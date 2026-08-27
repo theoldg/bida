@@ -7,7 +7,7 @@ import {
   type BalanceReport, type Expense, type Group, type GroupState, type Member,
   type Settlement, type Transfer,
 } from "@hajsik/core";
-import { db, type DeviceRecord } from "./db/dexie";
+import { db, type DeviceRecord, type IdentityEntry } from "./db/dexie";
 import { getDevice } from "./db/device";
 
 /**
@@ -156,6 +156,15 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     return out.sort((a, b) => Number(!!a.group.archivedAt) - Number(!!b.group.archivedAt)
       || b.lastActivity - a.lastActivity);
   }, []);
+}
+
+/** This device's identity changes in a group, oldest first. Device-local. */
+export function useIdentityLog(groupId: string | undefined): IdentityEntry[] {
+  return useLiveQuery(async () => {
+    if (!groupId) return [];
+    const rows = await db().identityLog.where("groupId").equals(groupId).toArray();
+    return rows.sort((a, b) => a.at - b.at || (a.id ?? 0) - (b.id ?? 0));
+  }, [groupId]) ?? [];
 }
 
 /** Whether the browser thinks it is online. Drives the offline banner. */

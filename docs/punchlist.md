@@ -14,10 +14,10 @@ Each item is written so it can be finished on its own and pushed on its own.
 
 | # | The ask (owner's words) | State |
 |---|---|---|
-| 1 | "the tabs are incoherent, there's a bottom row and a top row which partially overlap. consolidate into a bottom bar" | ⬜ |
+| 1 | "the tabs are incoherent, there's a bottom row and a top row which partially overlap. consolidate into a bottom bar" | ✅ |
 | 2 | "the dark theme is ugly make it less green/yellow" | ✅ |
-| 3 | "there should be in-group options including personal mode, color theme, changing identity" | ⬜ |
-| 4 | "there should be a history log for changing identity" | ⬜ |
+| 3 | "there should be in-group options including personal mode, color theme, changing identity" | ✅ |
+| 4 | "there should be a history log for changing identity" | ✅ |
 | 5 | "none of the text anywhere should be selectable (unless you think somewhere is explicitly justified, probably not)" | ✅ |
 | 6 | "there should be a cursor in the price input, and also maybe just let the native digit keyboard pop up" | ✅ |
 | 7 | "drop the placeholder example texts (maybe replace with generic things like 'title' etc)" | ✅ |

@@ -165,7 +165,9 @@ point of [ADR-0002](decisions/0002-append-only-op-log.md).
 | `ops` | `id` | index on `[groupId+hlc]`, `[groupId+syncState]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` at any time |
 | `blobs` | `attachmentId` | queued image data awaiting upload |
-| `device` | key | which member is "you", personal-mode toggle, last synced seq per group |
+| `device` | key | which member is "you", personal-mode toggle, theme, HLC state |
+| `groupKeys` | `groupId` | the invite secret and the sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
+| `identityLog` | `++id` | this phone's identity changes per group (schema v2). Device-local — [ADR-0009](decisions/0009-identity-is-device-local.md) |
 
 The materialised stores are a **cache**. If a migration gets confusing, the
 correct fix is to drop them and re-fold from `ops`. Never migrate materialised

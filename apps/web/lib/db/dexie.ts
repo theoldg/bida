@@ -34,6 +34,24 @@ export interface DeviceRecord {
 }
 
 /**
+ * Who this device said it was, over time, per group.
+ *
+ * Device-local and never an op: which member is holding this phone is a fact
+ * about the phone, not about the group, and pushing it would tell everyone
+ * else's ledger something it has no business knowing. Appended by `setMe`,
+ * rendered by the in-group options screen. ADR-0009.
+ */
+export interface IdentityEntry {
+  /** Auto-incremented by Dexie; also the display order. */
+  id?: number;
+  groupId: string;
+  at: number;
+  /** The member this device was before, or null on a first claim. */
+  fromMember: string | null;
+  toMember: string;
+}
+
+/**
  * The group secret from the invite link. Device-local and deliberately in a
  * table of its own: it must never be foldable from an op, or it would sync to
  * the server, which is the one place it must never be. ADR-0003.
@@ -54,6 +72,7 @@ export class HajsikDb extends Dexie {
   attachments!: Table<Attachment, string>;
   device!: Table<DeviceRecord, string>;
   groupKeys!: Table<GroupKey, string>;
+  identityLog!: Table<IdentityEntry, number>;
 
   constructor() {
     super("hajsik");
@@ -66,6 +85,11 @@ export class HajsikDb extends Dexie {
       attachments: "id, groupId, expenseId, uploadState",
       device: "key",
       groupKeys: "groupId",
+    });
+    // v2 adds the device-local identity log. Existing tables are repeated
+    // unchanged because Dexie treats a version's schema as the whole picture.
+    this.version(2).stores({
+      identityLog: "++id, groupId, at",
     });
   }
 }

@@ -27,12 +27,13 @@ one by hand.
 |---|---|
 | `/` | Groups list |
 | `/new` | Create a group |
-| `/g?id=` | The group view — expenses / balances / settle tabs |
+| `/g?id=[&tab=]` | The group view — expenses / balances / settle, chosen by the bottom bar |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense |
 | `/g/split?id=` | Split editor |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/members?id=` | Members |
+| `/g/options?id=` | In-group options: identity (and its log), personal mode, theme, way out to People/History/invite |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Landing for a shared invite link; claims a member slot |
 | `/settings` | Device settings: theme, personal mode |
@@ -54,8 +55,22 @@ without the secret.
   (`addExpense`, `editExpense`, `restoreRevision`). Each builds an op, appends
   it, and materialises it in one Dexie transaction. **Components never write to
   Dexie directly.**
-- Device-local, never-synced state (who "you" are, personal-mode toggle) lives in
-  the `device` store.
+- Device-local, never-synced state (who "you" are, personal-mode toggle, theme)
+  lives in the `device` store; the history of identity changes lives beside it in
+  `identityLog` — see [ADR-0009](decisions/0009-identity-is-device-local.md).
+
+### One navigation
+
+`/g` used to render a top tab strip (Expenses · Balances · Settle up) *and* a
+bottom bar (Expenses · Balances · History) whose middle item lit up for two of
+the three tabs. Two navigations for one screen, disagreeing about where you were.
+
+There is now exactly one: the bottom bar, four items —
+**Expenses · Balances · Settle · Group**. `Tabs` has been deleted from
+`components/chrome.tsx` along with its CSS; do not bring it back. A screen that
+needs more destinations than fit in the bar puts them on `/g/options`, not in a
+second row. *(Owner, 2026-08-27: "the tabs are incoherent … consolidate into a
+bottom bar".)*
 
 ## Personal mode
 

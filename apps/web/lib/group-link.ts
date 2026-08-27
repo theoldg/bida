@@ -52,5 +52,6 @@ export const route = {
   settleWith: (groupId: string, from: string, to: string, amount: number) =>
     `/g/settle?id=${encodeURIComponent(groupId)}&from=${from}&to=${to}&amount=${amount}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
+  options: (groupId: string) => `/g/options?id=${encodeURIComponent(groupId)}`,
   settings: () => "/settings",
 };

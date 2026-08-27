@@ -54,16 +54,12 @@ export function IconLink({ href, name, label }: { href: string; name: IconName; 
   return <Link className="iconbtn" href={href} aria-label={label}><Icon name={name} size={16} /></Link>;
 }
 
-export function Tabs({ tabs }: { tabs: { label: string; href: string; on?: boolean }[] }) {
-  return (
-    <div className="tabs">
-      {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className={`tab${t.on ? " on" : ""}`}>{t.label}</Link>
-      ))}
-    </div>
-  );
-}
-
+/**
+ * The app's ONE navigation. There is deliberately no top tab strip to go with
+ * it: `/g` used to carry both, and the two disagreed about which section you
+ * were in. If a screen needs more destinations than fit here, they belong on
+ * the group options screen, not in a second row.
+ */
 export function BottomNav({ items }: {
   items: { label: string; icon: IconName; href: string; on?: boolean }[];
 }) {

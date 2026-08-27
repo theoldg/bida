@@ -1,5 +1,5 @@
 import { newNodeId } from "@hajsik/core";
-import { db, type DeviceRecord } from "./dexie";
+import { db, type DeviceRecord, type IdentityEntry } from "./dexie";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
   key: "device",
@@ -30,9 +30,34 @@ export async function getMe(groupId: string): Promise<string | undefined> {
   return device.meByGroup[groupId];
 }
 
-export async function setMe(groupId: string, memberId: string): Promise<void> {
+/**
+ * Claim, or switch, which member this device is in a group — and record it.
+ *
+ * The log is device-local (see `IdentityEntry`): switching identity is not a
+ * change to the group's ledger, so it must never become an op. Re-claiming the
+ * same member is a no-op and is not logged.
+ */
+export async function setMe(
+  groupId: string,
+  memberId: string,
+  now = Date.now(),
+): Promise<void> {
   const device = await getDevice();
+  const previous = device.meByGroup[groupId];
+  if (previous === memberId) return;
   await updateDevice({ meByGroup: { ...device.meByGroup, [groupId]: memberId } });
+  await db().identityLog.add({
+    groupId,
+    at: now,
+    fromMember: previous ?? null,
+    toMember: memberId,
+  });
+}
+
+/** This device's identity changes in a group, oldest first. */
+export async function identityHistory(groupId: string): Promise<IdentityEntry[]> {
+  const rows = await db().identityLog.where("groupId").equals(groupId).toArray();
+  return rows.sort((a, b) => a.at - b.at || (a.id ?? 0) - (b.id ?? 0));
 }
 
 export async function setPersonalMode(on: boolean): Promise<void> {

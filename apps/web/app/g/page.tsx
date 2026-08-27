@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { shareOf, splitParticipants, type Expense, type Settlement } from "@hajsik/core";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
-  Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, Tabs, TopBar,
+  Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, TopBar,
 } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
@@ -60,12 +60,6 @@ function GroupScreen() {
           </Link>}
         />
 
-        <Tabs tabs={[
-          { label: "Expenses", href: route.group(group.id), on: tab === "expenses" },
-          { label: "Balances", href: route.group(group.id, "balances"), on: tab === "balances" },
-          { label: "Settle up", href: route.group(group.id, "settle"), on: tab === "settle" },
-        ]} />
-
         {tab === "expenses" ? <ExpensesTab data={data} personal={personal} />
           : tab === "balances" ? <BalancesTab data={data} />
           : <SettleTab data={data} />}
@@ -73,11 +67,15 @@ function GroupScreen() {
 
       {tab === "expenses" ? <Fab href={route.addExpense(group.id)} /> : null}
 
+      {/* One navigation, at the bottom. The screen used to carry a tab strip up
+          top *and* a bottom bar that disagreed with it — see punchlist item 1. */}
       <BottomNav items={[
         { label: "Expenses", icon: "list", href: route.group(group.id), on: tab === "expenses" },
         { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),
-          on: tab !== "expenses" },
-        { label: "History", icon: "clock", href: route.history(group.id) },
+          on: tab === "balances" },
+        { label: "Settle", icon: "swap", href: route.group(group.id, "settle"),
+          on: tab === "settle" },
+        { label: "Group", icon: "cog", href: route.options(group.id) },
       ]} />
     </Screen>
   );
