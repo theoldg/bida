@@ -139,6 +139,20 @@ export async function createGroup(
   return { groupId, memberId, secret };
 }
 
+/**
+ * Store the secret from an invite link. Called on the creating device (from
+ * `createGroup`) and on a device that just opened a `/join` link — the secret
+ * never travels through an op, only through the link fragment. ADR-0003.
+ */
+export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
+  const existing = await db().groupKeys.get(groupId);
+  await db().groupKeys.put({ groupId, secret, lastSeq: existing?.lastSeq ?? 0 });
+}
+
+export async function getGroupSecret(groupId: Id): Promise<string | undefined> {
+  return (await db().groupKeys.get(groupId))?.secret;
+}
+
 export async function renameGroup(groupId: Id, actor: Id, name: string): Promise<void> {
   await appendOps(groupId, actor, [
     { entity: "group", entityId: groupId, kind: "update", patch: { name } },

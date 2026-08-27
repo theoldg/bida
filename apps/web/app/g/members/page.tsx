@@ -6,8 +6,8 @@ import { Banner, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../co
 import { Icon } from "../../../components/icons";
 import { addMember, removeMember, renameMember } from "../../../lib/db/commands";
 import { setMe } from "../../../lib/db/device";
-import { route } from "../../../lib/group-link";
-import { useGroupData } from "../../../lib/hooks";
+import { formatJoinLink, route } from "../../../lib/group-link";
+import { useGroupData, useGroupSecret } from "../../../lib/hooks";
 
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
@@ -17,9 +17,22 @@ function MembersScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const secret = useGroupSecret(groupId);
 
   if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
   const group = data.group;
+
+  async function invite() {
+    if (!groupId || !secret) return;
+    const link = formatJoinLink({ groupId, secret });
+    if (navigator.share) {
+      try { await navigator.share({ title: `Join ${group!.name} on Hajsik`, url: link }); }
+      catch { /* user cancelled the share sheet */ }
+      return;
+    }
+    await navigator.clipboard.writeText(link);
+    alert("Invite link copied");
+  }
 
   async function claim(memberId: string) {
     if (!groupId) return;
@@ -51,7 +64,12 @@ function MembersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="People" sub={group.name} back={route.group(groupId)} />
+        <TopBar title="People" sub={group.name} back={route.group(groupId)}
+          right={secret ? (
+            <button className="iconbtn" aria-label="Invite" onClick={invite}>
+              <Icon name="link" size={16} />
+            </button>
+          ) : null} />
 
         <Scroll>
           {!data.me ? (

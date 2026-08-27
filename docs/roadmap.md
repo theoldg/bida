@@ -50,11 +50,12 @@ path to both.
 - [x] `lib/db/commands.ts` — one function per user intent
 - [x] Screens: groups, group/expenses, add expense, split editor, expense detail,
       balances, settle up, members, version history
-- [ ] `/join` screen — landing for a shared link, claims a member slot
-- [ ] Settings screen
-- [ ] Personal mode — confirm wired into the built screens
-- [ ] Multi-currency entry with a manually entered rate — confirm wired in
-- [ ] PWA manifest + shell service worker
+- [x] `/join` screen — landing for a shared link, claims a member slot *(honest
+      about there being no sync yet — see [sync.md](sync.md#gotchas))*
+- [x] Settings screen — theme, personal mode
+- [x] Personal mode — confirmed wired into the built screens
+- [x] Multi-currency entry with a manually entered rate — confirmed wired in
+- [x] PWA manifest + shell service worker
 - [ ] Screenshot harness for reviewing screens without a human
       ([testing.md](testing.md))
 

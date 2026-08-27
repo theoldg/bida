@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Karla, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { IconSprite } from "../components/icons";
+import { RegisterServiceWorker } from "../components/register-sw";
 import { ThemeScript } from "../components/theme";
 
 // Self-hosted at build time by next/font — nothing is fetched from Google at
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeScript />
         <IconSprite />
+        <RegisterServiceWorker />
         {children}
       </body>
     </html>

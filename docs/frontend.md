@@ -35,7 +35,7 @@ one by hand.
 | `/g/members?id=` | Members |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Landing for a shared invite link; claims a member slot |
-| `/settings` | Device settings: which member is "you", personal mode default *(not yet built)* |
+| `/settings` | Device settings: theme, personal mode |
 
 Deep links point at groups, never at individual expenses (unchanged from 0004).
 
@@ -74,9 +74,15 @@ user-uploaded content, so it's unrelated to the receipt-hosting question (see
 
 - Manifest with maskable icons, `display: standalone`, theme colour matched to
   the ledger paper token per theme.
-- Service worker precaches the app shell only. **The SW does not cache API
-  responses** — Dexie is the offline data layer, and a second caching layer over
-  the same data is how you get two disagreeing sources of truth.
+- `public/sw.js` precaches the app shell (every static route, per ADR-0007's
+  known-at-build-time set, plus the manifest and icons) and is registered from
+  `components/register-sw.tsx` in the root layout. **The SW does not cache API
+  responses** — it explicitly skips `/api/*` — Dexie is the offline data layer,
+  and a second caching layer over the same data is how you get two disagreeing
+  sources of truth. Pages are served network-first with a cache fallback;
+  hashed `/_next/static/` assets are cache-first since they're immutable.
+  `CACHE_VERSION` inside the file must be bumped by hand whenever its caching
+  behaviour changes, so old installs drop their stale cache on next activate.
 - iOS: no beforeinstallprompt, so show an "Add to Home Screen" hint. Installing
   matters on iOS beyond convenience — see the IndexedDB eviction gotcha in
   [architecture.md](architecture.md#gotchas).

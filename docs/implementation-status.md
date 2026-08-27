@@ -11,8 +11,8 @@ status file is worse than none.
 
 ## Where we are
 
-**Phase 0 and Phase 1 are done. Phase 2 is substantially built. Phase 3 has a
-minimal deploy path but no server logic yet.**
+**Phase 0 and Phase 1 are done. Phase 2 is done except the screenshot harness.
+Phase 3 has a minimal deploy path but no server logic yet.**
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 Both `apps/web` and `apps/api` now exist.
@@ -21,7 +21,7 @@ Both `apps/web` and `apps/api` now exist.
 |---|---|
 | 0 — Groundwork | ✅ done |
 | 1 — Domain core | ✅ done, 88 tests passing |
-| 2 — Local-first app, no server | 🟡 most screens built ← **you are here** |
+| 2 — Local-first app, no server | 🟡 done except the screenshot harness ← **you are here** |
 | 3 — Server and sync | 🟡 static assets deploy live; no D1, no API routes, no sync |
 | 4 — Receipts | ⬜ not started |
 | 5 — History surfaces | ⬜ not started |
@@ -59,20 +59,28 @@ Screens (each its own static route — see
 | Add/edit expense | `app/g/expense/edit/page.tsx` | ✅ |
 | Split editor | `app/g/split/page.tsx` | ✅ |
 | Version history | `app/g/history/page.tsx` | ✅ |
-| Members (claim identity, rename, remove, add) | `app/g/members/page.tsx` | ✅ |
+| Members (claim identity, rename, remove, add, invite link) | `app/g/members/page.tsx` | ✅ |
 | Record a settlement | `app/g/settle/page.tsx` | ✅ |
-| Join a shared link | — | ⬜ not built |
-| Settings (which member is "you", personal mode default) | — | ⬜ not built |
+| Join a shared link | `app/join/page.tsx` | ✅ *(see caveat below)* |
+| Settings (theme, personal mode) | `app/settings/page.tsx` | ✅ |
 
 Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
 (one function per user intent) are built — see [sync.md](sync.md) for the
-shape. Personal mode and multi-currency entry: check current code before
-assuming either is done, this file only tracks screens.
+shape. Personal mode (`usePersonalMode`, `Screen`'s `.personal` class,
+`ExpensesTab`'s highlight/fade) and multi-currency entry with a manually
+entered rate (`app/g/expense/edit/page.tsx`'s currency picker + rate input)
+are both confirmed wired into the built screens, not just `packages/core`.
 
-**Not built:** the `/join` landing screen (so a shared link currently has
-nowhere to land a second device), the Settings screen, the PWA service worker,
-and the screenshot/UI-inspection harness (see [testing.md](testing.md)). PWA
-icons **are** built — see [frontend.md](frontend.md#pwa).
+**Caveat on `/join`:** there is still no sync engine (Phase 3), so the screen
+parses the link and stores the invite secret, but can only actually land you
+in the group if it's already on that device — see
+[sync.md's gotcha](sync.md#gotchas). Real second-device sharing is still
+blocked on Phase 3.
+
+**Not built:** the screenshot/UI-inspection harness (see
+[testing.md](testing.md)). Everything else this file used to list as missing
+— `/join`, Settings, the PWA service worker — is now built; PWA icons were
+already in place — see [frontend.md](frontend.md#pwa).
 
 ### `apps/api` — what's built
 
@@ -147,25 +155,20 @@ Beyond the six ADRs, two things were settled in code:
 
 ## The next action, concretely
 
-What's left before Phase 2 is genuinely done and usable end-to-end on one
-device:
+Everything on Phase 2's list is built except one:
 
-1. The `/join` screen — landing for a shared link, claims a member slot. Right
-   now there's no page to receive `#<groupId>.<secret>` and get a second
-   device into a group at all.
-2. The Settings screen — which member is "you" on this device, personal-mode
-   default.
-3. Confirm personal mode and multi-currency entry are actually wired into the
-   built screens, not just in `packages/core`.
-4. The screenshot/UI-inspection harness (`pnpm shots`) — see
-   [testing.md](testing.md).
-5. The service worker (app-shell precache only). PWA manifest + icons are
-   already in place — see [frontend.md](frontend.md#pwa).
+1. The screenshot/UI-inspection harness (`pnpm shots`) — see
+   [testing.md](testing.md). Not started; build it against the Playwright
+   Chromium already available in the agent environment, driving the real
+   static export (`apps/web/out`), one PNG per route.
 
-**Do not start real Phase 3 work (D1, sync, auth) until `/join` exists and the
-app is genuinely usable by two people on two devices, even if they have to
-swap a link by hand.** The current deploy (static assets only, see
-[hosting.md](hosting.md#deploying)) is a Phase 3 head start, not Phase 3 itself.
+**Phase 2 is otherwise complete, but the app is still not usable by two
+people on two devices** — `/join` exists and stores the invite secret, but
+with no sync engine a second device has nothing to pull. That's what makes
+Phase 3 (D1, the `/api/groups/:id/ops` endpoints, the sync loop) next, not
+optional polish — see [roadmap.md](roadmap.md#phase-3--the-server-and-sync-still-the-mvp).
+The current deploy (static assets only, see [hosting.md](hosting.md#deploying))
+is a Phase 3 head start, not Phase 3 itself.
 
 ## Gotchas paid for already
 

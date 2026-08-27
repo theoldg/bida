@@ -56,12 +56,15 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 
 ## Current state
 
-**Design signed off. Phases 0 and 1 are done; Phase 2 is substantially built.**
-`packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
-balances, settle-up, history — with 88 passing tests. `apps/web` has most
-screens (groups, expenses, split editor, history, members, settle-up) but is
-missing `/join` and Settings. `apps/api` deploys the static export live at
-<https://hajsik.hajsik-api.workers.dev> with no D1/R2/sync yet — that's Phase 3.
+**Design signed off. Phases 0 and 1 are done; Phase 2 is done except the
+screenshot harness.** `packages/core` holds the whole domain — money, HLCs,
+ops, folding, splits, balances, settle-up, history — with 88 passing tests.
+`apps/web` has every screen (groups, expenses, split editor, history, members
+with invite-link sharing, settle-up, join, settings) plus a shell-precaching
+service worker. `apps/api` deploys the static export live at
+<https://hajsik.hajsik-api.workers.dev> with no D1/R2/sync yet — that's Phase 3,
+and it's the next real work: `/join` can store an invite secret but can't yet
+pull a group onto a second device without the sync engine.
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session

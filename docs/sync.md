@@ -139,3 +139,10 @@ it in one place so history and the expense form agree on wording.
   deletion — and that's a new ADR.
 - `createdAt` is display-only. Every time someone sorts by it, conflicts start
   resolving differently on different phones.
+- **The `/join` screen predates the sync engine.** It parses the link and
+  stores the secret in `groupKeys` (so nothing has to be re-typed once sync
+  ships), but with no `POST/GET /api/groups/:id/ops` yet, there is no way to
+  actually pull a group's op log onto a second device. Today it only does
+  something useful when the group is already local — reopening your own
+  invite link, or testing on one device. Don't treat `/join` existing as
+  proof that two-device sharing works; that's this section's job, done.

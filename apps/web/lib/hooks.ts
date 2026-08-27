@@ -36,6 +36,14 @@ export function usePersonalMode(): boolean {
   return useDevice()?.personalMode ?? false;
 }
 
+/** The invite secret for a group, if this device holds it (creator or a device that joined). */
+export function useGroupSecret(groupId: string | undefined): string | undefined {
+  return useLiveQuery(async () => {
+    if (!groupId) return undefined;
+    return (await db().groupKeys.get(groupId))?.secret;
+  }, [groupId]);
+}
+
 export interface GroupData {
   group: Group | undefined;
   members: Member[];
