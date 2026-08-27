@@ -42,7 +42,9 @@ otherwise the fold produces expenses referencing nothing.
   currency,               // ISO 4217, may differ from group base
   rateToBase,             // decimal string, e.g. "0.0921"; "1" when same currency
   baseAmountMinor,        // amountMinor × rateToBase, rounded once, stored
-  paidBy,                 // memberId  (MVP: exactly one payer)
+  paidBy,                 // memberId — the payer, or the largest co-sponsor
+  payers?,                // memberId -> minor units in THIS expense's currency,
+                          // summing to amountMinor. Absent = one payer. ADR-0010
   split: {
     mode: 'equal' | 'exact' | 'shares' | 'percent',
     // equal:   { members: memberId[] }

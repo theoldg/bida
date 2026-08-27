@@ -4,6 +4,7 @@ export * from "./ids.js";
 export * from "./types.js";
 export * from "./ops.js";
 export * from "./split.js";
+export * from "./payers.js";
 export * from "./fold.js";
 export * from "./history.js";
 export * from "./balance.js";

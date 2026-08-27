@@ -1,3 +1,4 @@
+import { resolvePayers } from "./payers.js";
 import { resolveSplit } from "./split.js";
 import { alive, type GroupState, type Id } from "./types.js";
 
@@ -54,9 +55,13 @@ export function computeBalances(state: GroupState): BalanceReport {
       continue;
     }
     totalSpendMinor += e.baseAmountMinor;
-    touch(e.paidBy);
-    paidMinor[e.paidBy] = (paidMinor[e.paidBy] ?? 0) + e.baseAmountMinor;
-    byMember[e.paidBy] = (byMember[e.paidBy] ?? 0) + e.baseAmountMinor;
+    // Credit every payer. With no co-sponsors this is one entry for `paidBy`
+    // carrying the whole amount, exactly as before payers existed.
+    for (const [id, amount] of Object.entries(resolvePayers(e))) {
+      touch(id);
+      paidMinor[id] = (paidMinor[id] ?? 0) + amount;
+      byMember[id] = (byMember[id] ?? 0) + amount;
+    }
     for (const [id, amount] of Object.entries(shares)) {
       touch(id);
       owedMinor[id] = (owedMinor[id] ?? 0) + amount;

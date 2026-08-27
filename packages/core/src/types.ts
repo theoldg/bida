@@ -44,7 +44,18 @@ export interface Expense {
   rateToBase: Rate;
   /** amountMinor converted to base currency. Stored, not recomputed. ADR-0005. */
   baseAmountMinor: number;
+  /**
+   * The single payer, or — when `payers` is set — its largest contributor.
+   * Always present: every op ever written carries it, and a list row needs one
+   * name and one avatar. See payers.ts and ADR-0010.
+   */
   paidBy: Id;
+  /**
+   * Co-sponsors. memberId -> amount in THIS EXPENSE'S currency, summing to
+   * `amountMinor`. Absent (the common case) means one payer: `paidBy` put in
+   * all of it.
+   */
+  payers?: Record<Id, number> | null;
   split: SplitSpec;
   attachmentIds: Id[];
   deletedAt?: number | null;
