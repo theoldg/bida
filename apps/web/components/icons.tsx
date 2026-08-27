@@ -5,7 +5,7 @@
  */
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
-  | "users" | "list" | "scale" | "swap" | "dots" | "sync" | "trash";
+  | "users" | "list" | "scale" | "swap" | "dots" | "sync" | "trash" | "edit";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -48,6 +48,9 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-trash" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2A1.8 1.8 0 009.2 21h5.6a1.8 1.8 0 001.8-1.8L17.5 7" />
+        </symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M15.5 4.5l4 4L7 21l-4.5.5.5-4.5z" /><path d="M13.5 6.5l4 4" />
         </symbol>
       </defs>
     </svg>
