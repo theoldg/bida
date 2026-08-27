@@ -77,7 +77,10 @@ export function useDraft(groupId: string | undefined): ExpenseDraft | undefined 
 
 export function blankDraft(paidBy: string, currency: string, members: string[]): ExpenseDraft {
   return {
-    amountText: "",
+    // A literal "0" rather than an empty field: the amount input is autofocused,
+    // and an empty centred field shows nothing but a caret. Typing replaces it,
+    // because the sanitiser strips leading zeros.
+    amountText: "0",
     currency,
     rateToBase: "1",
     description: "",

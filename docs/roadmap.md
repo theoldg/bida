@@ -39,7 +39,7 @@ No UI. No network. Pure functions and tests. This is where correctness is won.
 - [x] `core/settle.ts` — greedy minimal-ish transfer set
 - [x] Property tests: any permutation of ops folds identically
 
-## Phase 2 — Local-first app, no server *(current)*
+## Phase 2 — Local-first app, no server ✅
 
 Fully usable on one device with no backend at all — but not yet shippable; see
 Phase 3. Build it local-first anyway: the server is a replica of the op log, not
@@ -57,8 +57,8 @@ path to both.
 - [x] Personal mode — confirmed wired into the built screens
 - [x] Multi-currency entry with a manually entered rate — confirmed wired in
 - [x] PWA manifest + shell service worker
-- [ ] Screenshot harness for reviewing screens without a human
-      ([testing.md](testing.md))
+- [x] Screenshot harness for reviewing screens without a human — `pnpm shots`
+      ([testing.md](testing.md#pnpm-shots--photograph-every-screen))
 
 See [implementation-status.md](implementation-status.md) for the exact
 per-screen state.

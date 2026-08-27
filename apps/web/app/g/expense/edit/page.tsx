@@ -104,7 +104,8 @@ function EditExpenseScreen() {
     }
     if (exp === 0) text = text.split(".")[0] ?? "";
     const [whole = "", frac] = text.split(".");
-    const clipped = whole.slice(0, 12);
+    // "007" is a typo, not an amount: strip leading zeros but keep a lone "0".
+    const clipped = whole.replace(/^0+(?=\d)/, "").slice(0, 12);
     patch({ amountText: frac === undefined ? clipped : `${clipped}.${frac.slice(0, exp)}` });
   }
 
@@ -150,7 +151,7 @@ function EditExpenseScreen() {
                 placeholder="0"
                 value={draft.amountText}
                 onChange={(e) => typeAmount(e.target.value)}
-                size={Math.max(1, draft.amountText.length || 1)}
+                size={Math.max(3, draft.amountText.length)}
               />
               <span className="chip" style={{ alignSelf: "center", marginLeft: 3, position: "relative" }}>
                 {draft.currency} <Icon name="chev" size={10} />

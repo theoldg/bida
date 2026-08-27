@@ -56,17 +56,19 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 
 ## Current state
 
-**Design signed off. Phases 0, 1 and 3 are done; Phase 2 is done except the
-screenshot harness. The MVP (Phases 0-3) is complete and deployed.**
+**Design signed off. The MVP (Phases 0-3) is complete and deployed, and Phase 7
+— the owner's eight-item punch list — has landed on top of it.**
 `packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
-balances, settle-up, history — with 88 passing tests. `apps/web` has every
-screen (groups, expenses, split editor, history, members with invite-link
-sharing, settle-up, join, settings) plus a shell-precaching service worker and
+balances, settle-up, co-sponsored expenses, history — with 105 passing tests.
+`apps/web` has every screen (groups, expenses, split editor, payers editor,
+history, members with invite-link sharing, settle-up, join, in-group options,
+settings) behind a single bottom bar, plus a shell-precaching service worker and
 a background sync engine (`lib/db/sync.ts`). `apps/api` has D1 schema +
 migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
 bearer-secret auth) alongside the static-export passthrough. **Deployed and
 live** at <https://hajsik.hajsik-api.workers.dev>, D1 database created and
-migrated, sync verified against production. Next up: Phase 4 (receipts) — see
+migrated, sync verified against production. `pnpm shots` photographs every
+screen in both themes without a human. Next up: Phase 4 (receipts) — see
 [docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it

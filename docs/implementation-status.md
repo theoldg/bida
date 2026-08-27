@@ -11,8 +11,8 @@ status file is worse than none.
 
 ## Where we are
 
-**Phase 0, 1 and 3 are done. Phase 2 is done except the screenshot harness.
-The MVP (Phases 0-3) is complete and deployed.**
+**Phases 0-3 are done — the MVP is complete and deployed. Phase 7 (the owner's
+punch list) is done too; all eight items are on `main`.**
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 `apps/web` and `apps/api` both exist and are both live.
@@ -20,12 +20,13 @@ The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ done |
-| 1 — Domain core | ✅ done, 88 tests passing |
-| 2 — Local-first app, no server | 🟡 done except the screenshot harness |
+| 1 — Domain core | ✅ done, 105 tests passing |
+| 2 — Local-first app, no server | ✅ done — `pnpm shots` closed the last box |
 | 3 — Server and sync | ✅ done and deployed — **MVP complete** |
 | 4 — Receipts | ⬜ not started ← next up |
 | 5 — History surfaces | ⬜ not started |
 | 6 — Polish | ⬜ not started |
+| 7 — Owner's punch list | ✅ all eight done — [punchlist.md](punchlist.md) |
 
 **Live URL:** <https://hajsik.hajsik-api.workers.dev> — serving the static
 export *and* the sync API, backed by the `hajsik` D1 database (created and
@@ -81,8 +82,11 @@ device sharing works once both the sync API is deployed (see **Where we are**
 above) and the creating device has synced at least once — see
 [sync.md](sync.md#gotchas).
 
-**Not built:** the screenshot/UI-inspection harness (see
-[testing.md](testing.md)). That is now the only unchecked box left in Phase 2.
+**Phase 7 is in here too.** One bottom bar (the top tab strip is gone),
+`/g/options` with identity, personal mode and theme, a device-local identity
+log, nothing selectable, a real `<input inputMode="decimal">` amount field in
+place of the keypad, generic placeholders, and co-sponsored expenses via
+`/g/payers`. Item by item: [punchlist.md](punchlist.md).
 
 ### `apps/api` — what's built
 
@@ -112,7 +116,7 @@ Run it:
 
 ```bash
 pnpm install
-pnpm --filter @hajsik/core test          # 88 tests, ~1s
+pnpm --filter @hajsik/core test          # 105 tests, ~1s
 pnpm --filter @hajsik/core typecheck
 ```
 
@@ -162,10 +166,11 @@ Beyond the six ADRs, two things were settled in code:
 **The MVP is done and live.** What's left is Phase 4 (receipts) and the two
 loose ends below — neither blocks real use of the app.
 
-1. The screenshot/UI-inspection harness (`pnpm shots`) — see
-   [testing.md](testing.md). Not started; build it against the Playwright
-   Chromium already available in the agent environment, driving the real
-   static export (`apps/web/out`), one PNG per route.
+1. **Done, 2026-08-27:** the screenshot harness. `pnpm shots` builds the app,
+   serves the real static export, seeds a group through the UI and writes 24
+   PNGs (12 routes × 2 themes) into `shots/`. See
+   [testing.md](testing.md#pnpm-shots--photograph-every-screen) — including
+   the four ways it bit while being written.
 2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser
    profiles, a local `wrangler dev` + D1) that was flagged above as not yet
    done — and it turned up a genuine bug, not just an unverified path. A

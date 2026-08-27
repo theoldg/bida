@@ -289,10 +289,20 @@ a { color: inherit; text-decoration: none }
   padding: 0;
   min-width: 1ch;
   max-width: 100%;
-  text-align: center;
+  /* Right-aligned so the caret sits after the figure rather than on top of the
+     "0" placeholder, which read as a struck-through zero when centred. The row
+     itself is centred, so the field still looks centred on the screen. */
+  text-align: right;
   caret-color: var(--brand);
 }
-.amount::placeholder { color: var(--rule) }
+/* The caret is the focus signal here; a focus ring around a field this large,
+   sized to hug its own text, reads as a box drawn round a single digit. */
+.amount:focus-visible { outline: none }
+.amount::placeholder { color: var(--muted); opacity: .35 }
+/* An empty centred field draws its caret exactly where the placeholder's "0"
+   is, which reads as a struck-through zero. Once you're in the field the caret
+   is signal enough. */
+.amount:focus::placeholder { color: transparent }
 
 /* ---- segmented control ---- */
 .seg { display: flex; background: var(--card-3); border-radius: var(--r-s); padding: 2.5px; gap: 2px }

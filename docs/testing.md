@@ -24,21 +24,50 @@ UI gets smoke tests, not exhaustive coverage — see
 setup (`pnpm --filter @hajsik/web test`) exists for this; it does not yet have
 meaningful UI smoke tests written against it.
 
-## The screenshot / UI-inspection loop — not built yet
+## `pnpm shots` — photograph every screen
 
-[standing-instructions.md](standing-instructions.md#keep-a-screenshot-loop-and-dont-lean-on-it)
-records the owner's instruction to have a `pnpm shots` command that builds the
-app and photographs every screen in one browser launch, so a screen can be
-reviewed without a human on a phone. **This does not exist yet** — there is no
-`shots` script in any `package.json`. Build it against the Playwright Chromium
-already available in this environment (see the top-level agent environment
-notes — don't `playwright install`), driving the real static export
-(`apps/web/out`) rather than `next dev`, and saving one PNG per route from
-[ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)'s table into a
-gitignored output directory.
+```bash
+pnpm shots        # builds apps/web, then writes 24 PNGs into shots/ (gitignored)
+```
 
-Use it after building or changing a screen, or when something looks wrong —
-not as a step after every edit.
+One browser launch, one PNG per route per theme, no human and no phone. Run it
+after building or changing a screen, or when something looks wrong — **not after
+every edit**; that's the owner's instruction, see
+[standing-instructions.md](standing-instructions.md#keep-a-screenshot-loop-and-dont-lean-on-it).
+
+`scripts/shots.mjs` does three things:
+
+1. **Serves the real static export** (`apps/web/out`) over a bare `node:http`
+   server rather than running `next dev`. The export is what actually ships, and
+   it has quirks `next dev` doesn't.
+2. **Seeds a group through the UI** — "Marrakech", three members, a plain expense
+   and a co-sponsored one — by driving the real screens, not by poking IndexedDB.
+   That costs a few seconds and buys a lot: the harness fails loudly when a
+   screen it isn't even photographing breaks, and every shot shows a populated
+   ledger instead of an empty state.
+3. **Walks the routes in both themes** via two `newContext()`s with
+   `colorScheme` set, at a 390×844 mobile viewport with `deviceScaleFactor: 2`.
+
+Chromium comes from `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
+`playwright-core` is a root devDependency. Never run `playwright install`.
+
+### Gotchas
+
+- **`/g` is both a file and a directory** in the export (`out/g.html` and
+  `out/g/` holding the child routes), so the static server has to check
+  `statSync(p).isFile()` before serving a path and only then fall through to
+  `${file}.html`. Serving the directory hit is an `EISDIR` crash.
+- **Locate by role and id, not by guessed label text.** On `/new` the label is
+  "Name" and "Group name" is only the *placeholder*, so `getByLabel("Group
+  name")` hangs for the full timeout.
+- **Scope row-level clicks to the row.** `getByRole("button", { name: /the
+  rest$/i }).first()` in the payers editor hits whichever row is first, not the
+  one you meant — filter `.rows .row` by its member's name first. Getting this
+  wrong seeds a "co-sponsored" expense that quietly has one payer, and the shot
+  looks plausible.
+- **Screenshots miss the caret** (it blinks), and IBM Plex Mono's zero is
+  *dotted*. A "0" with a mark in the middle of it in a shot is the font, not a
+  struck-through field.
 
 ## Real two-device testing — for sync/join bugs specifically
 
