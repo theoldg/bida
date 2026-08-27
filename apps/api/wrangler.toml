@@ -1,0 +1,8 @@
+name = "hajsik"
+main = "src/index.ts"
+compatibility_date = "2026-08-27"
+
+[assets]
+directory = "../web/out"
+binding = "ASSETS"
+not_found_handling = "404-page"

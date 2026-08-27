@@ -11,21 +11,25 @@ status file is worse than none.
 
 ## Where we are
 
-**Phase 0 and Phase 1 are done. Phase 2 is next and has not been started.**
+**Phase 0 and Phase 1 are done. Phase 2 is substantially built. Phase 3 has a
+minimal deploy path but no server logic yet.**
 
-The design is signed off (2026-08-27, *"i approve of your design, go wild"*), so
-nothing is blocked on the owner. There is no `apps/web` and no `apps/api` yet —
-they are created when Phase 2 and Phase 3 need them, not up front.
+The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
+Both `apps/web` and `apps/api` now exist.
 
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ done |
 | 1 — Domain core | ✅ done, 88 tests passing |
-| 2 — Local-first app, no server | ⬜ not started ← **you are here** |
-| 3 — Server and sync | ⬜ not started |
+| 2 — Local-first app, no server | 🟡 most screens built ← **you are here** |
+| 3 — Server and sync | 🟡 static assets deploy live; no D1, no API routes, no sync |
 | 4 — Receipts | ⬜ not started |
 | 5 — History surfaces | ⬜ not started |
 | 6 — Polish | ⬜ not started |
+
+**Live URL:** <https://hajsik.hajsik-api.workers.dev> — static export only,
+served by a Cloudflare Worker with no backing data store. See
+[hosting.md](hosting.md#deploying).
 
 ## What exists on disk
 
@@ -34,9 +38,50 @@ pnpm-workspace.yaml      apps/* and packages/*
 package.json             root scripts: test, typecheck, build, check
 tsconfig.base.json       ES2022, strict, noUncheckedIndexedAccess, verbatimModuleSyntax
 packages/core/           @hajsik/core — pure domain logic, no I/O, no framework
+apps/web/                @hajsik/web — Next.js static export, the whole UI
+apps/api/                @hajsik/api — Cloudflare Worker; serves apps/web/out today,
+                         will host the Hono sync API in Phase 3
 design/mockups/          approved HTML/CSS. Source of truth for visual design
 docs/                    you are here
 ```
+
+### `apps/web` — what's built
+
+Screens (each its own static route — see
+[ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)):
+
+| Screen | File | State |
+|---|---|---|
+| Groups list | `app/page.tsx` | ✅ |
+| Create group | `app/new/page.tsx` | ✅ |
+| Group view (expenses/balances/settle tabs) | `app/g/page.tsx` | ✅ |
+| Expense detail | `app/g/expense/page.tsx` | ✅ |
+| Add/edit expense | `app/g/expense/edit/page.tsx` | ✅ |
+| Split editor | `app/g/split/page.tsx` | ✅ |
+| Version history | `app/g/history/page.tsx` | ✅ |
+| Members (claim identity, rename, remove, add) | `app/g/members/page.tsx` | ✅ |
+| Record a settlement | `app/g/settle/page.tsx` | ✅ |
+| Join a shared link | — | ⬜ not built |
+| Settings (which member is "you", personal mode default) | — | ⬜ not built |
+
+Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
+(one function per user intent) are built — see [sync.md](sync.md) for the
+shape. Personal mode and multi-currency entry: check current code before
+assuming either is done, this file only tracks screens.
+
+**Not built:** the `/join` landing screen (so a shared link currently has
+nowhere to land a second device), the Settings screen, PWA icons and service
+worker (see
+[standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp)
+— paused on purpose, not forgotten), and the screenshot/UI-inspection harness
+(see [testing.md](testing.md)).
+
+### `apps/api` — what's built
+
+A Hono app that passes every request through to the `ASSETS` binding (the
+static export), plus one `/api/health` route. No D1, no R2, no sync routes,
+no auth — that's all Phase 3. See [hosting.md](hosting.md#deploying) for the
+`wrangler.toml` shape and how to deploy.
 
 ### `packages/core` module map
 
@@ -49,7 +94,7 @@ docs/                    you are here
 | `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
 | `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
-| `history.ts` | `entityHistory`, `revisionsForEntity`, `activityFeed`, `buildRestorePatch` |
+| `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` (`revisionsForEntity` is module-private) |
 | `types.ts` | `Group`, `Member`, `Expense`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
 
@@ -104,23 +149,26 @@ Beyond the six ADRs, two things were settled in code:
 
 ## The next action, concretely
 
-Phase 2, in this order — each step is a commit:
+What's left before Phase 2 is genuinely done and usable end-to-end on one
+device:
 
-1. `apps/web`: Next.js App Router with `output: 'export'`, Tailwind, and the
-   mockup's `:root` token block ported into `globals.css` verbatim. Copy in only
-   the shadcn primitives actually used (Sheet, Drawer, Tabs, Avatar, Badge,
-   Dialog).
-2. `lib/db/schema.ts`: Dexie with an `ops` table plus materialised
-   `groups`/`expenses` stores, and `rebuild(groupId)` that re-folds from ops.
-3. `lib/db/commands.ts`: one exported function per user intent
-   (`addExpense`, `editExpense`, `deleteExpense`, `addMember`, `recordSettlement`).
-   Each appends an op and re-folds. Nothing else in the app writes to Dexie.
-4. Screens, in mockup order: group list → expenses → add expense → split editor
-   → expense detail → balances → settle up.
-5. Personal mode (the highlighter wash), multi-currency entry with a manual rate.
-6. PWA manifest + a shell service worker.
+1. The `/join` screen — landing for a shared link, claims a member slot. Right
+   now there's no page to receive `#<groupId>.<secret>` and get a second
+   device into a group at all.
+2. The Settings screen — which member is "you" on this device, personal-mode
+   default.
+3. Confirm personal mode and multi-currency entry are actually wired into the
+   built screens, not just in `packages/core`.
+4. The screenshot/UI-inspection harness (`pnpm shots`) — see
+   [testing.md](testing.md).
+5. PWA manifest icons + service worker — paused on purpose, see
+   [standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp);
+   resume only when the owner says so.
 
-**Do not start Phase 3 until the app is genuinely usable on one device offline.**
+**Do not start real Phase 3 work (D1, sync, auth) until `/join` exists and the
+app is genuinely usable by two people on two devices, even if they have to
+swap a link by hand.** The current deploy (static assets only, see
+[hosting.md](hosting.md#deploying)) is a Phase 3 head start, not Phase 3 itself.
 
 ## Gotchas paid for already
 
@@ -128,3 +176,8 @@ Phase 2, in this order — each step is a commit:
   `package.json` carries `"pnpm": { "onlyBuiltDependencies": ["esbuild"] }`.
 - Don't use `|` as a `perl -pe s|||` delimiter on a file containing markdown
   tables. It ate `docs/README.md` once.
+- `next build` (not `next dev`) fails to resolve `packages/core`'s `.js`-suffix
+  sibling imports unless `apps/web/next.config.mjs` sets
+  `config.resolve.extensionAlias`. Full explanation in
+  [hosting.md](hosting.md#gotchas). Run a real production build before
+  assuming anything deploys — `next dev` won't catch this.

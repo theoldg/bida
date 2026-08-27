@@ -33,8 +33,8 @@ append to it whenever they state a new preference.
 
 | Path | What |
 |---|---|
-| `apps/web/` | Next.js app (App Router, static export) — *not yet scaffolded (Phase 2)* |
-| `apps/api/` | Cloudflare Worker: static assets + Hono API — *not yet scaffolded (Phase 3)* |
+| `apps/web/` | Next.js app (App Router, static export) — **built, most screens done (Phase 2)** |
+| `apps/api/` | Cloudflare Worker: static assets today, Hono API to come — **serving the static export, live** |
 | `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 88 tests passing** |
 | `design/mockups/` | Approved HTML/CSS mockups. Source of truth for visual design |
 | `docs/` | Everything else. Start at [docs/implementation-status.md](docs/implementation-status.md), then [docs/README.md](docs/README.md) |
@@ -42,20 +42,26 @@ append to it whenever they state a new preference.
 
 ## The stack in one breath
 
-Next.js (App Router, `output: 'export'`) + shadcn/ui + Tailwind, compiled to
-static assets and served by a single Cloudflare Worker that also hosts a Hono
-API. Data lives in IndexedDB on the client (Dexie) and syncs as an append-only
-operation log to Cloudflare D1. Receipt images go to R2. No accounts — a group
-is a secret link. Total hosting cost: £0.
+Next.js (App Router, `output: 'export'`) + Tailwind + hand-rolled components
+ported from the mockup (see [ADR-0008](docs/decisions/0008-hand-rolled-css-not-shadcn.md) —
+no shadcn/ui dependency), compiled to static assets and served by a single
+Cloudflare Worker that will also host a Hono API. Data lives in IndexedDB on
+the client (Dexie) and will sync as an append-only operation log to
+Cloudflare D1 (not built yet). Receipt images go to R2 (not built yet, and
+paused for the MVP). No accounts — a group is a secret link. Total hosting
+cost: £0.
 
 Full reasoning: [docs/architecture.md](docs/architecture.md),
 [docs/hosting.md](docs/hosting.md).
 
 ## Current state
 
-**Design signed off. Phases 0 and 1 are done; Phase 2 is next.** `packages/core`
-holds the whole domain — money, HLCs, ops, folding, splits, balances, settle-up,
-history — with 88 passing tests. There is no UI and no server yet.
+**Design signed off. Phases 0 and 1 are done; Phase 2 is substantially built.**
+`packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
+balances, settle-up, history — with 88 passing tests. `apps/web` has most
+screens (groups, expenses, split editor, history, members, settle-up) but is
+missing `/join` and Settings. `apps/api` deploys the static export live at
+<https://hajsik.hajsik-api.workers.dev> with no D1/R2/sync yet — that's Phase 3.
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session
@@ -78,8 +84,9 @@ test coverage, especially splits, rounding, and op folding. UI gets smoke tests
 only. If you touch money arithmetic without adding a test, you have not finished.
 
 **Dependencies.** Prefer none. This app has very few users and a long expected
-life; every dependency is a future migration. shadcn/ui is copied-in source, not
-a dependency, which is why it was chosen.
+life; every dependency is a future migration. Components are hand-rolled from
+the mockup rather than pulled from a UI library — see
+[ADR-0008](docs/decisions/0008-hand-rolled-css-not-shadcn.md).
 
 **Scope.** Restaurant bill splitting and AI features are explicitly deferred —
 see [docs/product.md](docs/product.md#deliberately-not-in-the-mvp). Leave the

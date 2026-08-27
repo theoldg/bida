@@ -34,17 +34,47 @@ would be the only line item with a plausible route to real money.
 
 ## Deploying
 
-*To be filled in when `apps/api` exists. Expected shape:*
+`apps/api` is the one Worker. Today it only serves static assets — no D1, no
+R2, no API routes yet (that's Phase 3) — but the deploy path is real and live:
 
 ```bash
-pnpm build              # next build → static export into the worker's assets dir
-pnpm wrangler d1 migrations apply hajsik --remote
-pnpm wrangler deploy
+pnpm --filter @hajsik/web build     # next build → apps/web/out (static export)
+pnpm --filter @hajsik/api deploy    # wrangler deploy, serves apps/web/out
 ```
 
-One `wrangler.toml`, one Worker, D1 and R2 as bindings. Preview deploys use a
-separate D1 database — **never point a preview at production data**; the op log
-has no undo at the infrastructure level.
+`apps/api/wrangler.toml`:
+
+```toml
+name = "hajsik"
+main = "src/index.ts"
+compatibility_date = "2026-08-27"
+
+[assets]
+directory = "../web/out"
+binding = "ASSETS"
+not_found_handling = "404-page"
+```
+
+`src/index.ts` is a thin Hono app that passes everything through to the
+`ASSETS` binding (plus one `/api/health` route) — the real API routes land in
+Phase 3. `not_found_handling = "404-page"` (not `"single-page-application"`):
+the export is a real multi-page static site, one HTML file per route (see
+[ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)), not a
+client-router SPA that should fall back to `index.html` for unknown paths.
+
+**Live at <https://hajsik.hajsik-api.workers.dev>** — a permanent URL, no
+custom domain needed to get one; `workers.dev` subdomains don't expire as long
+as the Worker exists.
+
+When D1 and R2 land in Phase 3, add them as bindings in the same
+`wrangler.toml` and this section grows a migrations step:
+
+```bash
+pnpm wrangler d1 migrations apply hajsik --remote
+```
+
+Preview deploys use a separate D1 database — **never point a preview at
+production data**; the op log has no undo at the infrastructure level.
 
 ## Cost tripwires
 
@@ -68,3 +98,12 @@ one:
 - `@opennextjs/cloudflare` is the adapter you'd need **if** we ever move off
   static export. We don't use it — see
   [ADR-0004](decisions/0004-static-export-fragment-routing.md).
+- `packages/core` imports its own siblings with a `.js` extension (e.g.
+  `./hlc.js`), which is correct under `tsconfig.base.json`'s
+  `moduleResolution: "bundler"` and resolves fine under `tsc` and `next dev` —
+  but Next's production webpack build does **not** map `.js` imports back to
+  `.ts` files on its own, and fails with `Module not found: Can't resolve
+  './hlc.js'`. Fixed in `apps/web/next.config.mjs` with
+  `config.resolve.extensionAlias = { ".js": [".ts", ".tsx", ".js"] }` inside a
+  `webpack()` hook. This only shows up on `next build`, not `next dev` — run a
+  real production build at least once before assuming the app deploys.

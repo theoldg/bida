@@ -22,8 +22,9 @@ Tick boxes as you go, and update **Current state** in [CLAUDE.md](../CLAUDE.md).
 - [x] Docs skeleton
 - [x] **Design signed off by the owner** — *2026-08-27, "i approve of your design, go wild"*
 - [x] Monorepo scaffold: pnpm workspace + `packages/core`
-- [ ] `apps/web`, `apps/api` packages — deferred into Phase 2/3, created when first needed
-- [ ] Tailwind + shadcn init with the mockup's tokens ported *(Phase 2)*
+- [x] `apps/web`, `apps/api` packages — both created
+- [x] Tailwind init with the mockup's tokens ported *(no shadcn — see
+      [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md))*
 
 ## Phase 1 — The domain core ✅ *(88 tests passing)*
 
@@ -45,24 +46,32 @@ Phase 3. Build it local-first anyway: the server is a replica of the op log, not
 the source of truth, so writing the UI against IndexedDB first is the shortest
 path to both.
 
-- [ ] Dexie schema, materialised stores, rebuild-from-ops
-- [ ] `lib/db/commands.ts` — one function per user intent
-- [ ] Screens: groups, group/expenses, add expense, split editor, expense detail,
-      balances, settle up
-- [ ] Personal mode
-- [ ] Multi-currency entry with a manually entered rate
-- [ ] PWA manifest + shell service worker
+- [x] Dexie schema, materialised stores, rebuild-from-ops
+- [x] `lib/db/commands.ts` — one function per user intent
+- [x] Screens: groups, group/expenses, add expense, split editor, expense detail,
+      balances, settle up, members, version history
+- [ ] `/join` screen — landing for a shared link, claims a member slot
+- [ ] Settings screen
+- [ ] Personal mode — confirm wired into the built screens
+- [ ] Multi-currency entry with a manually entered rate — confirm wired in
+- [ ] PWA manifest + shell service worker — **paused for the MVP**, see
+      [standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp)
 - [ ] Screenshot harness for reviewing screens without a human
       ([testing.md](testing.md))
 
+See [implementation-status.md](implementation-status.md) for the exact
+per-screen state.
+
 ## Phase 3 — The server and sync *(still the MVP)*
 
+- [x] Minimal deploy: one Worker serving the static export, live at
+      <https://hajsik.hajsik-api.workers.dev> — no D1/R2 bindings yet
 - [ ] D1 schema + migrations
 - [ ] Hono worker: `POST /ops`, `GET /ops`, group create/join
 - [ ] Link-only auth: secret in fragment, `sha256` on the server
 - [ ] Sync engine: single-flight, backoff, triggers
 - [ ] Conflict surfacing in history ("Sam's change was overwritten")
-- [ ] Deploy; custom domain
+- [ ] Custom domain
 
 **End of the MVP.** Everything below is the finish.
 
