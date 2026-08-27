@@ -50,8 +50,9 @@ path to both.
 - [x] `lib/db/commands.ts` — one function per user intent
 - [x] Screens: groups, group/expenses, add expense, split editor, expense detail,
       balances, settle up, members, version history
-- [x] `/join` screen — landing for a shared link, claims a member slot *(honest
-      about there being no sync yet — see [sync.md](sync.md#gotchas))*
+- [x] `/join` screen — landing for a shared link, claims a member slot *(now
+      pulls the group via sync and recovers on its own if the first attempt
+      fails — see [sync.md](sync.md#gotchas))*
 - [x] Settings screen — theme, personal mode
 - [x] Personal mode — confirmed wired into the built screens
 - [x] Multi-currency entry with a manually entered rate — confirmed wired in
@@ -80,6 +81,12 @@ per-screen state.
       tested directly against production (create, idempotent re-push, pull,
       wrong-secret rejection all correct), and a real group with members and
       an expense was seen synced through it within minutes of deploy
+- [x] **Real cross-device `/join` verified** *(2026-08-27, two browser
+      profiles against a local `wrangler dev` + D1)* — this had only been
+      exercised as a mocked-`fetch` unit test before; running it for real
+      turned up a genuine bug (a first-time user's join screen could dead-end
+      if its one-shot sync attempt failed), now fixed — see
+      [sync.md's gotchas](sync.md#gotchas)
 - [ ] Custom domain — blocked on the owner pointing a domain at Cloudflare DNS;
       not something an agent session can do alone. `workers.dev` doesn't expire,
       so this is cosmetic, not blocking.

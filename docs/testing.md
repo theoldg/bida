@@ -39,3 +39,36 @@ gitignored output directory.
 
 Use it after building or changing a screen, or when something looks wrong —
 not as a step after every edit.
+
+## Real two-device testing — for sync/join bugs specifically
+
+A mocked `fetch` (`apps/web/lib/db/sync.test.ts`) proves the sync *protocol*,
+but it can't catch a bug that only exists in how two real devices interleave —
+which is exactly the shape of bug that `/join` had (see
+[sync.md's gotchas](sync.md#gotchas)). When a bug report smells like "works for
+a device that already has state, breaks for one that doesn't," don't reason
+about it in the abstract — stand up the real stack and drive two browser
+contexts against it:
+
+```bash
+pnpm install
+pnpm --filter @hajsik/web build                 # apps/web/out, real static export
+cd apps/api
+npx wrangler d1 migrations apply hajsik --local  # once, or after a schema change
+npx wrangler dev --port 8787                     # serves apps/web/out + the API + local D1
+```
+
+That's the real `ASSETS` + `DB` bindings from `apps/api/wrangler.toml` — not a
+mock. Drive it with `playwright-core` against the Chromium already on disk at
+`/opt/pw-browsers/chromium` (no `playwright install`; `playwright-core` isn't
+a project dependency — install it ad hoc with `npm install playwright-core
+--no-save` in a scratch directory, it's a debugging tool, not app code). One
+`browser.newContext()` per "device" gives each its own IndexedDB, which is the
+part a single-context test can't simulate: `ctxA` creates the group and reads
+its invite secret straight out of IndexedDB (`indexedDB.open('hajsik')` →
+`groupKeys` store) instead of fighting `navigator.clipboard`/`share`; `ctxB` is
+a **brand-new context with no storage at all** — that's the "never used the
+app before" device the bug reports care about. `page.route()` can force one
+device's API calls to fail-then-recover to test reconnect behaviour, which is
+more precise than `context.setOffline()` (that also blocks the initial page
+load, which isn't what a real "signal drops mid-sync" looks like).
