@@ -11,29 +11,29 @@ status file is worse than none.
 
 ## Where we are
 
-**Phase 0 and Phase 1 are done. Phase 2 is done except the screenshot harness.
-Phase 3's code is done — D1 schema, sync API, sync engine, conflict
-surfacing — but not yet deployed: the D1 database hasn't been created on
-Cloudflare and the Worker hasn't been redeployed with it.**
+**Phase 0, 1 and 3 are done. Phase 2 is done except the screenshot harness.
+The MVP (Phases 0-3) is complete and deployed.**
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
-Both `apps/web` and `apps/api` now exist.
+`apps/web` and `apps/api` both exist and are both live.
 
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ done |
 | 1 — Domain core | ✅ done, 88 tests passing |
 | 2 — Local-first app, no server | 🟡 done except the screenshot harness |
-| 3 — Server and sync | 🟡 code complete; D1 not yet provisioned/deployed ← **you are here** |
-| 4 — Receipts | ⬜ not started |
+| 3 — Server and sync | ✅ done and deployed — **MVP complete** |
+| 4 — Receipts | ⬜ not started ← next up |
 | 5 — History surfaces | ⬜ not started |
 | 6 — Polish | ⬜ not started |
 
-**Live URL:** <https://hajsik.hajsik-api.workers.dev> — as of this commit still
-serving the *previous* deploy (static export only, no sync). The next deploy
-needs a pasted `CLOUDFLARE_API_TOKEN` to create the D1 database and redeploy —
-see [hosting.md](hosting.md#deploying) and
-[standing-instructions.md](standing-instructions.md#the-owner-pastes-the-cloudflare-token-each-session).
+**Live URL:** <https://hajsik.hajsik-api.workers.dev> — serving the static
+export *and* the sync API, backed by the `hajsik` D1 database (created and
+migrated 2026-08-27). Verified live: `POST`/`GET /api/groups/:id/ops`
+round-tripped correctly against production (idempotent push, pull, wrong-secret
+rejection), and a real group with members and an expense was observed synced
+through it within minutes of deploy — i.e. this isn't just passing tests, it
+has carried a real write.
 
 ## What exists on disk
 
@@ -159,29 +159,23 @@ Beyond the six ADRs, two things were settled in code:
 
 ## The next action, concretely
 
-1. **Deploy Phase 3.** All the code is written and tested but nothing is live
-   yet. Needs a pasted `CLOUDFLARE_API_TOKEN` from the owner, then:
-   ```bash
-   cd apps/api
-   npx wrangler d1 create hajsik      # paste the printed database_id into wrangler.toml
-   pnpm db:migrate                    # applies migrations/0001_init.sql
-   pnpm --filter @hajsik/web build
-   pnpm --filter @hajsik/api deploy
-   ```
-   After that, do a real two-tab or two-device check: create a group in one
-   tab, copy its invite link, open it in another (or in a private window) and
-   confirm the group and its members actually appear — this has not been
-   exercised against a live server yet, only against a mocked `fetch` in
-   `apps/web/lib/db/sync.test.ts`.
-2. The screenshot/UI-inspection harness (`pnpm shots`) — see
+**The MVP is done and live.** What's left is Phase 4 (receipts) and the two
+loose ends below — neither blocks real use of the app.
+
+1. The screenshot/UI-inspection harness (`pnpm shots`) — see
    [testing.md](testing.md). Not started; build it against the Playwright
    Chromium already available in the agent environment, driving the real
    static export (`apps/web/out`), one PNG per route.
+2. A real cross-device `/join` check hasn't been done from two actual phones
+   (or two browser profiles) side by side — only the API round-trip has been
+   verified directly (see **Live URL** above) and against a mocked `fetch` in
+   `apps/web/lib/db/sync.test.ts`. Worth doing once, opportunistically, next
+   time this is picked up.
 
-See [roadmap.md](roadmap.md#phase-3--the-server-and-sync-still-the-mvp) for
-the full Phase 3 checklist — everything on it is done except the deploy step
-above and the custom domain, which needs the owner's own domain in Cloudflare
-DNS.
+See [roadmap.md](roadmap.md#phase-3--the-server-and-sync-deployed-2026-08-27--mvp-complete)
+for the full Phase 3 checklist. Phase 4 (receipts) is next —
+[product.md](product.md) and [roadmap.md](roadmap.md#phase-4--receipts) have
+the scope.
 
 ## Gotchas paid for already
 
@@ -194,8 +188,12 @@ DNS.
   `config.resolve.extensionAlias`. Full explanation in
   [hosting.md](hosting.md#gotchas). Run a real production build before
   assuming anything deploys — `next dev` won't catch this.
-- `apps/api/wrangler.toml`'s `database_id` is still the literal placeholder
-  `REPLACE_WITH_D1_DATABASE_ID` as of this commit. `wrangler deploy --dry-run`
-  succeeds anyway (it doesn't validate the id against the account), so a dry
-  run passing is not proof the real deploy will work — see the next action
-  above.
+- `wrangler deploy --dry-run` succeeds even with a bogus `database_id` in
+  `apps/api/wrangler.toml` — it doesn't validate the id against the account.
+  A clean dry run is not proof the real deploy will work; only a real
+  `wrangler deploy` (or `wrangler d1 list`) catches a wrong id.
+- A Cloudflare API token scoped only for Workers (e.g. a token from an earlier
+  session, before D1 existed in this repo) fails D1 calls with a generic
+  `Authentication error [code: 10000]`, not a clear permissions message.
+  `wrangler whoami` succeeding is not proof the token can create/read D1 —
+  needs the "D1 - Edit" permission specifically.

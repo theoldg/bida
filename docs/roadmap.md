@@ -62,11 +62,12 @@ path to both.
 See [implementation-status.md](implementation-status.md) for the exact
 per-screen state.
 
-## Phase 3 — The server and sync *(still the MVP)*
+## Phase 3 — The server and sync ✅ *(deployed 2026-08-27 — MVP complete)*
 
 - [x] Minimal deploy: one Worker serving the static export, live at
       <https://hajsik.hajsik-api.workers.dev>
-- [x] D1 schema + migrations (`apps/api/migrations/0001_init.sql`)
+- [x] D1 schema + migrations (`apps/api/migrations/0001_init.sql`) — the
+      `hajsik` D1 database is created and migrated on Cloudflare
 - [x] Hono worker: `POST /api/groups/:id/ops`, `GET /api/groups/:id/ops` — group
       creation is implicit on a group's first push, no separate endpoint
       (see [sync.md](sync.md#the-protocol))
@@ -75,12 +76,13 @@ per-screen state.
 - [x] Sync engine: single-flight, backoff, triggers (`apps/web/lib/db/sync.ts`)
 - [x] Conflict surfacing in history ("Sam's change to the amount was later
       overwritten by Marie's edit.") — `apps/web/app/g/history/page.tsx`
+- [x] **Deployed and verified live** — `POST`/`GET /api/groups/:id/ops` smoke
+      tested directly against production (create, idempotent re-push, pull,
+      wrong-secret rejection all correct), and a real group with members and
+      an expense was seen synced through it within minutes of deploy
 - [ ] Custom domain — blocked on the owner pointing a domain at Cloudflare DNS;
-      not something an agent session can do alone
-- [ ] The D1 database itself hasn't been created yet on Cloudflare, and the
-      Worker hasn't been redeployed with it — needs a pasted
-      `CLOUDFLARE_API_TOKEN` (see
-      [standing-instructions](standing-instructions.md#the-owner-pastes-the-cloudflare-token-each-session))
+      not something an agent session can do alone. `workers.dev` doesn't expire,
+      so this is cosmetic, not blocking.
 
 **End of the MVP.** Everything below is the finish.
 

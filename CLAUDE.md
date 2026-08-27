@@ -56,19 +56,18 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 
 ## Current state
 
-**Design signed off. Phases 0 and 1 are done; Phase 2 is done except the
-screenshot harness. Phase 3's code is done but not yet deployed.**
+**Design signed off. Phases 0, 1 and 3 are done; Phase 2 is done except the
+screenshot harness. The MVP (Phases 0-3) is complete and deployed.**
 `packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
 balances, settle-up, history — with 88 passing tests. `apps/web` has every
 screen (groups, expenses, split editor, history, members with invite-link
 sharing, settle-up, join, settings) plus a shell-precaching service worker and
-now a background sync engine (`lib/db/sync.ts`). `apps/api` has D1 schema +
+a background sync engine (`lib/db/sync.ts`). `apps/api` has D1 schema +
 migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
-bearer-secret auth) alongside the static-export passthrough — but the D1
-database itself hasn't been created on Cloudflare yet, so the live deploy at
-<https://hajsik.hajsik-api.workers.dev> doesn't have sync live yet. See
-[docs/implementation-status.md](docs/implementation-status.md#the-next-action-concretely)
-for the exact deploy steps, which need a pasted Cloudflare token.
+bearer-secret auth) alongside the static-export passthrough. **Deployed and
+live** at <https://hajsik.hajsik-api.workers.dev>, D1 database created and
+migrated, sync verified against production. Next up: Phase 4 (receipts) — see
+[docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session
