@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import {
   convertMinor, exponentOf, isValidRate, parseMinor, resolveSplit, splitParticipants,
+  validatePayers,
 } from "@hajsik/core";
 import { Avatar, Card, Chip } from "../../../../components/bits";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
@@ -45,6 +46,7 @@ function EditExpenseScreen() {
         rateToBase: e.rateToBase,
         description: e.description,
         paidBy: e.paidBy,
+        payers: e.payers ?? null,
         split: e.split,
         occurredAt: e.occurredAt,
         categoryId: e.categoryId ?? null,
@@ -79,7 +81,13 @@ function EditExpenseScreen() {
     shares = resolveSplit(baseMinor, draft.split, { tiebreakSeed: draft.expenseId ?? "new" }).shares;
   } catch { splitOk = false; }
 
-  const ready = amountMinor > 0 && rateOk && splitOk && draft.description.trim().length > 0;
+  // Payers are checked against the amount in the expense's own currency: that
+  // is the number people typed and the number they'd check against a receipt.
+  const payerCheck = validatePayers(amountMinor, draft.payers);
+  const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
+
+  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
+    && draft.description.trim().length > 0;
 
   /**
    * The amount is a real text input with a real caret and the phone's own
@@ -110,6 +118,7 @@ function EditExpenseScreen() {
       currency: draft!.currency,
       rateToBase: foreign ? draft!.rateToBase : "1",
       paidBy: draft!.paidBy,
+      payers: draft!.payers,
       split: draft!.split,
       categoryId: draft!.categoryId,
     };
@@ -191,14 +200,43 @@ function EditExpenseScreen() {
                 onChange={(e) => patch({ description: e.target.value })} />
             </div>
 
-            <div className="field">
-              <label htmlFor="paidby">Paid by</label>
-              <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
-              <select id="paidby" value={draft.paidBy} onChange={(e) => patch({ paidBy: e.target.value })}>
-                {data.members.map((m) =>
-                  <option key={m.id} value={m.id}>{m.id === data.me ? "You" : m.name}</option>)}
-              </select>
-            </div>
+            {coPayers.length > 1 ? (
+              <Card style={{ padding: "10px 12px" }}>
+                <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span style={{ fontSize: 13, color: "var(--muted)", width: 62 }}>Paid by</span>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>
+                    {coPayers.length} people
+                  </span>
+                  <Icon name="chev" size={14} className="spacer" style={{ color: "var(--muted)" }} />
+                </Link>
+                <div className="hairline" />
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {coPayers.map(([id, amount]) => (
+                    <Chip key={id} variant={id === data.me ? "hl" : undefined}>
+                      {(data.memberById.get(id)?.name ?? "?").split(" ")[0]} {money(amount, draft.currency)}
+                    </Chip>
+                  ))}
+                </div>
+                {!payerCheck.ok ? (
+                  <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7, fontWeight: 600 }}>
+                    {payerCheck.message}
+                  </div>
+                ) : null}
+              </Card>
+            ) : (
+              <div className="field">
+                <label htmlFor="paidby">Paid by</label>
+                <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
+                <select id="paidby" value={draft.paidBy}
+                  onChange={(e) => patch({ paidBy: e.target.value, payers: null })}>
+                  {data.members.map((m) =>
+                    <option key={m.id} value={m.id}>{m.id === data.me ? "You" : m.name}</option>)}
+                </select>
+                <Link href={route.payers(groupId)} className="chip" aria-label="Several people paid">
+                  + someone
+                </Link>
+              </div>
+            )}
 
             <Card style={{ padding: "10px 12px" }}>
               <Link href={route.split(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>

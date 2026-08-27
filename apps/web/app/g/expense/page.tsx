@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import { resolveSplit, splitParticipants } from "@hajsik/core";
+import { isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
@@ -45,6 +45,10 @@ function ExpenseScreen() {
   }
 
   const payer = data.memberById.get(expense.paidBy);
+  const coSponsored = isCoSponsored(expense);
+  // What each payer put in, in the base currency — the figure that actually
+  // moves their balance, so it is the one worth showing next to their name.
+  const putIn = resolvePayers(expense);
   const participants = splitParticipants(expense.split);
   let shares: Record<string, number> = {};
   try {
@@ -101,9 +105,29 @@ function ExpenseScreen() {
 
           <div className="pad" style={{ paddingTop: 2 }}>
             <Card>
-              <KV k="Paid by" v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
-                {payer?.id === data.me ? "You" : payer?.name ?? "Someone"}
-              </span>} />
+              {coSponsored ? (
+                <>
+                  <Eyebrow style={{ marginBottom: 4 }}>Paid by · {payerList(expense).length} people</Eyebrow>
+                  {payerList(expense).map((id) => {
+                    const m = data.memberById.get(id);
+                    const own = expense.payers?.[id] ?? 0;
+                    return (
+                      <KV key={id}
+                        k={id === data.me ? "You" : m?.name ?? "Someone"}
+                        v={<>
+                          {money(putIn[id] ?? 0, group.baseCurrency)}
+                          {foreign ? <span style={{ color: "var(--muted)" }}>
+                            {" "}({money(own, expense.currency)})
+                          </span> : null}
+                        </>} />
+                    );
+                  })}
+                </>
+              ) : (
+                <KV k="Paid by" v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
+                  {payer?.id === data.me ? "You" : payer?.name ?? "Someone"}
+                </span>} />
+              )}
               <div className="hairline" />
               <Eyebrow style={{ marginBottom: 4 }}>
                 Split · {expense.split.mode === "equal" ? "equally"

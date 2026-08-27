@@ -115,6 +115,71 @@ describe("commands", () => {
     expect(Object.keys(update.patch)).toEqual(["paidBy"]);
   });
 
+  it("stores co-sponsors and keeps paidBy on the largest of them", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Riad",
+      occurredAt: 1,
+      amountMinor: 50_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      payers: { [theo]: 10_000, [marie]: 40_000 },
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    const stored = await db().expenses.get(expenseId);
+    expect(stored?.payers).toEqual({ [theo]: 10_000, [marie]: 40_000 });
+    expect(stored?.paidBy).toBe(marie);
+  });
+
+  it("collapses a one-person payer map back to a plain single payer", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Taxi",
+      occurredAt: 1,
+      amountMinor: 1_500,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      payers: { [marie]: 1_500, [theo]: 0 },
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    const stored = await db().expenses.get(expenseId);
+    expect(stored?.payers).toBeNull();
+    expect(stored?.paidBy).toBe(marie);
+  });
+
+  it("writes both payer fields when an expense becomes co-sponsored, and neither when it doesn't change", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Dinner",
+      occurredAt: 1,
+      amountMinor: 6_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    await editExpense(groupId, theo, expenseId, {
+      payers: { [theo]: 2_000, [marie]: 4_000 },
+    });
+    const updates = () => db().ops.where("entityId").equals(expenseId).toArray()
+      .then((ops) => ops.filter((o) => o.kind === "update"));
+
+    const first = (await updates())[0]!;
+    expect(Object.keys(first.patch).sort()).toEqual(["paidBy", "payers"]);
+    expect(first.patch["paidBy"]).toBe(marie);
+
+    // Re-submitting the same payers, spelled in the other order, is not a change.
+    await editExpense(groupId, theo, expenseId, {
+      payers: { [marie]: 4_000, [theo]: 2_000 },
+    });
+    expect(await updates()).toHaveLength(1);
+  });
+
   it("recomputes the base amount when the amount, currency or rate changes", async () => {
     const { groupId, theo, marie } = await trip();
     const expenseId = await addExpense(groupId, theo, {

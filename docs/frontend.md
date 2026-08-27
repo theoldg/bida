@@ -30,7 +30,8 @@ one by hand.
 | `/g?id=[&tab=]` | The group view — expenses / balances / settle, chosen by the bottom bar |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense |
-| `/g/split?id=` | Split editor |
+| `/g/split?id=` | Split editor — who the money was spent *on* |
+| `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/members?id=` | Members |
 | `/g/options?id=` | In-group options: identity (and its log), personal mode, theme, way out to People/History/invite |

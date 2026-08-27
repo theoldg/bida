@@ -47,6 +47,7 @@ export const route = {
   expense: (groupId: string, expenseId: string) =>
     `/g/expense?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(expenseId)}`,
   split: (groupId: string) => `/g/split?id=${encodeURIComponent(groupId)}`,
+  payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
   history: (groupId: string, expenseId?: string) =>
     `/g/history?id=${encodeURIComponent(groupId)}${expenseId ? `&e=${encodeURIComponent(expenseId)}` : ""}`,
   settleWith: (groupId: string, from: string, to: string, amount: number) =>

@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { shareOf, splitParticipants, type Expense, type Settlement } from "@hajsik/core";
+import {
+  payerList, shareOf, splitParticipants, type Expense, type Settlement,
+} from "@hajsik/core";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, TopBar,
@@ -81,6 +83,13 @@ function GroupScreen() {
   );
 }
 
+/** "You paid" · "Marie paid" · "Marie + 1 other paid". */
+function payersLabel(name: string | undefined, isMe: boolean, others: number): string {
+  const who = isMe ? "You" : name ?? "Someone";
+  if (others <= 0) return `${who} paid`;
+  return `${who} + ${others} other${others === 1 ? "" : "s"} paid`;
+}
+
 // ------------------------------------------------------------- expenses
 
 type Entry =
@@ -151,8 +160,9 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
 
   function ExpenseRow({ expense, personal }: { data: GroupData; expense: Expense; personal: boolean }) {
     const payer = memberById.get(expense.paidBy);
+    const payers = payerList(expense);
     const involved = me ? splitParticipants(expense.split).includes(me) : false;
-    const mine = me === expense.paidBy || involved;
+    const mine = (me !== undefined && payers.includes(me)) || involved;
     const myShare = me && involved ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id }) : 0;
     const participants = splitParticipants(expense.split).length;
     const foreign = expense.currency !== group!.baseCurrency;
@@ -164,7 +174,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
-            {payer ? (payer.id === me ? "You paid" : `${payer.name} paid`) : "Someone paid"}
+            {payersLabel(payer?.name, payer?.id === me, payers.length - 1)}
             {" · "}
             {expense.split.mode === "equal"
               ? `split ${participants} ways`

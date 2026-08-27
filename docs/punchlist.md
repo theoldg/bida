@@ -21,7 +21,7 @@ Each item is written so it can be finished on its own and pushed on its own.
 | 5 | "none of the text anywhere should be selectable (unless you think somewhere is explicitly justified, probably not)" | ✅ |
 | 6 | "there should be a cursor in the price input, and also maybe just let the native digit keyboard pop up" | ✅ |
 | 7 | "drop the placeholder example texts (maybe replace with generic things like 'title' etc)" | ✅ |
-| 8 | "add an option for people to co-sponsor expenses (e.g. Bob paid 400 and Alice paid 100 for these 500 spent on people XYZ)" | ⬜ |
+| 8 | "add an option for people to co-sponsor expenses (e.g. Bob paid 400 and Alice paid 100 for these 500 spent on people XYZ)" | ✅ |
 
 ---
 
@@ -150,3 +150,21 @@ Cheapest and least entangled first, so the session banks progress early:
 Items 1 and 3 land together because the bottom bar's fourth item *is* the
 options screen. Item 8 is last because it touches `packages/core` and needs its
 own tests.
+
+
+---
+
+## Where it ended up
+
+All eight landed on `main` on 2026-08-27 and are deployed. What each turned into:
+
+| # | Landed as |
+|---|---|
+| 1 | `/g`'s top tab strip deleted; one bottom bar — Expenses · Balances · Settle · Group. `Tabs` and its CSS removed from the codebase |
+| 2 | Neutral dark palette in `globals.css` **and** `design/mockups/index.html`; see [design-system.md](design-system.md#dark-is-not-the-light-palette-turned-down) |
+| 3 | `/g/options` — identity, personal mode, theme, and the way out to People / History / invite / rename |
+| 4 | Dexie v2 `identityLog`, appended by `setMe`, rendered on `/g/options`. Device-local — [ADR-0009](decisions/0009-identity-is-device-local.md) |
+| 5 | `user-select: none` on `body`, `.selectable` opt-in, inputs exempt |
+| 6 | The keypad is gone; the amount is an `<input inputMode="decimal">` with a caret, autofocused on a new expense only |
+| 7 | "Marrakech" → "Group name", "Dinner · Nomad" → "Title", "Cash, bank transfer…" → "Note (optional)" |
+| 8 | `packages/core/src/payers.ts` + 17 tests, `computeBalances` credits every payer, `/g/payers` editor — [ADR-0010](decisions/0010-co-sponsored-expenses.md) |

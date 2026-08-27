@@ -160,6 +160,24 @@ CREATE TABLE attachments (
 There is no `expenses` table on the server. That is intentional and is the whole
 point of [ADR-0002](decisions/0002-append-only-op-log.md).
 
+## Co-sponsored expenses
+
+`payers` is the payer-side mirror of `split`, and the two are edited on two
+sibling screens (`/g/payers`, `/g/split`) so they can never be confused for one
+another: *who put the money in* and *who the money was spent on* are different
+questions and often have different answers.
+
+- Amounts are in the **expense's own currency** and must sum to `amountMinor`.
+- `resolvePayers()` converts them to base minor units at read time, apportioning
+  the stored `baseAmountMinor` so the payer side sums to it exactly.
+- `paidBy` is always kept in step as the largest contributor; a payer map that
+  ends up with one live contributor is stored as `null` instead.
+- A payer need not be a participant. Paying for a dinner you weren't at is the
+  point of the feature.
+
+Reasoning, and the two designs rejected, in
+[ADR-0010](decisions/0010-co-sponsored-expenses.md).
+
 ## IndexedDB schema (Dexie)
 
 | Store | Key | Notes |

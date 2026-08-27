@@ -20,6 +20,12 @@ export interface ExpenseDraft {
   rateToBase: string;
   description: string;
   paidBy: string;
+  /**
+   * Co-sponsors: memberId -> minor units in `currency`, summing to the amount.
+   * null is the ordinary one-payer case and stays null unless someone opens
+   * the payers editor and adds a second person.
+   */
+  payers: Record<string, number> | null;
   split: SplitSpec;
   occurredAt: number;
   categoryId: string | null;
@@ -76,6 +82,7 @@ export function blankDraft(paidBy: string, currency: string, members: string[]):
     rateToBase: "1",
     description: "",
     paidBy,
+    payers: null,
     split: { mode: "equal", members },
     occurredAt: Date.now(),
     categoryId: null,

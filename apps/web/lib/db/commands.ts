@@ -6,6 +6,7 @@ import {
   newColorSeed,
   newGroupSecret,
   newId,
+  primaryPayer,
   type CurrencyCode,
   type EntityKind,
   type Id,
@@ -216,6 +217,8 @@ export interface ExpenseInput {
   /** Frozen at entry. "1" when the expense is already in the base currency. */
   rateToBase: Rate;
   paidBy: Id;
+  /** Co-sponsors, in `currency` minor units. Omit or null for a single payer. */
+  payers?: Record<Id, number> | null;
   split: SplitSpec;
   categoryId?: string | null;
   attachmentIds?: Id[];
@@ -225,6 +228,34 @@ async function baseCurrencyOf(groupId: Id): Promise<CurrencyCode> {
   const group = await db().groups.get(groupId);
   if (!group) throw new Error(`unknown group: ${groupId}`);
   return group.baseCurrency;
+}
+
+/**
+ * Normalise the payer side before it is written.
+ *
+ * A `payers` map with one contributor is just a single payer and is stored as
+ * null, so the common case never carries a redundant field. With two or more,
+ * `paidBy` is rewritten as the largest contributor so a list row, an avatar and
+ * an older client all still have one sensible answer. ADR-0010.
+ */
+function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, number> | null } {
+  const spec = input.payers;
+  if (!spec) return { paidBy: input.paidBy, payers: null };
+  const live = Object.fromEntries(
+    Object.entries(spec).filter(([, amount]) => amount > 0),
+  );
+  const ids = Object.keys(live);
+  if (ids.length === 0) return { paidBy: input.paidBy, payers: null };
+  if (ids.length === 1) return { paidBy: ids[0]!, payers: null };
+  return { paidBy: primaryPayer(live, input.paidBy), payers: live };
+}
+
+/** Key order is not meaningful in a payer map, so compare it out. */
+function samePayers(a: Record<Id, number> | null, b: Record<Id, number> | null): boolean {
+  if (a === null || b === null) return a === b;
+  const ka = Object.keys(a).sort();
+  const kb = Object.keys(b).sort();
+  return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k] === b[k]);
 }
 
 /** The stored base amount, computed once at entry and never again. ADR-0005. */
@@ -241,6 +272,7 @@ export async function addExpense(
   now = Date.now(),
 ): Promise<Id> {
   const base = await baseCurrencyOf(groupId);
+  const payer = normalisePayers(input);
   const expenseId = newId();
   await appendOps(
     groupId,
@@ -258,7 +290,8 @@ export async function addExpense(
           currency: input.currency,
           rateToBase: input.rateToBase,
           baseAmountMinor: toBase(input, base),
-          paidBy: input.paidBy,
+          paidBy: payer.paidBy,
+          payers: payer.payers,
           split: input.split,
           attachmentIds: input.attachmentIds ?? [],
           deletedAt: null,
@@ -288,6 +321,19 @@ export async function editExpense(
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(changes)) {
     if (value !== undefined) patch[key] = value;
+  }
+
+  // The two payer fields move together — writing one without the other could
+  // leave `paidBy` naming somebody who isn't in `payers` at all — but only the
+  // ones that actually changed are written, or every payer edit would carry a
+  // redundant `payers: null` into the log.
+  if (patch["paidBy"] !== undefined || patch["payers"] !== undefined) {
+    const merged = { ...existing, ...changes } as ExpenseInput;
+    const payer = normalisePayers(merged);
+    if (payer.paidBy === existing.paidBy) delete patch["paidBy"];
+    else patch["paidBy"] = payer.paidBy;
+    if (samePayers(payer.payers, existing.payers ?? null)) delete patch["payers"];
+    else patch["payers"] = payer.payers;
   }
 
   // The amount, its currency or its rate changing all move the base figure.

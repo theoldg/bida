@@ -123,6 +123,7 @@ function describe(
 const FIELD_LABELS: Record<string, string> = {
   amountMinor: "the amount", currency: "the amount", rateToBase: "the amount",
   baseAmountMinor: "the amount", split: "who's involved", paidBy: "who paid",
+  payers: "who chipped in",
   description: "the description", occurredAt: "the date", categoryId: "the category",
   attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
   deletedAt: "whether this was deleted",
