@@ -22,7 +22,7 @@ for several centuries.
 
 | Token | Role |
 |---|---|
-| `--paper`, `--card`, `--card-2/3` | Grounds. Green-biased neutrals, not grey |
+| `--paper`, `--card`, `--card-2/3` | Grounds. Green-biased neutrals in light; **plain neutrals in dark** (see below) |
 | `--ink`, `--ink-2`, `--muted` | Text, three levels |
 | `--rule`, `--rule-soft` | Hairlines. The ruled-paper texture |
 | `--brand` | Interactive things only — buttons, active tabs, links |
@@ -31,6 +31,26 @@ for several centuries.
 
 `--brand` and the semantic pair are separate on purpose. A "Save" button is not
 a credit. Never colour a control with `--credit`.
+
+### Dark is not the light palette turned down
+
+*Retuned 2026-08-27 — owner: "the dark theme is ugly make it less green/yellow".*
+
+The first dark palette was the ledger-paper palette darkened, which kept paper's
+green bias: `--paper:#11150E` and `--card:#191E15` are olive-blacks, and against
+them the amber highlighter went full yellow. Two tints that read as *warm paper*
+at 90% lightness read as *stained* at 8%.
+
+So the dark grounds are now near-neutral (`#121316`, `#17191D`, `#1E2126`) with
+no measurable hue cast, the brand mint is pulled towards teal (`#78C9C2`) so it
+stops competing with `--credit` green, and the highlighter is a desaturated sand
+(`#C2A06B` edge, 16% wash) — the same family as light's amber, dialled back
+until it stops shouting. `--credit` and `--debit` keep their hues: they are
+semantic and must not drift between themes.
+
+Both dark blocks — the `prefers-color-scheme` one and the `[data-theme="dark"]`
+one — carry identical values, in `apps/web/app/globals.css` **and**
+`design/mockups/index.html`. Change one, change all four.
 
 ## Personal mode is a highlighter
 
