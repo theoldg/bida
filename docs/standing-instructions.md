@@ -52,3 +52,21 @@ expense id, so it's deterministic across devices but lands on a different person
 each time. `remainderAbsorbedBy` stays in the return value for tests. **No screen
 renders it.** The rotation is a thing you might notice once, not a row of UI that
 tells someone they were charged an extra cent.
+
+### The server is part of the MVP, not a phase 2.
+*2026-08-27* — "change the roadmap to set up some server backend as part of the
+mvp."
+
+Phases 0-3 are the MVP; see [roadmap.md](roadmap.md). Local-first is still how
+the client is built — the op log lives in IndexedDB and the server is a replica
+of it — but "works on one phone" is not a shippable version of a shared-expense
+app. Don't declare the MVP done before a second device can open the link and see
+the same ledger.
+
+### Keep a screenshot loop, and don't lean on it.
+*2026-08-27* — "set up some UI test/screenshot inspection loop which is efficient
+and easy to run for you, but don't overuse it."
+
+`pnpm shots` builds and photographs every screen in one browser launch. It is for
+checking a screen after you build it, or when something looks wrong — not a
+step after every edit. See [testing.md](testing.md).

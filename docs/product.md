@@ -51,6 +51,9 @@ at once, because that will actually happen on a trip.
 
 - Installable PWA, **fully usable offline** — reads *and* writes.
   See [sync.md](sync.md).
+- **Shared, not solo.** Sync through the worker is part of the MVP: the app is
+  not finished until a second person opens the link on their own phone and sees
+  the same ledger. See [roadmap.md](roadmap.md).
 - Multi-currency: per-expense currency, converted to the group's base currency
   at a rate captured and frozen when the expense is entered
   ([ADR-0005](decisions/0005-locked-fx-rate.md)).
