@@ -39,7 +39,7 @@ export default function NewGroupPage() {
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
               <label htmlFor="g-name">Name</label>
-              <input id="g-name" value={name} autoFocus placeholder="Marrakech"
+              <input id="g-name" value={name} autoFocus placeholder="Group name"
                 onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="field">

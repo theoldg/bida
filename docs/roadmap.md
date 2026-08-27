@@ -112,6 +112,14 @@ per-screen state.
 - [ ] Empty states, error states, install prompt
 - [ ] Answer the open product questions in [product.md](product.md#open-product-questions)
 
+## Phase 7 — the owner's punch list *(current)*
+
+Eight things the owner asked for after living with the deployed MVP for a day —
+navigation, dark theme, in-group options, identity history, text selection, the
+amount input, placeholder copy, and co-sponsored expenses. Each is specified,
+ordered and tracked item by item in **[punchlist.md](punchlist.md)**, which is
+the file to open when picking this up cold.
+
 ---
 
 ## Later, deliberately

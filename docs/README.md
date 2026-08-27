@@ -10,6 +10,7 @@ Read in whatever order your task needs. Each doc says at the top who it's for.
 | [product.md](product.md) | You need to know what we're building and what's out of scope |
 | [implementation-status.md](implementation-status.md) | **You're starting a session.** How far the build actually got, and the exact next action |
 | [roadmap.md](roadmap.md) | You want the plan the phases follow |
+| [punchlist.md](punchlist.md) | You're working Phase 7 — the owner's punch list, item by item |
 | [architecture.md](architecture.md) | You need the shape of the system before touching it |
 
 ## Building

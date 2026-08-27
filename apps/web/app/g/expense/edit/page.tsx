@@ -178,7 +178,7 @@ function EditExpenseScreen() {
           <div className="pad" style={{ paddingTop: 4, display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
               <label htmlFor="what">What</label>
-              <input id="what" value={draft.description} placeholder="Dinner · Nomad"
+              <input id="what" value={draft.description} placeholder="Title"
                 onChange={(e) => patch({ description: e.target.value })} />
             </div>
 

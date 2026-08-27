@@ -18,9 +18,9 @@ Each item is written so it can be finished on its own and pushed on its own.
 | 2 | "the dark theme is ugly make it less green/yellow" | ⬜ |
 | 3 | "there should be in-group options including personal mode, color theme, changing identity" | ⬜ |
 | 4 | "there should be a history log for changing identity" | ⬜ |
-| 5 | "none of the text anywhere should be selectable (unless you think somewhere is explicitly justified, probably not)" | ⬜ |
+| 5 | "none of the text anywhere should be selectable (unless you think somewhere is explicitly justified, probably not)" | ✅ |
 | 6 | "there should be a cursor in the price input, and also maybe just let the native digit keyboard pop up" | ⬜ |
-| 7 | "drop the placeholder example texts (maybe replace with generic things like 'title' etc)" | ⬜ |
+| 7 | "drop the placeholder example texts (maybe replace with generic things like 'title' etc)" | ✅ |
 | 8 | "add an option for people to co-sponsor expenses (e.g. Bob paid 400 and Alice paid 100 for these 500 spent on people XYZ)" | ⬜ |
 
 ---

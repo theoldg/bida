@@ -68,10 +68,17 @@ one line — a figure inside a sentence still gets the mono span.
    Never declare a colour only inside a media or `[data-theme]` block.
 3. **Foreign currency keeps its original figure** under the converted one. The
    receipt says 620 MAD; the app must too.
-4. **Rounding is confessed, not hidden.** If a cent can't divide, the UI says who
-   absorbed it.
+4. **Rounding is silent.** A leftover minor unit rotates between people, seeded
+   by the expense id — deterministic, but never rendered. The owner asked for it
+   as a quiet easter egg, not a row of UI; see
+   [standing-instructions](standing-instructions.md#dont-make-a-feature-of-the-odd-cent).
 5. **`100dvh`, safe-area insets, thumb-reachable primary actions.** This is a
    phone app that people use standing up in a restaurant.
+6. **Nothing is selectable.** `user-select: none` on `body`, opt back in with
+   `.selectable`. Inputs and textareas are exempt so typing behaves normally. A
+   long press on a ledger row is a mis-tap, not a request to copy — the
+   selection handles that used to appear were pure noise. *(Owner, 2026-08-27:
+   "none of the text anywhere should be selectable".)*
 
 ## Gotchas
 

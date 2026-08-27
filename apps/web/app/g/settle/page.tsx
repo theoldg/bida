@@ -99,7 +99,7 @@ function SettleScreen() {
             </div>
             <div className="field">
               <label htmlFor="s-note">Note (optional)</label>
-              <input id="s-note" value={note} placeholder="Cash, bank transfer…"
+              <input id="s-note" value={note} placeholder="Note (optional)"
                 onChange={(e) => setNote(e.target.value)} />
             </div>
           </div>
