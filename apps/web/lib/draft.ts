@@ -5,7 +5,7 @@ import type { SplitSpec } from "@hajsik/core";
 
 /**
  * The expense being typed. It lives outside React because two screens share it
- * — the keypad and the split editor are separate routes, and bouncing between
+ * — the amount screen and the split editor are separate routes, and bouncing between
  * them must not lose what you've entered. sessionStorage rather than the op log
  * on purpose: a half-typed expense is not a fact about the world yet, and
  * nothing unfinished should ever reach the log other devices read.
@@ -13,7 +13,7 @@ import type { SplitSpec } from "@hajsik/core";
 export interface ExpenseDraft {
   /** Present when editing rather than creating. */
   expenseId?: string;
-  /** Exactly what the keypad shows, e.g. "620," or "1234.5". Not a number. */
+  /** Exactly what is typed into the amount input, e.g. "620." or "1234.5". Not a number. */
   amountText: string;
   currency: string;
   /** "1" when the expense is already in the group's base currency. */

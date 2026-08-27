@@ -9,7 +9,7 @@ export function money(minor: number, currency: CurrencyCode, signed = false): st
   return formatMinor(minor, currency, { signDisplay: signed ? "always" : "auto" });
 }
 
-/** Bare figure, no symbol — for the keypad and for columns with their own header. */
+/** Bare figure, no symbol — for the amount input and for columns with their own header. */
 export function bare(minor: number, currency: CurrencyCode): string {
   return formatMinor(minor, currency, { showCurrency: false });
 }

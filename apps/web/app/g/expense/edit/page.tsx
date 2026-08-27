@@ -81,17 +81,23 @@ function EditExpenseScreen() {
 
   const ready = amountMinor > 0 && rateOk && splitOk && draft.description.trim().length > 0;
 
-  function key(k: string) {
-    const text = draft!.amountText;
-    if (k === "back") return patch({ amountText: text.slice(0, -1) });
-    if (k === ",") {
-      if (exp === 0 || text.includes(".")) return;
-      return patch({ amountText: (text || "0") + "." });
+  /**
+   * The amount is a real text input with a real caret and the phone's own
+   * digit keyboard (`inputMode="decimal"`), not a hand-built keypad — so it
+   * sanitises what a keyboard can produce rather than what three rows of
+   * buttons could. Both "," and "." are accepted as the separator and stored
+   * as "." because that is what `parseMinor` reads.
+   */
+  function typeAmount(raw: string) {
+    let text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
+    const first = text.indexOf(".");
+    if (first !== -1) {
+      text = text.slice(0, first + 1) + text.slice(first + 1).replace(/\./g, "");
     }
-    const [, frac = ""] = text.split(".");
-    if (text.includes(".") && frac.length >= exp) return;
-    if (!text.includes(".") && text.replace("-", "").length >= 12) return;
-    patch({ amountText: text === "0" ? k : text + k });
+    if (exp === 0) text = text.split(".")[0] ?? "";
+    const [whole = "", frac] = text.split(".");
+    const clipped = whole.slice(0, 12);
+    patch({ amountText: frac === undefined ? clipped : `${clipped}.${frac.slice(0, exp)}` });
   }
 
   async function save() {
@@ -113,8 +119,6 @@ function EditExpenseScreen() {
     router.replace(route.group(groupId));
   }
 
-  const [whole, frac] = (draft.amountText || "0").split(".");
-
   return (
     <Screen>
       <Body>
@@ -127,13 +131,18 @@ function EditExpenseScreen() {
 
         <Scroll>
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 7 }}>
-              <span className="bignum" style={{ fontSize: 44, letterSpacing: "-.045em" }}>{whole}</span>
-              {exp > 0 ? (
-                <span className="bignum" style={{ fontSize: 22, color: "var(--muted)" }}>
-                  ,{(frac ?? "").padEnd(exp, "0").slice(0, exp)}
-                </span>
-              ) : null}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+              <input
+                className="amount"
+                aria-label={`Amount in ${draft.currency}`}
+                inputMode="decimal"
+                enterKeyHint="done"
+                autoFocus={!draft.expenseId}
+                placeholder="0"
+                value={draft.amountText}
+                onChange={(e) => typeAmount(e.target.value)}
+                size={Math.max(1, draft.amountText.length || 1)}
+              />
               <span className="chip" style={{ alignSelf: "center", marginLeft: 3, position: "relative" }}>
                 {draft.currency} <Icon name="chev" size={10} />
                 <select
@@ -226,14 +235,6 @@ function EditExpenseScreen() {
         </Scroll>
       </Body>
 
-      <div className="keypad">
-        {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((k) => (
-          <button key={k} className="key" onClick={() => key(k)}>{k}</button>
-        ))}
-        <button className="key act" onClick={() => key(",")} disabled={exp === 0}>,</button>
-        <button className="key" onClick={() => key("0")}>0</button>
-        <button className="key act" onClick={() => key("back")} aria-label="Delete">⌫</button>
-      </div>
     </Screen>
   );
 }

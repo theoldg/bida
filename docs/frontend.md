@@ -96,8 +96,19 @@ user-uploaded content, so it's unrelated to the receipt-hosting question (see
 ## Components worth building once
 
 The two components with real logic behind them, not just markup, are the
-**amount keypad** and the **balance bar** (a bar around a centre axis, debit
-left, credit right) — see `components/bits.tsx`. Everything else is markup and
+**amount input** and the **balance bar** (a bar around a centre axis, debit
+left, credit right) — see `components/bits.tsx`.
+
+The amount input is a real `<input inputMode="decimal">` styled as the big
+figure, not the mockup's hand-built keypad. The keypad was replaced on
+2026-08-27 at the owner's request — "there should be a cursor in the price
+input, and also maybe just let the native digit keyboard pop up". A rendered
+`<span>` has no caret, cannot be tapped into the middle of, and made every
+phone's own numeric keyboard unreachable. The input sanitises as you type
+(digits, one separator, fraction clipped to the currency's exponent), accepts
+"," and "." alike, and autofocuses on a *new* expense only — never when
+editing, where stealing focus would scroll the form away from what you came to
+change. Everything else is markup and
 CSS lifted directly from the mockup (see
 [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)).
 
