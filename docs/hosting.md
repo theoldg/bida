@@ -38,7 +38,7 @@ would be the only line item with a plausible route to real money.
 
 ```bash
 pnpm build              # next build → static export into the worker's assets dir
-pnpm wrangler d1 migrations apply tally --remote
+pnpm wrangler d1 migrations apply hajsik --remote
 pnpm wrangler deploy
 ```
 

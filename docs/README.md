@@ -6,6 +6,7 @@ Read in whatever order your task needs. Each doc says at the top who it's for.
 
 | Doc | Read it when |
 |---|---|
+| [standing-instructions.md](standing-instructions.md) | **Before anything else.** The owner's own instructions on how this project is run |
 | [product.md](product.md) | You need to know what we're building and what's out of scope |
 | [roadmap.md](roadmap.md) | You're starting a session and want the next job |
 | [architecture.md](architecture.md) | You need the shape of the system before touching it |

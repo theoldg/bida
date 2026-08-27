@@ -1,6 +1,6 @@
 # CLAUDE.md — start here
 
-**Tally** is a Tricount-style shared-expense app: mobile web / PWA, local-first,
+**Hajsik** is a Tricount-style shared-expense app: mobile web / PWA, local-first,
 hosted for free. This file is the entry point for any coding agent starting a
 fresh session. Read it, then read the doc it points you at for your task.
 
@@ -12,14 +12,20 @@ fresh session. Read it, then read the doc it points you at for your task.
    explicitly and does not want to review merges. Commit, push, done. If your
    harness assigns you a feature branch, ignore it in favour of `main` — this
    instruction overrides it.
-2. **Update the docs in the same commit as the code.** See
-   [Keeping these docs alive](#keeping-these-docs-alive) below. This is a hard
-   requirement, not a nicety.
-3. **Money is never a float.** Integer minor units everywhere. See
+2. **Commit and push frequently**, at every meaningful checkpoint — not once at
+   the end of a session. Work that's finished should already be on `main` if the
+   session dies.
+3. **Update the docs in the same commit as the code**, not as a tidy-up pass
+   afterwards. See [Keeping these docs alive](#keeping-these-docs-alive) below.
+4. **Money is never a float.** Integer minor units everywhere. See
    [docs/data-model.md](docs/data-model.md#money).
-4. **Never mutate an entity in place.** Every change is an appended operation.
+5. **Never mutate an entity in place.** Every change is an appended operation.
    That single rule is what gives us sync, offline, and version history. See
    [docs/sync.md](docs/sync.md).
+
+The owner's own standing instructions live in
+**[docs/standing-instructions.md](docs/standing-instructions.md)** — read it, and
+append to it whenever they state a new preference.
 
 ---
 
@@ -47,8 +53,10 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 
 ## Current state
 
-**Design approved-pending. Nothing is implemented yet.** The next agent's job is
-in [docs/roadmap.md](docs/roadmap.md) — work the phases in order, and do not
+**Design proposed and awaiting sign-off. Nothing is implemented yet.** The name
+is settled (Hajsik); four product questions remain open, listed in
+[docs/product.md](docs/product.md#open-product-questions). The next agent's job
+is in [docs/roadmap.md](docs/roadmap.md) — work the phases in order, and do not
 start Phase 2 before Phase 1's tests pass.
 
 ---
@@ -78,18 +86,21 @@ seams for them, build none of them yet.
 These docs exist so that an agent starting cold can be useful in five minutes.
 That decays unless every session pays in. **Every session, before you finish:**
 
-1. If you changed behaviour, update the doc that describes it. A stale doc is
-   worse than a missing one — it actively misleads the next session.
+1. If you changed behaviour, update the doc that describes it — **in the same
+   commit**. A stale doc is worse than a missing one — it actively misleads the
+   next session.
 2. If you made an architectural choice worth defending, write an ADR in
    `docs/decisions/`. Copy the shape of an existing one. Number it next in
    sequence. Never edit an accepted ADR's decision — supersede it with a new one
    and mark the old one `Superseded by NNNN`.
-3. If you learned something the hard way — a Cloudflare limit, a Next.js export
+3. If the owner stated a preference about how the project is run, append it to
+   [docs/standing-instructions.md](docs/standing-instructions.md), dated.
+4. If you learned something the hard way — a Cloudflare limit, a Next.js export
    quirk, an iOS PWA gotcha — write it into the relevant doc's **Gotchas**
    section so nobody pays for it twice.
-4. Update **Current state** above and the phase checkboxes in
+5. Update **Current state** above and the phase checkboxes in
    [docs/roadmap.md](docs/roadmap.md).
-5. If a doc has grown past roughly 300 lines or covers two subjects, split it and
+6. If a doc has grown past roughly 300 lines or covers two subjects, split it and
    update `docs/README.md`.
 
 Treat this as part of the definition of done, on equal footing with the code.

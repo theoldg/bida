@@ -2,7 +2,7 @@
 
 ## `mockups/index.html`
 
-The approved visual design, as real HTML and CSS at real phone width. **This is
+The proposed visual design, as real HTML and CSS at real phone width. **This is
 the source of truth for the app's look**, not any document describing it.
 
 Published (viewable on a phone, which is the point):

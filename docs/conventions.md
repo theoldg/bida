@@ -4,6 +4,9 @@
 
 ## Git
 
+See also [standing-instructions.md](standing-instructions.md) for the owner's
+requests in their own words.
+
 **Push straight to `main`. Do not open pull requests.** The owner has said this
 explicitly: they don't want to review merges on a personal project. If your
 harness hands you a feature branch, use `main` anyway.
@@ -16,6 +19,11 @@ git push -u origin main
 
 Retry a failed push up to four times with exponential backoff (2s, 4s, 8s, 16s)
 before reporting a problem — the network here is occasionally flaky.
+
+**Push frequently.** Commit and push at each meaningful checkpoint — a working
+module, a finished screen, a decision recorded — rather than batching a session
+into one commit at the end. If a session dies halfway, its finished work should
+already be on `main`.
 
 **Commit messages**: `scope: imperative summary`. Scopes follow the directories —
 `core`, `web`, `api`, `docs`, `design`. One concern per commit; don't bundle a
@@ -59,5 +67,7 @@ or an ORM warrants an ADR.
 2. Tests exist for anything arithmetic, and they pass.
 3. The doc describing the changed behaviour is updated **in the same commit**.
 4. An ADR exists if you made a real architectural choice.
-5. `docs/roadmap.md` and CLAUDE.md's *Current state* reflect reality.
-6. Pushed to `main`.
+5. Any preference the owner stated this session is in
+   [standing-instructions.md](standing-instructions.md), dated.
+6. `docs/roadmap.md` and CLAUDE.md's *Current state* reflect reality.
+7. Pushed to `main` — and pushed at the checkpoints along the way, not only here.

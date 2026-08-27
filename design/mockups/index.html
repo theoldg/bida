@@ -1,4 +1,4 @@
-<title>Tally Mockups</title>
+<title>Hajsik Mockups</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Karla:ital,wght@0,300..700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -286,7 +286,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
       <svg width="26" height="22" viewBox="0 0 26 22" fill="none" stroke="var(--brand)" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
         <path d="M4 4v14M9.5 4v14M15 4v14M20.5 4v14M2 18.5L23 3.5"/>
       </svg>
-      Tally
+      Hajsik
     </div>
     <button class="toggle" id="pmToggle" type="button" aria-pressed="false">
       <span class="sw" aria-hidden="true"></span> Personal mode
@@ -306,7 +306,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
   <div class="facts">
     <div class="fact"><b>Direction</b>Accounting ledger — ruled paper, ink, red and green columns, a highlighter for what's yours.</div>
     <div class="fact"><b>Type</b>Bricolage Grotesque · Karla · IBM Plex Mono for every figure.</div>
-    <div class="fact"><b>Working name</b>Tally. Placeholder — rename it and I'll swap the wordmark.</div>
+    <div class="fact"><b>Name</b>Hajsik. The tally-mark wordmark stayed — five strokes, one for each person you have to chase.</div>
   </div>
 </div>
 
@@ -875,7 +875,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
     <p>None of these block the design — redline the screens and answer these whenever.</p>
   </div>
   <div class="qlist">
-    <div class="q"><span class="n"></span><p><b>The name.</b><span>"Tally" is a placeholder that gave me the tally-mark logo. Say the word and it becomes anything else.</span></p></div>
     <div class="q"><span class="n"></span><p><b>Comma or point for decimals?</b><span>Mocked as European (€57,10). Trivial to flip, but it sets the tone of the whole app.</span></p></div>
     <div class="q"><span class="n"></span><p><b>Should a restore be undoable by anyone, or only by whoever made the change?</b><span>Link-only groups mean there's no real identity behind a member, so my instinct is: anyone can restore anything, and history makes it obvious who did. Cheap to change later.</span></p></div>
     <div class="q"><span class="n"></span><p><b>Categories — fixed list or free-form?</b><span>Mocked as a small fixed set with an emoji. A free-form tag field is friendlier but makes later AI categorisation and any spend breakdown much messier.</span></p></div>
@@ -885,7 +884,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
 
 <footer>
   <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline">
-    <span><strong style="font-family:var(--f-display);color:var(--ink)">Tally</strong> · design proposal v1</span>
+    <span><strong style="font-family:var(--f-display);color:var(--ink)">Hajsik</strong> · design proposal v1</span>
     <span>Next.js · shadcn/ui · Cloudflare Workers + D1 + R2 · local-first, offline by default</span>
   </div>
 </footer>
@@ -897,7 +896,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
 (function(){
   var doc = document.getElementById('doc');
   var btn = document.getElementById('pmToggle');
-  var KEY = 'tally.personalMode';
+  var KEY = 'hajsik.personalMode';
   function apply(on){
     doc.classList.toggle('personal', on);
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');

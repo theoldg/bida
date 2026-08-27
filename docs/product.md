@@ -81,5 +81,7 @@ Leave room for these. Build none of them yet.
 ## Open product questions
 
 Tracked in the mockup's closing section, unanswered as of the last session:
-the app's real name; decimal comma vs. point; whether restore is open to anyone;
-fixed vs. free-form categories; whether personal mode is default-on.
+decimal comma vs. point; whether restore is open to anyone; fixed vs. free-form
+categories; whether personal mode is default-on.
+
+**Settled:** the app is called **Hajsik** (2026-08-27).
