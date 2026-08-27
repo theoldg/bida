@@ -1,0 +1,251 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { computeBalances, foldOps, settleUp } from "@hajsik/core";
+import { db } from "./dexie";
+import { rebuild } from "./fold";
+import { getMe } from "./device";
+import {
+  addExpense,
+  addMember,
+  createGroup,
+  deleteExpense,
+  editExpense,
+  recordSettlement,
+  restoreRevision,
+} from "./commands";
+
+/**
+ * The command layer is the only thing in the app that writes, so it gets real
+ * tests rather than smoke tests. What matters here isn't the UI — it's that
+ * every write lands as an op, and that the materialised tables are always
+ * exactly what re-folding the log would produce.
+ */
+
+async function wipe() {
+  const d = db();
+  await Promise.all([
+    d.ops.clear(), d.groups.clear(), d.members.clear(), d.expenses.clear(),
+    d.settlements.clear(), d.attachments.clear(), d.device.clear(), d.groupKeys.clear(),
+  ]);
+}
+
+/** Every materialised row must equal a cold fold of the whole log. */
+async function assertMaterialisedMatchesLog(groupId: string) {
+  const ops = await db().ops.where("groupId").equals(groupId).toArray();
+  const folded = foldOps(ops);
+
+  expect(await db().groups.get(groupId)).toEqual(folded.group);
+  const members = await db().members.where("groupId").equals(groupId).toArray();
+  expect(Object.fromEntries(members.map((m) => [m.id, m]))).toEqual(folded.members);
+  const expenses = await db().expenses.where("groupId").equals(groupId).toArray();
+  expect(Object.fromEntries(expenses.map((e) => [e.id, e]))).toEqual(folded.expenses);
+  const settlements = await db().settlements.where("groupId").equals(groupId).toArray();
+  expect(Object.fromEntries(settlements.map((s) => [s.id, s]))).toEqual(folded.settlements);
+}
+
+async function trip() {
+  const { groupId, memberId: theo } = await createGroup({
+    name: "Marrakech",
+    baseCurrency: "EUR",
+    myName: "Theo",
+  });
+  const marie = await addMember(groupId, theo, "Marie");
+  const sam = await addMember(groupId, theo, "Sam");
+  return { groupId, theo, marie, sam };
+}
+
+describe("commands", () => {
+  beforeEach(wipe);
+
+  it("creates a group with its first member and claims this device", async () => {
+    const { groupId, theo } = await trip();
+
+    const group = await db().groups.get(groupId);
+    expect(group?.name).toBe("Marrakech");
+    expect(group?.baseCurrency).toBe("EUR");
+    expect(await getMe(groupId)).toBe(theo);
+    expect(await db().groupKeys.get(groupId)).toBeTruthy();
+  });
+
+  it("keeps the group secret out of the op log entirely", async () => {
+    const { groupId } = await trip();
+    const key = await db().groupKeys.get(groupId);
+    const log = JSON.stringify(await db().ops.toArray());
+
+    expect(key!.secret.length).toBeGreaterThan(0);
+    expect(log).not.toContain(key!.secret);
+  });
+
+  it("appends rather than mutating: an edit leaves both versions in the log", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Riad",
+      occurredAt: Date.parse("2026-04-02T10:00:00Z"),
+      amountMinor: 42000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie, sam] },
+    });
+
+    await editExpense(groupId, theo, expenseId, { description: "Riad — 3 nights" }, "it was 3");
+
+    const ops = await db().ops.where("entityId").equals(expenseId).toArray();
+    expect(ops).toHaveLength(2);
+    expect(ops.map((o) => o.kind).sort()).toEqual(["create", "update"]);
+    expect((await db().expenses.get(expenseId))?.description).toBe("Riad — 3 nights");
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("patches carry only what changed", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Taxi",
+      occurredAt: 1,
+      amountMinor: 1500,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    await editExpense(groupId, theo, expenseId, { paidBy: marie });
+    const update = (await db().ops.where("entityId").equals(expenseId).toArray())
+      .find((o) => o.kind === "update")!;
+
+    expect(Object.keys(update.patch)).toEqual(["paidBy"]);
+  });
+
+  it("recomputes the base amount when the amount, currency or rate changes", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Souk rug",
+      occurredAt: 1,
+      amountMinor: 180000, // 1800.00 MAD
+      currency: "MAD",
+      rateToBase: "0.0921",
+      paidBy: marie,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    expect((await db().expenses.get(expenseId))?.baseAmountMinor).toBe(16578);
+
+    await editExpense(groupId, theo, expenseId, { amountMinor: 185000 });
+    expect((await db().expenses.get(expenseId))?.baseAmountMinor).toBe(17039);
+  });
+
+  it("a no-op edit writes no op at all", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Mint tea",
+      occurredAt: 1,
+      amountMinor: 400,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    const before = await db().ops.count();
+
+    await editExpense(groupId, theo, expenseId, {});
+
+    expect(await db().ops.count()).toBe(before);
+  });
+
+  it("deletes by tombstone, and a restore brings the expense back", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Hammam",
+      occurredAt: 1,
+      amountMinor: 6000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    const createHlc = (await db().ops.where("entityId").equals(expenseId).toArray())[0]!.hlc;
+
+    await deleteExpense(groupId, theo, expenseId, "double entry");
+    expect((await db().expenses.get(expenseId))?.deletedAt).toBeTruthy();
+
+    await restoreRevision(groupId, theo, "expense", expenseId, createHlc, "my mistake");
+    expect((await db().expenses.get(expenseId))?.deletedAt).toBeFalsy();
+    expect((await db().expenses.get(expenseId))?.description).toBe("Hammam");
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("settlements clear a balance without inflating what the trip cost", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    await addExpense(groupId, theo, {
+      description: "Dinner",
+      occurredAt: 1,
+      amountMinor: 9000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie, sam] },
+    });
+
+    const ops = await db().ops.where("groupId").equals(groupId).toArray();
+    const before = computeBalances(foldOps(ops));
+    expect(before.totalSpendMinor).toBe(9000);
+    expect(settleUp(before.byMember)).toHaveLength(2);
+
+    await recordSettlement(groupId, marie, {
+      fromMember: marie,
+      toMember: theo,
+      amountMinor: 3000,
+      currency: "EUR",
+      rateToBase: "1",
+      occurredAt: 2,
+    });
+
+    const after = computeBalances(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
+    expect(after.totalSpendMinor).toBe(9000);
+    expect(after.byMember[marie]).toBe(0);
+  });
+
+  it("the HLC survives a reload and keeps moving forward", async () => {
+    const { groupId, theo, marie } = await trip();
+    const at = Date.parse("2026-04-02T10:00:00Z");
+    for (let i = 0; i < 3; i++) {
+      await addExpense(groupId, theo, {
+        description: `Round ${i}`,
+        occurredAt: at,
+        amountMinor: 1000,
+        currency: "EUR",
+        rateToBase: "1",
+        paidBy: theo,
+        split: { mode: "equal", members: [theo, marie] },
+      }, at); // same wall clock every time: only the counter can separate them
+    }
+
+    const hlcs = (await db().ops.where("groupId").equals(groupId).toArray())
+      .map((o) => o.hlc);
+    expect(new Set(hlcs).size).toBe(hlcs.length);
+    expect([...hlcs].sort()).toEqual([...hlcs].sort((a, b) => a.localeCompare(b)));
+
+    const device = await db().device.get("device");
+    expect(device!.hlcCounter).toBeGreaterThan(0);
+  });
+
+  it("rebuild from the log reproduces the materialised tables exactly", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Riad",
+      occurredAt: 1,
+      amountMinor: 42000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "shares", weights: { [theo]: 1, [marie]: 2, [sam]: 1 } },
+    });
+    await editExpense(groupId, theo, expenseId, { description: "Riad, 3 nights" });
+
+    const before = await db().expenses.where("groupId").equals(groupId).toArray();
+    await rebuild(groupId);
+    const after = await db().expenses.where("groupId").equals(groupId).toArray();
+
+    expect(after).toEqual(before);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+});
