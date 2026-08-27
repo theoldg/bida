@@ -67,11 +67,10 @@ visual treatment and why it's a highlighter and not a colour.
 
 ## PWA
 
-**Paused for the MVP** (2026-08-27, owner: "we don't need images at all in the
-mvp... let's pause them for now") — `public/manifest.webmanifest` exists and is
-linked from `app/layout.tsx`, but the icon files it points at
-(`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`) don't exist yet, and
-there is no service worker. The plan below is unbuilt, not abandoned:
+In scope for the MVP — this is a few small, build-time icon files, not
+user-uploaded content, so it's unrelated to the receipt-hosting question (see
+[standing-instructions.md](standing-instructions.md#skip-receipt-attachment-images-for-the-mvp-not-pwa-icons)).
+`public/manifest.webmanifest` is in place and linked from `app/layout.tsx`.
 
 - Manifest with maskable icons, `display: standalone`, theme colour matched to
   the ledger paper token per theme.

@@ -70,11 +70,9 @@ shape. Personal mode and multi-currency entry: check current code before
 assuming either is done, this file only tracks screens.
 
 **Not built:** the `/join` landing screen (so a shared link currently has
-nowhere to land a second device), the Settings screen, PWA icons and service
-worker (see
-[standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp)
-— paused on purpose, not forgotten), and the screenshot/UI-inspection harness
-(see [testing.md](testing.md)).
+nowhere to land a second device), the Settings screen, the PWA service worker,
+and the screenshot/UI-inspection harness (see [testing.md](testing.md)). PWA
+icons **are** built — see [frontend.md](frontend.md#pwa).
 
 ### `apps/api` — what's built
 
@@ -161,9 +159,8 @@ device:
    built screens, not just in `packages/core`.
 4. The screenshot/UI-inspection harness (`pnpm shots`) — see
    [testing.md](testing.md).
-5. PWA manifest icons + service worker — paused on purpose, see
-   [standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp);
-   resume only when the owner says so.
+5. The service worker (app-shell precache only). PWA manifest + icons are
+   already in place — see [frontend.md](frontend.md#pwa).
 
 **Do not start real Phase 3 work (D1, sync, auth) until `/join` exists and the
 app is genuinely usable by two people on two devices, even if they have to

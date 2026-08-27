@@ -54,8 +54,7 @@ path to both.
 - [ ] Settings screen
 - [ ] Personal mode — confirm wired into the built screens
 - [ ] Multi-currency entry with a manually entered rate — confirm wired in
-- [ ] PWA manifest + shell service worker — **paused for the MVP**, see
-      [standing-instructions.md](standing-instructions.md#skip-pwa-icons-for-the-mvp)
+- [ ] PWA manifest + shell service worker
 - [ ] Screenshot harness for reviewing screens without a human
       ([testing.md](testing.md))
 

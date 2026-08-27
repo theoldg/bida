@@ -72,16 +72,19 @@ one browser launch, for checking a screen after you build it or when something
 looks wrong — not a step after every edit. **Not built yet** — see
 [testing.md](testing.md) for the current state and what it should do.
 
-### Skip PWA icons for the MVP.
-*2026-08-27* — "we don't need images at all in the mvp. keep what you have
-built but don't add more stuff for now. if the images are such a big deal
-hosting-wise then maybe we should skip them, let's pause them for now."
+### Skip receipt-attachment images for the MVP, not PWA icons.
+*2026-08-27* — "we don't need images at all in the mvp... let's pause them for
+now" was initially read as pausing the PWA app icons. Corrected same day:
+"there was a misunderstanding about the PWA icons. i want them, what I don't
+need for the mvp is the hosting of images attached to expenses. I'm okay with
+the app being text only for now."
 
-`public/manifest.webmanifest` exists and is linked from `app/layout.tsx`, but
-the icon files it references (`icon-192.png`, `icon-512.png`,
-`icon-maskable-512.png`) don't exist and shouldn't be generated yet. See
-[frontend.md](frontend.md#pwa). Don't resume icon generation without the
-owner saying so.
+So: **PWA icons are wanted and in scope** — they're a few small files baked in
+at build time, not user-uploaded content, and don't touch the hosting-cost
+question at all. What's actually deferred is **receipt photo attachments**
+(multi-image capture, R2 upload, gallery) — that was already Phase 4 in
+[roadmap.md](roadmap.md), unaffected by this. See
+[frontend.md](frontend.md#pwa).
 
 ### The owner pastes the Cloudflare token each session.
 *2026-08-27* — offered to commit the `CLOUDFLARE_API_TOKEN` into the repo "so
