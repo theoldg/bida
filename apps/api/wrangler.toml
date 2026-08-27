@@ -6,3 +6,11 @@ compatibility_date = "2026-08-27"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
+
+# Created by `wrangler d1 create hajsik` — database_id filled in once that's
+# run with a real Cloudflare token. See docs/hosting.md#deploying.
+[[d1_databases]]
+binding = "DB"
+database_name = "hajsik"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"

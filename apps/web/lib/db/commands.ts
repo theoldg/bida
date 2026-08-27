@@ -17,6 +17,7 @@ import {
 import { db, type StoredOp } from "./dexie";
 import { getDevice, setMe } from "./device";
 import { materialise, opsForGroup } from "./fold";
+import { scheduleSync } from "./sync";
 
 /**
  * Every write in the app goes through this file, and every function here
@@ -88,7 +89,10 @@ export async function appendOps(
 
       return written;
     },
-  );
+  ).then((written) => {
+    scheduleSync();
+    return written;
+  });
 }
 
 // ---------------------------------------------------------------- groups

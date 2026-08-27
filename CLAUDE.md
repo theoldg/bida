@@ -57,14 +57,18 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 ## Current state
 
 **Design signed off. Phases 0 and 1 are done; Phase 2 is done except the
-screenshot harness.** `packages/core` holds the whole domain — money, HLCs,
-ops, folding, splits, balances, settle-up, history — with 88 passing tests.
-`apps/web` has every screen (groups, expenses, split editor, history, members
-with invite-link sharing, settle-up, join, settings) plus a shell-precaching
-service worker. `apps/api` deploys the static export live at
-<https://hajsik.hajsik-api.workers.dev> with no D1/R2/sync yet — that's Phase 3,
-and it's the next real work: `/join` can store an invite secret but can't yet
-pull a group onto a second device without the sync engine.
+screenshot harness. Phase 3's code is done but not yet deployed.**
+`packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
+balances, settle-up, history — with 88 passing tests. `apps/web` has every
+screen (groups, expenses, split editor, history, members with invite-link
+sharing, settle-up, join, settings) plus a shell-precaching service worker and
+now a background sync engine (`lib/db/sync.ts`). `apps/api` has D1 schema +
+migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
+bearer-secret auth) alongside the static-export passthrough — but the D1
+database itself hasn't been created on Cloudflare yet, so the live deploy at
+<https://hajsik.hajsik-api.workers.dev> doesn't have sync live yet. See
+[docs/implementation-status.md](docs/implementation-status.md#the-next-action-concretely)
+for the exact deploy steps, which need a pasted Cloudflare token.
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session

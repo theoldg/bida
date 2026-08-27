@@ -67,7 +67,9 @@ CRDT library.
 
 ## The protocol
 
-Two endpoints. That's the whole thing.
+Two endpoints. That's the whole thing. **Implemented** — `apps/api/src/index.ts`
+(routes), `apps/api/src/store.ts` (D1 access), `apps/api/src/auth.ts` (the
+bearer-secret check).
 
 **`POST /api/groups/:id/ops`**
 ```jsonc
@@ -81,14 +83,23 @@ Two endpoints. That's the whole thing.
 Accepting is idempotent on `Op.id` — a retried push after a dropped response is
 a no-op, which is what makes retry safe on a flaky connection.
 
+There is no separate "create group" endpoint. A group's **first** push
+registers it in D1 — the server stores `sha256(secret)` from that first
+request's bearer token and every later request (push or pull) is checked
+against it. A `GET` on a group that has never been pushed to returns 404: the
+creating device has to sync at least once before a `/join` link is pullable
+anywhere else.
+
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
 
-Both authenticate with the group secret; see
+Both authenticate with the group secret as a bearer token
+(`Authorization: Bearer <secret>`); see
 [ADR-0003](decisions/0003-link-only-access.md).
 
 ## The sync engine
 
-Lives in `apps/web/lib/db/sync.ts`. A single-flight loop triggered by:
+Lives in `apps/web/lib/db/sync.ts`. **Implemented.** A single-flight loop
+triggered by:
 
 - a local write (debounced ~1 s),
 - `visibilitychange` → visible,
@@ -111,7 +122,9 @@ Two people edit the same expense while one is offline:
   both survive. No conflict at all.
 - **Same field** — highest HLC wins the materialised value. **Both ops remain in
   the log**, so the history screen shows the losing edit and who made it. The UI
-  should mark it: *"Sam's change to Amount was overwritten by Marie's."*
+  marks it: *"This change to the amount was later overwritten by Marie's
+  edit."* — `overwriteNotes()` in `apps/web/app/g/history/page.tsx`, driven by
+  `FieldChange.supersededByOpId` from `packages/core/history.ts`.
 
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix
@@ -139,10 +152,16 @@ it in one place so history and the expense form agree on wording.
   deletion — and that's a new ADR.
 - `createdAt` is display-only. Every time someone sorts by it, conflicts start
   resolving differently on different phones.
-- **The `/join` screen predates the sync engine.** It parses the link and
-  stores the secret in `groupKeys` (so nothing has to be re-typed once sync
-  ships), but with no `POST/GET /api/groups/:id/ops` yet, there is no way to
-  actually pull a group's op log onto a second device. Today it only does
-  something useful when the group is already local — reopening your own
-  invite link, or testing on one device. Don't treat `/join` existing as
-  proof that two-device sharing works; that's this section's job, done.
+- **`/join` now actually pulls.** It saves the secret, calls `syncGroup()` once
+  immediately, then checks whether the group landed locally — see
+  `apps/web/app/join/page.tsx`. If the creating device hasn't synced yet
+  (no ops ever pushed, or currently offline), the join fails honestly rather
+  than pretending; the invite is saved either way, so re-opening the same link
+  later works once the creator's device has synced.
+- **`acceptOps` in `apps/api/src/store.ts` reserves seq numbers with an
+  `UPDATE ... RETURNING`**, not inside an explicit multi-statement
+  transaction — two concurrent pushes to the *same* group could in theory
+  race that read-modify-write. Deliberately not hardened further: this app's
+  realistic write rate is a few phones, human-paced, in one group at a time.
+  If it ever bites, the fix is wrapping the reserve-and-insert in a proper D1
+  transaction, not a bigger rewrite.

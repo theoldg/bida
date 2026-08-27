@@ -34,12 +34,12 @@ would be the only line item with a plausible route to real money.
 
 ## Deploying
 
-`apps/api` is the one Worker. Today it only serves static assets — no D1, no
-R2, no API routes yet (that's Phase 3) — but the deploy path is real and live:
+`apps/api` is the one Worker. It serves the static assets *and*, as of Phase
+3, the sync API (`POST`/`GET /api/groups/:id/ops`) backed by D1:
 
 ```bash
 pnpm --filter @hajsik/web build     # next build → apps/web/out (static export)
-pnpm --filter @hajsik/api deploy    # wrangler deploy, serves apps/web/out
+pnpm --filter @hajsik/api deploy    # wrangler deploy, serves apps/web/out + API
 ```
 
 `apps/api/wrangler.toml`:
@@ -53,14 +53,33 @@ compatibility_date = "2026-08-27"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hajsik"
+database_id = "..."          # from `wrangler d1 create hajsik`, one-time
+migrations_dir = "migrations"
 ```
 
-`src/index.ts` is a thin Hono app that passes everything through to the
-`ASSETS` binding (plus one `/api/health` route) — the real API routes land in
-Phase 3. `not_found_handling = "404-page"` (not `"single-page-application"`):
-the export is a real multi-page static site, one HTML file per route (see
+`src/index.ts` is a Hono app: the two sync routes, `/api/health`, and
+everything else passed through to the `ASSETS` binding.
+`not_found_handling = "404-page"` (not `"single-page-application"`): the
+export is a real multi-page static site, one HTML file per route (see
 [ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)), not a
 client-router SPA that should fall back to `index.html` for unknown paths.
+
+### One-time: creating the D1 database
+
+Only needs doing once, ever, per Cloudflare account:
+
+```bash
+cd apps/api
+npx wrangler d1 create hajsik        # prints a database_id — paste it into wrangler.toml
+pnpm db:migrate                      # applies migrations/0001_init.sql to the remote DB
+```
+
+`pnpm db:migrate:local` applies the same migration to `wrangler dev`'s local
+SQLite instead, for local API testing without touching production data.
 
 ### The `CLOUDFLARE_API_TOKEN`
 

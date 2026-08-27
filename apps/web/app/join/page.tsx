@@ -5,14 +5,13 @@ import { useEffect, useState } from "react";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
+import { syncGroup } from "../../lib/db/sync";
 import { parseJoinLink, route } from "../../lib/group-link";
 
 /**
- * Lands a `/join#<groupId>.<secret>` link. There is no sync yet (Phase 3), so
- * this can only actually seat a second device once that ships — today it can
- * only re-open a group already on *this* device (e.g. the creator's own link,
- * or a link opened twice). It still stores the secret either way, so nothing
- * has to be re-typed once sync lands.
+ * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the
+ * group's op log from the server (see docs/sync.md) so a second device can
+ * actually seat itself, not just recognise a group it already had locally.
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -31,6 +30,12 @@ function JoinScreen() {
       if (!link) { setState({ kind: "bad-link" }); return; }
 
       await saveGroupKey(link.groupId, link.secret);
+      try {
+        await syncGroup(link.groupId);
+      } catch {
+        // Offline, or the server hasn't seen this group yet — fall through
+        // to the local check below, which handles both honestly.
+      }
       const group = await db().groups.get(link.groupId);
       if (cancelled) return;
 
@@ -59,10 +64,9 @@ function JoinScreen() {
     <Screen><Body>
       <TopBar title="Join a group" back={route.groups()} />
       <Scroll>
-        <Empty title="This group isn't on your phone yet">
-          Syncing between devices isn't built yet — for now, this link only works on the
-          phone the group was created on. Your invite has been saved, so once syncing
-          ships this device will be able to pull the group automatically.
+        <Empty title="Couldn't find that group yet">
+          Your invite has been saved, so this will work as soon as the other phone is back
+          online and has synced at least once — try opening the link again in a minute.
         </Empty>
       </Scroll>
     </Body></Screen>

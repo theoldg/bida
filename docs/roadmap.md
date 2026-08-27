@@ -65,13 +65,22 @@ per-screen state.
 ## Phase 3 — The server and sync *(still the MVP)*
 
 - [x] Minimal deploy: one Worker serving the static export, live at
-      <https://hajsik.hajsik-api.workers.dev> — no D1/R2 bindings yet
-- [ ] D1 schema + migrations
-- [ ] Hono worker: `POST /ops`, `GET /ops`, group create/join
-- [ ] Link-only auth: secret in fragment, `sha256` on the server
-- [ ] Sync engine: single-flight, backoff, triggers
-- [ ] Conflict surfacing in history ("Sam's change was overwritten")
-- [ ] Custom domain
+      <https://hajsik.hajsik-api.workers.dev>
+- [x] D1 schema + migrations (`apps/api/migrations/0001_init.sql`)
+- [x] Hono worker: `POST /api/groups/:id/ops`, `GET /api/groups/:id/ops` — group
+      creation is implicit on a group's first push, no separate endpoint
+      (see [sync.md](sync.md#the-protocol))
+- [x] Link-only auth: secret in fragment, `sha256` bearer-token check on the
+      server (`apps/api/src/auth.ts`)
+- [x] Sync engine: single-flight, backoff, triggers (`apps/web/lib/db/sync.ts`)
+- [x] Conflict surfacing in history ("Sam's change to the amount was later
+      overwritten by Marie's edit.") — `apps/web/app/g/history/page.tsx`
+- [ ] Custom domain — blocked on the owner pointing a domain at Cloudflare DNS;
+      not something an agent session can do alone
+- [ ] The D1 database itself hasn't been created yet on Cloudflare, and the
+      Worker hasn't been redeployed with it — needs a pasted
+      `CLOUDFLARE_API_TOKEN` (see
+      [standing-instructions](standing-instructions.md#the-owner-pastes-the-cloudflare-token-each-session))
 
 **End of the MVP.** Everything below is the finish.
 

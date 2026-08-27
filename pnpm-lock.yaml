@@ -17,6 +17,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@hajsik/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       hono:
         specifier: ^4.6.16
         version: 4.13.5

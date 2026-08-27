@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   activityFeed, entityHistory, splitParticipants,
-  type CurrencyCode, type Member, type Revision, type SplitSpec,
+  type CurrencyCode, type Member, type Op, type Revision, type SplitSpec,
 } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
@@ -120,6 +120,34 @@ function describe(
   return { what: `${who} updated the group` };
 }
 
+const FIELD_LABELS: Record<string, string> = {
+  amountMinor: "the amount", currency: "the amount", rateToBase: "the amount",
+  baseAmountMinor: "the amount", split: "who's involved", paidBy: "who paid",
+  description: "the description", occurredAt: "the date", categoryId: "the category",
+  attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
+  deletedAt: "whether this was deleted",
+};
+
+/**
+ * "Sam's change to the amount was overwritten by Marie's." — surfaced per
+ * docs/sync.md#conflicts: we never show a resolution dialog, just the honest
+ * record of what happened, once, in history.
+ */
+function overwriteNotes(rev: Revision, opsById: Map<string, Op>, memberById: Map<string, Member>): string[] {
+  const seen = new Set<string>();
+  const notes: string[] = [];
+  for (const change of rev.changes) {
+    if (!change.supersededByOpId || seen.has(change.supersededByOpId + change.field)) continue;
+    const laterOp = opsById.get(change.supersededByOpId);
+    if (!laterOp) continue;
+    seen.add(change.supersededByOpId + change.field);
+    const who = memberById.get(laterOp.actor)?.name ?? "someone";
+    const field = FIELD_LABELS[change.field] ?? "this";
+    notes.push(`This change to ${field} was later overwritten by ${who}'s edit.`);
+  }
+  return notes;
+}
+
 function HistoryScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
@@ -136,6 +164,7 @@ function HistoryScreen() {
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
   const ops = useLiveQuery(async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
+  const opsById = new Map(ops.map((op) => [op.id, op as Op]));
 
   const expense = expenseId ? data.expenses.find((e) => e.id === expenseId) : undefined;
   const revisions = !groupId ? [] : expenseId ? entityHistory(ops, expenseId) : activityFeed(ops, 200);
@@ -182,6 +211,9 @@ function HistoryScreen() {
                         </div>
                       ) : null}
                       {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
+                      {overwriteNotes(rev, opsById, memberById).map((n) => (
+                        <div className="conflict" key={n}>{n}</div>
+                      ))}
                       {canRestore ? (
                         <button className="restore" onClick={() => restore(rev)}>Restore this version</button>
                       ) : null}

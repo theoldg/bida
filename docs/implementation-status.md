@@ -12,7 +12,9 @@ status file is worse than none.
 ## Where we are
 
 **Phase 0 and Phase 1 are done. Phase 2 is done except the screenshot harness.
-Phase 3 has a minimal deploy path but no server logic yet.**
+Phase 3's code is done — D1 schema, sync API, sync engine, conflict
+surfacing — but not yet deployed: the D1 database hasn't been created on
+Cloudflare and the Worker hasn't been redeployed with it.**
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 Both `apps/web` and `apps/api` now exist.
@@ -21,15 +23,17 @@ Both `apps/web` and `apps/api` now exist.
 |---|---|
 | 0 — Groundwork | ✅ done |
 | 1 — Domain core | ✅ done, 88 tests passing |
-| 2 — Local-first app, no server | 🟡 done except the screenshot harness ← **you are here** |
-| 3 — Server and sync | 🟡 static assets deploy live; no D1, no API routes, no sync |
+| 2 — Local-first app, no server | 🟡 done except the screenshot harness |
+| 3 — Server and sync | 🟡 code complete; D1 not yet provisioned/deployed ← **you are here** |
 | 4 — Receipts | ⬜ not started |
 | 5 — History surfaces | ⬜ not started |
 | 6 — Polish | ⬜ not started |
 
-**Live URL:** <https://hajsik.hajsik-api.workers.dev> — static export only,
-served by a Cloudflare Worker with no backing data store. See
-[hosting.md](hosting.md#deploying).
+**Live URL:** <https://hajsik.hajsik-api.workers.dev> — as of this commit still
+serving the *previous* deploy (static export only, no sync). The next deploy
+needs a pasted `CLOUDFLARE_API_TOKEN` to create the D1 database and redeploy —
+see [hosting.md](hosting.md#deploying) and
+[standing-instructions.md](standing-instructions.md#the-owner-pastes-the-cloudflare-token-each-session).
 
 ## What exists on disk
 
@@ -71,23 +75,23 @@ shape. Personal mode (`usePersonalMode`, `Screen`'s `.personal` class,
 entered rate (`app/g/expense/edit/page.tsx`'s currency picker + rate input)
 are both confirmed wired into the built screens, not just `packages/core`.
 
-**Caveat on `/join`:** there is still no sync engine (Phase 3), so the screen
-parses the link and stores the invite secret, but can only actually land you
-in the group if it's already on that device — see
-[sync.md's gotcha](sync.md#gotchas). Real second-device sharing is still
-blocked on Phase 3.
+**`/join` now pulls for real.** It saves the invite secret, calls the sync
+engine once immediately, then checks whether the group landed locally. Second-
+device sharing works once both the sync API is deployed (see **Where we are**
+above) and the creating device has synced at least once — see
+[sync.md](sync.md#gotchas).
 
 **Not built:** the screenshot/UI-inspection harness (see
-[testing.md](testing.md)). Everything else this file used to list as missing
-— `/join`, Settings, the PWA service worker — is now built; PWA icons were
-already in place — see [frontend.md](frontend.md#pwa).
+[testing.md](testing.md)). That is now the only unchecked box left in Phase 2.
 
 ### `apps/api` — what's built
 
-A Hono app that passes every request through to the `ASSETS` binding (the
-static export), plus one `/api/health` route. No D1, no R2, no sync routes,
-no auth — that's all Phase 3. See [hosting.md](hosting.md#deploying) for the
-`wrangler.toml` shape and how to deploy.
+A Hono app serving three kinds of route: the sync API (`POST`/`GET
+/api/groups/:id/ops`, `apps/api/src/index.ts`), `/api/health`, and everything
+else passed through to the `ASSETS` binding (the static export). D1 schema in
+`apps/api/migrations/0001_init.sql`. No R2, no attachment routes yet — that's
+Phase 4. See [hosting.md](hosting.md#deploying) for the `wrangler.toml` shape,
+the one-time D1 setup, and how to deploy.
 
 ### `packages/core` module map
 
@@ -155,20 +159,29 @@ Beyond the six ADRs, two things were settled in code:
 
 ## The next action, concretely
 
-Everything on Phase 2's list is built except one:
-
-1. The screenshot/UI-inspection harness (`pnpm shots`) — see
+1. **Deploy Phase 3.** All the code is written and tested but nothing is live
+   yet. Needs a pasted `CLOUDFLARE_API_TOKEN` from the owner, then:
+   ```bash
+   cd apps/api
+   npx wrangler d1 create hajsik      # paste the printed database_id into wrangler.toml
+   pnpm db:migrate                    # applies migrations/0001_init.sql
+   pnpm --filter @hajsik/web build
+   pnpm --filter @hajsik/api deploy
+   ```
+   After that, do a real two-tab or two-device check: create a group in one
+   tab, copy its invite link, open it in another (or in a private window) and
+   confirm the group and its members actually appear — this has not been
+   exercised against a live server yet, only against a mocked `fetch` in
+   `apps/web/lib/db/sync.test.ts`.
+2. The screenshot/UI-inspection harness (`pnpm shots`) — see
    [testing.md](testing.md). Not started; build it against the Playwright
    Chromium already available in the agent environment, driving the real
    static export (`apps/web/out`), one PNG per route.
 
-**Phase 2 is otherwise complete, but the app is still not usable by two
-people on two devices** — `/join` exists and stores the invite secret, but
-with no sync engine a second device has nothing to pull. That's what makes
-Phase 3 (D1, the `/api/groups/:id/ops` endpoints, the sync loop) next, not
-optional polish — see [roadmap.md](roadmap.md#phase-3--the-server-and-sync-still-the-mvp).
-The current deploy (static assets only, see [hosting.md](hosting.md#deploying))
-is a Phase 3 head start, not Phase 3 itself.
+See [roadmap.md](roadmap.md#phase-3--the-server-and-sync-still-the-mvp) for
+the full Phase 3 checklist — everything on it is done except the deploy step
+above and the custom domain, which needs the owner's own domain in Cloudflare
+DNS.
 
 ## Gotchas paid for already
 
@@ -181,3 +194,8 @@ is a Phase 3 head start, not Phase 3 itself.
   `config.resolve.extensionAlias`. Full explanation in
   [hosting.md](hosting.md#gotchas). Run a real production build before
   assuming anything deploys — `next dev` won't catch this.
+- `apps/api/wrangler.toml`'s `database_id` is still the literal placeholder
+  `REPLACE_WITH_D1_DATABASE_ID` as of this commit. `wrangler deploy --dry-run`
+  succeeds anyway (it doesn't validate the id against the account), so a dry
+  run passing is not proof the real deploy will work — see the next action
+  above.
