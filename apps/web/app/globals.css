@@ -1,0 +1,148 @@
+@import "tailwindcss";
+
+/* ============================================================
+   TOKENS — ledger paper, ink, red/green columns, highlighter.
+   Lifted verbatim from design/mockups/index.html. If you change
+   a value here, change it there too: the mockup is the design's
+   source of truth and a drifted mockup is a lying one.
+   ============================================================ */
+:root {
+  --paper:#E9ECE2; --paper-2:#E2E6DA;
+  --card:#F8F9F4; --card-2:#F0F2E9; --card-3:#E7EBDE;
+  --ink:#151C15; --ink-2:#3C483C; --muted:#717D6F;
+  --rule:#CBD3C2; --rule-soft:#DBE1D3;
+  --credit:#1C6A4B; --credit-bg:#DCEBE1;
+  --debit:#AC382B;  --debit-bg:#F3DFDB;
+  --brand:#16554A; --brand-ink:#F8F9F4;
+  --hl:rgba(203,148,42,.30); --hl-edge:#BE861A; --hl-ink:#7A5410;
+  --shadow-s:0 1px 2px rgba(21,28,21,.07);
+  --shadow-l:0 2px 4px rgba(21,28,21,.05),0 18px 40px -20px rgba(21,28,21,.35);
+  --r-s:8px; --r-m:12px; --r-l:18px;
+
+  /* next/font sets --font-display/body/mono on <html>, which is :root, so the
+     fallback in each var() only bites if the font fails to load. */
+  --f-display: var(--font-display, "Bricolage Grotesque"), ui-sans-serif, system-ui, sans-serif;
+  --f-body: var(--font-body, "Karla"), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --f-mono: var(--font-mono, "IBM Plex Mono"), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme:dark) {
+  :root:not([data-theme="light"]) {
+    --paper:#11150E; --paper-2:#0C0F09;
+    --card:#191E15; --card-2:#20261B; --card-3:#272E20;
+    --ink:#E7EBDE; --ink-2:#BDC6B3; --muted:#8A9584;
+    --rule:#2F3729; --rule-soft:#232A1E;
+    --credit:#68C79A; --credit-bg:#16291F;
+    --debit:#E9857B;  --debit-bg:#2E1B18;
+    --brand:#7ED8C0; --brand-ink:#0C1710;
+    --hl:rgba(222,173,70,.20); --hl-edge:#D6A33C; --hl-ink:#E7C071;
+    --shadow-s:0 1px 2px rgba(0,0,0,.5);
+    --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:#11150E; --paper-2:#0C0F09;
+  --card:#191E15; --card-2:#20261B; --card-3:#272E20;
+  --ink:#E7EBDE; --ink-2:#BDC6B3; --muted:#8A9584;
+  --rule:#2F3729; --rule-soft:#232A1E;
+  --credit:#68C79A; --credit-bg:#16291F;
+  --debit:#E9857B;  --debit-bg:#2E1B18;
+  --brand:#7ED8C0; --brand-ink:#0C1710;
+  --hl:rgba(222,173,70,.20); --hl-edge:#D6A33C; --hl-ink:#E7C071;
+  --shadow-s:0 1px 2px rgba(0,0,0,.5);
+  --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+}
+
+/* `inline` means the utilities compile to var() references, so every
+   bg-card / text-ink follows the theme swap above with no dark: variants. */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+  --color-card-2: var(--card-2);
+  --color-card-3: var(--card-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-rule: var(--rule);
+  --color-rule-soft: var(--rule-soft);
+  --color-credit: var(--credit);
+  --color-credit-bg: var(--credit-bg);
+  --color-debit: var(--debit);
+  --color-debit-bg: var(--debit-bg);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-hl: var(--hl);
+  --color-hl-edge: var(--hl-edge);
+  --color-hl-ink: var(--hl-ink);
+
+  --font-display: var(--f-display);
+  --font-body: var(--f-body);
+  --font-mono: var(--f-mono);
+
+  --radius-s: var(--r-s);
+  --radius-m: var(--r-m);
+  --radius-l: var(--r-l);
+
+  --shadow-s: var(--shadow-s);
+  --shadow-l: var(--shadow-l);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Numbers are monospaced everywhere, always, with tabular figures so a
+   column of amounts can be eyeballed without being read. */
+.num {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.eyebrow {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* The personal-mode highlighter: a wash laid *over* the ledger, plus a left
+   edge bar so it survives colour-blindness. Never the only signal. */
+.mine {
+  background: var(--hl);
+}
+.mine::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--hl-edge);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* iOS Safari's toolbar eats the bottom nav if this is 100vh. */
+.app-shell {
+  min-height: 100dvh;
+}
