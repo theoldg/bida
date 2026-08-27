@@ -8,7 +8,8 @@ Read in whatever order your task needs. Each doc says at the top who it's for.
 |---|---|
 | [standing-instructions.md](standing-instructions.md) | **Before anything else.** The owner's own instructions on how this project is run |
 | [product.md](product.md) | You need to know what we're building and what's out of scope |
-| [roadmap.md](roadmap.md) | You're starting a session and want the next job |
+| [implementation-status.md](implementation-status.md) | **You're starting a session.** How far the build actually got, and the exact next action |
+| [roadmap.md](roadmap.md) | You want the plan the phases follow |
 | [architecture.md](architecture.md) | You need the shape of the system before touching it |
 
 ## Building

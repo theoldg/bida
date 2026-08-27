@@ -84,13 +84,23 @@ The algorithm (`packages/core/split.ts`):
 
 1. Compute each member's ideal share as an exact rational.
 2. Floor each to minor units.
-3. Distribute the remaining cents by **largest fractional remainder**, breaking
-   ties by ascending `memberId` so the result is identical on every device.
-4. Return the map plus `remainderAbsorbedBy: memberId[]` so the UI can say who
-   took the odd cent (the expense detail screen shows this).
+3. Distribute the remaining cents by **largest fractional remainder**. Ties are
+   broken by a hash of `${tiebreakSeed}:${memberId}` — callers pass the expense
+   id as the seed, so the leftover cent lands on a different person each time
+   while staying identical on every device.
+4. Return the map plus `remainderAbsorbedBy: memberId[]`.
+
+**`remainderAbsorbedBy` is diagnostic, not UI.** Tests assert on it; screens do
+not render it. Surfacing "€0,01 → Ada" turns a rounding artefact into an
+accusation, and the owner has asked for the opposite — see
+[standing-instructions](standing-instructions.md#dont-make-a-feature-of-the-odd-cent).
+The rotation is meant to be noticed by nobody, or by one person, once.
 
 Determinism matters more than fairness here: two phones folding the same ops
-must produce byte-identical splits, or balances diverge.
+must produce byte-identical splits, or balances diverge. The seeded draw buys
+fairness *inside* that constraint — without it, ties always break by ascending
+member id and the alphabetically-first member subsidises every split in the
+group.
 
 **Test this hard.** €10 across 3 people, €0.01 across 4, a 3-decimal currency,
 percent splits that don't sum to 100, exact splits that overshoot.

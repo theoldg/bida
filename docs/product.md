@@ -26,8 +26,8 @@ at once, because that will actually happen on a trip.
 - **Expenses**: amount, currency, description, date, category, who paid,
   who it was for.
 - **Split modes**: equally, exact amounts, shares (weights), percentages.
-  Remainders are distributed deterministically and the app says who absorbed
-  the odd cent.
+  Remainders are distributed deterministically, and quietly — the app never
+  makes a feature of a single cent.
 - **Balances** per member, derived, never stored.
 - **Settle up**: a minimal set of payments that clears the group, plus the
   ability to record a real reimbursement as its own entry.
@@ -73,8 +73,9 @@ Leave room for these. Build none of them yet.
 - **The number you came for is at the top.** Net position first, detail below.
 - **Never lose a write.** Offline, mid-flight, tab closed — the op is in
   IndexedDB before the UI acknowledges it.
-- **Show the arithmetic.** Foreign amounts keep their original figure. Rounding
-  remainders are attributed out loud. Nobody should have to trust us.
+- **Show the arithmetic.** Foreign amounts keep their original figure and the
+  rate they were locked at. Nobody should have to trust us. But don't confuse
+  transparency with noise: a rounding cent is not worth a line of UI.
 - **Colour is never the only signal.** Every debit/credit carries a sign and a
   word as well as a hue.
 

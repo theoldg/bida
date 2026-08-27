@@ -9,30 +9,31 @@ Tick boxes as you go, and update **Current state** in [CLAUDE.md](../CLAUDE.md).
 
 ---
 
-## Phase 0 — Groundwork *(current)*
+## Phase 0 — Groundwork ✅
 
 - [x] Hosting investigated and decided ([hosting.md](hosting.md))
 - [x] MVP scope agreed ([product.md](product.md))
 - [x] Design mockups produced and published
 - [x] Docs skeleton
-- [ ] **Design signed off by the owner** ← blocking everything below
-- [ ] Monorepo scaffold: pnpm workspace, `apps/web`, `apps/api`, `packages/core`
-- [ ] Tailwind + shadcn init with the mockup's tokens ported
+- [x] **Design signed off by the owner** — *2026-08-27, "i approve of your design, go wild"*
+- [x] Monorepo scaffold: pnpm workspace + `packages/core`
+- [ ] `apps/web`, `apps/api` packages — deferred into Phase 2/3, created when first needed
+- [ ] Tailwind + shadcn init with the mockup's tokens ported *(Phase 2)*
 
-## Phase 1 — The domain core
+## Phase 1 — The domain core ✅ *(88 tests passing)*
 
 No UI. No network. Pure functions and tests. This is where correctness is won.
 
-- [ ] `core/money.ts` — minor units, ISO 4217 exponents, formatting
-- [ ] `core/hlc.ts` — hybrid logical clock, send/receive, ordering
-- [ ] `core/ops.ts` — op types, validation
-- [ ] `core/fold.ts` — fold ops → entities, per-field LWW, out-of-order tolerant
-- [ ] `core/split.ts` — four modes, deterministic remainder distribution
-- [ ] `core/balance.ts` — balances from expenses + settlements
-- [ ] `core/settle.ts` — greedy minimal-ish transfer set
-- [ ] Property tests: any permutation of ops folds identically
+- [x] `core/money.ts` — minor units, ISO 4217 exponents, formatting
+- [x] `core/hlc.ts` — hybrid logical clock, send/receive, ordering
+- [x] `core/ops.ts` — op types, validation
+- [x] `core/fold.ts` — fold ops → entities, per-field LWW, out-of-order tolerant
+- [x] `core/split.ts` — four modes, deterministic remainder distribution
+- [x] `core/balance.ts` — balances from expenses + settlements
+- [x] `core/settle.ts` — greedy minimal-ish transfer set
+- [x] Property tests: any permutation of ops folds identically
 
-## Phase 2 — Local-first app, no server
+## Phase 2 — Local-first app, no server *(current)*
 
 Fully usable on one device with no backend at all. Ship this to your own phone
 and use it for a week before building the server.

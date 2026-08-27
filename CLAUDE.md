@@ -33,11 +33,11 @@ append to it whenever they state a new preference.
 
 | Path | What |
 |---|---|
-| `apps/web/` | Next.js app (App Router, static export) — *not yet scaffolded* |
-| `apps/api/` | Cloudflare Worker: static assets + Hono API — *not yet scaffolded* |
-| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — *not yet scaffolded* |
+| `apps/web/` | Next.js app (App Router, static export) — *not yet scaffolded (Phase 2)* |
+| `apps/api/` | Cloudflare Worker: static assets + Hono API — *not yet scaffolded (Phase 3)* |
+| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 88 tests passing** |
 | `design/mockups/` | Approved HTML/CSS mockups. Source of truth for visual design |
-| `docs/` | Everything else. Start at [docs/README.md](docs/README.md) |
+| `docs/` | Everything else. Start at [docs/implementation-status.md](docs/implementation-status.md), then [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before you argue with an architectural choice |
 
 ## The stack in one breath
@@ -53,11 +53,17 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 
 ## Current state
 
-**Design proposed and awaiting sign-off. Nothing is implemented yet.** The name
-is settled (Hajsik); four product questions remain open, listed in
-[docs/product.md](docs/product.md#open-product-questions). The next agent's job
-is in [docs/roadmap.md](docs/roadmap.md) — work the phases in order, and do not
-start Phase 2 before Phase 1's tests pass.
+**Design signed off. Phases 0 and 1 are done; Phase 2 is next.** `packages/core`
+holds the whole domain — money, HLCs, ops, folding, splits, balances, settle-up,
+history — with 88 passing tests. There is no UI and no server yet.
+
+**Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
+carries the fine-grained state and the exact next action, and survives a session
+restart. [docs/roadmap.md](docs/roadmap.md) has the phase plan behind it.
+
+```bash
+pnpm install && pnpm --filter @hajsik/core test
+```
 
 ---
 

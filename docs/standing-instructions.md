@@ -42,3 +42,13 @@ link to it from wherever it applies.
 ### The product is called Hajsik.
 *2026-08-27* — settled; "Tally" was the placeholder that produced the tally-mark
 wordmark. The mark stayed, the name didn't.
+
+### Don't make a feature of the odd cent.
+*2026-08-27* — "don't highlight cent splits, that's the wrong vibe. just draw
+people at random every time and have that be a quiet easter egg."
+
+`resolveSplit` still rotates who absorbs a leftover minor unit — seeded by the
+expense id, so it's deterministic across devices but lands on a different person
+each time. `remainderAbsorbedBy` stays in the return value for tests. **No screen
+renders it.** The rotation is a thing you might notice once, not a row of UI that
+tells someone they were charged an extra cent.
