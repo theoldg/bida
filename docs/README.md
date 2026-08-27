@@ -34,3 +34,5 @@ alternatives we rejected and why. Read the relevant one before reversing anythin
 - [0004 — Static export, secrets in the URL fragment](decisions/0004-static-export-fragment-routing.md)
 - [0005 — Per-expense currency with a locked rate](decisions/0005-locked-fx-rate.md)
 - [0006 — Per-field last-write-wins, not a CRDT library](decisions/0006-lww-not-crdt.md)
+- [0007 — Per-screen static routes, not drawers/sheets within `/g`](decisions/0007-per-screen-routes-not-drawers.md)
+- [0008 — Hand-rolled components from the mockup, not shadcn/ui](decisions/0008-hand-rolled-css-not-shadcn.md)

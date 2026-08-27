@@ -1,6 +1,11 @@
 # 0004 — Static export, secrets in the URL fragment
 
 **Status:** Accepted · 2026-08-27
+**Note (2026-08-27):** The routing table below and the "client state within
+`/g`, rendered as drawers and sheets" sentence are superseded by
+[0007](0007-per-screen-routes-not-drawers.md) — each screen is its own static
+route instead. The fragment-secret decision on this page is unchanged and
+still governs.
 
 ## Context
 

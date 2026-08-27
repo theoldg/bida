@@ -21,7 +21,7 @@ about to break all three features simultaneously. See
 
 ```
 ┌─────────────────────── the phone ────────────────────────┐
-│  Next.js (static export) + shadcn/ui                     │
+│  Next.js (static export) + hand-rolled components        │
 │         │                                                │
 │         │ reads materialised state                       │
 │         ▼                                                │
@@ -54,7 +54,7 @@ about to break all three features simultaneously. See
 |---|---|---|
 | `packages/core` | Op types, fold, split maths, balances, settle-up, HLC | Nothing. Pure. No Dexie, no React, no Cloudflare |
 | `apps/web/lib/db` | Dexie schema, queries, the sync engine | `core` |
-| `apps/web/app`, `components` | React, shadcn, routing | `core`, `lib/db` |
+| `apps/web/app`, `components` | React, hand-rolled components, routing | `core`, `lib/db` |
 | `apps/api` | Hono routes, D1 and R2 bindings | `core` (op validation only) |
 
 `packages/core` being pure is what makes the money logic testable and what lets

@@ -57,9 +57,10 @@ expensive:
 ## Dependencies
 
 Default to no. Every dependency is a migration we'll pay for later on a project
-with a long life and no team. shadcn/ui was chosen precisely because it's
-copied-in source rather than a package. Adding a state library, a date library,
-or an ORM warrants an ADR.
+with a long life and no team. Components are hand-rolled from the mockup
+rather than pulled from a UI library — see
+[ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md). Adding a state
+library, a date library, or an ORM warrants an ADR.
 
 ## Definition of done
 

@@ -67,6 +67,18 @@ the same ledger.
 *2026-08-27* — "set up some UI test/screenshot inspection loop which is efficient
 and easy to run for you, but don't overuse it."
 
-`pnpm shots` builds and photographs every screen in one browser launch. It is for
-checking a screen after you build it, or when something looks wrong — not a
-step after every edit. See [testing.md](testing.md).
+The intent: a `pnpm shots` command that builds and photographs every screen in
+one browser launch, for checking a screen after you build it or when something
+looks wrong — not a step after every edit. **Not built yet** — see
+[testing.md](testing.md) for the current state and what it should do.
+
+### Skip PWA icons for the MVP.
+*2026-08-27* — "we don't need images at all in the mvp. keep what you have
+built but don't add more stuff for now. if the images are such a big deal
+hosting-wise then maybe we should skip them, let's pause them for now."
+
+`public/manifest.webmanifest` exists and is linked from `app/layout.tsx`, but
+the icon files it references (`icon-192.png`, `icon-512.png`,
+`icon-maskable-512.png`) don't exist and shouldn't be generated yet. See
+[frontend.md](frontend.md#pwa). Don't resume icon generation without the
+owner saying so.

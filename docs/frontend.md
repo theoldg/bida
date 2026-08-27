@@ -4,8 +4,10 @@
 
 ## Stack
 
-Next.js App Router with `output: 'export'`, TypeScript, Tailwind, shadcn/ui
-(copied-in components, not a dependency), Dexie for IndexedDB.
+Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie for
+IndexedDB. Components are hand-rolled, ported directly from the mockup's HTML
+and CSS — no shadcn/ui, no Radix, see
+[ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
 
 **The whole app is client-side.** There is no server rendering, no server
 action, no route handler in Next. The Worker's API is reached with `fetch`.
@@ -15,23 +17,33 @@ the data, so rendering it on a server would mean fetching it twice.
 ## Routing
 
 Only static routes exist, because a static export cannot generate pages for
-group ids it doesn't know at build time.
+group ids it doesn't know at build time. Each screen is its own route, with
+the group id (never the secret) carried as a query string parameter — see
+[ADR-0007](decisions/0007-per-screen-routes-not-drawers.md). `lib/group-link.ts`'s
+`route` object is the one place these URLs get built; nothing else assembles
+one by hand.
 
 | Route | Purpose |
 |---|---|
 | `/` | Groups list |
-| `/g` | The group view — reads `#<groupId>.<secret>` from the fragment |
-| `/join` | Landing for a shared invite link; claims a member slot |
-| `/settings` | Device settings: which member is "you", personal mode default |
+| `/new` | Create a group |
+| `/g?id=` | The group view — expenses / balances / settle tabs |
+| `/g/expense?id=&e=` | Expense detail |
+| `/g/expense/edit?id=[&e=]` | Add or edit an expense |
+| `/g/split?id=` | Split editor |
+| `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
+| `/g/members?id=` | Members |
+| `/g/settle?id=&from=&to=&amount=` | Record a settlement |
+| `/join#<groupId>.<secret>` | Landing for a shared invite link; claims a member slot |
+| `/settings` | Device settings: which member is "you", personal mode default *(not yet built)* |
 
-Everything inside a group — expense detail, add expense, split editor, history —
-is **client state within `/g`**, presented as shadcn `Drawer` / `Sheet` /
-`Dialog`. This matches how the mockups behave and how the app is actually used
-one-handed. Deep links point at groups, never at individual expenses.
+Deep links point at groups, never at individual expenses (unchanged from 0004).
 
 The group secret lives in the **URL fragment**, which browsers never send to a
 server — see [ADR-0004](decisions/0004-static-export-fragment-routing.md).
-Never move it into a path segment or query string "for convenience".
+Never move it into a path segment or query string "for convenience". The group
+*id* alone is fine in a query string — see 0007 — because it confers nothing
+without the secret.
 
 ## State
 
@@ -55,6 +67,12 @@ visual treatment and why it's a highlighter and not a colour.
 
 ## PWA
 
+**Paused for the MVP** (2026-08-27, owner: "we don't need images at all in the
+mvp... let's pause them for now") — `public/manifest.webmanifest` exists and is
+linked from `app/layout.tsx`, but the icon files it points at
+(`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`) don't exist yet, and
+there is no service worker. The plan below is unbuilt, not abandoned:
+
 - Manifest with maskable icons, `display: standalone`, theme colour matched to
   the ledger paper token per theme.
 - Service worker precaches the app shell only. **The SW does not cache API
@@ -66,9 +84,11 @@ visual treatment and why it's a highlighter and not a colour.
 
 ## Components worth building once
 
-The mockups need exactly two things shadcn doesn't have: the **amount keypad**
-and the **balance bar** (a bar around a centre axis, debit left, credit right).
-Everything else maps to an existing primitive with our tokens swapped in.
+The two components with real logic behind them, not just markup, are the
+**amount keypad** and the **balance bar** (a bar around a centre axis, debit
+left, credit right) — see `components/bits.tsx`. Everything else is markup and
+CSS lifted directly from the mockup (see
+[ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)).
 
 ## Gotchas
 

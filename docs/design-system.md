@@ -7,8 +7,9 @@ reasoning so you extend the design rather than diverge from it.
 
 - Published: https://claude.ai/code/artifact/5195880f-3985-4409-ac1a-854e5a756921
 - Source: [`design/mockups/index.html`](../design/mockups/index.html) — the token
-  block at the top of that file is the canonical palette. Port it to Tailwind /
-  shadcn CSS variables verbatim; do not re-pick values by eye.
+  block at the top of that file is the canonical palette. Port it into
+  `globals.css` verbatim, under the same variable names; do not re-pick values
+  by eye. No shadcn — see [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
 
 ## Direction
 
@@ -76,6 +77,7 @@ one line — a figure inside a sentence still gets the mono span.
 
 *Add to this list every time one bites you.*
 
-- shadcn ships its own CSS variable names (`--background`, `--primary`, …). Map
-  our tokens onto those in `globals.css` rather than renaming shadcn's — it keeps
-  future `shadcn add` runs from fighting us.
+- No shadcn/ui dependency exists — components are hand-rolled from the mockup's
+  own markup and token names (`--paper`, `--ink`, `--brand`, …), used verbatim,
+  not remapped onto a component library's variable names. See
+  [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
