@@ -32,7 +32,10 @@ export const metadata: Metadata = {
   title: "Hajsik",
   description: "Shared expenses, split fairly. Works offline.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Hajsik", statusBarStyle: "default" },
+  // "black-translucent" draws the app under the status bar instead of
+  // beside it — iOS ignores the manifest's "fullscreen" display entirely for
+  // home-screen web apps, so this is the only lever for the same effect there.
+  appleWebApp: { capable: true, title: "Hajsik", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

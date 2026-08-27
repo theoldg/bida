@@ -72,8 +72,14 @@ user-uploaded content, so it's unrelated to the receipt-hosting question (see
 [standing-instructions.md](standing-instructions.md#skip-receipt-attachment-images-for-the-mvp-not-pwa-icons)).
 `public/manifest.webmanifest` is in place and linked from `app/layout.tsx`.
 
-- Manifest with maskable icons, `display: standalone`, theme colour matched to
-  the ledger paper token per theme.
+- Manifest with maskable icons, `display: fullscreen` (falls back to
+  `standalone` on browsers that don't support it — that's the spec's fixed
+  fallback chain, not something we implement), theme colour matched to the
+  ledger paper token per theme. iOS ignores manifest `display` for home-screen
+  web apps entirely; `appleWebApp.statusBarStyle: "black-translucent"` in
+  `app/layout.tsx` is the equivalent lever there — it draws the app under the
+  status bar rather than fullscreen replacing it, which is why `viewport-fit:
+  cover` and the `env(safe-area-inset-top)` padding on `.topbar` matter.
 - `public/sw.js` precaches the app shell (every static route, per ADR-0007's
   known-at-build-time set, plus the manifest and icons) and is registered from
   `components/register-sw.tsx` in the root layout. **The SW does not cache API
