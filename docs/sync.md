@@ -152,12 +152,21 @@ it in one place so history and the expense form agree on wording.
   deletion — and that's a new ADR.
 - `createdAt` is display-only. Every time someone sorts by it, conflicts start
   resolving differently on different phones.
-- **`/join` now actually pulls.** It saves the secret, calls `syncGroup()` once
-  immediately, then checks whether the group landed locally — see
-  `apps/web/app/join/page.tsx`. If the creating device hasn't synced yet
-  (no ops ever pushed, or currently offline), the join fails honestly rather
-  than pretending; the invite is saved either way, so re-opening the same link
-  later works once the creator's device has synced.
+- **`/join` pulls, and now recovers on its own.** It saves the secret, kicks
+  off `syncGroup()` once, and watches the local `groups` table with a live
+  query (`useLiveQuery`) rather than a one-shot check — see
+  `apps/web/app/join/page.tsx`. This used to be a real bug: a brand-new
+  device (nothing cached locally, unlike a returning device) whose first
+  `syncGroup()` call failed — offline for a moment, or the creating device
+  hadn't pushed yet — landed on a dead-end "couldn't find that group" screen
+  built from plain `useState`. `StartSync`'s background loop (root layout)
+  was already retrying that same group with backoff and on reconnect and
+  *would* eventually pull it down, but the join screen never re-checked, so
+  the user was stuck looking at a screen telling them to manually reopen the
+  link. Now the screen just waits on the live query: the moment the group
+  lands locally, from this attempt or a later background retry, it moves on
+  by itself. The invite secret is still saved up front either way, so the
+  retry has something to retry.
 - **`acceptOps` in `apps/api/src/store.ts` reserves seq numbers with an
   `UPDATE ... RETURNING`**, not inside an explicit multi-statement
   transaction — two concurrent pushes to the *same* group could in theory

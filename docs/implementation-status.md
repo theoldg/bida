@@ -166,11 +166,15 @@ loose ends below — neither blocks real use of the app.
    [testing.md](testing.md). Not started; build it against the Playwright
    Chromium already available in the agent environment, driving the real
    static export (`apps/web/out`), one PNG per route.
-2. A real cross-device `/join` check hasn't been done from two actual phones
-   (or two browser profiles) side by side — only the API round-trip has been
-   verified directly (see **Live URL** above) and against a mocked `fetch` in
-   `apps/web/lib/db/sync.test.ts`. Worth doing once, opportunistically, next
-   time this is picked up.
+2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser
+   profiles, a local `wrangler dev` + D1) that was flagged above as not yet
+   done — and it turned up a genuine bug, not just an unverified path. A
+   brand-new device (no local cache, unlike a returning device) whose first
+   `syncGroup()` call failed landed on a dead-end screen with no retry —
+   "nothing responds" from the user's side, only ever hit by someone who'd
+   never used the app before. Fixed in `apps/web/app/join/page.tsx` by making
+   the screen watch the local DB with a live query instead of a one-shot
+   check; see [sync.md's gotchas](sync.md#gotchas) for the full story.
 
 See [roadmap.md](roadmap.md#phase-3--the-server-and-sync-deployed-2026-08-27--mvp-complete)
 for the full Phase 3 checklist. Phase 4 (receipts) is next —
