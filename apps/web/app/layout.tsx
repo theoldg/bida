@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Karla, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { IconSprite } from "../components/icons";
+import { ThemeScript } from "../components/theme";
 
 // Self-hosted at build time by next/font — nothing is fetched from Google at
 // runtime, which matters for a PWA that has to render offline.
@@ -46,7 +48,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ThemeScript />
+        <IconSprite />
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,0 +1,138 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLiveQuery } from "dexie-react-hooks";
+import { resolveSplit, splitParticipants } from "@hajsik/core";
+import { Card, Eyebrow, KV } from "../../../components/bits";
+import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Icon } from "../../../components/icons";
+import { deleteExpense } from "../../../lib/db/commands";
+import { db } from "../../../lib/db/dexie";
+import { clockTime, dayLabel, money } from "../../../lib/format";
+import { route } from "../../../lib/group-link";
+import { useGroupData } from "../../../lib/hooks";
+
+export default function ExpensePage() {
+  return <QueryBoundary><ExpenseScreen /></QueryBoundary>;
+}
+
+function ExpenseScreen() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const groupId = params.get("id") ?? undefined;
+  const expenseId = params.get("e") ?? undefined;
+  const data = useGroupData(groupId);
+  const expense = data.expenses.find((e) => e.id === expenseId);
+
+  // "edited ×3" comes from the log itself: revisions are ops, not a counter
+  // somebody has to remember to increment.
+  const opCount = useLiveQuery(
+    async () => (expenseId ? db().ops.where("entityId").equals(expenseId).count() : 0),
+    [expenseId],
+  ) ?? 0;
+
+  if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
+  const group = data.group;
+
+  if (!expense) {
+    return (
+      <Screen><Body>
+        <TopBar title="Gone" back={route.group(groupId)} />
+        <Empty title="This expense isn't here any more">It may have been deleted.</Empty>
+      </Body></Screen>
+    );
+  }
+
+  const payer = data.memberById.get(expense.paidBy);
+  const participants = splitParticipants(expense.split);
+  let shares: Record<string, number> = {};
+  try {
+    shares = resolveSplit(expense.baseAmountMinor, expense.split, { tiebreakSeed: expense.id }).shares;
+  } catch { /* a broken split still deserves a readable screen */ }
+  const foreign = expense.currency !== group.baseCurrency;
+  const edits = Math.max(0, opCount - 1);
+
+  async function remove() {
+    if (!expense || !groupId) return;
+    if (!confirm("Delete this expense? It stays in the group's history either way.")) return;
+    await deleteExpense(groupId, data.me ?? expense.paidBy, expense.id);
+    router.replace(route.group(groupId));
+  }
+
+  return (
+    <Screen>
+      <Body>
+        <TopBar
+          title={expense.description || "Untitled"}
+          sub={`${dayLabel(expense.occurredAt)} · ${clockTime(expense.occurredAt)}`}
+          back={route.group(groupId)}
+          right={<>
+            <Link className="iconbtn" href={route.history(groupId, expense.id)} aria-label="History">
+              <Icon name="clock" size={16} />
+            </Link>
+            <button className="iconbtn" onClick={remove} aria-label="Delete">
+              <Icon name="trash" size={16} />
+            </button>
+          </>}
+        />
+
+        <Scroll>
+          <div className="pad" style={{ paddingTop: 2 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
+              <span className="bignum" style={{ fontSize: 32 }}>
+                {money(expense.baseAmountMinor, group.baseCurrency)}
+              </span>
+              {foreign ? (
+                <span className="num" style={{ fontSize: 13, color: "var(--muted)" }}>
+                  {money(expense.amountMinor, expense.currency)}
+                </span>
+              ) : null}
+            </div>
+            <div style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}>
+              {foreign ? <span className="chip">@ {expense.rateToBase}</span> : null}
+              {edits > 0 ? (
+                <Link href={route.history(groupId, expense.id)} className="chip">
+                  <Icon name="clock" size={11} /> edited ×{edits}
+                </Link>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="pad" style={{ paddingTop: 2 }}>
+            <Card>
+              <KV k="Paid by" v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
+                {payer?.id === data.me ? "You" : payer?.name ?? "Someone"}
+              </span>} />
+              <div className="hairline" />
+              <Eyebrow style={{ marginBottom: 4 }}>
+                Split · {expense.split.mode === "equal" ? "equally"
+                  : expense.split.mode === "exact" ? "exact amounts"
+                  : expense.split.mode === "shares" ? "by shares" : "by percent"}
+              </Eyebrow>
+              {data.members.map((m) => {
+                const inIt = participants.includes(m.id);
+                const weight = expense.split.mode === "shares" ? expense.split.weights[m.id] ?? 0 : 0;
+                const detail = expense.split.mode === "shares" && inIt
+                  ? ` · ${weight} share${weight === 1 ? "" : "s"}`
+                  : expense.split.mode === "percent" && inIt
+                    ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
+                    : "";
+                return (
+                  <KV key={m.id} dim={!inIt}
+                    k={`${m.id === data.me ? "You" : m.name}${inIt ? detail : " · not involved"}`}
+                    v={inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : "—"} />
+                );
+              })}
+            </Card>
+          </div>
+
+          <div className="pad" style={{ paddingTop: 4 }}>
+            <Link href={route.editExpense(groupId, expense.id)} className="btn btn-s">Edit</Link>
+          </div>
+          <div style={{ height: 24 }} />
+        </Scroll>
+      </Body>
+    </Screen>
+  );
+}
