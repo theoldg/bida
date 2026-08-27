@@ -62,6 +62,18 @@ the export is a real multi-page static site, one HTML file per route (see
 [ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)), not a
 client-router SPA that should fall back to `index.html` for unknown paths.
 
+### The `CLOUDFLARE_API_TOKEN`
+
+`wrangler deploy` needs a Cloudflare API token in the environment
+(`export CLOUDFLARE_API_TOKEN=...`) — it is **not** stored in this repo and
+must never be committed, even to a private one; see
+[standing-instructions.md](standing-instructions.md#the-owner-pastes-the-cloudflare-token-each-session).
+The owner's preferred way to set the environment variable persistently is the
+Claude Code environment settings UI, which isn't reachable from a phone — so
+for now, expect the token to be pasted into the session by hand each time a
+deploy is needed. Keep it in a session-local scratch file (outside the repo,
+outside anything git-tracked), never in a tracked file or a commit.
+
 **Live at <https://hajsik.hajsik-api.workers.dev>** — a permanent URL, no
 custom domain needed to get one; `workers.dev` subdomains don't expire as long
 as the Worker exists.

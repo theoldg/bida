@@ -82,3 +82,19 @@ the icon files it references (`icon-192.png`, `icon-512.png`,
 `icon-maskable-512.png`) don't exist and shouldn't be generated yet. See
 [frontend.md](frontend.md#pwa). Don't resume icon generation without the
 owner saying so.
+
+### The owner pastes the Cloudflare token each session.
+*2026-08-27* — offered to commit the `CLOUDFLARE_API_TOKEN` into the repo "so
+it's easier to resume sessions"; declined (a secret in git history persists
+even after a later removal, and this repo is meant to go public eventually).
+Follow-up: "okay i don't have the secrets UI on my phone so I'll just tell you
+the token every time."
+
+So: expect the owner to paste a fresh Cloudflare API token into the chat at
+the start of a session that needs to deploy. **Never write it into any
+git-tracked file or commit it**, however casually they offer — keep it only in
+a session-local scratch file outside the repo (e.g. the scratchpad directory),
+for that session's `wrangler deploy` calls. See
+[hosting.md](hosting.md#the-cloudflare_api_token). The better long-term fix —
+setting `CLOUDFLARE_API_TOKEN` once in the Claude Code environment settings —
+stays open for whenever the owner is at a computer rather than a phone.
