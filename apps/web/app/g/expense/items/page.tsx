@@ -164,7 +164,12 @@ function ItemsScreen() {
                   {items.map((item, i) => (
                     <tr key={i}>
                       <td className="itemlabel">
-                        <span>{item.label}</span>
+                        <span>
+                          {item.label}
+                          {item.quantity && item.quantity > 1 ? (
+                            <span className="itemqty"> ×{item.quantity}</span>
+                          ) : null}
+                        </span>
                         <span className="itemamount">{item.amount}</span>
                       </td>
                       {involvedMembers.map((m) => (

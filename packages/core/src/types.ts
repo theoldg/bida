@@ -82,7 +82,7 @@ export interface Expense {
    * session — instead of the parsed bill being thrown away once `split` is
    * computed from it. Absent on an expense with no scan. ADR-0017.
    */
-  receiptItems?: { label: string; amount: string }[] | null;
+  receiptItems?: { label: string; amount: string; quantity?: number | null }[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
   /** Who was marked present, last time the who-had-what grid was saved. */

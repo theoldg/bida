@@ -51,7 +51,9 @@ function EditExpenseScreen() {
     try {
       const result = await scanReceipt(file, groupId, secret, []);
       const patch = normalizeScan(result);
-      const receiptItems = result.lineItems.map((li) => ({ label: li.labelEn ?? li.label, amount: li.amount }));
+      const receiptItems = result.lineItems.map((li) => (
+        { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
+      ));
       saveDraft(groupId, {
         ...current,
         ...(patch.description !== undefined ? { description: patch.description } : {}),
