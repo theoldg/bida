@@ -112,3 +112,7 @@ it applies to work nobody has done yet.
 - **Fewer options.** *2026-08-28* — three split modes, in the owner's labels:
   **Evenly · As parts · As amounts**. Dropping a button is not the same act as
   dropping a variant from the data model: old ops keep meaning what they meant.
+- **A failure the model writes gets to be funny.** *2026-08-28* — the scan's
+  rejection sentence is slightly humorous, at the model's expense rather than
+  the photographer's, and still says what to re-shoot. Humour is for the
+  message the model composes, not the app's own fixed copy.

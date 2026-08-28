@@ -89,7 +89,7 @@ It reads. It doesn't compute.
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), amount in the same normalized notation as `total`, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
-| error | a short sentence if the photo isn't a receipt or is unreadable (e.g. "This doesn't look like a receipt"), else null — every other field is null/empty when set |
+| error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
 restaurant-splitting entity in product.md's deferred table isn't built. But
@@ -119,8 +119,9 @@ doesn't know a group's categories.
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 
 A photo that isn't a receipt (or is too blurry/cut off to read) is the
-model's call too: it sets `error` to a short sentence instead of guessing at
-the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
+model's call too: it sets `error` to a short sentence — the prompt asks for a
+light joke at the model's own expense, never the photographer's, that still
+names what to re-shoot — instead of guessing at the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
 into a thrown `ScanRejectedError` whose message *is* the model's sentence;
 the expense form shows it verbatim on the Receipt tab in place of the
 generic "Couldn't read that receipt." A `429`/`503` from Gemini (rate limited

@@ -27,9 +27,12 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "repeated lines or guess a default of 1. Use null for anything illegible or absent, "
             + "and an empty list if there are no line items. Don't compute or guess any amount "
             + "that isn't printed — only reformat the separators. If the photo isn't a receipt at "
-            + "all, or is too blurry or cut off to read, set error to a short sentence saying so "
-            + "(e.g. \"This doesn't look like a receipt\" or \"Too blurry to read\") and leave "
-            + "every other field null or empty. Otherwise leave error null.",
+            + "all, or is too blurry or cut off to read, set error to one short, slightly "
+            + "humorous sentence saying so — light and self-deprecating, never at the "
+            + "photographer's expense, and it still has to say plainly what's wrong so they know "
+            + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
+            + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
+            + "leave every other field null or empty. Otherwise leave error null.",
         },
       ],
     }],
