@@ -88,7 +88,7 @@ It reads. It doesn't compute.
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
-| lineItems | `{ label, labelEn, amount }[]` — printed label, English translation (null if already English), printed amount |
+| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), printed amount, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short sentence if the photo isn't a receipt or is unreadable (e.g. "This doesn't look like a receipt"), else null — every other field is null/empty when set |
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
@@ -100,6 +100,11 @@ new op kind. The items, tip and the grid's own assignment are also written
 onto the expense as plain optional fields so the grid reopens later, on any
 device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
+
+`quantity` is display-only: it's shown as "×N" next to the label on the
+who-had-what grid when printed, but the split arithmetic in
+`lib/scan/items.ts` never multiplies by it — `amount` is already the line's
+printed total, so folding quantity into it too would double-count.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts

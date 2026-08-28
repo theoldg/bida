@@ -58,7 +58,7 @@ describe("normalizeScan", () => {
       ...blank,
       total: "50.00",
       tip: "5.00",
-      lineItems: [{ label: "Café", labelEn: "Coffee", amount: "3.50" }],
+      lineItems: [{ label: "Café", labelEn: "Coffee", amount: "3.50", quantity: null }],
     };
     expect(normalizeScan(result)).toEqual({ amountText: "50.00" });
   });

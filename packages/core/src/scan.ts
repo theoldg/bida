@@ -15,6 +15,8 @@ export interface ScanLineItem {
   labelEn: string | null;
   /** The amount exactly as printed — same convention as ScanResult.total. */
   amount: string;
+  /** The count printed for this line (e.g. "2x", a qty column), or null if none is printed — not inferred. */
+  quantity: number | null;
 }
 
 export interface ScanResult {

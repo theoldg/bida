@@ -332,7 +332,7 @@ export interface ExpenseInput {
   categoryId?: string | null;
   attachmentIds?: Id[];
   /** The parsed bill behind `split`, kept so the who-had-what grid can reopen. */
-  receiptItems?: { label: string; amount: string }[] | null;
+  receiptItems?: { label: string; amount: string; quantity?: number | null }[] | null;
   receiptTip?: string | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;

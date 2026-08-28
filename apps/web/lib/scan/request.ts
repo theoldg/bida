@@ -18,10 +18,13 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "null; the ISO 4217 currency code if legible; the date as YYYY-MM-DD if legible; and "
             + `a category. ${categoryLine} Also return every line item: its label exactly as `
             + "printed in the receipt's own language, an English translation of that label (null "
-            + "if it's already English), and its amount exactly as printed. Use null for anything "
-            + "illegible or absent, and an empty list if there are no line items. Don't compute or "
-            + "guess anything that isn't printed. If the photo isn't a receipt at all, or is too "
-            + "blurry or cut off to read, set error to a short sentence saying so (e.g. \"This "
+            + "if it's already English), its amount exactly as printed, and a quantity if the "
+            + "receipt states a count for that line (e.g. \"2x\", a multiplier, a quantity column) "
+            + "— null if no count is printed, don't infer one from repeated lines or guess a "
+            + "default of 1. Use null for anything illegible or absent, and an empty list if there "
+            + "are no line items. Don't compute or guess anything that isn't printed. If the photo "
+            + "isn't a receipt at all, or is too blurry or cut off to read, set error to a short "
+            + "sentence saying so (e.g. \"This "
             + "doesn't look like a receipt\" or \"Too blurry to read\") and leave every other field "
             + "null or empty. Otherwise leave error null.",
         },
@@ -46,8 +49,9 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
                 label: { type: "STRING" },
                 labelEn: { type: "STRING", nullable: true },
                 amount: { type: "STRING" },
+                quantity: { type: "INTEGER", nullable: true },
               },
-              required: ["label", "labelEn", "amount"],
+              required: ["label", "labelEn", "amount", "quantity"],
             },
           },
           error: { type: "STRING", nullable: true },

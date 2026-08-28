@@ -36,7 +36,7 @@ export interface ExpenseDraft {
    * while it's being typed, then written onto the expense itself on save so
    * "Edit who-had-what" can reopen it later, on any device. ADR-0017.
    */
-  receiptItems?: { label: string; amount: string }[] | null;
+  receiptItems?: { label: string; amount: string; quantity?: number | null }[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
   /** Who was marked present, last time the who-had-what grid was saved. */
