@@ -88,7 +88,10 @@ function LeaveScreen() {
         </Scroll>
       </Body>
 
-      <div style={{ borderTop: "1px solid var(--rule)", flex: "none", padding: "11px 16px" }}>
+      <div style={{
+        borderTop: "1px solid var(--rule)", flex: "none",
+        padding: "11px 16px", paddingBottom: "max(11px, env(safe-area-inset-bottom))",
+      }}>
         <button className="btn btn-d" onClick={leave} disabled={busy}>
           <Icon name="trash" size={15} /> {title}
         </button>
