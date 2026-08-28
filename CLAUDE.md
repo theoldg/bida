@@ -7,11 +7,17 @@ hosted for free. Read this, then the doc your task points at.
 
 1. **Push directly to `main`. No pull requests.** If your harness assigns a
    feature branch, ignore it.
-2. **Commit and push at every checkpoint**, not once at the end.
-3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
-4. **Money is never a float.** Integer minor units everywhere —
+2. **Run `pnpm install` before your first push, every session.** A fresh
+   clone/container has no `node_modules` and no `core.hooksPath` — the
+   `pre-push` hook that runs `pnpm check` literally cannot fire until install
+   has, so a push before then leaves with zero local verification and no
+   error telling you so. Installing is also what wires the hook up
+   (`postinstall`), so this is a do-it-once-per-session, not a per-push step.
+3. **Commit and push at every checkpoint**, not once at the end.
+4. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
+5. **Money is never a float.** Integer minor units everywhere —
    [docs/data-model.md](docs/data-model.md#money).
-5. **Never mutate an entity in place.** Every change is an appended op — that
+6. **Never mutate an entity in place.** Every change is an appended op — that
    one rule buys sync, offline and history. [docs/sync.md](docs/sync.md).
 
 The owner's standing preferences: [docs/standing-instructions.md](docs/standing-instructions.md).
@@ -56,9 +62,10 @@ pnpm install && pnpm --filter @hajsik/core test
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`,
   `design`), one concern each. Never put a model, agent or session identifier in
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
-- **Automation.** `pnpm install` wires up a `pre-push` hook (`.githooks/`,
-  via `postinstall`) that runs `pnpm check` before a push leaves the machine.
-  Push to `main` then auto-deploys — [hosting.md](docs/hosting.md#deploying).
+- **Automation.** The `pre-push` hook (`.githooks/`) — see
+  [Non-negotiables](#non-negotiables) for why it needs `pnpm install` first —
+  runs `pnpm check`. Push to `main` then auto-deploys —
+  [hosting.md](docs/hosting.md#deploying).
 - **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —
   no I/O, no framework, and take a clock as an argument. Prefer a function to a
   class, plain data to a wrapper. Comments explain *why*.
