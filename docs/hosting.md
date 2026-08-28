@@ -22,6 +22,16 @@ free tiers move.)
 
 `apps/api` is the one Worker: static assets plus the sync API backed by D1.
 
+**Automatic:** every push to `main` runs
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — build the
+web export, then `wrangler deploy` — using the `CLOUDFLARE_API_TOKEN` repo
+secret (Settings → Secrets and variables → Actions). It does not re-run
+typecheck/test; that's the local pre-push hook's job (see
+[working agreements](../CLAUDE.md#working-agreements)), so a push that skips
+the hook (`--no-verify`) can still deploy.
+
+**Manually**, e.g. from a phone session with no local hook:
+
 ```bash
 pnpm --filter @hajsik/web build        # next build → apps/web/out
 pnpm --filter @hajsik/api run deploy   # wrangler deploy
@@ -56,10 +66,13 @@ subdomains don't expire while the Worker exists.
 
 ### The `CLOUDFLARE_API_TOKEN`
 
-`wrangler deploy` needs it in the environment. It is **not** in this repo and
-must never be committed. Expect the owner to paste a fresh one into the session
-each time a deploy is needed; keep it in a scratch file outside anything
-git-tracked. [standing-instructions.md](standing-instructions.md#workflow).
+`wrangler deploy` needs it in the environment. Since 2026-08-28 it lives as the
+`CLOUDFLARE_API_TOKEN` GitHub Actions repo secret, used by
+[`deploy.yml`](../.github/workflows/deploy.yml) — it is **not** in the repo
+itself and must never be committed. A manual deploy from a session still needs
+the owner to paste a fresh token; keep it in a scratch file outside anything
+git-tracked, never in a git-tracked one.
+[standing-instructions.md](standing-instructions.md#workflow).
 
 ## Cost tripwires
 

@@ -56,6 +56,9 @@ pnpm install && pnpm --filter @hajsik/core test
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`,
   `design`), one concern each. Never put a model, agent or session identifier in
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
+- **Automation.** `pnpm install` wires up a `pre-push` hook (`.githooks/`,
+  via `postinstall`) that runs `pnpm check` before a push leaves the machine.
+  Push to `main` then auto-deploys — [hosting.md](docs/hosting.md#deploying).
 - **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —
   no I/O, no framework, and take a clock as an argument. Prefer a function to a
   class, plain data to a wrapper. Comments explain *why*.

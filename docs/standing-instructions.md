@@ -21,6 +21,13 @@ it applies to work nobody has done yet.
   they declined committing it and can't reach the environment-settings UI from
   a phone. **Never write it to a git-tracked file.** Keep it in a session-local
   scratch file outside the repo. [hosting.md](hosting.md#the-cloudflare_api_token).
+- **Push to `main` triggers an automatic deploy.** *2026-08-28* — "a deploy job
+  from main would be great," with the token added as the `CLOUDFLARE_API_TOKEN`
+  GitHub Actions repo secret (the owner set this up themselves; never ask them
+  to paste a token into a session for this). Lint/typecheck/test run locally as
+  a pre-push hook, not as a GitHub Actions job — the owner wants CI-shaped
+  checks to run on the machine making the push, not the cloud side.
+  [hosting.md](hosting.md#deploying).
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
   and easy to run for you, but don't overuse it." `pnpm shots` after building or
   changing a screen, not after every edit. [testing.md](testing.md).

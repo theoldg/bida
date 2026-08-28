@@ -1,0 +1,8 @@
+#!/bin/sh
+# Typecheck + test before a push leaves the machine — the deploy workflow
+# (.github/workflows/deploy.yml) trusts this and does not re-run checks.
+# Wired up automatically by the root postinstall script
+# (`git config core.hooksPath .githooks`), so `pnpm install` is all a fresh
+# clone needs.
+set -e
+pnpm check
