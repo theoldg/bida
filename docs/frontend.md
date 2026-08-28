@@ -140,3 +140,9 @@ figure-free.
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
   the field accepts both "," and "." as decimal separators. It deliberately
   doesn't match `Intl`'s grouping in saved figures.
+- **`patch()` on the expense draft must merge against the latest saved draft,
+  not the `draft` the current render closed over.** A handler that calls
+  `patch()` twice synchronously (e.g. switching split tabs: once for the tab,
+  once for the converted `SplitSpec`) had the second call overwrite the first
+  — both merged onto the same stale closure, so `saveDraft` never saw the
+  first change. Fixed by reading `getDraft(groupId)` inside `patch()` itself.

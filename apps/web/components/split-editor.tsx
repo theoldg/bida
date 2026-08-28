@@ -238,46 +238,78 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
  * expense (`canScan`) — rescanning over an edit would silently overwrite
  * fields someone may have already corrected (ADR-0016).
  */
+function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, size }: {
+  scanDisabled: boolean;
+  scanState: "idle" | "scanning" | "error";
+  scanSource: "camera" | "library" | null;
+  onScanCamera: () => void;
+  onScanLibrary: () => void;
+  /** "s" for the first-scan pair, "xs" for the smaller replace-receipt pair. */
+  size: "s" | "xs";
+}) {
+  const busy = scanState === "scanning";
+  const disabledOpacity = size === "xs" ? { opacity: scanDisabled || busy ? .5 : 1 } : undefined;
+  return (
+    <div style={{ display: "flex", gap: 7 }}>
+      <button type="button" className={size === "s" ? "btn btn-s" : "chip"} disabled={scanDisabled || busy}
+        style={disabledOpacity} onClick={onScanCamera}>
+        {busy && scanSource === "camera"
+          ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={size === "s" ? 16 : 13} />}
+        {busy && scanSource === "camera" ? "Reading…" : size === "s" ? "Scan a receipt" : "Rescan"}
+      </button>
+      <button type="button" className={size === "s" ? "btn btn-s" : "chip"} disabled={scanDisabled || busy}
+        style={disabledOpacity} onClick={onScanLibrary}>
+        {busy && scanSource === "library"
+          ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={size === "s" ? 16 : 13} />}
+        {busy && scanSource === "library" ? "Reading…" : "Upload"}
+      </button>
+    </div>
+  );
+}
+
 function ReceiptPanel({
   items, canScan, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
 }: ReceiptTabProps) {
   if (items && items.length > 0) {
     return (
-      <div style={{ padding: "12px 12px" }}>
-        <div style={{ fontSize: 13.5 }}>
-          {items.length} item{items.length === 1 ? "" : "s"} from the receipt
-        </div>
-        <Link href={editItemsHref} className="action" style={{ fontSize: 12.5, display: "inline-block", marginTop: 6 }}>
-          Edit who-had-what
+      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+        <Link href={editItemsHref} className="btn btn-p" style={{ textDecoration: "none", justifyContent: "space-between" }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Icon name="users" size={16} />
+            Edit who-had-what
+          </span>
+          <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
+            {items.length} item{items.length === 1 ? "" : "s"}
+            <Icon name="chev" size={14} />
+          </span>
         </Link>
+        {canScan ? (
+          <div>
+            <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
+              onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
+            {scanState === "error" ? (
+              <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
+                {scanError ?? "Couldn't read that receipt."} The old one is still assigned.
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     );
   }
 
   if (!canScan) {
     return (
-      <div style={{ padding: "12px 12px", fontSize: 12, color: "var(--muted)" }}>
+      <div style={{ padding: 12, fontSize: 12, color: "var(--muted)" }}>
         No receipt on this expense. Scanning fills in a new expense — start one to use it.
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "12px 12px" }}>
-      <div style={{ display: "flex", gap: 7 }}>
-        <button type="button" className="btn btn-s" disabled={scanDisabled || scanState === "scanning"}
-          onClick={onScanCamera}>
-          {scanState === "scanning" && scanSource === "camera"
-            ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={16} />}
-          {scanState === "scanning" && scanSource === "camera" ? "Reading receipt…" : "Scan a receipt"}
-        </button>
-        <button type="button" className="btn btn-s" disabled={scanDisabled || scanState === "scanning"}
-          onClick={onScanLibrary}>
-          {scanState === "scanning" && scanSource === "library"
-            ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={16} />}
-          {scanState === "scanning" && scanSource === "library" ? "Reading receipt…" : "Upload"}
-        </button>
-      </div>
+    <div style={{ padding: 12 }}>
+      <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
+        onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="s" />
       {scanState === "error" ? (
         <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
           {scanError ?? "Couldn't read that receipt."}{" "}

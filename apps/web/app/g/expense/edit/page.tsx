@@ -111,7 +111,11 @@ function EditExpenseScreen() {
   }
   const group = data.group;
   const base = group.baseCurrency;
-  const patch = (change: Partial<ExpenseDraft>) => saveDraft(groupId, { ...draft, ...change });
+  // Merges against the latest saved draft, not the `draft` this render closed
+  // over — some interactions (switching split tabs) call patch() twice in one
+  // handler, and merging against a stale closure would let the first patch's
+  // change be clobbered by the second.
+  const patch = (change: Partial<ExpenseDraft>) => saveDraft(groupId, { ...(getDraft(groupId) ?? draft), ...change });
 
   let amountMinor = 0;
   try { amountMinor = draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0; } catch { /* mid-type */ }
