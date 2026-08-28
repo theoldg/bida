@@ -14,7 +14,7 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 
 // Model id is a Worker-side constant, not client-supplied — see
 // docs/receipt-scanning.md#why-the-key-sits-on-the-worker.
-const GEMINI_MODEL = "gemini-3.6-flash";
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 app.post("/api/groups/:id/scan", async (c) => {
