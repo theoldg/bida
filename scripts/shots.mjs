@@ -82,6 +82,12 @@ async function seed(page) {
   // A plain expense, then a co-sponsored one.
   await addExpense(page, groupId, { amount: "4800", what: "Riad Jnane" });
   await addExpense(page, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
+  // Then the two rows personal mode exists for: one somebody else paid that
+  // you owe a share of (red), and one that has nothing to do with you (faded).
+  await addExpense(page, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
+  await addExpense(page, groupId, {
+    amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
+  });
 
   // ...and one edit, so the history screens have a revision that is not just a
   // create: a diff to render, and a version worth offering to restore.
@@ -95,10 +101,14 @@ async function seed(page) {
   return groupId;
 }
 
-async function addExpense(page, groupId, { amount, what, coSponsor }) {
+async function addExpense(page, groupId, { amount, what, coSponsor, paidBy, exclude }) {
   await page.goto(`${base}/g/expense/edit?id=${groupId}`);
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
+  if (paidBy) await page.locator("#paidby").selectOption({ label: paidBy });
+  // The split editor is on this form now (ADR-0013), so leaving somebody out
+  // is a tap here rather than a trip to a screen and back.
+  if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
     await page.getByRole("link", { name: /several people paid/i }).click();
     await page.waitForURL(/\/g\/payers/);

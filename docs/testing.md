@@ -40,10 +40,14 @@ every edit**; that's the owner's instruction, see
 1. **Serves the real static export** (`apps/web/out`) over a bare `node:http`
    server rather than running `next dev`. The export is what actually ships, and
    it has quirks `next dev` doesn't.
-2. **Seeds a group through the UI** — "Marrakech", three members, a plain expense,
-   a co-sponsored one, and one edit — by driving the real screens, not by poking
-   IndexedDB. The edit is there so the history screens have a revision that
-   isn't a create: a diff to render, and a version worth offering to restore.
+2. **Seeds a group through the UI** — "Marrakech", three members, four expenses
+   and one edit — by driving the real screens, not by poking IndexedDB. Each
+   expense earns its place: a plain one, a co-sponsored one, one somebody else
+   paid that you owe a share of, and one that leaves you out entirely. The last
+   two are what personal mode is *for*, so a shot without them cannot show it
+   working — one row red, one faded to "not yours". The edit is there so the
+   history screens have a revision that isn't a create: a diff to render, and a
+   version worth offering to restore.
    That costs a few seconds and buys a lot: the harness fails loudly when a
    screen it isn't even photographing breaks, and every shot shows a populated
    ledger instead of an empty state.
