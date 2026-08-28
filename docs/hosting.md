@@ -38,8 +38,8 @@ would be the only line item with a plausible route to real money.
 3, the sync API (`POST`/`GET /api/groups/:id/ops`) backed by D1:
 
 ```bash
-pnpm --filter @hajsik/web build     # next build → apps/web/out (static export)
-pnpm --filter @hajsik/api deploy    # wrangler deploy, serves apps/web/out + API
+pnpm --filter @hajsik/web build        # next build → apps/web/out (static export)
+pnpm --filter @hajsik/api run deploy   # wrangler deploy, serves apps/web/out + API
 ```
 
 `apps/api/wrangler.toml`:
@@ -123,6 +123,10 @@ one:
 
 *Add to this list every time one bites you.*
 
+- **`pnpm --filter @hajsik/api deploy` does not run the package's `deploy`
+  script.** `deploy` is one of pnpm's own commands, so pnpm takes the word for
+  itself and fails with `ERR_PNPM_INVALID_DEPLOY_TARGET: This command requires
+  one parameter`. Say `run deploy` explicitly.
 - Cloudflare env vars are runtime-only; Next.js may want some at build time.
   Anything needed during `next build` must come from the CI environment, not
   from Worker secrets.
