@@ -32,7 +32,10 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 - [x] **Scan a receipt into the expense form** — [receipt-scanning.md](receipt-scanning.md),
       [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). Needs no
       storage: the photo is read and thrown away. Button, states, privacy
-      line, and a who-had-what screen for line items, all live.
+      line, and a who-had-what screen for line items — where a "×2" line
+      unfolds into separately assignable portions
+      ([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)) —
+      all live.
 - [ ] Multi-image capture, on-device downscale
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
 - [ ] Gallery + full-screen viewer

@@ -101,10 +101,14 @@ onto the expense as plain optional fields so the grid reopens later, on any
 device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
 
-`quantity` is display-only: it's shown as "×N" next to the label on the
-who-had-what grid when printed, but the split arithmetic in
-`lib/scan/items.ts` never multiplies by it — `amount` is already the line's
-printed total, so folding quantity into it too would double-count.
+`quantity` never multiplies anything — `amount` is already the line's printed
+total, so folding the count into it too would double-count. It does one job on
+the who-had-what grid: it's how many rows that line **unfolds** into. Tapping
+the "×2" on a row replaces it with two, each a portion of the printed amount
+with its own eaters — Alice and Bob shared one salad, Charlie had the other —
+and tapping it again merges them back. Portions carry `portionOf` and sum to
+the printed line exactly, so the bill's total never moves
+([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `ExpenseDraft` patch: `total` passes straight through as `amountText` — the
@@ -170,15 +174,16 @@ per-group quota, then a decision about whether the photo is stored at all.
    tab persists on the expense, the amount is computed from items + tip while
    Receipt mode has items, the tip scales to what each person ordered, and
    scanning/rescanning works on any expense, not just an unsaved one.
-9. ✅ Follow-up (2026-08-28): the tip is one editable row in the grid ("Tip +
-   service", with its percentage shown next to it) rather than a separate
-   field; the grid's initials row stays visible while scrolling; the split
-   editor's "N of total allocated" line is scoped to As amounts, the only
-   mode where it isn't either trivially true or, before the total had synced,
-   a nonsensical "€0.00 of €0.00"; and
+9. ✅ Follow-up (2026-08-28): the tip is an editable row in the grid with its
+   percentage beside it; the initials row stays put while scrolling; the split
+   editor's "N of total allocated" line is scoped to As amounts, the only mode
+   where it isn't trivially true; and
    [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md)
-   stopped caching that total/split in the draft at all — both are computed
-   fresh, inline, wherever they're read.
+   stopped caching the receipt's total and split in the draft at all.
+
+10. ✅ [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md) —
+    a line the receipt counted ("×2") unfolds into that many separately
+    assignable portions on the grid, and merges back.
 
 ## Verified live, 2026-08-28
 

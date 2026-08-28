@@ -4,11 +4,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { Icon } from "../../../../components/icons";
 import { distinctInitials, money, tone } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../../lib/draft";
-import { receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
+import {
+  foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto, weightsFromItems,
+} from "../../../../lib/scan/items";
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit
@@ -64,6 +67,7 @@ function ItemsScreen() {
   }
 
   const labels = distinctInitials(data.members);
+  const runs = portions(items);
 
   function toggleInvolved(memberId: string) {
     const nextInvolved = new Set(involved);
@@ -75,6 +79,40 @@ function ItemsScreen() {
       if (adding) next.add(memberId); else next.delete(memberId);
       return next;
     }));
+  }
+
+  // Unfolding and merging change the bill's shape, so the grid's rows have to
+  // move with it: both are written together, keeping the invariant the seeding
+  // effect above relies on (one assignment row per item) true even if this
+  // screen is left without pressing Done.
+  function commitRows(nextItems: typeof items, nextAssignments: Set<string>[]) {
+    if (!groupId || !draft) return;
+    setAssignments(nextAssignments);
+    saveDraft(groupId, {
+      ...draft,
+      receiptItems: nextItems,
+      receiptInvolved: [...involved],
+      receiptAssignments: nextAssignments.map((row) => [...row]),
+    });
+  }
+
+  /** "Salad ×2" becomes two salads, each starting with whoever had the line. */
+  function unfold(index: number) {
+    if (!draft) return;
+    const next = unfoldItem(items, index, draft.currency);
+    if (!next) return;
+    commitRows(next.items, assignments.flatMap((row, i) =>
+      i === index ? Array.from({ length: next.count }, () => new Set(row)) : [row]));
+  }
+
+  /** And back — everyone who had any portion had the line it becomes again. */
+  function fold(start: number, count: number) {
+    if (!draft) return;
+    const next = foldPortions(items, start, count, draft.currency);
+    if (!next) return;
+    const merged = new Set<string>();
+    for (const row of assignments.slice(start, start + count)) for (const id of row) merged.add(id);
+    commitRows(next.items, [...assignments.slice(0, start), merged, ...assignments.slice(start + count)]);
   }
 
   function toggleCell(itemIndex: number, memberId: string) {
@@ -94,6 +132,7 @@ function ItemsScreen() {
   );
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
+  const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
 
   let tipPercent: number | null = null;
   if (draft.receiptTip) {
@@ -164,31 +203,62 @@ function ItemsScreen() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item, i) => (
-                    <tr key={i}>
-                      <td className="itemlabel">
-                        <span>
-                          {item.label}
-                          {item.quantity && item.quantity > 1 ? (
-                            <span className="itemqty"> ×{item.quantity}</span>
-                          ) : null}
-                        </span>
-                        <span className="itemamount">{item.amount}</span>
-                      </td>
-                      {involvedMembers.map((m) => (
-                        <td key={m.id}>
-                          <button className="itemcell" onClick={() => toggleCell(i, m.id)}
-                            aria-pressed={assignments[i]?.has(m.id) ?? false}
-                            aria-label={`${m.name} had ${item.label}`}>
-                            {assignments[i]?.has(m.id) ? <span className={`dot ${tone(m.colorSeed)}`} /> : null}
-                          </button>
+                  {items.map((item, i) => {
+                    const part = runs[i] ?? null;
+                    const into = part ? null : unfoldableInto(item, draft.currency);
+                    return (
+                      <tr key={i} className={part ? "part" : undefined}>
+                        <td className="itemlabel">
+                          <div className="itemrow">
+                            <span className="itemtext">
+                              <span className="itemname">
+                                {item.label}
+                                {/* The printed count, but only where the button
+                                    below isn't already carrying it. */}
+                                {!part && into === null && item.quantity && item.quantity > 1 ? (
+                                  <span className="itemqty"> ×{item.quantity}</span>
+                                ) : null}
+                              </span>
+                              {/* Which portion this is goes on the amount line:
+                                  the label's own line has a button to share
+                                  with and a name of any length in it. */}
+                              <span className="itemamount">
+                                {item.amount}
+                                {part ? <span className="itemqty"> · {part.index} of {part.of}</span> : null}
+                              </span>
+                            </span>
+                            {into !== null ? (
+                              <button className="itemfold" onClick={() => unfold(i)}
+                                title={`Split into ${into} separate lines`}
+                                aria-label={`Split ${item.label} into ${into} separate lines`}>
+                                ×{into}<Icon name="split" size={12} />
+                              </button>
+                            ) : part && part.index === 1 ? (
+                              <button className="itemfold on" onClick={() => fold(part.start, part.of)}
+                                title="Merge back into one line"
+                                aria-label={`Merge the ${part.of} ${item.label} lines back into one`}>
+                                ×{part.of}<Icon name="merge" size={12} />
+                              </button>
+                            ) : null}
+                          </div>
                         </td>
-                      ))}
-                    </tr>
-                  ))}
+                        {involvedMembers.map((m) => (
+                          <td key={m.id}>
+                            <button className="itemcell" onClick={() => toggleCell(i, m.id)}
+                              aria-pressed={assignments[i]?.has(m.id) ?? false}
+                              aria-label={part
+                                ? `${m.name} had ${item.label}, portion ${part.index} of ${part.of}`
+                                : `${m.name} had ${item.label}`}>
+                              {assignments[i]?.has(m.id) ? <span className={`dot ${tone(m.colorSeed)}`} /> : null}
+                            </button>
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                   <tr>
                     <td className="itemlabel">
-                      <span>
+                      <span className="itemname">
                         Tip + service
                         {tipPercent !== null ? <span className="itemqty"> ({tipPercent}%)</span> : null}
                       </span>
@@ -205,6 +275,14 @@ function ItemsScreen() {
             {!everyItemAssigned ? (
               <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 9, fontWeight: 600 }}>
                 Every item needs at least one person.
+              </div>
+            ) : null}
+            {/* Only until it's been used once: a control you've found doesn't
+                need explaining, and the grid is tight enough already. */}
+            {canUnfoldSomething && runs.every((r) => r === null) ? (
+              <div className="hint" style={{ fontSize: 11.5 }}>
+                Tap a <span style={{ fontFamily: "var(--f-mono)" }}>×N</span> to split that line into
+                separate portions.
               </div>
             ) : null}
           </div>

@@ -1,4 +1,4 @@
-import { minorToDecimalString, parseMinor, resolveSplit, type SplitTab } from "@hajsik/core";
+import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitTab } from "@hajsik/core";
 
 /**
  * Turns "who had what" on a scanned receipt into split weights.
@@ -110,4 +110,108 @@ export function handOffReceiptTotal(
   // `minorToDecimalString`, not `bare`: what goes into `amountText` has to
   // be canonical text `parseMinor` can read back. `bare` groups thousands.
   return total === null ? null : minorToDecimalString(total, currency);
+}
+
+/**
+ * Unfolding a printed line into separately assignable portions.
+ *
+ * A receipt prints "Salad ×2  9.00" as one line, but two salads can have been
+ * eaten by different people — Alice and Bob shared one, Charlie had the other.
+ * One row can't say that, so the row becomes two, each carrying half the
+ * printed amount and its own set of eaters. Nothing downstream learns a new
+ * concept: the grid still reduces to weights, and the bill is still the sum of
+ * its lines. ADR-0022.
+ *
+ * Portions are marked (`portionOf`), not inferred from equal labels, so a
+ * receipt that happens to print two identical lines isn't drawn as something
+ * that was unfolded — and so merging back is exact.
+ */
+
+/** Where a row sits in an unfolded group: its start, its place, the size. */
+export interface Portion { start: number; index: number; of: number }
+
+/**
+ * One entry per item: null for an ordinary printed line, else the portion it
+ * is. A run counts only when all `of` consecutive rows agree on the label and
+ * the count, so a half-deleted group degrades to ordinary lines rather than
+ * rendering a bracket around the wrong rows.
+ */
+export function portions(items: readonly ReceiptItem[]): (Portion | null)[] {
+  const out: (Portion | null)[] = items.map(() => null);
+  for (let i = 0; i < items.length; ) {
+    const head = items[i];
+    const of = head?.portionOf ?? 0;
+    const run = head && of >= 2 && i + of <= items.length
+      && items.slice(i, i + of).every((r) => r.portionOf === of && r.label === head.label);
+    if (!run) { i++; continue; }
+    for (let k = 0; k < of; k++) out[i + k] = { start: i, index: k + 1, of };
+    i += of;
+  }
+  return out;
+}
+
+/** The count a printed line can be unfolded into, or null if it can't be. */
+export function unfoldableInto(item: ReceiptItem, currency: string): number | null {
+  const count = item.quantity ?? 0;
+  if (!Number.isInteger(count) || count < 2 || item.portionOf) return null;
+  try { if (parseMinor(item.amount, currency) <= 0) return null; } catch { return null; }
+  return count;
+}
+
+/**
+ * Split `items[index]` into one row per printed unit. The portions sum to the
+ * line exactly — the remainder goes to the earliest ones, a cent at a time —
+ * so the bill's total, and the tip percentage read off it, don't move.
+ *
+ * Returns the new list plus where it grew, so the caller can widen the grid's
+ * assignment rows in step, or null when the line isn't unfoldable.
+ */
+export function unfoldItem(
+  items: readonly ReceiptItem[],
+  index: number,
+  currency: string,
+): { items: ReceiptItem[]; at: number; count: number } | null {
+  const item = items[index];
+  if (!item) return null;
+  const count = unfoldableInto(item, currency);
+  if (count === null) return null;
+
+  const minor = parseMinor(item.amount, currency);
+  const each = Math.floor(minor / count);
+  const remainder = minor - each * count;
+  const parts: ReceiptItem[] = Array.from({ length: count }, (_, i) => ({
+    label: item.label,
+    amount: minorToDecimalString(each + (i < remainder ? 1 : 0), currency),
+    // The printed count belongs to the line that's gone; a portion is one of.
+    quantity: null,
+    portionOf: count,
+  }));
+  return { items: [...items.slice(0, index), ...parts, ...items.slice(index + 1)], at: index, count };
+}
+
+/**
+ * The inverse: `count` rows from `start` become the one line they came from,
+ * amounts summed back up and the count printed again as its quantity.
+ */
+export function foldPortions(
+  items: readonly ReceiptItem[],
+  start: number,
+  count: number,
+  currency: string,
+): { items: ReceiptItem[]; at: number } | null {
+  const rows = items.slice(start, start + count);
+  const head = rows[0];
+  if (!head || rows.length < 2) return null;
+
+  let minor = 0;
+  for (const row of rows) {
+    try { minor += parseMinor(row.amount, currency); } catch { return null; }
+  }
+  const merged: ReceiptItem = {
+    label: head.label,
+    amount: minorToDecimalString(minor, currency),
+    quantity: rows.reduce((n, row) => n + (row.quantity ?? 1), 0),
+    portionOf: null,
+  };
+  return { items: [...items.slice(0, start), merged, ...items.slice(start + count)], at: start };
 }

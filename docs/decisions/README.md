@@ -32,3 +32,4 @@ old one `Superseded by NNNN`.
 | [0019](0019-receipt-mode-owns-the-total.md) | Receipt mode owns the total; the tab choice persists | Accepted |
 | [0020](0020-receipt-total-and-split-are-derived-not-cached.md) | Receipt's total and split are derived at read time, never cached | Accepted |
 | [0021](0021-leaving-receipt-mode-hands-the-total-back.md) | Leaving Receipt hands the total back; a zero total is never "allocated" | Accepted |
+| [0022](0022-unfolding-a-receipt-line-into-portions.md) | A "×2" line unfolds into portions; a portion is an ordinary line | Accepted |

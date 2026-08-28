@@ -193,6 +193,36 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);
 
+      // Who had what — the one screen only a scan leads to, so its draft is
+      // patched in rather than photographed after a live model call. Shot
+      // twice: the bill as printed, then with its "×2" salad unfolded into two
+      // separately assignable portions.
+      await page.goto(`${base}/g/expense/edit?id=${groupId}`);
+      await page.waitForTimeout(200);
+      await page.evaluate((id) => {
+        const key = `hajsik.draft.${id}`;
+        const draft = JSON.parse(sessionStorage.getItem(key));
+        sessionStorage.setItem(key, JSON.stringify({
+          ...draft,
+          description: "Café Clock",
+          receiptItems: [
+            { label: "Salade marocaine", amount: "9.00", quantity: 2 },
+            { label: "Chicken tagine", amount: "14.50", quantity: null },
+            { label: "Mint tea", amount: "6.00", quantity: 3 },
+          ],
+          receiptTip: "3.00",
+          splitTab: "receipt",
+        }));
+      }, groupId);
+      await page.goto(`${base}/g/expense/items?id=${groupId}`);
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
+      process.stdout.write(`${theme}/who-had-what `);
+      await page.getByRole("button", { name: /^Split Salade marocaine/ }).click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
+      process.stdout.write(`${theme}/who-had-what-unfolded `);
+
       // The restore confirmation carries an HLC in its URL, so it is reached by
       // pressing the rewind on a real revision rather than by a fixed path.
       await page.goto(`${base}/g/history?id=${groupId}`);

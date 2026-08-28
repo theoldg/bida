@@ -77,6 +77,11 @@ it applies to work nobody has done yet.
   re-edit the split: "it should obviously be stored on the server." The parsed
   items and who-had-what grid are now plain fields on the expense, synced like
   everything else. [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
+- **Receipt splitting has to handle the awkward table, not just the easy one.**
+  *2026-08-28* — "add an option to unfold many items for nontrivial sub-splits,
+  e.g. salad (x2) → salad, Alice + Bob / salad, Charlie … this should be well
+  designed graphically."
+  [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md).
 
 ## Interface
 

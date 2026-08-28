@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { parseMinor } from "@hajsik/core";
-import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "./items";
+import {
+  foldPortions, handOffReceiptTotal, portions, receiptTotalMinor, unfoldItem, unfoldableInto,
+  weightsFromItems,
+} from "./items";
 
 describe("weightsFromItems", () => {
   it("splits each item evenly among its assigned members", () => {
@@ -119,5 +122,102 @@ describe("handOffReceiptTotal", () => {
     expect(handOffReceiptTotal("receipt", "equal", [], null, "EUR")).toBeNull();
     expect(handOffReceiptTotal("receipt", "equal", null, null, "EUR")).toBeNull();
     expect(handOffReceiptTotal("receipt", "equal", undefined, undefined, "EUR")).toBeNull();
+  });
+});
+
+describe("unfoldItem", () => {
+  const salad = { label: "Salad", amount: "9.00", quantity: 2 };
+
+  it("splits a printed line into one row per unit, summing back to the line", () => {
+    const out = unfoldItem([salad], 0, "EUR")!;
+    expect(out.items).toEqual([
+      { label: "Salad", amount: "4.50", quantity: null, portionOf: 2 },
+      { label: "Salad", amount: "4.50", quantity: null, portionOf: 2 },
+    ]);
+    expect(receiptTotalMinor(out.items, null, "EUR")).toBe(900);
+  });
+
+  it("keeps the bill's total exactly when the line doesn't divide", () => {
+    // 9.01 over three: 3.01 + 3.00 + 3.00. Never 3.00 × 3 with a lost cent,
+    // which would move the expense's amount and the tip percentage with it.
+    const out = unfoldItem([{ label: "Beer", amount: "9.01", quantity: 3 }], 0, "EUR")!;
+    expect(out.items.map((i) => i.amount)).toEqual(["3.01", "3.00", "3.00"]);
+    expect(receiptTotalMinor(out.items, null, "EUR")).toBe(901);
+  });
+
+  it("splits in the currency's own minor units", () => {
+    // JPY has no cents: 5 yen over 2 is 3 + 2, not 2.50.
+    const out = unfoldItem([{ label: "Tea", amount: "5", quantity: 2 }], 0, "JPY")!;
+    expect(out.items.map((i) => i.amount)).toEqual(["3", "2"]);
+    expect(receiptTotalMinor(out.items, null, "JPY")).toBe(5);
+  });
+
+  it("leaves the rest of the bill where it was", () => {
+    const out = unfoldItem([{ label: "Soup", amount: "3.00" }, salad, { label: "Wine", amount: "8.00" }], 1, "EUR")!;
+    expect(out.items.map((i) => i.label)).toEqual(["Soup", "Salad", "Salad", "Wine"]);
+    expect(out.at).toBe(1);
+    expect(out.count).toBe(2);
+  });
+
+  it("refuses a line there's nothing to unfold", () => {
+    expect(unfoldableInto({ label: "Soup", amount: "3.00" }, "EUR")).toBeNull();
+    expect(unfoldableInto({ label: "Soup", amount: "3.00", quantity: 1 }, "EUR")).toBeNull();
+    expect(unfoldableInto({ label: "Soup", amount: "0.00", quantity: 2 }, "EUR")).toBeNull();
+    expect(unfoldableInto({ label: "Soup", amount: "??", quantity: 2 }, "EUR")).toBeNull();
+    // A portion is already one unit; it can't be unfolded again.
+    expect(unfoldableInto({ label: "Salad", amount: "4.50", quantity: 2, portionOf: 2 }, "EUR")).toBeNull();
+    expect(unfoldItem([{ label: "Soup", amount: "3.00" }], 0, "EUR")).toBeNull();
+    expect(unfoldItem([salad], 4, "EUR")).toBeNull();
+  });
+});
+
+describe("foldPortions", () => {
+  it("puts the portions back on one line, exactly", () => {
+    const unfolded = unfoldItem([{ label: "Beer", amount: "9.01", quantity: 3 }], 0, "EUR")!;
+    const folded = foldPortions(unfolded.items, 0, 3, "EUR")!;
+    expect(folded.items).toEqual([{ label: "Beer", amount: "9.01", quantity: 3, portionOf: null }]);
+  });
+
+  it("round-trips a line unfolded and merged back", () => {
+    const before = [{ label: "Soup", amount: "3.00" }, { label: "Salad", amount: "9.00", quantity: 2 }];
+    const unfolded = unfoldItem(before, 1, "EUR")!;
+    const folded = foldPortions(unfolded.items, 1, 2, "EUR")!;
+    expect(folded.items).toEqual([
+      { label: "Soup", amount: "3.00" },
+      { label: "Salad", amount: "9.00", quantity: 2, portionOf: null },
+    ]);
+  });
+
+  it("refuses to merge fewer than two rows, or unreadable ones", () => {
+    expect(foldPortions([{ label: "Soup", amount: "3.00" }], 0, 1, "EUR")).toBeNull();
+    expect(foldPortions([{ label: "A", amount: "1.00" }, { label: "A", amount: "??" }], 0, 2, "EUR")).toBeNull();
+    expect(foldPortions([], 0, 2, "EUR")).toBeNull();
+  });
+});
+
+describe("portions", () => {
+  const p = (n: number) => ({ label: "Salad", amount: "4.50", portionOf: n });
+
+  it("marks each row of a run with its place in it", () => {
+    expect(portions([{ label: "Soup", amount: "3.00" }, p(2), p(2)])).toEqual([
+      null,
+      { start: 1, index: 1, of: 2 },
+      { start: 1, index: 2, of: 2 },
+    ]);
+  });
+
+  it("keeps two adjacent unfolds of the same line apart", () => {
+    // Four identical rows marked "one of two" are two separate pairs — the
+    // merge control on the third row must not swallow the first pair.
+    expect(portions([p(2), p(2), p(2), p(2)]).map((x) => x?.start)).toEqual([0, 0, 2, 2]);
+  });
+
+  it("treats a broken run as ordinary lines", () => {
+    // A row deleted out from under a group, or a receipt that printed the
+    // same label twice by itself: no bracket, no merge control.
+    expect(portions([p(2)])).toEqual([null]);
+    expect(portions([p(2), { label: "Wine", amount: "4.50", portionOf: 2 }])).toEqual([null, null]);
+    expect(portions([{ label: "Salad", amount: "4.50" }, { label: "Salad", amount: "4.50" }]))
+      .toEqual([null, null]);
   });
 });

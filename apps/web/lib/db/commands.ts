@@ -13,6 +13,7 @@ import {
   type Op,
   type OpKind,
   type Rate,
+  type ReceiptItem,
   type SplitSpec,
   type SplitTab,
 } from "@hajsik/core";
@@ -339,7 +340,7 @@ export interface ExpenseInput {
   categoryId?: string | null;
   attachmentIds?: Id[];
   /** The parsed bill behind `split`, kept so the who-had-what grid can reopen. */
-  receiptItems?: { label: string; amount: string; quantity?: number | null }[] | null;
+  receiptItems?: ReceiptItem[] | null;
   receiptTip?: string | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;

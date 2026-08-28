@@ -82,7 +82,7 @@ export interface Expense {
    * session — instead of the parsed bill being thrown away once `split` is
    * computed from it. Absent on an expense with no scan. ADR-0017.
    */
-  receiptItems?: { label: string; amount: string; quantity?: number | null }[] | null;
+  receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
   /** Who was marked present, last time the who-had-what grid was saved. */
@@ -92,6 +92,28 @@ export interface Expense {
   /** Which split tab was showing, last time this expense was saved. See `SplitTab`. */
   splitTab?: SplitTab | null;
   deletedAt?: number | null;
+}
+
+/**
+ * One line of a scanned bill, as kept on the expense. ADR-0017.
+ *
+ * `amount` is the line's printed total, already multiplied out — `quantity` is
+ * what the receipt printed next to it ("2x", a qty column) and is never used
+ * as a multiplier, only shown.
+ */
+export interface ReceiptItem {
+  label: string;
+  amount: string;
+  /** The count printed on the receipt, or null when none was. Display only. */
+  quantity?: number | null;
+  /**
+   * Set when this line is one portion of a printed line that was unfolded on
+   * the who-had-what grid — two people shared one of the two salads, the
+   * third had the other — and how many portions it was unfolded into.
+   * Consecutive lines carrying the same label and the same count are one such
+   * unfold, which is what lets it be merged back. ADR-0022.
+   */
+  portionOf?: number | null;
 }
 
 /** A real-world reimbursement. Kept separate so it never inflates trip cost. */
