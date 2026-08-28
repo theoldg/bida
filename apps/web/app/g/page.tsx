@@ -134,7 +134,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
   return (
     <>
       {personal && me ? (
-        <div className="pers-summary pad" style={{ paddingBottom: 0 }}>
+        <div className="pers-summary pad">
           <Card style={{
             flex: 1, padding: "10px 12px", borderColor: "transparent",
             background: net < 0 ? "var(--debit-bg)" : net > 0 ? "var(--credit-bg)" : "var(--card-2)",
