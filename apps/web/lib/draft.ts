@@ -29,6 +29,14 @@ export interface ExpenseDraft {
   split: SplitSpec;
   occurredAt: number;
   categoryId: string | null;
+  /**
+   * Line items from the last receipt scan, kept only until the who-had-what
+   * screen folds them into `split` and clears this. Amounts are printed
+   * strings, same convention as `ScanResult` — cleaned on use, not on arrival.
+   */
+  scanItems?: { label: string; amount: string }[] | null;
+  /** A separate tip/service line from the same scan, printed as-is. */
+  scanTip?: string | null;
 }
 
 const KEY = (groupId: string) => `hajsik.draft.${groupId}`;

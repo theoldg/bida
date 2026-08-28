@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   convertMinor, isValidRate, parseMinor, validatePayers, validateSplit,
 } from "@hajsik/core";
@@ -15,7 +15,8 @@ import { COMMON_CURRENCIES } from "../../../../lib/currencies";
 import { addExpense, editExpense } from "../../../../lib/db/commands";
 import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
-import { useGroupData } from "../../../../lib/hooks";
+import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
+import { normalizeScan, scanReceipt } from "../../../../lib/scan";
 import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft } from "../../../../lib/draft";
 
 export default function EditExpensePage() {
@@ -30,6 +31,38 @@ function EditExpenseScreen() {
 
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
+  const secret = useGroupSecret(groupId);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
+
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !groupId || !secret) return;
+    const current = getDraft(groupId);
+    if (!current) return;
+    setScanState("scanning");
+    try {
+      const result = await scanReceipt(file, groupId, secret, []);
+      const patch = normalizeScan(result);
+      const scanItems = result.lineItems.map((li) => ({ label: li.labelEn ?? li.label, amount: li.amount }));
+      saveDraft(groupId, {
+        ...current,
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
+        ...(patch.currency !== undefined
+          ? { currency: patch.currency, rateToBase: patch.currency === data.group?.baseCurrency ? "1" : current.rateToBase }
+          : {}),
+        ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
+        scanItems: scanItems.length > 0 ? scanItems : null,
+        scanTip: result.tip,
+      });
+      setScanState("idle");
+      if (scanItems.length > 0) router.push(route.items(groupId));
+    } catch {
+      setScanState("error");
+    }
+  }
 
   // Seed the draft once the group is loaded: from the expense being edited, or
   // blank with everyone included and the phone's owner paying.
@@ -117,6 +150,29 @@ function EditExpenseScreen() {
         />
 
         <Scroll>
+          {!draft.expenseId ? (
+            <div className="pad" style={{ paddingTop: 12, paddingBottom: 0 }}>
+              <input ref={fileInput} type="file" accept="image/*" capture="environment"
+                style={{ display: "none" }} onChange={onPhoto} aria-label="Scan a receipt" />
+              <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
+                onClick={() => fileInput.current?.click()}>
+                <Icon name="cam" size={16} />
+                {scanState === "scanning" ? "Reading receipt…" : "Scan a receipt"}
+              </button>
+              {scanState === "error" ? (
+                <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
+                  Couldn't read that receipt.{" "}
+                  <button type="button" className="action" style={{ fontSize: 11.5 }}
+                    onClick={() => fileInput.current?.click()}>Try again</button>
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
+                  Runs on Google's free tier — the photo may be used to improve their models.
+                </div>
+              )}
+            </div>
+          ) : null}
+
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               <AmountInput

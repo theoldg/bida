@@ -11,7 +11,7 @@ Update it in the same commit as the code it describes.*
 | 1 — Domain core | ✅ 111 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
-| 4 — Receipts | ⬜ **next up** |
+| 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | ⬜ CSV export, categories, empty/error states |
 | 7 — Owner's punch list | ✅ all eight, plus three rounds of follow-ups (2026-08-28) |
@@ -24,14 +24,17 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 
 ## The next action
 
-**Phase 4 — receipts, scanning first.** Photograph a receipt and have it fill
-the expense form: [receipt-scanning.md](receipt-scanning.md). Core normaliser,
-the Worker's `/api/groups/:id/scan` passthrough, and `apps/web/lib/scan/`
-(downscale, request, response) are built, deployed, and live-verified end to
-end — a synthesized receipt through the real Worker returned merchant, total,
-tip, and bilingual line items correctly. Left, on purpose — the owner wants to
-design the UX: the button on `/g/expense`, its states, and the privacy line.
-Then ADR-0016 and the roadmap checkbox. Scope in [product.md](product.md).
+**Phase 4 — receipt scanning is done; the rest of Phase 4 is next.**
+Photograph a receipt and it fills the expense form:
+[receipt-scanning.md](receipt-scanning.md),
+[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). The button
+lives on `/g/expense/edit` for new expenses, with states (scanning, error +
+"try again") and a one-line privacy note; a scan that finds line items routes
+to `/g/expense/items`, a who-had-what grid (coloured, disambiguated initial
+chips as columns, items as rows) that reduces to an ordinary `shares` split —
+no new entity, no schema change. Left for later: multi-image capture,
+on-device downscale for photos kept on the expense, R2 upload, and the
+gallery/full-screen viewer. Scope in [product.md](product.md).
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
@@ -79,7 +82,7 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` |
 | `types.ts` | `Group`, `Member`, `Expense`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
-| `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |
+| `scan.ts` | `normalizeScan`, `cleanAmountText`, `ScanResult`, `ScanPatch` |
 
 ## What has been proven — tested, not just written
 

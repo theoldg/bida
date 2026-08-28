@@ -60,8 +60,10 @@ it applies to work nobody has done yet.
   normalised. [receipt-scanning.md](receipt-scanning.md).
 - **Receipt scan's schema and UX are the owner's to design.** *2026-08-28* —
   "keep the schema and ux minimal/flexible, i have ideas for those." Built:
-  core normaliser, Worker passthrough, client scan lib. Left alone: the final
-  `ScanResult` shape and the button/screen states.
+  core normaliser, Worker passthrough, client scan lib. *2026-08-28, later* —
+  "propose a ux and go for it without approval, we'll iterate later": the
+  button, its states, and a who-had-what item-assignment screen shipped;
+  [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
   [receipt-scanning.md](receipt-scanning.md).
 
 ## Interface

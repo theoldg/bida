@@ -47,8 +47,11 @@ export interface ScanPatch {
  * or "," is the decimal point only when 1–2 digits follow it (cents); any
  * separator before that, and any separator followed by 3+ digits, is a
  * thousands mark and gets dropped.
+ *
+ * Exported for callers who need the same cleanup on a printed amount that
+ * isn't the receipt total — a line item, e.g. — without re-deriving it.
  */
-function cleanAmountText(total: string): string {
+export function cleanAmountText(total: string): string {
   const trimmed = total.replace(/[^\d,.-]/g, "");
   const neg = trimmed.startsWith("-") ? "-" : "";
   const body = trimmed.slice(neg.length);

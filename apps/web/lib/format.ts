@@ -44,6 +44,30 @@ export function tone(colorSeed: number): string {
   return `a-${Math.abs(colorSeed) % 6}`;
 }
 
+/**
+ * The shortest prefix of each name that tells everyone apart — "John" and
+ * "Jane" become "Jo"/"Ja" rather than colliding on "J". Grows a letter at a
+ * time until every id has a unique prefix; two people with the identical name
+ * fall back to the name in full.
+ */
+export function distinctInitials(members: { id: string; name: string }[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const maxLen = Math.max(1, ...members.map((m) => m.name.trim().length));
+  for (let len = 1; len <= maxLen; len++) {
+    const byPrefix = new Map<string, string[]>();
+    for (const m of members) {
+      if (out.has(m.id)) continue;
+      const prefix = m.name.trim().slice(0, len) || "?";
+      byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), m.id]);
+    }
+    for (const [prefix, ids] of byPrefix) {
+      if (ids.length === 1) out.set(ids[0]!, prefix);
+    }
+  }
+  for (const m of members) if (!out.has(m.id)) out.set(m.id, m.name.trim() || "?");
+  return out;
+}
+
 const DAY = 86_400_000;
 
 function startOfDay(ts: number): number {

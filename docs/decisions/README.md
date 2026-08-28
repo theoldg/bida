@@ -26,3 +26,4 @@ old one `Superseded by NNNN`.
 | [0013](0013-the-split-editor-is-part-of-the-expense-form.md) | The split editor is part of the expense form; three modes | Accepted |
 | [0014](0014-settings-belong-to-the-phone.md) | Settings belong to the phone, beside the group list | Accepted |
 | [0015](0015-one-money-field-core-reports-numbers.md) | One money field; core reports numbers, screens write sentences | Accepted |
+| [0016](0016-receipt-scan-ux-and-item-assignment.md) | Receipt scan UX: item assignment writes an ordinary `shares` split | Accepted |

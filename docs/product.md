@@ -39,7 +39,7 @@ Leave the seam. Build none of it.
 
 | Deferred | The seam |
 |---|---|
-| Restaurant bill splitting | Line items become a new entity with its own op kinds — the scan already reads them |
+| Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds — the scan already reads them, and a receipt scan can assign them ad hoc into a `shares` split today ([ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md)), but they aren't stored or re-editable after saving |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |

@@ -29,11 +29,10 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 - [ ] Custom domain — blocked on the owner pointing DNS at Cloudflare. Cosmetic.
 
 ## Phase 4 — Receipts ← next
-- [ ] **Scan a receipt into the expense form** — plan in
-      [receipt-scanning.md](receipt-scanning.md). Needs no storage, so it comes
-      first: the photo is read and thrown away. Core normaliser, Worker
-      endpoint and client scan lib built, deployed and live-verified; the
-      button and its UX are the owner's to design, then wire up
+- [x] **Scan a receipt into the expense form** — [receipt-scanning.md](receipt-scanning.md),
+      [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). Needs no
+      storage: the photo is read and thrown away. Button, states, privacy
+      line, and a who-had-what screen for line items, all live.
 - [ ] Multi-image capture, on-device downscale
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
 - [ ] Gallery + full-screen viewer

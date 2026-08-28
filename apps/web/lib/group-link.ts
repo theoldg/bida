@@ -47,6 +47,8 @@ export const route = {
   expense: (groupId: string, expenseId: string) =>
     `/g/expense?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(expenseId)}`,
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
+  /** Who-had-what, reached only right after a receipt scan finds line items. */
+  items: (groupId: string) => `/g/expense/items?id=${encodeURIComponent(groupId)}`,
   /** The confirmation screen for putting an entity back to how it looked. */
   restore: (groupId: string, entity: string, entityId: string, atHlc: string) =>
     `/g/restore?id=${encodeURIComponent(groupId)}&kind=${encodeURIComponent(entity)}`

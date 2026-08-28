@@ -1,8 +1,9 @@
 # Receipt scanning
 
-*For: whoever builds or changes the scan. Core, Worker endpoint and the
-client-side scan lib exist and are deployed and live-verified; the button and
-its states are deliberately not — the owner wants to design the UX.*
+*For: whoever builds or changes the scan. Core, Worker endpoint, the
+client-side scan lib, the button and the item-assignment screen all exist and
+are deployed. See [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md)
+for the UX decisions.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
@@ -86,9 +87,12 @@ It reads. It doesn't compute.
 | category | one of the group's, or null |
 | lineItems | `{ label, labelEn, amount }[]` — printed label, English translation (null if already English), printed amount |
 
-`lineItems` and `tip` are the seam for restaurant splitting (product.md's
-deferred table): captured now because the scan already reads them off the
-receipt, unused by `normalizeScan` until that entity exists.
+`lineItems` and `tip` are still unused by `normalizeScan` — the real
+restaurant-splitting entity in product.md's deferred table isn't built. But
+`/g/expense/items` (reached right after a scan that found line items) reads
+them directly off the draft to build a who-had-what grid, and reduces that to
+an ordinary `shares` split — no schema change, no new op kind. See
+[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts
@@ -129,9 +133,9 @@ per-group quota, then a decision about whether the photo is stored at all.
 3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
    output schema, including line items and tip), `response.ts`, and
    `scanReceipt()` tying them together.
-4. ⬜ The button on `/g/expense`, its states, and the privacy line — owner's
-   design. `pnpm shots` after.
-5. ⬜ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
+4. ✅ The button on `/g/expense/edit`, its states, the privacy line, and
+   `/g/expense/items` for who-had-what — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
+5. ✅ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 
 ## Verified live, 2026-08-28
 
