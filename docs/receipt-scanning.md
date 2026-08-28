@@ -120,25 +120,34 @@ per-group quota, then a decision about whether the photo is stored at all.
 
 1. ✅ `packages/core/src/scan.ts` + tests — the normaliser, no network.
 2. ✅ `apps/api` — `POST /api/groups/:id/scan`, same bearer-secret check as
-   sync, passthrough to `GEMINI_MODEL = "gemini-2.5-flash"` (best-documented
-   free tier as of writing — re-check in AI Studio once a key exists, model id
-   is one constant in `apps/api/src/index.ts`). Needs the `GEMINI_API_KEY`
-   Worker secret — [hosting.md](hosting.md#deploying).
+   sync, passthrough to `GEMINI_MODEL = "gemini-3.6-flash"` — verified live
+   against a real key (below); model id is one constant in
+   `apps/api/src/index.ts`. `GEMINI_API_KEY` Worker secret is set —
+   [hosting.md](hosting.md#deploying).
 3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
    output schema), `response.ts`, and `scanReceipt()` tying them together.
 4. ⬜ The button on `/g/expense`, its states, and the privacy line — owner's
    design. `pnpm shots` after.
 5. ⬜ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 
-## Still to verify — needs a real key
+## Verified live, 2026-08-28
 
-- Free-tier RPD for `gemini-2.5-flash` (check the rate-limit view in AI Studio
-  for the actual key, Google no longer publishes static numbers).
-- That a `ReadableStream` request body survives a Workers subrequest end-to-end
-  — the passthrough sets `duplex: "half"` on the upstream `fetch()` on the
-  assumption that's required and sufficient, unverified against a real request.
-- A real photo through `downscaleToBase64Jpeg` → the endpoint → Gemini →
-  `parseScanResponse`, once `GEMINI_API_KEY` is set.
+Direct curls to `generativelanguage.googleapis.com` with the owner's key,
+outside the Worker:
+
+- `gemini-2.5-flash` is **404 for new keys** — Google's own error names the
+  replacement: *"no longer available to new users... use
+  models/gemini-3.6-flash."* `gemini-3.7-flash` and `gemini-flash-latest` both
+  came back 503 (overloaded) on the same key at the same moment, so that's not
+  a verdict on those models either way — if `3.6-flash` ever 404s the same way,
+  try the current `-latest` alias before assuming the free tier is gone.
+- `gemini-3.6-flash` returns 200 and, with the exact `generationConfig.responseSchema`
+  `apps/web/lib/scan/request.ts` sends, a response `parseScanResponse()` parses
+  correctly.
+- Still unverified: free-tier RPD for `gemini-3.6-flash` (AI Studio's rate-limit
+  view has the number for a given key, Google no longer publishes it statically);
+  the `duplex: "half"` passthrough end-to-end through the deployed Worker rather
+  than a direct curl; a real photo rather than a text-only prompt.
 
 ## Gotchas
 
