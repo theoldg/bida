@@ -101,3 +101,12 @@ for that session's `wrangler deploy` calls. See
 [hosting.md](hosting.md#the-cloudflare_api_token). The better long-term fix —
 setting `CLOUDFLARE_API_TOKEN` once in the Claude Code environment settings —
 stays open for whenever the owner is at a computer rather than a phone.
+
+### Fix layout bugs at the shell, not per screen.
+*2026-08-28* — "the bottom bar is only visible when i scroll down, fix that."
+
+One CSS declaration (`min-height` where `height` belonged) broke the bar on
+every screen with more content than fits a phone, and none of the short screens
+showed it. When something is wrong on "the app" rather than on one screen, look
+at `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on
+a screen that overflows — a screenshot of a half-empty screen proves nothing.

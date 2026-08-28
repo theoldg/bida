@@ -34,7 +34,7 @@ one by hand.
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/members?id=` | Members |
-| `/g/options?id=` | In-group options: identity (and its log), personal mode, theme, way out to People/History/invite |
+| `/g/options?id=` | In-group options: identity (and this phone's claim timeline), personal mode, theme, way out to People/History/invite |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Landing for a shared invite link; claims a member slot |
 | `/settings` | Device settings: theme, personal mode |
@@ -57,8 +57,13 @@ without the secret.
   it, and materialises it in one Dexie transaction. **Components never write to
   Dexie directly.**
 - Device-local, never-synced state (who "you" are, personal-mode toggle, theme)
-  lives in the `device` store; the history of identity changes lives beside it in
-  `identityLog` — see [ADR-0009](decisions/0009-identity-is-device-local.md).
+  lives in the `device` store. **Changing** who "you" are is not device-local:
+  `claimIdentity` writes an `identity` op keyed by this device's HLC node id, so
+  the group can read every op's `actor` honestly — see
+  [ADR-0011](decisions/0011-identity-changes-are-public.md), superseding
+  [ADR-0009](decisions/0009-identity-is-device-local.md). `setMe` in
+  `lib/db/device.ts` is the device-local half and nothing outside that module
+  should call it.
 
 ### One navigation
 
@@ -136,3 +141,11 @@ CSS lifted directly from the mockup (see
   middleware, and dynamic params. If you need one of those, you are proposing a
   change to ADR-0004 — write it up rather than quietly adding the adapter.
 - 100dvh, not 100vh, or iOS Safari's toolbar eats the bottom nav.
+- **The shell takes `height`, not `min-height`.** `.app` was `min-height: 100dvh`
+  for months and looked right on every short screen. Give it content taller than
+  the viewport and the shell grows with it: `.scroll` never overflows, the
+  *document* scrolls instead, and the bottom bar sits at the foot of a long page
+  — invisible until you scroll to the end of the expenses. The shell is exactly
+  one viewport tall (`height: 100dvh; overflow: hidden`), `html, body` are
+  `overflow: hidden` too, and every scrolling child of a flex column needs
+  `min-height: 0` or it refuses to shrink below its content.
