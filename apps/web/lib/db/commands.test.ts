@@ -10,6 +10,7 @@ import {
   createGroup,
   deleteExpense,
   editExpense,
+  leaveGroup,
   publishExistingClaims,
   recordSettlement,
   restoreRevision,
@@ -291,6 +292,32 @@ describe("commands", () => {
     await restoreRevision(groupId, theo, "expense", expenseId, createHlc, "my mistake");
     expect((await db().expenses.get(expenseId))?.deletedAt).toBeFalsy();
     expect((await db().expenses.get(expenseId))?.description).toBe("Hammam");
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("leaving tombstones your own member and forgets this device's claim, without archiving a group that still has people in it", async () => {
+    const { groupId, theo, marie } = await trip();
+    await leaveGroup(groupId, theo, false);
+
+    expect((await db().members.get(theo))?.deletedAt).toBeTruthy();
+    expect((await db().members.get(marie))?.deletedAt).toBeFalsy();
+    expect((await db().groups.get(groupId))?.archivedAt).toBeFalsy();
+    expect(await getMe(groupId)).toBeUndefined();
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("the last member leaving also archives the group, in the same batch", async () => {
+    const { groupId, theo } = await trip();
+    const marie = (await db().members.where("groupId").equals(groupId).toArray())
+      .find((m) => m.id !== theo)!.id;
+    const sam = (await db().members.where("groupId").equals(groupId).toArray())
+      .find((m) => m.id !== theo && m.id !== marie)!.id;
+    await leaveGroup(groupId, marie, false);
+    await leaveGroup(groupId, sam, false);
+
+    await leaveGroup(groupId, theo, true);
+    expect((await db().members.get(theo))?.deletedAt).toBeTruthy();
+    expect((await db().groups.get(groupId))?.archivedAt).toBeTruthy();
     await assertMaterialisedMatchesLog(groupId);
   });
 

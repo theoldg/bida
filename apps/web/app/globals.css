@@ -296,6 +296,7 @@ a { color: inherit; text-decoration: none }
   padding: 12px; font-weight: 600; font-size: 14.5px; width: 100% }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
+.btn-d { background: var(--debit-bg); color: var(--debit) }
 .btn:disabled { opacity: .45 }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }

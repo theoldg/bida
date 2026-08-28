@@ -25,6 +25,7 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: the version and the fields coming back |
 | `/g/members?id=` | People: the member list, and where this phone claims which one it is |
+| `/g/leave?id=` | Confirms leaving the group — deletes it instead, if you're the last member |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |

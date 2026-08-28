@@ -132,6 +132,7 @@ const routes = (g) => [
   ["group-expenses", `/g?id=${g}`],
   ["group-balances", `/g?id=${g}&tab=balances`],
   ["members", `/g/members?id=${g}`],
+  ["leave", `/g/leave?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],

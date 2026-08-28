@@ -9,14 +9,17 @@ import { route } from "../lib/group-link";
 import { useGroupSummaries } from "../lib/hooks";
 
 export default function GroupsPage() {
-  const groups = useGroupSummaries();
-  const active = groups?.filter((g) => !g.group.archivedAt) ?? [];
+  const summaries = useGroupSummaries();
+  // Archived means deleted (the last member left, or later, an explicit
+  // archive) — the group log is untouched, but it has no reason to show up
+  // here any more.
+  const groups = summaries?.filter((g) => !g.group.archivedAt);
 
   // Money in two currencies does not add up, and pretending otherwise is
   // exactly the kind of quiet lie this app exists to avoid. Total the base
   // currency most of your groups use, and say so when others are left out.
   const byCurrency = new Map<string, number>();
-  for (const g of active) {
+  for (const g of groups ?? []) {
     if (g.netMinor === undefined) continue;
     const c = g.group.baseCurrency;
     byCurrency.set(c, (byCurrency.get(c) ?? 0) + g.netMinor);
@@ -63,8 +66,7 @@ export default function GroupsPage() {
 
           <div className="rows">
             {groups?.map(({ group, memberCount, expenseCount, netMinor, lastActivity }) => (
-              <Link key={group.id} href={route.group(group.id)} className="row"
-                style={group.archivedAt ? { opacity: .5 } : undefined}>
+              <Link key={group.id} href={route.group(group.id)} className="row">
                 <Avatar name={group.name} />
                 <div className="rmain">
                   <div className="rtitle">{group.name}</div>

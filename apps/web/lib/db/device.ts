@@ -73,3 +73,16 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
 export async function setPersonalMode(on: boolean): Promise<void> {
   await updateDevice({ personalMode: on });
 }
+
+/**
+ * Drop this device's claim on a group, e.g. after the member it pointed at
+ * left the group. Device-local only — the claim itself was never synced,
+ * only its `identity` op was, and that op is history, not a pointer to clear.
+ */
+export async function forgetMe(groupId: string): Promise<void> {
+  const device = await getDevice();
+  if (!(groupId in device.meByGroup)) return;
+  const meByGroup = { ...device.meByGroup };
+  delete meByGroup[groupId];
+  await updateDevice({ meByGroup });
+}

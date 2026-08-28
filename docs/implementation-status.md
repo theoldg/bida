@@ -14,13 +14,15 @@ Update it in the same commit as the code it describes.*
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | ⬜ CSV export, categories, empty/error states |
-| 7 — Owner's punch list | ✅ all eight, plus four rounds of follow-ups (2026-08-28) |
+| 7 — Owner's punch list | ✅ all eight, plus five rounds of follow-ups (2026-08-28) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
+Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
+follow-up (2026-08-28): leaving a group, from `/g/members` — `/g/leave`
+confirms it, and deletes the group instead when you're the last one there.
 
 ## The next action
 

@@ -17,7 +17,7 @@ import {
   type SplitTab,
 } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
-import { getDevice, setMe } from "./device";
+import { forgetMe, getDevice, setMe } from "./device";
 import { materialise, opsForGroup } from "./fold";
 import { scheduleSync } from "./sync";
 
@@ -288,6 +288,31 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
   await appendOps(groupId, actor, [
     { entity: "member", entityId: memberId, kind: "delete", patch: {} },
   ]);
+}
+
+/**
+ * Leave a group as `memberId`: the same tombstone as `removeMember`, but of
+ * yourself, and it also drops this device's claim — there is nobody left for
+ * it to point at. When `lastMember` is true (the caller already checked: this
+ * was the only member still alive), the group is archived in the same batch.
+ * An empty group is a dangling link with nobody to read it, not state worth
+ * keeping — [history-copy.ts](../history-copy.ts) already renders an
+ * `archivedAt` op as "archived the group", the same wording used here.
+ */
+export async function leaveGroup(
+  groupId: Id,
+  memberId: Id,
+  lastMember: boolean,
+  now = Date.now(),
+): Promise<void> {
+  const drafts: OpDraft[] = [
+    { entity: "member", entityId: memberId, kind: "delete", patch: {} },
+  ];
+  if (lastMember) {
+    drafts.push({ entity: "group", entityId: groupId, kind: "update", patch: { archivedAt: now } });
+  }
+  await appendOps(groupId, memberId, drafts, now);
+  await forgetMe(groupId);
 }
 
 // -------------------------------------------------------------- expenses

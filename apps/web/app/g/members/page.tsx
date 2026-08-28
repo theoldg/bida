@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Avatar } from "../../../components/bits";
 import { Banner, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
@@ -47,6 +48,11 @@ function MembersScreen() {
     await removeMember(groupId, data.me ?? memberId, memberId);
   }
 
+  // Removing yourself is "leaving", which gets its own screen — the one case
+  // where the consequence (deleting the group, if you're the last one) needs
+  // naming, not a one-line browser confirm(). Route.leave() from below instead
+  // of a second `confirm()` here.
+
   async function add() {
     if (!groupId) return;
     const name = prompt("Name")?.trim();
@@ -89,10 +95,12 @@ function MembersScreen() {
                     onClick={(e) => { e.stopPropagation(); void rename(m.id, m.name); }}>
                     <Icon name="edit" size={14} />
                   </button>
-                  <button className="iconbtn" aria-label={`Remove ${m.name}`}
-                    onClick={(e) => { e.stopPropagation(); void remove(m.id, m.name); }}>
-                    <Icon name="trash" size={14} />
-                  </button>
+                  {m.id !== data.me ? (
+                    <button className="iconbtn" aria-label={`Remove ${m.name}`}
+                      onClick={(e) => { e.stopPropagation(); void remove(m.id, m.name); }}>
+                      <Icon name="trash" size={14} />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -105,6 +113,17 @@ function MembersScreen() {
                 <div className="rtitle" style={{ color: "var(--muted)", fontWeight: 500 }}>Add member</div>
               </div>
             </div>
+
+            {data.me ? (
+              <Link href={route.leave(groupId)} className="row">
+                <span className="avatar" style={{
+                  background: "transparent", borderStyle: "dashed", color: "var(--debit)",
+                }}><Icon name="trash" size={15} /></span>
+                <div className="rmain">
+                  <div className="rtitle" style={{ color: "var(--debit)", fontWeight: 500 }}>Leave group</div>
+                </div>
+              </Link>
+            ) : null}
           </div>
         </Scroll>
       </Body>
