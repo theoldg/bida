@@ -87,6 +87,7 @@ Leave room for these. Build none of them yet.
 
 Tracked in the mockup's closing section, unanswered as of the last session:
 decimal comma vs. point; whether restore is open to anyone; fixed vs. free-form
-categories; whether personal mode is default-on.
+categories.
 
-**Settled:** the app is called **Hajsik** (2026-08-27).
+**Settled:** the app is called **Hajsik** (2026-08-27). Personal mode is
+default-on (2026-08-28, [ADR-0014](decisions/0014-settings-belong-to-the-phone.md)).

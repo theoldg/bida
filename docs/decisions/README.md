@@ -26,3 +26,4 @@ old one `Superseded by NNNN` at the top.
 | [0011](0011-identity-changes-are-public.md) | A device's identity claim is an op, so `actor` can be read | Accepted |
 | [0012](0012-balances-and-settling-are-one-screen.md) | Balances and settling are one screen; identity lives with the people | Accepted |
 | [0013](0013-the-split-editor-is-part-of-the-expense-form.md) | The split editor is part of the expense form, and there are three modes | Accepted |
+| [0014](0014-settings-belong-to-the-phone.md) | Settings belong to the phone, beside the group list | Accepted |

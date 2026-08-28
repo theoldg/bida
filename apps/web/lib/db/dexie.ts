@@ -32,6 +32,11 @@ export interface DeviceRecord {
   /** groupId -> the member this device belongs to. */
   meByGroup: Record<string, string>;
   theme: "system" | "light" | "dark";
+  /**
+   * Which generation of *defaults* this record was written against. Absent on
+   * records written before 2026-08-28. See `migrateDefaults` in ./device.ts.
+   */
+  prefsVersion?: number;
 }
 
 /**

@@ -28,12 +28,7 @@ export default function GroupsPage() {
   return (
     <Screen>
       <Body>
-        <TopBar
-          title="Your groups"
-          right={<Link className="iconbtn" href={route.settings()} aria-label="Settings">
-            <Icon name="dots" size={16} />
-          </Link>}
-        />
+        <TopBar title="Your groups" />
 
         {headline ? (
           <div className="pad" style={{ paddingTop: 0, paddingBottom: 10 }}>
@@ -112,7 +107,7 @@ export default function GroupsPage() {
 
       <BottomNav items={[
         { label: "Groups", icon: "list", href: route.groups(), on: true },
-        { label: "You", icon: "users", href: route.settings() },
+        { label: "Settings", icon: "cog", href: route.settings() },
       ]} />
     </Screen>
   );

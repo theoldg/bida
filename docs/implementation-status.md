@@ -74,8 +74,7 @@ Screens (each its own static route — see
 | Join a shared link | `app/join/page.tsx` | ✅ *(see caveat below)* |
 | Pick who you are, after joining | `app/g/claim/page.tsx` | ✅ |
 | Restore confirmation | `app/g/restore/page.tsx` | ✅ |
-| In-group options (copy invite link, personal mode, theme) | `app/g/options/page.tsx` | ✅ |
-| Settings (theme, personal mode) | `app/settings/page.tsx` | ✅ |
+| Settings (personal mode, theme) — from the group list | `app/settings/page.tsx` | ✅ |
 
 Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
 (one function per user intent) are built — see [sync.md](sync.md) for the

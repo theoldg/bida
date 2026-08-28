@@ -73,14 +73,15 @@ function GroupScreen() {
 
       {tab === "expenses" ? <Fab href={route.addExpense(group.id)} /> : null}
 
-      {/* One navigation, at the bottom. "Settle" used to be a fourth destination
-          of its own, which split one question — who owes what, and what to pay
-          to end it — across two screens you had to flip between. */}
+      {/* One navigation, at the bottom, and only what a group actually is: what
+          was spent, and who is up or down because of it. "Settle" was a third
+          destination and is now the bottom half of Balances; "Group" was a
+          fourth and is now Settings, next to the group list, because every
+          switch on it belonged to the phone rather than to this group. */}
       <BottomNav items={[
         { label: "Expenses", icon: "list", href: route.group(group.id), on: tab === "expenses" },
         { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),
           on: tab === "balances" },
-        { label: "Group", icon: "cog", href: route.options(group.id) },
       ]} />
     </Screen>
   );

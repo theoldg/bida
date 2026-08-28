@@ -101,8 +101,8 @@ export async function appendOps(
  *
  * A device that claimed a member under ADR-0009 has a `meByGroup` entry and no
  * op to show for it: its edits are attributed to somebody with nothing in the
- * log to explain why, and /g/options sits empty for a phone that has been in
- * the group for weeks. One `create` op per such group, once — later runs see it
+ * log to explain why, and /g/history has nothing to show for a phone that has
+ * been in the group for weeks. One `create` op per such group, once — later runs see it
  * and do nothing.
  *
  * `claimedAt` is when the claim was published, not when it was made. The

@@ -27,7 +27,7 @@ one by hand.
 |---|---|
 | `/` | Groups list |
 | `/new` | Create a group |
-| `/g?id=[&tab=]` | The group view — expenses / balances, chosen by the bottom bar. Settling lives on the balances tab; History and People are icons in its top bar |
+| `/g?id=[&tab=]` | The group view — expenses / balances, chosen by the bottom bar. Settling lives on the balances tab; invite link, People and History are icons in its top bar |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense — **including the split**, inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)) |
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
@@ -35,10 +35,9 @@ one by hand.
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: names the version and the fields coming back |
 | `/g/members?id=` | People: the member list, and where this phone claims which of them it is |
 | `/g/claim?id=` | The last step of joining: which member are you? Pick, then a button into the group |
-| `/g/options?id=` | In-group options: copy the invite link, personal mode, theme. Nothing else — see [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md) |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Landing for a shared invite link; saves the secret, pulls, then hands over to `/g/claim` |
-| `/settings` | Device settings: theme, personal mode |
+| `/settings` | The one settings screen: personal mode, theme. Reached from the group *list*, not from inside a group — [ADR-0014](decisions/0014-settings-belong-to-the-phone.md) |
 
 Deep links point at groups, never at individual expenses (unchanged from 0004).
 
@@ -81,15 +80,23 @@ wording there, not in a screen.
 bottom bar (Expenses · Balances · History) whose middle item lit up for two of
 the three tabs. Two navigations for one screen, disagreeing about where you were.
 
-There is now exactly one: the bottom bar, three items —
-**Expenses · Balances · Group**. `Tabs` has been deleted from
+There is now exactly one: the bottom bar. `Tabs` has been deleted from
 `components/chrome.tsx` along with its CSS; do not bring it back. A screen that
-needs more destinations than fit in the bar puts them on `/g/options`, not in a
-second row. *(Owner, 2026-08-27: "the tabs are incoherent … consolidate into a
-bottom bar".)*
+needs more destinations than fit in the bar puts them behind a top-bar icon,
+not in a second row. *(Owner, 2026-08-27: "the tabs are incoherent …
+consolidate into a bottom bar".)*
 
-Settling was the fourth item until 2026-08-28. It is now the bottom half of
-Balances — see [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
+| Where | The bar |
+|---|---|
+| Group list, `/settings` | **Groups · Settings** |
+| Inside a group | **Expenses · Balances** |
+
+It has shed an item twice. **Settle** was a third and became the bottom half of
+Balances — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
+**Group** was a fourth, then a third, and is now **Settings** beside the group
+list, because everything left on it belonged to the phone —
+[ADR-0014](decisions/0014-settings-belong-to-the-phone.md). Two icons in `/g`'s
+top bar became three when the invite link joined them; three is the ceiling.
 
 ## Personal mode
 
