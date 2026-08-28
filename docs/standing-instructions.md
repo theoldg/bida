@@ -225,3 +225,56 @@ to rename a group. invite link is fine but it should be a juicy button called
   when it is created. It doesn't need a rename prompt, and the one action a
   screen exists for should look like a button worth pressing, not a row in a
   list.
+
+### One thought, one screen. Don't push a route to finish a sentence.
+*2026-08-28* — "make the splitting options more 'single screen', i don't want to
+move forward and backwards."
+
+Adding an expense pushed `/g/split` and popped back off it, which made a form
+feel like a wizard for the commonest case there is. The split editor is now a
+component on the expense form —
+[ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
+
+The general rule: a new screen is for a *different* question, not for the
+second half of the one being asked. If the answer belongs in the thing you are
+already filling in, put it there and let the screen scroll. `/g/payers` stays a
+screen because *who put money in* genuinely is a different question, and a rare
+one.
+
+### Fewer options, in the owner's words.
+*2026-08-28* — "Drop the percentage option, keep the even/as parts/as amounts."
+
+Four split modes became three, and the labels are the owner's: **Evenly · As
+parts · As amounts**. `percent` stays readable in `packages/core` because ops
+already on a log carry it — dropping a variant from the data model is not the
+same act as dropping a button, and the log's promise is that old ops keep
+meaning what they meant.
+
+### Personal mode answers "does this help me or hurt me?".
+*2026-08-28* — "for personal mode, make it more obvious which expenses affect
+me positively vs negatively (+- signs and colors)" — and, in the same message,
+"make personal mode enabled by default".
+
+Showing your *share* said what an expense cost you and left the direction to be
+worked out. Every row now carries what it did to your balance — what you put in
+minus what you owe — signed, coloured green or red, with a matching left edge.
+Personal mode ships **on**; that answer is why the app is open.
+
+### Settings belong to the phone, next to the group list.
+*2026-08-28* — "rename 'group' to 'settings', move it out of the group view and
+back to the landing page/group list."
+
+A device-wide switch inside a group had to explain, in hint text, that it wasn't
+per-group — the tell that it was in the wrong place.
+[ADR-0014](decisions/0014-settings-belong-to-the-phone.md). A group's chrome is
+now the group: two tabs, three top-bar icons.
+
+### An arrow between two people points one way.
+*2026-08-28* — "make the settle screen arrows one sided, it's quite confusing
+with the bidirectional arrows." And: "move the 'copy link' button as an icon in
+the top right corner. Make all 3 icons slightly bigger."
+
+A settle-up row is an instruction — *you pay Marie €12* — so the arrow shows the
+direction the money goes, always payer → payee, left to right. And an icon that
+is the *only* way to a screen gets a real target: the top bar's buttons are 37px
+with an 18px glyph, bigger than the ones sitting inside a row.

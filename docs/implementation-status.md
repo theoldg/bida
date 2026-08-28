@@ -12,12 +12,15 @@ status file is worse than none.
 ## Where we are
 
 **Phases 0-3 are done — the MVP is complete and deployed. Phase 7 (the owner's
-punch list) is done too; all eight items are on `main`.** Since then, three
-follow-ups from the owner (2026-08-28): the bottom bar is pinned again on
-screens taller than the viewport, identity claims are now ops on the shared
-log — [ADR-0011](decisions/0011-identity-changes-are-public.md) — and a
-trimming pass took the UI down to three tabs, one member list and much less
-prose — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
+punch list) is done too; all eight items are on `main`.** Since then, two
+batches of follow-ups from the owner, both 2026-08-28. The first: the bottom
+bar is pinned again on screens taller than the viewport, identity claims are
+now ops on the shared log — [ADR-0011](decisions/0011-identity-changes-are-public.md)
+— and a trimming pass took the UI down to three tabs, one member list and much
+less prose — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
+The second is listed under **The second batch** below: an inline split editor,
+settings beside the group list, signed personal-mode rows, the invite link as a
+top-bar icon, and one-way settle arrows.
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 `apps/web` and `apps/api` both exist and are both live.
@@ -146,6 +149,38 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   standing bar for new copy is in
   [standing-instructions.md](standing-instructions.md).
 
+**The second batch, later on 2026-08-28:**
+
+- *"make the splitting options more 'single screen' … Drop the percentage
+  option"* — the split editor is `components/split-editor.tsx`, rendered inline
+  on `/g/expense/edit` and editing the same `ExpenseDraft`. `/g/split` and
+  `route.split` are deleted. Three modes — **Evenly · As parts · As amounts**.
+  `SplitSpec` keeps its `percent` variant so ops already written that way still
+  fold and still render; nothing can write one.
+  [ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
+- *"make it more obvious which expenses affect me positively vs negatively (+-
+  signs and colors)"* — every row in personal mode shows what it did to your
+  balance (`resolvePayers(e)[me] − shareOf(…)`, and ±the amount for a
+  settlement), signed, in credit green or debit red, with a matching left edge
+  (`.personal .row.up/.down`). The two summary cards became one: your net,
+  with paid and share under it.
+- *"rename 'group' to 'settings', move it out of the group view … and make
+  personal mode enabled by default"* — `/g/options` is deleted, `/settings` is
+  reached from the group list's bottom bar, and a group's bar is **Expenses ·
+  Balances**. `DEFAULTS.personalMode` is `true`; a `prefsVersion` field on the
+  device record carries that default once to phones that already had one,
+  applied by `migrateDefaults()` in `lib/db/device.ts` and triggered from
+  `StartSync`. [ADR-0014](decisions/0014-settings-belong-to-the-phone.md).
+- *"move the 'copy link' button as an icon in the top right corner. Make all 3
+  icons slightly bigger"* — `useInviteLink`'s copy button is the third icon in
+  `/g`'s top bar (History · People · link, swapping to a check for 1.6s).
+  `.topbar .iconbtn` is 37px with an 18px glyph; in-row icon buttons are
+  unchanged at 32px.
+- *"make the settle screen arrows one sided"* — `i-swap` is replaced by
+  `i-arrow` in the sprite and at all three call sites: the transfer rows under
+  the balances, the `/g/settle` header, and the reimbursement badge in the
+  ledger. It always points payer → payee.
+
 ### `apps/api` — what's built
 
 A Hono app serving three kinds of route: the sync API (`POST`/`GET
@@ -225,8 +260,9 @@ Beyond the six ADRs, two things were settled in code:
 loose ends below — neither blocks real use of the app.
 
 1. **Done, 2026-08-27:** the screenshot harness. `pnpm shots` builds the app,
-   serves the real static export, seeds a group through the UI and writes 28
-   PNGs (14 screens × 2 themes) into `shots/`. See
+   serves the real static export, seeds a group through the UI and writes one
+   PNG per screen per theme into `shots/` (22 as of 2026-08-28 — `/g/split` and
+   `/g/options` are gone). See
    [testing.md](testing.md#pnpm-shots--photograph-every-screen) — including
    the four ways it bit while being written.
 2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser

@@ -61,9 +61,9 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 `packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
 balances, settle-up, co-sponsored expenses, identity claims, history — with 110
 passing tests.
-`apps/web` has every screen (groups, expenses, split editor, payers editor,
-history, members with invite-link sharing, settle-up, join, in-group options,
-settings) behind a single bottom bar, plus a shell-precaching service worker and
+`apps/web` has every screen (groups, expenses, an expense form with the split
+editor on it, payers editor, history, members, settle-up, join, settings)
+behind a single bottom bar, plus a shell-precaching service worker and
 a background sync engine (`lib/db/sync.ts`). `apps/api` has D1 schema +
 migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
 bearer-secret auth) alongside the static-export passthrough. **Deployed and
@@ -78,8 +78,17 @@ pass left three tabs (settling lives on Balances), one member list that is also
 where you say which member you are, People and History as icons in the group's
 top bar, an options screen that is a "Copy invite link" button and two device
 switches, no way to rename a group, and a lot less prose —
-[ADR-0012](docs/decisions/0012-balances-and-settling-are-one-screen.md). Next
-up: Phase 4 (receipts) — see [docs/roadmap.md](docs/roadmap.md).
+[ADR-0012](docs/decisions/0012-balances-and-settling-are-one-screen.md). A
+second batch the same day took the wizard out of adding an expense and the
+settings out of the group: the split editor is now inline on the expense form
+with three modes, not four —
+[ADR-0013](docs/decisions/0013-the-split-editor-is-part-of-the-expense-form.md);
+`/g/options` is gone and `/settings` sits beside the group list with personal
+mode **on by default** —
+[ADR-0014](docs/decisions/0014-settings-belong-to-the-phone.md); every row in
+personal mode says what it did to your balance, signed and coloured; the invite
+link is the third icon in the group's top bar; and settle-up arrows point one
+way. Next up: Phase 4 (receipts) — see [docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session
