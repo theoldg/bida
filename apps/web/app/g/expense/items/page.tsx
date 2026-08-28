@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
-import { bare, distinctInitials, money, tone } from "../../../../lib/format";
+import { distinctInitials, money, tone } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../../lib/draft";
@@ -106,19 +106,15 @@ function ItemsScreen() {
 
   function finish() {
     if (!canFinish || !groupId || !draft) return;
-    // Recompute the derived total here rather than leaving it to the edit
-    // screen to notice on remount: this write is the one moment the bill and
-    // the split change together, so it's also the moment the amount that
-    // depends on both should be pinned down.
-    const total = receiptTotalMinor(items, draft.receiptTip ?? null, draft.currency);
-    // Keep receiptItems/receiptTip and the raw assignment around (unlike a
-    // discarded scan) so "Edit who-had-what" can reopen this exact grid —
-    // later in this session, or after being written onto the expense itself
-    // on save and reopened from any device. ADR-0017.
+    // This screen owns only the raw grid: who was there, and who had what.
+    // The total and the split it implies are derived from these fields
+    // wherever they're needed (the expense form's render, and its save) —
+    // not written down here too, so there's nothing that can drift out of
+    // sync with them (ADR-0020). Keep receiptItems/receiptTip and the raw
+    // assignment around (unlike a discarded scan) so "Edit who-had-what" can
+    // reopen this exact grid later, on any device. ADR-0017.
     saveDraft(groupId, {
       ...draft,
-      ...(total !== null ? { amountText: bare(total, draft.currency) } : {}),
-      split: { mode: "shares", weights },
       receiptInvolved: [...involved],
       receiptAssignments: assignments.map((row) => [...row]),
       splitTab: "receipt",

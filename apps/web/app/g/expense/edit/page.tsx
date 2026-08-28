@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, isValidRate, parseMinor, validatePayers, validateSplit,
+  convertMinor, isValidRate, parseMinor, validatePayers, validateSplit, type SplitSpec,
 } from "@hajsik/core";
-import { receiptTotalMinor } from "../../../../lib/scan/items";
+import { receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
@@ -110,25 +110,6 @@ function EditExpenseScreen() {
     }
   }, [groupId, expenseId, data.loading, data.group, data.members, data.me, data.expenses]);
 
-  // While Receipt mode has items, the amount isn't something you type — it's
-  // sum(items) + tip, so the total on the form can never drift out of sync
-  // with what "who had what" is actually dividing up. Runs whenever the bill
-  // itself changes shape; the field is also disabled below so nothing else
-  // can fight this while it's in charge.
-  useEffect(() => {
-    if (!groupId) return;
-    const current = getDraft(groupId);
-    if (!current) return;
-    const tab: SplitTab = current.splitTab
-      ?? (current.receiptItems && current.receiptItems.length > 0 ? "receipt"
-        : current.split.mode === "percent" ? "shares" : current.split.mode);
-    if (tab !== "receipt" || !current.receiptItems || current.receiptItems.length === 0) return;
-    const total = receiptTotalMinor(current.receiptItems, current.receiptTip ?? null, current.currency);
-    if (total === null) return;
-    const text = bare(total, current.currency);
-    if (text !== current.amountText) saveDraft(groupId, { ...current, amountText: text });
-  }, [groupId, draft?.receiptItems, draft?.receiptTip, draft?.currency, draft?.splitTab, draft?.split.mode]);
-
   if (!groupId || !data.group || !draft) {
     return <Screen><Body><TopBar title={expenseId ? "Edit" : "New expense"} back={true} /></Body></Screen>;
   }
@@ -139,26 +120,6 @@ function EditExpenseScreen() {
   // handler, and merging against a stale closure would let the first patch's
   // change be clobbered by the second.
   const patch = (change: Partial<ExpenseDraft>) => saveDraft(groupId, { ...(getDraft(groupId) ?? draft), ...change });
-
-  let amountMinor = 0;
-  try { amountMinor = draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0; } catch { /* mid-type */ }
-
-  const foreign = draft.currency !== base;
-  const rateOk = !foreign || isValidRate(draft.rateToBase);
-  const baseMinor = !foreign ? amountMinor
-    : rateOk ? convertMinor(amountMinor, draft.currency, base, draft.rateToBase) : 0;
-
-  // The split editor is inline below and shows its own arithmetic; the form
-  // only needs to know whether what it currently says can be saved.
-  const splitOk = validateSplit(baseMinor, draft.split, { tiebreakSeed: draft.expenseId ?? "new" }).ok;
-
-  // Payers are checked against the amount in the expense's own currency: that
-  // is the number people typed and the number they'd check against a receipt.
-  const payerCheck = validatePayers(amountMinor, draft.payers);
-  const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
-
-  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
-    && draft.description.trim().length > 0;
 
   // Undefined (an old draft, or an expense saved before this field existed)
   // derives from what's actually on it: a scanned bill means "Receipt",
@@ -174,6 +135,56 @@ function EditExpenseScreen() {
   // instead, or switch tabs to take manual control back.
   const receiptLocksAmount = activeTab === "receipt" && hasReceiptItems;
 
+  // Receipt's total and the split it implies are computed here, at the one
+  // place either is read (this render, and save() below) — never written
+  // into the draft as a cache for some other effect to notice and resync.
+  // There's nothing to fall out of step because nothing is ever recorded
+  // twice (ADR-0020; this replaced an effect on `receiptItems`/`receiptTip`
+  // that mirrored the total into `amountText`, which had a window where a
+  // screen reading the draft saw last save's total instead of this one's).
+  const receiptTotal = receiptLocksAmount
+    ? receiptTotalMinor(draft.receiptItems ?? [], draft.receiptTip ?? null, draft.currency)
+    : null;
+  const receiptWeights = receiptLocksAmount
+    ? weightsFromItems(
+        draft.receiptItems ?? [],
+        (draft.receiptAssignments ?? []).map((row) => new Set(row)),
+        draft.receiptTip && draft.receiptInvolved
+          ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
+        draft.currency,
+        draft.expenseId ?? "new",
+      )
+    : {};
+  // Empty until "who had what" has actually been visited (or on an old draft
+  // with nothing assigned yet) — falls back to whatever the split already
+  // was rather than claiming an opinion it doesn't have.
+  const receiptSplit: SplitSpec | null = Object.keys(receiptWeights).length > 0
+    ? { mode: "shares", weights: receiptWeights } : null;
+  const effectiveSplit = receiptSplit ?? draft.split;
+
+  let amountMinor = 0;
+  try {
+    amountMinor = receiptTotal !== null ? receiptTotal
+      : draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0;
+  } catch { /* mid-type */ }
+
+  const foreign = draft.currency !== base;
+  const rateOk = !foreign || isValidRate(draft.rateToBase);
+  const baseMinor = !foreign ? amountMinor
+    : rateOk ? convertMinor(amountMinor, draft.currency, base, draft.rateToBase) : 0;
+
+  // The split editor is inline below and shows its own arithmetic; the form
+  // only needs to know whether what it currently says can be saved.
+  const splitOk = validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: draft.expenseId ?? "new" }).ok;
+
+  // Payers are checked against the amount in the expense's own currency: that
+  // is the number people typed and the number they'd check against a receipt.
+  const payerCheck = validatePayers(amountMinor, draft.payers);
+  const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
+
+  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
+    && draft.description.trim().length > 0;
+
   async function save() {
     if (!ready || !groupId) return;
     const actor = data.me ?? draft!.paidBy;
@@ -185,7 +196,7 @@ function EditExpenseScreen() {
       rateToBase: foreign ? draft!.rateToBase : "1",
       paidBy: draft!.paidBy,
       payers: draft!.payers,
-      split: draft!.split,
+      split: effectiveSplit,
       categoryId: draft!.categoryId,
       receiptItems: draft!.receiptItems ?? null,
       receiptTip: draft!.receiptTip ?? null,
@@ -225,7 +236,7 @@ function EditExpenseScreen() {
                 autoFocus={!draft.expenseId}
                 placeholder="0"
                 currency={draft.currency}
-                value={draft.amountText}
+                value={receiptTotal !== null ? bare(receiptTotal, draft.currency) : draft.amountText}
                 onChange={(amountText) => patch({ amountText })}
                 autoSize={true}
                 disabled={receiptLocksAmount}
@@ -335,7 +346,7 @@ function EditExpenseScreen() {
               me={data.me}
               totalMinor={baseMinor}
               currency={base}
-              spec={draft.split}
+              spec={effectiveSplit}
               seed={draft.expenseId ?? "new"}
               onChange={(split) => patch({ split })}
               tab={activeTab}

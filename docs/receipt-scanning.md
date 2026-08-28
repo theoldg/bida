@@ -169,15 +169,15 @@ per-group quota, then a decision about whether the photo is stored at all.
    tab persists on the expense, the amount is computed from items + tip while
    Receipt mode has items, the tip scales to what each person ordered, and
    scanning/rescanning works on any expense, not just an unsaved one.
-9. ✅ Follow-up (2026-08-28): `/g/expense/items`'s "Done" now pins the derived
-   amount itself instead of leaving it to the expense form's next mount to
-   notice; the tip is one editable row in the grid ("Tip + service", with its
-   percentage of the items shown next to it) rather than a separate field
-   above the table; the grid's initials row stays visible while scrolling; and
-   the split editor's "N of total allocated" line only appears on As amounts —
-   Evenly, As parts and Receipt always land on the total by construction, so
-   the line only ever restated the obvious or, worse, printed "€0.00 of €0.00"
-   before the total had synced.
+9. ✅ Follow-up (2026-08-28): the tip is one editable row in the grid ("Tip +
+   service", with its percentage shown next to it) rather than a separate
+   field; the grid's initials row stays visible while scrolling; the split
+   editor's "N of total allocated" line is scoped to As amounts, the only
+   mode where it isn't either trivially true or, before the total had synced,
+   a nonsensical "€0.00 of €0.00"; and
+   [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md)
+   stopped caching that total/split in the draft at all — both are computed
+   fresh, inline, wherever they're read.
 
 ## Verified live, 2026-08-28
 
@@ -216,13 +216,9 @@ group and its secret:
   that can leave the total at zero needs its own guard; don't rely on the
   split footer to catch it (and, since 2026-08-28, that footer no longer
   renders on the Receipt tab at all — see below).
-- A value derived from two draft fields that a *later* mount's effect
-  resyncs is only as reliable as that next mount actually happening before
-  anyone reads the value. `/g/expense/items` writes `receiptItems`-derived
-  weights and calls `router.back()` in the same breath; waiting for
-  `/g/expense/edit`'s own effect to notice and fix up `amountText` left a
-  window where the total read as `0`, which — per the gotcha above — the
-  split footer reported as "fully allocated" while blocking Save (`amountMinor
-  > 0` failed). Fixed by having `finish()` pin the total itself in the same
-  write that changes the split, rather than trusting a different screen's
-  mount to catch up.
+- Don't write a derived value into the draft for another screen's effect to
+  notice and resync — that resync is only as reliable as the next mount
+  actually happening before anyone reads the value, and a screen that writes
+  the input and immediately navigates away (`/g/expense/items`'s "Done") can
+  beat it. Receipt's total and split are recomputed inline, at the one place
+  either is read, instead — [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).

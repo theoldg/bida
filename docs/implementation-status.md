@@ -21,13 +21,14 @@ backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
-follow-up (2026-08-28): a round of receipt-splitting bugs — the who-had-what
-grid now pins the derived total when you finish it rather than trusting the
-expense form's next mount to resync it (was printing "0 of 0 allocated" and
-blocking Save), the tip is one editable row in the grid instead of a separate
-field, the grid's initials row stays visible while scrolling, and the split
-editor's "N of total allocated" line is scoped to As amounts only. See
-[receipt-scanning.md](receipt-scanning.md#gotchas).
+follow-up (2026-08-28): a round of receipt-splitting bugs, root-caused to
+Receipt mode caching its derived total/split for another screen to resync
+(was printing "0 of 0 allocated" and blocking Save) — fixed by deriving both
+inline, at the one place either is read, instead
+([ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md)).
+Also: the tip is one editable row in the grid instead of a separate field,
+the grid's initials row stays visible while scrolling, and the split editor's
+"N of total allocated" line is scoped to As amounts only.
 
 ## The next action
 
@@ -37,7 +38,9 @@ Photograph a receipt and it fills the expense form:
 [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md),
 [ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md),
-[ADR-0019](decisions/0019-receipt-mode-owns-the-total.md). A "Receipt" tab
+[ADR-0019](decisions/0019-receipt-mode-owns-the-total.md),
+[ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).
+A "Receipt" tab
 on `/g/expense/edit`'s split editor, alongside Evenly/As parts/As amounts,
 holds the camera-capture and library-upload buttons (any expense, saved or
 not, sharing one handler) with a spinner-and-label loading state per button,
