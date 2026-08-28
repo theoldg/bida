@@ -97,7 +97,7 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` |
 | `types.ts` | `Group`, `Member`, `Expense`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
-| `scan.ts` | `normalizeScan`, `cleanAmountText`, `ScanResult`, `ScanPatch` |
+| `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |
 
 ## What has been proven — tested, not just written
 

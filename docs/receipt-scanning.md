@@ -83,12 +83,12 @@ It reads. It doesn't compute.
 | It returns | Type |
 |---|---|
 | merchant | string → `description` |
-| total | **the string as printed**: `"42,50"`, `"1.234,50"` |
-| tip | a separate tip/service-charge line, printed as-is, or null |
+| total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code |
+| tip | a separate tip/service-charge line, same normalized notation, or null |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
-| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), printed amount, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
+| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), amount in the same normalized notation as `total`, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short sentence if the photo isn't a receipt or is unreadable (e.g. "This doesn't look like a receipt"), else null — every other field is null/empty when set |
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
@@ -107,13 +107,13 @@ who-had-what grid when printed, but the split arithmetic in
 printed total, so folding quantity into it too would double-count.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
-`ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts
-(thousands separators stripped, last `,`/`.` kept as the decimal point only
-when 1–2 digits follow it), an uppercased currency, and `occurredAt` from the
-printed date. Conversion to minor units stays where it already is —
-`parseMinor` on save. `category` passes through as a name; matching it to the
-group's actual category id is the caller's job, since core doesn't know a
-group's categories.
+`ExpenseDraft` patch: `total` passes straight through as `amountText` — the
+prompt already asks the model for `parseMinor()`-ready notation, so there's no
+separator-guessing to do locally — plus an uppercased currency and
+`occurredAt` from the printed date. Conversion to minor units stays where it
+already is — `parseMinor` on save. `category` passes through as a name;
+matching it to the group's actual category id is the caller's job, since core
+doesn't know a group's categories.
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
@@ -123,8 +123,12 @@ model's call too: it sets `error` to a short sentence instead of guessing at
 the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
 into a thrown `ScanRejectedError` whose message *is* the model's sentence;
 the expense form shows it verbatim on the Receipt tab in place of the
-generic "Couldn't read that receipt." Any other failure (network, non-2xx,
-malformed JSON) still falls back to the generic message.
+generic "Couldn't read that receipt." A `429`/`503` from Gemini (rate limited
+or overloaded — the free tier hits this, see **Verified live** below) is
+distinguished the same way, as `ScanUnavailableError`, so the person sees
+"Gemini's busy right now" rather than a message indistinguishable from a bad
+photo. Any other failure (network, other non-2xx, malformed JSON) still
+falls back to the generic message.
 
 ## Trust, and what we're accepting
 

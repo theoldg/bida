@@ -6,25 +6,8 @@ const blank: ScanResult = {
 };
 
 describe("normalizeScan", () => {
-  it("cleans a plain decimal total", () => {
+  it("passes the model's normalized total through untouched", () => {
     expect(normalizeScan({ ...blank, total: "42.50" })).toMatchObject({ amountText: "42.50" });
-  });
-
-  it("cleans a comma-decimal total", () => {
-    expect(normalizeScan({ ...blank, total: "42,50" })).toMatchObject({ amountText: "42.50" });
-  });
-
-  it("cleans a thousands-dot, comma-decimal total", () => {
-    expect(normalizeScan({ ...blank, total: "1.234,50" })).toMatchObject({ amountText: "1234.50" });
-  });
-
-  it("treats a lone thousands separator as grouping, not cents", () => {
-    expect(normalizeScan({ ...blank, total: "1,234" })).toMatchObject({ amountText: "1234" });
-    expect(normalizeScan({ ...blank, total: "1.234" })).toMatchObject({ amountText: "1234" });
-  });
-
-  it("strips a currency symbol", () => {
-    expect(normalizeScan({ ...blank, total: "€42.50" })).toMatchObject({ amountText: "42.50" });
   });
 
   it("passes a plain integer through untouched", () => {

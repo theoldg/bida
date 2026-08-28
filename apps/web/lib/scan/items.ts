@@ -1,4 +1,4 @@
-import { cleanAmountText, parseMinor, resolveSplit } from "@hajsik/core";
+import { parseMinor, resolveSplit } from "@hajsik/core";
 
 /**
  * Turns "who had what" on a scanned receipt into split weights.
@@ -24,7 +24,7 @@ export function weightsFromItems(
     const who = [...(assignments[i] ?? new Set())];
     if (who.length === 0) return;
     let minor = 0;
-    try { minor = parseMinor(cleanAmountText(item.amount), currency); } catch { return; }
+    try { minor = parseMinor(item.amount, currency); } catch { return; }
     if (minor <= 0) return;
     const { shares } = resolveSplit(minor, { mode: "equal", members: who }, { tiebreakSeed: `${seed}:item${i}` });
     for (const [id, v] of Object.entries(shares)) add(id, v);
@@ -32,7 +32,7 @@ export function weightsFromItems(
 
   if (tip && tip.members.size > 0) {
     let minor = 0;
-    try { minor = parseMinor(cleanAmountText(tip.amount), currency); } catch { /* no tip, no problem */ }
+    try { minor = parseMinor(tip.amount, currency); } catch { /* no tip, no problem */ }
     if (minor > 0) {
       // Scale the tip to what each person already ordered, not an even split —
       // someone who had the €40 steak tips more than someone who had a coffee.
@@ -71,10 +71,10 @@ export function receiptTotalMinor(
   let total = 0;
   let any = false;
   for (const item of items) {
-    try { total += parseMinor(cleanAmountText(item.amount), currency); any = true; } catch { /* unreadable line, skip it */ }
+    try { total += parseMinor(item.amount, currency); any = true; } catch { /* unreadable line, skip it */ }
   }
   if (tip) {
-    try { total += parseMinor(cleanAmountText(tip), currency); } catch { /* no tip, no problem */ }
+    try { total += parseMinor(tip, currency); } catch { /* no tip, no problem */ }
   }
   return any ? total : null;
 }

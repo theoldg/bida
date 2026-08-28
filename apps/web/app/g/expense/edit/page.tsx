@@ -17,7 +17,7 @@ import { addExpense, editExpense } from "../../../../lib/db/commands";
 import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
-import { normalizeScan, scanReceipt, ScanRejectedError } from "../../../../lib/scan";
+import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
 import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
 
 export default function EditExpensePage() {
@@ -73,7 +73,7 @@ function EditExpenseScreen() {
       if (receiptItems.length > 0) router.push(route.items(groupId));
     } catch (err) {
       setScanState("error");
-      setScanError(err instanceof ScanRejectedError ? err.message : null);
+      setScanError(err instanceof ScanRejectedError || err instanceof ScanUnavailableError ? err.message : null);
     }
   }
 
