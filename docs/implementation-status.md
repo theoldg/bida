@@ -25,15 +25,16 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 ## The next action
 
 **Phase 4 — receipts, scanning first.** Photograph a receipt and have it fill
-the expense form: planned in full in [receipt-scanning.md](receipt-scanning.md),
-starting with `packages/core/src/scan.ts` and its tests. It needs no storage, so
-it lands ahead of the R2 work (multi-image capture, upload queue, gallery).
-Scope in [product.md](product.md), checklist in
-[roadmap.md](roadmap.md#phase-4--receipts).
+the expense form: [receipt-scanning.md](receipt-scanning.md). Core normaliser,
+the Worker's `/api/groups/:id/scan` passthrough, and `apps/web/lib/scan/`
+(downscale, request, response) are built and typechecked. Left, on purpose —
+the owner wants to design the schema's final shape and the UX: the button on
+`/g/expense`, its states, and the privacy line. Then ADR-0016 and the roadmap
+checkbox. Scope in [product.md](product.md).
 
-Blocked on one thing only: the owner pasting a Gemini API key, which becomes a
+Blocked on one thing: the owner pasting a Gemini API key, which becomes a
 Worker secret (`wrangler secret put GEMINI_API_KEY`). Everything but the live
-end-to-end check can be built and tested without it.
+end-to-end check is built and tested without it.
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
@@ -81,6 +82,7 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` |
 | `types.ts` | `Group`, `Member`, `Expense`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
+| `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |
 
 ## What has been proven — tested, not just written
 

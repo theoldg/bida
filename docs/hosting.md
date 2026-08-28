@@ -27,6 +27,12 @@ pnpm --filter @hajsik/web build        # next build → apps/web/out
 pnpm --filter @hajsik/api run deploy   # wrangler deploy
 ```
 
+The scan endpoint needs one Worker secret, once, not per deploy:
+
+```bash
+pnpm --filter @hajsik/api exec wrangler secret put GEMINI_API_KEY
+```
+
 `wrangler.toml` binds `[assets] directory = "../web/out"` with
 `not_found_handling = "404-page"` (**not** `single-page-application`: the export
 is a real multi-page site, one HTML file per route), and a `[[d1_databases]]`

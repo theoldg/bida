@@ -1,6 +1,8 @@
 # Receipt scanning
 
-*For: whoever builds or changes the scan. Not built yet — this is the plan.*
+*For: whoever builds or changes the scan. Core, Worker endpoint and the
+client-side scan lib exist; the button, its states and the final field schema
+are deliberately not — the owner wants to design those.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
@@ -79,15 +81,20 @@ It reads. It doesn't compute.
 | merchant | string → `description` |
 | total | **the string as printed**: `"42,50"`, `"1.234,50"` |
 | currency | ISO 4217 if legible, else null |
-| date | `YYYY-MM-DD` if legible, else null |
+| date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
-| line items | label + printed amount — unused today, the seam for restaurant splitting |
+
+Line items (restaurant splitting) are deferred scope — see product.md — so
+`ScanResult` doesn't carry them; add the field when that work starts.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns that into an
-`ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts,
-a validated currency, an `occurredAt`. Conversion to minor units stays where it
-already is — `parseMinor` on save. Core gets the tests (`"1.234,50"`, `"€42.50"`,
-a subtotal above the total, a tip line, a date in three formats).
+`ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts
+(thousands separators stripped, last `,`/`.` kept as the decimal point only
+when 1–2 digits follow it), an uppercased currency, and `occurredAt` from the
+printed date. Conversion to minor units stays where it already is —
+`parseMinor` on save. `category` passes through as a name; matching it to the
+group's actual category id is the caller's job, since core doesn't know a
+group's categories.
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It fills three fields and leaves the ledger alone.
@@ -111,24 +118,27 @@ per-group quota, then a decision about whether the photo is stored at all.
 
 ## Build order
 
-1. `packages/core/src/scan.ts` + tests — the normaliser, no network.
-2. `apps/api` — the passthrough endpoint and the `GEMINI_API_KEY` secret.
-3. `apps/web/lib/scan/` — downscale, request body, response parse.
-4. The button on `/g/expense`, its three states (idle, working, failed), and
-   the privacy line. `pnpm shots` after.
-5. ADR-0016, product.md's deferred row, roadmap Phase 4.
+1. ✅ `packages/core/src/scan.ts` + tests — the normaliser, no network.
+2. ✅ `apps/api` — `POST /api/groups/:id/scan`, same bearer-secret check as
+   sync, passthrough to `GEMINI_MODEL = "gemini-2.5-flash"` (best-documented
+   free tier as of writing — re-check in AI Studio once a key exists, model id
+   is one constant in `apps/api/src/index.ts`). Needs the `GEMINI_API_KEY`
+   Worker secret — [hosting.md](hosting.md#deploying).
+3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
+   output schema), `response.ts`, and `scanReceipt()` tying them together.
+4. ⬜ The button on `/g/expense`, its states, and the privacy line — owner's
+   design. `pnpm shots` after.
+5. ⬜ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 
-## To verify before coding
+## Still to verify — needs a real key
 
-Everything here about Gemini is from the docs, not from a call we've made:
-
-- Exact model id — `gemini-3.7-flash` is the newest with a free tier;
-  `gemini-2.5-flash` is the one whose 1,500 requests/day is best documented.
-- Endpoint path and header (`/v1beta/models/{model}:generateContent`,
-  `x-goog-api-key`), and the structured-output fields
-  (`generationConfig.responseMimeType` + `responseSchema`).
-- That a `ReadableStream` request body survives a Workers subrequest.
-- Free-tier RPD for the model we pick.
+- Free-tier RPD for `gemini-2.5-flash` (check the rate-limit view in AI Studio
+  for the actual key, Google no longer publishes static numbers).
+- That a `ReadableStream` request body survives a Workers subrequest end-to-end
+  — the passthrough sets `duplex: "half"` on the upstream `fetch()` on the
+  assumption that's required and sufficient, unverified against a real request.
+- A real photo through `downscaleToBase64Jpeg` → the endpoint → Gemini →
+  `parseScanResponse`, once `GEMINI_API_KEY` is set.
 
 ## Gotchas
 

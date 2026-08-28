@@ -31,7 +31,9 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 ## Phase 4 — Receipts ← next
 - [ ] **Scan a receipt into the expense form** — plan in
       [receipt-scanning.md](receipt-scanning.md). Needs no storage, so it comes
-      first: the photo is read and thrown away
+      first: the photo is read and thrown away. Core normaliser, Worker
+      endpoint and client scan lib built; the button, its UX and schema shape
+      are the owner's to design, then wire up
 - [ ] Multi-image capture, on-device downscale
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
 - [ ] Gallery + full-screen viewer

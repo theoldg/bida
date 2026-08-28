@@ -9,3 +9,4 @@ export * from "./fold.js";
 export * from "./history.js";
 export * from "./balance.js";
 export * from "./settle.js";
+export * from "./scan.js";

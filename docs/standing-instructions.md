@@ -53,6 +53,16 @@ it applies to work nobody has done yet.
 - **Prefer auditable over private-and-tidy.** *2026-08-28* — "the edits should
   record who did it … also on the public log." Who did what is a fact about the
   group. [ADR-0011](decisions/0011-identity-changes-are-public.md).
+- **Trust the model, don't re-derive what it already did.** *2026-08-28* — on
+  the receipt scan: "we don't need date parsing + the llm can handle that,
+  don't build useless stuff." The model is asked for `YYYY-MM-DD` directly;
+  don't add a multi-format date parser on top of a value that's already
+  normalised. [receipt-scanning.md](receipt-scanning.md).
+- **Receipt scan's schema and UX are the owner's to design.** *2026-08-28* —
+  "keep the schema and ux minimal/flexible, i have ideas for those." Built:
+  core normaliser, Worker passthrough, client scan lib. Left alone: the final
+  `ScanResult` shape and the button/screen states.
+  [receipt-scanning.md](receipt-scanning.md).
 
 ## Interface
 
