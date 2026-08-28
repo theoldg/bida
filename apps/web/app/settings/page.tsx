@@ -45,16 +45,10 @@ export default function SettingsPage() {
                 <button className={device?.personalMode ? "on" : ""}
                   onClick={() => setPersonalMode(true)}>On</button>
               </div>
-              <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, margin: "8px 2px 0" }}>
-                Highlights your own share in each group's expense list, and fades the ones
-                you're not part of. Set once here, for every group on this phone.
+              <p className="hint">
+                Highlights your own share and fades the expenses you're not part of.
               </p>
             </div>
-
-            <p style={{ fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5, margin: "4px 2px 0" }}>
-              Hajsik keeps no account of its own — this device and its groups' invite
-              links are the whole of it. There's nothing else to sign in or out of here.
-            </p>
           </div>
         </Scroll>
       </Body>

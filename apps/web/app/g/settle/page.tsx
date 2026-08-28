@@ -60,7 +60,7 @@ function SettleScreen() {
         occurredAt,
         note: note.trim() || null,
       });
-      router.replace(route.group(groupId, "settle"));
+      router.replace(route.group(groupId, "balances"));
     } catch (err) {
       setBusy(false);
       alert(err instanceof Error ? err.message : String(err));
@@ -70,7 +70,7 @@ function SettleScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="Record payment" back={route.group(groupId, "settle")}
+        <TopBar title="Record payment" back={route.group(groupId, "balances")}
           right={<button className="action" onClick={save} disabled={!ready}>Save</button>} />
         <Scroll>
           <div className="pad" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "18px 16px 6px" }}>

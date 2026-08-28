@@ -27,16 +27,16 @@ one by hand.
 |---|---|
 | `/` | Groups list |
 | `/new` | Create a group |
-| `/g?id=[&tab=]` | The group view — expenses / balances / settle, chosen by the bottom bar |
+| `/g?id=[&tab=]` | The group view — expenses / balances, chosen by the bottom bar. Settling lives on the balances tab; History and People are icons in its top bar |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense |
 | `/g/split?id=` | Split editor — who the money was spent *on* |
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: names the version and the fields coming back |
-| `/g/members?id=` | Members |
+| `/g/members?id=` | People: the member list, and where this phone claims which of them it is |
 | `/g/claim?id=` | The last step of joining: which member are you? Pick, then a button into the group |
-| `/g/options?id=` | In-group options: identity (and this phone's claim timeline), personal mode, theme, way out to People/History/invite |
+| `/g/options?id=` | In-group options: copy the invite link, personal mode, theme. Nothing else — see [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md) |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Landing for a shared invite link; saves the secret, pulls, then hands over to `/g/claim` |
 | `/settings` | Device settings: theme, personal mode |
@@ -82,12 +82,15 @@ wording there, not in a screen.
 bottom bar (Expenses · Balances · History) whose middle item lit up for two of
 the three tabs. Two navigations for one screen, disagreeing about where you were.
 
-There is now exactly one: the bottom bar, four items —
-**Expenses · Balances · Settle · Group**. `Tabs` has been deleted from
+There is now exactly one: the bottom bar, three items —
+**Expenses · Balances · Group**. `Tabs` has been deleted from
 `components/chrome.tsx` along with its CSS; do not bring it back. A screen that
 needs more destinations than fit in the bar puts them on `/g/options`, not in a
 second row. *(Owner, 2026-08-27: "the tabs are incoherent … consolidate into a
 bottom bar".)*
+
+Settling was the fourth item until 2026-08-28. It is now the bottom half of
+Balances — see [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
 
 ## Personal mode
 

@@ -169,3 +169,59 @@ Two halves of the same judgement, and worth applying beyond this screen:
   nothing it is about to change. `/g/restore` names the version, lists the
   fields coming back, and says what a restore does to the log. Reach for a
   screen when the answer depends on details the dialog can't show.
+
+### Copy the link. Don't open the share sheet.
+*2026-08-28* — "make the copy link button just copy the link instead of opening
+the sharing menu thing."
+
+The invite button called `navigator.share` when the browser had it, falling back
+to the clipboard when it didn't. The share sheet is a modal detour with a
+different set of destinations on every phone, in front of the one thing anybody
+wanted: the link, on the clipboard, to paste where they were already going.
+
+Both invite buttons now copy, and say "copied" in place — a swapped icon on
+People, a word on the options row — rather than raising an `alert()` you then
+have to dismiss. `useInviteLink` in `lib/hooks.ts` is the one implementation.
+
+The general rule: prefer the direct action to the OS menu that contains it, and
+prefer feedback in place to a dialog.
+
+### Cut the fat. Text has to earn its place.
+*2026-08-28* — "cut some fat from the ui: … delete any text that is unnecessary,
+e.g. the 'X people, base Y' subtitle."
+
+Not a one-off tidy — a standing bar for anything added from here on. Delete it
+if the screen already demonstrates it:
+
+- **A subtitle that counts what is visible below it.** "3 people · base EUR"
+  above a screen whose every figure is in euros; "3 active" above a list of
+  three.
+- **A paragraph restating the labels above it.** The new-group note explained
+  base currency to somebody who had just picked one from a labelled select.
+- **A promise the UI keeps by itself.** The join screen said it would move on
+  without being reopened. It moves on.
+- **A hint for an affordance that is already obvious.** "Tap a payment to record
+  it" under a list of tappable payments.
+
+Keep: empty states that say what to do next, and anything naming a consequence
+the user can't see (what a restore does to the log, what removing a member does
+to their past expenses). Those are the ones that earn it.
+
+Screens got smaller in the same pass — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
+Same instinct: one screen per question, one place per list.
+
+A second round, the same day, on what the first left behind: *"drop the people
+options, they're already in the top right corner. drop the history and move it
+next to the people icon in the top right corner. completely remove the option
+to rename a group. invite link is fine but it should be a juicy button called
+'copy invite link'."* Three more rules out of it:
+
+- **A menu row that duplicates a visible icon is dead weight.** If a
+  destination is already one tap away in the top bar, it does not also get a
+  row under a cog.
+- **A destination used constantly belongs in the top bar, not in a menu.**
+  Two icons is the ceiling there; a third goes back to being a row.
+- **Delete the second way to do a once-per-lifetime thing.** A group is named
+  when it is created. It doesn't need a rename prompt, and the one action a
+  screen exists for should look like a button worth pressing, not a row in a
+  list.

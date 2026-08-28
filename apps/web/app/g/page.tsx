@@ -15,7 +15,7 @@ import { route } from "../../lib/group-link";
 import { useGroupData, useOnline, usePersonalMode } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
-type Tab = "expenses" | "balances" | "settle";
+type Tab = "expenses" | "balances";
 
 export default function GroupPage() {
   return <QueryBoundary><GroupScreen /></QueryBoundary>;
@@ -42,7 +42,7 @@ function GroupScreen() {
     );
   }
 
-  const { group, members } = data;
+  const { group } = data;
 
   return (
     <Screen>
@@ -55,28 +55,31 @@ function GroupScreen() {
 
         <TopBar
           title={group.name}
-          sub={`${plural(members.length, "person", "people")} · base ${group.baseCurrency}`}
           back={route.groups()}
-          right={<Link className="iconbtn" href={route.members(group.id)} aria-label="People">
-            <Icon name="users" size={16} />
-          </Link>}
+          right={<>
+            <Link className="iconbtn" href={route.history(group.id)} aria-label="History">
+              <Icon name="clock" size={16} />
+            </Link>
+            <Link className="iconbtn" href={route.members(group.id)} aria-label="People">
+              <Icon name="users" size={16} />
+            </Link>
+          </>}
         />
 
-        {tab === "expenses" ? <ExpensesTab data={data} personal={personal} />
-          : tab === "balances" ? <BalancesTab data={data} />
-          : <SettleTab data={data} />}
+        {tab === "expenses"
+          ? <ExpensesTab data={data} personal={personal} />
+          : <BalancesTab data={data} />}
       </Body>
 
       {tab === "expenses" ? <Fab href={route.addExpense(group.id)} /> : null}
 
-      {/* One navigation, at the bottom. The screen used to carry a tab strip up
-          top *and* a bottom bar that disagreed with it — see punchlist item 1. */}
+      {/* One navigation, at the bottom. "Settle" used to be a fourth destination
+          of its own, which split one question — who owes what, and what to pay
+          to end it — across two screens you had to flip between. */}
       <BottomNav items={[
         { label: "Expenses", icon: "list", href: route.group(group.id), on: tab === "expenses" },
         { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),
           on: tab === "balances" },
-        { label: "Settle", icon: "swap", href: route.group(group.id, "settle"),
-          on: tab === "settle" },
         { label: "Group", icon: "cog", href: route.options(group.id) },
       ]} />
     </Screen>
@@ -134,9 +137,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
 
       <Scroll>
         {entries.length === 0 ? (
-          <Empty title="Nothing spent yet">
-            Tap + and put in the first thing somebody paid for.
-          </Empty>
+          <Empty title="Nothing spent yet">Tap + to add the first thing.</Empty>
         ) : null}
 
         <div className="rows">
@@ -219,10 +220,17 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
   }
 }
 
-// ------------------------------------------------------------- balances
+// ------------------------------------------------- balances and settling
 
+/**
+ * Who is up, who is down, and the shortest set of payments that ends it.
+ *
+ * These were two tabs. They are one question asked twice — the bars tell you
+ * a number is wrong, and the payments are the only thing you can do about it,
+ * so they belong on the same scroll.
+ */
 function BalancesTab({ data }: { data: GroupData }) {
-  const { group, members, balances, me, transfers } = data;
+  const { group, members, balances, memberById, me, transfers } = data;
   if (!group) return null;
   const widest = Math.max(1, ...members.map((m) => Math.abs(balances.byMember[m.id] ?? 0)));
 
@@ -267,42 +275,11 @@ function BalancesTab({ data }: { data: GroupData }) {
         </div>
       ) : null}
 
-      <div className="pad" style={{ paddingTop: 6 }}>
-        <Eyebrow style={{ marginBottom: 9 }}>Group total</Eyebrow>
-        <Card>
-          <div className="kv">
-            <span className="k">Spent together</span>
-            <span className="v">{money(balances.totalSpendMinor, group.baseCurrency)}</span>
-          </div>
-          <div className="kv">
-            <span className="k">Payments to square up</span>
-            <span className="v">{transfers.length}</span>
-          </div>
-        </Card>
-      </div>
-      <div style={{ height: 24 }} />
-    </Scroll>
-  );
-}
-
-// --------------------------------------------------------------- settle
-
-function SettleTab({ data }: { data: GroupData }) {
-  const { group, memberById, transfers, me } = data;
-  if (!group) return null;
-
-  return (
-    <Scroll>
-      <div className="pad">
-        <Eyebrow style={{ marginBottom: 9 }}>
-          {transfers.length === 0 ? "Nothing to settle"
-            : `Simplest way to settle · ${plural(transfers.length, "payment")}`}
-        </Eyebrow>
+      <div className="pad" style={{ paddingTop: 10 }}>
+        <Eyebrow style={{ marginBottom: 9 }}>Settle up</Eyebrow>
 
         {transfers.length === 0 ? (
-          <Empty title="Everyone's square">
-            Nobody owes anybody anything right now.
-          </Empty>
+          <Empty title="Everyone's square" />
         ) : null}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -327,12 +304,15 @@ function SettleTab({ data }: { data: GroupData }) {
             );
           })}
         </div>
+      </div>
 
-        {transfers.length > 0 ? (
-          <p style={{ fontSize: 11.5, color: "var(--muted)", textAlign: "center", margin: "10px 0 0", lineHeight: 1.4 }}>
-            Tap a payment to record it once the money has actually moved.
-          </p>
-        ) : null}
+      <div className="pad" style={{ paddingTop: 12 }}>
+        <Card>
+          <div className="kv">
+            <span className="k">Spent together</span>
+            <span className="v">{money(balances.totalSpendMinor, group.baseCurrency)}</span>
+          </div>
+        </Card>
       </div>
       <div style={{ height: 24 }} />
     </Scroll>

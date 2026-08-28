@@ -19,3 +19,9 @@ old one `Superseded by NNNN` at the top.
 | [0004](0004-static-export-fragment-routing.md) | Static export, secrets in the URL fragment | Accepted |
 | [0005](0005-locked-fx-rate.md) | Per-expense currency with a rate locked at entry | Accepted |
 | [0006](0006-lww-not-crdt.md) | Per-field last-write-wins, not a CRDT library | Accepted |
+| [0007](0007-per-screen-routes-not-drawers.md) | Per-screen static routes, not drawers/sheets within `/g` | Accepted |
+| [0008](0008-hand-rolled-css-not-shadcn.md) | Hand-rolled components from the mockup, not shadcn/ui | Accepted |
+| [0009](0009-identity-is-device-local.md) | Who you are is device-local, and so is its history | Superseded by [0011](0011-identity-changes-are-public.md) |
+| [0010](0010-co-sponsored-expenses.md) | Co-sponsored expenses: `payers` beside `paidBy` | Accepted |
+| [0011](0011-identity-changes-are-public.md) | A device's identity claim is an op, so `actor` can be read | Accepted |
+| [0012](0012-balances-and-settling-are-one-screen.md) | Balances and settling are one screen; identity lives with the people | Accepted |

@@ -39,7 +39,7 @@ export function parseJoinLink(input: string): JoinLink | null {
 export const route = {
   groups: () => "/",
   newGroup: () => "/new",
-  group: (groupId: string, tab?: "expenses" | "balances" | "settle") =>
+  group: (groupId: string, tab?: "expenses" | "balances") =>
     `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "expenses" ? `&tab=${tab}` : ""}`,
   addExpense: (groupId: string) => `/g/expense/edit?id=${encodeURIComponent(groupId)}`,
   editExpense: (groupId: string, expenseId: string) =>

@@ -89,9 +89,8 @@ function JoinScreen() {
       <TopBar title="Join a group" back={route.groups()} />
       <Scroll>
         <Empty title="Joining…">
-          Your invite has been saved and this will finish as soon as the other phone's
-          been online and synced at least once — no need to reopen the link, this screen
-          will move on by itself.
+          This finishes by itself once the other phone has synced. No need to reopen
+          the link.
         </Empty>
       </Scroll>
     </Body></Screen>

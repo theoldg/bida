@@ -69,12 +69,17 @@ migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
 bearer-secret auth) alongside the static-export passthrough. **Deployed and
 live** at <https://hajsik.hajsik-api.workers.dev>, D1 database created and
 migrated, sync verified against production. `pnpm shots` photographs every
-screen in both themes without a human. Two owner follow-ups landed on
+screen in both themes without a human. Three owner follow-ups landed on
 2026-08-28: the bottom bar is pinned on long screens again (the shell takes
-`height`, not `min-height`), and claiming or switching identity is now an op on
+`height`, not `min-height`); claiming or switching identity is now an op on
 the shared log so every edit's `actor` can be read —
-[ADR-0011](docs/decisions/0011-identity-changes-are-public.md). Next up: Phase 4
-(receipts) — see [docs/roadmap.md](docs/roadmap.md).
+[ADR-0011](docs/decisions/0011-identity-changes-are-public.md); and a trimming
+pass left three tabs (settling lives on Balances), one member list that is also
+where you say which member you are, People and History as icons in the group's
+top bar, an options screen that is a "Copy invite link" button and two device
+switches, no way to rename a group, and a lot less prose —
+[ADR-0012](docs/decisions/0012-balances-and-settling-are-one-screen.md). Next
+up: Phase 4 (receipts) — see [docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session

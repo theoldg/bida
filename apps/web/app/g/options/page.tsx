@@ -1,27 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Avatar, Eyebrow } from "../../../components/bits";
+import { Eyebrow } from "../../../components/bits";
 import {
-  Body, BottomNav, Empty, QueryBoundary, Screen, Scroll, TopBar,
+  Body, BottomNav, QueryBoundary, Screen, Scroll, TopBar,
 } from "../../../components/chrome";
-import { Icon, type IconName } from "../../../components/icons";
+import { Icon } from "../../../components/icons";
 import { applyTheme, type Theme } from "../../../components/theme";
-import { claimIdentity, renameGroup } from "../../../lib/db/commands";
 import { setPersonalMode, updateDevice } from "../../../lib/db/device";
-import { stamp } from "../../../lib/format";
-import { formatJoinLink, route } from "../../../lib/group-link";
-import { useDevice, useGroupData, useGroupSecret, useIdentityLog } from "../../../lib/hooks";
+import { route } from "../../../lib/group-link";
+import { useDevice, useGroupData, useInviteLink } from "../../../lib/hooks";
 
 /**
- * Everything about *this group on this phone*, in one place: who you are here,
- * how the app looks, and the way out to People, History and the invite link.
+ * What is left of a settings screen once everything with a better home has
+ * gone there: the invite link, and the two switches that belong to the phone.
  *
- * Theme and personal mode are device-wide, not per-group — they are properties
- * of the phone, not of the trip. This screen only surfaces them where people
- * actually notice they want them, rather than making them walk back out to
- * /settings. Changing one here changes it everywhere, and the copy says so.
+ * People and History are icons in `/g`'s top bar, one tap from the ledger
+ * rather than two through here. Who you are is claimed on People, next to the
+ * names. Renaming a group is gone entirely — you name it once. Theme and
+ * personal mode are device-wide, not per-group, and stay here only because
+ * this is where people notice they want them; changing one changes it for
+ * every group on this phone, and the copy says so.
  */
 
 const THEMES: { value: Theme; label: string }[] = [
@@ -39,76 +38,32 @@ function GroupOptionsScreen() {
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
   const device = useDevice();
-  const secret = useGroupSecret(groupId);
-  const identity = useIdentityLog(groupId);
+  const invite = useInviteLink(groupId);
 
   if (!groupId || !data.group) {
     return <Screen><Body><TopBar title="Group" back={true} /></Body></Screen>;
   }
   const group = data.group;
 
-  async function claim(memberId: string) {
-    if (!groupId) return;
-    await claimIdentity(groupId, memberId);
-  }
-
   async function setTheme(theme: Theme) {
     applyTheme(theme);
     await updateDevice({ theme });
   }
 
-  async function invite() {
-    if (!groupId || !secret) return;
-    const link = formatJoinLink({ groupId, secret });
-    if (navigator.share) {
-      try { await navigator.share({ title: `Join ${group.name} on Hajsik`, url: link }); }
-      catch { /* the share sheet was dismissed */ }
-      return;
-    }
-    await navigator.clipboard.writeText(link);
-    alert("Invite link copied");
-  }
-
-  async function rename() {
-    if (!groupId) return;
-    const name = prompt("Group name", group.name)?.trim();
-    if (!name || name === group.name) return;
-    await renameGroup(groupId, data.me ?? group.id, name);
-  }
-
-  const nameOf = (id: string | null) =>
-    id === null ? null : data.memberById.get(id)?.name ?? "someone who has since left";
-
   return (
     <Screen>
       <Body>
-        <TopBar title="Group options" sub={group.name} back={route.group(groupId)} />
+        <TopBar title={group.name} back={route.group(groupId)} />
 
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
 
-            <section>
-              <Eyebrow style={{ marginBottom: 9 }}>Who you are here</Eyebrow>
-              <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                {data.members.map((m) => (
-                  <button key={m.id} className="row" onClick={() => claim(m.id)}
-                    style={{ background: "transparent" }}>
-                    <Avatar member={m} size={28} />
-                    <div className="rmain">
-                      <div className="rtitle">{m.name}</div>
-                    </div>
-                    {m.id === data.me
-                      ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
-                      : null}
-                  </button>
-                ))}
-              </div>
-              <p className="hint">
-                {data.me
-                  ? "Every edit is filed under whoever this phone says it is, so switching is written to the group's history."
-                  : "Nobody is claimed on this phone yet — tap your name so your edits are filed under you."}
-              </p>
-            </section>
+            {invite.copy ? (
+              <button className="btn btn-p" onClick={invite.copy}>
+                <Icon name={invite.copied ? "check" : "link"} size={17} />
+                {invite.copied ? "Copied" : "Copy invite link"}
+              </button>
+            ) : null}
 
             <section>
               <Eyebrow style={{ marginBottom: 9 }}>Personal mode</Eyebrow>
@@ -120,7 +75,7 @@ function GroupOptionsScreen() {
               </div>
               <p className="hint">
                 Highlights your own share and fades the expenses you're not part of.
-                Set for this phone, in every group.
+                This phone, every group.
               </p>
             </section>
 
@@ -132,47 +87,6 @@ function GroupOptionsScreen() {
                     onClick={() => setTheme(t.value)}>{t.label}</button>
                 ))}
               </div>
-              <p className="hint">Also for this phone, in every group.</p>
-            </section>
-
-            <section>
-              <Eyebrow style={{ marginBottom: 9 }}>This group</Eyebrow>
-              <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                <Row href={route.members(groupId)} icon="users" label="People"
-                  meta={`${data.members.length}`} />
-                <Row href={route.history(groupId)} icon="clock" label="History"
-                  meta="Every change, in order" />
-                {secret ? <Row onClick={invite} icon="link" label="Invite link"
-                  meta="Share this group" /> : null}
-                <Row onClick={rename} icon="edit" label="Rename group" meta={group.name} />
-              </div>
-            </section>
-
-            <section>
-              <Eyebrow style={{ marginBottom: 9 }}>This phone&rsquo;s identity</Eyebrow>
-              {identity.length === 0 ? (
-                <Empty title="No claim yet">
-                  Once you pick who you are above, every switch is listed here.
-                </Empty>
-              ) : (
-                <div className="tl">
-                  {identity.slice().reverse().map((entry, i) => (
-                    <div key={entry.opId} className={`tle${i === 0 ? " now" : ""}`}>
-                      <div className="when">{stamp(entry.at)}</div>
-                      <div className="what">
-                        {entry.fromMember === null
-                          ? <>Claimed <b>{nameOf(entry.toMember)}</b> on this phone</>
-                          : <>Switched from <b>{nameOf(entry.fromMember)}</b> to <b>{nameOf(entry.toMember)}</b></>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p className="hint">
-                This phone only — other people’s devices have their own. The changes
-                themselves are in the group’s history, because every edit is signed
-                with whoever this phone said it was at the time.
-              </p>
             </section>
           </div>
           <div style={{ height: 24 }} />
@@ -182,27 +96,8 @@ function GroupOptionsScreen() {
       <BottomNav items={[
         { label: "Expenses", icon: "list", href: route.group(groupId) },
         { label: "Balances", icon: "scale", href: route.group(groupId, "balances") },
-        { label: "Settle", icon: "swap", href: route.group(groupId, "settle") },
         { label: "Group", icon: "cog", href: route.options(groupId), on: true },
       ]} />
     </Screen>
   );
-}
-
-function Row({ href, onClick, icon, label, meta }: {
-  href?: string; onClick?: () => void; icon: IconName; label: string; meta?: string;
-}) {
-  const inner = (
-    <>
-      <Icon name={icon} size={16} style={{ color: "var(--muted)", flex: "none" }} />
-      <div className="rmain">
-        <div className="rtitle" style={{ fontWeight: 500 }}>{label}</div>
-      </div>
-      {meta ? <span className="rmeta" style={{ maxWidth: 150 }}>{meta}</span> : null}
-      <Icon name="chev" size={13} style={{ color: "var(--muted)", flex: "none" }} />
-    </>
-  );
-  return href
-    ? <Link href={href} className="row">{inner}</Link>
-    : <button className="row" onClick={onClick} style={{ background: "transparent" }}>{inner}</button>;
 }

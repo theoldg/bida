@@ -12,10 +12,12 @@ status file is worse than none.
 ## Where we are
 
 **Phases 0-3 are done — the MVP is complete and deployed. Phase 7 (the owner's
-punch list) is done too; all eight items are on `main`.** Since then, two
+punch list) is done too; all eight items are on `main`.** Since then, three
 follow-ups from the owner (2026-08-28): the bottom bar is pinned again on
-screens taller than the viewport, and identity claims are now ops on the shared
-log — [ADR-0011](decisions/0011-identity-changes-are-public.md).
+screens taller than the viewport, identity claims are now ops on the shared
+log — [ADR-0011](decisions/0011-identity-changes-are-public.md) — and a
+trimming pass took the UI down to three tabs, one member list and much less
+prose — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 `apps/web` and `apps/api` both exist and are both live.
@@ -62,16 +64,17 @@ Screens (each its own static route — see
 |---|---|---|
 | Groups list | `app/page.tsx` | ✅ |
 | Create group | `app/new/page.tsx` | ✅ |
-| Group view (expenses/balances/settle tabs) | `app/g/page.tsx` | ✅ |
+| Group view (expenses / balances-and-settling tabs) | `app/g/page.tsx` | ✅ |
 | Expense detail | `app/g/expense/page.tsx` | ✅ |
 | Add/edit expense | `app/g/expense/edit/page.tsx` | ✅ |
 | Split editor | `app/g/split/page.tsx` | ✅ |
 | Version history | `app/g/history/page.tsx` | ✅ |
-| Members (claim identity, rename, remove, add, invite link) | `app/g/members/page.tsx` | ✅ |
+| People (claim identity, rename, remove, add, copy invite link) | `app/g/members/page.tsx` | ✅ |
 | Record a settlement | `app/g/settle/page.tsx` | ✅ |
 | Join a shared link | `app/join/page.tsx` | ✅ *(see caveat below)* |
 | Pick who you are, after joining | `app/g/claim/page.tsx` | ✅ |
 | Restore confirmation | `app/g/restore/page.tsx` | ✅ |
+| In-group options (copy invite link, personal mode, theme) | `app/g/options/page.tsx` | ✅ |
 | Settings (theme, personal mode) | `app/settings/page.tsx` | ✅ |
 
 Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
@@ -105,8 +108,9 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   identity changes, also on the public log"* — claiming or switching identity is
   an `identity` op keyed by the device's HLC node id. It folds into
   `GroupState.identities`, renders on `/g/history` beside every other change,
-  and `/g/options` reads this phone's timeline back out of the log instead of
-  the (now dropped) device-local `identityLog` table. Dexie is at v3, and
+  and the device-local `identityLog` table is dropped. (`/g/options` rendered
+  this phone's timeline back out of the log for a day; ADR-0012 removed that
+  view — the feed already tells the story.) Dexie is at v3, and
   `publishExistingClaims` publishes, once on next launch, the claim a device
   made before this shipped.
   [ADR-0011](decisions/0011-identity-changes-are-public.md) supersedes ADR-0009.
@@ -128,6 +132,20 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   where something would actually change. The expense link is a pressable pill.
   The revision sentence and field formatters moved to `lib/history-copy.ts`,
   shared by both screens.
+- *"make the copy link button just copy the link … also cut some fat from the
+  ui"* — both invite buttons copy to the clipboard and say so in place
+  (`useInviteLink`); `navigator.share` is gone. The bottom bar is three items,
+  with settling on the balances tab; identity is claimed on `/g/members` and
+  nowhere else; this phone's identity timeline is gone from `/g/options`
+  (the ops are still on `/g/history`); and the subtitles and explanatory
+  paragraphs that restated what the screen already showed are deleted. Then
+  `/g/options` itself came down to a "Copy invite link" button and the two
+  device switches: People and History are icons in `/g`'s top bar, and a group
+  can no longer be renamed (`renameGroup` stays in `commands.ts` — the ops
+  still have to fold — but nothing calls it).
+  [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md), and the
+  standing bar for new copy is in
+  [standing-instructions.md](standing-instructions.md).
 
 ### `apps/api` — what's built
 

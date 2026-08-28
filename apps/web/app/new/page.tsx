@@ -53,10 +53,9 @@ export default function NewGroupPage() {
                 {COMMON_CURRENCIES.map((c) => <option key={c} value={c}>{currencyLabel(c)}</option>)}
               </select>
             </div>
-            <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.5, margin: "4px 2px 0" }}>
-              The group's base currency is what balances are settled in. Individual
-              expenses can be in any currency — each keeps the rate it was entered at.
-              Add everyone else once the group exists.
+            <p className="hint">
+              Balances settle in this currency. An expense can be in any other, and
+              keeps the rate it was entered at.
             </p>
           </div>
         </Scroll>

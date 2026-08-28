@@ -19,7 +19,8 @@ import { useGroupData } from "../../../lib/hooks";
  *
  * This is the same list with one job. Pick a name, press the button, land in
  * the group. Nothing is written until the button: tapping a name here is a
- * selection, not a claim (which is an op, and public — ADR-0011).
+ * selection, not a claim (which is an op, and public — ADR-0011). It can be
+ * changed later on People, where the same names are.
  */
 export default function ClaimPage() {
   return <QueryBoundary><ClaimScreen /></QueryBoundary>;
@@ -65,13 +66,6 @@ function ClaimScreen() {
         <TopBar title="Which one is you?" sub={group.name} back={route.groups()} />
 
         <Scroll>
-          <div className="pad" style={{ paddingBottom: 4 }}>
-            <p className="hint" style={{ margin: "0 2px 4px" }}>
-              So your share, and every edit you make, is filed under the right name.
-              You can change it later in the group&rsquo;s options.
-            </p>
-          </div>
-
           <div className="rows">
             {data.members.map((m) => (
               <button key={m.id} className="row" onClick={() => setPicked(m.id)}>

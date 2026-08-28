@@ -5,9 +5,17 @@ import { Avatar } from "../../../components/bits";
 import { Banner, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { addMember, claimIdentity, removeMember, renameMember } from "../../../lib/db/commands";
-import { formatJoinLink, route } from "../../../lib/group-link";
-import { useGroupData, useGroupSecret } from "../../../lib/hooks";
+import { route } from "../../../lib/group-link";
+import { useGroupData, useInviteLink } from "../../../lib/hooks";
 
+/**
+ * People: who is in the group, and which of them this phone is.
+ *
+ * Identity used to be a second copy of this same list on the group options
+ * screen. One list, one place to tap: the check mark is who you are, and
+ * tapping another name moves it — an op on the shared log, like every other
+ * change (ADR-0011).
+ */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
 }
@@ -16,25 +24,13 @@ function MembersScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
-  const secret = useGroupSecret(groupId);
+  const invite = useInviteLink(groupId);
 
   if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
   const group = data.group;
 
-  async function invite() {
-    if (!groupId || !secret) return;
-    const link = formatJoinLink({ groupId, secret });
-    if (navigator.share) {
-      try { await navigator.share({ title: `Join ${group!.name} on Hajsik`, url: link }); }
-      catch { /* user cancelled the share sheet */ }
-      return;
-    }
-    await navigator.clipboard.writeText(link);
-    alert("Invite link copied");
-  }
-
   async function claim(memberId: string) {
-    if (!groupId) return;
+    if (!groupId || memberId === data.me) return;
     await claimIdentity(groupId, memberId);
   }
 
@@ -63,39 +59,41 @@ function MembersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="People" sub={group.name} back={route.group(groupId)}
-          right={secret ? (
-            <button className="iconbtn" aria-label="Invite" onClick={invite}>
-              <Icon name="link" size={16} />
+        <TopBar title="People" back={route.group(groupId)}
+          right={invite.copy ? (
+            <button className="iconbtn" aria-label="Copy invite link" onClick={invite.copy}>
+              <Icon name={invite.copied ? "check" : "link"} size={16}
+                style={invite.copied ? { color: "var(--brand)" } : undefined} />
             </button>
           ) : null} />
 
         <Scroll>
           {!data.me ? (
             <div className="pad" style={{ paddingBottom: 0 }}>
-              <Banner icon="users">Tap your name below so the app knows who you are on this phone.</Banner>
+              <Banner icon="users">Tap your name so this phone knows who you are.</Banner>
             </div>
           ) : null}
 
           <div className="rows">
             {data.members.map((m) => (
-              <div key={m.id} className="row" style={{ cursor: data.me ? undefined : "pointer" }}
-                onClick={!data.me ? () => claim(m.id) : undefined}>
+              <div key={m.id} className="row" style={{ cursor: "pointer" }} onClick={() => claim(m.id)}>
                 <Avatar member={m} />
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
-                  <div className="rmeta">{m.id === data.me ? "You" : !data.me ? "Tap if this is you" : ""}</div>
                 </div>
-                {data.me ? (
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="iconbtn" aria-label="Rename" onClick={() => rename(m.id, m.name)}>
-                      <Icon name="edit" size={14} />
-                    </button>
-                    <button className="iconbtn" aria-label="Remove" onClick={() => remove(m.id, m.name)}>
-                      <Icon name="trash" size={14} />
-                    </button>
-                  </div>
-                ) : null}
+                {m.id === data.me
+                  ? <Icon name="check" size={16} style={{ color: "var(--brand)", flex: "none" }} />
+                  : null}
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="iconbtn" aria-label={`Rename ${m.name}`}
+                    onClick={(e) => { e.stopPropagation(); void rename(m.id, m.name); }}>
+                    <Icon name="edit" size={14} />
+                  </button>
+                  <button className="iconbtn" aria-label={`Remove ${m.name}`}
+                    onClick={(e) => { e.stopPropagation(); void remove(m.id, m.name); }}>
+                    <Icon name="trash" size={14} />
+                  </button>
+                </div>
               </div>
             ))}
 

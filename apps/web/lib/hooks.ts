@@ -3,12 +3,13 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useState } from "react";
 import {
-  computeBalances, settleUp, emptyGroupState, sortOps,
+  computeBalances, settleUp, emptyGroupState,
   type BalanceReport, type Expense, type Group, type GroupState, type Member,
   type Settlement, type Transfer,
 } from "@hajsik/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
+import { formatJoinLink } from "./group-link";
 
 /**
  * Every screen reads through these. Two rules:
@@ -42,6 +43,38 @@ export function useGroupSecret(groupId: string | undefined): string | undefined 
     if (!groupId) return undefined;
     return (await db().groupKeys.get(groupId))?.secret;
   }, [groupId]);
+}
+
+/**
+ * The invite link for a group, and a one-tap copy of it.
+ *
+ * Copying, not `navigator.share`: the share sheet is a modal detour with a
+ * different set of destinations on every phone, and the answer was always
+ * "put it on the clipboard". `copied` flips back on its own so the button can
+ * say so without a dialog to dismiss.
+ */
+export function useInviteLink(groupId: string | undefined): {
+  copy: (() => Promise<void>) | undefined;
+  copied: boolean;
+} {
+  const secret = useGroupSecret(groupId);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1600);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  const copy = useMemo(() => {
+    if (!groupId || !secret) return undefined;
+    return async () => {
+      await navigator.clipboard.writeText(formatJoinLink({ groupId, secret }));
+      setCopied(true);
+    };
+  }, [groupId, secret]);
+
+  return { copy, copied };
 }
 
 export interface GroupData {
@@ -156,42 +189,6 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     return out.sort((a, b) => Number(!!a.group.archivedAt) - Number(!!b.group.archivedAt)
       || b.lastActivity - a.lastActivity);
   }, []);
-}
-
-/** One device's move from one member to another, read back out of the log. */
-export interface IdentityChange {
-  opId: string;
-  at: number;
-  /** The member this device was before, or null on a first claim. */
-  fromMember: string | null;
-  toMember: string;
-}
-
-/**
- * This device's identity changes in a group, oldest first.
- *
- * Derived from the `identity` ops this device stamped — the same ops everybody
- * else in the group can see (ADR-0011). Nothing device-local is read here
- * beyond which node id is ours.
- */
-export function useIdentityLog(groupId: string | undefined): IdentityChange[] {
-  const nodeId = useDevice()?.nodeId;
-  return useLiveQuery(async () => {
-    if (!groupId || !nodeId) return [];
-    const ops = sortOps(
-      (await db().ops.where("entityId").equals(nodeId).toArray())
-        .filter((o) => o.groupId === groupId && o.entity === "identity"),
-    );
-    let previous: string | null = null;
-    const changes: IdentityChange[] = [];
-    for (const op of ops) {
-      const to = op.patch["memberId"];
-      if (typeof to !== "string" || to === previous) continue;
-      changes.push({ opId: op.id, at: op.createdAt, fromMember: previous, toMember: to });
-      previous = to;
-    }
-    return changes;
-  }, [groupId, nodeId]) ?? [];
 }
 
 /** Whether the browser thinks it is online. Drives the offline banner. */

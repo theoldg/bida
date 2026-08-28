@@ -30,7 +30,6 @@ export default function GroupsPage() {
       <Body>
         <TopBar
           title="Your groups"
-          sub={groups ? `${active.length} active` : " "}
           right={<Link className="iconbtn" href={route.settings()} aria-label="Settings">
             <Icon name="dots" size={16} />
           </Link>}
