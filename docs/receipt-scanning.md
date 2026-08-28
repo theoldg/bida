@@ -1,8 +1,8 @@
 # Receipt scanning
 
 *For: whoever builds or changes the scan. Core, Worker endpoint and the
-client-side scan lib exist; the button, its states and the final field schema
-are deliberately not — the owner wants to design those.*
+client-side scan lib exist and are deployed and live-verified; the button and
+its states are deliberately not — the owner wants to design the UX.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
@@ -80,14 +80,17 @@ It reads. It doesn't compute.
 |---|---|
 | merchant | string → `description` |
 | total | **the string as printed**: `"42,50"`, `"1.234,50"` |
+| tip | a separate tip/service-charge line, printed as-is, or null |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
+| lineItems | `{ label, labelEn, amount }[]` — printed label, English translation (null if already English), printed amount |
 
-Line items (restaurant splitting) are deferred scope — see product.md — so
-`ScanResult` doesn't carry them; add the field when that work starts.
+`lineItems` and `tip` are the seam for restaurant splitting (product.md's
+deferred table): captured now because the scan already reads them off the
+receipt, unused by `normalizeScan` until that entity exists.
 
-`normalizeScan()` in `packages/core/src/scan.ts` turns that into an
+`normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts
 (thousands separators stripped, last `,`/`.` kept as the decimal point only
 when 1–2 digits follow it), an uppercased currency, and `occurredAt` from the
@@ -97,7 +100,7 @@ group's actual category id is the caller's job, since core doesn't know a
 group's categories.
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
-who paid, or how it splits. It fills three fields and leaves the ledger alone.
+who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 
 ## Trust, and what we're accepting
 
@@ -120,20 +123,21 @@ per-group quota, then a decision about whether the photo is stored at all.
 
 1. ✅ `packages/core/src/scan.ts` + tests — the normaliser, no network.
 2. ✅ `apps/api` — `POST /api/groups/:id/scan`, same bearer-secret check as
-   sync, passthrough to `GEMINI_MODEL = "gemini-3.6-flash"` — verified live
-   against a real key (below); model id is one constant in
-   `apps/api/src/index.ts`. `GEMINI_API_KEY` Worker secret is set —
-   [hosting.md](hosting.md#deploying).
+   sync, passthrough to `GEMINI_MODEL = "gemini-3.6-flash"`, deployed. Model id
+   is one constant in `apps/api/src/index.ts`. `GEMINI_API_KEY` Worker secret
+   is set — [hosting.md](hosting.md#deploying).
 3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
-   output schema), `response.ts`, and `scanReceipt()` tying them together.
+   output schema, including line items and tip), `response.ts`, and
+   `scanReceipt()` tying them together.
 4. ⬜ The button on `/g/expense`, its states, and the privacy line — owner's
    design. `pnpm shots` after.
 5. ⬜ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 
 ## Verified live, 2026-08-28
 
-Direct curls to `generativelanguage.googleapis.com` with the owner's key,
-outside the Worker:
+Direct curls to `generativelanguage.googleapis.com`, then the same request
+through the deployed Worker (`hajsik.hajsik-api.workers.dev`) with a throwaway
+group and its secret:
 
 - `gemini-2.5-flash` is **404 for new keys** — Google's own error names the
   replacement: *"no longer available to new users... use
@@ -141,13 +145,16 @@ outside the Worker:
   came back 503 (overloaded) on the same key at the same moment, so that's not
   a verdict on those models either way — if `3.6-flash` ever 404s the same way,
   try the current `-latest` alias before assuming the free tier is gone.
-- `gemini-3.6-flash` returns 200 and, with the exact `generationConfig.responseSchema`
-  `apps/web/lib/scan/request.ts` sends, a response `parseScanResponse()` parses
-  correctly.
-- Still unverified: free-tier RPD for `gemini-3.6-flash` (AI Studio's rate-limit
-  view has the number for a given key, Google no longer publishes it statically);
-  the `duplex: "half"` passthrough end-to-end through the deployed Worker rather
-  than a direct curl; a real photo rather than a text-only prompt.
+- A synthesized Czech pub receipt (merchant, three line items, a 10% tip line,
+  total, `28.08.2026`), sent as a real base64 JPEG through
+  `POST /api/groups/:id/scan` on the live Worker: 200, correct merchant, total
+  and tip cleaned to `parseMinor`-ready strings, line items translated
+  (a brand name like "Kofola" correctly came back with `labelEn: null`), date
+  converted to `2026-08-28`. Passthrough auth (missing/wrong secret, unknown
+  group) returns 401/403/404 same as the sync endpoint.
+- Still unverified: free-tier RPD for `gemini-3.6-flash` (AI Studio's
+  rate-limit view has the number for a given key, Google no longer publishes
+  it statically); a real phone photo rather than a synthesized one.
 
 ## Gotchas
 

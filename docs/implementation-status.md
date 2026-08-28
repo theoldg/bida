@@ -27,14 +27,11 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 **Phase 4 — receipts, scanning first.** Photograph a receipt and have it fill
 the expense form: [receipt-scanning.md](receipt-scanning.md). Core normaliser,
 the Worker's `/api/groups/:id/scan` passthrough, and `apps/web/lib/scan/`
-(downscale, request, response) are built and typechecked. Left, on purpose —
-the owner wants to design the schema's final shape and the UX: the button on
-`/g/expense`, its states, and the privacy line. Then ADR-0016 and the roadmap
-checkbox. Scope in [product.md](product.md).
-
-Blocked on one thing: the owner pasting a Gemini API key, which becomes a
-Worker secret (`wrangler secret put GEMINI_API_KEY`). Everything but the live
-end-to-end check is built and tested without it.
+(downscale, request, response) are built, deployed, and live-verified end to
+end — a synthesized receipt through the real Worker returned merchant, total,
+tip, and bilingual line items correctly. Left, on purpose — the owner wants to
+design the UX: the button on `/g/expense`, its states, and the privacy line.
+Then ADR-0016 and the roadmap checkbox. Scope in [product.md](product.md).
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.

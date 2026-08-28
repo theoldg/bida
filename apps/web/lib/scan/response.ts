@@ -13,8 +13,10 @@ export function parseScanResponse(json: unknown): ScanResult {
   return {
     merchant: parsed.merchant ?? null,
     total: parsed.total ?? null,
+    tip: parsed.tip ?? null,
     currency: parsed.currency ?? null,
     date: parsed.date ?? null,
     category: parsed.category ?? null,
+    lineItems: parsed.lineItems ?? [],
   };
 }

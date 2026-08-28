@@ -7,16 +7,30 @@
  * shape directly, so there's no multi-format date parser to maintain here.
  */
 
+/** One printed line: what it's called, translated, and what it cost. */
+export interface ScanLineItem {
+  /** As printed, in the receipt's own language. */
+  label: string;
+  /** English translation, or null if `label` already is English. */
+  labelEn: string | null;
+  /** The amount exactly as printed — same convention as ScanResult.total. */
+  amount: string;
+}
+
 export interface ScanResult {
   merchant: string | null;
   /** The total exactly as printed, e.g. "42,50" or "1.234,50". Not a number. */
   total: string | null;
+  /** A separate tip or service charge line, printed as-is, or null if none. */
+  tip: string | null;
   /** ISO 4217, or null if illegible. */
   currency: string | null;
   /** YYYY-MM-DD, or null if illegible. */
   date: string | null;
   /** One of the group's category names, or null. */
   category: string | null;
+  /** Unused by normalizeScan today — the seam for restaurant splitting (product.md). */
+  lineItems: ScanLineItem[];
 }
 
 export interface ScanPatch {
