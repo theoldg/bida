@@ -46,7 +46,7 @@ otherwise the fold produces expenses referencing nothing.
   payers?,                // memberId -> minor units in THIS expense's currency,
                           // summing to amountMinor. Absent = one payer. ADR-0010
   split: {
-    mode: 'equal' | 'exact' | 'shares' | 'percent',
+    mode: 'equal' | 'exact' | 'shares' | 'percent',   // percent: legacy, read-only (ADR-0013)
     // equal:   { members: memberId[] }
     // exact:   { amounts: Record<memberId, minor> }
     // shares:  { weights: Record<memberId, number> }
@@ -177,10 +177,11 @@ point of [ADR-0002](decisions/0002-append-only-op-log.md).
 
 ## Co-sponsored expenses
 
-`payers` is the payer-side mirror of `split`, and the two are edited on two
-sibling screens (`/g/payers`, `/g/split`) so they can never be confused for one
-another: *who put the money in* and *who the money was spent on* are different
-questions and often have different answers.
+`payers` is the payer-side mirror of `split`. The two are edited in two
+different places — the split inline on the expense form, the payers on
+`/g/payers` — so they can never be confused for one another: *who put the money
+in* and *who the money was spent on* are different questions and often have
+different answers. See [ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
 
 - Amounts are in the **expense's own currency** and must sum to `amountMinor`.
 - `resolvePayers()` converts them to base minor units at read time, apportioning

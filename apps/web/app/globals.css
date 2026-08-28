@@ -315,6 +315,22 @@ a { color: inherit; text-decoration: none }
   color: var(--muted); font-weight: 500 }
 .seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
+/* ---- the split editor, inline on the expense form ---- */
+/* It is a list inside a card rather than full-bleed `.row`s: it sits between
+   two fields on a form, and a full-width list there reads as a different
+   screen rather than as one more answer to the same question. */
+.splitlist { padding: 0; overflow: hidden }
+.splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+  border-bottom: 1px solid var(--rule-soft); position: relative }
+.splitin { width: 82px; text-align: right; background: transparent; border: 0;
+  border-bottom: 1px solid var(--rule); font: inherit; font-size: 14px; color: var(--ink);
+  outline: none; font-variant-numeric: tabular-nums }
+.splitin:disabled { border-bottom-color: transparent }
+.splitfoot { display: flex; align-items: center; gap: 7px; padding: 8px 12px; font-size: 12px;
+  font-weight: 600; border-top: 1px solid var(--rule-soft) }
+.splitfoot.ok { background: var(--credit-bg); color: var(--credit) }
+.splitfoot.bad { background: var(--debit-bg); color: var(--debit) }
+
 /* ---- inputs ---- */
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
   border: 1px solid var(--rule-soft); border-radius: var(--r-m); padding: 10px 12px }

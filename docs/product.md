@@ -25,7 +25,8 @@ at once, because that will actually happen on a trip.
   opened the app.
 - **Expenses**: amount, currency, description, date, category, who paid,
   who it was for.
-- **Split modes**: equally, exact amounts, shares (weights), percentages.
+- **Split modes**: evenly, as parts (weights), as amounts. Percentages were a
+  fourth and were dropped from the UI — [ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
   Remainders are distributed deterministically, and quietly — the app never
   makes a feature of a single cent.
 - **Balances** per member, derived, never stored.

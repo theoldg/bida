@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import {
-  convertMinor, exponentOf, isValidRate, parseMinor, resolveSplit, splitParticipants,
-  validatePayers,
+  convertMinor, exponentOf, isValidRate, parseMinor, validatePayers, validateSplit,
 } from "@hajsik/core";
 import { Avatar, Card, Chip } from "../../../../components/bits";
+import { SplitEditor } from "../../../../components/split-editor";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES } from "../../../../lib/currencies";
@@ -74,12 +74,9 @@ function EditExpenseScreen() {
   const baseMinor = !foreign ? amountMinor
     : rateOk ? convertMinor(amountMinor, draft.currency, base, draft.rateToBase) : 0;
 
-  const participants = splitParticipants(draft.split);
-  let shares: Record<string, number> = {};
-  let splitOk = participants.length > 0;
-  try {
-    shares = resolveSplit(baseMinor, draft.split, { tiebreakSeed: draft.expenseId ?? "new" }).shares;
-  } catch { splitOk = false; }
+  // The split editor is inline below and shows its own arithmetic; the form
+  // only needs to know whether what it currently says can be saved.
+  const splitOk = validateSplit(baseMinor, draft.split, { tiebreakSeed: draft.expenseId ?? "new" }).ok;
 
   // Payers are checked against the amount in the expense's own currency: that
   // is the number people typed and the number they'd check against a receipt.
@@ -239,30 +236,15 @@ function EditExpenseScreen() {
               </div>
             )}
 
-            <Card style={{ padding: "10px 12px" }}>
-              <Link href={route.split(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 13, color: "var(--muted)", width: 62 }}>Split</span>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>
-                  {draft.split.mode === "equal" ? "Equally" :
-                   draft.split.mode === "exact" ? "Exact amounts" :
-                   draft.split.mode === "shares" ? "By shares" : "By percent"}
-                  {" · "}{participants.length} {participants.length === 1 ? "person" : "people"}
-                </span>
-                <Icon name="chev" size={14} className="spacer" style={{ color: "var(--muted)" }} />
-              </Link>
-              {splitOk && participants.length > 0 ? (
-                <>
-                  <div className="hairline" />
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {participants.map((id) => (
-                      <Chip key={id} variant={id === data.me ? "hl" : undefined}>
-                        {(data.memberById.get(id)?.name ?? "?").split(" ")[0]} {money(shares[id] ?? 0, base)}
-                      </Chip>
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </Card>
+            <SplitEditor
+              members={data.members}
+              me={data.me}
+              totalMinor={baseMinor}
+              currency={base}
+              spec={draft.split}
+              seed={draft.expenseId ?? "new"}
+              onChange={(split) => patch({ split })}
+            />
 
             <div className="field">
               <label htmlFor="when">When</label>

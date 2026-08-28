@@ -130,15 +130,15 @@ function ExpenseScreen() {
               )}
               <div className="hairline" />
               <Eyebrow style={{ marginBottom: 4 }}>
-                Split · {expense.split.mode === "equal" ? "equally"
-                  : expense.split.mode === "exact" ? "exact amounts"
-                  : expense.split.mode === "shares" ? "by shares" : "by percent"}
+                Split · {expense.split.mode === "equal" ? "evenly"
+                  : expense.split.mode === "exact" ? "as amounts"
+                  : expense.split.mode === "shares" ? "as parts" : "by percent"}
               </Eyebrow>
               {data.members.map((m) => {
                 const inIt = participants.includes(m.id);
                 const weight = expense.split.mode === "shares" ? expense.split.weights[m.id] ?? 0 : 0;
                 const detail = expense.split.mode === "shares" && inIt
-                  ? ` · ${weight} share${weight === 1 ? "" : "s"}`
+                  ? ` · ${weight} part${weight === 1 ? "" : "s"}`
                   : expense.split.mode === "percent" && inIt
                     ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
                     : "";

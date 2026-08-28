@@ -29,8 +29,7 @@ one by hand.
 | `/new` | Create a group |
 | `/g?id=[&tab=]` | The group view — expenses / balances, chosen by the bottom bar. Settling lives on the balances tab; History and People are icons in its top bar |
 | `/g/expense?id=&e=` | Expense detail |
-| `/g/expense/edit?id=[&e=]` | Add or edit an expense |
-| `/g/split?id=` | Split editor — who the money was spent *on* |
+| `/g/expense/edit?id=[&e=]` | Add or edit an expense — **including the split**, inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)) |
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: names the version and the fields coming back |

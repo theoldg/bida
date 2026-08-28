@@ -126,7 +126,6 @@ const routes = (g) => [
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],
-  ["split", `/g/split?id=${g}`],
   ["payers", `/g/payers?id=${g}`],
   ["settings", "/settings"],
 ];

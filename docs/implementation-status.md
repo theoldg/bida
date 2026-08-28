@@ -66,8 +66,8 @@ Screens (each its own static route — see
 | Create group | `app/new/page.tsx` | ✅ |
 | Group view (expenses / balances-and-settling tabs) | `app/g/page.tsx` | ✅ |
 | Expense detail | `app/g/expense/page.tsx` | ✅ |
-| Add/edit expense | `app/g/expense/edit/page.tsx` | ✅ |
-| Split editor | `app/g/split/page.tsx` | ✅ |
+| Add/edit expense (split included) | `app/g/expense/edit/page.tsx` | ✅ |
+| Split editor | `components/split-editor.tsx` — inline on the expense form | ✅ |
 | Version history | `app/g/history/page.tsx` | ✅ |
 | People (claim identity, rename, remove, add, copy invite link) | `app/g/members/page.tsx` | ✅ |
 | Record a settlement | `app/g/settle/page.tsx` | ✅ |
