@@ -78,7 +78,7 @@ function SettleScreen() {
               <Avatar member={fromM} size={40} />
               <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{from === data.me ? "You" : fromM?.name}</div>
             </div>
-            <Icon name="swap" size={18} style={{ color: "var(--muted)" }} />
+            <Icon name="arrow" size={20} style={{ color: "var(--muted)" }} />
             <div style={{ textAlign: "center" }}>
               <Avatar member={toM} size={40} />
               <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{to === data.me ? "you" : toM?.name}</div>

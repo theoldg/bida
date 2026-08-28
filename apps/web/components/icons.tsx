@@ -5,7 +5,7 @@
  */
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
-  | "users" | "list" | "scale" | "swap" | "dots" | "sync" | "trash" | "edit" | "link"
+  | "users" | "list" | "scale" | "arrow" | "dots" | "sync" | "trash" | "edit" | "link"
   | "cog" | "rewind";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -40,7 +40,12 @@ export function IconSprite() {
           <path d="M12 4v16M6 8h12M4 15l2.6-6L9.2 15zM14.8 15l2.6-6 2.6 6" />
           <path d="M4 15a2.6 2.6 0 005.2 0M14.8 15a2.6 2.6 0 005.2 0" />
         </symbol>
-        <symbol id="i-swap" viewBox="0 0 24 24" {...S} strokeWidth="1.9"><path d="M4 8h13l-3-3M20 16H7l3 3" /></symbol>
+        {/* One-sided on purpose. The two-headed "swap" arrow it replaced read as
+            "these two are square with each other", which is the opposite of
+            what a settle-up row says: money goes this way, once. */}
+        <symbol id="i-arrow" viewBox="0 0 24 24" {...S} strokeWidth="2">
+          <path d="M4 12h14M12.5 6l6 6-6 6" />
+        </symbol>
         <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="5.5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="18.5" r="1.7" />
         </symbol>

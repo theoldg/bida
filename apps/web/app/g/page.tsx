@@ -12,7 +12,7 @@ import {
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { useGroupData, useOnline, usePersonalMode } from "../../lib/hooks";
+import { useGroupData, useInviteLink, useOnline, usePersonalMode } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "expenses" | "balances";
@@ -28,6 +28,10 @@ function GroupScreen() {
   const data = useGroupData(groupId);
   const personal = usePersonalMode();
   const online = useOnline();
+  // The invite link was the one thing on the deleted options screen that is a
+  // property of the group rather than of the phone, so it came here rather than
+  // to /settings — ADR-0014.
+  const invite = useInviteLink(groupId);
 
   if (!groupId) return <Screen><Body><TopBar title="No group" back={route.groups()} /></Body></Screen>;
   if (data.loading) return <Screen><Body><TopBar title=" " /></Body></Screen>;
@@ -58,11 +62,17 @@ function GroupScreen() {
           back={route.groups()}
           right={<>
             <Link className="iconbtn" href={route.history(group.id)} aria-label="History">
-              <Icon name="clock" size={16} />
+              <Icon name="clock" size={18} />
             </Link>
             <Link className="iconbtn" href={route.members(group.id)} aria-label="People">
-              <Icon name="users" size={16} />
+              <Icon name="users" size={18} />
             </Link>
+            {invite.copy ? (
+              <button className="iconbtn" aria-label="Copy invite link" onClick={invite.copy}>
+                <Icon name={invite.copied ? "check" : "link"} size={18}
+                  style={invite.copied ? { color: "var(--brand)" } : undefined} />
+              </button>
+            ) : null}
           </>}
         />
 
@@ -224,7 +234,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
       <div className={`row${personal ? (myNet !== 0 ? ` mine ${lean(myNet)}` : " notmine") : ""}`}>
         <span className="avatar" style={{
           background: "var(--card-3)", color: "var(--muted)", borderStyle: "dashed",
-        }}><Icon name="swap" size={15} /></span>
+        }}><Icon name="arrow" size={15} /></span>
         <div className="rmain">
           <div className="rtitle">
             {from?.id === me ? "You" : from?.name ?? "?"} paid {to?.id === me ? "you" : to?.name ?? "?"}
@@ -318,7 +328,7 @@ function BalancesTab({ data }: { data: GroupData }) {
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
                 <Avatar member={from} size={26} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{t.from === me ? "You" : from?.name}</span>
-                <Icon name="swap" size={15} style={{ color: "var(--muted)" }} />
+                <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
                 <Avatar member={to} size={26} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{t.to === me ? "you" : to?.name}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>

@@ -36,10 +36,10 @@ export function TopBar({ title, sub, back, right }: {
     <div className="topbar">
       {back === true ? (
         <button className="iconbtn" onClick={() => router.back()} aria-label="Back">
-          <Icon name="back" size={15} />
+          <Icon name="back" size={17} />
         </button>
       ) : back ? (
-        <Link className="iconbtn" href={back} aria-label="Back"><Icon name="back" size={15} /></Link>
+        <Link className="iconbtn" href={back} aria-label="Back"><Icon name="back" size={17} /></Link>
       ) : null}
       <div style={{ minWidth: 0 }}>
         <h3>{title}</h3>
@@ -51,7 +51,7 @@ export function TopBar({ title, sub, back, right }: {
 }
 
 export function IconLink({ href, name, label }: { href: string; name: IconName; label: string }) {
-  return <Link className="iconbtn" href={href} aria-label={label}><Icon name={name} size={16} /></Link>;
+  return <Link className="iconbtn" href={href} aria-label={label}><Icon name={name} size={18} /></Link>;
 }
 
 /**

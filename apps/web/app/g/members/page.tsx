@@ -62,7 +62,7 @@ function MembersScreen() {
         <TopBar title="People" back={route.group(groupId)}
           right={invite.copy ? (
             <button className="iconbtn" aria-label="Copy invite link" onClick={invite.copy}>
-              <Icon name={invite.copied ? "check" : "link"} size={16}
+              <Icon name={invite.copied ? "check" : "link"} size={18}
                 style={invite.copied ? { color: "var(--brand)" } : undefined} />
             </button>
           ) : null} />

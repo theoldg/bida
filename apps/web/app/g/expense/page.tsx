@@ -73,10 +73,10 @@ function ExpenseScreen() {
           back={route.group(groupId)}
           right={<>
             <Link className="iconbtn" href={route.history(groupId, expense.id)} aria-label="History">
-              <Icon name="clock" size={16} />
+              <Icon name="clock" size={18} />
             </Link>
             <button className="iconbtn" onClick={remove} aria-label="Delete">
-              <Icon name="trash" size={16} />
+              <Icon name="trash" size={18} />
             </button>
           </>}
         />

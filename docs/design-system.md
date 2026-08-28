@@ -52,6 +52,19 @@ Both dark blocks — the `prefers-color-scheme` one and the `[data-theme="dark"]
 one — carry identical values, in `apps/web/app/globals.css` **and**
 `design/mockups/index.html`. Change one, change all four.
 
+## A settle-up arrow points one way
+
+Money moving between two people has a direction, and the row is a *thing to do*
+— "you pay Marie €12" — not a statement that the two of you are connected. The
+double-headed swap arrow the mockup used said the second thing, and read as
+"these two are square". *(Owner, 2026-08-28: "make the settle screen arrows one
+sided, it's quite confusing with the bidirectional arrows".)*
+
+`i-arrow` replaces `i-swap` in the sprite and everywhere it was used: the
+transfer rows under the balances, the `/g/settle` header, and the badge on a
+recorded reimbursement in the ledger. It always points **from the payer to the
+person being paid**, left to right, matching the order of the names beside it.
+
 ## Personal mode is a highlighter
 
 The obvious move — tint your rows in the brand colour — fails, because red and
