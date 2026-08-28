@@ -20,7 +20,10 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "printed in the receipt's own language, an English translation of that label (null "
             + "if it's already English), and its amount exactly as printed. Use null for anything "
             + "illegible or absent, and an empty list if there are no line items. Don't compute or "
-            + "guess anything that isn't printed.",
+            + "guess anything that isn't printed. If the photo isn't a receipt at all, or is too "
+            + "blurry or cut off to read, set error to a short sentence saying so (e.g. \"This "
+            + "doesn't look like a receipt\" or \"Too blurry to read\") and leave every other field "
+            + "null or empty. Otherwise leave error null.",
         },
       ],
     }],
@@ -47,8 +50,9 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
               required: ["label", "labelEn", "amount"],
             },
           },
+          error: { type: "STRING", nullable: true },
         },
-        required: ["merchant", "total", "tip", "currency", "date", "category", "lineItems"],
+        required: ["merchant", "total", "tip", "currency", "date", "category", "lineItems", "error"],
       },
     },
   };

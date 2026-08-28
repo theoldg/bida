@@ -18,5 +18,6 @@ export function parseScanResponse(json: unknown): ScanResult {
     date: parsed.date ?? null,
     category: parsed.category ?? null,
     lineItems: parsed.lineItems ?? [],
+    error: parsed.error ?? null,
   };
 }

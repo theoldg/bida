@@ -47,6 +47,8 @@ export interface ReceiptTabProps {
   scanDisabled: boolean;
   scanState: "idle" | "scanning" | "error";
   scanSource: "camera" | "library" | null;
+  /** Set when the model read the photo but declined it (not a receipt, too blurry) — shown verbatim instead of the generic message. */
+  scanError: string | null;
   onScanCamera: () => void;
   onScanLibrary: () => void;
   editItemsHref: string;
@@ -237,7 +239,7 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
  * fields someone may have already corrected (ADR-0016).
  */
 function ReceiptPanel({
-  items, canScan, scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, editItemsHref,
+  items, canScan, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
 }: ReceiptTabProps) {
   if (items && items.length > 0) {
     return (
@@ -278,7 +280,7 @@ function ReceiptPanel({
       </div>
       {scanState === "error" ? (
         <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
-          Couldn't read that receipt.{" "}
+          {scanError ?? "Couldn't read that receipt."}{" "}
           <button type="button" className="action" style={{ fontSize: 11.5 }} onClick={onScanCamera}>
             Try again
           </button>

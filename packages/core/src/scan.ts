@@ -31,6 +31,13 @@ export interface ScanResult {
   category: string | null;
   /** Unused by normalizeScan today — the seam for restaurant splitting (product.md). */
   lineItems: ScanLineItem[];
+  /**
+   * A short, human-readable reason the model couldn't read a receipt out of
+   * the photo (e.g. "This doesn't look like a receipt"), or null when it
+   * read one. Set instead of guessing at the other fields — surfaced to the
+   * person verbatim rather than a generic "couldn't read that".
+   */
+  error: string | null;
 }
 
 export interface ScanPatch {

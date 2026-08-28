@@ -16,7 +16,7 @@ import { addExpense, editExpense } from "../../../../lib/db/commands";
 import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
-import { normalizeScan, scanReceipt } from "../../../../lib/scan";
+import { normalizeScan, scanReceipt, ScanRejectedError } from "../../../../lib/scan";
 import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
 
 export default function EditExpensePage() {
@@ -36,6 +36,7 @@ function EditExpenseScreen() {
   const libraryInput = useRef<HTMLInputElement>(null);
   const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
   const [scanSource, setScanSource] = useState<"camera" | "library" | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
     const file = e.target.files?.[0];
@@ -45,6 +46,7 @@ function EditExpenseScreen() {
     if (!current) return;
     setScanState("scanning");
     setScanSource(source);
+    setScanError(null);
     try {
       const result = await scanReceipt(file, groupId, secret, []);
       const patch = normalizeScan(result);
@@ -66,8 +68,9 @@ function EditExpenseScreen() {
       });
       setScanState("idle");
       if (receiptItems.length > 0) router.push(route.items(groupId));
-    } catch {
+    } catch (err) {
       setScanState("error");
+      setScanError(err instanceof ScanRejectedError ? err.message : null);
     }
   }
 
@@ -300,6 +303,7 @@ function EditExpenseScreen() {
                 scanDisabled: !secret,
                 scanState,
                 scanSource,
+                scanError,
                 onScanCamera: () => cameraInput.current?.click(),
                 onScanLibrary: () => libraryInput.current?.click(),
                 editItemsHref: route.items(groupId),

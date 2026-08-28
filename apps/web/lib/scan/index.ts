@@ -6,6 +6,9 @@ import { parseScanResponse } from "./response";
 export { normalizeScan } from "@hajsik/core";
 export type { ScanResult, ScanPatch } from "@hajsik/core";
 
+/** The model read the photo fine but declined it — not a receipt, too blurry, etc. Message is model-written, shown verbatim. */
+export class ScanRejectedError extends Error {}
+
 /**
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
  * retry doubles both our requests and the shared daily Gemini quota; let the
@@ -26,5 +29,7 @@ export async function scanReceipt(
   if (!res.ok) {
     throw new Error(`scan failed: ${res.status} ${await res.text().catch(() => "")}`);
   }
-  return parseScanResponse(await res.json());
+  const result = parseScanResponse(await res.json());
+  if (result.error) throw new ScanRejectedError(result.error);
+  return result;
 }

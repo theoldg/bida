@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { normalizeScan, type ScanResult } from "./scan.js";
 
 const blank: ScanResult = {
-  merchant: null, total: null, tip: null, currency: null, date: null, category: null, lineItems: [],
+  merchant: null, total: null, tip: null, currency: null, date: null, category: null, lineItems: [], error: null,
 };
 
 describe("normalizeScan", () => {

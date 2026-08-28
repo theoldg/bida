@@ -89,6 +89,7 @@ It reads. It doesn't compute.
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
 | lineItems | `{ label, labelEn, amount }[]` — printed label, English translation (null if already English), printed amount |
+| error | a short sentence if the photo isn't a receipt or is unreadable (e.g. "This doesn't look like a receipt"), else null — every other field is null/empty when set |
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
 restaurant-splitting entity in product.md's deferred table isn't built. But
@@ -111,6 +112,14 @@ group's categories.
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
+
+A photo that isn't a receipt (or is too blurry/cut off to read) is the
+model's call too: it sets `error` to a short sentence instead of guessing at
+the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
+into a thrown `ScanRejectedError` whose message *is* the model's sentence;
+the expense form shows it verbatim on the Receipt tab in place of the
+generic "Couldn't read that receipt." Any other failure (network, non-2xx,
+malformed JSON) still falls back to the generic message.
 
 ## Trust, and what we're accepting
 
