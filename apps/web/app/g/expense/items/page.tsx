@@ -10,10 +10,11 @@ import { saveDraft, useDraft } from "../../../../lib/draft";
 import { weightsFromItems } from "../../../../lib/scan/items";
 
 /**
- * Who had what, filled from a receipt scan. Its own screen rather than a
- * mode inside the split editor — a different question ("who ate this") from
- * "how does the total divide" — and it ends by writing an ordinary `shares`
- * split, so nothing downstream needs to know a scan was involved.
+ * Who had what, filled from a receipt scan and reopenable later via "Edit
+ * who-had-what" (ADR-0017). Its own screen rather than a mode inside the
+ * split editor — a different question ("who ate this") from "how does the
+ * total divide" — and it ends by writing an ordinary `shares` split, so
+ * nothing downstream needs to know a scan was involved.
  */
 export default function ItemsPage() {
   return <QueryBoundary><ItemsScreen /></QueryBoundary>;
@@ -25,21 +26,27 @@ function ItemsScreen() {
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
-  const items = draft?.scanItems ?? [];
+  const items = draft?.receiptItems ?? [];
 
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
 
   // Seeded once, when the group's members and the scan's items are both in —
-  // everyone included, every item shared by everyone, the ordinary case.
+  // restore a previously saved assignment if this grid was already visited,
+  // otherwise the ordinary case: everyone included, every item shared by all.
   useEffect(() => {
     if (seeded.current || data.loading || items.length === 0) return;
     seeded.current = true;
     const all = new Set(data.members.map((m) => m.id));
-    setInvolved(all);
-    setAssignments(items.map(() => new Set(all)));
-  }, [data.loading, data.members, items]);
+    if (draft?.receiptInvolved && draft.receiptAssignments?.length === items.length) {
+      setInvolved(new Set(draft.receiptInvolved));
+      setAssignments(draft.receiptAssignments.map((row) => new Set(row)));
+    } else {
+      setInvolved(all);
+      setAssignments(items.map(() => new Set(all)));
+    }
+  }, [data.loading, data.members, items, draft?.receiptInvolved, draft?.receiptAssignments]);
 
   if (!groupId || !data.group || !draft) {
     return <Screen><Body><TopBar title="Who had what" back={true} /></Body></Screen>;
@@ -48,7 +55,8 @@ function ItemsScreen() {
   if (items.length === 0) {
     return (
       <Screen><Body>
-        <TopBar title="Who had what" back={route.addExpense(groupId)} />
+        <TopBar title="Who had what"
+          back={draft.expenseId ? route.editExpense(groupId, draft.expenseId) : route.addExpense(groupId)} />
         <Empty title="No line items on that scan">Assign the split from the expense form instead.</Empty>
       </Body></Screen>
     );
@@ -80,7 +88,7 @@ function ItemsScreen() {
   const involvedMembers = data.members.filter((m) => involved.has(m.id));
   const weights = weightsFromItems(
     items, assignments,
-    draft.scanTip ? { amount: draft.scanTip, members: involved } : null,
+    draft.receiptTip ? { amount: draft.receiptTip, members: involved } : null,
     draft.currency, draft.expenseId ?? "new",
   );
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
@@ -88,7 +96,16 @@ function ItemsScreen() {
 
   function finish() {
     if (!canFinish || !groupId || !draft) return;
-    saveDraft(groupId, { ...draft, split: { mode: "shares", weights }, scanItems: null, scanTip: null });
+    // Keep receiptItems/receiptTip and the raw assignment around (unlike a
+    // discarded scan) so "Edit who-had-what" can reopen this exact grid —
+    // later in this session, or after being written onto the expense itself
+    // on save and reopened from any device. ADR-0017.
+    saveDraft(groupId, {
+      ...draft,
+      split: { mode: "shares", weights },
+      receiptInvolved: [...involved],
+      receiptAssignments: assignments.map((row) => [...row]),
+    });
     router.back();
   }
 
@@ -151,11 +168,11 @@ function ItemsScreen() {
                       ))}
                     </tr>
                   ))}
-                  {draft.scanTip ? (
+                  {draft.receiptTip ? (
                     <tr>
                       <td className="itemlabel">
                         <span>Tip</span>
-                        <span className="itemamount">{draft.scanTip}</span>
+                        <span className="itemamount">{draft.receiptTip}</span>
                       </td>
                       {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
                     </tr>

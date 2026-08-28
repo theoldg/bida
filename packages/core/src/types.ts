@@ -58,6 +58,19 @@ export interface Expense {
   payers?: Record<Id, number> | null;
   split: SplitSpec;
   attachmentIds: Id[];
+  /**
+   * The last receipt scan's line items, kept on the expense (not just a local
+   * draft) so "who had what" can be reopened later — another device, another
+   * session — instead of the parsed bill being thrown away once `split` is
+   * computed from it. Absent on an expense with no scan. ADR-0017.
+   */
+  receiptItems?: { label: string; amount: string }[] | null;
+  /** A separate tip/service line from the same scan, printed as-is. */
+  receiptTip?: string | null;
+  /** Who was marked present, last time the who-had-what grid was saved. */
+  receiptInvolved?: Id[] | null;
+  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
+  receiptAssignments?: Id[][] | null;
   deletedAt?: number | null;
 }
 

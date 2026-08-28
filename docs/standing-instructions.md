@@ -65,6 +65,11 @@ it applies to work nobody has done yet.
   button, its states, and a who-had-what item-assignment screen shipped;
   [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
   [receipt-scanning.md](receipt-scanning.md).
+- **State that should outlive one browser tab belongs on the server, not just
+  the local draft.** *2026-08-28* — on keeping the parsed receipt around to
+  re-edit the split: "it should obviously be stored on the server." The parsed
+  items and who-had-what grid are now plain fields on the expense, synced like
+  everything else. [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
 
 ## Interface
 

@@ -89,10 +89,13 @@ It reads. It doesn't compute.
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
 restaurant-splitting entity in product.md's deferred table isn't built. But
-`/g/expense/items` (reached right after a scan that found line items) reads
-them directly off the draft to build a who-had-what grid, and reduces that to
-an ordinary `shares` split — no schema change, no new op kind. See
-[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
+`/g/expense/items` (reached right after a scan that found line items, or via
+"Edit who-had-what" later) reads them off the draft to build a who-had-what
+grid, and reduces that to an ordinary `shares` split — no schema change, no
+new op kind. The items, tip and the grid's own assignment are also written
+onto the expense as plain optional fields so the grid reopens later, on any
+device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
+[ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `ExpenseDraft` patch: a cleaned `amountText` the existing `AmountInput` accepts
@@ -137,6 +140,8 @@ per-group quota, then a decision about whether the photo is stored at all.
    the same handler), their states, the privacy line, and `/g/expense/items`
    for who-had-what — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
 5. ✅ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
+6. ✅ ADR-0017 — the parsed bill and grid persist on the expense, reopenable
+   from any device via "Edit who-had-what".
 
 ## Verified live, 2026-08-28
 

@@ -27,13 +27,17 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 **Phase 4 — receipt scanning is done; the rest of Phase 4 is next.**
 Photograph a receipt and it fills the expense form:
 [receipt-scanning.md](receipt-scanning.md),
-[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). Two buttons
-live on `/g/expense/edit` for new expenses — camera capture and library
-upload, sharing one handler — with states (scanning, error + "try again") and
-a one-line privacy note; a scan that finds line items routes
-to `/g/expense/items`, a who-had-what grid (coloured, disambiguated initial
-chips as columns, items as rows) that reduces to an ordinary `shares` split —
-no new entity, no schema change. Left for later: multi-image capture,
+[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
+[ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md). Two
+buttons live on `/g/expense/edit` for new expenses — camera capture and
+library upload, sharing one handler — with a spinner-and-label loading state
+per button, an error + "try again", and a one-line privacy note; a scan that
+finds line items routes to `/g/expense/items`, a who-had-what grid (coloured,
+disambiguated initial chips as columns, items as rows) that reduces to an
+ordinary `shares` split — no new entity, no schema change. The parsed items,
+tip and grid assignment persist on the expense itself (plain optional
+fields), so "Edit who-had-what" can reopen the same grid later, for a new or
+already-saved expense, from any device. Left for later: multi-image capture,
 on-device downscale for photos kept on the expense, R2 upload, and the
 gallery/full-screen viewer. Scope in [product.md](product.md).
 

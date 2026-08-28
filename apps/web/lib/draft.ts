@@ -30,13 +30,17 @@ export interface ExpenseDraft {
   occurredAt: number;
   categoryId: string | null;
   /**
-   * Line items from the last receipt scan, kept only until the who-had-what
-   * screen folds them into `split` and clears this. Amounts are printed
-   * strings, same convention as `ScanResult` — cleaned on use, not on arrival.
+   * The parsed bill, mirroring the same-named fields on `Expense` — kept here
+   * while it's being typed, then written onto the expense itself on save so
+   * "Edit who-had-what" can reopen it later, on any device. ADR-0017.
    */
-  scanItems?: { label: string; amount: string }[] | null;
+  receiptItems?: { label: string; amount: string }[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
-  scanTip?: string | null;
+  receiptTip?: string | null;
+  /** Who was marked present, last time the who-had-what grid was saved. */
+  receiptInvolved?: string[] | null;
+  /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
+  receiptAssignments?: string[][] | null;
 }
 
 const KEY = (groupId: string) => `hajsik.draft.${groupId}`;

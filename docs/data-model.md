@@ -34,7 +34,11 @@ Expense {
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
   split: { mode: 'equal' | 'exact' | 'shares' | 'percent', ... },
-  attachmentIds: string[], deletedAt?
+  attachmentIds: string[],
+  receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
+                      // the parsed bill behind `split`, kept so the
+                      // who-had-what grid can reopen (ADR-0017)
+  deletedAt?
 }
 ```
 

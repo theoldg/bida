@@ -35,18 +35,20 @@ function EditExpenseScreen() {
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
   const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
+  const [scanSource, setScanSource] = useState<"camera" | "library" | null>(null);
 
-  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !groupId || !secret) return;
     const current = getDraft(groupId);
     if (!current) return;
     setScanState("scanning");
+    setScanSource(source);
     try {
       const result = await scanReceipt(file, groupId, secret, []);
       const patch = normalizeScan(result);
-      const scanItems = result.lineItems.map((li) => ({ label: li.labelEn ?? li.label, amount: li.amount }));
+      const receiptItems = result.lineItems.map((li) => ({ label: li.labelEn ?? li.label, amount: li.amount }));
       saveDraft(groupId, {
         ...current,
         ...(patch.description !== undefined ? { description: patch.description } : {}),
@@ -55,11 +57,14 @@ function EditExpenseScreen() {
           ? { currency: patch.currency, rateToBase: patch.currency === data.group?.baseCurrency ? "1" : current.rateToBase }
           : {}),
         ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
-        scanItems: scanItems.length > 0 ? scanItems : null,
-        scanTip: result.tip,
+        receiptItems: receiptItems.length > 0 ? receiptItems : null,
+        receiptTip: result.tip,
+        // A fresh scan replaces whatever grid was saved before.
+        receiptInvolved: null,
+        receiptAssignments: null,
       });
       setScanState("idle");
-      if (scanItems.length > 0) router.push(route.items(groupId));
+      if (receiptItems.length > 0) router.push(route.items(groupId));
     } catch {
       setScanState("error");
     }
@@ -85,6 +90,10 @@ function EditExpenseScreen() {
         split: e.split,
         occurredAt: e.occurredAt,
         categoryId: e.categoryId ?? null,
+        receiptItems: e.receiptItems ?? null,
+        receiptTip: e.receiptTip ?? null,
+        receiptInvolved: e.receiptInvolved ?? null,
+        receiptAssignments: e.receiptAssignments ?? null,
       });
     } else {
       const me = data.me ?? data.members[0]?.id;
@@ -133,6 +142,10 @@ function EditExpenseScreen() {
       payers: draft!.payers,
       split: draft!.split,
       categoryId: draft!.categoryId,
+      receiptItems: draft!.receiptItems ?? null,
+      receiptTip: draft!.receiptTip ?? null,
+      receiptInvolved: draft!.receiptInvolved ?? null,
+      receiptAssignments: draft!.receiptAssignments ?? null,
     };
     if (draft!.expenseId) await editExpense(groupId, actor, draft!.expenseId, input);
     else await addExpense(groupId, actor, input);
@@ -154,19 +167,21 @@ function EditExpenseScreen() {
           {!draft.expenseId ? (
             <div className="pad" style={{ paddingTop: 12, paddingBottom: 0 }}>
               <input ref={cameraInput} type="file" accept="image/*" capture="environment"
-                style={{ display: "none" }} onChange={onPhoto} aria-label="Take a photo of a receipt" />
+                style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label="Take a photo of a receipt" />
               <input ref={libraryInput} type="file" accept="image/*"
-                style={{ display: "none" }} onChange={onPhoto} aria-label="Upload a receipt photo" />
+                style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label="Upload a receipt photo" />
               <div style={{ display: "flex", gap: 7 }}>
                 <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
                   onClick={() => cameraInput.current?.click()}>
-                  <Icon name="cam" size={16} />
-                  {scanState === "scanning" ? "Reading receipt…" : "Scan a receipt"}
+                  {scanState === "scanning" && scanSource === "camera"
+                    ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={16} />}
+                  {scanState === "scanning" && scanSource === "camera" ? "Reading receipt…" : "Scan a receipt"}
                 </button>
                 <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
                   onClick={() => libraryInput.current?.click()}>
-                  <Icon name="image" size={16} />
-                  Upload
+                  {scanState === "scanning" && scanSource === "library"
+                    ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={16} />}
+                  {scanState === "scanning" && scanSource === "library" ? "Reading receipt…" : "Upload"}
                 </button>
               </div>
               {scanState === "error" ? (
@@ -175,11 +190,19 @@ function EditExpenseScreen() {
                   <button type="button" className="action" style={{ fontSize: 11.5 }}
                     onClick={() => cameraInput.current?.click()}>Try again</button>
                 </div>
-              ) : (
+              ) : !draft.receiptItems || draft.receiptItems.length === 0 ? (
                 <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
                   Runs on Google's free tier — the photo may be used to improve their models.
                 </div>
-              )}
+              ) : null}
+            </div>
+          ) : null}
+
+          {draft.receiptItems && draft.receiptItems.length > 0 ? (
+            <div className="pad" style={{ paddingTop: draft.expenseId ? 12 : 0, paddingBottom: 0 }}>
+              <Link href={route.items(groupId)} className="action" style={{ fontSize: 11.5 }}>
+                Edit who-had-what ({draft.receiptItems.length} item{draft.receiptItems.length === 1 ? "" : "s"})
+              </Link>
             </div>
           ) : null}
 
