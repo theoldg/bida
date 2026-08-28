@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import {
   convertSplitMode, resolveSplit, splitParticipants, validateSplit,
-  type Member, type SplitMode, type SplitSpec,
+  type Member, type SplitSpec,
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
 import { Avatar } from "./bits";
 import { Icon } from "./icons";
 import { bare, money, shortfallText } from "../lib/format";
+import type { SplitTab } from "../lib/draft";
 
 /**
  * Who the money was spent on, and how much each of them owes for it.
@@ -18,20 +20,39 @@ import { bare, money, shortfallText } from "../lib/format";
  * the middle of it meant a forward-and-back trip to answer a question the form
  * was already asking. It renders inline, on the form, and edits the same draft.
  *
- * Three modes, no more. "Percent" was the fourth and is gone from the UI —
- * nobody says "I'll take 33.33% of the taxi", they say "split it three ways"
- * or "I'll put in a tenner". `SplitSpec` still *has* a percent variant so that
- * expenses already recorded that way keep folding and keep rendering; nothing
- * new can be written in it, and switching mode converts one away for good.
+ * Three arithmetic modes, no more. "Percent" was a fourth and is gone from
+ * the UI — nobody says "I'll take 33.33% of the taxi", they say "split it
+ * three ways" or "I'll put in a tenner". `SplitSpec` still *has* a percent
+ * variant so that expenses already recorded that way keep folding and keep
+ * rendering; nothing new can be written in it, and switching mode converts
+ * one away for good.
+ *
+ * A fourth tab, "Receipt", sits beside them — scanning a bill and assigning
+ * who-had-what (`/g/expense/items`, ADR-0016) reduces to an ordinary `shares`
+ * spec, so it isn't a fifth `SplitMode`. It's tracked as its own tab
+ * (`SplitTab`, `lib/draft.ts`) precisely so the UI can still say "Receipt"
+ * once that reduction has happened, instead of falling back to "As parts".
  */
 
-const MODES: { mode: SplitMode; label: string }[] = [
+const MODES: { mode: "equal" | "shares" | "exact"; label: string }[] = [
   { mode: "equal", label: "Evenly" },
   { mode: "shares", label: "As parts" },
   { mode: "exact", label: "As amounts" },
 ];
 
-export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onChange }: {
+export interface ReceiptTabProps {
+  items: { label: string; amount: string }[] | null;
+  /** False once an expense already exists — rescanning could overwrite fields someone already corrected. */
+  canScan: boolean;
+  scanDisabled: boolean;
+  scanState: "idle" | "scanning" | "error";
+  scanSource: "camera" | "library" | null;
+  onScanCamera: () => void;
+  onScanLibrary: () => void;
+  editItemsHref: string;
+}
+
+export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** The expense total in the group's base currency — what the split divides. */
@@ -40,6 +61,9 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   spec: SplitSpec;
   seed: string;
   onChange: (next: SplitSpec) => void;
+  tab: SplitTab;
+  onTabChange: (next: SplitTab) => void;
+  receipt: ReceiptTabProps;
 }) {
   const opts = { tiebreakSeed: seed };
   const included = new Set(splitParticipants(spec));
@@ -49,10 +73,17 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   try { shares = resolveSplit(totalMinor, spec, opts).shares; } catch { /* incomplete */ }
 
   // A legacy percent split shows its rows and its numbers, but offers no mode
-  // button of its own: touching any of the three converts it away.
+  // button of its own: touching any of the three arithmetic tabs converts it away.
   const legacy = spec.mode === "percent";
+  const showReceipt = tab === "receipt";
+  const hasReceiptItems = (receipt.items?.length ?? 0) > 0;
+  // Nothing to check yet if the receipt tab hasn't produced a split — showing
+  // whatever the underlying spec still is (often "equal") would read as a
+  // verdict on a tab that has no opinion.
+  const showFooter = !showReceipt || hasReceiptItems;
 
-  function switchMode(mode: SplitMode) {
+  function switchMode(mode: "equal" | "shares" | "exact") {
+    onTabChange(mode);
     // Switching keeps everyone's current amounts rather than resetting them,
     // so you can start even and nudge one person without losing the rest.
     onChange(convertSplitMode(totalMinor, spec, mode, opts));
@@ -115,13 +146,16 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
 
       <div className="seg" style={{ marginBottom: 9 }}>
         {MODES.map((m) => (
-          <button key={m.mode} type="button" className={!legacy && spec.mode === m.mode ? "on" : ""}
+          <button key={m.mode} type="button" className={!showReceipt && !legacy && spec.mode === m.mode ? "on" : ""}
             onClick={() => switchMode(m.mode)}>{m.label}</button>
         ))}
+        <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
+          Receipt
+        </button>
       </div>
 
       <div className="card splitlist">
-        {members.map((m) => {
+        {showReceipt ? <ReceiptPanel {...receipt} /> : members.map((m) => {
           const on = included.has(m.id);
           return (
             <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
@@ -181,15 +215,79 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
           );
         })}
 
-        <div className={`splitfoot ${check.ok ? "ok" : "bad"}`}>
-          <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
-          <span>
-            {check.ok
-              ? `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`
-              : shortfallText(check, currency, { under: "left to split", over: "too much" })}
-          </span>
-        </div>
+        {showFooter ? (
+          <div className={`splitfoot ${check.ok ? "ok" : "bad"}`}>
+            <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
+            <span>
+              {check.ok
+                ? `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`
+                : shortfallText(check, currency, { under: "left to split", over: "too much" })}
+            </span>
+          </div>
+        ) : null}
       </div>
     </section>
+  );
+}
+
+/**
+ * The fourth tab's content: scan/upload before there's a bill, "edit
+ * who-had-what" once there is one. Scanning is offered only for a brand-new
+ * expense (`canScan`) — rescanning over an edit would silently overwrite
+ * fields someone may have already corrected (ADR-0016).
+ */
+function ReceiptPanel({
+  items, canScan, scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, editItemsHref,
+}: ReceiptTabProps) {
+  if (items && items.length > 0) {
+    return (
+      <div style={{ padding: "12px 12px" }}>
+        <div style={{ fontSize: 13.5 }}>
+          {items.length} item{items.length === 1 ? "" : "s"} from the receipt
+        </div>
+        <Link href={editItemsHref} className="action" style={{ fontSize: 12.5, display: "inline-block", marginTop: 6 }}>
+          Edit who-had-what
+        </Link>
+      </div>
+    );
+  }
+
+  if (!canScan) {
+    return (
+      <div style={{ padding: "12px 12px", fontSize: 12, color: "var(--muted)" }}>
+        No receipt on this expense. Scanning fills in a new expense — start one to use it.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: "12px 12px" }}>
+      <div style={{ display: "flex", gap: 7 }}>
+        <button type="button" className="btn btn-s" disabled={scanDisabled || scanState === "scanning"}
+          onClick={onScanCamera}>
+          {scanState === "scanning" && scanSource === "camera"
+            ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={16} />}
+          {scanState === "scanning" && scanSource === "camera" ? "Reading receipt…" : "Scan a receipt"}
+        </button>
+        <button type="button" className="btn btn-s" disabled={scanDisabled || scanState === "scanning"}
+          onClick={onScanLibrary}>
+          {scanState === "scanning" && scanSource === "library"
+            ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={16} />}
+          {scanState === "scanning" && scanSource === "library" ? "Reading receipt…" : "Upload"}
+        </button>
+      </div>
+      {scanState === "error" ? (
+        <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
+          Couldn't read that receipt.{" "}
+          <button type="button" className="action" style={{ fontSize: 11.5 }} onClick={onScanCamera}>
+            Try again
+          </button>
+        </div>
+      ) : (
+        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
+          Runs on Google's free tier — the photo may be used to improve their models.
+        </div>
+      )}
+    </div>
   );
 }

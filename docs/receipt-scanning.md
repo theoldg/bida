@@ -7,6 +7,9 @@ for the UX decisions.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
+The scan/upload buttons and "Edit who-had-what" live on the expense form's
+"Receipt" tab, the fourth alongside Evenly/As parts/As amounts
+([ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md)).
 
 ## The shape
 
@@ -142,6 +145,8 @@ per-group quota, then a decision about whether the photo is stored at all.
 5. ✅ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 6. ✅ ADR-0017 — the parsed bill and grid persist on the expense, reopenable
    from any device via "Edit who-had-what".
+7. ✅ ADR-0018 — scan/upload and "Edit who-had-what" moved into a fourth
+   "Receipt" tab in the split editor, beside Evenly/As parts/As amounts.
 
 ## Verified live, 2026-08-28
 

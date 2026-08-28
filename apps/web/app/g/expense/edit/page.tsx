@@ -17,7 +17,7 @@ import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { normalizeScan, scanReceipt } from "../../../../lib/scan";
-import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft } from "../../../../lib/draft";
+import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
 
 export default function EditExpensePage() {
   return <QueryBoundary><EditExpenseScreen /></QueryBoundary>;
@@ -62,6 +62,7 @@ function EditExpenseScreen() {
         // A fresh scan replaces whatever grid was saved before.
         receiptInvolved: null,
         receiptAssignments: null,
+        splitTab: "receipt",
       });
       setScanState("idle");
       if (receiptItems.length > 0) router.push(route.items(groupId));
@@ -129,6 +130,13 @@ function EditExpenseScreen() {
   const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
     && draft.description.trim().length > 0;
 
+  // Undefined (an old draft, or an expense saved before this field existed)
+  // derives from what's actually on it: a scanned bill means "Receipt",
+  // otherwise whatever arithmetic mode the split already is.
+  const activeTab: SplitTab = draft.splitTab
+    ?? (draft.receiptItems && draft.receiptItems.length > 0 ? "receipt"
+      : draft.split.mode === "percent" ? "shares" : draft.split.mode);
+
   async function save() {
     if (!ready || !groupId) return;
     const actor = data.me ?? draft!.paidBy;
@@ -164,47 +172,10 @@ function EditExpenseScreen() {
         />
 
         <Scroll>
-          {!draft.expenseId ? (
-            <div className="pad" style={{ paddingTop: 12, paddingBottom: 0 }}>
-              <input ref={cameraInput} type="file" accept="image/*" capture="environment"
-                style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label="Take a photo of a receipt" />
-              <input ref={libraryInput} type="file" accept="image/*"
-                style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label="Upload a receipt photo" />
-              <div style={{ display: "flex", gap: 7 }}>
-                <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
-                  onClick={() => cameraInput.current?.click()}>
-                  {scanState === "scanning" && scanSource === "camera"
-                    ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={16} />}
-                  {scanState === "scanning" && scanSource === "camera" ? "Reading receipt…" : "Scan a receipt"}
-                </button>
-                <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
-                  onClick={() => libraryInput.current?.click()}>
-                  {scanState === "scanning" && scanSource === "library"
-                    ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={16} />}
-                  {scanState === "scanning" && scanSource === "library" ? "Reading receipt…" : "Upload"}
-                </button>
-              </div>
-              {scanState === "error" ? (
-                <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
-                  Couldn't read that receipt.{" "}
-                  <button type="button" className="action" style={{ fontSize: 11.5 }}
-                    onClick={() => cameraInput.current?.click()}>Try again</button>
-                </div>
-              ) : !draft.receiptItems || draft.receiptItems.length === 0 ? (
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
-                  Runs on Google's free tier — the photo may be used to improve their models.
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          {draft.receiptItems && draft.receiptItems.length > 0 ? (
-            <div className="pad" style={{ paddingTop: draft.expenseId ? 12 : 0, paddingBottom: 0 }}>
-              <Link href={route.items(groupId)} className="action" style={{ fontSize: 11.5 }}>
-                Edit who-had-what ({draft.receiptItems.length} item{draft.receiptItems.length === 1 ? "" : "s"})
-              </Link>
-            </div>
-          ) : null}
+          <input ref={cameraInput} type="file" accept="image/*" capture="environment"
+            style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label="Take a photo of a receipt" />
+          <input ref={libraryInput} type="file" accept="image/*"
+            style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label="Upload a receipt photo" />
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
@@ -321,6 +292,18 @@ function EditExpenseScreen() {
               spec={draft.split}
               seed={draft.expenseId ?? "new"}
               onChange={(split) => patch({ split })}
+              tab={activeTab}
+              onTabChange={(splitTab) => patch({ splitTab })}
+              receipt={{
+                items: draft.receiptItems ?? null,
+                canScan: !draft.expenseId,
+                scanDisabled: !secret,
+                scanState,
+                scanSource,
+                onScanCamera: () => cameraInput.current?.click(),
+                onScanLibrary: () => libraryInput.current?.click(),
+                editItemsHref: route.items(groupId),
+              }}
             />
 
             <div className="field">

@@ -28,3 +28,4 @@ old one `Superseded by NNNN`.
 | [0015](0015-one-money-field-core-reports-numbers.md) | One money field; core reports numbers, screens write sentences | Accepted |
 | [0016](0016-receipt-scan-ux-and-item-assignment.md) | Receipt scan UX: item assignment writes an ordinary `shares` split | Accepted |
 | [0017](0017-receipt-items-persist-on-the-expense.md) | Receipt items persist on the expense, not just the draft | Accepted |
+| [0018](0018-receipt-as-a-fourth-split-tab.md) | Receipt scan and who-had-what move into a fourth split tab | Accepted |

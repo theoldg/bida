@@ -105,6 +105,7 @@ function ItemsScreen() {
       split: { mode: "shares", weights },
       receiptInvolved: [...involved],
       receiptAssignments: assignments.map((row) => [...row]),
+      splitTab: "receipt",
     });
     router.back();
   }
