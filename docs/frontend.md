@@ -141,6 +141,10 @@ figure-free.
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
   the field accepts both "," and "." as decimal separators. It deliberately
   doesn't match `Intl`'s grouping in saved figures.
+- **`bare()` is display text; `minorToDecimalString` is canonical text.** Both
+  drop the symbol, but `bare` is `Intl`-grouped, so feeding it to an
+  `AmountInput`'s `value` or a draft's `amountText` loses money: `parseMinor`
+  throws on "1,234.50" (amount silently 0) and reads JPY "25,000" as **25**.
 - **`patch()` on the expense draft must merge against the latest saved draft,
   not the `draft` the current render closed over.** A handler that calls
   `patch()` twice synchronously (e.g. switching split tabs: once for the tab,

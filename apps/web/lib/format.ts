@@ -1,4 +1,4 @@
-import { formatMinor, type CurrencyCode } from "@hajsik/core";
+import { formatMinor, type CurrencyCode, type SplitValidation } from "@hajsik/core";
 
 /**
  * Display helpers. Money formatting itself lives in core — this file only
@@ -9,7 +9,14 @@ export function money(minor: number, currency: CurrencyCode, signed = false): st
   return formatMinor(minor, currency, { signDisplay: signed ? "always" : "auto" });
 }
 
-/** Bare figure, no symbol — for the amount input and for columns with their own header. */
+/**
+ * Bare figure, no symbol — for columns with their own header.
+ *
+ * **Display only.** It is `Intl`-grouped, so it is not what `parseMinor` reads
+ * back: "1,234.50" throws, and JPY "25,000" parses as 25. Anything canonical —
+ * an `AmountInput`'s `value`, a draft's `amountText` — wants core's
+ * `minorToDecimalString` instead.
+ */
 export function bare(minor: number, currency: CurrencyCode): string {
   return formatMinor(minor, currency, { showCurrency: false });
 }
@@ -30,6 +37,35 @@ export function shortfallText(
   if (check.problem === "under") return `${money(diff, currency)} ${copy.under}`;
   if (check.problem === "over") return `${money(-diff, currency)} ${copy.over}`;
   return check.message ?? "";
+}
+
+/**
+ * The split editor's bottom line. `shortfallText` handles the ordinary "some
+ * of it is missing" case; this wraps it with the two verdicts that need the
+ * total itself rather than the shortfall:
+ *
+ * - **Nobody included yet.** A figure would be beside the point; say the thing.
+ * - **Nothing to divide.** `validateSplit` scores 0 minor units allocated out
+ *   of 0 as a satisfied split. That is arithmetically true and reads as
+ *   nonsense — "€0.00 of €0.00 allocated" under an expense whose amount is
+ *   still blank, claiming the split is settled when the expense has no number
+ *   yet. It is the most-reported bug in this editor, so the string is made
+ *   unreachable here rather than guarded at each of the call sites that can
+ *   reach a zero total.
+ */
+export function splitFooter(
+  check: SplitValidation,
+  currency: CurrencyCode,
+): { ok: boolean; text: string } {
+  if (check.problem === "empty") return { ok: false, text: check.message ?? "Nobody is included yet" };
+  if (check.totalMinor <= 0) return { ok: false, text: "Enter an amount to split" };
+  if (check.ok) {
+    return {
+      ok: true,
+      text: `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`,
+    };
+  }
+  return { ok: false, text: shortfallText(check, currency, { under: "left to split", over: "too much" }) };
 }
 
 export function initials(name: string): string {

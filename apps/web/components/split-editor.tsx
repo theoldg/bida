@@ -8,7 +8,7 @@ import {
 import { MinorAmountInput } from "./amount-input";
 import { Avatar } from "./bits";
 import { Icon } from "./icons";
-import { bare, money, shortfallText } from "../lib/format";
+import { bare, money, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
 /**
@@ -80,15 +80,18 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   // "N of total allocated" only means something where you're typing amounts
   // yourself — Evenly and As parts always land exactly on the total by
   // construction, and Receipt's total is derived from the bill, not typed.
-  // All three would otherwise show that line trivially satisfied (or, before
-  // the receipt total synced, nonsensically as "0 of 0"). Every mode still
-  // surfaces a real problem (nobody included, over-allocated) when there is
-  // one.
+  // All three would otherwise show that line trivially satisfied. Every mode
+  // still surfaces a real problem (nobody included, over-allocated, no total
+  // to divide) when there is one.
   const isExactTab = !showReceipt && !legacy && spec.mode === "exact";
+  // `splitFooter` — not `check` — decides both the wording and the verdict:
+  // a zero total is arithmetically a satisfied split and must never be shown
+  // as one, so "ok" here means "ok to show a tick", not `check.ok`.
+  const foot = splitFooter(check, currency);
   // Nothing to check yet if the receipt tab hasn't produced a split — showing
   // whatever the underlying spec still is (often "equal") would read as a
   // verdict on a tab that has no opinion.
-  const showFooter = showReceipt ? (hasReceiptItems && !check.ok) : (isExactTab || !check.ok);
+  const showFooter = showReceipt ? (hasReceiptItems && !foot.ok) : (isExactTab || !foot.ok);
 
   function switchMode(mode: "equal" | "shares" | "exact") {
     onTabChange(mode);
@@ -227,13 +230,9 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
         })}
 
         {showFooter ? (
-          <div className={`splitfoot ${check.ok ? "ok" : "bad"}`}>
-            <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
-            <span>
-              {check.ok
-                ? `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`
-                : shortfallText(check, currency, { under: "left to split", over: "too much" })}
-            </span>
+          <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
+            <Icon name={foot.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
+            <span>{foot.text}</span>
           </div>
         ) : null}
       </div>

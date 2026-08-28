@@ -211,14 +211,19 @@ group and its secret:
   the person switched away and saved. If a UI mode needs to stick, persist it,
   don't derive it from data that outlives the choice (ADR-0019).
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
-  (`allocated === total === 0`) — a blank or unread amount prints "€0.00 of
-  €0.00 allocated" with a green check, which looks like success. Anything
-  that can leave the total at zero needs its own guard; don't rely on the
-  split footer to catch it (and, since 2026-08-28, that footer no longer
-  renders on the Receipt tab at all — see below).
+  (`allocated === total === 0`) — which printed "€0.00 of €0.00 allocated"
+  under a green check, four separate times, whenever anything upstream left
+  the total at zero. The verdict is now `splitFooter`'s (`lib/format.ts`), not
+  `check.ok`'s, so the string is unreachable rather than guarded per call site
+  ([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
 - Don't write a derived value into the draft for another screen's effect to
   notice and resync — that resync is only as reliable as the next mount
   actually happening before anyone reads the value, and a screen that writes
   the input and immediately navigates away (`/g/expense/items`'s "Done") can
   beat it. Receipt's total and split are recomputed inline, at the one place
   either is read, instead — [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).
+- **Deriving a value only while one tab is showing needs a handoff when that
+  tab closes.** Receipt derives the total; every other tab reads `amountText`,
+  which nothing wrote, so leaving Receipt zeroed the amount. The split already
+  handed over via `convertSplitMode`; the amount now does too
+  ([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).

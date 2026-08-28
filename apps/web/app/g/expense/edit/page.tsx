@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, isValidRate, parseMinor, validatePayers, validateSplit, type SplitSpec,
+  convertMinor, isValidRate, minorToDecimalString, parseMinor, validatePayers, validateSplit,
+  type SplitSpec,
 } from "@hajsik/core";
-import { receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
+import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
@@ -14,7 +15,7 @@ import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../compone
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense } from "../../../../lib/db/commands";
-import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
+import { dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
@@ -88,7 +89,10 @@ function EditExpenseScreen() {
       if (!e) return;
       saveDraft(groupId, {
         expenseId,
-        amountText: bare(e.amountMinor, e.currency),
+        // `minorToDecimalString`, never `bare`: this is the canonical text
+        // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
+        // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
+        amountText: minorToDecimalString(e.amountMinor, e.currency),
         currency: e.currency,
         rateToBase: e.rateToBase,
         description: e.description,
@@ -129,11 +133,7 @@ function EditExpenseScreen() {
       : draft.split.mode === "percent" ? "shares" : draft.split.mode);
 
   const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
-  // The amount is derived from the bill while Receipt mode is showing it —
-  // typing over it would desync the total from what the items actually add
-  // up to, with nothing left to reconcile the two. Edit the items or the tip
-  // instead, or switch tabs to take manual control back.
-  const receiptLocksAmount = activeTab === "receipt" && hasReceiptItems;
+  const onReceiptTab = activeTab === "receipt" && hasReceiptItems;
 
   // Receipt's total and the split it implies are computed here, at the one
   // place either is read (this render, and save() below) — never written
@@ -142,10 +142,18 @@ function EditExpenseScreen() {
   // twice (ADR-0020; this replaced an effect on `receiptItems`/`receiptTip`
   // that mirrored the total into `amountText`, which had a window where a
   // screen reading the draft saw last save's total instead of this one's).
-  const receiptTotal = receiptLocksAmount
+  const receiptTotal = onReceiptTab
     ? receiptTotalMinor(draft.receiptItems ?? [], draft.receiptTip ?? null, draft.currency)
     : null;
-  const receiptWeights = receiptLocksAmount
+  // The amount is derived from the bill while Receipt mode is showing it —
+  // typing over it would desync the total from what the items actually add
+  // up to, with nothing left to reconcile the two. Edit the items or the tip
+  // instead, or switch tabs to take manual control back (ADR-0021). Locked on
+  // a real derived number, not merely on having items: a scan whose every
+  // line is unreadable would otherwise leave the field disabled *and* empty,
+  // with no way to type an amount and no way to save.
+  const receiptLocksAmount = receiptTotal !== null;
+  const receiptWeights = onReceiptTab
     ? weightsFromItems(
         draft.receiptItems ?? [],
         (draft.receiptAssignments ?? []).map((row) => new Set(row)),
@@ -161,6 +169,18 @@ function EditExpenseScreen() {
   const receiptSplit: SplitSpec | null = Object.keys(receiptWeights).length > 0
     ? { mode: "shares", weights: receiptWeights } : null;
   const effectiveSplit = receiptSplit ?? draft.split;
+
+  // Leaving Receipt hands its derived total back to the amount field, which
+  // is the only place a typed amount lives. `switchMode` in the split editor
+  // already hands the *split* over via `convertSplitMode`; this is its other
+  // half, and without it the amount has nowhere to go and the expense
+  // silently becomes worth zero. ADR-0021.
+  const changeTab = (splitTab: SplitTab) => {
+    const handoff = handOffReceiptTotal(
+      activeTab, splitTab, draft.receiptItems, draft.receiptTip, draft.currency,
+    );
+    patch({ splitTab, ...(handoff !== null ? { amountText: handoff } : {}) });
+  };
 
   let amountMinor = 0;
   try {
@@ -236,7 +256,8 @@ function EditExpenseScreen() {
                 autoFocus={!draft.expenseId}
                 placeholder="0"
                 currency={draft.currency}
-                value={receiptTotal !== null ? bare(receiptTotal, draft.currency) : draft.amountText}
+                value={receiptTotal !== null
+                  ? minorToDecimalString(receiptTotal, draft.currency) : draft.amountText}
                 onChange={(amountText) => patch({ amountText })}
                 autoSize={true}
                 disabled={receiptLocksAmount}
@@ -350,7 +371,7 @@ function EditExpenseScreen() {
               seed={draft.expenseId ?? "new"}
               onChange={(split) => patch({ split })}
               tab={activeTab}
-              onTabChange={(splitTab) => patch({ splitTab })}
+              onTabChange={changeTab}
               receipt={{
                 items: draft.receiptItems ?? null,
                 scanDisabled: !secret,

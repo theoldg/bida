@@ -29,3 +29,6 @@ old one `Superseded by NNNN`.
 | [0016](0016-receipt-scan-ux-and-item-assignment.md) | Receipt scan UX: item assignment writes an ordinary `shares` split | Accepted |
 | [0017](0017-receipt-items-persist-on-the-expense.md) | Receipt items persist on the expense, not just the draft | Accepted |
 | [0018](0018-receipt-as-a-fourth-split-tab.md) | Receipt scan and who-had-what move into a fourth split tab | Accepted |
+| [0019](0019-receipt-mode-owns-the-total.md) | Receipt mode owns the total; the tab choice persists | Accepted |
+| [0020](0020-receipt-total-and-split-are-derived-not-cached.md) | Receipt's total and split are derived at read time, never cached | Accepted |
+| [0021](0021-leaving-receipt-mode-hands-the-total-back.md) | Leaving Receipt hands the total back; a zero total is never "allocated" | Accepted |

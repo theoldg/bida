@@ -21,14 +21,18 @@ backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
-follow-up (2026-08-28): a round of receipt-splitting bugs, root-caused to
-Receipt mode caching its derived total/split for another screen to resync
-(was printing "0 of 0 allocated" and blocking Save) — fixed by deriving both
-inline, at the one place either is read, instead
-([ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md)).
-Also: the tip is one editable row in the grid instead of a separate field,
-the grid's initials row stays visible while scrolling, and the split editor's
-"N of total allocated" line is scoped to As amounts only.
+follow-up (2026-08-28): the recurring receipt-split bugs, root-caused. Receipt
+derives its total and writes it nowhere (ADR-0020), but every other tab reads
+`amountText`, so *leaving* Receipt zeroed the amount — a greyed-out Save, and
+"€0.00 of €0.00 allocated" one tap later, since `validateSplit(0, …)` scores
+0-of-0 as satisfied. Leaving Receipt now hands the total back the same way
+`convertSplitMode` already handed the split back, and a zero total is never
+rendered as an allocated one
+([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
+Found alongside it: `bare()` is `Intl`-grouped display text and was being
+written into `amountText`, so reopening any expense over ~1000 major units
+showed a zero total (EUR) or a hundredfold-wrong one (JPY) — in every mode,
+receipt or not.
 
 ## The next action
 
@@ -39,7 +43,8 @@ Photograph a receipt and it fills the expense form:
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md),
 [ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md),
 [ADR-0019](decisions/0019-receipt-mode-owns-the-total.md),
-[ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).
+[ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md),
+[ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md).
 A "Receipt" tab
 on `/g/expense/edit`'s split editor, alongside Evenly/As parts/As amounts,
 holds the camera-capture and library-upload buttons (any expense, saved or
@@ -52,8 +57,9 @@ split — no new entity, no schema change. The parsed items, tip and grid
 assignment persist on the expense itself (plain optional fields), so "Edit
 who-had-what" (also on the Receipt tab) can reopen the same grid later, for a
 new or already-saved expense, from any device. While Receipt mode has items,
-the amount field is computed (items + tip) and disabled, and the chosen split
-tab persists across save/reopen (ADR-0019). Left for later: multi-image
+the amount field is computed (items + tip) and disabled, switching away hands
+that total back to the field, and the chosen split tab persists across
+save/reopen (ADR-0019, ADR-0021). Left for later: multi-image
 capture, on-device downscale for photos kept on the expense, R2 upload, and
 the gallery/full-screen viewer. Scope in [product.md](product.md).
 

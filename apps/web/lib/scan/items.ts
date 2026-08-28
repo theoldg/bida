@@ -1,4 +1,4 @@
-import { parseMinor, resolveSplit } from "@hajsik/core";
+import { minorToDecimalString, parseMinor, resolveSplit, type SplitTab } from "@hajsik/core";
 
 /**
  * Turns "who had what" on a scanned receipt into split weights.
@@ -77,4 +77,37 @@ export function receiptTotalMinor(
     try { total += parseMinor(tip, currency); } catch { /* no tip, no problem */ }
   }
   return any ? total : null;
+}
+
+/**
+ * The amount to write into the draft when a tab change takes the total back
+ * off Receipt mode — or null to leave the amount field alone.
+ *
+ * Receipt's total is derived at read time and deliberately never cached
+ * (ADR-0020), which holds for exactly as long as the Receipt tab is the one
+ * showing it. Switching to Evenly / As parts / As amounts ends that: the
+ * person is taking the number back by hand, and the only place a typed amount
+ * lives is `amountText`. The split already makes precisely this handoff, via
+ * `convertSplitMode`; this is its missing other half. Without it the amount
+ * falls back to whatever `amountText` held before the scan — routinely
+ * nothing, because OCR often reads the line items and misses the printed
+ * total — and the expense silently becomes worth zero, which surfaces as a
+ * greyed-out Save and the "€0.00 of €0.00 allocated" footer.
+ *
+ * A one-shot conversion at an explicit user action, not a mirror: it fires
+ * only on the receipt → arithmetic transition, so switching between two
+ * arithmetic tabs never snaps a hand-typed amount back to what the bill says.
+ */
+export function handOffReceiptTotal(
+  from: SplitTab,
+  to: SplitTab,
+  items: { amount: string }[] | null | undefined,
+  tip: string | null | undefined,
+  currency: string,
+): string | null {
+  if (from !== "receipt" || to === "receipt") return null;
+  const total = receiptTotalMinor(items ?? [], tip ?? null, currency);
+  // `minorToDecimalString`, not `bare`: what goes into `amountText` has to
+  // be canonical text `parseMinor` can read back. `bare` groups thousands.
+  return total === null ? null : minorToDecimalString(total, currency);
 }
