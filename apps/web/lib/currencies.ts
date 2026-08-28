@@ -5,8 +5,16 @@
  */
 export const COMMON_CURRENCIES = [
   "EUR", "GBP", "USD", "PLN", "CHF", "CZK", "SEK", "NOK", "DKK",
-  "MAD", "TRY", "JPY", "THB", "AUD", "CAD", "HUF", "RON", "ISK",
+  "MAD", "TRY", "JPY", "THB", "AUD", "CAD", "HUF", "RON", "ISK", "UZS",
 ] as const;
+
+/** Sentinel option value that opens a free-text field for any ISO 4217 code. */
+export const OTHER_CURRENCY = "__other__";
+
+/** Normalize a typed currency code: uppercase, letters only, max 3. */
+export function normalizeCurrencyCode(input: string): string {
+  return input.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3);
+}
 
 export function currencyLabel(code: string): string {
   try {

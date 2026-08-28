@@ -11,7 +11,7 @@ import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
-import { COMMON_CURRENCIES } from "../../../../lib/currencies";
+import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense } from "../../../../lib/db/commands";
 import { bare, dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
@@ -225,14 +225,23 @@ function EditExpenseScreen() {
                 <select
                   aria-label="Currency"
                   value={draft.currency}
-                  onChange={(e) => patch({
-                    currency: e.target.value,
-                    rateToBase: e.target.value === base ? "1" : draft.rateToBase,
-                  })}
+                  onChange={(e) => {
+                    if (e.target.value === OTHER_CURRENCY) {
+                      const typed = normalizeCurrencyCode(window.prompt("Currency code (e.g. UZS)") ?? "");
+                      if (typed.length !== 3) return;
+                      patch({ currency: typed, rateToBase: typed === base ? "1" : draft.rateToBase });
+                      return;
+                    }
+                    patch({
+                      currency: e.target.value,
+                      rateToBase: e.target.value === base ? "1" : draft.rateToBase,
+                    });
+                  }}
                   style={{ position: "absolute", inset: 0, opacity: 0 }}
                 >
                   {[...new Set([base, draft.currency, ...COMMON_CURRENCIES])].map((c) =>
                     <option key={c} value={c}>{c}</option>)}
+                  <option value={OTHER_CURRENCY}>Other…</option>
                 </select>
               </span>
             </div>
