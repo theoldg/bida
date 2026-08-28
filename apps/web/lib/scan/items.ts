@@ -34,9 +34,17 @@ export function weightsFromItems(
     let minor = 0;
     try { minor = parseMinor(cleanAmountText(tip.amount), currency); } catch { /* no tip, no problem */ }
     if (minor > 0) {
-      const { shares } = resolveSplit(
-        minor, { mode: "equal", members: [...tip.members] }, { tiebreakSeed: `${seed}:tip` },
-      );
+      // Scale the tip to what each person already ordered, not an even split —
+      // someone who had the €40 steak tips more than someone who had a coffee.
+      // Only members with a positive item weight can take a proportional
+      // share; if none of the tip's members have one yet (nobody's assigned
+      // anything), fall back to splitting the tip evenly so it isn't silently
+      // dropped.
+      const proportional: Record<string, number> = {};
+      for (const id of tip.members) if (weights[id]) proportional[id] = weights[id];
+      const { shares } = Object.keys(proportional).length > 0
+        ? resolveSplit(minor, { mode: "shares", weights: proportional }, { tiebreakSeed: `${seed}:tip` })
+        : resolveSplit(minor, { mode: "equal", members: [...tip.members] }, { tiebreakSeed: `${seed}:tip` });
       for (const [id, v] of Object.entries(shares)) add(id, v);
     }
   }
@@ -45,4 +53,28 @@ export function weightsFromItems(
   // Object.keys() as the participant list, so a 0 would still owe nothing.
   for (const id of Object.keys(weights)) if (weights[id] === 0) delete weights[id];
   return weights;
+}
+
+/**
+ * The receipt's own total: every line item plus the tip, in the receipt's
+ * currency. This is what Receipt mode treats as the expense amount — derived
+ * from the bill, not typed separately — so it stays in lockstep with whatever
+ * "who had what" actually adds up to. Returns null when there's nothing to
+ * sum (no items parse), so the caller can leave the amount alone rather than
+ * overwrite it with zero.
+ */
+export function receiptTotalMinor(
+  items: { amount: string }[],
+  tip: string | null,
+  currency: string,
+): number | null {
+  let total = 0;
+  let any = false;
+  for (const item of items) {
+    try { total += parseMinor(cleanAmountText(item.amount), currency); any = true; } catch { /* unreadable line, skip it */ }
+  }
+  if (tip) {
+    try { total += parseMinor(cleanAmountText(tip), currency); } catch { /* no tip, no problem */ }
+  }
+  return any ? total : null;
 }

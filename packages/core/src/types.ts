@@ -5,6 +5,16 @@ export type Id = string;
 
 export type SplitMode = "equal" | "exact" | "shares" | "percent";
 
+/**
+ * Which of the split editor's four tabs is showing, independent of
+ * `SplitSpec["mode"]` — a finished who-had-what grid writes an ordinary
+ * `shares` spec, but the tab should still read "Receipt", not "As parts".
+ * Persisted on `Expense` (not just the local draft) so leaving Receipt mode
+ * for one of the other three sticks after save; absent means "derive it from
+ * the data" for expenses saved before this field existed.
+ */
+export type SplitTab = "equal" | "shares" | "exact" | "receipt";
+
 export type SplitSpec =
   | { mode: "equal"; members: Id[] }
   /** Exact minor amounts in the expense's BASE currency. Must sum to the total. */
@@ -37,6 +47,14 @@ export interface Expense {
   description: string;
   categoryId?: string | null;
   occurredAt: number;
+  /**
+   * When this expense was first added, wall-clock, set once and never
+   * touched by later edits. `occurredAt` is the (editable) date of the
+   * purchase; this is for breaking ties between same-day expenses in list
+   * order. Optional so expenses written before this field existed still fold
+   * and display fine — the list sort falls back to `occurredAt` for those.
+   */
+  createdAt?: number;
   /** Amount in `currency`. */
   amountMinor: number;
   currency: CurrencyCode;
@@ -71,6 +89,8 @@ export interface Expense {
   receiptInvolved?: Id[] | null;
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
   receiptAssignments?: Id[][] | null;
+  /** Which split tab was showing, last time this expense was saved. See `SplitTab`. */
+  splitTab?: SplitTab | null;
   deletedAt?: number | null;
 }
 
@@ -85,6 +105,8 @@ export interface Settlement {
   rateToBase: Rate;
   baseAmountMinor: number;
   occurredAt: number;
+  /** When this settlement was recorded, wall-clock. Same tiebreak role as `Expense.createdAt`. */
+  createdAt?: number;
   note?: string | null;
   deletedAt?: number | null;
 }

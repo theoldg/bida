@@ -14,7 +14,7 @@ Update it in the same commit as the code it describes.*
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | ⬜ CSV export, categories, empty/error states |
-| 7 — Owner's punch list | ✅ all eight, plus three rounds of follow-ups (2026-08-28) |
+| 7 — Owner's punch list | ✅ all eight, plus four rounds of follow-ups (2026-08-28) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
@@ -29,20 +29,23 @@ Photograph a receipt and it fills the expense form:
 [receipt-scanning.md](receipt-scanning.md),
 [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md),
-[ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md). A "Receipt" tab
+[ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md),
+[ADR-0019](decisions/0019-receipt-mode-owns-the-total.md). A "Receipt" tab
 on `/g/expense/edit`'s split editor, alongside Evenly/As parts/As amounts,
-holds the camera-capture and library-upload buttons (new expenses only,
-sharing one handler) with a spinner-and-label loading state per button, an
-error + "try again", and a one-line privacy note; a scan that finds line
+holds the camera-capture and library-upload buttons (any expense, saved or
+not, sharing one handler) with a spinner-and-label loading state per button,
+an error + "try again", and a one-line privacy note; a scan that finds line
 items routes to `/g/expense/items`, a who-had-what grid (coloured,
-disambiguated initial chips as columns, items as rows) that reduces to an
-ordinary `shares` split — no new entity, no schema change. The parsed items,
-tip and grid assignment persist on the expense itself (plain optional
-fields), so "Edit who-had-what" (also on the Receipt tab) can reopen the same
-grid later, for a new or already-saved expense, from any device. Left for
-later: multi-image capture, on-device downscale for photos kept on the
-expense, R2 upload, and the gallery/full-screen viewer. Scope in
-[product.md](product.md).
+disambiguated initial chips as columns, items as rows, an editable tip that
+scales to what each person ordered) that reduces to an ordinary `shares`
+split — no new entity, no schema change. The parsed items, tip and grid
+assignment persist on the expense itself (plain optional fields), so "Edit
+who-had-what" (also on the Receipt tab) can reopen the same grid later, for a
+new or already-saved expense, from any device. While Receipt mode has items,
+the amount field is computed (items + tip) and disabled, and the chosen split
+tab persists across save/reopen (ADR-0019). Left for later: multi-image
+capture, on-device downscale for photos kept on the expense, R2 upload, and
+the gallery/full-screen viewer. Scope in [product.md](product.md).
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.

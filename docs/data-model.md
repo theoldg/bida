@@ -19,13 +19,15 @@ server.
 Group      { id, name, baseCurrency, createdAt, archivedAt? }
 Member     { id, groupId, name, colorSeed, isPlaceholder, deletedAt? }
 Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
-             rateToBase, baseAmountMinor, occurredAt, note?, deletedAt? }
+             rateToBase, baseAmountMinor, occurredAt, createdAt?, note?, deletedAt? }
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
              uploadState: 'local'|'uploading'|'uploaded', createdAt }
 Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt }
 
 Expense {
   id, groupId, description, categoryId, occurredAt,
+  createdAt?,         // set once at creation; list-order tiebreak for
+                      // same-day expenses, since occurredAt is user-editable
   amountMinor,        // in `currency`
   currency,           // ISO 4217, may differ from group base
   rateToBase,         // decimal string, "1" when same currency
@@ -38,6 +40,8 @@ Expense {
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind `split`, kept so the
                       // who-had-what grid can reopen (ADR-0017)
+  splitTab?,          // 'equal'|'shares'|'exact'|'receipt' — which split
+                      // editor tab was showing, so it survives save (ADR-0019)
   deletedAt?
 }
 ```

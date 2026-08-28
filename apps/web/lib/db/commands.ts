@@ -14,6 +14,7 @@ import {
   type OpKind,
   type Rate,
   type SplitSpec,
+  type SplitTab,
 } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
 import { getDevice, setMe } from "./device";
@@ -310,6 +311,8 @@ export interface ExpenseInput {
   receiptTip?: string | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
+  /** Which split tab was showing when this expense was saved. */
+  splitTab?: SplitTab | null;
 }
 
 async function baseCurrencyOf(groupId: Id): Promise<CurrencyCode> {
@@ -374,6 +377,7 @@ export async function addExpense(
           description: input.description,
           categoryId: input.categoryId ?? null,
           occurredAt: input.occurredAt,
+          createdAt: now,
           amountMinor: input.amountMinor,
           currency: input.currency,
           rateToBase: input.rateToBase,
@@ -386,6 +390,7 @@ export async function addExpense(
           receiptTip: input.receiptTip ?? null,
           receiptInvolved: input.receiptInvolved ?? null,
           receiptAssignments: input.receiptAssignments ?? null,
+          splitTab: input.splitTab ?? null,
           deletedAt: null,
         },
       },
@@ -497,6 +502,7 @@ export async function recordSettlement(
           rateToBase: input.rateToBase,
           baseAmountMinor,
           occurredAt: input.occurredAt,
+          createdAt: now,
           note: input.note ?? null,
           deletedAt: null,
         },

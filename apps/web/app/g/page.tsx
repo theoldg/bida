@@ -112,8 +112,8 @@ function payersLabel(name: string | undefined, isMe: boolean, others: number): s
 // ------------------------------------------------------------- expenses
 
 type Entry =
-  | { kind: "expense"; at: number; expense: Expense }
-  | { kind: "settlement"; at: number; settlement: Settlement };
+  | { kind: "expense"; at: number; createdAt: number; expense: Expense }
+  | { kind: "settlement"; at: number; createdAt: number; settlement: Settlement };
 
 function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
@@ -125,9 +125,9 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   const entries: Entry[] = [
-    ...expenses.map((e): Entry => ({ kind: "expense", at: e.occurredAt, expense: e })),
-    ...settlements.map((s): Entry => ({ kind: "settlement", at: s.occurredAt, settlement: s })),
-  ].sort((a, b) => b.at - a.at);
+    ...expenses.map((e): Entry => ({ kind: "expense", at: e.occurredAt, createdAt: e.createdAt ?? e.occurredAt, expense: e })),
+    ...settlements.map((s): Entry => ({ kind: "settlement", at: s.occurredAt, createdAt: s.createdAt ?? s.occurredAt, settlement: s })),
+  ].sort((a, b) => (b.at - a.at) || (b.createdAt - a.createdAt));
 
   let lastDay = "";
 

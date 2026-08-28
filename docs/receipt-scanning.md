@@ -156,6 +156,10 @@ per-group quota, then a decision about whether the photo is stored at all.
    from any device via "Edit who-had-what".
 7. ✅ ADR-0018 — scan/upload and "Edit who-had-what" moved into a fourth
    "Receipt" tab in the split editor, beside Evenly/As parts/As amounts.
+8. ✅ [ADR-0019](decisions/0019-receipt-mode-owns-the-total.md) — the split
+   tab persists on the expense, the amount is computed from items + tip while
+   Receipt mode has items, the tip scales to what each person ordered, and
+   scanning/rescanning works on any expense, not just an unsaved one.
 
 ## Verified live, 2026-08-28
 
@@ -182,4 +186,14 @@ group and its secret:
 
 ## Gotchas
 
-*Empty until something bites. Add to it rather than learning it twice.*
+- A UI-only "which tab is showing" field that isn't written onto the entity
+  itself doesn't survive save/reopen if any other saved field can be used to
+  re-derive a *different* answer — `receiptItems` staying on the expense
+  forever (ADR-0017) meant `splitTab` kept re-deriving "Receipt" even after
+  the person switched away and saved. If a UI mode needs to stick, persist it,
+  don't derive it from data that outlives the choice (ADR-0019).
+- `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
+  (`allocated === total === 0`) — a blank or unread amount prints "€0.00 of
+  €0.00 allocated" with a green check, which looks like success. Anything
+  that can leave the total at zero needs its own guard; don't rely on the
+  split footer to catch it.

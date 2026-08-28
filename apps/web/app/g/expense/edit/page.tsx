@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   convertMinor, isValidRate, parseMinor, validatePayers, validateSplit,
 } from "@hajsik/core";
+import { receiptTotalMinor } from "../../../../lib/scan/items";
 import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
@@ -98,6 +99,7 @@ function EditExpenseScreen() {
         receiptTip: e.receiptTip ?? null,
         receiptInvolved: e.receiptInvolved ?? null,
         receiptAssignments: e.receiptAssignments ?? null,
+        splitTab: e.splitTab ?? undefined,
       });
     } else {
       const me = data.me ?? data.members[0]?.id;
@@ -105,6 +107,25 @@ function EditExpenseScreen() {
       saveDraft(groupId, blankDraft(me, data.group.baseCurrency, data.members.map((m) => m.id)));
     }
   }, [groupId, expenseId, data.loading, data.group, data.members, data.me, data.expenses]);
+
+  // While Receipt mode has items, the amount isn't something you type — it's
+  // sum(items) + tip, so the total on the form can never drift out of sync
+  // with what "who had what" is actually dividing up. Runs whenever the bill
+  // itself changes shape; the field is also disabled below so nothing else
+  // can fight this while it's in charge.
+  useEffect(() => {
+    if (!groupId) return;
+    const current = getDraft(groupId);
+    if (!current) return;
+    const tab: SplitTab = current.splitTab
+      ?? (current.receiptItems && current.receiptItems.length > 0 ? "receipt"
+        : current.split.mode === "percent" ? "shares" : current.split.mode);
+    if (tab !== "receipt" || !current.receiptItems || current.receiptItems.length === 0) return;
+    const total = receiptTotalMinor(current.receiptItems, current.receiptTip ?? null, current.currency);
+    if (total === null) return;
+    const text = bare(total, current.currency);
+    if (text !== current.amountText) saveDraft(groupId, { ...current, amountText: text });
+  }, [groupId, draft?.receiptItems, draft?.receiptTip, draft?.currency, draft?.splitTab, draft?.split.mode]);
 
   if (!groupId || !data.group || !draft) {
     return <Screen><Body><TopBar title={expenseId ? "Edit" : "New expense"} back={true} /></Body></Screen>;
@@ -144,6 +165,13 @@ function EditExpenseScreen() {
     ?? (draft.receiptItems && draft.receiptItems.length > 0 ? "receipt"
       : draft.split.mode === "percent" ? "shares" : draft.split.mode);
 
+  const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
+  // The amount is derived from the bill while Receipt mode is showing it —
+  // typing over it would desync the total from what the items actually add
+  // up to, with nothing left to reconcile the two. Edit the items or the tip
+  // instead, or switch tabs to take manual control back.
+  const receiptLocksAmount = activeTab === "receipt" && hasReceiptItems;
+
   async function save() {
     if (!ready || !groupId) return;
     const actor = data.me ?? draft!.paidBy;
@@ -161,6 +189,7 @@ function EditExpenseScreen() {
       receiptTip: draft!.receiptTip ?? null,
       receiptInvolved: draft!.receiptInvolved ?? null,
       receiptAssignments: draft!.receiptAssignments ?? null,
+      splitTab: activeTab,
     };
     if (draft!.expenseId) await editExpense(groupId, actor, draft!.expenseId, input);
     else await addExpense(groupId, actor, input);
@@ -197,6 +226,7 @@ function EditExpenseScreen() {
                 value={draft.amountText}
                 onChange={(amountText) => patch({ amountText })}
                 autoSize={true}
+                disabled={receiptLocksAmount}
               />
               <span className="chip" style={{ alignSelf: "center", marginLeft: 3, position: "relative" }}>
                 {draft.currency} <Icon name="chev" size={10} />
@@ -223,6 +253,13 @@ function EditExpenseScreen() {
                 </select>
               </span>
             </div>
+
+            {receiptLocksAmount ? (
+              <div style={{
+                fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
+                padding: "2px 8px", borderRadius: 999, marginTop: 7,
+              }}>from the receipt's items and tip — edit those to change it</div>
+            ) : null}
 
             {foreign ? (
               <>
@@ -303,7 +340,6 @@ function EditExpenseScreen() {
               onTabChange={(splitTab) => patch({ splitTab })}
               receipt={{
                 items: draft.receiptItems ?? null,
-                canScan: !draft.expenseId,
                 scanDisabled: !secret,
                 scanState,
                 scanSource,

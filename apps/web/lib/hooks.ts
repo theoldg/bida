@@ -22,6 +22,17 @@ function alive<T extends { deletedAt?: number | null }>(rows: T[] | undefined): 
   return (rows ?? []).filter((r) => !r.deletedAt);
 }
 
+/**
+ * Newest first by the user-facing date, then by actual entry order — two
+ * expenses backdated to the same day, or added within the same minute, still
+ * need a stable, deterministic order rather than whatever IndexedDB handed
+ * back. `createdAt` is absent on expenses written before it existed, so those
+ * fall back to `occurredAt` for the tiebreak (a wash, but never crashes).
+ */
+function byWhenThenCreated(a: Expense | Settlement, b: Expense | Settlement): number {
+  return (b.occurredAt - a.occurredAt) || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
+}
+
 export function useDevice(): DeviceRecord | undefined {
   const [fallback, setFallback] = useState<DeviceRecord>();
   const live = useLiveQuery(() => db().device.get("device"), []);
@@ -119,8 +130,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
       };
     }
     const members = alive(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-    const expenses = alive(rows.expenses).sort((a, b) => b.occurredAt - a.occurredAt);
-    const settlements = alive(rows.settlements).sort((a, b) => b.occurredAt - a.occurredAt);
+    const expenses = alive(rows.expenses).sort(byWhenThenCreated);
+    const settlements = alive(rows.settlements).sort(byWhenThenCreated);
 
     const state: GroupState = {
       ...emptyGroupState(),

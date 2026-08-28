@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { SplitSpec } from "@hajsik/core";
+import type { SplitSpec, SplitTab } from "@hajsik/core";
 
 /**
  * The expense being typed. It lives outside React because two screens share it
@@ -10,14 +10,7 @@ import type { SplitSpec } from "@hajsik/core";
  * on purpose: a half-typed expense is not a fact about the world yet, and
  * nothing unfinished should ever reach the log other devices read.
  */
-/**
- * Which of the split editor's four tabs is showing. Independent of
- * `split.mode` — a finished who-had-what grid writes an ordinary `shares`
- * spec (ADR-0016), but the tab should still read "Receipt", not "As parts".
- * Undefined means "derive it from `split.mode`", so old drafts and expenses
- * saved before this field existed still open on the right tab.
- */
-export type SplitTab = "equal" | "shares" | "exact" | "receipt";
+export type { SplitTab };
 
 export interface ExpenseDraft {
   /** Present when editing rather than creating. */

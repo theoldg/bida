@@ -136,6 +136,15 @@ function ItemsScreen() {
           </div>
 
           <div className="pad" style={{ paddingTop: 14 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>Tip</div>
+            <div className="field">
+              <label htmlFor="tip">Tip ({draft.currency}), scaled to what each person had</label>
+              <input id="tip" inputMode="decimal" placeholder="0.00" value={draft.receiptTip ?? ""}
+                onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+            </div>
+          </div>
+
+          <div className="pad" style={{ paddingTop: 14 }}>
             <div className="eyebrow" style={{ marginBottom: 8 }}>Tap who had each item</div>
             <div className="itemtablewrap">
               <table className="itemtable">

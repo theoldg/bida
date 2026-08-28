@@ -42,8 +42,6 @@ const MODES: { mode: "equal" | "shares" | "exact"; label: string }[] = [
 
 export interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
-  /** False once an expense already exists — rescanning could overwrite fields someone already corrected. */
-  canScan: boolean;
   scanDisabled: boolean;
   scanState: "idle" | "scanning" | "error";
   scanSource: "camera" | "library" | null;
@@ -234,9 +232,10 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
 
 /**
  * The fourth tab's content: scan/upload before there's a bill, "edit
- * who-had-what" once there is one. Scanning is offered only for a brand-new
- * expense (`canScan`) — rescanning over an edit would silently overwrite
- * fields someone may have already corrected (ADR-0016).
+ * who-had-what" plus a smaller rescan/upload pair once there is one — always
+ * available, including on an already-saved expense (ADR-0019, superseding
+ * ADR-0016's new-expense-only restriction). A fresh scan replaces the old
+ * items/tip and resets the who-had-what grid, same as the first scan.
  */
 function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, size }: {
   scanDisabled: boolean;
@@ -268,7 +267,7 @@ function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScan
 }
 
 function ReceiptPanel({
-  items, canScan, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
+  items, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
 }: ReceiptTabProps) {
   if (items && items.length > 0) {
     return (
@@ -283,25 +282,15 @@ function ReceiptPanel({
             <Icon name="chev" size={14} />
           </span>
         </Link>
-        {canScan ? (
-          <div>
-            <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
-              onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
-            {scanState === "error" ? (
-              <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
-                {scanError ?? "Couldn't read that receipt."} The old one is still assigned.
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    );
-  }
-
-  if (!canScan) {
-    return (
-      <div style={{ padding: 12, fontSize: 12, color: "var(--muted)" }}>
-        No receipt on this expense. Scanning fills in a new expense — start one to use it.
+        <div>
+          <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
+            onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
+          {scanState === "error" ? (
+            <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
+              {scanError ?? "Couldn't read that receipt."} The old one is still assigned.
+            </div>
+          ) : null}
+        </div>
       </div>
     );
   }
