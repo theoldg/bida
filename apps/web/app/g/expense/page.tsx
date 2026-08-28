@@ -56,6 +56,11 @@ function ExpenseScreen() {
   } catch { /* a broken split still deserves a readable screen */ }
   const foreign = expense.currency !== group.baseCurrency;
   const edits = Math.max(0, opCount - 1);
+  // A finished who-had-what grid writes an ordinary `shares` spec (see
+  // SplitTab in @hajsik/core) — without this check it would read as
+  // "as parts", which isn't what anyone typed.
+  const isReceipt = expense.splitTab === "receipt"
+    || (!expense.splitTab && expense.split.mode === "shares" && (expense.receiptItems?.length ?? 0) > 0);
 
   async function remove() {
     if (!expense || !groupId) return;
@@ -130,14 +135,15 @@ function ExpenseScreen() {
               )}
               <div className="hairline" />
               <Eyebrow style={{ marginBottom: 4 }}>
-                Split · {expense.split.mode === "equal" ? "evenly"
+                Split · {isReceipt ? "from receipt"
+                  : expense.split.mode === "equal" ? "evenly"
                   : expense.split.mode === "exact" ? "as amounts"
                   : expense.split.mode === "shares" ? "as parts" : "by percent"}
               </Eyebrow>
               {data.members.map((m) => {
                 const inIt = participants.includes(m.id);
                 const weight = expense.split.mode === "shares" ? expense.split.weights[m.id] ?? 0 : 0;
-                const detail = expense.split.mode === "shares" && inIt
+                const detail = expense.split.mode === "shares" && !isReceipt && inIt
                   ? ` · ${weight} part${weight === 1 ? "" : "s"}`
                   : expense.split.mode === "percent" && inIt
                     ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`

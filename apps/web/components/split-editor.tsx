@@ -163,7 +163,10 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
       </div>
 
       <div className="card splitlist">
-        {showReceipt ? <ReceiptPanel {...receipt} /> : members.map((m) => {
+        {showReceipt ? (
+          <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
+            shares={shares} included={included} />
+        ) : members.map((m) => {
           const on = included.has(m.id);
           return (
             <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
@@ -276,8 +279,17 @@ function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScan
 
 function ReceiptPanel({
   items, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
-}: ReceiptTabProps) {
+  members, me, currency, shares, included,
+}: ReceiptTabProps & {
+  members: Member[];
+  me: string | undefined;
+  currency: string;
+  /** Each involved member's share of the receipt, in the group's base currency. */
+  shares: Record<string, number>;
+  included: Set<string>;
+}) {
   if (items && items.length > 0) {
+    const involved = members.filter((m) => included.has(m.id));
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
         <Link href={editItemsHref} className="btn btn-p" style={{ textDecoration: "none", justifyContent: "space-between" }}>
@@ -290,6 +302,16 @@ function ReceiptPanel({
             <Icon name="chev" size={14} />
           </span>
         </Link>
+        {involved.length > 0 ? (
+          <div className="hairline" style={{ margin: "0 0 -3px" }} />
+        ) : null}
+        {involved.map((m) => (
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Avatar member={m} size={22} />
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.id === me ? "You" : m.name}</span>
+            <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
+          </div>
+        ))}
         <div>
           <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
             onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
