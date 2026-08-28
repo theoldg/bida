@@ -39,8 +39,7 @@ Leave the seam. Build none of it.
 
 | Deferred | The seam |
 |---|---|
-| Restaurant bill splitting | Line items become a new entity with its own op kinds |
-| AI receipt OCR / NL entry | Attachments are addressable; OCR is a worker appending an `update` op |
+| Restaurant bill splitting | Line items become a new entity with its own op kinds — the scan already reads them |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |

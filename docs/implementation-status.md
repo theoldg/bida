@@ -24,9 +24,16 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 
 ## The next action
 
-**Phase 4 — receipts.** Multi-image capture, on-device downscale, R2 upload via
-the worker (Wi-Fi-only default, queue UI), gallery + full-screen viewer. Scope
-in [product.md](product.md), checklist in [roadmap.md](roadmap.md#phase-4--receipts).
+**Phase 4 — receipts, scanning first.** Photograph a receipt and have it fill
+the expense form: planned in full in [receipt-scanning.md](receipt-scanning.md),
+starting with `packages/core/src/scan.ts` and its tests. It needs no storage, so
+it lands ahead of the R2 work (multi-image capture, upload queue, gallery).
+Scope in [product.md](product.md), checklist in
+[roadmap.md](roadmap.md#phase-4--receipts).
+
+Blocked on one thing only: the owner pasting a Gemini API key, which becomes a
+Worker secret (`wrangler secret put GEMINI_API_KEY`). Everything but the live
+end-to-end check can be built and tested without it.
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.

@@ -42,6 +42,14 @@ it applies to work nobody has done yet.
   splits, that's the wrong vibe. just draw people at random every time and have
   that be a quiet easter egg." The rotation is deterministic and rendered
   nowhere.
+- **The receipt scan runs on a free tier, with maximum trust.** *2026-08-28* —
+  "let's try it with a free tier gemini api token, server side, shared globally
+  across all users … we'll flag it as something to figure out if we ever want to
+  productionize", and "optimize for minimal cloudflare quota usage and assume
+  maximum trust for now (we don't need per group throttling etc)". The owner
+  wanted the call to leave from the phone, not the server; only CORS stopped it.
+  So the Worker adds a key and touches nothing else —
+  [receipt-scanning.md](receipt-scanning.md).
 - **Prefer auditable over private-and-tidy.** *2026-08-28* — "the edits should
   record who did it … also on the public log." Who did what is a fact about the
   group. [ADR-0011](decisions/0011-identity-changes-are-public.md).

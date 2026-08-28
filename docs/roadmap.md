@@ -29,6 +29,9 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 - [ ] Custom domain — blocked on the owner pointing DNS at Cloudflare. Cosmetic.
 
 ## Phase 4 — Receipts ← next
+- [ ] **Scan a receipt into the expense form** — plan in
+      [receipt-scanning.md](receipt-scanning.md). Needs no storage, so it comes
+      first: the photo is read and thrown away
 - [ ] Multi-image capture, on-device downscale
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
 - [ ] Gallery + full-screen viewer
@@ -53,6 +56,7 @@ then reshaped by three rounds of follow-ups on 2026-08-28 — ADRs
 carry what changed and why.
 
 ## Later, deliberately
-Restaurant bill splitting · AI receipt OCR · recurring expenses · push
-notifications · real-time collaboration · spend analytics. Seams described in
+Restaurant bill splitting · recurring expenses · push notifications ·
+real-time collaboration · spend analytics. (Receipt OCR left this list on
+2026-08-28 — it's Phase 4 now.) Seams described in
 [product.md](product.md#deliberately-not-in-the-mvp). Don't pre-build them.
