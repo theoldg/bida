@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  payerList, shareOf, splitParticipants, type Expense, type Settlement,
+  payerList, resolvePayers, shareOf, splitParticipants, type Expense, type Settlement,
 } from "@hajsik/core";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
@@ -86,6 +86,11 @@ function GroupScreen() {
   );
 }
 
+/** Which way a row moves your balance — drives the coloured edge in personal mode. */
+function lean(minor: number): string {
+  return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
+}
+
 /** "You paid" · "Marie paid" · "Marie + 1 other paid". */
 function payersLabel(name: string | undefined, isMe: boolean, others: number): string {
   const who = isMe ? "You" : name ?? "Someone";
@@ -103,6 +108,11 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
   const { group, expenses, settlements, memberById, me, balances } = data;
   if (!group) return null;
 
+  // Personal mode's whole job is answering "does this one help me or hurt me?",
+  // so every row carries its own effect on your balance — what you put in for
+  // it, minus what you owe for it — signed and coloured. They add up to `net`.
+  const net = me ? balances.byMember[me] ?? 0 : 0;
+
   const entries: Entry[] = [
     ...expenses.map((e): Entry => ({ kind: "expense", at: e.occurredAt, expense: e })),
     ...settlements.map((s): Entry => ({ kind: "settlement", at: s.occurredAt, settlement: s })),
@@ -113,23 +123,22 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
   return (
     <>
       {personal && me ? (
-        <div className="pers-summary pad" style={{ paddingBottom: 0, gap: 8 }}>
-          <Card style={{ flex: 1, background: "var(--hl)", borderColor: "var(--hl-edge)", padding: "9px 11px" }}>
-            <div style={{
-              fontSize: 10, fontFamily: "var(--f-mono)", letterSpacing: ".1em", textTransform: "uppercase",
-              color: "var(--hl-ink)", fontWeight: 600,
-            }}>Your share</div>
-            <div className="bignum" style={{ fontSize: 17, color: "var(--hl-ink)" }}>
-              {money(balances.owedMinor[me] ?? 0, group.baseCurrency)}
+        <div className="pers-summary pad" style={{ paddingBottom: 0 }}>
+          <Card style={{
+            flex: 1, padding: "10px 12px", borderColor: "transparent",
+            background: net < 0 ? "var(--debit-bg)" : net > 0 ? "var(--credit-bg)" : "var(--card-2)",
+          }}>
+            <div className="eyebrow" style={{ color: net === 0 ? "var(--muted)" : "inherit" }}>
+              <span className={signClass(net)}>
+                {net < 0 ? "You owe" : net > 0 ? "You're owed" : "You're square"}
+              </span>
             </div>
-          </Card>
-          <Card style={{ flex: 1, padding: "9px 11px" }}>
-            <div style={{
-              fontSize: 10, fontFamily: "var(--f-mono)", letterSpacing: ".1em", textTransform: "uppercase",
-              color: "var(--muted)", fontWeight: 600,
-            }}>You paid</div>
-            <div className="bignum" style={{ fontSize: 17 }}>
-              {money(balances.paidMinor[me] ?? 0, group.baseCurrency)}
+            <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
+              {money(net, group.baseCurrency, net !== 0)}
+            </div>
+            <div style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: 2 }}>
+              you paid {money(balances.paidMinor[me] ?? 0, group.baseCurrency)}
+              {" · "}your share {money(balances.owedMinor[me] ?? 0, group.baseCurrency)}
             </div>
           </Card>
         </div>
@@ -149,7 +158,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
                 {label ? <div className="daylabel">{label}</div> : null}
                 {entry.kind === "expense"
                   ? <ExpenseRow data={data} expense={entry.expense} personal={personal} />
-                  : <SettlementRow data={data} settlement={entry.settlement} />}
+                  : <SettlementRow data={data} settlement={entry.settlement} personal={personal} />}
               </div>
             );
           })}
@@ -163,23 +172,28 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
     const payer = memberById.get(expense.paidBy);
     const payers = payerList(expense);
     const involved = me ? splitParticipants(expense.split).includes(me) : false;
-    const mine = (me !== undefined && payers.includes(me)) || involved;
-    const myShare = me && involved ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id }) : 0;
+    const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
+    const myShare = me && involved
+      ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id })
+      : 0;
+    const myNet = putIn - myShare;
+    const mine = putIn !== 0 || involved;
     const participants = splitParticipants(expense.split).length;
     const foreign = expense.currency !== group!.baseCurrency;
 
     return (
       <Link href={route.expense(group!.id, expense.id)}
-        className={`row${personal ? (mine ? " mine" : " notmine") : ""}`}>
+        className={`row${personal ? (mine ? ` mine ${lean(myNet)}` : " notmine") : ""}`}>
         <Avatar member={payer} name={payer?.name} />
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
             {payersLabel(payer?.name, payer?.id === me, payers.length - 1)}
             {" · "}
-            {expense.split.mode === "equal"
-              ? `split ${participants} ways`
-              : `${participants} people, ${expense.split.mode}`}
+            {expense.split.mode === "equal" ? `split ${participants} ways`
+              : expense.split.mode === "shares" ? `${participants} people, as parts`
+              : expense.split.mode === "exact" ? `${participants} people, as amounts`
+              : `${participants} people, by percent`}
           </div>
         </div>
         <div className="ramt">
@@ -187,19 +201,26 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
           {foreign ? (
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
           ) : null}
-          <div className="sm share">
-            {involved ? `you: ${money(myShare, group!.baseCurrency)}` : "not yours"}
+          <div className={`sm share ${signClass(myNet)}`}>
+            {mine ? money(myNet, group!.baseCurrency, myNet !== 0) : "not yours"}
           </div>
         </div>
       </Link>
     );
   }
 
-  function SettlementRow({ settlement }: { data: GroupData; settlement: Settlement }) {
+  function SettlementRow({ settlement, personal }: {
+    data: GroupData; settlement: Settlement; personal: boolean;
+  }) {
     const from = memberById.get(settlement.fromMember);
     const to = memberById.get(settlement.toMember);
+    // Paying somebody back moves your balance up by exactly what you handed
+    // over; being paid back moves it down. Same arithmetic as an expense.
+    const myNet = me === settlement.fromMember ? settlement.baseAmountMinor
+      : me === settlement.toMember ? -settlement.baseAmountMinor : 0;
+
     return (
-      <div className="row">
+      <div className={`row${personal ? (myNet !== 0 ? ` mine ${lean(myNet)}` : " notmine") : ""}`}>
         <span className="avatar" style={{
           background: "var(--card-3)", color: "var(--muted)", borderStyle: "dashed",
         }}><Icon name="swap" size={15} /></span>
@@ -213,7 +234,9 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
           <div className="big" style={{ color: "var(--muted)" }}>
             {money(settlement.baseAmountMinor, group!.baseCurrency)}
           </div>
-          <div className="sm">settled</div>
+          <div className={`sm share ${signClass(myNet)}`}>
+            {myNet !== 0 ? money(myNet, group!.baseCurrency, true) : "not yours"}
+          </div>
         </div>
       </div>
     );

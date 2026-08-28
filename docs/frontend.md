@@ -93,11 +93,19 @@ Balances — see [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.
 
 ## Personal mode
 
-A boolean in device settings, exposed through one context. It changes rendering
-only — never the underlying data, never what syncs. Concretely: your share on
-each row, `opacity` on expenses you're not part of, your paid/share/net summary
-above the list, and a filter. See [design-system.md](design-system.md) for the
-visual treatment and why it's a highlighter and not a colour.
+A boolean in device settings, read through `usePersonalMode`. It changes
+rendering only — never the underlying data, never what syncs. Concretely:
+
+- **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — being
+  what you put in for that entry minus what you owe for it, with a matching
+  green/red left edge. Settlements are included, on the same arithmetic, so the
+  column adds up to your net.
+- **`opacity: .42`** on entries that involve neither your money nor your share.
+- **Your position above the list**: the net, signed and coloured, with what you
+  paid and what your share came to underneath.
+
+See [design-system.md](design-system.md) for the visual treatment and why it's
+a highlighter and not a colour.
 
 ## PWA
 

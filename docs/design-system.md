@@ -60,8 +60,16 @@ this". A translucent amber wash reads as something laid *over* the ledger, which
 is precisely what a personal lens is.
 
 It never carries meaning alone: a highlighted row also gets a solid left edge bar
-and an explicit `you: €14,28` figure. Rows you're not part of drop to 42% opacity
-rather than disappearing — you should still be able to see the group's spending.
+and an explicit figure. Rows you're not part of drop to 42% opacity rather than
+disappearing — you should still be able to see the group's spending.
+
+**The figure is signed, and the edge bar takes its colour** *(2026-08-28, owner:
+"make it more obvious which expenses affect me positively vs negatively")*. Each
+row shows what it did to your balance — what you put in for it minus what you
+owe for it — as `+€45,00` in credit green or `−€14,28` in debit red, with the
+left edge bar green or red to match. Three signals for one fact: the sign, the
+colour, and the bar. The amber wash still marks the row as *yours*; the sign
+says which way it went. A row that nets to nothing keeps the neutral amber edge.
 
 The same amber marks **pending sync**, and that overlap is intentional: both mean
 "this is about you specifically, not the shared record".

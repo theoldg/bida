@@ -44,9 +44,9 @@ at once, because that will actually happen on a trip.
 2. **Multiple images per expense.** Several photos per expense — the bill, the
    card slip, the thing you bought. Downscaled on-device before upload, queued
    until Wi-Fi, viewable full-screen.
-3. **Personal mode.** A toggle that re-reads the whole app as *your* ledger:
-   your share on every row, expenses you're not part of faded back, your own
-   paid/owed/net totals, and a filter for "only what involves me".
+3. **Personal mode.** Re-reads the whole app as *your* ledger: what every row
+   did to your balance, signed and coloured, expenses you're not part of faded
+   back, and your own paid/owed/net at the top. On by default.
 
 ### Platform
 

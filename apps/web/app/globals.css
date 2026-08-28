@@ -227,8 +227,15 @@ a { color: inherit; text-decoration: none }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- personal mode: the highlighter over the ledger ---- */
+/* Every row says which way it moved you, three ways over: a sign, a colour,
+   and a coloured left edge — so the answer survives colour-blindness and a
+   phone in the sun. Green is money coming back to you, red is money you owe. */
 .share { display: none }
-.personal .share { display: block; color: var(--hl-ink); font-weight: 600 }
+.personal .share { display: block; font-weight: 700; color: var(--muted) }
+.personal .share.credit { color: var(--credit) }
+.personal .share.debit { color: var(--debit) }
+.personal .row.up::before { background: var(--credit) }
+.personal .row.down::before { background: var(--debit) }
 .personal .notmine { opacity: .42 }
 .personal .notmine .rtitle { font-weight: 500 }
 .pers-summary { display: none }
