@@ -1,42 +1,23 @@
 # Docs
 
-Read in whatever order your task needs. Each doc says at the top who it's for.
-
-## Orientation
-
-| Doc | Read it when |
-|---|---|
-| [standing-instructions.md](standing-instructions.md) | **Before anything else.** The owner's own instructions on how this project is run |
-| [product.md](product.md) | You need to know what we're building and what's out of scope |
-| [implementation-status.md](implementation-status.md) | **You're starting a session.** How far the build actually got, and the exact next action |
-| [roadmap.md](roadmap.md) | You want the plan the phases follow |
-| [punchlist.md](punchlist.md) | You're working Phase 7 — the owner's punch list, item by item |
-| [architecture.md](architecture.md) | You need the shape of the system before touching it |
-
-## Building
+Read what your task needs. Each doc says at the top who it's for. Keep them
+tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 
 | Doc | Read it when |
 |---|---|
-| [data-model.md](data-model.md) | You're touching entities, money, splits, or the D1 schema |
-| [sync.md](sync.md) | You're touching the op log, offline behaviour, or version history |
-| [frontend.md](frontend.md) | You're writing UI, routing, or PWA/service-worker code |
-| [design-system.md](design-system.md) | You're writing anything the user will look at |
-| [hosting.md](hosting.md) | You're deploying, or worrying about cost and limits |
-| [conventions.md](conventions.md) | You're about to commit |
+| [standing-instructions.md](standing-instructions.md) | **First.** The owner's rules for how this project is run |
+| [implementation-status.md](implementation-status.md) | **Starting a session.** What's built and what's next |
+| [product.md](product.md) | Deciding whether something is in scope |
+| [roadmap.md](roadmap.md) | You want the phase plan |
+| [architecture.md](architecture.md) | Touching the shape of the system |
+| [data-model.md](data-model.md) | Touching entities, money, splits, or the D1 schema |
+| [sync.md](sync.md) | Touching the op log, offline behaviour, or history |
+| [frontend.md](frontend.md) | Writing UI, routing, or PWA code |
+| [design-system.md](design-system.md) | Writing anything a person will look at |
+| [hosting.md](hosting.md) | Deploying, or worrying about cost |
+| [testing.md](testing.md) | Writing tests or reviewing screens |
+| [conventions.md](conventions.md) | About to commit |
+| [decisions/](decisions/README.md) | About to reverse an architectural choice |
 
-## Decisions
-
-[decisions/](decisions/) holds ADRs — one file per architectural choice, with the
-alternatives we rejected and why. Read the relevant one before reversing anything.
-
-- [0001 — Cloudflare Workers + D1 + R2](decisions/0001-cloudflare-workers-d1-r2.md)
-- [0002 — Local-first, append-only operation log](decisions/0002-append-only-op-log.md)
-- [0003 — Link-only access, no user accounts](decisions/0003-link-only-access.md)
-- [0004 — Static export, secrets in the URL fragment](decisions/0004-static-export-fragment-routing.md)
-- [0005 — Per-expense currency with a locked rate](decisions/0005-locked-fx-rate.md)
-- [0006 — Per-field last-write-wins, not a CRDT library](decisions/0006-lww-not-crdt.md)
-- [0007 — Per-screen static routes, not drawers/sheets within `/g`](decisions/0007-per-screen-routes-not-drawers.md)
-- [0008 — Hand-rolled components from the mockup, not shadcn/ui](decisions/0008-hand-rolled-css-not-shadcn.md)
-- [0009 — Identity, and its history, are device-local](decisions/0009-identity-is-device-local.md) — *superseded by 0011*
-- [0010 — Co-sponsored expenses: `payers` beside `paidBy`](decisions/0010-co-sponsored-expenses.md)
-- [0011 — A device's identity claim is an op, so `actor` can be read](decisions/0011-identity-changes-are-public.md)
+Most docs end with a **Gotchas** section. Add to it every time something bites
+you, so nobody pays for it twice.
