@@ -96,6 +96,44 @@ export async function appendOps(
   });
 }
 
+/**
+ * Publish claims this device made before identity was on the log.
+ *
+ * A device that claimed a member under ADR-0009 has a `meByGroup` entry and no
+ * op to show for it: its edits are attributed to somebody with nothing in the
+ * log to explain why, and /g/options sits empty for a phone that has been in
+ * the group for weeks. One `create` op per such group, once — later runs see it
+ * and do nothing.
+ *
+ * `claimedAt` is when the claim was published, not when it was made. The
+ * earlier date only ever existed in a device-local table that ADR-0011 drops,
+ * and inventing a timestamp for the shared log would be worse than a late one.
+ */
+export async function publishExistingClaims(now = Date.now()): Promise<void> {
+  const device = await getDevice();
+  const mine = await db().ops.where("entityId").equals(device.nodeId).toArray();
+  const claimed = new Set(
+    mine.filter((op) => op.entity === "identity").map((op) => op.groupId),
+  );
+
+  for (const [groupId, memberId] of Object.entries(device.meByGroup)) {
+    if (claimed.has(groupId)) continue;
+    // A group whose ops haven't been pulled yet isn't ours to write to.
+    if (!(await db().groups.get(groupId))) continue;
+    await appendOps(
+      groupId,
+      memberId,
+      [{
+        entity: "identity",
+        entityId: device.nodeId,
+        kind: "create",
+        patch: { memberId, claimedAt: now },
+      }],
+      now,
+    );
+  }
+}
+
 // ---------------------------------------------------------------- groups
 
 export interface NewGroupInput {

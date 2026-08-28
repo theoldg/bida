@@ -104,7 +104,9 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   an `identity` op keyed by the device's HLC node id. It folds into
   `GroupState.identities`, renders on `/g/history` beside every other change,
   and `/g/options` reads this phone's timeline back out of the log instead of
-  the (now dropped) device-local `identityLog` table. Dexie is at v3.
+  the (now dropped) device-local `identityLog` table. Dexie is at v3, and
+  `publishExistingClaims` publishes, once on next launch, the claim a device
+  made before this shipped.
   [ADR-0011](decisions/0011-identity-changes-are-public.md) supersedes ADR-0009.
 
 ### `apps/api` — what's built

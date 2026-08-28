@@ -63,7 +63,8 @@ without the secret.
   [ADR-0011](decisions/0011-identity-changes-are-public.md), superseding
   [ADR-0009](decisions/0009-identity-is-device-local.md). `setMe` in
   `lib/db/device.ts` is the device-local half and nothing outside that module
-  should call it.
+  should call it. `StartSync` calls `publishExistingClaims` once on launch, for
+  devices that claimed somebody before identity was on the log.
 
 ### One navigation
 

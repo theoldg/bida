@@ -10,6 +10,7 @@ import {
   createGroup,
   deleteExpense,
   editExpense,
+  publishExistingClaims,
   recordSettlement,
   restoreRevision,
 } from "./commands";
@@ -79,6 +80,27 @@ describe("commands", () => {
       ["update", marie, theo],
     ]);
     await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("publishes a claim a device made before identity was on the log", async () => {
+    const { groupId, theo } = await trip();
+    const node = (await db().device.get("device"))!.nodeId;
+    // A device upgraded from Dexie v2: it knows who it is, the log doesn't.
+    await db().ops.where("entityId").equals(node).delete();
+    await db().identities.clear();
+
+    await publishExistingClaims();
+
+    const ops = await db().ops.where("entityId").equals(node).toArray();
+    expect(ops.map((o) => [o.entity, o.kind, o.patch["memberId"]])).toEqual([
+      ["identity", "create", theo],
+    ]);
+    expect((await db().identities.get(node))?.memberId).toBe(theo);
+    expect(await db().groups.get(groupId)).toBeDefined();
+
+    // Idempotent: a second run has nothing left to publish.
+    await publishExistingClaims();
+    expect(await db().ops.where("entityId").equals(node).count()).toBe(1);
   });
 
   it("writes nothing when you re-claim the member you already are", async () => {

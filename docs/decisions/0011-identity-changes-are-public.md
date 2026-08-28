@@ -67,6 +67,12 @@ The other objections stand as consequences rather than as reasons not to:
 
 - A device that has never claimed anybody writes no identity op. Nothing is
   published until you tell the app who you are.
+- A device that claimed somebody *before* this shipped publishes it once, on
+  next launch (`publishExistingClaims`), with `claimedAt` set to when it was
+  published rather than when it was claimed. Without that, a phone that has been
+  in a group for weeks would keep editing with nothing on the log to explain its
+  `actor`, and `/g/options` would sit empty. A late timestamp is honest; an
+  invented one would not be.
 - Identity revisions are never restorable — "restore" would mean telling
   somebody else's phone who it is. `/g/history` hides the control for them.
 - Rows in the old device-local `identityLog` are dropped rather than migrated:
