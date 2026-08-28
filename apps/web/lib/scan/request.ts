@@ -32,7 +32,11 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "photographer's expense, and it still has to say plainly what's wrong so they know "
             + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
             + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
-            + "leave every other field null or empty. Otherwise leave error null.",
+            + "leave every other field null or empty. The same applies if the receipt is cropped, "
+            + "folded, or photographed at an angle that hides part of the line-item list, or if the "
+            + "total is visible but any line above it is cut off or unreadable — don't guess at "
+            + "missing lines or report a partial list as if it were complete; set error asking for "
+            + "a photo of the whole receipt instead. Otherwise leave error null.",
         },
       ],
     }],
