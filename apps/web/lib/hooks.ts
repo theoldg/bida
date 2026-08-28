@@ -3,11 +3,11 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useState } from "react";
 import {
-  computeBalances, settleUp, emptyGroupState,
+  computeBalances, settleUp, emptyGroupState, sortOps,
   type BalanceReport, type Expense, type Group, type GroupState, type Member,
   type Settlement, type Transfer,
 } from "@hajsik/core";
-import { db, type DeviceRecord, type IdentityEntry } from "./db/dexie";
+import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
 
 /**
@@ -158,13 +158,40 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
   }, []);
 }
 
-/** This device's identity changes in a group, oldest first. Device-local. */
-export function useIdentityLog(groupId: string | undefined): IdentityEntry[] {
+/** One device's move from one member to another, read back out of the log. */
+export interface IdentityChange {
+  opId: string;
+  at: number;
+  /** The member this device was before, or null on a first claim. */
+  fromMember: string | null;
+  toMember: string;
+}
+
+/**
+ * This device's identity changes in a group, oldest first.
+ *
+ * Derived from the `identity` ops this device stamped — the same ops everybody
+ * else in the group can see (ADR-0011). Nothing device-local is read here
+ * beyond which node id is ours.
+ */
+export function useIdentityLog(groupId: string | undefined): IdentityChange[] {
+  const nodeId = useDevice()?.nodeId;
   return useLiveQuery(async () => {
-    if (!groupId) return [];
-    const rows = await db().identityLog.where("groupId").equals(groupId).toArray();
-    return rows.sort((a, b) => a.at - b.at || (a.id ?? 0) - (b.id ?? 0));
-  }, [groupId]) ?? [];
+    if (!groupId || !nodeId) return [];
+    const ops = sortOps(
+      (await db().ops.where("entityId").equals(nodeId).toArray())
+        .filter((o) => o.groupId === groupId && o.entity === "identity"),
+    );
+    let previous: string | null = null;
+    const changes: IdentityChange[] = [];
+    for (const op of ops) {
+      const to = op.patch["memberId"];
+      if (typeof to !== "string" || to === previous) continue;
+      changes.push({ opId: op.id, at: op.createdAt, fromMember: previous, toMember: to });
+      previous = to;
+    }
+    return changes;
+  }, [groupId, nodeId]) ?? [];
 }
 
 /** Whether the browser thinks it is online. Drives the offline banner. */

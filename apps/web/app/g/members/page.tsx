@@ -4,8 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { Avatar } from "../../../components/bits";
 import { Banner, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
-import { addMember, removeMember, renameMember } from "../../../lib/db/commands";
-import { setMe } from "../../../lib/db/device";
+import { addMember, claimIdentity, removeMember, renameMember } from "../../../lib/db/commands";
 import { formatJoinLink, route } from "../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../lib/hooks";
 
@@ -36,7 +35,7 @@ function MembersScreen() {
 
   async function claim(memberId: string) {
     if (!groupId) return;
-    await setMe(groupId, memberId);
+    await claimIdentity(groupId, memberId);
   }
 
   async function rename(memberId: string, current: string) {
@@ -58,7 +57,7 @@ function MembersScreen() {
     if (!name) return;
     const memberId = await addMember(groupId, data.me ?? group.id, name);
     // A brand-new phone that just created this member is almost certainly them.
-    if (!data.me) await setMe(groupId, memberId);
+    if (!data.me) await claimIdentity(groupId, memberId);
   }
 
   return (

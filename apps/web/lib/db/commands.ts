@@ -51,7 +51,7 @@ export async function appendOps(
   const d = db();
   return d.transaction(
     "rw",
-    [d.ops, d.device, d.groups, d.members, d.expenses, d.settlements, d.attachments],
+    [d.ops, d.device, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities],
     async () => {
       const device = await getDevice();
       let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
@@ -115,6 +115,8 @@ export async function createGroup(
 
   await db().groupKeys.put({ groupId, secret, lastSeq: 0 });
 
+  const device = await getDevice();
+
   await appendOps(
     groupId,
     memberId,
@@ -136,12 +138,55 @@ export async function createGroup(
         kind: "create",
         patch: { name: input.myName, colorSeed: newColorSeed(), deletedAt: null },
       },
+      {
+        entity: "identity",
+        entityId: device.nodeId,
+        kind: "create",
+        patch: { memberId, claimedAt: now },
+      },
     ],
     now,
   );
 
   await setMe(groupId, memberId);
   return { groupId, memberId, secret };
+}
+
+/**
+ * Say who is holding this phone in a group — the first claim, or a switch.
+ *
+ * This writes an op, unlike everything else about "you": every other op
+ * carries an `actor`, and an actor is only readable if the group can see when
+ * a device changed which member it speaks for. The claim is keyed by the
+ * device's HLC node id, which is already the suffix of every op that device
+ * ever stamped, so it publishes nothing the log did not already carry — it
+ * just makes it legible. ADR-0011.
+ *
+ * Re-claiming the member you already are is a no-op and writes nothing.
+ */
+export async function claimIdentity(
+  groupId: Id,
+  memberId: Id,
+  now = Date.now(),
+): Promise<void> {
+  const device = await getDevice();
+  const previous = device.meByGroup[groupId];
+  if (previous === memberId) return;
+
+  await setMe(groupId, memberId);
+  await appendOps(
+    groupId,
+    // The member who was here a moment ago is who made this change. On a
+    // first claim there is nobody else it could be.
+    previous ?? memberId,
+    [{
+      entity: "identity",
+      entityId: device.nodeId,
+      kind: previous === undefined ? "create" : "update",
+      patch: { memberId, claimedAt: now },
+    }],
+    now,
+  );
 }
 
 /**

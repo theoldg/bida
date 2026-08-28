@@ -12,6 +12,7 @@ export function tableFor(kind: EntityKind): Table<Row, string> {
     : kind === "member" ? d.members
     : kind === "expense" ? d.expenses
     : kind === "settlement" ? d.settlements
+    : kind === "identity" ? d.identities
     : d.attachments;
   return t as unknown as Table<Row, string>;
 }
@@ -22,6 +23,7 @@ function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string)
     : kind === "member" ? state.members
     : kind === "expense" ? state.expenses
     : kind === "settlement" ? state.settlements
+    : kind === "identity" ? state.identities
     : state.attachments;
   return bag[id] as Row | undefined;
 }
@@ -51,7 +53,7 @@ export async function rebuild(groupId: string): Promise<void> {
   const d = db();
   await d.transaction(
     "rw",
-    [d.ops, d.groups, d.members, d.expenses, d.settlements, d.attachments],
+    [d.ops, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities],
     async () => {
       const ops = await d.ops.where("groupId").equals(groupId).toArray();
       const state = foldOps(ops);
@@ -61,6 +63,7 @@ export async function rebuild(groupId: string): Promise<void> {
         d.expenses.where("groupId").equals(groupId).delete(),
         d.settlements.where("groupId").equals(groupId).delete(),
         d.attachments.where("groupId").equals(groupId).delete(),
+        d.identities.where("groupId").equals(groupId).delete(),
       ]);
 
       if (state.group) await d.groups.put(state.group);
@@ -68,6 +71,7 @@ export async function rebuild(groupId: string): Promise<void> {
       await d.expenses.bulkPut(Object.values(state.expenses));
       await d.settlements.bulkPut(Object.values(state.settlements));
       await d.attachments.bulkPut(Object.values(state.attachments));
+      await d.identities.bulkPut(Object.values(state.identities));
     },
   );
 }

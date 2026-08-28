@@ -8,8 +8,8 @@ import {
 } from "../../../components/chrome";
 import { Icon, type IconName } from "../../../components/icons";
 import { applyTheme, type Theme } from "../../../components/theme";
-import { renameGroup } from "../../../lib/db/commands";
-import { setMe, setPersonalMode, updateDevice } from "../../../lib/db/device";
+import { claimIdentity, renameGroup } from "../../../lib/db/commands";
+import { setPersonalMode, updateDevice } from "../../../lib/db/device";
 import { stamp } from "../../../lib/format";
 import { formatJoinLink, route } from "../../../lib/group-link";
 import { useDevice, useGroupData, useGroupSecret, useIdentityLog } from "../../../lib/hooks";
@@ -49,7 +49,7 @@ function GroupOptionsScreen() {
 
   async function claim(memberId: string) {
     if (!groupId) return;
-    await setMe(groupId, memberId);
+    await claimIdentity(groupId, memberId);
   }
 
   async function setTheme(theme: Theme) {
@@ -105,8 +105,8 @@ function GroupOptionsScreen() {
               </div>
               <p className="hint">
                 {data.me
-                  ? "Only this phone knows. Switching doesn't touch anybody else's ledger."
-                  : "Nobody is claimed on this phone yet — tap your name so the app knows who you are."}
+                  ? "Every edit is filed under whoever this phone says it is, so switching is written to the group's history."
+                  : "Nobody is claimed on this phone yet — tap your name so your edits are filed under you."}
               </p>
             </section>
 
@@ -149,7 +149,7 @@ function GroupOptionsScreen() {
             </section>
 
             <section>
-              <Eyebrow style={{ marginBottom: 9 }}>Identity on this phone</Eyebrow>
+              <Eyebrow style={{ marginBottom: 9 }}>This phone&rsquo;s identity</Eyebrow>
               {identity.length === 0 ? (
                 <Empty title="No claim yet">
                   Once you pick who you are above, every switch is listed here.
@@ -157,7 +157,7 @@ function GroupOptionsScreen() {
               ) : (
                 <div className="tl">
                   {identity.slice().reverse().map((entry, i) => (
-                    <div key={entry.id ?? entry.at} className={`tle${i === 0 ? " now" : ""}`}>
+                    <div key={entry.opId} className={`tle${i === 0 ? " now" : ""}`}>
                       <div className="when">{stamp(entry.at)}</div>
                       <div className="what">
                         {entry.fromMember === null
@@ -169,8 +169,9 @@ function GroupOptionsScreen() {
                 </div>
               )}
               <p className="hint">
-                Device-local, like the choice itself: switching who you are is a fact about
-                this phone, so it never goes up to the group's log.
+                This phone only — other people’s devices have their own. The changes
+                themselves are in the group’s history, because every edit is signed
+                with whoever this phone said it was at the time.
               </p>
             </section>
           </div>

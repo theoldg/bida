@@ -102,6 +102,22 @@ for that session's `wrangler deploy` calls. See
 setting `CLOUDFLARE_API_TOKEN` once in the Claude Code environment settings —
 stays open for whenever the owner is at a computer rather than a phone.
 
+### Attribution is the point of the identity log.
+*2026-08-28* — "the edits should record who did it, and that's why i wanted to
+track the identity changes, also on the public log."
+
+The identity history asked for in the punch list was never meant to be a
+curiosity about one phone. It exists because every op carries an `actor`, and an
+actor can only be trusted if the group can see when a device changed which
+member it speaks for. So identity claims are ops on the shared log, keyed by the
+device's HLC node id, and they render on `/g/history` beside every other change
+— [ADR-0011](decisions/0011-identity-changes-are-public.md), which supersedes
+ADR-0009's device-local answer.
+
+Read this as a general steer, not just a one-off fix: when a choice is between
+*private and tidy* and *auditable*, the owner wants auditable. Who did what is a
+fact about the group.
+
 ### Fix layout bugs at the shell, not per screen.
 *2026-08-28* — "the bottom bar is only visible when i scroll down, fix that."
 

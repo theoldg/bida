@@ -89,6 +89,18 @@ function describe(
     return { what: `${who} edited this expense` };
   }
 
+  if (rev.entity === "identity") {
+    const c = field("memberId");
+    const now = nameOf(c?.after);
+    // The entity id is a device, not a person: "who" is whoever was speaking
+    // for that device a moment ago, and "now" is who it speaks for next.
+    if (rev.isCreate) return { what: `${now} started editing from a new device` };
+    return {
+      what: `${who} handed a device over to ${now}`,
+      diff: { was: nameOf(c?.before), now },
+    };
+  }
+
   if (rev.entity === "settlement") {
     if (rev.isCreate) {
       const amt = field("baseAmountMinor")?.after as number | undefined;
@@ -126,6 +138,7 @@ const FIELD_LABELS: Record<string, string> = {
   payers: "who chipped in",
   description: "the description", occurredAt: "the date", categoryId: "the category",
   attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
+  memberId: "who a device speaks for",
   deletedAt: "whether this was deleted",
 };
 
@@ -200,7 +213,10 @@ function HistoryScreen() {
                 {revisions.map((rev, i) => {
                   const who = rev.op.actor === data.me ? "You" : memberById.get(rev.op.actor)?.name ?? "Someone";
                   const d = describe(rev, who, memberById, currency);
-                  const canRestore = rev.entity !== "group" && !(rev.isCreate && i === revisions.length - 1);
+                  // Restoring an identity claim would mean telling somebody
+                  // else's phone who it is. There is nothing to restore.
+                  const canRestore = rev.entity !== "group" && rev.entity !== "identity"
+                    && !(rev.isCreate && i === revisions.length - 1);
                   return (
                     <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
                       <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>

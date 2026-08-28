@@ -76,6 +76,23 @@ export interface Settlement {
   deletedAt?: number | null;
 }
 
+/**
+ * Which member a device says it is, in one group.
+ *
+ * `id` is the device's HLC node id — the same string that already ends every
+ * op that device stamped. Claiming an identity is therefore a *shared* fact,
+ * not a private one: it is what lets everybody read `Op.actor` honestly. See
+ * ADR-0011.
+ */
+export interface Identity {
+  /** The device's HLC node id. */
+  id: Id;
+  groupId: Id;
+  /** The member this device claims to be, as of `claimedAt`. */
+  memberId: Id;
+  claimedAt: number;
+}
+
 export type UploadState = "local" | "uploading" | "uploaded";
 
 export interface Attachment {
@@ -98,6 +115,8 @@ export interface GroupState {
   expenses: Record<Id, Expense>;
   settlements: Record<Id, Settlement>;
   attachments: Record<Id, Attachment>;
+  /** Keyed by device node id, not by member: one row per device. */
+  identities: Record<Id, Identity>;
   /** Highest HLC applied. Cheap way to know whether a fold is up to date. */
   lastHlc: Hlc | undefined;
 }
@@ -109,6 +128,7 @@ export function emptyGroupState(): GroupState {
     expenses: {},
     settlements: {},
     attachments: {},
+    identities: {},
     lastHlc: undefined,
   };
 }

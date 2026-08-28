@@ -1,6 +1,13 @@
 # 0009 — Who you are is device-local, and so is its history
 
-**Status:** Accepted · 2026-08-27
+**Status:** Superseded by [0011](0011-identity-changes-are-public.md) · 2026-08-27
+
+> Superseded 2026-08-28. The owner's point — *"the edits should record who did
+> it, and that's why i wanted to track the identity changes, also on the public
+> log"* — is that identity is not a standalone fact: it is what makes every op's
+> `actor` readable. And the leak this ADR feared was already in the log, in the
+> node id at the end of every HLC. Identity claims are now ops. See
+> [ADR-0011](0011-identity-changes-are-public.md).
 
 ## Context
 

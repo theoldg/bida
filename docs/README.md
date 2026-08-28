@@ -37,5 +37,6 @@ alternatives we rejected and why. Read the relevant one before reversing anythin
 - [0006 — Per-field last-write-wins, not a CRDT library](decisions/0006-lww-not-crdt.md)
 - [0007 — Per-screen static routes, not drawers/sheets within `/g`](decisions/0007-per-screen-routes-not-drawers.md)
 - [0008 — Hand-rolled components from the mockup, not shadcn/ui](decisions/0008-hand-rolled-css-not-shadcn.md)
-- [0009 — Identity, and its history, are device-local](decisions/0009-identity-is-device-local.md)
+- [0009 — Identity, and its history, are device-local](decisions/0009-identity-is-device-local.md) — *superseded by 0011*
 - [0010 — Co-sponsored expenses: `payers` beside `paidBy`](decisions/0010-co-sponsored-expenses.md)
+- [0011 — A device's identity claim is an op, so `actor` can be read](decisions/0011-identity-changes-are-public.md)

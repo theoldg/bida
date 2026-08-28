@@ -35,7 +35,7 @@ append to it whenever they state a new preference.
 |---|---|
 | `apps/web/` | Next.js app (App Router, static export) — **built, most screens done (Phase 2)** |
 | `apps/api/` | Cloudflare Worker: static assets today, Hono API to come — **serving the static export, live** |
-| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 88 tests passing** |
+| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 110 tests passing** |
 | `design/mockups/` | Approved HTML/CSS mockups. Source of truth for visual design |
 | `docs/` | Everything else. Start at [docs/implementation-status.md](docs/implementation-status.md), then [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before you argue with an architectural choice |
@@ -59,7 +59,8 @@ Full reasoning: [docs/architecture.md](docs/architecture.md),
 **Design signed off. The MVP (Phases 0-3) is complete and deployed, and Phase 7
 — the owner's eight-item punch list — has landed on top of it.**
 `packages/core` holds the whole domain — money, HLCs, ops, folding, splits,
-balances, settle-up, co-sponsored expenses, history — with 105 passing tests.
+balances, settle-up, co-sponsored expenses, identity claims, history — with 110
+passing tests.
 `apps/web` has every screen (groups, expenses, split editor, payers editor,
 history, members with invite-link sharing, settle-up, join, in-group options,
 settings) behind a single bottom bar, plus a shell-precaching service worker and
@@ -68,8 +69,12 @@ migrations and the two sync endpoints (`POST`/`GET /api/groups/:id/ops`,
 bearer-secret auth) alongside the static-export passthrough. **Deployed and
 live** at <https://hajsik.hajsik-api.workers.dev>, D1 database created and
 migrated, sync verified against production. `pnpm shots` photographs every
-screen in both themes without a human. Next up: Phase 4 (receipts) — see
-[docs/roadmap.md](docs/roadmap.md).
+screen in both themes without a human. Two owner follow-ups landed on
+2026-08-28: the bottom bar is pinned on long screens again (the shell takes
+`height`, not `min-height`), and claiming or switching identity is now an op on
+the shared log so every edit's `actor` can be read —
+[ADR-0011](docs/decisions/0011-identity-changes-are-public.md). Next up: Phase 4
+(receipts) — see [docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session

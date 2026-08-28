@@ -12,7 +12,10 @@ status file is worse than none.
 ## Where we are
 
 **Phases 0-3 are done — the MVP is complete and deployed. Phase 7 (the owner's
-punch list) is done too; all eight items are on `main`.**
+punch list) is done too; all eight items are on `main`.** Since then, two
+follow-ups from the owner (2026-08-28): the bottom bar is pinned again on
+screens taller than the viewport, and identity claims are now ops on the shared
+log — [ADR-0011](decisions/0011-identity-changes-are-public.md).
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 `apps/web` and `apps/api` both exist and are both live.
@@ -20,7 +23,7 @@ The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ done |
-| 1 — Domain core | ✅ done, 105 tests passing |
+| 1 — Domain core | ✅ done, 110 tests passing |
 | 2 — Local-first app, no server | ✅ done — `pnpm shots` closed the last box |
 | 3 — Server and sync | ✅ done and deployed — **MVP complete** |
 | 4 — Receipts | ⬜ not started ← next up |
@@ -83,10 +86,26 @@ above) and the creating device has synced at least once — see
 [sync.md](sync.md#gotchas).
 
 **Phase 7 is in here too.** One bottom bar (the top tab strip is gone),
-`/g/options` with identity, personal mode and theme, a device-local identity
-log, nothing selectable, a real `<input inputMode="decimal">` amount field in
+`/g/options` with identity, personal mode and theme, an identity claim log,
+nothing selectable, a real `<input inputMode="decimal">` amount field in
 place of the keypad, generic placeholders, and co-sponsored expenses via
 `/g/payers`. Item by item: [punchlist.md](punchlist.md).
+
+**Two owner follow-ups landed on 2026-08-28:**
+
+- *"the bottom bar is only visible when i scroll down"* — the shell was
+  `min-height: 100dvh`, so on any screen taller than the viewport it grew with
+  its content, the document scrolled instead of `.scroll`, and the bar sat at
+  the foot of a long page. It is `height: 100dvh; overflow: hidden` now, with
+  `min-height: 0` on the scrolling child and `overflow: hidden` on `html, body`.
+  Gotcha written up in [frontend.md](frontend.md#gotchas).
+- *"the edits should record who did it, and that's why i wanted to track the
+  identity changes, also on the public log"* — claiming or switching identity is
+  an `identity` op keyed by the device's HLC node id. It folds into
+  `GroupState.identities`, renders on `/g/history` beside every other change,
+  and `/g/options` reads this phone's timeline back out of the log instead of
+  the (now dropped) device-local `identityLog` table. Dexie is at v3.
+  [ADR-0011](decisions/0011-identity-changes-are-public.md) supersedes ADR-0009.
 
 ### `apps/api` — what's built
 
@@ -104,7 +123,7 @@ the one-time D1 setup, and how to deploy.
 | `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate` |
 | `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
 | `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
-| `fold.ts` | `foldOps`, `foldForward`, `sortOps`, `entityOps`, `foldEntityAt` |
+| `fold.ts` | `foldOps`, `foldForward`, `sortOps`, `entityOps`, `foldEntityAt` — buckets include `identities`, keyed by device node id |
 | `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
 | `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
@@ -116,7 +135,7 @@ Run it:
 
 ```bash
 pnpm install
-pnpm --filter @hajsik/core test          # 105 tests, ~1s
+pnpm --filter @hajsik/core test          # 110 tests, ~1s
 pnpm --filter @hajsik/core typecheck
 ```
 

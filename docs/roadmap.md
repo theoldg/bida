@@ -112,13 +112,20 @@ per-screen state.
 - [ ] Empty states, error states, install prompt
 - [ ] Answer the open product questions in [product.md](product.md#open-product-questions)
 
-## Phase 7 — the owner's punch list *(current)*
+## Phase 7 — the owner's punch list ✅ *(done 2026-08-27)*
 
 Eight things the owner asked for after living with the deployed MVP for a day —
 navigation, dark theme, in-group options, identity history, text selection, the
 amount input, placeholder copy, and co-sponsored expenses. Each is specified,
 ordered and tracked item by item in **[punchlist.md](punchlist.md)**, which is
 the file to open when picking this up cold.
+
+Two follow-ups on 2026-08-28, both on `main`: the bottom bar is pinned again on
+screens taller than the viewport (the shell takes `height`, not `min-height` —
+[frontend.md's gotchas](frontend.md#gotchas)), and identity claims moved onto
+the shared op log so every edit's `actor` is auditable
+([ADR-0011](decisions/0011-identity-changes-are-public.md), superseding
+ADR-0009, which reopens and answers punch-list item 4).
 
 ---
 

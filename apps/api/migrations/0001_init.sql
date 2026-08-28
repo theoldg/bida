@@ -12,7 +12,7 @@ CREATE TABLE ops (
   seq        INTEGER NOT NULL,        -- per-group, assigned by the server
   id         TEXT PRIMARY KEY,        -- client-generated UUID = idempotency key
   group_id   TEXT NOT NULL REFERENCES groups(id),
-  entity     TEXT NOT NULL,           -- 'group'|'member'|'expense'|'settlement'|'attachment'
+  entity     TEXT NOT NULL,           -- 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'
   entity_id  TEXT NOT NULL,
   kind       TEXT NOT NULL,           -- 'create'|'update'|'delete'|'restore'
   patch      TEXT NOT NULL,           -- JSON, changed fields only

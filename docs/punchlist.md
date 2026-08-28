@@ -79,11 +79,19 @@ of this phone, not of the trip. The screen just surfaces them where you are.
 
 ## 4 — Identity history
 
-**Shape.** Claiming or switching identity is device-local (`meByGroup`), so it
-must not become a synced op — it isn't a fact about the group, it's a fact about
-this phone. A new device-local Dexie table `identityLog` records
-`{ groupId, at, fromMember, toMember }`, appended by `setMe`, and the options
-screen (item 3) renders it as a small timeline: "You were Marie · became Sam".
+**Shape.** *(As built 2026-08-27, and revised 2026-08-28 — see below.)* Claiming
+or switching identity was first taken to be device-local (`meByGroup`), recorded
+in a device-local Dexie table `identityLog` and rendered by the options screen
+(item 3) as a small timeline: "You were Marie · became Sam".
+
+**Revised, 2026-08-28.** The owner: *"the edits should record who did it, and
+that's why i wanted to track the identity changes, also on the public log."*
+That reframes the item — the identity log is not a curiosity about this phone,
+it is what makes every op's `actor` auditable. Identity claims are now
+`identity` ops keyed by the device's HLC node id, on the shared log, rendered on
+`/g/history`; `identityLog` is dropped and `/g/options` reads this phone's
+timeline back out of the ops it stamped. See
+[ADR-0011](decisions/0011-identity-changes-are-public.md), superseding ADR-0009.
 
 ## 5 — Nothing selectable
 
@@ -163,7 +171,7 @@ All eight landed on `main` on 2026-08-27 and are deployed. What each turned into
 | 1 | `/g`'s top tab strip deleted; one bottom bar — Expenses · Balances · Settle · Group. `Tabs` and its CSS removed from the codebase |
 | 2 | Neutral dark palette in `globals.css` **and** `design/mockups/index.html`; see [design-system.md](design-system.md#dark-is-not-the-light-palette-turned-down) |
 | 3 | `/g/options` — identity, personal mode, theme, and the way out to People / History / invite / rename |
-| 4 | Dexie v2 `identityLog`, appended by `setMe`, rendered on `/g/options`. Device-local — [ADR-0009](decisions/0009-identity-is-device-local.md) |
+| 4 | `identity` ops keyed by device node id, rendered on `/g/history` and `/g/options`. Shared — [ADR-0011](decisions/0011-identity-changes-are-public.md) (Dexie v2's device-local `identityLog` was dropped in v3) |
 | 5 | `user-select: none` on `body`, `.selectable` opt-in, inputs exempt |
 | 6 | The keypad is gone; the amount is an `<input inputMode="decimal">` with a caret, autofocused on a new expense only |
 | 7 | "Marrakech" → "Group name", "Dinner · Nomad" → "Title", "Cash, bank transfer…" → "Note (optional)" |

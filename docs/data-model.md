@@ -77,6 +77,21 @@ kept separate so it never pollutes "how much did the trip cost".
 The binary lives in R2. Until upload succeeds, the blob lives in a separate
 Dexie table keyed by attachment id, and the UI renders it from there.
 
+### Identity
+Which member a **device** says it is, in one group.
+```ts
+{ id, groupId, memberId, claimedAt }
+```
+`id` is the device's HLC node id — the same string that already ends every op
+that device stamped — so there is one row per device, not per member. Claims are
+ops like everything else: every op carries an `actor`, and an actor is only
+readable if the group can see when a device changed which member it speaks for.
+See [ADR-0011](decisions/0011-identity-changes-are-public.md), which supersedes
+[ADR-0009](decisions/0009-identity-is-device-local.md).
+
+The device's *own* pointer — "am I Sam?" — stays in the `device` record's
+`meByGroup` and is never synced. Changing it is what appends the op.
+
 ## Splits — the only tricky arithmetic
 
 Every split mode resolves to `Record<memberId, minorAmount>` summing **exactly**
@@ -133,7 +148,7 @@ CREATE TABLE ops (
   seq        INTEGER NOT NULL,        -- per-group, assigned by the server
   id         TEXT PRIMARY KEY,        -- client-generated UUID = idempotency key
   group_id   TEXT NOT NULL REFERENCES groups(id),
-  entity     TEXT NOT NULL,           -- 'group'|'member'|'expense'|'settlement'|'attachment'
+  entity     TEXT NOT NULL,           -- 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'
   entity_id  TEXT NOT NULL,
   kind       TEXT NOT NULL,           -- 'create'|'update'|'delete'|'restore'
   patch      TEXT NOT NULL,           -- JSON, changed fields only
@@ -183,11 +198,11 @@ Reasoning, and the two designs rejected, in
 | Store | Key | Notes |
 |---|---|---|
 | `ops` | `id` | index on `[groupId+hlc]`, `[groupId+syncState]` |
-| `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` at any time |
+| `groups`, `members`, `expenses`, `settlements`, `attachments`, `identities` | `id` | materialised, rebuildable from `ops` at any time |
 | `blobs` | `attachmentId` | queued image data awaiting upload |
 | `device` | key | which member is "you", personal-mode toggle, theme, HLC state |
 | `groupKeys` | `groupId` | the invite secret and the sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
-| `identityLog` | `++id` | this phone's identity changes per group (schema v2). Device-local — [ADR-0009](decisions/0009-identity-is-device-local.md) |
+| ~~`identityLog`~~ | — | was this phone's identity changes (schema v2). **Dropped in v3**: identity claims are ops now — [ADR-0011](decisions/0011-identity-changes-are-public.md) |
 
 The materialised stores are a **cache**. If a migration gets confusing, the
 correct fix is to drop them and re-fold from `ops`. Never migrate materialised

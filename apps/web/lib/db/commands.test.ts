@@ -6,6 +6,7 @@ import { getMe } from "./device";
 import {
   addExpense,
   addMember,
+  claimIdentity,
   createGroup,
   deleteExpense,
   editExpense,
@@ -25,6 +26,7 @@ async function wipe() {
   await Promise.all([
     d.ops.clear(), d.groups.clear(), d.members.clear(), d.expenses.clear(),
     d.settlements.clear(), d.attachments.clear(), d.device.clear(), d.groupKeys.clear(),
+    d.identities.clear(),
   ]);
 }
 
@@ -40,6 +42,8 @@ async function assertMaterialisedMatchesLog(groupId: string) {
   expect(Object.fromEntries(expenses.map((e) => [e.id, e]))).toEqual(folded.expenses);
   const settlements = await db().settlements.where("groupId").equals(groupId).toArray();
   expect(Object.fromEntries(settlements.map((s) => [s.id, s]))).toEqual(folded.settlements);
+  const identities = await db().identities.where("groupId").equals(groupId).toArray();
+  expect(Object.fromEntries(identities.map((i) => [i.id, i]))).toEqual(folded.identities);
 }
 
 async function trip() {
@@ -55,6 +59,36 @@ async function trip() {
 
 describe("commands", () => {
   beforeEach(wipe);
+
+  it("records who this device is as an op, so edits can be attributed", async () => {
+    const { groupId, theo, marie } = await trip();
+    const node = (await db().device.get("device"))!.nodeId;
+
+    // Creating the group already claimed it.
+    expect(await getMe(groupId)).toBe(theo);
+    expect((await db().identities.get(node))?.memberId).toBe(theo);
+
+    await claimIdentity(groupId, marie);
+
+    expect(await getMe(groupId)).toBe(marie);
+    const ops = (await db().ops.where("entityId").equals(node).toArray())
+      .sort((a, b) => (a.hlc < b.hlc ? -1 : 1));
+    expect(ops.map((o) => [o.kind, o.patch["memberId"], o.actor])).toEqual([
+      ["create", theo, theo],
+      // The switch is filed under who this phone was a moment ago.
+      ["update", marie, theo],
+    ]);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("writes nothing when you re-claim the member you already are", async () => {
+    const { groupId, theo } = await trip();
+    const before = await db().ops.count();
+
+    await claimIdentity(groupId, theo);
+
+    expect(await db().ops.count()).toBe(before);
+  });
 
   it("creates a group with its first member and claims this device", async () => {
     const { groupId, theo } = await trip();

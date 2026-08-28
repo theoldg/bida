@@ -10,7 +10,7 @@ These are one subject. The log that syncs is the log that renders history.
 type Op = {
   id: string          // client-generated UUID; the idempotency key
   groupId: string
-  entity: 'group' | 'member' | 'expense' | 'settlement' | 'attachment'
+  entity: 'group' | 'member' | 'expense' | 'settlement' | 'attachment' | 'identity'
   entityId: string
   kind: 'create' | 'update' | 'delete' | 'restore'
   patch: Record<string, unknown>   // changed fields ONLY, never the whole entity

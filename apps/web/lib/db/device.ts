@@ -1,5 +1,5 @@
 import { newNodeId } from "@hajsik/core";
-import { db, type DeviceRecord, type IdentityEntry } from "./dexie";
+import { db, type DeviceRecord } from "./dexie";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
   key: "device",
@@ -31,33 +31,18 @@ export async function getMe(groupId: string): Promise<string | undefined> {
 }
 
 /**
- * Claim, or switch, which member this device is in a group — and record it.
+ * Point this device at a member, without touching the op log.
  *
- * The log is device-local (see `IdentityEntry`): switching identity is not a
- * change to the group's ledger, so it must never become an op. Re-claiming the
- * same member is a no-op and is not logged.
+ * This is the device-local half only. Nothing outside this module should call
+ * it: `claimIdentity` in ./commands.ts is the whole operation — it writes the
+ * `identity` op that lets everybody else read `Op.actor` honestly (ADR-0011),
+ * and calls this. Kept here, and kept private-by-convention, so that the
+ * device record still has exactly one writer.
  */
-export async function setMe(
-  groupId: string,
-  memberId: string,
-  now = Date.now(),
-): Promise<void> {
+export async function setMe(groupId: string, memberId: string): Promise<void> {
   const device = await getDevice();
-  const previous = device.meByGroup[groupId];
-  if (previous === memberId) return;
+  if (device.meByGroup[groupId] === memberId) return;
   await updateDevice({ meByGroup: { ...device.meByGroup, [groupId]: memberId } });
-  await db().identityLog.add({
-    groupId,
-    at: now,
-    fromMember: previous ?? null,
-    toMember: memberId,
-  });
-}
-
-/** This device's identity changes in a group, oldest first. */
-export async function identityHistory(groupId: string): Promise<IdentityEntry[]> {
-  const rows = await db().identityLog.where("groupId").equals(groupId).toArray();
-  return rows.sort((a, b) => a.at - b.at || (a.id ?? 0) - (b.id ?? 0));
 }
 
 export async function setPersonalMode(on: boolean): Promise<void> {

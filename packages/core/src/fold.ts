@@ -3,7 +3,7 @@ import { IMMUTABLE_FIELDS, type Op } from "./ops.js";
 import {
   emptyGroupState,
   type Attachment, type Expense, type Group, type GroupState,
-  type Id, type Member, type Settlement,
+  type Id, type Identity, type Member, type Settlement,
 } from "./types.js";
 
 /**
@@ -36,6 +36,7 @@ function bucketFor(state: GroupState, entity: Op["entity"]): Record<Id, Bag> | n
     case "expense": return state.expenses as unknown as Record<Id, Bag>;
     case "settlement": return state.settlements as unknown as Record<Id, Bag>;
     case "attachment": return state.attachments as unknown as Record<Id, Bag>;
+    case "identity": return state.identities as unknown as Record<Id, Bag>;
     case "group": return null;
   }
 }
@@ -129,4 +130,4 @@ export function foldEntityAt(
   return bucket[entityId];
 }
 
-export type { Attachment, Expense, Group, GroupState, Member, Settlement };
+export type { Attachment, Expense, Group, GroupState, Identity, Member, Settlement };

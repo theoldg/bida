@@ -7,7 +7,10 @@ import type { Id } from "./types.js";
  * the version history all at once. See ADR-0002.
  */
 
-export type EntityKind = "group" | "member" | "expense" | "settlement" | "attachment";
+export type EntityKind =
+  | "group" | "member" | "expense" | "settlement" | "attachment"
+  /** A device's claim to be a member. Shared so `actor` can be read. ADR-0011. */
+  | "identity";
 export type OpKind = "create" | "update" | "delete" | "restore";
 
 export interface Op {
@@ -32,7 +35,7 @@ export interface Op {
 }
 
 const ENTITIES: readonly EntityKind[] = [
-  "group", "member", "expense", "settlement", "attachment",
+  "group", "member", "expense", "settlement", "attachment", "identity",
 ];
 const KINDS: readonly OpKind[] = ["create", "update", "delete", "restore"];
 

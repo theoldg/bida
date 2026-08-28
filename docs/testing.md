@@ -10,7 +10,7 @@ and op folding. This is what actually exists and passes today:
 
 ```bash
 pnpm install
-pnpm --filter @hajsik/core test          # 88 tests, ~1s
+pnpm --filter @hajsik/core test          # 110 tests, ~1s
 pnpm --filter @hajsik/core typecheck
 ```
 
