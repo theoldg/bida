@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
   activityFeed, entityHistory, splitParticipants,
-  type CurrencyCode, type Member, type Op, type Revision, type SplitSpec,
+  type CurrencyCode, type Member, type Revision, type SplitSpec,
 } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
@@ -132,36 +132,6 @@ function describe(
   return { what: `${who} updated the group` };
 }
 
-const FIELD_LABELS: Record<string, string> = {
-  amountMinor: "the amount", currency: "the amount", rateToBase: "the amount",
-  baseAmountMinor: "the amount", split: "who's involved", paidBy: "who paid",
-  payers: "who chipped in",
-  description: "the description", occurredAt: "the date", categoryId: "the category",
-  attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
-  memberId: "who a device speaks for",
-  deletedAt: "whether this was deleted",
-};
-
-/**
- * "Sam's change to the amount was overwritten by Marie's." — surfaced per
- * docs/sync.md#conflicts: we never show a resolution dialog, just the honest
- * record of what happened, once, in history.
- */
-function overwriteNotes(rev: Revision, opsById: Map<string, Op>, memberById: Map<string, Member>): string[] {
-  const seen = new Set<string>();
-  const notes: string[] = [];
-  for (const change of rev.changes) {
-    if (!change.supersededByOpId || seen.has(change.supersededByOpId + change.field)) continue;
-    const laterOp = opsById.get(change.supersededByOpId);
-    if (!laterOp) continue;
-    seen.add(change.supersededByOpId + change.field);
-    const who = memberById.get(laterOp.actor)?.name ?? "someone";
-    const field = FIELD_LABELS[change.field] ?? "this";
-    notes.push(`This change to ${field} was later overwritten by ${who}'s edit.`);
-  }
-  return notes;
-}
-
 function HistoryScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
@@ -178,7 +148,15 @@ function HistoryScreen() {
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
   const ops = useLiveQuery(async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
-  const opsById = new Map(ops.map((op) => [op.id, op as Op]));
+
+  // Every expense the group has ever had, deleted ones included: the feed links
+  // to what a revision was about, and half the reason to open history is an
+  // expense that isn't there any more.
+  const allExpenses = useLiveQuery(
+    async () => (groupId ? db().expenses.where("groupId").equals(groupId).toArray() : []),
+    [groupId],
+  ) ?? [];
+  const expenseById = new Map(allExpenses.map((e) => [e.id, e]));
 
   const expense = expenseId ? data.expenses.find((e) => e.id === expenseId) : undefined;
   const revisions = !groupId ? [] : expenseId ? entityHistory(ops, expenseId) : activityFeed(ops, 200);
@@ -186,6 +164,23 @@ function HistoryScreen() {
   if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
   const group = data.group;
   const currency = group.baseCurrency;
+
+  /**
+   * Where a revision in the whole-group feed leads. Expenses only — they are
+   * the only thing with a screen of their own, and "You changed the amount" is
+   * not much use in a group feed without saying of what.
+   *
+   * A deleted expense has no detail screen, so it points at its own history,
+   * which is where you would be going next anyway.
+   */
+  function subjectOf(rev: Revision): { href: string; label: string } | undefined {
+    if (!groupId || rev.entity !== "expense") return undefined;
+    const e = expenseById.get(rev.entityId);
+    const label = e?.description?.trim() || "Untitled expense";
+    return e?.deletedAt
+      ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
+      : { href: route.expense(groupId, rev.entityId), label };
+  }
 
   async function restore(rev: Revision) {
     if (!groupId) return;
@@ -217,6 +212,7 @@ function HistoryScreen() {
                   // else's phone who it is. There is nothing to restore.
                   const canRestore = rev.entity !== "group" && rev.entity !== "identity"
                     && !(rev.isCreate && i === revisions.length - 1);
+                  const subject = expenseId ? undefined : subjectOf(rev);
                   return (
                     <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
                       <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>
@@ -228,9 +224,11 @@ function HistoryScreen() {
                         </div>
                       ) : null}
                       {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
-                      {overwriteNotes(rev, opsById, memberById).map((n) => (
-                        <div className="conflict" key={n}>{n}</div>
-                      ))}
+                      {subject ? (
+                        <Link className="tlink" href={subject.href}>
+                          {subject.label}<Icon name="chev" size={11} />
+                        </Link>
+                      ) : null}
                       {canRestore ? (
                         <button className="restore" onClick={() => restore(rev)}>Restore this version</button>
                       ) : null}

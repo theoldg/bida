@@ -121,10 +121,16 @@ Two people edit the same expense while one is offline:
 - **Different fields** (she changes the amount, he changes who's involved) —
   both survive. No conflict at all.
 - **Same field** — highest HLC wins the materialised value. **Both ops remain in
-  the log**, so the history screen shows the losing edit and who made it. The UI
-  marks it: *"This change to the amount was later overwritten by Marie's
-  edit."* — `overwriteNotes()` in `apps/web/app/g/history/page.tsx`, driven by
-  `FieldChange.supersededByOpId` from `packages/core/history.ts`.
+  the log**, so the history screen shows the losing edit and who made it, in
+  order, like every other revision.
+
+  It used to add a note under the losing entry — *"This change to the amount was
+  later overwritten by Marie's edit."* — and that is gone as of 2026-08-28
+  (owner: *"they're visually noisy"*). The data behind it is untouched:
+  `FieldChange.supersededByOpId` from `packages/core/history.ts` still marks
+  which later op replaced a field, and is still tested. Nothing renders it. If a
+  future screen wants to surface it, it is there — just not as a line under
+  every entry it applies to.
 
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix

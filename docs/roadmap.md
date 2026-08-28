@@ -75,8 +75,10 @@ per-screen state.
 - [x] Link-only auth: secret in fragment, `sha256` bearer-token check on the
       server (`apps/api/src/auth.ts`)
 - [x] Sync engine: single-flight, backoff, triggers (`apps/web/lib/db/sync.ts`)
-- [x] Conflict surfacing in history ("Sam's change to the amount was later
-      overwritten by Marie's edit.") — `apps/web/app/g/history/page.tsx`
+- [x] Conflict surfacing in history — the losing edit and its author appear as
+      an ordinary revision. The explicit "later overwritten by Marie's edit"
+      note was dropped on 2026-08-28 as visual noise; the data behind it stays
+      (see [sync.md](sync.md#conflicts))
 - [x] **Deployed and verified live** — `POST`/`GET /api/groups/:id/ops` smoke
       tested directly against production (create, idempotent re-push, pull,
       wrong-secret rejection all correct), and a real group with members and

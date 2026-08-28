@@ -126,3 +126,17 @@ every screen with more content than fits a phone, and none of the short screens
 showed it. When something is wrong on "the app" rather than on one screen, look
 at `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on
 a screen that overflows — a screenshot of a half-empty screen proves nothing.
+
+### Don't annotate the log with what the log already shows.
+*2026-08-28* — "in the edit history, drop both kinds of 'this change was later
+overwritten by XYZ', they're visually noisy."
+
+Every revision that lost a field to a later edit was carrying an italic note
+saying so. Two or three of them in a row buried the actual history under
+commentary about it. The timeline already shows both edits, in order, with who
+made each — that *is* the conflict, stated once.
+
+The general rule: a history screen earns its keep by being scannable. Prefer one
+line per thing that happened. Derived commentary needs a much higher bar than
+"we have the data for it".
+
