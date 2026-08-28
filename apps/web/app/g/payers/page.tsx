@@ -2,10 +2,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseMinor, validatePayers } from "@hajsik/core";
+import { MinorAmountInput } from "../../../components/amount-input";
 import { Avatar, Card } from "../../../components/bits";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
-import { bare, money } from "../../../lib/format";
+import { bare, money, shortfallText } from "../../../lib/format";
 import { useGroupData } from "../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../lib/draft";
 
@@ -55,9 +56,7 @@ function PayersScreen() {
     setSpec(next);
   }
 
-  function setAmount(memberId: string, text: string) {
-    let minor = 0;
-    try { minor = text ? parseMinor(text, currency) : 0; } catch { return; }
+  function setAmount(memberId: string, minor: number) {
     setSpec({ ...spec, [memberId]: minor });
   }
 
@@ -108,12 +107,11 @@ function PayersScreen() {
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button onClick={() => giveRest(m.id)} className="chip"
                         aria-label={`Give ${m.name} the rest`}>rest</button>
-                      <input className="bignum" inputMode="decimal" aria-label={`${m.name}'s contribution`}
-                        value={bare(spec[m.id] ?? 0, currency)}
-                        onChange={(e) => setAmount(m.id, e.target.value)}
-                        style={{ width: 84, textAlign: "right", background: "transparent", border: 0,
-                          borderBottom: "1px solid var(--rule)", font: "inherit", color: "var(--ink)",
-                          outline: "none", fontSize: 14 }} />
+                      <MinorAmountInput className="bignum splitin" aria-label={`${m.name}'s contribution`}
+                        currency={currency}
+                        valueMinor={spec[m.id] ?? 0}
+                        placeholder={bare(0, currency)}
+                        onChangeMinor={(minor) => setAmount(m.id, minor)} />
                     </span>
                   ) : (
                     <span style={{ color: "var(--muted)" }}><Icon name="plus" size={16} /></span>
@@ -134,7 +132,9 @@ function PayersScreen() {
                 color: check.ok ? "var(--credit)" : "var(--debit)" }}>
                 {check.ok
                   ? `${money(allocated, currency)} of ${money(amountMinor, currency)} accounted for`
-                  : check.message}
+                  : shortfallText(check, currency, {
+                      under: "still unaccounted for", over: "more than the expense",
+                    })}
               </span>
             </Card>
 

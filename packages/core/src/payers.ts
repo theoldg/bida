@@ -63,11 +63,18 @@ export function primaryPayer(spec: PayerSpec, fallback: Id): Id {
   return ids.sort((a, b) => (spec[b] ?? 0) - (spec[a] ?? 0) || (a < b ? -1 : 1))[0]!;
 }
 
+/** Same shape, same reasoning as `SplitProblem` — see split.ts. */
+export type PayerProblem = "empty" | "under" | "over" | "invalid";
+
 export interface PayerValidation {
   ok: boolean;
   /** What the payers currently add up to, in the expense's own currency. */
   allocatedMinor: number;
   totalMinor: number;
+  problem?: PayerProblem;
+  /** What is still unaccounted for; negative when the payers overshoot. */
+  diffMinor?: number;
+  /** A fallback sentence for callers with no currency to hand. */
   message?: string;
 }
 
@@ -87,25 +94,27 @@ export function validatePayers(
   for (const id of ids) {
     const v = spec[id] ?? 0;
     if (!Number.isSafeInteger(v)) {
-      return { ok: false, allocatedMinor: 0, totalMinor: amountMinor,
+      return { ok: false, allocatedMinor: 0, totalMinor: amountMinor, problem: "invalid",
         message: `${id}'s contribution must be a whole number of minor units` };
     }
     if (v < 0) {
-      return { ok: false, allocatedMinor: 0, totalMinor: amountMinor,
+      return { ok: false, allocatedMinor: 0, totalMinor: amountMinor, problem: "invalid",
         message: "Nobody can pay a negative amount" };
     }
     sum += v;
   }
   if (sum === 0) {
-    return { ok: false, allocatedMinor: 0, totalMinor: amountMinor,
-      message: "Nobody has put anything in yet" };
+    return { ok: false, allocatedMinor: 0, totalMinor: amountMinor, problem: "empty",
+      diffMinor: amountMinor, message: "Nobody has put anything in yet" };
   }
   if (sum !== amountMinor) {
     const diff = amountMinor - sum;
     return {
       ok: false, allocatedMinor: sum, totalMinor: amountMinor,
-      message: diff > 0 ? `${diff} minor units still unaccounted for`
-                        : `${-diff} minor units more than the expense`,
+      problem: diff > 0 ? "under" : "over",
+      diffMinor: diff,
+      message: diff > 0 ? "Some of it is still unaccounted for"
+                        : "That is more than the expense",
     };
   }
   return { ok: true, allocatedMinor: sum, totalMinor: amountMinor };

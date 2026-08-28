@@ -99,6 +99,24 @@ Money is always monospaced and tabular so decimal points align down a column and
 a total can be eyeballed without being read. Prose and figures never mix within
 one line — a figure inside a sentence still gets the mono span.
 
+## A money field has an underline
+
+Every field you type an amount into — the big expense figure, an FX rate, a
+split row in *as amounts*, a payer's contribution, a settlement — is the same
+component wearing `.amountfield`: an inline-flex wrapper with a bottom rule that
+is `--rule` at rest, `--brand` on `:focus-within`, and `--debit` (rule *and*
+text) when the figure doesn't add up. The big one on the expense form adds a
+thicker rule, a small radius and a `--card-2` well while focused, so the
+headline figure reads as the thing you are editing. Disabled fields drop the
+rule to transparent rather than showing a dead one.
+
+Digits group with **U+202F**, a narrow no-break space, while you type. Saved
+figures group the way `Intl` does for the locale. That difference is deliberate
+— see [ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
+
+No amount is ever shown to a person in minor units. Core hands the UI a number
+and a problem code; the screen formats it.
+
 ## Rules that are not negotiable
 
 1. **Colour is never the only signal.** Debit and credit always carry a sign

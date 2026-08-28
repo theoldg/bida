@@ -148,18 +148,54 @@ The two components with real logic behind them, not just markup, are the
 **amount input** and the **balance bar** (a bar around a centre axis, debit
 left, credit right) — see `components/bits.tsx`.
 
-The amount input is a real `<input inputMode="decimal">` styled as the big
-figure, not the mockup's hand-built keypad. The keypad was replaced on
-2026-08-27 at the owner's request — "there should be a cursor in the price
-input, and also maybe just let the native digit keyboard pop up". A rendered
-`<span>` has no caret, cannot be tapped into the middle of, and made every
-phone's own numeric keyboard unreachable. The input sanitises as you type
-(digits, one separator, fraction clipped to the currency's exponent), accepts
-"," and "." alike, and autofocuses on a *new* expense only — never when
-editing, where stealing focus would scroll the form away from what you came to
-change. Everything else is markup and
-CSS lifted directly from the mockup (see
+### Every money field is `components/amount-input.tsx`
+
+There is exactly one of these, and **no screen sanitises or formats a typed
+amount itself** — see
+[ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
+
+| Export | For | Value |
+|---|---|---|
+| `AmountInput` | fields whose model is the typed text | `value` / `onChange(text)` |
+| `MinorAmountInput` | fields whose model is minor units | `valueMinor` / `onChangeMinor(n)` |
+| `sanitizeAmount(raw, currency)` | the rule for what may be typed | pure, tested |
+| `groupDigits(canonical)` | `"4800"` → `"4 800"` | pure, tested |
+
+It is a real `<input inputMode="decimal">`, not the mockup's hand-built keypad
+— the keypad was replaced on 2026-08-27 at the owner's request ("there should be
+a cursor in the price input, and also maybe just let the native digit keyboard
+pop up") because a rendered `<span>` has no caret, cannot be tapped into the
+middle of, and made every phone's own numeric keyboard unreachable. Things it
+gets right, once, for everybody:
+
+- **Sanitises as you type**: digits, one separator, fraction clipped to the
+  currency's exponent (so JPY takes none and BHD takes three), leading zeros
+  stripped, a lone leading separator read as "nought point". "," and "." are
+  both accepted as the decimal separator.
+- **Keeps the caret where you left it.** The displayed value is grouped, so
+  reformatting moves characters; a `useLayoutEffect` counts significant
+  characters (digits and the point) before the caret and restores the position.
+  Backspacing onto a group mark deletes the digit before it.
+- **Looks like a field**: `.amountfield` wraps it with an underline that goes
+  brand-coloured on focus and red when the figure is invalid.
+- **Autofocuses on a *new* expense only** — never when editing, where stealing
+  focus would scroll the form away from what you came to change.
+
+`MinorAmountInput` holds the typed text locally and only re-reads the model when
+it changes from outside (the "rest" button, a mode switch). Do not go back to
+`value={bare(parseMinor(text))}`: that round trip is what ate the caret and
+erased a half-typed "12.".
+
+Everything else is markup and CSS lifted directly from the mockup (see
 [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)).
+
+### Core says what is wrong; the screen says it in money
+
+`validateSplit` and `validatePayers` return `problem` (`"under"`, `"over"`,
+`"empty"`, …) and `diffMinor`. `shortfallText` in `lib/format.ts` turns that
+into the sentence, because only the screen knows the currency: "€15.00 left to
+split", "€2.30 still unaccounted for". Never print `message` for an amount
+problem — it is deliberately figure-free.
 
 ## Gotchas
 
@@ -169,6 +205,18 @@ CSS lifted directly from the mockup (see
   middleware, and dynamic params. If you need one of those, you are proposing a
   change to ADR-0004 — write it up rather than quietly adding the adapter.
 - 100dvh, not 100vh, or iOS Safari's toolbar eats the bottom nav.
+- **A controlled input that reformats its own value on every keystroke will eat
+  the caret.** React writes the new value, the browser puts the caret at the
+  end, and typing into the middle of a figure silently appends instead. If a
+  field must reformat as you type, it has to restore the selection itself.
+- **A placeholder is not a default value.** `blankDraft` used to seed
+  `amountText: "0"` so the borderless figure showed something; that zero is a
+  real character, so tapping in and typing 5 gave you "50". Empty value, muted
+  `placeholder`, visible underline.
+- **The typed grouping separator is U+202F**, a narrow no-break space, because
+  the field accepts "," *and* "." as decimal separators — anything else makes a
+  typed figure ambiguous to parse. It does not match `Intl`'s grouping in saved
+  figures, on purpose.
 - **The shell takes `height`, not `min-height`.** `.app` was `min-height: 100dvh`
   for months and looked right on every short screen. Give it content taller than
   the viewport and the shell grows with it: `.scroll` never overflows, the

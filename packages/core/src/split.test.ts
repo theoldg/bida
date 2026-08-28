@@ -112,12 +112,22 @@ describe("validateSplit", () => {
     const v = validateSplit(17039, { mode: "exact", amounts: { a: 8520, b: 8000 } });
     expect(v.ok).toBe(false);
     expect(v.allocatedMinor).toBe(16520);
-    expect(v.message).toMatch(/unallocated/);
+    // The shortfall comes back as a number, not a sentence: only the UI knows
+    // the currency it should be shown in.
+    expect(v.problem).toBe("under");
+    expect(v.diffMinor).toBe(519);
   });
 
   it("flags over-allocation distinctly", () => {
     const v = validateSplit(1000, { mode: "exact", amounts: { a: 900, b: 200 } });
-    expect(v.message).toMatch(/over/);
+    expect(v.problem).toBe("over");
+    expect(v.diffMinor).toBe(-100);
+  });
+
+  it("never puts minor units in a sentence a human will read", () => {
+    const under = validateSplit(17039, { mode: "exact", amounts: { a: 8520, b: 8000 } });
+    const over = validateSplit(1000, { mode: "exact", amounts: { a: 900, b: 200 } });
+    for (const v of [under, over]) expect(v.message).not.toMatch(/minor units|\d/);
   });
 
   it("catches percentages that don't reach 100", () => {

@@ -278,3 +278,26 @@ A settle-up row is an instruction — *you pay Marie €12* — so the arrow sho
 direction the money goes, always payer → payee, left to right. And an icon that
 is the *only* way to a screen gets a real target: the top bar's buttons are 37px
 with an 18px glyph, bigger than the ones sitting inside a row.
+
+### The personal-mode banner needs air under it.
+*2026-08-28* — "also the vertical gap between the 'you're owed' banner and the
+first expense is too small, fix it."
+
+`.pers-summary` had `paddingBottom: 0` so its own `background: var(--card-2)`
+sat flush against the "TODAY" day-label strip below it, which paints its own
+background. Restored the card's normal padding.
+
+### Money fields need a caret, and core never speaks in minor units.
+*2026-08-28* — "the amounts number input is really awkward to use, there's no
+caret and i have no idea what's going on. fix that and all similar
+components." And, same message: "the text 'X minor units unallocated' should
+be displayed in currency (2.30 eur unallocated) or something."
+
+Every amount in the app — expense total, FX rate, a split row, a payer's
+contribution, a settlement — now goes through one component,
+`components/amount-input.tsx`: a real `<input>` with a caret that survives its
+own reformatting, digits grouped as you type, and an underline so it reads as
+a field. `packages/core`'s split/payer validators return a `problem` code and
+a `diffMinor` number, never a sentence — `lib/format.ts`'s `shortfallText`
+writes "€15.00 left to split" because only the screen knows the currency.
+[ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).

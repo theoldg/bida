@@ -14,6 +14,24 @@ export function bare(minor: number, currency: CurrencyCode): string {
   return formatMinor(minor, currency, { showCurrency: false });
 }
 
+/**
+ * The "this doesn't add up" sentence for the split and payer editors, in real
+ * money. Core hands back a number of minor units and a problem code rather
+ * than a sentence, because it doesn't know the currency — "230 minor units
+ * unallocated" is not a thing to show anyone. The screen supplies its own
+ * wording around the figure.
+ */
+export function shortfallText(
+  check: { problem?: string; diffMinor?: number; message?: string },
+  currency: CurrencyCode,
+  copy: { under: string; over: string },
+): string {
+  const diff = check.diffMinor ?? 0;
+  if (check.problem === "under") return `${money(diff, currency)} ${copy.under}`;
+  if (check.problem === "over") return `${money(-diff, currency)} ${copy.over}`;
+  return check.message ?? "";
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";

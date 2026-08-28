@@ -35,7 +35,7 @@ append to it whenever they state a new preference.
 |---|---|
 | `apps/web/` | Next.js app (App Router, static export) — **built, most screens done (Phase 2)** |
 | `apps/api/` | Cloudflare Worker: static assets today, Hono API to come — **serving the static export, live** |
-| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 110 tests passing** |
+| `packages/core/` | Shared domain logic: op folding, splits, balances, settle-up — **built, 111 tests passing** |
 | `design/mockups/` | Approved HTML/CSS mockups. Source of truth for visual design |
 | `docs/` | Everything else. Start at [docs/implementation-status.md](docs/implementation-status.md), then [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before you argue with an architectural choice |
@@ -88,7 +88,13 @@ mode **on by default** —
 [ADR-0014](docs/decisions/0014-settings-belong-to-the-phone.md); every row in
 personal mode says what it did to your balance, signed and coloured; the invite
 link is the third icon in the group's top bar; and settle-up arrows point one
-way. Next up: Phase 4 (receipts) — see [docs/roadmap.md](docs/roadmap.md).
+way. A third batch the same day rebuilt every money field on one component —
+caret preserved, digits grouped, a field that looks like a field — and moved
+the split/payer "doesn't add up" messages out of raw minor units into currency
+via `shortfallText`, since `packages/core` only ever hands back a problem code
+and a number —
+[ADR-0015](docs/decisions/0015-one-money-field-core-reports-numbers.md). Next
+up: Phase 4 (receipts) — see [docs/roadmap.md](docs/roadmap.md).
 
 **Start at [docs/implementation-status.md](docs/implementation-status.md)** — it
 carries the fine-grained state and the exact next action, and survives a session

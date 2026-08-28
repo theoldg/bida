@@ -20,7 +20,10 @@ now ops on the shared log — [ADR-0011](decisions/0011-identity-changes-are-pub
 less prose — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
 The second is listed under **The second batch** below: an inline split editor,
 settings beside the group list, signed personal-mode rows, the invite link as a
-top-bar icon, and one-way settle arrows.
+top-bar icon, and one-way settle arrows. A third batch after that fixed the
+money fields: one `AmountInput` behind every amount in the app, and a shortfall
+told in currency rather than in minor units —
+[ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
 
 The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 `apps/web` and `apps/api` both exist and are both live.
@@ -28,11 +31,11 @@ The design is signed off (2026-08-27, *"i approve of your design, go wild"*).
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ done |
-| 1 — Domain core | ✅ done, 110 tests passing |
+| 1 — Domain core | ✅ done, 111 tests passing |
 | 2 — Local-first app, no server | ✅ done — `pnpm shots` closed the last box |
 | 3 — Server and sync | ✅ done and deployed — **MVP complete** |
 | 4 — Receipts | ⬜ not started ← next up |
-| 5 — History surfaces | ⬜ not started |
+| 5 — History surfaces | ✅ done — revision timeline, activity feed, restore |
 | 6 — Polish | ⬜ not started |
 | 7 — Owner's punch list | ✅ all eight done — [punchlist.md](punchlist.md) |
 
@@ -181,6 +184,29 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   the balances, the `/g/settle` header, and the reimbursement badge in the
   ledger. It always points payer → payee.
 
+**The third batch, later still on 2026-08-28:**
+
+- *"the amounts number input is really awkward to use, there's no caret and i
+  have no idea what's going on. fix that and all similar components"* — all five
+  money fields (expense amount, FX rate, split row in *as amounts*, payer
+  contribution, settlement) are now one component,
+  `components/amount-input.tsx`. It sanitises as you type, groups digits with a
+  narrow no-break space, restores the caret across its own reformatting, and
+  wears `.amountfield`'s underline so a field looks like a field. `blankDraft`
+  starts empty with a placeholder instead of a literal `"0"` you had to delete.
+  `sanitizeAmount` and `groupDigits` are exported and unit-tested (6 of the
+  web app's 26 tests); `apps/web/vitest.config.ts` now includes `components/**`.
+- *"the text 'X minor units unallocated' should be displayed in currency"* —
+  `validateSplit` and `validatePayers` return `problem` and `diffMinor`;
+  `shortfallText` in `lib/format.ts` writes the sentence with the currency the
+  screen knows. Core's `message` is now figure-free, and two core tests assert
+  it stays that way. In *as amounts* mode the per-row meta line is empty — the
+  field beside it is the figure, and `resolveSplit` throws while the split is
+  short, which had been rendering a confident "€0.00" next to a typed "40.00".
+- `pnpm shots` gained two scenes for exactly these: `settle`, and
+  `expense-split-amounts` with a deliberate shortfall.
+  [ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
+
 ### `apps/api` — what's built
 
 A Hono app serving three kinds of route: the sync API (`POST`/`GET
@@ -198,7 +224,7 @@ the one-time D1 setup, and how to deploy.
 | `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
 | `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
 | `fold.ts` | `foldOps`, `foldForward`, `sortOps`, `entityOps`, `foldEntityAt` — buckets include `identities`, keyed by device node id |
-| `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
+| `split.ts` | `resolveSplit`, `validateSplit` (returns `problem` + `diffMinor`, never a sentence with money in it), `shareOf`, `convertSplitMode`, `splitParticipants` |
 | `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
 | `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` (`revisionsForEntity` is module-private) |
@@ -209,7 +235,7 @@ Run it:
 
 ```bash
 pnpm install
-pnpm --filter @hajsik/core test          # 110 tests, ~1s
+pnpm --filter @hajsik/core test          # 111 tests, ~1s
 pnpm --filter @hajsik/core typecheck
 ```
 
@@ -261,8 +287,9 @@ loose ends below — neither blocks real use of the app.
 
 1. **Done, 2026-08-27:** the screenshot harness. `pnpm shots` builds the app,
    serves the real static export, seeds a group through the UI and writes one
-   PNG per screen per theme into `shots/` (22 as of 2026-08-28 — `/g/split` and
-   `/g/options` are gone). See
+   PNG per screen per theme into `shots/` (13 scenes × 2 themes as of
+   2026-08-28 — `/g/split` and `/g/options` are gone; `settle` and
+   `expense-split-amounts` are new). See
    [testing.md](testing.md#pnpm-shots--photograph-every-screen) — including
    the four ways it bit while being written.
 2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser

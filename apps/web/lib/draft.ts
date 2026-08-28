@@ -77,10 +77,12 @@ export function useDraft(groupId: string | undefined): ExpenseDraft | undefined 
 
 export function blankDraft(paidBy: string, currency: string, members: string[]): ExpenseDraft {
   return {
-    // A literal "0" rather than an empty field: the amount input is autofocused,
-    // and an empty centred field shows nothing but a caret. Typing replaces it,
-    // because the sanitiser strips leading zeros.
-    amountText: "0",
+    // Empty, not a literal "0". The "0" was there so an autofocused, borderless
+    // field showed *something* — but it is a real character with a caret that
+    // can land either side of it, so tapping into the field and typing "5" gave
+    // you "50". The field now has an underline and a muted "0" placeholder, so
+    // it looks like an input without containing anything you have to delete.
+    amountText: "",
     currency,
     rateToBase: "1",
     description: "",

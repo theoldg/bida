@@ -61,11 +61,15 @@ describe("validatePayers", () => {
     const short = validatePayers(50_000, { [BOB]: 40_000 });
     expect(short.ok).toBe(false);
     expect(short.allocatedMinor).toBe(40_000);
-    expect(short.message).toMatch(/10000 minor units still unaccounted/);
+    expect(short.problem).toBe("under");
+    expect(short.diffMinor).toBe(10_000);
 
     const over = validatePayers(50_000, { [BOB]: 40_000, [ALICE]: 20_000 });
     expect(over.ok).toBe(false);
-    expect(over.message).toMatch(/10000 minor units more/);
+    expect(over.problem).toBe("over");
+    expect(over.diffMinor).toBe(-10_000);
+    // Both sentences are currency-free; the editor formats the number itself.
+    for (const v of [short, over]) expect(v.message).not.toMatch(/minor units|\d/);
   });
 
   it("refuses negatives, non-integers, and an all-zero set", () => {

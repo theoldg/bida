@@ -23,11 +23,25 @@ export interface SplitResult {
   remainderAbsorbedBy: Id[];
 }
 
+/**
+ * Why a split doesn't add up, for a UI that has to say so in the group's own
+ * currency. Core deliberately doesn't format money into these strings: it
+ * knows minor units and nothing about the currency they're in, and a sentence
+ * built here would read "230 minor units unallocated" on a screen where every
+ * other figure says "€2.30". The number is the field; the sentence is the
+ * caller's.
+ */
+export type SplitProblem = "empty" | "under" | "over" | "percent";
+
 export interface SplitValidation {
   ok: boolean;
   /** What the spec currently allocates, for the "€170,39 of €170,39" banner. */
   allocatedMinor: number;
   totalMinor: number;
+  problem?: SplitProblem;
+  /** Unallocated minor units; negative when the split is over the total. */
+  diffMinor?: number;
+  /** A fallback sentence for callers with no currency to hand. */
   message?: string;
 }
 
@@ -197,7 +211,10 @@ export function validateSplit(
 ): SplitValidation {
   const participants = splitParticipants(spec);
   if (participants.length === 0) {
-    return { ok: false, allocatedMinor: 0, totalMinor, message: "Nobody is included yet" };
+    return {
+      ok: false, allocatedMinor: 0, totalMinor, problem: "empty",
+      diffMinor: totalMinor, message: "Nobody is included yet",
+    };
   }
 
   if (spec.mode === "exact") {
@@ -209,7 +226,9 @@ export function validateSplit(
       ok: false,
       allocatedMinor: sum,
       totalMinor,
-      message: diff > 0 ? `${diff} minor units unallocated` : `${-diff} minor units over`,
+      problem: diff > 0 ? "under" : "over",
+      diffMinor: diff,
+      message: diff > 0 ? "Not all of it is allocated yet" : "That is more than the total",
     };
   }
 
@@ -220,6 +239,7 @@ export function validateSplit(
         ok: false,
         allocatedMinor: 0,
         totalMinor,
+        problem: "percent",
         message: `Percentages add up to ${(sum / 100).toFixed(2)}%, not 100%`,
       };
     }

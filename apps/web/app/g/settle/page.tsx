@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { minorToDecimalString, parseMinor } from "@hajsik/core";
+import { AmountInput } from "../../../components/amount-input";
 import { Avatar } from "../../../components/bits";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
@@ -88,9 +89,10 @@ function SettleScreen() {
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
               <label htmlFor="s-amt">Amount ({group.baseCurrency})</label>
-              <input id="s-amt" inputMode="decimal" value={amountText}
+              <AmountInput id="s-amt" frame="none" currency={group.baseCurrency}
+                value={amountText}
                 placeholder={bare(0, group.baseCurrency)}
-                onChange={(e) => setAmountText(e.target.value)} />
+                onChange={setAmountText} />
             </div>
             <div className="field">
               <label htmlFor="s-date">Date</label>

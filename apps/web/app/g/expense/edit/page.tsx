@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import {
-  convertMinor, exponentOf, isValidRate, parseMinor, validatePayers, validateSplit,
+  convertMinor, isValidRate, parseMinor, validatePayers, validateSplit,
 } from "@hajsik/core";
 import { Avatar, Card, Chip } from "../../../../components/bits";
+import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
@@ -65,7 +66,6 @@ function EditExpenseScreen() {
   const base = group.baseCurrency;
   const patch = (change: Partial<ExpenseDraft>) => saveDraft(groupId, { ...draft, ...change });
 
-  const exp = exponentOf(draft.currency);
   let amountMinor = 0;
   try { amountMinor = draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0; } catch { /* mid-type */ }
 
@@ -85,26 +85,6 @@ function EditExpenseScreen() {
 
   const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
     && draft.description.trim().length > 0;
-
-  /**
-   * The amount is a real text input with a real caret and the phone's own
-   * digit keyboard (`inputMode="decimal"`), not a hand-built keypad — so it
-   * sanitises what a keyboard can produce rather than what three rows of
-   * buttons could. Both "," and "." are accepted as the separator and stored
-   * as "." because that is what `parseMinor` reads.
-   */
-  function typeAmount(raw: string) {
-    let text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
-    const first = text.indexOf(".");
-    if (first !== -1) {
-      text = text.slice(0, first + 1) + text.slice(first + 1).replace(/\./g, "");
-    }
-    if (exp === 0) text = text.split(".")[0] ?? "";
-    const [whole = "", frac] = text.split(".");
-    // "007" is a typo, not an amount: strip leading zeros but keep a lone "0".
-    const clipped = whole.replace(/^0+(?=\d)/, "").slice(0, 12);
-    patch({ amountText: frac === undefined ? clipped : `${clipped}.${frac.slice(0, exp)}` });
-  }
 
   async function save() {
     if (!ready || !groupId) return;
@@ -139,16 +119,17 @@ function EditExpenseScreen() {
         <Scroll>
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-              <input
+              <AmountInput
                 className="amount"
+                fieldClassName="big"
                 aria-label={`Amount in ${draft.currency}`}
-                inputMode="decimal"
                 enterKeyHint="done"
                 autoFocus={!draft.expenseId}
                 placeholder="0"
+                currency={draft.currency}
                 value={draft.amountText}
-                onChange={(e) => typeAmount(e.target.value)}
-                size={Math.max(3, draft.amountText.length)}
+                onChange={(amountText) => patch({ amountText })}
+                autoSize={true}
               />
               <span className="chip" style={{ alignSelf: "center", marginLeft: 3, position: "relative" }}>
                 {draft.currency} <Icon name="chev" size={10} />
@@ -171,17 +152,15 @@ function EditExpenseScreen() {
               <>
                 <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 5, fontFamily: "var(--f-mono)" }}>
                   = {rateOk ? money(baseMinor, base) : "—"} · 1 {draft.currency} =
-                  <input
-                    aria-label={`Rate, ${draft.currency} to ${base}`}
-                    value={draft.rateToBase}
-                    inputMode="decimal"
-                    onChange={(e) => patch({ rateToBase: e.target.value })}
-                    style={{
-                      width: 78, marginLeft: 4, background: "transparent", border: 0,
-                      borderBottom: `1px solid ${rateOk ? "var(--rule)" : "var(--debit)"}`,
-                      font: "inherit", color: rateOk ? "var(--ink)" : "var(--debit)", outline: "none",
-                    }}
-                  /> {base}
+                  <span className={`amountfield${rateOk ? "" : " bad"}`} style={{ marginLeft: 4 }}>
+                    <input
+                      className="rateinput"
+                      aria-label={`Rate, ${draft.currency} to ${base}`}
+                      value={draft.rateToBase}
+                      inputMode="decimal"
+                      onChange={(e) => patch({ rateToBase: e.target.value })}
+                    />
+                  </span> {base}
                 </div>
                 <div style={{
                   fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",

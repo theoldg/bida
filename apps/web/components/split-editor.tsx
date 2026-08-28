@@ -1,12 +1,13 @@
 "use client";
 
 import {
-  convertSplitMode, parseMinor, resolveSplit, splitParticipants, validateSplit,
+  convertSplitMode, resolveSplit, splitParticipants, validateSplit,
   type Member, type SplitMode, type SplitSpec,
 } from "@hajsik/core";
+import { MinorAmountInput } from "./amount-input";
 import { Avatar } from "./bits";
 import { Icon } from "./icons";
-import { bare, money } from "../lib/format";
+import { bare, money, shortfallText } from "../lib/format";
 
 /**
  * Who the money was spent on, and how much each of them owes for it.
@@ -89,10 +90,8 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
     onChange({ mode: "shares", weights });
   }
 
-  function setExact(memberId: string, text: string) {
+  function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
-    let minor = 0;
-    try { minor = text ? parseMinor(text, currency) : 0; } catch { return; }
     onChange({ mode: "exact", amounts: { ...spec.amounts, [memberId]: minor } });
   }
 
@@ -136,7 +135,11 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
                     {m.id === me ? "You" : m.name}
                   </span>
                   <span className="rmeta" style={{ display: "block" }}>
-                    {on ? money(shares[m.id] ?? 0, currency) : "not involved"}
+                    {/* In "as amounts" the field beside this line already *is*
+                        the figure, and while the split is short it can't be
+                        resolved anyway — a stray "€0.00" under a row saying
+                        40.00 is worse than nothing. */}
+                    {!on ? "not involved" : spec.mode === "exact" ? "" : money(shares[m.id] ?? 0, currency)}
                   </span>
                 </span>
               </button>
@@ -158,10 +161,12 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
                     <button type="button" className="chip" onClick={() => giveRest(m.id)}
                       aria-label={`Give ${m.name} the rest`}>rest</button>
                   ) : null}
-                  <input className="bignum splitin" inputMode="decimal" aria-label={`${m.name}'s amount`}
-                    value={on ? bare(spec.amounts[m.id] ?? 0, currency) : ""}
+                  <MinorAmountInput className="bignum splitin" aria-label={`${m.name}'s amount`}
+                    currency={currency}
+                    valueMinor={on ? spec.amounts[m.id] ?? 0 : 0}
+                    placeholder={bare(0, currency)}
                     disabled={!on}
-                    onChange={(e) => setExact(m.id, e.target.value)} />
+                    onChangeMinor={(minor) => setExact(m.id, minor)} />
                 </span>
               ) : spec.mode === "percent" ? (
                 <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
@@ -181,7 +186,7 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
           <span>
             {check.ok
               ? `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`
-              : check.message ?? `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)}`}
+              : shortfallText(check, currency, { under: "left to split", over: "too much" })}
           </span>
         </div>
       </div>

@@ -168,6 +168,30 @@ async function main() {
         process.stdout.write(`${theme}/${name} `);
       }
 
+      // Recording a payment is reached by tapping a suggested transfer on the
+      // balances tab, so its amount arrives pre-filled — the shot is the only
+      // place the settle form's own money field gets photographed.
+      await page.goto(`${base}/g?id=${groupId}&tab=balances`);
+      await page.locator("a.card").first().click();
+      await page.waitForURL(/\/g\/settle/);
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: join(SHOTS, `${theme}-settle.png`) });
+      process.stdout.write(`${theme}/settle `);
+
+      // A half-finished "as amounts" split: the one state where the editor has
+      // something to say about money that doesn't add up, and the field you
+      // type that money into is in it.
+      await page.goto(`${base}/g/expense/edit?id=${groupId}`);
+      await page.locator("input.amount").fill("120");
+      await page.locator("#what").fill("Hammam");
+      await page.getByRole("button", { name: "As amounts" }).click();
+      // 25 of the 120, deliberately: the shot is there to catch the shortfall
+      // line, which is the sentence that used to say "9500 minor units".
+      await page.getByLabel("Marie's amount").fill("25");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
+      process.stdout.write(`${theme}/expense-split-amounts `);
+
       // The restore confirmation carries an HLC in its URL, so it is reached by
       // pressing the rewind on a real revision rather than by a fixed path.
       await page.goto(`${base}/g/history?id=${groupId}`);

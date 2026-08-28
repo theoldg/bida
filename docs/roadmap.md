@@ -101,11 +101,15 @@ per-screen state.
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
 - [ ] Gallery + full-screen viewer
 
-## Phase 5 — History surfaces
+## Phase 5 — History surfaces ✅
 
-- [ ] Per-expense revision timeline with field diffs
-- [ ] Group activity feed
-- [ ] Restore-to-version (as a forward `restore` op)
+- [x] Per-expense revision timeline with field diffs — `app/g/history/page.tsx`
+- [x] Group activity feed — same screen, whole-group mode
+- [x] Restore-to-version (as a forward `restore` op) — `app/g/restore/page.tsx`
+
+Landed alongside Phase 7 and the 2026-08-28 follow-ups, not as its own
+dedicated pass — `lib/history-copy.ts` holds the shared wording. See
+[implementation-status.md](implementation-status.md) for the detail.
 
 ## Phase 6 — Finish
 

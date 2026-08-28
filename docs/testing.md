@@ -10,7 +10,7 @@ and op folding. This is what actually exists and passes today:
 
 ```bash
 pnpm install
-pnpm --filter @hajsik/core test          # 110 tests, ~1s
+pnpm --filter @hajsik/core test          # 111 tests, ~1s
 pnpm --filter @hajsik/core typecheck
 ```
 
@@ -20,14 +20,17 @@ for what's specifically covered.
 ## `apps/web` — smoke tests only
 
 UI gets smoke tests, not exhaustive coverage — see
-[standing-instructions.md](standing-instructions.md). `apps/web`'s `vitest`
-setup (`pnpm --filter @hajsik/web test`) exists for this; it does not yet have
-meaningful UI smoke tests written against it.
+[standing-instructions.md](standing-instructions.md). `pnpm --filter @hajsik/web
+test` runs 26 of them. `vitest.config.ts` includes `lib/**/*.test.ts` **and**
+`components/**/*.test.ts` — pure logic that happens to live beside a component
+still gets real tests, which is why `sanitizeAmount` and `groupDigits` are
+exported from `components/amount-input.tsx` rather than hidden inside it.
+Rendering is not tested here; `pnpm shots` is what looks at screens.
 
 ## `pnpm shots` — photograph every screen
 
 ```bash
-pnpm shots        # builds apps/web, then writes 28 PNGs into shots/ (gitignored)
+pnpm shots        # builds apps/web, then writes 26 PNGs into shots/ (gitignored)
 ```
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
@@ -54,7 +57,11 @@ every edit**; that's the owner's instruction, see
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, at a 390×844 mobile viewport with `deviceScaleFactor: 2`.
    `/g/restore` is the one screen not in that list: its URL carries an HLC, so
-   it is reached by pressing the rewind on a real revision.
+   it is reached by pressing the rewind on a real revision. Two more scenes are
+   reached the same way, by driving to a state a URL alone can't express:
+   `settle` (open the first suggested settlement from the balances tab) and
+   `expense-split-amounts` (a 120 expense split *as amounts* with only 25
+   allocated, so the shortfall line has something to say).
 
 Chromium comes from `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
