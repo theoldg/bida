@@ -140,3 +140,16 @@ The general rule: a history screen earns its keep by being scannable. Prefer one
 line per thing that happened. Derived commentary needs a much higher bar than
 "we have the data for it".
 
+### A flow should end with a way forward, not a way back.
+*2026-08-28* — "when joining for the first time, after selecting my identity I'm
+in the people menu. in that case, it's counterintuitive to hit 'back'. maybe
+there should be a special screen with a more clear 'proceed' button for this use
+case, which mostly shares structure with the people menu."
+
+`/join` used to redirect to `/g/members`, which had the right list and the wrong
+job: a management screen offers no destination, so the only exit from a finished
+task was the back button. Joining now ends on `/g/claim` — the same rows, one
+question, and a primary button into the group.
+
+Reuse the *structure* of a screen when a flow needs its shape; don't reuse the
+screen itself when the flow needs a different ending.

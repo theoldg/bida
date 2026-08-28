@@ -114,6 +114,7 @@ const routes = (g) => [
   ["group-settle", `/g?id=${g}&tab=settle`],
   ["group-options", `/g/options?id=${g}`],
   ["members", `/g/members?id=${g}`],
+  ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],
   ["split", `/g/split?id=${g}`],

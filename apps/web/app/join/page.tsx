@@ -21,6 +21,10 @@ import { parseJoinLink, route } from "../../lib/group-link";
  * with a live query rather than a one-shot check: the moment the group lands
  * (from this attempt or a later background retry), it moves on by itself —
  * nobody has to be told to reopen the link.
+ *
+ * Where it moves on *to* is `/g/claim`, not `/g/members`: joining ends with
+ * "which one is you?" and a button into the group, rather than dropping a new
+ * arrival on a management screen whose only way onward is "back".
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -58,7 +62,7 @@ function JoinScreen() {
   );
 
   useEffect(() => {
-    if (link && group) router.replace(route.members(link.groupId));
+    if (link && group) router.replace(route.claim(link.groupId));
   }, [link, group, router]);
 
   if (link === undefined) {

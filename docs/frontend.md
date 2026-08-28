@@ -34,9 +34,10 @@ one by hand.
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/members?id=` | Members |
+| `/g/claim?id=` | The last step of joining: which member are you? Pick, then a button into the group |
 | `/g/options?id=` | In-group options: identity (and this phone's claim timeline), personal mode, theme, way out to People/History/invite |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
-| `/join#<groupId>.<secret>` | Landing for a shared invite link; claims a member slot |
+| `/join#<groupId>.<secret>` | Landing for a shared invite link; saves the secret, pulls, then hands over to `/g/claim` |
 | `/settings` | Device settings: theme, personal mode |
 
 Deep links point at groups, never at individual expenses (unchanged from 0004).

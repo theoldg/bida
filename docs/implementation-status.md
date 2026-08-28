@@ -70,6 +70,7 @@ Screens (each its own static route — see
 | Members (claim identity, rename, remove, add, invite link) | `app/g/members/page.tsx` | ✅ |
 | Record a settlement | `app/g/settle/page.tsx` | ✅ |
 | Join a shared link | `app/join/page.tsx` | ✅ *(see caveat below)* |
+| Pick who you are, after joining | `app/g/claim/page.tsx` | ✅ |
 | Settings (theme, personal mode) | `app/settings/page.tsx` | ✅ |
 
 Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
@@ -108,6 +109,17 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   `publishExistingClaims` publishes, once on next launch, the claim a device
   made before this shipped.
   [ADR-0011](decisions/0011-identity-changes-are-public.md) supersedes ADR-0009.
+- *"in the edit history, drop both kinds of 'this change was later overwritten
+  by XYZ', they're visually noisy. add links to relevant expenses"* — the
+  overwrite notes are gone from `/g/history` (the `supersededByOpId` data
+  behind them is untouched and still tested — [sync.md](sync.md#conflicts)),
+  and every expense revision in the whole-group feed now carries a link to the
+  expense it was about, or to that expense's own history if it has since been
+  deleted.
+- *"when joining for the first time, after selecting my identity I'm in the
+  people menu … it's counterintuitive to hit back"* — `/join` now hands over to
+  **`/g/claim`**, the same list of names with one job: pick, then a primary
+  button into the group. `/g/members` stays a management screen.
 
 ### `apps/api` — what's built
 
@@ -188,8 +200,8 @@ Beyond the six ADRs, two things were settled in code:
 loose ends below — neither blocks real use of the app.
 
 1. **Done, 2026-08-27:** the screenshot harness. `pnpm shots` builds the app,
-   serves the real static export, seeds a group through the UI and writes 24
-   PNGs (12 routes × 2 themes) into `shots/`. See
+   serves the real static export, seeds a group through the UI and writes 26
+   PNGs (13 routes × 2 themes) into `shots/`. See
    [testing.md](testing.md#pnpm-shots--photograph-every-screen) — including
    the four ways it bit while being written.
 2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser

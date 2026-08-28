@@ -27,7 +27,7 @@ meaningful UI smoke tests written against it.
 ## `pnpm shots` — photograph every screen
 
 ```bash
-pnpm shots        # builds apps/web, then writes 24 PNGs into shots/ (gitignored)
+pnpm shots        # builds apps/web, then writes 26 PNGs into shots/ (gitignored)
 ```
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
