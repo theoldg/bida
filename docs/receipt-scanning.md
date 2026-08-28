@@ -11,7 +11,7 @@ Worker request, and a form you still have to look at before anything is saved.
 ## The shape
 
 ```
-phone: capture → downscale → build the request body
+phone: capture or pick from library → downscale → build the request body
   ↓ POST /api/groups/:id/scan   (bearer = group secret)
 worker: check the secret, add the API key, stream the body upstream
   ↓
@@ -133,8 +133,9 @@ per-group quota, then a decision about whether the photo is stored at all.
 3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
    output schema, including line items and tip), `response.ts`, and
    `scanReceipt()` tying them together.
-4. ✅ The button on `/g/expense/edit`, its states, the privacy line, and
-   `/g/expense/items` for who-had-what — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
+4. ✅ The buttons on `/g/expense/edit` (camera capture and library upload share
+   the same handler), their states, the privacy line, and `/g/expense/items`
+   for who-had-what — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
 5. ✅ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
 
 ## Verified live, 2026-08-28

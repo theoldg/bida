@@ -27,9 +27,10 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*).
 **Phase 4 — receipt scanning is done; the rest of Phase 4 is next.**
 Photograph a receipt and it fills the expense form:
 [receipt-scanning.md](receipt-scanning.md),
-[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). The button
-lives on `/g/expense/edit` for new expenses, with states (scanning, error +
-"try again") and a one-line privacy note; a scan that finds line items routes
+[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). Two buttons
+live on `/g/expense/edit` for new expenses — camera capture and library
+upload, sharing one handler — with states (scanning, error + "try again") and
+a one-line privacy note; a scan that finds line items routes
 to `/g/expense/items`, a who-had-what grid (coloured, disambiguated initial
 chips as columns, items as rows) that reduces to an ordinary `shares` split —
 no new entity, no schema change. Left for later: multi-image capture,

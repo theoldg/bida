@@ -32,7 +32,8 @@ function EditExpenseScreen() {
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
   const secret = useGroupSecret(groupId);
-  const fileInput = useRef<HTMLInputElement>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
+  const libraryInput = useRef<HTMLInputElement>(null);
   const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -152,18 +153,27 @@ function EditExpenseScreen() {
         <Scroll>
           {!draft.expenseId ? (
             <div className="pad" style={{ paddingTop: 12, paddingBottom: 0 }}>
-              <input ref={fileInput} type="file" accept="image/*" capture="environment"
-                style={{ display: "none" }} onChange={onPhoto} aria-label="Scan a receipt" />
-              <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
-                onClick={() => fileInput.current?.click()}>
-                <Icon name="cam" size={16} />
-                {scanState === "scanning" ? "Reading receipt…" : "Scan a receipt"}
-              </button>
+              <input ref={cameraInput} type="file" accept="image/*" capture="environment"
+                style={{ display: "none" }} onChange={onPhoto} aria-label="Take a photo of a receipt" />
+              <input ref={libraryInput} type="file" accept="image/*"
+                style={{ display: "none" }} onChange={onPhoto} aria-label="Upload a receipt photo" />
+              <div style={{ display: "flex", gap: 7 }}>
+                <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
+                  onClick={() => cameraInput.current?.click()}>
+                  <Icon name="cam" size={16} />
+                  {scanState === "scanning" ? "Reading receipt…" : "Scan a receipt"}
+                </button>
+                <button type="button" className="btn btn-s" disabled={scanState === "scanning" || !secret}
+                  onClick={() => libraryInput.current?.click()}>
+                  <Icon name="image" size={16} />
+                  Upload
+                </button>
+              </div>
               {scanState === "error" ? (
                 <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
                   Couldn't read that receipt.{" "}
                   <button type="button" className="action" style={{ fontSize: 11.5 }}
-                    onClick={() => fileInput.current?.click()}>Try again</button>
+                    onClick={() => cameraInput.current?.click()}>Try again</button>
                 </div>
               ) : (
                 <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
