@@ -14,17 +14,20 @@ Update it in the same commit as the code it describes.*
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | ⬜ CSV export, categories, empty/error states |
-| 7 — Owner's punch list | ✅ all eight, plus five rounds of follow-ups (2026-08-28) |
+| 7 — Owner's punch list | ✅ all eight, plus six rounds of follow-ups (2026-08-28) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
-follow-up (2026-08-28): leaving a group, from `/g/members` — `/g/leave`
-confirms it, deletes the group instead when you're the last one there, and
-either way drops it off *your* groups list (`device.leftGroups`) even when
-others are still in it.
+follow-up (2026-08-28): a round of receipt-splitting bugs — the who-had-what
+grid now pins the derived total when you finish it rather than trusting the
+expense form's next mount to resync it (was printing "0 of 0 allocated" and
+blocking Save), the tip is one editable row in the grid instead of a separate
+field, the grid's initials row stays visible while scrolling, and the split
+editor's "N of total allocated" line is scoped to As amounts only. See
+[receipt-scanning.md](receipt-scanning.md#gotchas).
 
 ## The next action
 

@@ -77,10 +77,18 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt";
   const hasReceiptItems = (receipt.items?.length ?? 0) > 0;
+  // "N of total allocated" only means something where you're typing amounts
+  // yourself — Evenly and As parts always land exactly on the total by
+  // construction, and Receipt's total is derived from the bill, not typed.
+  // All three would otherwise show that line trivially satisfied (or, before
+  // the receipt total synced, nonsensically as "0 of 0"). Every mode still
+  // surfaces a real problem (nobody included, over-allocated) when there is
+  // one.
+  const isExactTab = !showReceipt && !legacy && spec.mode === "exact";
   // Nothing to check yet if the receipt tab hasn't produced a split — showing
   // whatever the underlying spec still is (often "equal") would read as a
   // verdict on a tab that has no opinion.
-  const showFooter = !showReceipt || hasReceiptItems;
+  const showFooter = showReceipt ? (hasReceiptItems && !check.ok) : (isExactTab || !check.ok);
 
   function switchMode(mode: "equal" | "shares" | "exact") {
     onTabChange(mode);

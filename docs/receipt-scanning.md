@@ -169,6 +169,15 @@ per-group quota, then a decision about whether the photo is stored at all.
    tab persists on the expense, the amount is computed from items + tip while
    Receipt mode has items, the tip scales to what each person ordered, and
    scanning/rescanning works on any expense, not just an unsaved one.
+9. ✅ Follow-up (2026-08-28): `/g/expense/items`'s "Done" now pins the derived
+   amount itself instead of leaving it to the expense form's next mount to
+   notice; the tip is one editable row in the grid ("Tip + service", with its
+   percentage of the items shown next to it) rather than a separate field
+   above the table; the grid's initials row stays visible while scrolling; and
+   the split editor's "N of total allocated" line only appears on As amounts —
+   Evenly, As parts and Receipt always land on the total by construction, so
+   the line only ever restated the obvious or, worse, printed "€0.00 of €0.00"
+   before the total had synced.
 
 ## Verified live, 2026-08-28
 
@@ -205,4 +214,15 @@ group and its secret:
   (`allocated === total === 0`) — a blank or unread amount prints "€0.00 of
   €0.00 allocated" with a green check, which looks like success. Anything
   that can leave the total at zero needs its own guard; don't rely on the
-  split footer to catch it.
+  split footer to catch it (and, since 2026-08-28, that footer no longer
+  renders on the Receipt tab at all — see below).
+- A value derived from two draft fields that a *later* mount's effect
+  resyncs is only as reliable as that next mount actually happening before
+  anyone reads the value. `/g/expense/items` writes `receiptItems`-derived
+  weights and calls `router.back()` in the same breath; waiting for
+  `/g/expense/edit`'s own effect to notice and fix up `amountText` left a
+  window where the total read as `0`, which — per the gotcha above — the
+  split footer reported as "fully allocated" while blocking Save (`amountMinor
+  > 0` failed). Fixed by having `finish()` pin the total itself in the same
+  write that changes the split, rather than trusting a different screen's
+  mount to catch up.

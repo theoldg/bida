@@ -2,12 +2,13 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { parseMinor } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
-import { distinctInitials, money, tone } from "../../../../lib/format";
+import { bare, distinctInitials, money, tone } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../../lib/draft";
-import { weightsFromItems } from "../../../../lib/scan/items";
+import { receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit
@@ -94,14 +95,29 @@ function ItemsScreen() {
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
 
+  let tipPercent: number | null = null;
+  if (draft.receiptTip) {
+    try {
+      const tipMinor = parseMinor(draft.receiptTip, draft.currency);
+      const subtotal = receiptTotalMinor(items, null, draft.currency) ?? 0;
+      if (subtotal > 0) tipPercent = Math.round((tipMinor / subtotal) * 100);
+    } catch { /* mid-type */ }
+  }
+
   function finish() {
     if (!canFinish || !groupId || !draft) return;
+    // Recompute the derived total here rather than leaving it to the edit
+    // screen to notice on remount: this write is the one moment the bill and
+    // the split change together, so it's also the moment the amount that
+    // depends on both should be pinned down.
+    const total = receiptTotalMinor(items, draft.receiptTip ?? null, draft.currency);
     // Keep receiptItems/receiptTip and the raw assignment around (unlike a
     // discarded scan) so "Edit who-had-what" can reopen this exact grid —
     // later in this session, or after being written onto the expense itself
     // on save and reopened from any device. ADR-0017.
     saveDraft(groupId, {
       ...draft,
+      ...(total !== null ? { amountText: bare(total, draft.currency) } : {}),
       split: { mode: "shares", weights },
       receiptInvolved: [...involved],
       receiptAssignments: assignments.map((row) => [...row]),
@@ -132,15 +148,6 @@ function ItemsScreen() {
                   {m.id === data.me ? "You" : m.name}
                 </button>
               ))}
-            </div>
-          </div>
-
-          <div className="pad" style={{ paddingTop: 14 }}>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Tip</div>
-            <div className="field">
-              <label htmlFor="tip">Tip ({draft.currency}), scaled to what each person had</label>
-              <input id="tip" inputMode="decimal" placeholder="0.00" value={draft.receiptTip ?? ""}
-                onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
             </div>
           </div>
 
@@ -183,15 +190,19 @@ function ItemsScreen() {
                       ))}
                     </tr>
                   ))}
-                  {draft.receiptTip ? (
-                    <tr>
-                      <td className="itemlabel">
-                        <span>Tip</span>
-                        <span className="itemamount">{draft.receiptTip}</span>
-                      </td>
-                      {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
-                    </tr>
-                  ) : null}
+                  <tr>
+                    <td className="itemlabel">
+                      <span>
+                        Tip + service
+                        {tipPercent !== null ? <span className="itemqty"> ({tipPercent}%)</span> : null}
+                      </span>
+                      <input className="itemamountin" inputMode="decimal" placeholder="0.00"
+                        aria-label={`Tip and service, in ${draft.currency}`}
+                        value={draft.receiptTip ?? ""}
+                        onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+                    </td>
+                    {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
+                  </tr>
                 </tbody>
               </table>
             </div>
