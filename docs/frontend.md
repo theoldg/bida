@@ -2,226 +2,141 @@
 
 *For: anyone writing UI, routing, or PWA code.*
 
-## Stack
-
-Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie for
-IndexedDB. Components are hand-rolled, ported directly from the mockup's HTML
-and CSS — no shadcn/ui, no Radix, see
-[ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
-
-**The whole app is client-side.** There is no server rendering, no server
-action, no route handler in Next. The Worker's API is reached with `fetch`.
-This is a deliberate consequence of being local-first: the client already has
-the data, so rendering it on a server would mean fetching it twice.
+Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie.
+Components are hand-rolled from the mockup's HTML and CSS — no shadcn, no Radix
+([ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)). **The whole app is
+client-side**: no SSR, no server actions, no Next route handlers. The Worker's
+API is reached with `fetch`.
 
 ## Routing
 
-Only static routes exist, because a static export cannot generate pages for
-group ids it doesn't know at build time. Each screen is its own route, with
-the group id (never the secret) carried as a query string parameter — see
-[ADR-0007](decisions/0007-per-screen-routes-not-drawers.md). `lib/group-link.ts`'s
-`route` object is the one place these URLs get built; nothing else assembles
-one by hand.
+Only static routes exist — a static export can't generate a page per group id.
+Each screen is its own route, with the group id (never the secret) in the query
+string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
+`lib/group-link.ts`'s `route` object is the one place URLs are built.
 
 | Route | Purpose |
 |---|---|
-| `/` | Groups list |
-| `/new` | Create a group |
-| `/g?id=[&tab=]` | The group view — expenses / balances, chosen by the bottom bar. Settling lives on the balances tab; invite link, People and History are icons in its top bar |
+| `/` · `/new` | Groups list · create a group |
+| `/g?id=[&tab=]` | The group: expenses / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense — **including the split**, inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)) |
-| `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
+| `/g/payers?id=` | Who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
-| `/g/restore?id=&kind=&e=&at=` | Confirms a restore: names the version and the fields coming back |
-| `/g/members?id=` | People: the member list, and where this phone claims which of them it is |
-| `/g/claim?id=` | The last step of joining: which member are you? Pick, then a button into the group |
+| `/g/restore?id=&kind=&e=&at=` | Confirms a restore: the version and the fields coming back |
+| `/g/members?id=` | People: the member list, and where this phone claims which one it is |
+| `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
-| `/join#<groupId>.<secret>` | Landing for a shared invite link; saves the secret, pulls, then hands over to `/g/claim` |
-| `/settings` | The one settings screen: personal mode, theme. Reached from the group *list*, not from inside a group — [ADR-0014](decisions/0014-settings-belong-to-the-phone.md) |
+| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
+| `/settings` | Personal mode, theme. From the group *list* ([ADR-0014](decisions/0014-settings-belong-to-the-phone.md)) |
 
-Deep links point at groups, never at individual expenses (unchanged from 0004).
-
-The group secret lives in the **URL fragment**, which browsers never send to a
-server — see [ADR-0004](decisions/0004-static-export-fragment-routing.md).
-Never move it into a path segment or query string "for convenience". The group
-*id* alone is fine in a query string — see 0007 — because it confers nothing
-without the secret.
+**The group secret lives in the URL fragment**, which browsers never send to a
+server ([ADR-0004](decisions/0004-static-export-fragment-routing.md)). Never move
+it into a path or query string "for convenience". The id alone is fine — it
+confers nothing without the secret.
 
 ## State
 
-- **Dexie is the store.** Use `dexie-react-hooks`' `useLiveQuery` to read; the UI
-  re-renders when the materialised tables change. No Redux, no Zustand, no
-  server-state library. Adding one is an ADR.
-- Writes go through `lib/db/commands.ts` — one function per user intent
-  (`addExpense`, `editExpense`, `restoreRevision`). Each builds an op, appends
-  it, and materialises it in one Dexie transaction. **Components never write to
-  Dexie directly.**
-- Device-local, never-synced state (who "you" are, personal-mode toggle, theme)
-  lives in the `device` store. **Changing** who "you" are is not device-local:
-  `claimIdentity` writes an `identity` op keyed by this device's HLC node id, so
-  the group can read every op's `actor` honestly — see
-  [ADR-0011](decisions/0011-identity-changes-are-public.md), superseding
-  [ADR-0009](decisions/0009-identity-is-device-local.md). `setMe` in
-  `lib/db/device.ts` is the device-local half and nothing outside that module
-  should call it. `StartSync` calls `publishExistingClaims` once on launch, for
-  devices that claimed somebody before identity was on the log.
+- **Dexie is the store.** Read with `useLiveQuery`. No Redux, no Zustand, no
+  server-state library; adding one is an ADR.
+- Writes go through `lib/db/commands.ts` — one function per user intent, each
+  building an op, appending it and materialising it in one transaction.
+  **Components never write to Dexie directly.**
+- Device-local, never-synced state (who "you" are, personal mode, theme) is in
+  the `device` store. *Changing* who you are is not device-local:
+  `claimIdentity` writes an `identity` op
+  ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
+  device-local half; nothing outside `lib/db/device.ts` should call it.
+- History wording lives once, in `lib/history-copy.ts` (`describe`,
+  `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. Two
+  copies of that vocabulary drift within a week.
 
-### History copy lives in one file
+## One navigation
 
-`lib/history-copy.ts` holds the sentence for a revision (`describe`) and the
-per-field label and value formatters (`fieldLabel`, `fieldValue`). Both the
-history feed and `/g/restore` read from it. Two copies of this vocabulary drift
-within a week — "the amount" on one screen and "amount" on the other — so add
-wording there, not in a screen.
-
-### One navigation
-
-`/g` used to render a top tab strip (Expenses · Balances · Settle up) *and* a
-bottom bar (Expenses · Balances · History) whose middle item lit up for two of
-the three tabs. Two navigations for one screen, disagreeing about where you were.
-
-There is now exactly one: the bottom bar. `Tabs` has been deleted from
-`components/chrome.tsx` along with its CSS; do not bring it back. A screen that
-needs more destinations than fit in the bar puts them behind a top-bar icon,
-not in a second row. *(Owner, 2026-08-27: "the tabs are incoherent …
-consolidate into a bottom bar".)*
-
-| Where | The bar |
-|---|---|
-| Group list, `/settings` | **Groups · Settings** |
-| Inside a group | **Expenses · Balances** |
-
-It has shed an item twice. **Settle** was a third and became the bottom half of
-Balances — [ADR-0012](decisions/0012-balances-and-settling-are-one-screen.md).
-**Group** was a fourth, then a third, and is now **Settings** beside the group
-list, because everything left on it belonged to the phone —
-[ADR-0014](decisions/0014-settings-belong-to-the-phone.md). Two icons in `/g`'s
-top bar became three when the invite link joined them; three is the ceiling.
+Exactly one nav bar, at the bottom: **Groups · Settings** outside a group,
+**Expenses · Balances** inside one. `Tabs` was deleted from `components/`; don't
+bring it back. A screen needing more destinations puts them behind a top-bar
+icon, not a second row — three icons is the ceiling.
 
 ## Personal mode
 
-A boolean in device settings, read through `usePersonalMode`. It changes
-rendering only — never the underlying data, never what syncs. Concretely:
+A device boolean read through `usePersonalMode`, on by default. It changes
+rendering only, never data or what syncs:
 
-- **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — being
-  what you put in for that entry minus what you owe for it, with a matching
-  green/red left edge. Settlements are included, on the same arithmetic, so the
-  column adds up to your net.
-- **`opacity: .42`** on entries that involve neither your money nor your share.
-- **Your position above the list**: the net, signed and coloured, with what you
-  paid and what your share came to underneath.
+- **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — what you
+  put in for that entry minus what you owe for it, with a matching green/red
+  left edge. Settlements included, so the column adds up to your net.
+- **`opacity: .42`** on entries involving neither your money nor your share.
+- **Your position above the list**: net, signed and coloured, with paid and
+  share underneath.
 
-See [design-system.md](design-system.md) for the visual treatment and why it's
-a highlighter and not a colour.
+Visual reasoning: [design-system.md](design-system.md).
 
 ## PWA
 
-In scope for the MVP — this is a few small, build-time icon files, not
-user-uploaded content, so it's unrelated to the receipt-hosting question (see
-[standing-instructions.md](standing-instructions.md#skip-receipt-attachment-images-for-the-mvp-not-pwa-icons)).
-`public/manifest.webmanifest` is in place and linked from `app/layout.tsx`.
+In scope for the MVP — build-time icon files, unrelated to receipt hosting.
+`public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
+`display: fullscreen` (spec falls back to `standalone`), theme colour per theme.
+iOS ignores manifest `display` entirely; `appleWebApp.statusBarStyle:
+"black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
+and `env(safe-area-inset-top)` padding on `.topbar` matter. iOS has no
+`beforeinstallprompt`, so show an "Add to Home Screen" hint — installing also
+protects IndexedDB from eviction
+([architecture.md](architecture.md#gotchas)).
 
-- Manifest with maskable icons, `display: fullscreen` (falls back to
-  `standalone` on browsers that don't support it — that's the spec's fixed
-  fallback chain, not something we implement), theme colour matched to the
-  ledger paper token per theme. iOS ignores manifest `display` for home-screen
-  web apps entirely; `appleWebApp.statusBarStyle: "black-translucent"` in
-  `app/layout.tsx` is the equivalent lever there — it draws the app under the
-  status bar rather than fullscreen replacing it, which is why `viewport-fit:
-  cover` and the `env(safe-area-inset-top)` padding on `.topbar` matter.
-- `public/sw.js` precaches the app shell (every static route, per ADR-0007's
-  known-at-build-time set, plus the manifest and icons) and is registered from
-  `components/register-sw.tsx` in the root layout. **The SW does not cache API
-  responses** — it explicitly skips `/api/*` — Dexie is the offline data layer,
-  and a second caching layer over the same data is how you get two disagreeing
-  sources of truth. Pages are served network-first with a cache fallback;
-  hashed `/_next/static/` assets are cache-first since they're immutable.
-  `CACHE_VERSION` inside the file must be bumped by hand whenever its caching
-  behaviour changes, so old installs drop their stale cache on next activate.
-- iOS: no beforeinstallprompt, so show an "Add to Home Screen" hint. Installing
-  matters on iOS beyond convenience — see the IndexedDB eviction gotcha in
-  [architecture.md](architecture.md#gotchas).
+`public/sw.js` precaches the app shell (every static route, plus manifest and
+icons), registered from `components/register-sw.tsx`. **It does not cache
+`/api/*`** — Dexie is the offline data layer, and a second cache over the same
+data gives you two disagreeing sources of truth. Pages network-first with a
+cache fallback; hashed `/_next/static/` cache-first. Bump `CACHE_VERSION` by
+hand whenever caching behaviour changes.
 
-## Components worth building once
+## Every money field is `components/amount-input.tsx`
 
-The two components with real logic behind them, not just markup, are the
-**amount input** and the **balance bar** (a bar around a centre axis, debit
-left, credit right) — see `components/bits.tsx`.
-
-### Every money field is `components/amount-input.tsx`
-
-There is exactly one of these, and **no screen sanitises or formats a typed
-amount itself** — see
-[ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
+There is exactly one, and **no screen sanitises or formats a typed amount
+itself** ([ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md)).
 
 | Export | For | Value |
 |---|---|---|
 | `AmountInput` | fields whose model is the typed text | `value` / `onChange(text)` |
 | `MinorAmountInput` | fields whose model is minor units | `valueMinor` / `onChangeMinor(n)` |
-| `sanitizeAmount(raw, currency)` | the rule for what may be typed | pure, tested |
+| `sanitizeAmount(raw, currency)` | what may be typed | pure, tested |
 | `groupDigits(canonical)` | `"4800"` → `"4 800"` | pure, tested |
 
-It is a real `<input inputMode="decimal">`, not the mockup's hand-built keypad
-— the keypad was replaced on 2026-08-27 at the owner's request ("there should be
-a cursor in the price input, and also maybe just let the native digit keyboard
-pop up") because a rendered `<span>` has no caret, cannot be tapped into the
-middle of, and made every phone's own numeric keyboard unreachable. Things it
-gets right, once, for everybody:
+A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
+separator — "," and "." both accepted — fraction clipped to the currency's
+exponent, leading zeros stripped), **restores the caret** across its own
+reformatting via a `useLayoutEffect` that counts significant characters before
+it, wears `.amountfield`'s underline so it looks like a field, and autofocuses
+on a *new* expense only. `MinorAmountInput` holds typed text locally and
+re-reads the model only on outside change — don't go back to
+`value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
+"12.".
 
-- **Sanitises as you type**: digits, one separator, fraction clipped to the
-  currency's exponent (so JPY takes none and BHD takes three), leading zeros
-  stripped, a lone leading separator read as "nought point". "," and "." are
-  both accepted as the decimal separator.
-- **Keeps the caret where you left it.** The displayed value is grouped, so
-  reformatting moves characters; a `useLayoutEffect` counts significant
-  characters (digits and the point) before the caret and restores the position.
-  Backspacing onto a group mark deletes the digit before it.
-- **Looks like a field**: `.amountfield` wraps it with an underline that goes
-  brand-coloured on focus and red when the figure is invalid.
-- **Autofocuses on a *new* expense only** — never when editing, where stealing
-  focus would scroll the form away from what you came to change.
+The other component with real logic is the **balance bar** (a bar around a
+centre axis, debit left, credit right) in `components/bits.tsx`. Everything else
+is markup lifted from the mockup.
 
-`MinorAmountInput` holds the typed text locally and only re-reads the model when
-it changes from outside (the "rest" button, a mode switch). Do not go back to
-`value={bare(parseMinor(text))}`: that round trip is what ate the caret and
-erased a half-typed "12.".
-
-Everything else is markup and CSS lifted directly from the mockup (see
-[ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)).
-
-### Core says what is wrong; the screen says it in money
-
-`validateSplit` and `validatePayers` return `problem` (`"under"`, `"over"`,
-`"empty"`, …) and `diffMinor`. `shortfallText` in `lib/format.ts` turns that
-into the sentence, because only the screen knows the currency: "€15.00 left to
-split", "€2.30 still unaccounted for". Never print `message` for an amount
-problem — it is deliberately figure-free.
+**Core says what is wrong; the screen says it in money.** `validateSplit` and
+`validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and
+`diffMinor`; `shortfallText` in `lib/format.ts` writes "€15.00 left to split".
+Never print core's `message` for an amount problem — it is deliberately
+figure-free.
 
 ## Gotchas
 
-*Add to this list every time one bites you.*
-
 - `output: 'export'` disallows route handlers, `next/image` optimisation, ISR,
-  middleware, and dynamic params. If you need one of those, you are proposing a
-  change to ADR-0004 — write it up rather than quietly adding the adapter.
-- 100dvh, not 100vh, or iOS Safari's toolbar eats the bottom nav.
-- **A controlled input that reformats its own value on every keystroke will eat
-  the caret.** React writes the new value, the browser puts the caret at the
-  end, and typing into the middle of a figure silently appends instead. If a
+  middleware and dynamic params. Needing one is a change to ADR-0004.
+- `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
+- **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
+  shell grows past the viewport, the *document* scrolls instead of `.scroll`,
+  and the bottom bar sits at the foot of a long page — invisible until you
+  scroll. `.app` is `height: 100dvh; overflow: hidden`, `html, body` too, and
+  every scrolling child of a flex column needs `min-height: 0`.
+- **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
-- **A placeholder is not a default value.** `blankDraft` used to seed
-  `amountText: "0"` so the borderless figure showed something; that zero is a
-  real character, so tapping in and typing 5 gave you "50". Empty value, muted
-  `placeholder`, visible underline.
+- **A placeholder is not a default value.** Seeding `amountText: "0"` means
+  tapping in and typing 5 gives you "50".
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
-  the field accepts "," *and* "." as decimal separators — anything else makes a
-  typed figure ambiguous to parse. It does not match `Intl`'s grouping in saved
-  figures, on purpose.
-- **The shell takes `height`, not `min-height`.** `.app` was `min-height: 100dvh`
-  for months and looked right on every short screen. Give it content taller than
-  the viewport and the shell grows with it: `.scroll` never overflows, the
-  *document* scrolls instead, and the bottom bar sits at the foot of a long page
-  — invisible until you scroll to the end of the expenses. The shell is exactly
-  one viewport tall (`height: 100dvh; overflow: hidden`), `html, body` are
-  `overflow: hidden` too, and every scrolling child of a flex column needs
-  `min-height: 0` or it refuses to shrink below its content.
+  the field accepts both "," and "." as decimal separators. It deliberately
+  doesn't match `Intl`'s grouping in saved figures.

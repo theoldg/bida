@@ -1,136 +1,95 @@
 # Sync, offline, and version history
 
-*For: anyone touching the op log, the sync engine, or history UI.*
-
-These are one subject. The log that syncs is the log that renders history.
+*For: anyone touching the op log, the sync engine, or history UI.* These are one
+subject: the log that syncs is the log that renders history.
 
 ## The operation
 
 ```ts
 type Op = {
-  id: string          // client-generated UUID; the idempotency key
+  id: string        // client UUID; the idempotency key
   groupId: string
-  entity: 'group' | 'member' | 'expense' | 'settlement' | 'attachment' | 'identity'
+  entity: 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'
   entityId: string
   kind: 'create' | 'update' | 'delete' | 'restore'
   patch: Record<string, unknown>   // changed fields ONLY, never the whole entity
-  hlc: string         // hybrid logical clock — see below
-  actor: string       // memberId
-  note?: string       // optional human reason, surfaced in history
-  createdAt: number   // wall clock, for display only — never for ordering
-  seq?: number        // assigned by the server on accept; absent = unsynced
+  hlc: string       // hybrid logical clock
+  actor: string     // memberId
+  note?: string     // optional human reason, surfaced in history
+  createdAt: number // wall clock, display only — NEVER for ordering
+  seq?: number      // assigned by the server; absent = unsynced
 }
 ```
 
-`patch` carrying **only changed fields** is what makes concurrent edits to
-different fields of the same expense merge cleanly instead of clobbering.
+`patch` carrying only changed fields is what lets concurrent edits to different
+fields of the same expense merge instead of clobbering.
 
 ## Ordering: hybrid logical clocks
 
-Wall clocks on phones are wrong, sometimes by minutes. Ordering by `createdAt`
-would let a phone with a slow clock silently lose every conflict.
+Phone wall clocks are wrong, sometimes by minutes; ordering by `createdAt` lets
+a slow clock silently lose every conflict. HLC (`core/hlc.ts`) is
+`<physical-ms>:<counter>:<nodeId>`, zero-padded so string comparison equals
+causal-ish ordering. On send: `physical = max(now, lastPhysical)`, incrementing
+`counter` on a tie. On receive: also `max` with the remote physical. `nodeId` is
+a random per-device string breaking ties deterministically.
 
-HLC (`packages/core/hlc.ts`) is `<physical-ms>:<counter>:<nodeId>`, zero-padded
-so lexicographic string comparison equals causal-ish ordering:
-
-- On send: `physical = max(now, lastPhysical)`; if equal, increment `counter`,
-  else reset it to 0.
-- On receive: `physical = max(now, lastPhysical, remotePhysical)`, counter
-  advanced accordingly.
-- `nodeId` is a random per-device string, breaking ties deterministically.
-
-**Ordering is by HLC, never by `seq` and never by `createdAt`.** `seq` orders
-*arrival at the server*, which is a different thing and is only used to ask
-"what have I not pulled yet".
+**Order by HLC, never by `seq` and never by `createdAt`.** `seq` orders arrival
+at the server and answers only "what have I not pulled yet".
 
 ## Folding
 
-```
-fold(ops) → entities
-```
+Sort by `hlc` ascending, then per entity: `create` initialises; `update` assigns
+each field in `patch`, **per-field last write wins by HLC**; `delete` sets
+`deletedAt` and never removes the row; `restore` resolves a target revision by
+folding that entity up to a given HLC and emits those field values as its own
+patch — a normal forward update, not a rewind.
 
-Sort by `hlc` ascending, then per entity apply in order:
-
-- `create` — initialise the entity.
-- `update` — assign each field in `patch`. **Per field, last write wins by HLC.**
-- `delete` — set `deletedAt`. Never remove the row; other ops may still reference it.
-- `restore` — resolve the target revision by folding that entity's ops up to a
-  given HLC, then emit the resulting field values as this op's `patch`. A restore
-  is a normal forward-moving update; it does not rewind the log.
-
-The fold is pure and total: any subset of ops produces *some* valid state.
-An `update` arriving before its `create` produces a partial entity that completes
-when the `create` lands. Do not throw on out-of-order ops.
-
-See [ADR-0006](decisions/0006-lww-not-crdt.md) for why per-field LWW and not a
-CRDT library.
+The fold is pure and total: any subset of ops produces *some* valid state. An
+`update` arriving before its `create` yields a partial entity that completes
+later. Don't throw on out-of-order ops.
+[ADR-0006](decisions/0006-lww-not-crdt.md) for why LWW and not a CRDT.
 
 ## The protocol
 
-Two endpoints. That's the whole thing. **Implemented** — `apps/api/src/index.ts`
-(routes), `apps/api/src/store.ts` (D1 access), `apps/api/src/auth.ts` (the
-bearer-secret check).
+Two endpoints — `apps/api/src/index.ts` (routes), `store.ts` (D1), `auth.ts`
+(bearer check). Both authenticate with the group secret as a bearer token
+([ADR-0003](decisions/0003-link-only-access.md)).
 
 **`POST /api/groups/:id/ops`**
 ```jsonc
-// →
-{ "ops": [ /* unsynced Op[], without seq */ ], "since": 412 }
-// ←
-{ "assigned": { "<opId>": 413, ... },   // seq per accepted op
-  "ops": [ /* ops with seq > 412 that this client hasn't seen */ ],
-  "latestSeq": 419 }
+// → { "ops": [ /* unsynced Op[], no seq */ ], "since": 412 }
+// ← { "assigned": { "<opId>": 413 }, "ops": [ /* seq > 412, unseen */ ],
+//     "latestSeq": 419 }
 ```
-Accepting is idempotent on `Op.id` — a retried push after a dropped response is
-a no-op, which is what makes retry safe on a flaky connection.
-
-There is no separate "create group" endpoint. A group's **first** push
-registers it in D1 — the server stores `sha256(secret)` from that first
-request's bearer token and every later request (push or pull) is checked
-against it. A `GET` on a group that has never been pushed to returns 404: the
-creating device has to sync at least once before a `/join` link is pullable
-anywhere else.
+Accepting is idempotent on `Op.id`, which is what makes retry safe on a flaky
+connection. **There is no create-group endpoint**: a group's first push
+registers it, storing `sha256(secret)` from that request's token, and every
+later request is checked against it. A `GET` on a never-pushed group returns
+404 — the creating device must sync once before an invite link is pullable.
 
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
 
-Both authenticate with the group secret as a bearer token
-(`Authorization: Bearer <secret>`); see
-[ADR-0003](decisions/0003-link-only-access.md).
-
 ## The sync engine
 
-Lives in `apps/web/lib/db/sync.ts`. **Implemented.** A single-flight loop
-triggered by:
+`apps/web/lib/db/sync.ts`. A single-flight loop triggered by a local write
+(debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
+while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
+block the UI; never let two runs overlap.
 
-- a local write (debounced ~1 s),
-- `visibilitychange` → visible,
-- `online`,
-- a slow interval (60 s) while the app is foregrounded.
-
-Backoff on failure: 2 s, 4 s, 8 s, capped at 60 s, reset on success. Never
-block the UI on it. Never let two runs overlap.
-
-**Attachments sync separately** and on a stricter policy: default to Wi-Fi only
-(`navigator.connection.type` where available, plus a manual "upload now"). An
-expense is fully synced and correct with its photos still queued — the op
-references attachment ids that resolve to local blobs until upload completes.
+**Attachments sync separately**, Wi-Fi-only by default plus a manual "upload
+now". An expense is fully synced and correct with its photos still queued — the
+op references attachment ids that resolve to local blobs until upload completes.
 
 ## Conflicts
 
-Two people edit the same expense while one is offline:
+Two people editing the same expense while one is offline: **different fields**
+both survive, no conflict at all; **the same field**, highest HLC wins the
+materialised value and **both ops stay in the log**, so history shows the losing
+edit and who made it, in order, like any other revision.
 
-- **Different fields** (she changes the amount, he changes who's involved) —
-  both survive. No conflict at all.
-- **Same field** — highest HLC wins the materialised value. **Both ops remain in
-  the log**, so the history screen shows the losing edit and who made it, in
-  order, like every other revision.
-
-  It used to add a note under the losing entry — *"This change to the amount was
-  later overwritten by Marie's edit."* — and that is gone as of 2026-08-28
-  (owner: *"they're visually noisy"*). The data behind it is untouched:
-  `FieldChange.supersededByOpId` from `packages/core/history.ts` still marks
-  which later op replaced a field, and is still tested. Nothing renders it. If a
-  future screen wants to surface it, it is there — just not as a line under
-  every entry it applies to.
+`FieldChange.supersededByOpId` from `core/history.ts` marks which later op
+replaced a field, and is tested — but nothing renders it (owner, 2026-08-28:
+*"they're visually noisy"*). It's there if a future screen wants it.
 
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix
@@ -138,51 +97,31 @@ it in one tap.
 
 ## History UI
 
-Falls straight out of the log with no extra storage:
+Falls out of the log with no extra storage. **Per expense**: `ops` filtered by
+`entityId`, newest first, each `patch` rendered against the folded state
+immediately before it. **Group feed**: all ops, same renderer. **Restore**:
+emits a `restore` op, reached by a rewind icon at a revision's edge leading to
+`/g/restore`, a confirmation screen that names the version and the fields coming
+back. Offered only on a revision that isn't the entity's newest, and never for
+identity ops.
 
-- **Per expense** — `ops` filtered by `entityId`, newest first. Render each op's
-  `patch` against the folded state immediately before it to produce the
-  before/after diff. Show `actor`, `createdAt`, and `note`.
-- **Group activity feed** — all ops for the group, newest first, same renderer.
-- **Restore** — emit a `restore` op as described above. The control is a rewind
-  icon at the edge of a revision, and it leads to `/g/restore`, a confirmation
-  screen that names the version and lists the fields coming back, rather than a
-  `confirm()` dialog that names nothing. It is offered only on a revision that
-  is *not* the entity's newest — the newest one is the current state, so there
-  is nothing to put back.
-
-The sentence for a revision and the per-field formatter (money, member lists,
-dates) live in `apps/web/lib/history-copy.ts`, in one place, so the history feed
-and the restore screen cannot drift apart in their wording.
+The sentence for a revision and the per-field formatters live in
+`apps/web/lib/history-copy.ts` — one place, so the feed and the restore screen
+can't drift apart.
 
 ## Gotchas
 
-*Add to this list every time one bites you.*
-
-- Never garbage-collect ops. They are the history feature. If the log ever gets
-  genuinely large (it won't, at this scale) the answer is snapshotting, not
-  deletion — and that's a new ADR.
-- `createdAt` is display-only. Every time someone sorts by it, conflicts start
-  resolving differently on different phones.
-- **`/join` pulls, and now recovers on its own.** It saves the secret, kicks
-  off `syncGroup()` once, and watches the local `groups` table with a live
-  query (`useLiveQuery`) rather than a one-shot check — see
-  `apps/web/app/join/page.tsx`. This used to be a real bug: a brand-new
-  device (nothing cached locally, unlike a returning device) whose first
-  `syncGroup()` call failed — offline for a moment, or the creating device
-  hadn't pushed yet — landed on a dead-end "couldn't find that group" screen
-  built from plain `useState`. `StartSync`'s background loop (root layout)
-  was already retrying that same group with backoff and on reconnect and
-  *would* eventually pull it down, but the join screen never re-checked, so
-  the user was stuck looking at a screen telling them to manually reopen the
-  link. Now the screen just waits on the live query: the moment the group
-  lands locally, from this attempt or a later background retry, it moves on
-  by itself. The invite secret is still saved up front either way, so the
-  retry has something to retry.
-- **`acceptOps` in `apps/api/src/store.ts` reserves seq numbers with an
-  `UPDATE ... RETURNING`**, not inside an explicit multi-statement
-  transaction — two concurrent pushes to the *same* group could in theory
-  race that read-modify-write. Deliberately not hardened further: this app's
-  realistic write rate is a few phones, human-paced, in one group at a time.
-  If it ever bites, the fix is wrapping the reserve-and-insert in a proper D1
-  transaction, not a bigger rewrite.
+- **Never garbage-collect ops.** They are the history feature. If the log ever
+  got genuinely large the answer is snapshotting, and that's a new ADR.
+- `createdAt` is display-only. Sort by it and conflicts start resolving
+  differently on different phones.
+- **A screen waiting on sync must watch the DB, not check once.** `/join` used
+  to run `syncGroup()` and check the local table once with `useState`; a
+  brand-new device whose first attempt failed dead-ended on "couldn't find that
+  group" while `StartSync`'s background loop was already retrying successfully.
+  It now watches `groups` with `useLiveQuery` and moves on the moment the group
+  lands, from any attempt. The secret is saved up front either way.
+- **`acceptOps` reserves seq numbers with `UPDATE ... RETURNING`**, not inside
+  an explicit transaction, so two concurrent pushes to the same group could in
+  theory race. Deliberately not hardened: a few phones, human-paced. If it ever
+  bites, wrap reserve-and-insert in a D1 transaction.
