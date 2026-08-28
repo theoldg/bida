@@ -49,8 +49,9 @@ confers nothing without the secret.
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
 - History wording lives once, in `lib/history-copy.ts` (`describe`,
-  `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. Two
-  copies of that vocabulary drift within a week.
+  `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
+  must be **total** — they run inside a render over every patch the log holds,
+  so one throw is a white screen, not a missing line.
 
 ## One navigation
 
@@ -134,6 +135,10 @@ figure-free.
   and the bottom bar sits at the foot of a long page — invisible until you
   scroll. `.app` is `height: 100dvh; overflow: hidden`, `html, body` too, and
   every scrolling child of a flex column needs `min-height: 0`.
+- **A revision's `changes` are only the fields that actually differed.** Saving
+  an expense in a new currency at the same rate writes `currency` and no amount
+  field at all, so history copy must never read one field because a sibling
+  changed.
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
 - **A placeholder is not a default value.** Seeding `amountText: "0"` means

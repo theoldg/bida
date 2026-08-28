@@ -28,18 +28,21 @@ export function describe(
 ): Described {
   const field = (name: string) => rev.changes.find((c) => c.field === name);
   const nameOf = (id: unknown) => (typeof id === "string" ? memberById.get(id)?.name ?? "someone" : "someone");
+  /** Money, or nothing at all — a diff line is worth less than a live screen. */
+  const cash = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? money(v, currency) : undefined);
+  const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
   const namesOf = (spec: SplitSpec | null | undefined) =>
     spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? "?").join(", ") : "";
 
   if (rev.entity === "expense") {
     if (rev.isCreate) {
-      const amt = field("baseAmountMinor")?.after as number | undefined;
+      const amt = cash(field("baseAmountMinor")?.after);
       const split = field("split")?.after as SplitSpec | undefined;
       const n = split ? splitParticipants(split).length : undefined;
       return {
         what: `${who} created this expense`,
         diff: amt !== undefined
-          ? { now: `${money(amt, currency)}${n ? ` · split ${plural(n, "way")}` : ""}` }
+          ? { now: `${amt}${n ? ` · split ${plural(n, "way")}` : ""}` }
           : undefined,
       };
     }
@@ -51,14 +54,30 @@ export function describe(
         diff: { was: namesOf(c.before as SplitSpec | null), now: namesOf(c.after as SplitSpec) },
       };
     }
-    if (field("amountMinor") || field("currency") || field("rateToBase") || field("baseAmountMinor")) {
-      const c = field("baseAmountMinor") ?? field("amountMinor")!;
+    // The three amount fields move together, but only the ones that actually
+    // changed reach here: switching an expense to another currency at the same
+    // rate leaves the figure alone, so there is a currency change and no
+    // amount change to report. Say what changed rather than assuming a number
+    // is there to print.
+    const amount = field("baseAmountMinor") ?? field("amountMinor");
+    if (amount) {
       return {
         what: `${who} changed the amount`,
-        diff: {
-          was: typeof c.before === "number" ? money(c.before, currency) : undefined,
-          now: typeof c.after === "number" ? money(c.after, currency) : "",
-        },
+        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+      };
+    }
+    if (field("currency")) {
+      const c = field("currency")!;
+      return {
+        what: `${who} changed the currency`,
+        diff: { was: text(c.before), now: text(c.after) ?? "" },
+      };
+    }
+    if (field("rateToBase")) {
+      const c = field("rateToBase")!;
+      return {
+        what: `${who} changed the rate`,
+        diff: { was: text(c.before), now: text(c.after) ?? "" },
       };
     }
     if (field("paidBy")) {
@@ -97,8 +116,8 @@ export function describe(
 
   if (rev.entity === "settlement") {
     if (rev.isCreate) {
-      const amt = field("baseAmountMinor")?.after as number | undefined;
-      return { what: `${who} recorded a settlement`, diff: amt !== undefined ? { now: money(amt, currency) } : undefined };
+      const amt = cash(field("baseAmountMinor")?.after);
+      return { what: `${who} recorded a settlement`, diff: amt !== undefined ? { now: amt } : undefined };
     }
     if (rev.isDelete) return { what: `${who} deleted a settlement` };
     return { what: `${who} edited a settlement` };
@@ -159,7 +178,7 @@ export function fieldValue(
   }
   if (field === "deletedAt") return "deleted";
   if (field === "baseAmountMinor" || field === "amountMinor") {
-    return typeof value === "number" ? money(value, ctx.currency) : String(value);
+    return typeof value === "number" && Number.isFinite(value) ? money(value, ctx.currency) : String(value);
   }
   if (field === "occurredAt") return typeof value === "number" ? dayLabel(value) : String(value);
   if (field === "paidBy") return nameOf(value);
