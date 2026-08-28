@@ -22,7 +22,9 @@ push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
 follow-up (2026-08-28): leaving a group, from `/g/members` — `/g/leave`
-confirms it, and deletes the group instead when you're the last one there.
+confirms it, deletes the group instead when you're the last one there, and
+either way drops it off *your* groups list (`device.leftGroups`) even when
+others are still in it.
 
 ## The next action
 
