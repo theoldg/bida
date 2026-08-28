@@ -31,6 +31,15 @@ export interface DeviceRecord {
   personalMode: boolean;
   /** groupId -> the member this device belongs to. */
   meByGroup: Record<string, string>;
+  /**
+   * Groups this device has left. Hidden from the groups list on this phone
+   * even though the shared data (and this device's `groupKeys` secret, if it
+   * still has one) is untouched — leaving is a per-device "not mine any more",
+   * not a claim about what happened to the group itself. Absent on records
+   * written before this existed, same as `prefsVersion`. Opening the invite
+   * link again clears an entry back out (`saveGroupKey`).
+   */
+  leftGroups?: string[];
   theme: "system" | "light" | "dark";
   /**
    * Which generation of *defaults* this record was written against. Absent on

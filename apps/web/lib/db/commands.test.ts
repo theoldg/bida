@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { computeBalances, foldOps, settleUp } from "@hajsik/core";
 import { db } from "./dexie";
 import { rebuild } from "./fold";
-import { getMe } from "./device";
+import { getDevice, getMe } from "./device";
 import {
   addExpense,
   addMember,
@@ -14,6 +14,7 @@ import {
   publishExistingClaims,
   recordSettlement,
   restoreRevision,
+  saveGroupKey,
 } from "./commands";
 
 /**
@@ -295,7 +296,7 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("leaving tombstones your own member and forgets this device's claim, without archiving a group that still has people in it", async () => {
+  it("leaving tombstones your own member, forgets this device's claim, and hides the group from this phone even though others are still in it", async () => {
     const { groupId, theo, marie } = await trip();
     await leaveGroup(groupId, theo, false);
 
@@ -303,7 +304,13 @@ describe("commands", () => {
     expect((await db().members.get(marie))?.deletedAt).toBeFalsy();
     expect((await db().groups.get(groupId))?.archivedAt).toBeFalsy();
     expect(await getMe(groupId)).toBeUndefined();
+    expect((await getDevice()).leftGroups).toContain(groupId);
     await assertMaterialisedMatchesLog(groupId);
+
+    // Opening the invite link again surfaces the group back on the list.
+    const secret = (await db().groupKeys.get(groupId))!.secret;
+    await saveGroupKey(groupId, secret);
+    expect((await getDevice()).leftGroups).not.toContain(groupId);
   });
 
   it("the last member leaving also archives the group, in the same batch", async () => {

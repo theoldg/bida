@@ -17,7 +17,7 @@ import {
   type SplitTab,
 } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
-import { forgetMe, getDevice, setMe } from "./device";
+import { forgetMe, getDevice, hideGroup, setMe, unhideGroup } from "./device";
 import { materialise, opsForGroup } from "./fold";
 import { scheduleSync } from "./sync";
 
@@ -236,6 +236,9 @@ export async function claimIdentity(
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   const existing = await db().groupKeys.get(groupId);
   await db().groupKeys.put({ groupId, secret, lastSeq: existing?.lastSeq ?? 0 });
+  // Opening the link is what "rejoining" means here — surface the group
+  // again if this device had previously left it.
+  await unhideGroup(groupId);
 }
 
 export async function getGroupSecret(groupId: Id): Promise<string | undefined> {
@@ -292,12 +295,15 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 
 /**
  * Leave a group as `memberId`: the same tombstone as `removeMember`, but of
- * yourself, and it also drops this device's claim — there is nobody left for
- * it to point at. When `lastMember` is true (the caller already checked: this
- * was the only member still alive), the group is archived in the same batch.
- * An empty group is a dangling link with nobody to read it, not state worth
- * keeping — [history-copy.ts](../history-copy.ts) already renders an
- * `archivedAt` op as "archived the group", the same wording used here.
+ * yourself, and it also drops this device's claim and hides the group from
+ * this phone's list — there is nobody left for the claim to point at, and
+ * having left, it isn't one of "your groups" any more, whether or not anyone
+ * else is still in it. When `lastMember` is true (the caller already
+ * checked: this was the only member still alive), the group is archived in
+ * the same batch. An empty group is a dangling link with nobody to read it,
+ * not state worth keeping — [history-copy.ts](../history-copy.ts) already
+ * renders an `archivedAt` op as "archived the group", the same wording used
+ * here.
  */
 export async function leaveGroup(
   groupId: Id,
@@ -313,6 +319,7 @@ export async function leaveGroup(
   }
   await appendOps(groupId, memberId, drafts, now);
   await forgetMe(groupId);
+  await hideGroup(groupId);
 }
 
 // -------------------------------------------------------------- expenses

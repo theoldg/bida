@@ -170,8 +170,13 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLiveQuery(async () => {
     const d = db();
     const [groups, device] = await Promise.all([d.groups.toArray(), d.device.get("device")]);
+    const left = new Set(device?.leftGroups ?? []);
     const out: GroupSummary[] = [];
     for (const group of groups) {
+      // Left means gone from this phone, whether or not the group itself
+      // still has other people in it — this list is "your groups", not
+      // "every group this device has ever synced".
+      if (left.has(group.id)) continue;
       const [members, expenses, settlements] = await Promise.all([
         d.members.where("groupId").equals(group.id).toArray(),
         d.expenses.where("groupId").equals(group.id).toArray(),

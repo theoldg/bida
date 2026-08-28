@@ -53,9 +53,11 @@ ops already on logs carry it, nothing writes it
 
 - A member is a person, not an account. One with expenses attached is
   tombstoned, never hard-deleted, or the fold references nothing. Leaving a
-  group is this, on yourself (`/g/leave`); when it empties the group,
-  `Group.archivedAt` is set in the same batch and the group drops off the
-  groups list — the log survives, untouched, same as any other tombstone.
+  group is this, on yourself (`/g/leave`), plus `device.leftGroups` (below) so
+  it drops off *your* groups list even when others are still in it; when it
+  empties the group, `Group.archivedAt` is also set in the same batch, which
+  drops it off everyone's list. Either way the log survives, untouched, same
+  as any other tombstone — opening the invite link again clears the hide.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
   entry ([ADR-0005](decisions/0005-locked-fx-rate.md)) and must re-derive
   identically on every device.

@@ -86,3 +86,17 @@ export async function forgetMe(groupId: string): Promise<void> {
   delete meByGroup[groupId];
   await updateDevice({ meByGroup });
 }
+
+/** Hide a group from this phone's groups list after leaving it. */
+export async function hideGroup(groupId: string): Promise<void> {
+  const device = await getDevice();
+  if (device.leftGroups?.includes(groupId)) return;
+  await updateDevice({ leftGroups: [...(device.leftGroups ?? []), groupId] });
+}
+
+/** Undo `hideGroup` — opening the group's invite link again is rejoining it. */
+export async function unhideGroup(groupId: string): Promise<void> {
+  const device = await getDevice();
+  if (!device.leftGroups?.includes(groupId)) return;
+  await updateDevice({ leftGroups: device.leftGroups.filter((id) => id !== groupId) });
+}
