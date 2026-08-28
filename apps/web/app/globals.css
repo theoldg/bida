@@ -340,7 +340,8 @@ a { color: inherit; text-decoration: none }
 .tle::before { content: ""; position: absolute; left: -21.5px; top: 5px; width: 9px; height: 9px;
   border-radius: 50%; background: var(--card); border: 2px solid var(--rule) }
 .tle.now::before { border-color: var(--brand); background: var(--brand) }
-.tle .when { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .04em }
+.tle .when { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .04em;
+  padding-right: 32px }
 .tle .what { font-size: 13px; line-height: 1.4; margin-top: 1px }
 .tle .what b { font-weight: 600 }
 .diff { font-family: var(--f-mono); font-size: 11.5px; margin-top: 5px; display: flex;
@@ -348,12 +349,18 @@ a { color: inherit; text-decoration: none }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
 .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
-/* Where a whole-group revision leads: the expense it was about. Quiet on
-   purpose — it sits under a sentence that already reads fine without it. */
-.tlink { display: flex; width: fit-content; align-items: center; gap: 3px; margin-top: 5px;
-  font-size: 12px; font-weight: 500; color: var(--brand) }
-.restore { font-size: 11px; color: var(--brand); font-weight: 600; margin-top: 5px; display: inline-block;
-  border-bottom: 1px solid var(--brand) }
+/* Where a whole-group revision leads: the expense it was about. Reads as a
+   thing to press rather than as more text under a sentence. */
+.tlink { display: flex; width: fit-content; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 7px 10px 7px 12px; border-radius: var(--r-m); font-size: 13.5px; font-weight: 600;
+  color: var(--ink); background: var(--card-2); border: 1px solid var(--rule) }
+.tlink svg { color: var(--brand); flex: none }
+
+/* Restoring is rare and undoable; it gets an icon at the edge, not a sentence
+   in the flow of the entry. The tap target is bigger than the mark. */
+.tlrewind { position: absolute; top: -4px; right: -6px; width: 34px; height: 34px;
+  display: grid; place-items: center; color: var(--muted); border-radius: 50% }
+.tlrewind:active { background: var(--card-2); color: var(--ink-2) }
 
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }

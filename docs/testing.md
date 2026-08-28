@@ -27,7 +27,7 @@ meaningful UI smoke tests written against it.
 ## `pnpm shots` — photograph every screen
 
 ```bash
-pnpm shots        # builds apps/web, then writes 26 PNGs into shots/ (gitignored)
+pnpm shots        # builds apps/web, then writes 28 PNGs into shots/ (gitignored)
 ```
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
@@ -40,13 +40,17 @@ every edit**; that's the owner's instruction, see
 1. **Serves the real static export** (`apps/web/out`) over a bare `node:http`
    server rather than running `next dev`. The export is what actually ships, and
    it has quirks `next dev` doesn't.
-2. **Seeds a group through the UI** — "Marrakech", three members, a plain expense
-   and a co-sponsored one — by driving the real screens, not by poking IndexedDB.
+2. **Seeds a group through the UI** — "Marrakech", three members, a plain expense,
+   a co-sponsored one, and one edit — by driving the real screens, not by poking
+   IndexedDB. The edit is there so the history screens have a revision that
+   isn't a create: a diff to render, and a version worth offering to restore.
    That costs a few seconds and buys a lot: the harness fails loudly when a
    screen it isn't even photographing breaks, and every shot shows a populated
    ledger instead of an empty state.
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, at a 390×844 mobile viewport with `deviceScaleFactor: 2`.
+   `/g/restore` is the one screen not in that list: its URL carries an HLC, so
+   it is reached by pressing the rewind on a real revision.
 
 Chromium comes from `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.

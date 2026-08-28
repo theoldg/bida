@@ -153,3 +153,19 @@ question, and a primary button into the group.
 
 Reuse the *structure* of a screen when a flow needs its shape; don't reuse the
 screen itself when the flow needs a different ending.
+
+### Rare actions get an icon; consequences get a screen.
+*2026-08-28* — "make the 'restore this version' way more discreet (a rewind icon
+flushed right with a confirmation screen once clicked). make the expense link
+bigger / maybe styled in a more inviting way to click it."
+
+Two halves of the same judgement, and worth applying beyond this screen:
+
+- **Weight follows how often you want it pressed.** Restore appeared under every
+  revision as a full brand-coloured link, competing with the history itself.
+  It is now a muted rewind icon at the entry's right edge. The thing people
+  actually came to press — through to the expense — is a bordered pill.
+- **A `confirm()` is not a confirmation.** A one-line browser dialog names
+  nothing it is about to change. `/g/restore` names the version, lists the
+  fields coming back, and says what a restore does to the log. Reach for a
+  screen when the answer depends on details the dialog can't show.

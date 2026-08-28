@@ -3,133 +3,18 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
-import {
-  activityFeed, entityHistory, splitParticipants,
-  type CurrencyCode, type Member, type Revision, type SplitSpec,
-} from "@hajsik/core";
+import { activityFeed, entityHistory, type Revision } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
-import { restoreRevision } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
 import { opsForGroup } from "../../../lib/db/fold";
-import { money, plural, stamp } from "../../../lib/format";
+import { plural, stamp } from "../../../lib/format";
+import { describe } from "../../../lib/history-copy";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
 export default function HistoryPage() {
   return <QueryBoundary><HistoryScreen /></QueryBoundary>;
-}
-
-interface Described {
-  what: string;
-  diff?: { was?: string; now: string };
-}
-
-/** Every entity kind gets a plain-English sentence and, where it helps, a diff. */
-function describe(
-  rev: Revision,
-  who: string,
-  memberById: Map<string, Member>,
-  currency: CurrencyCode,
-): Described {
-  const field = (name: string) => rev.changes.find((c) => c.field === name);
-  const nameOf = (id: unknown) => (typeof id === "string" ? memberById.get(id)?.name ?? "someone" : "someone");
-  const namesOf = (spec: SplitSpec | null | undefined) =>
-    spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? "?").join(", ") : "";
-
-  if (rev.entity === "expense") {
-    if (rev.isCreate) {
-      const amt = field("baseAmountMinor")?.after as number | undefined;
-      const split = field("split")?.after as SplitSpec | undefined;
-      const n = split ? splitParticipants(split).length : undefined;
-      return {
-        what: `${who} created this expense`,
-        diff: amt !== undefined
-          ? { now: `${money(amt, currency)}${n ? ` · split ${plural(n, "way")}` : ""}` }
-          : undefined,
-      };
-    }
-    if (rev.isDelete) return { what: `${who} deleted this expense` };
-    if (field("split")) {
-      const c = field("split")!;
-      return {
-        what: `${who} changed who's involved`,
-        diff: { was: namesOf(c.before as SplitSpec | null), now: namesOf(c.after as SplitSpec) },
-      };
-    }
-    if (field("amountMinor") || field("currency") || field("rateToBase") || field("baseAmountMinor")) {
-      const c = field("baseAmountMinor") ?? field("amountMinor")!;
-      return {
-        what: `${who} changed the amount`,
-        diff: {
-          was: typeof c.before === "number" ? money(c.before, currency) : undefined,
-          now: typeof c.after === "number" ? money(c.after, currency) : "",
-        },
-      };
-    }
-    if (field("paidBy")) {
-      const c = field("paidBy")!;
-      return { what: `${who} changed who paid`, diff: { was: nameOf(c.before), now: nameOf(c.after) } };
-    }
-    if (field("description")) {
-      const c = field("description")!;
-      return {
-        what: `${who} changed the description`,
-        diff: { was: (c.before as string) || "—", now: (c.after as string) || "—" },
-      };
-    }
-    if (field("occurredAt")) return { what: `${who} changed the date` };
-    if (field("categoryId")) return { what: `${who} changed the category` };
-    if (field("attachmentIds")) {
-      const c = field("attachmentIds")!;
-      const before = Array.isArray(c.before) ? c.before.length : 0;
-      const after = Array.isArray(c.after) ? c.after.length : 0;
-      return { what: `${who} ${after > before ? "added" : "removed"} ${plural(Math.abs(after - before), "photo")}` };
-    }
-    return { what: `${who} edited this expense` };
-  }
-
-  if (rev.entity === "identity") {
-    const c = field("memberId");
-    const now = nameOf(c?.after);
-    // The entity id is a device, not a person: "who" is whoever was speaking
-    // for that device a moment ago, and "now" is who it speaks for next.
-    if (rev.isCreate) return { what: `${now} started editing from a new device` };
-    return {
-      what: `${who} handed a device over to ${now}`,
-      diff: { was: nameOf(c?.before), now },
-    };
-  }
-
-  if (rev.entity === "settlement") {
-    if (rev.isCreate) {
-      const amt = field("baseAmountMinor")?.after as number | undefined;
-      return { what: `${who} recorded a settlement`, diff: amt !== undefined ? { now: money(amt, currency) } : undefined };
-    }
-    if (rev.isDelete) return { what: `${who} deleted a settlement` };
-    return { what: `${who} edited a settlement` };
-  }
-
-  if (rev.entity === "member") {
-    if (rev.isCreate) return { what: `${who} joined the group` };
-    if (rev.isDelete) return { what: `${who} left the group` };
-    if (field("name")) {
-      const c = field("name")!;
-      return { what: `${who} changed their name`, diff: { was: c.before as string, now: c.after as string } };
-    }
-    return { what: `${who} was updated` };
-  }
-
-  // group
-  if (rev.isCreate) return { what: `${who} created the group` };
-  if (field("name")) {
-    const c = field("name")!;
-    return { what: `${who} renamed the group`, diff: { was: c.before as string, now: c.after as string } };
-  }
-  if (field("archivedAt")) {
-    return { what: field("archivedAt")!.after ? `${who} archived the group` : `${who} restored the group` };
-  }
-  return { what: `${who} updated the group` };
 }
 
 function HistoryScreen() {
@@ -161,6 +46,14 @@ function HistoryScreen() {
   const expense = expenseId ? data.expenses.find((e) => e.id === expenseId) : undefined;
   const revisions = !groupId ? [] : expenseId ? entityHistory(ops, expenseId) : activityFeed(ops, 200);
 
+  // An entity's newest revision IS its current state, so there is nothing to
+  // put back — offering a rewind there is a dead end. Both feeds are
+  // newest-first, so the first revision seen for an entity is its latest.
+  const latestOf = new Map<string, string>();
+  for (const rev of revisions) {
+    if (!latestOf.has(rev.entityId)) latestOf.set(rev.entityId, rev.op.id);
+  }
+
   if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
   const group = data.group;
   const currency = group.baseCurrency;
@@ -180,12 +73,6 @@ function HistoryScreen() {
     return e?.deletedAt
       ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
       : { href: route.expense(groupId, rev.entityId), label };
-  }
-
-  async function restore(rev: Revision) {
-    if (!groupId) return;
-    if (!confirm("Restore this version? It adds a new entry rather than erasing what happened since.")) return;
-    await restoreRevision(groupId, data.me ?? rev.op.actor, rev.entity, rev.entityId, rev.op.hlc);
   }
 
   return (
@@ -211,10 +98,16 @@ function HistoryScreen() {
                   // Restoring an identity claim would mean telling somebody
                   // else's phone who it is. There is nothing to restore.
                   const canRestore = rev.entity !== "group" && rev.entity !== "identity"
-                    && !(rev.isCreate && i === revisions.length - 1);
+                    && latestOf.get(rev.entityId) !== rev.op.id;
                   const subject = expenseId ? undefined : subjectOf(rev);
                   return (
                     <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
+                      {canRestore ? (
+                        <Link className="tlrewind" aria-label="Restore this version"
+                          href={route.restore(groupId, rev.entity, rev.entityId, rev.op.hlc)}>
+                          <Icon name="rewind" size={15} />
+                        </Link>
+                      ) : null}
                       <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>
                       <div className="what">{d.what}</div>
                       {d.diff ? (
@@ -226,11 +119,8 @@ function HistoryScreen() {
                       {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
                       {subject ? (
                         <Link className="tlink" href={subject.href}>
-                          {subject.label}<Icon name="chev" size={11} />
+                          <span>{subject.label}</span><Icon name="chev" size={13} />
                         </Link>
-                      ) : null}
-                      {canRestore ? (
-                        <button className="restore" onClick={() => restore(rev)}>Restore this version</button>
                       ) : null}
                     </div>
                   );

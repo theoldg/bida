@@ -71,6 +71,7 @@ Screens (each its own static route — see
 | Record a settlement | `app/g/settle/page.tsx` | ✅ |
 | Join a shared link | `app/join/page.tsx` | ✅ *(see caveat below)* |
 | Pick who you are, after joining | `app/g/claim/page.tsx` | ✅ |
+| Restore confirmation | `app/g/restore/page.tsx` | ✅ |
 | Settings (theme, personal mode) | `app/settings/page.tsx` | ✅ |
 
 Data layer: Dexie schema, materialised stores, and `lib/db/commands.ts`
@@ -120,6 +121,13 @@ place of the keypad, generic placeholders, and co-sponsored expenses via
   people menu … it's counterintuitive to hit back"* — `/join` now hands over to
   **`/g/claim`**, the same list of names with one job: pick, then a primary
   button into the group. `/g/members` stays a management screen.
+- *"make the 'restore this version' way more discreet … make the expense link
+  bigger / more inviting"* — restore is a rewind icon at the right edge of a
+  revision leading to **`/g/restore`**, a confirmation screen naming the version
+  and the fields coming back (it replaces a `confirm()`); it is offered only
+  where something would actually change. The expense link is a pressable pill.
+  The revision sentence and field formatters moved to `lib/history-copy.ts`,
+  shared by both screens.
 
 ### `apps/api` — what's built
 
@@ -200,8 +208,8 @@ Beyond the six ADRs, two things were settled in code:
 loose ends below — neither blocks real use of the app.
 
 1. **Done, 2026-08-27:** the screenshot harness. `pnpm shots` builds the app,
-   serves the real static export, seeds a group through the UI and writes 26
-   PNGs (13 routes × 2 themes) into `shots/`. See
+   serves the real static export, seeds a group through the UI and writes 28
+   PNGs (14 screens × 2 themes) into `shots/`. See
    [testing.md](testing.md#pnpm-shots--photograph-every-screen) — including
    the four ways it bit while being written.
 2. **Done, 2026-08-27:** ran the real cross-device `/join` check (two browser

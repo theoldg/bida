@@ -33,6 +33,7 @@ one by hand.
 | `/g/split?id=` | Split editor — who the money was spent *on* |
 | `/g/payers?id=` | Payers editor — who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
+| `/g/restore?id=&kind=&e=&at=` | Confirms a restore: names the version and the fields coming back |
 | `/g/members?id=` | Members |
 | `/g/claim?id=` | The last step of joining: which member are you? Pick, then a button into the group |
 | `/g/options?id=` | In-group options: identity (and this phone's claim timeline), personal mode, theme, way out to People/History/invite |
@@ -66,6 +67,14 @@ without the secret.
   `lib/db/device.ts` is the device-local half and nothing outside that module
   should call it. `StartSync` calls `publishExistingClaims` once on launch, for
   devices that claimed somebody before identity was on the log.
+
+### History copy lives in one file
+
+`lib/history-copy.ts` holds the sentence for a revision (`describe`) and the
+per-field label and value formatters (`fieldLabel`, `fieldValue`). Both the
+history feed and `/g/restore` read from it. Two copies of this vocabulary drift
+within a week — "the amount" on one screen and "amount" on the other — so add
+wording there, not in a screen.
 
 ### One navigation
 

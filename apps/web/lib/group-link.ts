@@ -48,6 +48,10 @@ export const route = {
     `/g/expense?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(expenseId)}`,
   split: (groupId: string) => `/g/split?id=${encodeURIComponent(groupId)}`,
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
+  /** The confirmation screen for putting an entity back to how it looked. */
+  restore: (groupId: string, entity: string, entityId: string, atHlc: string) =>
+    `/g/restore?id=${encodeURIComponent(groupId)}&kind=${encodeURIComponent(entity)}`
+    + `&e=${encodeURIComponent(entityId)}&at=${encodeURIComponent(atHlc)}`,
   history: (groupId: string, expenseId?: string) =>
     `/g/history?id=${encodeURIComponent(groupId)}${expenseId ? `&e=${encodeURIComponent(expenseId)}` : ""}`,
   settleWith: (groupId: string, from: string, to: string, amount: number) =>

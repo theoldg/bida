@@ -82,6 +82,16 @@ async function seed(page) {
   // A plain expense, then a co-sponsored one.
   await addExpense(page, groupId, { amount: "4800", what: "Riad Jnane" });
   await addExpense(page, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
+
+  // ...and one edit, so the history screens have a revision that is not just a
+  // create: a diff to render, and a version worth offering to restore.
+  await page.getByText("Riad Jnane").click();
+  await page.waitForURL(/\/g\/expense\?/);
+  await page.getByRole("link", { name: "Edit" }).click();
+  await page.waitForURL(/expense\/edit/);
+  await page.locator("input.amount").fill("5100");
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL(/\/g\?id=/);
   return groupId;
 }
 
@@ -150,6 +160,15 @@ async function main() {
         await page.screenshot({ path: join(SHOTS, `${theme}-${name}.png`) });
         process.stdout.write(`${theme}/${name} `);
       }
+
+      // The restore confirmation carries an HLC in its URL, so it is reached by
+      // pressing the rewind on a real revision rather than by a fixed path.
+      await page.goto(`${base}/g/history?id=${groupId}`);
+      await page.locator(".tlrewind").first().click();
+      await page.waitForURL(/\/g\/restore/);
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: join(SHOTS, `${theme}-restore.png`) });
+      process.stdout.write(`${theme}/restore `);
       await context.close();
     }
     console.log(`\nshots written to ${SHOTS}`);

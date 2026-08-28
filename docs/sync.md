@@ -144,10 +144,16 @@ Falls straight out of the log with no extra storage:
   `patch` against the folded state immediately before it to produce the
   before/after diff. Show `actor`, `createdAt`, and `note`.
 - **Group activity feed** — all ops for the group, newest first, same renderer.
-- **Restore** — emit a `restore` op as described above.
+- **Restore** — emit a `restore` op as described above. The control is a rewind
+  icon at the edge of a revision, and it leads to `/g/restore`, a confirmation
+  screen that names the version and lists the fields coming back, rather than a
+  `confirm()` dialog that names nothing. It is offered only on a revision that
+  is *not* the entity's newest — the newest one is the current state, so there
+  is nothing to put back.
 
-The diff renderer needs a per-field formatter (money, member lists, dates); keep
-it in one place so history and the expense form agree on wording.
+The sentence for a revision and the per-field formatter (money, member lists,
+dates) live in `apps/web/lib/history-copy.ts`, in one place, so the history feed
+and the restore screen cannot drift apart in their wording.
 
 ## Gotchas
 
