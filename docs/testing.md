@@ -9,10 +9,10 @@ pnpm --filter @hajsik/web test        # 26 smoke tests
 pnpm shots                            # 26 PNGs into shots/ (gitignored)
 ```
 
-`packages/core` gets real coverage — money, splits, folding; see
-[conventions.md](conventions.md#tests) for the bar and
-[implementation-status.md](implementation-status.md#what-has-been-proven--tested-not-just-written)
-for what's proven. The web app gets smoke tests only; `vitest.config.ts`
+`packages/core` gets real coverage — money, splits, folding; the bar is in
+[CLAUDE.md](../CLAUDE.md#working-agreements) and what's proven is in
+[implementation-status.md](implementation-status.md#what-has-been-proven--tested-not-just-written).
+The web app gets smoke tests only; `vitest.config.ts`
 includes `lib/**` *and* `components/**`, which is why `sanitizeAmount` and
 `groupDigits` are exported from `amount-input.tsx` rather than hidden in it.
 Rendering isn't tested — `pnpm shots` is what looks at screens.
@@ -29,12 +29,11 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    server rather than `next dev`. The export is what ships, and it has quirks
    `next dev` doesn't.
 2. **Seeds a group through the UI** — three members, four expenses and an edit —
-   by driving real screens, not by poking IndexedDB. Each expense earns its
-   place: a plain one, a co-sponsored one, one somebody else paid that you owe
-   a share of, and one that leaves you out — the last two are what personal mode
-   is *for*. The edit gives the history screens a revision that isn't a create.
-   It costs seconds and buys a harness that fails loudly when a screen it isn't
-   even photographing breaks.
+   by driving real screens, not poking IndexedDB. Each expense earns its place:
+   a plain one, a co-sponsored one, one somebody else paid that you owe a share
+   of, and one that leaves you out (the last two are what personal mode is
+   *for*); the edit gives history a revision that isn't a create. It buys a
+   harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Three scenes are
    reached by driving instead of by URL: `/g/restore` (its URL carries an HLC),
@@ -71,12 +70,11 @@ npx wrangler d1 migrations apply hajsik --local   # once, or after a schema chan
 npx wrangler dev --port 8787                      # real ASSETS + DB bindings
 ```
 
-Drive it with `playwright-core` against the Chromium already on disk (install it
-ad hoc with `npm install playwright-core --no-save` in a scratch directory —
-it's a debugging tool, not app code). One `browser.newContext()` per "device"
-gives each its own IndexedDB, the part a single-context test can't simulate:
-`ctxA` creates the group and reads its secret straight out of IndexedDB
-(`groupKeys` store) instead of fighting the clipboard; `ctxB` is a brand-new
+Drive it with `playwright-core` (install ad hoc, `--no-save`, in a scratch
+directory — it's a debugging tool, not app code). One `newContext()` per
+"device" gives each its own IndexedDB, the part a single-context test can't
+simulate: `ctxA` creates the group and reads its secret straight out of the
+`groupKeys` store instead of fighting the clipboard; `ctxB` is a brand-new
 context with no storage — the "never used the app before" device the bug reports
-care about. Use `page.route()` to force fail-then-recover rather than
+care about. Force fail-then-recover with `page.route()`, not
 `context.setOffline()`, which also blocks the initial page load.

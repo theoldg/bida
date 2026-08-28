@@ -53,14 +53,30 @@ pnpm install && pnpm --filter @hajsik/core test
 
 ## Working agreements
 
-- **Commits.** `scope: imperative summary`, one concern each. Never put a model,
-  agent or session identifier in anything committed.
-- **Tests.** `packages/core` gets real coverage — splits, rounding, folding. UI
-  gets smoke tests. Touching money arithmetic without a test is unfinished work.
-- **Dependencies.** Default to no. Adding one warrants an ADR.
+- **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`,
+  `design`), one concern each. Never put a model, agent or session identifier in
+  anything committed. Retry a failed push four times with backoff (2/4/8/16s).
+- **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —
+  no I/O, no framework, and take a clock as an argument. Prefer a function to a
+  class, plain data to a wrapper. Comments explain *why*.
+- **Tests** (vitest). Coverage where being wrong is expensive: exhaustive on
+  `core/split.ts` and `core/money.ts` (every mode, every rounding edge, 0- and
+  3-decimal currencies); property tests on `core/fold.ts` and `core/hlc.ts` (any
+  permutation folds identically); `settle`/`payers` must clear every balance to
+  zero; sync engine covers offline→online replay, duplicate push, partial
+  failure; UI smoke only. **Touching money arithmetic without a test is not
+  finished work.**
+- **Dependencies.** Default to no — each is a migration we'll pay for on a
+  long-lived project with no team. A state, date or ORM library warrants an ADR.
 - **Scope.** Restaurant bill splitting and AI features are deferred
   ([product.md](docs/product.md#deliberately-not-in-the-mvp)). Leave the seams,
   build none of it.
+
+**Done means:** it works and you ran it · arithmetic has passing tests · the doc
+describing the changed behaviour is updated in the same commit and is no longer
+than before · an ADR exists if you made a real architectural choice · any
+preference the owner stated is in standing-instructions, dated ·
+implementation-status and roadmap reflect reality · pushed to `main`.
 
 ## Doc upkeep
 
