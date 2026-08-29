@@ -80,6 +80,10 @@ Visual reasoning: [design-system.md](design-system.md).
 In scope for the MVP — build-time icon files, unrelated to receipt hosting.
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
 `display: fullscreen` (spec falls back to `standalone`), theme colour per theme.
+The three PNGs are the tally wordmark in paper on an ink tile — the same
+figure-ground inversion as the FAB. Regenerate them together if the mark or the
+ink changes; the maskable one draws its mark smaller and unrounded so a
+circular launcher crop can't clip it.
 iOS ignores manifest `display` entirely; `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
 and `env(safe-area-inset-top)` padding on `.topbar` matter.
