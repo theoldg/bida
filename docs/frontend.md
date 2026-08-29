@@ -107,15 +107,14 @@ Dexie is the offline data layer, and a second cache over the same data gives
 you two disagreeing sources of truth.
 
 Everything precached is served cache-first, so a launch and every tap after it
-paint without waiting on the network. Three things make that safe. The list and
-the cache name are stamped in after the build by `apps/web/scripts/precache.mjs`
-from the files actually on disk, so neither can drift and there is no
-`CACHE_VERSION` to bump. The worker does not `skipWaiting`: activating
-mid-session would delete the running build's chunks out from under the open
-page, so a new deploy takes over on the next launch. And a *document* request
-for a `.txt` is answered with that route's shell — offline, Next abandons a
-failed payload fetch by handing the browser the payload URL, which served
-literally is a screenful of `1:"$Sreact.fragment"`.
+paint without waiting on the network — the reasoning, and the three things that
+make it safe, are
+[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md). In short:
+the list and the cache name are stamped in after the build by
+`apps/web/scripts/precache.mjs` (nothing to drift, no `CACHE_VERSION` to bump);
+the worker does not `skipWaiting`, so a deploy takes over on the next launch
+rather than deleting the running build under an open page; and a *document*
+request for a `.txt` is answered with that route's shell.
 
 `node scripts/offline-check.mjs` walks every screen with the network cut,
 against the real export. Run it after touching either file.

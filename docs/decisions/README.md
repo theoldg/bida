@@ -34,3 +34,4 @@ old one `Superseded by NNNN`.
 | [0021](0021-leaving-receipt-mode-hands-the-total-back.md) | Leaving Receipt hands the total back; a zero total is never "allocated" | Accepted |
 | [0022](0022-unfolding-a-receipt-line-into-portions.md) | A "×2" line unfolds into portions; a portion is an ordinary line | Accepted |
 | [0023](0023-monospace-monochrome.md) | One monospace face; colour only on money | Accepted |
+| [0024](0024-precache-the-whole-export-cache-first.md) | The service worker precaches the whole export and serves it cache-first | Accepted |
