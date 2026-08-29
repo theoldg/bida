@@ -135,10 +135,11 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
     <>
       {personal && me ? (
         <div className="pers-summary pad">
-          <Card style={{
-            flex: 1, padding: "10px 12px", borderColor: "transparent",
-            background: net < 0 ? "var(--debit-bg)" : net > 0 ? "var(--credit-bg)" : "var(--card-2)",
-          }}>
+          {/* The tint is neutral on purpose: the eyebrow and the figure are
+              already signed and coloured, and a card-sized wash of green or
+              red is the loudest thing on a screen that spends colour only on
+              money. */}
+          <Card style={{ flex: 1, padding: "10px 12px" }}>
             <div className="eyebrow" style={{ color: net === 0 ? "var(--muted)" : "inherit" }}>
               <span className={signClass(net)}>
                 {net < 0 ? "You owe" : net > 0 ? "You're owed" : "You're square"}
@@ -298,7 +299,7 @@ function BalancesTab({ data }: { data: GroupData }) {
 
       {balances.problems.length > 0 ? (
         <div className="pad">
-          <Card style={{ background: "var(--debit-bg)", borderColor: "transparent" }}>
+          <Card style={{ borderLeft: "2px solid var(--debit)" }}>
             <div style={{ fontSize: 12.5, color: "var(--debit)", fontWeight: 600 }}>
               {plural(balances.problems.length, "expense")} couldn't be split
             </div>

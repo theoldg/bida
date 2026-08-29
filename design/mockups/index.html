@@ -184,6 +184,8 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
   font-weight:600;font-size:13.5px;letter-spacing:-.01em;font-family:var(--f-body)}
 .btn-p{background:var(--brand);color:var(--brand-ink)}
 .btn-s{background:var(--card-2);color:var(--ink);border:1px solid var(--rule)}
+/* The one hue spent on something other than money: destructive gets an outline. */
+.btn-d{background:transparent;color:var(--debit);border:1px solid var(--debit)}
 
 /* ---- banners ---- */
 .banner{display:flex;align-items:center;gap:9px;padding:9px 16px;font-size:12.5px;flex:none;
@@ -302,8 +304,8 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
     <p class="lede">Eight screens covering the whole MVP: the Tricount loop you already know, plus the three things it doesn't do — full edit history, receipts by the handful, and a personal lens that pulls your own money out of the group's noise. Everything below is real HTML at real phone width, with real arithmetic.</p>
   </div>
   <div class="facts">
-    <div class="fact"><b>Direction</b>Accounting ledger — ruled paper, ink, red and green columns, a highlighter for what's yours.</div>
-    <div class="fact"><b>Type</b>Bricolage Grotesque · Karla · IBM Plex Mono for every figure.</div>
+    <div class="fact"><b>Direction</b>A terminal — one monospace face, hairline rules, square corners, and colour only on the balances.</div>
+    <div class="fact"><b>Type</b>JetBrains Mono, and nothing else — weight and tracking carry the hierarchy.</div>
     <div class="fact"><b>Name</b>Hajsik. The tally-mark wordmark stayed — five strokes, one for each person you have to chase.</div>
   </div>
 </div>
@@ -813,7 +815,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
       </div>
       <div class="fab"><svg width="24" height="24"><use href="#i-plus"/></svg></div>
     </div></div>
-    <figcaption><strong>Offline</strong>The app is fully usable in a riad with no signal — writes land locally and the amber dot marks what hasn't reached the server. Photos wait for Wi-Fi by default so nobody burns roaming data on receipts.</figcaption>
+    <figcaption><strong>Offline</strong>The app is fully usable in a riad with no signal — writes land locally and a dot marks what hasn't reached the server. Photos wait for Wi-Fi by default so nobody burns roaming data on receipts.</figcaption>
   </figure>
 
   </div>
@@ -839,11 +841,11 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
   <div class="grid2">
     <div class="note-card">
       <h4>Why a highlighter</h4>
-      <p>Personal mode can't use the red/green columns — those already mean debit and credit. A translucent amber wash reads as something laid <em>over</em> the ledger rather than part of it, which is exactly what a personal lens is. It also survives colour-blindness, because it comes with a left edge bar and an explicit "you: €14,27" figure.</p>
+      <p>Personal mode can't use the red/green columns — those already mean debit and credit, and they are the only two hues in the app. A translucent neutral wash reads as something laid <em>over</em> the ledger rather than part of it, which is exactly what a personal lens is. It also survives colour-blindness, because it comes with a left edge bar and an explicit "you: €14,27" figure.</p>
     </div>
     <div class="note-card">
       <h4>Numbers are monospaced, always</h4>
-      <p>Every figure is IBM Plex Mono with tabular figures, so decimal points line up down a column and you can eyeball a total without reading it. Text stays in Karla. The two never mix inside one line.</p>
+      <p>Everything is JetBrains Mono — headings, prose and figures alike — with tabular figures on the numbers, so decimal points line up down a column and you can eyeball a total without reading it. Hierarchy comes from weight and tracking, never from a second family.</p>
     </div>
     <div class="note-card">
       <h4>Colour is never the only signal</h4>

@@ -221,7 +221,11 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
                   {(spec.bps[m.id] ?? 0) / 100}%
                 </span>
               ) : (
-                <span style={{ color: on ? "var(--credit)" : "var(--muted)" }}>
+                <span style={{
+                  // Ink, not credit green: being in the split is not a credit,
+                  // and green is reserved for money.
+                  color: on ? "var(--ink)" : "var(--muted)",
+                }}>
                   <Icon name={on ? "check" : "plus"} size={16} />
                 </span>
               )}

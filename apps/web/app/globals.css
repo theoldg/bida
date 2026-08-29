@@ -235,7 +235,7 @@ a { color: inherit; text-decoration: none }
 .personal .share.debit { color: var(--debit) }
 .personal .row.up::before { background: var(--credit) }
 .personal .row.down::before { background: var(--debit) }
-/* Two highlighted rows in a row would otherwise merge into one amber block:
+/* Two highlighted rows in a row would otherwise merge into one grey block:
    the ordinary hairline is invisible against the wash. */
 .personal .mine { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .personal .notmine { opacity: .42 }
@@ -318,7 +318,9 @@ a { color: inherit; text-decoration: none }
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100% }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
-.btn-d { background: var(--debit-bg); color: var(--debit) }
+/* The one place a hue is spent on something other than money: destructive is
+   worth a signal, and it gets an outline rather than a filled block. */
+.btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
 .btn:disabled { opacity: .45 }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }

@@ -85,6 +85,11 @@ it applies to work nobody has done yet.
 
 ## Interface
 
+- **Minimal monospace, and colour only on balances.** *2026-08-29* — "redesign
+  the colors and the fonts for a more minimalistic monospace 'for programmers'
+  type of look … be very economic with colours, it should basically only have
+  subtle green and red for the balances."
+  [ADR-0023](decisions/0023-monospace-monochrome.md).
 - **Cut the fat. Text has to earn its place.** *2026-08-28.* Delete anything the
   screen already demonstrates: a subtitle counting what's visible below it, a
   paragraph restating the labels above it, a promise the UI keeps by itself, a
@@ -122,7 +127,7 @@ it applies to work nobody has done yet.
   the photographer's, and still says what to re-shoot. Humour is for the
   message the model composes, not the app's own fixed copy.
 - **Members are named, never "You".** *2026-08-29* — every screen prints a
-  member's own name; the amber "mine" highlight is what says which one is you.
+  member's own name; the "mine" highlight is what says which one is you.
 - **No cross-group total on the groups screen.** *2026-08-29* — one number per
   group, in that group's own currency. A sum across groups either lies about
   currency or restates rows already on screen.

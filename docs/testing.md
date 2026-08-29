@@ -53,8 +53,8 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
   member's name. Getting this wrong seeds a "co-sponsored" expense that quietly
   has one payer, and the shot looks plausible.
-- **Screenshots miss the caret** (it blinks), and IBM Plex Mono's zero is
-  *dotted*. A mark inside a "0" is the font, not a struck-through field.
+- **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
+  *slashed*. A mark inside a "0" is the font, not a struck-through field.
 
 ## Real two-device testing — for sync/join bugs
 

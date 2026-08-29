@@ -10,61 +10,65 @@ the reasoning so you extend the design rather than diverge from it.
 
 ## Direction
 
-An accounting ledger: ruled paper, ink, a red column and a green column, and a
-highlighter for the rows that are yours. Ledgers have solved the who-owes-what
-presentation problem for centuries.
+A terminal: one monospace face, near-monochrome grounds, hairline rules, square
+corners. Colour is a scarce resource spent only on money —
+[ADR-0023](decisions/0023-monospace-monochrome.md). The ledger reading survives
+underneath (ruled rows, a red column and a green column); what went is the paper
+texture, the second and third typeface, and every tint that wasn't a balance.
 
 ## Palette roles
 
 | Token | Role |
 |---|---|
-| `--paper`, `--card`, `--card-2/3` | Grounds. Green-biased neutrals in light; plain neutrals in dark |
+| `--paper`, `--card`, `--card-2/3` | Grounds. Near-neutral greys, both themes |
 | `--ink`, `--ink-2`, `--muted` | Text, three levels |
-| `--rule`, `--rule-soft` | Hairlines — the ruled-paper texture |
-| `--brand` | Interactive things only: buttons, active tabs, links |
-| `--credit` / `--debit` | **Semantic, reserved.** Money owed to you / by you |
-| `--hl`, `--hl-edge`, `--hl-ink` | The highlighter: personal mode, and pending sync |
+| `--rule`, `--rule-soft` | Hairlines — the ruling |
+| `--brand` | **Equal to `--ink`.** Buttons, active tabs, the focus ring |
+| `--credit` / `--debit` | **The only two hues in the app.** Money owed to you / by you |
+| `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: personal mode, and pending sync |
 
-`--brand` and the semantic pair are separate on purpose. A "Save" button is not
-a credit. Never colour a control with `--credit`.
+Two hues, and they mean one thing each. A "Save" button is not a credit, so
+never colour a control with `--credit`; and because `--brand` is just ink, a
+primary button is figure-ground inversion — an ink block with a paper glyph.
+Adding a third hue is a regression. Avatars carry no tint: monospaced initials
+and the printed name do the identifying. **The one sanctioned exception:**
+destructive actions (`.btn-d`, "Leave group") take `--debit` as an outline, not
+a fill — losing that warning to consistency would be a worse trade.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
-theme is ugly make it less green/yellow".)* Two tints that read as warm paper at
-90% lightness read as *stained* at 8%. Dark grounds are near-neutral
-(`#121316`, `#17191D`, `#1E2126`), the brand mint is pulled towards teal
-(`#78C9C2`) so it stops competing with `--credit`, and the highlighter is a
-desaturated sand (`#C2A06B` edge, 16% wash). `--credit` and `--debit` keep their
-hues — they're semantic and must not drift between themes. Both dark blocks
+theme is ugly make it less green/yellow".)* Grounds are near-neutral in both
+themes (`#0E0F11`, `#141517`, `#1A1C1F` dark), and `--credit`/`--debit` keep
+their hues — they're semantic and must not drift. Both dark blocks
 (`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values, in
 `globals.css` **and** the mockup. Change one, change all four.
 
 ## Personal mode is a highlighter
 
-Tinting your rows in the brand colour fails: red and green already mean debit
-and credit, and brand already means "tap this". A translucent amber wash reads
-as something laid *over* the ledger, which is what a personal lens is. The same
-amber marks pending sync — both mean "this is about you specifically, not the
-shared record". It is also the *only* way you are marked: a member is always
-printed by name, never as "You".
+Your rows take a translucent neutral wash — something laid *over* the ledger,
+which is what a personal lens is. The same wash marks pending sync: both mean
+"this is about you specifically, not the shared record". It is neutral rather
+than tinted so the row's own green or red stays the only colour on the line. It
+is also the *only* way you are marked: a member is always printed by name, never
+as "You".
 
 It never carries meaning alone. Each row shows what it did to your balance —
 what you put in minus what you owe — as `+€45,00` in credit green or `−€14,28`
 in debit red, with the left edge bar taking the same colour. Three signals for
-one fact: sign, colour, bar. A row that nets to nothing keeps a neutral amber
+one fact: sign, colour, bar. A row that nets to nothing keeps a neutral grey
 edge. Rows you're not part of drop to 42% opacity rather than disappearing —
 you should still see the group's spending.
 
 ## Type
 
-| Role | Face |
-|---|---|
-| Display | Bricolage Grotesque — headings and the wordmark, 500–700 |
-| Body | Karla — all prose and labels |
-| Figures | IBM Plex Mono — **every number**, `font-variant-numeric: tabular-nums` |
+**One face: JetBrains Mono**, 400–700, loaded once by `next/font` and
+self-hosted. `--f-display` and `--f-body` are aliases of `--f-mono`, kept so the
+CSS still speaks in roles. Hierarchy is weight and tracking only: headings 700
+at `-.03em`, body 400/500 at 14px, labels and eyebrows uppercase at `.12em`.
 
-Money is always monospaced and tabular so decimal points align down a column.
-Prose and figures never mix in one line — a figure inside a sentence still gets
-the mono span.
+Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
+align down a column even though everything is already monospaced. Body text sets
+wider than a proportional face did; titles truncate a word earlier, and that is
+accepted.
 
 ## A money field has an underline
 
@@ -88,8 +92,9 @@ always points payer → payee, left to right, matching the names beside it.
 
 ## Rules that are not negotiable
 
-1. **Colour is never the only signal.** Debit and credit carry a sign *and* a
-   word *and* a bar direction; pending sync carries a dot *and* a banner.
+1. **Colour is never the only signal**, and is never spent on anything but
+   money. Debit and credit carry a sign *and* a word *and* a bar direction;
+   pending sync carries a dot *and* a banner.
 2. **Both themes are designed.** Tokens on bare `:root` (light), redefined under
    `@media (prefers-color-scheme: dark)` guarded with `:root:not([data-theme=
    "light"])`, and again under `:root[data-theme="dark"]`. Never declare a

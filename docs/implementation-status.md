@@ -24,8 +24,12 @@ Since: the app asks to be installed — a dismissable nudge under the groups
 list and a permanent offer in Settings, Chrome's `beforeinstallprompt` where it
 exists and share-sheet instructions on iOS ([frontend.md](frontend.md#pwa)).
 
-Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
-follow-up (2026-08-28): a line the receipt counted — `Salade marocaine ×2` —
+Design signed off 2026-08-27 (*"i approve of your design, go wild"*), then
+re-cut 2026-08-29 on the owner's word: one monospace face (JetBrains Mono)
+everywhere, near-neutral grounds, and colour spent only on `--credit` and
+`--debit` — `--brand` is ink, avatars carry no tint, the highlighter is a grey
+wash ([ADR-0023](decisions/0023-monospace-monochrome.md)). Before it
+(2026-08-28): a line the receipt counted — `Salade marocaine ×2` —
 unfolds on the who-had-what grid into that many separately assignable rows
 (two shared one, someone else had the other), and merges back; the portions
 sum to the printed line exactly, so the bill's total never moves
