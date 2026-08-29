@@ -2,15 +2,14 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { Member } from "@hajsik/core";
-import { initials, tone } from "../lib/format";
+import { initials } from "../lib/format";
 
 export function Avatar({ member, size = 34, name }: {
   member?: Member; size?: number; name?: string;
 }) {
   const label = member?.name ?? name ?? "?";
-  const cls = member ? tone(member.colorSeed) : "a-0";
   return (
-    <span className={`avatar ${cls}`}
+    <span className="avatar"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>
       {initials(label)}
     </span>

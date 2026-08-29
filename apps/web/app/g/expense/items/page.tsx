@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
-import { distinctInitials, money, tone } from "../../../../lib/format";
+import { distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../../lib/draft";
@@ -177,7 +177,7 @@ function ItemsScreen() {
                   aria-pressed={involved.has(m.id)}
                   aria-label={`${m.name}${involved.has(m.id) ? " was there" : " wasn't there"}`}
                   className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
-                  <span className={`avatar ${tone(m.colorSeed)}`} style={{ width: 22, height: 22, fontSize: 10 }}>
+                  <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
                     {labels.get(m.id)}
                   </span>
                   {m.name}
@@ -195,7 +195,7 @@ function ItemsScreen() {
                     <th />
                     {involvedMembers.map((m) => (
                       <th key={m.id}>
-                        <span className={`avatar ${tone(m.colorSeed)}`} style={{ width: 24, height: 24, fontSize: 10 }}>
+                        <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
                           {labels.get(m.id)}
                         </span>
                       </th>
@@ -249,7 +249,7 @@ function ItemsScreen() {
                               aria-label={part
                                 ? `${m.name} had ${item.label}, portion ${part.index} of ${part.of}`
                                 : `${m.name} had ${item.label}`}>
-                              {assignments[i]?.has(m.id) ? <span className={`dot ${tone(m.colorSeed)}`} /> : null}
+                              {assignments[i]?.has(m.id) ? <span className="dot" /> : null}
                             </button>
                           </td>
                         ))}

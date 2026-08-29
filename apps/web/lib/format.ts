@@ -75,11 +75,6 @@ export function initials(name: string): string {
   return (parts[0]!.slice(0, 1) + parts[parts.length - 1]!.slice(0, 1)).toUpperCase();
 }
 
-/** Six ledger-paper tones; the member's stored colorSeed picks one, forever. */
-export function tone(colorSeed: number): string {
-  return `a-${Math.abs(colorSeed) % 6}`;
-}
-
 /**
  * The shortest prefix of each name that tells everyone apart — "John" and
  * "Jane" become "Jo"/"Ja" rather than colliding on "J". Grows a letter at a

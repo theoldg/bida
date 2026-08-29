@@ -1,73 +1,69 @@
 <title>Hajsik Mockups</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Karla:ital,wght@0,300..700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400..700;1,400&display=swap">
 
 <style>
 /* ============================================================
-   TOKENS — ledger paper, ink, red/green columns, highlighter
+   TOKENS — terminal neutrals, one monospace face, and exactly two
+   colours: a green and a red, spent only on balances
    ============================================================ */
 :root{
-  --paper:#E9ECE2; --paper-2:#E2E6DA;
-  --card:#F8F9F4; --card-2:#F0F2E9; --card-3:#E7EBDE;
-  --ink:#151C15; --ink-2:#3C483C; --muted:#717D6F;
-  --rule:#CBD3C2; --rule-soft:#DBE1D3;
-  --credit:#1C6A4B; --credit-bg:#DCEBE1;
-  --debit:#AC382B;  --debit-bg:#F3DFDB;
-  --brand:#16554A; --brand-ink:#F8F9F4;
-  --hl:rgba(203,148,42,.30); --hl-edge:#BE861A; --hl-ink:#7A5410;
-  --shadow-s:0 1px 2px rgba(21,28,21,.07);
-  --shadow-l:0 2px 4px rgba(21,28,21,.05),0 18px 40px -20px rgba(21,28,21,.35);
-  --r-s:8px; --r-m:12px; --r-l:18px;
-  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
-  --f-body:"Karla",ui-sans-serif,system-ui,-apple-system,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --paper:#F1F1EF; --paper-2:#E8E8E5;
+  --card:#FBFBFA; --card-2:#F3F3F1; --card-3:#E8E8E5;
+  --ink:#16171A; --ink-2:#4B4E54; --muted:#8C9096;
+  --rule:#D6D6D2; --rule-soft:#E7E7E3;
+  --credit:#2F7355; --credit-bg:#E9EFEB;
+  --debit:#A94B3D;  --debit-bg:#F4E9E6;
+  --brand:#16171A; --brand-ink:#FBFBFA;
+  --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
+  --shadow-s:0 0 0 1px rgba(22,23,26,.09);
+  --r-s:2px; --r-m:3px; --r-l:4px;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-display:var(--f-mono);
+  --f-body:var(--f-mono);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --paper:#121316; --paper-2:#0D0E10;
-    --card:#17191D; --card-2:#1E2126; --card-3:#262A30;
-    --ink:#E7E8EA; --ink-2:#B8BCC2; --muted:#878C94;
-    --rule:#33373E; --rule-soft:#24272C;
-    --credit:#63C598; --credit-bg:#182620;
-    --debit:#EA8A80;  --debit-bg:#2B1C1A;
-    --brand:#78C9C2; --brand-ink:#0D1416;
-    --hl:rgba(206,173,124,.16); --hl-edge:#C2A06B; --hl-ink:#D9C29B;
-    --shadow-s:0 1px 2px rgba(0,0,0,.5);
-    --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+    --paper:#0E0F11; --paper-2:#0A0B0C;
+    --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
+    --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
+    --rule:#2C2E33; --rule-soft:#212328;
+    --credit:#6FBF95; --credit-bg:#16211B;
+    --debit:#DC8377;  --debit-bg:#261917;
+    --brand:#E6E7E9; --brand-ink:#0E0F11;
+    --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+    --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
 :root[data-theme="dark"]{
-  --paper:#121316; --paper-2:#0D0E10;
-  --card:#17191D; --card-2:#1E2126; --card-3:#262A30;
-  --ink:#E7E8EA; --ink-2:#B8BCC2; --muted:#878C94;
-  --rule:#33373E; --rule-soft:#24272C;
-  --credit:#63C598; --credit-bg:#182620;
-  --debit:#EA8A80;  --debit-bg:#2B1C1A;
-  --brand:#78C9C2; --brand-ink:#0D1416;
-  --hl:rgba(206,173,124,.16); --hl-edge:#C2A06B; --hl-ink:#D9C29B;
-  --shadow-s:0 1px 2px rgba(0,0,0,.5);
-  --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+  --paper:#0E0F11; --paper-2:#0A0B0C;
+  --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
+  --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
+  --rule:#2C2E33; --rule-soft:#212328;
+  --credit:#6FBF95; --credit-bg:#16211B;
+  --debit:#DC8377;  --debit-bg:#261917;
+  --brand:#E6E7E9; --brand-ink:#0E0F11;
+  --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+  --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
 *{box-sizing:border-box}
 body{
   margin:0; background:var(--paper); color:var(--ink);
-  font-family:var(--f-body); font-size:16px; line-height:1.55;
+  font-family:var(--f-body); font-size:15px; line-height:1.55; letter-spacing:-.005em;
   -webkit-font-smoothing:antialiased;
-  background-image:repeating-linear-gradient(to bottom,transparent 0 27px,var(--rule-soft) 27px 28px);
 }
-:focus-visible{outline:2px solid var(--hl-edge); outline-offset:2px; border-radius:4px}
+:focus-visible{outline:1.5px solid var(--ink); outline-offset:2px; border-radius:var(--r-s)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
-h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:600;letter-spacing:-.015em}
+h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700;letter-spacing:-.03em}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
 
 /* ============================================================ MASTHEAD */
-.masthead{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:40;
-  background-image:repeating-linear-gradient(to bottom,transparent 0 27px,var(--rule-soft) 27px 28px)}
+.masthead{border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:40}
 .mast-in{display:flex;align-items:center;gap:16px;padding:14px 0;flex-wrap:wrap}
 .logo{display:flex;align-items:center;gap:9px;font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:-.02em}
 .logo svg{display:block}
@@ -107,7 +103,7 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 
 /* ============================================================ PHONE */
 .phone{width:340px;border-radius:36px;padding:9px;background:linear-gradient(160deg,var(--card-3),var(--card-2));
-  box-shadow:var(--shadow-l);border:1px solid var(--rule)}
+  box-shadow:var(--shadow-s);border:1px solid var(--rule)}
 .app{border-radius:28px;overflow:hidden;background:var(--card);height:660px;display:flex;flex-direction:column;position:relative;border:1px solid var(--rule-soft)}
 .statusbar{display:flex;align-items:center;justify-content:space-between;padding:9px 20px 3px;font-family:var(--f-mono);font-size:11px;color:var(--ink-2);font-weight:500;flex:none}
 .statusbar .sbr{display:flex;gap:5px;align-items:center}
@@ -119,7 +115,7 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .topbar{display:flex;align-items:center;gap:11px;padding:6px 16px 12px;flex:none}
 .topbar h3{font-size:19px;letter-spacing:-.02em;line-height:1.15}
 .topbar .sub{font-size:11.5px;color:var(--muted);font-family:var(--f-mono);letter-spacing:.02em}
-.iconbtn{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--card-2);
+.iconbtn{width:32px;height:32px;border-radius:var(--r-s);display:grid;place-items:center;background:var(--card-2);
   border:1px solid var(--rule-soft);color:var(--ink-2);flex:none}
 .spacer{margin-left:auto}
 
@@ -133,15 +129,14 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .row:last-child{border-bottom:0}
 .daylabel{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
   padding:13px 16px 5px;background:var(--card-2);border-bottom:1px solid var(--rule-soft);font-weight:500}
-.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-display);
-  font-size:13px;font-weight:600;flex:none;border:1px solid var(--rule)}
-.a-t{background:#CFE0D6;color:#123B2B}.a-m{background:#E3D7C0;color:#4A3612}
-.a-s{background:#D2DCE8;color:#1C3550}.a-a{background:#E8D3D3;color:#582522}
-:root[data-theme="dark"] .a-t,:root[data-theme="dark"] .a-m,:root[data-theme="dark"] .a-s,:root[data-theme="dark"] .a-a{border-color:transparent;filter:brightness(.82) saturate(.9)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .a-t,:root:not([data-theme="light"]) .a-m,:root:not([data-theme="light"]) .a-s,:root:not([data-theme="light"]) .a-a{border-color:transparent;filter:brightness(.82) saturate(.9)}}
+/* One neutral tile for everyone: colour is spent on balances only, and
+   monospaced initials already tell people apart. */
+.avatar{width:34px;height:34px;border-radius:var(--r-s);display:grid;place-items:center;
+  font-size:12px;font-weight:600;letter-spacing:-.02em;flex:none;
+  background:var(--card-2);color:var(--ink-2);border:1px solid var(--rule)}
 
 .rmain{min-width:0;flex:1}
-.rtitle{font-size:14.5px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rtitle{font-size:13.5px;font-weight:600;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rmeta{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .ramt{text-align:right;flex:none}
 .ramt .big{font-family:var(--f-mono);font-size:14.5px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
@@ -159,11 +154,11 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .doc.personal .pers-summary{display:flex}
 
 /* ---- chips / pills ---- */
-.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:2.5px 8px;border-radius:999px;
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:2.5px 7px;border-radius:var(--r-s);
   border:1px solid var(--rule);color:var(--ink-2);background:var(--card-2);font-weight:500;white-space:nowrap}
 .chip.hl{border-color:var(--hl-edge);color:var(--hl-ink);background:var(--hl)}
 .chip.pend{border-color:var(--hl-edge);color:var(--hl-ink);background:transparent}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--hl-edge);flex:none}
+.dot{width:6px;height:6px;border-radius:1px;background:var(--ink-2);flex:none}
 
 /* ---- cards inside app ---- */
 .pad{padding:14px 16px}
@@ -177,13 +172,16 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 
 /* ---- bottom nav / fab ---- */
 .bottomnav{display:flex;border-top:1px solid var(--rule);background:var(--card-2);flex:none;padding:7px 0 11px}
-.nav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);font-weight:500}
-.nav.on{color:var(--brand)}
-.fab{position:absolute;right:16px;bottom:78px;width:54px;height:54px;border-radius:50%;background:var(--brand);
-  color:var(--brand-ink);display:grid;place-items:center;box-shadow:0 8px 20px -6px rgba(21,28,21,.5);z-index:4}
+.nav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:var(--muted);
+  font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.nav.on{color:var(--ink);font-weight:700}
+/* A solid ink block, not a floating pill: pure figure-ground inversion is
+   signal enough without a shadow. */
+.fab{position:absolute;right:16px;bottom:78px;width:50px;height:50px;border-radius:var(--r-s);background:var(--brand);
+  color:var(--brand-ink);display:grid;place-items:center;z-index:4}
 
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-m);padding:12px;
-  font-weight:600;font-size:14.5px;font-family:var(--f-body)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:var(--r-s);padding:12px;
+  font-weight:600;font-size:13.5px;letter-spacing:-.01em;font-family:var(--f-body)}
 .btn-p{background:var(--brand);color:var(--brand-ink)}
 .btn-s{background:var(--card-2);color:var(--ink);border:1px solid var(--rule)}
 
@@ -216,7 +214,7 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .tl{position:relative;padding-left:26px}
 .tl::before{content:"";position:absolute;left:8.5px;top:6px;bottom:8px;width:1px;background:var(--rule)}
 .tle{position:relative;padding:0 0 15px}
-.tle::before{content:"";position:absolute;left:-21.5px;top:5px;width:9px;height:9px;border-radius:50%;
+.tle::before{content:"";position:absolute;left:-21.5px;top:5px;width:9px;height:9px;border-radius:1px;
   background:var(--card);border:2px solid var(--rule)}
 .tle.now::before{border-color:var(--brand);background:var(--brand)}
 .tle .when{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:.04em}
@@ -230,8 +228,8 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 
 /* ---- balance bars ---- */
 .balrow{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:9px 16px}
-.bar{height:7px;border-radius:999px;background:var(--card-3);position:relative;overflow:hidden}
-.bar i{position:absolute;top:0;bottom:0;border-radius:999px}
+.bar{height:7px;border-radius:0;background:var(--card-3);position:relative;overflow:hidden}
+.bar i{position:absolute;top:0;bottom:0}
 .bar i.c{background:var(--credit);left:50%}
 .bar i.d{background:var(--debit);right:50%}
 .axis{height:100%;width:1px;background:var(--rule);position:absolute;left:50%;top:0}
@@ -253,7 +251,7 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .q{display:grid;grid-template-columns:30px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule-soft);align-items:start}
 .q:last-child{border-bottom:0}
 .q .n{counter-increment:q;font-family:var(--f-mono);font-size:12px;color:var(--hl-ink);background:var(--hl);
-  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:600}
+  width:26px;height:26px;border-radius:var(--r-s);display:grid;place-items:center;font-weight:600}
 .q .n::before{content:counter(q,decimal-leading-zero)}
 .q p{margin:0;font-size:14px;line-height:1.5}
 .q p b{font-weight:600}
@@ -329,17 +327,17 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         </div>
         <div class="scroll"><div class="rows">
           <div class="row">
-            <div class="avatar a-m">MK</div>
+            <div class="avatar">MK</div>
             <div class="rmain"><div class="rtitle">Marrakech · 5 days</div><div class="rmeta">4 people · 7 expenses · 2h ago</div></div>
             <div class="ramt"><div class="big debit">−€105.62</div><div class="sm">you owe</div></div>
           </div>
           <div class="row">
-            <div class="avatar a-s">RO</div>
+            <div class="avatar">RO</div>
             <div class="rmain"><div class="rtitle">Rue Oberkampf</div><div class="rmeta">3 people · 41 expenses · yesterday</div></div>
             <div class="ramt"><div class="big credit">+€41.20</div><div class="sm">you're owed</div></div>
           </div>
           <div class="row">
-            <div class="avatar a-t">LA</div>
+            <div class="avatar">LA</div>
             <div class="rmain"><div class="rtitle">Les Arcs 2026</div><div class="rmeta">6 people · 23 expenses · Feb</div></div>
             <div class="ramt"><div class="big" style="color:var(--muted)">€0.00</div><div class="sm">settled</div></div>
           </div>
@@ -383,39 +381,39 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           <div class="rows">
             <div class="daylabel">Sat 5 April</div>
             <div class="row notmine">
-              <div class="avatar a-s">S</div>
+              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Hammam · Les Bains de Marrakech</div><div class="rmeta">Sam paid · Sam, Ada, Marie</div></div>
               <div class="ramt"><div class="big">€64.47</div><div class="sm">700 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Breakfast · Café des Épices</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€19.34</div><div class="sm">210 MAD</div><div class="sm share">you: €4.84</div></div>
             </div>
             <div class="daylabel">Fri 4 April</div>
             <div class="row notmine">
-              <div class="avatar a-m">M</div>
+              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Souk haul · lamp + rug</div><div class="rmeta">Marie paid · Marie, Ada · edited ×3</div></div>
               <div class="ramt"><div class="big">€170.39</div><div class="sm">1 850 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-a">A</div>
+              <div class="avatar">A</div>
               <div class="rmain"><div class="rtitle">Jardin Majorelle tickets</div><div class="rmeta">Ada paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€44.21</div><div class="sm">480 MAD</div><div class="sm share">you: €11.05</div></div>
             </div>
             <div class="daylabel">Thu 3 April</div>
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Dinner · Nomad</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€57.10</div><div class="sm">620 MAD</div><div class="sm share">you: €14.27</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-s">S</div>
+              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Grand taxi from RAK</div><div class="rmeta">Sam paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€27.63</div><div class="sm">300 MAD</div><div class="sm share">you: €6.90</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-m">M</div>
+              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Riad Jnane · 4 nights</div><div class="rmeta">Marie paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€580.00</div><div class="sm">&nbsp;</div><div class="sm share">you: €145.00</div></div>
             </div>
@@ -452,7 +450,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           <div style="font-size:12.5px;color:var(--muted);margin-top:5px;font-family:var(--f-mono)">
             = €57,10 &nbsp;·&nbsp; 1 MAD = 0,0921 EUR
           </div>
-          <div style="font-size:11px;color:var(--hl-ink);background:var(--hl);display:inline-block;padding:2px 8px;border-radius:999px;margin-top:7px">rate locked at entry — tap to override</div>
+          <div style="font-size:11px;color:var(--hl-ink);background:var(--hl);display:inline-block;padding:2px 8px;border-radius:var(--r-s);margin-top:7px">rate locked at entry — tap to override</div>
         </div>
         <div class="pad" style="padding-top:4px;display:flex;flex-direction:column;gap:9px">
           <div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px">
@@ -461,7 +459,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           </div>
           <div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px">
             <span style="font-size:13px;color:var(--muted);width:52px">Paid by</span>
-            <span class="avatar a-t" style="width:24px;height:24px;font-size:10px">T</span>
+            <span class="avatar" style="width:24px;height:24px;font-size:10px">T</span>
             <span style="font-size:14px;font-weight:600">You</span>
             <svg width="14" height="14" class="spacer" style="color:var(--muted)"><use href="#i-chev"/></svg>
           </div>
@@ -510,25 +508,25 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         <div class="scroll">
           <div style="padding:14px 0 4px">
             <div class="balrow mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">You</div>
                 <div class="bar"><i class="d" style="width:11.4%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€105,62</div>
             </div>
             <div class="balrow">
-              <div class="avatar a-m">M</div>
+              <div class="avatar">M</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Marie</div>
                 <div class="bar"><i class="c" style="width:50%"></i><span class="axis"></span></div></div>
               <div class="bignum credit" style="font-size:14px">+€461,65</div>
             </div>
             <div class="balrow">
-              <div class="avatar a-s">S</div>
+              <div class="avatar">S</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Sam</div>
                 <div class="bar"><i class="d" style="width:12.1%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€111,47</div>
             </div>
             <div class="balrow">
-              <div class="avatar a-a">A</div>
+              <div class="avatar">A</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Ada</div>
                 <div class="bar"><i class="d" style="width:26.5%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€244,56</div>
@@ -538,26 +536,26 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
             <div class="eyebrow" style="margin-bottom:9px">Simplest way to settle · 3 payments</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               <div class="card mine" style="display:flex;align-items:center;gap:9px;padding:11px 12px;position:relative">
-                <span class="avatar a-t" style="width:26px;height:26px;font-size:10px">T</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">T</span>
                 <span style="font-size:13px;font-weight:600">You</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar a-m" style="width:26px;height:26px;font-size:10px">M</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€105,62</span>
               </div>
               <div class="card" style="display:flex;align-items:center;gap:9px;padding:11px 12px">
-                <span class="avatar a-s" style="width:26px;height:26px;font-size:10px">S</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">S</span>
                 <span style="font-size:13px;font-weight:600">Sam</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar a-m" style="width:26px;height:26px;font-size:10px">M</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€111,47</span>
               </div>
               <div class="card" style="display:flex;align-items:center;gap:9px;padding:11px 12px">
-                <span class="avatar a-a" style="width:26px;height:26px;font-size:10px">A</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">A</span>
                 <span style="font-size:13px;font-weight:600">Ada</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar a-m" style="width:26px;height:26px;font-size:10px">M</span>
+                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€244,56</span>
               </div>
@@ -711,7 +709,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         <div class="scroll">
           <div class="rows">
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">You</div><div class="rmeta">not involved</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="color:var(--muted);font-size:17px">−</span>
@@ -720,7 +718,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar a-m">M</div>
+              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Marie</div><div class="rmeta mono">€85,19</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="font-size:17px">−</span>
@@ -729,7 +727,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar a-s">S</div>
+              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Sam</div><div class="rmeta">not involved</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="color:var(--muted);font-size:17px">−</span>
@@ -738,7 +736,7 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar a-a">A</div>
+              <div class="avatar">A</div>
               <div class="rmain"><div class="rtitle">Ada</div><div class="rmeta mono">€85,20</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="font-size:17px">−</span>
@@ -778,23 +776,23 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           <div class="rows">
             <div class="daylabel">Just now · on this phone</div>
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Taxi to Essaouira <span class="dot" style="display:inline-block;vertical-align:middle;margin-left:3px"></span></div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€64,47</div><div class="sm">700 MAD</div><div class="sm share">you: €16,12</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Lunch · Chez Hassan <span class="dot" style="display:inline-block;vertical-align:middle;margin-left:3px"></span></div><div class="rmeta">You paid · 2 photos queued</div></div>
               <div class="ramt"><div class="big">€27,63</div><div class="sm">300 MAD</div><div class="sm share">you: €6,91</div></div>
             </div>
             <div class="daylabel">Sat 5 April</div>
             <div class="row notmine">
-              <div class="avatar a-s">S</div>
+              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Hammam</div><div class="rmeta">Sam paid · Sam, Ada, Marie</div></div>
               <div class="ramt"><div class="big">€64,47</div><div class="sm">700 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar a-t">T</div>
+              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Breakfast · Café des Épices</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€19,34</div><div class="sm">210 MAD</div><div class="sm share">you: €4,84</div></div>
             </div>

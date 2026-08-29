@@ -1,57 +1,58 @@
 @import "tailwindcss";
 
 /* ============================================================
-   TOKENS — ledger paper, ink, red/green columns, highlighter.
-   Lifted verbatim from design/mockups/index.html. If you change
-   a value here, change it there too: the mockup is the design's
-   source of truth and a drifted mockup is a lying one.
+   TOKENS — terminal neutrals, one monospace face, and exactly two
+   colours: a green and a red, spent only on balances. Lifted verbatim
+   from design/mockups/index.html. If you change a value here, change
+   it there too: the mockup is the design's source of truth and a
+   drifted mockup is a lying one.
    ============================================================ */
 :root {
-  --paper:#E9ECE2; --paper-2:#E2E6DA;
-  --card:#F8F9F4; --card-2:#F0F2E9; --card-3:#E7EBDE;
-  --ink:#151C15; --ink-2:#3C483C; --muted:#717D6F;
-  --rule:#CBD3C2; --rule-soft:#DBE1D3;
-  --credit:#1C6A4B; --credit-bg:#DCEBE1;
-  --debit:#AC382B;  --debit-bg:#F3DFDB;
-  --brand:#16554A; --brand-ink:#F8F9F4;
-  --hl:rgba(203,148,42,.30); --hl-edge:#BE861A; --hl-ink:#7A5410;
-  --shadow-s:0 1px 2px rgba(21,28,21,.07);
-  --shadow-l:0 2px 4px rgba(21,28,21,.05),0 18px 40px -20px rgba(21,28,21,.35);
-  --r-s:8px; --r-m:12px; --r-l:18px;
+  --paper:#F1F1EF; --paper-2:#E8E8E5;
+  --card:#FBFBFA; --card-2:#F3F3F1; --card-3:#E8E8E5;
+  --ink:#16171A; --ink-2:#4B4E54; --muted:#8C9096;
+  --rule:#D6D6D2; --rule-soft:#E7E7E3;
+  --credit:#2F7355; --credit-bg:#E9EFEB;
+  --debit:#A94B3D;  --debit-bg:#F4E9E6;
+  --brand:#16171A; --brand-ink:#FBFBFA;
+  --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
+  /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
+  --shadow-s:0 0 0 1px rgba(22,23,26,.09);
+  --r-s:2px; --r-m:3px; --r-l:4px;
 
-  /* next/font sets --font-display/body/mono on <html>, which is :root, so the
-     fallback in each var() only bites if the font fails to load. */
-  --f-display: var(--font-display, "Bricolage Grotesque"), ui-sans-serif, system-ui, sans-serif;
-  --f-body: var(--font-body, "Karla"), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --f-mono: var(--font-mono, "IBM Plex Mono"), ui-monospace, "SF Mono", Menlo, monospace;
+  /* One face for everything. next/font sets --font-mono on <html>, which is
+     :root, so the fallback stack only bites if the font fails to load. The
+     three role names survive because the rules below still speak in roles —
+     display is weight, not family. */
+  --f-mono: var(--font-mono, "JetBrains Mono"), ui-monospace, "SF Mono", Menlo, monospace;
+  --f-display: var(--f-mono);
+  --f-body: var(--f-mono);
 }
 
 @media (prefers-color-scheme:dark) {
   :root:not([data-theme="light"]) {
-    --paper:#121316; --paper-2:#0D0E10;
-    --card:#17191D; --card-2:#1E2126; --card-3:#262A30;
-    --ink:#E7E8EA; --ink-2:#B8BCC2; --muted:#878C94;
-    --rule:#33373E; --rule-soft:#24272C;
-    --credit:#63C598; --credit-bg:#182620;
-    --debit:#EA8A80;  --debit-bg:#2B1C1A;
-    --brand:#78C9C2; --brand-ink:#0D1416;
-    --hl:rgba(206,173,124,.16); --hl-edge:#C2A06B; --hl-ink:#D9C29B;
-    --shadow-s:0 1px 2px rgba(0,0,0,.5);
-    --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+    --paper:#0E0F11; --paper-2:#0A0B0C;
+    --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
+    --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
+    --rule:#2C2E33; --rule-soft:#212328;
+    --credit:#6FBF95; --credit-bg:#16211B;
+    --debit:#DC8377;  --debit-bg:#261917;
+    --brand:#E6E7E9; --brand-ink:#0E0F11;
+    --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+    --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper:#121316; --paper-2:#0D0E10;
-  --card:#17191D; --card-2:#1E2126; --card-3:#262A30;
-  --ink:#E7E8EA; --ink-2:#B8BCC2; --muted:#878C94;
-  --rule:#33373E; --rule-soft:#24272C;
-  --credit:#63C598; --credit-bg:#182620;
-  --debit:#EA8A80;  --debit-bg:#2B1C1A;
-  --brand:#78C9C2; --brand-ink:#0D1416;
-  --hl:rgba(206,173,124,.16); --hl-edge:#C2A06B; --hl-ink:#D9C29B;
-  --shadow-s:0 1px 2px rgba(0,0,0,.5);
-  --shadow-l:0 2px 4px rgba(0,0,0,.4),0 18px 40px -20px rgba(0,0,0,.8);
+  --paper:#0E0F11; --paper-2:#0A0B0C;
+  --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
+  --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
+  --rule:#2C2E33; --rule-soft:#212328;
+  --credit:#6FBF95; --credit-bg:#16211B;
+  --debit:#DC8377;  --debit-bg:#261917;
+  --brand:#E6E7E9; --brand-ink:#0E0F11;
+  --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+  --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
 /* `inline` means the utilities compile to var() references, so every
@@ -86,7 +87,6 @@
   --radius-l: var(--r-l);
 
   --shadow-s: var(--shadow-s);
-  --shadow-l: var(--shadow-l);
 }
 
 /* The document itself never scrolls: `.app` is exactly one viewport tall and
@@ -103,8 +103,9 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--f-body);
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -.005em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
@@ -170,10 +171,10 @@ h1, h2, h3, h4 {
   font-family: var(--f-display);
   text-wrap: balance;
   margin: 0;
-  font-weight: 600;
-  letter-spacing: -.015em;
+  font-weight: 700;
+  letter-spacing: -.03em;
 }
-:focus-visible { outline: 2px solid var(--hl-edge); outline-offset: 2px; border-radius: 4px }
+:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; border-radius: var(--r-s) }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: inherit }
 a { color: inherit; text-decoration: none }
 
@@ -189,10 +190,10 @@ a { color: inherit; text-decoration: none }
 .scroll { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative }
 
 .topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px; flex: none }
-.topbar h3 { font-size: 19px; letter-spacing: -.02em; line-height: 1.15 }
-.topbar .sub { font-size: 11.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
+.topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
+.topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
-.iconbtn { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
+.iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); flex: none }
 /* The top bar's icons are destinations, not row affordances: they are the only
    way to reach People, History and the invite link, and they are pressed with a
@@ -208,23 +209,17 @@ a { color: inherit; text-decoration: none }
 .daylabel { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
   color: var(--muted); padding: 13px 16px 5px; background: var(--card-2);
   border-bottom: 1px solid var(--rule-soft); font-weight: 500 }
-.avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  font-family: var(--f-display); font-size: 13px; font-weight: 600; flex: none; border: 1px solid var(--rule) }
-.a-0 { background: #CFE0D6; color: #123B2B } .a-1 { background: #E3D7C0; color: #4A3612 }
-.a-2 { background: #D2DCE8; color: #1C3550 } .a-3 { background: #E8D3D3; color: #582522 }
-.a-4 { background: #DCD8E8; color: #33265A } .a-5 { background: #D8E4C8; color: #2E4413 }
-:root[data-theme="dark"] .avatar { border-color: transparent; filter: brightness(.82) saturate(.9) }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .avatar { border-color: transparent; filter: brightness(.82) saturate(.9) }
-}
+.avatar { width: 34px; height: 34px; border-radius: var(--r-s); display: grid; place-items: center;
+  font-size: 12px; font-weight: 600; letter-spacing: -.02em; flex: none;
+  background: var(--card-2); color: var(--ink-2); border: 1px solid var(--rule) }
 
 .rmain { min-width: 0; flex: 1 }
-.rtitle { font-size: 14.5px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden;
+.rtitle { font-size: 13.5px; font-weight: 600; line-height: 1.25; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis }
-.rmeta { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden;
+.rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
 .ramt { text-align: right; flex: none }
-.ramt .big { font-family: var(--f-mono); font-size: 14.5px; font-weight: 500;
+.ramt .big { font-family: var(--f-mono); font-size: 14px; font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }
 .ramt .sm { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted);
   font-variant-numeric: tabular-nums; margin-top: 1px }
@@ -249,18 +244,18 @@ a { color: inherit; text-decoration: none }
 .personal .pers-summary { display: flex }
 
 /* ---- chips ---- */
-.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; padding: 2.5px 8px;
-  border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; padding: 2.5px 7px;
+  border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hl-edge); flex: none;
+.dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
   display: inline-block }
 
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
-  padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid var(--rule); background: var(--card-2) }
-.itemtablewrap { overflow-x: auto; border: 1px solid var(--rule-soft); border-radius: var(--r-m) }
+  padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
+.itemtablewrap { overflow-x: auto; border: 1px solid var(--rule-soft); border-radius: var(--r-s) }
 .itemtable { border-collapse: collapse; width: 100%; font-size: 12.5px }
 .itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 7px 8px; text-align: center }
 .itemtable tr:last-child td { border-bottom: 0 }
@@ -279,11 +274,11 @@ a { color: inherit; text-decoration: none }
    it sits in its own right-hand column rather than inline after a label of
    unpredictable length. */
 .itemfold { display: inline-flex; align-items: center; gap: 3px; flex: none; min-height: 25px;
-  padding: 3px 7px; border-radius: 999px; border: 1px solid var(--rule); background: var(--card);
+  padding: 3px 7px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
   font-family: var(--f-mono); font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .itemfold svg { color: var(--muted) }
-.itemfold.on { border-color: var(--hl-edge); background: var(--hl); color: var(--hl-ink) }
-.itemfold.on svg { color: var(--hl-ink) }
+.itemfold.on { border-color: var(--ink-2); background: var(--card-3); color: var(--ink) }
+.itemfold.on svg { color: var(--ink) }
 /* A highlighter band across the portions of one printed line, capped by a rule
    down its left edge: they read as one dish shared out, not as two lines the
    receipt happened to print. */
@@ -294,11 +289,11 @@ a { color: inherit; text-decoration: none }
   margin-top: 1px; background: transparent; border: 0; outline: none; padding: 0 }
 .itemamountin::placeholder { color: var(--muted) }
 .itemcell { width: 40px; height: 34px; display: grid; place-items: center }
-.itemcell .dot { width: 11px; height: 11px }
+.itemcell .dot { width: 10px; height: 10px }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
-.card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
+.card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
@@ -311,14 +306,16 @@ a { color: inherit; text-decoration: none }
 /* ---- nav, fab, buttons ---- */
 .bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none;
   padding: 7px 0 max(11px, env(safe-area-inset-bottom)) }
-.nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px;
-  color: var(--muted); font-weight: 500 }
-.nav.on { color: var(--brand) }
-.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: 78px; width: 54px; height: 54px;
-  border-radius: 50%; background: var(--brand); color: var(--brand-ink); display: grid; place-items: center;
-  box-shadow: 0 8px 20px -6px rgba(21,28,21,.5); z-index: 4 }
-.btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-m);
-  padding: 12px; font-weight: 600; font-size: 14.5px; width: 100% }
+.nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px;
+  color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase }
+.nav.on { color: var(--ink); font-weight: 700 }
+/* A solid ink block, not a floating pill: the one thing on the screen that is
+   pure figure-ground inversion, which is signal enough without a shadow. */
+.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: 78px; width: 50px; height: 50px;
+  border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
+  place-items: center; z-index: 4 }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
+  padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100% }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
 .btn-d { background: var(--debit-bg); color: var(--debit) }
@@ -326,8 +323,9 @@ a { color: inherit; text-decoration: none }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
-.action { font-size: 14px; font-weight: 600; color: var(--brand) }
-.action:disabled { color: var(--muted) }
+.action { font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-thickness: 1px }
+.action:disabled { color: var(--muted); text-decoration-color: var(--rule) }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
@@ -340,9 +338,9 @@ a { color: inherit; text-decoration: none }
 .amount {
   font-family: var(--f-mono);
   font-variant-numeric: tabular-nums;
-  font-size: 44px;
-  font-weight: 500;
-  letter-spacing: -.045em;
+  font-size: 42px;
+  font-weight: 600;
+  letter-spacing: -.035em;
   line-height: 1.1;
   background: transparent;
   border: 0;
@@ -368,7 +366,7 @@ a { color: inherit; text-decoration: none }
 
 /* ---- segmented control ---- */
 .seg { display: flex; background: var(--card-3); border-radius: var(--r-s); padding: 2.5px; gap: 2px }
-.seg button { flex: 1; text-align: center; font-size: 12px; padding: 5.5px 0; border-radius: 6px;
+.seg button { flex: 1; text-align: center; font-size: 11.5px; padding: 5.5px 0; border-radius: 1px;
   color: var(--muted); font-weight: 500 }
 .seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
@@ -398,7 +396,7 @@ a { color: inherit; text-decoration: none }
 .amountfield:focus-within { border-bottom-color: var(--brand) }
 .amountfield.plain { border-bottom: 0 }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
-.amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: 7px 7px 0 0 }
+.amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: var(--r-s) var(--r-s) 0 0 }
 .amountfield.big:focus-within { background: var(--card-2) }
 .amountfield:has(> input:disabled) { border-bottom-color: transparent }
 .amountfield > input:disabled { color: var(--muted) }
@@ -408,7 +406,7 @@ a { color: inherit; text-decoration: none }
 
 /* ---- inputs ---- */
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
-  border: 1px solid var(--rule-soft); border-radius: var(--r-m); padding: 10px 12px }
+  border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
 .field label { font-size: 13px; color: var(--muted); width: 62px; flex: none }
 .field input, .field select { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
@@ -417,8 +415,8 @@ a { color: inherit; text-decoration: none }
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 11px;
   align-items: center; padding: 9px 16px }
-.bar { height: 7px; border-radius: 999px; background: var(--card-3); position: relative; overflow: hidden }
-.bar i { position: absolute; top: 0; bottom: 0; border-radius: 999px }
+.bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
+.bar i { position: absolute; top: 0; bottom: 0 }
 .bar i.c { background: var(--credit); left: 50% }
 .bar i.d { background: var(--debit); right: 50% }
 .axis { height: 100%; width: 1px; background: var(--rule); position: absolute; left: 50%; top: 0 }
@@ -429,8 +427,8 @@ a { color: inherit; text-decoration: none }
   background: var(--rule) }
 .tle { position: relative; padding: 0 0 15px }
 .tle::before { content: ""; position: absolute; left: -21.5px; top: 5px; width: 9px; height: 9px;
-  border-radius: 50%; background: var(--card); border: 2px solid var(--rule) }
-.tle.now::before { border-color: var(--brand); background: var(--brand) }
+  border-radius: 1px; background: var(--card); border: 2px solid var(--rule) }
+.tle.now::before { border-color: var(--ink); background: var(--ink) }
 .tle .when { font-family: var(--f-mono); font-size: 10px; color: var(--muted); letter-spacing: .04em;
   padding-right: 32px }
 .tle .what { font-size: 13px; line-height: 1.4; margin-top: 1px }
@@ -443,14 +441,14 @@ a { color: inherit; text-decoration: none }
 /* Where a whole-group revision leads: the expense it was about. Reads as a
    thing to press rather than as more text under a sentence. */
 .tlink { display: flex; width: fit-content; align-items: center; gap: 6px; margin-top: 8px;
-  padding: 7px 10px 7px 12px; border-radius: var(--r-m); font-size: 13.5px; font-weight: 600;
+  padding: 7px 10px 7px 12px; border-radius: var(--r-s); font-size: 12.5px; font-weight: 600;
   color: var(--ink); background: var(--card-2); border: 1px solid var(--rule) }
-.tlink svg { color: var(--brand); flex: none }
+.tlink svg { color: var(--ink-2); flex: none }
 
 /* Restoring is rare and undoable; it gets an icon at the edge, not a sentence
    in the flow of the entry. The tap target is bigger than the mark. */
 .tlrewind { position: absolute; top: -4px; right: -6px; width: 34px; height: 34px;
-  display: grid; place-items: center; color: var(--muted); border-radius: 50% }
+  display: grid; place-items: center; color: var(--muted); border-radius: var(--r-s) }
 .tlrewind:active { background: var(--card-2); color: var(--ink-2) }
 
 /* A note under a control, explaining what it does and how far it reaches. */
@@ -458,5 +456,5 @@ a { color: inherit; text-decoration: none }
 
 /* ---- empty states ---- */
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
-.empty b { display: block; font-family: var(--f-display); font-size: 15px; color: var(--ink);
-  margin-bottom: 4px; font-weight: 600 }
+.empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
+  margin-bottom: 4px; font-weight: 700 }
