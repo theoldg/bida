@@ -169,7 +169,28 @@ export interface GroupSummary {
 export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLiveQuery(async () => {
     const d = db();
-    const [groups, device] = await Promise.all([d.groups.toArray(), d.device.get("device")]);
+    // Five reads, not three per group. Every row on this phone belongs to a
+    // group in this list, so fetching each table whole and bucketing it here
+    // moves the same bytes in a constant number of IndexedDB round trips —
+    // the group list was the one screen whose cost grew with the group count.
+    const [groups, device, members, expenses, settlements] = await Promise.all([
+      d.groups.toArray(),
+      d.device.get("device"),
+      d.members.toArray(),
+      d.expenses.toArray(),
+      d.settlements.toArray(),
+    ]);
+    const byGroup = <T extends { groupId: string; deletedAt?: number | null }>(rows: T[]) => {
+      const map = new Map<string, T[]>();
+      for (const row of rows) {
+        if (row.deletedAt) continue;
+        const bucket = map.get(row.groupId);
+        if (bucket) bucket.push(row); else map.set(row.groupId, [row]);
+      }
+      return map;
+    };
+    const m = byGroup(members), e = byGroup(expenses), s = byGroup(settlements);
+
     const left = new Set(device?.leftGroups ?? []);
     const out: GroupSummary[] = [];
     for (const group of groups) {
@@ -177,18 +198,15 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       // still has other people in it — this list is "your groups", not
       // "every group this device has ever synced".
       if (left.has(group.id)) continue;
-      const [members, expenses, settlements] = await Promise.all([
-        d.members.where("groupId").equals(group.id).toArray(),
-        d.expenses.where("groupId").equals(group.id).toArray(),
-        d.settlements.where("groupId").equals(group.id).toArray(),
-      ]);
-      const live = { m: alive(members), e: alive(expenses), s: alive(settlements) };
+      const live = {
+        m: m.get(group.id) ?? [], e: e.get(group.id) ?? [], s: s.get(group.id) ?? [],
+      };
       const balances = computeBalances({
         ...emptyGroupState(),
         group,
-        members: Object.fromEntries(live.m.map((m) => [m.id, m])),
-        expenses: Object.fromEntries(live.e.map((e) => [e.id, e])),
-        settlements: Object.fromEntries(live.s.map((s) => [s.id, s])),
+        members: Object.fromEntries(live.m.map((x) => [x.id, x])),
+        expenses: Object.fromEntries(live.e.map((x) => [x.id, x])),
+        settlements: Object.fromEntries(live.s.map((x) => [x.id, x])),
       });
       const me = device?.meByGroup[group.id];
       out.push({
@@ -198,8 +216,8 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
         netMinor: me ? balances.byMember[me] ?? 0 : undefined,
         lastActivity: Math.max(
           group.createdAt,
-          ...live.e.map((e) => e.occurredAt),
-          ...live.s.map((s) => s.occurredAt),
+          ...live.e.map((x) => x.occurredAt),
+          ...live.s.map((x) => x.occurredAt),
         ),
       });
     }
