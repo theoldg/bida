@@ -25,7 +25,9 @@ to redraw a screen it already has. The service worker precaches the whole export
 under a build-stamped revision and serves it cache-first, RSC payloads included
 — they were the miss that turned a tap into a round trip online and a screenful
 of `1:"$Sreact.fragment"` off ([frontend.md](frontend.md#pwa); `node
-scripts/offline-check.mjs` walks fourteen screens with the network cut). On top
+scripts/offline-check.mjs` walks fourteen screens with the network cut, then
+installs a deploy over a half-dead network — a precache is all-or-nothing,
+because `activate` deletes the previous one). On top
 of it, the two states that made the app *feel* slow: every control now darkens
 under the thumb the instant it's touched, and a list still coming out of Dexie
 draws its own shape rather than a blank

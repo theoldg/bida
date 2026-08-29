@@ -31,9 +31,19 @@ if (!existsSync(OUT)) {
   process.exit(1);
 }
 
+// Levers for the "a deploy installed over a dying signal" case at the end.
+let swRevision = null;
+const blocked = new Set();
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   let path = decodeURIComponent(url.pathname);
+  if (blocked.has(path)) { res.writeHead(503); return res.end(); }
+  if (path === "/sw.js" && swRevision) {
+    const src = await readFile(join(OUT, "sw.js"), "utf8");
+    res.writeHead(200, { "content-type": "text/javascript" });
+    return res.end(src.replace(/const REVISION = "[^"]*"/, `const REVISION = "${swRevision}"`));
+  }
   if (path.endsWith("/")) path += "index.html";
   let file = join(OUT, path);
   const isFile = (p) => existsSync(p) && statSync(p).isFile();
@@ -42,6 +52,11 @@ const server = createServer(async (req, res) => {
   res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
   res.end(await readFile(file));
 });
+/** Any one precached file will do; a hashed chunk is the realistic casualty. */
+const ASSET_TO_DROP = JSON.parse(
+  (await readFile(join(OUT, "sw.js"), "utf8")).match(/const ASSETS = (\[[\s\S]*?\]);/)[1],
+).find((a) => a.startsWith("/_next/static/chunks/"));
+
 await new Promise((ok) => server.listen(PORT, ok));
 const base = `http://localhost:${PORT}`;
 
@@ -49,7 +64,7 @@ const browser = await chromium.launch({ executablePath: EXECUTABLE });
 const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
 });
-const page = await ctx.newPage();
+let page = await ctx.newPage();
 
 let failures = 0;
 function report(ok, label, detail) {
@@ -132,6 +147,34 @@ try {
   report(false, "save an expense, land back on the ledger with it in the list",
     `at ${page.url().replace(base, "")} — ${(await page.evaluate(() => document.body.innerText)).slice(0, 100).replace(/\s+/g, " ")}`);
 }
+
+// ---- a deploy that installs over a dying signal --------------------------
+// The failure this guards against is silent and only bites later: `activate`
+// deletes the previous cache, so a new worker allowed to install with holes in
+// its own leaves an installed phone unable to paint the build it now has.
+console.log("\nupdate over a flaky network:");
+await ctx.setOffline(false);
+const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("hajsik-shell-"));
+blocked.add(ASSET_TO_DROP);
+swRevision = "flakydeploy01";
+/** `update()` resolves before the install settles, so watch the worker itself. */
+const waiting = await page.evaluate(async () => {
+  const reg = await navigator.serviceWorker.getRegistration();
+  await reg.update().catch(() => {});
+  for (let i = 0; i < 60 && !reg.waiting; i++) {
+    if (reg.installing?.state === "redundant") return null;
+    await new Promise((ok) => setTimeout(ok, 500));
+  }
+  return reg.waiting?.state ?? null;
+});
+report(waiting === null, "an incomplete precache fails the install", waiting && `a worker is ${waiting}`);
+report((await page.evaluate(() => caches.keys())).includes(cacheBefore), "the working cache survives it");
+// The damage would only show one launch later: a waiting worker activates when
+// the last page closes, and activating is what deletes the good cache.
+await page.close();
+page = await ctx.newPage();
+await ctx.setOffline(true);
+await tap("still loads offline on the next launch", () => page.goto(`${base}/`), ".rows a.row");
 
 await browser.close();
 server.close();

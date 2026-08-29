@@ -40,10 +40,15 @@ every screen pay a round trip on the chance there is one.
   constantly — and takes over on the next launch. A deploy is therefore visible
   one launch later, which is the price.
 - The precache is the whole export, currently ~1.7MB across ~75 files. It
-  installs in batches with `Promise.allSettled`, so one bad entry doesn't fail
-  the install. If the export ever grows past what a phone should hold on first
-  visit, split the manifest — don't go back to a hand-written list.
+  installs in batches, and it is all-or-nothing: one retry for the stragglers,
+  then the install fails. Tolerating a hole was worse than no update — the
+  update runs on whatever signal the phone last had, and `activate` deletes the
+  previous cache, so a partial one strands an installed app on a build it can't
+  paint offline. A failed install just leaves the old worker running. If the
+  export ever grows past what a phone should hold on first visit, split the
+  manifest — don't go back to a hand-written list.
 - `scripts/offline-check.mjs` is the regression test: it drives the real export
   in Chromium, waits for the worker, reloads once (there is no `clients.claim`),
-  cuts the network and walks fourteen screens including a save. Run it after
-  touching `sw.js` or adding a route.
+  cuts the network and walks fourteen screens including a save, then installs a
+  deploy over a half-dead network and relaunches. Run it after touching
+  `sw.js` or adding a route.

@@ -38,17 +38,34 @@ async function cacheFirst(cacheKey, request) {
   return res;
 }
 
+/**
+ * All-or-nothing, because `activate` deletes the previous cache: a precache
+ * with holes replaces a complete one, and the installed app is then a build
+ * that can't finish painting itself with no signal. Which is the likely case —
+ * the update runs on whatever mobile data the phone had when it was last
+ * opened. So: batches (a few hundred parallel requests shouldn't stall the
+ * phone), one retry for the stragglers, then throw. A failed install leaves the
+ * running worker and its intact cache alone, and the browser tries again later.
+ */
+async function addAll(cache, urls) {
+  const failed = [];
+  for (let i = 0; i < urls.length; i += 12) {
+    const batch = urls.slice(i, i + 12);
+    const results = await Promise.allSettled(batch.map((url) => cache.add(url)));
+    results.forEach((r, j) => r.status === "rejected" && failed.push(batch[j]));
+  }
+  return failed;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) =>
-      // Best-effort and in chunks: one bad entry shouldn't fail the install,
-      // and a few hundred parallel requests shouldn't stall the phone.
-      (async () => {
-        for (let i = 0; i < ASSETS.length; i += 12) {
-          await Promise.allSettled(ASSETS.slice(i, i + 12).map((url) => cache.add(url)));
-        }
-      })(),
-    ),
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      const missing = await addAll(cache, await addAll(cache, ASSETS));
+      if (missing.length) {
+        throw new Error(`precache incomplete: ${missing.length} of ${ASSETS.length} missing`);
+      }
+    })(),
   );
   // Deliberately no `skipWaiting`. Serving the shell from cache is only safe if
   // a running page can't have its build deleted out from under it: activating

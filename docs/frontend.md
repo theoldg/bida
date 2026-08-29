@@ -124,8 +124,9 @@ the worker does not `skipWaiting`, so a deploy takes over on the next launch
 rather than deleting the running build under an open page; and a *document*
 request for a `.txt` is answered with that route's shell.
 
-`node scripts/offline-check.mjs` walks every screen with the network cut,
-against the real export. Run it after touching either file.
+`node scripts/offline-check.mjs` walks every screen with the network cut and
+then installs a deploy over a half-dead network, against the real export. Run it
+after touching either file.
 
 ## Every money field is `components/amount-input.tsx`
 
