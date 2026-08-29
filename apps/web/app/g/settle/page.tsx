@@ -100,8 +100,7 @@ function SettleScreen() {
                 onChange={(e) => setOccurredAt(withDate(occurredAt, e.target.value))} />
             </div>
             <div className="field">
-              <label htmlFor="s-note">Note (optional)</label>
-              <input id="s-note" value={note} placeholder="Note (optional)"
+              <input id="s-note" aria-label="Note (optional)" value={note} placeholder="Note (optional)"
                 onChange={(e) => setNote(e.target.value)} />
             </div>
           </div>

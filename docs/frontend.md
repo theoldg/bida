@@ -52,6 +52,11 @@ confers nothing without the secret.
   `claimIdentity` writes an `identity` op
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
+- **The expense draft is never stored** (`lib/draft.ts`): an in-memory store
+  shared by the expense screens, so bouncing to the split/payers/items routes
+  keeps what's typed, and nothing else does. Leaving the expense screen asks
+  before discarding, and a reload gets the browser's own warning — `seedDraft`
+  records the baseline `isDraftDirty` compares against.
 - History wording lives once, in `lib/history-copy.ts` (`describe`,
   `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
   must be **total** — they run inside a render over every patch the log holds,

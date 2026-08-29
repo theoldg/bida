@@ -19,7 +19,7 @@ import { dateInputValue, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
-import { blankDraft, clearDraft, getDraft, saveDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
+import { blankDraft, clearDraft, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
 
 export default function EditExpensePage() {
   return <QueryBoundary><EditExpenseScreen /></QueryBoundary>;
@@ -87,7 +87,7 @@ function EditExpenseScreen() {
     if (expenseId) {
       const e = data.expenses.find((x) => x.id === expenseId);
       if (!e) return;
-      saveDraft(groupId, {
+      seedDraft(groupId, {
         expenseId,
         // `minorToDecimalString`, never `bare`: this is the canonical text
         // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
@@ -110,9 +110,18 @@ function EditExpenseScreen() {
     } else {
       const me = data.me ?? data.members[0]?.id;
       if (!me) return;
-      saveDraft(groupId, blankDraft(me, data.group.baseCurrency, data.members.map((m) => m.id)));
+      seedDraft(groupId, blankDraft(me, data.group.baseCurrency, data.members.map((m) => m.id)));
     }
   }, [groupId, expenseId, data.loading, data.group, data.members, data.me, data.expenses]);
+
+  // Nothing is stored, so a reload or a closed tab loses what's typed. Let the
+  // browser say so, the same way it does for any other half-filled form.
+  useEffect(() => {
+    if (!groupId) return;
+    const warn = (e: BeforeUnloadEvent) => { if (isDraftDirty(groupId)) e.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [groupId]);
 
   if (!groupId || !data.group || !draft) {
     return <Screen><Body><TopBar title={expenseId ? "Edit" : "New expense"} back={true} /></Body></Screen>;
@@ -205,6 +214,16 @@ function EditExpenseScreen() {
   const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
     && draft.description.trim().length > 0;
 
+  // Leaving throws the draft away — there is nowhere for it to be kept — so ask
+  // first, but only once something has actually been typed.
+  function goBack() {
+    if (!groupId) return;
+    if (isDraftDirty(groupId)
+      && !window.confirm("Discard this expense? What you've entered will be lost.")) return;
+    clearDraft(groupId);
+    router.back();
+  }
+
   async function save() {
     if (!ready || !groupId) return;
     const actor = data.me ?? draft!.paidBy;
@@ -236,7 +255,7 @@ function EditExpenseScreen() {
         <TopBar
           title={draft.expenseId ? "Edit expense" : "New expense"}
           sub={group.name}
-          back={true}
+          back={goBack}
           right={<button className="action" onClick={save} disabled={!ready}>Save</button>}
         />
 

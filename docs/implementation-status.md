@@ -14,7 +14,7 @@ Update it in the same commit as the code it describes.*
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | 🟡 install prompt done; CSV export, categories, empty/error states open |
-| 7 — Owner's punch list | ✅ all eight, plus six rounds of follow-ups (2026-08-28) |
+| 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-29 |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent

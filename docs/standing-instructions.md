@@ -131,3 +131,7 @@ it applies to work nobody has done yet.
 - **No cross-group total on the groups screen.** *2026-08-29* — one number per
   group, in that group's own currency. A sum across groups either lies about
   currency or restates rows already on screen.
+- **Nothing half-typed is kept.** *2026-08-29* — an abandoned expense is
+  discarded, with a warning first, rather than saved and handed back later.
+- **A placeholder is the label.** *2026-08-29* — an optional field with an
+  obvious placeholder ("Note (optional)") carries no title above it.

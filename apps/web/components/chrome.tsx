@@ -29,13 +29,13 @@ export function Scroll({ children }: { children: ReactNode }) {
 }
 
 export function TopBar({ title, sub, back, right }: {
-  title: ReactNode; sub?: ReactNode; back?: string | true; right?: ReactNode;
+  title: ReactNode; sub?: ReactNode; back?: string | true | (() => void); right?: ReactNode;
 }) {
   const router = useRouter();
   return (
     <div className="topbar">
-      {back === true ? (
-        <button className="iconbtn" onClick={() => router.back()} aria-label="Back">
+      {back === true || typeof back === "function" ? (
+        <button className="iconbtn" onClick={() => (typeof back === "function" ? back() : router.back())} aria-label="Back">
           <Icon name="back" size={17} />
         </button>
       ) : back ? (
