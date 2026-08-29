@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Avatar, signClass } from "../components/bits";
-import { BottomNav, Body, Empty, Screen, Scroll, TopBar } from "../components/chrome";
+import { BottomNav, Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { Icon } from "../components/icons";
 import { InstallNudge } from "../components/install";
 import { ago, money, plural } from "../lib/format";
@@ -22,6 +22,10 @@ export default function GroupsPage() {
         <TopBar title="Your groups" />
 
         <Scroll>
+          {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
+              two used to look the same, and the blank was the one you saw. */}
+          {groups === undefined ? <SkeletonRows count={4} /> : null}
+
           {groups && groups.length === 0 ? (
             <Empty title="No groups yet">
               A group is a trip, a flat, a dinner — anything several people pay for.

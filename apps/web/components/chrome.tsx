@@ -87,6 +87,33 @@ export function Banner({ children, icon }: { children: ReactNode; icon?: IconNam
   );
 }
 
+/**
+ * The ledger's own shape, drawn while the ledger is still coming out of
+ * IndexedDB. Widths are a fixed cycle, not random: the static export renders
+ * this markup at build time and a random width would differ from the browser's.
+ */
+const SKELETON_WIDTHS = ["62%", "44%", "78%", "51%", "69%", "38%"];
+
+export function SkeletonRows({ count = 5 }: { count?: number }) {
+  return (
+    <div className="rows" aria-hidden="true">
+      {Array.from({ length: count }, (_, i) => (
+        <div className="row skelrow" key={i} style={{ ["--d" as string]: `${i * 0.09}s` }}>
+          <div className="avatar skel" />
+          <div className="rmain">
+            <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+            <div className="skel" style={{ height: 7, width: "34%" }} />
+          </div>
+          <div className="ramt">
+            <div className="skel" style={{ height: 10, width: 54 }} />
+            <div className="skel" style={{ height: 7, width: 32 }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return <div className="empty"><b>{title}</b>{children}</div>;
 }

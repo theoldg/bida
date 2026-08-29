@@ -7,7 +7,7 @@ import {
 } from "@hajsik/core";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
-  Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, TopBar,
+  Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
@@ -34,7 +34,25 @@ function GroupScreen() {
   const invite = useInviteLink(groupId);
 
   if (!groupId) return <Screen><Body><TopBar title="No group" back={route.groups()} /></Body></Screen>;
-  if (data.loading) return <Screen><Body><TopBar title=" " /></Body></Screen>;
+  // Loading used to be a top bar over nothing — indistinguishable from a tap
+  // that didn't land. Draw the whole frame instead: the group's name is the
+  // only thing here that has to wait for Dexie.
+  if (data.loading) {
+    return (
+      <Screen>
+        <Body>
+          <TopBar title=" " back={route.groups()} />
+          <Scroll><SkeletonRows count={6} /></Scroll>
+        </Body>
+        {tab === "expenses" ? <Fab href={route.addExpense(groupId)} /> : null}
+        <BottomNav items={[
+          { label: "Expenses", icon: "list", href: route.group(groupId), on: tab === "expenses" },
+          { label: "Balances", icon: "scale", href: route.group(groupId, "balances"),
+            on: tab === "balances" },
+        ]} />
+      </Screen>
+    );
+  }
   if (!data.group) {
     return (
       <Screen><Body>

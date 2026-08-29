@@ -20,7 +20,19 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the app asks to be installed — a dismissable nudge under the groups
+Since: the app is actually usable offline, and no longer waits on the network
+to redraw a screen it already has. The service worker precaches the whole export
+under a build-stamped revision and serves it cache-first, RSC payloads included
+— they were the miss that turned a tap into a round trip online and a screenful
+of `1:"$Sreact.fragment"` off ([frontend.md](frontend.md#pwa); `node
+scripts/offline-check.mjs` walks fourteen screens with the network cut). On top
+of it, the two states that made the app *feel* slow: every control now darkens
+under the thumb the instant it's touched, and a list still coming out of Dexie
+draws its own shape rather than a blank
+([design-system.md](design-system.md#nothing-waits-in-silence)). The group list
+reads five tables whole instead of three per group.
+
+Before it: the app asks to be installed — a dismissable nudge under the groups
 list and a permanent offer in Settings, Chrome's `beforeinstallprompt` where it
 exists and share-sheet instructions on iOS ([frontend.md](frontend.md#pwa)).
 
@@ -34,13 +46,8 @@ unfolds on the who-had-what grid into that many separately assignable rows
 (two shared one, someone else had the other), and merges back; the portions
 sum to the printed line exactly, so the bill's total never moves
 ([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
-Before it: the recurring receipt-split bugs, root-caused. Receipt derives its
-total and writes it nowhere (ADR-0020), but every other tab reads `amountText`,
-so *leaving* Receipt zeroed the amount — a greyed-out Save, and "€0.00 of
-€0.00 allocated" one tap later, since `validateSplit(0, …)` scores 0-of-0 as
-satisfied. Leaving Receipt now hands the total back the same way
-`convertSplitMode` already handed the split back, and a zero total is never
-rendered as an allocated one
+Before it: the recurring receipt-split bugs, root-caused — leaving Receipt hands
+the total back to `amountText` rather than zeroing it
 ([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
 
 ## The next action

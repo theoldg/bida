@@ -17,6 +17,7 @@
   --debit:#A94B3D;  --debit-bg:#F4E9E6;
   --brand:#16171A; --brand-ink:#FBFBFA;
   --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
+  --press:rgba(22,23,26,.09);
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
   --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
@@ -33,6 +34,7 @@
     --debit:#DC8377;  --debit-bg:#261917;
     --brand:#E6E7E9; --brand-ink:#0E0F11;
     --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+    --press:rgba(230,231,233,.11);
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -45,6 +47,7 @@
   --debit:#DC8377;  --debit-bg:#261917;
   --brand:#E6E7E9; --brand-ink:#0E0F11;
   --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+  --press:rgba(230,231,233,.11);
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -56,6 +59,27 @@ body{
 }
 :focus-visible{outline:1.5px solid var(--ink); outline-offset:2px; border-radius:var(--r-s)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Press. A wash laid over whatever the control already sits on, so one value
+   covers a row on paper, a highlighted row and the inverted FAB alike. Nothing
+   moves and nothing scales: this design doesn't float. Instant down, ~.2s up.
+   In the app these selectors are scoped to real controls (a.row, button.row);
+   here every element is a div in a picture of a phone. */
+.row,.nav,.fab,.btn,.iconbtn,.chip,.card,.tlrewind{transition:background-image .2s ease}
+.row:active,.nav:active,.fab:active,.btn:active,.iconbtn:active,.chip:active,
+.card:active,.tlrewind:active{
+  background-image:linear-gradient(var(--press),var(--press));transition-duration:0s}
+.phone *{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+
+/* Waiting. A list that hasn't loaded holds its own shape rather than going
+   blank — same row height, same three columns — so arrival changes the text and
+   not the layout. The stagger is what keeps a block of them from reading as one
+   broken panel. */
+.skel{background:var(--card-3);border-radius:2px;animation:skelpulse 1.4s ease-in-out infinite;
+  animation-delay:var(--d,0s)}
+@keyframes skelpulse{0%,100%{opacity:1}50%{opacity:.42}}
+.skelrow .rmain{display:flex;flex-direction:column;gap:6px}
+.skelrow .ramt{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
 
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
 h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;font-weight:700;letter-spacing:-.03em}
@@ -836,6 +860,52 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
     <div class="sw-item"><div class="sw-chip" style="background:var(--credit)"></div><b>Credit</b><span>you're owed</span></div>
     <div class="sw-item"><div class="sw-chip" style="background:var(--debit)"></div><b>Debit</b><span>you owe</span></div>
     <div class="sw-item"><div class="sw-chip" style="background:var(--hl);border-color:var(--hl-edge)"></div><b>Highlighter</b><span>personal mode</span></div>
+    <div class="sw-item"><div class="sw-chip" style="background:var(--card);background-image:linear-gradient(var(--press),var(--press))"></div><b>Press</b><span>under the thumb</span></div>
+  </div>
+
+  <div class="rail" style="margin-bottom:30px">
+  <figure class="screen">
+    <div class="phone"><div class="app">
+      <div class="statusbar"><span>20:14</span><span class="sbr"><svg width="12" height="12"><use href="#i-sync"/></svg> 100%</span></div>
+      <div class="appbody">
+        <div class="topbar">
+          <div><h3>Your groups</h3></div>
+        </div>
+        <div class="scroll"><div class="rows">
+          <div class="row skelrow" style="--d:0.00s">
+            <div class="avatar skel"></div>
+            <div class="rmain"><div class="skel" style="height:9px;width:62%"></div><div class="skel" style="height:7px;width:34%"></div></div>
+            <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
+          </div>
+          <div class="row skelrow" style="--d:0.09s">
+            <div class="avatar skel"></div>
+            <div class="rmain"><div class="skel" style="height:9px;width:44%"></div><div class="skel" style="height:7px;width:34%"></div></div>
+            <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
+          </div>
+          <div class="row skelrow" style="--d:0.18s">
+            <div class="avatar skel"></div>
+            <div class="rmain"><div class="skel" style="height:9px;width:78%"></div><div class="skel" style="height:7px;width:34%"></div></div>
+            <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
+          </div>
+          <div class="row skelrow" style="--d:0.27s">
+            <div class="avatar skel"></div>
+            <div class="rmain"><div class="skel" style="height:9px;width:51%"></div><div class="skel" style="height:7px;width:34%"></div></div>
+            <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
+          </div>
+          <div class="row" style="padding-top:16px">
+            <div class="avatar" style="background:transparent;border-style:dashed;color:var(--muted)"><svg width="15" height="15"><use href="#i-plus"/></svg></div>
+            <div class="rmain"><div class="rtitle" style="color:var(--muted);font-weight:500">New group</div></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="bottomnav">
+        <div class="nav on"><svg width="19" height="19"><use href="#i-list"/></svg>Groups</div>
+        <div class="nav"><svg width="19" height="19"><use href="#i-clock"/></svg>Activity</div>
+        <div class="nav"><svg width="19" height="19"><use href="#i-users"/></svg>You</div>
+      </div>
+    </div></div>
+    <figcaption><strong>Waiting</strong>The first frame of every list, held for as long as the database takes. The frame, the nav and the one row you can already act on are real; only the ledger is a placeholder. The subtitle count is absent rather than zero — an unknown number is not none.</figcaption>
+  </figure>
   </div>
 
   <div class="grid2">
@@ -850,6 +920,10 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
     <div class="note-card">
       <h4>Colour is never the only signal</h4>
       <p>Debit and credit always carry a sign, a word ("you owe" / "you're owed") and a bar direction. Pending sync carries a dot <em>and</em> a banner. Nothing in the app is legible only to people who can separate red from green.</p>
+    </div>
+    <div class="note-card">
+      <h4>Nothing waits in silence</h4>
+      <p>A screen that hasn't repainted and a screen that didn't hear you look identical, so every control darkens the instant it's touched and releases over ~.2s — press one above. A list still coming out of the database draws its own shape rather than a blank: same rows, same columns, pulsing, staggered. Between the two there is no moment where the app looks broken, and no spinner anywhere.</p>
     </div>
     <div class="note-card">
       <h4>Built on shadcn</h4>

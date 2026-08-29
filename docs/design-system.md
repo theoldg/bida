@@ -26,6 +26,7 @@ texture, the second and third typeface, and every tint that wasn't a balance.
 | `--brand` | **Equal to `--ink`.** Buttons, active tabs, the focus ring |
 | `--credit` / `--debit` | **The only two hues in the app.** Money owed to you / by you |
 | `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: personal mode, and pending sync |
+| `--press` | The wash under a thumb. Composited, not a background |
 
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
 never colour a control with `--credit`; and because `--brand` is just ink, a
@@ -57,6 +58,21 @@ in debit red, with the left edge bar taking the same colour. Three signals for
 one fact: sign, colour, bar. A row that nets to nothing keeps a neutral grey
 edge. Rows you're not part of drop to 42% opacity rather than disappearing —
 you should still see the group's spending.
+
+## Nothing waits in silence
+
+A screen that hasn't repainted yet and a screen that didn't hear you look
+identical. Two states cover the gap, and neither is a spinner:
+
+- **Press.** `--press` on `:active`, as a `linear-gradient` rather than a
+  `background-color` so it composites over what the control already sits on —
+  one value covers a row on paper, a highlighted row and the inverted FAB.
+  Instant down, `.2s` up; nothing moves and nothing scales. The browser's own
+  tap highlight is off (late, and it disagrees), and `touch-action:
+  manipulation` goes with it to drop the 300ms double-tap wait.
+- **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
+  height, same three columns, pulsing, staggered — arrival changes the text and
+  not the layout. The frame, nav and FAB around it are real and tappable.
 
 ## Type
 

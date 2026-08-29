@@ -16,6 +16,9 @@
   --debit:#A94B3D;  --debit-bg:#F4E9E6;
   --brand:#16171A; --brand-ink:#FBFBFA;
   --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
+  /* Laid over whatever a control already sits on, so one value covers a row on
+     paper, a highlighted row, and the inverted FAB alike. */
+  --press:rgba(22,23,26,.09);
   /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
@@ -39,6 +42,7 @@
     --debit:#DC8377;  --debit-bg:#261917;
     --brand:#E6E7E9; --brand-ink:#0E0F11;
     --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+    --press:rgba(230,231,233,.11);
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -52,6 +56,7 @@
   --debit:#DC8377;  --debit-bg:#261917;
   --brand:#E6E7E9; --brand-ink:#0E0F11;
   --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
+  --press:rgba(230,231,233,.11);
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -158,6 +163,41 @@ input, textarea, .selectable {
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ============================================================
+   TAP FEEDBACK
+   A screen that hasn't repainted yet and a screen that didn't hear you look
+   identical, and the ledger is a list of things you press. Every control
+   darkens under the thumb the moment it's touched and releases over ~.2s.
+   It is a wash laid over whatever the control already sits on — a row on
+   paper, a highlighted row, the inverted FAB — so one value covers all of
+   them and nothing's resting appearance changes. Nothing moves and nothing
+   scales: this design doesn't float.
+
+   The browser's own tap highlight goes with it. It arrives on a delay of its
+   own, disagrees with these colours, and on iOS boxes the whole row in blue.
+   `touch-action: manipulation` drops the 300ms double-tap-to-zoom wait that
+   sits in front of every tap along with it.
+   ============================================================ */
+a, button, label, select, .seg button, .itemcell {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
+.itemfold, a.chip, button.chip, .action, .tlrewind {
+  transition: background-image .2s ease;
+}
+a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
+.tlink:active, .seg button:active, a.card:active, .itemfold:active,
+a.chip:active, button.chip:active, .tlrewind:active, .btn:active:not(:disabled),
+.action:active:not(:disabled) {
+  /* A gradient, not a background-color: it composites over the element's own
+     background instead of replacing it. */
+  background-image: linear-gradient(var(--press), var(--press));
+  /* Down is instant; only the release is worth easing. */
+  transition-duration: 0s;
 }
 
 /* ============================================================
@@ -451,10 +491,26 @@ a { color: inherit; text-decoration: none }
    in the flow of the entry. The tap target is bigger than the mark. */
 .tlrewind { position: absolute; top: -4px; right: -6px; width: 34px; height: 34px;
   display: grid; place-items: center; color: var(--muted); border-radius: var(--r-s) }
-.tlrewind:active { background: var(--card-2); color: var(--ink-2) }
 
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
+
+/* ---- skeletons ----
+   A screen waiting on IndexedDB used to render its top bar over nothing: the
+   frame appeared, the page sat empty, then a ledger dropped in. These hold the
+   shape instead — same row height, same three columns — so arrival changes the
+   text and not the layout. The widths are fixed rather than random so the
+   export and the browser agree, and the pulse is staggered a row at a time
+   because a block of them breathing in unison reads as a broken screen. */
+.skel { background: var(--card-3); border-radius: 2px;
+  animation: skelpulse 1.4s ease-in-out infinite; animation-delay: var(--d, 0s) }
+@keyframes skelpulse { 0%, 100% { opacity: 1 } 50% { opacity: .42 } }
+.skelrow { pointer-events: none }
+/* A real last row drops its divider because the list ends there. A skeleton's
+   never does: something always follows it — more rows, or the New group row. */
+.skelrow:last-child { border-bottom: 1px solid var(--rule) }
+.skelrow .rmain { display: flex; flex-direction: column; gap: 6px }
+.skelrow .ramt { display: flex; flex-direction: column; gap: 5px; align-items: flex-end }
 
 /* ---- empty states ---- */
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
