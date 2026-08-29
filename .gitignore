@@ -11,3 +11,5 @@ dist/
 coverage/
 *.tsbuildinfo
 shots/
+# Throwaway measurement rigs: probe scripts, perf harnesses.
+*.tmp.*
