@@ -100,12 +100,25 @@ the same offer permanently in Settings. "Not now" writes
 launch is what makes install prompts hated; Settings is where it lives after
 that.
 
-`public/sw.js` precaches the app shell (every static route, plus manifest and
-icons), registered from `components/register-sw.tsx`. **It does not cache
-`/api/*`** — Dexie is the offline data layer, and a second cache over the same
-data gives you two disagreeing sources of truth. Pages network-first with a
-cache fallback; hashed `/_next/static/` cache-first. Bump `CACHE_VERSION` by
-hand whenever caching behaviour changes.
+`public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
+chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —
+registered from `components/register-sw.tsx`. **It does not cache `/api/*`** —
+Dexie is the offline data layer, and a second cache over the same data gives
+you two disagreeing sources of truth.
+
+Everything precached is served cache-first, so a launch and every tap after it
+paint without waiting on the network. Three things make that safe. The list and
+the cache name are stamped in after the build by `apps/web/scripts/precache.mjs`
+from the files actually on disk, so neither can drift and there is no
+`CACHE_VERSION` to bump. The worker does not `skipWaiting`: activating
+mid-session would delete the running build's chunks out from under the open
+page, so a new deploy takes over on the next launch. And a *document* request
+for a `.txt` is answered with that route's shell — offline, Next abandons a
+failed payload fetch by handing the browser the payload URL, which served
+literally is a screenful of `1:"$Sreact.fragment"`.
+
+`node scripts/offline-check.mjs` walks every screen with the network cut,
+against the real export. Run it after touching either file.
 
 ## Every money field is `components/amount-input.tsx`
 

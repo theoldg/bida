@@ -1,32 +1,60 @@
 /**
- * App-shell precache only — never the API. Dexie is the offline data layer;
- * caching `/api/*` responses here would be a second, disagreeing source of
- * truth. See docs/frontend.md#pwa.
+ * App-shell precache — never the API. Dexie is the offline data layer; caching
+ * `/api/*` here would be a second, disagreeing source of truth.
+ * See docs/frontend.md#pwa.
  *
- * Bump CACHE_VERSION whenever this file's caching behaviour changes so old
- * clients drop their stale cache on the next activate.
+ * Both lists below are stamped in by `scripts/precache.mjs` after the export is
+ * written, from the files actually on disk. Don't edit them, and don't add a
+ * hand-maintained route list back: the last one drifted from the app twice over.
  */
-const CACHE_VERSION = "v1";
-const CACHE_NAME = `hajsik-shell-${CACHE_VERSION}`;
+const REVISION = "__PRECACHE_REVISION__";
+const ASSETS = ["__PRECACHE_ASSETS__"];
+const CACHE_NAME = `hajsik-shell-${REVISION}`;
 
-// Every static route in the app (per ADR-0007, the full set is known at
-// build time — no dynamic segments). Kept in sync by hand; a route missing
-// here just means its first visit needs to be online, same as before this
-// file existed.
-const SHELL_URLS = [
-  "/", "/new", "/g", "/g/expense", "/g/expense/edit", "/g/split",
-  "/g/history", "/g/members", "/g/settle", "/join", "/settings",
-  "/manifest.webmanifest", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png",
-];
+/**
+ * Next fetches an RSC payload — `/g.txt?id=…&_rsc=…` — on every in-app tap, and
+ * a static export's payload for a route is one file whose query string is only
+ * ever app state. Match on the path alone and the whole app navigates from
+ * cache; miss them, as the first version of this file did, and every tap is a
+ * network round trip that fails outright on a train.
+ */
+function isPayload(url) {
+  return url.pathname.endsWith(".txt");
+}
+
+/** `/g.txt` is the payload for `/g`. Nothing else in the export ends in .txt. */
+function routeOf(url) {
+  return url.pathname.slice(0, -".txt".length) || "/";
+}
+
+async function cacheFirst(cacheKey, request) {
+  const cached = await caches.match(cacheKey, { ignoreSearch: true });
+  if (cached) return cached;
+  const res = await fetch(request);
+  if (res.ok) {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(cacheKey, res.clone());
+  }
+  return res;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      // Best-effort: one missing route shouldn't fail the whole install.
-      Promise.allSettled(SHELL_URLS.map((url) => cache.add(url))),
+      // Best-effort and in chunks: one bad entry shouldn't fail the install,
+      // and a few hundred parallel requests shouldn't stall the phone.
+      (async () => {
+        for (let i = 0; i < ASSETS.length; i += 12) {
+          await Promise.allSettled(ASSETS.slice(i, i + 12).map((url) => cache.add(url)));
+        }
+      })(),
     ),
   );
-  self.skipWaiting();
+  // Deliberately no `skipWaiting`. Serving the shell from cache is only safe if
+  // a running page can't have its build deleted out from under it: activating
+  // mid-session drops the old cache, and the next lazily-loaded chunk that page
+  // asks for is gone from the server too. The new worker waits for the app to
+  // be closed, which on a phone is constantly, and takes over on the next launch.
 });
 
 self.addEventListener("activate", (event) => {
@@ -35,7 +63,6 @@ self.addEventListener("activate", (event) => {
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
     ),
   );
-  self.clients.claim();
 });
 
 self.addEventListener("fetch", (event) => {
@@ -46,30 +73,41 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return; // never the API — Dexie owns offline data
 
-  // Hashed, immutable build output: cache-first, filled in lazily.
-  if (url.pathname.startsWith("/_next/static/")) {
+  /**
+   * Offline, Next's router gives up on a failed payload fetch and hands the
+   * *payload* URL to the browser as a navigation. Served literally that is a
+   * screenful of `1:"$Sreact.fragment"` — which is what saving an expense
+   * offline used to show. A document request for a payload is always a mistake:
+   * answer it with the route's own shell.
+   */
+  if (request.mode === "navigate" && isPayload(url)) {
     event.respondWith(
-      caches.match(request).then((cached) => cached ?? fetch(request).then((res) => {
-        if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(request, res.clone()));
-        return res;
-      })),
+      caches.match(routeOf(url), { ignoreSearch: true })
+        .then((cached) => cached ?? Response.redirect(routeOf(url), 302)),
     );
     return;
   }
 
-  // Pages: network-first so a phone online gets the latest ledger shell,
-  // falling back to the precached copy the moment it isn't. Every screen
-  // carries its state in the query string (never a path segment — ADR-0007),
-  // so the cache lookup ignores it: /g?id=... falls back to the shell at /g.
+  // Everything an installed app needs is precached under a revision that
+  // changes with the build, so it is all cache-first: a launch and every tap
+  // after it paint without waiting on the network, online or off. A new deploy
+  // arrives when the new worker installs — the browser revalidates sw.js
+  // itself — not by making every screen pay a round trip on the chance there is
+  // one.
+  if (isPayload(url)) {
+    event.respondWith(cacheFirst(url.pathname, request));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((res) => {
-          if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(url.pathname, res.clone()));
-          return res;
-        })
-        .catch(() => caches.match(url.pathname, { ignoreSearch: true })
-          .then((cached) => cached ?? caches.match("/"))),
+      cacheFirst(url.pathname, request).catch(() =>
+        caches.match(url.pathname, { ignoreSearch: true }).then((c) => c ?? caches.match("/")),
+      ),
     );
+    return;
   }
+
+  // Hashed, immutable build output, plus icons and the manifest.
+  event.respondWith(cacheFirst(request, request));
 });
