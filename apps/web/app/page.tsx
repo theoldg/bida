@@ -15,47 +15,10 @@ export default function GroupsPage() {
   // here any more.
   const groups = summaries?.filter((g) => !g.group.archivedAt);
 
-  // Money in two currencies does not add up, and pretending otherwise is
-  // exactly the kind of quiet lie this app exists to avoid. Total the base
-  // currency most of your groups use, and say so when others are left out.
-  const byCurrency = new Map<string, number>();
-  for (const g of groups ?? []) {
-    if (g.netMinor === undefined) continue;
-    const c = g.group.baseCurrency;
-    byCurrency.set(c, (byCurrency.get(c) ?? 0) + g.netMinor);
-  }
-  const ranked = [...byCurrency.entries()].sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-  const headline = ranked[0];
-  const otherCurrencies = ranked.length - 1;
-
   return (
     <Screen>
       <Body>
         <TopBar title="Your groups" />
-
-        {headline ? (
-          <div className="pad" style={{ paddingTop: 0, paddingBottom: 10 }}>
-            <div className="card" style={{
-              background: headline[1] < 0 ? "var(--debit-bg)" : "var(--credit-bg)",
-              borderColor: "transparent",
-            }}>
-              <div style={{
-                fontSize: 11.5, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase",
-                fontFamily: "var(--f-mono)",
-                color: headline[1] < 0 ? "var(--debit)" : "var(--credit)",
-              }}>Across everything</div>
-              <div className={`bignum ${signClass(headline[1])}`} style={{ fontSize: 31, marginTop: 2 }}>
-                {money(headline[1], headline[0], true)}
-              </div>
-              <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 1 }}>
-                {headline[1] < 0 ? "You owe more than you're owed"
-                  : headline[1] > 0 ? "You're owed more than you owe"
-                  : "Everything squares up"}
-                {otherCurrencies > 0 ? ` · ${plural(otherCurrencies, "other currency", "other currencies")} not counted` : ""}
-              </div>
-            </div>
-          </div>
-        ) : null}
 
         <Scroll>
           {groups && groups.length === 0 ? (

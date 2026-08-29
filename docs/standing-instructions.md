@@ -123,3 +123,6 @@ it applies to work nobody has done yet.
   message the model composes, not the app's own fixed copy.
 - **Members are named, never "You".** *2026-08-29* — every screen prints a
   member's own name; the amber "mine" highlight is what says which one is you.
+- **No cross-group total on the groups screen.** *2026-08-29* — one number per
+  group, in that group's own currency. A sum across groups either lies about
+  currency or restates rows already on screen.
