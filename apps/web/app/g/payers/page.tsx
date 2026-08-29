@@ -95,7 +95,7 @@ function PayersScreen() {
                     <Avatar member={m} />
                     <span className="rmain">
                       <span className="rtitle" style={{ display: "block" }}>
-                        {m.id === data.me ? "You" : m.name}
+                        {m.name}
                       </span>
                       <span className="rmeta" style={{ display: "block" }}>
                         {on ? "put money in" : "didn't pay"}

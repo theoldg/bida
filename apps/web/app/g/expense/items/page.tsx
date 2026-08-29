@@ -180,7 +180,7 @@ function ItemsScreen() {
                   <span className={`avatar ${tone(m.colorSeed)}`} style={{ width: 22, height: 22, fontSize: 10 }}>
                     {labels.get(m.id)}
                   </span>
-                  {m.id === data.me ? "You" : m.name}
+                  {m.name}
                 </button>
               ))}
             </div>
@@ -292,7 +292,7 @@ function ItemsScreen() {
               <div className="card">
                 {involvedMembers.map((m) => (
                   <div key={m.id} className="kv">
-                    <span className="k">{m.id === data.me ? "You" : m.name}</span>
+                    <span className="k">{m.name}</span>
                     <span className="v">{money(weights[m.id] ?? 0, draft.currency)}</span>
                   </div>
                 ))}

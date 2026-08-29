@@ -102,9 +102,9 @@ function lean(minor: number): string {
   return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
 }
 
-/** "You paid" · "Marie paid" · "Marie + 1 other paid". */
-function payersLabel(name: string | undefined, isMe: boolean, others: number): string {
-  const who = isMe ? "You" : name ?? "Someone";
+/** "Marie paid" · "Marie + 1 other paid". */
+function payersLabel(name: string | undefined, others: number): string {
+  const who = name ?? "Someone";
   if (others <= 0) return `${who} paid`;
   return `${who} + ${others} other${others === 1 ? "" : "s"} paid`;
 }
@@ -199,7 +199,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
-            {payersLabel(payer?.name, payer?.id === me, payers.length - 1)}
+            {payersLabel(payer?.name, payers.length - 1)}
             {" · "}
             {expense.split.mode === "equal" ? `split ${participants} ways`
               : expense.split.mode === "shares" ? `${participants} people, as parts`
@@ -237,7 +237,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
         }}><Icon name="arrow" size={15} /></span>
         <div className="rmain">
           <div className="rtitle">
-            {from?.id === me ? "You" : from?.name ?? "?"} paid {to?.id === me ? "you" : to?.name ?? "?"}
+            {from?.name ?? "?"} paid {to?.name ?? "?"}
           </div>
           <div className="rmeta">Reimbursement{settlement.note ? ` · ${settlement.note}` : ""}</div>
         </div>
@@ -279,7 +279,7 @@ function BalancesTab({ data }: { data: GroupData }) {
               <Avatar member={m} />
               <div>
                 <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
-                  {m.id === me ? "You" : m.name}
+                  {m.name}
                 </div>
                 <div className="bar">
                   {net === 0 ? null : net > 0
@@ -327,10 +327,10 @@ function BalancesTab({ data }: { data: GroupData }) {
                 className={`card${involvesMe ? " mine" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
                 <Avatar member={from} size={26} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{t.from === me ? "You" : from?.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{from?.name}</span>
                 <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
                 <Avatar member={to} size={26} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{t.to === me ? "you" : to?.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{to?.name}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>

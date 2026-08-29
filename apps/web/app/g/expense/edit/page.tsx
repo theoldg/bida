@@ -354,7 +354,7 @@ function EditExpenseScreen() {
                 <select id="paidby" value={draft.paidBy}
                   onChange={(e) => patch({ paidBy: e.target.value, payers: null })}>
                   {data.members.map((m) =>
-                    <option key={m.id} value={m.id}>{m.id === data.me ? "You" : m.name}</option>)}
+                    <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
                 <Link href={route.payers(groupId)} className="chip" aria-label="Several people paid">
                   + someone

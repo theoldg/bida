@@ -93,7 +93,7 @@ function HistoryScreen() {
             ) : (
               <div className="tl">
                 {revisions.map((rev, i) => {
-                  const who = rev.op.actor === data.me ? "You" : memberById.get(rev.op.actor)?.name ?? "Someone";
+                  const who = memberById.get(rev.op.actor)?.name ?? "Someone";
                   const d = describe(rev, who, memberById, currency);
                   // Restoring an identity claim would mean telling somebody
                   // else's phone who it is. There is nothing to restore.

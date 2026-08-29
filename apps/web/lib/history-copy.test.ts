@@ -28,7 +28,7 @@ async function described(groupId: string): Promise<{ rev: Revision; said: string
   const group = await db().groups.get(groupId);
   return activityFeed(await opsForGroup(groupId)).map((rev) => ({
     rev,
-    said: describe(rev, "You", byId, group!.baseCurrency).what,
+    said: describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency).what,
   }));
 }
 
@@ -59,7 +59,7 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.rev.changes.map((c) => c.field)).toEqual(["currency"]);
-    expect(latest!.said).toBe("You changed the currency");
+    expect(latest!.said).toBe("Theo changed the currency");
   });
 
   it("names a rate change that left the figure alone", async () => {
@@ -69,7 +69,7 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.rev.changes.map((c) => c.field)).toEqual(["rateToBase"]);
-    expect(latest!.said).toBe("You changed the rate");
+    expect(latest!.said).toBe("Theo changed the rate");
   });
 
   it("still calls a moved figure an amount change", async () => {
@@ -77,7 +77,7 @@ suite("describe", () => {
     await editExpense(groupId, theo, expenseId, { amountMinor: 12_500 });
 
     const [latest] = await described(groupId);
-    expect(latest!.said).toBe("You changed the amount");
+    expect(latest!.said).toBe("Theo changed the amount");
   });
 
   it("describes every revision a whole group's life can produce", async () => {

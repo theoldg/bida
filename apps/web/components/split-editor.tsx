@@ -180,7 +180,7 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
                 <Avatar member={m} size={28} />
                 <span className="rmain">
                   <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
-                    {m.id === me ? "You" : m.name}
+                    {m.name}
                   </span>
                   <span className="rmeta" style={{ display: "block" }}>
                     {/* In "as amounts" the field beside this line already *is*
@@ -307,7 +307,7 @@ function ReceiptPanel({
         {involved.map((m) => (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Avatar member={m} size={22} />
-            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.id === me ? "You" : m.name}</span>
+            <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}</span>
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>
         ))}

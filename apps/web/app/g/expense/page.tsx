@@ -118,7 +118,7 @@ function ExpenseScreen() {
                     const own = expense.payers?.[id] ?? 0;
                     return (
                       <KV key={id}
-                        k={id === data.me ? "You" : m?.name ?? "Someone"}
+                        k={m?.name ?? "Someone"}
                         v={<>
                           {money(putIn[id] ?? 0, group.baseCurrency)}
                           {foreign ? <span style={{ color: "var(--muted)" }}>
@@ -130,7 +130,7 @@ function ExpenseScreen() {
                 </>
               ) : (
                 <KV k="Paid by" v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
-                  {payer?.id === data.me ? "You" : payer?.name ?? "Someone"}
+                  {payer?.name ?? "Someone"}
                 </span>} />
               )}
               <div className="hairline" />
@@ -150,7 +150,7 @@ function ExpenseScreen() {
                     : "";
                 return (
                   <KV key={m.id} dim={!inIt}
-                    k={`${m.id === data.me ? "You" : m.name}${inIt ? detail : " · not involved"}`}
+                    k={`${m.name}${inIt ? detail : " · not involved"}`}
                     v={inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : "—"} />
                 );
               })}

@@ -121,3 +121,5 @@ it applies to work nobody has done yet.
   rejection sentence is slightly humorous, at the model's expense rather than
   the photographer's, and still says what to re-shoot. Humour is for the
   message the model composes, not the app's own fixed copy.
+- **Members are named, never "You".** *2026-08-29* — every screen prints a
+  member's own name; the amber "mine" highlight is what says which one is you.

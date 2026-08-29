@@ -44,7 +44,8 @@ Tinting your rows in the brand colour fails: red and green already mean debit
 and credit, and brand already means "tap this". A translucent amber wash reads
 as something laid *over* the ledger, which is what a personal lens is. The same
 amber marks pending sync — both mean "this is about you specifically, not the
-shared record".
+shared record". It is also the *only* way you are marked: a member is always
+printed by name, never as "You".
 
 It never carries meaning alone. Each row shows what it did to your balance —
 what you put in minus what you owe — as `+€45,00` in credit green or `−€14,28`

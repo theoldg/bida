@@ -98,9 +98,7 @@ function RestoreScreen() {
   const revision = entityHistory(ops, entityId).find((r) => r.op.hlc === atHlc);
   const patch = buildRestorePatch(ops, entityId, atHlc);
   const fields = displayFields(patch, { memberById, currency });
-  const who = revision
-    ? revision.op.actor === data.me ? "You" : memberById.get(revision.op.actor)?.name ?? "Someone"
-    : "Someone";
+  const who = (revision && memberById.get(revision.op.actor)?.name) || "Someone";
 
   async function restore() {
     if (!groupId || !entityId || !atHlc || busy) return;

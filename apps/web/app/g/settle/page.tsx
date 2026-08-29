@@ -77,12 +77,12 @@ function SettleScreen() {
           <div className="pad" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, padding: "18px 16px 6px" }}>
             <div style={{ textAlign: "center" }}>
               <Avatar member={fromM} size={40} />
-              <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{from === data.me ? "You" : fromM?.name}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{fromM?.name}</div>
             </div>
             <Icon name="arrow" size={20} style={{ color: "var(--muted)" }} />
             <div style={{ textAlign: "center" }}>
               <Avatar member={toM} size={40} />
-              <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{to === data.me ? "you" : toM?.name}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 5 }}>{toM?.name}</div>
             </div>
           </div>
 
