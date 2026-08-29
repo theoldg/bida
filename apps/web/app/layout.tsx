@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   title: "Hajsik",
   description: "Shared expenses, split fairly. Works offline.",
   manifest: "/manifest.webmanifest",
+  // Without this every cold load asks for /favicon.ico and takes a 404 for
+  // it — a wasted request on the one visit that can least afford one. The
+  // PWA icons are already on disk; point at them rather than adding a file.
+  icons: {
+    icon: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
+    apple: [{ url: "/icon-192.png", sizes: "192x192" }],
+  },
   // "black-translucent" draws the app under the status bar instead of
   // beside it — iOS ignores the manifest's "fullscreen" display entirely for
   // home-screen web apps, so this is the only lever for the same effect there.
