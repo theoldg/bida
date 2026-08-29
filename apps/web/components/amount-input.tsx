@@ -145,12 +145,26 @@ export function AmountInput({
       value={shown}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      size={autoSize ? Math.max(3, shown.length) : rest.size}
     />
   );
 
+  const classes = [
+    "amountfield",
+    ...(frame === "none" ? ["plain"] : []),
+    ...(autoSize ? ["autosize"] : []),
+    ...(fieldClassName ? [fieldClassName] : []),
+  ];
+
   return (
-    <span className={`amountfield${frame === "none" ? " plain" : ""}${fieldClassName ? ` ${fieldClassName}` : ""}`}>
+    <span className={classes.join(" ")}>
+      {/* The mirror that gives an auto-sized field its width. Same class, so
+          same font, weight and letter-spacing, so its box is the figure's own
+          box to the pixel. `aria-hidden` because it is the same text twice. */}
+      {autoSize ? (
+        <span className={`${className ?? ""} amountsizer`} aria-hidden="true">
+          {shown || rest.placeholder || "0"}
+        </span>
+      ) : null}
       {input}
     </span>
   );

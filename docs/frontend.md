@@ -172,6 +172,12 @@ figure-free.
   field must reformat as you type, it has to restore the selection itself.
 - **A placeholder is not a default value.** Seeding `amountText: "0"` means
   tapping in and typing 5 gives you "50".
+- **An input's `size` attribute is not a character count.** It is characters
+  times the *font's* average advance, which for JetBrains Mono at 42px ran ~78px
+  over three digits' real width, all of it dead space to the left of a
+  right-aligned figure. A field that must hug its own text takes its width from
+  a hidden mirror of that text (`.amountsizer`), and the input itself must then
+  be `width: 100%` or the column sizes to `size`'s 20-character default instead.
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
   the field accepts both "," and "." as decimal separators. It deliberately
   doesn't match `Intl`'s grouping in saved figures.
