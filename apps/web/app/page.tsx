@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Avatar, signClass } from "../components/bits";
 import { BottomNav, Body, Empty, Screen, Scroll, TopBar } from "../components/chrome";
 import { Icon } from "../components/icons";
+import { InstallNudge } from "../components/install";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { useGroupSummaries } from "../lib/hooks";
@@ -67,6 +68,9 @@ export default function GroupsPage() {
               </div>
             </Link>
           </div>
+
+          {/* Once there is something to come back to, and never before it. */}
+          {groups && groups.length > 0 ? <InstallNudge /> : null}
         </Scroll>
       </Body>
 

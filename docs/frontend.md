@@ -43,7 +43,8 @@ confers nothing without the secret.
 - Writes go through `lib/db/commands.ts` — one function per user intent, each
   building an op, appending it and materialising it in one transaction.
   **Components never write to Dexie directly.**
-- Device-local, never-synced state (who "you" are, personal mode, theme) is in
+- Device-local, never-synced state (who "you" are, personal mode, theme,
+  install-nudge dismissal) is in
   the `device` store. *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
@@ -81,10 +82,19 @@ In scope for the MVP — build-time icon files, unrelated to receipt hosting.
 `display: fullscreen` (spec falls back to `standalone`), theme colour per theme.
 iOS ignores manifest `display` entirely; `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
-and `env(safe-area-inset-top)` padding on `.topbar` matter. iOS has no
-`beforeinstallprompt`, so show an "Add to Home Screen" hint — installing also
-protects IndexedDB from eviction
-([architecture.md](architecture.md#gotchas)).
+and `env(safe-area-inset-top)` padding on `.topbar` matter.
+
+Installing also protects IndexedDB from eviction
+([architecture.md](architecture.md#gotchas)), so the app asks. `lib/install.ts`
+captures `beforeinstallprompt` at module load — it fires once, early, and only
+that object can open the install sheet later — and reduces the situation to one
+of `installed | ready | manual | none`; iOS has no such event, hence `manual`
+(share-sheet instructions). `components/install.tsx` renders it: a nudge at the
+foot of the groups list, only once there is a group worth coming back to, and
+the same offer permanently in Settings. "Not now" writes
+`device.installDismissedAt` and is never cleared — a banner that returns each
+launch is what makes install prompts hated; Settings is where it lives after
+that.
 
 `public/sw.js` precaches the app shell (every static route, plus manifest and
 icons), registered from `components/register-sw.tsx`. **It does not cache

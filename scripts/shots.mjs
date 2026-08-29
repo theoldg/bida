@@ -117,7 +117,7 @@ async function addExpense(page, groupId, { amount, what, coSponsor, paidBy, excl
     await marie.getByRole("button", { name: /paid too/i }).click();
     await marie.getByLabel(/contribution/).fill("2000");
     // ...and the person who was already paying takes the remainder.
-    await page.locator(".rows .row").filter({ hasText: "You" })
+    await page.locator(".rows .row").filter({ hasText: "Theo" })
       .getByRole("button", { name: /the rest$/i }).click();
     await page.getByRole("button", { name: "Done" }).click();
     await page.waitForURL(/expense\/edit/);

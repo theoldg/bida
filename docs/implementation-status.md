@@ -13,12 +13,16 @@ Update it in the same commit as the code it describes.*
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
-| 6 — Polish | ⬜ CSV export, categories, empty/error states |
+| 6 — Polish | 🟡 install prompt done; CSV export, categories, empty/error states open |
 | 7 — Owner's punch list | ✅ all eight, plus six rounds of follow-ups (2026-08-28) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
+
+Since: the app asks to be installed — a dismissable nudge under the groups
+list and a permanent offer in Settings, Chrome's `beforeinstallprompt` where it
+exists and share-sheet instructions on iOS ([frontend.md](frontend.md#pwa)).
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*). Latest
 follow-up (2026-08-28): a line the receipt counted — `Salade marocaine ×2` —

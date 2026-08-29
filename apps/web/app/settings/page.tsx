@@ -2,6 +2,7 @@
 
 import { Eyebrow } from "../../components/bits";
 import { Body, BottomNav, Screen, Scroll, TopBar } from "../../components/chrome";
+import { InstallSettings } from "../../components/install";
 import { applyTheme, type Theme } from "../../components/theme";
 import { setPersonalMode, updateDevice } from "../../lib/db/device";
 import { route } from "../../lib/group-link";
@@ -64,6 +65,8 @@ export default function SettingsPage() {
                 ))}
               </div>
             </section>
+
+            <InstallSettings />
           </div>
           <div style={{ height: 24 }} />
         </Scroll>

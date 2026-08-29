@@ -6,7 +6,7 @@
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "dots" | "sync" | "trash" | "edit" | "link"
-  | "cog" | "rewind" | "image" | "split" | "merge";
+  | "cog" | "rewind" | "image" | "split" | "merge" | "share";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -82,6 +82,10 @@ export function IconSprite() {
           <path d="M3.5 12h17" />
           <path d="M12 2.7v5.9M9.3 6L12 8.7l2.7-2.7" />
           <path d="M12 21.3v-5.9M9.3 18L12 15.3l2.7 2.7" />
+        </symbol>
+        <symbol id="i-share" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M12 3.5v11" /><path d="M8.5 7l3.5-3.5L15.5 7" />
+          <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
         </symbol>
         <symbol id="i-image" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <rect x="3" y="4.5" width="18" height="15" rx="2" />

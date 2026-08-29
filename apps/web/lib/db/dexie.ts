@@ -42,6 +42,11 @@ export interface DeviceRecord {
   leftGroups?: string[];
   theme: "system" | "light" | "dark";
   /**
+   * When "Not now" was tapped on the install nudge. Set once and never
+   * cleared: the offer moves to Settings rather than coming back on its own.
+   */
+  installDismissedAt?: number;
+  /**
    * Which generation of *defaults* this record was written against. Absent on
    * records written before 2026-08-28. See `migrateDefaults` in ./device.ts.
    */

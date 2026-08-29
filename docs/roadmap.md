@@ -48,7 +48,8 @@ the shared wording.
 ## Phase 6 — Finish
 - [ ] CSV export
 - [ ] Categories
-- [ ] Empty states, error states, install prompt
+- [x] Install prompt — `lib/install.ts` + `components/install.tsx`
+- [ ] Empty states, error states
 - [ ] Answer the open questions in [product.md](product.md#open-product-questions)
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
