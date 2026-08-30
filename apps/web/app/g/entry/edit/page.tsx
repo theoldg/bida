@@ -8,7 +8,7 @@ import {
   type Member, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
-import { Avatar, Card, Chip } from "../../../../components/bits";
+import { Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
@@ -516,7 +516,6 @@ function EditEntryScreen() {
                 <span className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</span>
                 <button type="button" id="paidby" className="pick"
                   aria-label={ENTRY_PAYER_LABEL[kind]} onClick={() => setAsk("payer")}>
-                  <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? "—"}</span>
                   <Icon name="chev" size={13} className="spacer pchev" />
                 </button>
@@ -598,7 +597,6 @@ function EditEntryScreen() {
           options={data.members.map((m) => ({
             value: m.id,
             label: m.name,
-            lead: <Avatar member={m} size={30} />,
             note: m.id === data.me ? "you" : undefined,
           }))}
           onPick={(paidBy) => patch({ paidBy, payers: null })}
@@ -650,7 +648,6 @@ function TransferSides({ members, from, to, onChange }: {
       <button type="button" className="tside" onClick={() => setPicking(which)}
         aria-label={which === "from" ? "Who sent it" : "Who received it"}>
         <span className="eyebrow">{which === "from" ? "From" : "To"}</span>
-        <Avatar member={member} size={38} />
         <span className="who">{member?.name ?? "—"}</span>
       </button>
     );
@@ -688,7 +685,6 @@ function TransferSides({ members, from, to, onChange }: {
           options={members.map((m) => ({
             value: m.id,
             label: m.name,
-            lead: <Avatar member={m} size={30} />,
             note: (picking === "from" ? m.id === to : m.id === from) && from !== to
               ? "the other side — picking swaps them" : undefined,
           }))}

@@ -102,7 +102,6 @@ export function SkeletonRows({ count = 5 }: { count?: number }) {
     <div className="rows" aria-hidden="true">
       {Array.from({ length: count }, (_, i) => (
         <div className="row skelrow" key={i} style={{ ["--d" as string]: `${i * 0.09}s` }}>
-          <div className="avatar skel" />
           <div className="rmain">
             <div className="skel" style={{ height: 9, width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
             <div className="skel" style={{ height: 7, width: "34%" }} />

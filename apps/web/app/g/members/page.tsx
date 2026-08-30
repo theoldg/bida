@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Avatar, GhostRow } from "../../../components/bits";
+import { GhostRow } from "../../../components/bits";
 import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
@@ -103,7 +103,6 @@ function MembersScreen() {
           <div className="rows">
             {data.members.map((m) => (
               <div key={m.id} className="row" style={{ cursor: "pointer" }} onClick={() => claim(m.id)}>
-                <Avatar member={m} />
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>

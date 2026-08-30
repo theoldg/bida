@@ -143,8 +143,11 @@ report(await page.getByText("Received by").count() > 0, "an income relabels the 
 report(await page.getByText("Shared with").count() > 0, "an income relabels the split");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 await save(2);
-report(await page.locator(".avatar.inverted").count() === 1, "the income row wears the inverted avatar");
+// No avatar marks it any more (ADR-0032): the verb and the sign are the two
+// signals that an entry runs the other way.
 report((await page.locator(".rmeta").first().innerText()).includes("received"), "the income row says received");
+report((await page.locator(".ramt .big").first().innerText()).includes("+"), "the income row signs its figure");
+report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 
 // ---- a transfer, reached the way a reimbursement is ---------------------
 await page.goto(`${base}/g?id=${g}&tab=balances`);
@@ -205,7 +208,8 @@ await page.waitForSelector("[role=tab]");
 report(await page.getByRole("tab").count() === 2, "editing an expense offers expense and income only");
 await page.getByRole("tab", { name: "Income" }).click();
 await save(3);
-report(await page.locator(".avatar.inverted").count() === 2, "an expense can become an income");
+report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
+  "an expense can become an income");
 
 // ---- and the log says what happened, in the app's own words ------------
 await page.goto(`${base}/g/history?id=${g}`);

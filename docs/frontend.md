@@ -168,7 +168,7 @@ axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
 Everything else is markup lifted from the mockup; what more than one screen
 draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
 still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
-`components/bits.tsx` (`Avatar`, `Card`, `KV`, `GhostRow`). What the three
+`components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0032 — `Card`, `KV`, `GhostRow`). What the three
 kinds of entry are *called* — labels, verbs, headings — lives only in
 `lib/entry-kind.ts`.
 

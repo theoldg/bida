@@ -296,9 +296,6 @@ function ItemsScreen() {
               <div className="totalstrip">
                 {involvedMembers.map((m) => (
                   <div key={m.id} className="tot" aria-label={`${m.name}'s share`}>
-                    <span className="avatar" style={{ width: 21, height: 21, fontSize: 9.5 }}>
-                      {labels.get(m.id)}
-                    </span>
                     <span className="who">{m.name}</span>
                     <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
                   </div>

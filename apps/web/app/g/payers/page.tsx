@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseMinor, validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
-import { Avatar } from "../../../components/bits";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { bare, money, shortfallText } from "../../../lib/format";
@@ -90,7 +89,6 @@ function PayersScreen() {
                     aria-label={on ? `Leave ${m.name} out` : `${m.name} put money in too`}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
-                    <Avatar member={m} />
                     <span className="rmain">
                       <span className="rtitle" style={{ display: "block" }}>
                         {m.name}

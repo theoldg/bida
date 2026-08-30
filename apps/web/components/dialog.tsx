@@ -133,8 +133,7 @@ export function PromptDialog({
  * A native picker is the same intrusion `prompt()` was (ADR-0025): on a phone
  * it is a full-height wheel or sheet in the OS's typeface, and it can show a
  * name and nothing else. Ours is the rows the rest of the app is made of, so
- * a person arrives with their avatar and whatever the caller needs to say
- * about them.
+ * a row can say what the caller needs to say about it.
  *
  * `note` is that sentence — what picking this one does, when it isn't simply
  * "this one now". The current choice carries a check and closes the dialog
@@ -142,7 +141,7 @@ export function PromptDialog({
  */
 export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose }: {
   title: string;
-  options: { value: T; label: string; lead?: ReactNode; note?: string }[];
+  options: { value: T; label: string; note?: string }[];
   value: T;
   onPick: (value: T) => void;
   onClose: () => void;
@@ -154,7 +153,6 @@ export function ChoiceDialog<T extends string>({ title, options, value, onPick, 
           <button key={o.value} type="button" className="drow-pick" role="option"
             aria-selected={o.value === value}
             onClick={() => { if (o.value !== value) onPick(o.value); onClose(); }}>
-            {o.lead}
             <span className="rmain">
               <span className="rtitle">{o.label}</span>
               {o.note ? <span className="rmeta">{o.note}</span> : null}

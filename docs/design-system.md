@@ -35,8 +35,9 @@ thing you opened, so a second wordmark would be branding where a name should be.
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
 never colour a control with `--credit`; and because `--brand` is just ink, a
 primary button is figure-ground inversion — an ink block with a paper glyph.
-Adding a third hue is a regression. Avatars carry no tint: monospaced initials
-and the printed name do the identifying. **The one sanctioned exception:**
+Adding a third hue is a regression. A person is identified by their printed
+name and nothing else — no tint, and no initials square
+([ADR-0032](decisions/0032-a-name-is-enough.md)). **The one sanctioned exception:**
 destructive actions (`.btn-d`, "Leave group") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade.
 
@@ -99,19 +100,18 @@ while typing; saved figures group the way `Intl` does — deliberately different
 ([ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md)). **No
 amount is ever shown in minor units.**
 
-## An arrow points one way, and an income is inverted
+## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
 people are connected, which is what the double-headed swap arrow said
 *(2026-08-28)*. `i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
-control exists to make cheap. Each side is labelled above the face — eyebrow,
-avatar, name — so "From" is read before the person it qualifies.
+control exists to make cheap. Each side is labelled above the name, so "From" is
+read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on
-it, so an income wears an **inverted avatar** — ink where paper was, the same
-figure-ground flip as the FAB and the app icon — and a `+` on its figure
+it, so an income says **"received"** in its row and prints a `+` on its figure
 ([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Two signals, never one.
 
 ## A dialog is ours, and its button says the act
@@ -125,7 +125,7 @@ scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 screen still wins where the decision needs the ledger on it — the payers editor,
 who-had-what ([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own
-rows — an avatar, a name, a check on the current one, and a `note` saying what an
+rows — a name, a check on the current one, and a `note` saying what an
 unobvious pick does. A date is the exception, being a calendar and not a list
 ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
 [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)). A *failure* is not

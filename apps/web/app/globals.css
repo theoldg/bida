@@ -264,10 +264,6 @@ a { color: inherit; text-decoration: none }
 
 /* An empty slot, not a person: the dashed square on a row that adds something. */
 .avatar.ghost { background: transparent; border-style: dashed }
-/* Ink where paper was: an income runs the other way, and this is the only mark
-   that says so at a glance. The same inversion as the FAB and the app icon —
-   colour is spent entirely on balances and has none left for this. */
-.avatar.inverted { background: var(--brand); color: var(--brand-ink); border-color: var(--brand) }
 /* Air above where the list stops and the things you can do to it start — on the
    first of them only, so a second needs no rule of its own. */
 .ghostrow { padding-top: 16px }
@@ -603,7 +599,7 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick .pchev { color: var(--muted); flex: none }
 
 /* ---- balance bars ---- */
-.balrow { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 11px;
+.balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;
   align-items: center; padding: 9px 16px }
 .bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
 .bar i { position: absolute; top: 0; bottom: 0 }

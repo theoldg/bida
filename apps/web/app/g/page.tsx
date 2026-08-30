@@ -6,7 +6,7 @@ import {
   payerList, resolvePayers, shareOf, splitParticipants, type Expense, type Settlement,
 } from "@hajsik/core";
 import { ENTRY_VERB, kindOf, myEffect } from "../../lib/entry-kind";
-import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
+import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
@@ -250,11 +250,6 @@ function LedgerTab({ data }: { data: GroupData }) {
     return (
       <Link href={route.entry(gid, expense.id)}
         className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
-        {/* Figure-ground inverted for an income — the same trick the FAB
-            plays, and the only mark on the row that says which way this one
-            runs before you have read a word of it. Colour can't do this job:
-            it is spent entirely on balances (ADR-0023). */}
-        <Avatar member={payer} inverted={income} />
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
@@ -288,9 +283,6 @@ function LedgerTab({ data }: { data: GroupData }) {
     return (
       <Link href={route.entry(gid, settlement.id)}
         className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
-        <span className="avatar" style={{
-          background: "var(--card-3)", color: "var(--muted)", borderStyle: "dashed",
-        }}><Icon name="arrow" size={15} /></span>
         <div className="rmain">
           <div className="rtitle">
             {from?.name ?? "?"} paid {to?.name ?? "?"}
@@ -332,7 +324,6 @@ function BalancesTab({ data }: { data: GroupData }) {
           const width = `${(Math.abs(net) / widest) * 50}%`;
           return (
             <div key={m.id} className={`balrow${m.id === me ? " mine" : ""}`}>
-              <Avatar member={m} />
               <div>
                 <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
                   {m.name}
@@ -382,10 +373,8 @@ function BalancesTab({ data }: { data: GroupData }) {
                 href={route.transferBetween(group.id, t.from, t.to, t.amountMinor)}
                 className={`card${involvesMe ? " mine" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
-                <Avatar member={from} size={26} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{from?.name}</span>
                 <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
-                <Avatar member={to} size={26} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{to?.name}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}

@@ -123,8 +123,8 @@ async function seed(page) {
   });
 
   // One of each of the other two kinds, so the ledger shot shows what the
-  // ledger actually holds: an income's inverted avatar and signed figure, and
-  // a transfer's arrow (ADR-0028).
+  // ledger actually holds: an income's verb and signed figure, and a transfer
+  // between two people (ADR-0028).
   await addEntry(page, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
   await addTransfer(page, groupId, { amount: "800", from: "Sam", to: "Theo" });
 

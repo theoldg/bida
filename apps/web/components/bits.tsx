@@ -2,33 +2,32 @@
 
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
-import type { Member } from "@hajsik/core";
 import { Icon, type IconName } from "./icons";
 import { initials } from "../lib/format";
 
 /**
- * Initials in a square. `name` is for what isn't a member — a group.
+ * Initials in a square — for a *group*, in the list of them, where a row has no
+ * other mark and every group's name is different.
  *
- * `inverted` swaps ink and paper — the same figure-ground flip the FAB and the
- * app icon use. It marks an income's row in a design that has no colour to
- * spend on the distinction (ADR-0023, ADR-0028).
+ * People don't get one. A name is already the shortest way to say who someone
+ * is, and the square beside it repeated the first letter of the word next to it
+ * on every screen the app has ([ADR-0032](../../../docs/decisions/0032-a-name-is-enough.md)).
+ * The one exception is the who-had-what grid, which uses initials as column
+ * headings and so draws its own.
  */
-export function Avatar({ member, size = 34, name, inverted }: {
-  member?: Member; size?: number; name?: string; inverted?: boolean;
-}) {
-  const label = member?.name ?? name ?? "?";
+export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
   return (
-    <span className={`avatar${inverted ? " inverted" : ""}`}
+    <span className="avatar"
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>
-      {initials(label)}
+      {initials(name)}
     </span>
   );
 }
 
 /**
  * A row that *does* something rather than being something in the list — add a
- * member, start a group, leave one. A dashed outline stands where an avatar's
- * initials would be, so it reads as an empty slot in the same column.
+ * member, start a group, leave one. The dashed square holds the icon, and marks
+ * the row as a thing to press rather than a thing that is there.
  *
  * `.ghostrow` carries the air above the first one, so a page never has to pass
  * a padding to say "this is where the list ends and the actions begin".

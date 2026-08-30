@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Avatar, GhostRow } from "../../../components/bits";
+import { GhostRow } from "../../../components/bits";
 import { Blank, Body, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
@@ -70,7 +70,6 @@ function ClaimScreen() {
           <div className="rows">
             {data.members.map((m) => (
               <button key={m.id} className="row" onClick={() => setPicked(m.id)}>
-                <Avatar member={m} />
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>

@@ -8,7 +8,7 @@ import {
   isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
 } from "@hajsik/core";
-import { Avatar, Card, Eyebrow, KV } from "../../../components/bits";
+import { Card, Eyebrow, KV } from "../../../components/bits";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
@@ -217,13 +217,11 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
       <div className="card transfer">
         <span className="tside">
           <span className="eyebrow">From</span>
-          <Avatar member={from} size={38} />
           <span className="who">{from?.name ?? "—"}</span>
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
           <span className="eyebrow">To</span>
-          <Avatar member={to} size={38} />
           <span className="who">{to?.name ?? "—"}</span>
         </span>
       </div>

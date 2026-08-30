@@ -6,7 +6,6 @@ import {
   type Member, type SplitSpec,
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
-import { Avatar } from "./bits";
 import { Failure } from "./chrome";
 import { Icon } from "./icons";
 import { bare, money, splitFooter, SPLIT_MODE_LABEL } from "../lib/format";
@@ -189,7 +188,6 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
                 aria-label={on ? `Leave ${m.name} out` : `Include ${m.name}`}
                 style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0,
                   opacity: on ? 1 : .45 }}>
-                <Avatar member={m} size={28} />
                 <span className="rmain">
                   <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
                     {m.name}
@@ -322,7 +320,6 @@ function ReceiptPanel({
         ) : null}
         {involved.map((m) => (
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Avatar member={m} size={22} />
             <span style={{ flex: 1, minWidth: 0, fontSize: 13.5 }}>{m.name}</span>
             <span className="bignum" style={{ fontSize: 13.5 }}>{money(shares[m.id] ?? 0, currency)}</span>
           </div>

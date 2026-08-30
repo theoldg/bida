@@ -153,8 +153,8 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .row:last-child{border-bottom:0}
 .daylabel{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
   padding:13px 16px 5px;background:var(--card-2);border-bottom:1px solid var(--rule-soft);font-weight:500}
-/* One neutral tile for everyone: colour is spent on balances only, and
-   monospaced initials already tell people apart. */
+/* A group's initials in the list of groups — the one place a row has no other
+   mark. People get their name and nothing else (ADR-0032). */
 .avatar{width:34px;height:34px;border-radius:var(--r-s);display:grid;place-items:center;
   font-size:12px;font-weight:600;letter-spacing:-.02em;flex:none;
   background:var(--card-2);color:var(--ink-2);border:1px solid var(--rule)}
@@ -253,7 +253,7 @@ figcaption mark{background:var(--hl);color:var(--hl-ink);padding:0 3px;border-ra
 .restore{font-size:11px;color:var(--brand);font-weight:600;margin-top:5px;display:inline-block;border-bottom:1px solid var(--brand)}
 
 /* ---- balance bars ---- */
-.balrow{position:relative;display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;padding:9px 16px}
+.balrow{position:relative;display:grid;grid-template-columns:1fr auto;gap:11px;align-items:center;padding:9px 16px}
 .bar{height:7px;border-radius:0;background:var(--card-3);position:relative;overflow:hidden}
 .bar i{position:absolute;top:0;bottom:0}
 .bar i.c{background:var(--credit);left:50%}
@@ -407,39 +407,32 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           <div class="rows">
             <div class="daylabel">Sat 5 April</div>
             <div class="row notmine">
-              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Hammam · Les Bains de Marrakech</div><div class="rmeta">Sam paid · Sam, Ada, Marie</div></div>
               <div class="ramt"><div class="big">€64.47</div><div class="sm">700 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Breakfast · Café des Épices</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€19.34</div><div class="sm">210 MAD</div><div class="sm share">you: €4.84</div></div>
             </div>
             <div class="daylabel">Fri 4 April</div>
             <div class="row notmine">
-              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Souk haul · lamp + rug</div><div class="rmeta">Marie paid · Marie, Ada · edited ×3</div></div>
               <div class="ramt"><div class="big">€170.39</div><div class="sm">1 850 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">A</div>
               <div class="rmain"><div class="rtitle">Jardin Majorelle tickets</div><div class="rmeta">Ada paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€44.21</div><div class="sm">480 MAD</div><div class="sm share">you: €11.05</div></div>
             </div>
             <div class="daylabel">Thu 3 April</div>
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Dinner · Nomad</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€57.10</div><div class="sm">620 MAD</div><div class="sm share">you: €14.27</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Grand taxi from RAK</div><div class="rmeta">Sam paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€27.63</div><div class="sm">300 MAD</div><div class="sm share">you: €6.90</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Riad Jnane · 4 nights</div><div class="rmeta">Marie paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€580.00</div><div class="sm">&nbsp;</div><div class="sm share">you: €145.00</div></div>
             </div>
@@ -485,7 +478,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           </div>
           <div class="card" style="display:flex;align-items:center;gap:10px;padding:10px 12px">
             <span style="font-size:13px;color:var(--muted);width:52px">Paid by</span>
-            <span class="avatar" style="width:24px;height:24px;font-size:10px">T</span>
             <span style="font-size:14px;font-weight:600">You</span>
             <svg width="14" height="14" class="spacer" style="color:var(--muted)"><use href="#i-chev"/></svg>
           </div>
@@ -534,25 +526,21 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         <div class="scroll">
           <div style="padding:14px 0 4px">
             <div class="balrow mine">
-              <div class="avatar">T</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">You</div>
                 <div class="bar"><i class="d" style="width:11.4%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€105,62</div>
             </div>
             <div class="balrow">
-              <div class="avatar">M</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Marie</div>
                 <div class="bar"><i class="c" style="width:50%"></i><span class="axis"></span></div></div>
               <div class="bignum credit" style="font-size:14px">+€461,65</div>
             </div>
             <div class="balrow">
-              <div class="avatar">S</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Sam</div>
                 <div class="bar"><i class="d" style="width:12.1%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€111,47</div>
             </div>
             <div class="balrow">
-              <div class="avatar">A</div>
               <div><div style="font-size:13.5px;font-weight:600;margin-bottom:4px">Ada</div>
                 <div class="bar"><i class="d" style="width:26.5%;right:50%"></i><span class="axis"></span></div></div>
               <div class="bignum debit" style="font-size:14px">−€244,56</div>
@@ -562,26 +550,20 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
             <div class="eyebrow" style="margin-bottom:9px">Simplest way to settle · 3 payments</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               <div class="card mine" style="display:flex;align-items:center;gap:9px;padding:11px 12px;position:relative">
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">T</span>
                 <span style="font-size:13px;font-weight:600">You</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€105,62</span>
               </div>
               <div class="card" style="display:flex;align-items:center;gap:9px;padding:11px 12px">
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">S</span>
                 <span style="font-size:13px;font-weight:600">Sam</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€111,47</span>
               </div>
               <div class="card" style="display:flex;align-items:center;gap:9px;padding:11px 12px">
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">A</span>
                 <span style="font-size:13px;font-weight:600">Ada</span>
                 <svg width="15" height="15" style="color:var(--muted)"><use href="#i-swap"/></svg>
-                <span class="avatar" style="width:26px;height:26px;font-size:10px">M</span>
                 <span style="font-size:13px;font-weight:600">Marie</span>
                 <span class="bignum spacer" style="font-size:13.5px">€244,56</span>
               </div>
@@ -735,7 +717,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         <div class="scroll">
           <div class="rows">
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">You</div><div class="rmeta">not involved</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="color:var(--muted);font-size:17px">−</span>
@@ -744,7 +725,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar">M</div>
               <div class="rmain"><div class="rtitle">Marie</div><div class="rmeta mono">€85,19</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="font-size:17px">−</span>
@@ -753,7 +733,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Sam</div><div class="rmeta">not involved</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="color:var(--muted);font-size:17px">−</span>
@@ -762,7 +741,6 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
               </div>
             </div>
             <div class="row">
-              <div class="avatar">A</div>
               <div class="rmain"><div class="rtitle">Ada</div><div class="rmeta mono">€85,20</div></div>
               <div style="display:flex;align-items:center;gap:11px">
                 <span style="font-size:17px">−</span>
@@ -802,23 +780,19 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
           <div class="rows">
             <div class="daylabel">Just now · on this phone</div>
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Taxi to Essaouira <span class="dot" style="display:inline-block;vertical-align:middle;margin-left:3px"></span></div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€64,47</div><div class="sm">700 MAD</div><div class="sm share">you: €16,12</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Lunch · Chez Hassan <span class="dot" style="display:inline-block;vertical-align:middle;margin-left:3px"></span></div><div class="rmeta">You paid · 2 photos queued</div></div>
               <div class="ramt"><div class="big">€27,63</div><div class="sm">300 MAD</div><div class="sm share">you: €6,91</div></div>
             </div>
             <div class="daylabel">Sat 5 April</div>
             <div class="row notmine">
-              <div class="avatar">S</div>
               <div class="rmain"><div class="rtitle">Hammam</div><div class="rmeta">Sam paid · Sam, Ada, Marie</div></div>
               <div class="ramt"><div class="big">€64,47</div><div class="sm">700 MAD</div><div class="sm share">not yours</div></div>
             </div>
             <div class="row mine">
-              <div class="avatar">T</div>
               <div class="rmain"><div class="rtitle">Breakfast · Café des Épices</div><div class="rmeta">You paid · split 4 ways</div></div>
               <div class="ramt"><div class="big">€19,34</div><div class="sm">210 MAD</div><div class="sm share">you: €4,84</div></div>
             </div>
@@ -873,22 +847,18 @@ footer{border-top:1px solid var(--rule);margin-top:52px;padding:26px 0 60px;colo
         </div>
         <div class="scroll"><div class="rows">
           <div class="row skelrow" style="--d:0.00s">
-            <div class="avatar skel"></div>
             <div class="rmain"><div class="skel" style="height:9px;width:62%"></div><div class="skel" style="height:7px;width:34%"></div></div>
             <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
           </div>
           <div class="row skelrow" style="--d:0.09s">
-            <div class="avatar skel"></div>
             <div class="rmain"><div class="skel" style="height:9px;width:44%"></div><div class="skel" style="height:7px;width:34%"></div></div>
             <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
           </div>
           <div class="row skelrow" style="--d:0.18s">
-            <div class="avatar skel"></div>
             <div class="rmain"><div class="skel" style="height:9px;width:78%"></div><div class="skel" style="height:7px;width:34%"></div></div>
             <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
           </div>
           <div class="row skelrow" style="--d:0.27s">
-            <div class="avatar skel"></div>
             <div class="rmain"><div class="skel" style="height:9px;width:51%"></div><div class="skel" style="height:7px;width:34%"></div></div>
             <div class="ramt"><div class="skel" style="height:10px;width:54px"></div><div class="skel" style="height:7px;width:32px"></div></div>
           </div>
