@@ -20,7 +20,7 @@ worker: check the secret, add the API key, stream the body upstream
   ↓
 Gemini Flash, free tier, one key shared by everyone
   ↑ response streamed straight back, untouched
-phone: parse → normalizeScan() → write an ExpenseDraft → /g/expense
+phone: parse → normalizeScan() → write an EntryDraft → /g/entry
 ```
 
 The scan ends at [`lib/draft.ts`](../apps/web/lib/draft.ts). That's the whole
@@ -93,7 +93,7 @@ It reads. It doesn't compute.
 
 `lineItems` and `tip` are still unused by `normalizeScan` — the real
 restaurant-splitting entity in product.md's deferred table isn't built. But
-`/g/expense/items` (reached right after a scan that found line items, or via
+`/g/entry/items` (reached right after a scan that found line items, or via
 "Edit who-had-what" later) reads them off the draft to build a who-had-what
 grid, and reduces that to an ordinary `shares` split — no schema change, no
 new op kind. The screen is three bands, not a scrolling page: who was there
@@ -114,7 +114,7 @@ the printed line exactly, so the bill's total never moves
 ([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
-`ExpenseDraft` patch: `total` passes straight through as `amountText` — the
+`EntryDraft` patch: `total` passes straight through as `amountText` — the
 prompt already asks the model for `parseMinor()`-ready notation, so there's no
 separator-guessing to do locally — plus an uppercased currency and
 `occurredAt` from the printed date. Conversion to minor units stays where it
@@ -163,8 +163,8 @@ per-group quota, then a decision about whether the photo is stored at all.
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
-`scanReceipt()` · the camera and library buttons on `/g/expense/edit`, which
-share one handler, and `/g/expense/items` behind them.
+`scanReceipt()` · the camera and library buttons on `/g/entry/edit`, which
+share one handler, and `/g/entry/items` behind them.
 
 The decisions it accumulated, each one still worth reading before changing this:
 [0016](decisions/0016-receipt-scan-ux-and-item-assignment.md) the grid reduces
@@ -222,7 +222,7 @@ group and its secret:
 - Don't write a derived value into the draft for another screen's effect to
   notice and resync — that resync is only as reliable as the next mount
   actually happening before anyone reads the value, and a screen that writes
-  the input and immediately navigates away (`/g/expense/items`'s "Done") can
+  the input and immediately navigates away (`/g/entry/items`'s "Done") can
   beat it. Receipt's total and split are recomputed inline, at the one place
   either is read, instead — [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).
 - **Deriving a value only while one tab is showing needs a handoff when that

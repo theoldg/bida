@@ -1,5 +1,5 @@
 /**
- * Turns a model's reading of a receipt into an ExpenseDraft patch. The model
+ * Turns a model's reading of a receipt into an entry-draft patch. The model
  * does the reading — merchant, total, currency, date, category — and this
  * does no arithmetic or reformatting on top of it. See docs/receipt-scanning.md.
  *

@@ -89,7 +89,7 @@ Photograph a receipt and it fills the expense form:
 [ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md),
 [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md).
 A "Receipt" tab on the split editor scans a bill (any expense, saved or not)
-and routes a scan with line items to `/g/expense/items`, a who-had-what grid
+and routes a scan with line items to `/g/entry/items`, a who-had-what grid
 that reduces to an ordinary `shares` split — no new entity, no schema change.
 Its items, tip and assignments live on the expense itself, so the grid reopens
 later from any device. **Left for later:** multi-image capture, on-device
