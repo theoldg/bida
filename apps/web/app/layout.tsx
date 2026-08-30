@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { IconSprite } from "../components/icons";
 import { NoLongPress } from "../components/no-long-press";
+import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
 import { ThemeScript } from "../components/theme";
@@ -39,6 +40,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
+  // already sized for a thumb, and a zoomed page strands the fixed bottom bar
+  // off-screen with no obvious way back. Android honours this pair; iOS Safari
+  // ignores it in a tab (it obeys it once installed to the home screen), so
+  // CSS `touch-action` and `NoPinchZoom` finish the job.
+  maximumScale: 1,
+  userScalable: false,
   // Matched to the --paper token in each theme.
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F1F1EF" },
@@ -53,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeScript />
         <IconSprite />
         <NoLongPress />
+        <NoPinchZoom />
         <RegisterServiceWorker />
         <StartSync />
         {children}

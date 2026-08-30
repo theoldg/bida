@@ -31,9 +31,11 @@ already had, called what it is everywhere a person can read. `/g/settle` is
 deleted (settling up links into the form with the transfer pre-filled) and
 `/g/expense*` is now `/g/entry*`.
 
-Before it: the browser's own gestures answer to the app. A long press does
+Also: the browser's own gestures answer to the app. A long press does
 nothing — CSS only ever silenced iOS's callout, so `components/no-long-press.tsx`
-swallows the touch context menu app-wide — and back climbs the hierarchy
+swallows the touch context menu app-wide — a pinch doesn't zoom (viewport meta,
+`touch-action` and `components/no-pinch-zoom.tsx` together, since no one of them
+covers every browser), and back climbs the hierarchy
 instead of replaying visits: an up-link unwinds the history to the parent
 rather than pushing (`lib/nav.ts`,
 [ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).

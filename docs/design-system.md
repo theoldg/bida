@@ -142,13 +142,17 @@ attempted, in `--debit`: `Failure` / `.failure`.
    [standing-instructions](standing-instructions.md#product).
 5. **`100dvh`, safe-area insets, thumb-reachable primary actions.** People use
    this standing up in a restaurant.
-6. **Nothing is selectable, and a long press does nothing.** `user-select:
-   none` on `body`, `.selectable` to opt back in; `NoLongPress` swallows the
-   touch context menu; inputs exempt from both. A long press on a ledger row is
-   a mis-tap. *(Owner, 2026-08-27, 2026-08-30.)*
+6. **The app is not a document: nothing selects, no long press, no zoom.**
+   `user-select: none` on `body`, `.selectable` to opt back in; `NoLongPress`
+   swallows the touch context menu; inputs exempt from both. Zoom needs all
+   three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
+   and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
+   left alone. *(Owner, 2026-08-27, 2026-08-30.)*
 
 ## Gotchas
 
+- iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
+  only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists. Components are hand-rolled from the mockup's
   own markup and token names, used verbatim, not remapped onto a component
   library's variables. [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
