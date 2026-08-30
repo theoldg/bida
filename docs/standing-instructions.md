@@ -78,6 +78,15 @@ it applies to work nobody has done yet.
   re-edit the split: "it should obviously be stored on the server." The parsed
   items and who-had-what grid are now plain fields on the expense, synced like
   everything else. [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
+- **Three kinds of entry, and a reimbursement is not one of them.** *2026-08-30*
+  — "the app should have transfers, expenses and incomes like tricount.
+  reimbursements should be a transfer, and everything should be editable."
+  Every screen says *transfer*; nothing the app can record is uneditable
+  ([ADR-0028](decisions/0028-three-kinds-of-entry.md)).
+- **The test data is disposable.** *2026-08-30* — "feel free to delete the
+  entire database and make a new one, you don't need to migrate the existing
+  data it's all testing nonsense." A schema change may break what's on a phone
+  or in D1; it must still not break the *log format* other clients read.
 - **Receipt splitting has to handle the awkward table, not just the easy one.**
   *2026-08-28* — "add an option to unfold many items for nontrivial sub-splits,
   e.g. salad (x2) → salad, Alice + Bob / salad, Charlie … this should be well

@@ -13,15 +13,17 @@ phones are offline at once, because that will happen on a trip.
 ## The MVP
 
 **Tricount parity.** Groups (name, base currency, members — a member is a name,
-not an account). Expenses (amount, currency, description, date, category, who
-paid, who for). Split modes: evenly, as parts, as amounts — remainders
-distributed deterministically and quietly. Balances, derived, never stored.
-Settle-up plus recording a real reimbursement. Invite by link. CSV export.
+not an account). Three kinds of entry — **expenses**, **incomes** and
+**transfers** (amount, currency, description, date, category, who paid, who
+for) ([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Split modes: evenly,
+as parts, as amounts — remainders distributed deterministically and quietly.
+Balances, derived, never stored. Settle-up, which records a transfer. Invite by
+link. CSV export.
 
 **The three additions.**
 
 1. **Version tracking.** Every change is an appended op with an author, a
-   timestamp and an optional reason. Per-expense diffs, a group-wide feed, and
+   timestamp and an optional reason. Per-entry diffs, a group-wide feed, and
    restore-to-version — which appends a revision, never erases one.
 2. **Multiple images per expense.** Downscaled on-device, queued until Wi-Fi,
    viewable full-screen.

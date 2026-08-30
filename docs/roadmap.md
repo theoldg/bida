@@ -10,7 +10,7 @@ Hosting decided, MVP scope agreed, mockups produced and **signed off**
 (2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`,
 Tailwind carrying the mockup's tokens.
 
-## Phase 1 — Domain core ✅ *(111 tests)*
+## Phase 1 — Domain core ✅ *(128 tests)*
 `money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, plus
 property tests that any permutation of ops folds identically.
 
@@ -41,7 +41,7 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 - [ ] Gallery + full-screen viewer
 
 ## Phase 5 — History surfaces ✅
-Per-expense revision timeline with field diffs, group activity feed, and
+Per-entry revision timeline with field diffs, group activity feed, and
 restore-as-a-forward-op. Landed alongside Phase 7; `lib/history-copy.ts` holds
 the shared wording.
 
@@ -53,6 +53,11 @@ the shared wording.
       (`lib/persist.ts`) and sync failing where nothing said so (`useSyncHealth`)
 - [ ] Empty states, the rest of the error states
 - [ ] Answer the open questions in [product.md](product.md#open-product-questions)
+
+## Phase 8 — Three kinds of entry ✅ *(2026-08-30)*
+Expenses, incomes and transfers, all editable, on one form and one detail
+screen; `/g/settle` and `/g/expense*` are gone
+([ADR-0028](decisions/0028-three-kinds-of-entry.md)).
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a

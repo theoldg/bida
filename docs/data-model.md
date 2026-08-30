@@ -10,6 +10,23 @@ happens in the view layer and nowhere else. Currency codes are ISO 4217;
 exponents vary (JPY 0, TND 3) and `core/money.ts` owns that table — never assume
 2.
 
+## The three kinds of entry
+
+What a person adds to a group is an **expense**, an **income** or a **transfer**
+([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Only two entities carry
+them:
+
+| Entry | Entity | How it differs |
+|---|---|---|
+| Expense | `Expense` | The default. `kind` absent. |
+| Income | `Expense`, `kind: 'income'` | Same positive amount, payers and split; `computeBalances` applies the sign. |
+| Transfer | `Settlement` | Two people, no split. Never touches what the trip cost. |
+
+The wire, the types and the D1 `entity` column say `settlement`; **every word a
+person reads says *transfer*** — the vocabulary lives once, in
+`apps/web/lib/entry-kind.ts`. "Reimbursement" is not a thing: paying somebody
+back is one reason to make a transfer, not a different kind of one.
+
 ## Entities
 
 Materialised by folding ops into IndexedDB tables. Authoritative nowhere on the
@@ -26,6 +43,8 @@ Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt }
 
 Expense {
   id, groupId, description, categoryId, occurredAt,
+  kind?,              // 'income' on an income; ABSENT on an expense, always,
+                      // so the common case never carries the field
   createdAt?,         // set once at creation; list-order tiebreak for
                       // same-day expenses, since occurredAt is user-editable
   amountMinor,        // in `currency`
@@ -47,32 +66,28 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
-`percent { percents }` (basis points). **`percent` is legacy and read-only** —
-ops already on logs carry it, nothing writes it
+`percent { percents }` (basis points). **`percent` is legacy and read-only**
 ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)).
 What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
-and nowhere else — the tab strip, the expense screen and the ledger row all
-read it from there.
+and nowhere else.
 
-- A member is a person, not an account. One with expenses attached is
-  tombstoned, never hard-deleted, or the fold references nothing. Leaving a
-  group is this, on yourself (a dialog on People), plus `device.leftGroups` (below) so
-  it drops off *your* groups list even when others are still in it; when it
-  empties the group, `Group.archivedAt` is also set in the same batch, which
-  drops it off everyone's list. Either way the log survives, untouched, same
-  as any other tombstone — opening the invite link again clears the hide.
+- A member is a person, not an account, and is tombstoned rather than
+  hard-deleted or the fold references nothing. Leaving is that tombstone on
+  yourself plus `device.leftGroups`, so the group drops off *your* list while
+  others keep it; emptying the group sets `archivedAt` in the same batch.
+  Opening the invite link again clears the hide.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
   entry ([ADR-0005](decisions/0005-locked-fx-rate.md)) and must re-derive
   identically on every device.
-- A settlement is structurally separate from an expense so it never pollutes
-  "how much did the trip cost".
+- A settlement (a **transfer**) is structurally separate from an expense so it
+  never pollutes "how much did the trip cost". So is income, which is counted in
+  `totalIncomeMinor` and never netted into `totalSpendMinor`.
 - An attachment's binary lives in R2; until upload succeeds the blob is in a
-  Dexie table keyed by attachment id and the UI renders from there.
+  Dexie table keyed by attachment id.
 - **Identity is one row per device**, keyed by the node id ending every HLC that
   device stamped. Claims are ops
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)); the device's own
-  "am I Sam?" pointer stays in `device.meByGroup`, unsynced — changing it is
-  what appends the op.
+  pointer stays in `device.meByGroup`, unsynced — changing it appends the op.
 
 ## Splits — the only tricky arithmetic
 
@@ -85,30 +100,27 @@ remainder by **largest fractional part**, ties broken by a hash of
 lands on a different person each time while staying identical across devices) →
 return the map plus `remainderAbsorbedBy`.
 
-**`remainderAbsorbedBy` is diagnostic, not UI** — tests assert on it, screens
-never render it. Determinism matters more than fairness: two phones folding the
-same ops must produce byte-identical splits or balances diverge; the seeded draw
-buys fairness inside that constraint.
-
-**Test this hard:** €10 across 3, €0.01 across 4, a 3-decimal currency, percent
-splits that don't sum to 100, exact splits that overshoot.
+**`remainderAbsorbedBy` is diagnostic, not UI.** Determinism outranks fairness:
+two phones folding the same ops must produce byte-identical splits or balances
+diverge, and the seeded draw buys fairness inside that constraint.
 
 ## Co-sponsored expenses
 
-`payers` is the payer-side mirror of `split`, edited on `/g/payers` while the
-split is inline on the expense form — *who put money in* and *who it was spent
-on* are different questions ([ADR-0010](decisions/0010-co-sponsored-expenses.md)).
-Amounts are in the **expense's own currency** and sum to `amountMinor`;
-`resolvePayers()` apportions the stored `baseAmountMinor` at read time so the
-payer side sums to it exactly; `paidBy` is kept in step as the largest
-contributor (a map with one live contributor is stored as `null`); and a payer
-need not be a participant — paying for a dinner you weren't at is the point.
+`payers` is the payer-side mirror of `split`, edited on `/g/payers`
+([ADR-0010](decisions/0010-co-sponsored-expenses.md)). Amounts are in the
+**entry's own currency** and sum to `amountMinor`; `resolvePayers()` apportions
+the stored `baseAmountMinor` at read time so the payer side sums to it exactly;
+`paidBy` is kept in step as the largest contributor (one live contributor is
+stored as `null`); a payer need not be a participant. On an income the same map
+names who *received* it.
 
 ## Balances and settle-up
 
-Both **derived on read, never stored.** `balance(member) = Σ(paid) − Σ(share)`
-in base minor units over expenses and settlements; the set always sums to zero
-(assert it in dev). Settle-up is a greedy largest-debtor↔largest-creditor match,
+Both **derived on read, never stored.** In base minor units over every entry,
+`balance(member) = Σ(paid) − Σ(share) − Σ(received) + Σ(income share)`, plus
+transfers out and minus transfers in; the set always sums to zero (assert it in
+dev). The income terms are the expense terms with the sign flipped, applied in
+`core/balance.ts` and nowhere else. Settle-up is a greedy largest-debtor↔largest-creditor match,
 at most `n−1` transfers — not provably minimal (NP-hard), just good. Say
 "simplest way to settle", never "optimal".
 

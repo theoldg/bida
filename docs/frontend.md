@@ -18,15 +18,14 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)) · create a group |
-| `/g?id=[&tab=]` | The group: expenses / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
-| `/g/expense?id=&e=` | Expense detail |
-| `/g/expense/edit?id=[&e=]` | Add or edit an expense — **including the split**, inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)) |
-| `/g/payers?id=` | Who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
-| `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
+| `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
+| `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0028](decisions/0028-three-kinds-of-entry.md)) |
+| `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)). Settle-up links here with a transfer pre-filled |
+| `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
+| `/g/history?id=[&e=]` | Version history, whole-group or per-entry |
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: the version and the fields coming back |
 | `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0025](decisions/0025-our-own-dialogs.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
-| `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
 **Back goes up, not back.** A screen's `back` names its parent, and `goUp`
@@ -55,11 +54,13 @@ confers nothing without the secret.
   `claimIdentity` writes an `identity` op
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
-- **The expense draft is never stored** (`lib/draft.ts`): an in-memory store
-  shared by the expense screens, so bouncing to the split/payers/items routes
-  keeps what's typed, and nothing else does. Leaving the expense screen asks
-  before discarding, and a reload gets the browser's own warning — `seedDraft`
-  records the baseline `isDraftDirty` compares against.
+- **The entry draft is never stored** (`lib/draft.ts`): an in-memory store
+  shared by the entry screens, so bouncing to the payers/items routes keeps
+  what's typed, and nothing else does. One draft covers all three kinds, which
+  is what lets the segmented control change your mind without losing the amount
+  you already typed. Leaving asks before discarding, and a reload gets the
+  browser's own warning — `seedDraft` records the baseline `isDraftDirty`
+  compares against.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`**: a real
   `<dialog>` with `showModal()`, so focus and Escape are the platform's job
   ([ADR-0025](decisions/0025-our-own-dialogs.md)).
@@ -70,7 +71,7 @@ confers nothing without the secret.
 
 ## One navigation
 
-At most one nav bar, at the bottom: **Expenses · Balances** inside a group, and
+At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
 none outside one — the groups list has a single destination. `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
@@ -81,8 +82,9 @@ Always on, not a setting ([ADR-0026](decisions/0026-the-groups-list-is-the-setti
 It changes rendering only, never data or what syncs:
 
 - **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — what you
-  put in for that entry minus what you owe for it, with a matching green/red
-  left edge. Settlements included, so the column adds up to your net.
+  put in for that entry minus what you owe for it (`myEffect` in
+  `lib/entry-kind.ts`, one subtraction for all three kinds), with a matching
+  green/red left edge. The column adds up to your net.
 - **`opacity: .42`** on entries involving neither your money nor your share.
 - **Your position above the list**: net, signed and coloured, with paid and
   share underneath.
@@ -163,7 +165,9 @@ axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
 Everything else is markup lifted from the mockup; what more than one screen
 draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
 still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
-`components/bits.tsx` (`Avatar`, `Card`, `KV`, `GhostRow`).
+`components/bits.tsx` (`Avatar`, `Card`, `KV`, `GhostRow`). What the three
+kinds of entry are *called* — labels, verbs, headings — lives only in
+`lib/entry-kind.ts`.
 
 **Core says what is wrong; the screen says it in money.** `validateSplit` and
 `validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and
@@ -193,13 +197,10 @@ figure-free.
   changed.
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
-- **A placeholder is not a default value.** Seeding `amountText: "0"` means
-  tapping in and typing 5 gives you "50".
-- **An input's `size` attribute is not a character count.** It is characters
-  times the *font's* average advance — ~78px of dead space beside three digits
-  at 42px. A field that hugs its own text sizes from a hidden mirror of it
-  (`.amountsizer`), and the input itself must then be `width: 100%` or the
-  column sizes to `size`'s 20-character default instead.
+- **An input's `size` attribute is not a character count**, it is characters
+  times the font's average advance. A field that hugs its own text sizes from a
+  hidden mirror (`.amountsizer`), and the input must then be `width: 100%` or
+  the column sizes to `size`'s 20-character default.
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
   the field accepts both "," and "." as decimal separators. It deliberately
   doesn't match `Intl`'s grouping in saved figures.

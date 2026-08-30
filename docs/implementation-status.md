@@ -8,19 +8,30 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 119 tests |
+| 1 — Domain core | ✅ 128 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
+| 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the browser's own gestures answer to the app. A long press does
+Since: a group holds three kinds of entry, not one. **Expenses, incomes and
+transfers**, all editable, on one form with a segmented control and one detail
+screen that looks its id up in both tables
+([ADR-0028](decisions/0028-three-kinds-of-entry.md)). An income is a single
+field on an expense — `kind: 'income'`, absent on everything else — and the
+sign is applied once, in `computeBalances`; a transfer is the `Settlement` we
+already had, called what it is everywhere a person can read. `/g/settle` is
+deleted (settling up links into the form with the transfer pre-filled) and
+`/g/expense*` is now `/g/entry*`.
+
+Before it: the browser's own gestures answer to the app. A long press does
 nothing — CSS only ever silenced iOS's callout, so `components/no-long-press.tsx`
 swallows the touch context menu app-wide — and back climbs the hierarchy
 instead of replaying visits: an up-link unwinds the history to the parent
@@ -107,7 +118,8 @@ Every screen is built. Routes and their jobs are listed in
 [frontend.md](frontend.md#routing) — that table is the current one; don't
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. 76 smoke tests.
+`lib/db/sync.ts`. What the three kinds of entry are *called* lives once, in
+`lib/entry-kind.ts`. 89 smoke tests.
 
 ### `apps/api`
 
@@ -126,10 +138,10 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `fold.ts` | `foldOps`, `foldForward`, `sortOps`, `entityOps`, `foldEntityAt` |
 | `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
 | `payers.ts` | `resolvePayers`, `validatePayers`, `payerList`, `isCoSponsored` |
-| `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` |
+| `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` — the one place an income's sign is applied |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
 | `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` |
-| `types.ts` | `Group`, `Member`, `Expense`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
+| `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
 | `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |
 
@@ -148,6 +160,8 @@ Deploy steps: [hosting.md](hosting.md#deploying).
   ahead is rejected, not absorbed.
 - **Payer and consumer sides both sum to `baseAmountMinor` exactly**, including
   a payer who isn't a participant.
+- **An income is exactly the negation of the same entry as an expense**, member
+  for member, and is counted apart from spend rather than netted into it.
 
 ### The pinned fixture
 

@@ -15,7 +15,8 @@ hosted for free. Read this, then the doc your task points at.
    (`postinstall`), so this is a do-it-once-per-session, not a per-push step.
 3. **Commit and push at every checkpoint**, not once at the end.
 4. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
-5. **Money is never a float.** Integer minor units everywhere —
+5. **Money is never a float.** Integer minor units everywhere, and always
+   positive — an income's sign is applied in `computeBalances` and nowhere else.
    [docs/data-model.md](docs/data-model.md#money).
 6. **Never mutate an entity in place.** Every change is an appended op — that
    one rule buys sync, offline and history. [docs/sync.md](docs/sync.md).
@@ -45,9 +46,11 @@ secret link. [architecture.md](docs/architecture.md) ·
 
 ## Current state
 
-MVP (Phases 0–3) complete, deployed and synced in production; Phase 7 (owner's
-punch list) and three rounds of owner follow-ups landed 2026-08-28. Next: Phase
-4 (receipts).
+MVP (Phases 0–3) complete, deployed and synced in production; the owner's punch
+list and follow-ups landed through 2026-08-30, and a group now holds three kinds
+of entry — expense, income, transfer
+([ADR-0028](docs/decisions/0028-three-kinds-of-entry.md)). Next: Phase 4
+(receipts).
 
 **Exact state and next action live in
 [docs/implementation-status.md](docs/implementation-status.md)** — not here, so
