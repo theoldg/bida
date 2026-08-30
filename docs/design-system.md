@@ -2,11 +2,10 @@
 
 *For: anyone writing something a person will look at.*
 
-**The mockups are the source of truth**, not this document —
-[`design/mockups/index.html`](../design/mockups/index.html)'s token block is the
-canonical palette in all three theme states. Port it into `globals.css`
-verbatim, under the same names; never re-pick values by eye. This file explains
-the reasoning so you extend the design rather than diverge from it.
+**`apps/web/app/globals.css` is the source of truth**, not this document — its
+`:root` block is the canonical palette in all three theme states. Take values
+from there; never re-pick one by eye. This file explains the reasoning so you
+extend the design rather than diverge from it.
 
 ## Direction
 
@@ -45,8 +44,8 @@ a fill — losing that warning to consistency would be a worse trade.
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both
 themes (`#0E0F11`, `#141517`, `#1A1C1F` dark), and `--credit`/`--debit` keep
 their hues — they're semantic and must not drift. Both dark blocks
-(`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values, in
-`globals.css` **and** the mockup. Change one, change all four.
+(`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values.
+Change one, change the other.
 
 ## Your own rows are highlighted
 
@@ -159,6 +158,6 @@ attempted, in `--debit`: `Failure` / `.failure`.
 
 - iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
-- No shadcn/ui dependency exists. Components are hand-rolled from the mockup's
-  own markup and token names, used verbatim, not remapped onto a component
-  library's variables. [ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md).
+- No shadcn/ui dependency exists, and no component library's variable names sit
+  between the tokens and the app.
+  [ADR-0008](decisions/0008-hand-rolled-interface.md).

@@ -3,7 +3,7 @@ import { activityFeed, entityHistory } from "./history.js";
 import { foldOps } from "./fold.js";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
 
-/** The "Souk haul" revision timeline from the mockup's history screen. */
+/** The "Souk haul" revision timeline, as the history screen renders it. */
 function soukLog() {
   const b = new OpBuilder();
   const created = b.push("expense", "e-souk", "create", {

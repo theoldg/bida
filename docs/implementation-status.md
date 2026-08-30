@@ -114,7 +114,6 @@ DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
 packages/core/   @hajsik/core — pure domain logic, no I/O, no framework
 apps/web/        @hajsik/web — Next.js static export, the whole UI
 apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static assets
-design/mockups/  approved HTML/CSS, source of truth for visual design
 ```
 
 Root scripts: `test`, `typecheck`, `build`, `check`, `shots`.
@@ -174,9 +173,9 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 
 ### The pinned fixture
 
-`fixtures.test-helper.ts` builds a four-person Marrakech trip. Its numbers are
-the ones printed in `design/mockups/index.html`, deliberately — if
-`balance.test.ts` fails, the mockup is out of date, not the code.
+`fixtures.test-helper.ts` builds a four-person Marrakech trip. The numbers
+below are the ones it asserts — if `balance.test.ts` fails, this doc is out of
+date, not the code.
 
 ```
 net: ada −244,56  marie +461,65  sam −111,47  theo −105,62   (EUR minor ×100)

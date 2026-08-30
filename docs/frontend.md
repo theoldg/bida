@@ -3,7 +3,7 @@
 *For: anyone writing UI, routing, or PWA code.*
 
 Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie.
-Components are hand-rolled from the mockup's HTML and CSS — no shadcn, no Radix
+Components are hand-rolled — no shadcn, no Radix
 ([ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)). **The whole app is
 client-side**: no SSR, no server actions, no Next route handlers. The Worker's
 API is reached with `fetch`.
@@ -165,7 +165,7 @@ re-reads the model only on outside change — don't go back to
 
 The other place with real logic is the **balance bar** (a bar around a centre
 axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
-Everything else is markup lifted from the mockup; what more than one screen
+Everything else is ordinary markup; what more than one screen
 draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
 still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
 `components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0032 — `Card`, `KV`, `GhostRow`). What the three

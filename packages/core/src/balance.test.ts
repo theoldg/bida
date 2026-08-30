@@ -6,8 +6,8 @@ import { formatMinor } from "./money.js";
 import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper.js";
 
 /**
- * These figures are the ones printed in design/mockups/index.html.
- * If this test fails, the mockup is out of date — fix the mockup.
+ * The figures quoted in docs/implementation-status.md. If this test fails,
+ * that doc is out of date — fix the doc, not the arithmetic.
  */
 describe("the Marrakech trip", () => {
   const state = foldOps(marrakechOps());
@@ -26,7 +26,7 @@ describe("the Marrakech trip", () => {
     expect(report.owedMinor).toEqual({ ada: 28_877, marie: 28_874, sam: 20_357, theo: 18_206 });
   });
 
-  it("produces the balances shown in the mockup", () => {
+  it("produces the balances quoted in the docs", () => {
     expect(report.byMember).toEqual({
       ada: -24_456,
       marie: 46_165,

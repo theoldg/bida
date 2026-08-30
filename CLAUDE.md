@@ -31,14 +31,13 @@ Append to it whenever they state a new one.
 | `packages/core/` | Pure domain logic: money, HLC, ops, folding, splits, payers, balances, settle-up, history |
 | `apps/web/` | Next.js App Router, static export — every screen |
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
-| `design/mockups/` | Approved HTML/CSS. Source of truth for visual design |
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 
 ## Stack
 
-Next.js (`output: 'export'`) + Tailwind + hand-rolled components from the mockup
-([ADR-0008](docs/decisions/0008-hand-rolled-css-not-shadcn.md)), served with a
+Next.js (`output: 'export'`) + Tailwind + hand-rolled components
+([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)), served with a
 Hono API by one Cloudflare Worker. Data is an append-only op log in IndexedDB
 (Dexie), synced to D1. R2 for receipts, not built. No accounts — a group is a
 secret link. [architecture.md](docs/architecture.md) ·

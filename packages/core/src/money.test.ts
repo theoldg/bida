@@ -69,7 +69,7 @@ describe("formatMinor", () => {
 
 describe("convertMinor", () => {
   it("converts at a locked rate, rounding once", () => {
-    // Every figure in the Marrakech mockup, at 1 MAD = 0.0921 EUR.
+    // Every figure in the Marrakech fixture, at 1 MAD = 0.0921 EUR.
     expect(convertMinor(62000, "MAD", "EUR", "0.0921")).toBe(5710);
     expect(convertMinor(30000, "MAD", "EUR", "0.0921")).toBe(2763);
     expect(convertMinor(48000, "MAD", "EUR", "0.0921")).toBe(4421);

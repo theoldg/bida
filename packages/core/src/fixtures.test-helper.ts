@@ -4,11 +4,10 @@ import type { Op } from "./ops.js";
 import type { SplitSpec } from "./types.js";
 
 /**
- * The Marrakech trip from the design mockups, as ops.
+ * The Marrakech trip — the pinned fixture, as ops.
  *
- * This doubles as a regression test for the figures printed in
- * design/mockups/index.html — if the arithmetic here changes, the mockup is
- * wrong and must be updated to match, not the other way round.
+ * Its numbers are quoted in docs/implementation-status.md; if the arithmetic
+ * here changes, that doc is wrong and must be updated to match.
  */
 
 export const GROUP = "g-marrakech";

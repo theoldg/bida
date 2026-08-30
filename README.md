@@ -5,9 +5,6 @@ local-first, offline, full edit history, personal-lens view. Personal project,
 very few users, £0 hosting.
 
 **Live:** <https://hajsik.hajsik-api.workers.dev>
-**Design mockups:** [`design/mockups/`](design/mockups/) ·
-[published](https://claude.ai/code/artifact/5195880f-3985-4409-ac1a-854e5a756921)
-
 Next.js static export · hand-rolled components ·
 Tailwind · Dexie/IndexedDB · Cloudflare Worker + D1.
 

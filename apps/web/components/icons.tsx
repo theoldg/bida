@@ -1,7 +1,7 @@
 /**
  * One sprite, mounted once in the layout, referenced by <use> everywhere else.
  * This is why there is no icon library in package.json: the whole set is a
- * couple of dozen paths, lifted straight from the approved mockup.
+ * couple of dozen paths, drawn once and used everywhere.
  */
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"

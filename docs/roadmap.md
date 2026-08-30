@@ -6,11 +6,10 @@
 typed into is a notebook. Phases 4–6 are the finish, not the product.
 
 ## Phase 0 — Groundwork ✅
-Hosting decided, MVP scope agreed, mockups produced and **signed off**
-(2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`,
-Tailwind carrying the mockup's tokens.
+Hosting decided, MVP scope agreed, the visual direction signed off
+(2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`.
 
-## Phase 1 — Domain core ✅ *(128 tests)*
+## Phase 1 — Domain core ✅ *(124 tests)*
 `money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, plus
 property tests that any permutation of ops folds identically.
 
