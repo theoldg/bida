@@ -156,6 +156,9 @@ it applies to work nobody has done yet.
   totals summary at the bottom should be a vertical list instead of a horizontal
   scroller. On the other hand, the 'who was there' selector should scroll
   horizontally." A total you have to scroll to find is a total you don't read.
+- **A long tap does nothing.** *2026-08-30* — "override the long-tap behaviour
+  so that it does nothing instead of pulling up a chrome option dialog." The
+  browser's own menu is never the answer to a press on a row.
 - **No settings screen.** *2026-08-30* — "remove the settings page entirely.
   dark/bright mode can be a toggle only visible on the home screen." A
   preference either has one obvious place to live or shouldn't exist; the

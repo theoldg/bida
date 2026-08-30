@@ -135,9 +135,10 @@ attempted, in `--debit`: `Failure` / `.failure`.
    [standing-instructions](standing-instructions.md#product).
 5. **`100dvh`, safe-area insets, thumb-reachable primary actions.** People use
    this standing up in a restaurant.
-6. **Nothing is selectable.** `user-select: none` on `body`, `.selectable` to opt
-   back in; inputs exempt. A long press on a ledger row is a mis-tap.
-   *(Owner, 2026-08-27.)*
+6. **Nothing is selectable, and a long press does nothing.** `user-select:
+   none` on `body`, `.selectable` to opt back in; `NoLongPress` swallows the
+   touch context menu; inputs exempt from both. A long press on a ledger row is
+   a mis-tap. *(Owner, 2026-08-27, 2026-08-30.)*
 
 ## Gotchas
 

@@ -20,7 +20,12 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the two failures that could quietly cost a trip its ledger now say so.
+Since: a long press does nothing. Chrome's link menu was the last browser UI
+a mis-tap could still reach — CSS only ever silenced iOS's callout, so
+`components/no-long-press.tsx` swallows the touch context menu app-wide
+([design-system.md](design-system.md#rules-that-are-not-negotiable)).
+
+Before it: the two failures that could quietly cost a trip its ledger now say so.
 Sync records how every attempt went, and `/g` warns after two consecutive
 failures — or at once, in its own words, when the server refuses this device's
 secret, which retrying can never fix; `navigator.onLine` had been the only

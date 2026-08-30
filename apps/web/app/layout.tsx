@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { IconSprite } from "../components/icons";
+import { NoLongPress } from "../components/no-long-press";
 import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
 import { ThemeScript } from "../components/theme";
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeScript />
         <IconSprite />
+        <NoLongPress />
         <RegisterServiceWorker />
         <StartSync />
         {children}
