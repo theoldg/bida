@@ -124,7 +124,7 @@ async function seed(page) {
 
   // One of each of the other two kinds, so the ledger shot shows what the
   // ledger actually holds: an income's verb and signed figure, and a transfer
-  // between two people (ADR-0028).
+  // between two people (ADR-0010).
   await addEntry(page, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
   await addTransfer(page, groupId, { amount: "800", from: "Sam", to: "Theo" });
 
@@ -148,7 +148,7 @@ async function addEntry(page, groupId, { kind, amount, what, coSponsor, paidBy, 
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   if (paidBy) await pickInDialog(page, "#paidby", paidBy);
-  // The split editor is on this form now (ADR-0013), so leaving somebody out
+  // The split editor is on this form now (ADR-0010), so leaving somebody out
   // is a tap here rather than a trip to a screen and back.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
@@ -179,7 +179,7 @@ async function addTransfer(page, groupId, { amount, from, to }) {
   await page.waitForURL(/\/g\?id=/);
 }
 
-/** Each side of a transfer opens our own picker now, not a <select> (ADR-0029). */
+/** Each side of a transfer opens our own picker now, not a <select> (ADR-0008). */
 const pickSide = (page, label, name) => pickInDialog(page, `[aria-label="${label}"]`, name);
 
 /** Open a picker and take a row out of it. Every picker in the app is this. */
@@ -243,7 +243,7 @@ async function main() {
       process.stdout.write(`${theme}/entry-transfer-prefilled `);
 
       // ...and the picker behind either side of it, which is a <dialog> rather
-      // than the browser's wheel (ADR-0029), so it has no URL of its own.
+      // than the browser's wheel (ADR-0008), so it has no URL of its own.
       await page.getByLabel("Who received it").click();
       await page.waitForSelector(".dlist");
       await page.waitForTimeout(200);
@@ -311,7 +311,7 @@ async function main() {
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
       // The dialogs this app draws in place of prompt() and confirm(): adding
-      // someone, and the one that used to be a screen of its own (ADR-0025).
+      // someone, and the one that used to be a screen of its own (ADR-0008).
       await page.goto(`${base}/g/members?id=${groupId}`);
       await page.getByRole("button", { name: "Add member" }).click();
       await page.waitForTimeout(200);

@@ -437,7 +437,7 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 /* ---- dialogs ----
    Our own, in place of prompt() and confirm(): those arrive in another app's
    typeface and have nowhere to put the sentence naming what is about to change
-   (ADR-0025). A scrim, a hairline card, the app's own buttons. It fades in and
+   (ADR-0008). A scrim, a hairline card, the app's own buttons. It fades in and
    nothing slides: the design still doesn't float. */
 /* A real <dialog>, so focus, Escape and the inert screen behind are the
    platform's job. It fills the viewport and paints the scrim itself rather than
@@ -593,7 +593,7 @@ dialog.scrim::backdrop { background: transparent }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
 /* A value that is picked rather than typed. The whole line is the button — a
    <select> at least gave you the row; ours has to say so itself — and the
-   chevron is the only mark that it opens something (ADR-0029). */
+   chevron is the only mark that it opens something (ADR-0008). */
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }

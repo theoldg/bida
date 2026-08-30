@@ -31,7 +31,7 @@ import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft
  * Expense, income and transfer are one thought with one shape — an amount, a
  * date, some words, and who it moves between — so they are one screen with a
  * segmented control at the top rather than three routes that lose what you
- * typed when you realise you picked the wrong one (ADR-0028). Switching kinds
+ * typed when you realise you picked the wrong one (ADR-0010). Switching kinds
  * keeps the amount, the currency, the date and the description; only the
  * middle of the form is swapped.
  */
@@ -219,7 +219,7 @@ function EditEntryScreen() {
   // place either is read (this render, and save() below) — never written
   // into the draft as a cache for some other effect to notice and resync.
   // There's nothing to fall out of step because nothing is ever recorded
-  // twice (ADR-0020; this replaced an effect on `receiptItems`/`receiptTip`
+  // twice (ADR-0016; this replaced an effect on `receiptItems`/`receiptTip`
   // that mirrored the total into `amountText`, which had a window where a
   // screen reading the draft saw last save's total instead of this one's).
   const receiptTotal = onReceiptTab
@@ -228,7 +228,7 @@ function EditEntryScreen() {
   // The amount is derived from the bill while Receipt mode is showing it —
   // typing over it would desync the total from what the items actually add
   // up to, with nothing left to reconcile the two. Edit the items or the tip
-  // instead, or switch tabs to take manual control back (ADR-0021). Locked on
+  // instead, or switch tabs to take manual control back (ADR-0016). Locked on
   // a real derived number, not merely on having items: a scan whose every
   // line is unreadable would otherwise leave the field disabled *and* empty,
   // with no way to type an amount and no way to save.
@@ -254,7 +254,7 @@ function EditEntryScreen() {
   // is the only place a typed amount lives. `switchMode` in the split editor
   // already hands the *split* over via `convertSplitMode`; this is its other
   // half, and without it the amount has nowhere to go and the expense
-  // silently becomes worth zero. ADR-0021.
+  // silently becomes worth zero. ADR-0016.
   const changeTab = (splitTab: SplitTab) => {
     const handoff = handOffReceiptTotal(
       activeTab, splitTab, draft.receiptItems, draft.receiptTip, draft.currency,
@@ -628,7 +628,7 @@ function EditEntryScreen() {
  *
  * Each half is labelled above the person: "From" then a face, which is the
  * order the sentence is read in. Tapping one opens our own picker rather than
- * the browser's wheel (ADR-0029) — which is what lets the person already on
+ * the browser's wheel (ADR-0008) — which is what lets the person already on
  * the other side stay in the list, saying what picking them does: it swaps the
  * sides, the only reading of "send this to the person who is sending it" that
  * isn't the error message below.

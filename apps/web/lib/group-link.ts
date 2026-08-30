@@ -47,7 +47,7 @@ export const route = {
    * The one form. `kind` picks which of the three an entry starts as, and a
    * transfer can arrive with its two sides and its amount already filled —
    * that is what "settle up" now links to, rather than a screen of its own
-   * ([ADR-0028](../../../docs/decisions/0028-three-kinds-of-entry.md)).
+   * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)).
    */
   addEntry: (groupId: string, kind?: EntryKind) =>
     `/g/entry/edit?id=${encodeURIComponent(groupId)}${kind && kind !== "expense" ? `&kind=${kind}` : ""}`,

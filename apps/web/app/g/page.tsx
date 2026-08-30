@@ -30,8 +30,8 @@ function GroupScreen() {
   const online = useOnline();
   const sync = useSyncHealth(groupId);
   // The invite link is a property of the group rather than of the phone, which
-  // is why it stayed on the group's own top bar when the options screen went
-  // (ADR-0014) and the settings screen after it (ADR-0026).
+  // is why it stayed on the group's own top bar when the options and settings
+  // screens went (ADR-0007).
   const invite = useInviteLink(groupId);
 
   if (!groupId) return <Blank title="No group" back={route.groups()} />;
@@ -122,7 +122,7 @@ function GroupScreen() {
           a fourth and is now Settings, next to the group list, because every
           switch on it belonged to the phone rather than to this group. The
           first tab is "Ledger", not "Expenses", because two of the three
-          things on it aren't expenses (ADR-0028). */}
+          things on it aren't expenses (ADR-0010). */}
       <BottomNav items={[
         { label: "Ledger", icon: "list", href: route.group(group.id), on: tab === "ledger" },
         { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),

@@ -18,11 +18,11 @@ import { useGroupData, useInviteLink } from "../../../lib/hooks";
  * Identity used to be a second copy of this same list on the group options
  * screen. One list, one place to tap: the check mark is who you are, and
  * tapping another name moves it — an op on the shared log, like every other
- * change (ADR-0011).
+ * change (ADR-0003).
  *
  * Every change made here — naming, adding, removing, leaving — is confirmed in
  * a dialog this app draws, on this list, rather than on a route of its own
- * (ADR-0025).
+ * (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;

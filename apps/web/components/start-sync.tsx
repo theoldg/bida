@@ -15,7 +15,7 @@ export function StartSync() {
     // of them would trigger the migration on their own.
     void getDevice();
     // One-off: devices that claimed a member before identity was an op
-    // (ADR-0011) have nothing on the log to explain their edits' `actor`.
+    // (ADR-0003) have nothing on the log to explain their edits' `actor`.
     void publishExistingClaims();
     // Every start, not once: the browser's answer depends on how established
     // the app looks to it, so a phone refused before install is granted after.

@@ -36,7 +36,7 @@ export async function getMe(groupId: string): Promise<string | undefined> {
  *
  * This is the device-local half only. Nothing outside this module should call
  * it: `claimIdentity` in ./commands.ts is the whole operation — it writes the
- * `identity` op that lets everybody else read `Op.actor` honestly (ADR-0011),
+ * `identity` op that lets everybody else read `Op.actor` honestly (ADR-0003),
  * and calls this. Kept here, and kept private-by-convention, so that the
  * device record still has exactly one writer.
  */

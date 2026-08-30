@@ -102,14 +102,14 @@ export async function appendOps(
 /**
  * Publish claims this device made before identity was on the log.
  *
- * A device that claimed a member under ADR-0009 has a `meByGroup` entry and no
+ * A device that claimed a member under ADR-0003 has a `meByGroup` entry and no
  * op to show for it: its edits are attributed to somebody with nothing in the
  * log to explain why, and /g/history has nothing to show for a phone that has
  * been in the group for weeks. One `create` op per such group, once — later runs see it
  * and do nothing.
  *
  * `claimedAt` is when the claim was published, not when it was made. The
- * earlier date only ever existed in a device-local table that ADR-0011 drops,
+ * earlier date only ever existed in a device-local table that ADR-0003 drops,
  * and inventing a timestamp for the shared log would be worse than a late one.
  */
 export async function publishExistingClaims(now = Date.now()): Promise<void> {
@@ -201,7 +201,7 @@ export async function createGroup(
  * a device changed which member it speaks for. The claim is keyed by the
  * device's HLC node id, which is already the suffix of every op that device
  * ever stamped, so it publishes nothing the log did not already carry — it
- * just makes it legible. ADR-0011.
+ * just makes it legible. ADR-0003.
  *
  * Re-claiming the member you already are is a no-op and writes nothing.
  */

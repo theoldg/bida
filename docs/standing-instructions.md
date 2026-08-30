@@ -60,7 +60,7 @@ it applies to work nobody has done yet.
   [receipt-scanning.md](receipt-scanning.md).
 - **Prefer auditable over private-and-tidy.** *2026-08-28* — "the edits should
   record who did it … also on the public log." Who did what is a fact about the
-  group. [ADR-0011](decisions/0011-identity-changes-are-public.md).
+  group. [ADR-0003](decisions/0003-link-only-access.md).
 - **Trust the model, don't re-derive what it already did.** *2026-08-28* — on
   the receipt scan: "we don't need date parsing + the llm can handle that,
   don't build useless stuff." The model is asked for `YYYY-MM-DD` directly;
@@ -71,18 +71,18 @@ it applies to work nobody has done yet.
   core normaliser, Worker passthrough, client scan lib. *2026-08-28, later* —
   "propose a ux and go for it without approval, we'll iterate later": the
   button, its states, and a who-had-what item-assignment screen shipped;
-  [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
+  [ADR-0016](decisions/0016-receipts.md).
   [receipt-scanning.md](receipt-scanning.md).
 - **State that should outlive one browser tab belongs on the server, not just
   the local draft.** *2026-08-28* — on keeping the parsed receipt around to
   re-edit the split: "it should obviously be stored on the server." The parsed
   items and who-had-what grid are now plain fields on the expense, synced like
-  everything else. [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
+  everything else. [ADR-0016](decisions/0016-receipts.md).
 - **Three kinds of entry, and a reimbursement is not one of them.** *2026-08-30*
   — "the app should have transfers, expenses and incomes like tricount.
   reimbursements should be a transfer, and everything should be editable."
   Every screen says *transfer*; nothing the app can record is uneditable
-  ([ADR-0028](decisions/0028-three-kinds-of-entry.md)).
+  ([ADR-0010](decisions/0010-what-an-entry-is.md)).
 - **The test data is disposable.** *2026-08-30* — "feel free to delete the
   entire database and make a new one, you don't need to migrate the existing
   data it's all testing nonsense." A schema change may break what's on a phone
@@ -91,7 +91,7 @@ it applies to work nobody has done yet.
   *2026-08-28* — "add an option to unfold many items for nontrivial sub-splits,
   e.g. salad (x2) → salad, Alice + Bob / salad, Charlie … this should be well
   designed graphically."
-  [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md).
+  [ADR-0016](decisions/0016-receipts.md).
 
 ## Interface
 
@@ -107,10 +107,10 @@ it applies to work nobody has done yet.
   next, and anything naming a consequence the user can't see.
 - **One thought, one screen.** A new route is for a *different* question, not
   the second half of the one being asked. Don't build a wizard out of a form.
-  [ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
+  [ADR-0010](decisions/0010-what-an-entry-is.md).
 - **Weight follows how often you want it pressed**, and consequences are named
   where they're confirmed — the browser's `confirm()` can't do that, a dialog we
-  draw can ([ADR-0025](decisions/0025-our-own-dialogs.md)).
+  draw can ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - **A destination reached constantly belongs in the top bar** (three icons is
   the ceiling), never as a menu row duplicating a visible icon. Delete the
   second way to do a once-per-lifetime thing.
@@ -129,7 +129,7 @@ it applies to work nobody has done yet.
 - **Money fields are one component, and core never speaks in minor units.**
   *2026-08-28* — a real input with a caret; the screen writes the sentence
   because only it knows the currency.
-  [ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md).
+  [ADR-0005](decisions/0005-money-and-currency.md).
 - **Fewer options.** *2026-08-28* — three split modes, in the owner's labels:
   **Evenly · As parts · As amounts**. Dropping a button is not the same act as
   dropping a variant from the data model: old ops keep meaning what they meant.
@@ -155,8 +155,7 @@ it applies to work nobody has done yet.
   of the browser native one", then "make all selectors into a custom dialog:
   currency, payer, etc". Asking is `components/dialog.tsx`; no `prompt()`,
   `confirm()` or `<select>`, anywhere
-  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
-  [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
+  ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - **A confirmation's button sits under its sentence.** *2026-08-30* — "on the
   'confirm leave group' page the button shouldn't be at the very bottom of the
   screen, i think it can be under the text. This page can be custom popup like
@@ -176,7 +175,7 @@ it applies to work nobody has done yet.
 - **Back climbs the hierarchy.** *2026-08-30* — "override back navigation to go
   up the hierarchy instead of returning to the latest expense." The back button
   is where you are in the app, not where you have been
-  ([ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).
+  ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 - **A long tap does nothing.** *2026-08-30* — "override the long-tap behaviour
   so that it does nothing instead of pulling up a chrome option dialog." The
   browser's own menu is never the answer to a press on a row.
@@ -187,4 +186,4 @@ it applies to work nobody has done yet.
   dark/bright mode can be a toggle only visible on the home screen." A
   preference either has one obvious place to live or shouldn't exist; the
   groups list is that place, and it wears the app's name above it
-  ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+  ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).

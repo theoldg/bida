@@ -25,7 +25,7 @@ Since: **a name is enough, and history is read rather than rewound.** The square
 holding a person's first letter is gone from every screen that names anyone —
 it repeated the word beside it — surviving only for a group in the list of
 groups and as the who-had-what grid's column headings
-([ADR-0032](decisions/0032-a-name-is-enough.md)). Restore-to-version is gone with
+([ADR-0023](decisions/0023-monospace-monochrome.md)). Restore-to-version is gone with
 it: `/g/restore`, `buildRestorePatch` and `foldEntityAt` are deleted, undoing
 something is editing it ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)),
 and the `restore` op kind still folds only because production groups hold some.
@@ -38,7 +38,7 @@ card opens a pre-filled transfer again — the draft is keyed by what seeded it.
 Before it: a group holds three kinds of entry, not one. **Expenses, incomes and
 transfers**, all editable, on one form with a segmented control and one detail
 screen that looks its id up in both tables
-([ADR-0028](decisions/0028-three-kinds-of-entry.md)). An income is a single
+([ADR-0010](decisions/0010-what-an-entry-is.md)). An income is a single
 field on an expense — `kind: 'income'`, absent on everything else — and the
 sign is applied once, in `computeBalances`; a transfer is the `Settlement` we
 already had, called what it is everywhere a person can read. `/g/settle` is
@@ -48,15 +48,14 @@ above the face, and **no field anywhere opens a browser picker**: the payer, bot
 currency fields and the sides are all `ChoiceDialog`, with the other side listed
 as a swap and "Other…" handing over to the three-letter prompt. `<input
 type="date">` is the last native control
-([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
-[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
+([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 
 Also: the browser's own gestures answer to the app. A long press does nothing
 (`components/no-long-press.tsx` — CSS only ever silenced iOS's callout), a pinch
 doesn't zoom (viewport meta, `touch-action` and `components/no-pinch-zoom.tsx`
 together, since no one of them covers every browser), and an up-link unwinds
 history to the parent rather than pushing (`lib/nav.ts`,
-[ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).
+[ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 Before it: the two failures that could quietly cost a trip its ledger now say so.
 Sync records how every attempt went, and `/g` warns after two consecutive
@@ -71,13 +70,13 @@ unpushed ops and the group secrets with no account to log back in with
 Before it: the groups list is the front door — wordmark, app name and the
 light/dark button alone on the bar; `/settings` is deleted, the personal lens
 unconditional, and outside a group there is no bottom bar
-([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)). Every
+([ADR-0007](decisions/0007-a-screen-is-a-route.md)). Every
 question the app asks is a `<dialog>` it draws rather than the browser's, so
 `/g/leave` is deleted and a failed write says so where it was attempted
-([ADR-0025](decisions/0025-our-own-dialogs.md)). And it is usable offline: the
+([ADR-0008](decisions/0008-hand-rolled-interface.md)). And it is usable offline: the
 service worker precaches the whole export, cache-first
 ([frontend.md](frontend.md#pwa),
-[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md); verify with
+[ADR-0004](decisions/0004-static-export-and-offline.md); verify with
 `node scripts/offline-check.mjs`), and nothing it does waits in silence
 ([design-system.md](design-system.md#nothing-waits-in-silence)).
 
@@ -90,13 +89,7 @@ Design signed off 2026-08-27 (*"i approve of your design, go wild"*), re-cut
 **Phase 4 — receipt scanning is done; the rest of Phase 4 is next.**
 Photograph a receipt and it fills the expense form:
 [receipt-scanning.md](receipt-scanning.md),
-[ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
-[ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md),
-[ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md),
-[ADR-0019](decisions/0019-receipt-mode-owns-the-total.md),
-[ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md),
-[ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md),
-[ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md).
+[ADR-0016](decisions/0016-receipts.md).
 A "Receipt" tab on the split editor scans a bill (any expense, saved or not)
 and routes a scan with line items to `/g/entry/items`, a who-had-what grid
 that reduces to an ordinary `shares` split — no new entity, no schema change.

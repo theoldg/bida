@@ -13,7 +13,7 @@ import { alive, type GroupState, type Id } from "./types.js";
  * knows it: whoever took the money in is down by it, and everybody it was
  * shared with is up by their share. Nothing else in core branches on
  * `Expense.kind` — the amount, the payer map and the split are the same
- * positive arithmetic either way (ADR-0028).
+ * positive arithmetic either way (ADR-0010).
  */
 
 export interface BalanceReport {

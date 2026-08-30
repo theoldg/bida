@@ -67,7 +67,7 @@ The command tests prove an income's sign reaches the balances and that a
 transfer edit writes only what changed. They cannot prove the *form* reaches
 those commands — a Save stuck disabled, a segmented control writing the wrong
 field, a detail screen that can't find a settlement by id
-([ADR-0028](decisions/0028-three-kinds-of-entry.md)). This adds each of the
+([ADR-0010](decisions/0010-what-an-entry-is.md)). This adds each of the
 three kinds through the real UI, edits them, and reads the history back.
 
 Needs a build first, like `shots` and `offline-check`. **Wait on state, not on

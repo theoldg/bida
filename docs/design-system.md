@@ -36,7 +36,7 @@ never colour a control with `--credit`; and because `--brand` is just ink, a
 primary button is figure-ground inversion — an ink block with a paper glyph.
 Adding a third hue is a regression. A person is identified by their printed
 name and nothing else — no tint, and no initials square
-([ADR-0032](decisions/0032-a-name-is-enough.md)). **The one sanctioned exception:**
+([ADR-0023](decisions/0023-monospace-monochrome.md)). **The one sanctioned exception:**
 destructive actions (`.btn-d`, "Leave group") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade.
 
@@ -50,7 +50,7 @@ Change one, change the other.
 ## Your own rows are highlighted
 
 Always, not as a mode
-([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)). Your
+([ADR-0007](decisions/0007-a-screen-is-a-route.md)). Your
 rows take a translucent neutral wash, laid *over* the ledger; the same wash
 marks pending sync, both meaning "this is about you, not the shared record".
 Neutral rather than tinted, so the row's own green or red stays the only colour
@@ -96,7 +96,7 @@ figure doesn't add up. The big one on the entry form adds a thicker rule, a
 small radius and a `--card-2` well while focused. Disabled fields drop the rule
 to transparent rather than showing a dead one. Digits group with **U+202F**
 while typing; saved figures group the way `Intl` does — deliberately different
-([ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md)). **No
+([ADR-0005](decisions/0005-money-and-currency.md)). **No
 amount is ever shown in minor units.**
 
 ## An arrow points one way, and an income says so twice
@@ -111,7 +111,7 @@ read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on
 it, so an income says **"received"** in its row and prints a `+` on its figure
-([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Two signals, never one.
+([ADR-0010](decisions/0010-what-an-entry-is.md)). Two signals, never one.
 
 ## A dialog is ours, and its button says the act
 
@@ -122,12 +122,11 @@ so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 ("Leave group", never "OK"), `--debit` outlined when it destroys something. A
 screen still wins where the decision needs the ledger on it — the payers editor,
-who-had-what ([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours, and
+who-had-what ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own
 rows — a name, a check on the current one, and a `note` saying what an
 unobvious pick does. A date is the exception, being a calendar and not a list
-([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
-[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)). A *failure* is not
+([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
 attempted, in `--debit`: `Failure` / `.failure`.
 

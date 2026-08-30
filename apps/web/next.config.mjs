@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Static export: the whole app is client-side and served as files by the
-  // Worker. See docs/decisions/0004-static-export-fragment-routing.md — this
+  // Worker. See docs/decisions/0004-static-export-and-offline.md — this
   // is why there are no route handlers, no middleware, and no dynamic params.
   output: "export",
   reactStrictMode: true,

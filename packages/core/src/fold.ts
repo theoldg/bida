@@ -9,7 +9,7 @@ import {
 /**
  * State is a deterministic fold over the op log. Ordering is by HLC, always —
  * never by seq (that is arrival order at the server) and never by createdAt
- * (that is a phone's opinion of the time). See ADR-0002 and ADR-0006.
+ * (that is a phone's opinion of the time). See ADR-0002.
  *
  * The fold is TOTAL: any subset of ops, in any order, produces some valid
  * state. An update arriving before its create yields a partial entity that

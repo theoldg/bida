@@ -20,7 +20,7 @@ import { useGroupData } from "../../../lib/hooks";
  *
  * This is the same list with one job. Pick a name, press the button, land in
  * the group. Nothing is written until the button: tapping a name here is a
- * selection, not a claim (which is an op, and public — ADR-0011). It can be
+ * selection, not a claim (which is an op, and public — ADR-0003). It can be
  * changed later on People, where the same names are.
  */
 export default function ClaimPage() {

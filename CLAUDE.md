@@ -48,7 +48,7 @@ secret link. [architecture.md](docs/architecture.md) ·
 MVP (Phases 0–3) complete, deployed and synced in production; the owner's punch
 list and follow-ups landed through 2026-08-30, and a group now holds three kinds
 of entry — expense, income, transfer
-([ADR-0028](docs/decisions/0028-three-kinds-of-entry.md)). Next: Phase 4
+([ADR-0010](docs/decisions/0010-what-an-entry-is.md)). Next: Phase 4
 (receipts).
 
 **Exact state and next action live in

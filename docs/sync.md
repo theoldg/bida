@@ -48,7 +48,7 @@ in production hold them.
 The fold is pure and total: any subset of ops produces *some* valid state. An
 `update` arriving before its `create` yields a partial entity that completes
 later. Don't throw on out-of-order ops.
-[ADR-0006](decisions/0006-lww-not-crdt.md) for why LWW and not a CRDT.
+[ADR-0002](decisions/0002-append-only-op-log.md) for why LWW and not a CRDT.
 
 ## The protocol
 

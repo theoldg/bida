@@ -2,14 +2,14 @@
 
 *For: whoever builds or changes the scan. Core, Worker endpoint, the
 client-side scan lib, the button and the item-assignment screen all exist and
-are deployed. See [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md)
+are deployed. See [ADR-0016](decisions/0016-receipts.md)
 for the UX decisions.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
 The scan/upload buttons and "Edit who-had-what" live on the expense form's
 "Receipt" tab, the fourth alongside Evenly/As parts/As amounts
-([ADR-0018](decisions/0018-receipt-as-a-fourth-split-tab.md)).
+([ADR-0016](decisions/0016-receipts.md)).
 
 ## The shape
 
@@ -101,8 +101,7 @@ above in one sideways-scrolling line, the running per-person totals stacked
 below, and the grid between them owning the vertical scroll, so its row of
 initials freezes while a long bill passes under it. The items, tip and the grid's own assignment are also written
 onto the expense as plain optional fields so the grid reopens later, on any
-device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
-[ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
+device — [ADR-0016](decisions/0016-receipts.md).
 
 `quantity` never multiplies anything — `amount` is already the line's printed
 total, so folding the count into it too would double-count. It does one job on
@@ -111,7 +110,7 @@ the "×2" on a row replaces it with two, each a portion of the printed amount
 with its own eaters — Alice and Bob shared one salad, Charlie had the other —
 and tapping it again merges them back. Portions carry `portionOf` and sum to
 the printed line exactly, so the bill's total never moves
-([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
+([ADR-0016](decisions/0016-receipts.md)).
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `EntryDraft` patch: `total` passes straight through as `amountText` — the
@@ -166,21 +165,11 @@ the key is the `GEMINI_API_KEY` Worker secret —
 `scanReceipt()` · the camera and library buttons on `/g/entry/edit`, which
 share one handler, and `/g/entry/items` behind them.
 
-The decisions it accumulated, each one still worth reading before changing this:
-[0016](decisions/0016-receipt-scan-ux-and-item-assignment.md) the grid reduces
-to an ordinary `shares` split ·
-[0017](decisions/0017-receipt-items-persist-on-the-expense.md) the bill and grid
-persist on the expense, reopenable from any device ·
-[0018](decisions/0018-receipt-as-a-fourth-split-tab.md) both live in a fourth
-"Receipt" tab beside Evenly/As parts/As amounts ·
-[0019](decisions/0019-receipt-mode-owns-the-total.md) Receipt owns the total and
-the tab choice persists ·
-[0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md) total
-and split are derived at read time, never cached ·
-[0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md) leaving
-Receipt hands the total back ·
-[0022](decisions/0022-unfolding-a-receipt-line-into-portions.md) a counted line
-unfolds into portions.
+[ADR-0016](decisions/0016-receipts.md) holds the rulings this
+accumulated — the grid reduces to a `shares` split, the bill persists on the
+expense, Receipt is a fourth tab that owns the total, nothing derived is cached,
+leaving hands the total back, and a counted line unfolds into portions. Read it
+before changing any of this.
 
 ## Verified live, 2026-08-28
 
@@ -210,23 +199,23 @@ group and its secret:
 - A UI-only "which tab is showing" field that isn't written onto the entity
   itself doesn't survive save/reopen if any other saved field can be used to
   re-derive a *different* answer — `receiptItems` staying on the expense
-  forever (ADR-0017) meant `splitTab` kept re-deriving "Receipt" even after
+  forever (ADR-0016) meant `splitTab` kept re-deriving "Receipt" even after
   the person switched away and saved. If a UI mode needs to stick, persist it,
-  don't derive it from data that outlives the choice (ADR-0019).
+  don't derive it from data that outlives the choice (ADR-0016).
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
   (`allocated === total === 0`) — which printed "€0.00 of €0.00 allocated"
   under a green check, four separate times, whenever anything upstream left
   the total at zero. The verdict is now `splitFooter`'s (`lib/format.ts`), not
   `check.ok`'s, so the string is unreachable rather than guarded per call site
-  ([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
+  ([ADR-0016](decisions/0016-receipts.md)).
 - Don't write a derived value into the draft for another screen's effect to
   notice and resync — that resync is only as reliable as the next mount
   actually happening before anyone reads the value, and a screen that writes
   the input and immediately navigates away (`/g/entry/items`'s "Done") can
   beat it. Receipt's total and split are recomputed inline, at the one place
-  either is read, instead — [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md).
+  either is read, instead — [ADR-0016](decisions/0016-receipts.md).
 - **Deriving a value only while one tab is showing needs a handoff when that
   tab closes.** Receipt derives the total; every other tab reads `amountText`,
   which nothing wrote, so leaving Receipt zeroed the amount. The split already
   handed over via `convertSplitMode`; the amount now does too
-  ([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
+  ([ADR-0016](decisions/0016-receipts.md)).

@@ -15,7 +15,7 @@ export type SplitMode = "equal" | "exact" | "shares" | "percent";
  *   returned, a prize, a sold ticket) and it is shared between the people it
  *   belongs to. Structurally identical to an expense — same payers, same
  *   split, same positive `amountMinor` — and the sign is applied once, in
- *   `computeBalances`. That is the whole of the difference. ADR-0028.
+ *   `computeBalances`. That is the whole of the difference. ADR-0010.
  *
  * The third kind of entry a person can add, a **transfer**, is not on this
  * union: it is a `Settlement`, a different entity with no split at all. The
@@ -104,7 +104,7 @@ export interface Expense {
    * The last receipt scan's line items, kept on the expense (not just a local
    * draft) so "who had what" can be reopened later — another device, another
    * session — instead of the parsed bill being thrown away once `split` is
-   * computed from it. Absent on an expense with no scan. ADR-0017.
+   * computed from it. Absent on an expense with no scan. ADR-0016.
    */
   receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
@@ -119,7 +119,7 @@ export interface Expense {
 }
 
 /**
- * One line of a scanned bill, as kept on the expense. ADR-0017.
+ * One line of a scanned bill, as kept on the expense. ADR-0016.
  *
  * `amount` is the line's printed total, already multiplied out — `quantity` is
  * what the receipt printed next to it ("2x", a qty column) and is never used
@@ -135,7 +135,7 @@ export interface ReceiptItem {
    * the who-had-what grid — two people shared one of the two salads, the
    * third had the other — and how many portions it was unfolded into.
    * Consecutive lines carrying the same label and the same count are one such
-   * unfold, which is what lets it be merged back. ADR-0022.
+   * unfold, which is what lets it be merged back. ADR-0016.
    */
   portionOf?: number | null;
 }
@@ -147,7 +147,7 @@ export interface ReceiptItem {
  * moves a debt, it does not create one. Paying somebody back is the reason
  * most transfers exist, but not the only one, which is why the app calls all
  * of them transfers and reserves "reimbursement" for none of them
- * ([ADR-0028](../../../docs/decisions/0028-three-kinds-of-entry.md)). The type
+ * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)). The type
  * keeps its old name because the op log, the D1 `entity` column and every op
  * ever written say `settlement`; renaming it would be a migration bought with
  * nothing.
@@ -174,7 +174,7 @@ export interface Settlement {
  * `id` is the device's HLC node id — the same string that already ends every
  * op that device stamped. Claiming an identity is therefore a *shared* fact,
  * not a private one: it is what lets everybody read `Op.actor` honestly. See
- * ADR-0011.
+ * ADR-0003.
  */
 export interface Identity {
   /** The device's HLC node id. */

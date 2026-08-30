@@ -11,7 +11,7 @@ import { Icon } from "./icons";
  * the browser asking rather than the app, with a single line of text and no
  * room for the sentence that names what is about to change. This one is drawn
  * from the same vocabulary as everything else — a scrim, a hairline card, the
- * app's buttons ([ADR-0025](docs/decisions/0025-our-own-dialogs.md)).
+ * app's buttons ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)).
  *
  * It is a real `<dialog>` opened with `showModal()`, so focus, Escape and the
  * inertness of the screen behind are the platform's job and not ours. The
@@ -130,7 +130,7 @@ export function PromptDialog({
 /**
  * Pick one of a handful of things — the third dialog, in place of a `<select>`.
  *
- * A native picker is the same intrusion `prompt()` was (ADR-0025): on a phone
+ * A native picker is the same intrusion `prompt()` was (ADR-0008): on a phone
  * it is a full-height wheel or sheet in the OS's typeface, and it can show a
  * name and nothing else. Ours is the rows the rest of the app is made of, so
  * a row can say what the caller needs to say about it.

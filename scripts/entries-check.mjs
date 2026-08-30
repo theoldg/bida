@@ -10,7 +10,7 @@
  * find a settlement by id. This walks that wiring against the real export.
  *
  * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts.
- * Needs `pnpm --filter @hajsik/web build` first. ADR-0028.
+ * Needs `pnpm --filter @hajsik/web build` first. ADR-0010.
  */
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -101,7 +101,7 @@ for (const name of ["Marie", "Sam"]) {
   await page.waitForTimeout(150);
 }
 
-/** Every picker in the app is our own dialog now (ADR-0029): open one, take a row. */
+/** Every picker in the app is our own dialog now (ADR-0008): open one, take a row. */
 async function pick(opener, row) {
   await page.locator(opener).click();
   await page.waitForSelector(".dlist");
@@ -143,7 +143,7 @@ report(await page.getByText("Received by").count() > 0, "an income relabels the 
 report(await page.getByText("Shared with").count() > 0, "an income relabels the split");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 await save(2);
-// No avatar marks it any more (ADR-0032): the verb and the sign are the two
+// No avatar marks it any more (ADR-0023): the verb and the sign are the two
 // signals that an entry runs the other way.
 report((await page.locator(".rmeta").first().innerText()).includes("received"), "the income row says received");
 report((await page.locator(".ramt .big").first().innerText()).includes("+"), "the income row signs its figure");
@@ -165,7 +165,7 @@ await page.waitForTimeout(100);
 report((await page.locator(".tside .who").last().innerText()) === wasFrom, "the arrow swaps the two sides");
 await page.locator(".tswap").click();
 await page.waitForTimeout(100);
-// Either side opens the app's own picker, never a <select> (ADR-0029), and the
+// Either side opens the app's own picker, never a <select> (ADR-0008), and the
 // person already on the other side is in it as a reversal rather than an error.
 // Nothing on this form is a native picker any more — the currency and the payer
 // went the same way — so the assertion is the whole screen, not the card.

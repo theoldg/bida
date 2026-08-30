@@ -15,7 +15,7 @@ phones are offline at once, because that will happen on a trip.
 **Tricount parity.** Groups (name, base currency, members — a member is a name,
 not an account). Three kinds of entry — **expenses**, **incomes** and
 **transfers** (amount, currency, description, date, category, who paid, who
-for) ([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Split modes: evenly,
+for) ([ADR-0010](decisions/0010-what-an-entry-is.md)). Split modes: evenly,
 as parts, as amounts — remainders distributed deterministically and quietly.
 Balances, derived, never stored. Settle-up, which records a transfer. Invite by
 link. CSV export.
@@ -29,11 +29,11 @@ link. CSV export.
    viewable full-screen.
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
    row did to your balance, signed and coloured; rows you're not in faded back;
-   your net on top ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+   your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
 Shared, not solo — sync is part of the MVP. Multi-currency, with the rate frozen
-at entry ([ADR-0005](decisions/0005-locked-fx-rate.md)).
+at entry ([ADR-0005](decisions/0005-money-and-currency.md)).
 
 ## Deliberately not in the MVP
 
@@ -41,7 +41,7 @@ Leave the seam. Build none of it.
 
 | Deferred | The seam |
 |---|---|
-| Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds — the scan already reads them, and a receipt scan can assign them ad hoc into a `shares` split today ([ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md)), but they aren't stored or re-editable after saving |
+| Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds — the scan already reads them, and a receipt scan can assign them ad hoc into a `shares` split today ([ADR-0016](decisions/0016-receipts.md)), but they aren't stored or re-editable after saving |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
@@ -62,4 +62,4 @@ Decimal comma vs. point · fixed vs. free-form categories.
 
 *Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
 setting at all (2026-08-30,
-[ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+[ADR-0007](decisions/0007-a-screen-is-a-route.md)).

@@ -257,7 +257,7 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
 /**
  * The fourth tab's content: scan/upload before there's a bill, "edit
  * who-had-what" plus a smaller rescan/upload pair once there is one — always
- * available, including on an already-saved expense (ADR-0019, superseding
+ * available, including on an already-saved expense (ADR-0016, superseding
  * ADR-0016's new-expense-only restriction). A fresh scan replaces the old
  * items/tip and resets the who-had-what grid, same as the first scan.
  */

@@ -29,11 +29,11 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 
 ## Phase 4 — Receipts ← next
 - [x] **Scan a receipt into the expense form** — [receipt-scanning.md](receipt-scanning.md),
-      [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md). Needs no
+      [ADR-0016](decisions/0016-receipts.md). Needs no
       storage: the photo is read and thrown away. Button, states, privacy
       line, and a who-had-what screen for line items — where a "×2" line
       unfolds into separately assignable portions
-      ([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)) —
+      ([ADR-0016](decisions/0016-receipts.md)) —
       all live.
 - [ ] Multi-image capture, on-device downscale
 - [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
@@ -57,17 +57,16 @@ wording.
 ## Phase 8 — Three kinds of entry ✅ *(2026-08-30)*
 Expenses, incomes and transfers, all editable, on one form and one detail
 screen; `/g/settle` and `/g/expense*` are gone
-([ADR-0028](decisions/0028-three-kinds-of-entry.md)). A transfer's sides label
+([ADR-0010](decisions/0010-what-an-entry-is.md)). A transfer's sides label
 themselves above the face, and every picker on the form — sides, payer, currency
-— is our own dialog ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
-[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
+— is our own dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a
 neutral dark theme, in-group options, identity history, nothing selectable, a
 real amount input, generic placeholders, and co-sponsored expenses. All landed,
 then reshaped by three rounds of follow-ups on 2026-08-28 — ADRs
-[0011](decisions/0011-identity-changes-are-public.md)–[0015](decisions/0015-one-money-field-core-reports-numbers.md)
+[0011](decisions/0003-link-only-access.md)–[0015](decisions/0005-money-and-currency.md)
 carry what changed and why.
 
 ## Later, deliberately

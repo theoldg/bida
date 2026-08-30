@@ -142,7 +142,7 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: str
 /**
  * A fixed bar under the scroll holding the screen's one act. Only for a button
  * that ends the screen — a decision that fits in a paragraph is a dialog
- * (ADR-0025).
+ * (ADR-0008).
  */
 export function Foot({ children }: { children: ReactNode }) {
   return <div className="foot">{children}</div>;

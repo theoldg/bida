@@ -9,7 +9,7 @@ import type { Id } from "./types.js";
 
 export type EntityKind =
   | "group" | "member" | "expense" | "settlement" | "attachment"
-  /** A device's claim to be a member. Shared so `actor` can be read. ADR-0011. */
+  /** A device's claim to be a member. Shared so `actor` can be read. ADR-0003. */
   | "identity";
 export type OpKind = "create" | "update" | "delete" | "restore";
 

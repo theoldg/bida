@@ -13,7 +13,7 @@ exponents vary (JPY 0, TND 3) and `core/money.ts` owns that table — never assu
 ## The three kinds of entry
 
 What a person adds to a group is an **expense**, an **income** or a **transfer**
-([ADR-0028](decisions/0028-three-kinds-of-entry.md)). Only two entities carry
+([ADR-0010](decisions/0010-what-an-entry-is.md)). Only two entities carry
 them:
 
 | Entry | Entity | How it differs |
@@ -58,16 +58,16 @@ Expense {
   attachmentIds: string[],
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind `split`, kept so the
-                      // who-had-what grid can reopen (ADR-0017)
+                      // who-had-what grid can reopen (ADR-0016)
   splitTab?,          // 'equal'|'shares'|'exact'|'receipt' — which split
-                      // editor tab was showing, so it survives save (ADR-0019)
+                      // editor tab was showing, so it survives save (ADR-0016)
   deletedAt?
 }
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
 `percent { percents }` (basis points). **`percent` is legacy and read-only**
-([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)).
+([ADR-0010](decisions/0010-what-an-entry-is.md)).
 What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
 and nowhere else.
 
@@ -77,7 +77,7 @@ and nowhere else.
   others keep it; emptying the group sets `archivedAt` in the same batch.
   Opening the invite link again clears the hide.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
-  entry ([ADR-0005](decisions/0005-locked-fx-rate.md)) and must re-derive
+  entry ([ADR-0005](decisions/0005-money-and-currency.md)) and must re-derive
   identically on every device.
 - A settlement (a **transfer**) is structurally separate from an expense so it
   never pollutes "how much did the trip cost". So is income, which is counted in
@@ -86,7 +86,7 @@ and nowhere else.
   Dexie table keyed by attachment id.
 - **Identity is one row per device**, keyed by the node id ending every HLC that
   device stamped. Claims are ops
-  ([ADR-0011](decisions/0011-identity-changes-are-public.md)); the device's own
+  ([ADR-0003](decisions/0003-link-only-access.md)); the device's own
   pointer stays in `device.meByGroup`, unsynced — changing it appends the op.
 
 ## Splits — the only tricky arithmetic
@@ -107,7 +107,7 @@ diverge, and the seeded draw buys fairness inside that constraint.
 ## Co-sponsored expenses
 
 `payers` is the payer-side mirror of `split`, edited on `/g/payers`
-([ADR-0010](decisions/0010-co-sponsored-expenses.md)). Amounts are in the
+([ADR-0010](decisions/0010-what-an-entry-is.md)). Amounts are in the
 **entry's own currency** and sum to `amountMinor`; `resolvePayers()` apportions
 the stored `baseAmountMinor` at read time so the payer side sums to it exactly;
 `paidBy` is kept in step as the largest contributor (one live contributor is

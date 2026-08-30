@@ -15,7 +15,7 @@ import {
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit
- * who-had-what" (ADR-0017). Its own screen rather than a mode inside the
+ * who-had-what" (ADR-0016). Its own screen rather than a mode inside the
  * split editor — a different question ("who ate this") from "how does the
  * total divide" — and it ends by writing an ordinary `shares` split, so
  * nothing downstream needs to know a scan was involved.
@@ -149,9 +149,9 @@ function ItemsScreen() {
     // The total and the split it implies are derived from these fields
     // wherever they're needed (the expense form's render, and its save) —
     // not written down here too, so there's nothing that can drift out of
-    // sync with them (ADR-0020). Keep receiptItems/receiptTip and the raw
+    // sync with them (ADR-0016). Keep receiptItems/receiptTip and the raw
     // assignment around (unlike a discarded scan) so "Edit who-had-what" can
-    // reopen this exact grid later, on any device. ADR-0017.
+    // reopen this exact grid later, on any device. ADR-0016.
     saveDraft(groupId, {
       ...draft,
       receiptInvolved: [...involved],

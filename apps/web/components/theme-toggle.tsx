@@ -7,7 +7,7 @@ import { updateDevice } from "../lib/db/device";
 
 /**
  * Light or dark, in one tap, on the one screen that is about this phone rather
- * than about a group (ADR-0026).
+ * than about a group (ADR-0007).
  *
  * It reads the DOM rather than the device record: `<html data-theme>` is set
  * before first paint by the script in ./theme.tsx, while Dexie is still

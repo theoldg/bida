@@ -17,7 +17,7 @@ import type { EntryKind } from "./entry-kind";
  * One draft covers all three kinds so that changing your mind halfway keeps
  * what you already typed: the amount, the date and the words survive a tap on
  * the segmented control, because the fields they live in are the same fields
- * (ADR-0028). The ones only a transfer uses (`fromMember`, `toMember`) and the
+ * (ADR-0010). The ones only a transfer uses (`fromMember`, `toMember`) and the
  * ones only an expense or income uses (`split`, `payers`, the receipt) simply
  * sit unread while the other kind is showing.
  */
@@ -55,7 +55,7 @@ export interface EntryDraft {
   /**
    * The parsed bill, mirroring the same-named fields on `Expense` — kept here
    * while it's being typed, then written onto the expense itself on save so
-   * "Edit who-had-what" can reopen it later, on any device. ADR-0017.
+   * "Edit who-had-what" can reopen it later, on any device. ADR-0016.
    */
   receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */

@@ -84,7 +84,7 @@ export function receiptTotalMinor(
  * off Receipt mode — or null to leave the amount field alone.
  *
  * Receipt's total is derived at read time and deliberately never cached
- * (ADR-0020), which holds for exactly as long as the Receipt tab is the one
+ * (ADR-0016), which holds for exactly as long as the Receipt tab is the one
  * showing it. Switching to Evenly / As parts / As amounts ends that: the
  * person is taking the number back by hand, and the only place a typed amount
  * lives is `amountText`. The split already makes precisely this handoff, via
@@ -120,7 +120,7 @@ export function handOffReceiptTotal(
  * One row can't say that, so the row becomes two, each carrying half the
  * printed amount and its own set of eaters. Nothing downstream learns a new
  * concept: the grid still reduces to weights, and the bill is still the sum of
- * its lines. ADR-0022.
+ * its lines. ADR-0016.
  *
  * Portions are marked (`portionOf`), not inferred from equal labels, so a
  * receipt that happens to print two identical lines isn't drawn as something

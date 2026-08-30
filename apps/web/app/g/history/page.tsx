@@ -50,7 +50,7 @@ function HistoryScreen() {
   const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
 
     // One id parameter, both tables: history is per-entry, and a transfer has
-  // as much of it as an expense does (ADR-0028).
+  // as much of it as an expense does (ADR-0010).
   const subject = entryId
     ? data.expenses.find((e) => e.id === entryId) ?? data.settlements.find((s) => s.id === entryId)
     : undefined;

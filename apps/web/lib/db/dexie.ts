@@ -109,7 +109,7 @@ export class HajsikDb extends Dexie {
     });
     // v3 replaces it with `identities`, materialised from `identity` ops:
     // who a device says it is became a shared fact, so the log of it is the
-    // op log like everything else. ADR-0011 supersedes ADR-0009. The old
+    // op log like everything else (ADR-0003). The old
     // table is dropped rather than migrated — its rows have no ops behind
     // them, and the shared record honestly starts here.
     this.version(3).stores({

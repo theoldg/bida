@@ -11,7 +11,7 @@ import { initials } from "../lib/format";
  *
  * People don't get one. A name is already the shortest way to say who someone
  * is, and the square beside it repeated the first letter of the word next to it
- * on every screen the app has ([ADR-0032](../../../docs/decisions/0032-a-name-is-enough.md)).
+ * on every screen the app has ([ADR-0023](../../../docs/decisions/0023-monospace-monochrome.md)).
  * The one exception is the who-had-what grid, which uses initials as column
  * headings and so draws its own.
  */

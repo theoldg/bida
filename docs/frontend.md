@@ -4,7 +4,7 @@
 
 Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie.
 Components are hand-rolled — no shadcn, no Radix
-([ADR-0008](decisions/0008-hand-rolled-css-not-shadcn.md)). **The whole app is
+([ADR-0008](decisions/0008-hand-rolled-interface.md)). **The whole app is
 client-side**: no SSR, no server actions, no Next route handlers. The Worker's
 API is reached with `fetch`.
 
@@ -12,29 +12,29 @@ API is reached with `fetch`.
 
 Only static routes exist — a static export can't generate a page per group id.
 Each screen is its own route, with the group id (never the secret) in the query
-string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
+string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 `lib/group-link.ts`'s `route` object is the one place URLs are built.
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)) · create a group |
+| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
-| `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0028](decisions/0028-three-kinds-of-entry.md)) |
-| `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)). Settle-up links here with a transfer pre-filled |
-| `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
+| `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
+| `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
+| `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-entry |
-| `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0025](decisions/0025-our-own-dialogs.md)) |
+| `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
 **Back goes up, not back.** A screen's `back` names its parent, and `goUp`
 (`lib/nav.ts`) unwinds the history to it instead of pushing, so the device's
 back button climbs one level per press
-([ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)). A `<Link>` to an
+([ADR-0007](decisions/0007-a-screen-is-a-route.md)). A `<Link>` to an
 ancestor or a sibling must `replace`; only descending pushes.
 
 **The group secret lives in the URL fragment**, which browsers never send to a
-server ([ADR-0004](decisions/0004-static-export-fragment-routing.md)). Never move
+server ([ADR-0004](decisions/0004-static-export-and-offline.md)). Never move
 it into a path or query string "for convenience". The id alone is fine — it
 confers nothing without the secret.
 
@@ -51,7 +51,7 @@ confers nothing without the secret.
 - Device-local, never-synced state (who "you" are, theme, install-nudge
   dismissal) is in the `device` store. *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
-  ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
+  ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
 - **The entry draft is never stored** (`lib/draft.ts`): an in-memory store
   shared by the entry screens, so bouncing to the payers/items routes keeps
@@ -62,12 +62,11 @@ confers nothing without the secret.
   compares against.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**:
   a real `<dialog>` with `showModal()`, so focus and Escape are the platform's
-  job ([ADR-0025](decisions/0025-our-own-dialogs.md)) — `ConfirmDialog`,
+  job ([ADR-0008](decisions/0008-hand-rolled-interface.md)) — `ConfirmDialog`,
   `PromptDialog` and `ChoiceDialog`, which is every picker in the app — payer,
   currency, a transfer's sides — behind a `.field > .pick` button or a chip.
   `<input type="date">` is the one native control left
-  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
-  [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
+  ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - History wording lives once, in `lib/history-copy.ts` (`describe`). It must be
   **total** — it runs inside a render over every patch the log holds, so one
   throw is a white screen, not a missing line.
@@ -81,7 +80,7 @@ them behind a top-bar icon, not a second row — three icons is the ceiling.
 
 ## Your own money, pulled out of the group's
 
-Always on, not a setting ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 It changes rendering only, never data or what syncs:
 
 - **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — what you
@@ -130,7 +129,7 @@ you two disagreeing sources of truth.
 Everything precached is served cache-first, so a launch and every tap after it
 paint without waiting on the network — the reasoning, and the three things that
 make it safe, are
-[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md). In short:
+[ADR-0004](decisions/0004-static-export-and-offline.md). In short:
 the list and the cache name are stamped in after the build by
 `apps/web/scripts/precache.mjs` (nothing to drift, no `CACHE_VERSION` to bump);
 the worker does not `skipWaiting`, so a deploy takes over on the next launch
@@ -144,7 +143,7 @@ after touching either file.
 ## Every money field is `components/amount-input.tsx`
 
 There is exactly one, and **no screen sanitises or formats a typed amount
-itself** ([ADR-0015](decisions/0015-one-money-field-core-reports-numbers.md)).
+itself** ([ADR-0005](decisions/0005-money-and-currency.md)).
 
 | Export | For | Value |
 |---|---|---|
@@ -168,7 +167,7 @@ axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
 Everything else is ordinary markup; what more than one screen
 draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
 still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
-`components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0032 — `Card`, `KV`, `GhostRow`). What the three
+`components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0023 — `Card`, `KV`, `GhostRow`). What the three
 kinds of entry are *called* — labels, verbs, headings — lives only in
 `lib/entry-kind.ts`.
 

@@ -14,7 +14,7 @@ import type { Expense, Settlement } from "@hajsik/core";
  *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, not a
  *   separate idea, which is why "reimbursement" appears nowhere any more.
  *
- * ADR-0028.
+ * ADR-0010.
  */
 export type EntryKind = "expense" | "income" | "transfer";
 
