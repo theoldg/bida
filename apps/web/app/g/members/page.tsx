@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Avatar } from "../../../components/bits";
-import { Banner, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Avatar, GhostRow } from "../../../components/bits";
+import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import {
@@ -42,7 +42,7 @@ function MembersScreen() {
   const invite = useInviteLink(groupId);
   const [ask, setAsk] = useState<Ask | null>(null);
 
-  if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
+  if (!groupId || !data.group) return <Blank />;
   const group = data.group;
 
   async function claim(memberId: string) {
@@ -125,24 +125,11 @@ function MembersScreen() {
               </div>
             ))}
 
-            <button className="row" style={{ paddingTop: 16 }} onClick={() => setAsk({ kind: "add" })}>
-              <span className="avatar" style={{
-                background: "transparent", borderStyle: "dashed", color: "var(--muted)",
-              }}><Icon name="plus" size={15} /></span>
-              <div className="rmain">
-                <div className="rtitle" style={{ color: "var(--muted)", fontWeight: 500 }}>Add member</div>
-              </div>
-            </button>
+            <GhostRow icon="plus" label="Add member" onClick={() => setAsk({ kind: "add" })} />
 
             {data.me ? (
-              <button className="row" onClick={() => setAsk({ kind: "leave" })}>
-                <span className="avatar" style={{
-                  background: "transparent", borderStyle: "dashed", color: "var(--debit)",
-                }}><Icon name="trash" size={15} /></span>
-                <div className="rmain">
-                  <div className="rtitle" style={{ color: "var(--debit)", fontWeight: 500 }}>Leave group</div>
-                </div>
-              </button>
+              <GhostRow icon="trash" label="Leave group" danger={true}
+                onClick={() => setAsk({ kind: "leave" })} />
             ) : null}
           </div>
         </Scroll>

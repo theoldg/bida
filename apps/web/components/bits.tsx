@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import type { Member } from "@hajsik/core";
+import { Icon, type IconName } from "./icons";
 import { initials } from "../lib/format";
 
+/** Initials in a square. `name` is for what isn't a member — a group. */
 export function Avatar({ member, size = 34, name }: {
   member?: Member; size?: number; name?: string;
 }) {
@@ -14,6 +17,34 @@ export function Avatar({ member, size = 34, name }: {
       {initials(label)}
     </span>
   );
+}
+
+/**
+ * A row that *does* something rather than being something in the list — add a
+ * member, start a group, leave one. A dashed outline stands where an avatar's
+ * initials would be, so it reads as an empty slot in the same column.
+ *
+ * `.ghostrow` carries the air above the first one, so a page never has to pass
+ * a padding to say "this is where the list ends and the actions begin".
+ */
+export function GhostRow({ icon, label, href, onClick, danger }: {
+  icon: IconName;
+  label: ReactNode;
+  href?: string;
+  onClick?: () => void;
+  /** Leaving a group is the one of these that takes something away. */
+  danger?: boolean;
+}) {
+  const color = danger ? "var(--debit)" : "var(--muted)";
+  const inner = (
+    <>
+      <span className="avatar ghost" style={{ color }}><Icon name={icon} size={15} /></span>
+      <div className="rmain"><div className="rtitle" style={{ color, fontWeight: 500 }}>{label}</div></div>
+    </>
+  );
+  return href
+    ? <Link href={href} className="row ghostrow">{inner}</Link>
+    : <button className="row ghostrow" onClick={onClick}>{inner}</button>;
 }
 
 export function Chip({ children, variant, style }: {

@@ -168,7 +168,6 @@ const routes = (g) => [
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],
-  ["payers", `/g/payers?id=${g}`],
 ];
 
 async function main() {
@@ -223,6 +222,17 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);
+
+      // Who paid, mid-allocation: the payer side's verdict line, in the two
+      // colours the split editor's own footer uses. It hangs off the draft the
+      // block above just typed, which is why it can't be reached by URL.
+      await page.getByRole("link", { name: /several people paid/i }).click();
+      await page.waitForURL(/\/g\/payers/);
+      await page.locator(".rows .row").filter({ hasText: "Marie" })
+        .getByRole("button", { name: /paid too/i }).click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-payers.png`) });
+      process.stdout.write(`${theme}/payers `);
 
       // Who had what — the one screen only a scan leads to. The draft is in
       // memory, so it is reached by really uploading a photo, with the model's

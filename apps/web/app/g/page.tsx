@@ -7,7 +7,7 @@ import {
 } from "@hajsik/core";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
-  Banner, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
+  Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
@@ -33,7 +33,7 @@ function GroupScreen() {
   // (ADR-0014) and the settings screen after it (ADR-0026).
   const invite = useInviteLink(groupId);
 
-  if (!groupId) return <Screen><Body><TopBar title="No group" back={route.groups()} /></Body></Screen>;
+  if (!groupId) return <Blank title="No group" back={route.groups()} />;
   // Loading used to be a top bar over nothing — indistinguishable from a tap
   // that didn't land. Draw the whole frame instead: the group's name is the
   // only thing here that has to wait for Dexie.
@@ -150,6 +150,10 @@ type Entry =
 function ExpensesTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
   if (!group) return null;
+  // Read out here, not `group!.baseCurrency` at each use: the row renderers
+  // below are hoisted function declarations, so they are created before this
+  // guard runs and TypeScript won't carry its narrowing into them.
+  const { id: gid, baseCurrency: base } = group;
 
   // The ledger's whole job is answering "does this one help me or hurt me?",
   // so every row carries its own effect on your balance — what you put in for
@@ -201,8 +205,8 @@ function ExpensesTab({ data }: { data: GroupData }) {
               <div key={entry.kind === "expense" ? entry.expense.id : entry.settlement.id}>
                 {label ? <div className="daylabel">{label}</div> : null}
                 {entry.kind === "expense"
-                  ? <ExpenseRow data={data} expense={entry.expense} />
-                  : <SettlementRow data={data} settlement={entry.settlement} />}
+                  ? <ExpenseRow expense={entry.expense} />
+                  : <SettlementRow settlement={entry.settlement} />}
               </div>
             );
           })}
@@ -212,7 +216,7 @@ function ExpensesTab({ data }: { data: GroupData }) {
     </>
   );
 
-  function ExpenseRow({ expense }: { data: GroupData; expense: Expense }) {
+  function ExpenseRow({ expense }: { expense: Expense }) {
     const payer = memberById.get(expense.paidBy);
     const payers = payerList(expense);
     const involved = me ? splitParticipants(expense.split).includes(me) : false;
@@ -223,12 +227,12 @@ function ExpensesTab({ data }: { data: GroupData }) {
     const myNet = putIn - myShare;
     const mine = putIn !== 0 || involved;
     const participants = splitParticipants(expense.split).length;
-    const foreign = expense.currency !== group!.baseCurrency;
+    const foreign = expense.currency !== base;
 
     return (
-      <Link href={route.expense(group!.id, expense.id)}
+      <Link href={route.expense(gid, expense.id)}
         className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
-        <Avatar member={payer} name={payer?.name} />
+        <Avatar member={payer} />
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
@@ -241,19 +245,19 @@ function ExpensesTab({ data }: { data: GroupData }) {
           </div>
         </div>
         <div className="ramt">
-          <div className="big">{money(expense.baseAmountMinor, group!.baseCurrency)}</div>
+          <div className="big">{money(expense.baseAmountMinor, base)}</div>
           {foreign ? (
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
           ) : null}
           <div className={`sm share ${signClass(myNet)}`}>
-            {mine ? money(myNet, group!.baseCurrency, myNet !== 0) : "not yours"}
+            {mine ? money(myNet, base, myNet !== 0) : "not yours"}
           </div>
         </div>
       </Link>
     );
   }
 
-  function SettlementRow({ settlement }: { data: GroupData; settlement: Settlement }) {
+  function SettlementRow({ settlement }: { settlement: Settlement }) {
     const from = memberById.get(settlement.fromMember);
     const to = memberById.get(settlement.toMember);
     // Paying somebody back moves your balance up by exactly what you handed
@@ -274,10 +278,10 @@ function ExpensesTab({ data }: { data: GroupData }) {
         </div>
         <div className="ramt">
           <div className="big" style={{ color: "var(--muted)" }}>
-            {money(settlement.baseAmountMinor, group!.baseCurrency)}
+            {money(settlement.baseAmountMinor, base)}
           </div>
           <div className={`sm share ${signClass(myNet)}`}>
-            {myNet !== 0 ? money(myNet, group!.baseCurrency, true) : "not yours"}
+            {myNet !== 0 ? money(myNet, base, true) : "not yours"}
           </div>
         </div>
       </div>
@@ -315,7 +319,7 @@ function BalancesTab({ data }: { data: GroupData }) {
                 <div className="bar">
                   {net === 0 ? null : net > 0
                     ? <i className="c" style={{ width }} />
-                    : <i className="d" style={{ width, right: "50%" }} />}
+                    : <i className="d" style={{ width }} />}
                   <span className="axis" />
                 </div>
               </div>

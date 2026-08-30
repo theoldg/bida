@@ -35,11 +35,12 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
-   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Eight scenes have no
-   URL of their own and are reached by driving: the three dialogs (add member,
-   leave group, delete expense), `/g/restore` (its URL carries an HLC),
-   `settle`, `who-had-what` twice, and `expense-split-amounts` (a deliberate
-   shortfall).
+   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Nine scenes have no URL
+   worth visiting and are reached by driving instead: the three dialogs (add
+   member, leave group, delete expense), `/g/restore` (its URL carries an HLC),
+   `settle`, `who-had-what` twice, `expense-split-amounts` (a deliberate
+   shortfall) and `payers` — the last two hang off the expense form's
+   in-memory draft, so their own URLs photograph an empty frame.
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.

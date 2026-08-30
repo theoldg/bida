@@ -152,9 +152,12 @@ re-reads the model only on outside change — don't go back to
 `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
 "12.".
 
-The other component with real logic is the **balance bar** (a bar around a
-centre axis, debit left, credit right) in `components/bits.tsx`. Everything else
-is markup lifted from the mockup.
+The other place with real logic is the **balance bar** (a bar around a centre
+axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
+Everything else is markup lifted from the mockup; what more than one screen
+draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
+still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
+`components/bits.tsx` (`Avatar`, `Card`, `KV`, `GhostRow`).
 
 **Core says what is wrong; the screen says it in money.** `validateSplit` and
 `validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and

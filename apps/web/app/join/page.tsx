@@ -3,7 +3,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
@@ -65,9 +65,7 @@ function JoinScreen() {
     if (link && group) router.replace(route.claim(link.groupId));
   }, [link, group, router]);
 
-  if (link === undefined) {
-    return <Screen><Body><TopBar title=" " back={route.groups()} /></Body></Screen>;
-  }
+  if (link === undefined) return <Blank back={route.groups()} />;
 
   if (!link) {
     return (
@@ -80,9 +78,7 @@ function JoinScreen() {
     );
   }
 
-  if (!keySaved || group) {
-    return <Screen><Body><TopBar title=" " back={route.groups()} /></Body></Screen>;
-  }
+  if (!keySaved || group) return <Blank back={route.groups()} />;
 
   return (
     <Screen><Body>

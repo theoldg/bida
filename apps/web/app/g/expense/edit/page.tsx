@@ -10,8 +10,8 @@ import {
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
-import { SplitEditor } from "../../../../components/split-editor";
-import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
+import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
@@ -37,8 +37,8 @@ function EditExpenseScreen() {
   const secret = useGroupSecret(groupId);
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
-  const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
-  const [scanSource, setScanSource] = useState<"camera" | "library" | null>(null);
+  const [scanState, setScanState] = useState<ScanState>("idle");
+  const [scanSource, setScanSource] = useState<ScanSource>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [ask, setAsk] = useState<null | "discard" | "currency">(null);
 
@@ -126,7 +126,7 @@ function EditExpenseScreen() {
   }, [groupId]);
 
   if (!groupId || !data.group || !draft) {
-    return <Screen><Body><TopBar title={expenseId ? "Edit" : "New expense"} back={true} /></Body></Screen>;
+    return <Blank title={expenseId ? "Edit" : "New expense"} />;
   }
   const group = data.group;
   const base = group.baseCurrency;

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, signClass } from "../components/bits";
+import { Avatar, GhostRow, signClass } from "../components/bits";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
-import { Icon, Wordmark } from "../components/icons";
+import { Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
 import { ThemeToggle } from "../components/theme-toggle";
 import { ago, money, plural } from "../lib/format";
@@ -69,14 +69,7 @@ export default function GroupsPage() {
               </Link>
             ))}
 
-            <Link href={route.newGroup()} className="row" style={{ paddingTop: 16 }}>
-              <span className="avatar" style={{
-                background: "transparent", borderStyle: "dashed", color: "var(--muted)",
-              }}><Icon name="plus" size={15} /></span>
-              <div className="rmain">
-                <div className="rtitle" style={{ color: "var(--muted)", fontWeight: 500 }}>New group</div>
-              </div>
-            </Link>
+            <GhostRow icon="plus" label="New group" href={route.newGroup()} />
           </div>
 
           {/* Once there is something to come back to, and never before it. */}

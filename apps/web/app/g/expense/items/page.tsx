@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
-import { Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
+import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
 import { distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
@@ -53,7 +53,7 @@ function ItemsScreen() {
   }, [data.loading, data.members, items, draft?.receiptInvolved, draft?.receiptAssignments]);
 
   if (!groupId || !data.group || !draft) {
-    return <Screen><Body><TopBar title="Who had what" back={true} /></Body></Screen>;
+    return <Blank title="Who had what" />;
   }
 
   if (items.length === 0) {

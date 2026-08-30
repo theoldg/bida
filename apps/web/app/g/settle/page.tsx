@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { minorToDecimalString, parseMinor } from "@hajsik/core";
 import { AmountInput } from "../../../components/amount-input";
 import { Avatar } from "../../../components/bits";
-import { Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { recordSettlement } from "../../../lib/db/commands";
 import { bare, dateInputValue, errorText, withDate } from "../../../lib/format";
@@ -38,9 +38,7 @@ function SettleScreen() {
     setSeeded(true);
   }, [seeded, data.group, suggested]);
 
-  if (!groupId || !data.group || !from || !to) {
-    return <Screen><Body><TopBar title="Record payment" back={true} /></Body></Screen>;
-  }
+  if (!groupId || !data.group || !from || !to) return <Blank title="Record payment" />;
   const group = data.group;
   const fromM = data.memberById.get(from);
   const toM = data.memberById.get(to);

@@ -2,8 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Avatar } from "../../../components/bits";
-import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Avatar, GhostRow } from "../../../components/bits";
+import { Blank, Body, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
@@ -39,9 +39,7 @@ function ClaimScreen() {
   const [busy, setBusy] = useState(false);
   const chosen = picked ?? data.me;
 
-  if (!groupId || !data.group) {
-    return <Screen><Body><TopBar title=" " back={route.groups()} /></Body></Screen>;
-  }
+  if (!groupId || !data.group) return <Blank back={route.groups()} />;
   const group = data.group;
 
   // Adding yourself here selects you too: you typed your own name, so making
@@ -82,27 +80,19 @@ function ClaimScreen() {
               </button>
             ))}
 
-            <button className="row" style={{ paddingTop: 16 }} onClick={() => setAdding(true)}>
-              <span className="avatar" style={{
-                background: "transparent", borderStyle: "dashed", color: "var(--muted)",
-              }}><Icon name="plus" size={15} /></span>
-              <div className="rmain">
-                <div className="rtitle" style={{ color: "var(--muted)", fontWeight: 500 }}>
-                  I&rsquo;m not on the list
-                </div>
-              </div>
-            </button>
+            <GhostRow icon="plus" label={<>I&rsquo;m not on the list</>}
+              onClick={() => setAdding(true)} />
           </div>
         </Scroll>
       </Body>
 
-      <div style={{ borderTop: "1px solid var(--rule)", flex: "none", padding: "11px 16px" }}>
+      <Foot>
         <button className="btn btn-p" onClick={proceed} disabled={!chosen || busy}>
           {chosen
             ? `Continue as ${data.memberById.get(chosen)?.name ?? "me"}`
             : "Pick your name to continue"}
         </button>
-      </div>
+      </Foot>
 
       {adding ? (
         <PromptDialog title="Your name" placeholder="Name" confirm="Add"

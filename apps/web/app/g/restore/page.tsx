@@ -8,7 +8,7 @@ import {
   type CurrencyCode, type EntityKind, type Member,
 } from "@hajsik/core";
 import { Eyebrow, KV } from "../../../components/bits";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { restoreRevision } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
@@ -18,18 +18,6 @@ import { describe, fieldLabel, fieldValue } from "../../../lib/history-copy";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
-/**
- * "Put it back to this" — the confirmation for a restore.
- *
- * It used to be a `confirm()` on the history screen, behind a "Restore this
- * version" link under every entry. That was both too loud in the timeline and
- * too quiet at the moment it mattered: a one-line browser dialog, naming
- * nothing it was about to change. This screen names all of it, and the
- * timeline gets a rewind icon at the edge instead.
- *
- * A restore is an ordinary op carrying the old field values (ADR-0002), so
- * nothing is erased — which is what the footnote here says, in those words.
- */
 /**
  * A restore patch is field-level and mechanical: putting an amount back carries
  * `amountMinor`, `rateToBase` and `baseAmountMinor`, three rows that say the
@@ -54,6 +42,20 @@ function displayFields(
   return rows;
 }
 
+/**
+ * "Put it back to this" — the confirmation for a restore.
+ *
+ * It used to be a `confirm()` on the history screen, behind a "Restore this
+ * version" link under every entry. That was both too loud in the timeline and
+ * too quiet at the moment it mattered: a one-line browser dialog, naming
+ * nothing it was about to change. This screen names all of it, and the
+ * timeline gets a rewind icon at the edge instead. It stays a screen rather
+ * than becoming a dialog because the decision needs the ledger on it
+ * (ADR-0025).
+ *
+ * A restore is an ordinary op carrying the old field values (ADR-0002), so
+ * nothing is erased — which is what the footnote here says, in those words.
+ */
 export default function RestorePage() {
   return <QueryBoundary><RestoreScreen /></QueryBoundary>;
 }
@@ -90,9 +92,7 @@ function RestoreScreen() {
     ? route.history(groupId, entity === "expense" ? entityId : undefined)
     : route.groups();
 
-  if (!groupId || !entityId || !atHlc || !data.group) {
-    return <Screen><Body><TopBar title=" " back={back} /></Body></Screen>;
-  }
+  if (!groupId || !entityId || !atHlc || !data.group) return <Blank back={back} />;
   const currency = data.group.baseCurrency;
 
   const revision = entityHistory(ops, entityId).find((r) => r.op.hlc === atHlc);
@@ -153,14 +153,14 @@ function RestoreScreen() {
         </Scroll>
       </Body>
 
-      <div style={{ borderTop: "1px solid var(--rule)", flex: "none", padding: "11px 16px" }}>
+      <Foot>
         <button className="btn btn-p" onClick={restore} disabled={busy || !revision || fields.length === 0}>
           <Icon name="rewind" size={15} /> Restore this version
         </button>
         <p className="hint" style={{ textAlign: "center" }}>
           This adds a new entry to the history rather than erasing what happened since.
         </p>
-      </div>
+      </Foot>
     </Screen>
   );
 }

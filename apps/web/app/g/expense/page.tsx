@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense } from "../../../lib/db/commands";
@@ -35,7 +35,7 @@ function ExpenseScreen() {
     [expenseId],
   ) ?? 0;
 
-  if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
+  if (!groupId || !data.group) return <Blank />;
   const group = data.group;
 
   if (!expense) {

@@ -7,6 +7,7 @@ import {
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
 import { Avatar } from "./bits";
+import { Failure } from "./chrome";
 import { Icon } from "./icons";
 import { bare, money, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
@@ -40,11 +41,16 @@ const MODES: { mode: "equal" | "shares" | "exact"; label: string }[] = [
   { mode: "exact", label: "As amounts" },
 ];
 
+/** Where a scan is: idle, in flight, or refused. Owned by the expense form. */
+export type ScanState = "idle" | "scanning" | "error";
+/** Which button started the scan in flight — only that one shows the spinner. */
+export type ScanSource = "camera" | "library" | null;
+
 export interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
   scanDisabled: boolean;
-  scanState: "idle" | "scanning" | "error";
-  scanSource: "camera" | "library" | null;
+  scanState: ScanState;
+  scanSource: ScanSource;
   /** Set when the model read the photo but declined it (not a receipt, too blurry) — shown verbatim instead of the generic message. */
   scanError: string | null;
   onScanCamera: () => void;
@@ -253,8 +259,8 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
  */
 function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, size }: {
   scanDisabled: boolean;
-  scanState: "idle" | "scanning" | "error";
-  scanSource: "camera" | "library" | null;
+  scanState: ScanState;
+  scanSource: ScanSource;
   onScanCamera: () => void;
   onScanLibrary: () => void;
   /** "s" for the first-scan pair, "xs" for the smaller replace-receipt pair. */
@@ -319,9 +325,7 @@ function ReceiptPanel({
           <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
             onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
           {scanState === "error" ? (
-            <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
-              {scanError ?? "Couldn't read that receipt."} The old one is still assigned.
-            </div>
+            <Failure>{scanError ?? "Couldn't read that receipt."} The old one is still assigned.</Failure>
           ) : null}
         </div>
       </div>
@@ -333,12 +337,12 @@ function ReceiptPanel({
       <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
         onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="s" />
       {scanState === "error" ? (
-        <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7 }}>
+        <Failure>
           {scanError ?? "Couldn't read that receipt."}{" "}
-          <button type="button" className="action" style={{ fontSize: 11.5 }} onClick={onScanCamera}>
+          <button type="button" className="action" style={{ fontSize: "inherit" }} onClick={onScanCamera}>
             Try again
           </button>
-        </div>
+        </Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
           Runs on Google's free tier — the photo may be used to improve their models.

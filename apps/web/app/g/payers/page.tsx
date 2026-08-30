@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseMinor, validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
-import { Avatar, Card } from "../../../components/bits";
-import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Avatar } from "../../../components/bits";
+import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { bare, money, shortfallText } from "../../../lib/format";
 import { useGroupData } from "../../../lib/hooks";
@@ -27,9 +27,8 @@ function PayersScreen() {
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
 
-  if (!groupId || !data.group || !draft) {
-    return <Screen><Body><TopBar title="Who paid" back={true} /></Body></Screen>;
-  }
+  if (!groupId || !data.group || !draft) return <Blank title="Who paid" />;
+  const gid = groupId, current = draft;
   const currency = draft.currency;
 
   let amountMinor = 0;
@@ -70,11 +69,9 @@ function PayersScreen() {
 
   /** Back to a single payer: the whole amount to whoever is largest now. */
   function onePayer() {
-    saveDraft(groupId!, { ...draft!, payers: null });
+    saveDraft(gid, { ...current, payers: null });
     router.back();
   }
-
-  const allocated = check.allocatedMinor;
 
   return (
     <Screen>
@@ -122,21 +119,16 @@ function PayersScreen() {
           </div>
 
           <div className="pad">
-            <Card style={{
-              background: check.ok ? "var(--credit-bg)" : "var(--debit-bg)", borderColor: "transparent",
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              <Icon name={check.ok ? "check" : "off"} size={16}
-                style={{ color: check.ok ? "var(--credit)" : "var(--debit)", flex: "none" }} />
-              <span style={{ fontSize: 12.5, fontWeight: 600,
-                color: check.ok ? "var(--credit)" : "var(--debit)" }}>
+            <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
+              <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
+              <span>
                 {check.ok
-                  ? `${money(allocated, currency)} of ${money(amountMinor, currency)} accounted for`
+                  ? `${money(check.allocatedMinor, currency)} of ${money(amountMinor, currency)} accounted for`
                   : shortfallText(check, currency, {
                       under: "still unaccounted for", over: "more than the expense",
                     })}
               </span>
-            </Card>
+            </div>
 
             {contributors.length > 1 ? (
               <button className="btn btn-s" style={{ marginTop: 10 }} onClick={onePayer}>

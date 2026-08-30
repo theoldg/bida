@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import { activityFeed, entityHistory, type Revision } from "@hajsik/core";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { db } from "../../../lib/db/dexie";
 import { opsForGroup } from "../../../lib/db/fold";
@@ -54,7 +54,7 @@ function HistoryScreen() {
     if (!latestOf.has(rev.entityId)) latestOf.set(rev.entityId, rev.op.id);
   }
 
-  if (!groupId || !data.group) return <Screen><Body><TopBar title=" " back={true} /></Body></Screen>;
+  if (!groupId || !data.group) return <Blank />;
   const group = data.group;
   const currency = group.baseCurrency;
 
@@ -132,11 +132,11 @@ function HistoryScreen() {
       </Body>
 
       {expenseId ? (
-        <div className="pad" style={{ borderTop: "1px solid var(--rule)", flex: "none", padding: "11px 16px" }}>
+        <Foot>
           <Link href={route.history(groupId)} className="btn btn-s">
             <Icon name="clock" size={15} /> See the whole group&rsquo;s history
           </Link>
-        </div>
+        </Foot>
       ) : null}
     </Screen>
   );
