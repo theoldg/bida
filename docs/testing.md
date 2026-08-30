@@ -3,9 +3,9 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm --filter @hajsik/core test       # 128 tests, ~1s
+pnpm --filter @hajsik/core test       # 124 tests, ~1s
 pnpm --filter @hajsik/core typecheck
-pnpm --filter @hajsik/web test        # 89 smoke tests
+pnpm --filter @hajsik/web test        # 93 smoke tests
 pnpm shots                            # PNGs into shots/ (gitignored)
 node scripts/entries-check.mjs        # the three kinds of entry, end to end
 node scripts/offline-check.mjs        # every screen with the network cut

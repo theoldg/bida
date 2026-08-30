@@ -8,6 +8,7 @@
   },
   "scripts": {
     "postinstall": "git config core.hooksPath .githooks || true",
+    "session": "pnpm install && sh scripts/on-main.sh",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",

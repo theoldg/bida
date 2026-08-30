@@ -31,6 +31,12 @@ it applies to work nobody has done yet.
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
   and easy to run for you, but don't overuse it." `pnpm shots` after building or
   changing a screen, not after every edit. [testing.md](testing.md).
+- **Keep the docs and ADRs short and punchy.** *2026-08-30* — the owner had the
+  32 ADRs folded into 11 and relaxed the rule that a doc must never grow: write
+  what a decision is now, not the sequence of sessions that reached it, and
+  don't pad a change back down to its old line count.
+- **There is no design mockup.** *2026-08-30* — dropped as a second copy of
+  `globals.css` that nothing checked. Take the palette from `globals.css`.
 
 ## Product
 
