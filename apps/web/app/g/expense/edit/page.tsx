@@ -313,7 +313,7 @@ function EditExpenseScreen() {
               <div style={{
                 fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
                 padding: "2px 7px", borderRadius: 2, marginTop: 7,
-              }}>from the receipt's items and tip — edit those to change it</div>
+              }}>read from receipt</div>
             ) : null}
 
             {foreign ? (
