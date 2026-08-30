@@ -269,9 +269,15 @@ export async function archiveGroup(groupId: Id, actor: Id, now = Date.now()): Pr
 
 // --------------------------------------------------------------- members
 
-export async function addMember(groupId: Id, actor: Id, name: string): Promise<Id> {
+/**
+ * `actor` is optional because of the one case where there isn't one yet: a
+ * phone joining a group adds the person holding it before it has claimed
+ * anybody, and "someone added Theo" is a worse account of that than the
+ * person arriving under their own name.
+ */
+export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
   const memberId = newId();
-  await appendOps(groupId, actor, [
+  await appendOps(groupId, actor ?? memberId, [
     {
       entity: "member",
       entityId: memberId,
@@ -472,6 +478,14 @@ export async function editExpense(
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(changes)) {
     if (value !== undefined) patch[key] = value;
+  }
+
+  // An expense is the *absence* of `kind` (see `addExpense`), but the form
+  // always sends one — so without this every first edit of an expense wrote a
+  // kind change against nothing, and the history read "turned this back into
+  // an expense" over an edit that only moved the amount.
+  if ("kind" in patch && (patch["kind"] ?? "expense") === (existing.kind ?? "expense")) {
+    delete patch["kind"];
   }
 
   // The two payer fields move together — writing one without the other could

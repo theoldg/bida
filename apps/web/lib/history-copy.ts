@@ -57,9 +57,14 @@ export function describe(
       };
     }
     if (rev.isDelete) return { what: `${who} deleted this ${noun}` };
-    if (field("kind")) {
+    // A crossing between the two is worth a sentence; the bookkeeping isn't.
+    // An expense is the *absence* of `kind` on the log, so an edit that carries
+    // `kind: "expense"` against nothing changed nothing — say what else the
+    // edit did instead of announcing a direction it never left.
+    const crossing = field("kind");
+    if (crossing && (crossing.after === "income" || crossing.before === "income")) {
       return {
-        what: field("kind")!.after === "income"
+        what: crossing.after === "income"
           ? `${who} turned this into an income`
           : `${who} turned this back into an expense`,
       };
@@ -168,13 +173,22 @@ export function describe(
   }
 
   if (rev.entity === "member") {
-    if (rev.isCreate) return { what: `${who} joined the group` };
-    if (rev.isDelete) return { what: `${who} left the group` };
+    // Named after the member the revision is *about*, not the actor: the actor
+    // is whoever was holding a phone, so adding three people in a row read as
+    // the same person joining three times over.
+    const them = memberById.get(rev.entityId)?.name
+      ?? (typeof field("name")?.after === "string" ? field("name")!.after as string : "someone");
+    const self = rev.op.actor === rev.entityId;
+    if (rev.isCreate) return { what: self ? `${them} joined the group` : `${who} added ${them}` };
+    if (rev.isDelete) return { what: self ? `${them} left the group` : `${who} removed ${them}` };
     if (field("name")) {
       const c = field("name")!;
-      return { what: `${who} changed their name`, diff: { was: c.before as string, now: c.after as string } };
+      return {
+        what: self ? `${who} changed their name` : `${who} renamed ${c.before as string}`,
+        diff: { was: c.before as string, now: c.after as string },
+      };
     }
-    return { what: `${who} was updated` };
+    return { what: `${who} updated ${self ? "their own details" : them}` };
   }
 
   // group

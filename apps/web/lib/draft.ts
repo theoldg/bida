@@ -72,6 +72,8 @@ const listeners = new Set<() => void>();
 const drafts = new Map<string, EntryDraft | undefined>();
 /** What the draft looked like when the screen seeded it, to tell edits from nothing. */
 const baselines = new Map<string, string>();
+/** Which entry the draft was seeded *for* — see `draftSeedKey`. */
+const seedKeys = new Map<string, string>();
 
 function emit(): void {
   for (const l of listeners) l();
@@ -82,15 +84,33 @@ export function saveDraft(groupId: string, draft: EntryDraft): void {
   emit();
 }
 
-/** First write for a screen: the same as `saveDraft`, but it also sets the baseline. */
-export function seedDraft(groupId: string, draft: EntryDraft): void {
+/**
+ * First write for a screen: the same as `saveDraft`, but it also sets the
+ * baseline and records what the draft was seeded *for*.
+ *
+ * `key` identifies the entry the form was opened on — the entry's id when
+ * editing, and what the link asked for when creating (which kind, and a
+ * transfer's pre-filled sides and amount). The form re-mounts every time you
+ * come back from the payers editor or the who-had-what grid, so it must keep
+ * a draft it already has; but a *different* key means a different entry was
+ * asked for, and handing that one a leftover draft is how settling up opened
+ * a blank expense.
+ */
+export function seedDraft(groupId: string, draft: EntryDraft, key: string): void {
   baselines.set(groupId, JSON.stringify(draft));
+  seedKeys.set(groupId, key);
   saveDraft(groupId, draft);
+}
+
+/** What the live draft was seeded for, or undefined if there isn't one. */
+export function draftSeedKey(groupId: string): string | undefined {
+  return drafts.get(groupId) ? seedKeys.get(groupId) : undefined;
 }
 
 export function clearDraft(groupId: string): void {
   drafts.set(groupId, undefined);
   baselines.delete(groupId);
+  seedKeys.delete(groupId);
   emit();
 }
 

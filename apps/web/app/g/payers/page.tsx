@@ -136,11 +136,6 @@ function PayersScreen() {
                 Back to one payer
               </button>
             ) : null}
-
-            <p className="hint">
-              Amounts are in {currency}, the currency of the expense — what people actually
-              handed over. Who the money was spent <i>on</i> is the split, and is set separately.
-            </p>
           </div>
           <div style={{ height: 24 }} />
         </Scroll>

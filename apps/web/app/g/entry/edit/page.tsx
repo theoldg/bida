@@ -23,7 +23,7 @@ import { dateInputValue, errorText, money, withDate } from "../../../../lib/form
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
-import { blankDraft, clearDraft, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
+import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
 
 /**
  * One form for all three kinds of entry.
@@ -101,13 +101,21 @@ function EditEntryScreen() {
     }
   }
 
+  // What this screen was opened *on*: an entry's id, or — creating — everything
+  // the link asked for. Coming back from the payers editor or the who-had-what
+  // grid re-mounts the form with the same key, so the draft survives; arriving
+  // from a different link doesn't, so a leftover draft is replaced rather than
+  // handed over (settle up used to land on whatever blank expense was left
+  // behind by an abandoned "+").
+  const seedKey = entryId
+    ?? `new:${wantedKind ?? "expense"}:${prefill.from ?? ""}:${prefill.to ?? ""}:${prefill.amount || 0}`;
+
   // Seed the draft once the group is loaded: from the entry being edited —
   // which is looked up in both tables, since one id parameter covers all three
   // kinds — or blank, in the kind the caller asked for.
   useEffect(() => {
     if (!groupId || data.loading || !data.group) return;
-    const existing = getDraft(groupId);
-    if (existing && existing.entryId === entryId) return;
+    if (draftSeedKey(groupId) === seedKey) return;
     const me = data.me ?? data.members[0]?.id;
     if (!me) return;
     const base = data.group.baseCurrency;
@@ -137,7 +145,7 @@ function EditEntryScreen() {
           receiptInvolved: e.receiptInvolved ?? null,
           receiptAssignments: e.receiptAssignments ?? null,
           splitTab: e.splitTab ?? undefined,
-        });
+        }, seedKey);
         return;
       }
       const s = data.settlements.find((x) => x.id === entryId);
@@ -152,7 +160,7 @@ function EditEntryScreen() {
         fromMember: s.fromMember,
         toMember: s.toMember,
         occurredAt: s.occurredAt,
-      });
+      }, seedKey);
       return;
     }
 
@@ -166,11 +174,11 @@ function EditEntryScreen() {
       // the amount directly rather than going back through a rate.
       ...(Number.isFinite(prefill.amount) && prefill.amount > 0
         ? { amountText: minorToDecimalString(prefill.amount, base) } : {}),
-    } : blank);
+    } : blank, seedKey);
     // `prefill` is rebuilt each render; the query params behind it are what
     // actually change, and the draft is only ever seeded once per entry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, entryId, wantedKind, prefill.from, prefill.to, prefill.amount,
+  }, [groupId, entryId, seedKey, wantedKind, prefill.from, prefill.to, prefill.amount,
     data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
   // Nothing is stored, so a reload or a closed tab loses what's typed. Let the

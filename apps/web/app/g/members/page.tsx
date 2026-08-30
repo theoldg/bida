@@ -64,7 +64,7 @@ function MembersScreen() {
 
   async function add(name: string) {
     if (!groupId) return;
-    const memberId = await addMember(groupId, data.me ?? group.id, name);
+    const memberId = await addMember(groupId, data.me, name);
     // A brand-new phone that just created this member is almost certainly them.
     if (!data.me) await claimIdentity(groupId, memberId);
     setAsk(null);

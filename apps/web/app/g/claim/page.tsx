@@ -46,7 +46,7 @@ function ClaimScreen() {
   // it one more tap to say so would be asking the same question twice.
   async function add(name: string) {
     if (!groupId) return;
-    setPicked(await addMember(groupId, data.me ?? group.id, name));
+    setPicked(await addMember(groupId, data.me, name));
     setAdding(false);
   }
 

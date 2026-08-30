@@ -2,14 +2,14 @@ import { beforeEach, describe as suite, expect, it } from "vitest";
 import { activityFeed, type Member, type Revision } from "@hajsik/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
-import { addExpense, createGroup, editExpense } from "./db/commands";
+import { addExpense, addMember, createGroup, editExpense, removeMember } from "./db/commands";
 import { describe } from "./history-copy";
 
 /**
- * The history and restore screens both render every revision the log holds, so
- * `describe` has to be total over anything the command layer can write. It is
- * called inside a render, where one throw takes the whole app down — these
- * tests exist because it did.
+ * The history screen renders every revision the log holds, so `describe` has to
+ * be total over anything the command layer can write. It is called inside a
+ * render, where one throw takes the whole app down — these tests exist because
+ * it did.
  */
 
 async function wipe() {
@@ -78,6 +78,51 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed the amount");
+  });
+
+  it("keeps the bookkeeping of `kind` out of the sentence", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    // The form always sends a kind; an expense is the absence of one on the
+    // log, so this edit changed the amount and nothing else.
+    await editExpense(groupId, theo, expenseId, { kind: "expense", amountMinor: 12_500 });
+
+    const [latest] = await described(groupId);
+    expect(latest!.rev.changes.map((c) => c.field)).not.toContain("kind");
+    expect(latest!.said).toBe("Theo changed the amount");
+  });
+
+  it("still names a real crossing between the two", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, { kind: "income" });
+    expect((await described(groupId))[0]!.said).toBe("Theo turned this into an income");
+    await editExpense(groupId, theo, expenseId, { kind: "expense" });
+    expect((await described(groupId))[0]!.said).toBe("Theo turned this back into an expense");
+  });
+
+  it("names the member a membership revision is about, not the actor", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const marie = await addMember(groupId, theo, "Marie");
+    await addMember(groupId, theo, "Sam");
+    await removeMember(groupId, theo, marie);
+
+    const said = (await described(groupId)).map((d) => d.said);
+    expect(said).toContain("Theo joined the group");
+    expect(said.filter((s) => s === "Theo joined the group")).toHaveLength(1);
+    expect(said).toContain("Theo added Marie");
+    expect(said).toContain("Theo added Sam");
+    expect(said).toContain("Theo removed Marie");
+  });
+
+  it("lets somebody who joins on their own phone say so themselves", async () => {
+    const { groupId } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    // The claim screen adds you before this phone speaks for anybody.
+    await addMember(groupId, undefined, "Marie");
+
+    expect((await described(groupId))[0]!.said).toBe("Marie joined the group");
   });
 
   it("describes every revision a whole group's life can produce", async () => {
