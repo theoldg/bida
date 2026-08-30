@@ -35,3 +35,4 @@ old one `Superseded by NNNN`.
 | [0022](0022-unfolding-a-receipt-line-into-portions.md) | A "×2" line unfolds into portions; a portion is an ordinary line | Accepted |
 | [0023](0023-monospace-monochrome.md) | One monospace face; colour only on money | Accepted |
 | [0024](0024-precache-the-whole-export-cache-first.md) | The service worker precaches the whole export and serves it cache-first | Accepted |
+| [0025](0025-our-own-dialogs.md) | The app draws its own dialogs; a consequence doesn't always need a route | Accepted |

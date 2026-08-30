@@ -58,8 +58,6 @@ export const route = {
   settleWith: (groupId: string, from: string, to: string, amount: number) =>
     `/g/settle?id=${encodeURIComponent(groupId)}&from=${from}&to=${to}&amount=${amount}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
-  /** The confirmation screen for leaving a group — deleting it, if you're the last one in it. */
-  leave: (groupId: string) => `/g/leave?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,
   settings: () => "/settings",

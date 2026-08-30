@@ -98,8 +98,9 @@ it applies to work nobody has done yet.
 - **One thought, one screen.** A new route is for a *different* question, not
   the second half of the one being asked. Don't build a wizard out of a form.
   [ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md).
-- **Weight follows how often you want it pressed**, and consequences get a
-  screen, not a `confirm()` — a dialog can't name what it's about to change.
+- **Weight follows how often you want it pressed**, and consequences are named
+  where they're confirmed — the browser's `confirm()` can't do that, a dialog we
+  draw can ([ADR-0025](decisions/0025-our-own-dialogs.md)).
 - **A destination reached constantly belongs in the top bar** (three icons is
   the ceiling), never as a menu row duplicating a visible icon. Delete the
   second way to do a once-per-lifetime thing.
@@ -135,3 +136,14 @@ it applies to work nobody has done yet.
   discarded, with a warning first, rather than saved and handed back later.
 - **A placeholder is the label.** *2026-08-29* — an optional field with an
   obvious placeholder ("Note (optional)") carries no title above it.
+- **No browser dialogs.** *2026-08-30* — "Add member has ugly native/browser
+  input make it cooler. Same for the 'abandon editing' popup." Asking is
+  `components/dialog.tsx`; no `prompt()` or `confirm()` anywhere.
+- **A confirmation's button sits under its sentence.** *2026-08-30* — "on the
+  'confirm leave group' page the button shouldn't be at the very bottom of the
+  screen, i think it can be under the text. This page can be custom popup like
+  'confirm abandon editing'." A consequence that fits in a paragraph is a
+  dialog; a screen is for one that needs the ledger on it.
+- **A grid you scroll keeps its header.** *2026-08-30* — "Freeze/stick the row
+  with the initials of users when editing a who-had-what with many items."
+  A column whose heading has scrolled away is an unlabelled column.

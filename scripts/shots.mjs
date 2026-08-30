@@ -30,6 +30,38 @@ const SHOTS = join(ROOT, "shots");
 const PORT = Number(process.env.SHOTS_PORT ?? 4321);
 const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 
+/* A stubbed bill for the who-had-what shots. The draft it fills lives in memory
+   only, so the grid can't be seeded by poking storage: the screen is reached the
+   way it is in life — a photo that comes back with line items. Only the model
+   call is faked. Long on purpose: the header of initials freezing over a bill
+   that outruns the screen is the thing the shot is there to show. */
+const RECEIPT = {
+  merchant: "Café Clock",
+  total: "76.50",
+  tip: "6.00",
+  currency: null,
+  date: null,
+  category: null,
+  error: null,
+  lineItems: [
+    { label: "Salade marocaine", amount: "9.00", quantity: 2 },
+    { label: "Chicken tagine", amount: "14.50", quantity: null },
+    { label: "Lamb couscous", amount: "16.00", quantity: null },
+    { label: "Mint tea", amount: "6.00", quantity: 3 },
+    { label: "Msemen", amount: "4.50", quantity: 2 },
+    { label: "Olives", amount: "2.00", quantity: null },
+    { label: "Bottled water", amount: "3.00", quantity: 2 },
+    { label: "Orange juice", amount: "7.00", quantity: 2 },
+    { label: "Chocolate pastilla", amount: "8.50", quantity: null },
+  ],
+};
+
+/** 1x1 PNG: the scan is stubbed, but the client really does decode and downscale. */
+const PHOTO = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".webmanifest": "application/manifest+json",
@@ -71,11 +103,12 @@ async function seed(page) {
   await page.waitForURL(/\/g\?id=/);
   const groupId = new URL(page.url()).searchParams.get("id");
 
-  // Two more members, through the members screen's prompt()s.
+  // Two more members, through the People screen's own Add member dialog.
   await page.goto(`${base}/g/members?id=${groupId}`);
   for (const name of ["Marie", "Sam"]) {
-    page.once("dialog", (d) => d.accept(name));
-    await page.getByText("Add member").click();
+    await page.getByRole("button", { name: "Add member" }).click();
+    await page.locator(".dinput").fill(name);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
     await page.waitForTimeout(120);
   }
 
@@ -132,7 +165,6 @@ const routes = (g) => [
   ["group-expenses", `/g?id=${g}`],
   ["group-balances", `/g?id=${g}&tab=balances`],
   ["members", `/g/members?id=${g}`],
-  ["leave", `/g/leave?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],
@@ -193,28 +225,22 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);
 
-      // Who had what — the one screen only a scan leads to, so its draft is
-      // patched in rather than photographed after a live model call. Shot
-      // twice: the bill as printed, then with its "×2" salad unfolded into two
-      // separately assignable portions.
+      // Who had what — the one screen only a scan leads to. The draft is in
+      // memory, so it is reached by really uploading a photo, with the model's
+      // answer stubbed. Shot twice: the bill as printed, then with its "×2"
+      // salad unfolded into two separately assignable portions.
+      await page.route("**/api/groups/*/scan", (r) => r.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          candidates: [{ content: { parts: [{ text: JSON.stringify(RECEIPT) }] } }],
+        }),
+      }));
       await page.goto(`${base}/g/expense/edit?id=${groupId}`);
       await page.waitForTimeout(200);
-      await page.evaluate((id) => {
-        const key = `hajsik.draft.${id}`;
-        const draft = JSON.parse(sessionStorage.getItem(key));
-        sessionStorage.setItem(key, JSON.stringify({
-          ...draft,
-          description: "Café Clock",
-          receiptItems: [
-            { label: "Salade marocaine", amount: "9.00", quantity: 2 },
-            { label: "Chicken tagine", amount: "14.50", quantity: null },
-            { label: "Mint tea", amount: "6.00", quantity: 3 },
-          ],
-          receiptTip: "3.00",
-          splitTab: "receipt",
-        }));
-      }, groupId);
-      await page.goto(`${base}/g/expense/items?id=${groupId}`);
+      await page.locator('input[aria-label="Upload a receipt photo"]')
+        .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+      await page.waitForURL(/expense\/items/);
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
       process.stdout.write(`${theme}/who-had-what `);
@@ -222,6 +248,19 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
+
+      // The dialogs this app draws in place of prompt() and confirm(): adding
+      // someone, and the one that used to be a screen of its own (ADR-0025).
+      await page.goto(`${base}/g/members?id=${groupId}`);
+      await page.getByRole("button", { name: "Add member" }).click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
+      process.stdout.write(`${theme}/add-member `);
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await page.getByRole("button", { name: "Leave group" }).click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-leave.png`) });
+      process.stdout.write(`${theme}/leave `);
 
       // The restore confirmation carries an HLC in its URL, so it is reached by
       // pressing the rewind on a real revision rather than by a fixed path.

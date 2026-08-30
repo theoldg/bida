@@ -12,6 +12,7 @@ import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor } from "../../../../components/split-editor";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense } from "../../../../lib/db/commands";
@@ -39,6 +40,7 @@ function EditExpenseScreen() {
   const [scanState, setScanState] = useState<"idle" | "scanning" | "error">("idle");
   const [scanSource, setScanSource] = useState<"camera" | "library" | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [ask, setAsk] = useState<null | "discard" | "currency">(null);
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
     const file = e.target.files?.[0];
@@ -218,8 +220,13 @@ function EditExpenseScreen() {
   // first, but only once something has actually been typed.
   function goBack() {
     if (!groupId) return;
-    if (isDraftDirty(groupId)
-      && !window.confirm("Discard this expense? What you've entered will be lost.")) return;
+    if (isDraftDirty(groupId)) { setAsk("discard"); return; }
+    clearDraft(groupId);
+    router.back();
+  }
+
+  function discard() {
+    if (!groupId) return;
     clearDraft(groupId);
     router.back();
   }
@@ -287,12 +294,7 @@ function EditExpenseScreen() {
                   aria-label="Currency"
                   value={draft.currency}
                   onChange={(e) => {
-                    if (e.target.value === OTHER_CURRENCY) {
-                      const typed = normalizeCurrencyCode(window.prompt("Currency code (e.g. UZS)") ?? "");
-                      if (typed.length !== 3) return;
-                      patch({ currency: typed, rateToBase: typed === base ? "1" : draft.rateToBase });
-                      return;
-                    }
+                    if (e.target.value === OTHER_CURRENCY) { setAsk("currency"); return; }
                     patch({
                       currency: e.target.value,
                       rateToBase: e.target.value === base ? "1" : draft.rateToBase,
@@ -413,6 +415,23 @@ function EditExpenseScreen() {
         </Scroll>
       </Body>
 
+      {ask === "discard" ? (
+        <ConfirmDialog title="Discard this expense?" confirm="Discard" danger={true}
+          onConfirm={discard} onClose={() => setAsk(null)}>
+          <p>What you've entered isn't saved anywhere and won't be handed back.</p>
+        </ConfirmDialog>
+      ) : null}
+
+      {ask === "currency" ? (
+        <PromptDialog title="Currency" placeholder="UZS" confirm="Use it" maxLength={3}
+          autoCapitalize="characters" hint="A three-letter ISO code."
+          clean={normalizeCurrencyCode} valid={(v) => v.length === 3}
+          onSubmit={(currency) => {
+            patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
+            setAsk(null);
+          }}
+          onClose={() => setAsk(null)} />
+      ) : null}
     </Screen>
   );
 }

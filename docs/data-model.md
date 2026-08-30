@@ -53,7 +53,7 @@ ops already on logs carry it, nothing writes it
 
 - A member is a person, not an account. One with expenses attached is
   tombstoned, never hard-deleted, or the fold references nothing. Leaving a
-  group is this, on yourself (`/g/leave`), plus `device.leftGroups` (below) so
+  group is this, on yourself (a dialog on People), plus `device.leftGroups` (below) so
   it drops off *your* groups list even when others are still in it; when it
   empties the group, `Group.archivedAt` is also set in the same batch, which
   drops it off everyone's list. Either way the log survives, untouched, same

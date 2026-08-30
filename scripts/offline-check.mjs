@@ -81,8 +81,9 @@ await page.waitForURL(/\/g\?id=/);
 const g = new URL(page.url()).searchParams.get("id");
 await page.goto(`${base}/g/members?id=${g}`);
 for (const name of ["Marie", "Sam"]) {
-  page.once("dialog", (d) => d.accept(name));
-  await page.getByText("Add member").click();
+  await page.getByRole("button", { name: "Add member" }).click();
+  await page.locator(".dinput").fill(name);
+  await page.getByRole("button", { name: "Add", exact: true }).click();
   await page.waitForTimeout(120);
 }
 for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Taxi"]]) {

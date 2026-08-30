@@ -24,8 +24,7 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | `/g/payers?id=` | Who *put the money in*, for co-sponsored expenses ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-expense |
 | `/g/restore?id=&kind=&e=&at=` | Confirms a restore: the version and the fields coming back |
-| `/g/members?id=` | People: the member list, and where this phone claims which one it is |
-| `/g/leave?id=` | Confirms leaving the group — deletes it instead, if you're the last member |
+| `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0025](decisions/0025-our-own-dialogs.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
@@ -57,6 +56,9 @@ confers nothing without the secret.
   keeps what's typed, and nothing else does. Leaving the expense screen asks
   before discarding, and a reload gets the browser's own warning — `seedDraft`
   records the baseline `isDraftDirty` compares against.
+- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`**: a real
+  `<dialog>` with `showModal()`, so focus and Escape are the platform's job
+  ([ADR-0025](decisions/0025-our-own-dialogs.md)).
 - History wording lives once, in `lib/history-copy.ts` (`describe`,
   `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
   must be **total** — they run inside a render over every patch the log holds,
@@ -170,6 +172,12 @@ figure-free.
   and the bottom bar sits at the foot of a long page — invisible until you
   scroll. `.app` is `height: 100dvh; overflow: hidden`, `html, body` too, and
   every scrolling child of a flex column needs `min-height: 0`.
+- **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
+  scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
+  *both* axes — `position: sticky; top: 0` is inert while the page scrolls past
+  it, and looks implemented. The wrapper must own the vertical scroll too, with
+  `border-collapse: separate`, or the collapsed border belongs to the table and
+  slides out from under the frozen row.
 - **A revision's `changes` are only the fields that actually differed.** Saving
   an expense in a new currency at the same rate writes `currency` and no amount
   field at all, so history copy must never read one field because a sibling
@@ -179,11 +187,10 @@ figure-free.
 - **A placeholder is not a default value.** Seeding `amountText: "0"` means
   tapping in and typing 5 gives you "50".
 - **An input's `size` attribute is not a character count.** It is characters
-  times the *font's* average advance, which for JetBrains Mono at 42px ran ~78px
-  over three digits' real width, all of it dead space to the left of a
-  right-aligned figure. A field that must hug its own text takes its width from
-  a hidden mirror of that text (`.amountsizer`), and the input itself must then
-  be `width: 100%` or the column sizes to `size`'s 20-character default instead.
+  times the *font's* average advance — ~78px of dead space beside three digits
+  at 42px. A field that hugs its own text sizes from a hidden mirror of it
+  (`.amountsizer`), and the input itself must then be `width: 100%` or the
+  column sizes to `size`'s 20-character default instead.
 - **The typed grouping separator is U+202F**, a narrow no-break space, because
   the field accepts both "," and "." as decimal separators. It deliberately
   doesn't match `Intl`'s grouping in saved figures.

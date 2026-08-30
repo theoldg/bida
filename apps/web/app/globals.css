@@ -295,14 +295,34 @@ a { color: inherit; text-decoration: none }
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
-.itemtablewrap { overflow-x: auto; border: 1px solid var(--rule-soft); border-radius: var(--r-s) }
-.itemtable { border-collapse: collapse; width: 100%; font-size: 12.5px }
+/* Three bands: who was there, the grid, the running totals. The grid is the
+   screen's scroll region rather than a block inside a scrolling page, which is
+   what makes the sticky header below actually stick — `position: sticky`
+   resolves against the nearest scroll container, and a wrapper that only scrolls
+   sideways gives it nothing to stick to. */
+.itemhead { flex: none; padding: 10px 16px 12px; max-height: 32dvh; overflow-y: auto }
+.itemtablewrap { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
+.itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
+  padding: 9px 16px; padding-bottom: max(9px, env(safe-area-inset-bottom)) }
+.footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
+.footnote.bad { color: var(--debit); font-weight: 600 }
+.footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
+/* Initials, not names: the column headers a finger's width above already say
+   whose they are, and this has to stay one line tall. */
+.totalstrip { display: flex; gap: 7px; overflow-x: auto }
+.tot { display: flex; align-items: center; gap: 6px; flex: none; padding: 3px 8px 3px 3px;
+  border: 1px solid var(--rule-soft); border-radius: var(--r-s); background: var(--card) }
+.tot .amt { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums }
+
+/* `separate`, not `collapse`: a collapsed border belongs to the table, so it
+   scrolls away from under a sticky header cell instead of travelling with it. */
+.itemtable { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px }
 .itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 7px 8px; text-align: center }
 .itemtable tr:last-child td { border-bottom: 0 }
 .itemtable th { padding-top: 9px; padding-bottom: 9px; background: var(--card-2) }
-/* Freezes the initials row so it's still visible once the item list scrolls
-   the header out of the way — the whole point of showing initials there. */
-.itemtable thead th { position: sticky; top: 0; z-index: 1 }
+/* Freezes the initials row: on a twenty-line bill the columns are otherwise
+   anonymous by the time you've scrolled to the last item. */
+.itemtable thead th { position: sticky; top: 0; z-index: 1; border-bottom-color: var(--rule) }
 /* Beats `.itemtable td { text-align: center }`, which this column never wanted. */
 .itemtable .itemlabel { text-align: left; min-width: 152px }
 .itemrow { display: flex; align-items: center; justify-content: space-between; gap: 10px }
@@ -368,6 +388,39 @@ a { color: inherit; text-decoration: none }
 .action { font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: underline;
   text-underline-offset: 3px; text-decoration-thickness: 1px }
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }
+
+/* ---- dialogs ----
+   Our own, in place of prompt() and confirm(): those arrive in another app's
+   typeface and have nowhere to put the sentence naming what is about to change
+   (ADR-0025). A scrim, a hairline card, the app's own buttons. It fades in and
+   nothing slides: the design still doesn't float. */
+/* A real <dialog>, so focus, Escape and the inert screen behind are the
+   platform's job. It fills the viewport and paints the scrim itself rather than
+   leaving it to ::backdrop, which doesn't reliably inherit our tokens — and
+   which would make "tapped outside the card" the harder question. */
+dialog.scrim { inset: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%;
+  margin: 0; border: 0; padding: 22px; color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 42%, transparent); animation: fadein .12s ease-out }
+dialog.scrim[open] { display: flex; align-items: center; justify-content: center }
+dialog.scrim::backdrop { background: transparent }
+.dialog { width: 100%; max-width: 340px; background: var(--card); border: 1px solid var(--rule);
+  border-radius: var(--r-m); padding: 15px 15px 13px; animation: fadein .12s ease-out;
+  max-height: calc(100dvh - 44px); overflow-y: auto }
+@keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { dialog.scrim, .dialog { animation: none } }
+.dtitle { font-size: 15.5px; letter-spacing: -.03em }
+.dbody { font-size: 13px; line-height: 1.5; color: var(--ink-2); margin-top: 9px }
+.dbody p { margin: 0 0 7px }
+.dbody p:last-child { margin-bottom: 0 }
+.dbody b { color: var(--ink); font-weight: 600 }
+.dinput { width: 100%; margin-top: 12px; background: var(--card-2); border: 1px solid var(--rule);
+  border-radius: var(--r-s); padding: 10px 12px; font: inherit; font-size: 15px; font-weight: 600;
+  color: var(--ink); outline: none }
+.dinput:focus { border-color: var(--ink-2) }
+.dinput::placeholder { color: var(--muted); font-weight: 500 }
+/* Cancel is the wider-reaching of the two only in the sense that it's free:
+   equal halves, the act on the right where the thumb already is. */
+.drow { display: flex; gap: 8px; margin-top: 14px }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }

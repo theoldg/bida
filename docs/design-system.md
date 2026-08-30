@@ -13,8 +13,7 @@ the reasoning so you extend the design rather than diverge from it.
 A terminal: one monospace face, near-monochrome grounds, hairline rules, square
 corners. Colour is a scarce resource spent only on money —
 [ADR-0023](decisions/0023-monospace-monochrome.md). The ledger reading survives
-underneath (ruled rows, a red column and a green column); what went is the paper
-texture, the second and third typeface, and every tint that wasn't a balance.
+underneath: ruled rows, a red column and a green column.
 
 ## Palette roles
 
@@ -52,12 +51,10 @@ than tinted so the row's own green or red stays the only colour on the line. It
 is also the *only* way you are marked: a member is always printed by name, never
 as "You".
 
-It never carries meaning alone. Each row shows what it did to your balance —
-what you put in minus what you owe — as `+€45,00` in credit green or `−€14,28`
-in debit red, with the left edge bar taking the same colour. Three signals for
-one fact: sign, colour, bar. A row that nets to nothing keeps a neutral grey
-edge. Rows you're not part of drop to 42% opacity rather than disappearing —
-you should still see the group's spending.
+It never carries meaning alone: each row shows what it did to your balance —
+`+€45,00` green, `−€14,28` red, left-edge bar to match — sign, colour and bar for
+one fact. A row netting to nothing keeps a grey edge; rows you're not part of
+drop to 42% opacity rather than disappearing.
 
 ## Nothing waits in silence
 
@@ -101,10 +98,20 @@ amount is ever shown in minor units.**
 ## A settle-up arrow points one way
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
-people are connected, which is what the double-headed swap arrow said.
-*(2026-08-28.)* `i-arrow` replaced `i-swap` everywhere: transfer rows under the
-balances, the `/g/settle` header, and the reimbursement badge in the ledger. It
-always points payer → payee, left to right, matching the names beside it.
+people are connected, which is what the double-headed swap arrow said
+*(2026-08-28)*. `i-arrow` always points payer → payee, left to right, matching
+the names beside it.
+
+## A dialog is ours, and its button says the act
+
+Asking is never `prompt()` or `confirm()`: those arrive in another app's
+typeface, announcing that the *site* is asking, with one line where a consequence
+needs a paragraph. `components/dialog.tsx` is a real `<dialog>` — `showModal()`,
+so focus and Escape are the platform's — filling the viewport and painting the
+scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
+("Leave group", never "OK"), `--debit` outlined when it destroys something. A
+screen still wins where the decision needs the ledger on it, `/g/restore` and
+`/g/settle` ([ADR-0025](decisions/0025-our-own-dialogs.md)).
 
 ## Rules that are not negotiable
 

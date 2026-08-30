@@ -14,13 +14,23 @@ Update it in the same commit as the code it describes.*
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
 | 6 — Polish | 🟡 install prompt done; CSV export, categories, empty/error states open |
-| 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-29 |
+| 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the app is actually usable offline, and no longer waits on the network
+Since: the browser's dialogs are gone. Adding, renaming and removing a member,
+discarding a half-typed expense and typing a currency the picker doesn't list all
+ask in a `<dialog>` this app draws, and leaving a group is one of those rather
+than a screen with its button pinned to the bottom — `/g/leave` is deleted
+([ADR-0025](decisions/0025-our-own-dialogs.md)). The who-had-what grid is now the
+scrolling band of its own screen, between the people who were there and their
+running totals, so its row of initials freezes over a long bill: it had been
+written as a sticky `<thead>` inside a wrapper that only scrolled sideways, which
+sticks to nothing ([frontend.md](frontend.md#gotchas)).
+
+Before it: the app is usable offline, and no longer waits on the network
 to redraw a screen it already has. The service worker precaches the whole export
 under a build-stamped revision and serves it cache-first, RSC payloads included
 — they were the miss that turned a tap into a round trip online and a screenful
@@ -48,9 +58,6 @@ unfolds on the who-had-what grid into that many separately assignable rows
 (two shared one, someone else had the other), and merges back; the portions
 sum to the printed line exactly, so the bill's total never moves
 ([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
-Before it: the recurring receipt-split bugs, root-caused — leaving Receipt hands
-the total back to `amountText` rather than zeroing it
-([ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md)).
 
 ## The next action
 
@@ -105,7 +112,7 @@ Every screen is built. Routes and their jobs are listed in
 [frontend.md](frontend.md#routing) — that table is the current one; don't
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. Personal mode is on by default. 26 smoke tests.
+`lib/db/sync.ts`. Personal mode is on by default. 67 smoke tests.
 
 ### `apps/api`
 

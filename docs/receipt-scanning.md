@@ -96,7 +96,9 @@ restaurant-splitting entity in product.md's deferred table isn't built. But
 `/g/expense/items` (reached right after a scan that found line items, or via
 "Edit who-had-what" later) reads them off the draft to build a who-had-what
 grid, and reduces that to an ordinary `shares` split — no schema change, no
-new op kind. The items, tip and the grid's own assignment are also written
+new op kind. The screen is three bands, not a scrolling page: who was there
+above, the running per-person totals below, and the grid between them owning the
+scroll, so its row of initials freezes while a long bill passes under it. The items, tip and the grid's own assignment are also written
 onto the expense as plain optional fields so the grid reopens later, on any
 device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).
@@ -152,38 +154,32 @@ Deliberate, for a group of friends under fifty people:
 or a paid tier (kills both the shared-spend and the training problem), then
 per-group quota, then a decision about whether the photo is stored at all.
 
-## Build order
+## What it's made of
 
-1. ✅ `packages/core/src/scan.ts` + tests — the normaliser, no network.
-2. ✅ `apps/api` — `POST /api/groups/:id/scan`, same bearer-secret check as
-   sync, passthrough to `GEMINI_MODEL = "gemini-3.6-flash"`, deployed. Model id
-   is one constant in `apps/api/src/index.ts`. `GEMINI_API_KEY` Worker secret
-   is set — [hosting.md](hosting.md#deploying).
-3. ✅ `apps/web/lib/scan/` — `downscale.ts`, `request.ts` (prompt + structured
-   output schema, including line items and tip), `response.ts`, and
-   `scanReceipt()` tying them together.
-4. ✅ The buttons on `/g/expense/edit` (camera capture and library upload share
-   the same handler), their states, the privacy line, and `/g/expense/items`
-   for who-had-what — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md).
-5. ✅ ADR-0016, product.md's deferred row, roadmap Phase 4 checkbox.
-6. ✅ ADR-0017 — the parsed bill and grid persist on the expense, reopenable
-   from any device via "Edit who-had-what".
-7. ✅ ADR-0018 — scan/upload and "Edit who-had-what" moved into a fourth
-   "Receipt" tab in the split editor, beside Evenly/As parts/As amounts.
-8. ✅ [ADR-0019](decisions/0019-receipt-mode-owns-the-total.md) — the split
-   tab persists on the expense, the amount is computed from items + tip while
-   Receipt mode has items, the tip scales to what each person ordered, and
-   scanning/rescanning works on any expense, not just an unsaved one.
-9. ✅ Follow-up (2026-08-28): the tip is an editable row in the grid with its
-   percentage beside it; the initials row stays put while scrolling; the split
-   editor's "N of total allocated" line is scoped to As amounts, the only mode
-   where it isn't trivially true; and
-   [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md)
-   stopped caching the receipt's total and split in the draft at all.
+`packages/core/src/scan.ts` — the normaliser, no network · `apps/api`'s `POST
+/api/groups/:id/scan`, the same bearer-secret check as sync, passing through to
+`GEMINI_MODEL = "gemini-3.6-flash"` (one constant in `apps/api/src/index.ts`;
+the key is the `GEMINI_API_KEY` Worker secret —
+[hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
+`request.ts` (prompt and structured output schema), `response.ts`,
+`scanReceipt()` · the camera and library buttons on `/g/expense/edit`, which
+share one handler, and `/g/expense/items` behind them.
 
-10. ✅ [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md) —
-    a line the receipt counted ("×2") unfolds into that many separately
-    assignable portions on the grid, and merges back.
+The decisions it accumulated, each one still worth reading before changing this:
+[0016](decisions/0016-receipt-scan-ux-and-item-assignment.md) the grid reduces
+to an ordinary `shares` split ·
+[0017](decisions/0017-receipt-items-persist-on-the-expense.md) the bill and grid
+persist on the expense, reopenable from any device ·
+[0018](decisions/0018-receipt-as-a-fourth-split-tab.md) both live in a fourth
+"Receipt" tab beside Evenly/As parts/As amounts ·
+[0019](decisions/0019-receipt-mode-owns-the-total.md) Receipt owns the total and
+the tab choice persists ·
+[0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md) total
+and split are derived at read time, never cached ·
+[0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md) leaving
+Receipt hands the total back ·
+[0022](decisions/0022-unfolding-a-receipt-line-into-portions.md) a counted line
+unfolds into portions.
 
 ## Verified live, 2026-08-28
 

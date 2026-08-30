@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
 import { distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
@@ -161,6 +161,17 @@ function ItemsScreen() {
     router.back();
   }
 
+  // One line under the grid at a time: what still has to be fixed, or — until
+  // the control has been found once — what the ×N does. A control you've used
+  // doesn't need explaining, and the footer is one line tall.
+  const note = !everyItemAssigned ? (
+    <div className="footnote bad">Every item needs at least one person.</div>
+  ) : canUnfoldSomething && runs.every((r) => r === null) ? (
+    <div className="footnote">
+      Tap a <b>×N</b> to split that line into separate portions.
+    </div>
+  ) : null;
+
   return (
     <Screen>
       <Body>
@@ -168,139 +179,133 @@ function ItemsScreen() {
           back={true}
           right={<button className="action" onClick={finish} disabled={!canFinish}>Done</button>} />
 
-        <Scroll>
-          <div className="pad" style={{ paddingTop: 10 }}>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Who was there</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {data.members.map((m) => (
-                <button key={m.id} onClick={() => toggleInvolved(m.id)}
-                  aria-pressed={involved.has(m.id)}
-                  aria-label={`${m.name}${involved.has(m.id) ? " was there" : " wasn't there"}`}
-                  className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
-                  <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
-                    {labels.get(m.id)}
-                  </span>
-                  {m.name}
-                </button>
-              ))}
-            </div>
+        {/* Three bands, not one scrolling page: who was there stays put at the
+            top, the running totals at the foot, and the grid in between owns
+            the scroll — which is what lets its initials row freeze while a long
+            bill scrolls under it. A twenty-line receipt is the case this screen
+            exists for, and the column you're tapping in has to keep its name. */}
+        <div className="itemhead">
+          <div className="eyebrow" style={{ marginBottom: 8 }}>Who was there</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {data.members.map((m) => (
+              <button key={m.id} onClick={() => toggleInvolved(m.id)}
+                aria-pressed={involved.has(m.id)}
+                aria-label={`${m.name}${involved.has(m.id) ? " was there" : " wasn't there"}`}
+                className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
+                <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
+                  {labels.get(m.id)}
+                </span>
+                {m.name}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="pad" style={{ paddingTop: 14 }}>
-            <div className="eyebrow" style={{ marginBottom: 8 }}>Tap who had each item</div>
-            <div className="itemtablewrap">
-              <table className="itemtable">
-                <thead>
-                  <tr>
-                    <th />
-                    {involvedMembers.map((m) => (
-                      <th key={m.id}>
-                        <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
-                          {labels.get(m.id)}
+        <div className="itemtablewrap">
+          <table className="itemtable">
+            <thead>
+              <tr>
+                <th />
+                {involvedMembers.map((m) => (
+                  <th key={m.id}>
+                    <span className="avatar" style={{ width: 24, height: 24, fontSize: 10 }}>
+                      {labels.get(m.id)}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, i) => {
+                const part = runs[i] ?? null;
+                const into = part ? null : unfoldableInto(item, draft.currency);
+                return (
+                  <tr key={i} className={part ? "part" : undefined}>
+                    <td className="itemlabel">
+                      <div className="itemrow">
+                        <span className="itemtext">
+                          <span className="itemname">
+                            {item.label}
+                            {/* The printed count, but only where the button
+                                below isn't already carrying it. */}
+                            {!part && into === null && item.quantity && item.quantity > 1 ? (
+                              <span className="itemqty"> ×{item.quantity}</span>
+                            ) : null}
+                          </span>
+                          {/* Which portion this is goes on the amount line:
+                              the label's own line has a button to share
+                              with and a name of any length in it. */}
+                          <span className="itemamount">
+                            {item.amount}
+                            {part ? <span className="itemqty"> · {part.index} of {part.of}</span> : null}
+                          </span>
                         </span>
-                      </th>
+                        {into !== null ? (
+                          <button className="itemfold" onClick={() => unfold(i)}
+                            title={`Split into ${into} separate lines`}
+                            aria-label={`Split ${item.label} into ${into} separate lines`}>
+                            ×{into}<Icon name="split" size={12} />
+                          </button>
+                        ) : part && part.index === 1 ? (
+                          <button className="itemfold on" onClick={() => fold(part.start, part.of)}
+                            title="Merge back into one line"
+                            aria-label={`Merge the ${part.of} ${item.label} lines back into one`}>
+                            ×{part.of}<Icon name="merge" size={12} />
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                    {involvedMembers.map((m) => (
+                      <td key={m.id}>
+                        <button className="itemcell" onClick={() => toggleCell(i, m.id)}
+                          aria-pressed={assignments[i]?.has(m.id) ?? false}
+                          aria-label={part
+                            ? `${m.name} had ${item.label}, portion ${part.index} of ${part.of}`
+                            : `${m.name} had ${item.label}`}>
+                          {assignments[i]?.has(m.id) ? <span className="dot" /> : null}
+                        </button>
+                      </td>
                     ))}
                   </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, i) => {
-                    const part = runs[i] ?? null;
-                    const into = part ? null : unfoldableInto(item, draft.currency);
-                    return (
-                      <tr key={i} className={part ? "part" : undefined}>
-                        <td className="itemlabel">
-                          <div className="itemrow">
-                            <span className="itemtext">
-                              <span className="itemname">
-                                {item.label}
-                                {/* The printed count, but only where the button
-                                    below isn't already carrying it. */}
-                                {!part && into === null && item.quantity && item.quantity > 1 ? (
-                                  <span className="itemqty"> ×{item.quantity}</span>
-                                ) : null}
-                              </span>
-                              {/* Which portion this is goes on the amount line:
-                                  the label's own line has a button to share
-                                  with and a name of any length in it. */}
-                              <span className="itemamount">
-                                {item.amount}
-                                {part ? <span className="itemqty"> · {part.index} of {part.of}</span> : null}
-                              </span>
-                            </span>
-                            {into !== null ? (
-                              <button className="itemfold" onClick={() => unfold(i)}
-                                title={`Split into ${into} separate lines`}
-                                aria-label={`Split ${item.label} into ${into} separate lines`}>
-                                ×{into}<Icon name="split" size={12} />
-                              </button>
-                            ) : part && part.index === 1 ? (
-                              <button className="itemfold on" onClick={() => fold(part.start, part.of)}
-                                title="Merge back into one line"
-                                aria-label={`Merge the ${part.of} ${item.label} lines back into one`}>
-                                ×{part.of}<Icon name="merge" size={12} />
-                              </button>
-                            ) : null}
-                          </div>
-                        </td>
-                        {involvedMembers.map((m) => (
-                          <td key={m.id}>
-                            <button className="itemcell" onClick={() => toggleCell(i, m.id)}
-                              aria-pressed={assignments[i]?.has(m.id) ?? false}
-                              aria-label={part
-                                ? `${m.name} had ${item.label}, portion ${part.index} of ${part.of}`
-                                : `${m.name} had ${item.label}`}>
-                              {assignments[i]?.has(m.id) ? <span className="dot" /> : null}
-                            </button>
-                          </td>
-                        ))}
-                      </tr>
-                    );
-                  })}
-                  <tr>
-                    <td className="itemlabel">
-                      <span className="itemname">
-                        Tip + service
-                        {tipPercent !== null ? <span className="itemqty"> ({tipPercent}%)</span> : null}
-                      </span>
-                      <input className="itemamountin" inputMode="decimal" placeholder="0.00"
-                        aria-label={`Tip and service, in ${draft.currency}`}
-                        value={draft.receiptTip ?? ""}
-                        onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
-                    </td>
-                    {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            {!everyItemAssigned ? (
-              <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 9, fontWeight: 600 }}>
-                Every item needs at least one person.
-              </div>
-            ) : null}
-            {/* Only until it's been used once: a control you've found doesn't
-                need explaining, and the grid is tight enough already. */}
-            {canUnfoldSomething && runs.every((r) => r === null) ? (
-              <div className="hint" style={{ fontSize: 11.5 }}>
-                Tap a <span style={{ fontFamily: "var(--f-mono)" }}>×N</span> to split that line into
-                separate portions.
-              </div>
-            ) : null}
-          </div>
+                );
+              })}
+              <tr>
+                <td className="itemlabel">
+                  <span className="itemname">
+                    Tip + service
+                    {tipPercent !== null ? <span className="itemqty"> ({tipPercent}%)</span> : null}
+                  </span>
+                  <input className="itemamountin" inputMode="decimal" placeholder="0.00"
+                    aria-label={`Tip and service, in ${draft.currency}`}
+                    value={draft.receiptTip ?? ""}
+                    onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+                </td>
+                {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          {involvedMembers.length > 0 ? (
-            <div className="pad" style={{ paddingTop: 4 }}>
-              <div className="card">
+        {/* What the grid adds up to, kept in sight while it's being tapped
+            rather than at the bottom of a scroll: initials, because the column
+            headers just above already say whose they are. */}
+        {note || involvedMembers.length > 0 ? (
+          <div className="itemfoot">
+            {note}
+            {involvedMembers.length > 0 ? (
+              <div className="totalstrip">
                 {involvedMembers.map((m) => (
-                  <div key={m.id} className="kv">
-                    <span className="k">{m.name}</span>
-                    <span className="v">{money(weights[m.id] ?? 0, draft.currency)}</span>
+                  <div key={m.id} className="tot" aria-label={`${m.name}'s share`}>
+                    <span className="avatar" style={{ width: 21, height: 21, fontSize: 9.5 }}>
+                      {labels.get(m.id)}
+                    </span>
+                    <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          ) : null}
-          <div style={{ height: 24 }} />
-        </Scroll>
+            ) : null}
+          </div>
+        ) : null}
       </Body>
     </Screen>
   );
