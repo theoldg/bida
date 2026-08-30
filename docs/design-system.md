@@ -115,7 +115,9 @@ so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 ("Leave group", never "OK"), `--debit` outlined when it destroys something. A
 screen still wins where the decision needs the ledger on it, `/g/restore` and
-`/g/settle` ([ADR-0025](decisions/0025-our-own-dialogs.md)).
+`/g/settle` ([ADR-0025](decisions/0025-our-own-dialogs.md)). A *failure* is not
+a dialog at all — there is nothing to decide — so it is said under whatever was
+attempted, in `--debit`: `Failure` / `.failure`.
 
 ## Rules that are not negotiable
 

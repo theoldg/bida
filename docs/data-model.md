@@ -50,6 +50,9 @@ Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`
 `percent { percents }` (basis points). **`percent` is legacy and read-only** —
 ops already on logs carry it, nothing writes it
 ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)).
+What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
+and nowhere else — the tab strip, the expense screen and the ledger row all
+read it from there.
 
 - A member is a person, not an account. One with expenses attached is
   tombstoned, never hard-deleted, or the fold references nothing. Leaving a

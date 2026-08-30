@@ -10,7 +10,7 @@ import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { Icon } from "../../components/icons";
-import { dayLabel, money, plural } from "../../lib/format";
+import { dayLabel, money, plural, SPLIT_MODE_LABEL } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { useGroupData, useInviteLink, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
@@ -238,10 +238,9 @@ function ExpensesTab({ data }: { data: GroupData }) {
           <div className="rmeta">
             {payersLabel(payer?.name, payers.length - 1)}
             {" · "}
-            {expense.split.mode === "equal" ? `split ${participants} ways`
-              : expense.split.mode === "shares" ? `${participants} people, as parts`
-              : expense.split.mode === "exact" ? `${participants} people, as amounts`
-              : `${participants} people, by percent`}
+            {expense.split.mode === "equal"
+              ? `split ${participants} ways`
+              : `${participants} people, ${SPLIT_MODE_LABEL[expense.split.mode].toLowerCase()}`}
           </div>
         </div>
         <div className="ramt">

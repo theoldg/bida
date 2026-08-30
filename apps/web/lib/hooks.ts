@@ -18,8 +18,34 @@ import { formatJoinLink } from "./group-link";
  *     materialised rows, never stored. It is cheap and it cannot go stale.
  */
 
-function alive<T extends { deletedAt?: number | null }>(rows: T[] | undefined): T[] {
+/**
+ * The rows that haven't been tombstoned. Core exports an `alive` of its own
+ * over the keyed records in a `GroupState`; this is the same rule over what
+ * Dexie hands back, which is arrays.
+ */
+function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined): T[] {
   return (rows ?? []).filter((r) => !r.deletedAt);
+}
+
+/**
+ * The keyed shape every reader in core wants, out of the arrays Dexie gives.
+ * Both hooks below need it — one for a group, one for every group at once —
+ * and a balance computed from a hand-built state that forgot a field is the
+ * kind of wrong nothing else catches.
+ */
+function stateOf(
+  group: Group | undefined,
+  members: Member[],
+  expenses: Expense[],
+  settlements: Settlement[],
+): GroupState {
+  return {
+    ...emptyGroupState(),
+    group,
+    members: Object.fromEntries(members.map((m) => [m.id, m])),
+    expenses: Object.fromEntries(expenses.map((e) => [e.id, e])),
+    settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
+  };
 }
 
 /**
@@ -124,18 +150,11 @@ export function useGroupData(groupId: string | undefined): GroupData {
         balances: EMPTY_REPORT, transfers: [], me: undefined, pendingOps: 0, loading: true,
       };
     }
-    const members = alive(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-    const expenses = alive(rows.expenses).sort(byWhenThenCreated);
-    const settlements = alive(rows.settlements).sort(byWhenThenCreated);
+    const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
+    const expenses = living(rows.expenses).sort(byWhenThenCreated);
+    const settlements = living(rows.settlements).sort(byWhenThenCreated);
 
-    const state: GroupState = {
-      ...emptyGroupState(),
-      group: rows.group,
-      members: Object.fromEntries(members.map((m) => [m.id, m])),
-      expenses: Object.fromEntries(expenses.map((e) => [e.id, e])),
-      settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
-    };
-    const balances = computeBalances(state);
+    const balances = computeBalances(stateOf(rows.group, members, expenses, settlements));
     return {
       group: rows.group,
       members,
@@ -196,13 +215,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       const live = {
         m: m.get(group.id) ?? [], e: e.get(group.id) ?? [], s: s.get(group.id) ?? [],
       };
-      const balances = computeBalances({
-        ...emptyGroupState(),
-        group,
-        members: Object.fromEntries(live.m.map((x) => [x.id, x])),
-        expenses: Object.fromEntries(live.e.map((x) => [x.id, x])),
-        settlements: Object.fromEntries(live.s.map((x) => [x.id, x])),
-      });
+      const balances = computeBalances(stateOf(group, live.m, live.e, live.s));
       const me = device?.meByGroup[group.id];
       out.push({
         group,

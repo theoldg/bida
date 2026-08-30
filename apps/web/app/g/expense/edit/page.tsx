@@ -231,30 +231,33 @@ function EditExpenseScreen() {
     router.back();
   }
 
-  async function save() {
+  // An arrow, not a hoisted `function`: a declaration is created before the
+  // guard above runs, so TypeScript wouldn't carry "draft exists" into it and
+  // every read had to assert it back.
+  const save = async () => {
     if (!ready || !groupId) return;
-    const actor = data.me ?? draft!.paidBy;
+    const actor = data.me ?? draft.paidBy;
     const input = {
-      description: draft!.description.trim(),
-      occurredAt: draft!.occurredAt,
+      description: draft.description.trim(),
+      occurredAt: draft.occurredAt,
       amountMinor,
-      currency: draft!.currency,
-      rateToBase: foreign ? draft!.rateToBase : "1",
-      paidBy: draft!.paidBy,
-      payers: draft!.payers,
+      currency: draft.currency,
+      rateToBase: foreign ? draft.rateToBase : "1",
+      paidBy: draft.paidBy,
+      payers: draft.payers,
       split: effectiveSplit,
-      categoryId: draft!.categoryId,
-      receiptItems: draft!.receiptItems ?? null,
-      receiptTip: draft!.receiptTip ?? null,
-      receiptInvolved: draft!.receiptInvolved ?? null,
-      receiptAssignments: draft!.receiptAssignments ?? null,
+      categoryId: draft.categoryId,
+      receiptItems: draft.receiptItems ?? null,
+      receiptTip: draft.receiptTip ?? null,
+      receiptInvolved: draft.receiptInvolved ?? null,
+      receiptAssignments: draft.receiptAssignments ?? null,
       splitTab: activeTab,
     };
-    if (draft!.expenseId) await editExpense(groupId, actor, draft!.expenseId, input);
+    if (draft.expenseId) await editExpense(groupId, actor, draft.expenseId, input);
     else await addExpense(groupId, actor, input);
     clearDraft(groupId);
     router.replace(route.group(groupId));
-  }
+  };
 
   return (
     <Screen>

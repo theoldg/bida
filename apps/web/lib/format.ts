@@ -1,4 +1,4 @@
-import { formatMinor, type CurrencyCode, type SplitValidation } from "@hajsik/core";
+import { formatMinor, type CurrencyCode, type SplitSpec, type SplitValidation } from "@hajsik/core";
 
 /**
  * Display helpers. Money formatting itself lives in core — this file only
@@ -67,6 +67,21 @@ export function splitFooter(
   }
   return { ok: false, text: shortfallText(check, currency, { under: "left to split", over: "too much" }) };
 }
+
+/**
+ * The owner's names for the split modes, and the only ones the UI uses — the
+ * tab strip, the expense's own "Split ·" line and the ledger row's "3 people,
+ * as parts" all read them from here rather than each spelling out the same
+ * four cases ([standing-instructions](docs/standing-instructions.md#interface):
+ * *Evenly · As parts · As amounts*). "By percent" is unreachable for anything
+ * new and still has to render on an expense recorded that way.
+ */
+export const SPLIT_MODE_LABEL: Record<SplitSpec["mode"], string> = {
+  equal: "Evenly",
+  shares: "As parts",
+  exact: "As amounts",
+  percent: "By percent",
+};
 
 /**
  * What a rejected promise says to a person. Anything thrown that isn't an

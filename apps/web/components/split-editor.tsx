@@ -9,7 +9,7 @@ import { MinorAmountInput } from "./amount-input";
 import { Avatar } from "./bits";
 import { Failure } from "./chrome";
 import { Icon } from "./icons";
-import { bare, money, splitFooter } from "../lib/format";
+import { bare, money, splitFooter, SPLIT_MODE_LABEL } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
 /**
@@ -35,11 +35,8 @@ import type { SplitTab } from "../lib/draft";
  * once that reduction has happened, instead of falling back to "As parts".
  */
 
-const MODES: { mode: "equal" | "shares" | "exact"; label: string }[] = [
-  { mode: "equal", label: "Evenly" },
-  { mode: "shares", label: "As parts" },
-  { mode: "exact", label: "As amounts" },
-];
+/** The three arithmetic tabs, in the owner's order. "Receipt" is the fourth. */
+const MODES = ["equal", "shares", "exact"] as const;
 
 /** Where a scan is: idle, in flight, or refused. Owned by the expense form. */
 export type ScanState = "idle" | "scanning" | "error";
@@ -162,9 +159,9 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
       </div>
 
       <div className="seg" style={{ marginBottom: 9 }}>
-        {MODES.map((m) => (
-          <button key={m.mode} type="button" className={!showReceipt && !legacy && spec.mode === m.mode ? "on" : ""}
-            onClick={() => switchMode(m.mode)}>{m.label}</button>
+        {MODES.map((mode) => (
+          <button key={mode} type="button" className={!showReceipt && !legacy && spec.mode === mode ? "on" : ""}
+            onClick={() => switchMode(mode)}>{SPLIT_MODE_LABEL[mode]}</button>
         ))}
         <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
           Receipt

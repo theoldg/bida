@@ -11,7 +11,7 @@ import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
-import { clockTime, dayLabel, money } from "../../../lib/format";
+import { clockTime, dayLabel, money, SPLIT_MODE_LABEL } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
@@ -137,10 +137,7 @@ function ExpenseScreen() {
               )}
               <div className="hairline" />
               <Eyebrow style={{ marginBottom: 4 }}>
-                Split · {isReceipt ? "from receipt"
-                  : expense.split.mode === "equal" ? "evenly"
-                  : expense.split.mode === "exact" ? "as amounts"
-                  : expense.split.mode === "shares" ? "as parts" : "by percent"}
+                Split · {isReceipt ? "from receipt" : SPLIT_MODE_LABEL[expense.split.mode].toLowerCase()}
               </Eyebrow>
               {data.members.map((m) => {
                 const inIt = participants.includes(m.id);

@@ -390,8 +390,15 @@ function samePayers(a: Record<Id, number> | null, b: Record<Id, number> | null):
   return ka.length === kb.length && ka.every((k, i) => k === kb[i] && a[k] === b[k]);
 }
 
-/** The stored base amount, computed once at entry and never again. ADR-0005. */
-function toBase(input: ExpenseInput, base: CurrencyCode): number {
+/**
+ * The stored base amount, computed once at entry and never again (ADR-0005).
+ * Takes the three fields rather than an `ExpenseInput`, because a settlement
+ * converts by exactly the same rule and must not drift from it.
+ */
+function toBase(
+  input: { amountMinor: number; currency: CurrencyCode; rateToBase: Rate },
+  base: CurrencyCode,
+): number {
   return input.currency === base
     ? input.amountMinor
     : convertMinor(input.amountMinor, input.currency, base, input.rateToBase);
@@ -522,10 +529,7 @@ export async function recordSettlement(
 ): Promise<Id> {
   const base = await baseCurrencyOf(groupId);
   const settlementId = newId();
-  const baseAmountMinor =
-    input.currency === base
-      ? input.amountMinor
-      : convertMinor(input.amountMinor, input.currency, base, input.rateToBase);
+  const baseAmountMinor = toBase(input, base);
 
   await appendOps(
     groupId,
