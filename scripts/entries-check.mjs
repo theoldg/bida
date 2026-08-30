@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm entries` — can you actually add, edit and read back
- * all three kinds of entry?
+ * `pnpm entries` — can you add, edit and read back all three kinds of entry?
  *
  * The command layer's own tests prove an income's sign reaches the balances and
  * that a transfer edit writes only what changed. What they structurally cannot

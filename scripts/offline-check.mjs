@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm offline` — does the built app actually work with the
- * network cut?
+ * `pnpm offline` — does the built app actually work with the network cut?
  *
  * Seeds a group through the real UI over a local server, lets the service
  * worker install, pulls the plug, and then walks every screen and saves an
