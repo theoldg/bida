@@ -405,6 +405,11 @@ button.tside:active { background: var(--press) }
 .tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
 .tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted);
   border-left: 1px solid var(--rule-soft); border-right: 1px solid var(--rule-soft) }
+/* The editable arrow is a control, not the divider the detail screen's is: a
+   square centred in the row, so it reads as something to press rather than as a
+   third column the size of the two people beside it. */
+button.tswap { align-self: center; width: 36px; height: 36px; margin: 0 6px; border-radius: 10px;
+  border: 1px solid var(--rule-soft); background: var(--card-2) }
 button.tswap:active { background: var(--press); color: var(--ink) }
 
 /* ---- nav, fab, buttons ---- */
