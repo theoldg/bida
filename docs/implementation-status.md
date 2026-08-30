@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 128 tests |
+| 1 — Domain core | ✅ 124 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
@@ -21,7 +21,21 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: a group holds three kinds of entry, not one. **Expenses, incomes and
+Since: **a name is enough, and history is read rather than rewound.** The square
+holding a person's first letter is gone from every screen that names anyone —
+it repeated the word beside it — surviving only for a group in the list of
+groups and as the who-had-what grid's column headings
+([ADR-0032](decisions/0032-a-name-is-enough.md)). Restore-to-version is gone with
+it: `/g/restore`, `buildRestorePatch` and `foldEntityAt` are deleted, undoing
+something is editing it ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)),
+and the `restore` op kind still folds only because production groups hold some.
+Three things the log said wrongly are fixed at their source: `editExpense` no
+longer writes a `kind` that didn't change (a new entry reads *created*, not
+*turned back into an expense*), a membership revision is named after the member
+it is *about* (adding two people isn't three people joining), and a settle-up
+card opens a pre-filled transfer again — the draft is keyed by what seeded it.
+
+Before it: a group holds three kinds of entry, not one. **Expenses, incomes and
 transfers**, all editable, on one form with a segmented control and one detail
 screen that looks its id up in both tables
 ([ADR-0028](decisions/0028-three-kinds-of-entry.md)). An income is a single
@@ -37,13 +51,11 @@ type="date">` is the last native control
 ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
 [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
 
-Also: the browser's own gestures answer to the app. A long press does
-nothing — CSS only ever silenced iOS's callout, so `components/no-long-press.tsx`
-swallows the touch context menu app-wide — a pinch doesn't zoom (viewport meta,
-`touch-action` and `components/no-pinch-zoom.tsx` together, since no one of them
-covers every browser), and back climbs the hierarchy
-instead of replaying visits: an up-link unwinds the history to the parent
-rather than pushing (`lib/nav.ts`,
+Also: the browser's own gestures answer to the app. A long press does nothing
+(`components/no-long-press.tsx` — CSS only ever silenced iOS's callout), a pinch
+doesn't zoom (viewport meta, `touch-action` and `components/no-pinch-zoom.tsx`
+together, since no one of them covers every browser), and an up-link unwinds
+history to the parent rather than pushing (`lib/nav.ts`,
 [ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).
 
 Before it: the two failures that could quietly cost a trip its ledger now say so.
@@ -56,29 +68,18 @@ to evict IndexedDB: Safari drops it after seven days uninstalled, taking
 unpushed ops and the group secrets with no account to log back in with
 ([architecture.md](architecture.md#gotchas)).
 
-Before it: the groups list is the front door — the tally wordmark and the app's name
-alone on the bar, light/dark as one icon button beside them. `/settings` is
-deleted, the personal lens is unconditional, and outside a group there is no
-bottom bar ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
-On the who-had-what screen, who-was-there scrolls sideways in one line and the
-per-person totals stack in a named column.
-
-Before it: the browser's dialogs are gone. Everything the app asks — adding,
-renaming and removing a member, naming yourself as you join, deleting an
-expense, discarding a half-typed one, an unlisted currency, leaving a group —
-asks in a `<dialog>` this app draws, so `/g/leave` is deleted
-([ADR-0025](decisions/0025-our-own-dialogs.md)); a write that fails says so
-where it was attempted (`Failure`) rather than in an `alert()`. The
-who-had-what grid became the scrolling band of its own screen so its row of
-initials freezes over a long bill: it had been a sticky `<thead>` in a wrapper
-that only scrolled sideways, which sticks to nothing
-([frontend.md](frontend.md#gotchas)).
-
-Before it: the app is usable offline and never waits on the network to redraw a
-screen it already has — the service worker precaches the whole export,
-cache-first ([frontend.md](frontend.md#pwa), [ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md);
-verify with `node scripts/offline-check.mjs`) — and nothing it does waits in
-silence ([design-system.md](design-system.md#nothing-waits-in-silence)).
+Before it: the groups list is the front door — wordmark, app name and the
+light/dark button alone on the bar; `/settings` is deleted, the personal lens
+unconditional, and outside a group there is no bottom bar
+([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)). Every
+question the app asks is a `<dialog>` it draws rather than the browser's, so
+`/g/leave` is deleted and a failed write says so where it was attempted
+([ADR-0025](decisions/0025-our-own-dialogs.md)). And it is usable offline: the
+service worker precaches the whole export, cache-first
+([frontend.md](frontend.md#pwa),
+[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md); verify with
+`node scripts/offline-check.mjs`), and nothing it does waits in silence
+([design-system.md](design-system.md#nothing-waits-in-silence)).
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*), re-cut
 2026-08-29 to one monospace face, near-neutral grounds, and colour spent only on
@@ -127,7 +128,7 @@ Every screen is built. Routes and their jobs are listed in
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
 `lib/db/sync.ts`. What the three kinds of entry are *called* lives once, in
-`lib/entry-kind.ts`. 89 smoke tests.
+`lib/entry-kind.ts`. 93 smoke tests.
 
 ### `apps/api`
 
