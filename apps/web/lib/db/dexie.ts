@@ -48,6 +48,18 @@ export interface DeviceRecord {
 }
 
 /**
+ * A run of consecutive failed sync attempts, cleared by the next success.
+ * `count` exists so the UI can tell a blip from an outage: one failure is a
+ * dropped packet, two is worth saying out loud.
+ */
+export interface SyncFailure {
+  count: number;
+  at: number;
+  /** HTTP status, when the request got that far. 403 never heals on its own. */
+  status?: number;
+}
+
+/**
  * The group secret from the invite link. Device-local and deliberately in a
  * table of its own: it must never be foldable from an op, or it would sync to
  * the server, which is the one place it must never be. ADR-0003.
@@ -57,6 +69,13 @@ export interface GroupKey {
   secret: string;
   /** Highest server seq pulled. The sync cursor. */
   lastSeq: number;
+  /** When a push+pull last completed. Absent until this device's first one. */
+  lastSyncedAt?: number;
+  /**
+   * Set while sync is failing. Neither this nor `lastSyncedAt` is indexed, so
+   * they need no schema version — Dexie only declares the fields it indexes.
+   */
+  failure?: SyncFailure;
 }
 
 export class HajsikDb extends Dexie {

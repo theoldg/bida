@@ -49,7 +49,9 @@ the shared wording.
 - [ ] CSV export
 - [ ] Categories
 - [x] Install prompt — `lib/install.ts` + `components/install.tsx`
-- [ ] Empty states, error states
+- [x] The two ways a real trip loses data: storage evicted under a phone
+      (`lib/persist.ts`) and sync failing where nothing said so (`useSyncHealth`)
+- [ ] Empty states, the rest of the error states
 - [ ] Answer the open questions in [product.md](product.md#open-product-questions)
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*

@@ -221,6 +221,49 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
   }, []);
 }
 
+/**
+ * How sync is actually going for one group.
+ *
+ * `navigator.onLine` answers a different question — whether there is a link,
+ * not whether the other end is answering. A Worker that 500s, a D1 outage or a
+ * key the server rejects all leave the phone "online" while nothing it writes
+ * ever leaves it, which is the one failure that quietly costs a trip its
+ * ledger. So the sync engine writes down how each attempt went and this reads
+ * it back.
+ */
+export interface SyncHealth {
+  /** Failing for long enough to be worth saying out loud — see FAILURES_BEFORE_WARNING. */
+  failing: boolean;
+  /** The server refused this device's secret. Retrying cannot fix it; a fresh link can. */
+  rejected: boolean;
+  /** When this device last completed a sync of this group, if it ever has. */
+  lastSyncedAt: number | undefined;
+}
+
+/**
+ * One failed attempt is a dropped packet on a train. Two, spaced by the
+ * engine's own backoff, is a server that isn't there — and only then does a
+ * banner earn its place.
+ */
+const FAILURES_BEFORE_WARNING = 2;
+
+export function useSyncHealth(groupId: string | undefined): SyncHealth {
+  const key = useLiveQuery(async () => {
+    if (!groupId) return undefined;
+    return (await db().groupKeys.get(groupId)) ?? null;
+  }, [groupId]);
+
+  return useMemo(() => {
+    const failure = key?.failure;
+    const rejected = failure?.status === 403;
+    return {
+      failing: rejected || (failure?.count ?? 0) >= FAILURES_BEFORE_WARNING,
+      rejected,
+      lastSyncedAt: key?.lastSyncedAt,
+    };
+  }, [key]);
+}
+
 /** Whether the browser thinks it is online. Drives the offline banner. */
 export function useOnline(): boolean {
   const [online, setOnline] = useState(true);

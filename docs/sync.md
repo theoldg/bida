@@ -76,6 +76,17 @@ later request is checked against it. A `GET` on a never-pushed group returns
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap.
 
+**Every attempt is written down.** A success stamps `groupKeys.lastSyncedAt`
+and clears `failure`; a failure increments `failure.count` and keeps the HTTP
+status. `useSyncHealth` reads it back, and `/g` says so once `count` reaches 2
+— one failure is a dropped packet, two is a server that isn't there. A 403
+warns immediately and differently: it means this device's secret no longer
+matches the group's, which retrying can never fix and a fresh invite link can
+(opening one clears the failure). `navigator.onLine` answers a different
+question and only drives the "Offline" banner: it reports a link, not an
+answering server, so it is blind to exactly the outage that costs a trip its
+ledger.
+
 **Attachments sync separately**, Wi-Fi-only by default plus a manual "upload
 now". An expense is fully synced and correct with its photos still queued — the
 op references attachment ids that resolve to local blobs until upload completes.

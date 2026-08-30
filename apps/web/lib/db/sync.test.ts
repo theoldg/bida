@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { foldOps } from "@hajsik/core";
 import { db } from "./dexie";
-import { addExpense, createGroup } from "./commands";
+import { addExpense, createGroup, saveGroupKey } from "./commands";
 import { syncGroup } from "./sync";
 
 /**
@@ -95,5 +95,70 @@ describe("syncGroup", () => {
     await expect(syncGroup(groupId)).rejects.toThrow();
     const ops = await db().ops.where("groupId").equals(groupId).toArray();
     expect(ops.every((op) => op.pending === 1)).toBe(true);
+  });
+});
+
+/**
+ * A phone whose changes are going nowhere used to look exactly like one that
+ * was up to date. These are the record the banner reads — see
+ * lib/hooks.ts#useSyncHealth.
+ */
+describe("sync health", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("counts consecutive failures and keeps the status the server gave", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 403 })));
+
+    await expect(syncGroup(groupId)).rejects.toThrow();
+    expect((await db().groupKeys.get(groupId))?.failure).toMatchObject({ count: 1, status: 403 });
+
+    await expect(syncGroup(groupId)).rejects.toThrow();
+    expect((await db().groupKeys.get(groupId))?.failure).toMatchObject({ count: 2, status: 403 });
+  });
+
+  it("records no status when the request never reached the server", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+
+    await expect(syncGroup(groupId)).rejects.toThrow();
+    const failure = (await db().groupKeys.get(groupId))?.failure;
+    expect(failure?.count).toBe(1);
+    expect(failure?.status).toBeUndefined();
+  });
+
+  it("clears the failure and stamps the time once a sync gets through", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 500 })));
+    await expect(syncGroup(groupId)).rejects.toThrow();
+    expect((await db().groupKeys.get(groupId))?.failure?.count).toBe(1);
+
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, i + 1]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: body.ops.length }), { status: 200 });
+    }));
+
+    await syncGroup(groupId);
+
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.failure).toBeUndefined();
+    expect(key?.lastSyncedAt).toBeGreaterThan(0);
+  });
+
+  it("keeps the sync cursor and clears the failure when a fresh link is opened", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 403 })));
+    await expect(syncGroup(groupId)).rejects.toThrow();
+    await db().groupKeys.update(groupId, { lastSeq: 7, lastSyncedAt: 1234 });
+
+    await saveGroupKey(groupId, "a-new-secret");
+
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.secret).toBe("a-new-secret");
+    expect(key?.failure).toBeUndefined();
+    expect(key?.lastSeq).toBe(7);
+    expect(key?.lastSyncedAt).toBe(1234);
   });
 });

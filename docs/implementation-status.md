@@ -13,14 +13,25 @@ Update it in the same commit as the code it describes.*
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline, feed, restore |
-| 6 — Polish | 🟡 install prompt done; CSV export, categories, empty/error states open |
+| 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the groups list is the front door — the tally wordmark and the app's name
+Since: the two failures that could quietly cost a trip its ledger now say so.
+Sync writes down how every attempt went (`groupKeys.lastSyncedAt` and
+`failure`), and `/g` warns after two consecutive failures — or immediately, in
+its own words, when the server refuses this device's secret, which retrying can
+never fix. `navigator.onLine` had been the only signal, and it reports a link
+rather than an answering server ([sync.md](sync.md#the-sync-engine)). And
+`lib/persist.ts` asks the browser to exempt IndexedDB from eviction — Safari
+drops it after seven days uninstalled, taking unpushed ops and the group
+secrets, with no account to log back in with
+([architecture.md](architecture.md#gotchas)).
+
+Before it: the groups list is the front door — the tally wordmark and the app's name
 alone on the bar, light/dark as one icon button beside them. `/settings` is
 deleted, the personal lens is unconditional, and outside a group there is no
 bottom bar ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
@@ -35,30 +46,17 @@ scrolling band of its own screen so its row of initials freezes over a long bill
 it had been a sticky `<thead>` in a wrapper that only scrolled sideways, which
 sticks to nothing ([frontend.md](frontend.md#gotchas)).
 
-Before it: the app is usable offline, and no longer waits on the network
-to redraw a screen it already has. The service worker precaches the whole export
-under a build-stamped revision and serves it cache-first, RSC payloads included
-— they were the miss that turned a tap into a round trip online and a screenful
-of `1:"$Sreact.fragment"` off ([frontend.md](frontend.md#pwa); `node
-scripts/offline-check.mjs` walks fourteen screens with the network cut, then
-installs a deploy over a half-dead network — a precache is all-or-nothing,
-because `activate` deletes the previous one). On top
-of it, the two states that made the app *feel* slow: every control now darkens
-under the thumb the instant it's touched, and a list still coming out of Dexie
-draws its own shape rather than a blank
-([design-system.md](design-system.md#nothing-waits-in-silence)). The group list
-reads five tables whole instead of three per group.
+Before it: the app is usable offline and never waits on the network to redraw a
+screen it already has — the service worker precaches the whole export, RSC
+payloads included, and serves it cache-first ([frontend.md](frontend.md#pwa),
+[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md); verify with
+`node scripts/offline-check.mjs`). Nothing waits in silence either: controls
+darken under the thumb, and a list still coming out of Dexie draws its own shape
+([design-system.md](design-system.md#nothing-waits-in-silence)).
 
-Design signed off 2026-08-27 (*"i approve of your design, go wild"*), then
-re-cut 2026-08-29 on the owner's word: one monospace face (JetBrains Mono)
-everywhere, near-neutral grounds, and colour spent only on `--credit` and
-`--debit` — `--brand` is ink, avatars carry no tint, the highlighter is a grey
-wash ([ADR-0023](decisions/0023-monospace-monochrome.md)). Before it
-(2026-08-28): a line the receipt counted — `Salade marocaine ×2` —
-unfolds on the who-had-what grid into that many separately assignable rows
-(two shared one, someone else had the other), and merges back; the portions
-sum to the printed line exactly, so the bill's total never moves
-([ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md)).
+Design signed off 2026-08-27 (*"i approve of your design, go wild"*), re-cut
+2026-08-29 to one monospace face, near-neutral grounds, and colour spent only on
+`--credit` and `--debit` ([ADR-0023](decisions/0023-monospace-monochrome.md)).
 
 ## The next action
 
@@ -113,7 +111,7 @@ Every screen is built. Routes and their jobs are listed in
 [frontend.md](frontend.md#routing) — that table is the current one; don't
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. 67 smoke tests.
+`lib/db/sync.ts`. 76 smoke tests.
 
 ### `apps/api`
 

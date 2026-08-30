@@ -12,7 +12,7 @@ import {
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { useGroupData, useInviteLink, useOnline } from "../../lib/hooks";
+import { useGroupData, useInviteLink, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "expenses" | "balances";
@@ -27,6 +27,7 @@ function GroupScreen() {
   const tab = (params.get("tab") ?? "expenses") as Tab;
   const data = useGroupData(groupId);
   const online = useOnline();
+  const sync = useSyncHealth(groupId);
   // The invite link is a property of the group rather than of the phone, which
   // is why it stayed on the group's own top bar when the options screen went
   // (ADR-0014) and the settings screen after it (ADR-0026).
@@ -68,9 +69,25 @@ function GroupScreen() {
   return (
     <Screen>
       <Body>
+        {/* Three ways for a group to be out of step with its friends, in the
+            order of how badly you need to know. Being offline is the benign
+            one and says so; a server that won't answer is the one that used to
+            be invisible; a refused key is the one that never heals by itself.
+            No colour on any of them — that is spent on balances (ADR-0023). */}
         {!online && data.pendingOps > 0 ? (
           <Banner icon="off">
             Offline — {plural(data.pendingOps, "change")} waiting. They'll go up on their own.
+          </Banner>
+        ) : sync.rejected ? (
+          <Banner icon="sync">
+            This phone's link no longer opens this group, so nothing is syncing.
+            Ask someone for a fresh invite link.
+          </Banner>
+        ) : sync.failing ? (
+          <Banner icon="sync">
+            Can't reach the server — {data.pendingOps > 0
+              ? `${plural(data.pendingOps, "change")} still only on this phone.`
+              : "you may not have everyone's latest."} Still trying.
           </Banner>
         ) : null}
 

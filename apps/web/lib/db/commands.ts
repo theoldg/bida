@@ -237,7 +237,11 @@ export async function claimIdentity(
  */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   const existing = await db().groupKeys.get(groupId);
-  await db().groupKeys.put({ groupId, secret, lastSeq: existing?.lastSeq ?? 0 });
+  // A fresh link is the only cure for a 403, so opening one clears the failure
+  // rather than leaving the old warning up over a key that now works.
+  await db().groupKeys.put({
+    ...existing, groupId, secret, lastSeq: existing?.lastSeq ?? 0, failure: undefined,
+  });
   // Opening the link is what "rejoining" means here — surface the group
   // again if this device had previously left it.
   await unhideGroup(groupId);
