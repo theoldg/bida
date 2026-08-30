@@ -18,9 +18,10 @@ export type SplitMode = "equal" | "exact" | "shares" | "percent";
  *   `computeBalances`. That is the whole of the difference. ADR-0028.
  *
  * The third kind of entry a person can add, a **transfer**, is not on this
- * union: it is a `Settlement`, a different entity with no split at all.
+ * union: it is a `Settlement`, a different entity with no split at all. The
+ * app-level vocabulary that does name all three is `apps/web/lib/entry-kind.ts`.
  */
-export type EntryKind = "expense" | "income";
+export type ExpenseKind = "expense" | "income";
 
 /**
  * Which of the split editor's four tabs is showing, independent of
@@ -64,9 +65,9 @@ export interface Expense {
   /**
    * Which way this entry runs. Absent means `expense` — every op written
    * before incomes existed, and every ordinary expense since, so the common
-   * case never carries the field. See `EntryKind`.
+   * case never carries the field. See `ExpenseKind`.
    */
-  kind?: EntryKind | null;
+  kind?: ExpenseKind | null;
   description: string;
   categoryId?: string | null;
   occurredAt: number;

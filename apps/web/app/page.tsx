@@ -39,13 +39,13 @@ export default function GroupsPage() {
           ) : null}
 
           <div className="rows">
-            {groups?.map(({ group, memberCount, expenseCount, netMinor, lastActivity }) => (
+            {groups?.map(({ group, memberCount, entryCount, netMinor, lastActivity }) => (
               <Link key={group.id} href={route.group(group.id)} className="row">
                 <Avatar name={group.name} />
                 <div className="rmain">
                   <div className="rtitle">{group.name}</div>
                   <div className="rmeta">
-                    {plural(memberCount, "person", "people")} · {plural(expenseCount, "expense")} · {ago(lastActivity)}
+                    {plural(memberCount, "person", "people")} · {plural(entryCount, "entry", "entries")} · {ago(lastActivity)}
                   </div>
                 </div>
                 <div className="ramt">

@@ -125,7 +125,8 @@ export interface GroupData {
 }
 
 const EMPTY_REPORT: BalanceReport = {
-  byMember: {}, totalSpendMinor: 0, paidMinor: {}, owedMinor: {}, problems: [],
+  byMember: {}, totalSpendMinor: 0, totalIncomeMinor: 0,
+  paidMinor: {}, owedMinor: {}, receivedMinor: {}, incomeShareMinor: {}, problems: [],
 };
 
 export function useGroupData(groupId: string | undefined): GroupData {
@@ -173,7 +174,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
 export interface GroupSummary {
   group: Group;
   memberCount: number;
-  expenseCount: number;
+  entryCount: number;
   /** This device's net position, or undefined if they haven't said who they are. */
   netMinor: number | undefined;
   lastActivity: number;
@@ -220,7 +221,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       out.push({
         group,
         memberCount: live.m.length,
-        expenseCount: live.e.length,
+        entryCount: live.e.length + live.s.length,
         netMinor: me ? balances.byMember[me] ?? 0 : undefined,
         lastActivity: Math.max(
           group.createdAt,

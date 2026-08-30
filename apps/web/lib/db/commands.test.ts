@@ -10,6 +10,7 @@ import {
   createGroup,
   deleteExpense,
   editExpense,
+  editSettlement,
   leaveGroup,
   publishExistingClaims,
   recordSettlement,
@@ -357,6 +358,106 @@ describe("commands", () => {
     const after = computeBalances(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
     expect(after.totalSpendMinor).toBe(9000);
     expect(after.byMember[marie]).toBe(0);
+  });
+
+  it("an income is one field on an expense, and runs the balance backwards", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    const id = await addExpense(groupId, theo, {
+      kind: "income",
+      description: "Deposit back",
+      occurredAt: 1,
+      amountMinor: 9000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie, sam] },
+    });
+    expect((await db().expenses.get(id))?.kind).toBe("income");
+
+    const report = computeBalances(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
+    expect(report.totalSpendMinor).toBe(0);
+    expect(report.totalIncomeMinor).toBe(9000);
+    // Theo took it all in and owes the other two their third each.
+    expect(report.byMember[theo]).toBe(-6000);
+    expect(report.byMember[marie]).toBe(3000);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("an ordinary expense carries no kind field at all", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await addExpense(groupId, theo, {
+      description: "Taxi",
+      occurredAt: 1,
+      amountMinor: 1000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    const op = (await db().ops.where("entityId").equals(id).toArray())[0]!;
+    expect("kind" in op.patch).toBe(false);
+  });
+
+  it("turning an expense into an income writes only that one field", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await addExpense(groupId, theo, {
+      description: "Ferry refund",
+      occurredAt: 1,
+      amountMinor: 4000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    await editExpense(groupId, theo, id, { kind: "income" });
+    const update = (await db().ops.where("entityId").equals(id).toArray())
+      .find((o) => o.kind === "update");
+    expect(update?.patch).toEqual({ kind: "income" });
+    expect(computeBalances(foldOps(await db().ops.toArray())).byMember[theo]).toBe(-2000);
+  });
+
+  it("edits a transfer, writing only what actually changed", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    const id = await recordSettlement(groupId, marie, {
+      fromMember: marie,
+      toMember: theo,
+      amountMinor: 3000,
+      currency: "EUR",
+      rateToBase: "1",
+      occurredAt: 2,
+      note: null,
+    });
+
+    // Same values in: nothing to say, so nothing is appended.
+    await editSettlement(groupId, marie, id, { amountMinor: 3000, occurredAt: 2 });
+    const updates = () => db().ops.where("entityId").equals(id).toArray()
+      .then((ops) => ops.filter((o) => o.kind === "update"));
+    expect(await updates()).toHaveLength(0);
+
+    await editSettlement(groupId, marie, id, { toMember: sam, amountMinor: 2500 });
+    const [update] = await updates();
+    expect(update?.patch).toEqual({ toMember: sam, amountMinor: 2500, baseAmountMinor: 2500 });
+
+    const stored = await db().settlements.get(id);
+    expect(stored?.toMember).toBe(sam);
+    expect(stored?.fromMember).toBe(marie);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("re-derives a transfer's base amount when its currency moves", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await recordSettlement(groupId, marie, {
+      fromMember: marie,
+      toMember: theo,
+      amountMinor: 3000,
+      currency: "EUR",
+      rateToBase: "1",
+      occurredAt: 2,
+    });
+    await editSettlement(groupId, marie, id, { currency: "MAD", rateToBase: "0.0921" });
+    // 3000 MAD minor × 0.0921, rounded once.
+    expect((await db().settlements.get(id))?.baseAmountMinor).toBe(276);
+    await assertMaterialisedMatchesLog(groupId);
   });
 
   it("the HLC survives a reload and keeps moving forward", async () => {

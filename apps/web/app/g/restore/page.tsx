@@ -88,8 +88,11 @@ function RestoreScreen() {
     [entity, entityId],
   );
 
+  // Expenses and transfers each have a history screen of their own; a member
+  // or a group revision only exists in the whole-group feed.
+  const perEntry = entity === "expense" || entity === "settlement";
   const back = groupId
-    ? route.history(groupId, entity === "expense" ? entityId : undefined)
+    ? route.history(groupId, perEntry ? entityId : undefined)
     : route.groups();
 
   if (!groupId || !entityId || !atHlc || !data.group) return <Blank back={back} />;

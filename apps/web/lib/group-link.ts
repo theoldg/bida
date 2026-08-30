@@ -31,6 +31,8 @@ export function parseJoinLink(input: string): JoinLink | null {
   return { groupId, secret };
 }
 
+import type { EntryKind } from "./entry-kind";
+
 /**
  * Internal routes. The app is a static export, so every screen is a real page
  * with the group id in the query string — no dynamic route segments to
@@ -39,24 +41,34 @@ export function parseJoinLink(input: string): JoinLink | null {
 export const route = {
   groups: () => "/",
   newGroup: () => "/new",
-  group: (groupId: string, tab?: "expenses" | "balances") =>
-    `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "expenses" ? `&tab=${tab}` : ""}`,
-  addExpense: (groupId: string) => `/g/expense/edit?id=${encodeURIComponent(groupId)}`,
-  editExpense: (groupId: string, expenseId: string) =>
-    `/g/expense/edit?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(expenseId)}`,
-  expense: (groupId: string, expenseId: string) =>
-    `/g/expense?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(expenseId)}`,
+  group: (groupId: string, tab?: "ledger" | "balances") =>
+    `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "ledger" ? `&tab=${tab}` : ""}`,
+  /**
+   * The one form. `kind` picks which of the three an entry starts as, and a
+   * transfer can arrive with its two sides and its amount already filled —
+   * that is what "settle up" now links to, rather than a screen of its own
+   * ([ADR-0028](../../../docs/decisions/0028-three-kinds-of-entry.md)).
+   */
+  addEntry: (groupId: string, kind?: EntryKind) =>
+    `/g/entry/edit?id=${encodeURIComponent(groupId)}${kind && kind !== "expense" ? `&kind=${kind}` : ""}`,
+  editEntry: (groupId: string, entryId: string) =>
+    `/g/entry/edit?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`,
+  /** One detail screen for all three: the id is looked up in both tables. */
+  entry: (groupId: string, entryId: string) =>
+    `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`,
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
   /** Who-had-what: right after a scan finds line items, or "Edit who-had-what" later. */
-  items: (groupId: string) => `/g/expense/items?id=${encodeURIComponent(groupId)}`,
+  items: (groupId: string) => `/g/entry/items?id=${encodeURIComponent(groupId)}`,
   /** The confirmation screen for putting an entity back to how it looked. */
   restore: (groupId: string, entity: string, entityId: string, atHlc: string) =>
     `/g/restore?id=${encodeURIComponent(groupId)}&kind=${encodeURIComponent(entity)}`
     + `&e=${encodeURIComponent(entityId)}&at=${encodeURIComponent(atHlc)}`,
-  history: (groupId: string, expenseId?: string) =>
-    `/g/history?id=${encodeURIComponent(groupId)}${expenseId ? `&e=${encodeURIComponent(expenseId)}` : ""}`,
-  settleWith: (groupId: string, from: string, to: string, amount: number) =>
-    `/g/settle?id=${encodeURIComponent(groupId)}&from=${from}&to=${to}&amount=${amount}`,
+  history: (groupId: string, entryId?: string) =>
+    `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`,
+  /** Settle up: a transfer, pre-filled with who owes whom and how much. */
+  transferBetween: (groupId: string, from: string, to: string, amount: number) =>
+    `${route.addEntry(groupId, "transfer")}&from=${encodeURIComponent(from)}`
+    + `&to=${encodeURIComponent(to)}&amount=${amount}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,

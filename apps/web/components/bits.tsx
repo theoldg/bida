@@ -6,13 +6,19 @@ import type { Member } from "@hajsik/core";
 import { Icon, type IconName } from "./icons";
 import { initials } from "../lib/format";
 
-/** Initials in a square. `name` is for what isn't a member — a group. */
-export function Avatar({ member, size = 34, name }: {
-  member?: Member; size?: number; name?: string;
+/**
+ * Initials in a square. `name` is for what isn't a member — a group.
+ *
+ * `inverted` swaps ink and paper — the same figure-ground flip the FAB and the
+ * app icon use. It marks an income's row in a design that has no colour to
+ * spend on the distinction (ADR-0023, ADR-0028).
+ */
+export function Avatar({ member, size = 34, name, inverted }: {
+  member?: Member; size?: number; name?: string; inverted?: boolean;
 }) {
   const label = member?.name ?? name ?? "?";
   return (
-    <span className="avatar"
+    <span className={`avatar${inverted ? " inverted" : ""}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>
       {initials(label)}
     </span>

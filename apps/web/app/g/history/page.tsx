@@ -20,7 +20,7 @@ export default function HistoryPage() {
 function HistoryScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
-  const expenseId = params.get("e") ?? undefined;
+  const entryId = params.get("e") ?? undefined;
   const data = useGroupData(groupId);
 
   // History needs every member's name, including people who've since been
@@ -43,8 +43,20 @@ function HistoryScreen() {
   ) ?? [];
   const expenseById = new Map(allExpenses.map((e) => [e.id, e]));
 
-  const expense = expenseId ? data.expenses.find((e) => e.id === expenseId) : undefined;
-  const revisions = !groupId ? [] : expenseId ? entityHistory(ops, expenseId) : activityFeed(ops, 200);
+  const allSettlements = useLiveQuery(
+    async () => (groupId ? db().settlements.where("groupId").equals(groupId).toArray() : []),
+    [groupId],
+  ) ?? [];
+  const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
+
+    // One id parameter, both tables: history is per-entry, and a transfer has
+  // as much of it as an expense does (ADR-0028).
+  const subject = entryId
+    ? data.expenses.find((e) => e.id === entryId) ?? data.settlements.find((s) => s.id === entryId)
+    : undefined;
+  const subjectName = !entryId ? undefined
+    : subject && "description" in subject ? (subject.description || "Untitled") : "Transfer";
+  const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops, 200);
 
   // An entity's newest revision IS its current state, so there is nothing to
   // put back — offering a rewind there is a dead end. Both feeds are
@@ -59,20 +71,32 @@ function HistoryScreen() {
   const currency = group.baseCurrency;
 
   /**
-   * Where a revision in the whole-group feed leads. Expenses only — they are
+   * Where a revision in the whole-group feed leads. Entries only — they are
    * the only thing with a screen of their own, and "You changed the amount" is
    * not much use in a group feed without saying of what.
    *
-   * A deleted expense has no detail screen, so it points at its own history,
+   * A deleted entry has no detail screen, so it points at its own history,
    * which is where you would be going next anyway.
    */
   function subjectOf(rev: Revision): { href: string; label: string } | undefined {
-    if (!groupId || rev.entity !== "expense") return undefined;
-    const e = expenseById.get(rev.entityId);
-    const label = e?.description?.trim() || "Untitled expense";
-    return e?.deletedAt
-      ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
-      : { href: route.expense(groupId, rev.entityId), label };
+    if (!groupId) return undefined;
+    if (rev.entity === "expense") {
+      const e = expenseById.get(rev.entityId);
+      const label = e?.description?.trim() || "Untitled entry";
+      return e?.deletedAt
+        ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
+        : { href: route.entry(groupId, rev.entityId), label };
+    }
+    if (rev.entity === "settlement") {
+      const s = settlementById.get(rev.entityId);
+      const from = memberById.get(s?.fromMember ?? "")?.name ?? "?";
+      const to = memberById.get(s?.toMember ?? "")?.name ?? "?";
+      const label = `${from} → ${to}`;
+      return s?.deletedAt
+        ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
+        : { href: route.entry(groupId, rev.entityId), label };
+    }
+    return undefined;
   }
 
   return (
@@ -80,10 +104,10 @@ function HistoryScreen() {
       <Body>
         <TopBar
           title="History"
-          sub={expenseId
-            ? `${expense?.description || "Expense"} · ${plural(revisions.length, "revision")}`
+          sub={entryId
+            ? `${subjectName ?? "Entry"} · ${plural(revisions.length, "revision")}`
             : `${group.name} · ${plural(revisions.length, "revision")}`}
-          back={expenseId ? route.expense(groupId, expenseId) : route.group(groupId)}
+          back={entryId ? route.entry(groupId, entryId) : route.group(groupId)}
         />
 
         <Scroll>
@@ -99,7 +123,7 @@ function HistoryScreen() {
                   // else's phone who it is. There is nothing to restore.
                   const canRestore = rev.entity !== "group" && rev.entity !== "identity"
                     && latestOf.get(rev.entityId) !== rev.op.id;
-                  const subject = expenseId ? undefined : subjectOf(rev);
+                  const subject = entryId ? undefined : subjectOf(rev);
                   return (
                     <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
                       {canRestore ? (
@@ -131,7 +155,7 @@ function HistoryScreen() {
         </Scroll>
       </Body>
 
-      {expenseId ? (
+      {entryId ? (
         <Foot>
           <Link href={route.history(groupId)} className="btn btn-s">
             <Icon name="clock" size={15} /> See the whole group&rsquo;s history

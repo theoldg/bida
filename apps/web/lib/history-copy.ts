@@ -35,18 +35,35 @@ export function describe(
     spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? "?").join(", ") : "";
 
   if (rev.entity === "expense") {
+    // An income and an expense are one entity, so a revision only knows which
+    // it is when the op itself carried `kind`. Where it didn't, the sentence
+    // says "entry" rather than guessing — a wrong noun in the log is worse
+    // than a general one.
+    const noun = (() => {
+      const k = field("kind");
+      if (k) return k.after === "income" ? "income" : "expense";
+      return rev.isCreate ? "expense" : "entry";
+    })();
+
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
       const split = field("split")?.after as SplitSpec | undefined;
       const n = split ? splitParticipants(split).length : undefined;
       return {
-        what: `${who} created this expense`,
+        what: `${who} created this ${noun}`,
         diff: amt !== undefined
-          ? { now: `${amt}${n ? ` · split ${plural(n, "way")}` : ""}` }
+          ? { now: `${amt}${n ? ` · ${noun === "income" ? "shared" : "split"} ${plural(n, "way")}` : ""}` }
           : undefined,
       };
     }
-    if (rev.isDelete) return { what: `${who} deleted this expense` };
+    if (rev.isDelete) return { what: `${who} deleted this ${noun}` };
+    if (field("kind")) {
+      return {
+        what: field("kind")!.after === "income"
+          ? `${who} turned this into an income`
+          : `${who} turned this back into an expense`,
+      };
+    }
     if (field("split")) {
       const c = field("split")!;
       return {
@@ -99,7 +116,7 @@ export function describe(
       const after = Array.isArray(c.after) ? c.after.length : 0;
       return { what: `${who} ${after > before ? "added" : "removed"} ${plural(Math.abs(after - before), "photo")}` };
     }
-    return { what: `${who} edited this expense` };
+    return { what: `${who} edited this ${noun}` };
   }
 
   if (rev.entity === "identity") {
@@ -117,10 +134,37 @@ export function describe(
   if (rev.entity === "settlement") {
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
-      return { what: `${who} recorded a settlement`, diff: amt !== undefined ? { now: amt } : undefined };
+      const between = field("fromMember") && field("toMember")
+        ? `${nameOf(field("fromMember")!.after)} → ${nameOf(field("toMember")!.after)}` : undefined;
+      return {
+        what: `${who} recorded a transfer`,
+        diff: amt !== undefined ? { now: between ? `${amt} · ${between}` : amt } : undefined,
+      };
     }
-    if (rev.isDelete) return { what: `${who} deleted a settlement` };
-    return { what: `${who} edited a settlement` };
+    if (rev.isDelete) return { what: `${who} deleted a transfer` };
+    const amount = field("baseAmountMinor") ?? field("amountMinor");
+    if (amount) {
+      return {
+        what: `${who} changed the amount`,
+        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+      };
+    }
+    if (field("fromMember") || field("toMember")) {
+      const c = field("fromMember") ?? field("toMember")!;
+      return {
+        what: `${who} changed who it was between`,
+        diff: { was: nameOf(c.before), now: nameOf(c.after) },
+      };
+    }
+    if (field("note")) {
+      const c = field("note")!;
+      return {
+        what: `${who} changed the note`,
+        diff: { was: (c.before as string) || "—", now: (c.after as string) || "—" },
+      };
+    }
+    if (field("occurredAt")) return { what: `${who} changed the date` };
+    return { what: `${who} edited a transfer` };
   }
 
   if (rev.entity === "member") {
@@ -152,6 +196,8 @@ export const FIELD_LABELS: Record<string, string> = {
   payers: "who chipped in",
   description: "the description", occurredAt: "the date", categoryId: "the category",
   attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
+  kind: "which way this runs", fromMember: "who paid", toMember: "who was paid",
+  note: "the note",
   memberId: "who a device speaks for",
   deletedAt: "whether this was deleted",
 };
@@ -181,7 +227,8 @@ export function fieldValue(
     return typeof value === "number" && Number.isFinite(value) ? money(value, ctx.currency) : String(value);
   }
   if (field === "occurredAt") return typeof value === "number" ? dayLabel(value) : String(value);
-  if (field === "paidBy") return nameOf(value);
+  if (field === "paidBy" || field === "fromMember" || field === "toMember") return nameOf(value);
+  if (field === "kind") return value === "income" ? "an income" : "an expense";
   if (field === "split") {
     const names = splitParticipants(value as SplitSpec).map(nameOf);
     return names.length > 0 ? names.join(", ") : "nobody";

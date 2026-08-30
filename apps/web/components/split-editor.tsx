@@ -55,9 +55,11 @@ export interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
+  /** "Split" on an expense, "Shared with" on an income — `ENTRY_SPLIT_LABEL`. */
+  title: string;
   /** The expense total in the group's base currency — what the split divides. */
   totalMinor: number;
   currency: string;
@@ -66,7 +68,12 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   onChange: (next: SplitSpec) => void;
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
-  receipt: ReceiptTabProps;
+  /**
+   * The Receipt tab, or null where scanning a bill makes no sense — an income
+   * has no receipt to read a total off, and offering the tab there would put
+   * a dead end in the middle of the form.
+   */
+  receipt: ReceiptTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
   const included = new Set(splitParticipants(spec));
@@ -78,8 +85,8 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   // A legacy percent split shows its rows and its numbers, but offers no mode
   // button of its own: touching any of the three arithmetic tabs converts it away.
   const legacy = spec.mode === "percent";
-  const showReceipt = tab === "receipt";
-  const hasReceiptItems = (receipt.items?.length ?? 0) > 0;
+  const showReceipt = tab === "receipt" && receipt !== null;
+  const hasReceiptItems = (receipt?.items?.length ?? 0) > 0;
   // "N of total allocated" only means something where you're typing amounts
   // yourself — Evenly and As parts always land exactly on the total by
   // construction, and Receipt's total is derived from the bill, not typed.
@@ -152,7 +159,7 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
   return (
     <section>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: 13, color: "var(--muted)" }}>Split</span>
+        <span style={{ fontSize: 13, color: "var(--muted)" }}>{title}</span>
         <span className="spacer" style={{ fontSize: 12, color: "var(--muted)" }}>
           {included.size} {included.size === 1 ? "person" : "people"}
         </span>
@@ -163,13 +170,15 @@ export function SplitEditor({ members, me, totalMinor, currency, spec, seed, onC
           <button key={mode} type="button" className={!showReceipt && !legacy && spec.mode === mode ? "on" : ""}
             onClick={() => switchMode(mode)}>{SPLIT_MODE_LABEL[mode]}</button>
         ))}
-        <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
-          Receipt
-        </button>
+        {receipt ? (
+          <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
+            Receipt
+          </button>
+        ) : null}
       </div>
 
       <div className="card splitlist">
-        {showReceipt ? (
+        {showReceipt && receipt ? (
           <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
             shares={shares} included={included} />
         ) : members.map((m) => {

@@ -60,7 +60,7 @@ function ItemsScreen() {
     return (
       <Screen><Body>
         <TopBar title="Who had what"
-          back={draft.expenseId ? route.editExpense(groupId, draft.expenseId) : route.addExpense(groupId)} />
+          back={draft.entryId ? route.editEntry(groupId, draft.entryId) : route.addEntry(groupId)} />
         <Empty title="No line items on that scan">Assign the split from the expense form instead.</Empty>
       </Body></Screen>
     );
@@ -128,7 +128,7 @@ function ItemsScreen() {
   const weights = weightsFromItems(
     items, assignments,
     draft.receiptTip ? { amount: draft.receiptTip, members: involved } : null,
-    draft.currency, draft.expenseId ?? "new",
+    draft.currency, draft.entryId ?? "new",
   );
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;

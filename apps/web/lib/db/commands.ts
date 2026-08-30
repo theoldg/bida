@@ -9,6 +9,7 @@ import {
   primaryPayer,
   type CurrencyCode,
   type EntityKind,
+  type ExpenseKind,
   type Id,
   type Op,
   type OpKind,
@@ -334,6 +335,8 @@ export async function leaveGroup(
 // -------------------------------------------------------------- expenses
 
 export interface ExpenseInput {
+  /** Which way the entry runs. Omitted or "expense" for the ordinary case. */
+  kind?: ExpenseKind | null;
   description: string;
   occurredAt: number;
   /** In `currency`, minor units. */
@@ -422,6 +425,9 @@ export async function addExpense(
         entityId: expenseId,
         kind: "create",
         patch: {
+          // Written only for an income: an ordinary expense is the absence of
+          // this field, on every op ever appended, and stays that way.
+          ...(input.kind === "income" ? { kind: "income" } : {}),
           description: input.description,
           categoryId: input.categoryId ?? null,
           occurredAt: input.occurredAt,
@@ -556,6 +562,43 @@ export async function recordSettlement(
     now,
   );
   return settlementId;
+}
+
+/**
+ * Edit a transfer. Same rule as `editExpense`: only the fields that actually
+ * changed reach the log, and the base figure is re-derived whenever the amount,
+ * the currency or the rate moves.
+ */
+export async function editSettlement(
+  groupId: Id,
+  actor: Id,
+  settlementId: Id,
+  changes: Partial<SettlementInput>,
+  note?: string,
+): Promise<void> {
+  const existing = await db().settlements.get(settlementId);
+  if (!existing) throw new Error(`unknown settlement: ${settlementId}`);
+
+  const patch: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(changes)) {
+    if (value !== undefined && value !== existing[key as keyof typeof existing]) {
+      patch[key] = value;
+    }
+  }
+
+  if (
+    patch["amountMinor"] !== undefined ||
+    patch["currency"] !== undefined ||
+    patch["rateToBase"] !== undefined
+  ) {
+    const base = await baseCurrencyOf(groupId);
+    patch["baseAmountMinor"] = toBase({ ...existing, ...changes }, base);
+  }
+
+  if (Object.keys(patch).length === 0) return;
+  await appendOps(groupId, actor, [
+    { entity: "settlement", entityId: settlementId, kind: "update", patch, note: note ?? null },
+  ]);
 }
 
 export async function deleteSettlement(

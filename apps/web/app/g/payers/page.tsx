@@ -27,7 +27,7 @@ function PayersScreen() {
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
 
-  if (!groupId || !data.group || !draft) return <Blank title="Who paid" />;
+  if (!groupId || !data.group || !draft) return <Blank title="Who put it in" />;
   const gid = groupId, current = draft;
   const currency = draft.currency;
 
@@ -76,7 +76,8 @@ function PayersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="Who paid" sub={money(amountMinor, currency)} back={true}
+        <TopBar title={draft.kind === "income" ? "Who received it" : "Who paid"}
+          sub={money(amountMinor, currency)} back={true}
           right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>Done</button>} />
 
         <Scroll>
@@ -86,7 +87,7 @@ function PayersScreen() {
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
                   <button onClick={() => toggle(m.id)}
-                    aria-label={on ? `${m.name} didn't pay` : `${m.name} paid too`}
+                    aria-label={on ? `Leave ${m.name} out` : `${m.name} put money in too`}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <Avatar member={m} />

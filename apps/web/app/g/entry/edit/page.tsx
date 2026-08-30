@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   convertMinor, isValidRate, minorToDecimalString, parseMinor, validatePayers, validateSplit,
-  type SplitSpec,
+  type Member, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Avatar, Card, Chip } from "../../../../components/bits";
@@ -15,22 +15,42 @@ import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../
 import { ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
-import { addExpense, editExpense } from "../../../../lib/db/commands";
-import { dateInputValue, money, withDate } from "../../../../lib/format";
+import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
+import {
+  ENTRY_LABEL, ENTRY_PAYER_LABEL, ENTRY_SPLIT_LABEL, ENTRY_KINDS, kindOf, type EntryKind,
+} from "../../../../lib/entry-kind";
+import { dateInputValue, errorText, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
-import { blankDraft, clearDraft, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type ExpenseDraft, type SplitTab } from "../../../../lib/draft";
+import { blankDraft, clearDraft, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
 
-export default function EditExpensePage() {
-  return <QueryBoundary><EditExpenseScreen /></QueryBoundary>;
+/**
+ * One form for all three kinds of entry.
+ *
+ * Expense, income and transfer are one thought with one shape — an amount, a
+ * date, some words, and who it moves between — so they are one screen with a
+ * segmented control at the top rather than three routes that lose what you
+ * typed when you realise you picked the wrong one (ADR-0028). Switching kinds
+ * keeps the amount, the currency, the date and the description; only the
+ * middle of the form is swapped.
+ */
+export default function EditEntryPage() {
+  return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
 }
 
-function EditExpenseScreen() {
+function EditEntryScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
-  const expenseId = params.get("e") ?? undefined;
+  const entryId = params.get("e") ?? undefined;
+  const wantedKind = params.get("kind") as EntryKind | null;
+  // Settle-up hands a transfer its two sides and its amount, in base units.
+  const prefill = {
+    from: params.get("from") ?? undefined,
+    to: params.get("to") ?? undefined,
+    amount: Number(params.get("amount") ?? "0"),
+  };
 
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
@@ -41,6 +61,7 @@ function EditExpenseScreen() {
   const [scanSource, setScanSource] = useState<ScanSource>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [ask, setAsk] = useState<null | "discard" | "currency">(null);
+  const [failed, setFailed] = useState<string>();
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
     const file = e.target.files?.[0];
@@ -80,41 +101,77 @@ function EditExpenseScreen() {
     }
   }
 
-  // Seed the draft once the group is loaded: from the expense being edited, or
-  // blank with everyone included and the phone's owner paying.
+  // Seed the draft once the group is loaded: from the entry being edited —
+  // which is looked up in both tables, since one id parameter covers all three
+  // kinds — or blank, in the kind the caller asked for.
   useEffect(() => {
     if (!groupId || data.loading || !data.group) return;
     const existing = getDraft(groupId);
-    if (existing && existing.expenseId === expenseId) return;
-    if (expenseId) {
-      const e = data.expenses.find((x) => x.id === expenseId);
-      if (!e) return;
+    if (existing && existing.entryId === entryId) return;
+    const me = data.me ?? data.members[0]?.id;
+    if (!me) return;
+    const base = data.group.baseCurrency;
+
+    if (entryId) {
+      const e = data.expenses.find((x) => x.id === entryId);
+      if (e) {
+        seedDraft(groupId, {
+          kind: kindOf(e),
+          entryId,
+          // `minorToDecimalString`, never `bare`: this is the canonical text
+          // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
+          // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
+          amountText: minorToDecimalString(e.amountMinor, e.currency),
+          currency: e.currency,
+          rateToBase: e.rateToBase,
+          description: e.description,
+          paidBy: e.paidBy,
+          payers: e.payers ?? null,
+          split: e.split,
+          fromMember: me,
+          toMember: data.members.find((m) => m.id !== me)?.id ?? me,
+          occurredAt: e.occurredAt,
+          categoryId: e.categoryId ?? null,
+          receiptItems: e.receiptItems ?? null,
+          receiptTip: e.receiptTip ?? null,
+          receiptInvolved: e.receiptInvolved ?? null,
+          receiptAssignments: e.receiptAssignments ?? null,
+          splitTab: e.splitTab ?? undefined,
+        });
+        return;
+      }
+      const s = data.settlements.find((x) => x.id === entryId);
+      if (!s) return;
       seedDraft(groupId, {
-        expenseId,
-        // `minorToDecimalString`, never `bare`: this is the canonical text
-        // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
-        // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
-        amountText: minorToDecimalString(e.amountMinor, e.currency),
-        currency: e.currency,
-        rateToBase: e.rateToBase,
-        description: e.description,
-        paidBy: e.paidBy,
-        payers: e.payers ?? null,
-        split: e.split,
-        occurredAt: e.occurredAt,
-        categoryId: e.categoryId ?? null,
-        receiptItems: e.receiptItems ?? null,
-        receiptTip: e.receiptTip ?? null,
-        receiptInvolved: e.receiptInvolved ?? null,
-        receiptAssignments: e.receiptAssignments ?? null,
-        splitTab: e.splitTab ?? undefined,
+        ...blankDraft("transfer", me, base, data.members.map((m) => m.id)),
+        entryId,
+        amountText: minorToDecimalString(s.amountMinor, s.currency),
+        currency: s.currency,
+        rateToBase: s.rateToBase,
+        description: s.note ?? "",
+        fromMember: s.fromMember,
+        toMember: s.toMember,
+        occurredAt: s.occurredAt,
       });
-    } else {
-      const me = data.me ?? data.members[0]?.id;
-      if (!me) return;
-      seedDraft(groupId, blankDraft(me, data.group.baseCurrency, data.members.map((m) => m.id)));
+      return;
     }
-  }, [groupId, expenseId, data.loading, data.group, data.members, data.me, data.expenses]);
+
+    const kind: EntryKind = wantedKind && ENTRY_KINDS.includes(wantedKind) ? wantedKind : "expense";
+    const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
+    seedDraft(groupId, kind === "transfer" ? {
+      ...blank,
+      ...(prefill.from ? { fromMember: prefill.from } : {}),
+      ...(prefill.to ? { toMember: prefill.to } : {}),
+      // The suggestion is already in the group's base currency, so it seeds
+      // the amount directly rather than going back through a rate.
+      ...(Number.isFinite(prefill.amount) && prefill.amount > 0
+        ? { amountText: minorToDecimalString(prefill.amount, base) } : {}),
+    } : blank);
+    // `prefill` is rebuilt each render; the query params behind it are what
+    // actually change, and the draft is only ever seeded once per entry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, entryId, wantedKind, prefill.from, prefill.to, prefill.amount,
+    data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
   // Nothing is stored, so a reload or a closed tab loses what's typed. Let the
   // browser say so, the same way it does for any other half-filled form.
@@ -125,16 +182,17 @@ function EditExpenseScreen() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [groupId]);
 
-  if (!groupId || !data.group || !draft) {
-    return <Blank title={expenseId ? "Edit" : "New expense"} />;
-  }
+  if (!groupId || !data.group || !draft) return <Blank title={entryId ? "Edit" : "New"} />;
   const group = data.group;
   const base = group.baseCurrency;
+  const kind = draft.kind;
+  const transfer = kind === "transfer";
+
   // Merges against the latest saved draft, not the `draft` this render closed
   // over — some interactions (switching split tabs) call patch() twice in one
   // handler, and merging against a stale closure would let the first patch's
   // change be clobbered by the second.
-  const patch = (change: Partial<ExpenseDraft>) => saveDraft(groupId, { ...(getDraft(groupId) ?? draft), ...change });
+  const patch = (change: Partial<EntryDraft>) => saveDraft(groupId, { ...(getDraft(groupId) ?? draft), ...change });
 
   // Undefined (an old draft, or an expense saved before this field existed)
   // derives from what's actually on it: a scanned bill means "Receipt",
@@ -143,8 +201,11 @@ function EditExpenseScreen() {
     ?? (draft.receiptItems && draft.receiptItems.length > 0 ? "receipt"
       : draft.split.mode === "percent" ? "shares" : draft.split.mode);
 
+  // A bill is a thing an expense has. An income has no receipt to read a
+  // total off, and a transfer has no split at all.
+  const canScan = kind === "expense";
   const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
-  const onReceiptTab = activeTab === "receipt" && hasReceiptItems;
+  const onReceiptTab = canScan && activeTab === "receipt" && hasReceiptItems;
 
   // Receipt's total and the split it implies are computed here, at the one
   // place either is read (this render, and save() below) — never written
@@ -171,7 +232,7 @@ function EditExpenseScreen() {
         draft.receiptTip && draft.receiptInvolved
           ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
         draft.currency,
-        draft.expenseId ?? "new",
+        draft.entryId ?? "new",
       )
     : {};
   // Empty until "who had what" has actually been visited (or on an old draft
@@ -193,6 +254,25 @@ function EditExpenseScreen() {
     patch({ splitTab, ...(handoff !== null ? { amountText: handoff } : {}) });
   };
 
+  /**
+   * Change which of the three this is, keeping everything the new kind can
+   * still use. Leaving Receipt behind takes the same handoff as an ordinary
+   * tab switch does — an income's amount would otherwise be derived from a
+   * bill it no longer shows.
+   */
+  const changeKind = (next: EntryKind) => {
+    if (next === kind) return;
+    const leavingReceipt = onReceiptTab && next !== "expense";
+    const handoff = leavingReceipt
+      ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, draft.receiptTip, draft.currency)
+      : null;
+    patch({
+      kind: next,
+      ...(leavingReceipt ? { splitTab: "equal" as SplitTab } : {}),
+      ...(handoff !== null ? { amountText: handoff } : {}),
+    });
+  };
+
   let amountMinor = 0;
   try {
     amountMinor = receiptTotal !== null ? receiptTotal
@@ -206,15 +286,20 @@ function EditExpenseScreen() {
 
   // The split editor is inline below and shows its own arithmetic; the form
   // only needs to know whether what it currently says can be saved.
-  const splitOk = validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: draft.expenseId ?? "new" }).ok;
+  const splitOk = transfer
+    || validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: draft.entryId ?? "new" }).ok;
 
-  // Payers are checked against the amount in the expense's own currency: that
+  // Payers are checked against the amount in the entry's own currency: that
   // is the number people typed and the number they'd check against a receipt.
-  const payerCheck = validatePayers(amountMinor, draft.payers);
+  const payerCheck = validatePayers(amountMinor, transfer ? null : draft.payers);
   const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
+  const sidesOk = !transfer || (draft.fromMember !== draft.toMember
+    && !!draft.fromMember && !!draft.toMember);
 
-  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok
-    && draft.description.trim().length > 0;
+  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok && sidesOk
+    // A transfer's words are a note and optional; an expense without a name is
+    // a row nobody can identify a week later.
+    && (transfer || draft.description.trim().length > 0);
 
   // Leaving throws the draft away — there is nowhere for it to be kept — so ask
   // first, but only once something has actually been typed.
@@ -236,34 +321,68 @@ function EditExpenseScreen() {
   // every read had to assert it back.
   const save = async () => {
     if (!ready || !groupId) return;
-    const actor = data.me ?? draft.paidBy;
-    const input = {
-      description: draft.description.trim(),
-      occurredAt: draft.occurredAt,
-      amountMinor,
-      currency: draft.currency,
-      rateToBase: foreign ? draft.rateToBase : "1",
-      paidBy: draft.paidBy,
-      payers: draft.payers,
-      split: effectiveSplit,
-      categoryId: draft.categoryId,
-      receiptItems: draft.receiptItems ?? null,
-      receiptTip: draft.receiptTip ?? null,
-      receiptInvolved: draft.receiptInvolved ?? null,
-      receiptAssignments: draft.receiptAssignments ?? null,
-      splitTab: activeTab,
-    };
-    if (draft.expenseId) await editExpense(groupId, actor, draft.expenseId, input);
-    else await addExpense(groupId, actor, input);
-    clearDraft(groupId);
-    router.replace(route.group(groupId));
+    setFailed(undefined);
+    const rate = foreign ? draft.rateToBase : "1";
+    try {
+      if (transfer) {
+        const input = {
+          fromMember: draft.fromMember,
+          toMember: draft.toMember,
+          amountMinor,
+          currency: draft.currency,
+          rateToBase: rate,
+          occurredAt: draft.occurredAt,
+          note: draft.description.trim() || null,
+        };
+        const actor = data.me ?? draft.fromMember;
+        if (draft.entryId) await editSettlement(groupId, actor, draft.entryId, input);
+        else await recordSettlement(groupId, actor, input);
+      } else {
+        const actor = data.me ?? draft.paidBy;
+        const input = {
+          kind,
+          description: draft.description.trim(),
+          occurredAt: draft.occurredAt,
+          amountMinor,
+          currency: draft.currency,
+          rateToBase: rate,
+          paidBy: draft.paidBy,
+          payers: draft.payers,
+          split: effectiveSplit,
+          categoryId: draft.categoryId,
+          receiptItems: draft.receiptItems ?? null,
+          receiptTip: draft.receiptTip ?? null,
+          receiptInvolved: draft.receiptInvolved ?? null,
+          receiptAssignments: draft.receiptAssignments ?? null,
+          splitTab: canScan ? activeTab : null,
+        };
+        if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
+        else await addExpense(groupId, actor, input);
+      }
+      clearDraft(groupId);
+      router.replace(route.group(groupId));
+    } catch (err) {
+      setFailed(errorText(err));
+    }
   };
+
+  /**
+   * Which kinds this screen can still become. Everything, on a new entry.
+   * Editing an expense keeps the one field that separates it from an income,
+   * so those two stay open — but a transfer is a different entity with a
+   * different shape, and turning one into the other is a delete and an add,
+   * not an edit. A control that can't do anything doesn't get drawn.
+   */
+  const reachable: EntryKind[] = !draft.entryId ? [...ENTRY_KINDS]
+    : transfer ? ["transfer"] : ["expense", "income"];
 
   return (
     <Screen>
       <Body>
         <TopBar
-          title={draft.expenseId ? "Edit expense" : "New expense"}
+          title={draft.entryId
+            ? (reachable.length > 1 ? "Edit" : `Edit ${ENTRY_LABEL[kind].toLowerCase()}`)
+            : "New"}
           sub={group.name}
           back={goBack}
           right={<button className="action" onClick={save} disabled={!ready}>Save</button>}
@@ -275,6 +394,19 @@ function EditExpenseScreen() {
           <input ref={libraryInput} type="file" accept="image/*"
             style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label="Upload a receipt photo" />
 
+          {reachable.length > 1 ? (
+            <div className="pad" style={{ paddingTop: 2, paddingBottom: 0 }}>
+              <div className="seg" role="tablist" aria-label="What kind of entry">
+                {reachable.map((k) => (
+                  <button key={k} type="button" role="tab" aria-selected={k === kind}
+                    className={k === kind ? "on" : ""} onClick={() => changeKind(k)}>
+                    {ENTRY_LABEL[k]}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               <AmountInput
@@ -282,7 +414,7 @@ function EditExpenseScreen() {
                 fieldClassName="big"
                 aria-label={`Amount in ${draft.currency}`}
                 enterKeyHint="done"
-                autoFocus={!draft.expenseId}
+                autoFocus={!draft.entryId}
                 placeholder="0"
                 currency={draft.currency}
                 value={receiptTotal !== null
@@ -342,16 +474,29 @@ function EditExpenseScreen() {
           </div>
 
           <div className="pad" style={{ paddingTop: 4, display: "flex", flexDirection: "column", gap: 9 }}>
+            {transfer ? (
+              <TransferSides
+                members={data.members}
+                from={draft.fromMember}
+                to={draft.toMember}
+                onChange={(sides) => patch(sides)}
+              />
+            ) : null}
+
             <div className="field">
-              <label htmlFor="what">What</label>
-              <input id="what" value={draft.description} placeholder="Title"
+              {transfer ? null : <label htmlFor="what">What</label>}
+              <input id="what" value={draft.description}
+                aria-label={transfer ? "Note (optional)" : "What"}
+                placeholder={transfer ? "Note (optional)" : "Title"}
                 onChange={(e) => patch({ description: e.target.value })} />
             </div>
 
-            {coPayers.length > 1 ? (
+            {transfer ? null : coPayers.length > 1 ? (
               <Card style={{ padding: "10px 12px" }}>
                 <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 13, color: "var(--muted)", width: 62 }}>Paid by</span>
+                  <span style={{ fontSize: 13, color: "var(--muted)", width: 76 }}>
+                    {ENTRY_PAYER_LABEL[kind]}
+                  </span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {coPayers.length} people
                   </span>
@@ -373,55 +518,60 @@ function EditExpenseScreen() {
               </Card>
             ) : (
               <div className="field">
-                <label htmlFor="paidby">Paid by</label>
+                <label htmlFor="paidby" style={{ width: 76 }}>{ENTRY_PAYER_LABEL[kind]}</label>
                 <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
                 <select id="paidby" value={draft.paidBy}
                   onChange={(e) => patch({ paidBy: e.target.value, payers: null })}>
                   {data.members.map((m) =>
                     <option key={m.id} value={m.id}>{m.name}</option>)}
                 </select>
-                <Link href={route.payers(groupId)} className="chip" aria-label="Several people paid">
+                <Link href={route.payers(groupId)} className="chip" aria-label="Several people put money in">
                   + someone
                 </Link>
               </div>
             )}
 
-            <SplitEditor
-              members={data.members}
-              me={data.me}
-              totalMinor={baseMinor}
-              currency={base}
-              spec={effectiveSplit}
-              seed={draft.expenseId ?? "new"}
-              onChange={(split) => patch({ split })}
-              tab={activeTab}
-              onTabChange={changeTab}
-              receipt={{
-                items: draft.receiptItems ?? null,
-                scanDisabled: !secret,
-                scanState,
-                scanSource,
-                scanError,
-                onScanCamera: () => cameraInput.current?.click(),
-                onScanLibrary: () => libraryInput.current?.click(),
-                editItemsHref: route.items(groupId),
-              }}
-            />
+            {transfer ? null : (
+              <SplitEditor
+                members={data.members}
+                me={data.me}
+                title={ENTRY_SPLIT_LABEL[kind]}
+                totalMinor={baseMinor}
+                currency={base}
+                spec={effectiveSplit}
+                seed={draft.entryId ?? "new"}
+                onChange={(split) => patch({ split })}
+                tab={activeTab}
+                onTabChange={changeTab}
+                receipt={canScan ? {
+                  items: draft.receiptItems ?? null,
+                  scanDisabled: !secret,
+                  scanState,
+                  scanSource,
+                  scanError,
+                  onScanCamera: () => cameraInput.current?.click(),
+                  onScanLibrary: () => libraryInput.current?.click(),
+                  editItemsHref: route.items(groupId),
+                } : null}
+              />
+            )}
 
             <div className="field">
               <label htmlFor="when">When</label>
               <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch({ occurredAt: withDate(draft.occurredAt, e.target.value) })} />
             </div>
+
+            {failed ? <p className="failure" role="alert">Couldn&rsquo;t save — {failed}</p> : null}
           </div>
           <div style={{ height: 12 }} />
         </Scroll>
       </Body>
 
       {ask === "discard" ? (
-        <ConfirmDialog title="Discard this expense?" confirm="Discard" danger={true}
-          onConfirm={discard} onClose={() => setAsk(null)}>
-          <p>What you've entered isn't saved anywhere and won't be handed back.</p>
+        <ConfirmDialog title={`Discard this ${ENTRY_LABEL[kind].toLowerCase()}?`} confirm="Discard"
+          danger={true} onConfirm={discard} onClose={() => setAsk(null)}>
+          <p>What you&rsquo;ve entered isn&rsquo;t saved anywhere and won&rsquo;t be handed back.</p>
         </ConfirmDialog>
       ) : null}
 
@@ -436,5 +586,57 @@ function EditExpenseScreen() {
           onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
+  );
+}
+
+/**
+ * A transfer's two sides, and the one-tap reversal between them.
+ *
+ * Getting the direction the wrong way round is the mistake this form invites,
+ * and it is one people make *after* picking both names — so the fix is the
+ * arrow itself, which points the way the money goes and reverses it when
+ * pressed, rather than two pickers you have to re-open in turn.
+ */
+function TransferSides({ members, from, to, onChange }: {
+  members: Member[];
+  from: string;
+  to: string;
+  onChange: (sides: { fromMember: string; toMember: string }) => void;
+}) {
+  const byId = new Map(members.map((m) => [m.id, m]));
+  const side = (which: "from" | "to") => {
+    const id = which === "from" ? from : to;
+    const member = byId.get(id);
+    return (
+      <span className="tside">
+        <Avatar member={member} size={38} />
+        <span className="who">{member?.name ?? "—"}</span>
+        <span className="eyebrow">{which === "from" ? "From" : "To"}</span>
+        <select aria-label={which === "from" ? "Who paid" : "Who was paid"} value={id}
+          onChange={(e) => onChange(which === "from"
+            ? { fromMember: e.target.value, toMember: to }
+            : { fromMember: from, toMember: e.target.value })}>
+          {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+        </select>
+      </span>
+    );
+  };
+
+  return (
+    <div>
+      <div className="card transfer">
+        {side("from")}
+        <button type="button" className="tswap" aria-label="Swap the two sides"
+          onClick={() => onChange({ fromMember: to, toMember: from })}>
+          <Icon name="arrow" size={18} />
+        </button>
+        {side("to")}
+      </div>
+      {from === to ? (
+        <p className="failure" role="alert">
+          Money has to go from one person to a different one.
+        </p>
+      ) : null}
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   payerList, resolvePayers, shareOf, splitParticipants, type Expense, type Settlement,
 } from "@hajsik/core";
+import { ENTRY_VERB, kindOf, myEffect } from "../../lib/entry-kind";
 import { Avatar, Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
@@ -15,7 +16,7 @@ import { route } from "../../lib/group-link";
 import { useGroupData, useInviteLink, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
-type Tab = "expenses" | "balances";
+type Tab = "ledger" | "balances";
 
 export default function GroupPage() {
   return <QueryBoundary><GroupScreen /></QueryBoundary>;
@@ -24,7 +25,7 @@ export default function GroupPage() {
 function GroupScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
-  const tab = (params.get("tab") ?? "expenses") as Tab;
+  const tab = (params.get("tab") ?? "ledger") as Tab;
   const data = useGroupData(groupId);
   const online = useOnline();
   const sync = useSyncHealth(groupId);
@@ -44,9 +45,9 @@ function GroupScreen() {
           <TopBar title=" " back={route.groups()} />
           <Scroll><SkeletonRows count={6} /></Scroll>
         </Body>
-        {tab === "expenses" ? <Fab href={route.addExpense(groupId)} /> : null}
+        {tab === "ledger" ? <Fab href={route.addEntry(groupId)} /> : null}
         <BottomNav items={[
-          { label: "Expenses", icon: "list", href: route.group(groupId), on: tab === "expenses" },
+          { label: "Ledger", icon: "list", href: route.group(groupId), on: tab === "ledger" },
           { label: "Balances", icon: "scale", href: route.group(groupId, "balances"),
             on: tab === "balances" },
         ]} />
@@ -110,18 +111,20 @@ function GroupScreen() {
           </>}
         />
 
-        {tab === "expenses" ? <ExpensesTab data={data} /> : <BalancesTab data={data} />}
+        {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}
       </Body>
 
-      {tab === "expenses" ? <Fab href={route.addExpense(group.id)} /> : null}
+      {tab === "ledger" ? <Fab href={route.addEntry(group.id)} label="Add an entry" /> : null}
 
       {/* One navigation, at the bottom, and only what a group actually is: what
-          was spent, and who is up or down because of it. "Settle" was a third
-          destination and is now the bottom half of Balances; "Group" was a
-          fourth and is now Settings, next to the group list, because every
-          switch on it belonged to the phone rather than to this group. */}
+          moved through it, and who is up or down because of it. "Settle" was a
+          third destination and is now the bottom half of Balances; "Group" was
+          a fourth and is now Settings, next to the group list, because every
+          switch on it belonged to the phone rather than to this group. The
+          first tab is "Ledger", not "Expenses", because two of the three
+          things on it aren't expenses (ADR-0028). */}
       <BottomNav items={[
-        { label: "Expenses", icon: "list", href: route.group(group.id), on: tab === "expenses" },
+        { label: "Ledger", icon: "list", href: route.group(group.id), on: tab === "ledger" },
         { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),
           on: tab === "balances" },
       ]} />
@@ -134,11 +137,11 @@ function lean(minor: number): string {
   return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
 }
 
-/** "Marie paid" · "Marie + 1 other paid". */
-function payersLabel(name: string | undefined, others: number): string {
+/** "Marie paid" · "Marie + 1 other received". */
+function payersLabel(name: string | undefined, others: number, verb: string): string {
   const who = name ?? "Someone";
-  if (others <= 0) return `${who} paid`;
-  return `${who} + ${others} other${others === 1 ? "" : "s"} paid`;
+  if (others <= 0) return `${who} ${verb}`;
+  return `${who} + ${others} other${others === 1 ? "" : "s"} ${verb}`;
 }
 
 // ------------------------------------------------------------- expenses
@@ -147,7 +150,7 @@ type Entry =
   | { kind: "expense"; at: number; createdAt: number; expense: Expense }
   | { kind: "settlement"; at: number; createdAt: number; settlement: Settlement };
 
-function ExpensesTab({ data }: { data: GroupData }) {
+function LedgerTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
   if (!group) return null;
   // Read out here, not `group!.baseCurrency` at each use: the row renderers
@@ -188,13 +191,21 @@ function ExpensesTab({ data }: { data: GroupData }) {
               you paid {money(balances.paidMinor[me] ?? 0, group.baseCurrency)}
               {" · "}your share {money(balances.owedMinor[me] ?? 0, group.baseCurrency)}
             </div>
+            {/* Only where there is income to account for: on a group with
+                none, this line would be two zeroes explaining nothing. */}
+            {(balances.receivedMinor[me] ?? 0) > 0 || (balances.incomeShareMinor[me] ?? 0) > 0 ? (
+              <div style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
+                you took in {money(balances.receivedMinor[me] ?? 0, group.baseCurrency)}
+                {" · "}your cut {money(balances.incomeShareMinor[me] ?? 0, group.baseCurrency)}
+              </div>
+            ) : null}
           </Card>
         </div>
       ) : null}
 
       <Scroll>
         {entries.length === 0 ? (
-          <Empty title="Nothing spent yet">Tap + to add the first thing.</Empty>
+          <Empty title="Nothing here yet">Tap + to add the first thing.</Empty>
         ) : null}
 
         <div className="rows">
@@ -217,34 +228,42 @@ function ExpensesTab({ data }: { data: GroupData }) {
   );
 
   function ExpenseRow({ expense }: { expense: Expense }) {
+    const kind = kindOf(expense);
+    const income = kind === "income";
     const payer = memberById.get(expense.paidBy);
     const payers = payerList(expense);
     const involved = me ? splitParticipants(expense.split).includes(me) : false;
     const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
-    const myShare = me && involved
+    const share = me && involved
       ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id })
       : 0;
-    const myNet = putIn - myShare;
+    const myNet = myEffect(me, { kind, putIn, share });
     const mine = putIn !== 0 || involved;
     const participants = splitParticipants(expense.split).length;
     const foreign = expense.currency !== base;
 
     return (
-      <Link href={route.expense(gid, expense.id)}
+      <Link href={route.entry(gid, expense.id)}
         className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
-        <Avatar member={payer} />
+        {/* Figure-ground inverted for an income — the same trick the FAB
+            plays, and the only mark on the row that says which way this one
+            runs before you have read a word of it. Colour can't do this job:
+            it is spent entirely on balances (ADR-0023). */}
+        <Avatar member={payer} inverted={income} />
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
           <div className="rmeta">
-            {payersLabel(payer?.name, payers.length - 1)}
+            {payersLabel(payer?.name, payers.length - 1, ENTRY_VERB[kind])}
             {" · "}
             {expense.split.mode === "equal"
-              ? `split ${participants} ways`
+              ? `${income ? "shared" : "split"} ${participants} ways`
               : `${participants} people, ${SPLIT_MODE_LABEL[expense.split.mode].toLowerCase()}`}
           </div>
         </div>
         <div className="ramt">
-          <div className="big">{money(expense.baseAmountMinor, base)}</div>
+          {/* An income's figure carries a "+": it is the group's number, not
+              yours, and without a sign it reads as one more thing spent. */}
+          <div className="big">{money(expense.baseAmountMinor, base, income)}</div>
           {foreign ? (
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
           ) : null}
@@ -259,13 +278,11 @@ function ExpensesTab({ data }: { data: GroupData }) {
   function SettlementRow({ settlement }: { settlement: Settlement }) {
     const from = memberById.get(settlement.fromMember);
     const to = memberById.get(settlement.toMember);
-    // Paying somebody back moves your balance up by exactly what you handed
-    // over; being paid back moves it down. Same arithmetic as an expense.
-    const myNet = me === settlement.fromMember ? settlement.baseAmountMinor
-      : me === settlement.toMember ? -settlement.baseAmountMinor : 0;
+    const myNet = myEffect(me, { kind: "transfer", settlement });
 
     return (
-      <div className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
+      <Link href={route.entry(gid, settlement.id)}
+        className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
         <span className="avatar" style={{
           background: "var(--card-3)", color: "var(--muted)", borderStyle: "dashed",
         }}><Icon name="arrow" size={15} /></span>
@@ -273,7 +290,7 @@ function ExpensesTab({ data }: { data: GroupData }) {
           <div className="rtitle">
             {from?.name ?? "?"} paid {to?.name ?? "?"}
           </div>
-          <div className="rmeta">Reimbursement{settlement.note ? ` · ${settlement.note}` : ""}</div>
+          <div className="rmeta">Transfer{settlement.note ? ` · ${settlement.note}` : ""}</div>
         </div>
         <div className="ramt">
           <div className="big" style={{ color: "var(--muted)" }}>
@@ -283,7 +300,7 @@ function ExpensesTab({ data }: { data: GroupData }) {
             {myNet !== 0 ? money(myNet, base, true) : "not yours"}
           </div>
         </div>
-      </div>
+      </Link>
     );
   }
 }
@@ -357,7 +374,7 @@ function BalancesTab({ data }: { data: GroupData }) {
             const involvesMe = t.from === me || t.to === me;
             return (
               <Link key={`${t.from}-${t.to}`}
-                href={route.settleWith(group.id, t.from, t.to, t.amountMinor)}
+                href={route.transferBetween(group.id, t.from, t.to, t.amountMinor)}
                 className={`card${involvesMe ? " mine" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
                 <Avatar member={from} size={26} />
@@ -380,6 +397,17 @@ function BalancesTab({ data }: { data: GroupData }) {
             <span className="k">Spent together</span>
             <span className="v">{money(balances.totalSpendMinor, group.baseCurrency)}</span>
           </div>
+          {/* Income is never netted into what the trip cost — the two are
+              different questions and the card asks both, but only once there
+              is an answer to the second one. */}
+          {balances.totalIncomeMinor > 0 ? (
+            <div className="kv">
+              <span className="k">Taken in</span>
+              <span className="v">
+                {money(balances.totalIncomeMinor, group.baseCurrency, true)}
+              </span>
+            </div>
+          ) : null}
         </Card>
       </div>
       <div style={{ height: 24 }} />

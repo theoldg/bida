@@ -259,6 +259,10 @@ a { color: inherit; text-decoration: none }
 
 /* An empty slot, not a person: the dashed square on a row that adds something. */
 .avatar.ghost { background: transparent; border-style: dashed }
+/* Ink where paper was: an income runs the other way, and this is the only mark
+   that says so at a glance. The same inversion as the FAB and the app icon —
+   colour is spent entirely on balances and has none left for this. */
+.avatar.inverted { background: var(--brand); color: var(--brand-ink); border-color: var(--brand) }
 /* Air above where the list stops and the things you can do to it start — on the
    first of them only, so a second needs no rule of its own. */
 .ghostrow { padding-top: 16px }
@@ -380,6 +384,21 @@ a { color: inherit; text-decoration: none }
   padding: 5px 0 }
 .kv .k { color: var(--muted) }
 .kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px }
+
+/* A transfer's two sides, with the direction between them. Tapping either half
+   opens its picker (an invisible <select> filling it); tapping the arrow — which
+   points the way the money goes — reverses them, because getting the direction
+   backwards is the mistake this control exists to make cheap to fix. */
+.transfer { display: flex; align-items: stretch; padding: 0; overflow: hidden }
+.tside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
+  gap: 5px; padding: 13px 8px; position: relative }
+.tside select { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100% }
+.tside .who { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap }
+.tside .eyebrow { font-size: 9.5px }
+.tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted);
+  border-left: 1px solid var(--rule-soft); border-right: 1px solid var(--rule-soft) }
+button.tswap:active { background: var(--press); color: var(--ink) }
 
 /* ---- nav, fab, buttons ---- */
 .bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none;
