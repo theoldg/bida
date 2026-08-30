@@ -9,14 +9,22 @@ Decision and rejected alternatives:
 | Service | Role | Free tier |
 |---|---|---|
 | **Workers** | Serves the static app *and* the API from one script | 100k req/day, 10 ms CPU per invocation |
-| **D1** | The op log (SQLite) | 5 GB, 5M row reads/day, 100k writes/day |
+| **D1** | The op log (SQLite) | 500 MB per database (5 GB account total), 5M row reads/day, 100k writes/day |
 | **R2** | Receipt images | 10 GB, **zero egress fees** |
 | Static Assets · custom domain | The Next.js export · a nice URL | included · free with DNS on Cloudflare |
 
 We expect a few hundred requests/day and thousands of rows, ever. The decisive
 property is **R2's zero egress** — this app is photo-heavy by design, and egress
-is where object storage bills come from. (Limits verified mid-2026; re-check,
-free tiers move.)
+is where object storage bills come from. Every group shares the one `hajsik`
+database, so 500 MB is the cap that would eventually bite — around a million
+ops, not the 5 GB. (Limits verified 2026-08-30; re-check, free tiers move.)
+
+**Nothing expires and nothing sleeps.** D1 storage has no TTL, a Worker is not
+paused or deleted for being idle, and a `workers.dev` subdomain lives as long as
+its Worker — unlike free tiers that suspend a project after a week of quiet. The
+only clock is **Time Travel: 7 days on the free plan** (30 paid), which is the
+window for undoing a bad write at the infrastructure level and the reason an
+export matters more than it looks.
 
 ## Deploying
 
