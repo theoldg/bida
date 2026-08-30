@@ -146,9 +146,15 @@ it applies to work nobody has done yet.
   discarded, with a warning first, rather than saved and handed back later.
 - **A placeholder is the label.** *2026-08-29* — an optional field with an
   obvious placeholder ("Note (optional)") carries no title above it.
-- **No browser dialogs.** *2026-08-30* — "Add member has ugly native/browser
-  input make it cooler. Same for the 'abandon editing' popup." Asking is
-  `components/dialog.tsx`; no `prompt()` or `confirm()` anywhere.
+- **A label goes above what it names.** *2026-08-30* — "move the words 'to' and
+  'from' above the names" on the transfer form. A caption read after its subject
+  is read twice.
+- **No browser dialogs, and that includes its pickers.** *2026-08-30* — "Add
+  member has ugly native/browser input make it cooler. Same for the 'abandon
+  editing' popup", then "create a custom dialog for the person selection instead
+  of the browser native one". Asking is `components/dialog.tsx`; no `prompt()`,
+  `confirm()` or `<select>` over a list of people
+  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
 - **A confirmation's button sits under its sentence.** *2026-08-30* — "on the
   'confirm leave group' page the button shouldn't be at the very bottom of the
   screen, i think it can be under the text. This page can be custom popup like

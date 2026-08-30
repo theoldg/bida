@@ -39,3 +39,4 @@ old one `Superseded by NNNN`.
 | [0026](0026-the-groups-list-is-the-settings-screen.md) | The groups list carries the app's name and its one switch | Accepted |
 | [0027](0027-back-goes-up-the-hierarchy.md) | Back climbs the hierarchy; an up-link unwinds the history | Accepted |
 | [0028](0028-three-kinds-of-entry.md) | Three kinds of entry: expense, income, transfer | Accepted |
+| [0029](0029-a-picker-is-a-dialog.md) | Picking a person is our dialog, not a `<select>` | Accepted |

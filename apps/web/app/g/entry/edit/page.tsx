@@ -12,7 +12,7 @@ import { Avatar, Card, Chip } from "../../../../components/bits";
 import { AmountInput } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
-import { ConfirmDialog, PromptDialog } from "../../../../components/dialog";
+import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
@@ -597,6 +597,13 @@ function EditEntryScreen() {
  * and it is one people make *after* picking both names — so the fix is the
  * arrow itself, which points the way the money goes and reverses it when
  * pressed, rather than two pickers you have to re-open in turn.
+ *
+ * Each half is labelled above the person: "From" then a face, which is the
+ * order the sentence is read in. Tapping one opens our own picker rather than
+ * the browser's wheel (ADR-0029) — which is what lets the person already on
+ * the other side stay in the list, saying what picking them does: it swaps the
+ * sides, the only reading of "send this to the person who is sending it" that
+ * isn't the error message below.
  */
 function TransferSides({ members, from, to, onChange }: {
   members: Member[];
@@ -604,23 +611,28 @@ function TransferSides({ members, from, to, onChange }: {
   to: string;
   onChange: (sides: { fromMember: string; toMember: string }) => void;
 }) {
+  const [picking, setPicking] = useState<null | "from" | "to">(null);
   const byId = new Map(members.map((m) => [m.id, m]));
+
   const side = (which: "from" | "to") => {
-    const id = which === "from" ? from : to;
-    const member = byId.get(id);
+    const member = byId.get(which === "from" ? from : to);
     return (
-      <span className="tside">
+      <button type="button" className="tside" onClick={() => setPicking(which)}
+        aria-label={which === "from" ? "Who sent it" : "Who received it"}>
+        <span className="eyebrow">{which === "from" ? "From" : "To"}</span>
         <Avatar member={member} size={38} />
         <span className="who">{member?.name ?? "—"}</span>
-        <span className="eyebrow">{which === "from" ? "From" : "To"}</span>
-        <select aria-label={which === "from" ? "Who paid" : "Who was paid"} value={id}
-          onChange={(e) => onChange(which === "from"
-            ? { fromMember: e.target.value, toMember: to }
-            : { fromMember: from, toMember: e.target.value })}>
-          {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </select>
-      </span>
+      </button>
     );
+  };
+
+  const pick = (id: string) => {
+    if (!picking) return;
+    // Picking the other side's person is a reversal, not an impossible transfer.
+    const swap = picking === "from" ? id === to : id === from;
+    if (swap) onChange({ fromMember: to, toMember: from });
+    else if (picking === "from") onChange({ fromMember: id, toMember: to });
+    else onChange({ fromMember: from, toMember: id });
   };
 
   return (
@@ -637,6 +649,22 @@ function TransferSides({ members, from, to, onChange }: {
         <p className="failure" role="alert">
           Money has to go from one person to a different one.
         </p>
+      ) : null}
+
+      {picking ? (
+        <ChoiceDialog
+          title={picking === "from" ? "Who sent it" : "Who received it"}
+          value={picking === "from" ? from : to}
+          options={members.map((m) => ({
+            value: m.id,
+            label: m.name,
+            lead: <Avatar member={m} size={30} />,
+            note: (picking === "from" ? m.id === to : m.id === from) && from !== to
+              ? "the other side — picking swaps them" : undefined,
+          }))}
+          onPick={pick}
+          onClose={() => setPicking(null)}
+        />
       ) : null}
     </div>
   );

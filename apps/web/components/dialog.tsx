@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Icon } from "./icons";
 
 /**
  * The app's own popup, in place of `prompt()` and `confirm()`.
@@ -122,6 +123,46 @@ export function PromptDialog({
           </button>
         </div>
       </form>
+    </Dialog>
+  );
+}
+
+/**
+ * Pick one of a handful of things — the third dialog, in place of a `<select>`.
+ *
+ * A native picker is the same intrusion `prompt()` was (ADR-0025): on a phone
+ * it is a full-height wheel or sheet in the OS's typeface, and it can show a
+ * name and nothing else. Ours is the rows the rest of the app is made of, so
+ * a person arrives with their avatar and whatever the caller needs to say
+ * about them.
+ *
+ * `note` is that sentence — what picking this one does, when it isn't simply
+ * "this one now". The current choice carries a check and closes the dialog
+ * without calling back.
+ */
+export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose }: {
+  title: string;
+  options: { value: T; label: string; lead?: ReactNode; note?: string }[];
+  value: T;
+  onPick: (value: T) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog title={title} onClose={onClose}>
+      <div className="dlist" role="listbox" aria-label={title}>
+        {options.map((o) => (
+          <button key={o.value} type="button" className="drow-pick" role="option"
+            aria-selected={o.value === value}
+            onClick={() => { if (o.value !== value) onPick(o.value); onClose(); }}>
+            {o.lead}
+            <span className="rmain">
+              <span className="rtitle">{o.label}</span>
+              {o.note ? <span className="rmeta">{o.note}</span> : null}
+            </span>
+            {o.value === value ? <Icon name="check" size={15} /> : null}
+          </button>
+        ))}
+      </div>
     </Dialog>
   );
 }

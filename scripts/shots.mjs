@@ -173,10 +173,19 @@ async function addTransfer(page, groupId, { amount, from, to }) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
   await page.waitForSelector(".transfer");
   await page.locator("input.amount").fill(amount);
-  await page.getByLabel("Who paid").selectOption({ label: from });
-  await page.getByLabel("Who was paid").selectOption({ label: to });
+  await pickSide(page, "Who sent it", from);
+  await pickSide(page, "Who received it", to);
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
+}
+
+/** Each side of a transfer opens our own picker now, not a <select> (ADR-0029). */
+async function pickSide(page, label, name) {
+  await page.getByLabel(label).click();
+  await page.waitForSelector(".dlist");
+  // By row, not by role name: an option's accessible name carries its note too.
+  await page.locator(".drow-pick").filter({ hasText: name }).click();
+  await page.waitForTimeout(100);
 }
 
 const routes = (g) => [
@@ -229,6 +238,15 @@ async function main() {
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-entry-transfer-prefilled.png`) });
       process.stdout.write(`${theme}/entry-transfer-prefilled `);
+
+      // ...and the picker behind either side of it, which is a <dialog> rather
+      // than the browser's wheel (ADR-0029), so it has no URL of its own.
+      await page.getByLabel("Who received it").click();
+      await page.waitForSelector(".dlist");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-transfer-who.png`) });
+      process.stdout.write(`${theme}/transfer-who `);
+      await page.keyboard.press("Escape");
 
       // An income: the same form with the segmented control flipped, so the
       // relabelled payer picker and the missing Receipt tab are visible.

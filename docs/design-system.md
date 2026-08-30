@@ -106,7 +106,8 @@ people are connected, which is what the double-headed swap arrow said
 *(2026-08-28)*. `i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
-control exists to make cheap.
+control exists to make cheap. Each side is labelled above the face — eyebrow,
+avatar, name — so "From" is read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on
 it, so an income wears an **inverted avatar** — ink where paper was, the same
@@ -122,7 +123,10 @@ so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 ("Leave group", never "OK"), `--debit` outlined when it destroys something. A
 screen still wins where the decision needs the ledger on it, `/g/restore`
-([ADR-0025](decisions/0025-our-own-dialogs.md)). A *failure* is not
+([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours:
+`ChoiceDialog` picks from a short list in the app's own rows — an avatar, a name,
+a check on the current one, and a `note` saying what an unobvious pick does
+([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
 attempted, in `--debit`: `Failure` / `.failure`.
 

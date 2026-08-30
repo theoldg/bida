@@ -61,9 +61,11 @@ confers nothing without the secret.
   you already typed. Leaving asks before discarding, and a reload gets the
   browser's own warning — `seedDraft` records the baseline `isDraftDirty`
   compares against.
-- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`**: a real
-  `<dialog>` with `showModal()`, so focus and Escape are the platform's job
-  ([ADR-0025](decisions/0025-our-own-dialogs.md)).
+- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**:
+  a real `<dialog>` with `showModal()`, so focus and Escape are the platform's
+  job ([ADR-0025](decisions/0025-our-own-dialogs.md)) — `ConfirmDialog`,
+  `PromptDialog` and `ChoiceDialog`, which picks a person from a short list
+  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
 - History wording lives once, in `lib/history-copy.ts` (`describe`,
   `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
   must be **total** — they run inside a render over every patch the log holds,

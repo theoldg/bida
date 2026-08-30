@@ -122,6 +122,21 @@ await page.waitForTimeout(100);
 report((await page.locator(".tside .who").last().innerText()) === wasFrom, "the arrow swaps the two sides");
 await page.locator(".tswap").click();
 await page.waitForTimeout(100);
+// Either side opens the app's own picker, never a <select> (ADR-0029), and the
+// person already on the other side is in it as a reversal rather than an error.
+report(await page.locator(".transfer select").count() === 0, "the sides are not native pickers");
+await page.getByLabel("Who sent it").click();
+await page.waitForSelector(".dlist");
+const otherSide = await page.locator(".tside .who").last().innerText();
+report((await page.locator(".drow-pick").filter({ hasText: otherSide }).innerText()).includes("swaps"),
+  "the picker offers the other side as a swap");
+await page.locator(".drow-pick").filter({ hasText: otherSide }).click();
+await page.waitForTimeout(100);
+report((await page.locator(".tside .who").first().innerText()) === otherSide
+  && (await page.locator(".tside .who").last().innerText()) === wasFrom,
+  "picking the other side swaps them");
+await page.locator(".tswap").click();
+await page.waitForTimeout(100);
 await save(3);
 report((await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
   "a transfer saves and lists");

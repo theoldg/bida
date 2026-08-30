@@ -216,15 +216,15 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
     <div className="pad" style={{ paddingTop: 2 }}>
       <div className="card transfer">
         <span className="tside">
+          <span className="eyebrow">From</span>
           <Avatar member={from} size={38} />
           <span className="who">{from?.name ?? "—"}</span>
-          <span className="eyebrow">From</span>
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
+          <span className="eyebrow">To</span>
           <Avatar member={to} size={38} />
           <span className="who">{to?.name ?? "—"}</span>
-          <span className="eyebrow">To</span>
         </span>
       </div>
       {settlement.note ? (
