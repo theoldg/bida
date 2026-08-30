@@ -37,3 +37,4 @@ old one `Superseded by NNNN`.
 | [0024](0024-precache-the-whole-export-cache-first.md) | The service worker precaches the whole export and serves it cache-first | Accepted |
 | [0025](0025-our-own-dialogs.md) | The app draws its own dialogs; a consequence doesn't always need a route | Accepted |
 | [0026](0026-the-groups-list-is-the-settings-screen.md) | The groups list carries the app's name and its one switch | Accepted |
+| [0027](0027-back-goes-up-the-hierarchy.md) | Back climbs the hierarchy; an up-link unwinds the history | Accepted |

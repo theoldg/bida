@@ -20,10 +20,12 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: a long press does nothing. Chrome's link menu was the last browser UI
-a mis-tap could still reach — CSS only ever silenced iOS's callout, so
-`components/no-long-press.tsx` swallows the touch context menu app-wide
-([design-system.md](design-system.md#rules-that-are-not-negotiable)).
+Since: the browser's own gestures answer to the app. A long press does
+nothing — CSS only ever silenced iOS's callout, so `components/no-long-press.tsx`
+swallows the touch context menu app-wide — and back climbs the hierarchy
+instead of replaying visits: an up-link unwinds the history to the parent
+rather than pushing (`lib/nav.ts`,
+[ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).
 
 Before it: the two failures that could quietly cost a trip its ledger now say so.
 Sync records how every attempt went, and `/g` warns after two consecutive

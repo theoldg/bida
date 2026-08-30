@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { goUp } from "../lib/nav";
 import { Icon, type IconName } from "./icons";
 
 /**
@@ -33,7 +34,13 @@ export function TopBar({ title, sub, back, right }: {
           <Icon name="back" size={17} />
         </button>
       ) : back ? (
-        <Link className="iconbtn" href={back} aria-label="Back"><Icon name="back" size={17} /></Link>
+        /* A real anchor, but not a plain push: the arrow names a parent, and
+           going up unwinds the history to it rather than stacking another
+           entry on top (lib/nav.ts). */
+        <Link className="iconbtn" href={back} aria-label="Back"
+          onClick={(e) => { e.preventDefault(); goUp(back, (to) => router.replace(to)); }}>
+          <Icon name="back" size={17} />
+        </Link>
       ) : null}
       <div style={{ minWidth: 0 }}>
         <h3>{title}</h3>
@@ -59,8 +66,10 @@ export function BottomNav({ items }: {
 }) {
   return (
     <nav className="bottomnav">
+      {/* `replace`: the tabs are two halves of one screen, not two places you
+          travelled through, so switching them doesn't deepen the history. */}
       {items.map((i) => (
-        <Link key={i.href} href={i.href} className={`nav${i.on ? " on" : ""}`}>
+        <Link key={i.href} href={i.href} replace className={`nav${i.on ? " on" : ""}`}>
           <Icon name={i.icon} size={19} />{i.label}
         </Link>
       ))}

@@ -156,6 +156,10 @@ it applies to work nobody has done yet.
   totals summary at the bottom should be a vertical list instead of a horizontal
   scroller. On the other hand, the 'who was there' selector should scroll
   horizontally." A total you have to scroll to find is a total you don't read.
+- **Back climbs the hierarchy.** *2026-08-30* — "override back navigation to go
+  up the hierarchy instead of returning to the latest expense." The back button
+  is where you are in the app, not where you have been
+  ([ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)).
 - **A long tap does nothing.** *2026-08-30* — "override the long-tap behaviour
   so that it does nothing instead of pulling up a chrome option dialog." The
   browser's own menu is never the answer to a press on a row.

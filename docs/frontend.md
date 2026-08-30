@@ -29,6 +29,12 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
+**Back goes up, not back.** A screen's `back` names its parent, and `goUp`
+(`lib/nav.ts`) unwinds the history to it instead of pushing, so the device's
+back button climbs one level per press
+([ADR-0027](decisions/0027-back-goes-up-the-hierarchy.md)). A `<Link>` to an
+ancestor or a sibling must `replace`; only descending pushes.
+
 **The group secret lives in the URL fragment**, which browsers never send to a
 server ([ADR-0004](decisions/0004-static-export-fragment-routing.md)). Never move
 it into a path or query string "for convenience". The id alone is fine — it
