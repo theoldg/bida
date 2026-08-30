@@ -97,8 +97,9 @@ restaurant-splitting entity in product.md's deferred table isn't built. But
 "Edit who-had-what" later) reads them off the draft to build a who-had-what
 grid, and reduces that to an ordinary `shares` split — no schema change, no
 new op kind. The screen is three bands, not a scrolling page: who was there
-above, the running per-person totals below, and the grid between them owning the
-scroll, so its row of initials freezes while a long bill passes under it. The items, tip and the grid's own assignment are also written
+above in one sideways-scrolling line, the running per-person totals stacked
+below, and the grid between them owning the vertical scroll, so its row of
+initials freezes while a long bill passes under it. The items, tip and the grid's own assignment are also written
 onto the expense as plain optional fields so the grid reopens later, on any
 device — [ADR-0016](decisions/0016-receipt-scan-ux-and-item-assignment.md),
 [ADR-0017](decisions/0017-receipt-items-persist-on-the-expense.md).

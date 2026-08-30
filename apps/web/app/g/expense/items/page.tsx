@@ -186,7 +186,7 @@ function ItemsScreen() {
             exists for, and the column you're tapping in has to keep its name. */}
         <div className="itemhead">
           <div className="eyebrow" style={{ marginBottom: 8 }}>Who was there</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div className="whostrip">
             {data.members.map((m) => (
               <button key={m.id} onClick={() => toggleInvolved(m.id)}
                 aria-pressed={involved.has(m.id)}
@@ -287,8 +287,8 @@ function ItemsScreen() {
         </div>
 
         {/* What the grid adds up to, kept in sight while it's being tapped
-            rather than at the bottom of a scroll: initials, because the column
-            headers just above already say whose they are. */}
+            rather than at the bottom of a scroll — one name per line, so the
+            figures share a right edge and none of them is off-screen. */}
         {note || involvedMembers.length > 0 ? (
           <div className="itemfoot">
             {note}
@@ -299,6 +299,7 @@ function ItemsScreen() {
                     <span className="avatar" style={{ width: 21, height: 21, fontSize: 9.5 }}>
                       {labels.get(m.id)}
                     </span>
+                    <span className="who">{m.name}</span>
                     <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
                   </div>
                 ))}

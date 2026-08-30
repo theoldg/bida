@@ -16,8 +16,9 @@ corners. Colour is a scarce resource spent only on money —
 underneath: ruled rows, a red column and a green column.
 
 **The app names itself once**, on the groups list: the tally wordmark beside
-*Hajsik*, the light/dark toggle opposite. Every other top bar says the thing you
-opened, so a second wordmark would be branding where a name should be.
+*Hajsik*, the light/dark toggle opposite, and nothing under it — a sub-line
+would caption the list you are already looking at. Every other top bar says the
+thing you opened, so a second wordmark would be branding where a name should be.
 
 ## Palette roles
 

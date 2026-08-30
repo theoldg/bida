@@ -21,18 +21,18 @@ backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Since: the groups list is the front door — the tally wordmark and the app's name
-over it, light/dark as one icon button beside them. `/settings` is deleted, the
-personal lens is unconditional, and outside a group there is no bottom bar
-([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+alone on the bar, light/dark as one icon button beside them. `/settings` is
+deleted, the personal lens is unconditional, and outside a group there is no
+bottom bar ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+On the who-had-what screen, who-was-there scrolls sideways in one line and the
+per-person totals stack in a named column.
 
-Before it: the browser's dialogs are gone. Adding, renaming and removing a member,
-discarding a half-typed expense and typing a currency the picker doesn't list all
-ask in a `<dialog>` this app draws, and leaving a group is one of those rather
-than a screen with its button pinned to the bottom — `/g/leave` is deleted
-([ADR-0025](decisions/0025-our-own-dialogs.md)). The who-had-what grid is now the
-scrolling band of its own screen, between the people who were there and their
-running totals, so its row of initials freezes over a long bill: it had been
-written as a sticky `<thead>` inside a wrapper that only scrolled sideways, which
+Before it: the browser's dialogs are gone — adding, renaming and removing a
+member, discarding a half-typed expense, an unlisted currency, and leaving a
+group all ask in a `<dialog>` this app draws, so `/g/leave` is deleted
+([ADR-0025](decisions/0025-our-own-dialogs.md)). The who-had-what grid became the
+scrolling band of its own screen so its row of initials freezes over a long bill:
+it had been a sticky `<thead>` in a wrapper that only scrolled sideways, which
 sticks to nothing ([frontend.md](frontend.md#gotchas)).
 
 Before it: the app is usable offline, and no longer waits on the network

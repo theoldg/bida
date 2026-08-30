@@ -22,9 +22,10 @@ export default function GroupsPage() {
       <Body>
         {/* The app says its own name once, on the screen you land on — and
             carries the one switch that belongs to the phone rather than to any
-            group (ADR-0026). */}
-        <TopBar title={<span className="brand"><Wordmark size={23} /> Hajsik</span>}
-          sub="Your groups" right={<ThemeToggle />} />
+            group (ADR-0026). The name is the whole bar: a sub-line under it
+            described the screen you could already see. */}
+        <TopBar title={<span className="brand"><Wordmark size={26} /> Hajsik</span>}
+          right={<ThemeToggle />} />
 
         <Scroll>
           {/* undefined is "Dexie hasn't answered yet", not "no groups" — the

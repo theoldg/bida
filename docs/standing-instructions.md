@@ -148,6 +148,14 @@ it applies to work nobody has done yet.
 - **A grid you scroll keeps its header.** *2026-08-30* — "Freeze/stick the row
   with the initials of users when editing a who-had-what with many items."
   A column whose heading has scrolled away is an unlabelled column.
+- **A screen doesn't label itself.** *2026-08-30* — "remove the 'your groups'
+  text from under the title on the home page and make it slightly bigger /
+  slightly more room to breathe. Not too much though." The name stands alone on
+  the groups list; the list under it is the caption.
+- **Scroll the short list sideways, stack the figures.** *2026-08-30* — "the
+  totals summary at the bottom should be a vertical list instead of a horizontal
+  scroller. On the other hand, the 'who was there' selector should scroll
+  horizontally." A total you have to scroll to find is a total you don't read.
 - **No settings screen.** *2026-08-30* — "remove the settings page entirely.
   dark/bright mode can be a toggle only visible on the home screen." A
   preference either has one obvious place to live or shouldn't exist; the
