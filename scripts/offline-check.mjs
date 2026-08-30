@@ -87,7 +87,7 @@ for (const name of ["Marie", "Sam"]) {
   await page.waitForTimeout(120);
 }
 for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Taxi"]]) {
-  await page.goto(`${base}/g/expense/edit?id=${g}`);
+  await page.goto(`${base}/g/entry/edit?id=${g}`);
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   await page.getByRole("button", { name: "Save" }).click();
@@ -122,11 +122,11 @@ async function tap(label, act, expect) {
 
 await tap("groups list loads", () => page.goto(`${base}/`), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
-await tap("tap an expense", () => page.getByText("Dinner").first().click(), ".bignum");
+await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bignum");
 await tap("in-app Back to the group",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), ".daylabel");
 await tap("balances tab", () => page.locator("a[href*='tab=balances']").first().click(), ".bar");
-await tap("tap a suggested transfer", () => page.locator("a.card").first().click(), "#s-amt");
+await tap("tap a suggested transfer", () => page.locator("a.card").first().click(), ".transfer");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
 // The one switch that isn't in a group: light/dark, on the groups list.
@@ -135,10 +135,10 @@ await tap("theme toggle", async () => {
   await page.locator(".topbar .iconbtn").first().click();
 }, "html[data-theme]");
 
-await tap("new expense form", () => page.goto(`${base}/g/expense/edit?id=${g}`), "input.amount");
+await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");
 // Reached only from the form, and only with a draft in hand — the one screen
 // that can't be checked by typing its URL in.
-await tap("who paid", () => page.getByRole("link", { name: /several people paid/i }).click(), ".rows .row");
+await tap("who paid", () => page.getByRole("link", { name: /several people put money in/i }).click(), ".rows .row");
 await tap("back to the form",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), "input.amount");
 try {

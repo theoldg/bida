@@ -94,7 +94,7 @@ async function serve() {
 
 const base = `http://localhost:${PORT}`;
 
-/** Build a group with three people and a co-sponsored expense, via the UI. */
+/** Build a group with three people and one of each kind of entry, via the UI. */
 async function seed(page) {
   await page.goto(`${base}/new`);
   await page.locator("#g-name").fill("Marrakech");
@@ -122,20 +122,29 @@ async function seed(page) {
     amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
   });
 
+  // One of each of the other two kinds, so the ledger shot shows what the
+  // ledger actually holds: an income's inverted avatar and signed figure, and
+  // a transfer's arrow (ADR-0028).
+  await addEntry(page, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
+  await addTransfer(page, groupId, { amount: "800", from: "Sam", to: "Theo" });
+
   // ...and one edit, so the history screens have a revision that is not just a
   // create: a diff to render, and a version worth offering to restore.
   await page.getByText("Riad Jnane").click();
-  await page.waitForURL(/\/g\/expense\?/);
+  await page.waitForURL(/\/g\/entry\?/);
   await page.getByRole("link", { name: "Edit" }).click();
-  await page.waitForURL(/expense\/edit/);
+  await page.waitForURL(/entry\/edit/);
   await page.locator("input.amount").fill("5100");
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
   return groupId;
 }
 
-async function addExpense(page, groupId, { amount, what, coSponsor, paidBy, exclude }) {
-  await page.goto(`${base}/g/expense/edit?id=${groupId}`);
+const addExpense = (page, groupId, opts) => addEntry(page, groupId, opts);
+
+async function addEntry(page, groupId, { kind, amount, what, coSponsor, paidBy, exclude }) {
+  await page.goto(`${base}/g/entry/edit?id=${groupId}`);
+  if (kind) await page.getByRole("tab", { name: kind }).click();
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   if (paidBy) await page.locator("#paidby").selectOption({ label: paidBy });
@@ -143,18 +152,29 @@ async function addExpense(page, groupId, { amount, what, coSponsor, paidBy, excl
   // is a tap here rather than a trip to a screen and back.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
-    await page.getByRole("link", { name: /several people paid/i }).click();
+    await page.getByRole("link", { name: /several people put money in/i }).click();
     await page.waitForURL(/\/g\/payers/);
     // Marie chips in 20,00; whoever was already paying takes the rest.
     const marie = page.locator(".rows .row").filter({ hasText: "Marie" });
-    await marie.getByRole("button", { name: /paid too/i }).click();
+    await marie.getByRole("button", { name: /put money in too/i }).click();
     await marie.getByLabel(/contribution/).fill("2000");
     // ...and the person who was already paying takes the remainder.
     await page.locator(".rows .row").filter({ hasText: "Theo" })
       .getByRole("button", { name: /the rest$/i }).click();
     await page.getByRole("button", { name: "Done" }).click();
-    await page.waitForURL(/expense\/edit/);
+    await page.waitForURL(/entry\/edit/);
   }
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL(/\/g\?id=/);
+}
+
+/** A transfer: no split, no payer picker, two sides and an arrow. */
+async function addTransfer(page, groupId, { amount, from, to }) {
+  await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
+  await page.waitForSelector(".transfer");
+  await page.locator("input.amount").fill(amount);
+  await page.getByLabel("Who paid").selectOption({ label: from });
+  await page.getByLabel("Who was paid").selectOption({ label: to });
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
 }
@@ -162,12 +182,13 @@ async function addExpense(page, groupId, { amount, what, coSponsor, paidBy, excl
 const routes = (g) => [
   ["groups", "/"],
   ["new", "/new"],
-  ["group-expenses", `/g?id=${g}`],
+  ["group-ledger", `/g?id=${g}`],
   ["group-balances", `/g?id=${g}&tab=balances`],
   ["members", `/g/members?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
-  ["expense-edit", `/g/expense/edit?id=${g}`],
+  ["entry-expense", `/g/entry/edit?id=${g}`],
+  ["entry-transfer", `/g/entry/edit?id=${g}&kind=transfer`],
 ];
 
 async function main() {
@@ -199,20 +220,30 @@ async function main() {
         process.stdout.write(`${theme}/${name} `);
       }
 
-      // Recording a payment is reached by tapping a suggested transfer on the
-      // balances tab, so its amount arrives pre-filled — the shot is the only
-      // place the settle form's own money field gets photographed.
+      // Settling up is entering a transfer, so tapping a suggested payment
+      // lands on the entry form with the kind, both sides and the amount
+      // already filled — the one place that state gets photographed.
       await page.goto(`${base}/g?id=${groupId}&tab=balances`);
       await page.locator("a.card").first().click();
-      await page.waitForURL(/\/g\/settle/);
+      await page.waitForURL(/entry\/edit/);
       await page.waitForTimeout(250);
-      await page.screenshot({ path: join(SHOTS, `${theme}-settle.png`) });
-      process.stdout.write(`${theme}/settle `);
+      await page.screenshot({ path: join(SHOTS, `${theme}-entry-transfer-prefilled.png`) });
+      process.stdout.write(`${theme}/entry-transfer-prefilled `);
+
+      // An income: the same form with the segmented control flipped, so the
+      // relabelled payer picker and the missing Receipt tab are visible.
+      await page.goto(`${base}/g/entry/edit?id=${groupId}`);
+      await page.getByRole("tab", { name: "Income" }).click();
+      await page.locator("input.amount").fill("300");
+      await page.locator("#what").fill("Deposit back");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-entry-income.png`) });
+      process.stdout.write(`${theme}/entry-income `);
 
       // A half-finished "as amounts" split: the one state where the editor has
       // something to say about money that doesn't add up, and the field you
       // type that money into is in it.
-      await page.goto(`${base}/g/expense/edit?id=${groupId}`);
+      await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.locator("input.amount").fill("120");
       await page.locator("#what").fill("Hammam");
       await page.getByRole("button", { name: "As amounts" }).click();
@@ -226,10 +257,10 @@ async function main() {
       // Who paid, mid-allocation: the payer side's verdict line, in the two
       // colours the split editor's own footer uses. It hangs off the draft the
       // block above just typed, which is why it can't be reached by URL.
-      await page.getByRole("link", { name: /several people paid/i }).click();
+      await page.getByRole("link", { name: /several people put money in/i }).click();
       await page.waitForURL(/\/g\/payers/);
       await page.locator(".rows .row").filter({ hasText: "Marie" })
-        .getByRole("button", { name: /paid too/i }).click();
+        .getByRole("button", { name: /put money in too/i }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-payers.png`) });
       process.stdout.write(`${theme}/payers `);
@@ -245,11 +276,11 @@ async function main() {
           candidates: [{ content: { parts: [{ text: JSON.stringify(RECEIPT) }] } }],
         }),
       }));
-      await page.goto(`${base}/g/expense/edit?id=${groupId}`);
+      await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.waitForTimeout(200);
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
-      await page.waitForURL(/expense\/items/);
+      await page.waitForURL(/entry\/items/);
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
       process.stdout.write(`${theme}/who-had-what `);
@@ -271,16 +302,16 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-leave.png`) });
       process.stdout.write(`${theme}/leave `);
 
-      // Deleting an expense — the last thing in the app that asked with the
+      // Deleting an entry — the last thing in the app that asked with the
       // browser's own confirm(). Opened and photographed, never confirmed: the
       // restore shot below needs this expense's history intact.
       await page.goto(`${base}/g?id=${groupId}`);
       await page.getByText("Riad Jnane").click();
-      await page.waitForURL(/\/g\/expense\?/);
+      await page.waitForURL(/\/g\/entry\?/);
       await page.getByRole("button", { name: "Delete" }).click();
       await page.waitForTimeout(200);
-      await page.screenshot({ path: join(SHOTS, `${theme}-delete-expense.png`) });
-      process.stdout.write(`${theme}/delete-expense `);
+      await page.screenshot({ path: join(SHOTS, `${theme}-delete-entry.png`) });
+      process.stdout.write(`${theme}/delete-entry `);
 
       // The restore confirmation carries an HLC in its URL, so it is reached by
       // pressing the rewind on a real revision rather than by a fixed path.

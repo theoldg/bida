@@ -114,7 +114,7 @@ function GroupScreen() {
         {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}
       </Body>
 
-      {tab === "ledger" ? <Fab href={route.addEntry(group.id)} label="Add an entry" /> : null}
+      {tab === "ledger" ? <Fab href={route.addEntry(group.id)} /> : null}
 
       {/* One navigation, at the bottom, and only what a group actually is: what
           moved through it, and who is up or down because of it. "Settle" was a
@@ -146,9 +146,14 @@ function payersLabel(name: string | undefined, others: number, verb: string): st
 
 // ------------------------------------------------------------- expenses
 
+/**
+ * One row of the ledger. `row` names the table it came from, not the entry's
+ * kind — an income is a `row: "expense"` — because which of the three it is
+ * lives on the expense itself (`kindOf`).
+ */
 type Entry =
-  | { kind: "expense"; at: number; createdAt: number; expense: Expense }
-  | { kind: "settlement"; at: number; createdAt: number; settlement: Settlement };
+  | { row: "expense"; at: number; createdAt: number; expense: Expense }
+  | { row: "settlement"; at: number; createdAt: number; settlement: Settlement };
 
 function LedgerTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
@@ -164,8 +169,8 @@ function LedgerTab({ data }: { data: GroupData }) {
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   const entries: Entry[] = [
-    ...expenses.map((e): Entry => ({ kind: "expense", at: e.occurredAt, createdAt: e.createdAt ?? e.occurredAt, expense: e })),
-    ...settlements.map((s): Entry => ({ kind: "settlement", at: s.occurredAt, createdAt: s.createdAt ?? s.occurredAt, settlement: s })),
+    ...expenses.map((e): Entry => ({ row: "expense", at: e.occurredAt, createdAt: e.createdAt ?? e.occurredAt, expense: e })),
+    ...settlements.map((s): Entry => ({ row: "settlement", at: s.occurredAt, createdAt: s.createdAt ?? s.occurredAt, settlement: s })),
   ].sort((a, b) => (b.at - a.at) || (b.createdAt - a.createdAt));
 
   let lastDay = "";
@@ -213,9 +218,9 @@ function LedgerTab({ data }: { data: GroupData }) {
             const day = dayLabel(entry.at);
             const label = day === lastDay ? null : (lastDay = day);
             return (
-              <div key={entry.kind === "expense" ? entry.expense.id : entry.settlement.id}>
+              <div key={entry.row === "expense" ? entry.expense.id : entry.settlement.id}>
                 {label ? <div className="daylabel">{label}</div> : null}
-                {entry.kind === "expense"
+                {entry.row === "expense"
                   ? <ExpenseRow expense={entry.expense} />
                   : <SettlementRow settlement={entry.settlement} />}
               </div>

@@ -350,10 +350,13 @@ function EditEntryScreen() {
           payers: draft.payers,
           split: effectiveSplit,
           categoryId: draft.categoryId,
-          receiptItems: draft.receiptItems ?? null,
-          receiptTip: draft.receiptTip ?? null,
-          receiptInvolved: draft.receiptInvolved ?? null,
-          receiptAssignments: draft.receiptAssignments ?? null,
+          // An income has no bill. Turning an expense into one clears the scan
+          // rather than leaving a receipt hanging off an entry that can never
+          // show it again.
+          receiptItems: canScan ? draft.receiptItems ?? null : null,
+          receiptTip: canScan ? draft.receiptTip ?? null : null,
+          receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
+          receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
           splitTab: canScan ? activeTab : null,
         };
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
@@ -494,9 +497,7 @@ function EditEntryScreen() {
             {transfer ? null : coPayers.length > 1 ? (
               <Card style={{ padding: "10px 12px" }}>
                 <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 13, color: "var(--muted)", width: 76 }}>
-                    {ENTRY_PAYER_LABEL[kind]}
-                  </span>
+                  <span className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {coPayers.length} people
                   </span>
@@ -518,7 +519,7 @@ function EditEntryScreen() {
               </Card>
             ) : (
               <div className="field">
-                <label htmlFor="paidby" style={{ width: 76 }}>{ENTRY_PAYER_LABEL[kind]}</label>
+                <label htmlFor="paidby" className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</label>
                 <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
                 <select id="paidby" value={draft.paidBy}
                   onChange={(e) => patch({ paidBy: e.target.value, payers: null })}>

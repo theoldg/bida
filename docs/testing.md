@@ -3,10 +3,12 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm --filter @hajsik/core test       # 119 tests, ~1s
+pnpm --filter @hajsik/core test       # 128 tests, ~1s
 pnpm --filter @hajsik/core typecheck
-pnpm --filter @hajsik/web test        # 76 smoke tests
-pnpm shots                            # 34 PNGs into shots/ (gitignored)
+pnpm --filter @hajsik/web test        # 89 smoke tests
+pnpm shots                            # PNGs into shots/ (gitignored)
+node scripts/entries-check.mjs        # the three kinds of entry, end to end
+node scripts/offline-check.mjs        # every screen with the network cut
 ```
 
 `packages/core` gets real coverage — money, splits, folding; the bar is in
@@ -37,10 +39,10 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Nine scenes have no URL
    worth visiting and are reached by driving instead: the three dialogs (add
-   member, leave group, delete expense), `/g/restore` (its URL carries an HLC),
-   `settle`, `who-had-what` twice, `expense-split-amounts` (a deliberate
-   shortfall) and `payers` — the last two hang off the expense form's
-   in-memory draft, so their own URLs photograph an empty frame.
+   member, leave group, delete entry), `/g/restore` (its URL carries an HLC),
+   `who-had-what` twice, `expense-split-amounts` (a deliberate shortfall) and
+   `payers` — the last two hang off the entry form's in-memory draft, so their
+   own URLs photograph an empty frame.
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
@@ -58,6 +60,20 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   has one payer, and the shot looks plausible.
 - **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
   *slashed*. A mark inside a "0" is the font, not a struck-through field.
+
+## `node scripts/entries-check.mjs` — the form is wired to the commands
+
+The command tests prove an income's sign reaches the balances and that a
+transfer edit writes only what changed. They cannot prove the *form* reaches
+those commands — a Save stuck disabled, a segmented control writing the wrong
+field, a detail screen that can't find a settlement by id
+([ADR-0028](decisions/0028-three-kinds-of-entry.md)). This adds each of the
+three kinds through the real UI, edits them, and reads the history back.
+
+Needs a build first, like `shots` and `offline-check`. **Wait on state, not on
+a URL:** a save navigates before Dexie has redrawn, so every assertion here
+follows a `waitForFunction` on the row count. Skipping that is what makes a
+check like this flake and then get deleted.
 
 ## Real two-device testing — for sync/join bugs
 

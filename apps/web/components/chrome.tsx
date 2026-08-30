@@ -77,7 +77,7 @@ export function BottomNav({ items }: {
   );
 }
 
-export function Fab({ href, label = "Add expense" }: { href: string; label?: string }) {
+export function Fab({ href, label = "Add an entry" }: { href: string; label?: string }) {
   return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={24} /></Link>;
 }
 
