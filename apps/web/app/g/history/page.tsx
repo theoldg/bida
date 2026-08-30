@@ -58,14 +58,6 @@ function HistoryScreen() {
     : subject && "description" in subject ? (subject.description || "Untitled") : "Transfer";
   const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops, 200);
 
-  // An entity's newest revision IS its current state, so there is nothing to
-  // put back — offering a rewind there is a dead end. Both feeds are
-  // newest-first, so the first revision seen for an entity is its latest.
-  const latestOf = new Map<string, string>();
-  for (const rev of revisions) {
-    if (!latestOf.has(rev.entityId)) latestOf.set(rev.entityId, rev.op.id);
-  }
-
   if (!groupId || !data.group) return <Blank />;
   const group = data.group;
   const currency = group.baseCurrency;
@@ -119,19 +111,9 @@ function HistoryScreen() {
                 {revisions.map((rev, i) => {
                   const who = memberById.get(rev.op.actor)?.name ?? "Someone";
                   const d = describe(rev, who, memberById, currency);
-                  // Restoring an identity claim would mean telling somebody
-                  // else's phone who it is. There is nothing to restore.
-                  const canRestore = rev.entity !== "group" && rev.entity !== "identity"
-                    && latestOf.get(rev.entityId) !== rev.op.id;
                   const subject = entryId ? undefined : subjectOf(rev);
                   return (
                     <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
-                      {canRestore ? (
-                        <Link className="tlrewind" aria-label="Restore this version"
-                          href={route.restore(groupId, rev.entity, rev.entityId, rev.op.hlc)}>
-                          <Icon name="rewind" size={15} />
-                        </Link>
-                      ) : null}
                       <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>
                       <div className="what">{d.what}</div>
                       {d.diff ? (

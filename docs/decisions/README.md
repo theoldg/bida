@@ -41,3 +41,4 @@ old one `Superseded by NNNN`.
 | [0028](0028-three-kinds-of-entry.md) | Three kinds of entry: expense, income, transfer | Accepted |
 | [0029](0029-a-picker-is-a-dialog.md) | Picking a person is our dialog, not a `<select>` | Accepted |
 | [0030](0030-every-picker-is-a-dialog.md) | Every picker is our dialog; the date is the exception | Accepted |
+| [0031](0031-history-reads-it-does-not-rewind-it.md) | History is read, not rewound: no restore-to-version | Accepted |

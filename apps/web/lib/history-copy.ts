@@ -5,13 +5,11 @@ import {
 import { dayLabel, money, plural } from "./format";
 
 /**
- * Plain English for the op log: one sentence per revision, and one label and
- * one rendered value per changed field.
+ * Plain English for the op log: one sentence per revision, and — where it
+ * helps — what the field it changed said before and after.
  *
- * Lives here rather than in the history screen because the restore screen has
- * to say the same things about the same revision — "you are putting the amount
- * back to €48,00" is the whole content of that confirmation, and two copies of
- * this vocabulary would drift within a week.
+ * Its own file rather than the history screen's, because it is the app's
+ * vocabulary for the log and nothing else on that screen is.
  */
 
 export interface Described {
@@ -201,59 +199,4 @@ export function describe(
     return { what: field("archivedAt")!.after ? `${who} archived the group` : `${who} restored the group` };
   }
   return { what: `${who} updated the group` };
-}
-
-/** What a changed field is called, in a sentence about it. */
-export const FIELD_LABELS: Record<string, string> = {
-  amountMinor: "the amount", currency: "the currency", rateToBase: "the rate",
-  baseAmountMinor: "the amount", split: "who's involved", paidBy: "who paid",
-  payers: "who chipped in",
-  description: "the description", occurredAt: "the date", categoryId: "the category",
-  attachmentIds: "the photos", name: "the name", archivedAt: "the archived status",
-  kind: "which way this runs", fromMember: "who paid", toMember: "who was paid",
-  note: "the note",
-  memberId: "who a device speaks for",
-  deletedAt: "whether this was deleted",
-};
-
-export function fieldLabel(field: string): string {
-  return FIELD_LABELS[field] ?? field;
-}
-
-/**
- * A field's value as a person would read it. Deliberately total: a patch can
- * carry anything an older version of the app wrote, and a restore screen that
- * throws on one odd field is worse than one that prints it raw.
- */
-export function fieldValue(
-  field: string,
-  value: unknown,
-  ctx: { memberById: Map<string, Member>; currency: CurrencyCode },
-): string {
-  const nameOf = (id: unknown) =>
-    typeof id === "string" ? ctx.memberById.get(id)?.name ?? "someone" : "someone";
-
-  if (value === null || value === undefined) {
-    return field === "deletedAt" ? "not deleted" : "nothing";
-  }
-  if (field === "deletedAt") return "deleted";
-  if (field === "baseAmountMinor" || field === "amountMinor") {
-    return typeof value === "number" && Number.isFinite(value) ? money(value, ctx.currency) : String(value);
-  }
-  if (field === "occurredAt") return typeof value === "number" ? dayLabel(value) : String(value);
-  if (field === "paidBy" || field === "fromMember" || field === "toMember") return nameOf(value);
-  if (field === "kind") return value === "income" ? "an income" : "an expense";
-  if (field === "split") {
-    const names = splitParticipants(value as SplitSpec).map(nameOf);
-    return names.length > 0 ? names.join(", ") : "nobody";
-  }
-  if (field === "payers" && typeof value === "object") {
-    return Object.keys(value as Record<string, number>).map(nameOf).join(", ") || "nobody";
-  }
-  if (field === "attachmentIds") {
-    return Array.isArray(value) ? `${value.length}` : String(value);
-  }
-  if (typeof value === "string") return value || "nothing";
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return JSON.stringify(value);
 }

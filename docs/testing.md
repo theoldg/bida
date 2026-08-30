@@ -40,7 +40,6 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Ten scenes have no URL
    worth visiting and are reached by driving instead: four dialogs (add member,
    leave group, delete entry, and a transfer side's person picker),
-   `/g/restore` (its URL carries an HLC),
    `who-had-what` twice, `expense-split-amounts` (a deliberate shortfall) and
    `payers` — the last two hang off the entry form's in-memory draft, so their
    own URLs photograph an empty frame.

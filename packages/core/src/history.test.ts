@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, buildRestorePatch, entityHistory } from "./history.js";
+import { activityFeed, entityHistory } from "./history.js";
 import { foldOps } from "./fold.js";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
 
@@ -91,44 +91,6 @@ describe("activityFeed", () => {
     expect(feed[0]?.entityId).toBe("e2");
     expect(feed[2]?.entityId).toBe("m1");
     expect(activityFeed(b.ops, 2)).toHaveLength(2);
-  });
-});
-
-describe("buildRestorePatch", () => {
-  it("rolls an expense back to an earlier revision", () => {
-    const { ops, amount } = soukLog();
-    const patch = buildRestorePatch(ops, "e-souk", amount.hlc);
-    // at that point the amount was already 185000, but the split had not been
-    // narrowed and no photos had been added
-    expect(patch["split"]).toEqual({ mode: "equal", members: ["marie", "ada", "sam", "theo"] });
-    expect(patch["attachmentIds"]).toEqual([]);
-    expect(patch).not.toHaveProperty("amountMinor");
-  });
-
-  it("restores forward: applying it moves the log on, never rewinds it", () => {
-    const { ops, created } = soukLog();
-    const patch = buildRestorePatch(ops, "e-souk", created.hlc);
-    const b = new OpBuilder("restore", 1_743_700_000_000);
-    const restore = b.push("expense", "e-souk", "restore", patch, THEO, "back to how Marie had it");
-
-    const state = foldOps([...ops, restore]);
-    const e = state.expenses["e-souk"];
-    expect(e?.amountMinor).toBe(120_000);
-    expect(e?.attachmentIds).toEqual([]);
-    // and the history still contains everything that ever happened
-    expect(entityHistory([...ops, restore], "e-souk")).toHaveLength(5);
-  });
-
-  it("undeletes as part of restoring", () => {
-    const b = new OpBuilder();
-    const created = b.push("expense", "e1", "create", { description: "x" });
-    b.push("expense", "e1", "delete", {});
-    const patch = buildRestorePatch(b.ops, "e1", created.hlc);
-    expect(patch["deletedAt"]).toBeNull();
-
-    const restore = b.push("expense", "e1", "restore", patch);
-    expect(foldOps(b.ops).expenses["e1"]?.deletedAt).toBeNull();
-    expect(restore.kind).toBe("restore");
   });
 });
 

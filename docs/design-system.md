@@ -122,8 +122,8 @@ needs a paragraph. `components/dialog.tsx` is a real `<dialog>` — `showModal()
 so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 ("Leave group", never "OK"), `--debit` outlined when it destroys something. A
-screen still wins where the decision needs the ledger on it, `/g/restore`
-([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours, and
+screen still wins where the decision needs the ledger on it — the payers editor,
+who-had-what ([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own
 rows — an avatar, a name, a check on the current one, and a `note` saying what an
 unobvious pick does. A date is the exception, being a calendar and not a list

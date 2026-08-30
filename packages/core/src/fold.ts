@@ -107,27 +107,4 @@ export function foldForward(state: GroupState, incoming: readonly Op[]): GroupSt
   return state;
 }
 
-/** Every op touching one entity, oldest first. */
-export function entityOps(ops: readonly Op[], entityId: Id): Op[] {
-  return sortOps(ops.filter((o) => o.entityId === entityId));
-}
-
-/**
- * What an entity looked like at a point in the log, inclusive of `atHlc`.
- * This is how a restore builds its patch.
- */
-export function foldEntityAt(
-  ops: readonly Op[],
-  entityId: Id,
-  atHlc: Hlc,
-): Record<string, unknown> | undefined {
-  const relevant = entityOps(ops, entityId).filter((o) => compareHlc(o.hlc, atHlc) <= 0);
-  if (relevant.length === 0) return undefined;
-  const state = foldOps(relevant);
-  const first = relevant[0]!;
-  const bucket = bucketFor(state, first.entity);
-  if (!bucket) return state.group as unknown as Record<string, unknown> | undefined;
-  return bucket[entityId];
-}
-
 export type { Attachment, Expense, Group, GroupState, Identity, Member, Settlement };

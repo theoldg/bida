@@ -6,7 +6,7 @@
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "dots" | "sync" | "trash" | "edit" | "link"
-  | "rewind" | "image" | "split" | "merge" | "share" | "sun" | "moon";
+  | "image" | "split" | "merge" | "share" | "sun" | "moon";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -51,11 +51,6 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-sync" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M20 11a8 8 0 00-14-4.5M4 13a8 8 0 0014 4.5" /><path d="M6 3v3.8h3.8M18 21v-3.8h-3.8" />
-        </symbol>
-        {/* Anticlockwise arrow: put this back how it was. */}
-        <symbol id="i-rewind" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
-          <path d="M3 3.5v5.2h5.2" />
-          <path d="M3.7 8.7a8.6 8.6 0 1 0 2.2-3L3 7.9" />
         </symbol>
         <symbol id="i-trash" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <path d="M4 7h16M9.5 7V4.8h5V7M6.5 7l.9 12.2A1.8 1.8 0 009.2 21h5.6a1.8 1.8 0 001.8-1.8L17.5 7" />

@@ -1,5 +1,4 @@
 import {
-  buildRestorePatch,
   convertMinor,
   createHlcState,
   hlcSend,
@@ -20,7 +19,7 @@ import {
 } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
 import { forgetMe, getDevice, hideGroup, setMe, unhideGroup } from "./device";
-import { materialise, opsForGroup } from "./fold";
+import { materialise } from "./fold";
 import { requestPersistence } from "../persist";
 import { scheduleSync } from "./sync";
 
@@ -622,27 +621,5 @@ export async function deleteSettlement(
 ): Promise<void> {
   await appendOps(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
-  ]);
-}
-
-// -------------------------------------------------------------- history
-
-/**
- * Roll an entity back to how it looked at `atHlc` — as a new op, appended like
- * any other. Nothing is ever rewound, so the rollback itself has a history.
- */
-export async function restoreRevision(
-  groupId: Id,
-  actor: Id,
-  entity: EntityKind,
-  entityId: Id,
-  atHlc: string,
-  note?: string,
-): Promise<void> {
-  const ops = await opsForGroup(groupId);
-  const patch = buildRestorePatch(ops, entityId, atHlc);
-  if (Object.keys(patch).length === 0) return;
-  await appendOps(groupId, actor, [
-    { entity, entityId, kind: "restore", patch, note: note ?? null },
   ]);
 }

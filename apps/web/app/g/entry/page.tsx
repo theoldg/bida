@@ -128,8 +128,8 @@ function EntryScreen() {
       {asking ? (
         <ConfirmDialog title={`Delete this ${ENTRY_LABEL[kind].toLowerCase()}?`} confirm="Delete"
           danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
-          <p>It comes out of everyone&rsquo;s balance straight away, and stays in the
-            group&rsquo;s history — where it can be put back.</p>
+          <p>It comes out of everyone&rsquo;s balance straight away. The group&rsquo;s
+            history keeps a record that it was here, and that you deleted it.</p>
         </ConfirmDialog>
       ) : null}
     </Screen>

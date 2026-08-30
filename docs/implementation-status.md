@@ -12,7 +12,7 @@ Update it in the same commit as the code it describes.*
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
-| 5 — History surfaces | ✅ timeline, feed, restore |
+| 5 — History surfaces | ✅ timeline and feed, read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)) |
 | 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 | 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
@@ -143,12 +143,12 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate` |
 | `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
 | `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
-| `fold.ts` | `foldOps`, `foldForward`, `sortOps`, `entityOps`, `foldEntityAt` |
+| `fold.ts` | `foldOps`, `foldForward`, `sortOps` |
 | `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
 | `payers.ts` | `resolvePayers`, `validatePayers`, `payerList`, `isCoSponsored` |
 | `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` — the one place an income's sign is applied |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
-| `history.ts` | `entityHistory`, `activityFeed`, `buildRestorePatch` |
+| `history.ts` | `entityHistory`, `activityFeed` |
 | `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
 | `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |

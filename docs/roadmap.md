@@ -41,9 +41,10 @@ with two browser contexts — which turned up a genuine first-run bug, now fixed
 - [ ] Gallery + full-screen viewer
 
 ## Phase 5 — History surfaces ✅
-Per-entry revision timeline with field diffs, group activity feed, and
-restore-as-a-forward-op. Landed alongside Phase 7; `lib/history-copy.ts` holds
-the shared wording.
+Per-entry revision timeline with field diffs and a group activity feed, read
+only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md) dropped
+restore-to-version). Landed alongside Phase 7; `lib/history-copy.ts` holds the
+wording.
 
 ## Phase 6 — Finish
 - [ ] CSV export

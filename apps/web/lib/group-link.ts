@@ -59,10 +59,6 @@ export const route = {
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
   /** Who-had-what: right after a scan finds line items, or "Edit who-had-what" later. */
   items: (groupId: string) => `/g/entry/items?id=${encodeURIComponent(groupId)}`,
-  /** The confirmation screen for putting an entity back to how it looked. */
-  restore: (groupId: string, entity: string, entityId: string, atHlc: string) =>
-    `/g/restore?id=${encodeURIComponent(groupId)}&kind=${encodeURIComponent(entity)}`
-    + `&e=${encodeURIComponent(entityId)}&at=${encodeURIComponent(atHlc)}`,
   history: (groupId: string, entryId?: string) =>
     `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`,
   /** Settle up: a transfer, pre-filled with who owes whom and how much. */

@@ -14,7 +14,6 @@ import {
   leaveGroup,
   publishExistingClaims,
   recordSettlement,
-  restoreRevision,
   saveGroupKey,
 } from "./commands";
 
@@ -275,7 +274,7 @@ describe("commands", () => {
     expect(await db().ops.count()).toBe(before);
   });
 
-  it("deletes by tombstone, and a restore brings the expense back", async () => {
+  it("deletes by tombstone, so the log still holds what was there", async () => {
     const { groupId, theo, marie } = await trip();
     const expenseId = await addExpense(groupId, theo, {
       description: "Hammam",
@@ -286,14 +285,12 @@ describe("commands", () => {
       paidBy: theo,
       split: { mode: "equal", members: [theo, marie] },
     });
-    const createHlc = (await db().ops.where("entityId").equals(expenseId).toArray())[0]!.hlc;
-
     await deleteExpense(groupId, theo, expenseId, "double entry");
-    expect((await db().expenses.get(expenseId))?.deletedAt).toBeTruthy();
 
-    await restoreRevision(groupId, theo, "expense", expenseId, createHlc, "my mistake");
-    expect((await db().expenses.get(expenseId))?.deletedAt).toBeFalsy();
-    expect((await db().expenses.get(expenseId))?.description).toBe("Hammam");
+    const row = await db().expenses.get(expenseId);
+    expect(row?.deletedAt).toBeTruthy();
+    // The row itself is untouched under the tombstone — nothing is erased.
+    expect(row?.description).toBe("Hammam");
     await assertMaterialisedMatchesLog(groupId);
   });
 

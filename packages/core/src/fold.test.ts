@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { foldEntityAt, foldForward, foldOps, sortOps } from "./fold.js";
+import { foldForward, foldOps, sortOps } from "./fold.js";
 import { validateOp, type Op } from "./ops.js";
 import { marrakechOps, GROUP, THEO } from "./fixtures.test-helper.js";
 import { createHlcState, formatHlc } from "./hlc.js";
@@ -109,15 +109,3 @@ describe("foldForward", () => {
   });
 });
 
-describe("foldEntityAt", () => {
-  it("reconstructs an entity as it was at a point in the log", () => {
-    const ops = [
-      op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "v1", amountMinor: 100 } }),
-      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { amountMinor: 200 } }),
-      op({ entityId: "e1", kind: "update", hlc: at(3), patch: { amountMinor: 300 } }),
-    ];
-    expect(foldEntityAt(ops, "e1", at(2))?.["amountMinor"]).toBe(200);
-    expect(foldEntityAt(ops, "e1", at(1))?.["amountMinor"]).toBe(100);
-    expect(foldEntityAt(ops, "e1", at(0))).toBeUndefined();
-  });
-});

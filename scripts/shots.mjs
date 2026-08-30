@@ -129,7 +129,7 @@ async function seed(page) {
   await addTransfer(page, groupId, { amount: "800", from: "Sam", to: "Theo" });
 
   // ...and one edit, so the history screens have a revision that is not just a
-  // create: a diff to render, and a version worth offering to restore.
+  // create: something with a diff to render.
   await page.getByText("Riad Jnane").click();
   await page.waitForURL(/\/g\/entry\?/);
   await page.getByRole("link", { name: "Edit" }).click();
@@ -324,8 +324,7 @@ async function main() {
       process.stdout.write(`${theme}/leave `);
 
       // Deleting an entry — the last thing in the app that asked with the
-      // browser's own confirm(). Opened and photographed, never confirmed: the
-      // restore shot below needs this expense's history intact.
+      // browser's own confirm(). Opened and photographed, never confirmed.
       await page.goto(`${base}/g?id=${groupId}`);
       await page.getByText("Riad Jnane").click();
       await page.waitForURL(/\/g\/entry\?/);
@@ -333,15 +332,6 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-delete-entry.png`) });
       process.stdout.write(`${theme}/delete-entry `);
-
-      // The restore confirmation carries an HLC in its URL, so it is reached by
-      // pressing the rewind on a real revision rather than by a fixed path.
-      await page.goto(`${base}/g/history?id=${groupId}`);
-      await page.locator(".tlrewind").first().click();
-      await page.waitForURL(/\/g\/restore/);
-      await page.waitForTimeout(250);
-      await page.screenshot({ path: join(SHOTS, `${theme}-restore.png`) });
-      process.stdout.write(`${theme}/restore `);
       await context.close();
     }
     console.log(`\nshots written to ${SHOTS}`);

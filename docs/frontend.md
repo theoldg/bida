@@ -23,7 +23,6 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)). Settle-up links here with a transfer pre-filled |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-co-sponsored-expenses.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-entry |
-| `/g/restore?id=&kind=&e=&at=` | Confirms a restore: the version and the fields coming back |
 | `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0025](decisions/0025-our-own-dialogs.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
@@ -69,10 +68,9 @@ confers nothing without the secret.
   `<input type="date">` is the one native control left
   ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
   [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
-- History wording lives once, in `lib/history-copy.ts` (`describe`,
-  `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
-  must be **total** — they run inside a render over every patch the log holds,
-  so one throw is a white screen, not a missing line.
+- History wording lives once, in `lib/history-copy.ts` (`describe`). It must be
+  **total** — it runs inside a render over every patch the log holds, so one
+  throw is a white screen, not a missing line.
 
 ## One navigation
 

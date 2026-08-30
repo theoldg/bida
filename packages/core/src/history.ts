@@ -107,38 +107,3 @@ export function activityFeed(ops: readonly Op[], limit?: number): Revision[] {
   all.sort((a, b) => compareHlc(b.op.hlc, a.op.hlc));
   return limit === undefined ? all : all.slice(0, limit);
 }
-
-/**
- * The patch a `restore` op should carry to bring an entity back to how it
- * looked at `atHlc`: every field that differs from the current state.
- */
-export function buildRestorePatch(
-  ops: readonly Op[],
-  entityId: Id,
-  atHlc: string,
-): Record<string, unknown> {
-  const sorted = sortOps(ops.filter((o) => o.entityId === entityId));
-  const target: Record<string, unknown> = {};
-  const current: Record<string, unknown> = {};
-
-  for (const op of sorted) {
-    const bag = compareHlc(op.hlc, atHlc) <= 0 ? [target, current] : [current];
-    for (const b of bag) {
-      if (op.kind === "delete") b["deletedAt"] = op.createdAt;
-      else {
-        for (const [k, v] of Object.entries(op.patch)) {
-          if (IMMUTABLE_FIELDS.has(k)) continue;
-          b[k] = v;
-        }
-      }
-    }
-  }
-  // Undeleting is part of restoring.
-  if (target["deletedAt"] === undefined) target["deletedAt"] = null;
-
-  const patch: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(target)) {
-    if (!equalish(current[k], v)) patch[k] = v;
-  }
-  return patch;
-}

@@ -23,8 +23,8 @@ link. CSV export.
 **The three additions.**
 
 1. **Version tracking.** Every change is an appended op with an author, a
-   timestamp and an optional reason. Per-entry diffs, a group-wide feed, and
-   restore-to-version — which appends a revision, never erases one.
+   timestamp and an optional reason. Per-entry diffs and a group-wide feed,
+   read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 2. **Multiple images per expense.** Downscaled on-device, queued until Wi-Fi,
    viewable full-screen.
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
@@ -58,8 +58,7 @@ Leave the seam. Build none of it.
 
 ## Open questions
 
-Decimal comma vs. point · whether restore is open to anyone · fixed vs.
-free-form categories.
+Decimal comma vs. point · fixed vs. free-form categories.
 
 *Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
 setting at all (2026-08-30,

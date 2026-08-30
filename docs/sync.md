@@ -40,9 +40,10 @@ at the server and answers only "what have I not pulled yet".
 
 Sort by `hlc` ascending, then per entity: `create` initialises; `update` assigns
 each field in `patch`, **per-field last write wins by HLC**; `delete` sets
-`deletedAt` and never removes the row; `restore` resolves a target revision by
-folding that entity up to a given HLC and emits those field values as its own
-patch — a normal forward update, not a rewind.
+`deletedAt` and never removes the row; `restore` applies exactly like an update
+— nothing emits one any more
+([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)), but groups
+in production hold them.
 
 The fold is pure and total: any subset of ops produces *some* valid state. An
 `update` arriving before its `create` yields a partial entity that completes
@@ -110,15 +111,14 @@ it in one tap.
 
 Falls out of the log with no extra storage. **Per expense**: `ops` filtered by
 `entityId`, newest first, each `patch` rendered against the folded state
-immediately before it. **Group feed**: all ops, same renderer. **Restore**:
-emits a `restore` op, reached by a rewind icon at a revision's edge leading to
-`/g/restore`, a confirmation screen that names the version and the fields coming
-back. Offered only on a revision that isn't the entity's newest, and never for
-identity ops.
+immediately before it. **Group feed**: all ops, same renderer. Both are read
+only: there is no restore-to-version, and undoing something is editing it
+([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 
-The sentence for a revision and the per-field formatters live in
-`apps/web/lib/history-copy.ts` — one place, so the feed and the restore screen
-can't drift apart.
+The sentence for a revision lives in `apps/web/lib/history-copy.ts` — it is the
+app's vocabulary for the log, and it names the member a membership revision is
+*about* rather than the actor, or adding three people reads as one person
+joining three times.
 
 ## Gotchas
 

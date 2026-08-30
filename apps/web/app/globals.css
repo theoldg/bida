@@ -191,12 +191,12 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
-.itemfold, a.chip, button.chip, .action, .tlrewind, .field:has(> .pick) {
+.itemfold, a.chip, button.chip, .action, .field:has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, .itemfold:active,
-a.chip:active, button.chip:active, .tlrewind:active, .btn:active:not(:disabled),
+a.chip:active, button.chip:active, .btn:active:not(:disabled),
 .field:has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient, not a background-color: it composites over the element's own
      background instead of replacing it. */
@@ -634,11 +634,6 @@ dialog.scrim::backdrop { background: transparent }
   padding: 7px 10px 7px 12px; border-radius: var(--r-s); font-size: 12.5px; font-weight: 600;
   color: var(--ink); background: var(--card-2); border: 1px solid var(--rule) }
 .tlink svg { color: var(--ink-2); flex: none }
-
-/* Restoring is rare and undoable; it gets an icon at the edge, not a sentence
-   in the flow of the entry. The tap target is bigger than the mark. */
-.tlrewind { position: absolute; top: -4px; right: -6px; width: 34px; height: 34px;
-  display: grid; place-items: center; color: var(--muted); border-radius: var(--r-s) }
 
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
