@@ -113,6 +113,34 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 }
 
 /**
+ * Something the app tried and couldn't do, said next to the thing that was
+ * tried. Not an `alert()`: that one covers the form you would need to look at
+ * to understand it, and has to be dismissed before you can.
+ */
+export function Failure({ children }: { children: ReactNode }) {
+  return <p className="failure" role="alert">{children}</p>;
+}
+
+/**
+ * The frame, with nothing in it yet — a screen whose group hasn't come out of
+ * IndexedDB. Every screen has this moment and they all drew it by hand. The
+ * back arrow is the part that has to work before the data lands; the title is
+ * blank unless the screen knows it without the ledger.
+ */
+export function Blank({ title = " ", back = true }: { title?: string; back?: string | true }) {
+  return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;
+}
+
+/**
+ * A fixed bar under the scroll holding the screen's one act. Only for a button
+ * that ends the screen — a decision that fits in a paragraph is a dialog
+ * (ADR-0025).
+ */
+export function Foot({ children }: { children: ReactNode }) {
+  return <div className="foot">{children}</div>;
+}
+
+/**
  * Every screen reads its group id from the query string, and Next needs the
  * hook that does that to sit behind a Suspense boundary when the page is
  * statically exported. One wrapper, used by every page, instead of nine.

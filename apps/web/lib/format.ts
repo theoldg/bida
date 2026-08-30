@@ -68,6 +68,15 @@ export function splitFooter(
   return { ok: false, text: shortfallText(check, currency, { under: "left to split", over: "too much" }) };
 }
 
+/**
+ * What a rejected promise says to a person. Anything thrown that isn't an
+ * `Error` is stringified rather than dropped — a bare string thrown by a
+ * dependency still beats a screen that silently does nothing.
+ */
+export function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";

@@ -435,6 +435,11 @@ dialog.scrim::backdrop { background: transparent }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
+/* A failure reads like `.hint` in the one colour this design spends on trouble:
+   it sits where the hint would, under whatever was being attempted. */
+.failure { font-size: 12px; color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
+/* The screen's last act, pinned under the scroll rather than floating over it. */
+.foot { flex: none; border-top: 1px solid var(--rule); padding: 11px 16px }
 
 /* ---- the amount input ----
    A real <input>, not a rendered figure driven by a hand-built keypad: it has

@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { minorToDecimalString, parseMinor } from "@hajsik/core";
 import { AmountInput } from "../../../components/amount-input";
 import { Avatar } from "../../../components/bits";
-import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { recordSettlement } from "../../../lib/db/commands";
-import { bare, dateInputValue, withDate } from "../../../lib/format";
+import { bare, dateInputValue, errorText, withDate } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
@@ -30,6 +30,7 @@ function SettleScreen() {
   const [occurredAt, setOccurredAt] = useState(() => Date.now());
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string>();
 
   useEffect(() => {
     if (seeded || !data.group || !Number.isFinite(suggested) || suggested <= 0) return;
@@ -51,6 +52,7 @@ function SettleScreen() {
   async function save() {
     if (!ready || !groupId || !from || !to) return;
     setBusy(true);
+    setFailed(undefined);
     try {
       await recordSettlement(groupId, data.me ?? from, {
         fromMember: from,
@@ -64,7 +66,7 @@ function SettleScreen() {
       router.replace(route.group(groupId, "balances"));
     } catch (err) {
       setBusy(false);
-      alert(err instanceof Error ? err.message : String(err));
+      setFailed(errorText(err));
     }
   }
 
@@ -103,6 +105,7 @@ function SettleScreen() {
               <input id="s-note" aria-label="Note (optional)" value={note} placeholder="Note (optional)"
                 onChange={(e) => setNote(e.target.value)} />
             </div>
+            {failed ? <Failure>Couldn&rsquo;t record the payment — {failed}</Failure> : null}
           </div>
         </Scroll>
       </Body>

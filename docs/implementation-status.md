@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 111 tests |
+| 1 — Domain core | ✅ 119 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
@@ -38,10 +38,12 @@ bottom bar ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)
 On the who-had-what screen, who-was-there scrolls sideways in one line and the
 per-person totals stack in a named column.
 
-Before it: the browser's dialogs are gone — adding, renaming and removing a
-member, discarding a half-typed expense, an unlisted currency, and leaving a
-group all ask in a `<dialog>` this app draws, so `/g/leave` is deleted
-([ADR-0025](decisions/0025-our-own-dialogs.md)). The who-had-what grid became the
+Before it: the browser's dialogs are gone. Everything the app asks — adding,
+renaming and removing a member, naming yourself as you join, deleting an
+expense, discarding a half-typed one, an unlisted currency, leaving a group —
+asks in a `<dialog>` this app draws, so `/g/leave` is deleted
+([ADR-0025](decisions/0025-our-own-dialogs.md)); a write that fails says so
+where it was attempted (`Failure`) rather than in an `alert()`. The who-had-what grid became the
 scrolling band of its own screen so its row of initials freezes over a long bill:
 it had been a sticky `<thead>` in a wrapper that only scrolled sideways, which
 sticks to nothing ([frontend.md](frontend.md#gotchas)).

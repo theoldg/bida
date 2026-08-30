@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
@@ -24,6 +26,7 @@ function ExpenseScreen() {
   const expenseId = params.get("e") ?? undefined;
   const data = useGroupData(groupId);
   const expense = data.expenses.find((e) => e.id === expenseId);
+  const [asking, setAsking] = useState(false);
 
   // "edited ×3" comes from the log itself: revisions are ops, not a counter
   // somebody has to remember to increment.
@@ -64,7 +67,6 @@ function ExpenseScreen() {
 
   async function remove() {
     if (!expense || !groupId) return;
-    if (!confirm("Delete this expense? It stays in the group's history either way.")) return;
     await deleteExpense(groupId, data.me ?? expense.paidBy, expense.id);
     router.replace(route.group(groupId));
   }
@@ -80,7 +82,7 @@ function ExpenseScreen() {
             <Link className="iconbtn" href={route.history(groupId, expense.id)} aria-label="History">
               <Icon name="clock" size={18} />
             </Link>
-            <button className="iconbtn" onClick={remove} aria-label="Delete">
+            <button className="iconbtn" onClick={() => setAsking(true)} aria-label="Delete">
               <Icon name="trash" size={18} />
             </button>
           </>}
@@ -163,6 +165,14 @@ function ExpenseScreen() {
           <div style={{ height: 24 }} />
         </Scroll>
       </Body>
+
+      {asking ? (
+        <ConfirmDialog title="Delete this expense?" confirm="Delete" danger={true}
+          onConfirm={remove} onClose={() => setAsking(false)}>
+          <p>It comes out of everyone's balance straight away, and stays in the
+            group's history — where it can be put back.</p>
+        </ConfirmDialog>
+      ) : null}
     </Screen>
   );
 }

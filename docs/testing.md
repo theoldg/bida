@@ -3,10 +3,10 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm --filter @hajsik/core test       # 111 tests, ~1s
+pnpm --filter @hajsik/core test       # 119 tests, ~1s
 pnpm --filter @hajsik/core typecheck
-pnpm --filter @hajsik/web test        # 26 smoke tests
-pnpm shots                            # 26 PNGs into shots/ (gitignored)
+pnpm --filter @hajsik/web test        # 76 smoke tests
+pnpm shots                            # 34 PNGs into shots/ (gitignored)
 ```
 
 `packages/core` gets real coverage — money, splits, folding; the bar is in
@@ -35,9 +35,11 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
-   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Three scenes are
-   reached by driving instead of by URL: `/g/restore` (its URL carries an HLC),
-   `settle`, and `expense-split-amounts` (a deliberate shortfall).
+   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Eight scenes have no
+   URL of their own and are reached by driving: the three dialogs (add member,
+   leave group, delete expense), `/g/restore` (its URL carries an HLC),
+   `settle`, `who-had-what` twice, and `expense-split-amounts` (a deliberate
+   shortfall).
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.

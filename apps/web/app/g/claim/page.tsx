@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Avatar } from "../../../components/bits";
 import { Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
 import { route } from "../../../lib/group-link";
@@ -34,6 +35,7 @@ function ClaimScreen() {
   // Re-opening an invite you have already accepted preselects who you are, so
   // it is one tap rather than a puzzle about whether you'll be duplicated.
   const [picked, setPicked] = useState<string>();
+  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const chosen = picked ?? data.me;
 
@@ -42,11 +44,12 @@ function ClaimScreen() {
   }
   const group = data.group;
 
-  async function add() {
+  // Adding yourself here selects you too: you typed your own name, so making
+  // it one more tap to say so would be asking the same question twice.
+  async function add(name: string) {
     if (!groupId) return;
-    const name = prompt("Your name")?.trim();
-    if (!name) return;
     setPicked(await addMember(groupId, data.me ?? group.id, name));
+    setAdding(false);
   }
 
   async function proceed() {
@@ -79,7 +82,7 @@ function ClaimScreen() {
               </button>
             ))}
 
-            <button className="row" style={{ paddingTop: 16 }} onClick={add}>
+            <button className="row" style={{ paddingTop: 16 }} onClick={() => setAdding(true)}>
               <span className="avatar" style={{
                 background: "transparent", borderStyle: "dashed", color: "var(--muted)",
               }}><Icon name="plus" size={15} /></span>
@@ -100,6 +103,12 @@ function ClaimScreen() {
             : "Pick your name to continue"}
         </button>
       </div>
+
+      {adding ? (
+        <PromptDialog title="Your name" placeholder="Name" confirm="Add"
+          autoCapitalize="words" maxLength={40}
+          onSubmit={add} onClose={() => setAdding(false)} />
+      ) : null}
     </Screen>
   );
 }

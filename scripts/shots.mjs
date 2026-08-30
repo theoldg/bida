@@ -261,6 +261,17 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-leave.png`) });
       process.stdout.write(`${theme}/leave `);
 
+      // Deleting an expense — the last thing in the app that asked with the
+      // browser's own confirm(). Opened and photographed, never confirmed: the
+      // restore shot below needs this expense's history intact.
+      await page.goto(`${base}/g?id=${groupId}`);
+      await page.getByText("Riad Jnane").click();
+      await page.waitForURL(/\/g\/expense\?/);
+      await page.getByRole("button", { name: "Delete" }).click();
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-delete-expense.png`) });
+      process.stdout.write(`${theme}/delete-expense `);
+
       // The restore confirmation carries an HLC in its URL, so it is reached by
       // pressing the rewind on a real revision rather than by a fixed path.
       await page.goto(`${base}/g/history?id=${groupId}`);

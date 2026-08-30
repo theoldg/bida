@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
 import { createGroup } from "../../lib/db/commands";
+import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
 
 export default function NewGroupPage() {
@@ -14,6 +15,7 @@ export default function NewGroupPage() {
   const [currency, setCurrency] = useState("EUR");
   const [customCurrency, setCustomCurrency] = useState("");
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState<string>();
 
   const isCustom = currency === OTHER_CURRENCY;
   const resolvedCurrency = isCustom ? normalizeCurrencyCode(customCurrency) : currency;
@@ -23,6 +25,7 @@ export default function NewGroupPage() {
   async function save() {
     if (!ready) return;
     setBusy(true);
+    setFailed(undefined);
     try {
       const { groupId } = await createGroup({
         name: name.trim(), baseCurrency: resolvedCurrency, myName: myName.trim(),
@@ -30,7 +33,7 @@ export default function NewGroupPage() {
       router.replace(route.group(groupId));
     } catch (err) {
       setBusy(false);
-      alert(err instanceof Error ? err.message : String(err));
+      setFailed(errorText(err));
     }
   }
 
@@ -66,6 +69,7 @@ export default function NewGroupPage() {
                   onChange={(e) => setCustomCurrency(e.target.value)} />
               </div>
             ) : null}
+            {failed ? <Failure>Couldn&rsquo;t create the group — {failed}</Failure> : null}
             <p className="hint">
               Balances settle in this currency. An expense can be in any other, and
               keeps the rate it was entered at.
