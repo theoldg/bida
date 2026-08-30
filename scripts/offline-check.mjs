@@ -129,7 +129,11 @@ await tap("balances tab", () => page.locator("a[href*='tab=balances']").first().
 await tap("tap a suggested transfer", () => page.locator("a.card").first().click(), "#s-amt");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
-await tap("settings", () => page.goto(`${base}/settings`), ".seg");
+// The one switch that isn't in a group: light/dark, on the groups list.
+await tap("theme toggle", async () => {
+  await page.goto(`${base}/`);
+  await page.locator(".topbar .iconbtn").first().click();
+}, "html[data-theme]");
 
 await tap("new expense form", () => page.goto(`${base}/g/expense/edit?id=${g}`), "input.amount");
 // Reached only from the form, and only with a draft in hand — the one screen

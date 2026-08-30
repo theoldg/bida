@@ -16,8 +16,8 @@ property tests that any permutation of ops folds identically.
 
 ## Phase 2 — Local-first app ✅
 Dexie schema and rebuild-from-ops, `lib/db/commands.ts`, every screen, `/join`,
-settings, personal mode, multi-currency entry, PWA manifest + shell service
-worker, and `pnpm shots`.
+the personal lens, multi-currency entry, PWA manifest + shell service worker,
+and `pnpm shots`.
 
 ## Phase 3 — Server and sync ✅ *(deployed 2026-08-27 — MVP complete)*
 One Worker serving the export and the API, D1 schema + migrations, the two op

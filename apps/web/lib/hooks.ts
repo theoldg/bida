@@ -44,11 +44,6 @@ export function useDevice(): DeviceRecord | undefined {
   return live ?? fallback;
 }
 
-/** Personal mode, on by default — see DEFAULTS in lib/db/device.ts. */
-export function usePersonalMode(): boolean {
-  return useDevice()?.personalMode ?? true;
-}
-
 /** The invite secret for a group, if this device holds it (creator or a device that joined). */
 export function useGroupSecret(groupId: string | undefined): string | undefined {
   return useLiveQuery(async () => {

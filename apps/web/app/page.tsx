@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { Avatar, signClass } from "../components/bits";
-import { BottomNav, Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
-import { Icon } from "../components/icons";
+import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
+import { Icon, Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
+import { ThemeToggle } from "../components/theme-toggle";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { useGroupSummaries } from "../lib/hooks";
@@ -19,7 +20,11 @@ export default function GroupsPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title="Your groups" />
+        {/* The app says its own name once, on the screen you land on — and
+            carries the one switch that belongs to the phone rather than to any
+            group (ADR-0026). */}
+        <TopBar title={<span className="brand"><Wordmark size={23} /> Hajsik</span>}
+          sub="Your groups" right={<ThemeToggle />} />
 
         <Scroll>
           {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
@@ -77,11 +82,6 @@ export default function GroupsPage() {
           {groups && groups.length > 0 ? <InstallNudge /> : null}
         </Scroll>
       </Body>
-
-      <BottomNav items={[
-        { label: "Groups", icon: "list", href: route.groups(), on: true },
-        { label: "Settings", icon: "cog", href: route.settings() },
-      ]} />
     </Screen>
   );
 }

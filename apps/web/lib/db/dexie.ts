@@ -28,7 +28,6 @@ export interface DeviceRecord {
   nodeId: string;
   hlcPhysical: number;
   hlcCounter: number;
-  personalMode: boolean;
   /** groupId -> the member this device belongs to. */
   meByGroup: Record<string, string>;
   /**
@@ -36,21 +35,16 @@ export interface DeviceRecord {
    * even though the shared data (and this device's `groupKeys` secret, if it
    * still has one) is untouched — leaving is a per-device "not mine any more",
    * not a claim about what happened to the group itself. Absent on records
-   * written before this existed, same as `prefsVersion`. Opening the invite
-   * link again clears an entry back out (`saveGroupKey`).
+   * written before this existed. Opening the invite link again clears an entry
+   * back out (`saveGroupKey`).
    */
   leftGroups?: string[];
   theme: "system" | "light" | "dark";
   /**
    * When "Not now" was tapped on the install nudge. Set once and never
-   * cleared: the offer moves to Settings rather than coming back on its own.
+   * cleared — the app asks about installing exactly once.
    */
   installDismissedAt?: number;
-  /**
-   * Which generation of *defaults* this record was written against. Absent on
-   * records written before 2026-08-28. See `migrateDefaults` in ./device.ts.
-   */
-  prefsVersion?: number;
 }
 
 /**

@@ -15,6 +15,10 @@ corners. Colour is a scarce resource spent only on money —
 [ADR-0023](decisions/0023-monospace-monochrome.md). The ledger reading survives
 underneath: ruled rows, a red column and a green column.
 
+**The app names itself once**, on the groups list: the tally wordmark beside
+*Hajsik*, the light/dark toggle opposite. Every other top bar says the thing you
+opened, so a second wordmark would be branding where a name should be.
+
 ## Palette roles
 
 | Token | Role |
@@ -24,7 +28,7 @@ underneath: ruled rows, a red column and a green column.
 | `--rule`, `--rule-soft` | Hairlines — the ruling |
 | `--brand` | **Equal to `--ink`.** Buttons, active tabs, the focus ring |
 | `--credit` / `--debit` | **The only two hues in the app.** Money owed to you / by you |
-| `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: personal mode, and pending sync |
+| `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: your own rows, and pending sync |
 | `--press` | The wash under a thumb. Composited, not a background |
 
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
@@ -42,19 +46,20 @@ their hues — they're semantic and must not drift. Both dark blocks
 (`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values, in
 `globals.css` **and** the mockup. Change one, change all four.
 
-## Personal mode is a highlighter
+## Your own rows are highlighted
 
-Your rows take a translucent neutral wash — something laid *over* the ledger,
-which is what a personal lens is. The same wash marks pending sync: both mean
-"this is about you specifically, not the shared record". It is neutral rather
-than tinted so the row's own green or red stays the only colour on the line. It
-is also the *only* way you are marked: a member is always printed by name, never
-as "You".
+Always, not as a mode
+([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)). Your
+rows take a translucent neutral wash, laid *over* the ledger; the same wash
+marks pending sync, both meaning "this is about you, not the shared record".
+Neutral rather than tinted, so the row's own green or red stays the only colour
+on the line — and the *only* way you are marked, since a member is always
+printed by name, never as "You".
 
-It never carries meaning alone: each row shows what it did to your balance —
-`+€45,00` green, `−€14,28` red, left-edge bar to match — sign, colour and bar for
-one fact. A row netting to nothing keeps a grey edge; rows you're not part of
-drop to 42% opacity rather than disappearing.
+The wash never carries meaning alone: each row shows what it did to your balance
+— `+€45,00` green, `−€14,28` red, left-edge bar to match. A row netting to
+nothing keeps a grey edge; rows you're not part of drop to 42% opacity rather
+than disappearing.
 
 ## Nothing waits in silence
 
@@ -62,14 +67,13 @@ A screen that hasn't repainted yet and a screen that didn't hear you look
 identical. Two states cover the gap, and neither is a spinner:
 
 - **Press.** `--press` on `:active`, as a `linear-gradient` rather than a
-  `background-color` so it composites over what the control already sits on —
-  one value covers a row on paper, a highlighted row and the inverted FAB.
+  `background-color` so it composites over what the control already sits on.
   Instant down, `.2s` up; nothing moves and nothing scales. The browser's own
-  tap highlight is off (late, and it disagrees), and `touch-action:
-  manipulation` goes with it to drop the 300ms double-tap wait.
+  tap highlight is off (late, and it disagrees), with `touch-action:
+  manipulation` to drop the 300ms double-tap wait.
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
   height, same three columns, pulsing, staggered — arrival changes the text and
-  not the layout. The frame, nav and FAB around it are real and tappable.
+  not the layout. The frame around it is real and tappable.
 
 ## Type
 
@@ -79,9 +83,8 @@ CSS still speaks in roles. Hierarchy is weight and tracking only: headings 700
 at `-.03em`, body 400/500 at 14px, labels and eyebrows uppercase at `.12em`.
 
 Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
-align down a column even though everything is already monospaced. Body text sets
-wider than a proportional face did; titles truncate a word earlier, and that is
-accepted.
+align down a column even though everything is already monospaced. Body sets
+wider than a proportional face did, so titles truncate a word earlier: accepted.
 
 ## A money field has an underline
 

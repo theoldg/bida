@@ -25,9 +25,9 @@ Settle-up plus recording a real reimbursement. Invite by link. CSV export.
    restore-to-version — which appends a revision, never erases one.
 2. **Multiple images per expense.** Downscaled on-device, queued until Wi-Fi,
    viewable full-screen.
-3. **Personal mode.** Re-reads the app as *your* ledger: what each row did to
-   your balance, signed and coloured; rows you're not in faded back; your net
-   on top. On by default.
+3. **A personal lens, always on.** The app reads as *your* ledger: what each
+   row did to your balance, signed and coloured; rows you're not in faded back;
+   your net on top ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
 
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
 Shared, not solo — sync is part of the MVP. Multi-currency, with the rate frozen
@@ -59,5 +59,6 @@ Leave the seam. Build none of it.
 Decimal comma vs. point · whether restore is open to anyone · fixed vs.
 free-form categories.
 
-*Settled:* the name is **Hajsik** (2026-08-27); personal mode is default-on
-(2026-08-28, [ADR-0014](decisions/0014-settings-belong-to-the-phone.md)).
+*Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
+setting at all (2026-08-30,
+[ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).

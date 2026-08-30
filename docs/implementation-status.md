@@ -20,7 +20,12 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: the browser's dialogs are gone. Adding, renaming and removing a member,
+Since: the groups list is the front door — the tally wordmark and the app's name
+over it, light/dark as one icon button beside them. `/settings` is deleted, the
+personal lens is unconditional, and outside a group there is no bottom bar
+([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+
+Before it: the browser's dialogs are gone. Adding, renaming and removing a member,
 discarding a half-typed expense and typing a currency the picker doesn't list all
 ask in a `<dialog>` this app draws, and leaving a group is one of those rather
 than a screen with its button pinned to the bottom — `/g/leave` is deleted
@@ -43,10 +48,6 @@ under the thumb the instant it's touched, and a list still coming out of Dexie
 draws its own shape rather than a blank
 ([design-system.md](design-system.md#nothing-waits-in-silence)). The group list
 reads five tables whole instead of three per group.
-
-Before it: the app asks to be installed — a dismissable nudge under the groups
-list and a permanent offer in Settings, Chrome's `beforeinstallprompt` where it
-exists and share-sheet instructions on iOS ([frontend.md](frontend.md#pwa)).
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*), then
 re-cut 2026-08-29 on the owner's word: one monospace face (JetBrains Mono)
@@ -112,7 +113,7 @@ Every screen is built. Routes and their jobs are listed in
 [frontend.md](frontend.md#routing) — that table is the current one; don't
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. Personal mode is on by default. 67 smoke tests.
+`lib/db/sync.ts`. 67 smoke tests.
 
 ### `apps/api`
 

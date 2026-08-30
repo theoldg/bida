@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
-import { usePersonalMode } from "../lib/hooks";
 
 /**
  * The app frame: a fixed head, one scrolling middle, an optional fixed foot.
@@ -12,12 +11,7 @@ import { usePersonalMode } from "../lib/hooks";
  * pocket app, not a responsive site.
  */
 export function Screen({ children, className }: { children: ReactNode; className?: string }) {
-  const personal = usePersonalMode();
-  return (
-    <div className={`app${personal ? " personal" : ""}${className ? ` ${className}` : ""}`}>
-      {children}
-    </div>
-  );
+  return <div className={`app${className ? ` ${className}` : ""}`}>{children}</div>;
 }
 
 export function Body({ children }: { children: ReactNode }) {

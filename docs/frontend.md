@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list · create a group |
+| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)) · create a group |
 | `/g?id=[&tab=]` | The group: expenses / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
 | `/g/expense?id=&e=` | Expense detail |
 | `/g/expense/edit?id=[&e=]` | Add or edit an expense — **including the split**, inline ([ADR-0013](decisions/0013-the-split-editor-is-part-of-the-expense-form.md)) |
@@ -28,7 +28,6 @@ string ([ADR-0007](decisions/0007-per-screen-routes-not-drawers.md)).
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/g/settle?id=&from=&to=&amount=` | Record a settlement |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
-| `/settings` | Personal mode, theme. From the group *list* ([ADR-0014](decisions/0014-settings-belong-to-the-phone.md)) |
 
 **The group secret lives in the URL fragment**, which browsers never send to a
 server ([ADR-0004](decisions/0004-static-export-fragment-routing.md)). Never move
@@ -45,9 +44,8 @@ confers nothing without the secret.
 - Writes go through `lib/db/commands.ts` — one function per user intent, each
   building an op, appending it and materialising it in one transaction.
   **Components never write to Dexie directly.**
-- Device-local, never-synced state (who "you" are, personal mode, theme,
-  install-nudge dismissal) is in
-  the `device` store. *Changing* who you are is not device-local:
+- Device-local, never-synced state (who "you" are, theme, install-nudge
+  dismissal) is in the `device` store. *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0011](decisions/0011-identity-changes-are-public.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.
@@ -66,15 +64,15 @@ confers nothing without the secret.
 
 ## One navigation
 
-Exactly one nav bar, at the bottom: **Groups · Settings** outside a group,
-**Expenses · Balances** inside one. `Tabs` was deleted from `components/`; don't
-bring it back. A screen needing more destinations puts them behind a top-bar
-icon, not a second row — three icons is the ceiling.
+At most one nav bar, at the bottom: **Expenses · Balances** inside a group, and
+none outside one — the groups list has a single destination. `Tabs` was deleted
+from `components/`; don't bring it back. A screen needing more destinations puts
+them behind a top-bar icon, not a second row — three icons is the ceiling.
 
-## Personal mode
+## Your own money, pulled out of the group's
 
-A device boolean read through `usePersonalMode`, on by default. It changes
-rendering only, never data or what syncs:
+Always on, not a setting ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).
+It changes rendering only, never data or what syncs:
 
 - **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — what you
   put in for that entry minus what you owe for it, with a matching green/red
@@ -105,10 +103,9 @@ that object can open the install sheet later — and reduces the situation to on
 of `installed | ready | manual | none`; iOS has no such event, hence `manual`
 (share-sheet instructions). `components/install.tsx` renders it: a nudge at the
 foot of the groups list, only once there is a group worth coming back to, and
-the same offer permanently in Settings. "Not now" writes
-`device.installDismissedAt` and is never cleared — a banner that returns each
-launch is what makes install prompts hated; Settings is where it lives after
-that.
+and nowhere else. "Not now" writes `device.installDismissedAt` and is never
+cleared — a banner that returns each launch is what makes install prompts
+hated, and the browser's own menu still installs.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

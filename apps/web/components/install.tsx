@@ -1,7 +1,6 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Eyebrow } from "./bits";
 import { Icon } from "./icons";
 import { updateDevice } from "../lib/db/device";
 import { useDevice } from "../lib/hooks";
@@ -18,8 +17,8 @@ export function useInstallOffer(): InstallOffer {
  * about itself before it has told you a single number.
  *
  * "Not now" is remembered on the phone rather than for the session: asking
- * again next launch is what makes install banners hated. Settings keeps the
- * offer for anyone who changes their mind.
+ * again next launch is what makes install banners hated. It is the app's only
+ * offer, so "Not now" is final here — the browser's own menu still installs.
  */
 export function InstallNudge() {
   const offer = useInstallOffer();
@@ -30,7 +29,8 @@ export function InstallNudge() {
   return (
     <div className="pad" style={{ paddingTop: 18 }}>
       <div className="card">
-        <Offer offer={offer} heading />
+        <div style={{ fontSize: 14, fontWeight: 600 }}>Keep Hajsik on your home screen</div>
+        <Offer offer={offer} />
         <button className="action" style={{ marginTop: 12, color: "var(--muted)" }}
           onClick={() => updateDevice({ installDismissedAt: Date.now() })}>
           Not now
@@ -40,33 +40,10 @@ export function InstallNudge() {
   );
 }
 
-/** The same offer in Settings, where it stays available after "Not now". */
-export function InstallSettings() {
-  const offer = useInstallOffer();
-  if (offer === "none") return null;
-
-  return (
-    <section>
-      <Eyebrow style={{ marginBottom: 9 }}>Home screen</Eyebrow>
-      {offer === "installed" ? (
-        <p className="hint" style={{ marginTop: 0 }}>
-          Hajsik is installed on this phone.
-        </p>
-      ) : (
-        <Offer offer={offer} />
-      )}
-    </section>
-  );
-}
-
-/** The heading is the nudge's own title; in Settings the eyebrow already says it. */
-function Offer({ offer, heading }: { offer: "ready" | "manual"; heading?: boolean }) {
+function Offer({ offer }: { offer: "ready" | "manual" }) {
   return (
     <>
-      {heading ? (
-        <div style={{ fontSize: 14, fontWeight: 600 }}>Keep Hajsik on your home screen</div>
-      ) : null}
-      <p className="hint" style={{ marginTop: heading ? 4 : 0 }}>
+      <p className="hint" style={{ marginTop: 4 }}>
         Its own icon, no browser bar, and the same data — it already works offline.
       </p>
       {offer === "ready" ? (

@@ -12,7 +12,7 @@ import {
 import { Icon } from "../../components/icons";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { useGroupData, useInviteLink, useOnline, usePersonalMode } from "../../lib/hooks";
+import { useGroupData, useInviteLink, useOnline } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "expenses" | "balances";
@@ -26,11 +26,10 @@ function GroupScreen() {
   const groupId = params.get("id") ?? undefined;
   const tab = (params.get("tab") ?? "expenses") as Tab;
   const data = useGroupData(groupId);
-  const personal = usePersonalMode();
   const online = useOnline();
-  // The invite link was the one thing on the deleted options screen that is a
-  // property of the group rather than of the phone, so it came here rather than
-  // to /settings — ADR-0014.
+  // The invite link is a property of the group rather than of the phone, which
+  // is why it stayed on the group's own top bar when the options screen went
+  // (ADR-0014) and the settings screen after it (ADR-0026).
   const invite = useInviteLink(groupId);
 
   if (!groupId) return <Screen><Body><TopBar title="No group" back={route.groups()} /></Body></Screen>;
@@ -94,9 +93,7 @@ function GroupScreen() {
           </>}
         />
 
-        {tab === "expenses"
-          ? <ExpensesTab data={data} personal={personal} />
-          : <BalancesTab data={data} />}
+        {tab === "expenses" ? <ExpensesTab data={data} /> : <BalancesTab data={data} />}
       </Body>
 
       {tab === "expenses" ? <Fab href={route.addExpense(group.id)} /> : null}
@@ -115,7 +112,7 @@ function GroupScreen() {
   );
 }
 
-/** Which way a row moves your balance — drives the coloured edge in personal mode. */
+/** Which way a row moves your balance — drives the coloured edge on the row. */
 function lean(minor: number): string {
   return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
 }
@@ -133,11 +130,11 @@ type Entry =
   | { kind: "expense"; at: number; createdAt: number; expense: Expense }
   | { kind: "settlement"; at: number; createdAt: number; settlement: Settlement };
 
-function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean }) {
+function ExpensesTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
   if (!group) return null;
 
-  // Personal mode's whole job is answering "does this one help me or hurt me?",
+  // The ledger's whole job is answering "does this one help me or hurt me?",
   // so every row carries its own effect on your balance — what you put in for
   // it, minus what you owe for it — signed and coloured. They add up to `net`.
   const net = me ? balances.byMember[me] ?? 0 : 0;
@@ -151,8 +148,8 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
 
   return (
     <>
-      {personal && me ? (
-        <div className="pers-summary pad">
+      {me ? (
+        <div className="mysummary pad">
           {/* The tint is neutral on purpose: the eyebrow and the figure are
               already signed and coloured, and a card-sized wash of green or
               red is the loudest thing on a screen that spends colour only on
@@ -187,8 +184,8 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
               <div key={entry.kind === "expense" ? entry.expense.id : entry.settlement.id}>
                 {label ? <div className="daylabel">{label}</div> : null}
                 {entry.kind === "expense"
-                  ? <ExpenseRow data={data} expense={entry.expense} personal={personal} />
-                  : <SettlementRow data={data} settlement={entry.settlement} personal={personal} />}
+                  ? <ExpenseRow data={data} expense={entry.expense} />
+                  : <SettlementRow data={data} settlement={entry.settlement} />}
               </div>
             );
           })}
@@ -198,7 +195,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
     </>
   );
 
-  function ExpenseRow({ expense, personal }: { data: GroupData; expense: Expense; personal: boolean }) {
+  function ExpenseRow({ expense }: { data: GroupData; expense: Expense }) {
     const payer = memberById.get(expense.paidBy);
     const payers = payerList(expense);
     const involved = me ? splitParticipants(expense.split).includes(me) : false;
@@ -213,7 +210,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
 
     return (
       <Link href={route.expense(group!.id, expense.id)}
-        className={`row${personal ? (mine ? ` mine ${lean(myNet)}` : " notmine") : ""}`}>
+        className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
         <Avatar member={payer} name={payer?.name} />
         <div className="rmain">
           <div className="rtitle">{expense.description || "Untitled"}</div>
@@ -239,9 +236,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
     );
   }
 
-  function SettlementRow({ settlement, personal }: {
-    data: GroupData; settlement: Settlement; personal: boolean;
-  }) {
+  function SettlementRow({ settlement }: { data: GroupData; settlement: Settlement }) {
     const from = memberById.get(settlement.fromMember);
     const to = memberById.get(settlement.toMember);
     // Paying somebody back moves your balance up by exactly what you handed
@@ -250,7 +245,7 @@ function ExpensesTab({ data, personal }: { data: GroupData; personal: boolean })
       : me === settlement.toMember ? -settlement.baseAmountMinor : 0;
 
     return (
-      <div className={`row${personal ? (myNet !== 0 ? ` mine ${lean(myNet)}` : " notmine") : ""}`}>
+      <div className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
         <span className="avatar" style={{
           background: "var(--card-3)", color: "var(--muted)", borderStyle: "dashed",
         }}><Icon name="arrow" size={15} /></span>

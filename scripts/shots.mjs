@@ -115,8 +115,8 @@ async function seed(page) {
   // A plain expense, then a co-sponsored one.
   await addExpense(page, groupId, { amount: "4800", what: "Riad Jnane" });
   await addExpense(page, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
-  // Then the two rows personal mode exists for: one somebody else paid that
-  // you owe a share of (red), and one that has nothing to do with you (faded).
+  // Then the two rows the personal lens exists for: one somebody else paid
+  // that you owe a share of (red), and one with nothing to do with you (faded).
   await addExpense(page, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
   await addExpense(page, groupId, {
     amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
@@ -169,7 +169,6 @@ const routes = (g) => [
   ["history", `/g/history?id=${g}`],
   ["expense-edit", `/g/expense/edit?id=${g}`],
   ["payers", `/g/payers?id=${g}`],
-  ["settings", "/settings"],
 ];
 
 async function main() {

@@ -31,7 +31,7 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 2. **Seeds a group through the UI** — three members, four expenses and an edit —
    by driving real screens, not poking IndexedDB. Each expense earns its place:
    a plain one, a co-sponsored one, one somebody else paid that you owe a share
-   of, and one that leaves you out (the last two are what personal mode is
+   of, and one that leaves you out (the last two are what the personal lens is
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with

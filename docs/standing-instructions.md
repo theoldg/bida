@@ -42,9 +42,10 @@ it applies to work nobody has done yet.
   "what I don't need for the mvp is the hosting of images attached to expenses.
   I'm okay with the app being text only for now." Icons are build-time files and
   unrelated to hosting cost.
-- **Personal mode answers "does this help me or hurt me?"** *2026-08-28* — every
-  row shows what it did to *your* balance, signed and coloured, not just your
-  share. It ships **on by default**.
+- **The app answers "does this help me or hurt me?"** *2026-08-28, made
+  unconditional 2026-08-30* — every row shows what it did to *your* balance,
+  signed and coloured, not just your share. "Personal mode should be always
+  on": it is the app, not a setting.
 - **Don't make a feature of the odd cent.** *2026-08-27* — "don't highlight cent
   splits, that's the wrong vibe. just draw people at random every time and have
   that be a quiet easter egg." The rotation is deterministic and rendered
@@ -147,3 +148,8 @@ it applies to work nobody has done yet.
 - **A grid you scroll keeps its header.** *2026-08-30* — "Freeze/stick the row
   with the initials of users when editing a who-had-what with many items."
   A column whose heading has scrolled away is an unlabelled column.
+- **No settings screen.** *2026-08-30* — "remove the settings page entirely.
+  dark/bright mode can be a toggle only visible on the home screen." A
+  preference either has one obvious place to live or shouldn't exist; the
+  groups list is that place, and it wears the app's name above it
+  ([ADR-0026](decisions/0026-the-groups-list-is-the-settings-screen.md)).

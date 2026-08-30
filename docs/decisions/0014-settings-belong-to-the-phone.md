@@ -1,6 +1,6 @@
 # 0014 — Settings belong to the phone, beside the group list
 
-**Status:** Accepted · 2026-08-28
+**Status:** Superseded by [0026](0026-the-groups-list-is-the-settings-screen.md) · 2026-08-28
 **Amends:** [0012](0012-balances-and-settling-are-one-screen.md) — its
 three-item bottom bar and the `/g/options` screen. The rest of 0012 stands.
 

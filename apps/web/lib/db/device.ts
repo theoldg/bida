@@ -1,47 +1,23 @@
 import { newNodeId } from "@hajsik/core";
 import { db, type DeviceRecord } from "./dexie";
 
-/**
- * Bumped when a *default* changes in a way that should reach phones that
- * already have a device record. The record is device-local and unsynced, so
- * this is a plain field, not a Dexie schema version — nothing is indexed on it.
- */
-const PREFS_VERSION = 1;
-
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
   key: "device",
   hlcPhysical: 0,
   hlcCounter: 0,
-  // On, because the question the app is open to answer is "what does this cost
-  // me?" — see docs/product.md. Turning it off is a deliberate act; having it
-  // off was not.
-  personalMode: true,
   meByGroup: {},
+  // Until the toggle on the groups list is tapped, the phone's own setting
+  // decides — see components/theme-toggle.tsx.
   theme: "system",
-  prefsVersion: PREFS_VERSION,
 };
 
-/** Read the device record, creating it on first run and updating stale defaults. */
+/** Read the device record, creating it on first run. */
 export async function getDevice(): Promise<DeviceRecord> {
   const existing = await db().device.get("device");
-  if (existing) return migrateDefaults(existing);
+  if (existing) return existing;
   const fresh: DeviceRecord = { ...DEFAULTS, nodeId: newNodeId() };
   await db().device.put(fresh);
   return fresh;
-}
-
-/**
- * A phone that installed the app before 2026-08-28 carries `personalMode:
- * false` that nobody chose — it was the default at the time. Flipping the
- * default alone would leave exactly the existing users looking at the old app.
- * This runs once per phone; a later "Off" sticks, because the version marker
- * is already current by then.
- */
-async function migrateDefaults(record: DeviceRecord): Promise<DeviceRecord> {
-  if (record.prefsVersion === PREFS_VERSION) return record;
-  const next: DeviceRecord = { ...record, personalMode: true, prefsVersion: PREFS_VERSION };
-  await db().device.put(next);
-  return next;
 }
 
 export async function updateDevice(patch: Partial<DeviceRecord>): Promise<void> {
@@ -68,10 +44,6 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
   const device = await getDevice();
   if (device.meByGroup[groupId] === memberId) return;
   await updateDevice({ meByGroup: { ...device.meByGroup, [groupId]: memberId } });
-}
-
-export async function setPersonalMode(on: boolean): Promise<void> {
-  await updateDevice({ personalMode: on });
 }
 
 /**

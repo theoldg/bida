@@ -52,7 +52,7 @@ describe("the Marrakech trip", () => {
     expect(Object.values(applyTransfers(report.byMember, transfers)).every((v) => v === 0)).toBe(true);
   });
 
-  it("shows one payment in personal mode", () => {
+  it("shows only one member's own payments", () => {
     expect(transfersFor(settleUp(report.byMember), THEO)).toHaveLength(1);
   });
 });

@@ -49,7 +49,7 @@ export function settleUp(balances: Record<Id, number>): Transfer[] {
   return transfers;
 }
 
-/** Only the payments involving one member — what personal mode shows. */
+/** Only the payments involving one member — what a member's own view shows. */
 export function transfersFor(transfers: readonly Transfer[], memberId: Id): Transfer[] {
   return transfers.filter((t) => t.from === memberId || t.to === memberId);
 }

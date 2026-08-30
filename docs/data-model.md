@@ -148,7 +148,7 @@ CREATE TABLE attachments (
 | `ops` | `id` | indexes on `[groupId+hlc]`, `[groupId+syncState]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments`, `identities` | `id` | materialised, rebuildable from `ops` |
 | `blobs` | `attachmentId` | queued image data awaiting upload |
-| `device` | key | who "you" are, personal mode, theme, HLC state, `prefsVersion` |
+| `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
 
 `identityLog` existed in v2 and is **dropped** — identity claims are ops now.

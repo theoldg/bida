@@ -24,7 +24,7 @@ old one `Superseded by NNNN`.
 | [0011](0011-identity-changes-are-public.md) | Identity claims are ops, so `actor` is auditable | Accepted |
 | [0012](0012-balances-and-settling-are-one-screen.md) | Balances and settling are one screen | Accepted |
 | [0013](0013-the-split-editor-is-part-of-the-expense-form.md) | The split editor is part of the expense form; three modes | Accepted |
-| [0014](0014-settings-belong-to-the-phone.md) | Settings belong to the phone, beside the group list | Accepted |
+| [0014](0014-settings-belong-to-the-phone.md) | Settings belong to the phone, beside the group list | Superseded by [0026](0026-the-groups-list-is-the-settings-screen.md) |
 | [0015](0015-one-money-field-core-reports-numbers.md) | One money field; core reports numbers, screens write sentences | Accepted |
 | [0016](0016-receipt-scan-ux-and-item-assignment.md) | Receipt scan UX: item assignment writes an ordinary `shares` split | Accepted |
 | [0017](0017-receipt-items-persist-on-the-expense.md) | Receipt items persist on the expense, not just the draft | Accepted |
@@ -36,3 +36,4 @@ old one `Superseded by NNNN`.
 | [0023](0023-monospace-monochrome.md) | One monospace face; colour only on money | Accepted |
 | [0024](0024-precache-the-whole-export-cache-first.md) | The service worker precaches the whole export and serves it cache-first | Accepted |
 | [0025](0025-our-own-dialogs.md) | The app draws its own dialogs; a consequence doesn't always need a route | Accepted |
+| [0026](0026-the-groups-list-is-the-settings-screen.md) | The groups list carries the app's name and its one switch | Accepted |

@@ -60,5 +60,4 @@ export const route = {
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,
-  settings: () => "/settings",
 };
