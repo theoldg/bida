@@ -6,6 +6,23 @@ export type Id = string;
 export type SplitMode = "equal" | "exact" | "shares" | "percent";
 
 /**
+ * Which way an entry moves money through the group.
+ *
+ * - `expense` — somebody paid out, and it is shared between the people it was
+ *   spent on. The default, and what an entry written before this field existed
+ *   is: absent means `expense`, forever.
+ * - `income` — somebody took money *in* on the group's behalf (a deposit
+ *   returned, a prize, a sold ticket) and it is shared between the people it
+ *   belongs to. Structurally identical to an expense — same payers, same
+ *   split, same positive `amountMinor` — and the sign is applied once, in
+ *   `computeBalances`. That is the whole of the difference. ADR-0028.
+ *
+ * The third kind of entry a person can add, a **transfer**, is not on this
+ * union: it is a `Settlement`, a different entity with no split at all.
+ */
+export type EntryKind = "expense" | "income";
+
+/**
  * Which of the split editor's four tabs is showing, independent of
  * `SplitSpec["mode"]` — a finished who-had-what grid writes an ordinary
  * `shares` spec, but the tab should still read "Receipt", not "As parts".
@@ -44,6 +61,12 @@ export interface Member {
 export interface Expense {
   id: Id;
   groupId: Id;
+  /**
+   * Which way this entry runs. Absent means `expense` — every op written
+   * before incomes existed, and every ordinary expense since, so the common
+   * case never carries the field. See `EntryKind`.
+   */
+  kind?: EntryKind | null;
   description: string;
   categoryId?: string | null;
   occurredAt: number;
@@ -116,7 +139,18 @@ export interface ReceiptItem {
   portionOf?: number | null;
 }
 
-/** A real-world reimbursement. Kept separate so it never inflates trip cost. */
+/**
+ * A **transfer**: money handed from one person to another, in the real world.
+ *
+ * Kept separate from `Expense` so it never inflates what the trip cost — it
+ * moves a debt, it does not create one. Paying somebody back is the reason
+ * most transfers exist, but not the only one, which is why the app calls all
+ * of them transfers and reserves "reimbursement" for none of them
+ * ([ADR-0028](../../../docs/decisions/0028-three-kinds-of-entry.md)). The type
+ * keeps its old name because the op log, the D1 `entity` column and every op
+ * ever written say `settlement`; renaming it would be a migration bought with
+ * nothing.
+ */
 export interface Settlement {
   id: Id;
   groupId: Id;
