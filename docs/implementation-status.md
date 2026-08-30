@@ -21,14 +21,13 @@ backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
 Since: the two failures that could quietly cost a trip its ledger now say so.
-Sync writes down how every attempt went (`groupKeys.lastSyncedAt` and
-`failure`), and `/g` warns after two consecutive failures — or immediately, in
-its own words, when the server refuses this device's secret, which retrying can
-never fix. `navigator.onLine` had been the only signal, and it reports a link
-rather than an answering server ([sync.md](sync.md#the-sync-engine)). And
-`lib/persist.ts` asks the browser to exempt IndexedDB from eviction — Safari
-drops it after seven days uninstalled, taking unpushed ops and the group
-secrets, with no account to log back in with
+Sync records how every attempt went, and `/g` warns after two consecutive
+failures — or at once, in its own words, when the server refuses this device's
+secret, which retrying can never fix; `navigator.onLine` had been the only
+signal, and it reports a link rather than an answering server
+([sync.md](sync.md#the-sync-engine)). And `lib/persist.ts` asks the browser not
+to evict IndexedDB: Safari drops it after seven days uninstalled, taking
+unpushed ops and the group secrets with no account to log back in with
 ([architecture.md](architecture.md#gotchas)).
 
 Before it: the groups list is the front door — the tally wordmark and the app's name
@@ -43,18 +42,17 @@ renaming and removing a member, naming yourself as you join, deleting an
 expense, discarding a half-typed one, an unlisted currency, leaving a group —
 asks in a `<dialog>` this app draws, so `/g/leave` is deleted
 ([ADR-0025](decisions/0025-our-own-dialogs.md)); a write that fails says so
-where it was attempted (`Failure`) rather than in an `alert()`. The who-had-what grid became the
-scrolling band of its own screen so its row of initials freezes over a long bill:
-it had been a sticky `<thead>` in a wrapper that only scrolled sideways, which
-sticks to nothing ([frontend.md](frontend.md#gotchas)).
+where it was attempted (`Failure`) rather than in an `alert()`. The
+who-had-what grid became the scrolling band of its own screen so its row of
+initials freezes over a long bill: it had been a sticky `<thead>` in a wrapper
+that only scrolled sideways, which sticks to nothing
+([frontend.md](frontend.md#gotchas)).
 
 Before it: the app is usable offline and never waits on the network to redraw a
-screen it already has — the service worker precaches the whole export, RSC
-payloads included, and serves it cache-first ([frontend.md](frontend.md#pwa),
-[ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md); verify with
-`node scripts/offline-check.mjs`). Nothing waits in silence either: controls
-darken under the thumb, and a list still coming out of Dexie draws its own shape
-([design-system.md](design-system.md#nothing-waits-in-silence)).
+screen it already has — the service worker precaches the whole export,
+cache-first ([frontend.md](frontend.md#pwa), [ADR-0024](decisions/0024-precache-the-whole-export-cache-first.md);
+verify with `node scripts/offline-check.mjs`) — and nothing it does waits in
+silence ([design-system.md](design-system.md#nothing-waits-in-silence)).
 
 Design signed off 2026-08-27 (*"i approve of your design, go wild"*), re-cut
 2026-08-29 to one monospace face, near-neutral grounds, and colour spent only on
@@ -72,24 +70,13 @@ Photograph a receipt and it fills the expense form:
 [ADR-0020](decisions/0020-receipt-total-and-split-are-derived-not-cached.md),
 [ADR-0021](decisions/0021-leaving-receipt-mode-hands-the-total-back.md),
 [ADR-0022](decisions/0022-unfolding-a-receipt-line-into-portions.md).
-A "Receipt" tab
-on `/g/expense/edit`'s split editor, alongside Evenly/As parts/As amounts,
-holds the camera-capture and library-upload buttons (any expense, saved or
-not, sharing one handler) with a spinner-and-label loading state per button,
-an error + "try again", and a one-line privacy note; a scan that finds line
-items routes to `/g/expense/items`, a who-had-what grid (coloured,
-disambiguated initial chips as columns, items as rows, an editable tip that
-scales to what each person ordered, and a "×2" line that unfolds into that many
-separately assignable portions) that reduces to an ordinary `shares` split —
-no new entity, no schema change. The parsed items, tip and grid
-assignment persist on the expense itself (plain optional fields), so "Edit
-who-had-what" (also on the Receipt tab) can reopen the same grid later, for a
-new or already-saved expense, from any device. While Receipt mode has items,
-the amount field is computed (items + tip) and disabled, switching away hands
-that total back to the field, and the chosen split tab persists across
-save/reopen (ADR-0019, ADR-0021). Left for later: multi-image
-capture, on-device downscale for photos kept on the expense, R2 upload, and
-the gallery/full-screen viewer. Scope in [product.md](product.md).
+A "Receipt" tab on the split editor scans a bill (any expense, saved or not)
+and routes a scan with line items to `/g/expense/items`, a who-had-what grid
+that reduces to an ordinary `shares` split — no new entity, no schema change.
+Its items, tip and assignments live on the expense itself, so the grid reopens
+later from any device. **Left for later:** multi-image capture, on-device
+downscale, R2 upload, and the gallery/viewer. Scope in
+[product.md](product.md).
 
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
