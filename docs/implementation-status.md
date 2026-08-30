@@ -109,7 +109,11 @@ apps/web/        @hajsik/web — Next.js static export, the whole UI
 apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static assets
 ```
 
-Root scripts: `test`, `typecheck`, `build`, `check`, `shots`.
+Root scripts: `session`, `check` (typecheck · tests · doc links · export build,
+what pre-push runs), `verify`, `entries`, `offline`, `shots`, `docs`.
+`scripts/lib/harness.mjs` holds what the browser checks share — the build, the
+static server, a phone-shaped browser, the tally, a seeded group — so they build
+themselves and a fourth costs a dozen lines ([testing.md](testing.md)).
 `tsconfig.base.json`: ES2022, strict, `noUncheckedIndexedAccess`,
 `verbatimModuleSyntax`.
 
@@ -180,7 +184,7 @@ total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo
 1. **Seeded remainder tiebreak.** `resolveSplit` takes `tiebreakSeed` (callers
    pass the expense id) so the leftover cent rotates instead of always landing
    on the alphabetically-first member. Never surfaced in the UI —
-   [standing-instructions](standing-instructions.md#dont-make-a-feature-of-the-odd-cent).
+   [standing-instructions](standing-instructions.md#product).
 2. **`packages/core` excludes the DOM lib**, so `ids.ts` declares its own
    minimal `CryptoLike` rather than depending on `Crypto`.
 

@@ -3,13 +3,23 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm --filter @hajsik/core test       # 124 tests, ~1s
-pnpm --filter @hajsik/core typecheck
-pnpm --filter @hajsik/web test        # 93 smoke tests
-pnpm shots                            # PNGs into shots/ (gitignored)
-node scripts/entries-check.mjs        # the three kinds of entry, end to end
-node scripts/offline-check.mjs        # every screen with the network cut
+pnpm check       # typecheck · 217 tests · doc links · export build — pre-push, ~45s
+pnpm verify      # both browser checks against a real build, ~45s
+pnpm entries     # just the three kinds of entry, end to end
+pnpm offline     # just every screen with the network cut
+pnpm shots       # PNGs into shots/ (gitignored)
+pnpm docs        # every relative markdown link resolves, ~30ms
 ```
+
+**The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
+and `packages/core` against `apps/web/out` and runs the build only when it is
+missing or stale — so none of them needs a build step in front of it, and none
+of them wastes 25 seconds when nothing has changed.
+
+`pnpm check` is the gate: the build is in it because `next build` catches what
+`tsc` cannot — a prerender that touches `window`, a client-boundary mistake, a
+`precache.mjs` that throws — and the deploy workflow only rebuilds and ships,
+so a build that fails there fails on `main`.
 
 `packages/core` gets real coverage — money, splits, folding; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements) and what's proven is in
@@ -19,6 +29,32 @@ includes `lib/**` *and* `components/**`, which is why `sanitizeAmount` and
 `groupDigits` are exported from `amount-input.tsx` rather than hidden in it.
 Rendering isn't tested — `pnpm shots` is what looks at screens.
 
+## `scripts/lib/harness.mjs` — what the three checks share
+
+A build, a server that speaks the static export's dialect, a phone-shaped
+browser, a pass/fail tally that owns the exit code, and a seeded group. Written
+three times they drifted; written once, a fourth check costs a dozen lines:
+
+```js
+import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup }
+  from "./lib/harness.mjs";
+
+ensureBuild();
+const { base, close } = await serveExport();   // port 0 — two checks can't collide
+const browser = await launch();
+const page = await (await newPhone(browser)).newPage();
+const { report, finish } = reporter(page);     // page errors count as failures
+
+const g = await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
+report(await page.getByText("Trip").count() > 0, "the group exists");
+await browser.close(); close(); finish();
+```
+
+`serveExport({ intercept })` gets first refusal on every request — that is how
+offline-check drops an asset and forges a service-worker revision. `pick(page,
+opener, row)` opens one of the app's own dialogs and takes a row out of it;
+every picker in the app is one ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
+
 ## `pnpm shots` — photograph every screen
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
@@ -27,9 +63,8 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 
 `scripts/shots.mjs`:
 
-1. **Serves the real static export** (`apps/web/out`) over a bare `node:http`
-   server rather than `next dev`. The export is what ships, and it has quirks
-   `next dev` doesn't.
+1. **Serves the real static export** (`apps/web/out`) rather than `next dev`.
+   The export is what ships, and it has quirks `next dev` doesn't.
 2. **Seeds a group through the UI** — three members, four expenses and an edit —
    by driving real screens, not poking IndexedDB. Each expense earns its place:
    a plain one, a co-sponsored one, one somebody else paid that you owe a share
@@ -51,7 +86,8 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 
 - **`/g` is both a file and a directory** in the export, so the static server
   must `statSync(p).isFile()` before serving and only then fall through to
-  `${file}.html`. Serving the directory hit is an `EISDIR` crash.
+  `${file}.html`. Serving the directory hit is an `EISDIR` crash. Fixed once, in
+  the harness — don't hand-roll a fourth server.
 - **Locate by role and id, not by guessed label text.** On `/new` the label is
   "Name"; "Group name" is only the placeholder, so `getByLabel` hangs.
 - **Scope row-level clicks to the row.** `getByRole("button", { name: /the
@@ -61,7 +97,7 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 - **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
   *slashed*. A mark inside a "0" is the font, not a struck-through field.
 
-## `node scripts/entries-check.mjs` — the form is wired to the commands
+## `pnpm entries` — the form is wired to the commands
 
 The command tests prove an income's sign reaches the balances and that a
 transfer edit writes only what changed. They cannot prove the *form* reaches
@@ -70,10 +106,9 @@ field, a detail screen that can't find a settlement by id
 ([ADR-0010](decisions/0010-what-an-entry-is.md)). This adds each of the
 three kinds through the real UI, edits them, and reads the history back.
 
-Needs a build first, like `shots` and `offline-check`. **Wait on state, not on
-a URL:** a save navigates before Dexie has redrawn, so every assertion here
-follows a `waitForFunction` on the row count. Skipping that is what makes a
-check like this flake and then get deleted.
+**Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
+every assertion here follows a `waitForFunction` on the row count. Skipping
+that is what makes a check like this flake and then get deleted.
 
 ## Real two-device testing — for sync/join bugs
 

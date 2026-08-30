@@ -12,8 +12,12 @@
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "build": "pnpm -r --if-present build",
-    "check": "pnpm typecheck && pnpm test",
-    "shots": "pnpm --filter @hajsik/web build && node scripts/shots.mjs"
+    "docs": "node scripts/docs-check.mjs",
+    "check": "pnpm typecheck && pnpm test && pnpm docs && pnpm build",
+    "verify": "node scripts/entries-check.mjs && node scripts/offline-check.mjs",
+    "entries": "node scripts/entries-check.mjs",
+    "offline": "node scripts/offline-check.mjs",
+    "shots": "node scripts/shots.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.62.1",
@@ -22,7 +26,8 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "esbuild",
+      "workerd"
     ]
   }
 }

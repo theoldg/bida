@@ -7,8 +7,9 @@
  * edit. See docs/standing-instructions.md.
  *
  * What it does, in order:
- *   1. serves the real static export (apps/web/out) over http — not `next dev`,
- *      because the export is what actually ships and it has its own quirks;
+ *   0. builds the static export if it is missing or stale;
+ *   1. serves it over http — not `next dev`, because the export is what
+ *      actually ships and it has its own quirks;
  *   2. drives the real UI to seed a group, members and expenses, so the shots
  *      show a populated ledger rather than eight empty states. Seeding through
  *      the UI rather than by poking IndexedDB means the harness also fails when
@@ -18,17 +19,12 @@
  * Chromium comes from PLAYWRIGHT_BROWSERS_PATH (already on disk in the agent
  * environment). Never run `playwright install`.
  */
-import { createServer } from "node:http";
-import { readFile, mkdir, rm } from "node:fs/promises";
-import { existsSync, statSync } from "node:fs";
-import { extname, join, resolve } from "node:path";
-import { chromium } from "playwright-core";
+import { mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
+import { ROOT, ensureBuild, serveExport, launch, newPhone, pick, newGroup }
+  from "./lib/harness.mjs";
 
-const ROOT = resolve(import.meta.dirname, "..");
-const OUT = join(ROOT, "apps/web/out");
 const SHOTS = join(ROOT, "shots");
-const PORT = Number(process.env.SHOTS_PORT ?? 4321);
-const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 
 /* A stubbed bill for the who-had-what shots. The draft it fills lives in memory
    only, so the grid can't be seeded by poking storage: the screen is reached the
@@ -62,71 +58,27 @@ const PHOTO = Buffer.from(
   "base64",
 );
 
-const MIME = {
-  ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
-  ".json": "application/json", ".webmanifest": "application/manifest+json",
-  ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon",
-  ".woff2": "font/woff2", ".txt": "text/plain",
-};
-
-/** Static export: /g is out/g.html, / is out/index.html. */
-async function serve() {
-  const server = createServer(async (req, res) => {
-    const url = new URL(req.url ?? "/", "http://localhost");
-    let path = decodeURIComponent(url.pathname);
-    if (path.endsWith("/")) path += "index.html";
-    let file = join(OUT, path);
-    // `/g` is both out/g.html and out/g/ (its child routes live in there), so a
-    // bare directory hit has to fall through to the sibling .html, not read the
-    // directory.
-    const isFile = (p) => existsSync(p) && statSync(p).isFile();
-    if (!isFile(file) && isFile(`${file}.html`)) file = `${file}.html`;
-    if (!isFile(file)) {
-      res.writeHead(404, { "content-type": "text/plain" });
-      return res.end("not found");
-    }
-    res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
-    res.end(await readFile(file));
-  });
-  await new Promise((ok) => server.listen(PORT, ok));
-  return server;
-}
-
-const base = `http://localhost:${PORT}`;
-
 /** Build a group with three people and one of each kind of entry, via the UI. */
-async function seed(page) {
-  await page.goto(`${base}/new`);
-  await page.locator("#g-name").fill("Marrakech");
-  await page.locator("#g-me").fill("Theo");
-  await page.getByRole("button", { name: "Create" }).click();
-  await page.waitForURL(/\/g\?id=/);
-  const groupId = new URL(page.url()).searchParams.get("id");
-
-  // Two more members, through the People screen's own Add member dialog.
-  await page.goto(`${base}/g/members?id=${groupId}`);
-  for (const name of ["Marie", "Sam"]) {
-    await page.getByRole("button", { name: "Add member" }).click();
-    await page.locator(".dinput").fill(name);
-    await page.getByRole("button", { name: "Add", exact: true }).click();
-    await page.waitForTimeout(120);
-  }
+async function seed(page, base) {
+  const groupId = await newGroup(page, base, {
+    name: "Marrakech", me: "Theo", members: ["Marie", "Sam"],
+  });
 
   // A plain expense, then a co-sponsored one.
-  await addExpense(page, groupId, { amount: "4800", what: "Riad Jnane" });
-  await addExpense(page, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
+  await addExpense(page, base, groupId, { amount: "4800", what: "Riad Jnane" });
+  await addExpense(page, base, groupId, { amount: "6200", what: "Dinner", coSponsor: true });
   // Then the two rows the personal lens exists for: one somebody else paid
   // that you owe a share of (red), and one with nothing to do with you (faded).
-  await addExpense(page, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
-  await addExpense(page, groupId, {
+  await addExpense(page, base, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
+  await addExpense(page, base, groupId, {
     amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
   });
 
   // One of each of the other two kinds, so the ledger shot shows what the
   // ledger actually holds: an income's verb and signed figure, and a transfer
   // between two people (ADR-0010).
-  await addEntry(page, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
-  await addTransfer(page, groupId, { amount: "800", from: "Sam", to: "Theo" });
+  await addEntry(page, base, groupId, { kind: "Income", amount: "1500", what: "Deposit back" });
+  await addTransfer(page, base, groupId, { amount: "800", from: "Sam", to: "Theo" });
 
   // ...and one edit, so the history screens have a revision that is not just a
   // create: something with a diff to render.
@@ -140,14 +92,14 @@ async function seed(page) {
   return groupId;
 }
 
-const addExpense = (page, groupId, opts) => addEntry(page, groupId, opts);
+const addExpense = (page, base, groupId, opts) => addEntry(page, base, groupId, opts);
 
-async function addEntry(page, groupId, { kind, amount, what, coSponsor, paidBy, exclude }) {
+async function addEntry(page, base, groupId, { kind, amount, what, coSponsor, paidBy, exclude }) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}`);
   if (kind) await page.getByRole("tab", { name: kind }).click();
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
-  if (paidBy) await pickInDialog(page, "#paidby", paidBy);
+  if (paidBy) await pick(page, "#paidby", paidBy);
   // The split editor is on this form now (ADR-0010), so leaving somebody out
   // is a tap here rather than a trip to a screen and back.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
@@ -169,7 +121,7 @@ async function addEntry(page, groupId, { kind, amount, what, coSponsor, paidBy, 
 }
 
 /** A transfer: no split, no payer picker, two sides and an arrow. */
-async function addTransfer(page, groupId, { amount, from, to }) {
+async function addTransfer(page, base, groupId, { amount, from, to }) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
   await page.waitForSelector(".transfer");
   await page.locator("input.amount").fill(amount);
@@ -180,16 +132,7 @@ async function addTransfer(page, groupId, { amount, from, to }) {
 }
 
 /** Each side of a transfer opens our own picker now, not a <select> (ADR-0008). */
-const pickSide = (page, label, name) => pickInDialog(page, `[aria-label="${label}"]`, name);
-
-/** Open a picker and take a row out of it. Every picker in the app is this. */
-async function pickInDialog(page, opener, name) {
-  await page.locator(opener).click();
-  await page.waitForSelector(".dlist");
-  // By row, not by role name: an option's accessible name carries its note too.
-  await page.locator(".drow-pick").filter({ hasText: name }).click();
-  await page.waitForTimeout(100);
-}
+const pickSide = (page, label, name) => pick(page, `[aria-label="${label}"]`, name);
 
 const routes = (g) => [
   ["groups", "/"],
@@ -204,26 +147,17 @@ const routes = (g) => [
 ];
 
 async function main() {
-  if (!existsSync(OUT)) {
-    console.error("apps/web/out is missing — run `pnpm --filter @hajsik/web build` first.");
-    process.exit(1);
-  }
+  ensureBuild();
   await rm(SHOTS, { recursive: true, force: true });
   await mkdir(SHOTS, { recursive: true });
 
-  const server = await serve();
-  const browser = await chromium.launch({ executablePath: EXECUTABLE });
+  const { base, close } = await serveExport();
+  const browser = await launch();
   try {
     for (const theme of ["light", "dark"]) {
-      const context = await browser.newContext({
-        viewport: { width: 390, height: 844 },
-        deviceScaleFactor: 2,
-        colorScheme: theme,
-        isMobile: true,
-        hasTouch: true,
-      });
+      const context = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: theme });
       const page = await context.newPage();
-      const groupId = await seed(page);
+      const groupId = await seed(page, base);
 
       for (const [name, path] of routes(groupId)) {
         await page.goto(base + path);
@@ -337,7 +271,7 @@ async function main() {
     console.log(`\nshots written to ${SHOTS}`);
   } finally {
     await browser.close();
-    server.close();
+    close();
   }
 }
 

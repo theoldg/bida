@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `node scripts/offline-check.mjs` — does the built app actually work with the
+ * `pnpm offline` — does the built app actually work with the
  * network cut?
  *
  * Seeds a group through the real UI over a local server, lets the service
@@ -8,84 +8,46 @@
  * expense. It exists because "offline-first" was true of the data layer and
  * false of the app: the shell precache missed the RSC payloads Next fetches on
  * every tap, so a phone with no signal got a wall of `1:"$Sreact.fragment"`.
- * Run it after touching public/sw.js or scripts/precache.mjs.
+ * Run it after touching public/sw.js or apps/web/scripts/precache.mjs; it
+ * builds first if it has to.
  */
-import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { existsSync, statSync } from "node:fs";
-import { extname, join, resolve } from "node:path";
-import { chromium } from "playwright-core";
+import { join } from "node:path";
+import { ensureBuild, OUT, serveExport, launch, newPhone, reporter, newGroup }
+  from "./lib/harness.mjs";
 
-const ROOT = resolve(import.meta.dirname, "..");
-const OUT = join(ROOT, "apps/web/out");
-const PORT = Number(process.env.OFFLINE_PORT ?? 4410);
-const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
-const MIME = {
-  ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
-  ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml",
-  ".woff2": "font/woff2", ".txt": "text/plain",
-};
+ensureBuild();
 
-if (!existsSync(OUT)) {
-  console.error("apps/web/out is missing — run `pnpm --filter @hajsik/web build` first.");
-  process.exit(1);
-}
-
-// Levers for the "a deploy installed over a dying signal" case at the end.
+// Levers for the "a deploy installed over a dying signal" case at the end: one
+// asset goes missing, and the worker comes back claiming to be a new build.
 let swRevision = null;
 const blocked = new Set();
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? "/", "http://localhost");
-  let path = decodeURIComponent(url.pathname);
-  if (blocked.has(path)) { res.writeHead(503); return res.end(); }
-  if (path === "/sw.js" && swRevision) {
-    const src = await readFile(join(OUT, "sw.js"), "utf8");
-    res.writeHead(200, { "content-type": "text/javascript" });
-    return res.end(src.replace(/const REVISION = "[^"]*"/, `const REVISION = "${swRevision}"`));
-  }
-  if (path.endsWith("/")) path += "index.html";
-  let file = join(OUT, path);
-  const isFile = (p) => existsSync(p) && statSync(p).isFile();
-  if (!isFile(file) && isFile(`${file}.html`)) file = `${file}.html`;
-  if (!isFile(file)) { res.writeHead(404, { "content-type": "text/plain" }); return res.end("not found"); }
-  res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
-  res.end(await readFile(file));
+const { base, close } = await serveExport({
+  async intercept(path, res) {
+    if (blocked.has(path)) { res.writeHead(503); res.end(); return true; }
+    if (path === "/sw.js" && swRevision) {
+      const src = await readFile(join(OUT, "sw.js"), "utf8");
+      res.writeHead(200, { "content-type": "text/javascript" });
+      res.end(src.replace(/const REVISION = "[^"]*"/, `const REVISION = "${swRevision}"`));
+      return true;
+    }
+    return false;
+  },
 });
+
 /** Any one precached file will do; a hashed chunk is the realistic casualty. */
 const ASSET_TO_DROP = JSON.parse(
   (await readFile(join(OUT, "sw.js"), "utf8")).match(/const ASSETS = (\[[\s\S]*?\]);/)[1],
 ).find((a) => a.startsWith("/_next/static/chunks/"));
 
-await new Promise((ok) => server.listen(PORT, ok));
-const base = `http://localhost:${PORT}`;
-
-const browser = await chromium.launch({ executablePath: EXECUTABLE });
-const ctx = await browser.newContext({
-  viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
-});
+const browser = await launch();
+const ctx = await newPhone(browser);
 let page = await ctx.newPage();
-
-let failures = 0;
-function report(ok, label, detail) {
-  if (!ok) failures++;
-  console.log(`${ok ? "  ok  " : "FAIL  "}${label}${detail ? `\n        ${detail}` : ""}`);
-}
+const { report, finish } = reporter();
 
 // ---- seed, online -------------------------------------------------------
-await page.goto(`${base}/new`);
-await page.locator("#g-name").fill("Marrakech");
-await page.locator("#g-me").fill("Theo");
-await page.getByRole("button", { name: "Create" }).click();
-await page.waitForURL(/\/g\?id=/);
-const g = new URL(page.url()).searchParams.get("id");
-await page.goto(`${base}/g/members?id=${g}`);
-for (const name of ["Marie", "Sam"]) {
-  await page.getByRole("button", { name: "Add member" }).click();
-  await page.locator(".dinput").fill(name);
-  await page.getByRole("button", { name: "Add", exact: true }).click();
-  await page.waitForTimeout(120);
-}
+const g = await newGroup(page, base, { name: "Marrakech", me: "Theo", members: ["Marie", "Sam"] });
 for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Taxi"]]) {
   await page.goto(`${base}/g/entry/edit?id=${g}`);
   await page.locator("input.amount").fill(amount);
@@ -182,6 +144,5 @@ await ctx.setOffline(true);
 await tap("still loads offline on the next launch", () => page.goto(`${base}/`), ".rows a.row");
 
 await browser.close();
-server.close();
-console.log(failures ? `\n${failures} failed` : "\nall offline checks passed");
-process.exit(failures ? 1 : 0);
+close();
+finish();

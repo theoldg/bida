@@ -38,6 +38,7 @@ Append to it whenever they state a new one.
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
+| `scripts/` | Browser checks (`entries`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
 
 ## Stack
 
@@ -61,7 +62,7 @@ of entry — expense, income, transfer
 this file can't go stale.
 
 ```bash
-pnpm install && pnpm --filter @hajsik/core test
+pnpm session && pnpm check
 ```
 
 ## Working agreements
@@ -71,8 +72,11 @@ pnpm install && pnpm --filter @hajsik/core test
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
-  runs `pnpm check`. Push to `main` then auto-deploys —
-  [hosting.md](docs/hosting.md#deploying).
+  runs `pnpm check`: typecheck, tests, doc links and the static export build,
+  ~45s. Nothing else gates a push, so anything you want caught belongs in it.
+  `pnpm verify` drives the built app in a real browser and `pnpm shots`
+  photographs it — [testing.md](docs/testing.md). Push to `main` then
+  auto-deploys — [hosting.md](docs/hosting.md#deploying).
 - **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —
   no I/O, no framework, and take a clock as an argument. Prefer a function to a
   class, plain data to a wrapper. Comments explain *why*.
@@ -89,7 +93,7 @@ pnpm install && pnpm --filter @hajsik/core test
   ([product.md](docs/product.md#deliberately-not-in-the-mvp)). Leave the seams,
   build none of it.
 
-**Done means:** it works and you ran it · arithmetic has passing tests · the doc
+**Done means:** `pnpm check` passes · arithmetic has passing tests · the doc
 describing the changed behaviour is updated in the same commit · any preference
 the owner stated is in standing-instructions, dated · implementation-status and
 roadmap reflect reality · pushed to `main`.

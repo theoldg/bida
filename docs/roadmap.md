@@ -52,7 +52,7 @@ wording.
 - [x] The two ways a real trip loses data: storage evicted under a phone
       (`lib/persist.ts`) and sync failing where nothing said so (`useSyncHealth`)
 - [ ] Empty states, the rest of the error states
-- [ ] Answer the open questions in [product.md](product.md#open-product-questions)
+- [ ] Answer the open questions in [product.md](product.md#open-questions)
 
 ## Phase 8 — Three kinds of entry ✅ *(2026-08-30)*
 Expenses, incomes and transfers, all editable, on one form and one detail

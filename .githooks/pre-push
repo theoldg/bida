@@ -1,6 +1,10 @@
 #!/bin/sh
-# Typecheck + test before a push leaves the machine — the deploy workflow
-# (.github/workflows/deploy.yml) trusts this and does not re-run checks.
+# Everything CI-shaped, on the machine making the push — the owner's rule
+# (docs/standing-instructions.md#workflow). `pnpm check` is typecheck, tests,
+# doc links and the static export build: the deploy workflow
+# (.github/workflows/deploy.yml) only rebuilds and ships, so a build that fails
+# there fails on `main` with nothing to gate it.
+#
 # Wired up automatically by the root postinstall script
 # (`git config core.hooksPath .githooks`), so `pnpm install` is all a fresh
 # clone needs.
