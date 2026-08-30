@@ -3,12 +3,13 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # typecheck · 217 tests · doc links · export build — pre-push, ~45s
+pnpm check       # links · rules · typecheck · 217 tests · export build — pre-push, ~45s
 pnpm verify      # both browser checks against a real build, ~45s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm docs        # every relative markdown link resolves, ~30ms
+pnpm rules       # core is still pure, no browser dialogs crept back, ~30ms
 ```
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
@@ -16,10 +17,18 @@ and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale — so none of them needs a build step in front of it, and none
 of them wastes 25 seconds when nothing has changed.
 
-`pnpm check` is the gate: the build is in it because `next build` catches what
-`tsc` cannot — a prerender that touches `window`, a client-boundary mistake, a
-`precache.mjs` that throws — and the deploy workflow only rebuilds and ships,
-so a build that fails there fails on `main`.
+`pnpm check` is the gate — nothing else stands between an edit and production,
+so the two things that gate nothing else are in it. The build, because `next
+build` catches what `tsc` cannot (a prerender touching `window`, a
+client-boundary mistake, a `precache.mjs` that throws) and the deploy workflow
+only rebuilds and ships, so a build that fails there fails on `main`. And
+`pnpm rules`, because a decision written in an ADR is one careless import away
+from being reversed by someone who never read it: it fails on an import or a
+`Date.now()` in `packages/core`, and on a `prompt`/`confirm`/`alert`/`<select>`
+in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for
+a fourth rule is in the script: written down as a decision, reversible in one
+line, invisible to every test. Style isn't on the list — there is no linter here
+on purpose.
 
 `packages/core` gets real coverage — money, splits, folding; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements) and what's proven is in
