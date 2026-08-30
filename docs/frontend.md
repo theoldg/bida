@@ -96,8 +96,11 @@ iOS ignores manifest `display` entirely; `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
 and `env(safe-area-inset-top)` padding on `.topbar` matter.
 
-Installing also protects IndexedDB from eviction
-([architecture.md](architecture.md#gotchas)), so the app asks. `lib/install.ts`
+Installing is also what makes the browser grant `navigator.storage.persist()`
+— `lib/persist.ts`, called from `saveGroupKey` and on every start once the
+phone holds a group, because the answer changes once the app looks established.
+Without it IndexedDB is evictable ([architecture.md](architecture.md#gotchas)),
+so the app asks to be installed too. `lib/install.ts`
 captures `beforeinstallprompt` at module load — it fires once, early, and only
 that object can open the install sheet later — and reduces the situation to one
 of `installed | ready | manual | none`; iOS has no such event, hence `manual`

@@ -20,6 +20,7 @@ import {
 import { db, type StoredOp } from "./dexie";
 import { forgetMe, getDevice, hideGroup, setMe, unhideGroup } from "./device";
 import { materialise, opsForGroup } from "./fold";
+import { requestPersistence } from "../persist";
 import { scheduleSync } from "./sync";
 
 /**
@@ -240,6 +241,9 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   // Opening the link is what "rejoining" means here — surface the group
   // again if this device had previously left it.
   await unhideGroup(groupId);
+  // This phone now holds something that exists nowhere else until it syncs.
+  // Not awaited: whether the browser agrees to keep it doesn't gate the join.
+  void requestPersistence();
 }
 
 export async function getGroupSecret(groupId: Id): Promise<string | undefined> {
