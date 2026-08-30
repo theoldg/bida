@@ -64,8 +64,11 @@ confers nothing without the secret.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**:
   a real `<dialog>` with `showModal()`, so focus and Escape are the platform's
   job ([ADR-0025](decisions/0025-our-own-dialogs.md)) — `ConfirmDialog`,
-  `PromptDialog` and `ChoiceDialog`, which picks a person from a short list
-  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
+  `PromptDialog` and `ChoiceDialog`, which is every picker in the app — payer,
+  currency, a transfer's sides — behind a `.field > .pick` button or a chip.
+  `<input type="date">` is the one native control left
+  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
+  [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
 - History wording lives once, in `lib/history-copy.ts` (`describe`,
   `fieldLabel`, `fieldValue`), read by both the feed and `/g/restore`. All three
   must be **total** — they run inside a render over every patch the log holds,

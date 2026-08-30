@@ -147,7 +147,7 @@ async function addEntry(page, groupId, { kind, amount, what, coSponsor, paidBy, 
   if (kind) await page.getByRole("tab", { name: kind }).click();
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
-  if (paidBy) await page.locator("#paidby").selectOption({ label: paidBy });
+  if (paidBy) await pickInDialog(page, "#paidby", paidBy);
   // The split editor is on this form now (ADR-0013), so leaving somebody out
   // is a tap here rather than a trip to a screen and back.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
@@ -180,8 +180,11 @@ async function addTransfer(page, groupId, { amount, from, to }) {
 }
 
 /** Each side of a transfer opens our own picker now, not a <select> (ADR-0029). */
-async function pickSide(page, label, name) {
-  await page.getByLabel(label).click();
+const pickSide = (page, label, name) => pickInDialog(page, `[aria-label="${label}"]`, name);
+
+/** Open a picker and take a row out of it. Every picker in the app is this. */
+async function pickInDialog(page, opener, name) {
+  await page.locator(opener).click();
   await page.waitForSelector(".dlist");
   // By row, not by role name: an option's accessible name carries its note too.
   await page.locator(".drow-pick").filter({ hasText: name }).click();

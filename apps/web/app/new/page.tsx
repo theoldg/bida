@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
+import { ChoiceDialog, PromptDialog } from "../../components/dialog";
+import { Icon } from "../../components/icons";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
 import { createGroup } from "../../lib/db/commands";
 import { errorText } from "../../lib/format";
@@ -13,14 +15,12 @@ export default function NewGroupPage() {
   const [name, setName] = useState("");
   const [myName, setMyName] = useState("");
   const [currency, setCurrency] = useState("EUR");
-  const [customCurrency, setCustomCurrency] = useState("");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
+  const [ask, setAsk] = useState<null | "currency" | "other">(null);
 
-  const isCustom = currency === OTHER_CURRENCY;
-  const resolvedCurrency = isCustom ? normalizeCurrencyCode(customCurrency) : currency;
   const ready = name.trim().length > 0 && myName.trim().length > 0
-    && resolvedCurrency.length === 3 && !busy;
+    && currency.length === 3 && !busy;
 
   async function save() {
     if (!ready) return;
@@ -28,7 +28,7 @@ export default function NewGroupPage() {
     setFailed(undefined);
     try {
       const { groupId } = await createGroup({
-        name: name.trim(), baseCurrency: resolvedCurrency, myName: myName.trim(),
+        name: name.trim(), baseCurrency: currency, myName: myName.trim(),
       });
       router.replace(route.group(groupId));
     } catch (err) {
@@ -55,20 +55,13 @@ export default function NewGroupPage() {
                 onChange={(e) => setMyName(e.target.value)} />
             </div>
             <div className="field">
-              <label htmlFor="g-cur">Currency</label>
-              <select id="g-cur" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                {COMMON_CURRENCIES.map((c) => <option key={c} value={c}>{currencyLabel(c)}</option>)}
-                <option value={OTHER_CURRENCY}>Other…</option>
-              </select>
+              <span className="fieldlabel" style={{ width: 62 }}>Currency</span>
+              <button type="button" id="g-cur" className="pick" aria-label="Currency"
+                onClick={() => setAsk("currency")}>
+                <span className="ptext">{currencyLabel(currency)}</span>
+                <Icon name="chev" size={13} className="spacer pchev" />
+              </button>
             </div>
-            {isCustom ? (
-              <div className="field">
-                <label htmlFor="g-cur-custom">Currency code</label>
-                <input id="g-cur-custom" value={customCurrency} placeholder="e.g. UZS" maxLength={3}
-                  autoFocus
-                  onChange={(e) => setCustomCurrency(e.target.value)} />
-              </div>
-            ) : null}
             {failed ? <Failure>Couldn&rsquo;t create the group — {failed}</Failure> : null}
             <p className="hint">
               Balances settle in this currency. An expense can be in any other, and
@@ -77,6 +70,30 @@ export default function NewGroupPage() {
           </div>
         </Scroll>
       </Body>
+
+      {ask === "currency" ? (
+        <ChoiceDialog
+          title="Currency"
+          value={currency}
+          options={[
+            ...[...new Set([currency, ...COMMON_CURRENCIES])].map((c) => ({
+              value: c, label: currencyLabel(c),
+            })),
+            { value: OTHER_CURRENCY, label: "Other…", note: "any three-letter code" },
+          ]}
+          onPick={(c) => { if (c === OTHER_CURRENCY) setAsk("other"); else setCurrency(c); }}
+          // "Other…" swaps one dialog for the next, so it can't close this one.
+          onClose={() => setAsk((a) => (a === "other" ? a : null))}
+        />
+      ) : null}
+
+      {ask === "other" ? (
+        <PromptDialog title="Currency" placeholder="UZS" confirm="Use it" maxLength={3}
+          autoCapitalize="characters" hint="A three-letter ISO code."
+          clean={normalizeCurrencyCode} valid={(v) => v.length === 3}
+          onSubmit={(code) => { setCurrency(code); setAsk(null); }}
+          onClose={() => setAsk(null)} />
+      ) : null}
     </Screen>
   );
 }

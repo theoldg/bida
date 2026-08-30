@@ -30,9 +30,12 @@ sign is applied once, in `computeBalances`; a transfer is the `Settlement` we
 already had, called what it is everywhere a person can read. `/g/settle` is
 deleted (settling up links into the form with the transfer pre-filled) and
 `/g/expense*` is now `/g/entry*`. A transfer's two sides carry their label
-above the face and open a `ChoiceDialog` rather than a `<select>`, with the
-other side in the list as a swap
-([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
+above the face, and **no field anywhere opens a browser picker**: the payer, both
+currency fields and the sides are all `ChoiceDialog`, with the other side listed
+as a swap and "Other…" handing over to the three-letter prompt. `<input
+type="date">` is the last native control
+([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
+[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
 
 Also: the browser's own gestures answer to the app. A long press does
 nothing — CSS only ever silenced iOS's callout, so `components/no-long-press.tsx`

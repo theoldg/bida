@@ -14,7 +14,7 @@ import { SplitEditor, type ScanSource, type ScanState } from "../../../../compon
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
-import { COMMON_CURRENCIES, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
+import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
 import {
   ENTRY_LABEL, ENTRY_PAYER_LABEL, ENTRY_SPLIT_LABEL, ENTRY_KINDS, kindOf, type EntryKind,
@@ -60,7 +60,7 @@ function EditEntryScreen() {
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scanSource, setScanSource] = useState<ScanSource>(null);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [ask, setAsk] = useState<null | "discard" | "currency">(null);
+  const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
   const [failed, setFailed] = useState<string>();
 
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
@@ -426,25 +426,11 @@ function EditEntryScreen() {
                 autoSize={true}
                 disabled={receiptLocksAmount}
               />
-              <span className="chip" style={{ alignSelf: "center", marginLeft: 3, position: "relative" }}>
+              <button type="button" className="chip" aria-label="Currency"
+                style={{ alignSelf: "center", marginLeft: 3 }}
+                onClick={() => setAsk("currency")}>
                 {draft.currency} <Icon name="chev" size={10} />
-                <select
-                  aria-label="Currency"
-                  value={draft.currency}
-                  onChange={(e) => {
-                    if (e.target.value === OTHER_CURRENCY) { setAsk("currency"); return; }
-                    patch({
-                      currency: e.target.value,
-                      rateToBase: e.target.value === base ? "1" : draft.rateToBase,
-                    });
-                  }}
-                  style={{ position: "absolute", inset: 0, opacity: 0 }}
-                >
-                  {[...new Set([base, draft.currency, ...COMMON_CURRENCIES])].map((c) =>
-                    <option key={c} value={c}>{c}</option>)}
-                  <option value={OTHER_CURRENCY}>Other…</option>
-                </select>
-              </span>
+              </button>
             </div>
 
             {receiptLocksAmount ? (
@@ -519,13 +505,13 @@ function EditEntryScreen() {
               </Card>
             ) : (
               <div className="field">
-                <label htmlFor="paidby" className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</label>
-                <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
-                <select id="paidby" value={draft.paidBy}
-                  onChange={(e) => patch({ paidBy: e.target.value, payers: null })}>
-                  {data.members.map((m) =>
-                    <option key={m.id} value={m.id}>{m.name}</option>)}
-                </select>
+                <span className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</span>
+                <button type="button" id="paidby" className="pick"
+                  aria-label={ENTRY_PAYER_LABEL[kind]} onClick={() => setAsk("payer")}>
+                  <Avatar member={data.memberById.get(draft.paidBy)} size={24} />
+                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? "—"}</span>
+                  <Icon name="chev" size={13} className="spacer pchev" />
+                </button>
                 <Link href={route.payers(groupId)} className="chip" aria-label="Several people put money in">
                   + someone
                 </Link>
@@ -577,6 +563,42 @@ function EditEntryScreen() {
       ) : null}
 
       {ask === "currency" ? (
+        <ChoiceDialog
+          title="Currency"
+          value={draft.currency}
+          options={[
+            ...[...new Set([base, draft.currency, ...COMMON_CURRENCIES])].map((c) => ({
+              value: c,
+              label: currencyLabel(c),
+              note: c === base ? "the group settles in this" : undefined,
+            })),
+            { value: OTHER_CURRENCY, label: "Other…", note: "any three-letter code" },
+          ]}
+          onPick={(currency) => {
+            if (currency === OTHER_CURRENCY) { setAsk("currency-other"); return; }
+            patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
+          }}
+          // "Other…" hands over to the prompt, so that pick must not close it.
+          onClose={() => setAsk((a) => (a === "currency-other" ? a : null))}
+        />
+      ) : null}
+
+      {ask === "payer" ? (
+        <ChoiceDialog
+          title={ENTRY_PAYER_LABEL[kind]}
+          value={draft.paidBy}
+          options={data.members.map((m) => ({
+            value: m.id,
+            label: m.name,
+            lead: <Avatar member={m} size={30} />,
+            note: m.id === data.me ? "you" : undefined,
+          }))}
+          onPick={(paidBy) => patch({ paidBy, payers: null })}
+          onClose={() => setAsk(null)}
+        />
+      ) : null}
+
+      {ask === "currency-other" ? (
         <PromptDialog title="Currency" placeholder="UZS" confirm="Use it" maxLength={3}
           autoCapitalize="characters" hint="A three-letter ISO code."
           clean={normalizeCurrencyCode} valid={(v) => v.length === 3}

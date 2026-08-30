@@ -40,3 +40,4 @@ old one `Superseded by NNNN`.
 | [0027](0027-back-goes-up-the-hierarchy.md) | Back climbs the hierarchy; an up-link unwinds the history | Accepted |
 | [0028](0028-three-kinds-of-entry.md) | Three kinds of entry: expense, income, transfer | Accepted |
 | [0029](0029-a-picker-is-a-dialog.md) | Picking a person is our dialog, not a `<select>` | Accepted |
+| [0030](0030-every-picker-is-a-dialog.md) | Every picker is our dialog; the date is the exception | Accepted |

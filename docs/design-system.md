@@ -123,10 +123,12 @@ so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
 ("Leave group", never "OK"), `--debit` outlined when it destroys something. A
 screen still wins where the decision needs the ledger on it, `/g/restore`
-([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours:
-`ChoiceDialog` picks from a short list in the app's own rows — an avatar, a name,
-a check on the current one, and a `note` saying what an unobvious pick does
-([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)). A *failure* is not
+([ADR-0025](decisions/0025-our-own-dialogs.md)). Nor is a `<select>` ours, and
+there are none left: `ChoiceDialog` picks from a short list in the app's own
+rows — an avatar, a name, a check on the current one, and a `note` saying what an
+unobvious pick does. A date is the exception, being a calendar and not a list
+([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
+[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
 attempted, in `--debit`: `Failure` / `.failure`.
 

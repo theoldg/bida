@@ -76,6 +76,20 @@ async function save(expectRows) {
 await page.goto(`${base}/new`);
 await page.locator("#g-name").fill("Trip");
 await page.locator("#g-me").fill("Theo");
+// "Other…" is the one row that hands one dialog to the next rather than
+// closing: the picker has to stay out of the prompt's way.
+await page.locator("#g-cur").click();
+await page.waitForSelector(".dlist");
+await page.locator(".drow-pick").filter({ hasText: "Other" }).click();
+await page.locator(".dinput").fill("uzs");
+await page.getByRole("button", { name: "Use it" }).click();
+await page.waitForTimeout(120);
+report((await page.locator("#g-cur").innerText()).includes("UZS"),
+  "an unlisted currency is typed, not scrolled to");
+await page.locator("#g-cur").click();
+await page.waitForSelector(".dlist");
+await page.locator(".drow-pick").filter({ hasText: "EUR" }).first().click();
+await page.waitForTimeout(120);
 await page.getByRole("button", { name: "Create" }).click();
 await page.waitForURL(/\/g\?id=/);
 const g = new URL(page.url()).searchParams.get("id");
@@ -87,10 +101,36 @@ for (const name of ["Marie", "Sam"]) {
   await page.waitForTimeout(150);
 }
 
+/** Every picker in the app is our own dialog now (ADR-0029): open one, take a row. */
+async function pick(opener, row) {
+  await page.locator(opener).click();
+  await page.waitForSelector(".dlist");
+  // By row, not by role name: an option's accessible name carries its note too.
+  await page.locator(".drow-pick").filter({ hasText: row }).first().click();
+  await page.waitForTimeout(120);
+}
+
 // ---- an expense --------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
 await page.locator("#what").fill("Dinner");
+
+// The currency and the payer are the same dialog the transfer's sides use. A
+// foreign currency has to bring the rate row with it, since that is the field
+// the conversion is actually read from.
+await pick('[aria-label="Currency"]', "USD");
+report((await page.locator('[aria-label="Currency"]').innerText()).includes("USD"),
+  "the currency picker sets the currency");
+report(await page.getByLabel("Rate, USD to EUR").count() === 1,
+  "a foreign currency brings out the rate");
+await pick('[aria-label="Currency"]', "EUR");
+report(await page.getByLabel("Rate, USD to EUR").count() === 0,
+  "picking the base currency puts the rate away");
+
+await pick("#paidby", "Marie");
+report((await page.locator("#paidby").innerText()).includes("Marie"), "the payer picker sets the payer");
+await pick("#paidby", "Theo");
+
 await save(1);
 report(await page.getByText("Dinner").count() > 0, "an expense saves and lists");
 
@@ -124,7 +164,9 @@ await page.locator(".tswap").click();
 await page.waitForTimeout(100);
 // Either side opens the app's own picker, never a <select> (ADR-0029), and the
 // person already on the other side is in it as a reversal rather than an error.
-report(await page.locator(".transfer select").count() === 0, "the sides are not native pickers");
+// Nothing on this form is a native picker any more — the currency and the payer
+// went the same way — so the assertion is the whole screen, not the card.
+report(await page.locator("select").count() === 0, "no screen of the form has a <select>");
 await page.getByLabel("Who sent it").click();
 await page.waitForSelector(".dlist");
 const otherSide = await page.locator(".tside .who").last().innerText();

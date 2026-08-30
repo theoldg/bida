@@ -152,9 +152,11 @@ it applies to work nobody has done yet.
 - **No browser dialogs, and that includes its pickers.** *2026-08-30* — "Add
   member has ugly native/browser input make it cooler. Same for the 'abandon
   editing' popup", then "create a custom dialog for the person selection instead
-  of the browser native one". Asking is `components/dialog.tsx`; no `prompt()`,
-  `confirm()` or `<select>` over a list of people
-  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
+  of the browser native one", then "make all selectors into a custom dialog:
+  currency, payer, etc". Asking is `components/dialog.tsx`; no `prompt()`,
+  `confirm()` or `<select>`, anywhere
+  ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
+  [ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
 - **A confirmation's button sits under its sentence.** *2026-08-30* — "on the
   'confirm leave group' page the button shouldn't be at the very bottom of the
   screen, i think it can be under the text. This page can be custom popup like

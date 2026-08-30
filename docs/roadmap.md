@@ -58,8 +58,9 @@ the shared wording.
 Expenses, incomes and transfers, all editable, on one form and one detail
 screen; `/g/settle` and `/g/expense*` are gone
 ([ADR-0028](decisions/0028-three-kinds-of-entry.md)). A transfer's sides label
-themselves above the face and pick from our own dialog
-([ADR-0029](decisions/0029-a-picker-is-a-dialog.md)).
+themselves above the face, and every picker on the form — sides, payer, currency
+— is our own dialog ([ADR-0029](decisions/0029-a-picker-is-a-dialog.md),
+[ADR-0030](decisions/0030-every-picker-is-a-dialog.md)).
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a

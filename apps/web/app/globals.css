@@ -191,13 +191,13 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
-.itemfold, a.chip, button.chip, .action, .tlrewind {
+.itemfold, a.chip, button.chip, .action, .tlrewind, .field:has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .tlrewind:active, .btn:active:not(:disabled),
-.action:active:not(:disabled) {
+.field:has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient, not a background-color: it composites over the element's own
      background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
@@ -592,9 +592,15 @@ dialog.scrim::backdrop { background: transparent }
    jump as the segmented control changes the entry's kind. */
 .field label.fieldlabel, .fieldlabel {
   font-size: 13px; color: var(--muted); width: 92px; flex: none; white-space: nowrap }
-.field input, .field select { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
+.field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
+/* A value that is picked rather than typed. The whole line is the button — a
+   <select> at least gave you the row; ours has to say so itself — and the
+   chevron is the only mark that it opens something (ADR-0029). */
+.field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
+.field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.field .pick .pchev { color: var(--muted); flex: none }
 
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 34px 1fr auto; gap: 11px;
