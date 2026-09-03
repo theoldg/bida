@@ -60,18 +60,16 @@ confers nothing without the secret.
   you already typed. Leaving asks before discarding, and a reload gets the
   browser's own warning — `seedDraft` records the baseline `isDraftDirty`
   compares against.
-- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**:
-  a real `<dialog>` with `showModal()`, so focus and Escape are the platform's
-  job ([ADR-0008](decisions/0008-hand-rolled-interface.md)) — `ConfirmDialog`,
-  `PromptDialog` and `ChoiceDialog`, which is every picker in the app — payer,
-  currency, a transfer's sides — behind a `.field > .pick` button or a chip.
-  `<input type="date">` is the one native control left
+- **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
+  — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
+  the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
+  the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
   of a list of names: Enter files the name and hands the caret back, so a group
   of six is one burst of typing rather than six trips through a scrim. Used on
-  `/new`, `/g/members` and `/g/claim`. A dialog is still right for a decision
-  with a consequence to state; it was never right for a list you fill.
+  `/new`, `/g/members` and `/g/claim`. A dialog is for a decision with a
+  consequence to state; it was never right for a list you fill.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. It must be **total** — it runs inside a render over
   every patch the log holds, so one throw is a white screen, not a missing line.
@@ -79,15 +77,10 @@ confers nothing without the secret.
 ## Every word, in `lib/copy.ts`
 
 Screens import `copy` and hold no literal a person can read — `aria-label`,
-`placeholder` and `title` included ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
-A string that takes a value is a function *there*, because word order is the
-first thing a translation changes; counts go through `plural(n, noun)` with a
-`{ one, many }` noun. `pnpm rules` fails a build that types one back into a
-screen. A second language is a second object of the same shape and nothing
-else — no library, no extraction step.
-
-Say it once and say it short: the screen already shows the amount, the name and
-the button, so the sentence beside them carries only what they can't.
+`placeholder` and `title` included; `pnpm run rules` fails a build that types
+one back in ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Say it once
+and say it short: the screen already shows the amount, the name and the button,
+so the sentence beside them carries only what they can't.
 
 ## One navigation
 
@@ -98,45 +91,38 @@ them behind a top-bar icon, not a second row — three icons is the ceiling.
 
 ## Your own money, pulled out of the group's
 
-Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
-It changes rendering only, never data or what syncs:
-
-- **A signed, coloured effect on every row** — `+€45,00` / `−€14,28` — what you
-  put in for that entry minus what you owe for it (`myEffect` in
-  `lib/entry-kind.ts`, one subtraction for all three kinds), with a matching
-  green/red left edge. The column adds up to your net.
-- **`opacity: .42`** on entries involving neither your money nor your share.
-- **Your position above the list**: net, signed and coloured, with paid and
-  share underneath.
-
-Visual reasoning: [design-system.md](design-system.md).
+Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)),
+and it changes rendering only — never data or what syncs. Every row carries a
+signed, coloured effect: what you put in for that entry minus what you owe for
+it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
+The column adds up to the net printed above the list. Rows involving neither
+your money nor your share drop to `opacity: .42`. What it looks like and why:
+[design-system.md](design-system.md#your-own-rows-are-highlighted).
 
 ## PWA
 
-In scope for the MVP — build-time icon files, unrelated to receipt hosting.
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: fullscreen` (spec falls back to `standalone`), theme colour per theme.
-The three PNGs are the tally wordmark in paper on an ink tile — the same
-figure-ground inversion as the FAB. Regenerate them together if the mark or the
-ink changes; the maskable one draws its mark smaller and unrounded so a
-circular launcher crop can't clip it.
-iOS ignores manifest `display` entirely; `appleWebApp.statusBarStyle:
+`display: fullscreen` (falls back to `standalone`), theme colour per theme. The
+three PNGs are the tally wordmark in paper on an ink tile; regenerate them
+together if the mark or the ink changes, and the maskable one draws its mark
+smaller and unrounded so a circular launcher crop can't clip it. iOS ignores
+manifest `display` entirely — `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
 and `env(safe-area-inset-top)` padding on `.topbar` matter.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
-— `lib/persist.ts`, called from `saveGroupKey` and on every start once the
-phone holds a group, because the answer changes once the app looks established.
+(`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
+holds a group, because the answer changes once the app looks established).
 Without it IndexedDB is evictable ([architecture.md](architecture.md#gotchas)),
-so the app asks to be installed too. `lib/install.ts`
-captures `beforeinstallprompt` at module load — it fires once, early, and only
-that object can open the install sheet later — and reduces the situation to one
-of `installed | ready | manual | none`; iOS has no such event, hence `manual`
-(share-sheet instructions). `components/install.tsx` renders it: a nudge at the
-foot of the groups list, only once there is a group worth coming back to, and
-and nowhere else. "Not now" writes `device.installDismissedAt` and is never
-cleared — a banner that returns each launch is what makes install prompts
-hated, and the browser's own menu still installs.
+so the app asks to be installed too. `lib/install.ts` captures
+`beforeinstallprompt` at module load — it fires once, early, and only that
+object can open the install sheet later — and reduces the situation to
+`installed | ready | manual | none`; iOS has no such event, hence `manual`.
+`components/install.tsx` puts the nudge at the foot of the groups list, only
+once there is a group worth coming back to. "Not now" writes
+`device.installDismissedAt` and is never cleared: a banner that returns each
+launch is what makes install prompts hated, and the browser's menu still
+installs.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —
@@ -145,18 +131,12 @@ Dexie is the offline data layer, and a second cache over the same data gives
 you two disagreeing sources of truth.
 
 Everything precached is served cache-first, so a launch and every tap after it
-paint without waiting on the network — the reasoning, and the three things that
-make it safe, are
-[ADR-0004](decisions/0004-static-export-and-offline.md). In short:
-the list and the cache name are stamped in after the build by
-`apps/web/scripts/precache.mjs` (nothing to drift, no `CACHE_VERSION` to bump);
-the worker does not `skipWaiting`, so a deploy takes over on the next launch
-rather than deleting the running build under an open page; and a *document*
-request for a `.txt` is answered with that route's shell.
-
-`node scripts/offline-check.mjs` walks every screen with the network cut and
-then installs a deploy over a half-dead network, against the real export. Run it
-after touching either file.
+paint without waiting on the network. The list and the cache name are stamped in
+after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
+`CACHE_VERSION` to bump — and the three things that make cache-first safe are
+[ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
+scripts/offline-check.mjs` after touching either file: it walks every screen
+with the network cut, then installs a deploy over a half-dead network.
 
 ## Every money field is `components/amount-input.tsx`
 
@@ -173,21 +153,18 @@ itself** ([ADR-0005](decisions/0005-money-and-currency.md)).
 A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
 separator — "," and "." both accepted — fraction clipped to the currency's
 exponent, leading zeros stripped), **restores the caret** across its own
-reformatting via a `useLayoutEffect` that counts significant characters before
-it, wears `.amountfield`'s underline so it looks like a field, and autofocuses
-on a *new* expense only. `MinorAmountInput` holds typed text locally and
-re-reads the model only on outside change — don't go back to
-`value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
+reformatting, and autofocuses on a *new* expense only. `MinorAmountInput` holds
+typed text locally and re-reads the model only on outside change — don't go back
+to `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
 "12.".
 
-The other place with real logic is the **balance bar** (a bar around a centre
-axis, debit left, credit right), drawn inline on `/g`'s Balances tab.
-Everything else is ordinary markup; what more than one screen
-draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
-still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
-`components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0023 — `Card`, `KV`, `GhostRow`). What the three
-kinds of entry are *called* — labels, verbs, headings — is `copy.entryKind`;
-`lib/entry-kind.ts` is types and arithmetic only.
+The other place with real logic is the **balance bar** (around a centre axis,
+debit left, credit right), drawn inline on `/g`'s Balances tab. Everything else
+is ordinary markup; what more than one screen draws lives in
+`components/chrome.tsx` (the frame, plus `Blank` for a screen still waiting on
+Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
+`components/bits.tsx` (`Avatar` — a *group's* initials — `Card`, `KV`,
+`GhostRow`).
 
 **Core says what is wrong; the screen says it in money.** `validateSplit` and
 `validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and
@@ -221,9 +198,6 @@ figure-free.
   times the font's average advance. A field that hugs its own text sizes from a
   hidden mirror (`.amountsizer`), and the input must then be `width: 100%` or
   the column sizes to `size`'s 20-character default.
-- **The typed grouping separator is U+202F**, a narrow no-break space, because
-  the field accepts both "," and "." as decimal separators. It deliberately
-  doesn't match `Intl`'s grouping in saved figures.
 - **`bare()` is display text; `minorToDecimalString` is canonical text.** Both
   drop the symbol, but `bare` is `Intl`-grouped, so feeding it to an
   `AmountInput`'s `value` or a draft's `amountText` loses money: `parseMinor`

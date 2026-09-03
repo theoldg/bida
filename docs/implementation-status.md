@@ -22,83 +22,32 @@ Update it in the same commit as the code it describes.*
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: **every word a person reads lives in `apps/web/lib/copy.ts`** —
-placeholders and `aria-label`s included, parameterised strings as functions,
-counts through `plural` — and `scripts/rules-check.mjs` fails the build on a
-stray literal, so a second language is a second object rather than a hunt
-([ADR-0033](decisions/0033-every-word-in-one-file.md)). The English was cut
-short on the way through. Four things the owner caught went with it: **adding a
-person is the last row of the list**, not a dialog — `components/name-adder.tsx`
-on `/g/members`, `/g/claim` and `/new`, where a group is now created with
-everyone in it in one batch; the tip on the who-had-what grid is drawn as a
-field with a pencil beside it, because nobody tried tapping a borderless mono
-figure; the offline banner shows the moment `navigator.onLine` says so rather
-than only when changes are queued, and opening a group asks the server then
-instead of waiting up to 60s for the loop; and a scan with no network throws
-`ScanOfflineError` — "you're offline", not "couldn't read that receipt".
+**What it does today.** A group holds three kinds of entry — expense, income,
+transfer — all editable, on one form with a segmented control and one detail
+screen ([ADR-0010](decisions/0010-what-an-entry-is.md)). Every word a person
+reads lives in `apps/web/lib/copy.ts`, fenced by `pnpm check`
+([ADR-0033](decisions/0033-every-word-in-one-file.md)). Nothing the browser
+draws is used: no `prompt()`, `confirm()` or `<select>`, no long-press menu, no
+pinch zoom, and adding a person is the last row of the list rather than a dialog
+([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
+parent instead of pushing ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
+History is read, not rewound — `/g/restore` and `buildRestorePatch` are gone,
+and the `restore` op kind still folds only because production groups hold some
+([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)). The look is
+one monospace face with colour only on money
+([ADR-0023](decisions/0023-monospace-monochrome.md)).
 
-Before it: **a name is enough, and history is read rather than rewound.** The square
-holding a person's first letter is gone from every screen that names anyone —
-it repeated the word beside it — surviving only for a group in the list of
-groups and as the who-had-what grid's column headings
-([ADR-0023](decisions/0023-monospace-monochrome.md)). Restore-to-version is gone with
-it: `/g/restore`, `buildRestorePatch` and `foldEntityAt` are deleted, undoing
-something is editing it ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)),
-and the `restore` op kind still folds only because production groups hold some.
-Three things the log said wrongly are fixed at their source: `editExpense` no
-longer writes a `kind` that didn't change (a new entry reads *created*, not
-*turned back into an expense*), a membership revision is named after the member
-it is *about* (adding two people isn't three people joining), and a settle-up
-card opens a pre-filled transfer again — the draft is keyed by what seeded it.
-
-Before it: a group holds three kinds of entry, not one. **Expenses, incomes and
-transfers**, all editable, on one form with a segmented control and one detail
-screen that looks its id up in both tables
-([ADR-0010](decisions/0010-what-an-entry-is.md)). An income is a single
-field on an expense — `kind: 'income'`, absent on everything else — and the
-sign is applied once, in `computeBalances`; a transfer is the `Settlement` we
-already had, called what it is everywhere a person can read. `/g/settle` is
-deleted (settling up links into the form with the transfer pre-filled) and
-`/g/expense*` is now `/g/entry*`. A transfer's two sides carry their label
-above the face, and **no field anywhere opens a browser picker**: the payer, both
-currency fields and the sides are all `ChoiceDialog`, with the other side listed
-as a swap and "Other…" handing over to the three-letter prompt. `<input
-type="date">` is the last native control
-([ADR-0008](decisions/0008-hand-rolled-interface.md)).
-
-Also: the browser's own gestures answer to the app. A long press does nothing
-(`components/no-long-press.tsx` — CSS only ever silenced iOS's callout), a pinch
-doesn't zoom (viewport meta, `touch-action` and `components/no-pinch-zoom.tsx`
-together, since no one of them covers every browser), and an up-link unwinds
-history to the parent rather than pushing (`lib/nav.ts`,
-[ADR-0007](decisions/0007-a-screen-is-a-route.md)).
-
-Before it: the two failures that could quietly cost a trip its ledger now say so.
-Sync records how every attempt went, and `/g` warns after two consecutive
-failures — or at once, in its own words, when the server refuses this device's
-secret, which retrying can never fix; `navigator.onLine` had been the only
-signal, and it reports a link rather than an answering server
-([sync.md](sync.md#the-sync-engine)). And `lib/persist.ts` asks the browser not
-to evict IndexedDB: Safari drops it after seven days uninstalled, taking
-unpushed ops and the group secrets with no account to log back in with
-([architecture.md](architecture.md#gotchas)).
-
-Before it: the groups list is the front door — wordmark, app name and the
-light/dark button alone on the bar; `/settings` is deleted, the personal lens
-unconditional, and outside a group there is no bottom bar
-([ADR-0007](decisions/0007-a-screen-is-a-route.md)). Every
-question the app asks is a `<dialog>` it draws rather than the browser's, so
-`/g/leave` is deleted and a failed write says so where it was attempted
-([ADR-0008](decisions/0008-hand-rolled-interface.md)). And it is usable offline: the
-service worker precaches the whole export, cache-first
-([frontend.md](frontend.md#pwa),
-[ADR-0004](decisions/0004-static-export-and-offline.md); verify with
-`node scripts/offline-check.mjs`), and nothing it does waits in silence
-([design-system.md](design-system.md#nothing-waits-in-silence)).
-
-Design signed off 2026-08-27 (*"i approve of your design, go wild"*), re-cut
-2026-08-29 to one monospace face, near-neutral grounds, and colour spent only on
-`--credit` and `--debit` ([ADR-0023](decisions/0023-monospace-monochrome.md)).
+**The two failures that could quietly cost a trip its ledger say so.** Sync
+records how every attempt went and `/g` warns after two consecutive failures —
+or at once, in its own words, when the server refuses this device's secret
+([sync.md](sync.md#the-sync-engine)); offline is announced the moment
+`navigator.onLine` says so, including as its own scan error. `lib/persist.ts`
+asks the browser not to evict IndexedDB, since Safari drops it after seven days
+uninstalled and there is no account to log back in with
+([architecture.md](architecture.md#gotchas)). The service worker precaches the
+whole export cache-first, so the app paints with no signal
+([ADR-0004](decisions/0004-static-export-and-offline.md); verify with `node
+scripts/offline-check.mjs`).
 
 ## The next action
 

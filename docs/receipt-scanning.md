@@ -1,15 +1,11 @@
 # Receipt scanning
 
-*For: whoever builds or changes the scan. Core, Worker endpoint, the
-client-side scan lib, the button and the item-assignment screen all exist and
-are deployed. See [ADR-0016](decisions/0016-receipts.md)
-for the UX decisions.*
+*For: whoever builds or changes the scan. All of it is built and deployed;
+[ADR-0016](decisions/0016-receipts.md) holds the UX rulings.*
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
-The scan/upload buttons and "Edit who-had-what" live on the expense form's
-"Receipt" tab, the fourth alongside Evenly/As parts/As amounts
-([ADR-0016](decisions/0016-receipts.md)).
+The scan and upload buttons live on the form's "Receipt" tab.
 
 ## The shape
 
@@ -31,11 +27,11 @@ kinds, no schema change, nothing on the log that nobody looked at.
 
 ## Why the key sits on the Worker
 
-Only Anthropic ships a browser-callable API (`anthropic-dangerous-direct-browser-access`);
-`generativelanguage.googleapis.com` fails CORS preflight, so a device-direct
-call to Gemini isn't available. Free tier means no card, no per-user signup, and
-hosting stays £0 — the price is a shared key behind our own endpoint. See
-**Trust** below for what that costs and ADR-0016 (to be written with the code).
+The owner wanted the call to leave from the phone. Only Anthropic ships a
+browser-callable API; `generativelanguage.googleapis.com` fails CORS preflight,
+so a device-direct call to Gemini isn't available. Free tier means no card, no
+per-user signup, and hosting stays £0 — the price is a shared key behind our own
+endpoint, and **Trust** below is what that costs.
 
 ## Minimal Cloudflare quota: the Worker never touches the bytes
 
@@ -91,26 +87,17 @@ It reads. It doesn't compute.
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), amount in the same normalized notation as `total`, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
-`lineItems` and `tip` are still unused by `normalizeScan` — the real
-restaurant-splitting entity in product.md's deferred table isn't built. But
-`/g/entry/items` (reached right after a scan that found line items, or via
-"Edit who-had-what" later) reads them off the draft to build a who-had-what
-grid, and reduces that to an ordinary `shares` split — no schema change, no
-new op kind. The screen is three bands, not a scrolling page: who was there
-above in one sideways-scrolling line, the running per-person totals stacked
-below, and the grid between them owning the vertical scroll, so its row of
-initials freezes while a long bill passes under it. The items, tip and the grid's own assignment are also written
-onto the expense as plain optional fields so the grid reopens later, on any
-device — [ADR-0016](decisions/0016-receipts.md).
+`normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
+reached right after a scan that found lines, or via "Edit who-had-what" later —
+building the grid that reduces to an ordinary `shares` split
+([ADR-0016](decisions/0016-receipts.md)). The screen is three bands rather than
+a scrolling page: who was there in one sideways-scrolling line above, running
+per-person totals stacked below, and the grid between them owning the vertical
+scroll so its row of initials freezes while a long bill passes under it.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
-total, so folding the count into it too would double-count. It does one job on
-the who-had-what grid: it's how many rows that line **unfolds** into. Tapping
-the "×2" on a row replaces it with two, each a portion of the printed amount
-with its own eaters — Alice and Bob shared one salad, Charlie had the other —
-and tapping it again merges them back. Portions carry `portionOf` and sum to
-the printed line exactly, so the bill's total never moves
-([ADR-0016](decisions/0016-receipts.md)).
+total. It says how many rows that line **unfolds** into on the grid, and nothing
+else.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `EntryDraft` patch: `total` passes straight through as `amountText` — the
@@ -124,25 +111,21 @@ doesn't know a group's categories.
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 
-A photo that isn't a receipt (or is too blurry/cut off to read) is the
-model's call too: it sets `error` to a short sentence — the prompt asks for a
-light joke at the model's own expense, never the photographer's, that still
-names what to re-shoot — instead of guessing at the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
-into a thrown `ScanRejectedError` whose message *is* the model's sentence;
-the expense form shows it verbatim on the Receipt tab in place of the
-generic "Couldn't read that receipt."
+**Whether the photo is readable is the model's call too.** It sets `error` to a
+short sentence — a light joke at its own expense, never the photographer's, that
+still names what to re-shoot — instead of guessing at the other fields.
+`scanReceipt()` throws `ScanRejectedError` carrying that sentence, and the form
+prints it verbatim.
 
-Two conditions of the phone are told apart from that, because neither is
-anything to do with the photo, and the generic message sent people back to
-re-shoot a receipt that was fine. A `429`/`503` from Gemini (rate limited or
-overloaded — the free tier hits this, see **Verified live** below) throws
-`ScanUnavailableError`, and the person is told Gemini is busy. **Scanning is
-the one act in the app that needs a network**, so an offline phone throws
-`ScanOfflineError` — checked before the downscale, and again on a `fetch` that
-rejects, which is the captive portal `navigator.onLine` calls online. The
-words are `copy.scan.*` ([ADR-0033](decisions/0033-every-word-in-one-file.md));
-`scanErrorText` in the entry form maps error to sentence. Any other failure
-(other non-2xx, malformed JSON) still falls back to the generic message.
+Two conditions of the *phone* are told apart from that, because neither has
+anything to do with the photo and the generic message sent people back to
+re-shoot a receipt that was fine: a `429`/`503` from Gemini throws
+`ScanUnavailableError` ("Gemini is busy"), and — **scanning being the one act in
+the app that needs a network** — an offline phone throws `ScanOfflineError`,
+checked before the downscale and again on a rejecting `fetch`, which is the
+captive portal `navigator.onLine` calls online. The words are `copy.scan.*`
+([ADR-0033](decisions/0033-every-word-in-one-file.md)); `scanErrorText` maps
+error to sentence. Anything else falls back to the generic message.
 
 ## Trust, and what we're accepting
 
@@ -169,60 +152,27 @@ per-group quota, then a decision about whether the photo is stored at all.
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
-`scanReceipt()` · the camera and library buttons on `/g/entry/edit`, which
-share one handler, and `/g/entry/items` behind them.
-
-[ADR-0016](decisions/0016-receipts.md) holds the rulings this
-accumulated — the grid reduces to a `shares` split, the bill persists on the
-expense, Receipt is a fourth tab that owns the total, nothing derived is cached,
-leaving hands the total back, and a counted line unfolds into portions. Read it
-before changing any of this.
-
-## Verified live, 2026-08-28
-
-Direct curls to `generativelanguage.googleapis.com`, then the same request
-through the deployed Worker (`hajsik.hajsik-api.workers.dev`) with a throwaway
-group and its secret:
-
-- `gemini-2.5-flash` is **404 for new keys** — Google's own error names the
-  replacement: *"no longer available to new users... use
-  models/gemini-3.6-flash."* `gemini-3.7-flash` and `gemini-flash-latest` both
-  came back 503 (overloaded) on the same key at the same moment, so that's not
-  a verdict on those models either way — if `3.6-flash` ever 404s the same way,
-  try the current `-latest` alias before assuming the free tier is gone.
-- A synthesized Czech pub receipt (merchant, three line items, a 10% tip line,
-  total, `28.08.2026`), sent as a real base64 JPEG through
-  `POST /api/groups/:id/scan` on the live Worker: 200, correct merchant, total
-  and tip cleaned to `parseMinor`-ready strings, line items translated
-  (a brand name like "Kofola" correctly came back with `labelEn: null`), date
-  converted to `2026-08-28`. Passthrough auth (missing/wrong secret, unknown
-  group) returns 401/403/404 same as the sync endpoint.
-- Still unverified: free-tier RPD for `gemini-3.6-flash` (AI Studio's
-  rate-limit view has the number for a given key, Google no longer publishes
-  it statically); a real phone photo rather than a synthesized one.
+`scanReceipt()` · the camera and library buttons on `/g/entry/edit`, which share
+one handler, and `/g/entry/items` behind them. Verified end to end against the
+deployed Worker, 2026-08-28.
 
 ## Gotchas
 
-- A UI-only "which tab is showing" field that isn't written onto the entity
-  itself doesn't survive save/reopen if any other saved field can be used to
-  re-derive a *different* answer — `receiptItems` staying on the expense
-  forever (ADR-0016) meant `splitTab` kept re-deriving "Receipt" even after
-  the person switched away and saved. If a UI mode needs to stick, persist it,
-  don't derive it from data that outlives the choice (ADR-0016).
+- `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
+  replacement. If `3.6-flash` ever goes the same way, try the current
+  `-latest` alias before assuming the free tier is gone. A 503 on the same key
+  at the same moment is overload, not a verdict on the model.
+- **If a UI mode needs to stick, persist it; never re-derive it from data that
+  outlives the choice.** `receiptItems` stays on the expense forever, so a
+  derived `splitTab` kept saying "Receipt" after the person switched away and
+  saved.
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
-  (`allocated === total === 0`) — which printed "€0.00 of €0.00 allocated"
-  under a green check, four separate times, whenever anything upstream left
-  the total at zero. The verdict is now `splitFooter`'s (`lib/format.ts`), not
-  `check.ok`'s, so the string is unreachable rather than guarded per call site
-  ([ADR-0016](decisions/0016-receipts.md)).
-- Don't write a derived value into the draft for another screen's effect to
-  notice and resync — that resync is only as reliable as the next mount
-  actually happening before anyone reads the value, and a screen that writes
-  the input and immediately navigates away (`/g/entry/items`'s "Done") can
-  beat it. Receipt's total and split are recomputed inline, at the one place
-  either is read, instead — [ADR-0016](decisions/0016-receipts.md).
-- **Deriving a value only while one tab is showing needs a handoff when that
-  tab closes.** Receipt derives the total; every other tab reads `amountText`,
-  which nothing wrote, so leaving Receipt zeroed the amount. The split already
-  handed over via `convertSplitMode`; the amount now does too
-  ([ADR-0016](decisions/0016-receipts.md)).
+  (`allocated === total === 0`) — it printed "€0.00 of €0.00 allocated" under a
+  green check in four places. The verdict is `splitFooter`'s (`lib/format.ts`)
+  now, so the string is unreachable rather than guarded per call site.
+- **Don't write a derived value into the draft for another screen's effect to
+  resync.** That resync is only as reliable as the next mount happening before
+  anyone reads the value, and a screen that writes the input then navigates away
+  (`/g/entry/items`'s "Done") beats it. Recompute inline instead — and where one
+  tab derives what another tab merely reads, closing it needs an explicit
+  handoff, or leaving Receipt zeroes the amount.
