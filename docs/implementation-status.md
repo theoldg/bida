@@ -16,12 +16,28 @@ Update it in the same commit as the code it describes.*
 | 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 | 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
+| 9 — Every word in one file | ✅ `lib/copy.ts`, fenced by `pnpm check` ([ADR-0033](decisions/0033-every-word-in-one-file.md)) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-Since: **a name is enough, and history is read rather than rewound.** The square
+Since: **every word a person reads lives in `apps/web/lib/copy.ts`** —
+placeholders and `aria-label`s included, parameterised strings as functions,
+counts through `plural` — and `scripts/rules-check.mjs` fails the build on a
+stray literal, so a second language is a second object rather than a hunt
+([ADR-0033](decisions/0033-every-word-in-one-file.md)). The English was cut
+short on the way through. Four things the owner caught went with it: **adding a
+person is the last row of the list**, not a dialog — `components/name-adder.tsx`
+on `/g/members`, `/g/claim` and `/new`, where a group is now created with
+everyone in it in one batch; the tip on the who-had-what grid is drawn as a
+field with a pencil beside it, because nobody tried tapping a borderless mono
+figure; the offline banner shows the moment `navigator.onLine` says so rather
+than only when changes are queued, and opening a group asks the server then
+instead of waiting up to 60s for the loop; and a scan with no network throws
+`ScanOfflineError` — "you're offline", not "couldn't read that receipt".
+
+Before it: **a name is enough, and history is read rather than rewound.** The square
 holding a person's first letter is gone from every screen that names anyone —
 it repeated the word beside it — surviving only for a group in the list of
 groups and as the who-had-what grid's column headings
@@ -124,8 +140,8 @@ Every screen is built. Routes and their jobs are listed in
 [frontend.md](frontend.md#routing) — that table is the current one; don't
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. What the three kinds of entry are *called* lives once, in
-`lib/entry-kind.ts`. 93 smoke tests.
+`lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
+`lib/entry-kind.ts` is types and arithmetic only. 94 smoke tests.
 
 ### `apps/api`
 

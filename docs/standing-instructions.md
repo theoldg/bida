@@ -106,11 +106,13 @@ it applies to work nobody has done yet.
   type of look … be very economic with colours, it should basically only have
   subtle green and red for the balances."
   [ADR-0023](decisions/0023-monospace-monochrome.md).
-- **Cut the fat. Text has to earn its place.** *2026-08-28.* Delete anything the
-  screen already demonstrates: a subtitle counting what's visible below it, a
-  paragraph restating the labels above it, a promise the UI keeps by itself, a
-  hint for an obvious affordance. **Keep:** empty states that say what to do
-  next, and anything naming a consequence the user can't see.
+- **Cut the fat. Text has to earn its place.** *2026-08-28*, restated
+  *2026-09-03* ("the english strings are too verbose, cut some fat in a bunch of
+  places"). Delete anything the screen already demonstrates: a subtitle counting
+  what's visible below it, a paragraph restating the labels above it, a promise
+  the UI keeps by itself, a hint for an obvious affordance. **Keep:** empty
+  states that say what to do next, and anything naming a consequence the user
+  can't see. With every string in one file, read it as prose and cut there.
 - **One thought, one screen.** A new route is for a *different* question, not
   the second half of the one being asked. Don't build a wizard out of a form.
   [ADR-0010](decisions/0010-what-an-entry-is.md).
@@ -161,7 +163,8 @@ it applies to work nobody has done yet.
   of the browser native one", then "make all selectors into a custom dialog:
   currency, payer, etc". Asking is `components/dialog.tsx`; no `prompt()`,
   `confirm()` or `<select>`, anywhere
-  ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
+  ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Adding a member has
+  since stopped being an ask at all — see below.
 - **A confirmation's button sits under its sentence.** *2026-08-30* — "on the
   'confirm leave group' page the button shouldn't be at the very bottom of the
   screen, i think it can be under the text. This page can be custom popup like
@@ -193,3 +196,17 @@ it applies to work nobody has done yet.
   preference either has one obvious place to live or shouldn't exist; the
   groups list is that place, and it wears the app's name above it
   ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
+- **Adding people is inline, never a dialog.** *2026-09-03* — "'add member'
+  should not be a dialog, it should be inline so that it's easier to add many
+  members", and the create-group screen "should allow conveniently adding many
+  members". The last row of a list of people *is* the field that adds the next
+  one, and the caret comes straight back (`components/name-adder.tsx`).
+- **Every word a person reads lives in `apps/web/lib/copy.ts`.** *2026-09-03* —
+  "refactor all the strings to a centralized file, paving the way for
+  translation." Placeholders and `aria-label`s included; `pnpm check` fails on a
+  stray literal ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+- **Say you're offline the moment you are.** *2026-09-03* — "it only seems to
+  flag 'you may not have everyone's latest' once i fiddle a bit … it should show
+  up sooner", and receipt scanning "should have an explicit 'offline' error
+  message instead of 'couldn't read…'". A condition of the phone is named as
+  such, at once, not disguised as a failure of the thing you just did.

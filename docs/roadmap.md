@@ -61,6 +61,17 @@ screen; `/g/settle` and `/g/expense*` are gone
 themselves above the face, and every picker on the form — sides, payer, currency
 — is our own dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 
+## Phase 9 — Every word in one file ✅ *(2026-09-03)*
+`apps/web/lib/copy.ts` holds every string a person can read, placeholders and
+`aria-label`s included, and `pnpm check` fails on a stray literal
+([ADR-0033](decisions/0033-every-word-in-one-file.md)) — with the English cut
+short on the way through. Alongside it, three things the owner caught: adding
+people is the last row of the list rather than a dialog, on `/new` as well as
+`/g/members` (`components/name-adder.tsx`); the offline banner shows the moment
+the phone is offline, and opening a group asks the server rather than waiting
+for the loop; and a scan that can't reach the network says so instead of
+blaming the photo.
+
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a
 neutral dark theme, in-group options, identity history, nothing selectable, a
