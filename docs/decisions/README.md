@@ -4,23 +4,42 @@ One file per decision that is **expensive to reverse and worth arguing with**.
 Read the relevant one before arguing with a choice — your alternative is
 probably in its "Rejected" section, which is the half worth keeping.
 
-**Write one when** you'd have to defend the choice to someone who'd do it
-differently: a dependency, a data shape that lands on the op log, a rule that
-every future screen has to obey. **Don't write one for** a change a doc or the
-diff already explains, or for a decision nobody would reverse.
+## Adding one: the default is no
+
+**Most sessions add none, and a session that adds two is documenting its work
+rather than deciding anything.** There are twelve; `pnpm run docs` refuses a
+thirteenth, so a new one means folding or deleting another — or the owner
+raising the cap. All four of these must hold:
+
+1. **It is built and shipped**, not proposed. An ADR records a decision the
+   code already obeys; a plan goes in the roadmap.
+2. **Reversing it would cost far more than the diff that made it** — other
+   packages, every future screen, or ops already written to a log.
+3. **You can name the alternative a competent person would have chosen**, and
+   why it lost. If the "Rejected" section needs a straw man, there is no ADR
+   here.
+4. **No existing ADR covers the subject.** If one does, edit it. A new file is
+   for a new subject, never for a new session's take on an old one.
+
+**Not an ADR:** anything the owner asked for — that is a standing instruction,
+or nothing at all; a choice the diff or a doc already explains; a bug fix,
+however clever (that is a **Gotcha**); wording, layout or naming on a screen
+([design-system.md](../design-system.md), `copy.ts`); *how* something works, as
+opposed to why it is this and not that; a dependency you decided **not** to add,
+which is the default rather than a decision.
 
 **Changing one:** edit it. An ADR records where we stand and why, not the order
 we got here — if a later session refines a decision, fold it in and move the
 date on. Rewrite freely, and delete one whose decision no longer binds anything.
 **Numbers are stable** (things link to them) and gaps are normal: they mean a
-decision was folded into another file.
+decision was folded into another file. Every ADR on disk is a row in the table
+below, and `pnpm run docs` checks that both ways.
 
-**Keep them short — 80 lines, enforced by `pnpm run docs`.** Context, decision,
-consequences, rejected, and nothing else: the parts that tell the next person
-what they can't see from the code. Not how the built thing looks or reads, which
-is the design system's and the feature docs' job — link to those rather than
-saying it twice. A consequence that restates the decision, or a rejected option
-nobody would propose, is a line to cut.
+**Keep them short — 80 lines, enforced too.** Context, decision, consequences,
+rejected, nothing else. Not how the built thing looks or reads, which is the
+design system's and the feature docs' job — link rather than say it twice. A
+consequence that restates the decision, or a rejected option nobody would
+propose, is a line to cut.
 
 | # | Decision |
 |---|---|

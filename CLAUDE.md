@@ -26,7 +26,7 @@ hosted for free. Read this, then the doc your task points at.
    one rule buys sync, offline and history. [docs/sync.md](docs/sync.md).
 
 The owner's standing preferences: [docs/standing-instructions.md](docs/standing-instructions.md).
-Append to it whenever they state a new one.
+Obey them; adding one is rare and has a bar at the head of that file.
 
 ## Where things are
 
@@ -94,9 +94,9 @@ pnpm session && pnpm check
   build none of it.
 
 **Done means:** `pnpm check` passes · arithmetic has passing tests · the doc
-describing the changed behaviour is updated in the same commit · any preference
-the owner stated is in standing-instructions, dated · implementation-status and
-roadmap reflect reality · pushed to `main`.
+describing the changed behaviour is updated in the same commit · a preference
+that clears the bar is in standing-instructions, dated · implementation-status
+and roadmap reflect reality · pushed to `main`.
 
 ## Doc upkeep
 
@@ -104,18 +104,20 @@ These docs exist so a cold agent is useful in five minutes. That decays unless
 every session pays in. **Before you finish:**
 
 1. Changed behaviour → update the doc that describes it, in the same commit.
-2. Made a choice that would be expensive to reverse and that someone might
-   argue with → put it in an ADR. Usually that means **editing the existing one
-   on that subject** so it says where we stand now; a new file is for a new
-   subject. Most changes need no ADR at all —
-   [decisions/](docs/decisions/README.md) has the bar.
-3. Owner stated a preference that binds work nobody has done yet → append it to
-   [standing-instructions.md](docs/standing-instructions.md), dated. Once it is
-   a built thing, the built thing documents it: delete the entry.
-4. Learned something the hard way → one line in the relevant **Gotchas**
+2. Made a choice expensive to reverse that someone might argue with → **edit
+   the ADR on that subject** so it says where we stand now.
+3. Learned something the hard way → one line in the relevant **Gotchas**
    section.
-5. Update [implementation-status.md](docs/implementation-status.md) and the
+4. Update [implementation-status.md](docs/implementation-status.md) and the
    roadmap checkboxes.
+
+**A new ADR and a new standing instruction are the two things a session almost
+never adds**, and `pnpm run docs` holds both lists at the length they are: a
+thirteenth ADR or a 24th preference fails the build until something is folded
+or deleted. Each file states its own bar — [decisions/](docs/decisions/README.md)
+and [standing-instructions.md](docs/standing-instructions.md) — and both start
+from *no*. Most of what a session wants to record is neither: it is a Gotcha, a
+line in the doc describing the thing, or already said by the code.
 
 **Every doc has a line budget, and `pnpm run docs` fails when one breaks it** —
 one per file plus a ceiling over the whole set, in `scripts/docs-check.mjs`. A
@@ -124,11 +126,9 @@ call and not a way to land a session; cutting a doc well below its number means
 lowering the number in the same commit.
 
 Staying inside it is mostly one rule: **one fact, one home.** Before writing a
-paragraph, find where the project already says it and edit *that*. The three
-ways these files have inflated before are an ADR describing the built thing in
-design-system's words, a standing instruction restating what the code already
-enforces, and a note about what changed this session. Prefer editing a line to
-adding one, delete what the code now says for itself, and cut narrative history:
-a doc records the state and the reasoning, not the sequence of sessions that got
-here. Real new behaviour is allowed to cost a paragraph — pay for it by cutting
-something that has stopped earning its place.
+paragraph, find where the project already says it and edit *that*. These files
+have inflated three ways before: an ADR describing the built thing in
+design-system's words, a standing instruction restating what the code enforces,
+and a note about what changed this session. Prefer editing a line to adding one,
+delete what the code says for itself, and cut narrative history — a doc records
+the state and the reasoning, not the sessions that got here.

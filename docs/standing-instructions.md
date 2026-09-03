@@ -5,13 +5,27 @@
 The owner's rules for how this project is run. They outrank your defaults and
 your harness's defaults.
 
-**This list is only for rules that bind work nobody has done yet.** When the
-owner states a preference, add it the same session — dated, in their words, one
-or two lines. Once a preference has become a built thing, the built thing
-documents it: **delete the entry, or fold it into the line above.** A rule the
-code, an ADR or the design system now enforces is not a standing instruction —
-it is a description of the app, and it belongs in the doc that describes the
-app. Expect to remove more entries here than you add.
+**Adding one: the default is no.** There are 23; `pnpm run docs` refuses a 24th,
+so a new entry means deleting one — or the owner raising the cap. Most sessions
+should leave this file exactly as they found it, or shorter. All three of these
+must hold:
+
+1. **The owner said it, in words you can quote**, this session. Not inferred
+   from what they approved, let pass, or seemed pleased by.
+2. **It binds work nobody has done yet** — the next screen, not the one in
+   front of them. A preference about what is on screen now is a change to make,
+   not a line to write.
+3. **Nothing else can hold it.** If code, a test or `pnpm check` could enforce
+   it, put it there: that is where it will actually be obeyed, and a rule in
+   two places is a rule that will disagree with itself.
+
+**Not a standing instruction:** a restatement of an ADR, the design system or
+`copy.ts`; a note kept "so it isn't forgotten", because the code remembers; a
+rule you are deriving from the owner's reaction rather than their words.
+
+Entries are dated, in the owner's words, one or two lines. **Once a preference
+is a built thing, the built thing documents it — delete the entry**, and expect
+to remove more from this list than you add.
 
 ## Workflow
 
