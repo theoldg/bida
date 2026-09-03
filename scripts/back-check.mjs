@@ -64,6 +64,28 @@ report(/\/g\?id=/.test(page.url()),
   "a back press on an entry opened from the feed climbs to the group",
   `landed on ${new URL(page.url()).pathname}`);
 
+// ---- one level per press, counted from a real history -------------------
+// The two above only say the button lands somewhere the arrow points. It can
+// do that and still overshoot: cancelling a traversal finishes after the event
+// it was cancelled in, and a traversal started before then is counted from the
+// entry the cancelled press was heading for. So walk in from the groups list,
+// where a step too far is a screen with a different path.
+await page.goto(`${base}/`);
+const intoFirstRow = async (until) => {
+  await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 1, null, { timeout: 8000 });
+  await page.locator(".rows a.row").first().click();
+  await page.waitForURL(until);
+};
+await intoFirstRow(/\/g\?id=/);
+await intoFirstRow(/\/g\/entry\?/);
+
+await pressBack();
+report(/\/g\?id=/.test(page.url()), "a back press on an expense stops at its group",
+  `landed on ${new URL(page.url()).pathname}`);
+await pressBack();
+report(new URL(page.url()).pathname === "/", "and the one after it reaches the groups list",
+  `landed on ${new URL(page.url()).pathname}`);
+
 await browser.close();
 close();
 finish();

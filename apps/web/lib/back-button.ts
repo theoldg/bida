@@ -63,9 +63,14 @@ function onNavigate(event: Event): void {
   const back = screens[screens.length - 1]?.current;
   if (!takesOver(e, navigation()?.currentEntry?.index, !!back) || !back) return;
   e.preventDefault();
-  // Out of the event before navigating again: cancelling a traversal and
-  // starting another one inside the same handler is asking for trouble.
-  queueMicrotask(back);
+  // Out of the event's *task* before navigating again, not merely out of its
+  // microtask checkpoint. Cancelling a traversal is finished later in the same
+  // task, and until it is, the browser still counts a relative traversal from
+  // the entry the cancelled press was heading for: `history.go(-1)` from an
+  // expense landed on the groups list, and from a group ran off the start of
+  // the history and did nothing at all. A macrotask runs after the abort, so
+  // the screen's own back action starts from where the user still is.
+  setTimeout(back, 0);
 }
 
 /**

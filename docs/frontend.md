@@ -206,6 +206,14 @@ figure-free.
   an expense in a new currency at the same rate writes `currency` and no amount
   field at all, so history copy must never read one field because a sibling
   changed.
+- **Cancelling a back press is finished after the event's task, not after its
+  microtask checkpoint.** Until then the browser counts a relative traversal
+  from the entry the cancelled press was heading for, so a `history.go(-1)`
+  queued with `queueMicrotask` moved *two* screens: an expense's back button
+  reached the groups list, and a group's ran off the start of the history and
+  did nothing at all. `lib/back-button.ts` hands the screen's back action to a
+  macrotask. `navigation.traverseTo` is no way round it — inside that window it
+  rejects the key it was just given.
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
 - **An input's `size` attribute is not a character count**, it is characters
