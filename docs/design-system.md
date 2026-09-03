@@ -155,6 +155,9 @@ attempted, in `--debit`: `Failure` / `.failure`.
 
 ## Gotchas
 
+- Something wrong on "the app" rather than one screen is a shell bug: look at
+  `.app` / `.appbody` / `.scroll` in `globals.css` first, and check the fix on a
+  screen that overflows.
 - iOS Safari in a tab ignores `user-scalable=no` and lets `touch-action` stop
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists, and no component library's variable names sit
