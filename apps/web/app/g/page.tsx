@@ -16,7 +16,7 @@ import { ConfirmDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
-import { deleteExpense } from "../../lib/db/commands";
+import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -164,9 +164,7 @@ type Entry =
 function LedgerTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
   if (!group) return null;
-  // Read out here, not `group!.baseCurrency` at each use: the row renderers
-  // below are hoisted function declarations, so they are created before this
-  // guard runs and TypeScript won't carry its narrowing into them.
+  // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
 
   // The ledger's whole job is answering "does this one help me or hurt me?",
@@ -230,7 +228,7 @@ function LedgerTab({ data }: { data: GroupData }) {
                 {label ? <div className="daylabel">{label}</div> : null}
                 {entry.row === "expense"
                   ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
-                  : <SettlementRow settlement={entry.settlement} />}
+                  : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />}
               </div>
             );
           })}
@@ -239,41 +237,13 @@ function LedgerTab({ data }: { data: GroupData }) {
       </Scroll>
     </>
   );
-
-  function SettlementRow({ settlement }: { settlement: Settlement }) {
-    const from = memberById.get(settlement.fromMember);
-    const to = memberById.get(settlement.toMember);
-    const myNet = myEffect(me, { kind: "transfer", settlement });
-
-    return (
-      <Link href={route.entry(gid, settlement.id)}
-        className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
-        <div className="rmain">
-          <div className="rtitle">
-            {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}
-          </div>
-          <div className="rmeta">
-            {settlement.note ? copy.group.transferNote(settlement.note) : copy.group.transfer}
-          </div>
-        </div>
-        <div className="ramt">
-          <div className="big" style={{ color: "var(--muted)" }}>
-            {money(settlement.baseAmountMinor, base)}
-          </div>
-          <div className={`sm share ${signClass(myNet)}`}>
-            {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}
-          </div>
-        </div>
-      </Link>
-    );
-  }
 }
 
 /**
- * Hoisted out of `LedgerTab` rather than nested inside it: a nested function
- * component is a new identity on every render, which would discard this
- * row's own state — the open delete confirmation — the moment a live query
- * elsewhere in the group redraws the ledger.
+ * Hoisted out of `LedgerTab` rather than nested inside it, as `SettlementRow`
+ * is: a nested function component is a new identity on every render, which
+ * would discard this row's own state — the open delete confirmation — the
+ * moment a live query elsewhere in the group redraws the ledger.
  */
 function ExpenseRow({ expense, gid, base, me, memberById }: {
   expense: Expense; gid: string; base: string; me: string | undefined; memberById: Map<string, Member>;
@@ -332,6 +302,62 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 
       {asking ? (
         <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
+          confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
+          <p>{copy.entry.deleteBody}</p>
+        </ConfirmDialog>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * A transfer's row. It carries the same long press as an expense's: a transfer
+ * is an entry like the other two (ADR-0010), and the one it doesn't belong to
+ * is the one you most want to take back.
+ */
+function SettlementRow({ settlement, gid, base, me, memberById }: {
+  settlement: Settlement; gid: string; base: string; me: string | undefined;
+  memberById: Map<string, Member>;
+}) {
+  const from = memberById.get(settlement.fromMember);
+  const to = memberById.get(settlement.toMember);
+  const myNet = myEffect(me, { kind: "transfer", settlement });
+  const [asking, setAsking] = useState(false);
+
+  const { onContextMenu, menu } = useLongPressMenu([
+    { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+  ]);
+
+  async function remove() {
+    await deleteSettlement(gid, me ?? settlement.fromMember, settlement.id);
+  }
+
+  return (
+    <>
+      <Link href={route.entry(gid, settlement.id)}
+        className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        <div className="rmain">
+          <div className="rtitle">
+            {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}
+          </div>
+          <div className="rmeta">
+            {settlement.note ? copy.group.transferNote(settlement.note) : copy.group.transfer}
+          </div>
+        </div>
+        <div className="ramt">
+          <div className="big" style={{ color: "var(--muted)" }}>
+            {money(settlement.baseAmountMinor, base)}
+          </div>
+          <div className={`sm share ${signClass(myNet)}`}>
+            {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}
+          </div>
+        </div>
+      </Link>
+
+      {menu}
+
+      {asking ? (
+        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label.transfer.toLowerCase())}
           confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
           <p>{copy.entry.deleteBody}</p>
         </ConfirmDialog>

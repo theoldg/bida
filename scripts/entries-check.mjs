@@ -151,6 +151,20 @@ await save(3);
 report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
   "an expense can become an income");
 
+// ---- and a transfer's row answers a long press, as an expense's does ---
+// It didn't: the delete menu was on the expense row only, so the one entry
+// with no other way to remove it from the ledger was the transfer.
+await page.locator("a.row").filter({ hasText: "paid" }).first().click({ button: "right" });
+await page.waitForSelector(".rowmenu");
+report(await page.getByRole("menuitem", { name: "Delete" }).count() === 1,
+  "a long press on a transfer row offers to delete it");
+await page.getByRole("menuitem", { name: "Delete" }).click();
+await page.getByRole("button", { name: "Delete" }).click();
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length === 2, null, { timeout: 8000 })
+  .catch(() => {});
+report(!(await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
+  "and the transfer leaves the ledger");
+
 // ---- and the log says what happened, in the app's own words ------------
 await page.goto(`${base}/g/history?id=${g}`);
 await page.waitForSelector(".tle");
