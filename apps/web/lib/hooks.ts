@@ -178,6 +178,8 @@ export interface GroupSummary {
   /** This device's net position, or undefined if they haven't said who they are. */
   netMinor: number | undefined;
   lastActivity: number;
+  /** The member this device is, in this group — same undefined-until-claimed as `GroupData.me`. */
+  me: string | undefined;
 }
 
 /** The groups list, with each group's net for whoever is holding the phone. */
@@ -223,6 +225,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
         memberCount: live.m.length,
         entryCount: live.e.length + live.s.length,
         netMinor: me ? balances.byMember[me] ?? 0 : undefined,
+        me,
         lastActivity: Math.max(
           group.createdAt,
           ...live.e.map((x) => x.occurredAt),

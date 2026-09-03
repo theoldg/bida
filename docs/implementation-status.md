@@ -27,8 +27,11 @@ transfer — all editable, on one form with a segmented control and one detail
 screen ([ADR-0010](decisions/0010-what-an-entry-is.md)). Every word a person
 reads lives in `apps/web/lib/copy.ts`, fenced by `pnpm check`
 ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Nothing the browser
-draws is used: no `prompt()`, `confirm()` or `<select>`, no long-press menu, no
-pinch zoom, and adding a person is the last row of the list rather than a dialog
+draws is used: no `prompt()`, `confirm()` or `<select>`; a long press or a
+right click on a row opens the app's own small `RowMenu`
+([ADR-0008](decisions/0008-hand-rolled-interface.md)) instead of the
+browser's menu. No pinch zoom, and adding a person is the last row of the
+list rather than a dialog
 — a row that refuses a name already there and follows the list down the screen
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
 parent instead of pushing, and the device's back button is cancelled so it runs

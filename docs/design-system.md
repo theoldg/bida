@@ -146,9 +146,12 @@ attempted, in `--debit`: `Failure` / `.failure`.
    [standing-instructions](standing-instructions.md#product).
 5. **`100dvh`, safe-area insets, thumb-reachable primary actions.** People use
    this standing up in a restaurant.
-6. **The app is not a document: nothing selects, no long press, no zoom.**
-   `user-select: none` on `body`, `.selectable` to opt back in; `NoLongPress`
-   swallows the touch context menu; inputs exempt from both. Zoom needs all
+6. **The app is not a document: nothing selects, the browser never gets a long
+   press, no zoom.** `user-select: none` on `body`, `.selectable` to opt back
+   in; `NoLongPress` swallows the touch context menu, except on a row that
+   opts into the app's own small `RowMenu` instead — the same event a real
+   right-click sends (`components/long-press.tsx`, `components/row-menu.tsx`).
+   Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
    left alone. *(Owner, 2026-08-27, 2026-08-30.)*

@@ -57,3 +57,12 @@ wheel in the OS's typeface that can show a name and nothing else.
 **Revisit if** a screen needs a primitive with real accessibility complexity (a
 combobox, a popover with focus management). Pulling in that one headless
 primitive doesn't reverse this ADR — just note the exception where it happens.
+
+**Exception, 2026-09-03: `components/row-menu.tsx`.** A long press or a right
+click on a row opens `RowMenu` — a small card anchored to the pointer, not a
+`Dialog`. It exists outside `components/dialog.tsx` on purpose: a scrim that
+dims the whole screen is for a decision with a sentence to say about it,
+which a menu of one or two actions isn't. It positions itself (own
+`position: fixed`, no `showModal()`) and closes itself (an invisible click-
+catching veil, `Escape`, a scroll) rather than getting that from `<dialog>`.
+Picking an action still opens `ConfirmDialog` for anything destructive.

@@ -1,15 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Avatar, GhostRow, signClass } from "../components/bits";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
+import { ConfirmDialog } from "../components/dialog";
 import { Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
+import { useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
 import { copy } from "../lib/copy";
+import { leaveGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
-import { useGroupSummaries } from "../lib/hooks";
+import { useGroupSummaries, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const summaries = useGroupSummaries();
@@ -38,36 +42,7 @@ export default function GroupsPage() {
           ) : null}
 
           <div className="rows">
-            {groups?.map(({ group, memberCount, entryCount, netMinor, lastActivity }) => (
-              <Link key={group.id} href={route.group(group.id)} className="row">
-                <Avatar name={group.name} />
-                <div className="rmain">
-                  <div className="rtitle">{group.name}</div>
-                  <div className="rmeta">
-                    {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
-                  </div>
-                </div>
-                <div className="ramt">
-                  {netMinor === undefined ? (
-                    <>
-                      <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
-                      <div className="sm">{copy.groups.whoAreYou}</div>
-                    </>
-                  ) : (
-                    <>
-                      <div className={`big ${signClass(netMinor)}`}
-                        style={netMinor === 0 ? { color: "var(--muted)" } : undefined}>
-                        {money(netMinor, group.baseCurrency, netMinor !== 0)}
-                      </div>
-                      <div className="sm">
-                        {netMinor < 0 ? copy.groups.youOwe
-                          : netMinor > 0 ? copy.groups.youreOwed : copy.groups.settled}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Link>
-            ))}
+            {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
 
             <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
           </div>
@@ -77,5 +52,68 @@ export default function GroupsPage() {
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/**
+ * One row of "your groups" — and, on a long press or a right click, the one
+ * action leaving belongs to. Only offered once this device has claimed a
+ * member here; before that there's nobody for `leaveGroup` to remove.
+ */
+function GroupRow({ summary }: { summary: GroupSummary }) {
+  const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;
+  const [asking, setAsking] = useState(false);
+  const lastMember = memberCount === 1 && me !== undefined;
+  const leaveTitle = lastMember ? copy.members.deleteGroup : copy.members.leave;
+
+  const { onContextMenu, menu } = useLongPressMenu(me === undefined ? [] : [
+    { label: leaveTitle, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+  ]);
+
+  async function leave() {
+    if (!me) return;
+    await leaveGroup(group.id, me, lastMember);
+  }
+
+  return (
+    <>
+      <Link href={route.group(group.id)} className="row" onContextMenu={onContextMenu}>
+        <Avatar name={group.name} />
+        <div className="rmain">
+          <div className="rtitle">{group.name}</div>
+          <div className="rmeta">
+            {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
+          </div>
+        </div>
+        <div className="ramt">
+          {netMinor === undefined ? (
+            <>
+              <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
+              <div className="sm">{copy.groups.whoAreYou}</div>
+            </>
+          ) : (
+            <>
+              <div className={`big ${signClass(netMinor)}`}
+                style={netMinor === 0 ? { color: "var(--muted)" } : undefined}>
+                {money(netMinor, group.baseCurrency, netMinor !== 0)}
+              </div>
+              <div className="sm">
+                {netMinor < 0 ? copy.groups.youOwe
+                  : netMinor > 0 ? copy.groups.youreOwed : copy.groups.settled}
+              </div>
+            </>
+          )}
+        </div>
+      </Link>
+
+      {menu}
+
+      {asking ? (
+        <ConfirmDialog title={leaveTitle} confirm={leaveTitle} danger={true}
+          onConfirm={leave} onClose={() => setAsking(false)}>
+          <p>{lastMember ? copy.members.lastBody(group.name) : copy.members.leaveBody(group.name)}</p>
+        </ConfirmDialog>
+      ) : null}
+    </>
   );
 }

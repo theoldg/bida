@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  payerList, resolvePayers, shareOf, splitParticipants, type Expense, type Settlement,
+  payerList, resolvePayers, shareOf, splitParticipants,
+  type Expense, type Member, type Settlement,
 } from "@hajsik/core";
 import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
+import { ConfirmDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
+import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
+import { deleteExpense } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -225,7 +229,7 @@ function LedgerTab({ data }: { data: GroupData }) {
               <div key={entry.row === "expense" ? entry.expense.id : entry.settlement.id}>
                 {label ? <div className="daylabel">{label}</div> : null}
                 {entry.row === "expense"
-                  ? <ExpenseRow expense={entry.expense} />
+                  ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
                   : <SettlementRow settlement={entry.settlement} />}
               </div>
             );
@@ -235,49 +239,6 @@ function LedgerTab({ data }: { data: GroupData }) {
       </Scroll>
     </>
   );
-
-  function ExpenseRow({ expense }: { expense: Expense }) {
-    const kind = kindOf(expense);
-    const income = kind === "income";
-    const payer = memberById.get(expense.paidBy);
-    const payers = payerList(expense);
-    const involved = me ? splitParticipants(expense.split).includes(me) : false;
-    const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
-    const share = me && involved
-      ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id })
-      : 0;
-    const myNet = myEffect(me, { kind, putIn, share });
-    const mine = putIn !== 0 || involved;
-    const participants = splitParticipants(expense.split).length;
-    const foreign = expense.currency !== base;
-
-    return (
-      <Link href={route.entry(gid, expense.id)}
-        className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
-        <div className="rmain">
-          <div className="rtitle">{expense.description || copy.group.untitled}</div>
-          <div className="rmeta">
-            {copy.group.payers(payer?.name ?? copy.someone, payers.length - 1, copy.entryKind.verb[kind])}
-            {" · "}
-            {expense.split.mode === "equal"
-              ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
-              : copy.group.splitAs(participants, copy.split.mode[expense.split.mode].toLowerCase())}
-          </div>
-        </div>
-        <div className="ramt">
-          {/* An income's figure carries a "+": it is the group's number, not
-              yours, and without a sign it reads as one more thing spent. */}
-          <div className="big">{money(expense.baseAmountMinor, base, income)}</div>
-          {foreign ? (
-            <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
-          ) : null}
-          <div className={`sm share ${signClass(myNet)}`}>
-            {mine ? money(myNet, base, myNet !== 0) : copy.group.notYours}
-          </div>
-        </div>
-      </Link>
-    );
-  }
 
   function SettlementRow({ settlement }: { settlement: Settlement }) {
     const from = memberById.get(settlement.fromMember);
@@ -306,6 +267,77 @@ function LedgerTab({ data }: { data: GroupData }) {
       </Link>
     );
   }
+}
+
+/**
+ * Hoisted out of `LedgerTab` rather than nested inside it: a nested function
+ * component is a new identity on every render, which would discard this
+ * row's own state — the open delete confirmation — the moment a live query
+ * elsewhere in the group redraws the ledger.
+ */
+function ExpenseRow({ expense, gid, base, me, memberById }: {
+  expense: Expense; gid: string; base: string; me: string | undefined; memberById: Map<string, Member>;
+}) {
+  const kind = kindOf(expense);
+  const income = kind === "income";
+  const payer = memberById.get(expense.paidBy);
+  const payers = payerList(expense);
+  const involved = me ? splitParticipants(expense.split).includes(me) : false;
+  const putIn = me ? resolvePayers(expense)[me] ?? 0 : 0;
+  const share = me && involved
+    ? shareOf(expense.baseAmountMinor, expense.split, me, { tiebreakSeed: expense.id })
+    : 0;
+  const myNet = myEffect(me, { kind, putIn, share });
+  const mine = putIn !== 0 || involved;
+  const participants = splitParticipants(expense.split).length;
+  const foreign = expense.currency !== base;
+  const [asking, setAsking] = useState(false);
+
+  const { onContextMenu, menu } = useLongPressMenu([
+    { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+  ]);
+
+  async function remove() {
+    await deleteExpense(gid, me ?? expense.paidBy, expense.id);
+  }
+
+  return (
+    <>
+      <Link href={route.entry(gid, expense.id)}
+        className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        <div className="rmain">
+          <div className="rtitle">{expense.description || copy.group.untitled}</div>
+          <div className="rmeta">
+            {copy.group.payers(payer?.name ?? copy.someone, payers.length - 1, copy.entryKind.verb[kind])}
+            {" · "}
+            {expense.split.mode === "equal"
+              ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
+              : copy.group.splitAs(participants, copy.split.mode[expense.split.mode].toLowerCase())}
+          </div>
+        </div>
+        <div className="ramt">
+          {/* An income's figure carries a "+": it is the group's number, not
+              yours, and without a sign it reads as one more thing spent. */}
+          <div className="big">{money(expense.baseAmountMinor, base, income)}</div>
+          {foreign ? (
+            <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
+          ) : null}
+          <div className={`sm share ${signClass(myNet)}`}>
+            {mine ? money(myNet, base, myNet !== 0) : copy.group.notYours}
+          </div>
+        </div>
+      </Link>
+
+      {menu}
+
+      {asking ? (
+        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
+          confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
+          <p>{copy.entry.deleteBody}</p>
+        </ConfirmDialog>
+      ) : null}
+    </>
+  );
 }
 
 // ------------------------------------------------- balances and settling
