@@ -167,7 +167,7 @@ function MembersScreen() {
 
       {ask?.kind === "blocked" ? (
         <Dialog title={copy.members.blockedTitle(ask.name)} onClose={() => setAsk(null)}>
-          <div className="dbody"><p>{copy.members.blockedBody}</p></div>
+          <div className="dbody"><p>{copy.members.blockedBody(ask.name)}</p></div>
           <div className="dlist">
             {ask.expenses.map((e) => (
               <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
