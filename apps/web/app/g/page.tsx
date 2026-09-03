@@ -2,16 +2,19 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants, type Expense, type Settlement,
 } from "@hajsik/core";
-import { ENTRY_VERB, kindOf, myEffect } from "../../lib/entry-kind";
+import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { Icon } from "../../components/icons";
-import { dayLabel, money, plural, SPLIT_MODE_LABEL } from "../../lib/format";
+import { copy } from "../../lib/copy";
+import { syncGroup } from "../../lib/db/sync";
+import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { useGroupData, useInviteLink, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
@@ -34,7 +37,16 @@ function GroupScreen() {
   // screens went (ADR-0007).
   const invite = useInviteLink(groupId);
 
-  if (!groupId) return <Blank title="No group" back={route.groups()} />;
+  // Opening a group is the moment you want to know whether it is current, so
+  // ask the server then rather than waiting for the loop's next 60s tick. A
+  // dead server records its first failure here; the engine's own backoff
+  // retries seconds later, which is what turns the banner on. The rejection is
+  // the recorded failure — `useSyncHealth` reads it, nothing here needs it.
+  useEffect(() => {
+    if (groupId) void syncGroup(groupId).catch(() => {});
+  }, [groupId]);
+
+  if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
   // Loading used to be a top bar over nothing — indistinguishable from a tap
   // that didn't land. Draw the whole frame instead: the group's name is the
   // only thing here that has to wait for Dexie.
@@ -47,8 +59,8 @@ function GroupScreen() {
         </Body>
         {tab === "ledger" ? <Fab href={route.addEntry(groupId)} /> : null}
         <BottomNav items={[
-          { label: "Ledger", icon: "list", href: route.group(groupId), on: tab === "ledger" },
-          { label: "Balances", icon: "scale", href: route.group(groupId, "balances"),
+          { label: copy.group.tabs.ledger, icon: "list", href: route.group(groupId), on: tab === "ledger" },
+          { label: copy.group.tabs.balances, icon: "scale", href: route.group(groupId, "balances"),
             on: tab === "balances" },
         ]} />
       </Screen>
@@ -57,10 +69,8 @@ function GroupScreen() {
   if (!data.group) {
     return (
       <Screen><Body>
-        <TopBar title="Not found" back={route.groups()} />
-        <Empty title="That group isn't on this phone">
-          Open the invite link again, or pick another group.
-        </Empty>
+        <TopBar title={copy.group.notFound.title} back={route.groups()} />
+        <Empty title={copy.group.notFound.empty}>{copy.group.notFound.body}</Empty>
       </Body></Screen>
     );
   }
@@ -75,20 +85,19 @@ function GroupScreen() {
             one and says so; a server that won't answer is the one that used to
             be invisible; a refused key is the one that never heals by itself.
             No colour on any of them — that is spent on balances (ADR-0023). */}
-        {!online && data.pendingOps > 0 ? (
+        {!online ? (
           <Banner icon="off">
-            Offline — {plural(data.pendingOps, "change")} waiting. They'll go up on their own.
+            {data.pendingOps > 0
+              ? copy.group.offlinePending(plural(data.pendingOps, copy.noun.change))
+              : copy.group.offlineIdle}
           </Banner>
         ) : sync.rejected ? (
-          <Banner icon="sync">
-            This phone's link no longer opens this group, so nothing is syncing.
-            Ask someone for a fresh invite link.
-          </Banner>
+          <Banner icon="sync">{copy.group.rejected}</Banner>
         ) : sync.failing ? (
           <Banner icon="sync">
-            Can't reach the server — {data.pendingOps > 0
-              ? `${plural(data.pendingOps, "change")} still only on this phone.`
-              : "you may not have everyone's latest."} Still trying.
+            {data.pendingOps > 0
+              ? copy.group.unreachablePending(plural(data.pendingOps, copy.noun.change))
+              : copy.group.unreachableIdle}
           </Banner>
         ) : null}
 
@@ -96,14 +105,14 @@ function GroupScreen() {
           title={group.name}
           back={route.groups()}
           right={<>
-            <Link className="iconbtn" href={route.history(group.id)} aria-label="History">
+            <Link className="iconbtn" href={route.history(group.id)} aria-label={copy.group.history}>
               <Icon name="clock" size={18} />
             </Link>
-            <Link className="iconbtn" href={route.members(group.id)} aria-label="People">
+            <Link className="iconbtn" href={route.members(group.id)} aria-label={copy.group.people}>
               <Icon name="users" size={18} />
             </Link>
             {invite.copy ? (
-              <button className="iconbtn" aria-label="Copy invite link" onClick={invite.copy}>
+              <button className="iconbtn" aria-label={copy.group.copyLink} onClick={invite.copy}>
                 <Icon name={invite.copied ? "check" : "link"} size={18}
                   style={invite.copied ? { color: "var(--brand)" } : undefined} />
               </button>
@@ -124,8 +133,8 @@ function GroupScreen() {
           first tab is "Ledger", not "Expenses", because two of the three
           things on it aren't expenses (ADR-0010). */}
       <BottomNav items={[
-        { label: "Ledger", icon: "list", href: route.group(group.id), on: tab === "ledger" },
-        { label: "Balances", icon: "scale", href: route.group(group.id, "balances"),
+        { label: copy.group.tabs.ledger, icon: "list", href: route.group(group.id), on: tab === "ledger" },
+        { label: copy.group.tabs.balances, icon: "scale", href: route.group(group.id, "balances"),
           on: tab === "balances" },
       ]} />
     </Screen>
@@ -135,13 +144,6 @@ function GroupScreen() {
 /** Which way a row moves your balance — drives the coloured edge on the row. */
 function lean(minor: number): string {
   return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
-}
-
-/** "Marie paid" · "Marie + 1 other received". */
-function payersLabel(name: string | undefined, others: number, verb: string): string {
-  const who = name ?? "Someone";
-  if (others <= 0) return `${who} ${verb}`;
-  return `${who} + ${others} other${others === 1 ? "" : "s"} ${verb}`;
 }
 
 // ------------------------------------------------------------- expenses
@@ -186,22 +188,24 @@ function LedgerTab({ data }: { data: GroupData }) {
           <Card style={{ flex: 1, padding: "10px 12px" }}>
             <div className="eyebrow" style={{ color: net === 0 ? "var(--muted)" : "inherit" }}>
               <span className={signClass(net)}>
-                {net < 0 ? "You owe" : net > 0 ? "You're owed" : "You're square"}
+                {net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square}
               </span>
             </div>
             <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
               {money(net, group.baseCurrency, net !== 0)}
             </div>
             <div style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: 2 }}>
-              you paid {money(balances.paidMinor[me] ?? 0, group.baseCurrency)}
-              {" · "}your share {money(balances.owedMinor[me] ?? 0, group.baseCurrency)}
+              {copy.group.you.paidAndShare(
+                money(balances.paidMinor[me] ?? 0, group.baseCurrency),
+                money(balances.owedMinor[me] ?? 0, group.baseCurrency))}
             </div>
             {/* Only where there is income to account for: on a group with
                 none, this line would be two zeroes explaining nothing. */}
             {(balances.receivedMinor[me] ?? 0) > 0 || (balances.incomeShareMinor[me] ?? 0) > 0 ? (
               <div style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-                you took in {money(balances.receivedMinor[me] ?? 0, group.baseCurrency)}
-                {" · "}your cut {money(balances.incomeShareMinor[me] ?? 0, group.baseCurrency)}
+                {copy.group.you.tookAndCut(
+                  money(balances.receivedMinor[me] ?? 0, group.baseCurrency),
+                  money(balances.incomeShareMinor[me] ?? 0, group.baseCurrency))}
               </div>
             ) : null}
           </Card>
@@ -210,7 +214,7 @@ function LedgerTab({ data }: { data: GroupData }) {
 
       <Scroll>
         {entries.length === 0 ? (
-          <Empty title="Nothing here yet">Tap + to add the first thing.</Empty>
+          <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
         ) : null}
 
         <div className="rows">
@@ -251,13 +255,13 @@ function LedgerTab({ data }: { data: GroupData }) {
       <Link href={route.entry(gid, expense.id)}
         className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`}>
         <div className="rmain">
-          <div className="rtitle">{expense.description || "Untitled"}</div>
+          <div className="rtitle">{expense.description || copy.group.untitled}</div>
           <div className="rmeta">
-            {payersLabel(payer?.name, payers.length - 1, ENTRY_VERB[kind])}
+            {copy.group.payers(payer?.name ?? copy.someone, payers.length - 1, copy.entryKind.verb[kind])}
             {" · "}
             {expense.split.mode === "equal"
-              ? `${income ? "shared" : "split"} ${participants} ways`
-              : `${participants} people, ${SPLIT_MODE_LABEL[expense.split.mode].toLowerCase()}`}
+              ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
+              : copy.group.splitAs(participants, copy.split.mode[expense.split.mode].toLowerCase())}
           </div>
         </div>
         <div className="ramt">
@@ -268,7 +272,7 @@ function LedgerTab({ data }: { data: GroupData }) {
             <div className="sm">{money(expense.amountMinor, expense.currency)}</div>
           ) : null}
           <div className={`sm share ${signClass(myNet)}`}>
-            {mine ? money(myNet, base, myNet !== 0) : "not yours"}
+            {mine ? money(myNet, base, myNet !== 0) : copy.group.notYours}
           </div>
         </div>
       </Link>
@@ -285,16 +289,18 @@ function LedgerTab({ data }: { data: GroupData }) {
         className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`}>
         <div className="rmain">
           <div className="rtitle">
-            {from?.name ?? "?"} paid {to?.name ?? "?"}
+            {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}
           </div>
-          <div className="rmeta">Transfer{settlement.note ? ` · ${settlement.note}` : ""}</div>
+          <div className="rmeta">
+            {settlement.note ? copy.group.transferNote(settlement.note) : copy.group.transfer}
+          </div>
         </div>
         <div className="ramt">
           <div className="big" style={{ color: "var(--muted)" }}>
             {money(settlement.baseAmountMinor, base)}
           </div>
           <div className={`sm share ${signClass(myNet)}`}>
-            {myNet !== 0 ? money(myNet, base, true) : "not yours"}
+            {myNet !== 0 ? money(myNet, base, true) : copy.group.notYours}
           </div>
         </div>
       </Link>
@@ -347,20 +353,20 @@ function BalancesTab({ data }: { data: GroupData }) {
         <div className="pad">
           <Card style={{ borderLeft: "2px solid var(--debit)" }}>
             <div style={{ fontSize: 12.5, color: "var(--debit)", fontWeight: 600 }}>
-              {plural(balances.problems.length, "expense")} couldn't be split
+              {copy.group.unsplittable(plural(balances.problems.length, copy.noun.expense))}
             </div>
             <p style={{ fontSize: 11.5, color: "var(--ink-2)", margin: "5px 0 0" }}>
-              {balances.problems[0]!.reason}. They're left out of the balances above.
+              {copy.group.unsplittableWhy(balances.problems[0]!.reason)}
             </p>
           </Card>
         </div>
       ) : null}
 
       <div className="pad" style={{ paddingTop: 10 }}>
-        <Eyebrow style={{ marginBottom: 9 }}>Settle up</Eyebrow>
+        <Eyebrow style={{ marginBottom: 9 }}>{copy.group.settleUp}</Eyebrow>
 
         {transfers.length === 0 ? (
-          <Empty title="Everyone's square" />
+          <Empty title={copy.group.allSquare} />
         ) : null}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -388,7 +394,7 @@ function BalancesTab({ data }: { data: GroupData }) {
       <div className="pad" style={{ paddingTop: 12 }}>
         <Card>
           <div className="kv">
-            <span className="k">Spent together</span>
+            <span className="k">{copy.group.spentTogether}</span>
             <span className="v">{money(balances.totalSpendMinor, group.baseCurrency)}</span>
           </div>
           {/* Income is never netted into what the trip cost — the two are
@@ -396,7 +402,7 @@ function BalancesTab({ data }: { data: GroupData }) {
               is an answer to the second one. */}
           {balances.totalIncomeMinor > 0 ? (
             <div className="kv">
-              <span className="k">Taken in</span>
+              <span className="k">{copy.group.takenIn}</span>
               <span className="v">
                 {money(balances.totalIncomeMinor, group.baseCurrency, true)}
               </span>

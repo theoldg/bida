@@ -130,12 +130,19 @@ light joke at the model's own expense, never the photographer's, that still
 names what to re-shoot — instead of guessing at the other fields. `scanReceipt()` (`apps/web/lib/scan/index.ts`) turns that
 into a thrown `ScanRejectedError` whose message *is* the model's sentence;
 the expense form shows it verbatim on the Receipt tab in place of the
-generic "Couldn't read that receipt." A `429`/`503` from Gemini (rate limited
-or overloaded — the free tier hits this, see **Verified live** below) is
-distinguished the same way, as `ScanUnavailableError`, so the person sees
-"Gemini's busy right now" rather than a message indistinguishable from a bad
-photo. Any other failure (network, other non-2xx, malformed JSON) still
-falls back to the generic message.
+generic "Couldn't read that receipt."
+
+Two conditions of the phone are told apart from that, because neither is
+anything to do with the photo, and the generic message sent people back to
+re-shoot a receipt that was fine. A `429`/`503` from Gemini (rate limited or
+overloaded — the free tier hits this, see **Verified live** below) throws
+`ScanUnavailableError`, and the person is told Gemini is busy. **Scanning is
+the one act in the app that needs a network**, so an offline phone throws
+`ScanOfflineError` — checked before the downscale, and again on a `fetch` that
+rejects, which is the captive portal `navigator.onLine` calls online. The
+words are `copy.scan.*` ([ADR-0033](decisions/0033-every-word-in-one-file.md));
+`scanErrorText` in the entry form maps error to sentence. Any other failure
+(other non-2xx, malformed JSON) still falls back to the generic message.
 
 ## Trust, and what we're accepting
 

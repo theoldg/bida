@@ -16,13 +16,14 @@ import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../component
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
-import {
-  ENTRY_LABEL, ENTRY_PAYER_LABEL, ENTRY_SPLIT_LABEL, ENTRY_KINDS, kindOf, type EntryKind,
-} from "../../../../lib/entry-kind";
+import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
+import { copy } from "../../../../lib/copy";
 import { dateInputValue, errorText, money, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
-import { normalizeScan, scanReceipt, ScanRejectedError, ScanUnavailableError } from "../../../../lib/scan";
+import {
+  normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
+} from "../../../../lib/scan";
 import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
 
 /**
@@ -37,6 +38,17 @@ import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft
  */
 export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
+}
+
+/**
+ * Why the scan failed, in words. Only the model's own refusal is quoted: the
+ * other two are conditions of the phone, and the app says those in its voice.
+ */
+function scanErrorText(err: unknown): string | null {
+  if (err instanceof ScanOfflineError) return copy.scan.offline;
+  if (err instanceof ScanUnavailableError) return copy.scan.busy;
+  if (err instanceof ScanRejectedError) return err.message;
+  return null;
 }
 
 function EditEntryScreen() {
@@ -97,7 +109,7 @@ function EditEntryScreen() {
       if (receiptItems.length > 0) router.push(route.items(groupId));
     } catch (err) {
       setScanState("error");
-      setScanError(err instanceof ScanRejectedError || err instanceof ScanUnavailableError ? err.message : null);
+      setScanError(scanErrorText(err));
     }
   }
 
@@ -392,26 +404,26 @@ function EditEntryScreen() {
       <Body>
         <TopBar
           title={draft.entryId
-            ? (reachable.length > 1 ? "Edit" : `Edit ${ENTRY_LABEL[kind].toLowerCase()}`)
-            : "New"}
+            ? (reachable.length > 1 ? copy.form.editTitle : copy.form.editKind(copy.entryKind.label[kind].toLowerCase()))
+            : copy.form.newTitle}
           sub={group.name}
           back={goBack}
-          right={<button className="action" onClick={save} disabled={!ready}>Save</button>}
+          right={<button className="action" onClick={save} disabled={!ready}>{copy.act.save}</button>}
         />
 
         <Scroll>
           <input ref={cameraInput} type="file" accept="image/*" capture="environment"
-            style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label="Take a photo of a receipt" />
+            style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label={copy.scan.camera} />
           <input ref={libraryInput} type="file" accept="image/*"
-            style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label="Upload a receipt photo" />
+            style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label={copy.scan.library} />
 
           {reachable.length > 1 ? (
             <div className="pad" style={{ paddingTop: 2, paddingBottom: 0 }}>
-              <div className="seg" role="tablist" aria-label="What kind of entry">
+              <div className="seg" role="tablist" aria-label={copy.form.kindTablist}>
                 {reachable.map((k) => (
                   <button key={k} type="button" role="tab" aria-selected={k === kind}
                     className={k === kind ? "on" : ""} onClick={() => changeKind(k)}>
-                    {ENTRY_LABEL[k]}
+                    {copy.entryKind.label[k]}
                   </button>
                 ))}
               </div>
@@ -423,7 +435,7 @@ function EditEntryScreen() {
               <AmountInput
                 className="amount"
                 fieldClassName="big"
-                aria-label={`Amount in ${draft.currency}`}
+                aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
                 autoFocus={!draft.entryId}
                 placeholder="0"
@@ -434,7 +446,7 @@ function EditEntryScreen() {
                 autoSize={true}
                 disabled={receiptLocksAmount}
               />
-              <button type="button" className="chip" aria-label="Currency"
+              <button type="button" className="chip" aria-label={copy.form.currency}
                 style={{ alignSelf: "center", marginLeft: 3 }}
                 onClick={() => setAsk("currency")}>
                 {draft.currency} <Icon name="chev" size={10} />
@@ -445,17 +457,17 @@ function EditEntryScreen() {
               <div style={{
                 fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
                 padding: "2px 7px", borderRadius: 2, marginTop: 7,
-              }}>read from receipt</div>
+              }}>{copy.form.fromReceipt}</div>
             ) : null}
 
             {foreign ? (
               <>
                 <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 5, fontFamily: "var(--f-mono)" }}>
-                  = {rateOk ? money(baseMinor, base) : "—"} · 1 {draft.currency} =
+                  = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} =
                   <span className={`amountfield${rateOk ? "" : " bad"}`} style={{ marginLeft: 4 }}>
                     <input
                       className="rateinput"
-                      aria-label={`Rate, ${draft.currency} to ${base}`}
+                      aria-label={copy.form.rateLabel(draft.currency, base)}
                       value={draft.rateToBase}
                       inputMode="decimal"
                       onChange={(e) => patch({ rateToBase: e.target.value })}
@@ -465,7 +477,7 @@ function EditEntryScreen() {
                 <div style={{
                   fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
                   padding: "2px 7px", borderRadius: 2, marginTop: 7,
-                }}>rate is frozen at entry — edit it here</div>
+                }}>{copy.form.rateFrozen}</div>
               </>
             ) : null}
           </div>
@@ -481,19 +493,19 @@ function EditEntryScreen() {
             ) : null}
 
             <div className="field">
-              {transfer ? null : <label htmlFor="what">What</label>}
+              {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
-                aria-label={transfer ? "Note (optional)" : "What"}
-                placeholder={transfer ? "Note (optional)" : "Title"}
+                aria-label={transfer ? copy.form.note : copy.form.what}
+                placeholder={transfer ? copy.form.note : copy.form.whatPlaceholder}
                 onChange={(e) => patch({ description: e.target.value })} />
             </div>
 
             {transfer ? null : coPayers.length > 1 ? (
               <Card style={{ padding: "10px 12px" }}>
                 <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</span>
+                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
-                    {coPayers.length} people
+                    {copy.form.somePeople(coPayers.length)}
                   </span>
                   <Icon name="chev" size={14} className="spacer" style={{ color: "var(--muted)" }} />
                 </Link>
@@ -501,7 +513,7 @@ function EditEntryScreen() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {coPayers.map(([id, amount]) => (
                     <Chip key={id} variant={id === data.me ? "hl" : undefined}>
-                      {(data.memberById.get(id)?.name ?? "?").split(" ")[0]} {money(amount, draft.currency)}
+                      {(data.memberById.get(id)?.name ?? copy.unknown).split(" ")[0]} {money(amount, draft.currency)}
                     </Chip>
                   ))}
                 </div>
@@ -513,14 +525,14 @@ function EditEntryScreen() {
               </Card>
             ) : (
               <div className="field">
-                <span className="fieldlabel">{ENTRY_PAYER_LABEL[kind]}</span>
+                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                 <button type="button" id="paidby" className="pick"
-                  aria-label={ENTRY_PAYER_LABEL[kind]} onClick={() => setAsk("payer")}>
-                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? "—"}</span>
+                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
+                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
                   <Icon name="chev" size={13} className="spacer pchev" />
                 </button>
-                <Link href={route.payers(groupId)} className="chip" aria-label="Several people put money in">
-                  + someone
+                <Link href={route.payers(groupId)} className="chip" aria-label={copy.form.coPayers}>
+                  {copy.form.andSomeone}
                 </Link>
               </div>
             )}
@@ -529,7 +541,7 @@ function EditEntryScreen() {
               <SplitEditor
                 members={data.members}
                 me={data.me}
-                title={ENTRY_SPLIT_LABEL[kind]}
+                title={copy.entryKind.split[kind]}
                 totalMinor={baseMinor}
                 currency={base}
                 spec={effectiveSplit}
@@ -551,35 +563,36 @@ function EditEntryScreen() {
             )}
 
             <div className="field">
-              <label htmlFor="when">When</label>
+              <label htmlFor="when">{copy.form.when}</label>
               <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
                 onChange={(e) => patch({ occurredAt: withDate(draft.occurredAt, e.target.value) })} />
             </div>
 
-            {failed ? <p className="failure" role="alert">Couldn&rsquo;t save — {failed}</p> : null}
+            {failed ? <p className="failure" role="alert">{copy.form.saveFailed(failed)}</p> : null}
           </div>
           <div style={{ height: 12 }} />
         </Scroll>
       </Body>
 
       {ask === "discard" ? (
-        <ConfirmDialog title={`Discard this ${ENTRY_LABEL[kind].toLowerCase()}?`} confirm="Discard"
+        <ConfirmDialog title={copy.form.discardTitle(copy.entryKind.label[kind].toLowerCase())}
+          confirm={copy.act.discard}
           danger={true} onConfirm={discard} onClose={() => setAsk(null)}>
-          <p>What you&rsquo;ve entered isn&rsquo;t saved anywhere and won&rsquo;t be handed back.</p>
+          <p>{copy.form.discardBody}</p>
         </ConfirmDialog>
       ) : null}
 
       {ask === "currency" ? (
         <ChoiceDialog
-          title="Currency"
+          title={copy.currency.title}
           value={draft.currency}
           options={[
             ...[...new Set([base, draft.currency, ...COMMON_CURRENCIES])].map((c) => ({
               value: c,
               label: currencyLabel(c),
-              note: c === base ? "the group settles in this" : undefined,
+              note: c === base ? copy.currency.isBase : undefined,
             })),
-            { value: OTHER_CURRENCY, label: "Other…", note: "any three-letter code" },
+            { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
           ]}
           onPick={(currency) => {
             if (currency === OTHER_CURRENCY) { setAsk("currency-other"); return; }
@@ -592,12 +605,12 @@ function EditEntryScreen() {
 
       {ask === "payer" ? (
         <ChoiceDialog
-          title={ENTRY_PAYER_LABEL[kind]}
+          title={copy.entryKind.payer[kind]}
           value={draft.paidBy}
           options={data.members.map((m) => ({
             value: m.id,
             label: m.name,
-            note: m.id === data.me ? "you" : undefined,
+            note: m.id === data.me ? copy.form.you : undefined,
           }))}
           onPick={(paidBy) => patch({ paidBy, payers: null })}
           onClose={() => setAsk(null)}
@@ -605,8 +618,9 @@ function EditEntryScreen() {
       ) : null}
 
       {ask === "currency-other" ? (
-        <PromptDialog title="Currency" placeholder="UZS" confirm="Use it" maxLength={3}
-          autoCapitalize="characters" hint="A three-letter ISO code."
+        <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
+          confirm={copy.act.useIt} maxLength={3}
+          autoCapitalize="characters" hint={copy.currency.otherHint}
           clean={normalizeCurrencyCode} valid={(v) => v.length === 3}
           onSubmit={(currency) => {
             patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
@@ -646,9 +660,9 @@ function TransferSides({ members, from, to, onChange }: {
     const member = byId.get(which === "from" ? from : to);
     return (
       <button type="button" className="tside" onClick={() => setPicking(which)}
-        aria-label={which === "from" ? "Who sent it" : "Who received it"}>
-        <span className="eyebrow">{which === "from" ? "From" : "To"}</span>
-        <span className="who">{member?.name ?? "—"}</span>
+        aria-label={which === "from" ? copy.form.sentBy : copy.form.receivedBy}>
+        <span className="eyebrow">{which === "from" ? copy.entry.from : copy.entry.to}</span>
+        <span className="who">{member?.name ?? copy.none}</span>
       </button>
     );
   };
@@ -666,27 +680,25 @@ function TransferSides({ members, from, to, onChange }: {
     <div>
       <div className="card transfer">
         {side("from")}
-        <button type="button" className="tswap" aria-label="Swap the two sides"
+        <button type="button" className="tswap" aria-label={copy.form.swapSides}
           onClick={() => onChange({ fromMember: to, toMember: from })}>
           <Icon name="arrow" size={18} />
         </button>
         {side("to")}
       </div>
       {from === to ? (
-        <p className="failure" role="alert">
-          Money has to go from one person to a different one.
-        </p>
+        <p className="failure" role="alert">{copy.form.sameSide}</p>
       ) : null}
 
       {picking ? (
         <ChoiceDialog
-          title={picking === "from" ? "Who sent it" : "Who received it"}
+          title={picking === "from" ? copy.form.sentBy : copy.form.receivedBy}
           value={picking === "from" ? from : to}
           options={members.map((m) => ({
             value: m.id,
             label: m.name,
             note: (picking === "from" ? m.id === to : m.id === from) && from !== to
-              ? "the other side — picking swaps them" : undefined,
+              ? copy.form.otherSide : undefined,
           }))}
           onPick={pick}
           onClose={() => setPicking(null)}

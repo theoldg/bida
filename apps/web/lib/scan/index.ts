@@ -13,6 +13,13 @@ export class ScanRejectedError extends Error {}
 export class ScanUnavailableError extends Error {}
 
 /**
+ * The phone can't reach anything. Scanning is the one act in the app that
+ * needs a network — everything else is local first — so "couldn't read that
+ * receipt" was a lie about the photo when the truth was about the signal.
+ */
+export class ScanOfflineError extends Error {}
+
+/**
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
  * retry doubles both our requests and the shared daily Gemini quota; let the
  * caller offer a "try again" button instead. See docs/receipt-scanning.md.
@@ -23,14 +30,26 @@ export async function scanReceipt(
   secret: string,
   categoryNames: readonly string[],
 ): Promise<ScanResult> {
+  // Asked before the downscale, which is the expensive part: there is no point
+  // resizing a photo we cannot send.
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
+    throw new ScanOfflineError("offline");
+  }
   const imageBase64 = await downscaleToBase64Jpeg(photo);
-  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-    body: JSON.stringify(buildScanRequestBody(imageBase64, categoryNames)),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+      body: JSON.stringify(buildScanRequestBody(imageBase64, categoryNames)),
+    });
+  } catch (err) {
+    // fetch only rejects when the request never reached a server — a captive
+    // portal or a dead radio that `navigator.onLine` still calls online.
+    throw new ScanOfflineError(err instanceof Error ? err.message : "offline");
+  }
   if (res.status === 429 || res.status === 503) {
-    throw new ScanUnavailableError("Gemini's busy right now — try again in a minute.");
+    throw new ScanUnavailableError("busy");
   }
   if (!res.ok) {
     throw new Error(`scan failed: ${res.status} ${await res.text().catch(() => "")}`);
