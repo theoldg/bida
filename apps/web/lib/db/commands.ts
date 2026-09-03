@@ -18,7 +18,7 @@ import {
   type SplitTab,
 } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
-import { forgetMe, getDevice, hideGroup, setMe, unhideGroup } from "./device";
+import { getDevice, hideGroup, setMe, unhideGroup } from "./device";
 import { materialise } from "./fold";
 import { requestPersistence } from "../persist";
 import { scheduleSync } from "./sync";
@@ -320,31 +320,14 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 }
 
 /**
- * Leave a group as `memberId`: the same tombstone as `removeMember`, but of
- * yourself, and it also drops this device's claim and hides the group from
- * this phone's list — there is nobody left for the claim to point at, and
- * having left, it isn't one of "your groups" any more, whether or not anyone
- * else is still in it. When `lastMember` is true (the caller already
- * checked: this was the only member still alive), the group is archived in
- * the same batch. An empty group is a dangling link with nobody to read it,
- * not state worth keeping — [history-copy.ts](../history-copy.ts) already
- * renders an `archivedAt` op as "archived the group", the same wording used
- * here.
+ * Forget a group on this phone: hides it from this device's list. Purely
+ * local — nothing is appended to the op log, so it's invisible to everyone
+ * else in the group and there's nothing for history to show. Membership and
+ * this device's claimed identity are untouched, so opening the invite link
+ * again (`saveGroupKey`) un-forgets it with no fuss. Groups are never
+ * deleted, whether forgotten by everyone or not.
  */
-export async function leaveGroup(
-  groupId: Id,
-  memberId: Id,
-  lastMember: boolean,
-  now = Date.now(),
-): Promise<void> {
-  const drafts: OpDraft[] = [
-    { entity: "member", entityId: memberId, kind: "delete", patch: {} },
-  ];
-  if (lastMember) {
-    drafts.push({ entity: "group", entityId: groupId, kind: "update", patch: { archivedAt: now } });
-  }
-  await appendOps(groupId, memberId, drafts, now);
-  await forgetMe(groupId);
+export async function forgetGroup(groupId: Id): Promise<void> {
   await hideGroup(groupId);
 }
 

@@ -31,12 +31,12 @@ export interface DeviceRecord {
   /** groupId -> the member this device belongs to. */
   meByGroup: Record<string, string>;
   /**
-   * Groups this device has left. Hidden from the groups list on this phone
-   * even though the shared data (and this device's `groupKeys` secret, if it
-   * still has one) is untouched — leaving is a per-device "not mine any more",
-   * not a claim about what happened to the group itself. Absent on records
-   * written before this existed. Opening the invite link again clears an entry
-   * back out (`saveGroupKey`).
+   * Groups this device has forgotten. Hidden from the groups list on this
+   * phone even though the shared data (and this device's `groupKeys` secret,
+   * if it still has one) is untouched — forgetting is a per-device "not on my
+   * list any more", not a claim about what happened to the group itself, and
+   * it's never logged. Absent on records written before this existed.
+   * Opening the invite link again clears an entry back out (`saveGroupKey`).
    */
   leftGroups?: string[];
   theme: "system" | "light" | "dark";

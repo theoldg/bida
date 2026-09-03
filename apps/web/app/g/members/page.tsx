@@ -9,7 +9,7 @@ import { Icon } from "../../../components/icons";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
 import {
-  addMember, claimIdentity, leaveGroup, removeMember, renameMember,
+  addMember, claimIdentity, forgetGroup, removeMember, renameMember,
 } from "../../../lib/db/commands";
 import { route } from "../../../lib/group-link";
 import { useGroupData, useInviteLink } from "../../../lib/hooks";
@@ -35,7 +35,7 @@ export default function MembersPage() {
 type Ask =
   | { kind: "rename"; id: string; name: string }
   | { kind: "remove"; id: string; name: string }
-  | { kind: "leave" };
+  | { kind: "forget" };
 
 function MembersScreen() {
   const router = useRouter();
@@ -73,15 +73,9 @@ function MembersScreen() {
     if (!data.me) await claimIdentity(groupId, memberId);
   }
 
-  // Leaving is `removeMember` on yourself, so it tombstones like any other
-  // removal: your past expenses stay exactly as they were. The one thing worth
-  // naming is what it does when you're the last person here.
-  const lastMember = data.members.length === 1 && data.members[0]?.id === data.me;
-  const leaveTitle = lastMember ? copy.members.deleteGroup : copy.members.leave;
-
-  async function leave() {
-    if (!groupId || !data.me) return;
-    await leaveGroup(groupId, data.me, lastMember);
+  async function forget() {
+    if (!groupId) return;
+    await forgetGroup(groupId);
     router.replace(route.groups());
   }
 
@@ -130,8 +124,8 @@ function MembersScreen() {
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
 
             {data.me ? (
-              <GhostRow icon="trash" label={copy.members.leave} danger={true}
-                onClick={() => setAsk({ kind: "leave" })} />
+              <GhostRow icon="trash" label={copy.members.forget}
+                onClick={() => setAsk({ kind: "forget" })} />
             ) : null}
           </div>
         </Scroll>
@@ -155,10 +149,10 @@ function MembersScreen() {
         </ConfirmDialog>
       ) : null}
 
-      {ask?.kind === "leave" ? (
-        <ConfirmDialog title={leaveTitle} confirm={leaveTitle} danger={true}
-          onConfirm={leave} onClose={() => setAsk(null)}>
-          <p>{lastMember ? copy.members.lastBody(group.name) : copy.members.leaveBody(group.name)}</p>
+      {ask?.kind === "forget" ? (
+        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
+          onConfirm={forget} onClose={() => setAsk(null)}>
+          <p>{copy.members.forgetBody(group.name)}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>

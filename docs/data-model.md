@@ -72,10 +72,11 @@ What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
 and nowhere else.
 
 - A member is a person, not an account, and is tombstoned rather than
-  hard-deleted or the fold references nothing. Leaving is that tombstone on
-  yourself plus `device.leftGroups`, so the group drops off *your* list while
-  others keep it; emptying the group sets `archivedAt` in the same batch.
-  Opening the invite link again clears the hide.
+  hard-deleted or the fold references nothing.
+- Forgetting a group (`device.leftGroups`) is purely local — no op, no
+  tombstone, nobody else sees it — so it drops off *your* list without
+  touching membership or the group itself. Groups are never deleted. Opening
+  the invite link again clears the hide.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
   entry ([ADR-0005](decisions/0005-money-and-currency.md)) and must re-derive
   identically on every device.

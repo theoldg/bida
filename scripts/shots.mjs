@@ -244,7 +244,7 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
-      // Adding someone is the last row of the list, mid-name; leaving is the
+      // Adding someone is the last row of the list, mid-name; forgetting is the
       // dialog this app draws in place of confirm() (ADR-0008).
       await page.goto(`${base}/g/members?id=${groupId}`);
       await page.getByLabel("Add someone").fill("Nadia");
@@ -252,10 +252,10 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
       process.stdout.write(`${theme}/add-member `);
       await page.getByLabel("Add someone").fill("");
-      await page.getByRole("button", { name: "Leave group" }).click();
+      await page.getByRole("button", { name: "Forget group" }).click();
       await page.waitForTimeout(200);
-      await page.screenshot({ path: join(SHOTS, `${theme}-leave.png`) });
-      process.stdout.write(`${theme}/leave `);
+      await page.screenshot({ path: join(SHOTS, `${theme}-forget.png`) });
+      process.stdout.write(`${theme}/forget `);
 
       // Deleting an entry — the last thing in the app that asked with the
       // browser's own confirm(). Opened and photographed, never confirmed.

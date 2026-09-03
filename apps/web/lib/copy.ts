@@ -197,11 +197,9 @@ export const copy = {
     newName: "New name",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are — nothing is redistributed.",
-    leave: "Leave group",
-    deleteGroup: "Delete group",
-    leaveBody: (group: string) => `You’ll be removed from ${group}. Your past entries stay as they are.`,
-    lastBody: (group: string) =>
-      `You’re the last person in ${group}, so leaving deletes it. Nothing comes back on its own.`,
+    forget: "Forget group",
+    forgetBody: (group: string) =>
+      `${group} comes off this phone’s list. Nothing is deleted, and no one is notified — open the invite link again any time to bring it back.`,
   },
 
   // ------------------------------------------------------------- one entry

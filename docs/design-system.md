@@ -37,7 +37,7 @@ primary button is figure-ground inversion — an ink block with a paper glyph.
 Adding a third hue is a regression. A person is identified by their printed
 name and nothing else — no tint, and no initials square
 ([ADR-0023](decisions/0023-monospace-monochrome.md)). **The one sanctioned exception:**
-destructive actions (`.btn-d`, "Leave group") take `--debit` as an outline, not
+destructive actions (`.btn-d`, "Remove") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
@@ -120,7 +120,7 @@ typeface, announcing that the *site* is asking, with one line where a consequenc
 needs a paragraph. `components/dialog.tsx` is a real `<dialog>` — `showModal()`,
 so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
-("Leave group", never "OK"), `--debit` outlined when it destroys something. A
+("Forget group", never "OK"), `--debit` outlined when it destroys something. A
 screen still wins where the decision needs the ledger on it — the payers editor,
 who-had-what ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own

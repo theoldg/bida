@@ -11,7 +11,7 @@ import {
   deleteExpense,
   editExpense,
   editSettlement,
-  leaveGroup,
+  forgetGroup,
   publishExistingClaims,
   recordSettlement,
   saveGroupKey,
@@ -310,14 +310,17 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("leaving tombstones your own member, forgets this device's claim, and hides the group from this phone even though others are still in it", async () => {
+  it("forgetting a group only hides it on this phone — no op, membership and claim untouched", async () => {
     const { groupId, theo, marie } = await trip();
-    await leaveGroup(groupId, theo, false);
+    const before = await db().ops.count();
 
-    expect((await db().members.get(theo))?.deletedAt).toBeTruthy();
+    await forgetGroup(groupId);
+
+    expect(await db().ops.count()).toBe(before);
+    expect((await db().members.get(theo))?.deletedAt).toBeFalsy();
     expect((await db().members.get(marie))?.deletedAt).toBeFalsy();
     expect((await db().groups.get(groupId))?.archivedAt).toBeFalsy();
-    expect(await getMe(groupId)).toBeUndefined();
+    expect(await getMe(groupId)).toBe(theo);
     expect((await getDevice()).leftGroups).toContain(groupId);
     await assertMaterialisedMatchesLog(groupId);
 
@@ -325,21 +328,6 @@ describe("commands", () => {
     const secret = (await db().groupKeys.get(groupId))!.secret;
     await saveGroupKey(groupId, secret);
     expect((await getDevice()).leftGroups).not.toContain(groupId);
-  });
-
-  it("the last member leaving also archives the group, in the same batch", async () => {
-    const { groupId, theo } = await trip();
-    const marie = (await db().members.where("groupId").equals(groupId).toArray())
-      .find((m) => m.id !== theo)!.id;
-    const sam = (await db().members.where("groupId").equals(groupId).toArray())
-      .find((m) => m.id !== theo && m.id !== marie)!.id;
-    await leaveGroup(groupId, marie, false);
-    await leaveGroup(groupId, sam, false);
-
-    await leaveGroup(groupId, theo, true);
-    expect((await db().members.get(theo))?.deletedAt).toBeTruthy();
-    expect((await db().groups.get(groupId))?.archivedAt).toBeTruthy();
-    await assertMaterialisedMatchesLog(groupId);
   });
 
   it("settlements clear a balance without inflating what the trip cost", async () => {
