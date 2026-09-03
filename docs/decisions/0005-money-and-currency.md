@@ -1,36 +1,37 @@
 # 0005 — Money: minor units, a rate locked at entry, one field that types it
 
-**Status:** Accepted · 2026-08-27 · input section 2026-08-28
+**Status:** Accepted · 2026-08-27 · input 2026-08-28
 
 **Context.** The main use is a trip abroad: some expenses local, some at home,
 one group. Three models were on the table — one currency per group, per-expense
-currency with a frozen rate, or live re-rating. Separately the owner: *"the
-amounts number input is really awkward to use, there's no caret and i have no
-idea what's going on"*, and *"the text 'X minor units unallocated' should be
-displayed in currency"* — money was being handled by whichever screen held it.
+currency with a frozen rate, or live re-rating. Separately, money was being
+handled by whichever screen held it: *"the amounts number input is really
+awkward to use, there's no caret"*, and *"'X minor units unallocated' should be
+displayed in currency"*.
 
 ## Decision
 
 **A group has a base currency; each expense carries its own.** An expense stores
 `currency`, `amountMinor`, the `rateToBase` in force when it was entered, and
 the resulting `baseAmountMinor`. Balances are computed in base. The rate is
-fetched at entry, shown, and **editable** — if the card charged a different rate,
-you can say so. Amounts are integer minor units everywhere and always positive.
+fetched at entry, shown, and **editable** — if the card charged a different
+rate, you can say so. Amounts are integer minor units everywhere and always
+positive.
 
-**One component owns every money field**: `components/amount-input.tsx`.
-`AmountInput` is text-valued, `MinorAmountInput` wraps it for fields whose model
-is minor units. The caret is preserved explicitly — a `useLayoutEffect` counts
+**One component owns every money field**: `components/amount-input.tsx`
+(`AmountInput` text-valued, `MinorAmountInput` wrapping it where the model is
+minor units). The caret is preserved explicitly — a `useLayoutEffect` counts
 significant characters before it and puts it back after reformatting — because
 five hand-rolled fields had each round-tripped through a formatter on every
-keystroke, erasing a half-typed "12." and snapping the caret to the end. The
-group separator is U+202F, since the field accepts both "," and "." as decimal
-separators and neither can also mean "group".
+keystroke, erasing a half-typed "12." and snapping the caret to the end. It
+groups with U+202F, since the field accepts both "," and "." as decimal
+separators and neither can also mean "group"
+([design-system.md](../design-system.md#a-money-field-has-an-underline)).
 
 **Core reports a code and a number, never a sentence with money in it.**
 `SplitValidation` and `PayerValidation` carry `problem` and `diffMinor`; the
 screen builds the sentence (`lib/format.ts`), because only it knows the
-currency. `packages/core` is currency-agnostic and must not leak "minor units"
-into an interface.
+currency. `packages/core` must not leak "minor units" into an interface.
 
 ## Consequences
 
@@ -42,11 +43,6 @@ into an interface.
   That's correct — it's what the bank did — so the rate is shown on the detail.
 - Offline entry defaults to the last cached rate for the pair, flagged for
   correction. It never blocks the write.
-- Every money field gains the same caret behaviour, sanitising and keyboard by
-  construction. Getting a new one wrong now requires effort.
-- A typed figure groups with U+202F while a saved one groups the way the locale
-  does, so it looks slightly different while you type. Input correctness beats
-  output consistency here.
 
 ## Rejected
 
