@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
-import { distinctInitials, money } from "../../../../lib/format";
+import { copy } from "../../../../lib/copy";
+import { bare, distinctInitials, money, plural } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../../lib/draft";
@@ -53,15 +54,15 @@ function ItemsScreen() {
   }, [data.loading, data.members, items, draft?.receiptInvolved, draft?.receiptAssignments]);
 
   if (!groupId || !data.group || !draft) {
-    return <Blank title="Who had what" />;
+    return <Blank title={copy.items.title} />;
   }
 
   if (items.length === 0) {
     return (
       <Screen><Body>
-        <TopBar title="Who had what"
+        <TopBar title={copy.items.title}
           back={draft.entryId ? route.editEntry(groupId, draft.entryId) : route.addEntry(groupId)} />
-        <Empty title="No line items on that scan">Assign the split from the expense form instead.</Empty>
+        <Empty title={copy.items.none.title}>{copy.items.none.body}</Empty>
       </Body></Screen>
     );
   }
@@ -165,19 +166,19 @@ function ItemsScreen() {
   // the control has been found once — what the ×N does. A control you've used
   // doesn't need explaining, and the footer is one line tall.
   const note = !everyItemAssigned ? (
-    <div className="footnote bad">Every item needs at least one person.</div>
+    <div className="footnote bad">{copy.items.needsSomeone}</div>
   ) : canUnfoldSomething && runs.every((r) => r === null) ? (
     <div className="footnote">
-      Tap a <b>×N</b> to split that line into separate portions.
+      {copy.items.unfoldHint.before} <b>×N</b> {copy.items.unfoldHint.after}
     </div>
   ) : null;
 
   return (
     <Screen>
       <Body>
-        <TopBar title="Who had what" sub={`${items.length} item${items.length === 1 ? "" : "s"}`}
+        <TopBar title={copy.items.title} sub={plural(items.length, copy.noun.item)}
           back={true}
-          right={<button className="action" onClick={finish} disabled={!canFinish}>Done</button>} />
+          right={<button className="action" onClick={finish} disabled={!canFinish}>{copy.act.done}</button>} />
 
         {/* Three bands, not one scrolling page: who was there stays put at the
             top, the running totals at the foot, and the grid in between owns
@@ -185,12 +186,12 @@ function ItemsScreen() {
             bill scrolls under it. A twenty-line receipt is the case this screen
             exists for, and the column you're tapping in has to keep its name. */}
         <div className="itemhead">
-          <div className="eyebrow" style={{ marginBottom: 8 }}>Who was there</div>
+          <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
           <div className="whostrip">
             {data.members.map((m) => (
               <button key={m.id} onClick={() => toggleInvolved(m.id)}
                 aria-pressed={involved.has(m.id)}
-                aria-label={`${m.name}${involved.has(m.id) ? " was there" : " wasn't there"}`}
+                aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
                 className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
                 <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
                   {labels.get(m.id)}
@@ -237,19 +238,19 @@ function ItemsScreen() {
                               with and a name of any length in it. */}
                           <span className="itemamount">
                             {item.amount}
-                            {part ? <span className="itemqty"> · {part.index} of {part.of}</span> : null}
+                            {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
                         </span>
                         {into !== null ? (
                           <button className="itemfold" onClick={() => unfold(i)}
-                            title={`Split into ${into} separate lines`}
-                            aria-label={`Split ${item.label} into ${into} separate lines`}>
+                            title={copy.items.splitInto(into)}
+                            aria-label={copy.items.splitItem(item.label, into)}>
                             ×{into}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
                           <button className="itemfold on" onClick={() => fold(part.start, part.of)}
-                            title="Merge back into one line"
-                            aria-label={`Merge the ${part.of} ${item.label} lines back into one`}>
+                            title={copy.items.mergeBack}
+                            aria-label={copy.items.mergeItem(item.label, part.of)}>
                             ×{part.of}<Icon name="merge" size={12} />
                           </button>
                         ) : null}
@@ -260,8 +261,8 @@ function ItemsScreen() {
                         <button className="itemcell" onClick={() => toggleCell(i, m.id)}
                           aria-pressed={assignments[i]?.has(m.id) ?? false}
                           aria-label={part
-                            ? `${m.name} had ${item.label}, portion ${part.index} of ${part.of}`
-                            : `${m.name} had ${item.label}`}>
+                            ? copy.items.hadPortion(m.name, item.label, part.index, part.of)
+                            : copy.items.had(m.name, item.label)}>
                           {assignments[i]?.has(m.id) ? <span className="dot" /> : null}
                         </button>
                       </td>
@@ -272,13 +273,20 @@ function ItemsScreen() {
               <tr>
                 <td className="itemlabel">
                   <span className="itemname">
-                    Tip + service
-                    {tipPercent !== null ? <span className="itemqty"> ({tipPercent}%)</span> : null}
+                    {copy.items.tip}
+                    {tipPercent !== null ? <span className="itemqty"> {copy.items.tipPercent(tipPercent)}</span> : null}
                   </span>
-                  <input className="itemamountin" inputMode="decimal" placeholder="0.00"
-                    aria-label={`Tip and service, in ${draft.currency}`}
-                    value={draft.receiptTip ?? ""}
-                    onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+                  {/* The only figure on this screen that is typed rather than
+                      read off the bill, so it is drawn as a field and says so
+                      until it holds something. */}
+                  <span className="tipfield">
+                    <input className="itemamountin" inputMode="decimal" placeholder={bare(0, draft.currency)}
+                      aria-label={copy.items.tipLabel(draft.currency)}
+                      value={draft.receiptTip ?? ""}
+                      onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+                    <Icon name="edit" size={11} className="tipedit" />
+                  </span>
+                  {draft.receiptTip ? null : <span className="tiphint">{copy.items.tipHint}</span>}
                 </td>
                 {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
               </tr>
@@ -295,7 +303,7 @@ function ItemsScreen() {
             {involvedMembers.length > 0 ? (
               <div className="totalstrip">
                 {involvedMembers.map((m) => (
-                  <div key={m.id} className="tot" aria-label={`${m.name}'s share`}>
+                  <div key={m.id} className="tot" aria-label={copy.items.share(m.name)}>
                     <span className="who">{m.name}</span>
                     <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
                   </div>
