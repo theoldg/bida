@@ -199,10 +199,9 @@ export const copy = {
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are — nothing is redistributed.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
-    blockedBody: (name: string) => `${name} is involved in these expenses. Remove them there, or delete the expense, first.`,
+    blockedBody: (name: string) => `${name} is involved in these expenses.`,
     forget: "Forget group",
-    forgetBody: (group: string) =>
-      `${group} leaves this phone only — nothing’s deleted, no one’s notified. The invite link brings it back.`,
+    forgetBody: "The invite link brings it back.",
   },
 
   // ------------------------------------------------------------- one entry

@@ -109,7 +109,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       {asking ? (
         <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
           onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{copy.members.forgetBody(group.name)}</p>
+          <p>{copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </>

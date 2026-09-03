@@ -187,7 +187,7 @@ function MembersScreen() {
       {ask?.kind === "forget" ? (
         <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
           onConfirm={forget} onClose={() => setAsk(null)}>
-          <p>{copy.members.forgetBody(group.name)}</p>
+          <p>{copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>
