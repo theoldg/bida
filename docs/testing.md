@@ -8,7 +8,7 @@ pnpm verify      # both browser checks against a real build, ~45s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
-pnpm run docs    # every relative link resolves, every doc inside its budget
+pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms
 pnpm run rules   # core is still pure, no browser dialogs crept back, ~30ms
 ```
 

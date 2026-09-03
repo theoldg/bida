@@ -70,8 +70,7 @@ pnpm session && pnpm check
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
-  runs `pnpm check`: doc links and line budgets, the invariants in
-  `scripts/rules-check.mjs`,
+  runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
   typecheck, tests and the static export build, ~45s. Nothing else gates a
   push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
@@ -112,23 +111,20 @@ every session pays in. **Before you finish:**
    roadmap checkboxes.
 
 **A new ADR and a new standing instruction are the two things a session almost
-never adds**, and `pnpm run docs` holds both lists at the length they are: a
-thirteenth ADR or a 24th preference fails the build until something is folded
-or deleted. Each file states its own bar — [decisions/](docs/decisions/README.md)
+never adds.** Each file states its own bar — [decisions/](docs/decisions/README.md)
 and [standing-instructions.md](docs/standing-instructions.md) — and both start
 from *no*. Most of what a session wants to record is neither: it is a Gotcha, a
-line in the doc describing the thing, or already said by the code.
+line in the doc describing the thing, or already said by the code. If you do add
+one, say so in your summary, so the owner sees the list grow rather than finding
+it later.
 
-**Every doc has a line budget, and `pnpm run docs` fails when one breaks it** —
-one per file plus a ceiling over the whole set, in `scripts/docs-check.mjs`. A
-doc therefore grows only when another shrinks. Raising a budget is the owner's
-call and not a way to land a session; cutting a doc well below its number means
-lowering the number in the same commit.
-
-Staying inside it is mostly one rule: **one fact, one home.** Before writing a
-paragraph, find where the project already says it and edit *that*. These files
-have inflated three ways before: an ADR describing the built thing in
-design-system's words, a standing instruction restating what the code enforces,
-and a note about what changed this session. Prefer editing a line to adding one,
-delete what the code says for itself, and cut narrative history — a doc records
-the state and the reasoning, not the sessions that got here.
+**Keep them short.** Nothing counts the lines, so it is on you. The rule that
+does most of the work is **one fact, one home**: before writing a paragraph,
+find where the project already says it and edit *that*. These files have
+inflated three ways before — an ADR describing the built thing in design-system's
+words, a standing instruction restating what the code enforces, and a note about
+what changed this session. Prefer editing a line to adding one, delete what the
+code says for itself, and cut narrative history: a doc records the state and the
+reasoning, not the sessions that got here. Real new behaviour may cost a
+paragraph; pay for it by cutting something that has stopped earning its place.
+A doc past ~200 lines, or covering two subjects, wants splitting or cutting.

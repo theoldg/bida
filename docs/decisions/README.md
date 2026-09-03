@@ -7,9 +7,8 @@ probably in its "Rejected" section, which is the half worth keeping.
 ## Adding one: the default is no
 
 **Most sessions add none, and a session that adds two is documenting its work
-rather than deciding anything.** There are twelve; `pnpm run docs` refuses a
-thirteenth, so a new one means folding or deleting another — or the owner
-raising the cap. All four of these must hold:
+rather than deciding anything.** There are twelve, and that number should move
+about as often as the architecture does. All four of these must hold:
 
 1. **It is built and shipped**, not proposed. An ADR records a decision the
    code already obeys; a plan goes in the roadmap.
@@ -28,6 +27,9 @@ however clever (that is a **Gotcha**); wording, layout or naming on a screen
 opposed to why it is this and not that; a dependency you decided **not** to add,
 which is the default rather than a decision.
 
+If all four hold, write it — and say in your summary that the set grew, so the
+owner sees a thirteenth arrive rather than finding it later.
+
 **Changing one:** edit it. An ADR records where we stand and why, not the order
 we got here — if a later session refines a decision, fold it in and move the
 date on. Rewrite freely, and delete one whose decision no longer binds anything.
@@ -35,11 +37,10 @@ date on. Rewrite freely, and delete one whose decision no longer binds anything.
 decision was folded into another file. Every ADR on disk is a row in the table
 below, and `pnpm run docs` checks that both ways.
 
-**Keep them short — 80 lines, enforced too.** Context, decision, consequences,
-rejected, nothing else. Not how the built thing looks or reads, which is the
-design system's and the feature docs' job — link rather than say it twice. A
-consequence that restates the decision, or a rejected option nobody would
-propose, is a line to cut.
+**Keep them short.** Context, decision, consequences, rejected, nothing else.
+Not how the built thing looks or reads, which is the design system's and the
+feature docs' job — link rather than say it twice. A consequence that restates
+the decision, or a rejected option nobody would propose, is a line to cut.
 
 | # | Decision |
 |---|---|

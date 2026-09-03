@@ -74,9 +74,9 @@ apps/web/        @hajsik/web — Next.js static export, the whole UI
 apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static assets
 ```
 
-Root scripts: `session`, `check` (doc links and budgets · invariants ·
-typecheck · tests · export build — what pre-push runs), `verify`, `entries`,
-`offline`, `shots`, `docs`, `rules`.
+Root scripts: `session`, `check` (doc links · invariants · typecheck · tests ·
+export build — what pre-push runs), `verify`, `entries`, `offline`, `shots`,
+`docs`, `rules`.
 `scripts/lib/harness.mjs` holds what the browser checks share — the build, the
 static server, a phone-shaped browser, the tally, a seeded group — so they build
 themselves and a fourth costs a dozen lines ([testing.md](testing.md)).

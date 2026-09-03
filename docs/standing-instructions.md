@@ -5,10 +5,8 @@
 The owner's rules for how this project is run. They outrank your defaults and
 your harness's defaults.
 
-**Adding one: the default is no.** There are 23; `pnpm run docs` refuses a 24th,
-so a new entry means deleting one — or the owner raising the cap. Most sessions
-should leave this file exactly as they found it, or shorter. All three of these
-must hold:
+**Adding one: the default is no.** Most sessions should leave this file exactly
+as they found it, or shorter. All three of these must hold:
 
 1. **The owner said it, in words you can quote**, this session. Not inferred
    from what they approved, let pass, or seemed pleased by.
@@ -22,6 +20,9 @@ must hold:
 **Not a standing instruction:** a restatement of an ADR, the design system or
 `copy.ts`; a note kept "so it isn't forgotten", because the code remembers; a
 rule you are deriving from the owner's reaction rather than their words.
+
+If all three hold, add it — and say in your summary that the list grew, so it
+is the owner's to keep rather than something that accumulated behind them.
 
 Entries are dated, in the owner's words, one or two lines. **Once a preference
 is a built thing, the built thing documents it — delete the entry**, and expect
@@ -45,8 +46,8 @@ to remove more from this list than you add.
 - **Keep the docs and ADRs short.** *2026-08-30, restated 2026-09-03* — the
   owner had 32 ADRs folded into 11, then: "every time i make a request, the ADRs,
   owner preferences and whatnot get more inflated. compress those back down."
-  Write where a decision stands, never the sequence of sessions that reached it.
-  Every doc has a line budget `pnpm run docs` enforces —
+  Write where a decision stands, never the sequence of sessions that reached it,
+  and prefer editing a line to adding one —
   [CLAUDE.md](../CLAUDE.md#doc-upkeep).
 
 ## Product
