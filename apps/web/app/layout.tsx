@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { IconSprite } from "../components/icons";
+import { KeyboardInset } from "../components/keyboard-inset";
 import { NoLongPress } from "../components/no-long-press";
 import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeScript />
         <IconSprite />
+        <KeyboardInset />
         <NoLongPress />
         <NoPinchZoom />
         <RegisterServiceWorker />

@@ -73,7 +73,8 @@ confers nothing without the secret.
   list costs two rules: **one name, one person** — a name already on it is
   refused as you type, since a member is only ever drawn as their name (so is
   a rename; `lib/names.ts`) — and the row **follows the list down**, as a
-  browser scrolls to a field only as it takes focus, and this one never lets go.
+  browser scrolls to a field only as it takes focus, and this one never lets go
+  — clear of the keyboard, per the `--kb` Gotcha below.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. It must be **total** — it runs inside a render over
   every patch the log holds, so one throw is a white screen, not a missing line.
@@ -186,6 +187,14 @@ figure-free.
   and the bottom bar sits at the foot of a long page — invisible until you
   scroll. `.app` is `height: 100dvh; overflow: hidden`, `html, body` too, and
   every scrolling child of a flex column needs `min-height: 0`.
+- **`dvh` does not shrink for the keyboard.** On iOS the keyboard and its
+  accessory bar are drawn *over* the layout viewport, so the shell keeps its
+  full height and `.scroll` ends behind them — a field scrolled to that edge,
+  by us or by the browser on focus, sits under the strip's buttons. The visual
+  viewport is what's left: `components/keyboard-inset.tsx` writes the covered
+  strip to `--kb`, and `.scroll` spends `--kb` plus air as both padding and
+  `scroll-padding-bottom`. Padding is what a last row can scroll into;
+  scroll-padding is where a field mid-form stops.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past
