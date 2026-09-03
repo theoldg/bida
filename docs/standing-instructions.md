@@ -210,3 +210,7 @@ it applies to work nobody has done yet.
   up sooner", and receipt scanning "should have an explicit 'offline' error
   message instead of 'couldn't read…'". A condition of the phone is named as
   such, at once, not disguised as a failure of the thing you just did.
+- **The offline glyph means offline, nothing else.** *2026-09-03* — "remove the
+  'no wifi' icon next to 'enter an amount to split' and anywhere else." A split
+  or payer verdict that isn't satisfied yet is just its sentence; only the
+  satisfied one earns a tick.

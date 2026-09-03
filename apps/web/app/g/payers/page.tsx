@@ -121,8 +121,10 @@ function PayersScreen() {
           </div>
 
           <div className="pad">
+            {/* Tick when it adds up, words alone when it doesn't — same as the
+                split footer, and for the same reason. */}
             <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
-              <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
+              {check.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
               <span>
                 {check.ok
                   ? copy.payers.accountedFor(

@@ -244,9 +244,11 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
           );
         })}
 
+        {/* Only the satisfied verdict wears a glyph. The unsatisfied one used
+            the offline icon, which says "no wifi" and nothing about a split. */}
         {showFooter ? (
           <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
-            <Icon name={foot.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
+            {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
             <span>{foot.text}</span>
           </div>
         ) : null}
