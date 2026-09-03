@@ -45,7 +45,7 @@ function MembersScreen() {
   const invite = useInviteLink(groupId);
   const [ask, setAsk] = useState<Ask | null>(null);
 
-  if (!groupId || !data.group) return <Blank />;
+  if (!groupId || !data.group) return <Blank back={groupId ? route.group(groupId) : route.groups()} />;
   const group = data.group;
   const names = data.members.map((m) => m.name);
 

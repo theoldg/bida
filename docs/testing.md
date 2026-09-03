@@ -4,8 +4,9 @@
 
 ```bash
 pnpm check       # links · rules · typecheck · 217 tests · export build — pre-push, ~45s
-pnpm verify      # both browser checks against a real build, ~45s
+pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
+pnpm back        # just the device back button, against the arrow it must match
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms
@@ -38,11 +39,11 @@ includes `lib/**` *and* `components/**`, which is why `sanitizeAmount` and
 `groupDigits` are exported from `amount-input.tsx` rather than hidden in it.
 Rendering isn't tested — `pnpm shots` is what looks at screens.
 
-## `scripts/lib/harness.mjs` — what the three checks share
+## `scripts/lib/harness.mjs` — what the browser checks share
 
 A build, a server that speaks the static export's dialect, a phone-shaped
 browser, a pass/fail tally that owns the exit code, and a seeded group. Written
-three times they drifted; written once, a fourth check costs a dozen lines:
+three times they drifted; written once, the next check costs a dozen lines:
 
 ```js
 import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup }

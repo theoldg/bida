@@ -31,7 +31,9 @@ draws is used: no `prompt()`, `confirm()` or `<select>`, no long-press menu, no
 pinch zoom, and adding a person is the last row of the list rather than a dialog
 — a row that refuses a name already there and follows the list down the screen
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
-parent instead of pushing ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
+parent instead of pushing, and the device's back button is cancelled so it runs
+the screen's own back action rather than replaying where you had been — one
+behaviour, arrow and button ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 History is read, not rewound — `/g/restore` and `buildRestorePatch` are gone,
 and the `restore` op kind still folds only because production groups hold some
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)). The look is
@@ -76,11 +78,11 @@ apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static asset
 ```
 
 Root scripts: `session`, `check` (doc links · invariants · typecheck · tests ·
-export build — what pre-push runs), `verify`, `entries`, `offline`, `shots`,
-`docs`, `rules`.
+export build — what pre-push runs), `verify`, `entries`, `back`, `offline`,
+`shots`, `docs`, `rules`.
 `scripts/lib/harness.mjs` holds what the browser checks share — the build, the
 static server, a phone-shaped browser, the tally, a seeded group — so they build
-themselves and a fourth costs a dozen lines ([testing.md](testing.md)).
+themselves and the next one costs a dozen lines ([testing.md](testing.md)).
 `tsconfig.base.json`: ES2022, strict, `noUncheckedIndexedAccess`,
 `verbatimModuleSyntax`.
 

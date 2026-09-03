@@ -60,7 +60,9 @@ function HistoryScreen() {
       ? (subject.description || copy.group.untitled) : copy.group.transfer;
   const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops, 200);
 
-  if (!groupId || !data.group) return <Blank />;
+  if (!groupId || !data.group) {
+    return <Blank back={groupId ? (entryId ? route.entry(groupId, entryId) : route.group(groupId)) : route.groups()} />;
+  }
   const group = data.group;
   const currency = group.baseCurrency;
 

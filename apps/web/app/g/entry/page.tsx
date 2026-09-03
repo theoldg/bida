@@ -47,7 +47,7 @@ function EntryScreen() {
     [entryId],
   ) ?? 0;
 
-  if (!groupId || !data.group) return <Blank />;
+  if (!groupId || !data.group) return <Blank back={groupId ? route.group(groupId) : route.groups()} />;
   const group = data.group;
   const entry = expense ?? settlement;
 

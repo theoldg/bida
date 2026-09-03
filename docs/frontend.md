@@ -28,10 +28,11 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
 **Back goes up, not back.** A screen's `back` names its parent, and `goUp`
-(`lib/nav.ts`) unwinds the history to it instead of pushing, so the device's
-back button climbs one level per press
-([ADR-0007](decisions/0007-a-screen-is-a-route.md)). A `<Link>` to an
-ancestor or a sibling must `replace`; only descending pushes.
+(`lib/nav.ts`) unwinds the history to it instead of pushing; the device's back
+button is cancelled and runs that same action, so the button and the arrow
+cannot disagree (`lib/back-button.ts`,
+[ADR-0007](decisions/0007-a-screen-is-a-route.md)). A `<Link>` to an ancestor
+or a sibling must `replace`; only descending pushes.
 
 **The group secret lives in the URL fragment**, which browsers never send to a
 server ([ADR-0004](decisions/0004-static-export-and-offline.md)). Never move

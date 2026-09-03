@@ -15,9 +15,10 @@
     "docs": "node scripts/docs-check.mjs",
     "rules": "node scripts/rules-check.mjs",
     "check": "pnpm run docs && pnpm run rules && pnpm run typecheck && pnpm run test && pnpm run build",
-    "verify": "node scripts/entries-check.mjs && node scripts/offline-check.mjs",
+    "verify": "node scripts/entries-check.mjs && node scripts/back-check.mjs && node scripts/offline-check.mjs",
     "entries": "node scripts/entries-check.mjs",
     "offline": "node scripts/offline-check.mjs",
+    "back": "node scripts/back-check.mjs",
     "shots": "node scripts/shots.mjs"
   },
   "devDependencies": {

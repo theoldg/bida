@@ -1,6 +1,6 @@
 # 0007 — A screen is a route, back climbs the hierarchy, the chrome is thin
 
-**Status:** Accepted · 2026-08-27 · revised through 2026-08-30
+**Status:** Accepted · 2026-08-27 · revised through 2026-09-03
 
 **Context.** The original plan put everything inside a group in drawers and
 sheets over `/g`. Drawer state doesn't survive a reload or a back press unless
@@ -30,13 +30,21 @@ expenses you'd looked at rather than climbing out.
   personal lens, unconditional).
 - **An up-link unwinds; it doesn't navigate.** `lib/nav.ts`'s `goUp` finds the
   parent among the entries *behind* the current one and goes straight back to
-  it, so only descending pushes and the device back button climbs one level per
-  press. The parent is found by comparing path and query, never a saved count,
-  which would be wrong the moment the browser trimmed the stack. Without the
-  Navigation API (iOS before 18.4) an up-link replaces the current entry. The
-  two tabs `replace`, being halves of one screen; `router.back()` stays where
-  "back" is the truth — payers, who-had-what and the entry form are only reached
-  from below.
+  it, so only descending pushes. The parent is found by comparing path and
+  query, never a saved count, which would be wrong the moment the browser
+  trimmed the stack. Without the Navigation API (iOS before 18.4) an up-link
+  replaces the current entry. The two tabs `replace`, being halves of one
+  screen; `router.back()` stays where "back" is the truth — payers,
+  who-had-what and the entry form are only reached from below.
+- **The device's back button runs the screen's back action, whatever it is.**
+  Unwinding alone left the two disagreeing: an entry opened from the history
+  feed went back to the feed while its arrow went up to the group, and on the
+  entry form the arrow asked before throwing a typed draft away while the
+  button just threw it away. So a *user*-initiated backward traversal is
+  cancelled and `TopBar`'s own back runs instead (`lib/back-button.ts`). The
+  app's own traversals are left alone — taking those over would call the arrow
+  in a loop — and so is a browser that won't be cancelled, which is the
+  degradation, not a second behaviour.
 
 ## Consequences
 
@@ -59,8 +67,14 @@ expenses you'd looked at rather than climbing out.
 - **Keep Settle as a fourth tab, or `/settings` for the theme alone** — the
   first two screens divided a sentence rather than a subject; the second is a
   route and a nav item for one binary you set once.
-- **Intercept `popstate` and route the back button ourselves** — fighting the
-  platform's own gesture for the same result, and it breaks the moment the user
-  means to leave the app.
+- **Leave the back button to the browser** (this ADR's original position: that
+  cancelling it fights the platform's own gesture, and breaks the moment the
+  user means to leave the app). Unwinding got the common paths to agree and no
+  further, and the owner asked for the arrow's behaviour "always". The screen
+  that can be left is the one with no back arrow, and it registers nothing —
+  from the groups list the button still leaves the app.
+- **Intercept `popstate`** — it fires once the browser has already moved, so
+  the only way back is to push the screen again: a flicker, and a history
+  entry per press. The Navigation API cancels beforehand.
 - **Make every up-link `replace`** — it leaves the parent twice on the stack, so
   the first press of the device back button appears to do nothing.

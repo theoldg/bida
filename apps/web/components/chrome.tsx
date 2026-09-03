@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { copy } from "../lib/copy";
+import { useBackButton } from "../lib/back-button";
 import { goUp } from "../lib/nav";
 import { Icon, type IconName } from "./icons";
 
@@ -28,6 +29,11 @@ export function TopBar({ title, sub, back, right }: {
   title: ReactNode; sub?: ReactNode; back?: string | true | (() => void); right?: ReactNode;
 }) {
   const router = useRouter();
+  // The device's back button does exactly what this arrow does (lib/back-button.ts).
+  // `back === true` is the exception that needs no help: it *is* a plain back.
+  useBackButton(typeof back === "function" ? back
+    : typeof back === "string" ? () => goUp(back, (to) => router.replace(to))
+      : undefined);
   return (
     <div className="topbar">
       {back === true || typeof back === "function" ? (
@@ -133,8 +139,11 @@ export function Failure({ children }: { children: ReactNode }) {
 /**
  * The frame, with nothing in it yet — a screen whose group hasn't come out of
  * IndexedDB. Every screen has this moment and they all drew it by hand. The
- * back arrow is the part that has to work before the data lands; the title is
- * blank unless the screen knows it without the ledger.
+ * title is blank unless the screen knows it without the ledger.
+ *
+ * `back` has to be the parent the *loaded* screen will name, not the default:
+ * it is the back button's behaviour too now (lib/back-button.ts), so a press
+ * during the load would otherwise land somewhere the arrow never goes.
  */
 export function Blank({ title = " ", back = true }: { title?: string; back?: string | true }) {
   return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;

@@ -37,7 +37,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
-| `scripts/` | Browser checks (`entries`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
+| `scripts/` | Browser checks (`entries`, `back`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
 
 ## Stack
 

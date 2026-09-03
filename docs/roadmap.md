@@ -71,7 +71,10 @@ people is the last row of the list rather than a dialog, on `/new` as well as
 the list grows (`components/name-adder.tsx`); the offline banner shows the moment
 the phone is offline, and opening a group asks the server rather than waiting
 for the loop; and a scan that can't reach the network says so instead of
-blaming the photo.
+blaming the photo. Two more the same day: a failed scan no longer offers "try
+again" beside the two scan buttons that already are it, and the device's back
+button runs the screen's own back action instead of replaying where you had
+been ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `pnpm back`).
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a
