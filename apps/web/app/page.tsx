@@ -10,16 +10,16 @@ import { InstallNudge } from "../components/install";
 import { useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
 import { copy } from "../lib/copy";
-import { leaveGroup } from "../lib/db/commands";
+import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { useGroupSummaries, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const summaries = useGroupSummaries();
-  // Archived means deleted (the last member left, or later, an explicit
-  // archive) — the group log is untouched, but it has no reason to show up
-  // here any more.
+  // Archiving is explicit and unreachable from the UI today — nothing sets
+  // it on the path that used to (leaving no longer does) — but the filter
+  // stays cheap insurance against a group with no reason to show up here.
   const groups = summaries?.filter((g) => !g.group.archivedAt);
 
   return (
@@ -57,22 +57,20 @@ export default function GroupsPage() {
 
 /**
  * One row of "your groups" — and, on a long press or a right click, the one
- * action leaving belongs to. Only offered once this device has claimed a
- * member here; before that there's nobody for `leaveGroup` to remove.
+ * action forgetting belongs to. Mirrors the gate on the Members screen's own
+ * "Forget group" row: offered once this device has claimed a member here,
+ * though `forgetGroup` itself doesn't need one.
  */
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;
   const [asking, setAsking] = useState(false);
-  const lastMember = memberCount === 1 && me !== undefined;
-  const leaveTitle = lastMember ? copy.members.deleteGroup : copy.members.leave;
 
   const { onContextMenu, menu } = useLongPressMenu(me === undefined ? [] : [
-    { label: leaveTitle, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+    { label: copy.members.forget, icon: "trash", onSelect: () => setAsking(true) },
   ]);
 
-  async function leave() {
-    if (!me) return;
-    await leaveGroup(group.id, me, lastMember);
+  async function forget() {
+    await forgetGroup(group.id);
   }
 
   return (
@@ -109,9 +107,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       {menu}
 
       {asking ? (
-        <ConfirmDialog title={leaveTitle} confirm={leaveTitle} danger={true}
-          onConfirm={leave} onClose={() => setAsking(false)}>
-          <p>{lastMember ? copy.members.lastBody(group.name) : copy.members.leaveBody(group.name)}</p>
+        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
+          onConfirm={forget} onClose={() => setAsking(false)}>
+          <p>{copy.members.forgetBody(group.name)}</p>
         </ConfirmDialog>
       ) : null}
     </>
