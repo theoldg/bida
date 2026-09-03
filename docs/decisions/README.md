@@ -15,8 +15,12 @@ date on. Rewrite freely, and delete one whose decision no longer binds anything.
 **Numbers are stable** (things link to them) and gaps are normal: they mean a
 decision was folded into another file.
 
-**Keep them short.** Context, decision, consequences, rejected — the parts that
-tell the next person what they can't see from the code.
+**Keep them short — 80 lines, enforced by `pnpm run docs`.** Context, decision,
+consequences, rejected, and nothing else: the parts that tell the next person
+what they can't see from the code. Not how the built thing looks or reads, which
+is the design system's and the feature docs' job — link to those rather than
+saying it twice. A consequence that restates the decision, or a rejected option
+nobody would propose, is a line to cut.
 
 | # | Decision |
 |---|---|

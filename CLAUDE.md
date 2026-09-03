@@ -14,10 +14,9 @@ hosted for free. Read this, then the doc your task points at.
      Installing is what wires the hook up (`postinstall`).
    - **Branch.** This project pushes directly to `main`; there are no pull
      requests. If your harness assigned a feature branch, `on-main.sh` moves you
-     to `main` and carries over anything already committed, which also stops the
-     harness nagging about "unpushed commits" on a branch that has no remote.
-     Run it before you commit. If you only notice later, it still works —
-     it fast-forwards `main` and deletes the stray branch.
+     to `main` and carries over anything already committed. Run it before you
+     commit; noticing later still works, as it fast-forwards `main` and deletes
+     the stray branch.
 2. **Commit and push at every checkpoint**, not once at the end.
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
@@ -51,9 +50,8 @@ secret link. [architecture.md](docs/architecture.md) ·
 
 ## Current state
 
-MVP (Phases 0–3) complete, deployed and synced in production; the owner's punch
-list and follow-ups landed through 2026-08-30, and a group now holds three kinds
-of entry — expense, income, transfer
+MVP (Phases 0–3) complete, deployed and synced in production, and a group holds
+three kinds of entry — expense, income, transfer
 ([ADR-0010](docs/decisions/0010-what-an-entry-is.md)). Next: Phase 4
 (receipts).
 
@@ -72,7 +70,8 @@ pnpm session && pnpm check
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
-  runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
+  runs `pnpm check`: doc links and line budgets, the invariants in
+  `scripts/rules-check.mjs`,
   typecheck, tests and the static export build, ~45s. Nothing else gates a
   push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
@@ -110,16 +109,26 @@ every session pays in. **Before you finish:**
    on that subject** so it says where we stand now; a new file is for a new
    subject. Most changes need no ADR at all —
    [decisions/](docs/decisions/README.md) has the bar.
-3. Owner stated a preference → append it to
-   [standing-instructions.md](docs/standing-instructions.md), dated.
+3. Owner stated a preference that binds work nobody has done yet → append it to
+   [standing-instructions.md](docs/standing-instructions.md), dated. Once it is
+   a built thing, the built thing documents it: delete the entry.
 4. Learned something the hard way → one line in the relevant **Gotchas**
    section.
 5. Update [implementation-status.md](docs/implementation-status.md) and the
    roadmap checkboxes.
 
-**Keep them short and punchy.** Prefer editing a line to adding one, delete what
-the code now says for itself, and cut narrative history — a doc records the
-state and the reasoning, not the sequence of sessions that got here. Real new
-behaviour is allowed to cost a paragraph; don't pad the count back down by
-trimming prose you had no other reason to touch. If a doc passes ~200 lines or
-covers two subjects, split it or cut it.
+**Every doc has a line budget, and `pnpm run docs` fails when one breaks it** —
+one per file plus a ceiling over the whole set, in `scripts/docs-check.mjs`. A
+doc therefore grows only when another shrinks. Raising a budget is the owner's
+call and not a way to land a session; cutting a doc well below its number means
+lowering the number in the same commit.
+
+Staying inside it is mostly one rule: **one fact, one home.** Before writing a
+paragraph, find where the project already says it and edit *that*. The three
+ways these files have inflated before are an ADR describing the built thing in
+design-system's words, a standing instruction restating what the code already
+enforces, and a note about what changed this session. Prefer editing a line to
+adding one, delete what the code now says for itself, and cut narrative history:
+a doc records the state and the reasoning, not the sequence of sessions that got
+here. Real new behaviour is allowed to cost a paragraph — pay for it by cutting
+something that has stopped earning its place.

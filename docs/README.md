@@ -1,7 +1,8 @@
 # Docs
 
-Read what your task needs. Each doc says at the top who it's for. Keep them
-tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
+Read what your task needs. Each doc says at the top who it's for. Each also has
+a line budget `pnpm run docs` enforces, so one grows only when another shrinks —
+see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 
 | Doc | Read it when |
 |---|---|
