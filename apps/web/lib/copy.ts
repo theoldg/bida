@@ -44,7 +44,6 @@ export const copy = {
     remove: "Remove",
     rename: "Rename",
     save: "Save",
-    tryAgain: "Try again",
     useIt: "Use it",
   },
 

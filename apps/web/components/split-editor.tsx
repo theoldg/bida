@@ -343,12 +343,9 @@ function ReceiptPanel({
       <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
         onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="s" />
       {scanState === "error" ? (
-        <Failure>
-          {scanError ?? copy.scan.failed}{" "}
-          <button type="button" className="action" style={{ fontSize: "inherit" }} onClick={onScanCamera}>
-            {copy.act.tryAgain}
-          </button>
-        </Failure>
+        /* No "try again" beside the message: the two scan buttons are right
+           above it, still enabled, and one of them is the retry. */
+        <Failure>{scanError ?? copy.scan.failed}</Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
           {copy.scan.freeTier}

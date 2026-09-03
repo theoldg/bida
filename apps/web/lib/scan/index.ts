@@ -21,8 +21,8 @@ export class ScanOfflineError extends Error {}
 
 /**
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
- * retry doubles both our requests and the shared daily Gemini quota; let the
- * caller offer a "try again" button instead. See docs/receipt-scanning.md.
+ * retry doubles both our requests and the shared daily Gemini quota; the scan
+ * buttons stay enabled and the person decides. See docs/receipt-scanning.md.
  */
 export async function scanReceipt(
   photo: File | Blob,

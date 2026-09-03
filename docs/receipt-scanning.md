@@ -63,8 +63,8 @@ The rules that follow from it:
   and it keeps the streamed body small enough that the fallback path
   (`await c.req.text()`, if stream passthrough misbehaves) still fits in 10 ms.
 - **One request per scan.** No automatic retry — a retry doubles both our
-  requests and the shared daily Gemini quota. A failure shows a "try again"
-  button and lets the person decide.
+  requests and the shared daily Gemini quota. A failure says so and leaves the
+  scan buttons enabled — the retry is the same button, not a second one.
 - **No throttling, no counters, no D1 writes.** Auth is the existing
   `bearerSecret` + `sha256Hex` check against the group row: one D1 read, no new
   table, and it's the difference between "my friends" and "the internet".
