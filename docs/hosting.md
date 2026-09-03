@@ -15,9 +15,38 @@ Decision and rejected alternatives:
 
 We expect a few hundred requests/day and thousands of rows, ever. The decisive
 property is **R2's zero egress** — this app is photo-heavy by design, and egress
-is where object storage bills come from. Every group shares the one `hajsik`
-database, so 500 MB is the cap that would eventually bite — around a million
-ops, not the 5 GB. (Limits verified 2026-08-30; re-check, free tiers move.)
+is where object storage bills come from. (Limits verified 2026-08-30; re-check,
+free tiers move.)
+
+### How full can it get
+
+Every group shares the one `hajsik` database, and nothing is ever deleted, so
+the caps only ever move one way. Replaying realistic ops into
+[the real schema](../apps/api/migrations/0001_init.sql) costs **~970 bytes per
+op**, indexes included, so **500 MB is about 515k ops**. At the ~1.3 ops a
+lived-in expense ends up costing (the entry, plus edits and the occasional
+delete) that is:
+
+| | Fills 500 MB |
+|---|---|
+| Expenses | ~380,000 |
+| Typical trip groups (5 people, 50 expenses, ~71 KB) | ~7,000 |
+| Heavy groups (200 expenses, ~270 KB) | ~1,900 |
+
+Nothing else comes close first. Pulls are incremental (`seq > ?`), so the 5M
+daily row reads are unreachable; writes touch three rows per op (row + two
+indexes), leaving ~30k ops/day, which is more entries than this app will see in
+a year. **R2 is the cap that actually bites**: 10 GB at the ≤200 KB a receipt is
+downscaled to ([receipt-scanning.md](receipt-scanning.md)) is ~50,000 photos, so
+once more than about one expense in eight carries one, receipts run out of room
+before the op log does.
+
+**So: no eviction strategy, and no near date for one.** At this project's real
+scale — a few trips a year — 500 MB is centuries of use. It becomes a question
+only at roughly a thousand new groups a month, i.e. only if this stops being an
+app for its owner's friends. If that day comes the lever is receipts (R2 first,
+and old photos are the disposable part), not the op log, which is the thing a
+group's link is promising to still hold.
 
 **Nothing expires and nothing sleeps.** D1 storage has no TTL, a Worker is not
 paused or deleted for being idle, and a `workers.dev` subdomain lives as long as
