@@ -17,13 +17,13 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group |
+| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group, everyone in it, in one screen |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
 | `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=]` | Version history, whole-group or per-entry |
-| `/g/members?id=` | People: the member list, where this phone claims which one it is, and every change to it — adding, renaming, removing, leaving — in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
+| `/g/members?id=` | People: the member list, where this phone claims which one it is. Adding is the last row of the list; renaming, removing and leaving are dialogs ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
@@ -67,9 +67,27 @@ confers nothing without the secret.
   currency, a transfer's sides — behind a `.field > .pick` button or a chip.
   `<input type="date">` is the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
-- History wording lives once, in `lib/history-copy.ts` (`describe`). It must be
-  **total** — it runs inside a render over every patch the log holds, so one
-  throw is a white screen, not a missing line.
+- **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
+  of a list of names: Enter files the name and hands the caret back, so a group
+  of six is one burst of typing rather than six trips through a scrim. Used on
+  `/new`, `/g/members` and `/g/claim`. A dialog is still right for a decision
+  with a consequence to state; it was never right for a list you fill.
+- History wording is assembled once, in `lib/history-copy.ts` (`describe`),
+  from `copy.history`. It must be **total** — it runs inside a render over
+  every patch the log holds, so one throw is a white screen, not a missing line.
+
+## Every word, in `lib/copy.ts`
+
+Screens import `copy` and hold no literal a person can read — `aria-label`,
+`placeholder` and `title` included ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+A string that takes a value is a function *there*, because word order is the
+first thing a translation changes; counts go through `plural(n, noun)` with a
+`{ one, many }` noun. `pnpm rules` fails a build that types one back into a
+screen. A second language is a second object of the same shape and nothing
+else — no library, no extraction step.
+
+Say it once and say it short: the screen already shows the amount, the name and
+the button, so the sentence beside them carries only what they can't.
 
 ## One navigation
 
@@ -168,8 +186,8 @@ Everything else is ordinary markup; what more than one screen
 draws lives in `components/chrome.tsx` (the frame, plus `Blank` for a screen
 still waiting on Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
 `components/bits.tsx` (`Avatar` — a *group's* initials, ADR-0023 — `Card`, `KV`, `GhostRow`). What the three
-kinds of entry are *called* — labels, verbs, headings — lives only in
-`lib/entry-kind.ts`.
+kinds of entry are *called* — labels, verbs, headings — is `copy.entryKind`;
+`lib/entry-kind.ts` is types and arithmetic only.
 
 **Core says what is wrong; the screen says it in money.** `validateSplit` and
 `validatePayers` return `problem` (`"under"`, `"over"`, `"empty"`…) and

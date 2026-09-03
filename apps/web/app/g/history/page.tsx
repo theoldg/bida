@@ -8,6 +8,7 @@ import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from 
 import { Icon } from "../../../components/icons";
 import { db } from "../../../lib/db/dexie";
 import { opsForGroup } from "../../../lib/db/fold";
+import { copy } from "../../../lib/copy";
 import { plural, stamp } from "../../../lib/format";
 import { describe } from "../../../lib/history-copy";
 import { route } from "../../../lib/group-link";
@@ -55,7 +56,8 @@ function HistoryScreen() {
     ? data.expenses.find((e) => e.id === entryId) ?? data.settlements.find((s) => s.id === entryId)
     : undefined;
   const subjectName = !entryId ? undefined
-    : subject && "description" in subject ? (subject.description || "Untitled") : "Transfer";
+    : subject && "description" in subject
+      ? (subject.description || copy.group.untitled) : copy.group.transfer;
   const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops, 200);
 
   if (!groupId || !data.group) return <Blank />;
@@ -74,18 +76,18 @@ function HistoryScreen() {
     if (!groupId) return undefined;
     if (rev.entity === "expense") {
       const e = expenseById.get(rev.entityId);
-      const label = e?.description?.trim() || "Untitled entry";
+      const label = e?.description?.trim() || copy.history.untitled;
       return e?.deletedAt
-        ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
+        ? { href: route.history(groupId, rev.entityId), label: copy.history.deleted(label) }
         : { href: route.entry(groupId, rev.entityId), label };
     }
     if (rev.entity === "settlement") {
       const s = settlementById.get(rev.entityId);
-      const from = memberById.get(s?.fromMember ?? "")?.name ?? "?";
-      const to = memberById.get(s?.toMember ?? "")?.name ?? "?";
+      const from = memberById.get(s?.fromMember ?? "")?.name ?? copy.unknown;
+      const to = memberById.get(s?.toMember ?? "")?.name ?? copy.unknown;
       const label = `${from} → ${to}`;
       return s?.deletedAt
-        ? { href: route.history(groupId, rev.entityId), label: `${label} · deleted` }
+        ? { href: route.history(groupId, rev.entityId), label: copy.history.deleted(label) }
         : { href: route.entry(groupId, rev.entityId), label };
     }
     return undefined;
@@ -95,21 +97,21 @@ function HistoryScreen() {
     <Screen>
       <Body>
         <TopBar
-          title="History"
-          sub={entryId
-            ? `${subjectName ?? "Entry"} · ${plural(revisions.length, "revision")}`
-            : `${group.name} · ${plural(revisions.length, "revision")}`}
+          title={copy.history.title}
+          sub={copy.history.subject(
+            entryId ? subjectName ?? copy.history.entry : group.name,
+            plural(revisions.length, copy.noun.revision))}
           back={entryId ? route.entry(groupId, entryId) : route.group(groupId)}
         />
 
         <Scroll>
           <div className="pad">
             {revisions.length === 0 ? (
-              <Empty title="Nothing here yet" />
+              <Empty title={copy.history.empty} />
             ) : (
               <div className="tl">
                 {revisions.map((rev, i) => {
-                  const who = memberById.get(rev.op.actor)?.name ?? "Someone";
+                  const who = memberById.get(rev.op.actor)?.name ?? copy.someone;
                   const d = describe(rev, who, memberById, currency);
                   const subject = entryId ? undefined : subjectOf(rev);
                   return (
@@ -140,7 +142,7 @@ function HistoryScreen() {
       {entryId ? (
         <Foot>
           <Link href={route.history(groupId)} className="btn btn-s">
-            <Icon name="clock" size={15} /> See the whole group&rsquo;s history
+            <Icon name="clock" size={15} /> {copy.history.wholeGroup}
           </Link>
         </Foot>
       ) : null}

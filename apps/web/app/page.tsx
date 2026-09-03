@@ -6,6 +6,7 @@ import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components
 import { Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
 import { ThemeToggle } from "../components/theme-toggle";
+import { copy } from "../lib/copy";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { useGroupSummaries } from "../lib/hooks";
@@ -24,7 +25,7 @@ export default function GroupsPage() {
             carries the one switch that belongs to the phone rather than to any
             group (ADR-0007). The name is the whole bar: a sub-line under it
             described the screen you could already see. */}
-        <TopBar title={<span className="brand"><Wordmark size={26} /> Hajsik</span>}
+        <TopBar title={<span className="brand"><Wordmark size={26} /> {copy.app.name}</span>}
           right={<ThemeToggle />} />
 
         <Scroll>
@@ -33,9 +34,7 @@ export default function GroupsPage() {
           {groups === undefined ? <SkeletonRows count={4} /> : null}
 
           {groups && groups.length === 0 ? (
-            <Empty title="No groups yet">
-              A group is a trip, a flat, a dinner — anything several people pay for.
-            </Empty>
+            <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
           ) : null}
 
           <div className="rows">
@@ -45,14 +44,14 @@ export default function GroupsPage() {
                 <div className="rmain">
                   <div className="rtitle">{group.name}</div>
                   <div className="rmeta">
-                    {plural(memberCount, "person", "people")} · {plural(entryCount, "entry", "entries")} · {ago(lastActivity)}
+                    {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
                   </div>
                 </div>
                 <div className="ramt">
                   {netMinor === undefined ? (
                     <>
-                      <div className="big" style={{ color: "var(--muted)" }}>—</div>
-                      <div className="sm">who are you?</div>
+                      <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
+                      <div className="sm">{copy.groups.whoAreYou}</div>
                     </>
                   ) : (
                     <>
@@ -61,7 +60,8 @@ export default function GroupsPage() {
                         {money(netMinor, group.baseCurrency, netMinor !== 0)}
                       </div>
                       <div className="sm">
-                        {netMinor < 0 ? "you owe" : netMinor > 0 ? "you're owed" : "settled"}
+                        {netMinor < 0 ? copy.groups.youOwe
+                          : netMinor > 0 ? copy.groups.youreOwed : copy.groups.settled}
                       </div>
                     </>
                   )}
@@ -69,7 +69,7 @@ export default function GroupsPage() {
               </Link>
             ))}
 
-            <GhostRow icon="plus" label="New group" href={route.newGroup()} />
+            <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
           </div>
 
           {/* Once there is something to come back to, and never before it. */}

@@ -7,6 +7,7 @@ import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
 import { ThemeScript } from "../components/theme";
+import { copy } from "../lib/copy";
 
 // One face for the whole app — headings, prose and figures alike; hierarchy is
 // carried by weight and tracking instead. Self-hosted at build time by
@@ -20,8 +21,8 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hajsik",
-  description: "Shared expenses, split fairly. Works offline.",
+  title: copy.app.name,
+  description: copy.app.description,
   manifest: "/manifest.webmanifest",
   // Without this every cold load asks for /favicon.ico and takes a 404 for
   // it — a wasted request on the one visit that can least afford one. The
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
   // "black-translucent" draws the app under the status bar instead of
   // beside it — iOS ignores the manifest's "fullscreen" display entirely for
   // home-screen web apps, so this is the only lever for the same effect there.
-  appleWebApp: { capable: true, title: "Hajsik", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

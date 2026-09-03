@@ -21,8 +21,9 @@ credited. Nothing else in `packages/core` branches on it.
 **A transfer is the `Settlement` we already had, renamed in the only place a
 rename costs nothing: the words.** Every screen says *transfer*. The type, the
 op `entity` and the D1 column keep saying `settlement`, because every op ever
-written does. `lib/entry-kind.ts` is the one place the three-way vocabulary
-lives.
+written does. The three-way vocabulary lives in `copy.entryKind`
+([ADR-0033](0033-every-word-in-one-file.md)); `lib/entry-kind.ts` keeps the
+types and the arithmetic that decide which of the three an entry is.
 
 **Several payers are an optional map.** `Expense.payers?: Record<Id, number>`,
 in the expense's **own currency**, summing to `amountMinor`. Absent means what it

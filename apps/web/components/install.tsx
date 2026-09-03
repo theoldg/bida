@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { updateDevice } from "../lib/db/device";
+import { copy } from "../lib/copy";
 import { useDevice } from "../lib/hooks";
 import { installOffer, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
@@ -29,11 +30,11 @@ export function InstallNudge() {
   return (
     <div className="pad" style={{ paddingTop: 18 }}>
       <div className="card">
-        <div style={{ fontSize: 14, fontWeight: 600 }}>Keep Hajsik on your home screen</div>
+        <div style={{ fontSize: 14, fontWeight: 600 }}>{copy.install.title}</div>
         <Offer offer={offer} />
         <button className="action" style={{ marginTop: 12, color: "var(--muted)" }}
           onClick={() => updateDevice({ installDismissedAt: Date.now() })}>
-          Not now
+          {copy.install.notNow}
         </button>
       </div>
     </div>
@@ -43,12 +44,10 @@ export function InstallNudge() {
 function Offer({ offer }: { offer: "ready" | "manual" }) {
   return (
     <>
-      <p className="hint" style={{ marginTop: 4 }}>
-        Its own icon, no browser bar, and the same data — it already works offline.
-      </p>
+      <p className="hint" style={{ marginTop: 4 }}>{copy.install.body}</p>
       {offer === "ready" ? (
         <button className="btn btn-p" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
-          Add to home screen
+          {copy.install.add}
         </button>
       ) : (
         // iOS gives no install API at all, so the honest thing is to point at
@@ -56,9 +55,9 @@ function Offer({ offer }: { offer: "ready" | "manual" }) {
         <p className="hint" style={{ marginTop: 9 }}>
           {/* Tailwind's reset makes every svg a block; inline is what puts it
               in the middle of the sentence rather than on a line of its own. */}
-          Tap <Icon name="share" size={15}
-            style={{ display: "inline", verticalAlign: "-2px", color: "var(--ink-2)" }} /> in the browser bar,
-          then <b style={{ fontWeight: 600 }}>Add to Home Screen</b>.
+          {copy.install.manual.tap} <Icon name="share" size={15}
+            style={{ display: "inline", verticalAlign: "-2px", color: "var(--ink-2)" }} />{" "}
+          {copy.install.manual.then} <b style={{ fontWeight: 600 }}>{copy.install.manual.label}</b>.
         </p>
       )}
     </>

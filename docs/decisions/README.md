@@ -31,3 +31,4 @@ tell the next person what they can't see from the code.
 | [0016](0016-receipts.md) | A scanned receipt reduces to an ordinary split |
 | [0023](0023-monospace-monochrome.md) | One monospace face, colour only on money, a name is enough |
 | [0031](0031-history-reads-it-does-not-rewind-it.md) | History is read, not rewound: no restore-to-version |
+| [0033](0033-every-word-in-one-file.md) | Every word the app says lives in one file |

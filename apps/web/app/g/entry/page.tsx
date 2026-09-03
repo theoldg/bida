@@ -14,10 +14,9 @@ import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
-import {
-  ENTRY_LABEL, ENTRY_PAYER_LABEL, ENTRY_SPLIT_LABEL, kindOf, type EntryKind,
-} from "../../../lib/entry-kind";
-import { clockTime, dayLabel, money, SPLIT_MODE_LABEL } from "../../../lib/format";
+import { kindOf, type EntryKind } from "../../../lib/entry-kind";
+import { copy } from "../../../lib/copy";
+import { clockTime, dayLabel, money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData, type GroupData } from "../../../lib/hooks";
 
@@ -55,8 +54,8 @@ function EntryScreen() {
   if (!entry) {
     return (
       <Screen><Body>
-        <TopBar title="Gone" back={route.group(groupId)} />
-        <Empty title="This entry isn&rsquo;t here any more">It may have been deleted.</Empty>
+        <TopBar title={copy.entry.gone.title} back={route.group(groupId)} />
+        <Empty title={copy.entry.gone.body}>{copy.entry.gone.why}</Empty>
       </Body></Screen>
     );
   }
@@ -76,14 +75,14 @@ function EntryScreen() {
     <Screen>
       <Body>
         <TopBar
-          title={expense ? (expense.description || "Untitled") : "Transfer"}
+          title={expense ? (expense.description || copy.group.untitled) : copy.group.transfer}
           sub={`${dayLabel(entry.occurredAt)} · ${clockTime(entry.occurredAt)}`}
           back={route.group(groupId)}
           right={<>
-            <Link className="iconbtn" href={route.history(groupId, entry.id)} aria-label="History">
+            <Link className="iconbtn" href={route.history(groupId, entry.id)} aria-label={copy.entry.history}>
               <Icon name="clock" size={18} />
             </Link>
-            <button className="iconbtn" onClick={() => setAsking(true)} aria-label="Delete">
+            <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
               <Icon name="trash" size={18} />
             </button>
           </>}
@@ -104,11 +103,11 @@ function EntryScreen() {
             <div style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}>
               {/* Expenses are the default and say nothing; the two that run
                   differently name themselves once, here. */}
-              {kind !== "expense" ? <span className="chip hl">{ENTRY_LABEL[kind]}</span> : null}
-              {foreign ? <span className="chip">@ {entry.rateToBase}</span> : null}
+              {kind !== "expense" ? <span className="chip hl">{copy.entryKind.label[kind]}</span> : null}
+              {foreign ? <span className="chip">{copy.entry.rate(entry.rateToBase)}</span> : null}
               {edits > 0 ? (
                 <Link href={route.history(groupId, entry.id)} className="chip">
-                  <Icon name="clock" size={11} /> edited ×{edits}
+                  <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
                 </Link>
               ) : null}
             </div>
@@ -119,17 +118,17 @@ function EntryScreen() {
             : <TransferDetail settlement={settlement!} data={data} />}
 
           <div className="pad" style={{ paddingTop: 4 }}>
-            <Link href={route.editEntry(groupId, entry.id)} className="btn btn-s">Edit</Link>
+            <Link href={route.editEntry(groupId, entry.id)} className="btn btn-s">{copy.act.edit}</Link>
           </div>
           <div style={{ height: 24 }} />
         </Scroll>
       </Body>
 
       {asking ? (
-        <ConfirmDialog title={`Delete this ${ENTRY_LABEL[kind].toLowerCase()}?`} confirm="Delete"
+        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
+          confirm={copy.act.delete}
           danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
-          <p>It comes out of everyone&rsquo;s balance straight away. The group&rsquo;s
-            history keeps a record that it was here, and that you deleted it.</p>
+          <p>{copy.entry.deleteBody}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>
@@ -163,14 +162,14 @@ function ExpenseDetail({ expense, kind, group, data }: {
         {coSponsored ? (
           <>
             <Eyebrow style={{ marginBottom: 4 }}>
-              {ENTRY_PAYER_LABEL[kind]} · {payerList(expense).length} people
+              {copy.entry.payerCount(copy.entryKind.payer[kind], payerList(expense).length)}
             </Eyebrow>
             {payerList(expense).map((id) => {
               const m = data.memberById.get(id);
               const own = expense.payers?.[id] ?? 0;
               return (
                 <KV key={id}
-                  k={m?.name ?? "Someone"}
+                  k={m?.name ?? copy.someone}
                   v={<>
                     {money(putIn[id] ?? 0, group.baseCurrency)}
                     {foreign ? <span style={{ color: "var(--muted)" }}>
@@ -181,26 +180,27 @@ function ExpenseDetail({ expense, kind, group, data }: {
             })}
           </>
         ) : (
-          <KV k={ENTRY_PAYER_LABEL[kind]} v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
-            {payer?.name ?? "Someone"}
+          <KV k={copy.entryKind.payer[kind]} v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
+            {payer?.name ?? copy.someone}
           </span>} />
         )}
         <div className="hairline" />
         <Eyebrow style={{ marginBottom: 4 }}>
-          {ENTRY_SPLIT_LABEL[kind]} · {isReceipt ? "from receipt" : SPLIT_MODE_LABEL[expense.split.mode].toLowerCase()}
+          {copy.entry.splitMode(copy.entryKind.split[kind],
+            isReceipt ? copy.entry.fromReceipt : copy.split.mode[expense.split.mode].toLowerCase())}
         </Eyebrow>
         {data.members.map((m) => {
           const inIt = participants.includes(m.id);
           const weight = expense.split.mode === "shares" ? expense.split.weights[m.id] ?? 0 : 0;
           const detail = expense.split.mode === "shares" && !isReceipt && inIt
-            ? ` · ${weight} part${weight === 1 ? "" : "s"}`
+            ? ` · ${plural(weight, copy.noun.part)}`
             : expense.split.mode === "percent" && inIt
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
           return (
             <KV key={m.id} dim={!inIt}
-              k={`${m.name}${inIt ? detail : " · not involved"}`}
-              v={inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : "—"} />
+              k={`${m.name}${inIt ? detail : ` · ${copy.entry.notInvolved}`}`}
+              v={inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : copy.none} />
           );
         })}
       </Card>
@@ -216,13 +216,13 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
     <div className="pad" style={{ paddingTop: 2 }}>
       <div className="card transfer">
         <span className="tside">
-          <span className="eyebrow">From</span>
-          <span className="who">{from?.name ?? "—"}</span>
+          <span className="eyebrow">{copy.entry.from}</span>
+          <span className="who">{from?.name ?? copy.none}</span>
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
-          <span className="eyebrow">To</span>
-          <span className="who">{to?.name ?? "—"}</span>
+          <span className="eyebrow">{copy.entry.to}</span>
+          <span className="who">{to?.name ?? copy.none}</span>
         </span>
       </div>
       {settlement.note ? (

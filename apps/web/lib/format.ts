@@ -1,8 +1,10 @@
-import { formatMinor, type CurrencyCode, type SplitSpec, type SplitValidation } from "@hajsik/core";
+import { formatMinor, type CurrencyCode, type SplitValidation } from "@hajsik/core";
+import { copy, type Noun } from "./copy";
 
 /**
  * Display helpers. Money formatting itself lives in core — this file only
- * decides *which* of core's formats a given bit of chrome wants.
+ * decides *which* of core's formats a given bit of chrome wants; the words
+ * around the figures come from `lib/copy.ts`.
  */
 
 export function money(minor: number, currency: CurrencyCode, signed = false): string {
@@ -31,11 +33,11 @@ export function bare(minor: number, currency: CurrencyCode): string {
 export function shortfallText(
   check: { problem?: string; diffMinor?: number; message?: string },
   currency: CurrencyCode,
-  copy: { under: string; over: string },
+  words: { under: string; over: string },
 ): string {
   const diff = check.diffMinor ?? 0;
-  if (check.problem === "under") return `${money(diff, currency)} ${copy.under}`;
-  if (check.problem === "over") return `${money(-diff, currency)} ${copy.over}`;
+  if (check.problem === "under") return `${money(diff, currency)} ${words.under}`;
+  if (check.problem === "over") return `${money(-diff, currency)} ${words.over}`;
   return check.message ?? "";
 }
 
@@ -57,31 +59,19 @@ export function splitFooter(
   check: SplitValidation,
   currency: CurrencyCode,
 ): { ok: boolean; text: string } {
-  if (check.problem === "empty") return { ok: false, text: check.message ?? "Nobody is included yet" };
-  if (check.totalMinor <= 0) return { ok: false, text: "Enter an amount to split" };
+  if (check.problem === "empty") return { ok: false, text: copy.split.nobody };
+  if (check.totalMinor <= 0) return { ok: false, text: copy.split.noTotal };
   if (check.ok) {
     return {
       ok: true,
-      text: `${money(check.allocatedMinor, currency)} of ${money(check.totalMinor, currency)} allocated`,
+      text: copy.split.allocated(money(check.allocatedMinor, currency), money(check.totalMinor, currency)),
     };
   }
-  return { ok: false, text: shortfallText(check, currency, { under: "left to split", over: "too much" }) };
+  return {
+    ok: false,
+    text: shortfallText(check, currency, { under: copy.split.under, over: copy.split.over }),
+  };
 }
-
-/**
- * The owner's names for the split modes, and the only ones the UI uses — the
- * tab strip, the expense's own "Split ·" line and the ledger row's "3 people,
- * as parts" all read them from here rather than each spelling out the same
- * four cases ([standing-instructions](docs/standing-instructions.md#interface):
- * *Evenly · As parts · As amounts*). "By percent" is unreachable for anything
- * new and still has to render on an expense recorded that way.
- */
-export const SPLIT_MODE_LABEL: Record<SplitSpec["mode"], string> = {
-  equal: "Evenly",
-  shares: "As parts",
-  exact: "As amounts",
-  percent: "By percent",
-};
 
 /**
  * What a rejected promise says to a person. Anything thrown that isn't an
@@ -94,7 +84,7 @@ export function errorText(err: unknown): string {
 
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
+  if (parts.length === 0) return copy.unknown;
   if (parts.length === 1) return parts[0]!.slice(0, 1).toUpperCase();
   return (parts[0]!.slice(0, 1) + parts[parts.length - 1]!.slice(0, 1)).toUpperCase();
 }
@@ -112,14 +102,14 @@ export function distinctInitials(members: { id: string; name: string }[]): Map<s
     const byPrefix = new Map<string, string[]>();
     for (const m of members) {
       if (out.has(m.id)) continue;
-      const prefix = m.name.trim().slice(0, len) || "?";
+      const prefix = m.name.trim().slice(0, len) || copy.unknown;
       byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), m.id]);
     }
     for (const [prefix, ids] of byPrefix) {
       if (ids.length === 1) out.set(ids[0]!, prefix);
     }
   }
-  for (const m of members) if (!out.has(m.id)) out.set(m.id, m.name.trim() || "?");
+  for (const m of members) if (!out.has(m.id)) out.set(m.id, m.name.trim() || copy.unknown);
   return out;
 }
 
@@ -134,8 +124,8 @@ function startOfDay(ts: number): number {
 /** "Today" / "Yesterday" / "Sat 5 April" — the ledger's day rule. */
 export function dayLabel(ts: number, now = Date.now()): string {
   const days = Math.round((startOfDay(now) - startOfDay(ts)) / DAY);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
+  if (days === 0) return copy.time.today;
+  if (days === 1) return copy.time.yesterday;
   const d = new Date(ts);
   const opts: Intl.DateTimeFormatOptions =
     d.getFullYear() === new Date(now).getFullYear()
@@ -147,11 +137,11 @@ export function dayLabel(ts: number, now = Date.now()): string {
 /** "2h ago", "yesterday", "Feb" — deliberately vague past a week. */
 export function ago(ts: number, now = Date.now()): string {
   const ms = now - ts;
-  if (ms < 60_000) return "just now";
-  if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m ago`;
-  if (ms < DAY) return `${Math.floor(ms / 3_600_000)}h ago`;
-  if (ms < 2 * DAY) return "yesterday";
-  if (ms < 7 * DAY) return `${Math.floor(ms / DAY)}d ago`;
+  if (ms < 60_000) return copy.time.justNow;
+  if (ms < 3_600_000) return copy.time.minutesAgo(Math.floor(ms / 60_000));
+  if (ms < DAY) return copy.time.hoursAgo(Math.floor(ms / 3_600_000));
+  if (ms < 2 * DAY) return copy.time.agoYesterday;
+  if (ms < 7 * DAY) return copy.time.daysAgo(Math.floor(ms / DAY));
   const d = new Date(ts);
   return new Intl.DateTimeFormat(undefined, { month: "short", ...(d.getFullYear() === new Date(now).getFullYear() ? {} : { year: "numeric" }) }).format(d);
 }
@@ -167,8 +157,13 @@ export function stamp(ts: number): string {
   return `${date.toUpperCase()} · ${clockTime(ts)}`;
 }
 
-export function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
+/**
+ * "3 changes". The noun is a `{ one, many }` pair from `lib/copy.ts` rather
+ * than a word plus an "s" — the plural of a word is the translation's business,
+ * not this function's.
+ */
+export function plural(n: number, noun: Noun): string {
+  return `${n} ${n === 1 ? noun.one : noun.many}`;
 }
 
 /** Date input value ("2026-04-04") from a timestamp, in local time. */

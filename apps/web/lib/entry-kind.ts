@@ -14,47 +14,15 @@ import type { Expense, Settlement } from "@hajsik/core";
  *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, not a
  *   separate idea, which is why "reimbursement" appears nowhere any more.
  *
+ * What they are *called* — the segmented control's labels, the verb in "Marie
+ * paid", the headings over the payer and the split — is `copy.entryKind`
+ * (lib/copy.ts), like every other word the app says.
+ *
  * ADR-0010.
  */
 export type EntryKind = "expense" | "income" | "transfer";
 
 export const ENTRY_KINDS: readonly EntryKind[] = ["expense", "income", "transfer"];
-
-/** The segmented control's labels, and the ones on every screen. */
-export const ENTRY_LABEL: Record<EntryKind, string> = {
-  expense: "Expense",
-  income: "Income",
-  transfer: "Transfer",
-};
-
-/**
- * What the person on the money side of the entry did with it — the verb in
- * "Marie paid", and the label above the picker that names her.
- */
-export const ENTRY_VERB: Record<EntryKind, string> = {
-  expense: "paid",
-  income: "received",
-  transfer: "sent",
-};
-
-/** The heading over the payer picker: who put it in, or who took it in. */
-export const ENTRY_PAYER_LABEL: Record<EntryKind, string> = {
-  expense: "Paid by",
-  income: "Received by",
-  transfer: "From",
-};
-
-/** The heading over the split: who it was spent on, or who it belongs to. */
-export const ENTRY_SPLIT_LABEL: Record<EntryKind, string> = {
-  expense: "Split",
-  income: "Shared with",
-  transfer: "To",
-};
-
-/** Whether an entry of this kind lives in the `settlements` table. */
-export function isTransfer(kind: EntryKind): boolean {
-  return kind === "transfer";
-}
 
 /** An expense row's kind. Absent means expense, forever — see `Expense.kind`. */
 export function kindOf(expense: Expense): "expense" | "income" {

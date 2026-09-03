@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { applyTheme, type Theme } from "./theme";
 import { updateDevice } from "../lib/db/device";
+import { copy } from "../lib/copy";
 
 /**
  * Light or dark, in one tap, on the one screen that is about this phone rather
@@ -48,7 +49,7 @@ export function ThemeToggle() {
 
   return (
     <button className="iconbtn" onClick={flip}
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}>
+      aria-label={dark ? copy.groups.theme.toLight : copy.groups.theme.toDark}>
       <Icon name={dark ? "sun" : "moon"} size={18} />
     </button>
   );

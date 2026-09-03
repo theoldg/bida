@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { copy } from "../lib/copy";
 import { goUp } from "../lib/nav";
 import { Icon, type IconName } from "./icons";
 
@@ -30,14 +31,14 @@ export function TopBar({ title, sub, back, right }: {
   return (
     <div className="topbar">
       {back === true || typeof back === "function" ? (
-        <button className="iconbtn" onClick={() => (typeof back === "function" ? back() : router.back())} aria-label="Back">
+        <button className="iconbtn" onClick={() => (typeof back === "function" ? back() : router.back())} aria-label={copy.act.back}>
           <Icon name="back" size={17} />
         </button>
       ) : back ? (
         /* A real anchor, but not a plain push: the arrow names a parent, and
            going up unwinds the history to it rather than stacking another
            entry on top (lib/nav.ts). */
-        <Link className="iconbtn" href={back} aria-label="Back"
+        <Link className="iconbtn" href={back} aria-label={copy.act.back}
           onClick={(e) => { e.preventDefault(); goUp(back, (to) => router.replace(to)); }}>
           <Icon name="back" size={17} />
         </Link>
@@ -77,7 +78,7 @@ export function BottomNav({ items }: {
   );
 }
 
-export function Fab({ href, label = "Add an entry" }: { href: string; label?: string }) {
+export function Fab({ href, label = copy.group.addEntry }: { href: string; label?: string }) {
   return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={24} /></Link>;
 }
 

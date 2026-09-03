@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./icons";
+import { copy } from "../lib/copy";
 
 /**
  * The app's own popup, in place of `prompt()` and `confirm()`.
@@ -71,7 +72,7 @@ export function ConfirmDialog({ title, confirm, danger, children, onConfirm, onC
     <Dialog title={title} onClose={onClose}>
       {children ? <div className="dbody">{children}</div> : null}
       <div className="drow">
-        <button className="btn btn-s" onClick={onClose} disabled={busy}>Cancel</button>
+        <button className="btn btn-s" onClick={onClose} disabled={busy}>{copy.act.cancel}</button>
         <button className={`btn ${danger ? "btn-d" : "btn-p"}`} onClick={() => void go()} disabled={busy}>
           {busy ? <span className="spinner" /> : null}{confirm}
         </button>
@@ -117,7 +118,7 @@ export function PromptDialog({
           enterKeyHint="done" onChange={(e) => setValue(clean(e.target.value))} />
         {hint ? <div className="hint">{hint}</div> : null}
         <div className="drow">
-          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>Cancel</button>
+          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>{copy.act.cancel}</button>
           <button type="submit" className="btn btn-p" disabled={!ok || busy}>
             {busy ? <span className="spinner" /> : null}{confirm}
           </button>

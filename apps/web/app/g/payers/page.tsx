@@ -5,6 +5,7 @@ import { parseMinor, validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
+import { copy } from "../../../lib/copy";
 import { bare, money, shortfallText } from "../../../lib/format";
 import { useGroupData } from "../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../lib/draft";
@@ -26,7 +27,7 @@ function PayersScreen() {
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
 
-  if (!groupId || !data.group || !draft) return <Blank title="Who put it in" />;
+  if (!groupId || !data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
   const gid = groupId, current = draft;
   const currency = draft.currency;
 
@@ -75,9 +76,11 @@ function PayersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={draft.kind === "income" ? "Who received it" : "Who paid"}
+        <TopBar title={draft.kind === "income" ? copy.payers.whoReceived : copy.payers.whoPaid}
           sub={money(amountMinor, currency)} back={true}
-          right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>Done</button>} />
+          right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>
+            {copy.act.done}
+          </button>} />
 
         <Scroll>
           <div className="rows">
@@ -86,7 +89,7 @@ function PayersScreen() {
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
                   <button onClick={() => toggle(m.id)}
-                    aria-label={on ? `Leave ${m.name} out` : `${m.name} put money in too`}
+                    aria-label={on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid(m.name)}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <span className="rmain">
@@ -94,7 +97,7 @@ function PayersScreen() {
                         {m.name}
                       </span>
                       <span className="rmeta" style={{ display: "block" }}>
-                        {on ? "put money in" : "didn't pay"}
+                        {on ? copy.payers.putIn : copy.payers.didnt}
                       </span>
                     </span>
                   </button>
@@ -102,8 +105,8 @@ function PayersScreen() {
                   {on ? (
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button onClick={() => giveRest(m.id)} className="chip"
-                        aria-label={`Give ${m.name} the rest`}>rest</button>
-                      <MinorAmountInput className="bignum splitin" aria-label={`${m.name}'s contribution`}
+                        aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
+                      <MinorAmountInput className="bignum splitin" aria-label={copy.payers.contribution(m.name)}
                         currency={currency}
                         valueMinor={spec[m.id] ?? 0}
                         placeholder={bare(0, currency)}
@@ -122,16 +125,17 @@ function PayersScreen() {
               <Icon name={check.ok ? "check" : "off"} size={14} style={{ flex: "none" }} />
               <span>
                 {check.ok
-                  ? `${money(check.allocatedMinor, currency)} of ${money(amountMinor, currency)} accounted for`
+                  ? copy.payers.accountedFor(
+                      money(check.allocatedMinor, currency), money(amountMinor, currency))
                   : shortfallText(check, currency, {
-                      under: "still unaccounted for", over: "more than the expense",
+                      under: copy.payers.under, over: copy.payers.over,
                     })}
               </span>
             </div>
 
             {contributors.length > 1 ? (
               <button className="btn btn-s" style={{ marginTop: 10 }} onClick={onePayer}>
-                Back to one payer
+                {copy.payers.onePayer}
               </button>
             ) : null}
           </div>

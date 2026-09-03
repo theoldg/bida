@@ -7,6 +7,7 @@ import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../..
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
+import { copy } from "../../lib/copy";
 import { parseJoinLink, route } from "../../lib/group-link";
 
 /**
@@ -70,10 +71,8 @@ function JoinScreen() {
   if (!link) {
     return (
       <Screen><Body>
-        <TopBar title="Join a group" back={route.groups()} />
-        <Empty title="That link doesn't look right">
-          Ask whoever shared it to send the invite link again.
-        </Empty>
+        <TopBar title={copy.join.title} back={route.groups()} />
+        <Empty title={copy.join.badLink.title}>{copy.join.badLink.body}</Empty>
       </Body></Screen>
     );
   }
@@ -82,12 +81,9 @@ function JoinScreen() {
 
   return (
     <Screen><Body>
-      <TopBar title="Join a group" back={route.groups()} />
+      <TopBar title={copy.join.title} back={route.groups()} />
       <Scroll>
-        <Empty title="Joining…">
-          This finishes by itself once the other phone has synced. No need to reopen
-          the link.
-        </Empty>
+        <Empty title={copy.join.joining.title}>{copy.join.joining.body}</Empty>
       </Scroll>
     </Body></Screen>
   );

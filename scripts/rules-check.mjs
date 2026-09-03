@@ -2,10 +2,11 @@
 /**
  * `pnpm rules` — the rules the docs state, checked against the code.
  *
- * Two of this project's decisions are one careless line away from being quietly
- * reversed, and either would be found months later by a person rather than by a
- * test: core stops being pure, or a browser dialog creeps back in. Cheap to
- * check, expensive to rediscover — so they run in `pnpm check`.
+ * Three of this project's decisions are one careless line away from being
+ * quietly reversed, and each would be found months later by a person rather
+ * than by a test: core stops being pure, a browser dialog creeps back in, or a
+ * sentence is typed into a screen instead of into lib/copy.ts. Cheap to check,
+ * expensive to rediscover — so they run in `pnpm check`.
  *
  * The bar for adding one: it is written down as a decision, a single line
  * reverses it, and no test would notice. Style is not on this list — there is
@@ -72,6 +73,53 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   if (/<select[\s>]/.test(src)) fail(file, "`<select>` — every picker is our own ChoiceDialog (ADR-0008)");
 }
 
+/**
+ * Every word a person reads lives in `apps/web/lib/copy.ts` (ADR-0033). One
+ * literal typed straight into a screen is invisible until the day someone asks
+ * for a second language, so it is caught here instead.
+ *
+ * Two shapes are findable without a parser and cover what actually slips in:
+ * text sitting between JSX tags, and the three attributes that are read aloud
+ * or shown in a blank field. Everything else — a string handed to a prop — is
+ * left to review; this is a fence, not a type system.
+ */
+const COPY_FILE = join(ROOT, "apps/web/lib/copy.ts");
+const SPEAKING_ATTRS = /\b(aria-label|placeholder|title)=(["'])([^"'{}]*[A-Za-z]{2}[^"'{}]*)\2/g;
+/** Text between tags, inline or wrapped: `>Save<`, `>\n  A sentence.\n<`. */
+const JSX_TEXT = />([^<>{}=()[\];:`$]*?[A-Za-z]{2}[^<>{}=()[\];:`$]*?)</g;
+
+/**
+ * `Promise<void>`, `Omit<Props, "size">` — a generic's `>` is not a tag's, and
+ * the type after it reads as text between tags. Dropped innermost-first, so
+ * nested ones go too.
+ */
+function withoutGenerics(src) {
+  let out = src, prev;
+  do { prev = out; out = out.replace(/(?<=[\w$])<[^<>]*>/g, ""); } while (out !== prev);
+  return out;
+}
+
+for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT, "apps/web/components")))) {
+  if (file === COPY_FILE) continue;
+  const raw = readFileSync(file, "utf8");
+  // Comments only: the literals are the point here, so `code()` is too blunt.
+  const src = withoutGenerics(
+    raw.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/\/\/.*$/gm, " "));
+  for (const [, , , text] of src.matchAll(SPEAKING_ATTRS)) {
+    fail(file, `${JSON.stringify(text)} — words a person reads live in lib/copy.ts (ADR-0033)`);
+  }
+  for (const [, text] of src.matchAll(JSX_TEXT)) {
+    const said = text.trim();
+    // An entity (&rsquo;) or a lone symbol is punctuation around an expression,
+    // not a sentence — `{copy.split.rest}</button>` must not read as one.
+    if (said.length < 3 || !/[A-Za-z]{2}/.test(said) || /^&\w+;$/.test(said)) continue;
+    if (/^(import|export|from|const|let|type|interface|return|function|null|undefined)$/.test(said)) continue;
+    fail(file, `${JSON.stringify(said)} — words a person reads live in lib/copy.ts (ADR-0033)`);
+  }
+}
+
 for (const p of problems) console.log(`FAIL  ${p}`);
-console.log(problems.length ? `\n${problems.length} broken rule(s)` : "rules: core is pure, no browser dialogs");
+console.log(problems.length
+  ? `\n${problems.length} broken rule(s)`
+  : "rules: core is pure, no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);

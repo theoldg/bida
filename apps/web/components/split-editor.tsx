@@ -8,7 +8,8 @@ import {
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { Icon } from "./icons";
-import { bare, money, splitFooter, SPLIT_MODE_LABEL } from "../lib/format";
+import { copy } from "../lib/copy";
+import { bare, money, plural, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
 /**
@@ -47,7 +48,7 @@ export interface ReceiptTabProps {
   scanDisabled: boolean;
   scanState: ScanState;
   scanSource: ScanSource;
-  /** Set when the model read the photo but declined it (not a receipt, too blurry) — shown verbatim instead of the generic message. */
+  /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
   scanError: string | null;
   onScanCamera: () => void;
   onScanLibrary: () => void;
@@ -57,7 +58,7 @@ export interface ReceiptTabProps {
 export function SplitEditor({ members, me, title, totalMinor, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
-  /** "Split" on an expense, "Shared with" on an income — `ENTRY_SPLIT_LABEL`. */
+  /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
   title: string;
   /** The expense total in the group's base currency — what the split divides. */
   totalMinor: number;
@@ -160,18 +161,18 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
         <span style={{ fontSize: 13, color: "var(--muted)" }}>{title}</span>
         <span className="spacer" style={{ fontSize: 12, color: "var(--muted)" }}>
-          {included.size} {included.size === 1 ? "person" : "people"}
+          {copy.split.people(included.size)}
         </span>
       </div>
 
       <div className="seg" style={{ marginBottom: 9 }}>
         {MODES.map((mode) => (
           <button key={mode} type="button" className={!showReceipt && !legacy && spec.mode === mode ? "on" : ""}
-            onClick={() => switchMode(mode)}>{SPLIT_MODE_LABEL[mode]}</button>
+            onClick={() => switchMode(mode)}>{copy.split.mode[mode]}</button>
         ))}
         {receipt ? (
           <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
-            Receipt
+            {copy.split.receipt}
           </button>
         ) : null}
       </div>
@@ -185,7 +186,7 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
           return (
             <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
               <button type="button" onClick={() => toggle(m.id)}
-                aria-label={on ? `Leave ${m.name} out` : `Include ${m.name}`}
+                aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
                 style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0,
                   opacity: on ? 1 : .45 }}>
                 <span className="rmain">
@@ -197,29 +198,29 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
                         the figure, and while the split is short it can't be
                         resolved anyway — a stray "€0.00" under a row saying
                         40.00 is worse than nothing. */}
-                    {!on ? "not involved" : spec.mode === "exact" ? "" : money(shares[m.id] ?? 0, currency)}
+                    {!on ? copy.split.notInvolved : spec.mode === "exact" ? "" : money(shares[m.id] ?? 0, currency)}
                   </span>
                 </span>
               </button>
 
               {spec.mode === "shares" ? (
                 <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={`Fewer parts for ${m.name}`}
+                  <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
                     style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
                   <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
                     color: on ? "var(--ink)" : "var(--muted)" }}>
                     {spec.weights[m.id] ?? 0}
                   </span>
-                  <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={`More parts for ${m.name}`}
+                  <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
                     style={{ fontSize: 18 }}>+</button>
                 </span>
               ) : spec.mode === "exact" ? (
                 <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
                   {on && !check.ok ? (
                     <button type="button" className="chip" onClick={() => giveRest(m.id)}
-                      aria-label={`Give ${m.name} the rest`}>rest</button>
+                      aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
                   ) : null}
-                  <MinorAmountInput className="bignum splitin" aria-label={`${m.name}'s amount`}
+                  <MinorAmountInput className="bignum splitin" aria-label={copy.split.amountFor(m.name)}
                     currency={currency}
                     valueMinor={on ? spec.amounts[m.id] ?? 0 : 0}
                     placeholder={bare(0, currency)}
@@ -278,13 +279,13 @@ function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScan
         style={disabledOpacity} onClick={onScanCamera}>
         {busy && scanSource === "camera"
           ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={size === "s" ? 16 : 13} />}
-        {busy && scanSource === "camera" ? "Reading…" : size === "s" ? "Scan a receipt" : "Rescan"}
+        {busy && scanSource === "camera" ? copy.scan.reading : size === "s" ? copy.scan.scan : copy.scan.rescan}
       </button>
       <button type="button" className={size === "s" ? "btn btn-s" : "chip"} disabled={scanDisabled || busy}
         style={disabledOpacity} onClick={onScanLibrary}>
         {busy && scanSource === "library"
           ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={size === "s" ? 16 : 13} />}
-        {busy && scanSource === "library" ? "Reading…" : "Upload"}
+        {busy && scanSource === "library" ? copy.scan.reading : copy.scan.upload}
       </button>
     </div>
   );
@@ -308,10 +309,10 @@ function ReceiptPanel({
         <Link href={editItemsHref} className="btn btn-p" style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />
-            Edit who-had-what
+            {copy.scan.editWhoHadWhat}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
-            {items.length} item{items.length === 1 ? "" : "s"}
+            {plural(items.length, copy.noun.item)}
             <Icon name="chev" size={14} />
           </span>
         </Link>
@@ -328,7 +329,7 @@ function ReceiptPanel({
           <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
             onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
           {scanState === "error" ? (
-            <Failure>{scanError ?? "Couldn't read that receipt."} The old one is still assigned.</Failure>
+            <Failure>{scanError ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
           ) : null}
         </div>
       </div>
@@ -341,14 +342,14 @@ function ReceiptPanel({
         onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="s" />
       {scanState === "error" ? (
         <Failure>
-          {scanError ?? "Couldn't read that receipt."}{" "}
+          {scanError ?? copy.scan.failed}{" "}
           <button type="button" className="action" style={{ fontSize: "inherit" }} onClick={onScanCamera}>
-            Try again
+            {copy.act.tryAgain}
           </button>
         </Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
-          Runs on Google's free tier — the photo may be used to improve their models.
+          {copy.scan.freeTier}
         </div>
       )}
     </div>
