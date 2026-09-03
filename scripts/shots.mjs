@@ -244,14 +244,14 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
-      // The dialogs this app draws in place of prompt() and confirm(): adding
-      // someone, and the one that used to be a screen of its own (ADR-0008).
+      // Adding someone is the last row of the list, mid-name; leaving is the
+      // dialog this app draws in place of confirm() (ADR-0008).
       await page.goto(`${base}/g/members?id=${groupId}`);
-      await page.getByRole("button", { name: "Add member" }).click();
+      await page.getByLabel("Add someone").fill("Nadia");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
       process.stdout.write(`${theme}/add-member `);
-      await page.getByRole("button", { name: "Cancel" }).click();
+      await page.getByLabel("Add someone").fill("");
       await page.getByRole("button", { name: "Leave group" }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-leave.png`) });

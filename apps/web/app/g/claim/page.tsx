@@ -2,10 +2,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { GhostRow } from "../../../components/bits";
 import { Blank, Body, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
+import { AddName } from "../../../components/name-adder";
+import { copy } from "../../../lib/copy";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
@@ -35,7 +35,6 @@ function ClaimScreen() {
   // Re-opening an invite you have already accepted preselects who you are, so
   // it is one tap rather than a puzzle about whether you'll be duplicated.
   const [picked, setPicked] = useState<string>();
-  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const chosen = picked ?? data.me;
 
@@ -47,7 +46,6 @@ function ClaimScreen() {
   async function add(name: string) {
     if (!groupId) return;
     setPicked(await addMember(groupId, data.me, name));
-    setAdding(false);
   }
 
   async function proceed() {
@@ -64,7 +62,7 @@ function ClaimScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="Which one is you?" sub={group.name} back={route.groups()} />
+        <TopBar title={copy.claim.title} sub={group.name} back={route.groups()} />
 
         <Scroll>
           <div className="rows">
@@ -79,8 +77,7 @@ function ClaimScreen() {
               </button>
             ))}
 
-            <GhostRow icon="plus" label={<>I&rsquo;m not on the list</>}
-              onClick={() => setAdding(true)} />
+            <AddName placeholder={copy.claim.addPlaceholder} onAdd={add} />
           </div>
         </Scroll>
       </Body>
@@ -88,16 +85,11 @@ function ClaimScreen() {
       <Foot>
         <button className="btn btn-p" onClick={proceed} disabled={!chosen || busy}>
           {chosen
-            ? `Continue as ${data.memberById.get(chosen)?.name ?? "me"}`
-            : "Pick your name to continue"}
+            ? copy.claim.continueAs(data.memberById.get(chosen)?.name ?? copy.someoneLower)
+            : copy.claim.pickFirst}
         </button>
       </Foot>
 
-      {adding ? (
-        <PromptDialog title="Your name" placeholder="Name" confirm="Add"
-          autoCapitalize="words" maxLength={40}
-          onSubmit={add} onClose={() => setAdding(false)} />
-      ) : null}
     </Screen>
   );
 }

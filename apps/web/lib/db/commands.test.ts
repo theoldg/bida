@@ -124,6 +124,22 @@ describe("commands", () => {
     expect(await db().groupKeys.get(groupId)).toBeTruthy();
   });
 
+  it("seats everyone named on the create screen, and only you are this device", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech",
+      baseCurrency: "EUR",
+      myName: "Theo",
+      otherNames: ["Marie", "Sam"],
+    });
+
+    const members = await db().members.where("groupId").equals(groupId).toArray();
+    expect(members.map((m) => m.name).sort()).toEqual(["Marie", "Sam", "Theo"]);
+    // The others are people in the group, not claims: this phone is still only
+    // Theo, and their own devices claim them when they open the link.
+    expect(await getMe(groupId)).toBe(theo);
+    expect(await db().identities.where("groupId").equals(groupId).count()).toBe(1);
+  });
+
   it("keeps the group secret out of the op log entirely", async () => {
     const { groupId } = await trip();
     const key = await db().groupKeys.get(groupId);

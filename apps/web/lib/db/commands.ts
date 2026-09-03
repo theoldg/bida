@@ -144,6 +144,8 @@ export interface NewGroupInput {
   baseCurrency: CurrencyCode;
   /** The person holding this device. Becomes the first member and the actor. */
   myName: string;
+  /** Everyone else, in the order they were typed. Optional — they can be added later. */
+  otherNames?: readonly string[];
 }
 
 export async function createGroup(
@@ -185,6 +187,15 @@ export async function createGroup(
         kind: "create",
         patch: { memberId, claimedAt: now },
       },
+      // The rest of the group, in the same batch: one HLC run, so the log reads
+      // as the group being created with these people in it rather than as five
+      // separate arrivals a millisecond apart.
+      ...(input.otherNames ?? []).map((name) => ({
+        entity: "member" as const,
+        entityId: newId(),
+        kind: "create" as const,
+        patch: { name, colorSeed: newColorSeed(), deletedAt: null },
+      })),
     ],
     now,
   );

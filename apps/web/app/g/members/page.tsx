@@ -6,6 +6,8 @@ import { GhostRow } from "../../../components/bits";
 import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
+import { AddName } from "../../../components/name-adder";
+import { copy } from "../../../lib/copy";
 import {
   addMember, claimIdentity, leaveGroup, removeMember, renameMember,
 } from "../../../lib/db/commands";
@@ -20,16 +22,16 @@ import { useGroupData, useInviteLink } from "../../../lib/hooks";
  * tapping another name moves it — an op on the shared log, like every other
  * change (ADR-0003).
  *
- * Every change made here — naming, adding, removing, leaving — is confirmed in
- * a dialog this app draws, on this list, rather than on a route of its own
- * (ADR-0008).
+ * Adding is the last row of the list rather than a dialog — a group is filled
+ * in one burst of typing, and a scrim per name made that four acts instead of
+ * one (components/name-adder.tsx). Renaming and removing keep their dialogs:
+ * each is one decision, and a removal has a consequence to state (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
 }
 
 type Ask =
-  | { kind: "add" }
   | { kind: "rename"; id: string; name: string }
   | { kind: "remove"; id: string; name: string }
   | { kind: "leave" };
@@ -67,14 +69,13 @@ function MembersScreen() {
     const memberId = await addMember(groupId, data.me, name);
     // A brand-new phone that just created this member is almost certainly them.
     if (!data.me) await claimIdentity(groupId, memberId);
-    setAsk(null);
   }
 
   // Leaving is `removeMember` on yourself, so it tombstones like any other
   // removal: your past expenses stay exactly as they were. The one thing worth
   // naming is what it does when you're the last person here.
   const lastMember = data.members.length === 1 && data.members[0]?.id === data.me;
-  const leaveTitle = lastMember ? "Delete group" : "Leave group";
+  const leaveTitle = lastMember ? copy.members.deleteGroup : copy.members.leave;
 
   async function leave() {
     if (!groupId || !data.me) return;
@@ -85,9 +86,9 @@ function MembersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title="People" back={route.group(groupId)}
+        <TopBar title={copy.members.title} back={route.group(groupId)}
           right={invite.copy ? (
-            <button className="iconbtn" aria-label="Copy invite link" onClick={invite.copy}>
+            <button className="iconbtn" aria-label={copy.group.copyLink} onClick={invite.copy}>
               <Icon name={invite.copied ? "check" : "link"} size={18}
                 style={invite.copied ? { color: "var(--brand)" } : undefined} />
             </button>
@@ -96,7 +97,7 @@ function MembersScreen() {
         <Scroll>
           {!data.me ? (
             <div className="pad" style={{ paddingBottom: 0 }}>
-              <Banner icon="users">Tap your name so this phone knows who you are.</Banner>
+              <Banner icon="users">{copy.members.claimPrompt}</Banner>
             </div>
           ) : null}
 
@@ -110,12 +111,12 @@ function MembersScreen() {
                   ? <Icon name="check" size={16} style={{ color: "var(--brand)", flex: "none" }} />
                   : null}
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button className="iconbtn" aria-label={`Rename ${m.name}`}
+                  <button className="iconbtn" aria-label={copy.members.rename(m.name)}
                     onClick={(e) => { e.stopPropagation(); setAsk({ kind: "rename", id: m.id, name: m.name }); }}>
                     <Icon name="edit" size={14} />
                   </button>
                   {m.id !== data.me ? (
-                    <button className="iconbtn" aria-label={`Remove ${m.name}`}
+                    <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
                       onClick={(e) => { e.stopPropagation(); setAsk({ kind: "remove", id: m.id, name: m.name }); }}>
                       <Icon name="trash" size={14} />
                     </button>
@@ -124,51 +125,34 @@ function MembersScreen() {
               </div>
             ))}
 
-            <GhostRow icon="plus" label="Add member" onClick={() => setAsk({ kind: "add" })} />
+            <AddName placeholder={copy.members.addPlaceholder} onAdd={add} />
 
             {data.me ? (
-              <GhostRow icon="trash" label="Leave group" danger={true}
+              <GhostRow icon="trash" label={copy.members.leave} danger={true}
                 onClick={() => setAsk({ kind: "leave" })} />
             ) : null}
           </div>
         </Scroll>
       </Body>
 
-      {ask?.kind === "add" ? (
-        <PromptDialog title="Add member" placeholder="Name" confirm="Add"
-          autoCapitalize="words" maxLength={40}
-          onSubmit={(name) => add(name)} onClose={() => setAsk(null)} />
-      ) : null}
-
       {ask?.kind === "rename" ? (
-        <PromptDialog title="New name" initial={ask.name} confirm="Rename"
+        <PromptDialog title={copy.members.newName} initial={ask.name} confirm={copy.act.rename}
           autoCapitalize="words" maxLength={40}
           valid={(v) => v.trim().length > 0 && v.trim() !== ask.name}
           onSubmit={(name) => rename(ask.id, name)} onClose={() => setAsk(null)} />
       ) : null}
 
       {ask?.kind === "remove" ? (
-        <ConfirmDialog title={`Remove ${ask.name}?`} confirm="Remove" danger={true}
+        <ConfirmDialog title={copy.members.removeTitle(ask.name)} confirm={copy.act.remove} danger={true}
           onConfirm={() => remove(ask.id)} onClose={() => setAsk(null)}>
-          <p>Their past expenses stay exactly as they were — removing someone doesn't
-            redistribute money already owed or owing.</p>
+          <p>{copy.members.removeBody}</p>
         </ConfirmDialog>
       ) : null}
 
       {ask?.kind === "leave" ? (
         <ConfirmDialog title={leaveTitle} confirm={leaveTitle} danger={true}
           onConfirm={leave} onClose={() => setAsk(null)}>
-          {lastMember ? (
-            <>
-              <p>You're the last person in <b>{group.name}</b>. Leaving deletes the group —
-                there's nobody left to keep it for.</p>
-              <p>Its expenses stay in the log, unreachable rather than erased. Nothing about
-                it comes back on its own.</p>
-            </>
-          ) : (
-            <p>You'll be removed from <b>{group.name}</b>. Your past expenses stay exactly as
-              they were — leaving doesn't redistribute money you already owed or were owed.</p>
-          )}
+          <p>{lastMember ? copy.members.lastBody(group.name) : copy.members.leaveBody(group.name)}</p>
         </ConfirmDialog>
       ) : null}
     </Screen>

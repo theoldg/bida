@@ -158,17 +158,14 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
   await page.goto(`${base}/new`);
   await page.locator("#g-name").fill(name);
   await page.locator("#g-me").fill(me);
+  // Everyone else goes in here, on the same inline row the People screen uses:
+  // this is the flow a person takes, and it is the one worth exercising.
+  for (const member of members) {
+    await page.getByLabel("Add someone").fill(member);
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+  }
   await onForm?.();
   await page.getByRole("button", { name: "Create" }).click();
   await page.waitForURL(/\/g\?id=/);
-  const id = new URL(page.url()).searchParams.get("id");
-
-  await page.goto(`${base}/g/members?id=${id}`);
-  for (const member of members) {
-    await page.getByRole("button", { name: "Add member" }).click();
-    await page.locator(".dinput").fill(member);
-    await page.getByRole("button", { name: "Add", exact: true }).click();
-    await page.waitForTimeout(150);
-  }
-  return id;
+  return new URL(page.url()).searchParams.get("id");
 }
