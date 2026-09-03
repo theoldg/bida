@@ -6,7 +6,7 @@
 pnpm check       # links · rules · typecheck · 217 tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
-pnpm back        # just the device back button, against the arrow it must match
+pnpm back        # every screen with an arrow, walked back out one press at a time
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms

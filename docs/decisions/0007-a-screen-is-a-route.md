@@ -45,6 +45,13 @@ expenses you'd looked at rather than climbing out.
   app's own traversals are left alone — taking those over would call the arrow
   in a loop — and so is a browser that won't be cancelled, which is the
   degradation, not a second behaviour.
+- **Cancel only where the two differ.** A screen opened from its parent already
+  has that parent one entry behind it, so the browser's own back *is* the
+  arrow and the press goes through untouched — which is most of them. Taking
+  every press over was the same behaviour on paper and a worse one in the
+  hand: a cancellation has to be re-navigated, and the re-navigation was
+  counted against an index the browser had already moved. Cancelling is now
+  what the history feed and the entry form need, not the app's normal path.
 
 ## Consequences
 

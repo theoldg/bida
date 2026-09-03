@@ -29,10 +29,11 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 **Back goes up, not back.** A screen's `back` names its parent, and `goUp`
 (`lib/nav.ts`) unwinds the history to it instead of pushing; the device's back
-button is cancelled and runs that same action, so the button and the arrow
-cannot disagree (`lib/back-button.ts`,
-[ADR-0007](decisions/0007-a-screen-is-a-route.md)). A `<Link>` to an ancestor
-or a sibling must `replace`; only descending pushes.
+button runs that same action, so the button and the arrow cannot disagree
+(`lib/back-button.ts`, [ADR-0007](decisions/0007-a-screen-is-a-route.md)). It
+is only taken over where they would differ — the browser's own back is already
+the arrow on a screen opened from its parent, which is nearly every press. A
+`<Link>` to an ancestor or a sibling must `replace`; only descending pushes.
 
 **The group secret lives in the URL fragment**, which browsers never send to a
 server ([ADR-0004](decisions/0004-static-export-and-offline.md)). Never move
@@ -206,14 +207,17 @@ figure-free.
   an expense in a new currency at the same rate writes `currency` and no amount
   field at all, so history copy must never read one field because a sibling
   changed.
-- **Cancelling a back press is finished after the event's task, not after its
-  microtask checkpoint.** Until then the browser counts a relative traversal
-  from the entry the cancelled press was heading for, so a `history.go(-1)`
-  queued with `queueMicrotask` moved *two* screens: an expense's back button
-  reached the groups list, and a group's ran off the start of the history and
-  did nothing at all. `lib/back-button.ts` hands the screen's back action to a
-  macrotask. `navigation.traverseTo` is no way round it — inside that window it
-  rejects the key it was just given.
+- **A cancelled back press leaves the browser counting from the entry the
+  press was heading for**, not from the screen still on show — for the rest of
+  that task, and on a real phone for longer than that. So `history.go(-1)`
+  moved *two*: an expense's button reached the groups list, and a group's ran
+  off the start of the history, where a traversal that lands nowhere is
+  silently dropped and the press appears to do nothing. Hence both halves of
+  the fix: don't cancel a press the browser is already getting right, and when
+  you must, name the destination entry (`traverseTo`) instead of counting to
+  it. A count is only ever as right as the browser's idea of where you are.
+  Deferring to a macrotask is not enough on its own, though it is still needed
+  — a traversal started while the cancellation unwinds is refused outright.
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
 - **An input's `size` attribute is not a character count**, it is characters

@@ -20,8 +20,9 @@
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigationLike = {
-  entries: () => { url: string | null }[];
+  entries: () => { url: string | null; key: string }[];
   currentEntry: { index: number } | null;
+  traverseTo?: (key: string) => { committed: Promise<unknown>; finished: Promise<unknown> };
 };
 
 function navigation(): NavigationLike | undefined {
@@ -34,6 +35,10 @@ function navigation(): NavigationLike | undefined {
  * doesn't count, and neither does a trailing slash, because a link the app
  * built and one a person pasted have to compare equal.
  */
+export function sameScreen(a: string, b: string): boolean {
+  return screenKey(a) === screenKey(b);
+}
+
 function screenKey(url: string): string {
   // The base is only there to satisfy the parser; app URLs are all relative.
   const u = new URL(url, "http://app.invalid");
@@ -65,7 +70,22 @@ export function goUp(href: string, replace: (href: string) => void): void {
   const nav = navigation();
   const here = nav?.currentEntry?.index;
   if (nav && here !== undefined && here >= 0) {
-    const steps = stepsBackTo(nav.entries().map((e) => e.url), here, href);
+    const entries = nav.entries();
+    const steps = stepsBackTo(entries.map((e) => e.url), here, href);
+    const target = steps === null ? undefined : entries[here + steps];
+    if (target && nav.traverseTo) {
+      // Name the entry; don't count back to it. A count is measured against
+      // the browser's idea of where we are, and that is not always this
+      // screen: inside a cancelled back press it is the entry the press was
+      // heading for, so `history.go(-1)` moved two — off the ledger to the
+      // groups list, and off the start of the history, where a traversal that
+      // lands nowhere is silently dropped and the press does nothing. A key
+      // cannot be off by one, and a browser that won't take it says so.
+      const { committed, finished } = nav.traverseTo(target.key);
+      finished.catch(() => {});
+      committed.catch(() => replace(href));
+      return;
+    }
     if (steps !== null) {
       window.history.go(steps);
       return;

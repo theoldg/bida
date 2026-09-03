@@ -34,9 +34,9 @@ browser's menu. No pinch zoom, and adding a person is the last row of the
 list rather than a dialog
 — a row that refuses a name already there and follows the list down the screen
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
-parent instead of pushing, and the device's back button is cancelled so it runs
-the screen's own back action rather than replaying where you had been — one
-behaviour, arrow and button ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
+parent instead of pushing, and the device's back button runs the screen's own
+back action rather than replaying where you had been — one behaviour, arrow and
+button ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 History is read, not rewound — `/g/restore` and `buildRestorePatch` are gone,
 and the `restore` op kind still folds only because production groups hold some
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)). The look is

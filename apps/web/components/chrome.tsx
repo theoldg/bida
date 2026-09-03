@@ -31,8 +31,10 @@ export function TopBar({ title, sub, back, right }: {
   const router = useRouter();
   // The device's back button does exactly what this arrow does (lib/back-button.ts).
   // `back === true` is the exception that needs no help: it *is* a plain back.
-  useBackButton(typeof back === "function" ? back
-    : typeof back === "string" ? () => goUp(back, (to) => router.replace(to))
+  // An up-link hands over its destination as well as its action, so a press the
+  // browser is already taking there needs no intervention at all.
+  useBackButton(typeof back === "function" ? { run: back }
+    : typeof back === "string" ? { run: () => goUp(back, (to) => router.replace(to)), href: back }
       : undefined);
   return (
     <div className="topbar">
