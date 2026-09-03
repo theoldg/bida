@@ -8,8 +8,8 @@ pnpm verify      # both browser checks against a real build, ~45s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
-pnpm docs        # every relative markdown link resolves, ~30ms
-pnpm rules       # core is still pure, no browser dialogs crept back, ~30ms
+pnpm run docs    # every relative link resolves, every doc inside its budget
+pnpm run rules   # core is still pure, no browser dialogs crept back, ~30ms
 ```
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
@@ -22,7 +22,7 @@ so the two things that gate nothing else are in it. The build, because `next
 build` catches what `tsc` cannot (a prerender touching `window`, a
 client-boundary mistake, a `precache.mjs` that throws) and the deploy workflow
 only rebuilds and ships, so a build that fails there fails on `main`. And
-`pnpm rules`, because a decision written in an ADR is one careless import away
+`pnpm run rules`, because a decision in an ADR is one careless import away
 from being reversed by someone who never read it: it fails on an import or a
 `Date.now()` in `packages/core`, and on a `prompt`/`confirm`/`alert`/`<select>`
 in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for

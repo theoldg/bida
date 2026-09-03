@@ -32,7 +32,7 @@ app. Expect to remove more entries here than you add.
   owner had 32 ADRs folded into 11, then: "every time i make a request, the ADRs,
   owner preferences and whatnot get more inflated. compress those back down."
   Write where a decision stands, never the sequence of sessions that reached it.
-  Every doc has a line budget `pnpm docs` enforces —
+  Every doc has a line budget `pnpm run docs` enforces —
   [CLAUDE.md](../CLAUDE.md#doc-upkeep).
 
 ## Product
