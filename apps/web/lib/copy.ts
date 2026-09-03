@@ -45,6 +45,7 @@ export const copy = {
     rename: "Rename",
     save: "Save",
     useIt: "Use it",
+    close: "Close",
   },
 
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */
@@ -197,6 +198,8 @@ export const copy = {
     newName: "New name",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are — nothing is redistributed.",
+    blockedTitle: (name: string) => `Can’t remove ${name}`,
+    blockedBody: "Still on these expenses. Remove them from each one, or delete the expense, first.",
     forget: "Forget group",
     forgetBody: (group: string) =>
       `${group} comes off this phone’s list. Nothing is deleted, and no one is notified — open the invite link again any time to bring it back.`,

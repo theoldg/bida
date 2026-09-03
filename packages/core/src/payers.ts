@@ -1,4 +1,4 @@
-import { resolveSplit, SplitError } from "./split.js";
+import { resolveSplit, SplitError, splitParticipants } from "./split.js";
 import type { Expense, Id } from "./types.js";
 
 /**
@@ -156,4 +156,15 @@ export function resolvePayers(expense: PayerBearing): Record<Id, number> {
 /** Convenience for a full `Expense`, which always has the fields above. */
 export function payersOf(expense: Expense): Record<Id, number> {
   return resolvePayers(expense);
+}
+
+/**
+ * Whether a member currently has a stake in this expense — paid some of it or
+ * is in the split. Used to decide whether removing them from the group would
+ * leave a live expense pointing at nobody the group can still edit; a member
+ * only in expenses they've since been edited out of (or that were deleted)
+ * doesn't count.
+ */
+export function expenseInvolves(expense: Expense, memberId: Id): boolean {
+  return payerList(expense).includes(memberId) || splitParticipants(expense.split).includes(memberId);
 }

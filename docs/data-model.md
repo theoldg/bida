@@ -77,6 +77,10 @@ and nowhere else.
   tombstone, nobody else sees it — so it drops off *your* list without
   touching membership or the group itself. Groups are never deleted. Opening
   the invite link again clears the hide.
+- The UI (not `removeMember` itself) refuses to remove someone else while
+  `expenseInvolves` (payers.ts) still names them a payer or split participant
+  on a live expense — past involvement they've since been edited out of
+  doesn't count.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
   entry ([ADR-0005](decisions/0005-money-and-currency.md)) and must re-derive
   identically on every device.

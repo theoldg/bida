@@ -1,16 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { expenseInvolves, type Expense } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
 import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ConfirmDialog, PromptDialog } from "../../../components/dialog";
+import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
 import {
   addMember, claimIdentity, forgetGroup, removeMember, renameMember,
 } from "../../../lib/db/commands";
+import { money } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData, useInviteLink } from "../../../lib/hooks";
 import { nameTaken } from "../../../lib/names";
@@ -35,6 +38,7 @@ export default function MembersPage() {
 type Ask =
   | { kind: "rename"; id: string; name: string }
   | { kind: "remove"; id: string; name: string }
+  | { kind: "blocked"; name: string; expenses: Expense[] }
   | { kind: "forget" };
 
 function MembersScreen() {
@@ -64,6 +68,18 @@ function MembersScreen() {
     if (!groupId) return;
     await removeMember(groupId, data.me ?? memberId, memberId);
     setAsk(null);
+  }
+
+  // A tombstoned member's past expenses are meant to stay exactly as they
+  // were (removeMember's whole point), but "past" means past: someone still
+  // named on a live expense — as a payer or in the split — isn't a stray
+  // balance, they're an open one. Removing them wouldn't touch the expense,
+  // just make it un-editable by anyone who can no longer pick them.
+  function askRemove(memberId: string, name: string) {
+    const blocking = data.expenses.filter((e) => expenseInvolves(e, memberId));
+    setAsk(blocking.length > 0
+      ? { kind: "blocked", name, expenses: blocking }
+      : { kind: "remove", id: memberId, name });
   }
 
   async function add(name: string) {
@@ -113,7 +129,7 @@ function MembersScreen() {
                   </button>
                   {m.id !== data.me ? (
                     <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
-                      onClick={(e) => { e.stopPropagation(); setAsk({ kind: "remove", id: m.id, name: m.name }); }}>
+                      onClick={(e) => { e.stopPropagation(); askRemove(m.id, m.name); }}>
                       <Icon name="trash" size={14} />
                     </button>
                   ) : null}
@@ -147,6 +163,25 @@ function MembersScreen() {
           onConfirm={() => remove(ask.id)} onClose={() => setAsk(null)}>
           <p>{copy.members.removeBody}</p>
         </ConfirmDialog>
+      ) : null}
+
+      {ask?.kind === "blocked" ? (
+        <Dialog title={copy.members.blockedTitle(ask.name)} onClose={() => setAsk(null)}>
+          <div className="dbody"><p>{copy.members.blockedBody}</p></div>
+          <div className="dlist">
+            {ask.expenses.map((e) => (
+              <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
+                <span className="rmain">
+                  <span className="rtitle">{e.description || copy.group.untitled}</span>
+                </span>
+                <span className="rmeta">{money(e.baseAmountMinor, group.baseCurrency)}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="drow">
+            <button className="btn btn-p" onClick={() => setAsk(null)}>{copy.act.close}</button>
+          </div>
+        </Dialog>
       ) : null}
 
       {ask?.kind === "forget" ? (

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  isCoSponsored, payerList, primaryPayer, resolvePayers, validatePayers,
+  expenseInvolves, isCoSponsored, payerList, primaryPayer, resolvePayers, validatePayers,
 } from "./payers.js";
 import { computeBalances, assertBalanced } from "./balance.js";
 import { emptyGroupState, type Expense, type Member } from "./types.js";
@@ -44,6 +44,31 @@ describe("payerList / primaryPayer / isCoSponsored", () => {
     expect(primaryPayer({ [BOB]: 40_000, [ALICE]: 10_000 }, CARL)).toBe(BOB);
     expect(primaryPayer({ [BOB]: 25_000, [ALICE]: 25_000 }, CARL)).toBe(ALICE);
     expect(primaryPayer({}, CARL)).toBe(CARL);
+  });
+});
+
+describe("expenseInvolves", () => {
+  it("is true for the split, true for a payer, false for neither", () => {
+    const e = expense({ split: { mode: "equal", members: [BOB, ALICE] } });
+    expect(expenseInvolves(e, BOB)).toBe(true);
+    expect(expenseInvolves(e, ALICE)).toBe(true);
+    expect(expenseInvolves(e, CARL)).toBe(false);
+  });
+
+  it("counts a co-sponsor even when they're not in the split", () => {
+    const e = expense({
+      payers: { [BOB]: 40_000, [CARL]: 10_000 },
+      split: { mode: "equal", members: [BOB, ALICE] },
+    });
+    expect(expenseInvolves(e, CARL)).toBe(true);
+  });
+
+  it("stops counting someone edited out of both sides", () => {
+    const e = expense({
+      paidBy: BOB,
+      split: { mode: "equal", members: [BOB] },
+    });
+    expect(expenseInvolves(e, ALICE)).toBe(false);
   });
 });
 
