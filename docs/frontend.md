@@ -69,7 +69,11 @@ confers nothing without the secret.
   of a list of names: Enter files the name and hands the caret back, so a group
   of six is one burst of typing rather than six trips through a scrim. Used on
   `/new`, `/g/members` and `/g/claim`. A dialog is for a decision with a
-  consequence to state; it was never right for a list you fill.
+  consequence to state; it was never right for a list you fill. Living in the
+  list costs two rules: **one name, one person** — a name already on it is
+  refused as you type, since a member is only ever drawn as their name (so is
+  a rename; `lib/names.ts`) — and the row **follows the list down**, as a
+  browser scrolls to a field only as it takes focus, and this one never lets go.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. It must be **total** — it runs inside a render over
   every patch the log holds, so one throw is a white screen, not a missing line.

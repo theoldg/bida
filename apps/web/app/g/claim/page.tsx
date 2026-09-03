@@ -77,7 +77,8 @@ function ClaimScreen() {
               </button>
             ))}
 
-            <AddName placeholder={copy.claim.addPlaceholder} onAdd={add} />
+            <AddName placeholder={copy.claim.addPlaceholder}
+              taken={data.members.map((m) => m.name)} onAdd={add} />
           </div>
         </Scroll>
       </Body>

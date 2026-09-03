@@ -13,6 +13,7 @@ import {
 } from "../../../lib/db/commands";
 import { route } from "../../../lib/group-link";
 import { useGroupData, useInviteLink } from "../../../lib/hooks";
+import { nameTaken } from "../../../lib/names";
 
 /**
  * People: who is in the group, and which of them this phone is.
@@ -46,6 +47,7 @@ function MembersScreen() {
 
   if (!groupId || !data.group) return <Blank />;
   const group = data.group;
+  const names = data.members.map((m) => m.name);
 
   async function claim(memberId: string) {
     if (!groupId || memberId === data.me) return;
@@ -125,7 +127,7 @@ function MembersScreen() {
               </div>
             ))}
 
-            <AddName placeholder={copy.members.addPlaceholder} onAdd={add} />
+            <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
 
             {data.me ? (
               <GhostRow icon="trash" label={copy.members.leave} danger={true}
@@ -138,7 +140,11 @@ function MembersScreen() {
       {ask?.kind === "rename" ? (
         <PromptDialog title={copy.members.newName} initial={ask.name} confirm={copy.act.rename}
           autoCapitalize="words" maxLength={40}
-          valid={(v) => v.trim().length > 0 && v.trim() !== ask.name}
+          /* Renaming is the other door onto two people with one name, so it is
+             shut here too — Rename simply doesn't light up for a name already
+             on the list. */
+          valid={(v) => v.trim().length > 0 && v.trim() !== ask.name
+            && !nameTaken(v, names.filter((n) => n !== ask.name))}
           onSubmit={(name) => rename(ask.id, name)} onClose={() => setAsk(null)} />
       ) : null}
 

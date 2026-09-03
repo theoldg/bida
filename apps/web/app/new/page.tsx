@@ -12,6 +12,7 @@ import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY
 import { createGroup } from "../../lib/db/commands";
 import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
+import { nameTaken } from "../../lib/names";
 
 /**
  * The whole group, on one screen.
@@ -32,8 +33,12 @@ export default function NewGroupPage() {
   const [failed, setFailed] = useState<string>();
   const [ask, setAsk] = useState<null | "currency" | "other">(null);
 
+  // Your own name is on the same list as everyone else's, so it plays by the
+  // same rule: one Ana, and the app can tell people apart everywhere it only
+  // ever shows a name (lib/names.ts).
+  const clash = nameTaken(myName, others);
   const ready = name.trim().length > 0 && myName.trim().length > 0
-    && currency.length === 3 && !busy;
+    && !clash && currency.length === 3 && !busy;
 
   async function save() {
     if (!ready) return;
@@ -67,6 +72,7 @@ export default function NewGroupPage() {
               <input id="g-me" value={myName} placeholder={copy.newGroup.yourNamePlaceholder}
                 onChange={(e) => setMyName(e.target.value)} />
             </div>
+            {clash ? <Failure>{copy.members.taken(myName.trim())}</Failure> : null}
             <div className="field">
               <span className="fieldlabel" style={{ width: 62 }}>{copy.newGroup.currency}</span>
               <button type="button" id="g-cur" className="pick" aria-label={copy.newGroup.currency}
@@ -90,7 +96,7 @@ export default function NewGroupPage() {
                 </button>
               </div>
             ))}
-            <AddName placeholder={copy.members.addPlaceholder}
+            <AddName placeholder={copy.members.addPlaceholder} taken={[myName, ...others]}
               onAdd={(who) => setOthers((list) => [...list, who])} />
           </div>
         </Scroll>

@@ -67,7 +67,8 @@ themselves above the face, and every picker on the form — sides, payer, curren
 ([ADR-0033](decisions/0033-every-word-in-one-file.md)) — with the English cut
 short on the way through. Alongside it, three things the owner caught: adding
 people is the last row of the list rather than a dialog, on `/new` as well as
-`/g/members` (`components/name-adder.tsx`); the offline banner shows the moment
+`/g/members`, refusing a name already on it and scrolling itself into view as
+the list grows (`components/name-adder.tsx`); the offline banner shows the moment
 the phone is offline, and opening a group asks the server rather than waiting
 for the loop; and a scan that can't reach the network says so instead of
 blaming the photo.

@@ -29,6 +29,7 @@ reads lives in `apps/web/lib/copy.ts`, fenced by `pnpm check`
 ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Nothing the browser
 draws is used: no `prompt()`, `confirm()` or `<select>`, no long-press menu, no
 pinch zoom, and adding a person is the last row of the list rather than a dialog
+— a row that refuses a name already there and follows the list down the screen
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
 parent instead of pushing ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 History is read, not rewound — `/g/restore` and `buildRestorePatch` are gone,

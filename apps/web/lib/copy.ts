@@ -191,6 +191,8 @@ export const copy = {
     title: "People",
     claimPrompt: "Tap your name.",
     addPlaceholder: "Add someone",
+    /** Two people with one name are two people nothing on screen tells apart. */
+    taken: (name: string) => `${name} is already here.`,
     rename: (name: string) => `Rename ${name}`,
     removeLabel: (name: string) => `Remove ${name}`,
     newName: "New name",

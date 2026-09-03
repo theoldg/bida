@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
+import { nameTaken } from "../lib/names";
 
 /**
  * Adding people, in the list itself.
@@ -15,16 +16,39 @@ import { copy } from "../lib/copy";
  *
  * The dialogs stay where they belong (ADR-0008) — a rename is one field and
  * one name, and a removal has a consequence to state first.
+ *
+ * Two things follow from the field living inside the list it fills. A name
+ * already on that list is refused here rather than added twice (lib/names.ts),
+ * said as it is typed and not after the fact. And each name pushes this row
+ * further down, so the field follows the list rather than walking off the
+ * bottom of it.
  */
-export function AddName({ placeholder, autoFocus, onAdd }: {
+export function AddName({ placeholder, autoFocus, taken, onAdd }: {
   placeholder: string;
   autoFocus?: boolean;
+  /** The names already on the list — this row won't add a second of any. */
+  taken: readonly string[];
   onAdd: (name: string) => void | Promise<void>;
 }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const field = useRef<HTMLInputElement>(null);
-  const ready = value.trim().length > 0 && !busy;
+  const row = useRef<HTMLFormElement>(null);
+  const already = nameTaken(value, taken);
+  const ready = value.trim().length > 0 && !already && !busy;
+
+  // The list grows above this row, so past a screenful the field is below the
+  // fold and the rest of the names are typed blind — the browser scrolls to a
+  // field when it takes focus, and this one never loses it. Follow the row
+  // once it has actually moved: after the render that added the name, not in
+  // the handler that asked for it. `nearest` scrolls the least that works, so
+  // a field already in view doesn't jump.
+  const count = taken.length;
+  const seen = useRef(count);
+  useEffect(() => {
+    if (count > seen.current) row.current?.scrollIntoView({ block: "nearest" });
+    seen.current = count;
+  }, [count]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -42,12 +66,15 @@ export function AddName({ placeholder, autoFocus, onAdd }: {
   }
 
   return (
-    <form className="row addrow" onSubmit={(e) => void submit(e)}>
-      <span className="avatar ghost"><Icon name="plus" size={15} /></span>
-      <input ref={field} className="addname" value={value} placeholder={placeholder}
-        aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
-        enterKeyHint="done" onChange={(e) => setValue(e.target.value)} />
-      <button type="submit" className="action" disabled={!ready}>{copy.act.add}</button>
-    </form>
+    <>
+      <form ref={row} className="row addrow" onSubmit={(e) => void submit(e)}>
+        <span className="avatar ghost"><Icon name="plus" size={15} /></span>
+        <input ref={field} className="addname" value={value} placeholder={placeholder}
+          aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
+          enterKeyHint="done" onChange={(e) => setValue(e.target.value)} />
+        <button type="submit" className="action" disabled={!ready}>{copy.act.add}</button>
+      </form>
+      {already ? <p className="failure addwarn">{copy.members.taken(value.trim())}</p> : null}
+    </>
   );
 }
