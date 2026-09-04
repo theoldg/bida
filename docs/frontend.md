@@ -151,7 +151,7 @@ you), and writes `device.appRevision` / `appUpdatedAt` the first time it sees a
 new one. The footnote along the bottom edge reads that date and pairs it with
 `copy.release.what`, which ships inside that same build and so describes it —
 update the note whenever you ship something a person would notice
-([CLAUDE.md](../CLAUDE.md#doc-upkeep)). Nothing shows before a worker has ever
+([CLAUDE.md](../CLAUDE.md#working-agreements)). Nothing shows before a worker has ever
 taken over: there is no honest date yet.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`

@@ -68,6 +68,12 @@ pnpm session && pnpm check
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`),
   one concern each. Never put a model, agent or session identifier in
   anything committed. Retry a failed push four times with backoff (2/4/8/16s).
+- **The update note.** A push to `main` deploys, and the groups list tells each
+  phone what arrived on it — dated by `lib/app-version.ts`, worded by
+  `copy.release.what`. That note ships *inside* the build it describes, so
+  rewrite it in the same push whenever what you shipped changes what a person
+  sees, and leave it alone when it doesn't. The `pre-push` hook says so when it
+  looks like you forgot. [frontend.md](docs/frontend.md#pwa).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
   runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
@@ -93,9 +99,10 @@ pnpm session && pnpm check
   build none of it.
 
 **Done means:** `pnpm check` passes · arithmetic has passing tests · the doc
-describing the changed behaviour is updated in the same commit · a preference
-that clears the bar is in standing-instructions, dated · implementation-status
-and roadmap reflect reality · pushed to `main`.
+describing the changed behaviour is updated in the same commit · `copy.release.what`
+says what this push changed, if a person would notice it · a preference that
+clears the bar is in standing-instructions, dated · implementation-status and
+roadmap reflect reality · pushed to `main`.
 
 ## Doc upkeep
 
@@ -107,10 +114,7 @@ every session pays in. **Before you finish:**
    the ADR on that subject** so it says where we stand now.
 3. Learned something the hard way → one line in the relevant **Gotchas**
    section.
-4. Shipped something a person would notice → rewrite `copy.release.what`, the
-   few words under the groups list. It rides inside the build whose arrival that
-   line dates, so a stale note is a wrong one.
-5. Update [implementation-status.md](docs/implementation-status.md) and the
+4. Update [implementation-status.md](docs/implementation-status.md) and the
    roadmap checkboxes.
 
 **A new ADR and a new standing instruction are the two things a session almost

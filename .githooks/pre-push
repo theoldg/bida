@@ -10,3 +10,18 @@
 # clone needs.
 set -e
 pnpm check
+
+# The one thing `pnpm check` can't judge: this push deploys, and the groups list
+# will tell every phone what arrived on it in the words of `copy.release.what`
+# (CLAUDE.md#working-agreements). Whether what you shipped is worth announcing
+# is a human call, so this only says the app changed and the note didn't —
+# a reminder at the one moment it is actionable, never a gate.
+note_in() { sed -n '/^  release: {/,/^  },/ s/^ *what: "\(.*\)",$/\1/p'; }
+base=$(git rev-parse --verify --quiet origin/main) || base=""
+if [ -n "$base" ] &&
+  ! git diff --quiet "$base"..HEAD -- apps/web/app apps/web/components apps/web/lib &&
+  [ "$(git show "$base:apps/web/lib/copy.ts" 2>/dev/null | note_in)" = "$(note_in < apps/web/lib/copy.ts)" ]
+then
+  printf '\n  the update note still reads "%s".\n' "$(note_in < apps/web/lib/copy.ts)"
+  printf '  Rewrite copy.release.what if this push changes what a person sees.\n\n'
+fi
