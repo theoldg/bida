@@ -582,7 +582,7 @@ function EditEntryScreen() {
             {foreign ? (
               <>
                 <button type="button" className="ratelink"
-                  aria-label={copy.form.rateLabel(draft.currency, base)}
+                  aria-label={copy.rates.openFor(draft.currency)}
                   onClick={() => setAskRate(draft.currency)}>
                   = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} ={" "}
                   <span className={groupRate === undefined ? "bad" : undefined}>

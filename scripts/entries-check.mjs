@@ -55,17 +55,46 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
 await page.locator("#what").fill("Dinner");
 
-// The currency and the payer are the same dialog the transfer's sides use. A
-// foreign currency has to bring the rate row with it, since that is the field
-// the conversion is actually read from.
+// The currency and the payer are the same dialog the transfer's sides use.
+// Introducing a currency the group has no rate for asks for one on the spot —
+// this is the whole point of the registry, and the state that used to sail
+// through with rateToBase stuck at "1" (ADR-0005).
 await pick(page, '[aria-label="Currency"]', "USD");
 report((await page.locator('[aria-label="Currency"]').innerText()).includes("USD"),
   "the currency picker sets the currency");
-report(await page.getByLabel("Rate, USD to EUR").count() === 1,
-  "a foreign currency brings out the rate");
+await page.waitForSelector('dialog[aria-label="USD rate"]');
+report(true, "a currency the group has no rate for opens the rate dialog by itself");
+
+// Both directions of one number, and they move together. There is no feed
+// behind the static export, so this is also the path a phone with no signal
+// takes: the fields are typeable and the dialog says so.
+const forward = page.getByRole("textbox", { name: "Rate, USD to EUR" });
+const inverse = page.getByRole("textbox", { name: "Rate, EUR to USD" });
+report(await forward.count() === 1 && await inverse.count() === 1,
+  "the rate dialog offers the rate both ways round");
+await forward.fill("0.8");
+await page.waitForTimeout(80);
+report((await inverse.inputValue()) === "1.25", "typing one direction fills in the other");
+await inverse.fill("4");
+await page.waitForTimeout(80);
+report((await forward.inputValue()) === "0.25", "and it works the other way too");
+await forward.fill("0.8");
+await page.waitForTimeout(80);
+await page.getByRole("button", { name: "Save" }).last().click();
+await page.waitForTimeout(200);
+report(await page.locator("dialog.scrim").count() === 0, "saving the rate closes the dialog");
+report((await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
+  "the form's rate line shows what the group now says");
+
+// Picked a second time, the rate is already the group's, so nothing is asked.
 await pick(page, '[aria-label="Currency"]', "EUR");
-report(await page.getByLabel("Rate, USD to EUR").count() === 0,
+report(await page.getByLabel("Set the USD rate").count() === 0,
   "picking the base currency puts the rate away");
+await pick(page, '[aria-label="Currency"]', "USD");
+await page.waitForTimeout(150);
+report(await page.locator("dialog.scrim").count() === 0,
+  "a currency the group already has a rate for asks nothing");
+await pick(page, '[aria-label="Currency"]', "EUR");
 
 await pick(page, "#paidby", "Marie");
 report((await page.locator("#paidby").innerText()).includes("Marie"), "the payer picker sets the payer");
@@ -173,6 +202,48 @@ for (const line of ["created this expense", "created this income", "recorded a t
   "turned this into an income"]) {
   report(feed.includes(line), `history says "${line}"`);
 }
+
+// ---- the registry, and the thing it exists to do -----------------------
+// A rate is the group's, not the entry's: correcting it moves every entry
+// already written in that currency, which is what a per-entry frozen rate
+// could never do (ADR-0005).
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.locator("input.amount").fill("100");
+await page.locator("#what").fill("Cab");
+await pick(page, '[aria-label="Currency"]', "USD");
+await page.waitForTimeout(150);
+// The group already has a USD rate by now, so nothing is asked and the line
+// under the amount reads it back: 100 USD at 0.8 is €80.00.
+report((await page.getByLabel("Set the USD rate").innerText()).includes("80"),
+  "the form converts at the group's rate");
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/);
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3,
+  null, { timeout: 8000 });
+const cabBefore = await page.locator("a.row").filter({ hasText: "Cab" })
+  .locator(".ramt .big").innerText();
+report(cabBefore.includes("80"), "and banks it in the group's currency");
+
+await page.getByRole("link", { name: "Rates" }).click();
+await page.waitForURL(/\/g\/rates/);
+await page.waitForSelector(".rows button.row");
+report((await page.locator(".rows").first().innerText()).includes("USD"),
+  "the registry lists the currency the group spent in");
+await page.locator("button.row").filter({ hasText: "USD" }).click();
+await page.waitForSelector('dialog[aria-label="USD rate"]');
+await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.4");
+await page.waitForTimeout(100);
+report((await page.locator(".dbody").innerText()).includes("re-values"),
+  "the dialog says how much of the ledger the change moves");
+await page.getByRole("button", { name: "Save" }).last().click();
+await page.waitForTimeout(300);
+
+await page.goto(`${base}/g?id=${g}`);
+await page.waitForSelector(".rows a.row");
+const cabAfter = await page.locator("a.row").filter({ hasText: "Cab" })
+  .locator(".ramt .big").innerText();
+report(cabAfter.includes("40"),
+  "correcting the rate re-values an entry that was already written");
 
 await browser.close();
 close();

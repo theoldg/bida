@@ -113,6 +113,15 @@ const scenes = [
     out: [group, "/"],
   },
   {
+    at: "Rates",
+    walk: async (p) => {
+      await intoGroup(p);
+      await p.getByLabel("Rates").click();
+      await p.waitForURL(/\/g\/rates/);
+    },
+    out: [group, "/"],
+  },
+  {
     at: "People",
     walk: async (p) => {
       await intoGroup(p);

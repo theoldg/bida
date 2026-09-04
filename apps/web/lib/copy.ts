@@ -484,6 +484,8 @@ export const copy = {
     failed: (why: string) => `Couldn’t save the rate — ${why}`,
     /** The form's rate row, which now points at the group's number. */
     groupRate: "group rate",
+    /** That row is a button, and what it opens is not what the fields inside it are. */
+    openFor: (code: string) => `Set the ${code} rate`,
     needed: (code: string) => `Set what a ${code} is worth before saving this.`,
   },
 } as const;
