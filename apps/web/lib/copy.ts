@@ -162,6 +162,10 @@ export const copy = {
     history: "History",
     people: "People",
     copyLink: "Copy invite link",
+    /** The clipboard can refuse — an insecure context, a denied permission —
+        and the link is shown nowhere else, so it is shown here. */
+    linkTitle: "The invite link",
+    linkBody: "Copying didn’t work on this phone. Hold the link to copy it.",
     addEntry: "Add an entry",
 
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },

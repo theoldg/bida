@@ -65,6 +65,11 @@ confers nothing without the secret.
   side: the rest of the draft is not its to throw away. So does who-had-what,
   which has to write a split or merged line through as it happens — its rows
   and the bill's lines are one list — and restores the bill it opened with.
+- **The invite link is `components/invite.tsx`**, on two top bars and written
+  once. `navigator.clipboard.writeText` rejects on an insecure context or a
+  denied permission, and used to reject into nothing — an inert-looking button,
+  and the link shown nowhere else. A refusal puts the link on screen to be
+  read ([ADR-0003](decisions/0003-link-only-access.md)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is

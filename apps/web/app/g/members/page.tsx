@@ -8,6 +8,7 @@ import { GhostRow } from "../../../components/bits";
 import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
+import { InviteButton } from "../../../components/invite";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
 import {
@@ -15,7 +16,7 @@ import {
 } from "../../../lib/db/commands";
 import { money } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
-import { useGroupData, useInviteLink } from "../../../lib/hooks";
+import { useGroupData } from "../../../lib/hooks";
 import { nameTaken } from "../../../lib/names";
 
 /**
@@ -53,7 +54,6 @@ function MembersScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
-  const invite = useInviteLink(groupId);
   const [ask, setAsk] = useState<Ask | null>(null);
 
   if (!groupId || !data.group) return <Blank back={groupId ? route.group(groupId) : route.groups()} />;
@@ -131,12 +131,7 @@ function MembersScreen() {
     <Screen>
       <Body>
         <TopBar title={copy.members.title} back={route.group(groupId)}
-          right={invite.copy ? (
-            <button className="iconbtn" aria-label={copy.group.copyLink} onClick={invite.copy}>
-              <Icon name={invite.copied ? "check" : "link"} size={18}
-                style={invite.copied ? { color: "var(--brand)" } : undefined} />
-            </button>
-          ) : null} />
+          right={<InviteButton groupId={groupId} />} />
 
         <Scroll>
           {!data.me ? (

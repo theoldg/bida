@@ -163,12 +163,6 @@ registration should actually be keyed on.
 - **`/new` discards a typed group in silence** while the entry form asks first:
   the back arrow is a plain `<Link>` and there is no `beforeunload`. Also,
   member names cap at 40 and the group name has no limit at all.
-- **Clipboard failure is silent.** `onClick={invite.copy}` — a rejected
-  `writeText` (insecure context, denied permission) is an unhandled rejection,
-  `copied` never flips, the button looks inert, and the link is shown nowhere
-  else. For an app whose whole auth model is a secret link
-  ([ADR-0003](docs/decisions/0003-link-only-access.md)), there should be a way
-  to read it when copying fails.
 - **The scan asks for a category and throws it away.** `normalizeScan` returns
   `patch.category`; the form never reads it, and `scanReceipt(…, [])` always
   passes an empty category list. Either wire it up or stop asking — it is

@@ -499,6 +499,11 @@ dialog.scrim::backdrop { background: transparent }
 .dbody p { margin: 0 0 7px }
 .dbody p:last-child { margin-bottom: 0 }
 .dbody b { color: var(--ink); font-weight: 600 }
+/* The invite link, when the clipboard refused it: a mono block that wraps
+   anywhere, because it is one long unbroken string and all of it matters. */
+.invitelink { font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+  background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
+  padding: 9px 10px; margin-top: 10px; overflow-wrap: anywhere }
 .dinput { width: 100%; margin-top: 12px; background: var(--card-2); border: 1px solid var(--rule);
   border-radius: var(--r-s); padding: 10px 12px; font: inherit; font-size: 15px; font-weight: 600;
   color: var(--ink); outline: none }

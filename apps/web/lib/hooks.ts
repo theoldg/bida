@@ -90,9 +90,15 @@ export function useGroupSecret(groupId: string | undefined): string | undefined 
 export function useInviteLink(groupId: string | undefined): {
   copy: (() => Promise<void>) | undefined;
   copied: boolean;
+  /** The link itself, for showing when the clipboard won't take it. */
+  link: string | undefined;
+  /** The last attempt was refused, and the link has to be read instead. */
+  failed: boolean;
+  clearFailure: () => void;
 } {
   const secret = useGroupSecret(groupId);
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -100,15 +106,25 @@ export function useInviteLink(groupId: string | undefined): {
     return () => clearTimeout(timer);
   }, [copied]);
 
-  const copy = useMemo(() => {
-    if (!groupId || !secret) return undefined;
-    return async () => {
-      await navigator.clipboard.writeText(formatJoinLink({ groupId, secret }));
-      setCopied(true);
-    };
-  }, [groupId, secret]);
+  const link = groupId && secret ? formatJoinLink({ groupId, secret }) : undefined;
 
-  return { copy, copied };
+  const copy = useMemo(() => {
+    if (!link) return undefined;
+    // `writeText` rejects on an insecure context or a denied permission, and
+    // it used to reject into nothing: the icon never flipped, the button read
+    // as inert, and the link — the whole of this app's access model — was
+    // shown nowhere else. A refusal puts it on screen to be read instead.
+    return async () => {
+      try {
+        await navigator.clipboard.writeText(link);
+        setCopied(true);
+      } catch {
+        setFailed(true);
+      }
+    };
+  }, [link]);
+
+  return { copy, copied, link, failed, clearFailure: () => setFailed(false) };
 }
 
 export interface GroupData {

@@ -13,6 +13,7 @@ import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
+import { InviteButton } from "../../components/invite";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -20,7 +21,7 @@ import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { useGroupData, useInviteLink, useOnline, useSyncHealth } from "../../lib/hooks";
+import { useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "ledger" | "balances";
@@ -37,11 +38,6 @@ function GroupScreen() {
   const data = useGroupData(groupId);
   const online = useOnline();
   const sync = useSyncHealth(groupId);
-  // The invite link is a property of the group rather than of the phone, which
-  // is why it stayed on the group's own top bar when the options and settings
-  // screens went (ADR-0007).
-  const invite = useInviteLink(groupId);
-
   // Opening a group is the moment you want to know whether it is current, so
   // ask the server then rather than waiting for the loop's next 60s tick. A
   // dead server records its first failure here; the engine's own backoff
@@ -128,12 +124,7 @@ function GroupScreen() {
             <Link className="iconbtn" href={route.members(group.id)} aria-label={copy.group.people}>
               <Icon name="users" size={18} />
             </Link>
-            {invite.copy ? (
-              <button className="iconbtn" aria-label={copy.group.copyLink} onClick={invite.copy}>
-                <Icon name={invite.copied ? "check" : "link"} size={18}
-                  style={invite.copied ? { color: "var(--brand)" } : undefined} />
-              </button>
-            ) : null}
+            <InviteButton groupId={groupId} />
           </>}
         />
 
