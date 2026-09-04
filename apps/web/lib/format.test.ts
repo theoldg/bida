@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@hajsik/core";
-import { bare, splitFooter } from "./format";
+import { bare, distinctInitials, initials, splitFooter } from "./format";
 
 describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {
@@ -48,5 +48,28 @@ describe("bare", () => {
 
     expect(parseMinor(minorToDecimalString(123450, "EUR"), "EUR")).toBe(123450);
     expect(parseMinor(minorToDecimalString(25000, "JPY"), "JPY")).toBe(25000);
+  });
+});
+
+// An avatar is a name's first character, and a name can start with one the
+// browser stores as two code units. Half a surrogate pair renders as "�".
+describe("initials", () => {
+  it("keeps an emoji whole", () => {
+    expect(initials("🐙 Kraken")).toBe("🐙K");
+    expect(initials("🐙")).toBe("🐙");
+  });
+
+  it("still does what it did for letters", () => {
+    expect(initials("ada lovelace")).toBe("AL");
+    expect(initials("Prince")).toBe("P");
+  });
+
+  it("tells emoji names apart without splitting one", () => {
+    const out = distinctInitials([
+      { id: "a", name: "🐙🐙" },
+      { id: "b", name: "🐙🦑" },
+    ]);
+    expect(out.get("a")).toBe("🐙🐙");
+    expect(out.get("b")).toBe("🐙🦑");
   });
 });

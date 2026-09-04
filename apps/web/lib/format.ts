@@ -96,11 +96,27 @@ export function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
+/**
+ * What a person *sees* as one character. `slice(0, 1)` counts UTF-16 code
+ * units, so a name starting with an emoji lost half a surrogate pair and drew
+ * the replacement box; a flag or a family is longer still. `Intl.Segmenter`
+ * counts what the font draws, and code points are the fallback where it is
+ * missing — wrong only for sequences no avatar has room for anyway.
+ */
+const graphemer = typeof Intl !== "undefined" && "Segmenter" in Intl
+  ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+  : null;
+
+export function graphemes(s: string): string[] {
+  return graphemer ? Array.from(graphemer.segment(s), (g) => g.segment) : Array.from(s);
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return copy.unknown;
-  if (parts.length === 1) return parts[0]!.slice(0, 1).toUpperCase();
-  return (parts[0]!.slice(0, 1) + parts[parts.length - 1]!.slice(0, 1)).toUpperCase();
+  const first = graphemes(parts[0]!)[0] ?? "";
+  if (parts.length === 1) return first.toUpperCase();
+  return (first + (graphemes(parts[parts.length - 1]!)[0] ?? "")).toUpperCase();
 }
 
 /**
@@ -111,12 +127,13 @@ export function initials(name: string): string {
  */
 export function distinctInitials(members: { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
-  const maxLen = Math.max(1, ...members.map((m) => m.name.trim().length));
+  const chars = new Map(members.map((m) => [m.id, graphemes(m.name.trim())]));
+  const maxLen = Math.max(1, ...[...chars.values()].map((g) => g.length));
   for (let len = 1; len <= maxLen; len++) {
     const byPrefix = new Map<string, string[]>();
     for (const m of members) {
       if (out.has(m.id)) continue;
-      const prefix = m.name.trim().slice(0, len) || copy.unknown;
+      const prefix = chars.get(m.id)!.slice(0, len).join("") || copy.unknown;
       byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), m.id]);
     }
     for (const [prefix, ids] of byPrefix) {
