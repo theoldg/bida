@@ -259,7 +259,6 @@ export const copy = {
     currency: "Currency",
     fromReceipt: "read from receipt",
     rateLabel: (from: string, to: string) => `Rate, ${from} to ${to}`,
-    rateFrozen: "rate frozen at entry — edit here",
     what: "What",
     whatPlaceholder: "Title",
     note: "Note (optional)",
@@ -438,5 +437,53 @@ export const copy = {
     otherPlaceholder: "UZS",
     otherHint: "A three-letter ISO code.",
     isBase: "the group settles in this",
+    hasRate: (rate: string) => `1 = ${rate}`,
+    noRate: "no rate yet",
+  },
+
+  // ------------------------------------------------------ exchange rates
+
+  rates: {
+    /** The icon in the top row, between History and People. */
+    title: "Rates",
+    subtitle: (base: string) => `What the group counts in ${base}`,
+    empty: "Everything is in one currency",
+    emptyBody: "Add a rate here, or just write an entry in another currency — this asks then.",
+    add: "Add a currency",
+    /** Under a row: how much of the ledger moves when this rate does. */
+    usedBy: (entries: string) => `${entries} at this rate`,
+    usedByNone: "nothing written in it yet",
+    /** A currency entries exist in that the registry has no opinion about. */
+    unset: "each entry at its own rate",
+
+    /** The dialog. Both directions of the same number, and they move together. */
+    editTitle: (code: string) => `${code} rate`,
+    /** "1 PLN =" — the label before each of the two fields. */
+    oneOf: (code: string) => `1 ${code} =`,
+    /** Where the number on screen came from, said under the fields. */
+    from: {
+      fetched: (date: string) => `today’s rate, ${date}`,
+      fetchedUndated: "today’s rate",
+      typed: "yours",
+      typedOn: (date: string) => `yours, ${date}`,
+      loading: "looking it up…",
+      offline: "offline — type it and correct it later",
+      unavailable: "couldn’t look it up — type it",
+    },
+    refetch: "Look it up",
+    /** The one thing this dialog does that a person should know before doing it. */
+    movesEntries: (entries: string, code: string) =>
+      `This re-values ${entries} already written in ${code}.`,
+    remove: "Remove",
+    removeTitle: (code: string) => `Remove the ${code} rate?`,
+    removeBody: (entries: string) =>
+      `${entries} go back to the rate each was saved with. Nothing is deleted.`,
+    removeBodyEmpty: "Nothing is written in it, so nothing changes.",
+    /** Save is held until there is a number to save. */
+    invalid: "That isn’t a rate.",
+    failed: (why: string) => `Couldn’t save the rate — ${why}`,
+    /** The form's rate row, which now points at the group's number. */
+    groupRate: "group rate",
+    needed: (code: string) => `Set what a ${code} is worth before saving this.`,
   },
 } as const;

@@ -121,6 +121,9 @@ function GroupScreen() {
             <Link className="iconbtn" href={route.history(group.id)} aria-label={copy.group.history}>
               <Icon name="clock" size={18} />
             </Link>
+            <Link className="iconbtn" href={route.rates(group.id)} aria-label={copy.rates.title}>
+              <Icon name="fx" size={18} />
+            </Link>
             <Link className="iconbtn" href={route.members(group.id)} aria-label={copy.group.people}>
               <Icon name="users" size={18} />
             </Link>

@@ -34,9 +34,13 @@ export interface EntryDraft {
   entryId?: string;
   /** Exactly what is typed into the amount input, e.g. "620." or "1234.5". Not a number. */
   amountText: string;
+  /**
+   * What the entry is denominated in. There is deliberately no rate beside it:
+   * a rate is the group's, not this draft's, and the form reads it from the
+   * registry (ADR-0005). Picking a currency the group has no rate for is what
+   * opens the rate dialog.
+   */
   currency: string;
-  /** "1" when the entry is already in the group's base currency. */
-  rateToBase: string;
   /** The title of an expense or income; the optional note on a transfer. */
   description: string;
   /** Who paid, or — on an income — who received. Unused by a transfer. */
@@ -205,7 +209,6 @@ export function blankDraft(
     // it looks like an input without containing anything you have to delete.
     amountText: "",
     currency,
-    rateToBase: "1",
     description: "",
     paidBy: me,
     payers: null,

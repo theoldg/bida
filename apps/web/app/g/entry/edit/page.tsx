@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, isCurrencyCode, isValidRate, minorToDecimalString,
-  sanitizeRate, splitParticipants, validatePayers, validateSplit, type Member, type SplitSpec,
+  convertMinor, formatRate, isCurrencyCode, minorToDecimalString, rateFor,
+  splitParticipants, validatePayers, validateSplit,
+  type Member, type RateSource, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, weightsFromItems } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
@@ -13,9 +14,12 @@ import { AmountInput, sanitizeAmount } from "../../../../components/amount-input
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
+import { RateDialog } from "../../../../components/rate-dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
-import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
+import {
+  addExpense, editExpense, editSettlement, recordSettlement, setRate,
+} from "../../../../lib/db/commands";
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
 import { dateInputValue, errorText, money, payerProblemText, plural, withDate } from "../../../../lib/format";
@@ -99,7 +103,20 @@ function EditEntryScreen() {
   const [scanSource, setScanSource] = useState<ScanSource>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
+  /** Which currency's rate is being set, if any. See `pickCurrency`. */
+  const [askRate, setAskRate] = useState<string | null>(null);
   const [failed, setFailed] = useState<string>();
+
+  /**
+   * True when the group has no rate for this currency — the state in which an
+   * entry cannot honestly be converted, and the one that opens the dialog.
+   * Hoisted so the scan handler above can ask it too.
+   */
+  function needsRate(currency: string): boolean {
+    const groupBase = data.group?.baseCurrency;
+    return !!groupBase && currency !== groupBase
+      && rateFor(data.rates, groupBase, currency) === undefined;
+  }
 
   // A scan can outlive the screen that started it — it is a network round
   // trip to a model, and people put the phone down. The draft still takes the
@@ -122,6 +139,10 @@ function EditEntryScreen() {
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));
+      // A photographed Moroccan receipt used to arrive looking complete and
+      // wrong: it wrote MAD and kept whatever rate the draft had. Now it asks,
+      // the same as picking the currency by hand would.
+      if (patch.currency !== undefined && needsRate(patch.currency)) setAskRate(patch.currency);
       // The merchant is a guess, and a title somebody typed is not. Take it
       // only into an empty field or over the *previous* scan's guess, so a
       // rescan can correct itself without renaming the expense you named.
@@ -133,9 +154,7 @@ function EditEntryScreen() {
           ? { description: patch.description, scannedDescription: patch.description }
           : {}),
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
-        ...(patch.currency !== undefined
-          ? { currency: patch.currency, rateToBase: patch.currency === data.group?.baseCurrency ? "1" : current.rateToBase }
-          : {}),
+        ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
         ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
         receiptItems: receiptItems.length > 0 ? receiptItems : null,
         receiptTip: result.tip,
@@ -182,7 +201,6 @@ function EditEntryScreen() {
           // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
           amountText: minorToDecimalString(e.amountMinor, e.currency),
           currency: e.currency,
-          rateToBase: e.rateToBase,
           description: e.description,
           paidBy: e.paidBy,
           payers: e.payers ?? null,
@@ -206,7 +224,6 @@ function EditEntryScreen() {
         entryId,
         amountText: minorToDecimalString(s.amountMinor, s.currency),
         currency: s.currency,
-        rateToBase: s.rateToBase,
         description: s.note ?? "",
         fromMember: s.fromMember,
         toMember: s.toMember,
@@ -270,6 +287,19 @@ function EditEntryScreen() {
   // over — some interactions (switching split tabs) call patch() twice in one
   // handler, and merging against a stale closure would let the first patch's
   // change be clobbered by the second.
+  /**
+   * Change the entry's currency, and ask for its rate when the group has none.
+   *
+   * This is the "introducing a new currency" moment: picking MAD in a EUR
+   * group used to leave the rate at "1", pass validation, and bank a 500 MAD
+   * dinner as €500. Now the dialog opens on the spot with today's rate ready,
+   * and Save is held until the group has a number either way.
+   */
+  function pickCurrency(currency: string) {
+    patch({ currency });
+    if (needsRate(currency)) setAskRate(currency);
+  }
+
   const patch = (change: Partial<EntryDraft>) =>
     saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
@@ -346,13 +376,18 @@ function EditEntryScreen() {
   const amountMinor = draftAmountMinor(draft);
 
   const foreign = draft.currency !== base;
+  // The rate is the group's, read from the registry — not a field on this form
+  // and not a number frozen onto the entry (ADR-0005). Undefined means the
+  // group has never said what this currency is worth, which is the state that
+  // used to be silently `"1"` and bank a 500 MAD dinner as €500.
+  const groupRate = rateFor(data.rates, base, draft.currency);
   // An amount and a rate can each be in range and still multiply out of it —
   // `sanitizeAmount` allows twelve whole digits, and this runs in the render
   // body, so an unguarded throw is a white screen with nothing to press. An
-  // out-of-range conversion is "no base amount yet", the state a malformed
-  // rate already produces: the field goes red and Save stays held.
-  const converted = foreign && isValidRate(draft.rateToBase)
-    ? tryConvertMinor(amountMinor, draft.currency, base, draft.rateToBase)
+  // out-of-range conversion is "no base amount yet", the state a missing rate
+  // already produces: the figure reads "—" and Save stays held.
+  const converted = foreign && groupRate !== undefined
+    ? tryConvertMinor(amountMinor, draft.currency, base, groupRate)
     : null;
   const rateOk = !foreign || converted !== null;
   const baseMinor = foreign ? converted ?? 0 : amountMinor;
@@ -391,7 +426,10 @@ function EditEntryScreen() {
   // on screen to read. A check with no visible reason is a dead end.
   const blocker = goneMember
     ? copy.form.goneMember(data.nameOf(goneMember))
-    : payerProblemText(payerCheck, draft.currency);
+    // A rate the group hasn't got is not a typo to be fixed in this field —
+    // there is no field. Say what is missing and where it is set.
+    : foreign && groupRate === undefined ? copy.rates.needed(draft.currency)
+      : payerProblemText(payerCheck, draft.currency);
 
   const ready = amountMinor > 0 && rateOk && splitOk && !blocker && sidesOk
     // A transfer's words are a note and optional; an expense without a name is
@@ -419,7 +457,7 @@ function EditEntryScreen() {
   const save = async () => {
     if (!ready || !groupId) return;
     setFailed(undefined);
-    const rate = foreign ? draft.rateToBase : "1";
+    const rate = foreign ? groupRate ?? "1" : "1";
     try {
       if (transfer) {
         const input = {
@@ -537,24 +575,25 @@ function EditEntryScreen() {
               }}>{copy.form.fromReceipt}</div>
             ) : null}
 
+            {/* The rate is no longer a field on this form. It is the group's
+                one number for this currency, so the row says what that number
+                is and opens the registry's own dialog to change it — where
+                changing it also says how much of the ledger moves. */}
             {foreign ? (
               <>
-                <div style={{ fontSize: 12.5, color: "var(--muted)", marginTop: 5, fontFamily: "var(--f-mono)" }}>
-                  = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} =
-                  <span className={`amountfield${rateOk ? "" : " bad"}`} style={{ marginLeft: 4 }}>
-                    <input
-                      className="rateinput"
-                      aria-label={copy.form.rateLabel(draft.currency, base)}
-                      value={draft.rateToBase}
-                      inputMode="decimal"
-                      onChange={(e) => patch({ rateToBase: sanitizeRate(e.target.value) })}
-                    />
-                  </span> {base}
-                </div>
+                <button type="button" className="ratelink"
+                  aria-label={copy.form.rateLabel(draft.currency, base)}
+                  onClick={() => setAskRate(draft.currency)}>
+                  = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} ={" "}
+                  <span className={groupRate === undefined ? "bad" : undefined}>
+                    {groupRate === undefined ? copy.unknown : formatRate(groupRate)}
+                  </span>{" "}
+                  {base} <Icon name="chev" size={10} />
+                </button>
                 <div style={{
                   fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
                   padding: "2px 7px", borderRadius: 2, marginTop: 7,
-                }}>{copy.form.rateFrozen}</div>
+                }}>{copy.rates.groupRate}</div>
               </>
             ) : null}
           </div>
@@ -670,7 +709,7 @@ function EditEntryScreen() {
           ]}
           onPick={(currency) => {
             if (currency === OTHER_CURRENCY) { setAsk("currency-other"); return; }
-            patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
+            pickCurrency(currency);
           }}
           // "Other…" hands over to the prompt, so that pick must not close it.
           onClose={() => setAsk((a) => (a === "currency-other" ? a : null))}
@@ -691,13 +730,28 @@ function EditEntryScreen() {
         />
       ) : null}
 
+      {/* The same dialog the registry screen opens, so a rate set from here
+          is the group's rate and not a number private to this entry. */}
+      {askRate !== null && groupId ? (
+        <RateDialog
+          currency={askRate}
+          base={base}
+          current={data.rates[askRate]}
+          entryCount={data.currencies.find((c) => c.currency === askRate)?.entryCount ?? 0}
+          onSave={async (rate: string, source: RateSource, asOf: number) => {
+            await setRate(groupId, data.me ?? draft.paidBy, askRate, rate, source, asOf);
+          }}
+          onClose={() => setAskRate(null)}
+        />
+      ) : null}
+
       {ask === "currency-other" ? (
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
           autoCapitalize="characters" hint={copy.currency.otherHint}
           clean={normalizeCurrencyCode} valid={isCurrencyCode}
           onSubmit={(currency) => {
-            patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
+            pickCurrency(currency);
             setAsk(null);
           }}
           onClose={() => setAsk(null)} />

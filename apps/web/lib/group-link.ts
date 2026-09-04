@@ -66,6 +66,8 @@ export const route = {
     `${route.addEntry(groupId, "transfer")}&from=${encodeURIComponent(from)}`
     + `&to=${encodeURIComponent(to)}&amount=${amount}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
+  /** The group's exchange-rate registry: one rate per currency it spends in. */
+  rates: (groupId: string) => `/g/rates?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,
 };
