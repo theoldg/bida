@@ -161,16 +161,6 @@ registration should actually be keyed on.
   showing in the field while `receiptTotalMinor`'s `try`/`catch` silently drops
   it from the total. It is the one typed figure on that screen — give it
   `AmountInput` like every other.
-- **A scan shouldn't rename an expense you have already named.** `onPhoto`
-  overwrites `description` with the merchant unconditionally. Only take the
-  merchant name when the description is empty **or** still holds the previous
-  scan's merchant — track that so a rescan can correct itself without
-  clobbering a title somebody typed.
-- **A finished scan shouldn't yank you into "who had what".** `onPhoto` fires
-  `router.push(route.items(groupId))` when the scan resolves, even if you left
-  the form minutes ago. Only navigate when the form is still the screen on
-  show. The grid stays reachable and editable either way — "Edit who-had-what"
-  on the Receipt tab is already the door.
 - **History is capped at 200 and the count lies.** `activityFeed(ops, 200)`,
   and the subtitle renders `plural(revisions.length, …)` — the post-slice
   length. Drop the cap, or make it a seamless scroll-to-load-more; either way

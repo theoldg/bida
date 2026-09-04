@@ -121,6 +121,14 @@ Two fields the model doesn't get the last word on:
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 
+**A scan is a guess, and it defers to a person.** The merchant name lands in
+`description` only when that field is empty or still holds the *previous*
+scan's merchant (`EntryDraft.scannedDescription`), so a rescan can correct
+itself without renaming an expense somebody named. And a scan that resolves
+after you have left the form fills the draft but doesn't navigate: it is a
+network round trip, and the who-had-what grid stays one tap away on the
+Receipt tab either way.
+
 **Whether the photo is readable is the model's call too.** It sets `error` to a
 short sentence — a light joke at its own expense, never the photographer's, that
 still names what to re-shoot — instead of guessing at the other fields.

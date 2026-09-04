@@ -98,6 +98,12 @@ function EditEntryScreen() {
   const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
   const [failed, setFailed] = useState<string>();
 
+  // A scan can outlive the screen that started it — it is a network round
+  // trip to a model, and people put the phone down. The draft still takes the
+  // result (that is the point of scanning), but nothing yanks you back here.
+  const onScreen = useRef(true);
+  useEffect(() => () => { onScreen.current = false; }, []);
+
   async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -113,9 +119,16 @@ function EditEntryScreen() {
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));
+      // The merchant is a guess, and a title somebody typed is not. Take it
+      // only into an empty field or over the *previous* scan's guess, so a
+      // rescan can correct itself without renaming the expense you named.
+      const keepsTyped = current.description.trim().length > 0
+        && current.description !== current.scannedDescription;
       saveDraft(groupId, clipAmountToCurrency({
         ...current,
-        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.description !== undefined && !keepsTyped
+          ? { description: patch.description, scannedDescription: patch.description }
+          : {}),
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
         ...(patch.currency !== undefined
           ? { currency: patch.currency, rateToBase: patch.currency === data.group?.baseCurrency ? "1" : current.rateToBase }
@@ -129,7 +142,7 @@ function EditEntryScreen() {
         splitTab: "receipt",
       }));
       setScanState("idle");
-      if (receiptItems.length > 0) router.push(route.items(groupId));
+      if (receiptItems.length > 0 && onScreen.current) router.push(route.items(groupId));
     } catch (err) {
       setScanState("error");
       setScanError(scanErrorText(err));

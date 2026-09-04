@@ -66,6 +66,12 @@ export interface EntryDraft {
   receiptAssignments?: string[][] | null;
   /** Explicit tab choice; see `SplitTab`. */
   splitTab?: SplitTab;
+  /**
+   * The merchant the last scan put in `description`, so a second scan can
+   * correct its own guess without overwriting a title somebody typed. Not a
+   * field of the entry: it never leaves this draft.
+   */
+  scannedDescription?: string;
 }
 
 const listeners = new Set<() => void>();
