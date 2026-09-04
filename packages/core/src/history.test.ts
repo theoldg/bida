@@ -44,6 +44,35 @@ describe("entityHistory", () => {
     ]);
   });
 
+  // A create leaves an unset field off the op entirely, so an edit that sends
+  // an explicit `null` for it is not a change: reading absent and null as
+  // different put "changed the category" in the log over edits that never
+  // touched one, on the first edit of every expense.
+  it("does not count an absent field written back as null", () => {
+    const b = new OpBuilder();
+    b.push("expense", "e-cat", "create", {
+      description: "Gelato", amountMinor: 1250, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 1250, paidBy: THEO,
+      split: { mode: "equal", members: [THEO] },
+    }, THEO);
+    b.push("expense", "e-cat", "update", { categoryId: null }, THEO);
+    expect(entityHistory(b.ops, "e-cat")).toHaveLength(1);
+  });
+
+  it("still counts a real value arriving where there was none", () => {
+    const b = new OpBuilder();
+    b.push("expense", "e-cat2", "create", {
+      description: "Gelato", amountMinor: 1250, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 1250, paidBy: THEO,
+      split: { mode: "equal", members: [THEO] },
+    }, THEO);
+    b.push("expense", "e-cat2", "update", { categoryId: "c-food" }, THEO);
+    const [latest] = entityHistory(b.ops, "e-cat2");
+    expect(latest?.changes).toEqual([
+      { field: "categoryId", before: null, after: "c-food" },
+    ]);
+  });
+
   it("gives one revision per change, newest first", () => {
     const { ops, photos, created } = soukLog();
     const history = entityHistory(ops, "e-souk");

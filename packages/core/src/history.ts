@@ -31,7 +31,11 @@ export interface Revision {
 
 function equalish(a: unknown, b: unknown): boolean {
   if (a === b) return true;
-  if (a === null || b === null || a === undefined || b === undefined) return false;
+  // An absent field and an explicit `null` are the same value — not set. A
+  // create op leaves an unset field off entirely, so an edit that sends `null`
+  // for it is not a change anybody made, and saying so put "changed the
+  // category" in the log over edits that never touched one.
+  if ((a ?? null) === null || (b ?? null) === null) return (a ?? null) === (b ?? null);
   if (typeof a !== "object" || typeof b !== "object") return false;
   return JSON.stringify(a) === JSON.stringify(b);
 }
