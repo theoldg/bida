@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
 import { parseMinor, validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
-import { bare, money, shortfallText } from "../../../lib/format";
+import { bare, money, payerProblemText } from "../../../lib/format";
 import { useGroupData } from "../../../lib/hooks";
 import { saveDraft, useDraft } from "../../../lib/draft";
 
@@ -26,6 +28,12 @@ function PayersScreen() {
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
   const draft = useDraft(groupId);
+  const [asking, setAsking] = useState(false);
+  // What the payer side looked like when this screen opened, so leaving can
+  // put it back. Only the payer side: the rest of the draft isn't this
+  // screen's to throw away.
+  const opened = useRef<{ payers: Record<string, number> | null; paidBy: string } | null>(null);
+  if (draft && !opened.current) opened.current = { payers: draft.payers, paidBy: draft.paidBy };
 
   if (!groupId || !data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
   const gid = groupId, current = draft;
@@ -50,9 +58,32 @@ function PayersScreen() {
 
   function toggle(memberId: string) {
     const next = { ...spec };
-    if ((next[memberId] ?? 0) > 0 || memberId in next) delete next[memberId];
+    const removing = memberId in next;
+    // The last person can't be taken off. An expense nobody paid for isn't a
+    // half-finished edit, it's a nonsense one — and an empty map stranded the
+    // form, which reads it as the *single-payer* case and had nowhere to put
+    // the reason Save was grey. Swapping payers still works: add the new one,
+    // then remove the old. The row is `disabled` so the refusal is visible
+    // rather than a tap that does nothing.
+    if (removing && Object.keys(next).length <= 1) return;
+    if (removing) delete next[memberId];
     else next[memberId] = 0;
     setSpec(next);
+  }
+
+  /** Leaving throws this screen's edits away, so ask first — as the form does. */
+  function goBack() {
+    const was = opened.current;
+    const changed = was !== null && (JSON.stringify(was.payers) !== JSON.stringify(current.payers)
+      || was.paidBy !== current.paidBy);
+    if (changed) { setAsking(true); return; }
+    router.back();
+  }
+
+  function discard() {
+    const was = opened.current;
+    if (was) saveDraft(gid, { ...current, payers: was.payers, paidBy: was.paidBy });
+    router.back();
   }
 
   function setAmount(memberId: string, minor: number) {
@@ -77,7 +108,7 @@ function PayersScreen() {
     <Screen>
       <Body>
         <TopBar title={draft.kind === "income" ? copy.payers.whoReceived : copy.payers.whoPaid}
-          sub={money(amountMinor, currency)} back={true}
+          sub={money(amountMinor, currency)} back={goBack}
           right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>
             {copy.act.done}
           </button>} />
@@ -86,10 +117,12 @@ function PayersScreen() {
           <div className="rows">
             {data.members.map((m) => {
               const on = m.id in spec;
+              const last = on && Object.keys(spec).length <= 1;
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
-                  <button onClick={() => toggle(m.id)}
-                    aria-label={on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid(m.name)}
+                  <button onClick={() => toggle(m.id)} disabled={last}
+                    aria-label={last ? copy.payers.onlyPayer(m.name)
+                      : on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid(m.name)}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <span className="rmain">
@@ -129,9 +162,7 @@ function PayersScreen() {
                 {check.ok
                   ? copy.payers.accountedFor(
                       money(check.allocatedMinor, currency), money(amountMinor, currency))
-                  : shortfallText(check, currency, {
-                      under: copy.payers.under, over: copy.payers.over,
-                    })}
+                  : payerProblemText(check, currency)}
               </span>
             </div>
 
@@ -144,6 +175,13 @@ function PayersScreen() {
           <div style={{ height: 24 }} />
         </Scroll>
       </Body>
+
+      {asking ? (
+        <ConfirmDialog title={copy.payers.discardTitle} confirm={copy.act.discard}
+          danger={true} onConfirm={discard} onClose={() => setAsking(false)}>
+          <p>{copy.payers.discardBody}</p>
+        </ConfirmDialog>
+      ) : null}
     </Screen>
   );
 }

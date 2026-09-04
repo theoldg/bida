@@ -1,4 +1,4 @@
-import { formatMinor, type CurrencyCode, type SplitValidation } from "@hajsik/core";
+import { formatMinor, type CurrencyCode, type PayerValidation, type SplitValidation } from "@hajsik/core";
 import { copy, type Noun } from "./copy";
 
 /**
@@ -71,6 +71,20 @@ export function splitFooter(
     ok: false,
     text: shortfallText(check, currency, { under: copy.split.under, over: copy.split.over }),
   };
+}
+
+/**
+ * Why the payer side can't be saved, in the entry's own currency — or `null`
+ * when it can. The payers screen shows it under its own table and the entry
+ * form shows it beside the payer field: same sentence either way, because a
+ * person moving between the two screens is looking at one thing.
+ */
+export function payerProblemText(check: PayerValidation, currency: CurrencyCode): string | null {
+  if (check.ok) return null;
+  // "Nobody" needs the words, not the figure: the shortfall is the whole
+  // amount, and "€40.00 still unaccounted for" doesn't say the table is empty.
+  if (check.problem === "empty") return copy.payers.nobody;
+  return shortfallText(check, currency, { under: copy.payers.under, over: copy.payers.over });
 }
 
 /**

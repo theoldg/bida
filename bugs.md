@@ -69,30 +69,6 @@ Slightly stale rates are fine. Shape to build:
 
 ## 3. Dead ends — a disabled button and nothing saying why
 
-### 3.1 The payers screen can strand the form
-
-`apps/web/app/g/payers/page.tsx`'s `toggle` will delete every entry, leaving
-`payers: {}`. `Done` disables correctly, but `TopBar back={true}` doesn't, so
-you can leave anyway. Back on the form, `coPayers` is empty, so it renders the
-*single-payer* branch — and `payerCheck.message` is only rendered inside the
-`coPayers.length > 1` card. Save is grey with no text anywhere explaining it.
-Same trap with one payer holding the wrong amount.
-
-**Do, both halves:**
-
-- **Leaving the payers screen by the back arrow or the device's back button
-  should warn and discard**, the way the entry form already does. The machinery
-  exists: `isDraftDirty`/`ConfirmDialog` in `entry/edit/page.tsx`, and
-  `TopBar back={fn}` routes the hardware button through the same action
-  (`apps/web/lib/back-button.ts`). Discarding means restoring the payer map the
-  screen opened with, not clearing the whole draft.
-- **Zero payers must be unsaveable and un-leavable as a state.** An empty map
-  is not a half-finished edit, it is a nonsense one — either refuse the last
-  removal, or treat `{}` as `null` (back to one payer) on the way out. Whatever
-  the form ends up holding, Save must never be disabled with no visible reason:
-  move the `payerCheck.message` render out of the `coPayers.length > 1` branch
-  so it shows in both.
-
 ### 3.2 A scan that can't read the total must fail as a scan
 
 The payers screen computes its total as `parseMinor(draft.amountText)` while
@@ -160,22 +136,6 @@ People is where the fix is.
   rendering the group. Joining is not finished until "who are you" is answered.
 - **Never render a silent `Blank`.** Where a screen genuinely can't proceed, it
   should say so and point at the way out, not sit blank.
-
----
-
-## 4. Balances that visibly don't sum to zero
-
-### 4.1 The form will still save an entry naming somebody who has left
-
-The removal path is closed and the balances tab now shows a departed member's
-position, but the entry form's own guard is half done: `sidesOk` checks that a
-transfer's two sides are live members, and `paidBy` and the split participants
-are not checked at all. A member removed on another device while you have the
-form open still saves.
-
-**Do:** the same membership check on `paidBy`, on `splitParticipants`, and on
-the `payers` map — folded into whatever single "why Save is off" line comes out
-of 3.1, since a check with no visible reason is that item's bug.
 
 ---
 

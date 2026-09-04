@@ -128,7 +128,9 @@ rows — a name, a check on the current one, and a `note` saying what an
 unobvious pick does. A date is the exception, being a calendar and not a list
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
-attempted, in `--debit`: `Failure` / `.failure`.
+attempted, in `--debit`: `Failure` / `.failure`. **A held action always has
+one**: Save greyed with nothing to read is a dead end, so the entry form keeps
+a single reason line beside the payer field rather than one per branch.
 
 ## Rules that are not negotiable
 

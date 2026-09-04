@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   convertMinor, isCurrencyCode, isValidRate, minorToDecimalString, parseMinor,
-  validatePayers, validateSplit, type Member, type SplitSpec,
+  splitParticipants, validatePayers, validateSplit, type Member, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
@@ -18,7 +18,7 @@ import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY
 import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
-import { dateInputValue, errorText, money, withDate } from "../../../../lib/format";
+import { dateInputValue, errorText, money, payerProblemText, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import {
@@ -353,7 +353,25 @@ function EditEntryScreen() {
   const sidesOk = !transfer
     || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
 
-  const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok && sidesOk
+  // Everybody an expense names has to still be in the group. `paidBy`, the
+  // payer map and the split are all lists of ids, and a member removed while
+  // this entry was open leaves one behind that no picker on either screen can
+  // show — money sitting against a name that is on no list. Save is held, and
+  // the line below says whose name it is; the transfer sides are checked
+  // above, where the picker already renders the gap.
+  const goneMember = transfer ? undefined
+    : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)]
+      .find((id) => id && !live.has(id));
+
+  // The one place the form says why Save is grey. It used to live inside the
+  // co-payer card, so the states that render the *single*-payer field — an
+  // empty payer map, a payer who has left — held Save with nothing anywhere
+  // on screen to read. A check with no visible reason is a dead end.
+  const blocker = goneMember
+    ? copy.form.goneMember(data.nameOf(goneMember))
+    : payerProblemText(payerCheck, draft.currency);
+
+  const ready = amountMinor > 0 && rateOk && splitOk && !blocker && sidesOk
     // A transfer's words are a note and optional; an expense without a name is
     // a row nobody can identify a week later.
     && (transfer || draft.description.trim().length > 0);
@@ -554,11 +572,6 @@ function EditEntryScreen() {
                     </Chip>
                   ))}
                 </div>
-                {!payerCheck.ok ? (
-                  <div style={{ fontSize: 11.5, color: "var(--debit)", marginTop: 7, fontWeight: 600 }}>
-                    {payerCheck.message}
-                  </div>
-                ) : null}
               </Card>
             ) : (
               <div className="field">
@@ -573,6 +586,8 @@ function EditEntryScreen() {
                 </Link>
               </div>
             )}
+
+            {blocker ? <div className="failure">{blocker}</div> : null}
 
             {transfer ? null : (
               <SplitEditor

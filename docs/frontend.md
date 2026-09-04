@@ -61,7 +61,8 @@ confers nothing without the secret.
   is what lets the segmented control change your mind without losing the amount
   you already typed. Leaving asks before discarding, and a reload gets the
   browser's own warning — `seedDraft` records the baseline `isDraftDirty`
-  compares against.
+  compares against. The payers route asks too, and puts back only the payer
+  side: the rest of the draft is not its to throw away.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
