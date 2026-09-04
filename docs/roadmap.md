@@ -51,8 +51,6 @@ wording.
 - [x] Install prompt — `lib/install.ts` + `components/install.tsx`
 - [x] The two ways a real trip loses data: storage evicted under a phone
       (`lib/persist.ts`) and sync failing where nothing said so (`useSyncHealth`)
-- [x] What the app itself last gained, dated by when the build reached *this*
-      phone (`lib/app-version.ts`)
 - [ ] Empty states, the rest of the error states
 - [ ] Answer the open questions in [product.md](product.md#open-questions)
 

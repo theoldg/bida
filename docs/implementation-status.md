@@ -13,7 +13,7 @@ Update it in the same commit as the code it describes.*
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
 | 5 — History surfaces | ✅ timeline and feed, read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)) |
-| 6 — Polish | 🟡 install prompt, storage persistence, sync-failure surfacing and the last-update footnote done; CSV export, categories, empty states open |
+| 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 | 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
 | 9 — Every word in one file | ✅ `lib/copy.ts`, fenced by `pnpm check` ([ADR-0033](decisions/0033-every-word-in-one-file.md)) |
@@ -60,10 +60,7 @@ uninstalled and there is no account to log back in with
 ([architecture.md](architecture.md#gotchas)). The service worker precaches the
 whole export cache-first, so the app paints with no signal
 ([ADR-0004](decisions/0004-static-export-and-offline.md); verify with `node
-scripts/offline-check.mjs`), and the moment a new build takes over from it is
-what the groups list's "updated 2h ago: …" footnote dates —
-`lib/app-version.ts`, the words in `copy.release.what`
-([frontend.md](frontend.md#pwa)).
+scripts/offline-check.mjs`).
 
 ## The next action
 

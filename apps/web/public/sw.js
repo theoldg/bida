@@ -82,18 +82,6 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-/**
- * Which build this page is actually running on. Only the *active* worker
- * answers — the one whose cache is serving the page — so a new revision that
- * has installed but is still waiting doesn't count as arrived. That is the
- * moment the groups list dates: not when the deploy happened, but when it
- * replaced what was on this phone. See lib/app-version.ts.
- */
-self.addEventListener("message", (event) => {
-  if (event.data !== "revision") return;
-  event.ports[0]?.postMessage(REVISION);
-});
-
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;

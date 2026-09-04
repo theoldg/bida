@@ -64,29 +64,6 @@ await page.goto(`${base}/`);
 await page.waitForTimeout(500);
 report(await page.evaluate(() => !!navigator.serviceWorker.controller), "service worker controls the page");
 
-/** The device record, straight out of IndexedDB — no Dexie on `window` to ask. */
-const deviceRecord = () => page.evaluate(() => new Promise((resolve, reject) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => reject(open.error);
-  open.onsuccess = () => {
-    const get = open.result.transaction("device", "readonly").objectStore("device").get("device");
-    get.onsuccess = () => resolve(get.result ?? null);
-    get.onerror = () => reject(get.error);
-  };
-}));
-
-// The footnote on the groups list dates the build's arrival *here* — so it can
-// only appear once a worker is serving this page, and it has to survive the
-// launches after that without resetting itself to "just now" (lib/app-version.ts).
-await page.waitForSelector(".lastup", { timeout: 8000 }).catch(() => {});
-const firstStamp = await deviceRecord();
-report(!!firstStamp?.appRevision && !!firstStamp?.appUpdatedAt,
-  "the groups list dates the build that took over");
-await page.goto(`${base}/`);
-await page.waitForSelector(".lastup", { timeout: 8000 }).catch(() => {});
-report((await deviceRecord())?.appUpdatedAt === firstStamp?.appUpdatedAt,
-  "opening the app again is not updating it");
-
 // ---- pull the plug ------------------------------------------------------
 await ctx.setOffline(true);
 console.log("\noffline:");
@@ -164,34 +141,6 @@ await page.close();
 page = await ctx.newPage();
 await ctx.setOffline(true);
 await tap("still loads offline on the next launch", () => page.goto(`${base}/`), ".rows a.row");
-
-// ---- and one that lands ---------------------------------------------------
-// The other half of the same story: a *complete* precache does take over, and
-// that is the moment the groups list is dating. Nothing else in the app can
-// tell a person their phone is running last week's build.
-console.log("\na deploy that lands:");
-await ctx.setOffline(false);
-blocked.delete(ASSET_TO_DROP);
-swRevision = "gooddeploy02";
-await page.evaluate(async () => {
-  const reg = await navigator.serviceWorker.getRegistration();
-  await reg.update().catch(() => {});
-  for (let i = 0; i < 60 && !reg.waiting; i++) await new Promise((ok) => setTimeout(ok, 500));
-});
-// It activates when the last page closes — the phone being put down, not a
-// reload — so this is what a person's next launch actually is.
-await page.close();
-page = await ctx.newPage();
-await page.goto(`${base}/`);
-await page.waitForFunction(
-  () => navigator.serviceWorker.controller?.scriptURL !== undefined, null, { timeout: 20000 });
-await page.waitForSelector(".lastup", { timeout: 8000 }).catch(() => {});
-const after = await deviceRecord();
-report(after?.appRevision === swRevision, "a new build that takes over is recorded as arrived",
-  after?.appRevision !== swRevision && `record says ${after?.appRevision}`);
-report((after?.appUpdatedAt ?? 0) > (firstStamp?.appUpdatedAt ?? 0), "and the date moves with it");
-report(/updated .*: /.test(await page.locator(".lastup").innerText().catch(() => "")),
-  "the groups list says so");
 
 await browser.close();
 close();
