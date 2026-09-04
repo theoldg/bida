@@ -374,6 +374,7 @@ export const copy = {
     subject: (name: string, revisions: string) => `${name} · ${revisions}`,
     deleted: (label: string) => `${label} · deleted`,
     untitled: "Untitled entry",
+    more: (rest: string) => `Show ${rest} more`,
 
     /** One sentence per revision. `who` is the actor's own name. */
     createdEntry: (who: string, noun: string) => `${who} created this ${noun}`,

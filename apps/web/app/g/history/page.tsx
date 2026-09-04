@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { activityFeed, entityHistory, type Revision } from "@hajsik/core";
 import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
@@ -14,6 +15,10 @@ import { describe } from "../../../lib/history-copy";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
+/** How much of a long feed is drawn before asking. The rest comes in one tap,
+ *  which is why the button can say exactly how many it is. */
+const PAGE = 200;
+
 export default function HistoryPage() {
   return <QueryBoundary><HistoryScreen /></QueryBoundary>;
 }
@@ -23,6 +28,7 @@ function HistoryScreen() {
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
   const data = useGroupData(groupId);
+  const [shown, setShown] = useState(PAGE);
 
   // History needs every member's name, including people who've since been
   // removed — the alive-only map from useGroupData would erase them from
@@ -58,7 +64,13 @@ function HistoryScreen() {
   const subjectName = !entryId ? undefined
     : subject && "description" in subject
       ? (subject.description || copy.group.untitled) : copy.group.transfer;
-  const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops, 200);
+  // The feed is whole, and the page grows into it. It used to be sliced to 200
+  // and then counted *after* the slice, so a group with more history than that
+  // was told it had exactly 200 revisions — the one number on this screen, and
+  // wrong. Rendering is what's paged now; the count is the real one.
+  const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops);
+  const visible = revisions.slice(0, shown);
+  const rest = revisions.length - visible.length;
 
   if (!groupId || !data.group) {
     return <Blank back={groupId ? (entryId ? route.entry(groupId, entryId) : route.group(groupId)) : route.groups()} />;
@@ -112,7 +124,7 @@ function HistoryScreen() {
               <Empty title={copy.history.empty} />
             ) : (
               <div className="tl">
-                {revisions.map((rev, i) => {
+                {visible.map((rev, i) => {
                   const who = memberById.get(rev.op.actor)?.name ?? copy.someone;
                   const d = describe(rev, who, memberById, currency);
                   const subject = entryId ? undefined : subjectOf(rev);
@@ -137,6 +149,13 @@ function HistoryScreen() {
                 })}
               </div>
             )}
+
+            {rest > 0 ? (
+              <button className="btn btn-s" style={{ marginTop: 12 }}
+                onClick={() => setShown(revisions.length)}>
+                {copy.history.more(plural(rest, copy.noun.revision))}
+              </button>
+            ) : null}
           </div>
         </Scroll>
       </Body>

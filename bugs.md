@@ -156,10 +156,6 @@ registration should actually be keyed on.
 
 ## 6. Smaller, all real
 
-- **History is capped at 200 and the count lies.** `activityFeed(ops, 200)`,
-  and the subtitle renders `plural(revisions.length, …)` — the post-slice
-  length. Drop the cap, or make it a seamless scroll-to-load-more; either way
-  the count must be the real one.
 - **History stamps are wall clock while ordering is HLC.**
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth
