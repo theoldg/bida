@@ -43,6 +43,12 @@ to remove more from this list than you add.
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
   and easy to run for you, but don't overuse it." `pnpm shots` after building or
   changing a screen, not after every edit. [testing.md](testing.md).
+- **Drive nontrivial behaviour by hand before calling it done.** *2026-09-04* —
+  "use the text driver to manually stress test features when nontrivial
+  behaviour is introduced or modified … this can catch bugs and inform test
+  design", and "only for nontrivial changes". `pnpm drive` the thing you just
+  built, then let what it turns up shape the tests you write —
+  [testing.md](testing.md#pnpm-drive--the-app-as-text).
 - **Keep the docs and ADRs short.** *2026-08-30, restated 2026-09-03* — the
   owner had 32 ADRs folded into 11, then: "every time i make a request, the ADRs,
   owner preferences and whatnot get more inflated. compress those back down."

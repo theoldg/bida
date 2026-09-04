@@ -136,7 +136,10 @@ that is what makes a check like this flake and then get deleted.
 
 A live session you send one command at a time and that answers with the screen
 written out in words — reproducing a bug, checking a screen, watching two phones
-disagree, all in a terminal without a screenshot.
+disagree, all in a terminal without a screenshot. Stress-test any nontrivial
+behaviour here before calling it done — owner's instruction,
+[standing-instructions](standing-instructions.md#workflow) — and what it turns
+up is usually the test worth writing.
 
 ```bash
 pnpm drive start &                                   # holds the session open
