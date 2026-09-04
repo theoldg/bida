@@ -24,6 +24,15 @@ type Op = {
 `patch` carrying only changed fields is what lets concurrent edits to different
 fields of the same expense merge instead of clobbering.
 
+**The command layer is what makes that true.** An edit form posts every field
+it holds, so `editExpense` and `editSettlement` diff each one against the folded
+entity and drop what already matches. Without that a save touching the amount
+wrote all fifteen fields, and quietly undid whatever a peer had changed offline
+— the guarantee above, contradicted by the only code that writes. `null` and
+absent compare equal in that diff: `only()` leaves an unset field off the create
+entirely, so reading the two apart also recorded a revision saying the category
+changed on every first edit, of every expense, whether or not one was ever set.
+
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
 bytes in the log and a row in its own history saying nothing changed — eight

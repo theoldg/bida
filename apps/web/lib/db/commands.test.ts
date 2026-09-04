@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { atCurrentRates, computeBalances, foldOps, settleUp } from "@hajsik/core";
+import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp } from "@hajsik/core";
 import { db } from "./dexie";
 import { rebuild } from "./fold";
 import { getDevice, getMe } from "./device";
@@ -260,6 +260,106 @@ describe("commands", () => {
       .find((o) => o.kind === "update")!;
 
     expect(Object.keys(update.patch)).toEqual(["paidBy"]);
+  });
+
+  // The form posts its whole draft, not a diff, so these two say what the test
+  // above could not: it passed a single field by hand, and the bug lived in
+  // every field it never sent. A field written back unchanged wins its slot at
+  // fold time and undoes whatever another device did to it offline.
+  describe("an edit that sends the whole form back", () => {
+    /** Exactly what `/g/entry/edit` posts on Save, for an untouched expense. */
+    async function draftOf(expenseId: string) {
+      const e = (await db().expenses.get(expenseId))!;
+      return {
+        kind: "expense" as const,
+        description: e.description,
+        occurredAt: e.occurredAt,
+        amountMinor: e.amountMinor,
+        currency: e.currency,
+        rateToBase: e.rateToBase,
+        paidBy: e.paidBy,
+        payers: e.payers ?? null,
+        split: e.split,
+        categoryId: e.categoryId ?? null,
+        receiptItems: e.receiptItems ?? null,
+        receiptTip: e.receiptTip ?? null,
+        receiptInvolved: e.receiptInvolved ?? null,
+        receiptAssignments: e.receiptAssignments ?? null,
+        splitTab: e.splitTab ?? null,
+      };
+    }
+
+    async function gelato() {
+      const { groupId, theo, marie } = await trip();
+      const expenseId = await addExpense(groupId, theo, {
+        description: "Gelato",
+        occurredAt: 1,
+        amountMinor: 1250,
+        currency: "EUR",
+        rateToBase: "1",
+        paidBy: theo,
+        split: { mode: "equal", members: [theo, marie] },
+      });
+      return { groupId, theo, marie, expenseId };
+    }
+
+    it("writes no op at all when nothing was touched", async () => {
+      const { groupId, theo, expenseId } = await gelato();
+      const before = await db().ops.count();
+
+      await editExpense(groupId, theo, expenseId, await draftOf(expenseId));
+
+      expect(await db().ops.count()).toBe(before);
+      await assertMaterialisedMatchesLog(groupId);
+    });
+
+    it("carries only the field that moved, so a peer's edit survives", async () => {
+      const { groupId, theo, expenseId } = await gelato();
+
+      await editExpense(groupId, theo, expenseId, {
+        ...(await draftOf(expenseId)),
+        description: "Ice cream",
+      });
+
+      const update = (await db().ops.where("entityId").equals(expenseId).toArray())
+        .find((o) => o.kind === "update")!;
+      expect(Object.keys(update.patch)).toEqual(["description"]);
+    });
+
+    // Each device patches against the expense it holds, so this runs the two
+    // saves in turn and re-reads the draft between them — what a phone that
+    // has caught up would post. The guarantee is the narrow patch: neither op
+    // may name the other's field, or folding them replays a stale value over
+    // a change that came after it.
+    it("keeps both when two devices move different fields", async () => {
+      const { groupId, theo, marie, expenseId } = await gelato();
+
+      await editExpense(groupId, theo, expenseId, {
+        ...(await draftOf(expenseId)), amountMinor: 2000,
+      });
+      await editExpense(groupId, marie, expenseId, {
+        ...(await draftOf(expenseId)), description: "Ice cream",
+      });
+
+      const updates = (await db().ops.where("entityId").equals(expenseId).toArray())
+        .filter((o) => o.kind === "update");
+      const named = updates.map((o) => Object.keys(o.patch).sort().join(","));
+      expect(named.sort()).toEqual(["amountMinor,baseAmountMinor", "description"]);
+
+      await rebuild(groupId);
+      const after = (await db().expenses.get(expenseId))!;
+      expect(after.description).toBe("Ice cream");
+      expect(after.amountMinor).toBe(2000);
+      await assertMaterialisedMatchesLog(groupId);
+    });
+
+    it("leaves no revision in the log for an untouched save", async () => {
+      const { groupId, theo, expenseId } = await gelato();
+      await editExpense(groupId, theo, expenseId, await draftOf(expenseId));
+
+      const ops = await db().ops.where("entityId").equals(expenseId).toArray();
+      expect(entityHistory(ops, expenseId)).toHaveLength(1);
+    });
   });
 
   it("stores co-sponsors and keeps paidBy on the largest of them", async () => {

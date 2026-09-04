@@ -571,6 +571,34 @@ export async function addExpense(
   return expenseId;
 }
 
+/** JSON with object keys in a fixed order, so `{a,b}` and `{b,a}` compare equal. */
+function stableJson(value: unknown): string {
+  return JSON.stringify(value, (_key, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.keys(v as Record<string, unknown>).sort()
+            .map((k) => [k, (v as Record<string, unknown>)[k]]),
+        )
+      : v);
+}
+
+/**
+ * Is this the value the entity already holds? A patch may only carry what
+ * actually changed: a field written back unchanged wins its slot at fold time
+ * and silently undoes whatever another device did to it offline.
+ *
+ * `null` and absent are the same value — not set. `only()` leaves an unset
+ * field off the create op entirely while the form always sends an explicit
+ * `null` for it, and reading those as different wrote a phantom revision on
+ * every first edit.
+ */
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if ((a ?? null) === null || (b ?? null) === null) return (a ?? null) === (b ?? null);
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  return stableJson(a) === stableJson(b);
+}
+
 /**
  * Edit an expense. The patch carries only the fields that actually changed —
  * that is what lets two people edit different fields of the same expense
@@ -588,7 +616,9 @@ export async function editExpense(
 
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(changes)) {
-    if (value !== undefined) patch[key] = value;
+    if (value === undefined) continue;
+    if (sameValue(value, existing[key as keyof typeof existing])) continue;
+    patch[key] = value;
   }
 
   // An expense is the *absence* of `kind` (see `addExpense`), but the form
@@ -623,7 +653,9 @@ export async function editExpense(
     merged.rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
     if (merged.rateToBase !== existing.rateToBase) patch["rateToBase"] = merged.rateToBase;
     else delete patch["rateToBase"];
-    patch["baseAmountMinor"] = toBase(merged, base);
+    const wasBase = toBase(merged, base);
+    // A currency swapped at a rate that lands on the same figure moves nothing.
+    if (wasBase !== existing.baseAmountMinor) patch["baseAmountMinor"] = wasBase;
   }
 
   if (Object.keys(patch).length === 0) return;
@@ -709,7 +741,7 @@ export async function editSettlement(
 
   const patch: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(changes)) {
-    if (value !== undefined && value !== existing[key as keyof typeof existing]) {
+    if (value !== undefined && !sameValue(value, existing[key as keyof typeof existing])) {
       patch[key] = value;
     }
   }
