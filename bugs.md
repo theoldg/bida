@@ -156,11 +156,6 @@ registration should actually be keyed on.
 
 ## 6. Smaller, all real
 
-- **The tip field swallows typos.** `items/page.tsx` stores
-  `e.target.value.trim() || null` unvalidated; `"abc"` or `"5.5.5"` keeps
-  showing in the field while `receiptTotalMinor`'s `try`/`catch` silently drops
-  it from the total. It is the one typed figure on that screen — give it
-  `AmountInput` like every other.
 - **History is capped at 200 and the count lies.** `activityFeed(ops, 200)`,
   and the subtitle renders `plural(revisions.length, …)` — the post-slice
   length. Drop the cap, or make it a seamless scroll-to-load-more; either way

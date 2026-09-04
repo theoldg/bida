@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
+import { AmountInput } from "../../../../components/amount-input";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { Icon } from "../../../../components/icons";
 import { copy } from "../../../../lib/copy";
@@ -280,10 +281,14 @@ function ItemsScreen() {
                       read off the bill, so it is drawn as a field and says so
                       until it holds something. */}
                   <span className="tipfield">
-                    <input className="itemamountin" inputMode="decimal" placeholder={bare(0, draft.currency)}
+                    {/* `AmountInput`, like every other typed figure: a bare
+                        input took "5.5.5" and kept showing it while
+                        `receiptTotalMinor` quietly dropped it from the total. */}
+                    <AmountInput className="itemamountin" frame="none"
+                      currency={draft.currency} placeholder={bare(0, draft.currency)}
                       aria-label={copy.items.tipLabel(draft.currency)}
                       value={draft.receiptTip ?? ""}
-                      onChange={(e) => saveDraft(groupId, { ...draft, receiptTip: e.target.value.trim() || null })} />
+                      onChange={(text) => saveDraft(groupId, { ...draft, receiptTip: text || null })} />
                     <Icon name="edit" size={11} className="tipedit" />
                   </span>
                   {draft.receiptTip ? null : <span className="tiphint">{copy.items.tipHint}</span>}
@@ -313,6 +318,7 @@ function ItemsScreen() {
           </div>
         ) : null}
       </Body>
+
     </Screen>
   );
 }
