@@ -147,7 +147,10 @@ export const copy = {
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline — you may not have everyone’s latest.",
     offlinePending: (waiting: string) => `Offline — ${waiting} waiting.`,
-    rejected: "This link no longer opens this group. Ask for a fresh one.",
+    // Not "ask for a fresh one": there is no secret rotation, so a fresh link
+    // is byte-identical. Opening the invite link again is what actually clears
+    // this — `saveGroupKey` unsets the failure.
+    rejected: "This phone’s link doesn’t open this group. Open the invite link again.",
     unreachableIdle: "Can’t reach the server — you may not have everyone’s latest.",
     unreachablePending: (waiting: string) => `Can’t reach the server — ${waiting} stuck on this phone.`,
 

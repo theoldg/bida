@@ -86,7 +86,13 @@ later request is checked against it. A `GET` on a never-pushed group returns
 `apps/web/lib/db/sync.ts`. A single-flight loop triggered by a local write
 (debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
-block the UI; never let two runs overlap.
+block the UI; never let two runs overlap — `syncAll` is single-flight over the
+whole run, and an overlapping call gets back the promise already in flight.
+A run that attempted nothing must never conclude "no failures" and reset a
+backoff the failing run had grown.
+
+**A forgotten group is skipped**, not synced in the background forever. It
+keeps its secret: opening the invite link again un-forgets it.
 
 **Every attempt is written down.** A success stamps `groupKeys.lastSyncedAt`
 and clears `failure`; a failure increments `failure.count` and keeps the HTTP

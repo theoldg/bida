@@ -1,4 +1,5 @@
-import type { Op } from "@hajsik/core";
+import { createHlcState, hlcReceive, type Op } from "@hajsik/core";
+import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";
 
@@ -107,13 +108,28 @@ export async function syncGroup(groupId: string): Promise<SyncOutcome | undefine
   }
   const { assigned, ops: pulled, latestSeq } = response;
 
-  await d.transaction("rw", [d.ops, d.groupKeys], async () => {
+  await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
     for (const op of pending) {
       const seq = assigned[op.id];
       if (seq !== undefined) await d.ops.update(op.id, { seq, pending: 0 });
     }
     if (pulled.length > 0) {
       await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
+      // Adopt every stamp we've just stored, so this device's next op sorts
+      // after the ops it has seen. Without this the clock only ever moved on
+      // send: reading a peer's expense and correcting it stamped the
+      // correction *before* the create when that peer's phone ran fast, and
+      // the fold discarded it — the amount changed, then snapped back. In the
+      // same transaction as the ops themselves, for the same reason appendOps
+      // advances it in its own: a tab that dies here must not leave the clock
+      // trailing an op the log already holds.
+      const device = await getDevice();
+      const now = Date.now();
+      let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
+      for (const op of pulled) clock = hlcReceive(clock, op.hlc, now);
+      await d.device.put({
+        ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
+      });
     }
     const current = await d.groupKeys.get(groupId);
     await d.groupKeys.put({
@@ -134,25 +150,41 @@ export async function syncGroup(groupId: string): Promise<SyncOutcome | undefine
   return { pushed: pending.length, pulled: pulled.length };
 }
 
-let syncing = new Set<string>();
+let running: Promise<void> | undefined;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let backoffTimer: ReturnType<typeof setTimeout> | undefined;
 let backoffMs = 2000;
 const BACKOFF_MAX_MS = 60000;
 
-/** Runs every group's sync once, sequentially, skipping any already in flight. */
-export async function syncAll(): Promise<void> {
+/**
+ * Runs every group's sync once, sequentially. Single-flight across the whole
+ * run, not per group: an overlapping call joins the run in flight instead of
+ * starting a second one.
+ *
+ * It has to be. Five things trigger this — a local write, visibility, `online`,
+ * the 60s interval, and the backoff timer itself — and the second caller used
+ * to skip the groups already in flight, finish with nothing attempted, then
+ * clear the pending retry and reset the backoff to 2s. Against a dead server
+ * the backoff never grew past its first step.
+ */
+export function syncAll(): Promise<void> {
+  running ??= runSyncAll().finally(() => { running = undefined; });
+  return running;
+}
+
+async function runSyncAll(): Promise<void> {
   const keys = await db().groupKeys.toArray();
+  // A forgotten group keeps its secret — reopening the invite link un-forgets
+  // it — but it stops costing cellular data in the meantime. Without this,
+  // `forgetGroup` only hid the row while its ops went on flowing in forever.
+  const left = new Set((await getDevice()).leftGroups ?? []);
   let anyFailure = false;
   for (const key of keys) {
-    if (syncing.has(key.groupId)) continue;
-    syncing.add(key.groupId);
+    if (left.has(key.groupId)) continue;
     try {
       await syncGroup(key.groupId);
     } catch {
       anyFailure = true;
-    } finally {
-      syncing.delete(key.groupId);
     }
   }
 

@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { foldOps } from "@hajsik/core";
 import { db } from "./dexie";
-import { addExpense, createGroup, saveGroupKey } from "./commands";
-import { syncGroup } from "./sync";
+import { formatHlc, createHlcState } from "@hajsik/core";
+import { addExpense, createGroup, forgetGroup, saveGroupKey } from "./commands";
+import { getDevice } from "./device";
+import { syncAll, syncGroup } from "./sync";
 
 /**
  * The sync engine's job is narrow: ship unsynced ops out, absorb whatever
@@ -160,5 +162,92 @@ describe("sync health", () => {
     expect(key?.failure).toBeUndefined();
     expect(key?.lastSeq).toBe(7);
     expect(key?.lastSyncedAt).toBe(1234);
+  });
+
+  // The whole point of an HLC: having *seen* a peer's op is what makes this
+  // device stamp after it. Ordering by wall clock alone let a peer three hours
+  // fast win every conflict, and the correction you typed in reply to their
+  // op sorted before it and was folded away.
+  it("adopts the clock of every op it pulls, so a reply sorts after it", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const before = await getDevice();
+    const fromTheFuture = formatHlc(createHlcState("peer", Date.now() + 3 * 3600_000, 0));
+    const remote = {
+      id: "op-from-a-fast-phone", groupId, entity: "group", entityId: groupId,
+      kind: "update", patch: { name: "Marrakesh" }, hlc: fromTheFuture,
+      actor: "someone", note: null, createdAt: Date.now(), seq: 1,
+    };
+
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, i + 1]));
+      return new Response(JSON.stringify({ assigned, ops: [remote], latestSeq: 1 }), { status: 200 });
+    }));
+
+    await syncGroup(groupId);
+
+    const after = await getDevice();
+    expect(before.hlcPhysical).toBeLessThan(after.hlcPhysical);
+    // Not merely "moved": far enough that the next local op outranks theirs.
+    await addExpense(groupId, "theo", {
+      description: "Riad", occurredAt: 1, amountMinor: 100, currency: "EUR",
+      rateToBase: "1", paidBy: "theo", split: { mode: "equal", members: ["theo"] },
+    });
+    const mine = (await db().ops.where("groupId").equals(groupId).toArray())
+      .filter((op) => op.pending === 1);
+    expect(mine.length).toBeGreaterThan(0);
+    expect(mine.every((op) => op.hlc > fromTheFuture)).toBe(true);
+  });
+});
+
+describe("syncAll", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("leaves a forgotten group alone", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    await forgetGroup(groupId);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncAll();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("picks a forgotten group back up once its invite link is opened again", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    await forgetGroup(groupId);
+    await saveGroupKey(groupId, "shh");
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncAll();
+
+    expect(fetchMock).toHaveBeenCalled();
+  });
+
+  // Five things trigger syncAll. An overlapping call used to attempt nothing,
+  // conclude "no failures", and reset the backoff the failing run had just
+  // grown — so a dead server was retried every two seconds forever.
+  it("joins the run already in flight rather than starting a second one", async () => {
+    await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    let inFlight = 0;
+    let overlapped = false;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      inFlight += 1;
+      if (inFlight > 1) overlapped = true;
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight -= 1;
+      return new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }), { status: 200 });
+    }));
+
+    const first = syncAll();
+    const second = syncAll();
+    expect(second).toBe(first);
+    await Promise.all([first, second]);
+
+    expect(overlapped).toBe(false);
   });
 });

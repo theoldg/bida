@@ -208,34 +208,6 @@ line up for step 5 to be reachable, and each is worth a look on its own:
 
 ## 5. Sync and multi-device
 
-### 5.1 `hlcReceive` is never called, so a skewed clock eats other people's edits
-
-Grepped the repo: the only callers of `hlcReceive` are its own tests.
-`syncGroup` pulls ops, `bulkPut`s them and rebuilds; the local clock is
-advanced only by `hlcSend` in `appendOps`. So causality is not preserved on
-receive. If B's phone is three hours fast, B creates an expense stamped
-≈ now+3h; A pulls it, reads it, corrects the amount, and A's op stamps ≈ now.
-`sortOps` therefore places **A's correction before B's create**, and the fold
-discards it — A watches the amount change, then a background `rebuild` snaps it
-back. Every conflict goes B's way until wall time catches up, and because
-`hlcSend` does `Math.max(state.physical, now)`, a device that was ever fast
-keeps an inflated clock and keeps winning after its time is fixed.
-
-**Do:**
-
-- **Call `hlcReceive` for every pulled op**, inside the same transaction that
-  stores them, so the device's clock never trails an op it has already seen.
-  That is the fix; the drift check is not.
-- **Drop the drift limit entirely.** `MAX_CLOCK_DRIFT_MS` and the `throw` that
-  reads it should go: there is no time limit on an update. A late or
-  far-future op is still an op, and refusing it loses somebody's expense to
-  protect an ordering guarantee that adopting the timestamp already provides.
-- **Correct the docs in the same commit.**
-  [implementation-status.md](docs/implementation-status.md) lists "a peer more
-  than an hour ahead is rejected, not absorbed" under *What has been proven* —
-  true of the function, never true of the product.
-  [sync.md](docs/sync.md) describes the ordering rules and needs the same pass.
-
 ### 5.2 Two members with one name should be mergeable
 
 `apps/web/lib/names.ts` argues correctly that two "Ana"s are two people nothing
@@ -259,38 +231,14 @@ before it is written:
   it, per the coverage rule in [CLAUDE.md](CLAUDE.md).
 - A device that claimed the loser has to follow to the winner.
 
-### 5.3 Forgotten groups keep syncing forever
+### 5.3 Anyone who learns a group id before its creator syncs can steal it
 
-`forgetGroup` writes `leftGroups` on the device record and nothing else;
-`syncAll` iterates every `groupKeys` row. A forgotten group is hidden from the
-list while its ops keep flowing in over cellular indefinitely.
-
-**Do:** skip groups in `leftGroups` in `syncAll`. Keep the secret — opening the
-invite link again is what un-forgets it (`saveGroupKey` calls `unhideGroup`),
-and that must keep working.
-
-### 5.4 Backoff resets itself under concurrency
-
-`syncAll` isn't single-flight — only the per-group `syncing` set is. A second
-overlapping call skips the in-flight groups, finishes with `anyFailure = false`,
-clears the pending `backoffTimer` and resets `backoffMs` to 2000. Against a
-dead server, with visibility, `online`, the 60s interval and `scheduleSync` all
-firing it, the backoff never gets to grow.
-
-**Do:** make `syncAll` single-flight, or only touch the backoff when the run
-actually attempted something.
-
-### 5.5 The 403 message names a remedy that doesn't exist
-
-`copy.group.rejected` says *"This link no longer opens this group. Ask for a
-fresh one."* There is no secret rotation, so the fresh link is byte-identical.
-The action that does clear it is reopening the invite link — `saveGroupKey`
-sets `failure: undefined` — which is not what the sentence says.
-
-**Do:** say the thing that works ("open the invite link again"). Related, and
-worth a moment's thought while in there: `ensureGroup` registers a group id on
-first push, so anyone who learns a group id before its creator has synced can
-claim it with their own secret and 403 the real owner permanently.
+`ensureGroup` registers a group id on first push and stores `sha256(secret)`
+from *that* request. A group id known before its creator has ever synced can be
+claimed with somebody else's secret, and the real owner is 403'd permanently
+with no way back. Noticed while fixing the 403 copy, which is why it is small
+here and not in section 5's original list — it needs a think about what
+registration should actually be keyed on.
 
 ---
 
