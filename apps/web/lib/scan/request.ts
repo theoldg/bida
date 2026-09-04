@@ -1,6 +1,12 @@
 /**
  * The Gemini request body. Prompt and response schema live here, not on the
  * Worker — see docs/receipt-scanning.md#why-the-key-sits-on-the-worker.
+ *
+ * The prompt says how to *read* a bill and never what the answer has to come
+ * to. Told that the lines have to equal the printed total, a model closes the
+ * gap by adjusting a line — and a bill that has been made to add up is the one
+ * error `checkScan` cannot see. Instructions about the page are safe; the
+ * invariant it is checked against is not.
  */
 export function buildScanRequestBody(imageBase64: string, categoryNames: readonly string[]): unknown {
   const categoryLine = categoryNames.length > 0
@@ -24,7 +30,17 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "if it's already English), its amount in the same normalized decimal notation as the "
             + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
             + "multiplier, a quantity column) — null if no count is printed, don't infer one from "
-            + "repeated lines or guess a default of 1. Use null for anything illegible or absent, "
+            + "repeated lines or guess a default of 1. The amount is the total printed against "
+            + "that line — the figure in the receipt's own amount column, already multiplied out "
+            + "where a count is printed (a line reading \"2 ... 18.00\" has amount \"18.00\", not "
+            + "\"9.00\") — never the per-unit price, and never a product you work out yourself. "
+            + "Read the columns as the printer laid them out, not as the photo happens to line "
+            + "them up: a receipt shot at an angle shears them, so an amount can sit lower than "
+            + "the label it belongs to. A label the printer wrapped over two or three rows is "
+            + "still one line item with one amount — join the rows, and don't let a wrapped row "
+            + "that has drifted under the amount column take an amount of its own. Every printed "
+            + "amount belongs to exactly one line item: none dropped, none counted twice. "
+            + "Use null for anything illegible or absent, "
             + "and an empty list if there are no line items. Don't compute or guess any amount "
             + "that isn't printed — only reformat the separators. If the photo isn't a receipt at "
             + "all, set error to one short pun or joke about the picture's actual subject, "

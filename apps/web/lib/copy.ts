@@ -348,7 +348,7 @@ export const copy = {
       "no-total": "I can’t make out the total on that one.",
       "unreadable-line": "I can’t read every line on that one.",
       "credit-line": "There’s a credit on that receipt — I can’t split those yet.",
-      mismatch: "The lines on that one don’t add up to the total.",
+      mismatch: "The lines on that one don’t add up to the total — a flatter, square-on photo usually fixes it.",
     } satisfies Record<ScanProblem, string>,
     offline: "You’re offline — scanning needs a connection.",
     busy: "Gemini’s busy — try again in a minute.",

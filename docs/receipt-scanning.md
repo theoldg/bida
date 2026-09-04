@@ -84,7 +84,7 @@ It reads. It doesn't compute.
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | category | one of the group's, or null |
-| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label, English translation (null if already English), amount in the same normalized notation as `total`, and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
+| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
 `normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
@@ -146,9 +146,11 @@ total but takes no part in the grid's ratios, so it would be shared out across
 everybody), or lines plus tip that miss the printed total by any amount, a
 non-positive total included (`mismatch`). No tolerance: a bill the app can't
 reconcile prices the who-had-what grid against a total the receipt never
-printed, silently. Refusing costs one more photo. **A receipt printing tax or
-service on top of its lines is refused too** — the prompt asks for the tip
-alone, so the sum falls short of the total.
+printed, silently. Refusing costs one more photo — which is what
+`copy.scan.problem.mismatch` asks for, in the words that actually help: flatter,
+square-on (see Gotchas). **A receipt printing tax or service on top of its lines
+is refused too** — the prompt asks for the tip alone, so the sum falls short of
+the total.
 
 Two conditions of the *phone* are told apart from that, because neither has
 anything to do with the photo and the generic message sent people back to
@@ -191,6 +193,15 @@ deployed Worker, 2026-08-28.
 
 ## Gotchas
 
+- **`mismatch` on a bill that plainly adds up means the photo was taken at an
+  angle.** The shear pulls the amount column out of line with the labels, and a
+  wrapped continuation row ends up taking an amount of its own — one line lost
+  or one counted twice. Re-shot square-on, the same receipt reads fine, so the
+  prompt describes a sheared page and the copy asks for the flatter photo.
+  What the prompt must never carry is the arithmetic it is checked against: a
+  model told the lines have to equal the total closes the gap by adjusting a
+  line, and a bill that has been made to add up is the one error `checkScan`
+  cannot see.
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
