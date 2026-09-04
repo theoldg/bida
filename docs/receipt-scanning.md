@@ -135,6 +135,18 @@ still names what to re-shoot — instead of guessing at the other fields.
 `scanReceipt()` throws `ScanRejectedError` carrying that sentence, and the form
 prints it verbatim.
 
+**Whether it adds up is not the model's call.** `checkScan` (core) is an
+absolute arithmetic bar, and `scanReceipt` throws `ScanUnreliableError` at the
+first thing it finds: a total it can't read (`no-total`), a line it can't read
+(`unreadable-line`), a credit line (`credit-line` — a discount sums into the
+total but takes no part in the grid's ratios, so it would be shared out across
+everybody), or lines plus tip that miss the printed total by any amount, a
+non-positive total included (`mismatch`). No tolerance: a bill the app can't
+reconcile prices the who-had-what grid against a total the receipt never
+printed, silently. Refusing costs one more photo. **A receipt printing tax or
+service on top of its lines is refused too** — the prompt asks for the tip
+alone, so the sum falls short of the total.
+
 Two conditions of the *phone* are told apart from that, because neither has
 anything to do with the photo and the generic message sent people back to
 re-shoot a receipt that was fine: a `429`/`503` from Gemini throws

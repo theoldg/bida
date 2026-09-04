@@ -1,4 +1,4 @@
-import type { ScanResult } from "@hajsik/core";
+import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@hajsik/core";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { buildScanRequestBody } from "./request";
 import { parseScanResponse } from "./response";
@@ -11,6 +11,17 @@ export class ScanRejectedError extends Error {}
 
 /** Gemini's free tier is rate-limited or overloaded (429/503) — distinct from a genuine read failure so the person knows to just wait. */
 export class ScanUnavailableError extends Error {}
+
+/**
+ * The photo was fine and the model answered, but what came back doesn't
+ * reconcile — see `checkScan`. Carries which of the four it is, so the app can
+ * say the one true thing rather than a shrug that covers all of them.
+ */
+export class ScanUnreliableError extends Error {
+  constructor(readonly problem: ScanProblem) {
+    super(problem);
+  }
+}
 
 /**
  * The phone can't reach anything. Scanning is the one act in the app that
@@ -29,6 +40,8 @@ export async function scanReceipt(
   groupId: string,
   secret: string,
   categoryNames: readonly string[],
+  /** The draft's currency — what a receipt that doesn't name its own is counted in. */
+  currency: string,
 ): Promise<ScanResult> {
   // Asked before the downscale, which is the expensive part: there is no point
   // resizing a photo we cannot send.
@@ -56,5 +69,9 @@ export async function scanReceipt(
   }
   const result = parseScanResponse(await res.json());
   if (result.error) throw new ScanRejectedError(result.error);
+  // Checked here rather than at the call site so there is one door: everything
+  // downstream of this function may assume the bill it holds adds up.
+  const problem = checkScan(result, scanCurrency(result, currency));
+  if (problem) throw new ScanUnreliableError(problem);
   return result;
 }

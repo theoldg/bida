@@ -23,6 +23,7 @@ import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
+  ScanUnreliableError,
 } from "../../../../lib/scan";
 import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
 
@@ -64,13 +65,15 @@ export default function EditEntryPage() {
 }
 
 /**
- * Why the scan failed, in words. Only the model's own refusal is quoted: the
- * other two are conditions of the phone, and the app says those in its voice.
+ * Why the scan failed, in words. Only the model's own refusal is quoted —
+ * everything else is the phone's condition or the app's own arithmetic, and
+ * the app says those in its voice.
  */
 function scanErrorText(err: unknown): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
   if (err instanceof ScanUnavailableError) return copy.scan.busy;
   if (err instanceof ScanRejectedError) return err.message;
+  if (err instanceof ScanUnreliableError) return copy.scan.problem[err.problem];
   return null;
 }
 
@@ -114,7 +117,7 @@ function EditEntryScreen() {
     setScanSource(source);
     setScanError(null);
     try {
-      const result = await scanReceipt(file, groupId, secret, []);
+      const result = await scanReceipt(file, groupId, secret, [], current.currency);
       const patch = normalizeScan(result);
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }

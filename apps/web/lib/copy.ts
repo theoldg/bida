@@ -1,4 +1,4 @@
-import type { SplitSpec } from "@hajsik/core";
+import type { ScanProblem, SplitSpec } from "@hajsik/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -340,6 +340,17 @@ export const copy = {
     freeTier: "Google’s free tier — the photo may train their models.",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
+    /**
+     * The app's own four refusals, one per way a reading can fail to add up
+     * (`checkScan`). Each says which it is, because each asks for something
+     * different back: another photo, a straighter one, or the form instead.
+     */
+    problem: {
+      "no-total": "I can’t make out the total on that one.",
+      "unreadable-line": "I can’t read every line on that one.",
+      "credit-line": "There’s a credit on that receipt — I can’t split those yet.",
+      mismatch: "The lines on that one don’t add up to the total.",
+    } satisfies Record<ScanProblem, string>,
     offline: "You’re offline — scanning needs a connection.",
     busy: "Gemini’s busy — try again in a minute.",
   },
