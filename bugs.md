@@ -11,49 +11,18 @@ queue, not a record.
 
 ## 1. Crashes the screen
 
+### 1.1 One throw anywhere is a white screen with nothing to press
+
 There is no `error.tsx` or `global-error.tsx` anywhere under `apps/web/app/`,
 so any throw during render unmounts the tree, and the service worker serves the
-shell cache-first — the person gets a white screen with nothing to press. Both
-items below are one throw each.
+shell cache-first. The two throws that got here this way are fixed — a scanned
+currency symbol and an out-of-range conversion, both in the entry form — but
+the class isn't: `formatMinor` and `parseMinor` throw by design and are called
+all over every screen.
 
-### 1.1 A scan that returns a currency symbol white-screens the form
-
-`normalizeScan` (`packages/core/src/scan.ts`) does
-`patch.currency = result.currency.toUpperCase()` with no validation, and the
-form writes it straight into the draft. `formatMinor` is then called all over
-the screen, and `Intl.NumberFormat` refuses anything that isn't three ASCII
-letters. Confirmed against the real build:
-
-```
-formatMinor(1000, "€")    -> RangeError: Invalid currency code
-formatMinor(1000, "EU")   -> RangeError: Invalid currency code
-formatMinor(1000, "USDT") -> RangeError: Invalid currency code
-formatMinor(1000, "ZZZ")  -> "ZZZ 10.00"     (three letters is enough)
-```
-
-**Do:** run the model's currency through the validation the hand-typed path
-already has — `normalizeCurrencyCode` in `apps/web/lib/currencies.ts` — and
-**discard it if it doesn't come out three letters**, keeping the draft's
-existing currency rather than adopting a symbol. The scan's other fields still
-apply. `normalizeCurrencyCode` is currently wired into `new/page.tsx` and
-`entry/edit/page.tsx` only; the scan path never sees it.
-
-### 1.2 A large amount times a large rate throws in render
-
-`apps/web/app/g/entry/edit/page.tsx` computes
-`baseMinor = ... rateOk ? convertMinor(...) : 0` in the render body with no
-`try`/`catch`, while the identical call on the save path is guarded.
-`sanitizeAmount` deliberately allows twelve whole digits. Confirmed:
-
-```
-amountMinor 99999999999999 ("999999999999.99")
-  @1000  -> USD : RangeError: convertMinor: result out of range
-  @27000 -> VND : RangeError: convertMinor: result out of range
-```
-
-**Do:** wrap it the way `parseMinor` above it already is, and treat an
-out-of-range conversion as "no base amount yet" — the same state a bad rate
-produces — so the field goes red instead of the app going blank.
+**Do:** a route-level `error.tsx` and a `global-error.tsx` that say something
+and offer the way out (reload, and back to the group list). Needs a copy
+decision, so it is here rather than done.
 
 ---
 
@@ -95,31 +64,6 @@ Slightly stale rates are fine. Shape to build:
   invalid-rate path block Save, so the person types the rate rather than
   unknowingly accepting a wrong one. Say which it is: fetched, cached from a
   date, or yours.
-
-### 2.2 Switching currency doesn't re-clip the typed amount
-
-`sanitizeAmount` runs only in `AmountInput`'s `onChange`, never when `currency`
-changes (grep confirms: no other caller). So the field and the model disagree
-with no keystroke in between:
-
-```
-field reads "12.34",  currency now JPY -> parseMinor = 12     (saves ¥12)
-field reads "12.349", currency now EUR -> parseMinor = 1235   (rounds up, unannounced)
-```
-
-**Do:** re-run `sanitizeAmount(draft.amountText, nextCurrency)` wherever the
-currency changes — the picker, the "Other…" prompt, and the scan patch — so the
-displayed figure is always the one that will be saved.
-
-### 2.3 Scanned dates land a day early west of UTC
-
-`normalizeScan` parses `` `${result.date}T00:00:00Z` `` — UTC midnight — while
-`dateInputValue` and `dayLabel` both read it in local time. A receipt dated
-2026-04-04 shows as 2026-04-03 at any negative offset, and files under the
-wrong day heading in the ledger.
-
-**Do:** build the timestamp in local time from the `YYYY-MM-DD` parts, the way
-`withDate` already does.
 
 ---
 

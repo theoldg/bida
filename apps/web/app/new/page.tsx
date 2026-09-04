@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { isCurrencyCode } from "@hajsik/core";
 import { Eyebrow } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ChoiceDialog, PromptDialog } from "../../components/dialog";
@@ -122,7 +123,7 @@ export default function NewGroupPage() {
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
           autoCapitalize="characters" hint={copy.currency.otherHint}
-          clean={normalizeCurrencyCode} valid={(v) => v.length === 3}
+          clean={normalizeCurrencyCode} valid={isCurrencyCode}
           onSubmit={(code) => { setCurrency(code); setAsk(null); }}
           onClose={() => setAsk(null)} />
       ) : null}

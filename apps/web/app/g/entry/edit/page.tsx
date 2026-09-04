@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, isValidRate, minorToDecimalString, parseMinor, validatePayers, validateSplit,
-  type Member, type SplitSpec,
+  convertMinor, isCurrencyCode, isValidRate, minorToDecimalString, parseMinor,
+  validatePayers, validateSplit, type Member, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
-import { AmountInput } from "../../../../components/amount-input";
+import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
@@ -25,6 +25,29 @@ import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
 } from "../../../../lib/scan";
 import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
+
+/**
+ * The typed amount and the currency it is held in must never disagree: JPY has
+ * no minor units and BHD has three, and `sanitizeAmount` otherwise only runs on
+ * a keystroke. Switching currency with "12.34" in the field used to leave it
+ * reading "12.34" while the model saved ¥12 — no keystroke in between, and
+ * nothing on screen saying so. Every write to the draft goes through this.
+ */
+function clipAmountToCurrency(draft: EntryDraft): EntryDraft {
+  const amountText = sanitizeAmount(draft.amountText, draft.currency);
+  return amountText === draft.amountText ? draft : { ...draft, amountText };
+}
+
+/** `convertMinor`, or null when the product doesn't fit in a safe integer. */
+function tryConvertMinor(
+  minor: number, from: string, to: string, rate: string,
+): number | null {
+  try {
+    return convertMinor(minor, from, to, rate);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * One form for all three kinds of entry.
@@ -90,7 +113,7 @@ function EditEntryScreen() {
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));
-      saveDraft(groupId, {
+      saveDraft(groupId, clipAmountToCurrency({
         ...current,
         ...(patch.description !== undefined ? { description: patch.description } : {}),
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
@@ -104,7 +127,7 @@ function EditEntryScreen() {
         receiptInvolved: null,
         receiptAssignments: null,
         splitTab: "receipt",
-      });
+      }));
       setScanState("idle");
       if (receiptItems.length > 0) router.push(route.items(groupId));
     } catch (err) {
@@ -212,7 +235,8 @@ function EditEntryScreen() {
   // over — some interactions (switching split tabs) call patch() twice in one
   // handler, and merging against a stale closure would let the first patch's
   // change be clobbered by the second.
-  const patch = (change: Partial<EntryDraft>) => saveDraft(groupId, { ...(getDraft(groupId) ?? draft), ...change });
+  const patch = (change: Partial<EntryDraft>) =>
+    saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
   // Undefined (an old draft, or an expense saved before this field existed)
   // derives from what's actually on it: a scanned bill means "Receipt",
@@ -300,9 +324,16 @@ function EditEntryScreen() {
   } catch { /* mid-type */ }
 
   const foreign = draft.currency !== base;
-  const rateOk = !foreign || isValidRate(draft.rateToBase);
-  const baseMinor = !foreign ? amountMinor
-    : rateOk ? convertMinor(amountMinor, draft.currency, base, draft.rateToBase) : 0;
+  // An amount and a rate can each be in range and still multiply out of it —
+  // `sanitizeAmount` allows twelve whole digits, and this runs in the render
+  // body, so an unguarded throw is a white screen with nothing to press. An
+  // out-of-range conversion is "no base amount yet", the state a malformed
+  // rate already produces: the field goes red and Save stays held.
+  const converted = foreign && isValidRate(draft.rateToBase)
+    ? tryConvertMinor(amountMinor, draft.currency, base, draft.rateToBase)
+    : null;
+  const rateOk = !foreign || converted !== null;
+  const baseMinor = foreign ? converted ?? 0 : amountMinor;
 
   // The split editor is inline below and shows its own arithmetic; the form
   // only needs to know whether what it currently says can be saved.
@@ -621,7 +652,7 @@ function EditEntryScreen() {
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
           autoCapitalize="characters" hint={copy.currency.otherHint}
-          clean={normalizeCurrencyCode} valid={(v) => v.length === 3}
+          clean={normalizeCurrencyCode} valid={isCurrencyCode}
           onSubmit={(currency) => {
             patch({ currency, rateToBase: currency === base ? "1" : draft.rateToBase });
             setAsk(null);
