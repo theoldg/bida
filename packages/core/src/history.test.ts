@@ -26,6 +26,24 @@ function soukLog() {
 }
 
 describe("entityHistory", () => {
+  // Spelling a default out on a create put a null -> null row in the entity's
+  // own history: nine "changes" that changed nothing, on every expense. The
+  // create writes only what it carries now, so the revision names only that.
+  it("names only the fields a create actually carried", () => {
+    const b = new OpBuilder();
+    b.push("expense", "e-lean", "create", {
+      description: "Dinner", amountMinor: 8450, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 8450, paidBy: THEO,
+      split: { mode: "equal", members: [THEO] },
+    }, THEO);
+    const [rev] = entityHistory(b.ops, "e-lean");
+    expect(rev?.isCreate).toBe(true);
+    expect(rev?.changes.map((c) => c.field).sort()).toEqual([
+      "amountMinor", "baseAmountMinor", "currency", "description", "paidBy",
+      "rateToBase", "split",
+    ]);
+  });
+
   it("gives one revision per change, newest first", () => {
     const { ops, photos, created } = soukLog();
     const history = entityHistory(ops, "e-souk");

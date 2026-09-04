@@ -153,6 +153,55 @@ describe("commands", () => {
     expect(log).not.toContain(key!.secret);
   });
 
+  // The fold defaults every absent field, so a create that spells out
+  // `receiptItems: null` spends bytes in the log and a row in the entry's
+  // history to say nothing. See `only` in commands.ts.
+  it("writes no field a create would only be defaulting", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Riad",
+      occurredAt: Date.parse("2026-04-02T10:00:00Z"),
+      amountMinor: 42000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie, sam] },
+    });
+    const settlementId = await recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 14000,
+      currency: "EUR", rateToBase: "1", occurredAt: Date.now(),
+    });
+
+    const patchOf = async (id: string) =>
+      (await db().ops.where("entityId").equals(id).first())!.patch;
+    expect(Object.keys(await patchOf(expenseId)).sort()).toEqual([
+      "amountMinor", "baseAmountMinor", "createdAt", "currency", "description",
+      "occurredAt", "paidBy", "rateToBase", "split",
+    ]);
+    // No `note`: this transfer was recorded without one.
+    expect(Object.keys(await patchOf(settlementId)).sort()).toEqual([
+      "amountMinor", "baseAmountMinor", "createdAt", "currency", "fromMember",
+      "occurredAt", "rateToBase", "toMember",
+    ]);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  // The one create that must keep writing `deletedAt: null`: a rate is keyed by
+  // its currency, so setting one the group cleared lands on the tombstoned row.
+  it("revives a cleared rate, which is why that create still writes its null", async () => {
+    const { groupId, theo } = await trip();
+    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
+    await clearRate(groupId, theo, "MAD");
+    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
+
+    await setRate(groupId, theo, "MAD", "0.095", "typed", 2);
+
+    const row = await db().rates.get([groupId, "MAD"]);
+    expect(row?.deletedAt).toBeFalsy();
+    expect(row?.rate).toBe("0.095");
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
   it("appends rather than mutating: an edit leaves both versions in the log", async () => {
     const { groupId, theo, marie, sam } = await trip();
     const expenseId = await addExpense(groupId, theo, {
@@ -225,7 +274,8 @@ describe("commands", () => {
     });
 
     const stored = await db().expenses.get(expenseId);
-    expect(stored?.payers).toBeNull();
+    // Having no co-sponsors is the absence of the field, not a stored null.
+    expect(stored && "payers" in stored).toBe(false);
     expect(stored?.paidBy).toBe(marie);
   });
 

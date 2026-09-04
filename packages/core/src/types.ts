@@ -99,7 +99,11 @@ export interface Expense {
    */
   payers?: Record<Id, number> | null;
   split: SplitSpec;
-  attachmentIds: Id[];
+  /**
+   * Receipt photos on this expense. Absent — not `[]` — when there are none,
+   * which today is every expense: nothing appends an `attachment` op yet.
+   */
+  attachmentIds?: Id[];
   /**
    * The last receipt scan's line items, kept on the expense (not just a local
    * draft) so "who had what" can be reopened later — another device, another

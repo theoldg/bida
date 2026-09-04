@@ -24,6 +24,16 @@ type Op = {
 `patch` carrying only changed fields is what lets concurrent edits to different
 fields of the same expense merge instead of clobbering.
 
+**A `create` writes no field it would only be defaulting.** The fold treats
+absent as the default, so `receiptItems: null` on an expense nobody scanned is
+bytes in the log and a row in its own history saying nothing changed — eight
+such fields on every ordinary expense, a quarter of the op. `only()` in
+`apps/web/lib/db/commands.ts` drops them. The exception is a `rate` create:
+its entity id is the currency code, so setting a rate the group had cleared
+lands on the tombstoned row and must write `deletedAt: null` to lift it. In an
+`update` an absent field means "leave it alone", so clearing one there still
+writes the null.
+
 A `rate` op is the odd one: its `entityId` is the currency code rather than a
 generated id, because the group holds one rate per currency and everyone has to
 land on the same row ([ADR-0005](decisions/0005-money-and-currency.md)). Two

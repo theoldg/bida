@@ -370,6 +370,10 @@ export async function setRate(
     ]);
     return;
   }
+  // The one create that does write `deletedAt: null` rather than leaving it
+  // absent (see `only`): a rate's id is its currency code, so setting one the
+  // group had cleared lands on the existing tombstoned row and has to lift the
+  // tombstone. Every other entity gets a fresh id and can never be reviving.
   await appendOps(groupId, actor, [
     { entity: "rate", entityId: currency, kind: "create", patch: { ...patch, deletedAt: null } },
   ]);
@@ -431,6 +435,28 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
   if (ids.length === 0) return { paidBy: input.paidBy, payers: null };
   if (ids.length === 1) return { paidBy: ids[0]!, payers: null };
   return { paidBy: primaryPayer(live, input.paidBy), payers: live };
+}
+
+/**
+ * The entries that actually carry something.
+ *
+ * A `create` writes no field it would only be defaulting. The fold treats
+ * absent as the default already, so `receiptItems: null` on an expense nobody
+ * scanned is bytes in the log, a row in its own history saying nothing changed,
+ * and no other effect — and eight such fields ride on every ordinary expense,
+ * a quarter of the op (ADR-0002).
+ *
+ * **Only a create may do this.** In an `update` an absent field means "leave it
+ * alone", so clearing one there still has to write the null.
+ */
+function only(fields: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || value === null) continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    out[key] = value;
+  }
+  return out;
 }
 
 /** Key order is not meaningful in a payer map, so compare it out. */
@@ -517,7 +543,6 @@ export async function addExpense(
           // this field, on every op ever appended, and stays that way.
           ...(input.kind === "income" ? { kind: "income" } : {}),
           description: input.description,
-          categoryId: input.categoryId ?? null,
           occurredAt: input.occurredAt,
           createdAt: now,
           amountMinor: input.amountMinor,
@@ -525,15 +550,19 @@ export async function addExpense(
           rateToBase: seed.rateToBase,
           baseAmountMinor: toBase(seed, base),
           paidBy: payer.paidBy,
-          payers: payer.payers,
           split: input.split,
-          attachmentIds: input.attachmentIds ?? [],
-          receiptItems: input.receiptItems ?? null,
-          receiptTip: input.receiptTip ?? null,
-          receiptInvolved: input.receiptInvolved ?? null,
-          receiptAssignments: input.receiptAssignments ?? null,
-          splitTab: input.splitTab ?? null,
-          deletedAt: null,
+          // Absent on an ordinary expense — see `only`. No `deletedAt` either:
+          // the id is fresh, so a create is never a tombstone.
+          ...only({
+            categoryId: input.categoryId,
+            payers: payer.payers,
+            attachmentIds: input.attachmentIds,
+            receiptItems: input.receiptItems,
+            receiptTip: input.receiptTip,
+            receiptInvolved: input.receiptInvolved,
+            receiptAssignments: input.receiptAssignments,
+            splitTab: input.splitTab,
+          }),
         },
       },
     ],
@@ -654,8 +683,7 @@ export async function recordSettlement(
           baseAmountMinor,
           occurredAt: input.occurredAt,
           createdAt: now,
-          note: input.note ?? null,
-          deletedAt: null,
+          ...only({ note: input.note }),
         },
       },
     ],

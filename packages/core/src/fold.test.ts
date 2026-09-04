@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { foldForward, foldOps, sortOps } from "./fold.js";
 import { validateOp, type Op } from "./ops.js";
 import { marrakechOps, GROUP, THEO } from "./fixtures.test-helper.js";
+import { alive } from "./types.js";
 import { createHlcState, formatHlc } from "./hlc.js";
 
 function op(partial: Partial<Op> & Pick<Op, "entityId" | "kind" | "hlc">): Op {
@@ -93,6 +94,71 @@ describe("foldOps", () => {
     const a = op({ entityId: "e1", kind: "update", hlc: at(5), patch: {}, createdAt: 9_000_000 });
     const b = op({ entityId: "e1", kind: "update", hlc: at(6), patch: {}, createdAt: 1 });
     expect(sortOps([b, a]).map((o) => o.hlc)).toEqual([at(5), at(6)]);
+  });
+});
+
+/**
+ * A create writes no field it would only be defaulting — `only()` in
+ * apps/web/lib/db/commands.ts drops them. That is only safe because absent and
+ * spelled-out-null fold to the same entity for every reader, which is what
+ * these pin.
+ */
+describe("a create that leaves its defaults out", () => {
+  const carried = {
+    description: "Dinner at the harbour",
+    occurredAt: 1_743_600_000_000,
+    createdAt: 1_743_600_000_000,
+    amountMinor: 8450,
+    currency: "EUR",
+    rateToBase: "1",
+    baseAmountMinor: 8450,
+    paidBy: THEO,
+    split: { mode: "equal", members: [THEO] },
+  };
+  /** What the same expense used to be written as, before `only()`. */
+  const defaults = {
+    categoryId: null, payers: null, attachmentIds: [], receiptItems: null,
+    receiptTip: null, receiptInvolved: null, receiptAssignments: null,
+    splitTab: null, deletedAt: null,
+  };
+  const folded = (patch: Record<string, unknown>) =>
+    foldOps([op({ entityId: "e1", kind: "create", hlc: at(1), patch })])
+      .expenses["e1"] as unknown as Record<string, unknown>;
+
+  it("agrees field for field with one that spells them out", () => {
+    // Absent, null and — for `attachmentIds`, whose default is a list — empty
+    // are one thing to every reader of an expense. Nothing asks which it got.
+    const empty = (v: unknown) => v === undefined || v === null
+      || (Array.isArray(v) && v.length === 0);
+    const lean = folded(carried);
+    const verbose = folded({ ...carried, ...defaults });
+    for (const key of [...Object.keys(carried), ...Object.keys(defaults)]) {
+      if (empty(lean[key]) && empty(verbose[key])) continue;
+      expect(lean[key]).toEqual(verbose[key]);
+    }
+  });
+
+  it("carries none of them, which is the point", () => {
+    expect(Object.keys(folded(carried)).sort())
+      .toEqual(["amountMinor", "baseAmountMinor", "createdAt", "currency", "description",
+        "groupId", "id", "occurredAt", "paidBy", "rateToBase", "split"]);
+  });
+
+  it("is alive, and still takes a tombstone", () => {
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: carried }),
+      op({ entityId: "e1", kind: "delete", hlc: at(2) }),
+    ];
+    expect(alive(foldOps([ops[0]!]).expenses)).toHaveLength(1);
+    expect(alive(foldOps(ops).expenses)).toHaveLength(0);
+  });
+
+  it("still takes a later update that sets one of them", () => {
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: carried }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { splitTab: "receipt" } }),
+    ];
+    expect(foldOps(ops).expenses["e1"]?.splitTab).toBe("receipt");
   });
 });
 

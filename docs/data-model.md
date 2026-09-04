@@ -67,7 +67,8 @@ Expense {
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
   split: { mode: 'equal' | 'exact' | 'shares' | 'percent', ... },
-  attachmentIds: string[],
+  attachmentIds?,     // absent when there are none, which is every
+                      // expense today: nothing appends an attachment op yet
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind `split`, kept so the
                       // who-had-what grid can reopen (ADR-0016)
