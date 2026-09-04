@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
@@ -30,6 +30,7 @@ export default function GroupPage() {
 }
 
 function GroupScreen() {
+  const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const tab = (params.get("tab") ?? "ledger") as Tab;
@@ -50,11 +51,23 @@ function GroupScreen() {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
 
+  // Joining isn't finished until "who are you" is answered, and this screen is
+  // the one place that used to let a phone skip it — a bookmark, or the join
+  // flow's back arrow and then the group row. Unclaimed, nothing here works
+  // the way it reads: every row is somebody else's, and People offered a trash
+  // button on every name including the last.
+  const unclaimed = !data.loading && !!data.group && !data.me;
+  useEffect(() => {
+    if (groupId && unclaimed) router.replace(route.claim(groupId));
+  }, [groupId, unclaimed, router]);
+
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
   // Loading used to be a top bar over nothing — indistinguishable from a tap
   // that didn't land. Draw the whole frame instead: the group's name is the
   // only thing here that has to wait for Dexie.
-  if (data.loading) {
+  // The skeleton covers the redirect above too: a flash of somebody else's
+  // ledger before it lands is worse than a frame that is still loading.
+  if (data.loading || unclaimed) {
     return (
       <Screen>
         <Body>

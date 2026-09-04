@@ -82,7 +82,9 @@ and nowhere else.
   kind — a payer or split participant on an expense, or a side of a transfer.
   Past involvement they've since been edited out of doesn't count. Ask that
   function rather than one of its halves: asking about expenses alone left
-  groups carrying a balance with nothing on the other side of it.
+  groups carrying a balance with nothing on the other side of it. It also
+  refuses the **last** member: a group with nobody in it has no payer to seed
+  an entry with, and the form gave up on that silently.
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.

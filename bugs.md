@@ -116,27 +116,6 @@ zero or less is not a bill. Belt and braces: `receiptLocksAmount` should also
 require a positive total, so no future path can disable the field and the save
 button at once.
 
-### 3.4 A group must never have zero members, and no device may sit in one unclaimed
-
-`data.me` is undefined until a device claims someone, and while it is, *every*
-member row shows a trash button — the `m.id !== data.me` guard passes for all
-of them. Remove them all and the entry form's seed effect hits `if (!me)
-return` and never seeds: `Blank title="New"` forever, no message, no hint that
-People is where the fix is.
-
-**Do:**
-
-- **Refuse to remove the last member.** `apps/web/app/g/members/page.tsx`
-  already has the pattern — `askRemove` opens a "Can't remove" dialog with a
-  reason. Give it a second reason.
-- **A device with no claimed member doesn't get into the group.** `/g/claim`
-  disables Continue until a name is picked, but nothing stops landing on
-  `/g?id=…` directly — a bookmark, or the join flow's back arrow followed by
-  tapping the group row. Send an unclaimed device to `/g/claim` instead of
-  rendering the group. Joining is not finished until "who are you" is answered.
-- **Never render a silent `Blank`.** Where a screen genuinely can't proceed, it
-  should say so and point at the way out, not sit blank.
-
 ---
 
 ## 5. Sync and multi-device

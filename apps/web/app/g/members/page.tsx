@@ -45,7 +45,7 @@ interface BlockingEntry {
 type Ask =
   | { kind: "rename"; id: string; name: string }
   | { kind: "remove"; id: string; name: string }
-  | { kind: "blocked"; name: string; entries: BlockingEntry[] }
+  | { kind: "blocked"; name: string; body: string; entries: BlockingEntry[] }
   | { kind: "forget" };
 
 function MembersScreen() {
@@ -88,6 +88,14 @@ function MembersScreen() {
   // nothing balancing them, and a settle-up row with no name and a dead id
   // behind it.
   function askRemove(memberId: string, name: string) {
+    // A group with nobody in it is a screen with nothing to do on it: the
+    // entry form can't seed a payer and gives up, silently. Reachable only
+    // from a phone that hasn't claimed anyone — that's the state where every
+    // row, including the last, still offers a trash button.
+    if (data.members.length <= 1) {
+      setAsk({ kind: "blocked", name, body: copy.members.lastBody, entries: [] });
+      return;
+    }
     const involved = entriesInvolving(data, memberId);
     const blocking: BlockingEntry[] = [
       ...involved.expenses.map((e) => ({
@@ -102,7 +110,7 @@ function MembersScreen() {
       })),
     ];
     setAsk(blocking.length > 0
-      ? { kind: "blocked", name, entries: blocking }
+      ? { kind: "blocked", name, body: copy.members.blockedBody(name), entries: blocking }
       : { kind: "remove", id: memberId, name });
   }
 
@@ -191,7 +199,7 @@ function MembersScreen() {
 
       {ask?.kind === "blocked" ? (
         <Dialog title={copy.members.blockedTitle(ask.name)} onClose={() => setAsk(null)}>
-          <div className="dbody"><p>{copy.members.blockedBody(ask.name)}</p></div>
+          <div className="dbody"><p>{ask.body}</p></div>
           <div className="dlist">
             {ask.entries.map((e) => (
               <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">

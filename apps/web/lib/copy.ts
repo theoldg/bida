@@ -207,6 +207,7 @@ export const copy = {
     blockedTitle: (name: string) => `Can’t remove ${name}`,
     /** "these entries", not "these expenses": a transfer blocks removal too. */
     blockedBody: (name: string) => `${name} is named on these entries.`,
+    lastBody: "A group has to have somebody in it. Add the next person first.",
     forget: "Forget group",
     forgetBody: "The invite link brings it back.",
   },
@@ -263,6 +264,8 @@ export const copy = {
     discardBody: "This isn’t saved anywhere.",
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
     goneMember: (name: string) => `${name} has left the group — pick somebody else.`,
+    nobodyTitle: "Nobody in this group yet",
+    nobodyBody: "Add the people sharing this before you write down what it cost.",
     sentBy: "Who sent it",
     receivedBy: "Who received it",
     swapSides: "Swap the two sides",

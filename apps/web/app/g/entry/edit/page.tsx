@@ -11,7 +11,7 @@ import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../
 import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
-import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
@@ -225,7 +225,26 @@ function EditEntryScreen() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [groupId]);
 
-  if (!groupId || !data.group || !draft) return <Blank title={entryId ? "Edit" : "New"} />;
+  const title = entryId ? copy.form.editTitle : copy.form.newTitle;
+  // No members means the draft can't be seeded — no payer to name — and this
+  // screen used to sit as a titled blank forever, with nothing saying that
+  // People is where the fix is. It is reachable: a group pulled from the
+  // server before its members arrive, or opened by its own link on a phone
+  // that hasn't claimed anybody.
+  if (groupId && !data.loading && data.group && data.members.length === 0) {
+    return (
+      <Screen><Body>
+        <TopBar title={title} back={route.group(groupId)} />
+        <Empty title={copy.form.nobodyTitle}>
+          <p>{copy.form.nobodyBody}</p>
+          <Link className="btn btn-p" style={{ marginTop: 14 }} href={route.members(groupId)}>
+            {copy.members.title}
+          </Link>
+        </Empty>
+      </Body></Screen>
+    );
+  }
+  if (!groupId || !data.group || !draft) return <Blank title={title} />;
   const group = data.group;
   const base = group.baseCurrency;
   const kind = draft.kind;

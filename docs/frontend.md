@@ -18,7 +18,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group, everyone in it, in one screen |
-| `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons |
+| `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, People and the invite link are top-bar icons. A phone that hasn't claimed anybody is sent to `/g/claim` — joining isn't finished until "who are you" is answered |
 | `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
