@@ -8,6 +8,8 @@
  * multi-format parser to maintain here.
  */
 
+import { isCurrencyCode } from "./money.js";
+
 /** One printed line: what it's called, translated, and what it cost. */
 export interface ScanLineItem {
   /** As printed, in the receipt's own language. */
@@ -56,10 +58,26 @@ export function normalizeScan(result: ScanResult): ScanPatch {
   const patch: ScanPatch = {};
   if (result.merchant) patch.description = result.merchant;
   if (result.total) patch.amountText = result.total;
-  if (result.currency) patch.currency = result.currency.toUpperCase();
+  // A currency only travels if it is three letters. Everything else the model
+  // has been seen to return — a symbol, "EU", "USDT" — makes `formatMinor`
+  // throw, and the form calls that on every render: adopting one white-screens
+  // the screen you are typing on. Dropping it keeps the draft's own currency,
+  // which is at worst the group's base and is at least formattable. It is a
+  // drop rather than a repair for the same reason: "USDT" clipped to "USD"
+  // would bank a number in a currency nobody named.
+  if (result.currency) {
+    const code = result.currency.trim().toUpperCase();
+    if (isCurrencyCode(code)) patch.currency = code;
+  }
+  // Built in local time, not parsed as UTC midnight: `dateInputValue` and
+  // `dayLabel` both read the instant back locally, so a UTC-midnight stamp
+  // shows and files a receipt a day early anywhere west of Greenwich.
   if (result.date) {
-    const parsed = Date.parse(`${result.date}T00:00:00Z`);
-    if (!Number.isNaN(parsed)) patch.occurredAt = parsed;
+    const [y, m, d] = result.date.split("-").map(Number);
+    if (y && m && d) {
+      const local = new Date(y, m - 1, d).getTime();
+      if (!Number.isNaN(local)) patch.occurredAt = local;
+    }
   }
   if (result.category) patch.category = result.category;
   return patch;

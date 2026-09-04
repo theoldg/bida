@@ -102,11 +102,21 @@ else.
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `EntryDraft` patch: `total` passes straight through as `amountText` — the
 prompt already asks the model for `parseMinor()`-ready notation, so there's no
-separator-guessing to do locally — plus an uppercased currency and
-`occurredAt` from the printed date. Conversion to minor units stays where it
+separator-guessing to do locally. Conversion to minor units stays where it
 already is — `parseMinor` on save. `category` passes through as a name;
 matching it to the group's actual category id is the caller's job, since core
 doesn't know a group's categories.
+
+Two fields the model doesn't get the last word on:
+
+- **The currency** is uppercased and then has to pass `isCurrencyCode` — three
+  ASCII letters, the only thing `Intl.NumberFormat` accepts. Anything else is
+  dropped and the draft keeps the currency it had. Dropped, not repaired:
+  clipping "USDT" to "USD" banks a number in a currency nobody named.
+- **The date** becomes local midnight of the printed day, built from the
+  `YYYY-MM-DD` parts. The app reads instants back in local time everywhere, so
+  a UTC-midnight stamp files a receipt under the previous day west of
+  Greenwich.
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
@@ -166,6 +176,10 @@ deployed Worker, 2026-08-28.
   outlives the choice.** `receiptItems` stays on the expense forever, so a
   derived `splitTab` kept saying "Receipt" after the person switched away and
   saved.
+- **A model field that reaches `formatMinor` is a crash waiting to happen.**
+  `Intl.NumberFormat` throws on anything but three ASCII letters, the form
+  formats on every render, and there is no error boundary — one "€" in the
+  scan's `currency` white-screened the screen you were typing on.
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
   (`allocated === total === 0`) — it printed "€0.00 of €0.00 allocated" under a
   green check in four places. The verdict is `splitFooter`'s (`lib/format.ts`)

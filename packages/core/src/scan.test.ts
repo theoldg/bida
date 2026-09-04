@@ -22,9 +22,30 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, currency: "eur" })).toMatchObject({ currency: "EUR" });
   });
 
-  it("converts a printed date to an instant", () => {
+  // Anything formatMinor would throw on has to be dropped, not repaired:
+  // the form formats the draft's currency on every render.
+  it.each(["\u20ac", "EU", "USDT", "12", "", "  "])(
+    "drops a currency that isn't three letters: %j",
+    (currency) => {
+      expect(normalizeScan({ ...blank, currency })).not.toHaveProperty("currency");
+    },
+  );
+
+  it("converts a printed date to local midnight, not UTC midnight", () => {
     const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" });
-    expect(occurredAt).toBe(Date.parse("2026-08-28T00:00:00Z"));
+    expect(occurredAt).toBe(new Date(2026, 7, 28).getTime());
+  });
+
+  // The whole point: whatever the offset, the day you read back is the day
+  // that was printed on the receipt.
+  it("reads the date back as the day that was printed", () => {
+    const { occurredAt } = normalizeScan({ ...blank, date: "2026-04-04" });
+    const back = new Date(occurredAt!);
+    expect([back.getFullYear(), back.getMonth() + 1, back.getDate()]).toEqual([2026, 4, 4]);
+  });
+
+  it("omits an unparseable date", () => {
+    expect(normalizeScan({ ...blank, date: "last Tuesday" })).not.toHaveProperty("occurredAt");
   });
 
   it("passes merchant and category through as the description and category patch", () => {

@@ -17,6 +17,16 @@ const EXPONENT_OVERRIDES: Record<string, number> = {
   CLF: 4, UYW: 4,
 };
 
+/**
+ * True for the three ASCII letters `Intl.NumberFormat` accepts as a currency —
+ * the one thing `formatMinor` needs and cannot be talked out of. Anything else
+ * ("€", "EU", "USDT") makes it throw, so every code that reaches the model,
+ * the picker or a draft is checked against this first.
+ */
+export function isCurrencyCode(code: string): boolean {
+  return /^[A-Z]{3}$/.test(code);
+}
+
 /** Minor-unit exponent for a currency. Defaults to 2. Never assume 2 yourself. */
 export function exponentOf(currency: CurrencyCode): number {
   return EXPONENT_OVERRIDES[currency.toUpperCase()] ?? 2;

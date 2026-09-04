@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertMinor, exponentOf, formatMinor, minorToDecimalString,
+  convertMinor, exponentOf, formatMinor, isCurrencyCode, minorToDecimalString,
   parseMinor, isValidRate, sumMinor,
 } from "./money.js";
 
@@ -12,6 +12,30 @@ describe("exponentOf", () => {
     expect(exponentOf("jpy")).toBe(0);
     expect(exponentOf("TND")).toBe(3);
     expect(exponentOf("CLF")).toBe(4);
+  });
+});
+
+describe("isCurrencyCode", () => {
+  // It exists to answer exactly one question: will formatMinor survive this?
+  it.each(["EUR", "JPY", "ZZZ"])("accepts %s, which formatMinor formats", (code) => {
+    expect(isCurrencyCode(code)).toBe(true);
+    expect(() => formatMinor(1000, code)).not.toThrow();
+  });
+
+  it.each(["\u20ac", "EU", "USDT", "US1", "", " EUR"])(
+    "rejects %j, which formatMinor throws on",
+    (code) => {
+      expect(isCurrencyCode(code)).toBe(false);
+      expect(() => formatMinor(1000, code)).toThrow();
+    },
+  );
+
+  // Intl is happy with "eur"; the rest of the app is not, since a code is
+  // compared against the group's base by string equality. Callers uppercase
+  // before asking, so this stays a check on the canonical form.
+  it("rejects a lowercase code even though Intl would take it", () => {
+    expect(isCurrencyCode("eur")).toBe(false);
+    expect(() => formatMinor(1000, "eur")).not.toThrow();
   });
 });
 
