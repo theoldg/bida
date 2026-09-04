@@ -344,8 +344,14 @@ function EditEntryScreen() {
   // is the number people typed and the number they'd check against a receipt.
   const payerCheck = validatePayers(amountMinor, transfer ? null : draft.payers);
   const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
-  const sidesOk = !transfer || (draft.fromMember !== draft.toMember
-    && !!draft.fromMember && !!draft.toMember);
+  // A side has to be somebody still in the group, not merely a non-empty
+  // string. This checked truthiness, and a removed member's id is truthy — so
+  // a settle-up row naming somebody who had left opened a transfer *from* a
+  // person who is not in the group, with Save lit up. The picker renders an
+  // unresolvable id as "—", so the reason is on screen.
+  const live = new Set(data.members.map((m) => m.id));
+  const sidesOk = !transfer
+    || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
 
   const ready = amountMinor > 0 && rateOk && splitOk && payerCheck.ok && sidesOk
     // A transfer's words are a note and optional; an expense without a name is

@@ -657,6 +657,11 @@ dialog.scrim::backdrop { background: transparent }
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;
   align-items: center; padding: 9px 16px }
+/* A grid child won't shrink below its content without min-width: 0, and the
+   40 characters maxLength allows can be one unbroken word. */
+.balrow > * { min-width: 0 }
+.balname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.balgone { margin-left: 6px; font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .bar { height: 7px; border-radius: 0; background: var(--card-3); position: relative; overflow: hidden }
 .bar i { position: absolute; top: 0; bottom: 0 }
 .bar i.c { background: var(--credit); left: 50% }

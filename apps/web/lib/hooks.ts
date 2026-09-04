@@ -9,6 +9,7 @@ import {
 } from "@hajsik/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
+import { copy } from "./copy";
 import { formatJoinLink } from "./group-link";
 
 /**
@@ -112,8 +113,19 @@ export function useInviteLink(groupId: string | undefined): {
 
 export interface GroupData {
   group: Group | undefined;
+  /** Live members, sorted by name — the list every picker offers. */
   members: Member[];
+  /**
+   * Every member the group has ever had, removed ones included. An id on an
+   * entry outlives the member it names (removal is a tombstone, never a
+   * rewrite), so a map of the living answers "who is this?" with `undefined`
+   * exactly when somebody has left — which is when the name matters most.
+   */
   memberById: Map<string, Member>;
+  /** Their name, or `copy.unknown`. Use this rather than reaching into the map. */
+  nameOf: (id: string) => string;
+  /** True for a member who has been removed but is still named on an entry. */
+  hasLeft: (id: string) => boolean;
   expenses: Expense[];
   settlements: Settlement[];
   balances: BalanceReport;
@@ -147,7 +159,9 @@ export function useGroupData(groupId: string | undefined): GroupData {
   return useMemo(() => {
     if (!rows) {
       return {
-        group: undefined, members: [], memberById: new Map(), expenses: [], settlements: [],
+        group: undefined, members: [], memberById: new Map(),
+        nameOf: () => copy.unknown, hasLeft: () => false,
+        expenses: [], settlements: [],
         balances: EMPTY_REPORT, transfers: [], me: undefined, pendingOps: 0, loading: true,
       };
     }
@@ -156,10 +170,13 @@ export function useGroupData(groupId: string | undefined): GroupData {
     const settlements = living(rows.settlements).sort(byWhenThenCreated);
 
     const balances = computeBalances(stateOf(rows.group, members, expenses, settlements));
+    const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
     return {
       group: rows.group,
       members,
-      memberById: new Map(members.map((m) => [m.id, m])),
+      memberById,
+      nameOf: (id) => memberById.get(id)?.name ?? copy.unknown,
+      hasLeft: (id) => !!memberById.get(id)?.deletedAt,
       expenses,
       settlements,
       balances,

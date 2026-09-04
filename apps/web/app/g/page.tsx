@@ -376,21 +376,34 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
  * so they belong on the same scroll.
  */
 function BalancesTab({ data }: { data: GroupData }) {
-  const { group, members, balances, memberById, me, transfers } = data;
+  const { group, members, balances, nameOf, me, transfers } = data;
   if (!group) return null;
-  const widest = Math.max(1, ...members.map((m) => Math.abs(balances.byMember[m.id] ?? 0)));
+  // Everyone carrying a balance, not only everyone still in the group. A
+  // removed member with a position is precisely who you need to see, and
+  // leaving them off is what made the bars stop summing to zero on screen
+  // while `byMember` went on summing to zero underneath.
+  const live = new Set(members.map((m) => m.id));
+  const rows = [
+    ...members.map((m) => ({ id: m.id, name: m.name, gone: false })),
+    ...Object.keys(balances.byMember)
+      .filter((id) => !live.has(id) && (balances.byMember[id] ?? 0) !== 0)
+      .map((id) => ({ id, name: nameOf(id), gone: true }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  ];
+  const widest = Math.max(1, ...rows.map((r) => Math.abs(balances.byMember[r.id] ?? 0)));
 
   return (
     <Scroll>
       <div style={{ padding: "14px 0 4px" }}>
-        {members.map((m) => {
+        {rows.map((m) => {
           const net = balances.byMember[m.id] ?? 0;
           const width = `${(Math.abs(net) / widest) * 50}%`;
           return (
             <div key={m.id} className={`balrow${m.id === me ? " mine" : ""}`}>
               <div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
+                <div className="balname" style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>
                   {m.name}
+                  {m.gone ? <span className="balgone">{copy.group.hasLeft}</span> : null}
                 </div>
                 <div className="bar">
                   {net === 0 ? null : net > 0
@@ -429,17 +442,15 @@ function BalancesTab({ data }: { data: GroupData }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {transfers.map((t) => {
-            const from = memberById.get(t.from);
-            const to = memberById.get(t.to);
             const involvesMe = t.from === me || t.to === me;
             return (
               <Link key={`${t.from}-${t.to}`}
                 href={route.transferBetween(group.id, t.from, t.to, t.amountMinor)}
                 className={`card${involvesMe ? " mine" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{from?.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.from)}</span>
                 <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
-                <span style={{ fontSize: 13, fontWeight: 600 }}>{to?.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.to)}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>

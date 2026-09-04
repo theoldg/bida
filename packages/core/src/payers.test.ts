@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  expenseInvolves, isCoSponsored, payerList, primaryPayer, resolvePayers, validatePayers,
+  entriesInvolving, expenseInvolves, isCoSponsored, memberInvolved, payerList,
+  primaryPayer, resolvePayers, settlementInvolves, validatePayers,
 } from "./payers.js";
 import { computeBalances, assertBalanced } from "./balance.js";
-import { emptyGroupState, type Expense, type Member } from "./types.js";
+import { emptyGroupState, type Expense, type Member, type Settlement } from "./types.js";
 
 const BOB = "m-bob";
 const ALICE = "m-alice";
@@ -69,6 +70,54 @@ describe("expenseInvolves", () => {
       split: { mode: "equal", members: [BOB] },
     });
     expect(expenseInvolves(e, ALICE)).toBe(false);
+  });
+});
+
+function settlement(over: Partial<Settlement> = {}): Settlement {
+  return {
+    id: "s-1", groupId: "g", fromMember: ALICE, toMember: BOB,
+    amountMinor: 5_000, currency: "EUR", rateToBase: "1", baseAmountMinor: 5_000,
+    occurredAt: 1, ...over,
+  };
+}
+
+describe("settlementInvolves / memberInvolved", () => {
+  it("counts both sides of a transfer and nobody else", () => {
+    const s = settlement();
+    expect(settlementInvolves(s, ALICE)).toBe(true);
+    expect(settlementInvolves(s, BOB)).toBe(true);
+    expect(settlementInvolves(s, CARL)).toBe(false);
+  });
+
+  // The bug this pair exists for: the members screen asked about expenses
+  // only, so a transfer to somebody was no obstacle to removing them — and
+  // the group was left showing a balance with nothing on the other side.
+  it("sees a member who is only in a transfer", () => {
+    const tables = { expenses: [], settlements: [settlement({ fromMember: ALICE, toMember: BOB })] };
+
+    expect(memberInvolved(tables, BOB)).toBe(true);
+    expect(entriesInvolving(tables, BOB).settlements).toHaveLength(1);
+    expect(memberInvolved(tables, CARL)).toBe(false);
+  });
+
+  it("sees a member who is only in an expense", () => {
+    const tables = {
+      expenses: [expense({ split: { mode: "equal", members: [BOB, ALICE] } })],
+      settlements: [],
+    };
+
+    expect(memberInvolved(tables, ALICE)).toBe(true);
+    expect(entriesInvolving(tables, ALICE).expenses).toHaveLength(1);
+  });
+
+  it("ignores deleted entries of either kind", () => {
+    const tables = {
+      expenses: [expense({ deletedAt: 5 })],
+      settlements: [settlement({ deletedAt: 5 })],
+    };
+
+    expect(memberInvolved(tables, BOB)).toBe(false);
+    expect(memberInvolved(tables, ALICE)).toBe(false);
   });
 });
 

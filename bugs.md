@@ -165,44 +165,17 @@ People is where the fix is.
 
 ## 4. Balances that visibly don't sum to zero
 
-### 4.1 Removing a member checks expenses but not transfers
+### 4.1 The form will still save an entry naming somebody who has left
 
-`askRemove` filters `data.expenses` through `expenseInvolves`; nothing looks at
-`data.settlements` — `expenseInvolves` is the only such guard in the app.
-So:
+The removal path is closed and the balances tab now shows a departed member's
+position, but the entry form's own guard is half done: `sidesOk` checks that a
+transfer's two sides are live members, and `paidBy` and the split participants
+are not checked at all. A member removed on another device while you have the
+form open still saves.
 
-1. Ada sends Bob €50 as a transfer. Bob is in no expense.
-2. Remove Bob — allowed.
-3. `computeBalances` `touch()`es Bob so the set still sums to zero internally,
-   but `BalancesTab` iterates alive `members`. **On screen Ada is +50 with
-   nothing balancing her.**
-4. `settleUp` works over `byMember`, so it still yields Bob, and the settle-up
-   card renders `<span>{from?.name}</span>` — `undefined`. **A nameless row
-   with an arrow and an amount.**
-5. Tapping it opens `route.transferBetween(gid, <dead id>, …)`. `sidesOk` only
-   checks `from !== to && !!from && !!to`, and a dead id is truthy. **Save is
-   enabled on a transfer from somebody who is not in the group.**
-
-**Do — the bug, then the class of bug it came from.** The one-line version is a
-settlement check in `askRemove`, but four separate pieces of sloppiness had to
-line up for step 5 to be reachable, and each is worth a look on its own:
-
-- **Give core a sibling to `expenseInvolves`.** `packages/core/src/payers.ts`
-  has the expense half; a settlement half belongs next to it, and the members
-  screen should ask about both. Consider one `memberInvolved(state, memberId)`
-  so the next entity kind can't be forgotten the same way.
-- **`sidesOk` should check membership, not truthiness.** A member id that
-  doesn't resolve to a live member is not a valid side. Same for `paidBy` and
-  for split participants on save — the form will happily save an entry naming
-  somebody who was removed on another device mid-edit.
-- **Never render a bare `memberById.get(id)?.name`.** The settle-up card is the
-  one place with no `?? copy.unknown` fallback; the rest of the app has one.
-  A shared helper would make the omission impossible rather than caught by
-  review.
-- **`BalancesTab` should show anyone carrying a balance**, not only alive
-  members — a removed person with a non-zero position is exactly who you need
-  to see. Rendering `byMember` and marking the departed keeps the bars summing
-  to zero on screen, which is the invariant the whole tab rests on.
+**Do:** the same membership check on `paidBy`, on `splitParticipants`, and on
+the `payers` map — folded into whatever single "why Save is off" line comes out
+of 3.1, since a check with no visible reason is that item's bug.
 
 ---
 

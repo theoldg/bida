@@ -78,9 +78,14 @@ and nowhere else.
   touching membership or the group itself. Groups are never deleted. Opening
   the invite link again clears the hide.
 - The UI (not `removeMember` itself) refuses to remove someone else while
-  `expenseInvolves` (payers.ts) still names them a payer or split participant
-  on a live expense — past involvement they've since been edited out of
-  doesn't count.
+  `memberInvolved` (payers.ts) still finds them on a live entry of **either**
+  kind — a payer or split participant on an expense, or a side of a transfer.
+  Past involvement they've since been edited out of doesn't count. Ask that
+  function rather than one of its halves: asking about expenses alone left
+  groups carrying a balance with nothing on the other side of it.
+- A removed member who still carries a balance is **shown** on the balances
+  tab, marked as departed. `computeBalances` `touch()`es them so the set sums
+  to zero; hiding them is what made the bars stop summing to zero on screen.
 - `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
   entry ([ADR-0005](decisions/0005-money-and-currency.md)) and must re-derive
   identically on every device.

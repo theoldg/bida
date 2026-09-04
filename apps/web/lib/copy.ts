@@ -154,6 +154,9 @@ export const copy = {
     unreachableIdle: "Can’t reach the server — you may not have everyone’s latest.",
     unreachablePending: (waiting: string) => `Can’t reach the server — ${waiting} stuck on this phone.`,
 
+    /** Marks a balance row for somebody who is no longer in the group. */
+    hasLeft: "left the group",
+
     tabs: { ledger: "Ledger", balances: "Balances" },
     history: "History",
     people: "People",
@@ -202,7 +205,8 @@ export const copy = {
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are — nothing is redistributed.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
-    blockedBody: (name: string) => `${name} is involved in these expenses.`,
+    /** "these entries", not "these expenses": a transfer blocks removal too. */
+    blockedBody: (name: string) => `${name} is named on these entries.`,
     forget: "Forget group",
     forgetBody: "The invite link brings it back.",
   },

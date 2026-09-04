@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { expenseInvolves, type Expense } from "@hajsik/core";
+import { entriesInvolving } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
 import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
@@ -35,10 +35,17 @@ export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
 }
 
+/** One thing still naming a member, of either kind — the dialog treats them alike. */
+interface BlockingEntry {
+  id: string;
+  label: string;
+  baseAmountMinor: number;
+}
+
 type Ask =
   | { kind: "rename"; id: string; name: string }
   | { kind: "remove"; id: string; name: string }
-  | { kind: "blocked"; name: string; expenses: Expense[] }
+  | { kind: "blocked"; name: string; entries: BlockingEntry[] }
   | { kind: "forget" };
 
 function MembersScreen() {
@@ -70,15 +77,32 @@ function MembersScreen() {
     setAsk(null);
   }
 
-  // A tombstoned member's past expenses are meant to stay exactly as they
-  // were (removeMember's whole point), but "past" means past: someone still
-  // named on a live expense — as a payer or in the split — isn't a stray
-  // balance, they're an open one. Removing them wouldn't touch the expense,
-  // just make it un-editable by anyone who can no longer pick them.
+  // A tombstoned member's past entries are meant to stay exactly as they were
+  // (removeMember's whole point), but "past" means past: someone still named
+  // on a live one — a payer, a name in the split, a side of a transfer — isn't
+  // a stray balance, they're an open one. Removing them wouldn't touch the
+  // entry, just make it un-editable by anyone who can no longer pick them.
+  //
+  // Both kinds, via core, because asking about expenses alone is what let a
+  // transfer's counterparty be removed — leaving the payer +50 on screen with
+  // nothing balancing them, and a settle-up row with no name and a dead id
+  // behind it.
   function askRemove(memberId: string, name: string) {
-    const blocking = data.expenses.filter((e) => expenseInvolves(e, memberId));
+    const involved = entriesInvolving(data, memberId);
+    const blocking: BlockingEntry[] = [
+      ...involved.expenses.map((e) => ({
+        id: e.id,
+        label: e.description || copy.group.untitled,
+        baseAmountMinor: e.baseAmountMinor,
+      })),
+      ...involved.settlements.map((s) => ({
+        id: s.id,
+        label: copy.group.paidTo(data.nameOf(s.fromMember), data.nameOf(s.toMember)),
+        baseAmountMinor: s.baseAmountMinor,
+      })),
+    ];
     setAsk(blocking.length > 0
-      ? { kind: "blocked", name, expenses: blocking }
+      ? { kind: "blocked", name, entries: blocking }
       : { kind: "remove", id: memberId, name });
   }
 
@@ -169,10 +193,10 @@ function MembersScreen() {
         <Dialog title={copy.members.blockedTitle(ask.name)} onClose={() => setAsk(null)}>
           <div className="dbody"><p>{copy.members.blockedBody(ask.name)}</p></div>
           <div className="dlist">
-            {ask.expenses.map((e) => (
+            {ask.entries.map((e) => (
               <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
                 <span className="rmain">
-                  <span className="rtitle">{e.description || copy.group.untitled}</span>
+                  <span className="rtitle">{e.label}</span>
                 </span>
                 <span className="rmeta">{money(e.baseAmountMinor, group.baseCurrency)}</span>
               </Link>

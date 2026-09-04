@@ -1,5 +1,5 @@
 import { resolveSplit, SplitError, splitParticipants } from "./split.js";
-import type { Expense, Id } from "./types.js";
+import type { Expense, Id, Settlement } from "./types.js";
 
 /**
  * Co-sponsored expenses: "Bob paid 400 and Alice paid 100 for these 500".
@@ -167,4 +167,41 @@ export function payersOf(expense: Expense): Record<Id, number> {
  */
 export function expenseInvolves(expense: Expense, memberId: Id): boolean {
   return payerList(expense).includes(memberId) || splitParticipants(expense.split).includes(memberId);
+}
+
+/** The transfer half of the same question: they are one of the two sides. */
+export function settlementInvolves(settlement: Settlement, memberId: Id): boolean {
+  return settlement.fromMember === memberId || settlement.toMember === memberId;
+}
+
+/** Both entry tables of a group, which is what every caller of the two below holds. */
+export interface EntryTables {
+  expenses: readonly Expense[];
+  settlements: readonly Settlement[];
+}
+
+/**
+ * Everything live in the group that still names this member, both kinds at
+ * once. Ask this rather than either half: the members screen asked only about
+ * expenses, so a transfer to somebody was no obstacle to removing them, and
+ * the group was left carrying a balance with nothing on the other side of it.
+ * A third entry kind gets added here and every caller inherits the check.
+ *
+ * Deleted entries don't count, the same way `expenseInvolves` means "currently
+ * has a stake": being named on something the group has since thrown away is
+ * not a reason to keep somebody.
+ */
+export function entriesInvolving(
+  entries: EntryTables, memberId: Id,
+): { expenses: Expense[]; settlements: Settlement[] } {
+  return {
+    expenses: entries.expenses.filter((e) => !e.deletedAt && expenseInvolves(e, memberId)),
+    settlements: entries.settlements.filter((s) => !s.deletedAt && settlementInvolves(s, memberId)),
+  };
+}
+
+/** Whether anything at all still names them. `entriesInvolving`, as a verdict. */
+export function memberInvolved(entries: EntryTables, memberId: Id): boolean {
+  const { expenses, settlements } = entriesInvolving(entries, memberId);
+  return expenses.length > 0 || settlements.length > 0;
 }
