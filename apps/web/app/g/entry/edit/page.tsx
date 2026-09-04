@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
   convertMinor, isCurrencyCode, isValidRate, minorToDecimalString, parseMinor,
-  splitParticipants, validatePayers, validateSplit, type Member, type SplitSpec,
+  sanitizeRate, splitParticipants, validatePayers, validateSplit, type Member, type SplitSpec,
 } from "@hajsik/core";
 import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
@@ -544,7 +544,7 @@ function EditEntryScreen() {
                       aria-label={copy.form.rateLabel(draft.currency, base)}
                       value={draft.rateToBase}
                       inputMode="decimal"
-                      onChange={(e) => patch({ rateToBase: e.target.value })}
+                      onChange={(e) => patch({ rateToBase: sanitizeRate(e.target.value) })}
                     />
                   </span> {base}
                 </div>

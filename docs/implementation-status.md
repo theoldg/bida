@@ -109,7 +109,7 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 
 | Module | Exports |
 |---|---|
-| `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate` |
+| `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate`, `sanitizeRate`, `isCurrencyCode` |
 | `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
 | `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
 | `fold.ts` | `foldOps`, `foldForward`, `sortOps` |

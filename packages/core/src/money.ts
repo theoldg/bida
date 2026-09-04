@@ -126,6 +126,20 @@ export function isValidRate(rate: string): boolean {
   return /^\d+(\.\d+)?$/.test(rate.trim()) && Number(rate) > 0;
 }
 
+/**
+ * Whatever a keyboard produced, as the text `isValidRate` reads. "," is the
+ * decimal separator to half of Europe, and the rate was the one money field
+ * that refused it — every other one goes through the amount input, which has
+ * normalised it from the start. Nothing is clipped: how many decimals a rate
+ * carries is its own business (ADR-0005).
+ */
+export function sanitizeRate(raw: string): string {
+  const text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
+  const first = text.indexOf(".");
+  if (first === -1) return text;
+  return text.slice(0, first + 1) + text.slice(first + 1).replace(/\./g, "");
+}
+
 function parseRate(rate: Rate): { num: bigint; scale: number } {
   const s = rate.trim();
   if (!isValidRate(s)) throw new RangeError(`invalid rate: ${JSON.stringify(rate)}`);

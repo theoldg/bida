@@ -156,10 +156,6 @@ registration should actually be keyed on.
 
 ## 6. Smaller, all real
 
-- **The rate field is the one money field that rejects a comma.** `AmountInput`
-  normalises `,` to `.` everywhere; the rate is a bare `<input>` checked by
-  `isValidRate`. Half of Europe types `4,32` and gets a red field with no
-  message. (Folds naturally into 2.1.)
 - **The tip field swallows typos.** `items/page.tsx` stores
   `e.target.value.trim() || null` unvalidated; `"abc"` or `"5.5.5"` keeps
   showing in the field while `receiptTotalMinor`'s `try`/`catch` silently drops

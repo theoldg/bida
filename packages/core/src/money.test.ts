@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   convertMinor, exponentOf, formatMinor, isCurrencyCode, minorToDecimalString,
-  parseMinor, isValidRate, sumMinor,
+  parseMinor, isValidRate, sanitizeRate, sumMinor,
 } from "./money.js";
 
 describe("exponentOf", () => {
@@ -123,6 +123,35 @@ describe("convertMinor", () => {
       expect(isValidRate(bad)).toBe(false);
       expect(() => convertMinor(100, "MAD", "EUR", bad)).toThrow();
     }
+  });
+});
+
+describe("sanitizeRate", () => {
+  // The typed text has to come out as something isValidRate accepts, or the
+  // field goes red at somebody whose keyboard is simply not American.
+  it.each([
+    ["4,32", "4.32"],
+    ["4.32", "4.32"],
+    ["1,0921", "1.0921"],
+    ["10", "10"],
+    ["", ""],
+  ])("normalises %s to %s", (raw, want) => {
+    expect(sanitizeRate(raw)).toBe(want);
+  });
+
+  it("keeps the first separator and drops the rest", () => {
+    expect(sanitizeRate("1,2,3")).toBe("1.23");
+    expect(sanitizeRate("1.2.3")).toBe("1.23");
+  });
+
+  it("throws nothing away that a rate needs", () => {
+    expect(sanitizeRate("0,000001")).toBe("0.000001");
+    expect(isValidRate(sanitizeRate("0,0921"))).toBe(true);
+  });
+
+  it("drops what a rate can't hold", () => {
+    expect(sanitizeRate("-4,32")).toBe("4.32");
+    expect(sanitizeRate("4 32 EUR")).toBe("432");
   });
 });
 
