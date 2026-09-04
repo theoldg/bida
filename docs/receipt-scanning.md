@@ -127,7 +127,10 @@ scan's merchant (`EntryDraft.scannedDescription`), so a rescan can correct
 itself without renaming an expense somebody named. And a scan that resolves
 after you have left the form fills the draft but doesn't navigate: it is a
 network round trip, and the who-had-what grid stays one tap away on the
-Receipt tab either way.
+Receipt tab either way. A receipt in a currency the group has no rate for
+owes two screens, and they come one after the other: the rate dialog first,
+the grid when it closes — saved or cancelled — since the grid prices a bill
+against a rate that has to exist first.
 
 **Whether the photo is readable is the model's call too.** It sets `error` to a
 short sentence — a light joke at its own expense, never the photographer's, that
@@ -192,6 +195,10 @@ deployed Worker, 2026-08-28.
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
+- **Two things that both want the screen after a scan have to be ordered.**
+  Opening a dialog and calling `router.push` in the same tick is not a
+  sequence: the navigation unmounts the dialog before anybody sees it. The
+  second one waits on the first's `onClose`.
 - **If a UI mode needs to stick, persist it; never re-derive it from data that
   outlives the choice.** `receiptItems` stays on the expense forever, so a
   derived `splitTab` kept saying "Receipt" after the person switched away and

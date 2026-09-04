@@ -105,6 +105,16 @@ function EditEntryScreen() {
   const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
   /** Which currency's rate is being set, if any. See `pickCurrency`. */
   const [askRate, setAskRate] = useState<string | null>(null);
+  /**
+   * Set when a scan owes the who-had-what grid a visit but the rate dialog is
+   * standing in front of it. The two used to fire together, and the push won:
+   * a receipt in a currency the group had never seen opened the dialog and
+   * navigated straight over it, so the rate was never set and the grid it
+   * jumped to priced a bill nobody had told the group the worth of. They
+   * happen one after the other now — dialog first, grid when it closes,
+   * saved or cancelled.
+   */
+  const [itemsAfterRate, setItemsAfterRate] = useState(false);
   const [failed, setFailed] = useState<string>();
 
   /**
@@ -142,7 +152,9 @@ function EditEntryScreen() {
       // A photographed Moroccan receipt used to arrive looking complete and
       // wrong: it wrote MAD and kept whatever rate the draft had. Now it asks,
       // the same as picking the currency by hand would.
-      if (patch.currency !== undefined && needsRate(patch.currency)) setAskRate(patch.currency);
+      const wantsRate = patch.currency !== undefined && needsRate(patch.currency)
+        ? patch.currency : null;
+      if (wantsRate !== null) setAskRate(wantsRate);
       // The merchant is a guess, and a title somebody typed is not. Take it
       // only into an empty field or over the *previous* scan's guess, so a
       // rescan can correct itself without renaming the expense you named.
@@ -164,7 +176,9 @@ function EditEntryScreen() {
         splitTab: "receipt",
       }));
       setScanState("idle");
-      if (receiptItems.length > 0 && onScreen.current) router.push(route.items(groupId));
+      const toItems = receiptItems.length > 0 && onScreen.current;
+      if (wantsRate !== null) setItemsAfterRate(toItems);
+      else if (toItems) router.push(route.items(groupId));
     } catch (err) {
       setScanState("error");
       setScanError(scanErrorText(err));
@@ -741,7 +755,11 @@ function EditEntryScreen() {
           onSave={async (rate: string, source: RateSource, asOf: number) => {
             await setRate(groupId, data.me ?? draft.paidBy, askRate, rate, source, asOf);
           }}
-          onClose={() => setAskRate(null)}
+          onClose={() => {
+            setAskRate(null);
+            // The grid the scan was on its way to, held back until now.
+            if (itemsAfterRate) { setItemsAfterRate(false); router.push(route.items(groupId)); }
+          }}
         />
       ) : null}
 
