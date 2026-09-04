@@ -9,14 +9,14 @@ typed into is a notebook. Phases 4–6 are the finish, not the product.
 Hosting decided, MVP scope agreed, the visual direction signed off
 (2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`.
 
-## Phase 1 — Domain core ✅ *(124 tests)*
-`money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, plus
+## Phase 1 — Domain core ✅ *(236 tests)*
+`money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, `rates`, plus
 property tests that any permutation of ops folds identically.
 
 ## Phase 2 — Local-first app ✅
 Dexie schema and rebuild-from-ops, `lib/db/commands.ts`, every screen, `/join`,
-the personal lens, multi-currency entry, PWA manifest + shell service worker,
-and `pnpm shots`.
+the personal lens, multi-currency entry (the registry came in Phase 10), PWA
+manifest + shell service worker, and `pnpm shots`.
 
 ## Phase 3 — Server and sync ✅ *(deployed 2026-08-27 — MVP complete)*
 One Worker serving the export and the API, D1 schema + migrations, the two op
@@ -75,6 +75,16 @@ blaming the photo. Two more the same day: a failed scan no longer offers "try
 again" beside the two scan buttons that already are it, and the device's back
 button runs the screen's own back action instead of replaying where you had
 been ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `pnpm back`).
+
+## Phase 10 — The group's rate registry ✅ *(2026-09-04)*
+What a foreign amount is worth stopped being a number frozen onto each entry
+and became one the group holds, per currency, as an op
+([ADR-0005](decisions/0005-money-and-currency.md)). `/g/rates` is the icon
+between History and People; its dialog fetches a suggestion through the Worker
+(`GET /api/rates/:from/:to`), takes the number in whichever direction you think
+in, says how many entries a change moves, and opens by itself the first time a
+group meets a currency. `core/rates.ts` reprices every entry in one pass where
+the app reads its state, so a correction moves the whole ledger at once.
 
 ## Phase 7 — The owner's punch list ✅ *(2026-08-27)*
 Eight items after a day of living with the deployed MVP: one bottom bar, a

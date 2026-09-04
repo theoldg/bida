@@ -48,7 +48,7 @@ the decision, or a rejected option nobody would propose, is a line to cut.
 | [0002](0002-append-only-op-log.md) | An append-only op log, merged per-field by last-write-wins |
 | [0003](0003-link-only-access.md) | Link-only access; a device's identity claim is an op |
 | [0004](0004-static-export-and-offline.md) | A static export: secret in the fragment, whole thing precached |
-| [0005](0005-money-and-currency.md) | Minor units, a rate locked at entry, one field that types money |
+| [0005](0005-money-and-currency.md) | Minor units, one rate per currency per group, one field that types money |
 | [0007](0007-a-screen-is-a-route.md) | A screen is a route; back climbs the hierarchy; the chrome is thin |
 | [0008](0008-hand-rolled-interface.md) | Hand-rolled components; the app draws its own dialogs and pickers |
 | [0010](0010-what-an-entry-is.md) | Three kinds of entry, and several people may have paid |

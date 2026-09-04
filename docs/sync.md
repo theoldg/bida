@@ -9,7 +9,7 @@ subject: the log that syncs is the log that renders history.
 type Op = {
   id: string        // client UUID; the idempotency key
   groupId: string
-  entity: 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'
+  entity: 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'|'rate'
   entityId: string
   kind: 'create' | 'update' | 'delete' | 'restore'
   patch: Record<string, unknown>   // changed fields ONLY, never the whole entity
@@ -23,6 +23,12 @@ type Op = {
 
 `patch` carrying only changed fields is what lets concurrent edits to different
 fields of the same expense merge instead of clobbering.
+
+A `rate` op is the odd one: its `entityId` is the currency code rather than a
+generated id, because the group holds one rate per currency and everyone has to
+land on the same row ([ADR-0005](decisions/0005-money-and-currency.md)). Two
+people typing a EUR→MAD rate offline therefore *conflict*, per-field LWW, which
+is the point — one number, last word wins, both ops in the history.
 
 ## Ordering: hybrid logical clocks
 

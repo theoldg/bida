@@ -10,6 +10,14 @@ happens in the view layer and nowhere else. Currency codes are ISO 4217;
 exponents vary (JPY 0, TND 3) and `core/money.ts` owns that table — never assume
 2.
 
+**A rate belongs to the group, not to the entry.** A group has a base currency
+and an `ExchangeRate` row per other currency it spends in; what a foreign entry
+is *worth* is read from that registry every time, so correcting a rate moves
+every entry already written in that currency
+([ADR-0005](decisions/0005-money-and-currency.md)). A `Rate` is an exact
+decimal string (`isValidRate`), never a float, stored to 12 significant digits
+and shown to 6 — enough that typing it as its inverse round-trips.
+
 ## The three kinds of entry
 
 What a person adds to a group is an **expense**, an **income** or a **transfer**
@@ -40,6 +48,9 @@ Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
              uploadState: 'local'|'uploading'|'uploaded', createdAt }
 Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt }
+ExchangeRate { id /* the ISO 4217 code — the currency IS the entity */, groupId,
+             rate /* 1 unit of `id` = `rate` units of the group's base */,
+             source: 'fetched'|'typed', asOf, deletedAt? }
 
 Expense {
   id, groupId, description, categoryId, occurredAt,
@@ -49,7 +60,8 @@ Expense {
                       // same-day expenses, since occurredAt is user-editable
   amountMinor,        // in `currency`
   currency,           // ISO 4217, may differ from group base
-  rateToBase,         // decimal string, "1" when same currency
+  rateToBase,         // decimal string, "1" when same currency — what was
+                      // believed at save; the registry overrides it on read
   baseAmountMinor,    // amountMinor × rateToBase, rounded once, STORED
   paidBy,             // memberId — the payer, or the largest co-sponsor
   payers?,            // memberId -> minor units in THIS expense's currency,
@@ -88,9 +100,17 @@ and nowhere else.
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.
-- `baseAmountMinor` is **stored, not computed on read** — the rate is frozen at
-  entry ([ADR-0005](decisions/0005-money-and-currency.md)) and must re-derive
-  identically on every device.
+- `baseAmountMinor` and `rateToBase` are **stored**, but they are not what an
+  entry is worth: `atCurrentRates` (`core/rates.ts`) reprices every entry at the
+  registry in `stateOf()`, so one pass values the whole app and no call site can
+  forget. Stored values are the honest record of what was believed at save, and
+  the fallback for a currency the registry has no row for — every foreign entry
+  written before the registry existed, and any rate a group removes
+  ([ADR-0005](decisions/0005-money-and-currency.md)).
+- **An exchange rate is identified by its currency code**, the one entity whose
+  id a person chooses rather than `newId()`. So its Dexie key is compound
+  (`[groupId+id]`) — two trips both spending in MAD are two rows — and anything
+  re-folding one entity has to scope by group as well as by id.
 - A settlement (a **transfer**) is structurally separate from an expense so it
   never pollutes "how much did the trip cost". So is income, which is counted in
   `totalIncomeMinor` and never netted into `totalSpendMinor`.
@@ -151,7 +171,8 @@ CREATE TABLE ops (
   seq INTEGER NOT NULL,          -- per-group, assigned by the server
   id TEXT PRIMARY KEY,           -- client UUID = idempotency key
   group_id TEXT NOT NULL REFERENCES groups(id),
-  entity TEXT NOT NULL,          -- group|member|expense|settlement|attachment|identity
+  entity TEXT NOT NULL,          -- group|member|expense|settlement|attachment|
+                                 -- identity|rate
   entity_id TEXT NOT NULL,
   kind TEXT NOT NULL,            -- create|update|delete|restore
   patch TEXT NOT NULL,           -- JSON, changed fields only
@@ -168,12 +189,13 @@ CREATE TABLE attachments (
   created_at INTEGER NOT NULL);
 ```
 
-## IndexedDB (Dexie), schema v3
+## IndexedDB (Dexie), schema v4
 
 | Store | Key | Notes |
 |---|---|---|
 | `ops` | `id` | indexes on `[groupId+hlc]`, `[groupId+syncState]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments`, `identities` | `id` | materialised, rebuildable from `ops` |
+| `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
 | `blobs` | `attachmentId` | queued image data awaiting upload |
 | `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
@@ -186,3 +208,8 @@ them and re-fold from `ops`. Never migrate materialised data by hand.
 
 - `Intl.NumberFormat` will happily render a float. Format from minor units via
   `core/money.ts`; don't reach for `toFixed`.
+- **`identities` is keyed by node id alone**, so a device in two groups has one
+  row and rebuilding either group's fold clobbers the other's claim. Latent
+  today — nothing reads the table (`device.meByGroup` answers "who am I here")
+  — but the fix is a compound key like `rates`', which is a schema version and
+  a rebuild, not a patch.

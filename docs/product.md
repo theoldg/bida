@@ -32,8 +32,9 @@ link. CSV export.
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
-Shared, not solo — sync is part of the MVP. Multi-currency, with the rate frozen
-at entry ([ADR-0005](decisions/0005-money-and-currency.md)).
+Shared, not solo — sync is part of the MVP. Multi-currency, with one rate per
+currency held by the group and corrected in one place
+([ADR-0005](decisions/0005-money-and-currency.md)).
 
 ## Deliberately not in the MVP
 
@@ -51,7 +52,7 @@ Leave the seam. Build none of it.
 
 - **The number you came for is at the top.** Net position first, detail below.
 - **Never lose a write.** The op is in IndexedDB before the UI acknowledges it.
-- **Show the arithmetic** — foreign amounts keep their figure and locked rate —
+- **Show the arithmetic** — foreign amounts keep their figure and the rate used —
   but transparency isn't noise: a rounding cent is not worth a line of UI.
 - **Colour is never the only signal.** Every debit/credit carries a sign and a
   word as well as a hue.

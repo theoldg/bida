@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 124 tests |
+| 1 — Domain core | ✅ 236 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
@@ -17,6 +17,7 @@ Update it in the same commit as the code it describes.*
 | 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
 | 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
 | 9 — Every word in one file | ✅ `lib/copy.ts`, fenced by `pnpm check` ([ADR-0033](decisions/0033-every-word-in-one-file.md)) |
+| 10 — The group's rate registry | ✅ one live rate per currency, an op, editable both ways ([ADR-0005](decisions/0005-money-and-currency.md)) |
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
@@ -24,7 +25,13 @@ push, pull, wrong-secret rejection, and a real group synced between devices.
 
 **What it does today.** A group holds three kinds of entry — expense, income,
 transfer — all editable, on one form with a segmented control and one detail
-screen ([ADR-0010](decisions/0010-what-an-entry-is.md)). Every word a person
+screen ([ADR-0010](decisions/0010-what-an-entry-is.md)). **What a foreign
+amount is worth is the group's, not the entry's**: `/g/rates` holds one rate
+per currency, synced as an op, and every screen values entries at it, so
+correcting a rate moves every entry already written in that currency. The
+dialog fetches a suggestion through the Worker, takes the number in either
+direction, and never writes without a Save
+([ADR-0005](decisions/0005-money-and-currency.md)). Every word a person
 reads lives in `apps/web/lib/copy.ts`, fenced by `pnpm check`
 ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Nothing the browser
 draws is used: no `prompt()`, `confirm()` or `<select>`; a long press or a
@@ -96,20 +103,22 @@ Every screen is built. Routes and their jobs are listed in
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
 `lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
-`lib/entry-kind.ts` is types and arithmetic only. 94 smoke tests.
+`lib/entry-kind.ts` is types and arithmetic only. 124 smoke tests.
 
 ### `apps/api`
 
-A Hono app with three kinds of route: the sync API (`POST`/`GET
-/api/groups/:id/ops`), `/api/health`, and everything else passed to the
-`ASSETS` binding. D1 schema in `migrations/0001_init.sql`. No R2 yet — Phase 4.
+A Hono app with four kinds of route: the sync API (`POST`/`GET
+/api/groups/:id/ops`), `/api/health`, `GET /api/rates/:from/:to` (a cached
+passthrough to a public feed — no secret, since the input is two currency codes
+and it spends nothing), and everything else passed to the `ASSETS` binding.
+D1 schema in `migrations/0001_init.sql`. No R2 yet — Phase 4.
 Deploy steps: [hosting.md](hosting.md#deploying).
 
 ### `packages/core` module map
 
 | Module | Exports |
 |---|---|
-| `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate`, `sanitizeRate`, `isCurrencyCode` |
+| `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate`, `sanitizeRate`, `isCurrencyCode`, `rateFromNumber`, `invertRate`, `formatRate` |
 | `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
 | `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
 | `fold.ts` | `foldOps`, `foldForward`, `sortOps` |
@@ -118,7 +127,8 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` — the one place an income's sign is applied |
 | `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
 | `history.ts` | `entityHistory`, `activityFeed` |
-| `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
+| `rates.ts` | `rateFor`, `repriceEntry`, `atCurrentRates`, `currenciesInUse` |
+| `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `ExchangeRate`, `RateSource`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
 | `scan.ts` | `normalizeScan`, `checkScan`, `scanCurrency`, `ScanResult`, `ScanPatch`, `ScanProblem` |
 
@@ -140,6 +150,10 @@ Deploy steps: [hosting.md](hosting.md#deploying).
   a payer who isn't a participant.
 - **An income is exactly the negation of the same entry as an expense**, member
   for member, and is counted apart from spend rather than netted into it.
+- **A rate inverts and comes back.** 12 stored significant digits against 6
+  shown, so a rate typed as its own inverse round-trips; repricing at the rate
+  an entry was saved with is a no-op, and a rate that can't convert leaves the
+  entry as it was instead of throwing on a render.
 
 ### The pinned fixture
 
@@ -172,3 +186,7 @@ total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo
 - A Cloudflare token scoped for Workers only fails D1 calls with a generic
   `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
   nothing; the token needs "D1 - Edit" specifically.
+- **Repricing belongs where state is read, not where ops are folded.**
+  `materialise()` folds one entity's ops, so a rate op and an expense never meet
+  there. `atCurrentRates` runs once in `stateOf()` instead
+  ([data-model.md](data-model.md#entities)).

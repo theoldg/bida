@@ -82,12 +82,12 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
-   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Ten scenes have no URL
-   worth visiting and are reached by driving instead: four dialogs (add member,
-   forget group, delete entry, and a transfer side's person picker),
-   `who-had-what` twice, `expense-split-amounts` (a deliberate shortfall) and
-   `payers` — the last two hang off the entry form's in-memory draft, so their
-   own URLs photograph an empty frame.
+   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Eleven scenes have no URL
+   worth visiting and are reached by driving instead: five dialogs (add member,
+   forget group, delete entry, a transfer side's person picker, and the rate
+   editor), `who-had-what` twice, `expense-split-amounts` (a deliberate
+   shortfall) and `payers` — the last two hang off the entry form's in-memory
+   draft, so their own URLs photograph an empty frame.
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
@@ -106,6 +106,9 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   has one payer, and the shot looks plausible.
 - **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
   *slashed*. A mark inside a "0" is the font, not a struck-through field.
+- **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
+  nothing against `Marie’s amount` and hangs until the check times out; match
+  with a regex (`/Marie.s amount/`) or paste the real character.
 
 ## `pnpm entries` — the form is wired to the commands
 
@@ -114,7 +117,11 @@ transfer edit writes only what changed. They cannot prove the *form* reaches
 those commands — a Save stuck disabled, a segmented control writing the wrong
 field, a detail screen that can't find a settlement by id
 ([ADR-0010](decisions/0010-what-an-entry-is.md)). This adds each of the
-three kinds through the real UI, edits them, and reads the history back.
+three kinds through the real UI, edits them, and reads the history back. It
+also drives the rate registry end to end — a new currency opening the dialog by
+itself, the two directions of the field moving together, and correcting a saved
+rate re-valuing an entry already in the ledger
+([ADR-0005](decisions/0005-money-and-currency.md)).
 
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping
