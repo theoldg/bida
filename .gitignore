@@ -3,6 +3,7 @@ node_modules/
 out/
 dist/
 .wrangler/
+.drive/
 .dev.vars
 .env*
 !.env.example

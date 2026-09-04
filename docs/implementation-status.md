@@ -89,10 +89,13 @@ apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static asset
 
 Root scripts: `session`, `check` (doc links · invariants · typecheck · tests ·
 export build — what pre-push runs), `verify`, `entries`, `back`, `offline`,
-`shots`, `docs`, `rules`.
+`shots`, `drive`, `docs`, `rules`.
 `scripts/lib/harness.mjs` holds what the browser checks share — the build, the
-static server, a phone-shaped browser, the tally, a seeded group — so they build
-themselves and the next one costs a dozen lines ([testing.md](testing.md)).
+static server, a Worker-and-D1 server for the ones that need real sync, a
+phone-shaped browser, the tally, a seeded group — so they build themselves and
+the next one costs a dozen lines. `drive` is the odd one out: not a check but a
+live session that answers each command with the screen as text, several phones
+at once ([testing.md](testing.md#pnpm-drive--the-app-as-text)).
 `tsconfig.base.json`: ES2022, strict, `noUncheckedIndexedAccess`,
 `verbatimModuleSyntax`.
 

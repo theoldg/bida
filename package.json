@@ -19,7 +19,8 @@
     "entries": "node scripts/entries-check.mjs",
     "offline": "node scripts/offline-check.mjs",
     "back": "node scripts/back-check.mjs",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "drive": "node scripts/drive.mjs"
   },
   "devDependencies": {
     "playwright-core": "^1.62.1",

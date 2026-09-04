@@ -1,6 +1,6 @@
 /**
  * Shared plumbing for the browser checks — `shots.mjs`, `entries-check.mjs`,
- * `offline-check.mjs`.
+ * `offline-check.mjs`, `drive.mjs`.
  *
  * Each of those asks the same four things before it can assert anything: a
  * build, a server that speaks the static export's dialect, a phone-shaped
@@ -12,9 +12,9 @@
  * environment. Never run `playwright install`.
  */
 import { createServer } from "node:http";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { existsSync, statSync, readdirSync } from "node:fs";
+import { existsSync, statSync, readdirSync, rmSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { chromium } from "playwright-core";
 
@@ -96,6 +96,62 @@ export async function serveExport({ intercept } = {}) {
   });
   await new Promise((ok) => server.listen(0, ok));
   return { base: `http://localhost:${server.address().port}`, close: () => server.close() };
+}
+
+/**
+ * Serve the app the way production does: one Cloudflare Worker in front of both
+ * the static export and the sync API, on a throwaway D1.
+ *
+ * `serveExport` above is enough for a check about one phone's screens, and it
+ * starts in milliseconds. This one costs ~10 seconds of `wrangler dev` boot and
+ * buys the only thing that cannot be faked — two phones actually syncing
+ * through the real API. Reach for it only when a check needs that.
+ *
+ * The database is a fresh directory per call, so a session never inherits the
+ * groups of the one before it, and migrations run against that directory rather
+ * than the repo's `.wrangler/state` — running them anywhere else silently gives
+ * the Worker a database with no tables in it.
+ */
+export async function serveWorker({ state } = {}) {
+  const api = join(ROOT, "apps/api");
+  const persist = state ?? join(ROOT, ".drive/d1");
+  rmSync(persist, { recursive: true, force: true });
+  const migrate = spawnSync("npx", [
+    "wrangler", "d1", "migrations", "apply", "hajsik", "--local", "--persist-to", persist,
+  ], { cwd: api, encoding: "utf8" });
+  if (migrate.status !== 0) throw new Error(`d1 migrations failed:\n${migrate.stderr ?? ""}`);
+
+  const port = await freePort();
+  const child = spawn("npx", [
+    "wrangler", "dev", "--port", String(port), "--persist-to", persist,
+  ], { cwd: api, stdio: ["ignore", "pipe", "pipe"] });
+
+  const base = `http://localhost:${port}`;
+  const log = [];
+  const ready = new Promise((ok, fail) => {
+    const watch = (chunk) => {
+      const text = String(chunk);
+      log.push(text);
+      if (text.includes("Ready on")) ok();
+    };
+    child.stdout.on("data", watch);
+    child.stderr.on("data", watch);
+    child.on("exit", (code) => fail(new Error(`wrangler exited (${code}):\n${log.join("")}`)));
+    setTimeout(() => fail(new Error(`wrangler never became ready:\n${log.join("")}`)), 90_000);
+  });
+  await ready;
+  return { base, close: () => child.kill("SIGTERM") };
+}
+
+/** An unused port, asked of the OS rather than guessed. */
+function freePort() {
+  return new Promise((ok) => {
+    const probe = createServer();
+    probe.listen(0, () => {
+      const { port } = probe.address();
+      probe.close(() => ok(port));
+    });
+  });
 }
 
 /* ---- the browser -------------------------------------------------------- */
