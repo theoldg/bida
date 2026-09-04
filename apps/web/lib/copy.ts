@@ -195,7 +195,7 @@ export const copy = {
       (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
     sharedWays: (n: string) => `shared ${n}`,
     splitWays: (n: string) => `split ${n}`,
-    splitAs: (people: number, mode: string) => `${people} people, ${mode}`,
+    splitAs: (people: string, mode: string) => `${people}, ${mode}`,
     transfer: "Transfer",
     transferNote: (note: string) => `Transfer · ${note}`,
     paidTo: (from: string, to: string) => `${from} paid ${to}`,
@@ -222,8 +222,8 @@ export const copy = {
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are — nothing is redistributed.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
-    /** "these entries", not "these expenses": a transfer blocks removal too. */
-    blockedBody: (name: string) => `${name} is named on these entries.`,
+    /** "entries", not "expenses": a transfer blocks removal too. */
+    blockedBody: (name: string, entries: string) => `${name} is named on ${entries}.`,
     lastBody: "A group has to have somebody in it. Add the next person first.",
     forget: "Forget group",
     forgetBody: "The invite link brings it back.",

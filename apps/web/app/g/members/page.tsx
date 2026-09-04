@@ -14,7 +14,7 @@ import { copy } from "../../../lib/copy";
 import {
   addMember, claimIdentity, forgetGroup, removeMember, renameMember,
 } from "../../../lib/db/commands";
-import { money } from "../../../lib/format";
+import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 import { nameTaken } from "../../../lib/names";
@@ -112,7 +112,10 @@ function MembersScreen() {
       })),
     ];
     setAsk(blocking.length > 0
-      ? { kind: "blocked", name, body: copy.members.blockedBody(name), entries: blocking }
+      ? {
+        kind: "blocked", name, entries: blocking,
+        body: copy.members.blockedBody(name, plural(blocking.length, copy.noun.entry)),
+      }
       : { kind: "remove", id: memberId, name });
   }
 

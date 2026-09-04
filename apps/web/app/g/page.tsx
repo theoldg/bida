@@ -291,7 +291,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
             {" · "}
             {expense.split.mode === "equal"
               ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
-              : copy.group.splitAs(participants, copy.split.mode[expense.split.mode].toLowerCase())}
+              : copy.group.splitAs(plural(participants, copy.noun.person),
+                copy.split.mode[expense.split.mode].toLowerCase())}
           </div>
         </div>
         <div className="ramt">
