@@ -68,6 +68,13 @@ const READ = `(() => {
   const out = [];        // { text, where } in document order
   let n = 0, line = "", lineWhere = "on", alerts = 0;
 
+  // Numbers are handed out fresh every read, so the last read's have to go
+  // first. They used to linger, and a sheet is where that bit: its five options
+  // took 1-5 while the form behind them still wore 1-20, so \`click 1\` matched
+  // the older element, waited for a control under the scrim to become
+  // pressable, and timed out. Same stale numbers were what \`html <n>\` read.
+  for (const el of document.querySelectorAll("[data-drive]")) el.removeAttribute("data-drive");
+
   // A native modal makes the rest of the document inert, which is exactly the
   // question being asked; :modal answers it without knowing the app's classes.
   const modal = [...document.querySelectorAll("dialog[open]")].filter((d) => d.matches(":modal")).pop() ?? null;
@@ -342,6 +349,15 @@ const READ = `(() => {
     last = item.where;
     lines.push(item.text);
   }
+  // Keyboard is the only way into some controls, so where focus sits is part of
+  // the screen. A numbered control wears it as "(focused)"; anywhere else there
+  // is nothing to hang it on, and saying nothing reads as "nothing is focused"
+  // when it may equally mean "focus is somewhere your key press will go".
+  const active = document.activeElement;
+  if (!active || active === document.body) lines.push("── nothing has keyboard focus ──");
+  else if (!active.hasAttribute("data-drive"))
+    lines.push(\`── keyboard focus is on <\${active.tagName.toLowerCase()}>, not a numbered control ──\`);
+
   if (modal) lines.unshift(\`── a sheet is open\${modal.getAttribute("aria-label") ? \`: "\${modal.getAttribute("aria-label")}"\` : ""} — only what is in it can be pressed ──\`);
   if (behind) lines.push(\`── \${behind} control\${behind === 1 ? "" : "s"} out of reach behind it ──\`);
   return { url: location.href, title: document.title, lines };
@@ -394,19 +410,36 @@ async function start() {
     const who = current;
     const { page, ctx, noise } = await phone(who);
     const arg = args.join(" ");
-    const target = (n) => `[data-drive="${Number(n)}"]`;
+
+    /**
+     * The control a number names, or a reason it names none.
+     *
+     * Both ways of getting this wrong used to arrive as the same five-second
+     * timeout, and they want opposite responses: a number nobody handed out
+     * means read the screen again, while a number matching twice means this
+     * script lost track and no press should be guessed at. Playwright is told
+     * `strict` as well, because the page can re-render between counting and
+     * pressing and a wrong press is worse than a failed one.
+     */
+    const target = async (n) => {
+      const sel = `[data-drive="${Number(n)}"]`;
+      const found = await page.locator(sel).count();
+      if (found === 0) throw new Error(`nothing is numbered ${n} on this screen — read it again`);
+      if (found > 1) throw new Error(`${n} names ${found} controls — the screen was read wrong`);
+      return sel;
+    };
 
     switch (verb) {
       case undefined: case "screen": break;
       case "goto": await page.goto(arg.startsWith("http") ? arg : base + (arg.startsWith("/") ? arg : `/${arg}`), { waitUntil: "domcontentloaded" }); break;
-      case "click": await page.click(target(args[0]), { timeout: 5000 }); break;
-      case "fill": await page.fill(target(args[0]), args.slice(1).join(" ")); break;
-      case "select": await page.selectOption(target(args[0]), { label: args.slice(1).join(" ") }); break;
+      case "click": await page.click(await target(args[0]), { timeout: 5000, strict: true }); break;
+      case "fill": await page.fill(await target(args[0]), args.slice(1).join(" "), { strict: true }); break;
+      case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
       case "press": await page.keyboard.press(args[0]); break;
       // Some actions live behind a long press and nowhere else, so a driver
       // that can only click cannot reach them at all. A right click is the
       // same `contextmenu` event a touch hold sends.
-      case "hold": await page.click(target(args[0]), { button: "right" }); break;
+      case "hold": await page.click(await target(args[0]), { button: "right", strict: true }); break;
       case "back": await page.goBack(); break;
       case "forward": await page.goForward(); break;
       case "reload": await page.reload(); break;
@@ -429,7 +462,7 @@ async function start() {
           };
           walk(document.querySelector(sel), 0);
           return seen.join("\n");
-        }, args[0] ? target(args[0]) : "body");
+        }, args[0] ? await target(args[0]) : "body");
         return { who, url: page.url().replace(base, ""), title: "", lines: dump.split("\n"), noise: [] };
       }
       default: throw new Error(`no such command: ${verb}`);

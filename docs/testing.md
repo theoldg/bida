@@ -187,6 +187,11 @@ answer it gave before:
   visually-hidden text is read out by screen readers but is not on the page, so
   it is left out.
 
+**Where the keyboard is pointing.** A numbered control wears `(focused)`; when
+focus is anywhere else — a sheet that opened without landing it on a row — the
+dump says so. `press` is how you reach what a tap cannot, and a key sent nowhere
+looks exactly like a control that ignored it.
+
 **Alternatives are read as one question.** A `tablist`, `listbox`, `radiogroup`,
 or look-alike siblings where exactly one is painted differently come out as a
 set with the chosen one marked `(•)`. When only the styling says which, the
