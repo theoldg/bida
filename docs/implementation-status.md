@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 236 tests |
+| 1 — Domain core | ✅ 241 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
@@ -106,7 +106,7 @@ Every screen is built. Routes and their jobs are listed in
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
 `lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
-`lib/entry-kind.ts` is types and arithmetic only. 124 smoke tests.
+`lib/entry-kind.ts` is types and arithmetic only. 130 smoke tests.
 
 ### `apps/api`
 
