@@ -491,9 +491,10 @@ export const copy = {
       `This re-values ${entries} already written in ${code}.`,
     remove: "Remove",
     removeTitle: (code: string) => `Remove the ${code} rate?`,
-    removeBody: (entries: string) =>
-      `${entries} go back to the rate each was saved with. Nothing is deleted.`,
     removeBodyEmpty: "Nothing is written in it, so nothing changes.",
+    /** Removing a rate is refused on the same terms as removing a person. */
+    blockedTitle: (code: string) => `Can’t remove the ${code} rate`,
+    blockedBody: (code: string, entries: string) => `The ${code} rate values ${entries}.`,
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate — ${why}`,

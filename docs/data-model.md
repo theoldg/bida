@@ -98,6 +98,11 @@ and nowhere else.
   groups carrying a balance with nothing on the other side of it. It also
   refuses the **last** member: a group with nobody in it has no payer to seed
   an entry with, and the form gave up on that silently.
+- **A rate comes out on the same terms**, and the UI is again where that is
+  said. Clearing one used to be allowed, and every entry written in that
+  currency silently fell back to the rate it was saved at — a different number
+  on each row, and no screen mentioning it. `/g/rates` now blocks removal while
+  any entry is written in that currency, listing them, exactly as People does.
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.

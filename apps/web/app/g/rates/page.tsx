@@ -1,18 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatRate, isCurrencyCode, type RateSource } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../components/dialog";
+import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
 import { RateDialog } from "../../../components/rate-dialog";
 import { clearRate, setRate } from "../../../lib/db/commands";
 import { copy } from "../../../lib/copy";
 import {
   COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
 } from "../../../lib/currencies";
-import { plural } from "../../../lib/format";
+import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
@@ -34,11 +35,19 @@ export default function RatesPage() {
   return <QueryBoundary><RatesScreen /></QueryBoundary>;
 }
 
+/** One entry still written in a currency — the dialog treats both kinds alike. */
+interface BlockingEntry {
+  id: string;
+  label: string;
+  baseAmountMinor: number;
+}
+
 type Ask =
   | { kind: "edit"; currency: string }
   | { kind: "pick" }
   | { kind: "other" }
-  | { kind: "remove"; currency: string; entryCount: number };
+  | { kind: "remove"; currency: string }
+  | { kind: "blocked"; currency: string; entries: BlockingEntry[] };
 
 function RatesScreen() {
   const params = useSearchParams();
@@ -69,6 +78,28 @@ function RatesScreen() {
     if (!groupId || !actor) return;
     await clearRate(groupId, actor, currency);
     setAsk(null);
+  }
+
+  // A rate comes out on the same terms a person does: only when nothing is
+  // left leaning on it. Clearing one used to be allowed and quietly re-priced
+  // every entry written in it — back to whatever rate each was saved at, which
+  // is a different number on every row and no screen said so.
+  function askRemove(currency: string) {
+    const blocking: BlockingEntry[] = [
+      ...data.expenses.filter((e) => e.currency === currency).map((e) => ({
+        id: e.id,
+        label: e.description || copy.group.untitled,
+        baseAmountMinor: e.baseAmountMinor,
+      })),
+      ...data.settlements.filter((t) => t.currency === currency).map((t) => ({
+        id: t.id,
+        label: copy.group.paidTo(data.nameOf(t.fromMember), data.nameOf(t.toMember)),
+        baseAmountMinor: t.baseAmountMinor,
+      })),
+    ];
+    setAsk(blocking.length > 0
+      ? { kind: "blocked", currency, entries: blocking }
+      : { kind: "remove", currency });
   }
 
   /** Picking from the menu goes straight into the editor for that currency. */
@@ -126,7 +157,7 @@ function RatesScreen() {
           entryCount={editing.entryCount}
           onSave={(rate, source, asOf) => save(editing.currency, rate, source, asOf)}
           onRemove={editing.rate
-            ? () => { setAsk({ kind: "remove", currency: editing.currency, entryCount: editing.entryCount }); return Promise.resolve(); }
+            ? () => { askRemove(editing.currency); return Promise.resolve(); }
             : undefined}
           onClose={() => setAsk((a) => (a?.kind === "edit" ? null : a))}
         />
@@ -169,10 +200,29 @@ function RatesScreen() {
       {ask?.kind === "remove" ? (
         <ConfirmDialog title={copy.rates.removeTitle(ask.currency)} confirm={copy.act.remove}
           danger={true} onConfirm={() => remove(ask.currency)} onClose={() => setAsk(null)}>
-          <p>{ask.entryCount > 0
-            ? copy.rates.removeBody(plural(ask.entryCount, copy.noun.entry))
-            : copy.rates.removeBodyEmpty}</p>
+          <p>{copy.rates.removeBodyEmpty}</p>
         </ConfirmDialog>
+      ) : null}
+
+      {ask?.kind === "blocked" ? (
+        <Dialog title={copy.rates.blockedTitle(ask.currency)} onClose={() => setAsk(null)}>
+          <div className="dbody">
+            <p>{copy.rates.blockedBody(ask.currency, plural(ask.entries.length, copy.noun.entry))}</p>
+          </div>
+          <div className="dlist">
+            {ask.entries.map((e) => (
+              <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
+                <span className="rmain">
+                  <span className="rtitle">{e.label}</span>
+                </span>
+                <span className="rmeta">{money(e.baseAmountMinor, base)}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="drow">
+            <button className="btn btn-p" onClick={() => setAsk(null)}>{copy.act.close}</button>
+          </div>
+        </Dialog>
       ) : null}
     </Screen>
   );
