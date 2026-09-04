@@ -5,12 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { parseMinor } from "@hajsik/core";
 import { AmountInput } from "../../../../components/amount-input";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
+import { ConfirmDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { copy } from "../../../../lib/copy";
 import { bare, distinctInitials, money, plural } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
-import { saveDraft, useDraft } from "../../../../lib/draft";
+import { saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
 import {
   foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto, weightsFromItems,
 } from "../../../../lib/scan/items";
@@ -37,6 +38,22 @@ function ItemsScreen() {
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
+  const [asking, setAsking] = useState(false);
+  // Splitting a line and merging one back have to be written to the draft as
+  // they happen — the grid's rows and the bill's lines are one list, and the
+  // seeding effect above trusts them to be the same length. So this screen
+  // keeps what it found, and leaving puts it back: tapping ×N to see what a
+  // shared bottle would look like was otherwise a change you couldn't undo.
+  const opened = useRef<Pick<EntryDraft,
+    "receiptItems" | "receiptTip" | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
+  const [touched, setTouched] = useState(false);
+  if (draft && !opened.current) {
+    opened.current = {
+      receiptItems: draft.receiptItems, receiptTip: draft.receiptTip,
+      receiptInvolved: draft.receiptInvolved, receiptAssignments: draft.receiptAssignments,
+      splitTab: draft.splitTab,
+    };
+  }
 
   // Seeded once, when the group's members and the scan's items are both in —
   // restore a previously saved assignment if this grid was already visited,
@@ -72,6 +89,7 @@ function ItemsScreen() {
   const runs = portions(items);
 
   function toggleInvolved(memberId: string) {
+    setTouched(true);
     const nextInvolved = new Set(involved);
     const adding = !nextInvolved.has(memberId);
     if (adding) nextInvolved.add(memberId); else nextInvolved.delete(memberId);
@@ -89,6 +107,7 @@ function ItemsScreen() {
   // screen is left without pressing Done.
   function commitRows(nextItems: typeof items, nextAssignments: Set<string>[]) {
     if (!groupId || !draft) return;
+    setTouched(true);
     setAssignments(nextAssignments);
     saveDraft(groupId, {
       ...draft,
@@ -118,6 +137,7 @@ function ItemsScreen() {
   }
 
   function toggleCell(itemIndex: number, memberId: string) {
+    setTouched(true);
     setAssignments(assignments.map((row, i) => {
       if (i !== itemIndex) return row;
       const next = new Set(row);
@@ -163,6 +183,17 @@ function ItemsScreen() {
     router.back();
   }
 
+  /** Leaving undoes what this screen wrote; `finish` is the only way to keep it. */
+  function goBack() {
+    if (touched) { setAsking(true); return; }
+    router.back();
+  }
+
+  function discard() {
+    if (groupId && draft && opened.current) saveDraft(groupId, { ...draft, ...opened.current });
+    router.back();
+  }
+
   // One line under the grid at a time: what still has to be fixed, or — until
   // the control has been found once — what the ×N does. A control you've used
   // doesn't need explaining, and the footer is one line tall.
@@ -178,7 +209,7 @@ function ItemsScreen() {
     <Screen>
       <Body>
         <TopBar title={copy.items.title} sub={plural(items.length, copy.noun.item)}
-          back={true}
+          back={goBack}
           right={<button className="action" onClick={finish} disabled={!canFinish}>{copy.act.done}</button>} />
 
         {/* Three bands, not one scrolling page: who was there stays put at the
@@ -288,7 +319,10 @@ function ItemsScreen() {
                       currency={draft.currency} placeholder={bare(0, draft.currency)}
                       aria-label={copy.items.tipLabel(draft.currency)}
                       value={draft.receiptTip ?? ""}
-                      onChange={(text) => saveDraft(groupId, { ...draft, receiptTip: text || null })} />
+                      onChange={(text) => {
+                        setTouched(true);
+                        saveDraft(groupId, { ...draft, receiptTip: text || null });
+                      }} />
                     <Icon name="edit" size={11} className="tipedit" />
                   </span>
                   {draft.receiptTip ? null : <span className="tiphint">{copy.items.tipHint}</span>}
@@ -319,6 +353,12 @@ function ItemsScreen() {
         ) : null}
       </Body>
 
+      {asking ? (
+        <ConfirmDialog title={copy.items.discardTitle} confirm={copy.act.discard}
+          danger={true} onConfirm={discard} onClose={() => setAsking(false)}>
+          <p>{copy.items.discardBody}</p>
+        </ConfirmDialog>
+      ) : null}
     </Screen>
   );
 }

@@ -359,6 +359,8 @@ export const copy = {
       `${name} had ${label}, portion ${index} of ${of}`,
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
+    discardTitle: "Discard this grid?",
+    discardBody: "The bill goes back to the lines the scan read.",
     unfoldHint: { before: "Tap a", after: "to split a line into portions." },
   },
 

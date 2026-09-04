@@ -62,7 +62,9 @@ confers nothing without the secret.
   you already typed. Leaving asks before discarding, and a reload gets the
   browser's own warning — `seedDraft` records the baseline `isDraftDirty`
   compares against. The payers route asks too, and puts back only the payer
-  side: the rest of the draft is not its to throw away.
+  side: the rest of the draft is not its to throw away. So does who-had-what,
+  which has to write a split or merged line through as it happens — its rows
+  and the bill's lines are one list — and restores the bill it opened with.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is

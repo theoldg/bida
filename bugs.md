@@ -173,9 +173,6 @@ registration should actually be keyed on.
   else. For an app whose whole auth model is a secret link
   ([ADR-0003](docs/decisions/0003-link-only-access.md)), there should be a way
   to read it when copying fails.
-- **Unfolding an item commits the in-progress grid.** `commitRows` writes
-  `receiptInvolved`/`receiptAssignments` into the draft, so backing out of
-  "who had what" is no longer a clean cancel once you have tapped ×N.
 - **The scan asks for a category and throws it away.** `normalizeScan` returns
   `patch.category`; the form never reads it, and `scanReceipt(…, [])` always
   passes an empty category list. Either wire it up or stop asking — it is
