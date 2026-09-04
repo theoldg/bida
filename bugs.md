@@ -37,33 +37,69 @@ whatever the draft had: `patch({ currency, rateToBase: currency === base ? "1"
 €500. A scan makes it worse — it writes the scanned currency and keeps the old
 rate, so a photographed Moroccan receipt arrives looking complete and wrong.
 
-Slightly stale rates are fine. Shape to build:
+Slightly stale rates are fine. The design below is settled — the owner picked
+"whichever source is free and convenient" on 2026-09-04, so what is left is
+building it.
 
-- **A Worker endpoint**, `GET /api/rates?base=XXX`, alongside the existing
-  Gemini passthrough in `apps/api/src/index.ts`. Same reasoning as
-  [ADR-0003](docs/decisions/0003-link-only-access.md)'s key handling: one
-  server-side cache for everyone, no key in the client if the source ever needs
-  one, and no CORS or service-worker fight. Cache hard — daily is plenty.
-- **A source with no API key and broad coverage.** ECB-backed feeds are free
-  and clean but miss MAD, UZS and others that
-  `apps/web/lib/currencies.ts` already offers; check coverage against
-  `COMMON_CURRENCIES` before committing to one. This is a new runtime
-  dependency on a third party, so it likely wants an
-  [ADR](docs/decisions/README.md) — read that file's bar first.
+**The source: `@fawazahmed0/currency-api`**, served from jsDelivr
+(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/mad.json`),
+with `https://latest.currency-api.pages.dev/v1/...` as the fallback host. CC0,
+no key, no rate limit, ~340 currencies, one file per currency, updated daily,
+and every code in `COMMON_CURRENCIES` present — MAD and UZS included, which is
+what rules the ECB feeds out. Runner-up: `open.er-api.com` (166 currencies,
+also complete for our list) — company-run, but its free tier requires an
+attribution link and forbids redistributing the numbers, which is what a proxy
+does.
+
+**Fetch by the entry's currency, not the group's base.** The feed publishes a
+file per currency, so `currencies/mad.json → .eur` *is* `rateToBase` for a MAD
+entry in a EUR group: a number the source printed, copied out as a string,
+never divided. Fetching the base and reciprocating would put every rate through
+a double first.
+
+- **A Worker endpoint**, `GET /api/rates/:from/:to`, alongside the Gemini
+  passthrough in `apps/api/src/index.ts`. Both codes checked against
+  `isCurrencyCode` or 400 — this is the one route with no group secret, so the
+  input surface is exactly two three-letter codes. Fetch upstream with
+  `cf: { cacheTtl: 21600, cacheEverything: true }`: Cloudflare's edge cache
+  *is* the shared cache, so no KV, no D1, no cron, no new binding. It answers
+  in our shape — `{ from, to, rate, asOf }` — so swapping the feed later
+  touches one file and no client. Unauthenticated on purpose: the data is
+  public and cached, the secret would buy nothing, and unlike the scan this
+  endpoint spends no money.
 - **Decimal strings, never floats.** `Rate` is an exact decimal string and
-  `isValidRate` is `/^\d+(\.\d+)?$/`. Convert whatever the feed returns to a
-  string without going through arithmetic, and round to a fixed number of
-  places at the edge.
-- **Cache locally** (a small Dexie table) so an offline phone can still prefill
-  yesterday's number.
-- **Nothing changes about storage.** [ADR-0005](docs/decisions/0005-money-and-currency.md)
-  still holds: the rate is frozen onto the entry at save. This only prefills
-  the field, which stays editable.
+  `isValidRate` is `/^\d+(\.\d+)?$/`. A `rateFromNumber(n)` in `core/money.ts`
+  turns the feed's JSON number into one, clamped to a fixed number of
+  significant digits and never in exponent notation (`String(5e-7)` is
+  `"5e-7"`, which `isValidRate` rejects). Money arithmetic, so it needs the
+  exhaustive-test treatment `core/money.ts` already gets.
+- **A rate is never an op.** It is not a fact about the group — the only shared
+  fact is the rate frozen onto the entry at save
+  ([ADR-0005](docs/decisions/0005-money-and-currency.md), unchanged). So it
+  caches in a device-local Dexie table beside `device` and `groupKeys` (schema
+  v4: `rates`, keyed `from>to`, holding `rate`, `asOf`, `fetchedAt`) and never
+  goes near `lib/db/sync.ts`.
+- **Opportunistic, never a poller.** One trigger: the form needs a rate for a
+  pair with no fresh row — the currency picker, a scan that set a currency, or
+  opening the form on a foreign draft. Read-through: draw the cached row at
+  once, revalidate if `fetchedAt` isn't today. The feed moves daily; that is
+  the whole cadence. No prefetch of all 19 common currencies, since a trip uses
+  one.
+- **It fills the field, it doesn't take it over** — the rule the scanned
+  merchant already follows. A fetched rate lands only in a field nobody has
+  typed in, tracked by a `suggestedRate` mirror on the draft the way
+  `scannedDescription` mirrors the merchant.
 - **When there is no rate to be had** — offline, unknown currency, feed down —
-  do *not* fall back to `1`. Leave the field empty and let the existing
-  invalid-rate path block Save, so the person types the rate rather than
-  unknowingly accepting a wrong one. Say which it is: fetched, cached from a
-  date, or yours.
+  do *not* fall back to `1`. Picking a foreign currency sets `rateToBase: ""`
+  there and then, so the existing invalid-rate path holds Save until the fetch
+  lands or the person types. That one line is the actual bug here, and it works
+  with no feed at all. Say which it is under the field: today's rate, cached
+  from a date, or yours.
+- **Probably not a new ADR.** What's durable is one paragraph — *the rate is
+  prefilled, never invented, and the source sits behind our own endpoint so it
+  stays swappable* — which belongs in ADR-0005 rather than in a file of its
+  own. Read [decisions/](docs/decisions/README.md)'s bar before deciding
+  otherwise.
 
 ---
 
