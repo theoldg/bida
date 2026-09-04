@@ -428,6 +428,11 @@ export const copy = {
     archivedGroup: (who: string) => `${who} archived the group`,
     restoredGroup: (who: string) => `${who} restored the group`,
     updatedGroup: (who: string) => `${who} updated the group`,
+    setRate: (who: string, code: string) => `${who} set the ${code} rate`,
+    changedRateFor: (who: string, code: string) => `${who} changed the ${code} rate`,
+    removedRate: (who: string, code: string) => `${who} removed the ${code} rate`,
+    /** A rate's diff reads as the sentence the dialog shows: 1 MAD = 0.0921 EUR. */
+    ratePair: (code: string, rate: string, base: string) => `1 ${code} = ${rate} ${base}`,
   },
 
   currency: {

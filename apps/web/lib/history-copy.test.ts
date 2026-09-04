@@ -2,7 +2,8 @@ import { beforeEach, describe as suite, expect, it } from "vitest";
 import { activityFeed, type Member, type Revision } from "@hajsik/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
-import { addExpense, addMember, createGroup, editExpense, removeMember } from "./db/commands";
+import { addExpense, addMember, clearRate, createGroup, editExpense, removeMember, setRate }
+  from "./db/commands";
 import { describe } from "./history-copy";
 
 /**
@@ -17,7 +18,7 @@ async function wipe() {
   await Promise.all([
     d.ops.clear(), d.groups.clear(), d.members.clear(), d.expenses.clear(),
     d.settlements.clear(), d.attachments.clear(), d.device.clear(),
-    d.groupKeys.clear(), d.identities.clear(),
+    d.groupKeys.clear(), d.identities.clear(), d.rates.clear(),
   ]);
 }
 
@@ -125,11 +126,41 @@ suite("describe", () => {
     expect((await described(groupId))[0]!.said).toBe("Marie joined the group");
   });
 
+  // A rate is the group's, so its revisions land in the feed like any other —
+  // and the entity id is the currency itself, which is what lets the sentence
+  // name it without a lookup. Before this branch existed they read "renamed
+  // the group".
+  it("names the currency a rate revision is about", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const members = new Map<string, Member>(
+      (await db().members.where("groupId").equals(groupId).toArray()).map((m) => [m.id, m]));
+    const feed = async () => activityFeed(await opsForGroup(groupId))
+      .filter((rev) => rev.entity === "rate")
+      .map((rev) => describe(rev, "Theo", members, "EUR"));
+
+    await setRate(groupId, theo, "MAD", "0.0921", "fetched", 0);
+    const [set] = await feed();
+    expect(set!.what).toBe("Theo set the MAD rate");
+    expect(set!.diff).toEqual({ now: "1 MAD = 0.0921 EUR" });
+
+    await setRate(groupId, theo, "MAD", "0.095", "typed", 0);
+    const [changed] = await feed();
+    expect(changed!.what).toBe("Theo changed the MAD rate");
+    expect(changed!.diff).toEqual({ was: "1 MAD = 0.0921 EUR", now: "1 MAD = 0.095 EUR" });
+
+    await clearRate(groupId, theo, "MAD");
+    expect((await feed())[0]!.what).toBe("Theo removed the MAD rate");
+  });
+
   it("describes every revision a whole group's life can produce", async () => {
     const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
     await editExpense(groupId, theo, expenseId, { currency: "PLN", rateToBase: "1" });
     await editExpense(groupId, theo, expenseId, { rateToBase: "4.30" });
     await editExpense(groupId, theo, expenseId, { description: "Beers and chips" });
+    await setRate(groupId, theo, "MAD", "0.0921", "fetched", 0);
+    await clearRate(groupId, theo, "MAD");
 
     const all = await described(groupId);
     expect(all.length).toBeGreaterThan(4);

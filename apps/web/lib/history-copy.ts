@@ -1,5 +1,5 @@
 import {
-  splitParticipants,
+  formatRate, isValidRate, splitParticipants,
   type CurrencyCode, type Member, type Revision, type SplitSpec,
 } from "@hajsik/core";
 import { copy } from "./copy";
@@ -172,6 +172,20 @@ export function describe(
       };
     }
     return { what: self ? said.updatedSelf(who) : said.updatedMember(who, them) };
+  }
+
+  // A rate is the group's, and its entity id is the currency code itself, so
+  // the sentence can name the currency without looking anything up.
+  if (rev.entity === "rate") {
+    const code = rev.entityId;
+    const pair = (v: unknown) =>
+      (typeof v === "string" && isValidRate(v) ? said.ratePair(code, formatRate(v), currency) : undefined);
+    if (rev.isDelete) return { what: said.removedRate(who, code) };
+    const c = field("rate");
+    const now = pair(c?.after);
+    if (rev.isCreate) return { what: said.setRate(who, code), diff: now ? { now } : undefined };
+    if (c) return { what: said.changedRateFor(who, code), diff: { was: pair(c.before), now: now ?? "" } };
+    return { what: said.changedRateFor(who, code) };
   }
 
   // group
