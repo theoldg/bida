@@ -64,6 +64,24 @@ registration should actually be keyed on.
 
 ## 6. Smaller, all real
 
+- **A form held open across a peer's edit still loses that edit.** The command
+  layer diffs the posted form against the entity *as of save*, so a whole-form
+  save no longer clobbers a field it never touched. But a form opened before
+  the peer's op arrived holds their old value and posts it as a deliberate
+  change, which is per-field LWW working correctly on a lie. Either re-read the
+  entity into the open form when sync brings a change, or say so.
+- **A rate too large to convert at saves anyway, and re-values nothing.** The
+  dialog takes `999999999999999999999`, promises "This re-values 1 entry
+  already written in USD", and stores it. `repriceEntry` then throws inside
+  `convertMinor` and deliberately keeps the stored figure, so the entry does not
+  move: the rates screen shows a number the ledger is not using, with nothing
+  saying so. The catch is right — losing the row would be worse. The dialog is
+  what should refuse, on the same range `convertMinor` enforces.
+- **Segmented controls don't announce which option is chosen.** Split mode,
+  entry kind and the ledger/balances tabs mark selection with styling only; a
+  screen reader reads four equal buttons. Wants `role="tab"`/`aria-selected`
+  or `aria-pressed` on each.
+
 - **History stamps are wall clock while ordering is HLC.**
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth

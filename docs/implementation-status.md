@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 241 tests |
+| 1 — Domain core | ✅ 243 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
@@ -49,6 +49,16 @@ and the `restore` op kind still folds only because production groups hold some
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)). The look is
 one monospace face with colour only on money
 ([ADR-0023](decisions/0023-monospace-monochrome.md)).
+
+**An edit writes only what the edit changed.** The form posts all fifteen
+fields; the command layer diffs them against the entity and appends a patch of
+what actually moved, so two phones editing different fields of one expense
+offline both keep their change, and a save that touched nothing appends nothing
+([sync.md](sync.md#the-operation)). Removing a rate is refused on the same
+terms as removing a person — only while nothing is written in that currency
+([data-model.md](data-model.md)) — and every `/g` route says "Bad link" for a
+group id it doesn't hold, rather than spinning
+([frontend.md](frontend.md#routing)).
 
 **The two failures that could quietly cost a trip its ledger say so.** Sync
 records how every attempt went and `/g` warns after two consecutive failures —
@@ -106,7 +116,7 @@ Every screen is built. Routes and their jobs are listed in
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
 `lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
-`lib/entry-kind.ts` is types and arithmetic only. 130 smoke tests.
+`lib/entry-kind.ts` is types and arithmetic only. 131 smoke tests.
 
 ### `apps/api`
 
