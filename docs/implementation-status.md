@@ -120,7 +120,7 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 | `history.ts` | `entityHistory`, `activityFeed` |
 | `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
 | `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
-| `scan.ts` | `normalizeScan`, `ScanResult`, `ScanPatch` |
+| `scan.ts` | `normalizeScan`, `checkScan`, `scanCurrency`, `ScanResult`, `ScanPatch`, `ScanProblem` |
 
 ## What has been proven — tested, not just written
 
