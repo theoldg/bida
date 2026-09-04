@@ -67,57 +67,6 @@ Slightly stale rates are fine. Shape to build:
 
 ---
 
-## 3. Dead ends — a disabled button and nothing saying why
-
-### 3.2 A scan that can't read the total must fail as a scan
-
-The payers screen computes its total as `parseMinor(draft.amountText)` while
-the form computes `receiptTotal ?? parseMinor(draft.amountText)`. On the
-Receipt tab `amountText` is routinely empty — OCR often reads the line items
-and misses the printed total, as `handOffReceiptTotal`'s own comment says — so
-the payers header reads **€0.00**, every contribution scores "over", and the
-two screens disagree about what the expense is worth.
-
-Fixing the divergence downstream is treating a symptom. A scan with no total is
-a scan that failed.
-
-**Do:**
-
-- **Refuse the scan when the model returns no total.** `scanReceipt` already
-  has the shape for this — `ScanRejectedError` carries a model-written sentence
-  shown verbatim. Add the app's own: *"I can't see the total on that one"*, in
-  `lib/copy.ts` with the rest of `copy.scan`. The prompt in
-  `apps/web/lib/scan/request.ts` already instructs the model to set `error`
-  when the receipt is cropped or partly unreadable; this is the case where it
-  returns lines anyway.
-- **Validate that the parts add up.** Sum the line items plus the tip and
-  compare against the printed total; on a meaningful mismatch, refuse with
-  *"Something doesn't add up on that receipt"* rather than importing a bill
-  whose grid will silently misprice everyone. Pick a tolerance — a minor unit
-  or two of rounding is normal, a missing line is not — and keep the comparison
-  in integer minor units.
-- **Once the total is trustworthy, make one function own it.** The form and the
-  payers screen should read the entry's amount from the same place instead of
-  each deriving it.
-
-### 3.3 A zero or negative receipt total locks the form shut
-
-Same root, same fix. `receiptLocksAmount = receiptTotal !== null`, and
-`receiptTotalMinor` returns a number as soon as *one* line parses — including
-`0`, and including negatives (`parseMinor("-5.00")` is `-500`, confirmed). A
-refund or all-zero receipt disables the amount field *and* fails
-`amountMinor > 0`, and the footer then says **"Enter an amount to split"**
-pointing at a field the app has disabled. The comment above
-`receiptLocksAmount` anticipates "a scan whose every line is unreadable" (which
-returns `null`) but not "every line is zero or negative".
-
-**Do:** refuse these at the scan, with the validation in 3.2 — a bill totalling
-zero or less is not a bill. Belt and braces: `receiptLocksAmount` should also
-require a positive total, so no future path can disable the field and the save
-button at once.
-
----
-
 ## 5. Sync and multi-device
 
 ### 5.2 Two members with one name should be mergeable
@@ -181,7 +130,7 @@ the discount was actually for.
 
 That may well be the right answer: a "-5.00 loyalty card" on a restaurant bill
 probably *should* be shared. But a voucher against one person's dish should
-not, and today the grid gives no way to say which. Worth deciding what a
-negative line means on the who-had-what grid before writing anything —
-including whether it should be assignable to people at all, like any other
-line. The scan-time sum check in 3.2 has to agree with whatever is chosen.
+not, and today the grid gives no way to say which. So `checkScan` refuses a
+receipt with a credit line outright — nothing is mispriced, and nothing is
+importable either. Deciding what a negative line means on the grid — including
+whether it is assignable to people, like any other line — is what unblocks it.

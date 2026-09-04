@@ -1,8 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import type { ReceiptItem, SplitSpec, SplitTab } from "@hajsik/core";
+import { parseMinor, type ReceiptItem, type SplitSpec, type SplitTab } from "@hajsik/core";
 import type { EntryKind } from "./entry-kind";
+import { receiptTotalMinor } from "./scan/items";
 
 /**
  * The entry being typed — an expense, an income or a transfer. It lives outside
@@ -72,6 +73,55 @@ export interface EntryDraft {
    * field of the entry: it never leaves this draft.
    */
   scannedDescription?: string;
+}
+
+/**
+ * Which split-editor tab a draft is on. Undefined — an old draft, or an
+ * expense saved before the field existed — derives from what is actually on
+ * the entry: a scanned bill means Receipt, otherwise whatever arithmetic mode
+ * the split already is.
+ */
+export function activeSplitTab(draft: EntryDraft): SplitTab {
+  return draft.splitTab
+    ?? ((draft.receiptItems?.length ?? 0) > 0 ? "receipt"
+      : draft.split.mode === "percent" ? "shares" : draft.split.mode);
+}
+
+/**
+ * The bill's own total — every line plus the tip — while Receipt mode is the
+ * thing showing it, and null otherwise.
+ *
+ * Derived at read time, never written into the draft as a cache for some
+ * other screen's effect to notice (ADR-0016). Null on a total of zero or less
+ * as well as on no bill at all: the form disables the amount field on a real
+ * derived number, and a field that is disabled *and* empty is a screen with
+ * nothing to type in and a Save that will never light.
+ */
+export function draftReceiptTotal(draft: EntryDraft): number | null {
+  const showing = draft.kind === "expense"
+    && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
+  if (!showing) return null;
+  const total = receiptTotalMinor(draft.receiptItems ?? [], draft.receiptTip ?? null, draft.currency);
+  return total !== null && total > 0 ? total : null;
+}
+
+/**
+ * What the entry is worth, in its own currency — the bill's total when
+ * Receipt mode is deriving it, else what was typed.
+ *
+ * One function because two screens working it out apart is how the payers
+ * editor came to think a scanned expense was worth €0.00 while the form it
+ * was opened from said €48.30: the form knew about the bill, and the payers
+ * editor only ever read `amountText`.
+ */
+export function draftAmountMinor(draft: EntryDraft): number {
+  const receipt = draftReceiptTotal(draft);
+  if (receipt !== null) return receipt;
+  try {
+    return draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0;
+  } catch {
+    return 0; // mid-type
+  }
 }
 
 const listeners = new Set<() => void>();

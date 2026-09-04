@@ -65,6 +65,9 @@ confers nothing without the secret.
   side: the rest of the draft is not its to throw away. So does who-had-what,
   which has to write a split or merged line through as it happens — its rows
   and the bill's lines are one list — and restores the bill it opened with.
+  **What the entry is worth is `draftAmountMinor` and nowhere else** — a
+  scanned bill is worth what its lines add up to, and the payers editor
+  reading `amountText` on its own is how it came to call one €0.00.
 - **The invite link is `components/invite.tsx`**, on two top bars and written
   once. `navigator.clipboard.writeText` rejects on an insecure context or a
   denied permission, and used to reject into nothing — an inert-looking button,

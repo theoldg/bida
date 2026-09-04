@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, isCurrencyCode, isValidRate, minorToDecimalString, parseMinor,
+  convertMinor, isCurrencyCode, isValidRate, minorToDecimalString,
   sanitizeRate, splitParticipants, validatePayers, validateSplit, type Member, type SplitSpec,
 } from "@hajsik/core";
-import { handOffReceiptTotal, receiptTotalMinor, weightsFromItems } from "../../../../lib/scan/items";
+import { handOffReceiptTotal, weightsFromItems } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
@@ -25,7 +25,7 @@ import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError,
 } from "../../../../lib/scan";
-import { blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
+import { activeSplitTab, blankDraft, clearDraft, draftAmountMinor, draftReceiptTotal, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
 
 /**
  * The typed amount and the currency it is held in must never disagree: JPY has
@@ -273,12 +273,7 @@ function EditEntryScreen() {
   const patch = (change: Partial<EntryDraft>) =>
     saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
-  // Undefined (an old draft, or an expense saved before this field existed)
-  // derives from what's actually on it: a scanned bill means "Receipt",
-  // otherwise whatever arithmetic mode the split already is.
-  const activeTab: SplitTab = draft.splitTab
-    ?? (draft.receiptItems && draft.receiptItems.length > 0 ? "receipt"
-      : draft.split.mode === "percent" ? "shares" : draft.split.mode);
+  const activeTab: SplitTab = activeSplitTab(draft);
 
   // A bill is a thing an expense has. An income has no receipt to read a
   // total off, and a transfer has no split at all.
@@ -286,23 +281,18 @@ function EditEntryScreen() {
   const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
   const onReceiptTab = canScan && activeTab === "receipt" && hasReceiptItems;
 
-  // Receipt's total and the split it implies are computed here, at the one
-  // place either is read (this render, and save() below) — never written
-  // into the draft as a cache for some other effect to notice and resync.
-  // There's nothing to fall out of step because nothing is ever recorded
-  // twice (ADR-0016; this replaced an effect on `receiptItems`/`receiptTip`
-  // that mirrored the total into `amountText`, which had a window where a
-  // screen reading the draft saw last save's total instead of this one's).
-  const receiptTotal = onReceiptTab
-    ? receiptTotalMinor(draft.receiptItems ?? [], draft.receiptTip ?? null, draft.currency)
-    : null;
+  // Receipt's total is `lib/draft.ts`'s to derive, at the one place it is read
+  // (this render, and save() below) — never written into the draft as a cache
+  // for some other effect to notice and resync. Nothing can fall out of step
+  // because nothing is recorded twice (ADR-0016).
+  const receiptTotal = draftReceiptTotal(draft);
   // The amount is derived from the bill while Receipt mode is showing it —
   // typing over it would desync the total from what the items actually add
   // up to, with nothing left to reconcile the two. Edit the items or the tip
   // instead, or switch tabs to take manual control back (ADR-0016). Locked on
-  // a real derived number, not merely on having items: a scan whose every
-  // line is unreadable would otherwise leave the field disabled *and* empty,
-  // with no way to type an amount and no way to save.
+  // a real, positive derived number, never merely on having items: a field
+  // that is disabled *and* empty is a screen with nothing to type in and a
+  // Save that will never light.
   const receiptLocksAmount = receiptTotal !== null;
   const receiptWeights = onReceiptTab
     ? weightsFromItems(
@@ -352,11 +342,8 @@ function EditEntryScreen() {
     });
   };
 
-  let amountMinor = 0;
-  try {
-    amountMinor = receiptTotal !== null ? receiptTotal
-      : draft.amountText ? parseMinor(draft.amountText, draft.currency) : 0;
-  } catch { /* mid-type */ }
+  // The same question the payers editor asks, answered by the same function.
+  const amountMinor = draftAmountMinor(draft);
 
   const foreign = draft.currency !== base;
   // An amount and a rate can each be in range and still multiply out of it —

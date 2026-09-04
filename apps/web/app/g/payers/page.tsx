@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { parseMinor, validatePayers } from "@hajsik/core";
+import { validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
@@ -10,7 +10,7 @@ import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
 import { bare, money, payerProblemText } from "../../../lib/format";
 import { useGroupData } from "../../../lib/hooks";
-import { saveDraft, useDraft } from "../../../lib/draft";
+import { draftAmountMinor, saveDraft, useDraft } from "../../../lib/draft";
 
 /**
  * Who put the money in. The mirror of the split editor, and deliberately
@@ -39,8 +39,10 @@ function PayersScreen() {
   const gid = groupId, current = draft;
   const currency = draft.currency;
 
-  let amountMinor = 0;
-  try { amountMinor = draft.amountText ? parseMinor(draft.amountText, currency) : 0; } catch { /* mid-type */ }
+  // What the form says this entry is worth, from the same function the form
+  // asks — a scanned bill is worth what its lines add up to, and reading
+  // `amountText` alone had this screen calling that expense €0.00.
+  const amountMinor = draftAmountMinor(draft);
 
   // A draft with no `payers` yet means the ordinary one-payer expense; show it
   // as that person holding the whole amount rather than as an empty table.
