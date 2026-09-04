@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isCurrencyCode } from "@hajsik/core";
 import { Eyebrow } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
-import { ChoiceDialog, PromptDialog } from "../../components/dialog";
+import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
 import { AddName } from "../../components/name-adder";
 import { copy } from "../../lib/copy";
@@ -14,6 +14,7 @@ import { createGroup } from "../../lib/db/commands";
 import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { nameTaken } from "../../lib/names";
+import { goUp } from "../../lib/nav";
 
 /**
  * The whole group, on one screen.
@@ -32,7 +33,28 @@ export default function NewGroupPage() {
   const [currency, setCurrency] = useState("EUR");
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
-  const [ask, setAsk] = useState<null | "currency" | "other">(null);
+  const [ask, setAsk] = useState<null | "currency" | "other" | "discard">(null);
+
+  // A group typed here is state and nothing else — no draft store, nothing in
+  // Dexie — so both ways off this screen throw it away. The entry form asks
+  // before it does that and lets the browser ask on a reload; a list of names
+  // somebody just typed is worth the same courtesy.
+  const typed = name.trim().length > 0 || myName.trim().length > 0 || others.length > 0;
+  useEffect(() => {
+    if (!typed) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [typed]);
+
+  function leave() {
+    goUp(route.groups(), (to) => router.replace(to));
+  }
+
+  function goBack() {
+    if (typed && !busy) { setAsk("discard"); return; }
+    leave();
+  }
 
   // Your own name is on the same list as everyone else's, so it plays by the
   // same rule: one Ana, and the app can tell people apart everywhere it only
@@ -59,18 +81,22 @@ export default function NewGroupPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.newGroup.title} back={route.groups()}
+        <TopBar title={copy.newGroup.title} back={goBack}
           right={<button className="action" onClick={save} disabled={!ready}>{copy.act.create}</button>} />
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
               <label htmlFor="g-name">{copy.newGroup.name}</label>
-              <input id="g-name" value={name} autoFocus placeholder={copy.newGroup.namePlaceholder}
+              {/* The same cap every name in the app has: a member's is 40, and
+                  a group drawn beside them has no more room than they do. */}
+              <input id="g-name" value={name} autoFocus maxLength={40}
+                placeholder={copy.newGroup.namePlaceholder}
                 onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="field">
               <label htmlFor="g-me">{copy.newGroup.you}</label>
-              <input id="g-me" value={myName} placeholder={copy.newGroup.yourNamePlaceholder}
+              <input id="g-me" value={myName} maxLength={40}
+                placeholder={copy.newGroup.yourNamePlaceholder}
                 onChange={(e) => setMyName(e.target.value)} />
             </div>
             {clash ? <Failure>{copy.members.taken(myName.trim())}</Failure> : null}
@@ -102,6 +128,13 @@ export default function NewGroupPage() {
           </div>
         </Scroll>
       </Body>
+
+      {ask === "discard" ? (
+        <ConfirmDialog title={copy.newGroup.discardTitle} confirm={copy.act.discard}
+          danger={true} onConfirm={leave} onClose={() => setAsk(null)}>
+          <p>{copy.newGroup.discardBody}</p>
+        </ConfirmDialog>
+      ) : null}
 
       {ask === "currency" ? (
         <ChoiceDialog

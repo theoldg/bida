@@ -160,9 +160,6 @@ registration should actually be keyed on.
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth
   a note in the UI or a switch to something monotonic.
-- **`/new` discards a typed group in silence** while the entry form asks first:
-  the back arrow is a plain `<Link>` and there is no `beforeunload`. Also,
-  member names cap at 40 and the group name has no limit at all.
 - **The scan asks for a category and throws it away.** `normalizeScan` returns
   `patch.category`; the form never reads it, and `scanReceipt(…, [])` always
   passes an empty category list. Either wire it up or stop asking — it is

@@ -113,6 +113,8 @@ export const copy = {
     currencyHint: "Balances settle in this currency. Entries can be in any other.",
     people: "Who else",
     failed: (why: string) => `Couldn’t create the group — ${why}`,
+    discardTitle: "Discard this group?",
+    discardBody: "Nothing has been created yet.",
   },
 
   // ------------------------------------------------------------- join
