@@ -133,8 +133,9 @@ Deploy steps: [hosting.md](hosting.md#deploying).
 - **Any permutation of the same ops folds to the same state**; a late-arriving
   op is detected (`foldForward` → `null`, caller rebuilds).
 - **`settleUp` clears every balance to zero**, 300 randomised groups.
-- **HLCs are totally ordered by string comparison**; a peer more than an hour
-  ahead is rejected, not absorbed.
+- **HLCs are totally ordered by string comparison**, and a peer's stamp is
+  absorbed on receive however far ahead it reads — so a reply to their op
+  always sorts after it.
 - **Payer and consumer sides both sum to `baseAmountMinor` exactly**, including
   a payer who isn't a participant.
 - **An income is exactly the negation of the same entry as an expense**, member

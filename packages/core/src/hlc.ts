@@ -16,8 +16,6 @@ export type Hlc = string;
 const PHYSICAL_DIGITS = 15;
 const COUNTER_DIGITS = 5;
 const MAX_COUNTER = 10 ** COUNTER_DIGITS - 1;
-/** Reject clocks this far ahead of us; a device that wrong corrupts ordering. */
-export const MAX_CLOCK_DRIFT_MS = 60 * 60 * 1000;
 
 export interface HlcState {
   physical: number;
@@ -66,15 +64,19 @@ export function hlcSend(state: HlcState, now: number): { state: HlcState; hlc: H
   return { state: next, hlc: formatHlc(next) };
 }
 
-/** Advance the local clock on receiving a remote stamp. */
+/**
+ * Advance the local clock on receiving a remote stamp.
+ *
+ * Every stamp is adopted, however far ahead it reads. This used to refuse one
+ * more than an hour in the future, which protected ordering by throwing away
+ * somebody's expense: there is no time limit on an update, and a late or
+ * far-future op is still an op. Adopting it is what makes the guarantee — a
+ * device that has seen a stamp stamps after it — so the refusal bought
+ * nothing the adoption doesn't already give.
+ */
 export function hlcReceive(state: HlcState, remote: Hlc, now: number): HlcState {
   const r = parseHlc(remote);
   const wall = Math.trunc(now);
-  if (r.physical - wall > MAX_CLOCK_DRIFT_MS) {
-    throw new RangeError(
-      `hlc from the future by ${r.physical - wall}ms; refusing to adopt it`,
-    );
-  }
   const physical = Math.max(state.physical, r.physical, wall);
   let counter: number;
   if (physical === state.physical && physical === r.physical) {

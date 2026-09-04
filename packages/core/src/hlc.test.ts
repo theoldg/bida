@@ -47,10 +47,15 @@ describe("hlc", () => {
     expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
   });
 
-  it("refuses a clock absurdly far in the future", () => {
+  // There is no time limit on an update. Refusing a far-future stamp lost
+  // somebody's expense to protect an ordering guarantee that adopting it
+  // provides anyway.
+  it("adopts a clock absurdly far in the future rather than refusing it", () => {
     const state = createHlcState("aaa", 0, 0);
     const remote = formatHlc(createHlcState("bbb", 10 ** 12, 0));
-    expect(() => hlcReceive(state, remote, 1000)).toThrow(/future/);
+    const next = hlcReceive(state, remote, 1000);
+    expect(next.physical).toBe(10 ** 12);
+    expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
   });
 
   it("rejects malformed stamps and node ids", () => {

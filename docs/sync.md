@@ -30,8 +30,19 @@ Phone wall clocks are wrong, sometimes by minutes; ordering by `createdAt` lets
 a slow clock silently lose every conflict. HLC (`core/hlc.ts`) is
 `<physical-ms>:<counter>:<nodeId>`, zero-padded so string comparison equals
 causal-ish ordering. On send: `physical = max(now, lastPhysical)`, incrementing
-`counter` on a tie. On receive: also `max` with the remote physical. `nodeId` is
+`counter` on a tie. On receive: `max` with the remote physical. `nodeId` is
 a random per-device string breaking ties deterministically.
+
+**Receiving is what makes the ordering true**, so `hlcReceive` runs over every
+pulled op, in the same transaction that stores them — a device that has seen a
+stamp always stamps after it. Skip that and the clock only moves on send: a
+peer whose phone runs three hours fast wins every conflict, because the
+correction you type after reading their op stamps *before* it and the fold
+throws it away.
+
+**Any stamp is adopted, however far ahead it reads.** There is no time limit on
+an update: a late or far-future op is still somebody's expense, and refusing it
+loses that expense to protect a guarantee adopting it already provides.
 
 **Order by HLC, never by `seq` and never by `createdAt`.** `seq` orders arrival
 at the server and answers only "what have I not pulled yet".
