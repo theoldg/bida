@@ -178,7 +178,7 @@ per-group quota, then a decision about whether the photo is stored at all.
 
 `packages/core/src/scan.ts` — the normaliser, no network · `apps/api`'s `POST
 /api/groups/:id/scan`, the same bearer-secret check as sync, passing through to
-`GEMINI_MODEL = "gemini-3.6-flash"` (one constant in `apps/api/src/index.ts`;
+`GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
@@ -189,7 +189,7 @@ deployed Worker, 2026-08-28.
 ## Gotchas
 
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
-  replacement. If `3.6-flash` ever goes the same way, try the current
+  replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
 - **If a UI mode needs to stick, persist it; never re-derive it from data that
