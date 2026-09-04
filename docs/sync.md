@@ -34,7 +34,7 @@ is the point — one number, last word wins, both ops in the history.
 
 Phone wall clocks are wrong, sometimes by minutes; ordering by `createdAt` lets
 a slow clock silently lose every conflict. HLC (`core/hlc.ts`) is
-`<physical-ms>:<counter>:<nodeId>`, zero-padded so string comparison equals
+`<physical-ms>-<counter>-<nodeId>`, zero-padded so string comparison equals
 causal-ish ordering. On send: `physical = max(now, lastPhysical)`, incrementing
 `counter` on a tie. On receive: `max` with the remote physical. `nodeId` is
 a random per-device string breaking ties deterministically.
@@ -111,9 +111,9 @@ question and only drives the "Offline" banner: it reports a link, not an
 answering server, so it is blind to exactly the outage that costs a trip its
 ledger.
 
-**Attachments sync separately**, Wi-Fi-only by default plus a manual "upload
-now". An expense is fully synced and correct with its photos still queued — the
-op references attachment ids that resolve to local blobs until upload completes.
+**Attachments will sync separately** — Wi-Fi-only by default plus a manual
+"upload now", with an expense fully synced and correct while its photos are
+still queued. Not built: nothing appends an `attachment` op yet (Phase 4).
 
 ## Conflicts
 

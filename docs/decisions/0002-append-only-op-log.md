@@ -19,7 +19,7 @@ sequence number and hands ops back. It does not fold.
 clock — no CRDT library.** Ops carry only changed fields, so concurrent edits to
 *different* fields both survive; same-field edits resolve by highest HLC, and
 both ops stay in the log so history can show the edit that lost. HLC is
-`<physical-ms>:<counter>:<nodeId>`, zero-padded, so a phone with a wrong wall
+`<physical-ms>-<counter>-<nodeId>`, zero-padded, so a phone with a wrong wall
 clock can't silently win every conflict.
 
 ## Consequences

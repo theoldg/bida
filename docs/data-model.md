@@ -42,7 +42,7 @@ server.
 
 ```ts
 Group      { id, name, baseCurrency, createdAt, archivedAt? }
-Member     { id, groupId, name, colorSeed, isPlaceholder, deletedAt? }
+Member     { id, groupId, name, colorSeed, deletedAt? }
 Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
              rateToBase, baseAmountMinor, occurredAt, createdAt?, note?, deletedAt? }
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
@@ -78,7 +78,7 @@ Expense {
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
-`percent { percents }` (basis points). **`percent` is legacy and read-only**
+`percent { bps }` (basis points). **`percent` is legacy and read-only**
 ([ADR-0010](decisions/0010-what-an-entry-is.md)).
 What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
 and nowhere else.
@@ -193,10 +193,9 @@ CREATE TABLE attachments (
 
 | Store | Key | Notes |
 |---|---|---|
-| `ops` | `id` | indexes on `[groupId+hlc]`, `[groupId+syncState]` |
+| `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]` |
 | `groups`, `members`, `expenses`, `settlements`, `attachments`, `identities` | `id` | materialised, rebuildable from `ops` |
 | `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
-| `blobs` | `attachmentId` | queued image data awaiting upload |
 | `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
 
