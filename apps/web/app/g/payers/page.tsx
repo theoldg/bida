@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
-import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
@@ -35,7 +35,9 @@ function PayersScreen() {
   const opened = useRef<{ payers: Record<string, number> | null; paidBy: string } | null>(null);
   if (draft && !opened.current) opened.current = { payers: draft.payers, paidBy: draft.paidBy };
 
-  if (!groupId || !data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
+  if (!groupId) return <BadLink />;
+  if (!data.loading && !data.group) return <BadLink />;
+  if (!data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
   const gid = groupId, current = draft;
   const currency = draft.currency;
 

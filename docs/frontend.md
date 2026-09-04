@@ -28,6 +28,14 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
+**Every `/g` route validates its id.** They all read the group out of the query
+string, and a link naming a group this phone doesn't have — a stale bookmark, a
+URL shared to somebody who never joined — used to leave the sub-screens holding
+a back arrow and nothing else, or spinning forever on `useGroupData(undefined)`.
+Each now renders `BadLink` (`components/chrome.tsx`), which says what a proper
+invite link is. `/g` itself keeps its gentler "Not found": you are on the group
+screen, one id short.
+
 **Back goes up, not back.** A screen's `back` names its parent, and `goUp`
 (`lib/nav.ts`) unwinds the history to it instead of pushing; the device's back
 button runs that same action, so the button and the arrow cannot disagree

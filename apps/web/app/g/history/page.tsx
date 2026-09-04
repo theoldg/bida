@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { activityFeed, entityHistory, type Revision } from "@hajsik/core";
-import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { db } from "../../../lib/db/dexie";
 import { opsForGroup } from "../../../lib/db/fold";
@@ -72,9 +72,11 @@ function HistoryScreen() {
   const visible = revisions.slice(0, shown);
   const rest = revisions.length - visible.length;
 
-  if (!groupId || !data.group) {
-    return <Blank back={groupId ? (entryId ? route.entry(groupId, entryId) : route.group(groupId)) : route.groups()} />;
+  if (!groupId) return <BadLink />;
+  if (data.loading) {
+    return <Blank back={entryId ? route.entry(groupId, entryId) : route.group(groupId)} />;
   }
+  if (!data.group) return <BadLink />;
   const group = data.group;
   const currency = group.baseCurrency;
 

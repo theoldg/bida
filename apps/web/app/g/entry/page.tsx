@@ -9,7 +9,7 @@ import {
   type Expense, type Group, type Settlement,
 } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
-import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
@@ -47,7 +47,9 @@ function EntryScreen() {
     [entryId],
   ) ?? 0;
 
-  if (!groupId || !data.group) return <Blank back={groupId ? route.group(groupId) : route.groups()} />;
+  if (!groupId) return <BadLink />;
+  if (data.loading) return <Blank back={route.group(groupId)} />;
+  if (!data.group) return <BadLink />;
   const group = data.group;
   const entry = expense ?? settlement;
 

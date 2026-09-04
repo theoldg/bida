@@ -147,6 +147,16 @@ export const copy = {
       empty: "That group isn’t on this phone",
       body: "Open the invite link again, or pick another group.",
     },
+    /**
+     * For a link that names nothing this phone has — a deep link into a group
+     * that was never joined or has been forgotten. `notFound` above is the
+     * gentler case: you are on the group screen, one id short.
+     */
+    badLink: {
+      title: "Bad link",
+      empty: "This link doesn’t open anything",
+      body: "A group only opens on a phone that has its invite link. Ask someone in the group to send you theirs, or pick another group.",
+    },
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline — you may not have everyone’s latest.",
     offlinePending: (waiting: string) => `Offline — ${waiting} waiting.`,

@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { formatRate, isCurrencyCode, type RateSource } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
-import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../components/dialog";
 import { RateDialog } from "../../../components/rate-dialog";
 import { clearRate, setRate } from "../../../lib/db/commands";
@@ -46,8 +46,9 @@ function RatesScreen() {
   const data = useGroupData(groupId);
   const [ask, setAsk] = useState<Ask | null>(null);
 
-  if (!groupId || data.loading) return <Blank title={copy.rates.title} back={groupId ? route.group(groupId) : route.groups()} />;
-  if (!data.group) return <Blank title={copy.rates.title} back={route.groups()} />;
+  if (!groupId) return <BadLink />;
+  if (data.loading) return <Blank title={copy.rates.title} back={route.group(groupId)} />;
+  if (!data.group) return <BadLink />;
 
   const group = data.group;
   const base = group.baseCurrency;

@@ -152,6 +152,22 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: str
 }
 
 /**
+ * A link that names a group this phone doesn't have. Every screen under `/g`
+ * needs one: they all read the group out of the query string, and without this
+ * a stale bookmark or a shared URL left them holding a back arrow and nothing
+ * else. It always offers the way out — the group list — rather than only
+ * saying no.
+ */
+export function BadLink() {
+  return (
+    <Screen><Body>
+      <TopBar title={copy.group.badLink.title} back="/" />
+      <Empty title={copy.group.badLink.empty}>{copy.group.badLink.body}</Empty>
+    </Body></Screen>
+  );
+}
+
+/**
  * A fixed bar under the scroll holding the screen's one act. Only for a button
  * that ends the screen — a decision that fits in a paragraph is a dialog
  * (ADR-0008).

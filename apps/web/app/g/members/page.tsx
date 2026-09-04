@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
-import { Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { InviteButton } from "../../../components/invite";
@@ -56,7 +56,9 @@ function MembersScreen() {
   const data = useGroupData(groupId);
   const [ask, setAsk] = useState<Ask | null>(null);
 
-  if (!groupId || !data.group) return <Blank back={groupId ? route.group(groupId) : route.groups()} />;
+  if (!groupId) return <BadLink />;
+  if (data.loading) return <Blank back={route.group(groupId)} />;
+  if (!data.group) return <BadLink />;
   const group = data.group;
   const names = data.members.map((m) => m.name);
 

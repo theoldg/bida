@@ -12,7 +12,7 @@ import { handOffReceiptTotal, weightsFromItems } from "../../../../lib/scan/item
 import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
-import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { RateDialog } from "../../../../components/rate-dialog";
 import { Icon } from "../../../../components/icons";
@@ -291,7 +291,23 @@ function EditEntryScreen() {
       </Body></Screen>
     );
   }
-  if (!groupId || !data.group || !draft) return <Blank title={title} />;
+  // An `e` naming nothing in either table is the same dead end one step on: the
+  // seeding effect has nothing to seed from and gives up, leaving a titled
+  // blank forever. A link to a deleted entry is the ordinary way here, so it
+  // gets the sentence the entry screen already says for one.
+  if (groupId && entryId && !data.loading && data.group
+    && !data.expenses.some((e) => e.id === entryId)
+    && !data.settlements.some((s) => s.id === entryId)) {
+    return (
+      <Screen><Body>
+        <TopBar title={copy.entry.gone.title} back={route.group(groupId)} />
+        <Empty title={copy.entry.gone.body}>{copy.entry.gone.why}</Empty>
+      </Body></Screen>
+    );
+  }
+  if (!groupId) return <BadLink />;
+  if (!data.loading && !data.group) return <BadLink />;
+  if (!data.group || !draft) return <Blank title={title} />;
   const group = data.group;
   const base = group.baseCurrency;
   const kind = draft.kind;
