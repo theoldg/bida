@@ -37,6 +37,7 @@ function bucketFor(state: GroupState, entity: Op["entity"]): Record<Id, Bag> | n
     case "settlement": return state.settlements as unknown as Record<Id, Bag>;
     case "attachment": return state.attachments as unknown as Record<Id, Bag>;
     case "identity": return state.identities as unknown as Record<Id, Bag>;
+    case "rate": return state.rates as unknown as Record<Id, Bag>;
     case "group": return null;
   }
 }
@@ -107,4 +108,6 @@ export function foldForward(state: GroupState, incoming: readonly Op[]): GroupSt
   return state;
 }
 
-export type { Attachment, Expense, Group, GroupState, Identity, Member, Settlement };
+export type {
+  Attachment, ExchangeRate, Expense, Group, GroupState, Identity, Member, Settlement,
+};

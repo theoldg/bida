@@ -10,7 +10,9 @@ import type { Id } from "./types.js";
 export type EntityKind =
   | "group" | "member" | "expense" | "settlement" | "attachment"
   /** A device's claim to be a member. Shared so `actor` can be read. ADR-0003. */
-  | "identity";
+  | "identity"
+  /** One currency's rate to the group's base. Entity id is the code. ADR-0005. */
+  | "rate";
 export type OpKind = "create" | "update" | "delete" | "restore";
 
 export interface Op {
@@ -35,7 +37,7 @@ export interface Op {
 }
 
 const ENTITIES: readonly EntityKind[] = [
-  "group", "member", "expense", "settlement", "attachment", "identity",
+  "group", "member", "expense", "settlement", "attachment", "identity", "rate",
 ];
 const KINDS: readonly OpKind[] = ["create", "update", "delete", "restore"];
 

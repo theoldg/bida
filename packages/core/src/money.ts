@@ -178,3 +178,110 @@ export function sumMinor(values: Iterable<number>): number {
   if (!Number.isSafeInteger(total)) throw new RangeError("sumMinor: overflow");
   return total;
 }
+
+/**
+ * How many significant digits a rate the app produced carries.
+ *
+ * Not a precision limit on money — `convertMinor` reads the whole string —
+ * but on the two places the app writes a rate instead of a person: what comes
+ * back from the feed, and the reciprocal of what somebody typed the other way
+ * round. Twelve is chosen so a rate typed as its inverse survives the round
+ * trip: "4.5" stores as 1/4.5 to twelve digits, and inverting that back at
+ * `RATE_SHOWN_DIGITS` reads "4.5" again rather than "4.500000001".
+ */
+export const RATE_DIGITS = 12;
+
+/** Significant digits a rate is *shown* with. Six is where a human stops reading. */
+export const RATE_SHOWN_DIGITS = 6;
+
+/** "1.0834e-5" -> "0.000010834". `isValidRate` rejects exponent notation. */
+function expandExponent(text: string): string {
+  const e = text.indexOf("e");
+  if (e === -1) return text;
+  const exponent = Number(text.slice(e + 1));
+  const [whole = "0", frac = ""] = text.slice(0, e).split(".");
+  const digits = whole + frac;
+  // Where the point sits once the exponent is spent, counted from the left.
+  const point = whole.length + exponent;
+  if (point <= 0) return `0.${"0".repeat(-point)}${digits}`;
+  if (point >= digits.length) return digits + "0".repeat(point - digits.length);
+  return `${digits.slice(0, point)}.${digits.slice(point)}`;
+}
+
+/** Drop the zeros a fixed-digit rounding left on the end. "4.500" -> "4.5". */
+function trimRate(text: string): string {
+  if (!text.includes(".")) return text;
+  const trimmed = text.replace(/0+$/, "").replace(/\.$/, "");
+  return trimmed === "" || trimmed === "-" ? "0" : trimmed;
+}
+
+/**
+ * A rate from a JSON number, as the exact decimal string `Rate` is.
+ *
+ * The feed publishes rates as JSON numbers, which are floats — this is the
+ * one door they come in through, and it closes behind them: everything
+ * downstream is the string. `toPrecision` does the rounding (the float is
+ * already the only value we have; no arithmetic is done on it here) and the
+ * two helpers above undo the two shapes it can produce that `isValidRate`
+ * rejects — an exponent, and trailing zeros.
+ */
+export function rateFromNumber(value: number, significantDigits = RATE_DIGITS): Rate {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new RangeError(`rateFromNumber: ${value} is not a positive finite number`);
+  }
+  const rate = trimRate(expandExponent(value.toPrecision(significantDigits)));
+  if (!isValidRate(rate)) throw new RangeError(`rateFromNumber: produced ${JSON.stringify(rate)}`);
+  return rate;
+}
+
+/**
+ * Round a positive decimal string to `significantDigits`, half-away-from-zero.
+ * Works on the digits themselves — no float, no `toPrecision`, since the input
+ * may carry more precision than a double holds.
+ */
+function toSignificant(whole: string, frac: string, significantDigits: number): string {
+  const digits = whole + frac;
+  const lead = digits.search(/[1-9]/);
+  if (lead === -1) return "0";
+  const keep = lead + significantDigits;
+  if (keep >= digits.length) return trimRate(`${whole}.${frac}`);
+  // Round the kept prefix as an integer, then put the point back where the
+  // whole part ends. Carrying past the front ("999" -> "1000") lengthens it,
+  // which moves the point one to the right — exactly what the extra digit means.
+  const roundUp = Number(digits[keep]) >= 5;
+  const kept = (BigInt(digits.slice(0, keep)) + (roundUp ? 1n : 0n)).toString()
+    .padStart(keep, "0");
+  const point = whole.length + (kept.length - keep);
+  const padded = kept + "0".repeat(Math.max(0, point - kept.length));
+  return trimRate(point <= 0
+    ? `0.${"0".repeat(-point)}${padded}`
+    : `${padded.slice(0, point) || "0"}.${padded.slice(point)}`);
+}
+
+/**
+ * The same rate read the other way round: "1 PLN = 0.234 EUR" becomes
+ * "1 EUR = 4.27350 PLN".
+ *
+ * The registry stores one direction and the dialog offers both, so this runs
+ * on every keystroke in the field somebody isn't typing in. Exact bigint long
+ * division to `significantDigits`, never `1 / Number(rate)`: a reciprocal that
+ * a person then saves *becomes* the rate every balance is computed from, so it
+ * is money arithmetic and gets money arithmetic's treatment.
+ */
+export function invertRate(rate: Rate, significantDigits = RATE_DIGITS): Rate {
+  const { num, scale } = parseRate(rate);
+  // 1 / (num / 10^scale) = 10^scale / num, taken to enough places that
+  // `toSignificant` has a digit to round on however small the result is.
+  const places = significantDigits + num.toString().length + 1;
+  const scaled = divRound(pow10(scale + places), num).toString().padStart(places + 1, "0");
+  const cut = scaled.length - places;
+  return toSignificant(scaled.slice(0, cut), scaled.slice(cut), significantDigits);
+}
+
+/** A rate as a person reads it — the stored precision is for arithmetic, not eyes. */
+export function formatRate(rate: Rate, significantDigits = RATE_SHOWN_DIGITS): string {
+  const { num, scale } = parseRate(rate);
+  const text = num.toString().padStart(scale + 1, "0");
+  const cut = text.length - scale;
+  return toSignificant(text.slice(0, cut), text.slice(cut), significantDigits);
+}

@@ -185,6 +185,38 @@ export interface Identity {
   claimedAt: number;
 }
 
+/**
+ * Where a rate in the registry came from, which is the only thing the app can
+ * honestly say about a number it is converting money with.
+ */
+export type RateSource = "fetched" | "typed";
+
+/**
+ * One line of the group's exchange-rate registry: what a currency is worth,
+ * for everybody in the group, right now.
+ *
+ * The registry is **the** answer to "what is 500 MAD in euros" — entries are
+ * valued at it on read, not at whatever rate happened to be in force the day
+ * somebody typed them (ADR-0005). That is what makes it worth correcting: fix
+ * the rate once and every MAD entry in the ledger follows.
+ *
+ * `id` is the currency code, so there is exactly one row per currency and two
+ * phones editing the same one merge by HLC like any other entity rather than
+ * making a second row. A row for the group's own base currency is meaningless
+ * and is never written.
+ */
+export interface ExchangeRate {
+  /** The currency this values. Doubles as the entity id — one row per currency. */
+  id: CurrencyCode;
+  groupId: Id;
+  /** 1 unit of `id` = `rate` units of the group's base currency. */
+  rate: Rate;
+  source: RateSource;
+  /** The feed's own date for a fetched rate; when it was typed, for a typed one. */
+  asOf: number;
+  deletedAt?: number | null;
+}
+
 export type UploadState = "local" | "uploading" | "uploaded";
 
 export interface Attachment {
@@ -209,6 +241,8 @@ export interface GroupState {
   attachments: Record<Id, Attachment>;
   /** Keyed by device node id, not by member: one row per device. */
   identities: Record<Id, Identity>;
+  /** The group's exchange-rate registry, keyed by currency code. See `ExchangeRate`. */
+  rates: Record<CurrencyCode, ExchangeRate>;
   /** Highest HLC applied. Cheap way to know whether a fold is up to date. */
   lastHlc: Hlc | undefined;
 }
@@ -221,6 +255,7 @@ export function emptyGroupState(): GroupState {
     settlements: {},
     attachments: {},
     identities: {},
+    rates: {},
     lastHlc: undefined,
   };
 }

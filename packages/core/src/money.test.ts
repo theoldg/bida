@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   convertMinor, exponentOf, formatMinor, isCurrencyCode, minorToDecimalString,
   parseMinor, isValidRate, sanitizeRate, sumMinor,
+  formatRate, invertRate, rateFromNumber, RATE_DIGITS, RATE_SHOWN_DIGITS,
 } from "./money.js";
 
 describe("exponentOf", () => {
@@ -159,5 +160,130 @@ describe("sumMinor", () => {
   it("adds", () => {
     expect(sumMinor([5710, 2763, 4421])).toBe(12894);
     expect(sumMinor([])).toBe(0);
+  });
+});
+
+describe("rateFromNumber", () => {
+  it.each([
+    [0.234043, "0.234043"],
+    [4.5, "4.5"],
+    [1, "1"],
+    [10.834, "10.834"],
+    [0.0921, "0.0921"],
+  ])("keeps %s as it was printed", (value, want) => {
+    expect(rateFromNumber(value)).toBe(want);
+  });
+
+  // The bug this exists for: String(5e-7) is "5e-7", which isValidRate rejects,
+  // and a rate that fails validation is a Save that never lights.
+  it.each([5e-7, 1.0834e-5, 2.5e-8, 1e-21])("writes %s out in full", (value) => {
+    const rate = rateFromNumber(value);
+    expect(rate).not.toContain("e");
+    expect(isValidRate(rate)).toBe(true);
+  });
+
+  it("writes a large rate out in full too", () => {
+    // UZS to EUR the wrong way round: the feed publishes both directions.
+    expect(rateFromNumber(1.2e21)).toBe("1200000000000000000000");
+    expect(isValidRate(rateFromNumber(1e30))).toBe(true);
+  });
+
+  it("rounds to the digits asked for, and trims what that leaves", () => {
+    expect(rateFromNumber(0.23404255319148936, 6)).toBe("0.234043");
+    expect(rateFromNumber(4.5, 6)).toBe("4.5");
+    expect(rateFromNumber(0.999999999999, 6)).toBe("1");
+  });
+
+  it("refuses what is not a rate", () => {
+    expect(() => rateFromNumber(0)).toThrow(RangeError);
+    expect(() => rateFromNumber(-1)).toThrow(RangeError);
+    expect(() => rateFromNumber(NaN)).toThrow(RangeError);
+    expect(() => rateFromNumber(Infinity)).toThrow(RangeError);
+  });
+});
+
+describe("invertRate", () => {
+  it.each([
+    ["4", "0.25"],
+    ["0.25", "4"],
+    ["1", "1"],
+    ["2", "0.5"],
+    ["0.5", "2"],
+  ])("turns %s into %s exactly", (rate, want) => {
+    expect(invertRate(rate)).toBe(want);
+  });
+
+  it("takes a repeating reciprocal to the digits it was asked for", () => {
+    expect(invertRate("3", 12)).toBe("0.333333333333");
+    expect(invertRate("4.5", 12)).toBe("0.222222222222");
+    expect(invertRate("7", 6)).toBe("0.142857");
+  });
+
+  it("rounds half away from zero rather than truncating", () => {
+    // 1/1.6 = 0.625 exactly; asked for two digits that is 0.63, not 0.62.
+    expect(invertRate("1.6", 2)).toBe("0.63");
+    // 1/8 = 0.125 -> 0.13 at two digits.
+    expect(invertRate("8", 2)).toBe("0.13");
+  });
+
+  it("carries past the front of the number", () => {
+    // 1/0.10005 = 9.995... which rounds to 10 at three digits, not 9.99.
+    expect(invertRate("0.10005", 3)).toBe("10");
+  });
+
+  // The whole reason for the two digit counts. Somebody types "1 EUR = 4.5 PLN"
+  // into the dialog's second field; the registry stores the first direction,
+  // so what is kept is 1/4.5 — and the field they typed in has to still read
+  // "4.5" afterwards rather than "4.500000001".
+  const asTypedBack = (typed: string) =>
+    formatRate(invertRate(invertRate(typed, RATE_DIGITS), RATE_DIGITS), RATE_SHOWN_DIGITS);
+
+  it.each(["4.5", "3.5", "1.0001", "0.0921", "12345.6", "0.000004", "1", "7"])(
+    "reads %s back after storing its reciprocal", (typed) => {
+      expect(asTypedBack(typed)).toBe(typed);
+    },
+  );
+
+  it("survives a rate with more precision than a double holds", () => {
+    expect(invertRate("0.333333333333333333333", 6)).toBe("3");
+  });
+
+  it("refuses what is not a rate", () => {
+    expect(() => invertRate("0")).toThrow(RangeError);
+    expect(() => invertRate("")).toThrow(RangeError);
+    expect(() => invertRate("abc")).toThrow(RangeError);
+  });
+});
+
+describe("formatRate", () => {
+  it("shows a stored rate at reading precision", () => {
+    expect(formatRate("0.222222222222")).toBe("0.222222");
+    expect(formatRate("4.5")).toBe("4.5");
+    expect(formatRate("1")).toBe("1");
+    expect(formatRate("0.0000123456789", 4)).toBe("0.00001235");
+  });
+
+  it("leaves a rate shorter than the limit alone", () => {
+    expect(formatRate("4.32")).toBe("4.32");
+    expect(formatRate("10")).toBe("10");
+  });
+
+  // Display only. The digits it drops are still on the stored rate, and they
+  // are the ones convertMinor reads — which only shows up on an amount big
+  // enough for a ten-billionth to be worth a cent, but that is the point:
+  // shortening is for the eye and never for the arithmetic.
+  it("never changes what the arithmetic uses", () => {
+    const stored = invertRate("4.5");
+    expect(stored).toBe("0.222222222222");
+    expect(formatRate(stored)).toBe("0.222222");
+    const huge = 2_250_000_000;
+    expect(convertMinor(huge, "PLN", "EUR", stored)).toBe(500_000_000);
+    expect(convertMinor(huge, "PLN", "EUR", formatRate(stored))).toBe(499_999_500);
+  });
+
+  it("always produces something isValidRate accepts", () => {
+    for (const rate of ["0.000000000123456789", "999999999999.999", "1", "0.5"]) {
+      expect(isValidRate(formatRate(rate))).toBe(true);
+    }
   });
 });
