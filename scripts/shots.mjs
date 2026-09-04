@@ -70,6 +70,11 @@ async function seed(page, base) {
   // Then the two rows the personal lens exists for: one somebody else paid
   // that you owe a share of (red), and one with nothing to do with you (faded).
   await addExpense(page, base, groupId, { amount: "900", what: "Taxi", paidBy: "Marie" });
+  // One in the currency the trip is actually spent in, so the ledger shows a
+  // converted figure and the registry has a row worth photographing.
+  await addExpense(page, base, groupId, {
+    amount: "62000", what: "Café Clock", currency: "MAD", rate: "0.0921",
+  });
   await addExpense(page, base, groupId, {
     amount: "450", what: "Marie's sunglasses", paidBy: "Marie", exclude: "Theo",
   });
@@ -94,9 +99,23 @@ async function seed(page, base) {
 
 const addExpense = (page, base, groupId, opts) => addEntry(page, base, groupId, opts);
 
-async function addEntry(page, base, groupId, { kind, amount, what, coSponsor, paidBy, exclude }) {
+async function addEntry(
+  page, base, groupId, { kind, amount, what, coSponsor, paidBy, exclude, currency, rate },
+) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}`);
   if (kind) await page.getByRole("tab", { name: kind }).click();
+  // Currency first: picking one the group has no rate for opens the rate
+  // dialog on the spot, and there is no feed behind the static export, so the
+  // number is typed the way a phone with no signal would have to type it.
+  if (currency) {
+    await pick(page, '[aria-label="Currency"]', currency);
+    const dialog = page.locator("dialog.scrim");
+    if (await dialog.count() > 0) {
+      await page.getByRole("textbox", { name: `Rate, ${currency} to EUR` }).fill(rate);
+      await page.getByRole("button", { name: "Save" }).last().click();
+      await page.waitForTimeout(200);
+    }
+  }
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   if (paidBy) await pick(page, "#paidby", paidBy);
@@ -142,6 +161,7 @@ const routes = (g) => [
   ["members", `/g/members?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
+  ["rates", `/g/rates?id=${g}`],
   ["entry-expense", `/g/entry/edit?id=${g}`],
   ["entry-transfer", `/g/entry/edit?id=${g}&kind=transfer`],
 ];
@@ -204,7 +224,7 @@ async function main() {
       await page.getByRole("button", { name: "As amounts" }).click();
       // 25 of the 120, deliberately: the shot is there to catch the shortfall
       // line, which is the sentence that used to say "9500 minor units".
-      await page.getByLabel("Marie's amount").fill("25");
+      await page.getByLabel(/Marie.s amount/).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
       process.stdout.write(`${theme}/expense-split-amounts `);
@@ -256,6 +276,17 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-forget.png`) });
       process.stdout.write(`${theme}/forget `);
+
+      // The rate dialog: one number, both ways round, and the sentence saying
+      // how much of the ledger moves if it changes.
+      await page.goto(`${base}/g/rates?id=${groupId}`);
+      await page.waitForSelector(".rows button.row");
+      await page.locator("button.row").filter({ hasText: "MAD" }).click();
+      await page.waitForSelector("dialog.scrim");
+      await page.getByRole("textbox", { name: "Rate, MAD to EUR" }).fill("0.093");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-rate.png`) });
+      process.stdout.write(`${theme}/rate `);
 
       // Deleting an entry — the last thing in the app that asked with the
       // browser's own confirm(). Opened and photographed, never confirmed.
