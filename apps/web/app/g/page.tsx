@@ -291,7 +291,9 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
           <div className="rmeta">
-            {copy.group.payers(payer?.name ?? copy.someone, payers.length - 1, copy.entryKind.verb[kind])}
+            {copy.group.payers(payer?.name ?? copy.someone,
+              payers.length > 1 ? plural(payers.length - 1, copy.noun.other) : null,
+              copy.entryKind.verb[kind])}
             {" · "}
             {expense.split.mode === "equal"
               ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))

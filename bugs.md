@@ -183,10 +183,6 @@ registration should actually be keyed on.
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth
   a note in the UI or a switch to something monotonic.
-- **A long unbroken name breaks the Balances tab.** `.balrow` is
-  `grid-template-columns: 1fr auto` and the name is a bare `<div>` with no
-  `min-width: 0` and no ellipsis, unlike `.rtitle` everywhere else. Forty mono
-  characters — the `maxLength` — overflows a phone.
 - **Emoji names get half a surrogate pair.** `initials()` and
   `distinctInitials()` in `apps/web/lib/format.ts` both slice by code unit.
 - **`/new` discards a typed group in silence** while the entry form asks first:
@@ -208,10 +204,6 @@ registration should actually be keyed on.
 - **No throttle on `/api/groups/:id/scan`.** Anyone holding a group link
   proxies straight to Gemini on the shared key. `copy.scan.freeTier` implies a
   budget that nothing defends.
-- **`lib/copy.ts` breaks its own stated rule twice.** `group.payers` does
-  ``other${others === 1 ? "" : "s"}`` and `split.people` inlines
-  `person`/`people`, both of which the file's own header forbids in favour of
-  `plural()` with a `Noun`. `copy.noun.person` already exists.
 
 ---
 

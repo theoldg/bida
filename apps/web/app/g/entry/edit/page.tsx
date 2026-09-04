@@ -18,7 +18,7 @@ import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY
 import { addExpense, editExpense, editSettlement, recordSettlement } from "../../../../lib/db/commands";
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
-import { dateInputValue, errorText, money, payerProblemText, withDate } from "../../../../lib/format";
+import { dateInputValue, errorText, money, payerProblemText, plural, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import {
@@ -579,7 +579,7 @@ function EditEntryScreen() {
                 <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
-                    {copy.form.somePeople(coPayers.length)}
+                    {plural(coPayers.length, copy.noun.person)}
                   </span>
                   <Icon name="chev" size={14} className="spacer" style={{ color: "var(--muted)" }} />
                 </Link>

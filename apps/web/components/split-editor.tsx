@@ -161,7 +161,7 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8 }}>
         <span style={{ fontSize: 13, color: "var(--muted)" }}>{title}</span>
         <span className="spacer" style={{ fontSize: 12, color: "var(--muted)" }}>
-          {copy.split.people(included.size)}
+          {plural(included.size, copy.noun.person)}
         </span>
       </div>
 

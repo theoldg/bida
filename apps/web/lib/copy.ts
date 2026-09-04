@@ -59,6 +59,7 @@ export const copy = {
     entry: { one: "entry", many: "entries" } as Noun,
     expense: { one: "expense", many: "expenses" } as Noun,
     item: { one: "item", many: "items" } as Noun,
+    other: { one: "other", many: "others" } as Noun,
     part: { one: "part", many: "parts" } as Noun,
     person: { one: "person", many: "people" } as Noun,
     photo: { one: "photo", many: "photos" } as Noun,
@@ -174,8 +175,8 @@ export const copy = {
       tookAndCut: (took: string, cut: string) => `took in ${took} · cut ${cut}`,
     },
     /** "Marie paid" · "Marie + 1 other received". */
-    payers: (who: string, others: number, verb: string) =>
-      (others <= 0 ? `${who} ${verb}` : `${who} + ${others} other${others === 1 ? "" : "s"} ${verb}`),
+    payers: (who: string, others: string | null, verb: string) =>
+      (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
     sharedWays: (n: string) => `shared ${n}`,
     splitWays: (n: string) => `split ${n}`,
     splitAs: (people: number, mode: string) => `${people} people, ${mode}`,
@@ -221,7 +222,7 @@ export const copy = {
     rate: (rate: string) => `@ ${rate}`,
     fromReceipt: "from receipt",
     notInvolved: "not involved",
-    payerCount: (label: string, n: number) => `${label} · ${n} people`,
+    payerCount: (label: string, people: string) => `${label} · ${people}`,
     /** "Split · evenly" · "Shared with · from receipt". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
@@ -257,7 +258,6 @@ export const copy = {
     whatPlaceholder: "Title",
     note: "Note (optional)",
     when: "When",
-    somePeople: (n: number) => `${n} people`,
     andSomeone: "+ someone",
     coPayers: "Several people put money in",
     discardTitle: (kind: string) => `Discard this ${kind}?`,
@@ -304,7 +304,6 @@ export const copy = {
       percent: "By percent",
     } as Record<SplitSpec["mode"], string>,
     receipt: "Receipt",
-    people: (n: number) => `${n} ${n === 1 ? "person" : "people"}`,
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,
     fewerParts: (name: string) => `Fewer parts for ${name}`,
