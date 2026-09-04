@@ -101,6 +101,17 @@ export const copy = {
     manual: { tap: "Tap", then: "in the browser bar, then", label: "Add to Home Screen" },
   },
 
+  /** The footnote under the groups list: what the app itself last gained. */
+  release: {
+    /** What this build brought, rewritten whenever a session ships something a
+        person would notice (CLAUDE.md). It ships *inside* the build whose
+        arrival the line dates, so it describes that build and no other. Lower
+        case, a few words, a subject rather than a sentence — it is the tail of
+        the line below. */
+    what: "currency handling",
+    updated: (when: string, what: string) => `updated ${when}: ${what}`,
+  },
+
   // ------------------------------------------------------------- new group
 
   newGroup: {

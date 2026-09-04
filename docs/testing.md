@@ -7,7 +7,7 @@ pnpm check       # links · rules · typecheck · 217 tests · export build — 
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time
-pnpm offline     # just every screen with the network cut
+pnpm offline     # just every screen with the network cut, and a deploy arriving
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms
 pnpm run rules   # core is still pure, no browser dialogs crept back, ~30ms

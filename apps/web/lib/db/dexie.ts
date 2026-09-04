@@ -46,6 +46,13 @@ export interface DeviceRecord {
    * cleared — the app asks about installing exactly once.
    */
   installDismissedAt?: number;
+  /**
+   * The precache revision this phone is running, and when it started running
+   * it — the groups list's "updated 2h ago" (lib/app-version.ts). Absent until
+   * a service worker has taken over, which is never on the first visit.
+   */
+  appRevision?: string;
+  appUpdatedAt?: number;
 }
 
 /**

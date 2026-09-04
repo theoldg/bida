@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group, everyone in it, in one screen |
+| `/` · `/new` | Groups list — the app's name, the light/dark toggle, and what the app itself last gained ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group, everyone in it, in one screen |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, Rates, People and the invite link are top-bar icons. A phone that hasn't claimed anybody is sent to `/g/claim` — joining isn't finished until "who are you" is answered |
 | `/g/entry?id=&e=` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
@@ -142,6 +142,17 @@ once there is a group worth coming back to. "Not now" writes
 `device.installDismissedAt` and is never cleared: a banner that returns each
 launch is what makes install prompts hated, and the browser's menu still
 installs.
+
+A build only reaches a phone when its worker takes over, which is the next
+launch and can be days after the deploy — so **the groups list dates the arrival,
+not the release**: `lib/app-version.ts` asks the *active* worker for its revision
+(during an update two shells exist, and only the worker knows which is serving
+you), and writes `device.appRevision` / `appUpdatedAt` the first time it sees a
+new one. The footnote along the bottom edge reads that date and pairs it with
+`copy.release.what`, which ships inside that same build and so describes it —
+update the note whenever you ship something a person would notice
+([CLAUDE.md](../CLAUDE.md#doc-upkeep)). Nothing shows before a worker has ever
+taken over: there is no honest date yet.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

@@ -726,6 +726,17 @@ dialog.scrim::backdrop { background: transparent }
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
+/* What the app itself last gained, along the bottom edge of the groups list.
+   Under the scroller, not in it, so the list can be any length and this stays
+   where it was looked for. No rule above it and no bar behind it: unlike
+   `.foot` there is nothing here to press, and drawing an edge would promise
+   there was. Mono and a shade under `.hint`, because it is the one line on the
+   screen addressed to nobody in particular — findable when looked for and
+   invisible when not. */
+.lastup { flex: none; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .02em;
+  color: var(--muted); opacity: .8; text-align: center;
+  padding: 10px 16px; padding-bottom: max(10px, env(safe-area-inset-bottom)) }
+
 /* ---- skeletons ----
    A screen waiting on IndexedDB used to render its top bar over nothing: the
    frame appeared, the page sat empty, then a ledger dropped in. These hold the

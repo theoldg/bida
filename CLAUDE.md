@@ -107,7 +107,10 @@ every session pays in. **Before you finish:**
    the ADR on that subject** so it says where we stand now.
 3. Learned something the hard way → one line in the relevant **Gotchas**
    section.
-4. Update [implementation-status.md](docs/implementation-status.md) and the
+4. Shipped something a person would notice → rewrite `copy.release.what`, the
+   few words under the groups list. It rides inside the build whose arrival that
+   line dates, so a stale note is a wrong one.
+5. Update [implementation-status.md](docs/implementation-status.md) and the
    roadmap checkboxes.
 
 **A new ADR and a new standing instruction are the two things a session almost

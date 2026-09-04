@@ -13,7 +13,7 @@ import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
-import { useGroupSummaries, type GroupSummary } from "../lib/hooks";
+import { useDevice, useGroupSummaries, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const summaries = useGroupSummaries();
@@ -50,6 +50,8 @@ export default function GroupsPage() {
           {/* Once there is something to come back to, and never before it. */}
           {groups && groups.length > 0 ? <InstallNudge /> : null}
         </Scroll>
+
+        <LastUpdate />
       </Body>
     </Screen>
   );
@@ -114,4 +116,28 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       ) : null}
     </>
   );
+}
+
+/**
+ * What the app itself last gained, along the bottom edge of the screen you land
+ * on — the one place the app is allowed to talk about itself (ADR-0007). It is
+ * there so an app with no version number, no store listing and no release notes
+ * can still show it is alive, and it sits under the scroller rather than after
+ * the last group so that a long list doesn't bury it.
+ *
+ * The date is this phone's, not the deploy's: `lib/app-version.ts` records the
+ * moment a new build actually replaced the cached one here, which on a phone
+ * can be days after it shipped. `copy.release.what` — baked into that same
+ * build — says what came with it.
+ */
+function LastUpdate() {
+  // `undefined` until Dexie answers, and on any launch that has never had a
+  // worker take over: no honest date to show, so no line. It also keeps `ago`,
+  // which reads the clock, out of the static export's prerendered HTML, where
+  // the build's "just now" against the browser's "3d ago" is a hydration
+  // mismatch.
+  const updatedAt = useDevice()?.appUpdatedAt;
+  if (updatedAt === undefined) return null;
+
+  return <p className="lastup">{copy.release.updated(ago(updatedAt), copy.release.what)}</p>;
 }
