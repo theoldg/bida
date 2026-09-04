@@ -3,9 +3,9 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useState } from "react";
 import {
-  computeBalances, settleUp, emptyGroupState,
-  type BalanceReport, type Expense, type Group, type GroupState, type Member,
-  type Settlement, type Transfer,
+  atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
+  type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
+  type GroupState, type Member, type Settlement, type Transfer,
 } from "@hajsik/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
@@ -29,24 +29,32 @@ function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined):
 }
 
 /**
- * The keyed shape every reader in core wants, out of the arrays Dexie gives.
+ * The keyed shape every reader in core wants, out of the arrays Dexie gives —
+ * **valued at the group's current rates**.
+ *
  * Both hooks below need it — one for a group, one for every group at once —
  * and a balance computed from a hand-built state that forgot a field is the
- * kind of wrong nothing else catches.
+ * kind of wrong nothing else catches. The repricing is here for the same
+ * reason: an entry's stored `baseAmountMinor` is what it was saved at, the
+ * registry says what it is worth, and one screen reading the stored figure
+ * while the rest read the registry is exactly the disagreement this whole
+ * thing exists to remove (ADR-0005).
  */
 function stateOf(
   group: Group | undefined,
   members: Member[],
   expenses: Expense[],
   settlements: Settlement[],
+  rates: ExchangeRate[] = [],
 ): GroupState {
-  return {
+  return atCurrentRates({
     ...emptyGroupState(),
     group,
     members: Object.fromEntries(members.map((m) => [m.id, m])),
     expenses: Object.fromEntries(expenses.map((e) => [e.id, e])),
     settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
-  };
+    rates: Object.fromEntries(rates.map((r) => [r.id, r])),
+  });
 }
 
 /**
@@ -142,8 +150,17 @@ export interface GroupData {
   nameOf: (id: string) => string;
   /** True for a member who has been removed but is still named on an entry. */
   hasLeft: (id: string) => boolean;
+  /** Live expenses, newest first, valued at the group's current rates. */
   expenses: Expense[];
+  /** Live transfers, newest first, valued at the group's current rates. */
   settlements: Settlement[];
+  /** The group's rate registry, keyed by currency code. See `ExchangeRate`. */
+  rates: Record<string, ExchangeRate>;
+  /**
+   * Every currency the registry has to answer for — what entries are written
+   * in, plus what was added ahead of time — busiest first. What /g/rates lists.
+   */
+  currencies: CurrencyInUse[];
   balances: BalanceReport;
   transfers: Transfer[];
   /** The member this device is, in this group. Undefined until they pick one. */
@@ -169,7 +186,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
       d.ops.where("[groupId+hlc]").between([groupId, ""], [groupId, "￿"]).filter((o) => o.pending === 1).count(),
       d.device.get("device"),
     ]);
-    return { group, members, expenses, settlements, pending, device };
+    const rates = await d.rates.where("groupId").equals(groupId).toArray();
+    return { group, members, expenses, settlements, rates, pending, device };
   }, [groupId]);
 
   return useMemo(() => {
@@ -177,15 +195,27 @@ export function useGroupData(groupId: string | undefined): GroupData {
       return {
         group: undefined, members: [], memberById: new Map(),
         nameOf: () => copy.unknown, hasLeft: () => false,
-        expenses: [], settlements: [],
+        expenses: [], settlements: [], rates: {}, currencies: [],
         balances: EMPTY_REPORT, transfers: [], me: undefined, pendingOps: 0, loading: true,
       };
     }
     const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
-    const expenses = living(rows.expenses).sort(byWhenThenCreated);
-    const settlements = living(rows.settlements).sort(byWhenThenCreated);
+    const state = stateOf(
+      rows.group, members,
+      living(rows.expenses).sort(byWhenThenCreated),
+      living(rows.settlements).sort(byWhenThenCreated),
+      living(rows.rates),
+    );
+    // Back out of the repriced state, in the order they went in — `stateOf`
+    // keys them and loses the sort. Every screen reads these two arrays, so
+    // none of them can be left looking at a stale conversion.
+    const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
+      rows.map((row) => keyed[row.id] ?? row);
+    const expenses = bySortOrder(living(rows.expenses).sort(byWhenThenCreated), state.expenses);
+    const settlements = bySortOrder(
+      living(rows.settlements).sort(byWhenThenCreated), state.settlements);
 
-    const balances = computeBalances(stateOf(rows.group, members, expenses, settlements));
+    const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
     return {
       group: rows.group,
@@ -195,6 +225,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
       hasLeft: (id) => !!memberById.get(id)?.deletedAt,
       expenses,
       settlements,
+      rates: state.rates,
+      currencies: currenciesInUse(state),
       balances,
       transfers: settleUp(balances.byMember),
       me: groupId ? rows.device?.meByGroup[groupId] : undefined,
@@ -223,12 +255,13 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     // group in this list, so fetching each table whole and bucketing it here
     // moves the same bytes in a constant number of IndexedDB round trips —
     // the group list was the one screen whose cost grew with the group count.
-    const [groups, device, members, expenses, settlements] = await Promise.all([
+    const [groups, device, members, expenses, settlements, rates] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),
       d.members.toArray(),
       d.expenses.toArray(),
       d.settlements.toArray(),
+      d.rates.toArray(),
     ]);
     const byGroup = <T extends { groupId: string; deletedAt?: number | null }>(rows: T[]) => {
       const map = new Map<string, T[]>();
@@ -240,6 +273,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       return map;
     };
     const m = byGroup(members), e = byGroup(expenses), s = byGroup(settlements);
+    const r = byGroup(rates);
 
     const left = new Set(device?.leftGroups ?? []);
     const out: GroupSummary[] = [];
@@ -250,8 +284,9 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       if (left.has(group.id)) continue;
       const live = {
         m: m.get(group.id) ?? [], e: e.get(group.id) ?? [], s: s.get(group.id) ?? [],
+        r: r.get(group.id) ?? [],
       };
-      const balances = computeBalances(stateOf(group, live.m, live.e, live.s));
+      const balances = computeBalances(stateOf(group, live.m, live.e, live.s, live.r));
       const me = device?.meByGroup[group.id];
       out.push({
         group,

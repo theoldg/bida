@@ -1,5 +1,7 @@
 import { Hono } from "hono";
-import { validateOp, OpValidationError, type Op } from "@hajsik/core";
+import {
+  isCurrencyCode, rateFromNumber, validateOp, OpValidationError, type Op,
+} from "@hajsik/core";
 import { bearerSecret, sha256Hex } from "./auth";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
@@ -16,6 +18,74 @@ app.get("/api/health", (c) => c.json({ ok: true }));
 // docs/receipt-scanning.md#why-the-key-sits-on-the-worker.
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+
+/**
+ * Today's rate for one currency pair, for the group's rate registry.
+ *
+ * `@fawazahmed0/currency-api` — CC0, no key, no rate limit, ~340 currencies
+ * including the MAD and UZS that rule the ECB-backed feeds out, one file per
+ * currency, updated daily. jsDelivr is the primary host and the project's own
+ * Pages deployment the fallback, because a CDN that 404s a path is the failure
+ * mode this feed actually has.
+ *
+ * Fetched **by the entry's currency**, not by the group's base: the feed
+ * publishes `currencies/mad.json` with a `.eur` in it, which *is* the rate a
+ * MAD entry needs. Asking for the base and reciprocating would put every rate
+ * through a division nobody asked for.
+ *
+ * Behind our own endpoint rather than called from the phone, for the reasons
+ * the scan passthrough is: one cache for everyone, no CORS or service-worker
+ * fight, and swapping the feed later touches this file and no client. It
+ * answers in our own shape for the same reason. Unauthenticated on purpose —
+ * the data is public, the input is two three-letter codes, and unlike the scan
+ * it spends no money.
+ */
+const RATE_HOSTS = [
+  "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1",
+  "https://latest.currency-api.pages.dev/v1",
+];
+
+app.get("/api/rates/:from/:to", async (c) => {
+  const from = c.req.param("from").toUpperCase();
+  const to = c.req.param("to").toUpperCase();
+  if (!isCurrencyCode(from) || !isCurrencyCode(to)) {
+    return c.json({ error: "from and to must be three-letter currency codes" }, 400);
+  }
+  if (from === to) return c.json({ from, to, rate: "1", asOf: null });
+
+  for (const host of RATE_HOSTS) {
+    let payload: { date?: unknown; [key: string]: unknown };
+    try {
+      // Cloudflare's edge cache IS the shared cache — no KV, no D1, no cron,
+      // no new binding. Six hours on a feed that moves once a day.
+      const upstream = await fetch(`${host}/currencies/${from.toLowerCase()}.json`, {
+        cf: { cacheTtl: 21600, cacheEverything: true },
+      });
+      if (!upstream.ok) continue;
+      payload = await upstream.json();
+    } catch {
+      continue;
+    }
+    const table = payload[from.toLowerCase()];
+    const value = typeof table === "object" && table !== null
+      ? (table as Record<string, unknown>)[to.toLowerCase()]
+      : undefined;
+    if (typeof value !== "number") continue;
+    let rate: string;
+    try {
+      // The one door the feed's floats come in through, and it closes behind
+      // them: everything downstream of here is the decimal string.
+      rate = rateFromNumber(value);
+    } catch {
+      continue;
+    }
+    const asOf = typeof payload["date"] === "string" ? payload["date"] : null;
+    return c.json({ from, to, rate, asOf }, 200, {
+      "cache-control": "public, max-age=21600",
+    });
+  }
+  return c.json({ error: `no rate for ${from} to ${to}` }, 502);
+});
 
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");

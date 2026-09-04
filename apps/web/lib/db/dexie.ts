@@ -1,6 +1,7 @@
 import Dexie, { type Table } from "dexie";
 import type {
   Attachment,
+  ExchangeRate,
   Expense,
   Group,
   Identity,
@@ -89,6 +90,14 @@ export class HajsikDb extends Dexie {
   groupKeys!: Table<GroupKey, string>;
   /** Materialised from `identity` ops: one row per device, keyed by node id. */
   identities!: Table<Identity, string>;
+  /**
+   * The groups' exchange-rate registries. The one table whose rows are keyed
+   * by something a person chose rather than by a random id — an `ExchangeRate`
+   * is identified by its currency code — so its primary key is
+   * `[groupId+id]`: two trips both spending in MAD are two rows, not one that
+   * they fight over.
+   */
+  rates!: Table<ExchangeRate, [string, string]>;
 
   constructor() {
     super("hajsik");
@@ -115,6 +124,13 @@ export class HajsikDb extends Dexie {
     this.version(3).stores({
       identities: "id, groupId",
       identityLog: null,
+    });
+    // v4 adds the group's exchange-rate registry (ADR-0005). Materialised from
+    // `rate` ops like everything else, so there is nothing to migrate: a phone
+    // that upgrades has an empty table until the log gives it rows, and every
+    // foreign entry keeps converting at the rate it was saved with until then.
+    this.version(4).stores({
+      rates: "[groupId+id], groupId",
     });
   }
 }

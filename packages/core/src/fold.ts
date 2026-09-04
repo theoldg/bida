@@ -108,6 +108,4 @@ export function foldForward(state: GroupState, incoming: readonly Op[]): GroupSt
   return state;
 }
 
-export type {
-  Attachment, ExchangeRate, Expense, Group, GroupState, Identity, Member, Settlement,
-};
+export type { Attachment, Expense, Group, GroupState, Identity, Member, Settlement };

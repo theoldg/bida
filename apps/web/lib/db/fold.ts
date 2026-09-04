@@ -2,8 +2,11 @@ import type { Table } from "dexie";
 import { foldOps, type EntityKind } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
 
-/** A row in one of the materialised tables. They all key on `id`. */
-type Row = { id: string };
+/**
+ * A row in one of the materialised tables. They all carry `id` and `groupId`;
+ * `rates` is the only one whose primary key needs both (see dexie.ts).
+ */
+type Row = { id: string; groupId: string };
 
 export function tableFor(kind: EntityKind): Table<Row, string> {
   const d = db();
@@ -13,6 +16,7 @@ export function tableFor(kind: EntityKind): Table<Row, string> {
     : kind === "expense" ? d.expenses
     : kind === "settlement" ? d.settlements
     : kind === "identity" ? d.identities
+    : kind === "rate" ? d.rates
     : d.attachments;
   return t as unknown as Table<Row, string>;
 }
@@ -24,6 +28,7 @@ function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string)
     : kind === "expense" ? state.expenses
     : kind === "settlement" ? state.settlements
     : kind === "identity" ? state.identities
+    : kind === "rate" ? state.rates
     : state.attachments;
   return bag[id] as Row | undefined;
 }
@@ -34,9 +39,17 @@ function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string)
  * Entity-scoped is safe because merging is per-field within one entity: an op
  * never affects another entity's fields. It also means a write touches one row,
  * so a live query over the expense list doesn't re-render on a member rename.
+ *
+ * Scoped to the group as well as the entity, which matters for exactly one
+ * entity: a `rate`'s id is its currency code, so two groups on this phone both
+ * spending in MAD have ops under the same entity id. Every other entity has a
+ * random id and the filter costs it nothing.
  */
-export async function materialise(kind: EntityKind, entityId: string): Promise<void> {
-  const ops = await db().ops.where("entityId").equals(entityId).toArray();
+export async function materialise(
+  groupId: string, kind: EntityKind, entityId: string,
+): Promise<void> {
+  const ops = await db().ops.where("entityId").equals(entityId)
+    .and((op) => op.groupId === groupId).toArray();
   if (ops.length === 0) return;
   const row = rowFor(kind, foldOps(ops), entityId);
   if (row) await tableFor(kind).put(row);
@@ -53,7 +66,7 @@ export async function rebuild(groupId: string): Promise<void> {
   const d = db();
   await d.transaction(
     "rw",
-    [d.ops, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities],
+    [d.ops, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities, d.rates],
     async () => {
       const ops = await d.ops.where("groupId").equals(groupId).toArray();
       const state = foldOps(ops);
@@ -64,6 +77,7 @@ export async function rebuild(groupId: string): Promise<void> {
         d.settlements.where("groupId").equals(groupId).delete(),
         d.attachments.where("groupId").equals(groupId).delete(),
         d.identities.where("groupId").equals(groupId).delete(),
+        d.rates.where("groupId").equals(groupId).delete(),
       ]);
 
       if (state.group) await d.groups.put(state.group);
@@ -72,6 +86,7 @@ export async function rebuild(groupId: string): Promise<void> {
       await d.settlements.bulkPut(Object.values(state.settlements));
       await d.attachments.bulkPut(Object.values(state.attachments));
       await d.identities.bulkPut(Object.values(state.identities));
+      await d.rates.bulkPut(Object.values(state.rates));
     },
   );
 }
