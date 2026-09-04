@@ -70,6 +70,11 @@ registration should actually be keyed on.
   the peer's op arrived holds their old value and posts it as a deliberate
   change, which is per-field LWW working correctly on a lie. Either re-read the
   entity into the open form when sync brings a change, or say so.
+- **A group's name can never be changed.** `renameGroup` is in
+  `lib/db/commands.ts` and no screen has ever called it — a typo at `/new` is
+  permanent. The row menu on the group list is where it belongs: it already
+  exists, already holds "Forget group", and People's rename dialog is the
+  pattern to copy. One copy string and a `PromptDialog` away.
 - **A rate too large to convert at saves anyway, and re-values nothing.** The
   dialog takes `999999999999999999999`, promises "This re-values 1 entry
   already written in USD", and stores it. `repriceEntry` then throws inside

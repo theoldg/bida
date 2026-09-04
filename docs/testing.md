@@ -209,3 +209,11 @@ segment is live is a finding, and this is where it surfaces.
   app, not before, or you are testing a blank tab rather than the offline app.
 - **`html` is the one deliberate cheat.** It is for building the reader, not for
   using it; reading it during a blind run defeats the point.
+- **Don't run `pnpm check` while a session is open.** It rebuilds `apps/web/out`
+  under the running Worker, which then serves 404 for every path — including the
+  app shell, so the next `goto` fails with an HTTP error that looks like a bug
+  in the app. Restart the daemon after any build. A `git push` counts: pre-push
+  runs `pnpm check`.
+- **The daemon holds a browser and a Worker.** Killing it without reaping those
+  leaves a multi-gigabyte process behind, and enough of them exhaust memory —
+  at which point a fresh `start` hangs before it ever writes `.drive/ready.json`.
