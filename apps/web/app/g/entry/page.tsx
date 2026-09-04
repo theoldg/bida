@@ -155,8 +155,15 @@ function ExpenseDetail({ expense, kind, group, data }: {
   // A finished who-had-what grid writes an ordinary `shares` spec (see
   // SplitTab in @hajsik/core) — without this check it would read as
   // "as parts", which isn't what anyone typed.
-  const isReceipt = expense.splitTab === "receipt"
-    || (!expense.splitTab && expense.split.mode === "shares" && (expense.receiptItems?.length ?? 0) > 0);
+  //
+  // The items are what make it a receipt, not the tab: `splitTab` records
+  // which tab was open, and opening Receipt and saving without scanning
+  // anything stores "receipt" over an ordinary even split. This screen called
+  // that "from receipt" while the ledger row next to it said "split 2 ways".
+  // The form draws the same distinction, as `onReceiptTab`.
+  const isReceipt = (expense.receiptItems?.length ?? 0) > 0
+    && (expense.splitTab === "receipt"
+      || (!expense.splitTab && expense.split.mode === "shares"));
 
   return (
     <div className="pad" style={{ paddingTop: 2 }}>
