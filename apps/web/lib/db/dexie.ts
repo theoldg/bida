@@ -95,14 +95,19 @@ export class HajsikDb extends Dexie {
   attachments!: Table<Attachment, string>;
   device!: Table<DeviceRecord, string>;
   groupKeys!: Table<GroupKey, string>;
-  /** Materialised from `identity` ops: one row per device, keyed by node id. */
-  identities!: Table<Identity, string>;
   /**
-   * The groups' exchange-rate registries. The one table whose rows are keyed
-   * by something a person chose rather than by a random id — an `ExchangeRate`
-   * is identified by its currency code — so its primary key is
-   * `[groupId+id]`: two trips both spending in MAD are two rows, not one that
-   * they fight over.
+   * Materialised from `identity` ops: one row per device, per group. Keyed by
+   * `[groupId+id]` because `id` is the device's HLC node id, which is the same
+   * string in every group this phone is in — keyed by that alone, a device in
+   * two groups had one row and re-folding either group clobbered the other's
+   * claim.
+   */
+  identities!: Table<Identity, [string, string]>;
+  /**
+   * The groups' exchange-rate registries. Rows are keyed by something a person
+   * chose rather than by a random id — an `ExchangeRate` is identified by its
+   * currency code — so its primary key is `[groupId+id]`: two trips both
+   * spending in MAD are two rows, not one that they fight over.
    */
   rates!: Table<ExchangeRate, [string, string]>;
 
@@ -139,6 +144,18 @@ export class HajsikDb extends Dexie {
     this.version(4).stores({
       rates: "[groupId+id], groupId",
     });
+    // v5/v6 re-key `identities` by `[groupId+id]`. Its `id` is the device's
+    // HLC node id — one string per install, the same in every group — so keyed
+    // by that alone a phone in two groups had one row, and re-folding either
+    // group deleted the other group's claim.
+    //
+    // Two versions because Dexie refuses to change a table's primary key in
+    // place ("Not yet support for changing primary key"): drop, then recreate,
+    // exactly as `identityLog` did. Nothing is migrated and nothing is lost —
+    // the materialised tables are a cache of the op log, and `rebuild()`
+    // refills this one from the `identity` ops that are the real record.
+    this.version(5).stores({ identities: null });
+    this.version(6).stores({ identities: "[groupId+id], groupId" });
   }
 }
 

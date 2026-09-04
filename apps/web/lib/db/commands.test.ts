@@ -73,7 +73,7 @@ describe("commands", () => {
 
     // Creating the group already claimed it.
     expect(await getMe(groupId)).toBe(theo);
-    expect((await db().identities.get(node))?.memberId).toBe(theo);
+    expect((await db().identities.get([groupId, node]))?.memberId).toBe(theo);
 
     await claimIdentity(groupId, marie);
 
@@ -101,12 +101,32 @@ describe("commands", () => {
     expect(ops.map((o) => [o.entity, o.kind, o.patch["memberId"]])).toEqual([
       ["identity", "create", theo],
     ]);
-    expect((await db().identities.get(node))?.memberId).toBe(theo);
+    expect((await db().identities.get([groupId, node]))?.memberId).toBe(theo);
     expect(await db().groups.get(groupId)).toBeDefined();
 
     // Idempotent: a second run has nothing left to publish.
     await publishExistingClaims();
     expect(await db().ops.where("entityId").equals(node).count()).toBe(1);
+  });
+
+  // A device's identity id is its HLC node id — one string per install, the
+  // same in every group it joins. Keyed by that alone, the second group's
+  // claim overwrote the first's and re-folding either deleted the other.
+  it("keeps this device's claim in two groups apart", async () => {
+    const a = await trip();
+    const b = await trip();
+    const node = (await db().device.get("device"))!.nodeId;
+    await claimIdentity(b.groupId, b.marie);
+
+    expect((await db().identities.get([a.groupId, node]))?.memberId).toBe(a.theo);
+    expect((await db().identities.get([b.groupId, node]))?.memberId).toBe(b.marie);
+
+    // And re-folding one group leaves the other group's claim standing.
+    await rebuild(a.groupId);
+    expect((await db().identities.get([b.groupId, node]))?.memberId).toBe(b.marie);
+    expect((await db().identities.get([a.groupId, node]))?.memberId).toBe(a.theo);
+    await assertMaterialisedMatchesLog(a.groupId);
+    await assertMaterialisedMatchesLog(b.groupId);
   });
 
   it("writes nothing when you re-claim the member you already are", async () => {

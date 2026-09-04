@@ -190,26 +190,31 @@ CREATE TABLE attachments (
   created_at INTEGER NOT NULL);
 ```
 
-## IndexedDB (Dexie), schema v4
+## IndexedDB (Dexie), schema v6
 
 | Store | Key | Notes |
 |---|---|---|
 | `ops` | `id` | indexes on `groupId`, `entityId`, `hlc`, `pending`, `[groupId+hlc]` |
-| `groups`, `members`, `expenses`, `settlements`, `attachments`, `identities` | `id` | materialised, rebuildable from `ops` |
+| `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
 | `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
+| `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
 | `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
 
 `identityLog` existed in v2 and is **dropped** — identity claims are ops now.
+v5/v6 re-key `identities` from `id` to `[groupId+id]`, in two steps because
+Dexie refuses to change a primary key in place.
+
 The materialised stores are a **cache**: if a migration gets confusing, drop
-them and re-fold from `ops`. Never migrate materialised data by hand.
+them and re-fold from `ops`. Never migrate materialised data by hand — which is
+why re-keying a table costs a drop and a `rebuild()`, not a data migration.
 
 ## Gotchas
 
 - `Intl.NumberFormat` will happily render a float. Format from minor units via
   `core/money.ts`; don't reach for `toFixed`.
-- **`identities` is keyed by node id alone**, so a device in two groups has one
-  row and rebuilding either group's fold clobbers the other's claim. Latent
-  today — nothing reads the table (`device.meByGroup` answers "who am I here")
-  — but the fix is a compound key like `rates`', which is a schema version and
-  a rebuild, not a patch.
+- **A device's identity id is its HLC node id** — one string per install, the
+  same in every group it joins. So `identities` is keyed by `[groupId+id]`, like
+  `rates`: keyed by the node id alone (as it was until Dexie v6) a phone in two
+  groups had one row, and re-folding either group deleted the other's claim.
+  Anything re-folding one entity has to scope by group as well as by id.

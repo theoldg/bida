@@ -4,7 +4,8 @@ import { db, type StoredOp } from "./dexie";
 
 /**
  * A row in one of the materialised tables. They all carry `id` and `groupId`;
- * `rates` is the only one whose primary key needs both (see dexie.ts).
+ * `rates` and `identities` are the two whose primary key needs both, which is
+ * why this is cast rather than typed per table (see dexie.ts).
  */
 type Row = { id: string; groupId: string };
 
