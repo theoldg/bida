@@ -178,6 +178,24 @@ describe("convertSplitMode", () => {
     const spec = convertSplitMode(0, { mode: "equal", members: ["a", "b", "c"] }, "percent");
     expect(validateSplit(0, spec).ok).toBe(true);
   });
+
+  // Zeroing every part in the editor and then switching tabs used to throw out
+  // of `resolveSplit`, leaving the tab unswitched and an error on the console.
+  it("carries an empty split into every mode instead of throwing", () => {
+    const empty: SplitSpec[] = [
+      { mode: "equal", members: [] },
+      { mode: "exact", amounts: {} },
+      { mode: "shares", weights: {} },
+      { mode: "percent", bps: {} },
+    ];
+    for (const start of empty) {
+      for (const mode of ["equal", "exact", "shares", "percent"] as const) {
+        const spec = convertSplitMode(4500, start, mode);
+        expect(spec.mode).toBe(mode);
+        expect(splitParticipants(spec)).toEqual([]);
+      }
+    }
+  });
 });
 
 describe("property: every split sums to the total", () => {

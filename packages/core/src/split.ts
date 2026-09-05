@@ -279,6 +279,18 @@ export function convertSplitMode(
 ): SplitSpec {
   if (spec.mode === mode) return spec;
   const participants = splitParticipants(spec);
+  // Nobody included is a state the editor lets you sit in — zero everyone's
+  // parts and the tabs must still switch. `exact` and `percent` reach it
+  // through `resolveSplit`, which refuses an empty split rather than invent
+  // one, so the empty spec is built here instead of thrown over.
+  if (participants.length === 0) {
+    switch (mode) {
+      case "equal": return { mode: "equal", members: [] };
+      case "exact": return { mode: "exact", amounts: {} };
+      case "shares": return { mode: "shares", weights: {} };
+      case "percent": return { mode: "percent", bps: {} };
+    }
+  }
   switch (mode) {
     case "equal":
       return { mode: "equal", members: participants };
