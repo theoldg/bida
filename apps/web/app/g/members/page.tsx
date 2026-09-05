@@ -114,7 +114,7 @@ function MembersScreen() {
     setAsk(blocking.length > 0
       ? {
         kind: "blocked", name, entries: blocking,
-        body: copy.members.blockedBody(name, plural(blocking.length, copy.noun.entry)),
+        body: copy.members.blockedBody(plural(blocking.length, copy.noun.entry)),
       }
       : { kind: "remove", id: memberId, name });
   }

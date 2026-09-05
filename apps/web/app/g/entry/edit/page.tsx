@@ -301,7 +301,7 @@ function EditEntryScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.entry.gone.title} back={route.group(groupId)} />
-        <Empty title={copy.entry.gone.body}>{copy.entry.gone.why}</Empty>
+        <Empty title={copy.entry.gone.body} />
       </Body></Screen>
     );
   }
@@ -782,7 +782,7 @@ function EditEntryScreen() {
       {ask === "currency-other" ? (
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters" hint={copy.currency.otherHint}
+          autoCapitalize="characters"
           clean={normalizeCurrencyCode} valid={isCurrencyCode}
           onSubmit={(currency) => {
             pickCurrency(currency);

@@ -95,7 +95,6 @@ export const copy = {
   install: {
     title: "Keep Hajsik on your home screen",
     body: "Own icon, no browser bar, works offline.",
-    add: "Add to home screen",
     notNow: "Not now",
     /** iOS has no install API, so name the button that does it. */
     manual: { tap: "Tap", then: "in the browser bar, then", label: "Add to Home Screen" },
@@ -110,7 +109,7 @@ export const copy = {
     you: "You are",
     yourNamePlaceholder: "Your name",
     currency: "Currency",
-    currencyHint: "Balances settle in this currency. Entries can be in any other.",
+    currencyHint: "Balances settle in this. Entries can be any currency.",
     people: "Who else",
     failed: (why: string) => `Couldn’t create the group — ${why}`,
     discardTitle: "Discard this group?",
@@ -122,12 +121,12 @@ export const copy = {
   join: {
     title: "Join a group",
     badLink: {
-      title: "That link doesn’t look right",
-      body: "Ask whoever shared it to send the invite link again.",
+      title: "Bad link",
+      body: "Ask whoever shared it to send it again.",
     },
     joining: {
       title: "Joining…",
-      body: "This finishes by itself once the other phone syncs.",
+      body: "Finishes by itself once the other phone syncs.",
     },
   },
 
@@ -145,7 +144,7 @@ export const copy = {
     notFound: {
       title: "Not found",
       empty: "That group isn’t on this phone",
-      body: "Open the invite link again, or pick another group.",
+      body: "Open the invite link again.",
     },
     /**
      * For a link that names nothing this phone has — a deep link into a group
@@ -155,7 +154,7 @@ export const copy = {
     badLink: {
       title: "Bad link",
       empty: "This link doesn’t open anything",
-      body: "A group only opens on a phone that has its invite link. Ask someone in the group to send you theirs, or pick another group.",
+      body: "Ask someone in the group to send you the invite link.",
     },
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline — you may not have everyone’s latest.",
@@ -177,7 +176,7 @@ export const copy = {
     /** The clipboard can refuse — an insecure context, a denied permission —
         and the link is shown nowhere else, so it is shown here. */
     linkTitle: "The invite link",
-    linkBody: "Copying didn’t work on this phone. Hold the link to copy it.",
+    linkBody: "Copying didn’t work — hold the link to copy it.",
     addEntry: "Add an entry",
 
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
@@ -201,7 +200,7 @@ export const copy = {
     paidTo: (from: string, to: string) => `${from} paid ${to}`,
 
     unsplittable: (n: string) => `${n} couldn’t be split`,
-    unsplittableWhy: (reason: string) => `${reason}. They’re left out of the balances above.`,
+    unsplittableWhy: (reason: string) => `${reason} — left out of the balances.`,
     settleUp: "Settle up",
     allSquare: "Everyone’s square",
     spentTogether: "Spent together",
@@ -220,11 +219,11 @@ export const copy = {
     removeLabel: (name: string) => `Remove ${name}`,
     newName: "New name",
     removeTitle: (name: string) => `Remove ${name}?`,
-    removeBody: "Their past entries stay as they are — nothing is redistributed.",
+    removeBody: "Their past entries stay as they are.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
     /** "entries", not "expenses": a transfer blocks removal too. */
-    blockedBody: (name: string, entries: string) => `${name} is named on ${entries}.`,
-    lastBody: "A group has to have somebody in it. Add the next person first.",
+    blockedBody: (entries: string) => `Named on ${entries}.`,
+    lastBody: "Add somebody else first.",
     forget: "Forget group",
     forgetBody: "The invite link brings it back.",
   },
@@ -232,7 +231,7 @@ export const copy = {
   // ------------------------------------------------------------- one entry
 
   entry: {
-    gone: { title: "Gone", body: "This entry isn’t here any more", why: "It may have been deleted." },
+    gone: { title: "Gone", body: "This entry may have been deleted." },
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
@@ -242,7 +241,7 @@ export const copy = {
     /** "Split · evenly" · "Shared with · from receipt". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
-    deleteBody: "Balances update straight away. The history keeps a record.",
+    deleteBody: "The history keeps a record.",
     from: "From",
     to: "To",
   },
@@ -280,11 +279,11 @@ export const copy = {
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
     goneMember: (name: string) => `${name} has left the group — pick somebody else.`,
     nobodyTitle: "Nobody in this group yet",
-    nobodyBody: "Add the people sharing this before you write down what it cost.",
+    nobodyBody: "Add the people sharing this first.",
     sentBy: "Who sent it",
     receivedBy: "Who received it",
     swapSides: "Swap the two sides",
-    sameSide: "Money has to go from one person to a different one.",
+    sameSide: "Pick two different people.",
     otherSide: "the other side — picking swaps them",
     you: "you",
   },
@@ -358,7 +357,7 @@ export const copy = {
       "no-total": "I can’t make out the total on that one.",
       "unreadable-line": "I can’t read every line on that one.",
       "credit-line": "There’s a credit on that receipt — I can’t split those yet.",
-      mismatch: "The lines on that one don’t add up to the total — a flatter, square-on photo usually fixes it.",
+      mismatch: "The lines don’t add up to the total — try a flatter, square-on photo.",
     } satisfies Record<ScanProblem, string>,
     offline: "You’re offline — scanning needs a connection.",
     busy: "Gemini’s busy — try again in a minute.",
@@ -387,7 +386,7 @@ export const copy = {
     needsSomeone: "Every item needs at least one person.",
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
-    unfoldHint: { before: "Tap a", after: "to split a line into portions." },
+    unfoldHint: { before: "Tap a", after: "to split a line." },
   },
 
   // ------------------------------------------------------------- history
@@ -396,7 +395,7 @@ export const copy = {
     title: "History",
     entry: "Entry",
     empty: "Nothing here yet",
-    wholeGroup: "The whole group’s history",
+    wholeGroup: "The whole group",
     subject: (name: string, revisions: string) => `${name} · ${revisions}`,
     deleted: (label: string) => `${label} · deleted`,
     untitled: "Untitled entry",
@@ -450,7 +449,6 @@ export const copy = {
     other: "Other…",
     otherNote: "any three-letter code",
     otherPlaceholder: "UZS",
-    otherHint: "A three-letter ISO code.",
     isBase: "the group settles in this",
     hasRate: (rate: string) => `1 = ${rate}`,
     noRate: "no rate yet",
@@ -461,9 +459,8 @@ export const copy = {
   rates: {
     /** The icon in the top row, between History and People. */
     title: "Rates",
-    subtitle: (base: string) => `What the group counts in ${base}`,
     empty: "Everything is in one currency",
-    emptyBody: "Add a rate here, or just write an entry in another currency — this asks then.",
+    emptyBody: "Add one here, or write an entry in another currency.",
     add: "Add a currency",
     /** Under a row: how much of the ledger moves when this rate does. */
     usedBy: (entries: string) => `${entries} at this rate`,
@@ -482,19 +479,18 @@ export const copy = {
       typed: "yours",
       typedOn: (date: string) => `yours, ${date}`,
       loading: "looking it up…",
-      offline: "offline — type it and correct it later",
+      offline: "offline — type it",
       unavailable: "couldn’t look it up — type it",
     },
     refetch: "Look it up",
     /** The one thing this dialog does that a person should know before doing it. */
-    movesEntries: (entries: string, code: string) =>
-      `This re-values ${entries} already written in ${code}.`,
+    movesEntries: (entries: string, code: string) => `Re-values ${entries} in ${code}.`,
     remove: "Remove",
     removeTitle: (code: string) => `Remove the ${code} rate?`,
     removeBodyEmpty: "Nothing is written in it, so nothing changes.",
     /** Removing a rate is refused on the same terms as removing a person. */
     blockedTitle: (code: string) => `Can’t remove the ${code} rate`,
-    blockedBody: (code: string, entries: string) => `The ${code} rate values ${entries}.`,
+    blockedBody: (entries: string) => `Used by ${entries}.`,
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate — ${why}`,

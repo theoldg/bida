@@ -76,8 +76,8 @@ registration should actually be keyed on.
   exists, already holds "Forget group", and People's rename dialog is the
   pattern to copy. One copy string and a `PromptDialog` away.
 - **A rate too large to convert at saves anyway, and re-values nothing.** The
-  dialog takes `999999999999999999999`, promises "This re-values 1 entry
-  already written in USD", and stores it. `repriceEntry` then throws inside
+  dialog takes `999999999999999999999`, promises "Re-values 1 entry in USD",
+  and stores it. `repriceEntry` then throws inside
   `convertMinor` and deliberately keeps the stored figure, so the entry does not
   move: the rates screen shows a number the ledger is not using, with nothing
   saying so. The catch is right — losing the row would be worse. The dialog is

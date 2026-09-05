@@ -111,7 +111,7 @@ function RatesScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.rates.title} sub={copy.rates.subtitle(base)} back={route.group(groupId)} />
+        <TopBar title={copy.rates.title} back={route.group(groupId)} />
         <Scroll>
           {currencies.length === 0 ? (
             <Empty title={copy.rates.empty}>{copy.rates.emptyBody}</Empty>
@@ -191,7 +191,7 @@ function RatesScreen() {
       {ask?.kind === "other" ? (
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters" hint={copy.currency.otherHint}
+          autoCapitalize="characters"
           clean={normalizeCurrencyCode} valid={(v) => isCurrencyCode(v) && v !== base}
           onSubmit={(currency) => add(currency)}
           onClose={() => setAsk((a) => (a?.kind === "other" ? null : a))} />
@@ -207,7 +207,7 @@ function RatesScreen() {
       {ask?.kind === "blocked" ? (
         <Dialog title={copy.rates.blockedTitle(ask.currency)} onClose={() => setAsk(null)}>
           <div className="dbody">
-            <p>{copy.rates.blockedBody(ask.currency, plural(ask.entries.length, copy.noun.entry))}</p>
+            <p>{copy.rates.blockedBody(plural(ask.entries.length, copy.noun.entry))}</p>
           </div>
           <div className="dlist">
             {ask.entries.map((e) => (

@@ -47,7 +47,7 @@ function Offer({ offer }: { offer: "ready" | "manual" }) {
       <p className="hint" style={{ marginTop: 4 }}>{copy.install.body}</p>
       {offer === "ready" ? (
         <button className="btn btn-p" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
-          {copy.install.add}
+          {copy.act.add}
         </button>
       ) : (
         // iOS gives no install API at all, so the honest thing is to point at

@@ -155,7 +155,7 @@ export default function NewGroupPage() {
       {ask === "other" ? (
         <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
           confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters" hint={copy.currency.otherHint}
+          autoCapitalize="characters"
           clean={normalizeCurrencyCode} valid={isCurrencyCode}
           onSubmit={(code) => { setCurrency(code); setAsk(null); }}
           onClose={() => setAsk(null)} />

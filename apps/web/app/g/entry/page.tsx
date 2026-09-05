@@ -62,7 +62,7 @@ function EntryScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.entry.gone.title} back={parent} />
-        <Empty title={copy.entry.gone.body}>{copy.entry.gone.why}</Empty>
+        <Empty title={copy.entry.gone.body} />
       </Body></Screen>
     );
   }

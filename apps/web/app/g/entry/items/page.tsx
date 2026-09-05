@@ -8,7 +8,7 @@ import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../c
 import { ConfirmDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { copy } from "../../../../lib/copy";
-import { bare, distinctInitials, money, plural } from "../../../../lib/format";
+import { bare, distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
@@ -208,7 +208,7 @@ function ItemsScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.items.title} sub={plural(items.length, copy.noun.item)}
+        <TopBar title={copy.items.title}
           back={goBack}
           right={<button className="action" onClick={finish} disabled={!canFinish}>{copy.act.done}</button>} />
 

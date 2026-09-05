@@ -175,8 +175,7 @@ export function RateDialog({
         {/* The one consequence worth saying out loud: this is not a number on
             one entry, it is the number every entry in this currency is read at. */}
         {entryCount > 0 && changed ? (
-          <div className="dbody"><p>{copy.rates.movesEntries(
-            plural(entryCount, copy.noun.entry), currency)}</p></div>
+          <div className="dbody"><p>{copy.rates.movesEntries(plural(entryCount, copy.noun.entry), currency)}</p></div>
         ) : null}
 
         {failed ? <p className="failure" role="alert">{copy.rates.failed(failed)}</p> : null}
