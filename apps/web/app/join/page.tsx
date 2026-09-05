@@ -7,6 +7,7 @@ import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../..
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
+import { useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
 import { parseJoinLink, route } from "../../lib/group-link";
 
@@ -62,13 +63,18 @@ function JoinScreen() {
     [link?.groupId],
   );
 
+  // The one join failure waiting cannot mend: the server has this group
+  // registered under a different secret, so every retry is another 403. A
+  // link whose secret is wrong is a wrong link, which is what it now says.
+  const { rejected } = useSyncHealth(link ? link.groupId : undefined);
+
   useEffect(() => {
     if (link && group) router.replace(route.claim(link.groupId));
   }, [link, group, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;
 
-  if (!link) {
+  if (!link || (rejected && !group)) {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
