@@ -217,6 +217,16 @@ function LedgerTab({ data }: { data: GroupData }) {
                   money(balances.incomeShareMinor[me] ?? 0, group.baseCurrency))}
               </div>
             ) : null}
+            {/* The lines above account for entries; a transfer is not one, and
+                without it they explain a figure they cannot reach. Net, so a
+                phone that has both sent and received says one thing. */}
+            {(balances.settledMinor[me] ?? 0) !== 0 ? (
+              <div style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
+                {copy.group.you.settled(
+                  money(Math.abs(balances.settledMinor[me] ?? 0), group.baseCurrency),
+                  (balances.settledMinor[me] ?? 0) > 0)}
+              </div>
+            ) : null}
           </Card>
         </div>
       ) : null}

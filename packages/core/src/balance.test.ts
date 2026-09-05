@@ -79,7 +79,12 @@ describe("computeBalances", () => {
     const after = computeBalances(foldOps(b.ops));
     expect(after.byMember).toEqual({ a: 0, b: 0 });
     expect(after.totalSpendMinor).toBe(1000);
+    // Named separately because a summary reading "paid X · share Y" beside a
+    // balance has to be able to reach that balance; the transfer is the term
+    // that used to be missing from it.
+    expect(after.settledMinor).toEqual({ a: -500, b: 500 });
   });
+
 
   it("ignores tombstoned expenses", () => {
     const b = new OpBuilder();
@@ -221,6 +226,34 @@ describe("income", () => {
     expect(report.byMember).toEqual({ a: 500, b: -500 });
     expect(report.totalIncomeMinor).toBe(0);
     expect(report.totalSpendMinor).toBe(1000);
+  });
+
+  /**
+   * The identity every per-member summary is built on. It is the one that
+   * broke: transfers moved `byMember` while appearing in no named term, so a
+   * card reading "paid €54.00 · share €53.50" sat under a balance of €13.00.
+   * All four terms have to be here, or the missing one is the bug again.
+   */
+  it("splits every balance into terms that add back up to it", () => {
+    const b = group();
+    b.push("expense", "e1", "create", entry({}));
+    b.push("expense", "i1", "create", entry({ kind: "income", paidBy: "b" }));
+    b.push("settlement", "s1", "create", {
+      fromMember: "b", toMember: "a", amountMinor: 250, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 250, occurredAt: 0,
+    });
+    const r = computeBalances(foldOps(b.ops));
+    expect(r.settledMinor).toEqual({ a: -250, b: 250 });
+    for (const [id, net] of Object.entries(r.byMember)) {
+      expect([id, net]).toEqual([id,
+        (r.paidMinor[id] ?? 0) - (r.owedMinor[id] ?? 0)
+        - (r.receivedMinor[id] ?? 0) + (r.incomeShareMinor[id] ?? 0)
+        + (r.settledMinor[id] ?? 0)]);
+    }
+    // Every term has to be doing work, or the identity holds for the wrong reason.
+    for (const t of [r.paidMinor, r.owedMinor, r.receivedMinor, r.incomeShareMinor, r.settledMinor]) {
+      expect(Object.values(t).some((v) => v !== 0)).toBe(true);
+    }
   });
 
   it("settles up as ordinary balances — a transfer clears an income too", () => {

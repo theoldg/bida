@@ -46,6 +46,10 @@ removing the variant would break the one thing the op log promises.
 - `BalanceReport` gains `totalIncomeMinor`, `receivedMinor` and
   `incomeShareMinor`. Income is **never netted into** `totalSpendMinor` — what a
   trip cost and what it took in are different questions.
+- Every term a balance is made of is **named** in the report, transfers
+  (`settledMinor`) included: `byMember` = paid − owed − received + income share
+  + settled. A screen showing some of the terms beside the balance can only be
+  honest if the whole identity is available to it.
 - Expense ↔ income is an edit of one field. Expense ↔ transfer is not offered:
   different entity, different shape.
 - A payer need not be a participant — paying for a dinner you weren't at is the

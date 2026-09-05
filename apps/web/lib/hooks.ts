@@ -171,7 +171,8 @@ export interface GroupData {
 
 const EMPTY_REPORT: BalanceReport = {
   byMember: {}, totalSpendMinor: 0, totalIncomeMinor: 0,
-  paidMinor: {}, owedMinor: {}, receivedMinor: {}, incomeShareMinor: {}, problems: [],
+  paidMinor: {}, owedMinor: {}, receivedMinor: {}, incomeShareMinor: {}, settledMinor: {},
+  problems: [],
 };
 
 export function useGroupData(groupId: string | undefined): GroupData {

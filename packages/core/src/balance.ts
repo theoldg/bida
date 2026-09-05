@@ -28,6 +28,12 @@ export interface BalanceReport {
   /** Per member: what they took in on the group's behalf, and their cut of it. */
   receivedMinor: Record<Id, number>;
   incomeShareMinor: Record<Id, number>;
+  /**
+   * Per member: what transfers did to their balance — sent minus received.
+   * `byMember` has always counted it; without it named here a summary built
+   * from `paidMinor` and `owedMinor` cannot reach the figure beside it.
+   */
+  settledMinor: Record<Id, number>;
   /** Entries we could not apportion. Rendered as a warning, never swallowed. */
   problems: { expenseId: Id; reason: string }[];
 }
@@ -38,6 +44,7 @@ export function computeBalances(state: GroupState): BalanceReport {
   const owedMinor: Record<Id, number> = {};
   const receivedMinor: Record<Id, number> = {};
   const incomeShareMinor: Record<Id, number> = {};
+  const settledMinor: Record<Id, number> = {};
   const problems: { expenseId: Id; reason: string }[] = [];
   let totalSpendMinor = 0;
   let totalIncomeMinor = 0;
@@ -48,6 +55,7 @@ export function computeBalances(state: GroupState): BalanceReport {
     owedMinor[m.id] = 0;
     receivedMinor[m.id] = 0;
     incomeShareMinor[m.id] = 0;
+    settledMinor[m.id] = 0;
   }
   const touch = (id: Id) => {
     // A member deleted after their expenses still has to appear, or the
@@ -57,6 +65,7 @@ export function computeBalances(state: GroupState): BalanceReport {
     owedMinor[id] ??= 0;
     receivedMinor[id] ??= 0;
     incomeShareMinor[id] ??= 0;
+    settledMinor[id] ??= 0;
   };
 
   for (const e of alive(state.expenses)) {
@@ -107,11 +116,13 @@ export function computeBalances(state: GroupState): BalanceReport {
     touch(s.toMember);
     byMember[s.fromMember] = (byMember[s.fromMember] ?? 0) + s.baseAmountMinor;
     byMember[s.toMember] = (byMember[s.toMember] ?? 0) - s.baseAmountMinor;
+    settledMinor[s.fromMember] = (settledMinor[s.fromMember] ?? 0) + s.baseAmountMinor;
+    settledMinor[s.toMember] = (settledMinor[s.toMember] ?? 0) - s.baseAmountMinor;
   }
 
   return {
     byMember, totalSpendMinor, totalIncomeMinor,
-    paidMinor, owedMinor, receivedMinor, incomeShareMinor, problems,
+    paidMinor, owedMinor, receivedMinor, incomeShareMinor, settledMinor, problems,
   };
 }
 
