@@ -96,10 +96,13 @@ confers nothing without the secret.
   reading `amountText` on its own is how it came to call one €0.00.
 - **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,
   not the form. It answers the amount, the base figure, the split in force and
-  the one sentence saying why Save is grey — from a draft and the group's
-  rates, with no React in it, so the arithmetic behind that button is a test
-  suite rather than a screen to mount. The form reads its answers and writes
-  none of them.
+  why Save is grey — from a draft and the group's rates, with no React in it,
+  so the arithmetic behind that button is a test suite rather than a screen to
+  mount. The form reads its answers and writes none of them. Two sentences,
+  because they are read in two places: `blocker` sits above the split editor,
+  and `receiptBlocker` — the Receipt tab with no bill, or a bill nobody has
+  assigned — goes in the split's own footer beside "Enter an amount to split",
+  since it is the split that is short.
 - **The invite link is `components/invite.tsx`**, written once for the two top
   bars that carry it and the groups list's row menu, which offers it without a
   top bar of its own. `navigator.clipboard.writeText` rejects on an insecure

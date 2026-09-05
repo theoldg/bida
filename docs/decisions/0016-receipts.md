@@ -28,9 +28,12 @@ parts" would lose where it came from. `SplitTab` is saved explicitly — derivin
 it from "are there items?" made every save silently drop a deliberate switch
 back to Evenly. **The tab is a claim, and Save is held until it is true**: with
 no bill scanned, or a bill nobody has been assigned a line of, there is no
-receipt split, and saving stored "Receipt" over an ordinary even one. While the
-tab has items the amount field mirrors `receiptTotalMinor`, disabled — *"when in receipt mode I shouldn't be able to
-change the price"* — so a misread total is fixed on the item or by rescanning.
+receipt split, and saving stored "Receipt" over an ordinary even one. The
+holding is said in the split editor's footer, where every other unfinished
+split is complained about, not up beside Save. While the tab has items the
+amount field mirrors `receiptTotalMinor`, disabled — *"when in receipt mode I
+shouldn't be able to change the price"* — so a misread total is fixed on the
+item or by rescanning.
 
 **Nothing derived is ever cached.** The total and the split are computed fresh,
 inline, where both are read: the form's render. The who-had-what screen writes

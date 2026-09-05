@@ -281,12 +281,6 @@ export const copy = {
     discardBody: "This isn’t saved anywhere.",
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
     goneMember: (name: string) => `${name} is no longer in the group — pick somebody else.`,
-    /**
-     * Receipt mode with no bill behind it. Both say the same thing — this
-     * split doesn't exist yet — and each names the step that is missing.
-     */
-    noReceipt: "Scan a receipt, or split it another way.",
-    noWhoHadWhat: "Say who had what, or split it another way.",
     nobodyTitle: "Nobody in this group yet",
     nobodyBody: "Add the people sharing this first.",
     sentBy: "Who sent it",
@@ -341,6 +335,14 @@ export const copy = {
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
     under: "left to split",
     over: "too much",
+    /**
+     * Receipt mode with no bill behind it. Both say the same thing — this
+     * split doesn’t exist yet — and each names the step that is missing. They
+     * sit in the same footer as the three above: it is the split that is
+     * short, so it is read where every other shortfall in a split is read.
+     */
+    noReceipt: "Scan a receipt, or split it another way",
+    noWhoHadWhat: "Say who had what, or split it another way",
   },
 
   // ------------------------------------------------------------- receipts

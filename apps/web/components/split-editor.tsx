@@ -50,6 +50,12 @@ export interface ReceiptTabProps {
   scanSource: ScanSource;
   /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
   scanError: string | null;
+  /**
+   * Why this tab hasn't produced a split yet — `checkEntry`'s `receiptBlocker`.
+   * It is shown in the split footer with the arithmetic tabs' own verdicts,
+   * because it is the same complaint: this split isn't finished.
+   */
+  blocker: string | null;
   onScanCamera: () => void;
   onScanLibrary: () => void;
   editItemsHref: string;
@@ -101,15 +107,18 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // still surfaces a real problem (nobody included, over-allocated, no total
   // to divide) when there is one.
   const isExactTab = !showReceipt && !legacy && spec.mode === "exact";
+  // Receipt's own shortfall outranks the arithmetic: while the tab has no
+  // split of its own, whatever spec is underneath (often "equal") is not what
+  // is being judged, so its verdict would be a verdict on nothing.
+  const receiptBlocker = showReceipt ? receipt?.blocker ?? null : null;
   // `splitFooter` — not `check` — decides both the wording and the verdict:
   // a zero total is arithmetically a satisfied split and must never be shown
   // as one, so "ok" here means "ok to show a tick", not `check.ok`.
-  const foot = splitFooter(check, currency);
-  // Nothing to check yet if the receipt tab hasn't produced a split — showing
-  // whatever the underlying spec still is (often "equal") would read as a
-  // verdict on a tab that has no opinion.
+  const foot = receiptBlocker !== null
+    ? { ok: false, text: receiptBlocker } : splitFooter(check, currency);
   const showFooter = totalUnknown ? false
-    : showReceipt ? (hasReceiptItems && !foot.ok) : (isExactTab || !foot.ok);
+    : showReceipt ? (receiptBlocker !== null || (hasReceiptItems && !foot.ok))
+      : (isExactTab || !foot.ok);
 
   function switchMode(mode: "equal" | "shares" | "exact") {
     onTabChange(mode);

@@ -326,7 +326,7 @@ function EditEntryScreen() {
   });
   const {
     activeTab, canScan, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, ready,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
   } = check;
 
   // Leaving Receipt hands its derived total back to the amount field, which
@@ -598,6 +598,7 @@ function EditEntryScreen() {
                   scanState,
                   scanSource,
                   scanError,
+                  blocker: receiptBlocker,
                   onScanCamera: () => cameraInput.current?.click(),
                   onScanLibrary: () => libraryInput.current?.click(),
                   editItemsHref: route.items(groupId),

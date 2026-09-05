@@ -50,6 +50,13 @@ export interface EntryCheck {
   effectiveSplit: SplitSpec;
   /** The one sentence saying why Save is grey, or null when nothing is wrong. */
   blocker: string | null;
+  /**
+   * Why Receipt mode hasn't produced the split it claims, or null. Kept apart
+   * from `blocker` because it is read somewhere else: a complaint about the
+   * split belongs in the split editor's own footer, beside "enter an amount to
+   * split", not up against Save with the payer problems.
+   */
+  receiptBlocker: string | null;
   /** Whether Save may light. */
   ready: boolean;
 }
@@ -178,8 +185,8 @@ export function checkEntry(input: {
   // said "from receipt" beside a split nobody read off a receipt, and a scan
   // whose grid was never filled in silently went out evenly. The tab is the
   // claim; `receiptSplit` is whether it is true.
-  const receiptUnfinished = canScan && activeTab === "receipt" && receiptSplit === null
-    ? (hasReceiptItems ? copy.form.noWhoHadWhat : copy.form.noReceipt)
+  const receiptBlocker = canScan && activeTab === "receipt" && receiptSplit === null
+    ? (hasReceiptItems ? copy.split.noWhoHadWhat : copy.split.noReceipt)
     : null;
 
   // The one place the form says why Save is grey. It used to live inside the
@@ -191,9 +198,9 @@ export function checkEntry(input: {
     // A rate the group hasn't got is not a typo to be fixed in this field —
     // there is no field. Say what is missing and where it is set.
     : foreign && groupRate === undefined ? copy.rates.needed(draft.currency)
-      : receiptUnfinished ?? payerProblemText(payerCheck, draft.currency);
+      : payerProblemText(payerCheck, draft.currency);
 
-  const ready = amountMinor > 0 && rateOk && splitOk && !blocker && sidesOk
+  const ready = amountMinor > 0 && rateOk && splitOk && !blocker && !receiptBlocker && sidesOk
     // A transfer's words are a note and optional; an expense without a name is
     // a row nobody can identify a week later.
     && (transfer || draft.description.trim().length > 0);
@@ -201,6 +208,6 @@ export function checkEntry(input: {
   return {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
-    onReceiptTab, effectiveSplit, blocker, ready,
+    onReceiptTab, effectiveSplit, blocker, receiptBlocker, ready,
   };
 }
