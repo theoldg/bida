@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # links · rules · typecheck · 380 tests · export build — pre-push, ~45s
+pnpm check       # links · rules · typecheck · 389 tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time

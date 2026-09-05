@@ -108,10 +108,6 @@ an id known on its own is not a claim.
   has left (only they can, and only where a balance says so), or the settle-up
   row stops offering what the form refuses — a product call, which is why it is
   here.
-- **Segmented controls don't announce which option is chosen.** Split mode,
-  entry kind and the ledger/balances tabs mark selection with styling only; a
-  screen reader reads four equal buttons. Wants `role="tab"`/`aria-selected`
-  or `aria-pressed` on each.
 - **History stamps are wall clock while ordering is HLC.**
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth

@@ -120,7 +120,7 @@ Every screen is built. Routes and their jobs are listed in
 duplicate it here. Data layer: Dexie schema, materialised stores, and
 `lib/db/commands.ts` (one function per user intent). Sync engine in
 `lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
-`lib/entry-kind.ts` is types and arithmetic only. 131 smoke tests.
+`lib/entry-kind.ts` is types and arithmetic only. 140 smoke tests.
 
 ### `apps/api`
 
