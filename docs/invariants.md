@@ -66,7 +66,7 @@ missing a refusal yields a state with no trace to repair from.
 | One identity row per device per group | natural key (the node id) | held |
 | A live entry names only live members | healer — `strandedMembers` | held |
 | An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | — | **open** — whole-entity merge |
-| A device's claimed member is live | — | **open** — lift-or-forget |
+| A device's claimed member is live | — | **open** — the phone puts them back |
 | A group has at least one live member | — | **open** — follows from the above |
 | Two live members never share a `nameKey` | — | **open** — name as identity, part built |
 | A currency with live entries has a live rate | — | **open** — needs a healer |
@@ -122,10 +122,11 @@ Forbidding rename is what makes the name immutable.
 What it costs, both of which are broken today rather than working:
 
 - **Two genuinely different people named Ana.** They now merge silently, with
-  no way out. So the add and join fields must show the names already in the
-  group and nudge toward a distinct one — advisory, since a refusal cannot hold
-  anyway. Ignore the nudge and you merge, which is what `names.ts` has always
-  claimed the app means.
+  no way out. `nameTaken` keeps refusing — it costs nothing and catches every
+  case one device can see both halves of — and the field gains the names
+  already in the group, so the second Ana has something to act on rather than
+  just a no. The refusal is courtesy either way: two offline phones still
+  merge, which is what `names.ts` has always claimed the app means.
 - **Typos are permanent** once any money names you, since removal is refused
   there. Accepted rather than reintroducing rename.
 
@@ -135,35 +136,37 @@ So an old "Ana" and a newly added "Ana" still collide in a group that predates
 the change. Accepted knowingly: the affected groups are known, and the merge
 healer this would otherwise need is the most expensive thing on the list.
 
-**A removal a device contradicts is settled on that device.** Removal is
-refused while anybody is named on a live entry, but that needs both facts on
-one phone — so removing Bruno while Bruno's phone is offline leaves him a
-*ghost*: `device.meByGroup` still points at him, the claim gate passes, and
-every entry naming him is refused with nothing on screen saying why. On sync,
-a phone whose claimed member is tombstoned resolves it itself: if the stranding
-detector still names them, lift it — *"Bruno came back"* — and otherwise the
-removal was uncontested, so the phone forgets the group, keeping the secret the
-way [`leftGroups`](data-model.md#entities) already does.
+**A phone whose member was removed puts them back.** Removal is refused while
+anybody is named on a live entry, but that needs both facts on one phone — so
+removing Bruno while Bruno's phone is offline leaves him a *ghost*:
+`device.meByGroup` still points at him, the claim gate passes, and every entry
+naming him is refused with nothing on screen saying why. On sync, a phone whose
+claimed member is tombstoned lifts it: *"Bruno came back"*.
+
+Unconditionally — not only where an entry contradicts the removal. **Forgetting
+is the exit that makes that safe**: a forgotten group is skipped by the sync
+loop (`sync.ts`), so a phone that accepts the removal stops syncing and stays
+gone, while a phone still using the ledger keeps its person. A removal the
+other side goes on refusing is not a removal, it is two people disagreeing, and
+a shared ledger is not where that gets settled.
 
 Signing as the subject rather than an actor is what lets this run in
 `syncGroup`, where merges actually happen, rather than waiting for somebody to
 open a screen with a claimed identity. It also makes the empty group
-unobservable rather than prevented: two people who remove each other and share
-no money both forget, and nobody is left looking.
+impossible rather than merely rare: every claimed member's phone restores them
+on its next sync.
 
 ## Open questions
 
-- **Is "forget" right for an uncontested removal?** It is the only place the
-  app makes a group silently disappear from somebody's list. The alternative —
-  always come back — makes removal unwinnable against an installed phone, and
-  ping-pongs at human pace with neither side told why.
+- **What does the removal sheet promise now?** If a claimed phone always
+  restores its person, removal only sticks against somebody who has forgotten
+  the group or lost the phone. That is the intended behaviour, but the sheet
+  still reads as though removing is final, and it is the one screen that would
+  then be lying.
 - **Does the log stay small enough?** Whole-entity ops repeat every field on
-  every edit, and a receipt-scanned expense is not small. Ops are never
-  collected ([sync.md](sync.md#gotchas)), so this wants measuring on a real
-  group before it ships, not arguing about.
-- **Should `nameTaken` survive at all** once adding converges? A hint that says
-  "this joins the existing Ana" is arguably better than a refusal, and would be
-  the first screen to admit that one name is one person rather than assert it.
+  every edit, and a receipt-scanned expense is not small, and ops are never
+  collected ([sync.md](sync.md#gotchas)). It ships whole and gets measured on a
+  realistic group afterwards — a number settles this, not an argument.
 - **Where does the last healer live?** A cleared rate that a live entry still
   spends in has no repair yet, and it is the same shape as the member one: the
   tombstone is the half the log contradicts, and `setRate` already writes the
