@@ -434,21 +434,26 @@ function EditEntryScreen() {
   // A side has to be somebody still in the group, not merely a non-empty
   // string. This checked truthiness, and a removed member's id is truthy — so
   // a settle-up row naming somebody who had left opened a transfer *from* a
-  // person who is not in the group, with Save lit up. The picker renders an
-  // unresolvable id as "—", so the reason is on screen.
+  // person who is not in the group, with Save lit up. `goneMember` below is
+  // what puts the name of the missing side on screen.
   const live = new Set(data.members.map((m) => m.id));
   const sidesOk = !transfer
     || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
 
-  // Everybody an expense names has to still be in the group. `paidBy`, the
-  // payer map and the split are all lists of ids, and a member removed while
-  // this entry was open leaves one behind that no picker on either screen can
-  // show — money sitting against a name that is on no list. Save is held, and
-  // the line below says whose name it is; the transfer sides are checked
-  // above, where the picker already renders the gap.
-  const goneMember = transfer ? undefined
-    : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)]
-      .find((id) => id && !live.has(id));
+  // Everybody an entry names has to still be in the group. `paidBy`, the payer
+  // map and the split are all lists of ids, and a member removed while this
+  // entry was open leaves one behind that no picker on either screen can show —
+  // money sitting against a name that is on no list. Save is held, and the line
+  // below says whose name it is.
+  //
+  // A transfer's two sides are the same fault wearing "—". A departed member
+  // keeps whatever balance they left with, so the balances tab still offers to
+  // settle with them; following that row landed on a grey Save, an empty slot
+  // and nothing on screen saying whose name was missing.
+  const goneMember = (transfer
+    ? [draft.fromMember, draft.toMember]
+    : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)])
+    .find((id) => id && !live.has(id));
 
   // Receipt mode has to have produced the split it claims. Without this the
   // tab could be opened over an ordinary even split and saved — the entry then
