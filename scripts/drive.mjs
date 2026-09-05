@@ -389,12 +389,18 @@ async function start() {
       const ctx = await newPhone(browser, { permissions: ["clipboard-read", "clipboard-write"] });
       const page = await ctx.newPage();
       const noise = [];
+      // An offline phone failing to reach the API is the test, not news — and
+      // it arrives twice, as a failed request and as the console error the
+      // browser logs beside it. Both are dropped, or `offline on` answers
+      // every command with a warning about the thing you just asked for.
+      const offlineChatter = (text) => text.includes("ERR_INTERNET_DISCONNECTED");
       page.on("pageerror", (e) => noise.push(`page error: ${e.message.split("\n")[0]}`));
-      page.on("console", (m) => { if (m.type() === "error") noise.push(`console error: ${m.text().slice(0, 300)}`); });
+      page.on("console", (m) => {
+        if (m.type() === "error" && !offlineChatter(m.text())) noise.push(`console error: ${m.text().slice(0, 300)}`);
+      });
       page.on("requestfailed", (r) => {
         const why = r.failure()?.errorText ?? "";
-        // An offline phone failing to reach the API is the test, not news.
-        if (!why.includes("ERR_INTERNET_DISCONNECTED")) noise.push(`request failed: ${r.url().replace(base, "")} (${why})`);
+        if (!offlineChatter(why)) noise.push(`request failed: ${r.url().replace(base, "")} (${why})`);
       });
       phones.set(who, { ctx, page, noise });
     }

@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # links · rules · typecheck · 368 tests · export build — pre-push, ~45s
+pnpm check       # links · rules · typecheck · 380 tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time
@@ -31,6 +31,11 @@ in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for
 a fourth rule is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose.
+
+The flip side: **the browser checks below gate nothing**, so one can go red and
+stay red. `pnpm entries` spent a commit asserting a string the copy had since
+recapitalised. Run `pnpm verify` after touching a screen, not only when
+something feels wrong.
 
 `packages/core` gets real coverage — money, splits, folding; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements) and what's proven is in
@@ -205,6 +210,9 @@ segment is live is a finding, and this is where it surfaces.
 
 - **Numbers are only good until the next screen**, like a person looking away.
   Every answer renumbers; never reuse a number across two commands blind.
+- **Read a whole answer, not its tail.** The banner that says what state a phone
+  is in — offline, changes waiting, link rejected — is the first line, above the
+  back arrow, and `| tail` cuts exactly it.
 - **`offline on` cuts the page load too.** Cut the network after a phone has the
   app, not before, or you are testing a blank tab rather than the offline app.
 - **`html` is the one deliberate cheat.** It is for building the reader, not for
