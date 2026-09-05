@@ -9,23 +9,6 @@ queue, not a record.
 
 ---
 
-## 1. Crashes the screen
-
-### 1.1 One throw anywhere is a white screen with nothing to press
-
-There is no `error.tsx` or `global-error.tsx` anywhere under `apps/web/app/`,
-so any throw during render unmounts the tree, and the service worker serves the
-shell cache-first. The two throws that got here this way are fixed — a scanned
-currency symbol and an out-of-range conversion, both in the entry form — but
-the class isn't: `formatMinor` and `parseMinor` throw by design and are called
-all over every screen.
-
-**Do:** a route-level `error.tsx` and a `global-error.tsx` that say something
-and offer the way out (reload, and back to the group list). Needs a copy
-decision, so it is here rather than done.
-
----
-
 ## 5. Sync and multi-device
 
 ### 5.2 Two members with one name should be mergeable
@@ -67,36 +50,10 @@ in, a `/g/claim` add and a concurrent rename are others.
   cause, not whichever device did the tidying: "Ana was added twice, offline —
   merged".
 
-### 5.3 Anyone who learns a group id before its creator syncs can steal it
-
-`ensureGroup` registers a group id on first push and stores `sha256(secret)`
-from *that* request, so the first request to name an unregistered id owns it.
-`lib/group-link.ts` states the opposite as the reason an id may travel in the
-open — it "confers nothing without the secret" — and that is the part that
-isn't true.
-
-Narrow, and worth being honest about how narrow: it needs an id that leaked
-without its secret (the id is in the address bar on every screen; the secret
-stays in the fragment) *and* a creator who has not pushed yet, which online is
-seconds. Nothing is exposed either way — the thief registers an empty group.
-What it costs is the owner's sync, permanently, while `copy.rejected` tells
-them to open the invite link again, which cannot help: there is no rotation, so
-a fresh link is byte-identical.
-
-**Do:** key the id to the secret rather than to who asked first — derive it
-(`groupId = truncate(sha256(secret))`) and check the pair at registration, so
-an id known on its own is not a claim.
-
 ---
 
 ## 6. Smaller, all real
 
-- **A form held open across a peer's edit still loses that edit.** The command
-  layer diffs the posted form against the entity *as of save*, so a whole-form
-  save no longer clobbers a field it never touched. But a form opened before
-  the peer's op arrived holds their old value and posts it as a deliberate
-  change, which is per-field LWW working correctly on a lie. Either re-read the
-  entity into the open form when sync brings a change, or say so.
 - **A departed member's balance can never be cleared.** Removal is refused
   while a member is named on anything, so this needs a race — a peer adding an
   entry offline while somebody removes them — but the state is reachable and
@@ -108,10 +65,6 @@ an id known on its own is not a claim.
   member (only they can, and only where a balance says so), or the settle-up
   row stops offering what the form refuses — a product call, which is why it is
   here.
-- **History stamps are wall clock while ordering is HLC.**
-  `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
-  timeline shows times out of order. Less alarming once 5.1 lands, still worth
-  a note in the UI or a switch to something monotonic.
 
 ---
 
