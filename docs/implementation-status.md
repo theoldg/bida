@@ -8,7 +8,7 @@ Update it in the same commit as the code it describes.*
 | Phase | State |
 |---|---|
 | 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 243 tests |
+| 1 — Domain core | ✅ 249 tests |
 | 2 — Local-first app | ✅ |
 | 3 — Server and sync | ✅ deployed — **MVP complete** |
 | 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |

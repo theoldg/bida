@@ -142,6 +142,12 @@ return the map plus `remainderAbsorbedBy`.
 two phones folding the same ops must produce byte-identical splits or balances
 diverge, and the seeded draw buys fairness inside that constraint.
 
+**A split is written canonically** (`canonicalSplit`): members sorted and
+deduplicated, weight maps keyed in sorted order. The log is diffed and read as
+JSON, so two specs meaning the same thing have to serialise the same — toggling
+a member out and straight back in reorders the array, and that used to append an
+op saying "changed who's involved" with the identical names on both lines.
+
 ## Co-sponsored expenses
 
 `payers` is the payer-side mirror of `split`, edited on `/g/payers`

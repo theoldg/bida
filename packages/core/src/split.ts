@@ -82,6 +82,33 @@ export function splitParticipants(spec: SplitSpec): Id[] {
   return [...new Set(ids)].sort();
 }
 
+/** The same map, keyed in sorted order. */
+function sortedKeys<T>(map: Record<Id, T>): Record<Id, T> {
+  const out: Record<Id, T> = {};
+  for (const id of Object.keys(map).sort()) out[id] = map[id] as T;
+  return out;
+}
+
+/**
+ * The same split written one way: members sorted and deduplicated, weight maps
+ * keyed in sorted order.
+ *
+ * Two specs that mean the same thing then serialise the same, which is the
+ * only way anything downstream can tell "nobody moved" from "somebody re-picked
+ * the same people". Toggling a member out and straight back in reorders the
+ * array, and that used to be written as an edit — the log then said "changed
+ * who's involved" with the identical names on both lines, because the names
+ * are what a person is shown and the order is not.
+ */
+export function canonicalSplit(spec: SplitSpec): SplitSpec {
+  switch (spec.mode) {
+    case "equal": return { mode: "equal", members: splitParticipants(spec) };
+    case "shares": return { mode: "shares", weights: sortedKeys(spec.weights) };
+    case "exact": return { mode: "exact", amounts: sortedKeys(spec.amounts) };
+    case "percent": return { mode: "percent", bps: sortedKeys(spec.bps) };
+  }
+}
+
 /** Positive weight per participant, whatever the mode calls it. */
 function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
   const out = new Map<Id, bigint>();

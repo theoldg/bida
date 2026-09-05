@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertSplitMode, resolveSplit, shareOf, splitParticipants, validateSplit,
+  canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -213,5 +213,35 @@ describe("property: every split sums to the total", () => {
       expect(sum(resolveSplit(total, { mode: "equal", members }).shares)).toBe(total);
       expect(sum(resolveSplit(total, { mode: "shares", weights }).shares)).toBe(total);
     }
+  });
+});
+
+describe("canonicalSplit", () => {
+  // The whole point: JSON.stringify is what the command layer and the history
+  // compare with, so two specs meaning the same thing must serialise the same.
+  it("sorts members, whatever order they were picked in", () => {
+    const picked: SplitSpec = { mode: "equal", members: ["c", "a", "b"] };
+    expect(JSON.stringify(canonicalSplit(picked)))
+      .toBe(JSON.stringify(canonicalSplit({ mode: "equal", members: ["a", "b", "c"] })));
+  });
+
+  it("drops a member named twice", () => {
+    expect(canonicalSplit({ mode: "equal", members: ["b", "a", "b"] }))
+      .toEqual({ mode: "equal", members: ["a", "b"] });
+  });
+
+  it("sorts the keys of every weighted mode", () => {
+    expect(JSON.stringify(canonicalSplit({ mode: "shares", weights: { b: 2, a: 1 } })))
+      .toBe(JSON.stringify({ mode: "shares", weights: { a: 1, b: 2 } }));
+    expect(JSON.stringify(canonicalSplit({ mode: "exact", amounts: { b: 200, a: 100 } })))
+      .toBe(JSON.stringify({ mode: "exact", amounts: { a: 100, b: 200 } }));
+    expect(JSON.stringify(canonicalSplit({ mode: "percent", bps: { b: 4000, a: 6000 } })))
+      .toBe(JSON.stringify({ mode: "percent", bps: { a: 6000, b: 4000 } }));
+  });
+
+  it("changes nothing about the arithmetic", () => {
+    const spec: SplitSpec = { mode: "shares", weights: { c: 3, a: 1, b: 2 } };
+    expect(resolveSplit(6000, canonicalSplit(spec), { tiebreakSeed: "e1" }).shares)
+      .toEqual(resolveSplit(6000, spec, { tiebreakSeed: "e1" }).shares);
   });
 });

@@ -1,4 +1,5 @@
 import {
+  canonicalSplit,
   convertMinor,
   createHlcState,
   isValidRate,
@@ -550,7 +551,9 @@ export async function addExpense(
           rateToBase: seed.rateToBase,
           baseAmountMinor: toBase(seed, base),
           paidBy: payer.paidBy,
-          split: input.split,
+          // Canonical from the very first op, so an edit that re-picks the same
+          // people compares equal to it — see `canonicalSplit`.
+          split: canonicalSplit(input.split),
           // Absent on an ordinary expense — see `only`. No `deletedAt` either:
           // the id is fresh, so a create is never a tombstone.
           ...only({
@@ -614,10 +617,18 @@ export async function editExpense(
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
+  // Both sides of the split comparison written one way. `sameValue` sorts
+  // object keys but not array elements, so toggling a member out and back in
+  // reordered `members` and was written as an edit that changed nothing a
+  // person could see (`canonicalSplit`).
+  const input: Partial<ExpenseInput> = changes.split
+    ? { ...changes, split: canonicalSplit(changes.split) } : changes;
+  const before = { ...existing, split: canonicalSplit(existing.split) };
+
   const patch: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(changes)) {
+  for (const [key, value] of Object.entries(input)) {
     if (value === undefined) continue;
-    if (sameValue(value, existing[key as keyof typeof existing])) continue;
+    if (sameValue(value, before[key as keyof typeof before])) continue;
     patch[key] = value;
   }
 
@@ -634,7 +645,7 @@ export async function editExpense(
   // ones that actually changed are written, or every payer edit would carry a
   // redundant `payers: null` into the log.
   if (patch["paidBy"] !== undefined || patch["payers"] !== undefined) {
-    const merged = { ...existing, ...changes } as ExpenseInput;
+    const merged = { ...existing, ...input } as ExpenseInput;
     const payer = normalisePayers(merged);
     if (payer.paidBy === existing.paidBy) delete patch["paidBy"];
     else patch["paidBy"] = payer.paidBy;
@@ -649,7 +660,7 @@ export async function editExpense(
     patch["rateToBase"] !== undefined
   ) {
     const { base, rates } = await valuationOf(groupId);
-    const merged: ExpenseInput = { ...existing, ...changes } as ExpenseInput;
+    const merged: ExpenseInput = { ...existing, ...input } as ExpenseInput;
     merged.rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
     if (merged.rateToBase !== existing.rateToBase) patch["rateToBase"] = merged.rateToBase;
     else delete patch["rateToBase"];
