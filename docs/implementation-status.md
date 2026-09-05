@@ -206,3 +206,9 @@ total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo
   `materialise()` folds one entity's ops, so a rate op and an expense never meet
   there. `atCurrentRates` runs once in `stateOf()` instead
   ([data-model.md](data-model.md#entities)).
+- **A figure shown beside a balance has to be able to reach it.** Two of the
+  three defects a blind `pnpm drive` walk turned up were a screen stating part
+  of an arithmetic it presented as the whole: the summary's "paid · share"
+  without the transfer, and a split asking for an amount that was typed but
+  unconvertible. Neither is caught by a test of the arithmetic, which was right
+  both times.

@@ -119,6 +119,16 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.
+- **`pnpm back` is intermittently red, and it is not the check.** A different
+  journey loses each run, and the signature is always the same: one press
+  unwinds *two* screens (`/g/members` → `/`, then off the end of history). That
+  is the double-unwind `goUp` names in
+  [lib/nav.ts](../apps/web/lib/nav.ts) — a back press cancelled while the
+  browser's own traversal also lands — so the race it was written to close is
+  not fully closed. Not diagnosed; don't read a red run as your change until
+  you have run it on `main` too. Lengthening `pressBack`'s wait makes it fail
+  *more*, which is the tell: the check was sampling before the second unwind
+  arrived.
 
 ## `pnpm entries` — the form is wired to the commands
 
