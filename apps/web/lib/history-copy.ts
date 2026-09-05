@@ -1,6 +1,6 @@
 import {
-  formatRate, isValidRate, splitParticipants,
-  type CurrencyCode, type Member, type Revision, type SplitSpec,
+  formatRate, isValidRate, resolveSplit, splitParticipants,
+  type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
 } from "@hajsik/core";
 import { copy } from "./copy";
 import { money, plural } from "./format";
@@ -19,6 +19,32 @@ export interface Described {
   diff?: { was?: string; now: string };
 }
 
+/**
+ * Everybody's share of the whole, in basis points — the one reading of a split
+ * that survives a change of mode. "Evenly between two" and "one part each" are
+ * the same split written twice, and a log announcing a difference between them
+ * is noise. Null where nothing is allocated at all: an empty split, or one
+ * whose every part is zero.
+ */
+function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | null {
+  if (!spec) return null;
+  const weights: Record<Id, number> = {};
+  for (const id of splitParticipants(spec)) {
+    const w = spec.mode === "equal" ? 1
+      : spec.mode === "shares" ? spec.weights[id] ?? 0
+        : spec.mode === "exact" ? spec.amounts[id] ?? 0
+          : spec.bps[id] ?? 0;
+    // Exact amounts are money and the rest are counts, but as a *ratio* they
+    // are the same question, so one distribution answers it for all four.
+    if (Number.isSafeInteger(w) && w > 0) weights[id] = w;
+  }
+  try {
+    return resolveSplit(10_000, { mode: "shares", weights }).shares;
+  } catch {
+    return null;
+  }
+}
+
 /** Every entity kind gets a plain-English sentence and, where it helps, a diff. */
 export function describe(
   rev: Revision,
@@ -35,6 +61,22 @@ export function describe(
   const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
   const namesOf = (spec: SplitSpec | null | undefined) =>
     spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? copy.unknown).join(", ") : "";
+  /**
+   * What each person is down for, in the mode's own words — "Evenly", "Ana ×2
+   * · Bo ×1", "Ana €12.00 · Bo €8.00". The names are already on the line above
+   * when the *people* changed; this line is for when only the shares did.
+   */
+  const shareLine = (spec: SplitSpec | null | undefined): string => {
+    if (!spec) return "";
+    if (spec.mode === "equal") return copy.split.mode.equal;
+    const name = (id: Id) => memberById.get(id)?.name ?? copy.unknown;
+    return splitParticipants(spec).map((id) => {
+      const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
+        : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, currency)
+          : copy.history.percent((spec.bps[id] ?? 0) / 100);
+      return copy.history.shareOf(name(id), value);
+    }).join(" · ");
+  };
 
   if (rev.entity === "expense") {
     // An income and an expense are one entity, so a revision only knows which
@@ -70,12 +112,28 @@ export function describe(
     if (crossing && (crossing.after === "income" || crossing.before === "income")) {
       return { what: crossing.after === "income" ? said.toIncome(who) : said.toExpense(who) };
     }
-    if (field("split")) {
-      const c = field("split")!;
-      return {
-        what: said.changedInvolved(who),
-        diff: { was: namesOf(c.before as SplitSpec | null), now: namesOf(c.after as SplitSpec) },
-      };
+    const split = field("split");
+    if (split) {
+      const was = split.before as SplitSpec | null;
+      const now = split.after as SplitSpec;
+      // Two questions, in the order a person cares about them: who it is
+      // spent on, and then how much each of them owes. Asking only the first
+      // is what put "changed who's involved" over an edit that moved a part
+      // from one name to another — the same two names on both lines, and
+      // nothing on screen saying what had actually moved.
+      const wasWho = namesOf(was);
+      const nowWho = namesOf(now);
+      if (wasWho !== nowWho) {
+        return { what: said.changedInvolved(who), diff: { was: wasWho || undefined, now: nowWho } };
+      }
+      const wasHow = shareLine(was);
+      const nowHow = shareLine(now);
+      if (JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now)) && wasHow !== nowHow) {
+        return { what: said.changedShares(who), diff: { was: wasHow || undefined, now: nowHow } };
+      }
+      // Same people, same shares: the spec was rewritten — a mode swapped for
+      // an identical one, a re-picked member — and there is nothing to report.
+      // Say what else the edit did instead of inventing a change.
     }
     // The three amount fields move together, but only the ones that actually
     // changed reach here: switching an expense to another currency at the same

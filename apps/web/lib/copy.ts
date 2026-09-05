@@ -416,6 +416,12 @@ export const copy = {
     toIncome: (who: string) => `${who} turned this into an income`,
     toExpense: (who: string) => `${who} turned this back into an expense`,
     changedInvolved: (who: string) => `${who} changed who’s involved`,
+    /** The same people, a different share each. */
+    changedShares: (who: string) => `${who} changed how it’s split`,
+    /** One name and what it is down for, on a diff line: "Ana ×2", "Bo €8.00". */
+    shareOf: (name: string, value: string) => `${name} ${value}`,
+    parts: (n: number) => `×${n}`,
+    percent: (n: number) => `${n}%`,
     changedAmount: (who: string) => `${who} changed the amount`,
     changedCurrency: (who: string) => `${who} changed the currency`,
     changedRate: (who: string) => `${who} changed the rate`,

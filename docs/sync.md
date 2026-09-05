@@ -160,7 +160,11 @@ only: there is no restore-to-version, and undoing something is editing it
 The sentence for a revision lives in `apps/web/lib/history-copy.ts` — it is the
 app's vocabulary for the log, and it names the member a membership revision is
 *about* rather than the actor, or adding three people reads as one person
-joining three times.
+joining three times. A **split** revision asks two questions in that order — who
+is involved, then what each of them owes — and answers whichever changed: the
+names, or a share line ("Evenly" → "Ana ×2 · Bo ×1"). Where neither moved it
+says nothing at all and the next field speaks, because a spec can be rewritten
+without meaning anything different.
 
 ## Gotchas
 

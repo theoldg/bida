@@ -23,14 +23,16 @@ async function wipe() {
 }
 
 /** Every revision of a group, described exactly as the screens describe them. */
-async function described(groupId: string): Promise<{ rev: Revision; said: string }[]> {
+async function described(
+  groupId: string,
+): Promise<{ rev: Revision; said: string; diff?: { was?: string; now: string } }[]> {
   const members = await db().members.where("groupId").equals(groupId).toArray();
   const byId = new Map<string, Member>(members.map((m) => [m.id, m]));
   const group = await db().groups.get(groupId);
-  return activityFeed(await opsForGroup(groupId)).map((rev) => ({
-    rev,
-    said: describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency).what,
-  }));
+  return activityFeed(await opsForGroup(groupId)).map((rev) => {
+    const d = describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency);
+    return { rev, said: d.what, diff: d.diff };
+  });
 }
 
 async function expenseIn(base: string, currency: string) {
@@ -49,8 +51,88 @@ async function expenseIn(base: string, currency: string) {
   return { groupId, theo, expenseId };
 }
 
+/** Theo and Marie, splitting one expense evenly — the shape a split edit needs. */
+async function sharedExpense() {
+  const { groupId, memberId: theo } = await createGroup({
+    name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+  });
+  const marie = await addMember(groupId, theo, "Marie");
+  const expenseId = await addExpense(groupId, theo, {
+    description: "Beers",
+    occurredAt: Date.now(),
+    amountMinor: 10_000,
+    currency: "EUR",
+    rateToBase: "1",
+    paidBy: theo,
+    split: { mode: "equal", members: [theo, marie] },
+  });
+  return { groupId, theo, marie, expenseId };
+}
+
 suite("describe", () => {
   beforeEach(wipe);
+
+  // The bug these three exist for: every one of them used to read "Theo
+  // changed who's involved" over the identical pair of names, twice.
+  it("writes nothing at all when the same people are picked again", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    const before = (await described(groupId)).length;
+    // What toggling somebody out and straight back in posts: the same two
+    // people, the other way round.
+    await editExpense(groupId, theo, expenseId, { split: { mode: "equal", members: [marie, theo] } });
+
+    expect((await described(groupId)).length).toBe(before);
+  });
+
+  it("says whose share moved when the people did not", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "shares", weights: { [theo]: 2, [marie]: 1 } },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed how it’s split");
+    // Both lines carry a figure, which is the whole point — the old sentence
+    // printed the same two names above and below.
+    expect(latest!.diff!.was).toBe("Evenly");
+    expect(latest!.diff!.now).toContain("Theo ×2");
+    expect(latest!.diff!.now).toContain("Marie ×1");
+  });
+
+  it("keeps naming the people when they are the thing that changed", async () => {
+    const { groupId, theo, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { split: { mode: "equal", members: [theo] } });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who’s involved");
+    expect(latest!.diff!.was).toContain("Marie");
+    expect(latest!.diff!.now).not.toContain("Marie");
+  });
+
+  it("stays quiet about a mode swapped for one that means the same", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    // One part each is evenly, written differently — so the edit that carries
+    // it is the amount change and nothing else.
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "shares", weights: { [theo]: 1, [marie]: 1 } },
+      amountMinor: 12_500,
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.rev.changes.map((c) => c.field)).toContain("split");
+    expect(latest!.said).toBe("Theo changed the amount");
+  });
+
+  it("prices an exact split in real money", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "exact", amounts: { [theo]: 7_000, [marie]: 3_000 } },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed how it’s split");
+    expect(latest!.diff!.now).toContain("Marie €30.00");
+  });
 
   it("names a currency change that left the figure alone", async () => {
     const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
