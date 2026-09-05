@@ -37,6 +37,33 @@ export function RowMenu({ x, y, actions, onClose }: {
     });
   }, [x, y]);
 
+  // Nothing focuses this card, so opening it left the caret on the row behind
+  // the veil: Escape closed a menu the keyboard was never in, and Tab walked
+  // the page underneath it. `Dialog` gets all of that from `showModal()`; a
+  // card pinned to where the finger landed cannot be a modal dialog, so it
+  // moves focus itself and hands it back on the way out.
+  const opener = useRef<Element | null>(null);
+  useEffect(() => {
+    opener.current = document.activeElement;
+    return () => {
+      const back = opener.current;
+      // A menu action can unmount the row it was opened from — forgetting the
+      // group is one — and can open a dialog of its own, which takes focus
+      // after this runs.
+      if (back instanceof HTMLElement && back.isConnected) back.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Held hidden until it has been measured and placed, and a hidden element
+    // cannot take focus — so wait for the position rather than race it.
+    // `preventScroll` because the card is already inside the viewport by then,
+    // and a scroll is what closes this menu.
+    if (!pos) return;
+    ref.current?.querySelector<HTMLButtonElement>(".rowmenu-item")
+      ?.focus({ preventScroll: true });
+  }, [pos]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
     document.addEventListener("keydown", onKey);

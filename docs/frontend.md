@@ -232,6 +232,14 @@ figure-free.
   it, and looks implemented. The wrapper must own the vertical scroll too, with
   `border-collapse: separate`, or the collapsed border belongs to the table and
   slides out from under the frozen row.
+- **Only a real `<dialog>` gets focus for free.** `Dialog` calls `showModal()`,
+  so the platform moves the caret in, keeps Tab inside and makes the screen
+  behind inert. `RowMenu` is a card pinned to where the finger landed and
+  cannot be one, so it does that by hand: it focuses its first item once it
+  has been positioned — a `visibility: hidden` element cannot take focus, and
+  `preventScroll`, because a scroll is what closes it — and hands focus back to
+  the row on the way out. Without that the long-press menu opened with the
+  caret still on the row behind its own veil.
 - **A revision's `changes` are only the fields that actually differed.** Saving
   an expense in a new currency at the same rate writes `currency` and no amount
   field at all, so history copy must never read one field because a sibling
