@@ -85,7 +85,7 @@ expenses you'd looked at rather than climbing out.
 - Anything new that goes *up* or sideways must say so — a plain `<Link>` to an
   ancestor re-introduces the replayed-history bug.
 - **A group cannot be renamed, and nothing archives one.** You name it when you
-  create it. Both writes are gone from `commands.ts` — a command nothing calls
+  create it. Both writes are gone from the command layer — a command nothing calls
   does not help a `group.update` arriving over sync, which `fold.ts` applies
   without asking the command layer anything. The read side stays: the fold, and
   the words history says about an `archivedAt` it may still find in a

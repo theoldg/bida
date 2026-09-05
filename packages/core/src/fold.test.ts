@@ -99,7 +99,7 @@ describe("foldOps", () => {
 
 /**
  * A create writes no field it would only be defaulting — `only()` in
- * apps/web/lib/db/commands.ts drops them. That is only safe because absent and
+ * apps/web/lib/db/commands/patch.ts drops them. That is only safe because absent and
  * spelled-out-null fold to the same entity for every reader, which is what
  * these pin.
  */

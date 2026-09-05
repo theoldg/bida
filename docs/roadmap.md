@@ -18,7 +18,7 @@ Hosting decided, MVP scope agreed, the visual direction signed off
 property tests that any permutation of ops folds identically.
 
 ## Phase 2 — Local-first app ✅
-Dexie schema and rebuild-from-ops, `lib/db/commands.ts`, every screen, `/join`,
+Dexie schema and rebuild-from-ops, `lib/db/commands/`, every screen, `/join`,
 the personal lens, multi-currency entry (the registry came in Phase 10), PWA
 manifest + shell service worker, and `pnpm shots`.
 

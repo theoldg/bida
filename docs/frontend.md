@@ -71,9 +71,11 @@ confers nothing without the secret.
   `undefined` from a live query means *not answered yet*, not *empty* — the two
   used to render the same blank. A list screen shows `SkeletonRows` in that
   window and its empty state only once the query has answered.
-- Writes go through `lib/db/commands.ts` — one function per user intent, each
-  building an op, appending it and materialising it in one transaction.
-  **Components never write to Dexie directly.**
+- Writes go through `lib/db/commands/` — one function per user intent, each
+  building an op, appending it and materialising it in one transaction
+  (`append.ts`). **Components never write to Dexie directly.** The rule that an
+  op carries only what changed is `patch.ts`, once, for both entry editors: it
+  was written out at each of them and the two copies drifted.
 - Device-local, never-synced state (who "you" are, theme, install-nudge
   dismissal) is in the `device` store. *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op

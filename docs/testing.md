@@ -38,10 +38,12 @@ recapitalised. Run `pnpm verify` after touching a screen, not only when
 something feels wrong.
 
 `packages/core` gets real coverage — 249 tests; the bar is in
-[CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 159, and they
+[CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 169, and they
 are not all smoke: the command layer and `checkEntry` — the two places outside
 core where being wrong costs money — are covered in earnest, the screens are
-not. `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
+not. The merge rule itself has its own suite (`lib/db/commands/patch.test.ts`),
+because reaching it only through a saved entry is how the two entry editors
+came to disagree about it. `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
 `sanitizeAmount` and `groupDigits` are exported from `amount-input.tsx` rather
 than hidden in it. Rendering isn't tested — `pnpm shots` is what looks at
 screens.

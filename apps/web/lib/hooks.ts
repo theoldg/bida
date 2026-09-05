@@ -15,7 +15,7 @@ import { formatJoinLink, route } from "./group-link";
 
 /**
  * Every screen reads through these. Two rules:
- *   - Nothing here writes. Writes go through lib/db/commands.ts, always.
+ *   - Nothing here writes. Writes go through lib/db/commands/, always.
  *   - Derived money (balances, settle-up) is computed here from the
  *     materialised rows, never stored. It is cheap and it cannot go stale.
  */

@@ -40,7 +40,7 @@ written.
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
 bytes in the log and a row in its own history saying nothing changed — eight
 such fields on every ordinary expense, a quarter of the op. `only()` in
-`apps/web/lib/db/commands.ts` drops them. The exception is a `rate` create:
+`apps/web/lib/db/commands/patch.ts` drops them. The exception is a `rate` create:
 its entity id is the currency code, so setting a rate the group had cleared
 lands on the tombstoned row and must write `deletedAt: null` to lift it. In an
 `update` an absent field means "leave it alone", so clearing one there still
