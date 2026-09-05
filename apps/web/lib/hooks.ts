@@ -4,9 +4,11 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
+  atCurrentRates, computeBalances, currenciesInUse, detectAll, settleUp, emptyGroupState,
+  wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
-  type GroupState, type Member, type Settlement, type Transfer,
+  type GroupState, type Member, type OpDraft, type RegisteredInvariant,
+  type Settlement, type Transfer,
 } from "@hajsik/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
@@ -166,6 +168,22 @@ export interface GroupData {
   transfers: Transfer[];
   /** The member this device is, in this group. Undefined until they pick one. */
   me: string | undefined;
+  /**
+   * A stable key naming everything a merge has broken that `healGroup` would
+   * repair, or "" when the state is legal. Screens use it to fire the healer
+   * when the state appears rather than on every redraw — never to decide what
+   * to repair, which is the registry's to say (`core/invariants.ts`).
+   */
+  unhealed: string;
+  /**
+   * The invariant this write would break, as far as this device can see, or
+   * undefined. **The only source of a refusal in the app.** A screen that
+   * decides for itself is the defect docs/invariants.md exists for: the guard
+   * and its healer become two things that agree until they don't. It is a
+   * courtesy either way — it reads one replica, and `healGroup` is what makes
+   * the state legal when it loses.
+   */
+  guard: (draft: OpDraft) => RegisteredInvariant | undefined;
   pendingOps: number;
   loading: boolean;
 }
@@ -198,7 +216,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
         group: undefined, members: [], memberById: new Map(),
         nameOf: () => copy.unknown, hasLeft: () => false,
         expenses: [], settlements: [], rates: {}, currencies: [],
-        balances: EMPTY_REPORT, transfers: [], me: undefined, pendingOps: 0, loading: true,
+        balances: EMPTY_REPORT, transfers: [], me: undefined, unhealed: "",
+        guard: () => undefined, pendingOps: 0, loading: true,
       };
     }
     const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
@@ -219,6 +238,24 @@ export function useGroupData(groupId: string | undefined): GroupData {
 
     const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
+    // Detection needs the tombstones, which `state` has filtered out — a
+    // removed member on a live entry is the whole point. Folded from the raw
+    // rows and handed to the registry, never re-derived here: a screen that
+    // decides for itself what is broken is the drift docs/invariants.md is
+    // about.
+    const withTombstones: GroupState = {
+      ...emptyGroupState(),
+      group: rows.group,
+      members: Object.fromEntries((rows.members ?? []).map((m) => [m.id, m])),
+      expenses: Object.fromEntries((rows.expenses ?? []).map((e) => [e.id, e])),
+      settlements: Object.fromEntries((rows.settlements ?? []).map((s) => [s.id, s])),
+      rates: Object.fromEntries((rows.rates ?? []).map((r) => [r.id, r])),
+    };
+    const found = detectAll(withTombstones);
+    const unhealed = Object.entries(found)
+      .map(([name, violations]) =>
+        `${name}:${violations.map((v) => (v as { id: string }).id).sort().join(",")}`)
+      .sort().join(" ");
     return {
       group: rows.group,
       members,
@@ -232,6 +269,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
       balances,
       transfers: settleUp(balances.byMember),
       me: groupId ? rows.device?.meByGroup[groupId] : undefined,
+      unhealed,
+      guard: (draft) => wouldViolate(withTombstones, draft),
       pendingOps: rows.pending,
       loading: false,
     };

@@ -14,7 +14,7 @@ import {
   editSettlement,
   forgetGroup,
   publishExistingClaims,
-  readdStrandedMembers,
+  healGroup,
   recordSettlement,
   removeMember,
   saveGroupKey,
@@ -522,7 +522,7 @@ describe("commands", () => {
     await removeMember(groupId, theo, marie);
     expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
 
-    expect(await readdStrandedMembers(groupId, theo)).toEqual([marie]);
+    expect(await healGroup(groupId, theo)).toBe(1);
 
     expect((await db().members.get(marie))?.deletedAt).toBeNull();
     await assertMaterialisedMatchesLog(groupId);
@@ -530,8 +530,42 @@ describe("commands", () => {
     // Idempotent: a member who is back is no longer stranded, so a second run
     // — another screen, another device — writes nothing.
     const ops = await db().ops.count();
-    expect(await readdStrandedMembers(groupId, theo)).toEqual([]);
+    expect(await healGroup(groupId, theo)).toBe(0);
     expect(await db().ops.count()).toBe(ops);
+  });
+
+  it("puts back a rate cleared while entries were still written in it", async () => {
+    // The member race, one entity over: one phone clears MAD, the other —
+    // offline — writes a dinner in MAD. `clearRate` itself doesn't refuse,
+    // which is what lets this stand in for the merge.
+    const { groupId, theo, marie } = await trip();
+    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
+    await addExpense(groupId, theo, {
+      description: "Nomad", occurredAt: 1, amountMinor: 62_000, currency: "MAD",
+      rateToBase: "0.0921", paidBy: theo, split: { mode: "equal", members: [theo, marie] },
+    });
+    await clearRate(groupId, theo, "MAD");
+    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
+
+    expect(await healGroup(groupId, theo)).toBe(1);
+
+    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeNull();
+    await assertMaterialisedMatchesLog(groupId);
+
+    // Idempotent, and the lift is not an edit to the number itself.
+    const ops = await db().ops.count();
+    expect(await healGroup(groupId, theo)).toBe(0);
+    expect(await db().ops.count()).toBe(ops);
+    expect((await db().rates.get([groupId, "MAD"]))?.rate).toBe("0.0921");
+  });
+
+  it("leaves a cleared rate nothing is written in alone", async () => {
+    const { groupId, theo } = await trip();
+    await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
+    await clearRate(groupId, theo, "MAD");
+
+    expect(await healGroup(groupId, theo)).toBe(0);
+    expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
   });
 
   it("leaves an ordinary departure alone", async () => {
@@ -542,7 +576,7 @@ describe("commands", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    expect(await readdStrandedMembers(groupId, theo)).toEqual([]);
+    expect(await healGroup(groupId, theo)).toBe(0);
     expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
   });
 
@@ -557,7 +591,7 @@ describe("commands", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    await readdStrandedMembers(groupId, theo);
+    await healGroup(groupId, theo);
 
     const folded = async () =>
       atCurrentRates(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));

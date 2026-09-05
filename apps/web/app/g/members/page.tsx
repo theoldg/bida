@@ -95,6 +95,12 @@ function MembersScreen() {
       setAsk({ kind: "blocked", name, body: copy.members.lastBody, entries: [] });
       return;
     }
+    // The verdict is the registry's — one declaration for the refusal and the
+    // repair that covers it when two phones write past it (core/invariants.ts).
+    // `entriesInvolving` is only asked what to *name*, never whether to refuse.
+    const refused = data.guard({
+      entity: "member", entityId: memberId, kind: "delete", patch: {},
+    });
     const involved = entriesInvolving(data, memberId);
     const blocking: BlockingEntry[] = [
       ...involved.expenses.map((e) => ({
@@ -108,7 +114,7 @@ function MembersScreen() {
         baseAmountMinor: s.baseAmountMinor,
       })),
     ];
-    setAsk(blocking.length > 0
+    setAsk(refused
       ? {
         kind: "blocked", name, entries: blocking,
         body: copy.members.blockedBody(plural(blocking.length, copy.noun.entry)),

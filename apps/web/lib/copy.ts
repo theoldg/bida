@@ -449,6 +449,9 @@ export const copy = {
     /** Nobody asked for this one, so it names the cause rather than the actor:
         a removal the group had already contradicted, undone. */
     readded: (them: string) => `${them} was removed, but an entry still names them — added back`,
+    /** The rate half of the same repair. Names the cause, not the actor. */
+    restoredRate: (code: string) =>
+      `The ${code} rate was cleared, but entries still use it — put back`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,
     updatedMember: (who: string, them: string) => `${who} updated ${them}`,

@@ -3,7 +3,7 @@ import { activityFeed, type Member, type Revision } from "@hajsik/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
 import {
-  addExpense, addMember, clearRate, createGroup, editExpense, readdStrandedMembers,
+  addExpense, addMember, clearRate, createGroup, editExpense, healGroup,
   recordSettlement, removeMember, setRate,
 } from "./db/commands";
 import { describe } from "./history-copy";
@@ -215,7 +215,7 @@ suite("describe", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    await readdStrandedMembers(groupId, theo);
+    await healGroup(groupId, theo);
 
     expect((await described(groupId))[0]!.said)
       .toBe("Marie was removed, but an entry still names them — added back");

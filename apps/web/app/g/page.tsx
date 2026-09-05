@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  payerList, resolvePayers, shareOf, splitParticipants, strandedMembers,
+  payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@hajsik/core";
 import { kindOf, myEffect } from "../../lib/entry-kind";
@@ -17,7 +17,7 @@ import { InviteButton } from "../../components/invite";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
-import { deleteExpense, deleteSettlement, readdStrandedMembers } from "../../lib/db/commands";
+import { deleteExpense, deleteSettlement, healGroup } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -55,15 +55,14 @@ function GroupScreen() {
   //
   // Here rather than in the sync engine because this is the screen the state
   // shows on, and because a write needs the one thing a screen has and a
-  // background tick doesn't: a phone that has said who it is. Keyed on the
-  // stranded ids, so it fires when that set appears and not on every redraw —
-  // and the command re-reads the tables, so it never writes from a stale one.
-  const stranded = strandedMembers([...data.memberById.values()], data)
-    .map((m) => m.id).join(" ");
+  // background tick doesn't: a phone that has said who it is. Keyed on what
+  // the registry found, so it fires when a violation appears and not on every
+  // redraw — and the command re-reads the log, so it never writes from a stale
+  // snapshot.
   useEffect(() => {
-    if (!groupId || !data.me || !stranded) return;
-    void readdStrandedMembers(groupId, data.me).catch(() => {});
-  }, [groupId, data.me, stranded]);
+    if (!groupId || !data.me || !data.unhealed) return;
+    void healGroup(groupId, data.me).catch(() => {});
+  }, [groupId, data.me, data.unhealed]);
 
   // Joining isn't finished until "who are you" is answered. Unclaimed, nothing
   // here works the way it reads: every row is somebody else's, and there is no

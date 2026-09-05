@@ -1,5 +1,5 @@
 import type { Table } from "dexie";
-import { foldOps, type EntityKind } from "@hajsik/core";
+import { foldOps, type EntityKind, type GroupState } from "@hajsik/core";
 import { db, type StoredOp } from "./dexie";
 
 /**
@@ -32,6 +32,18 @@ function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string)
     : kind === "rate" ? state.rates
     : state.attachments;
   return bag[id] as Row | undefined;
+}
+
+/**
+ * The whole group as one folded state.
+ *
+ * Folded from the log rather than assembled from the materialised tables: the
+ * invariant detectors are pure functions of the state the log means, and a
+ * healer reading a half-written cache would repair the wrong thing. The same
+ * fold `rebuild` does on every pull.
+ */
+export async function groupState(groupId: string): Promise<GroupState> {
+  return foldOps(await db().ops.where("groupId").equals(groupId).toArray());
 }
 
 /**

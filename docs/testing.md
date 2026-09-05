@@ -69,6 +69,17 @@ otherwise have to read 253 tests to learn:
   a payer who isn't a participant.
 - **An income is exactly the negation of the same entry as an expense**, member
   for member, and is counted apart from spend rather than netted into it.
+- **Every declared invariant has a healer that works.** Each entry in
+  `core/invariants.ts` detects its state, repairs it in one pass, writes nothing
+  on a second run, writes the same repair whatever order the ops arrived in,
+  and reaches a fixed point. A registry entry with no violating scenario fails
+  the suite, so an invariant whose healer has never run cannot be added.
+- **Hostile merges leave no live entry naming a removed member or currency.**
+  `integrity.test.ts` folds permutations no single device would write and
+  asserts the properties without naming a healer — the layer that catches an
+  invariant nobody declared. References that move money are checked for
+  liveness; everything else only for existence, because an `identity` claim
+  pointing at a removed member is a historical fact history needs.
 - **A rate inverts and comes back.** 12 stored significant digits against 6
   shown, so a rate typed as its own inverse round-trips; repricing at the rate
   an entry was saved with is a no-op, and a rate that can't convert leaves the

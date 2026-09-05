@@ -1,5 +1,5 @@
 import { resolveSplit, SplitError, splitParticipants } from "./split.js";
-import type { Expense, Id, Member, Settlement } from "./types.js";
+import type { Expense, Id, Settlement } from "./types.js";
 
 /**
  * Co-sponsored expenses: "Bob paid 400 and Alice paid 100 for these 500".
@@ -154,14 +154,24 @@ export function resolvePayers(expense: PayerBearing): Record<Id, number> {
 }
 
 /**
- * Whether a member currently has a stake in this expense — paid some of it or
- * is in the split. Used to decide whether removing them from the group would
- * leave a live expense pointing at nobody the group can still edit; a member
- * only in expenses they've since been edited out of (or that were deleted)
- * doesn't count.
+ * Whether a member currently has a stake in this expense — paid some of it, is
+ * in the split, or was marked present on its receipt. Used to decide whether
+ * removing them from the group would leave a live expense pointing at nobody
+ * the group can still edit; a member only in expenses they've since been edited
+ * out of (or that were deleted) doesn't count.
+ *
+ * **Being on the receipt counts even where it costs nothing.** "Who was there"
+ * is a person saying they were at the meal; that they ended up assigned no line
+ * and owing zero is an outcome, not an absence. Removing them anyway left their
+ * id in `receiptInvolved` for the who-had-what grid to read back
+ * (`app/g/entry/items`) against a member list that no longer has them.
+ * `receiptAssignments` is checked too, for grids saved before both were stored.
  */
 export function expenseInvolves(expense: Expense, memberId: Id): boolean {
-  return payerList(expense).includes(memberId) || splitParticipants(expense.split).includes(memberId);
+  return payerList(expense).includes(memberId)
+    || splitParticipants(expense.split).includes(memberId)
+    || (expense.receiptInvolved?.includes(memberId) ?? false)
+    || (expense.receiptAssignments?.some((row) => row.includes(memberId)) ?? false);
 }
 
 /** The transfer half of the same question: they are one of the two sides. */
@@ -201,19 +211,8 @@ export function memberInvolved(entries: EntryTables, memberId: Id): boolean {
   return expenses.length > 0 || settlements.length > 0;
 }
 
-/**
- * Members the group has removed and gone on naming anyway: tombstoned, and
- * still on a live entry.
- *
- * The UI refuses a removal while `memberInvolved` finds anybody, so reaching
- * this takes two phones — one removes Bruno while the other, offline, writes a
- * transfer to him — and it appears where they merge. It is a *state*, not an
- * event: whichever race produced it, a tombstone over live money is the same
- * contradiction, and the app folds it away by putting the member back
- * (`readdStrandedMembers`, `apps/web/lib/db/commands/groups.ts`).
- */
-export function strandedMembers(
-  members: readonly Member[], entries: EntryTables,
-): Member[] {
-  return members.filter((m) => !!m.deletedAt && memberInvolved(entries, m.id));
-}
+// The detector that pairs with this refusal — tombstoned, and still on a live
+// entry — is `liveEntriesNameLiveMembers` in invariants.ts, which declares the
+// guard and its repair together. It used to live here as `strandedMembers`, a
+// second function that happened to agree with `memberInvolved` and was free to
+// drift from it.

@@ -22,16 +22,29 @@ two devices.
 ## The next action
 
 **[invariants.md](invariants.md)** — the only open work, and it is one subject:
-invariants the UI checks at write time that a merge can break anyway. Four are
-open there, and the owner has settled the direction for three of them — merge an
-entry whole rather than per field, make a member's name their identity now that
-renaming is gone, and have a phone whose member was removed put them back on
-sync. Each removes more than it adds; only the rename half is built.
+invariants the UI checks at write time that a merge can break anyway.
 
-Start with the whole-entity merge: the other two sit on it, and its two
-amendments (lifecycle fields stay per-field, history diffs by re-folding) are
-what keep a stale write from undoing a repair. Nothing else is scheduled — a
-session with no assignment should take that, not start a feature the owner cut.
+**The enforcement layer is built.** `core/invariants.ts` holds each invariant's
+detector and its repair in one declaration that cannot omit the repair, the two
+healers the app needs are registered against it, and two test layers hold them:
+one registry-driven, one that asserts the properties naming no healer at all.
+Every refusal in the UI now reads its verdict from that registry. See
+[Enforcement](invariants.md#enforcement).
+
+**Three decided calls remain unbuilt**, in this order — the second and third
+sit on the first:
+
+1. **Merge an entry whole, not per field**, with its two amendments (lifecycle
+   fields stay per-field, history diffs by re-folding), which are what keep a
+   stale write from undoing a repair. Ships whole and gets measured on a real
+   group afterwards.
+2. **A member's name is their identity** — `memberId = hash(groupId + nameKey)`
+   now that renaming is gone.
+3. **A phone whose member was removed puts them back on sync**, which is also
+   what moves healing off the `/g` screen and onto the sync path.
+
+Nothing else is scheduled — a session with no assignment should take the next
+one of those, not start a feature the owner cut.
 
 ## What a cold session needs to know
 

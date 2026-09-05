@@ -229,9 +229,8 @@ export function describe(
     if (rev.isCreate) return { what: self ? said.joined(them) : said.added(who, them) };
     if (rev.isDelete) return { what: said.removed(who, them) };
     // Lifting the tombstone is the one member change nobody made: a removal
-    // that raced an entry naming them is undone automatically
-    // (`readdStrandedMembers`), and the sentence says what the log said, not
-    // which phone noticed it.
+    // that raced an entry naming them is undone automatically (`healGroup`),
+    // and the sentence says what the log said, not which phone noticed it.
     if (field("deletedAt")?.after === null) return { what: said.readded(them) };
     if (field("name")) {
       const c = field("name")!;
@@ -250,6 +249,11 @@ export function describe(
     const pair = (v: unknown) =>
       (typeof v === "string" && isValidRate(v) ? said.ratePair(code, formatRate(v), currency) : undefined);
     if (rev.isDelete) return { what: said.removedRate(who, code) };
+    // The rate half of the same repair, and it has to come before the `rate`
+    // field below: a lift carries only `deletedAt`, so without this it fell
+    // through to "changed the MAD rate" — an edit nobody made, over a number
+    // that did not move.
+    if (field("deletedAt")?.after === null) return { what: said.restoredRate(code) };
     const c = field("rate");
     const now = pair(c?.after);
     if (rev.isCreate) return { what: said.setRate(who, code), diff: now ? { now } : undefined };

@@ -105,21 +105,26 @@ and nowhere else.
 - **A removal the group goes on contradicting is undone.** That refusal needs
   both facts on one phone, so two offline beat it — one removes Bruno, the
   other writes a transfer to him — and the merge lands a tombstone on live
-  money. `strandedMembers` (payers.ts) names that state and
-  `readdStrandedMembers` (`commands/groups.ts`) folds it away: an entry is
+  money. `liveEntriesNameLiveMembers` (core/invariants.ts) names that state and
+  `healGroup` (`commands/groups.ts`) folds it away: an entry is
   money somebody typed and a removal only the claim that nobody named them, so
   the tombstone is the half that gives way. It is lifted with an ordinary
   `deletedAt: null` — as re-setting a cleared rate lifts that row's — and
   history says the entry is why rather than naming the phone that noticed. `/g`
   runs it, being the screen the state shows on and one that has a claimed
-  identity to sign with. Until it did, a departed member's balance had no way
+  identity to sign with. Being named on a receipt's "who was there" counts as
+  being involved, even where it costs nothing. Until this ran, a departed
+  member's balance had no way
   out: the balances tab offered the settle-up row that would square them off,
   and the transfer form refused the name that row opened with.
-- **A rate comes out on the same terms**, and the UI is again where that is
-  said. Clearing one used to be allowed, and every entry written in that
-  currency silently fell back to the rate it was saved at — a different number
-  on each row, and no screen mentioning it. `/g/rates` now blocks removal while
-  any entry is written in that currency, listing them, exactly as People does.
+- **A rate comes out on the same terms**, and comes back on them too. Clearing
+  one used to be allowed, and every entry written in that currency silently
+  fell back to the rate it was saved at — a different number on each row, and
+  no screen mentioning it. `/g/rates` blocks removal while any entry is written
+  in that currency, listing them, exactly as People does; and when two phones
+  beat that refusal, `liveEntriesHaveLiveRates` lifts the tombstone the way the
+  member healer does. A currency the group has *never* priced is a different
+  state and is left alone — there is no number to put back.
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.

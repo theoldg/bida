@@ -1,6 +1,6 @@
 import {
   createHlcState, hlcSend, newId,
-  type EntityKind, type Id, type Op, type OpKind,
+  type EntityKind, type Id, type Op, type OpDraft,
 } from "@hajsik/core";
 import { db, type StoredOp } from "../dexie";
 import { getDevice } from "../device";
@@ -12,13 +12,7 @@ import { scheduleSync } from "../sync";
  * in the app appends to the log, advances the clock or touches Dexie's tables.
  */
 
-export interface OpDraft {
-  entity: EntityKind;
-  entityId: Id;
-  kind: OpKind;
-  patch: Record<string, unknown>;
-  note?: string | null;
-}
+export type { OpDraft };
 
 /**
  * Append ops and materialise what they touched, atomically.

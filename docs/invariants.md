@@ -32,8 +32,8 @@ one of three ways:
 1. **Unreachable** — the state cannot be written down. Natural keys, derivation
    at read, atomic entities. Always prefer this: nothing to run, nothing to test.
 2. **A healer** — a pure detector naming the *state* (not the event behind it),
-   and a repair that folds it away. `strandedMembers` / `readdStrandedMembers`
-   is the worked example; its contract is below.
+   and a repair that folds it away, declared together in `core/invariants.ts`
+   so neither can ship without the other. Its contract is below.
 3. **Courtesy** — a UI refusal, which is a kindness to whoever is holding the
    phone and **not** a correctness mechanism. Every guard in the app is this,
    whether or not it was written believing so.
@@ -64,12 +64,12 @@ missing a refusal yields a state with no trace to repair from.
 | Balances sum to zero | derived on read, `touch()` | held |
 | One rate per currency per group | natural key (the currency code) | held |
 | One identity row per device per group | natural key (the node id) | held |
-| A live entry names only live members | healer — `strandedMembers` | held |
+| A live entry names only live members | healer — `liveEntriesNameLiveMembers` | held |
 | An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | — | **open** — whole-entity merge |
 | A device's claimed member is live | — | **open** — the phone puts them back |
 | A group has at least one live member | — | **open** — follows from the above |
 | Two live members never share a `nameKey` | — | **open** — name as identity, part built |
-| A currency with live entries has a live rate | — | **open** — needs a healer |
+| A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
 
 ## Decided, not built
 
@@ -130,6 +130,22 @@ What it costs, both of which are broken today rather than working:
 - **Typos are permanent** once any money names you, since removal is refused
   there. Accepted rather than reintroducing rename.
 
+**A cleared rate comes back the same way a member does.** A live entry — an
+expense *or* a transfer — written in a currency whose rate row is tombstoned
+lifts that row. The mirror of the member case in every respect: the same race
+(clearing is refused while entries spend in it, which needs both facts on one
+phone), the same repair (`deletedAt: null`, which is the op `setRate` already
+writes), and the same reading of which half gives way. A currency with **no row
+at all** is deliberately left alone — the group has never said what it is worth,
+there is no number to restore, and `needsRate` and the rate dialog own it.
+
+**Being on a receipt is being involved.** "Who was there" is a person saying
+they were at the meal; ending up assigned no line and owing zero is an outcome,
+not an absence. `receiptInvolved` and `receiptAssignments` therefore join
+`payerList` and `splitParticipants` in `expenseInvolves`, which makes the
+removal refuse *and* the healer put them back from a single edit — the whole
+point of the guard and its healer being one declaration.
+
 **Legacy groups keep the gap.** Members already written carry `newId()` and
 cannot be re-keyed — every entry references them and ops are never rewritten.
 So an old "Ana" and a newly added "Ana" still collide in a group that predates
@@ -167,18 +183,55 @@ on its next sync.
   every edit, and a receipt-scanned expense is not small, and ops are never
   collected ([sync.md](sync.md#gotchas)). It ships whole and gets measured on a
   realistic group afterwards — a number settles this, not an argument.
-- **Where does the last healer live?** A cleared rate that a live entry still
-  spends in has no repair yet, and it is the same shape as the member one: the
-  tombstone is the half the log contradicts, and `setRate` already writes the
-  lift.
+- **Should healing move onto the sync path?** It runs from `/g` today, which
+  needs somebody to open a screen with a claimed identity. `syncGroup` is where
+  merges actually happen, and the come-back healer above has to run there —
+  but a repair triggers the push that triggers the repair, so whatever runs it
+  there has to be shown to reach a fixed point under a loop it cannot see.
+
+## Enforcement
+
+Docs are how a cold agent learns this; they enforce nothing. `data-model.md`
+described the removal guard correctly and the guard still shipped without a
+healer. And the server cannot help — it stores ops and assigns `seq`, it never
+folds ([ADR-0002](decisions/0002-append-only-op-log.md)) — so enforcement is
+client-side at authoring time or nowhere. Four layers, weakest first:
+
+1. **`rules-check.mjs`** refuses a call to `memberInvolved` anywhere in
+   `apps/web`. A screen takes its verdict from `data.guard`, never from a bare
+   predicate. It cannot see the difference between a read that converges and
+   one that refuses, which is why it is the weakest layer.
+2. **The type.** `Invariant<V>` requires `repair`; `wouldViolate` — the UI's
+   refusal — is optional and declared beside it. A guard therefore *implies* a
+   healer, because there is nowhere else for a screen to get an answer. The
+   failure this class keeps producing becomes a compile error.
+3. **`invariants.test.ts`** holds every registered entry to the five rules
+   above: detects the state, repairs it in one pass, is idempotent, writes the
+   same repair on every permutation, and reaches a fixed point. Its first test
+   refuses a registry entry with no violating scenario — so an invariant whose
+   healer has never actually run cannot be added.
+4. **`integrity.test.ts`** asserts the properties directly, over hostile
+   permutations no single device would write, naming no healer at all. It is
+   the only layer with a chance against the invariant nobody declared: deleting
+   an entry from the registry turns it red.
+
+**Existence is not liveness**, and conflating them writes a healer that
+destroys history. Every reference is checked for *existence* — always true by
+construction, since a delete tombstones and never removes a row. Only
+references that move money — an entry's members, an entry's currency — are
+checked for *liveness*. An `identity` claim pointing at a removed member is the
+case that forces the distinction: it is a true historical fact, and every op
+that device stamped is attributed through it, so a healer that repointed or
+dropped it would erase the attribution to satisfy a property nobody wanted.
 
 ## Gotchas
 
-- **A guard and its healer must be one declaration.** `memberInvolved` (the
-  refusal) and `strandedMembers` (the detector) are two functions that happen
-  to agree, and will drift. Every defect in this file so far was a guard whose
-  healer was never written — the check looked like enforcement, so nobody asked
-  what happened when it lost.
+- **A guard and its healer must be one declaration.** They used to be two
+  functions that happened to agree — `memberInvolved` refusing, `strandedMembers`
+  detecting — and free to drift. Every defect in this file was a guard whose
+  healer was never written: the check looked like enforcement, so nobody asked
+  what happened when it lost. `Invariant` now requires the repair and makes the
+  refusal the optional half, which is the inversion that matters.
 - **Healers must not fight.** One that tombstones and one that lifts, pointed
   at the same row, is an op loop that syncs. Whatever runs them has to reach a
   fixed point and be tested for it, especially once healing moves onto the sync

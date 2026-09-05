@@ -1,8 +1,9 @@
 import {
-  newColorSeed, newGroupSecret, newId, strandedMembers,
+  healDrafts, newColorSeed, newGroupSecret, newId,
   type CurrencyCode, type Id,
 } from "@hajsik/core";
 import { db } from "../dexie";
+import { groupState } from "../fold";
 import { getDevice, hideGroup, setMe, unhideGroup } from "../device";
 import { requestPersistence } from "../../persist";
 import { appendOps } from "./append";
@@ -236,41 +237,38 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 }
 
 /**
- * Put back every member the group removed and then went on naming — the state
- * `strandedMembers` (core/payers.ts) describes.
+ * Repair every invariant the merged log has broken — `INVARIANTS` in
+ * `core/invariants.ts`, run to a fixed point.
  *
- * Removal is refused while anybody is named on a live entry, so this only
- * happens when two phones are each right at once: one removes Bruno, the other
- * — offline — writes a transfer to him, and the merge leaves a tombstoned
- * member holding money. The tombstone is the half the log has since
- * contradicted: an entry is money somebody typed, a removal is only the claim
- * that nobody was naming them. So the tombstone gives way, and the debt has a
- * way out again — before this, the balances tab offered a settle-up row that
- * the transfer form then refused, because no picker offers a member who has
- * left.
+ * Reaching any of these takes two phones, each right on its own evidence: one
+ * removes Bruno, the other — offline — writes a transfer to him; one clears the
+ * MAD rate, the other writes a dinner in MAD. Every guard in the app is a
+ * courtesy that constrains one replica's view of the log and cannot constrain
+ * the union of two ([docs/invariants.md](../../../../../docs/invariants.md)),
+ * so what makes the state legal again is this, not the refusal.
  *
- * Lifting it is an ordinary `deletedAt: null`, exactly as re-setting a cleared
- * rate lifts that row's tombstone (rates.ts); `lib/history-copy.ts` turns it
- * into the one sentence saying why somebody reappeared. Idempotent: it reads
- * the tables itself, and a member who is back is no longer stranded, so every
- * run after the first writes nothing. Two devices noticing at once write the
- * same lift, which folds to the same state.
+ * The repairs are ordinary ops — a `deletedAt: null` lift, exactly what
+ * re-adding a member or re-setting a cleared rate already writes — so nothing
+ * about the fold, the wire format or history has to learn a new shape.
+ *
+ * Idempotent, and safe to call from anywhere: it reads the log itself, a healed
+ * state fails its own detector, and two devices noticing at once write the same
+ * repair, which folds to the same state. The loop is what makes it total —
+ * repairing one invariant can reveal another — and it terminates because each
+ * pass either writes nothing or strictly reduces what the detectors find,
+ * which `invariants.test.ts` holds every registered entry to.
  */
-export async function readdStrandedMembers(groupId: Id, actor: Id): Promise<Id[]> {
-  const d = db();
-  const [members, expenses, settlements] = await Promise.all([
-    d.members.where("groupId").equals(groupId).toArray(),
-    d.expenses.where("groupId").equals(groupId).toArray(),
-    d.settlements.where("groupId").equals(groupId).toArray(),
-  ]);
-  const stranded = strandedMembers(members, { expenses, settlements });
-  if (stranded.length === 0) return [];
-
-  await appendOps(groupId, actor, stranded.map((m) => ({
-    entity: "member" as const,
-    entityId: m.id,
-    kind: "update" as const,
-    patch: { deletedAt: null },
-  })));
-  return stranded.map((m) => m.id);
+export async function healGroup(groupId: Id, actor: Id): Promise<number> {
+  let written = 0;
+  // Bounded rather than `while (true)`: a healer pair that did fight would
+  // otherwise write ops forever, and an op loop that syncs is the worst
+  // failure this file could have. The test proves the fixed point; this is
+  // what keeps a future mistake cheap.
+  for (let pass = 0; pass < 8; pass++) {
+    const drafts = healDrafts(await groupState(groupId));
+    if (drafts.length === 0) break;
+    await appendOps(groupId, actor, drafts);
+    written += drafts.length;
+  }
+  return written;
 }

@@ -62,6 +62,19 @@ for (const file of sources(join(ROOT, "packages/core/src"))) {
   }
 }
 
+// docs/invariants.md: a guard and its healer must be one declaration. Every
+// defect of that class so far was a refusal whose repair was never written, so
+// a screen must take its verdict from the registry (`data.guard`), which cannot
+// be declared without a repair. `entriesInvolving` stays allowed: a screen may
+// ask what to *name*, never whether to refuse.
+for (const file of sources(join(ROOT, "apps/web"))) {
+  const src = code(readFileSync(file, "utf8"));
+  if (/\bmemberInvolved\b/.test(src)) {
+    fail(file, "calls `memberInvolved` — a refusal comes from `data.guard`, so it "
+      + "cannot outlive its healer (docs/invariants.md)");
+  }
+}
+
 // ADR-0008, and the owner said it three times: asking is components/dialog.tsx.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
