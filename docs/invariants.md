@@ -54,8 +54,8 @@ missing a refusal yields a state with no trace to repair from.
 | One identity row per device per group | natural key (the node id) | held |
 | A live entry names only live members | healer — `liveEntriesNameLiveMembers` | held |
 | An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | unreachable — whole-entity merge | held |
-| A device's claimed member is live | — | **open** — the phone puts them back |
-| A group has at least one live member | — | **open** — follows from the above |
+| A device's claimed member is live | healer — `restoreClaimDrafts` | held |
+| A group has at least one live member | follows from the above | held |
 | Two live members never share a `nameKey` | — | **open** — name as identity, part built |
 | A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
 
@@ -127,8 +127,7 @@ So an old "Ana" and a newly added "Ana" still collide in a group that predates
 the change. Accepted knowingly: the affected groups are known, and the merge
 healer this would otherwise need is the most expensive thing on the list.
 
-**A phone whose member was removed puts them back.** *Not built.* Removal is
-refused while
+**A phone whose member was removed puts them back.** Removal is refused while
 anybody is named on a live entry, but that needs both facts on one phone — so
 removing Bruno while Bruno's phone is offline leaves him a *ghost*:
 `device.meByGroup` still points at him, the claim gate passes, and every entry
@@ -142,11 +141,17 @@ gone, while a phone still using the ledger keeps its person. A removal the
 other side goes on refusing is not a removal, it is two people disagreeing, and
 a shared ledger is not where that gets settled.
 
-Signing as the subject rather than an actor is what lets this run in
-`syncGroup`, where merges actually happen, rather than waiting for somebody to
-open a screen with a claimed identity. It also makes the empty group
-impossible rather than merely rare: every claimed member's phone restores them
-on its next sync.
+It signs as the subject, not as whoever noticed, and that is what lets it run
+in `syncGroup` — where merges actually happen — rather than waiting for
+somebody to open a screen. All healing moved there with it, for the same
+reason: a local write is refused before it lands, so a merge is the only thing
+that can produce an illegal state. It also makes the empty group impossible
+rather than merely rare, since every claimed member's phone restores them.
+
+It is the one repair the registry cannot hold, and `restoreClaimDrafts` lives
+beside it saying why: a registered detector sees only `GroupState`, and the
+premise here is *which member this phone is*. Registered, every device would
+resurrect every claimed member and forgetting would end nothing.
 
 ## Open questions
 

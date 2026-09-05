@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  atCurrentRates, computeBalances, currenciesInUse, detectAll, settleUp, emptyGroupState,
+  atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
   wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
@@ -169,13 +169,6 @@ export interface GroupData {
   /** The member this device is, in this group. Undefined until they pick one. */
   me: string | undefined;
   /**
-   * A stable key naming everything a merge has broken that `healGroup` would
-   * repair, or "" when the state is legal. Screens use it to fire the healer
-   * when the state appears rather than on every redraw — never to decide what
-   * to repair, which is the registry's to say (`core/invariants.ts`).
-   */
-  unhealed: string;
-  /**
    * The invariant this write would break, as far as this device can see, or
    * undefined. **The only source of a refusal in the app.** A screen that
    * decides for itself is the defect docs/invariants.md exists for: the guard
@@ -216,7 +209,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
         group: undefined, members: [], memberById: new Map(),
         nameOf: () => copy.unknown, hasLeft: () => false,
         expenses: [], settlements: [], rates: {}, currencies: [],
-        balances: EMPTY_REPORT, transfers: [], me: undefined, unhealed: "",
+        balances: EMPTY_REPORT, transfers: [], me: undefined,
         guard: () => undefined, pendingOps: 0, loading: true,
       };
     }
@@ -251,11 +244,6 @@ export function useGroupData(groupId: string | undefined): GroupData {
       settlements: Object.fromEntries((rows.settlements ?? []).map((s) => [s.id, s])),
       rates: Object.fromEntries((rows.rates ?? []).map((r) => [r.id, r])),
     };
-    const found = detectAll(withTombstones);
-    const unhealed = Object.entries(found)
-      .map(([name, violations]) =>
-        `${name}:${violations.map((v) => (v as { id: string }).id).sort().join(",")}`)
-      .sort().join(" ");
     return {
       group: rows.group,
       members,
@@ -269,7 +257,6 @@ export function useGroupData(groupId: string | undefined): GroupData {
       balances,
       transfers: settleUp(balances.byMember),
       me: groupId ? rows.device?.meByGroup[groupId] : undefined,
-      unhealed,
       guard: (draft) => wouldViolate(withTombstones, draft),
       pendingOps: rows.pending,
       loading: false,

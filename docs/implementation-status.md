@@ -38,13 +38,16 @@ no longer sit beside a split from another phone that does not sum to it —
 repairs up: `deletedAt` merges per field, and `createdAt` is write-once in the
 fold. History diffs two folds rather than reading the patch.
 
-**Two decided calls remain unbuilt:**
+**Healing runs on the sync path.** `syncGroup` heals right after it rebuilds
+from a pull, because a merge is the only thing that can make the state illegal
+— every local write is refused before it lands. A phone whose member the merge
+removed puts them back there too, signed as the person restored
+(`restoreClaimDrafts`); forgetting the group is the exit.
 
-1. **A member's name is their identity** — `memberId = hash(groupId + nameKey)`
-   now that renaming is gone, so two phones adding "Ana" offline mint one
-   member rather than two.
-2. **A phone whose member was removed puts them back on sync**, which is also
-   what moves healing off the `/g` screen and onto the sync path.
+**One decided call remains unbuilt: a member's name is their identity** —
+`memberId = hash(groupId + nameKey)` now that renaming is gone, so two phones
+adding "Ana" offline mint one member rather than two. It earns an ADR when it
+is built.
 
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
@@ -68,10 +71,10 @@ here before you read anything:
   rate per currency, synced as an op; `atCurrentRates` values the whole ledger
   in one pass where state is read, so correcting a rate moves every entry
   already written in that currency ([ADR-0005](decisions/0005-money-and-currency.md)).
-- **An edit writes only what the edit changed.** The form posts every field and
-  the command layer diffs them, so two phones editing different fields of one
-  expense offline both keep their change
-  ([sync.md](sync.md#the-operation)).
+- **An entry is merged whole, a member or rate per field.** An expense op
+  carries the entity as its saver saw it, so an amount can never sit beside
+  another phone's split; `deletedAt` and `createdAt` are the exceptions that
+  keep the healers working ([sync.md](sync.md#the-operation)).
 - **History is read, never rewound.** The `restore` op kind still folds only
   because production groups hold some
   ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).

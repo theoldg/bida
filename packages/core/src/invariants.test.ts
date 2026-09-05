@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   INVARIANTS, detectAll, healDrafts, liveEntriesHaveLiveRates,
-  liveEntriesNameLiveMembers, wouldViolate, type OpDraft,
+  liveEntriesNameLiveMembers, restoreClaimDrafts, wouldViolate, type OpDraft,
 } from "./invariants.js";
 import { foldOps } from "./fold.js";
 import { createHlcState, formatHlc, maxHlc } from "./hlc.js";
@@ -239,5 +239,54 @@ describe("liveEntriesNameLiveMembers", () => {
     ];
 
     expect(liveEntriesNameLiveMembers.detect(foldOps(ops))).toEqual([]);
+  });
+});
+
+/**
+ * Not a registered invariant, and the tests say why: its premise is which
+ * member *this* phone is, which no `GroupState` holds. See `restoreClaimDrafts`.
+ */
+describe("restoreClaimDrafts", () => {
+  const removed = (member: string): GroupState => foldOps([
+    ...marrakechOps().filter((o) => o.entity !== "expense"),
+    {
+      id: "op-remove", groupId: GROUP, entity: "member", entityId: member, kind: "delete",
+      patch: {}, hlc: formatHlc(createHlcState("phoneb", 1_743_800_000_000)),
+      actor: MARIE, note: null, createdAt: 1_743_800_000_000, seq: null,
+    },
+  ]);
+
+  it("lifts the removal of the member this phone claims", () => {
+    expect(restoreClaimDrafts(removed(ADA), ADA)).toEqual([
+      { entity: "member", entityId: ADA, kind: "update", patch: { deletedAt: null } },
+    ]);
+  });
+
+  it("leaves somebody else's removal alone", () => {
+    expect(restoreClaimDrafts(removed(ADA), MARIE)).toEqual([]);
+  });
+
+  it("writes nothing for a member who is already live, or who was never here", () => {
+    expect(restoreClaimDrafts(removed(ADA), THEO)).toEqual([]);
+    expect(restoreClaimDrafts(removed(ADA), "nobody")).toEqual([]);
+  });
+
+  it("is idempotent — the lifted state asks for nothing", () => {
+    const state = removed(ADA);
+    const healed = foldOps([
+      ...marrakechOps().filter((o) => o.entity !== "expense"),
+      {
+        id: "op-remove", groupId: GROUP, entity: "member", entityId: ADA, kind: "delete",
+        patch: {}, hlc: formatHlc(createHlcState("phoneb", 1_743_800_000_000)),
+        actor: MARIE, note: null, createdAt: 1_743_800_000_000, seq: null,
+      },
+      {
+        id: "op-back", groupId: GROUP, entity: "member", entityId: ADA, kind: "update",
+        patch: restoreClaimDrafts(state, ADA)[0]!.patch,
+        hlc: formatHlc(createHlcState("phonea", 1_743_900_000_000)),
+        actor: ADA, note: null, createdAt: 1_743_900_000_000, seq: null,
+      },
+    ]);
+    expect(restoreClaimDrafts(healed, ADA)).toEqual([]);
   });
 });

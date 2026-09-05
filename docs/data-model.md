@@ -110,9 +110,9 @@ and nowhere else.
   money somebody typed and a removal only the claim that nobody named them, so
   the tombstone is the half that gives way. It is lifted with an ordinary
   `deletedAt: null` — as re-setting a cleared rate lifts that row's — and
-  history says the entry is why rather than naming the phone that noticed. `/g`
-  runs it, being the screen the state shows on and one that has a claimed
-  identity to sign with. Being named on a receipt's "who was there" counts as
+  history says the entry is why rather than naming the phone that noticed. The
+  sync engine runs it, right after the merge that could have caused it — a
+  local write is refused before it lands, so nothing else can. Being named on a receipt's "who was there" counts as
   being involved, even where it costs nothing. Until this ran, a departed
   member's balance had no way
   out: the balances tab offered the settle-up row that would square them off,
@@ -125,6 +125,11 @@ and nowhere else.
   beat that refusal, `liveEntriesHaveLiveRates` lifts the tombstone the way the
   member healer does. A currency the group has *never* priced is a different
   state and is left alone — there is no number to put back.
+- **A phone whose member was removed puts them back**, whatever the reason —
+  `restoreClaimDrafts`, signed as the person being restored. Not a registered
+  invariant: its premise is which member *this* phone is, and no `GroupState`
+  holds that. Forgetting the group is the exit
+  ([invariants.md](invariants.md#decided)).
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.

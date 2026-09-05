@@ -1,10 +1,10 @@
 import {
-  healDrafts, newColorSeed, newGroupSecret, newId,
+  healDrafts, newColorSeed, newGroupSecret, newId, restoreClaimDrafts,
   type CurrencyCode, type Id,
 } from "@hajsik/core";
 import { db } from "../dexie";
 import { groupState } from "../fold";
-import { getDevice, hideGroup, setMe, unhideGroup } from "../device";
+import { getDevice, getMe, hideGroup, setMe, unhideGroup } from "../device";
 import { requestPersistence } from "../../persist";
 import { appendOps } from "./append";
 
@@ -237,7 +237,8 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 }
 
 /**
- * Repair every invariant the merged log has broken — `INVARIANTS` in
+ * Repair every invariant the merged log has broken, and put this phone's own
+ * member back if the merge removed them — `INVARIANTS` in
  * `core/invariants.ts`, run to a fixed point.
  *
  * Reaching any of these takes two phones, each right on its own evidence: one
@@ -258,16 +259,30 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
  * pass either writes nothing or strictly reduces what the detectors find,
  * which `invariants.test.ts` holds every registered entry to.
  */
-export async function healGroup(groupId: Id, actor: Id): Promise<number> {
+export async function healGroup(groupId: Id): Promise<number> {
+  // Who this phone is, which is both the signature on the repairs and — for
+  // the claim below — the thing being repaired. A device that hasn't said who
+  // it is has no honest name to sign with and nothing of its own to put back,
+  // so it heals nothing; the phones that are in the group will.
+  const me = await getMe(groupId);
+  if (!me) return 0;
+
   let written = 0;
   // Bounded rather than `while (true)`: a healer pair that did fight would
   // otherwise write ops forever, and an op loop that syncs is the worst
   // failure this file could have. The test proves the fixed point; this is
   // what keeps a future mistake cheap.
   for (let pass = 0; pass < 8; pass++) {
-    const drafts = healDrafts(await groupState(groupId));
+    const state = await groupState(groupId);
+    // The claim first, because it is the one repair the registry cannot make
+    // (`restoreClaimDrafts`) and because putting this person back can strand
+    // the entries they were paying for, which the registered healers then see.
+    const registered = healDrafts(state);
+    const claim = restoreClaimDrafts(state, me)
+      .filter((d) => !registered.some((r) => r.entity === d.entity && r.entityId === d.entityId));
+    const drafts = [...claim, ...registered];
     if (drafts.length === 0) break;
-    await appendOps(groupId, actor, drafts);
+    await appendOps(groupId, me, drafts);
     written += drafts.length;
   }
   return written;

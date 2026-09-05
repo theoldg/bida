@@ -46,6 +46,14 @@ and append the lot. A save that moved nothing still writes nothing
 (`movesAnything` in `commands/patch.ts`), or every Save would be a revision
 saying nothing happened.
 
+**A merge is the only thing that can make the state illegal**, so `syncGroup`
+heals right after it rebuilds: `healGroup` runs the registry to a fixed point
+and puts this phone's own member back if the merge removed them
+([invariants.md](invariants.md)). It writes ordinary ops, which the next run
+pushes. A phone that hasn't claimed a member heals nothing — it has no honest
+name to sign with — and a forgotten group is never reached at all, which is
+what keeps a restored member from being an argument that runs forever.
+
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
 bytes in the log and a row in its own history saying nothing changed — eight

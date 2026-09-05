@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { foldOps } from "@hajsik/core";
 import { db } from "./dexie";
 import { formatHlc, createHlcState } from "@hajsik/core";
-import { addExpense, createGroup, forgetGroup, saveGroupKey } from "./commands";
+import { addExpense, addMember, createGroup, forgetGroup, saveGroupKey } from "./commands";
 import { getDevice } from "./device";
 import { syncAll, syncGroup } from "./sync";
 
@@ -55,6 +55,62 @@ describe("syncGroup", () => {
     expect(after.every((op) => op.pending === 0)).toBe(true);
     expect(after.every((op) => typeof op.seq === "number")).toBe(true);
     expect((await db().groupKeys.get(groupId))?.lastSeq).toBe(pendingBefore.length);
+  });
+
+  /**
+   * The decision in docs/invariants.md: a phone whose member was removed puts
+   * them back, unconditionally, signing as the person being restored. Forgetting
+   * the group is the exit — the sync loop skips a forgotten group, so the
+   * argument ends rather than running forever.
+   */
+  it("puts this phone's own member back when the merge removed them", async () => {
+    const { groupId, memberId: marie } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Marie",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+
+    // Somebody else's phone removed her, later on the clock than anything here.
+    const removal = {
+      id: "op-removal", groupId, entity: "member" as const, entityId: marie,
+      kind: "update" as const, patch: { deletedAt: Date.now() },
+      hlc: formatHlc(createHlcState("peer", Date.now() + 3600_000, 0)),
+      actor: "someone-else", note: null, createdAt: Date.now(), seq: 1,
+    };
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops: [removal], latestSeq: 1 }), { status: 200 }),
+    ));
+
+    await syncGroup(groupId);
+
+    expect((await db().members.get(marie))?.deletedAt).toBeNull();
+    // Signed as the subject, and pending — the next run tells everyone else.
+    const restore = (await db().ops.where("groupId").equals(groupId).toArray())
+      .filter((op) => op.entityId === marie && op.kind === "update" && op.patch.deletedAt === null);
+    expect(restore).toHaveLength(1);
+    expect(restore[0]!.actor).toBe(marie);
+    expect(restore[0]!.pending).toBe(1);
+  });
+
+  it("leaves somebody else's removal alone", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    const marie = await addMember(groupId, theo, "Marie");
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+
+    const removal = {
+      id: "op-removal", groupId, entity: "member" as const, entityId: marie,
+      kind: "update" as const, patch: { deletedAt: Date.now() },
+      hlc: formatHlc(createHlcState("peer", Date.now() + 3600_000, 0)),
+      actor: theo, note: null, createdAt: Date.now(), seq: 1,
+    };
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops: [removal], latestSeq: 1 }), { status: 200 }),
+    ));
+
+    await syncGroup(groupId);
+
+    expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
   });
 
   it("pulls remote ops and rebuilds so a second device folds to the same state", async () => {

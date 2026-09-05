@@ -145,7 +145,17 @@ export async function syncGroup(groupId: string): Promise<SyncOutcome | undefine
   // A pulled op can slot in earlier than ops already folded locally — refold
   // the whole group rather than risk applying out of HLC order. See
   // docs/sync.md#gotchas.
-  if (pulled.length > 0) await rebuild(groupId);
+  if (pulled.length > 0) {
+    await rebuild(groupId);
+    // A merge is the only thing that can produce an illegal state — every
+    // local write is refused before it lands — so this is where healing
+    // belongs, not on a screen somebody may never open. It writes ops of its
+    // own, which the next run pushes. Imported lazily because the command
+    // layer imports this file (`appendOps` schedules a sync); a static import
+    // would close the cycle.
+    const { healGroup } = await import("./commands/groups");
+    await healGroup(groupId).catch(() => {});
+  }
 
   return { pushed: pending.length, pulled: pulled.length };
 }

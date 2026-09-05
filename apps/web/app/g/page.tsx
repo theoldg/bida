@@ -17,7 +17,7 @@ import { InviteButton } from "../../components/invite";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
-import { deleteExpense, deleteSettlement, healGroup } from "../../lib/db/commands";
+import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -45,24 +45,6 @@ function GroupScreen() {
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
-
-  // Two phones can each be right at once: one removes Bruno while the other,
-  // offline, writes a transfer to him. The merge leaves a tombstoned member
-  // holding live money — a departed row on the balances tab below, and a
-  // settle-up row whose form then refuses the name it opened with. The
-  // removal is the half the log has since contradicted, so it gives way
-  // (docs/data-model.md).
-  //
-  // Here rather than in the sync engine because this is the screen the state
-  // shows on, and because a write needs the one thing a screen has and a
-  // background tick doesn't: a phone that has said who it is. Keyed on what
-  // the registry found, so it fires when a violation appears and not on every
-  // redraw — and the command re-reads the log, so it never writes from a stale
-  // snapshot.
-  useEffect(() => {
-    if (!groupId || !data.me || !data.unhealed) return;
-    void healGroup(groupId, data.me).catch(() => {});
-  }, [groupId, data.me, data.unhealed]);
 
   // Joining isn't finished until "who are you" is answered. Unclaimed, nothing
   // here works the way it reads: every row is somebody else's, and there is no

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp } from "@hajsik/core";
 import { db } from "./dexie";
 import { rebuild } from "./fold";
-import { getDevice, getMe } from "./device";
+import { getDevice, getMe, updateDevice } from "./device";
 import {
   addExpense,
   addMember,
@@ -560,7 +560,7 @@ describe("commands", () => {
     await removeMember(groupId, theo, marie);
     expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
 
-    expect(await healGroup(groupId, theo)).toBe(1);
+    expect(await healGroup(groupId)).toBe(1);
 
     expect((await db().members.get(marie))?.deletedAt).toBeNull();
     await assertMaterialisedMatchesLog(groupId);
@@ -568,7 +568,7 @@ describe("commands", () => {
     // Idempotent: a member who is back is no longer stranded, so a second run
     // — another screen, another device — writes nothing.
     const ops = await db().ops.count();
-    expect(await healGroup(groupId, theo)).toBe(0);
+    expect(await healGroup(groupId)).toBe(0);
     expect(await db().ops.count()).toBe(ops);
   });
 
@@ -585,14 +585,14 @@ describe("commands", () => {
     await clearRate(groupId, theo, "MAD");
     expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
 
-    expect(await healGroup(groupId, theo)).toBe(1);
+    expect(await healGroup(groupId)).toBe(1);
 
     expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeNull();
     await assertMaterialisedMatchesLog(groupId);
 
     // Idempotent, and the lift is not an edit to the number itself.
     const ops = await db().ops.count();
-    expect(await healGroup(groupId, theo)).toBe(0);
+    expect(await healGroup(groupId)).toBe(0);
     expect(await db().ops.count()).toBe(ops);
     expect((await db().rates.get([groupId, "MAD"]))?.rate).toBe("0.0921");
   });
@@ -602,8 +602,41 @@ describe("commands", () => {
     await setRate(groupId, theo, "MAD", "0.0921", "typed", 1);
     await clearRate(groupId, theo, "MAD");
 
-    expect(await healGroup(groupId, theo)).toBe(0);
+    expect(await healGroup(groupId)).toBe(0);
     expect((await db().rates.get([groupId, "MAD"]))?.deletedAt).toBeTruthy();
+  });
+
+  /**
+   * The other half of healing, and the one the registry cannot hold: which
+   * member this phone is. Decided in docs/invariants.md — the removal always
+   * gives way, and forgetting the group is the exit that ends the argument.
+   */
+  it("puts this phone's own member back, whatever the reason for the removal", async () => {
+    const { groupId, theo } = await trip();
+    // No entry names Theo: the registered healers see nothing to repair, and
+    // he comes back anyway, because this phone is him.
+    await removeMember(groupId, theo, theo);
+    expect((await db().members.get(theo))?.deletedAt).toBeTruthy();
+
+    expect(await healGroup(groupId)).toBe(1);
+
+    expect((await db().members.get(theo))?.deletedAt).toBeNull();
+    await assertMaterialisedMatchesLog(groupId);
+    expect(await healGroup(groupId)).toBe(0);
+  });
+
+  it("heals nothing on a phone that hasn't said who it is", async () => {
+    const { groupId, theo, marie } = await trip();
+    await recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 3000,
+      currency: "EUR", rateToBase: "1", occurredAt: 2,
+    });
+    await removeMember(groupId, theo, marie);
+    // A device with no claim has no honest name to sign a repair with.
+    await updateDevice({ meByGroup: {} });
+
+    expect(await healGroup(groupId)).toBe(0);
+    expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
   });
 
   it("leaves an ordinary departure alone", async () => {
@@ -614,7 +647,7 @@ describe("commands", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    expect(await healGroup(groupId, theo)).toBe(0);
+    expect(await healGroup(groupId)).toBe(0);
     expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
   });
 
@@ -629,7 +662,7 @@ describe("commands", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    await healGroup(groupId, theo);
+    await healGroup(groupId);
 
     const folded = async () =>
       atCurrentRates(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));

@@ -222,4 +222,24 @@ export function wouldViolate(state: GroupState, draft: OpDraft): RegisteredInvar
   return INVARIANTS.find((i) => i.wouldViolate(state, draft));
 }
 
+/**
+ * The op that puts this device's own member back, when a merge removed them.
+ *
+ * Not in `INVARIANTS`, and it cannot be: a registered detector sees only
+ * `GroupState`, and the premise here is device-local — *which* member this
+ * phone is. Registered, every device would resurrect every claimed member, and
+ * a removal would be unrefusable by anyone. Kept device-local, the person being
+ * removed is the only one who puts themselves back, and **forgetting the group
+ * is the exit that ends it**: a forgotten group is skipped by the sync loop, so
+ * the phone stops arguing (docs/invariants.md).
+ *
+ * A removal the other side goes on refusing was never a removal — it is two
+ * people disagreeing, and a shared ledger is not where that gets settled.
+ */
+export function restoreClaimDrafts(state: GroupState, memberId: Id): OpDraft[] {
+  const member = state.members[memberId];
+  if (!member?.deletedAt) return [];
+  return [{ entity: "member", entityId: memberId, kind: "update", patch: { deletedAt: null } }];
+}
+
 export type { Op };

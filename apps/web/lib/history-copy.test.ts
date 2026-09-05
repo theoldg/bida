@@ -215,7 +215,7 @@ suite("describe", () => {
     });
     await removeMember(groupId, theo, marie);
 
-    await healGroup(groupId, theo);
+    await healGroup(groupId);
 
     expect((await described(groupId))[0]!.said)
       .toBe("Marie was removed, but an entry still names them — added back");
