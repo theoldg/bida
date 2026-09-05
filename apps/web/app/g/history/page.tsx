@@ -12,7 +12,7 @@ import { opsForGroup } from "../../../lib/db/fold";
 import { copy } from "../../../lib/copy";
 import { plural, stamp } from "../../../lib/format";
 import { describe } from "../../../lib/history-copy";
-import { route } from "../../../lib/group-link";
+import { parseEntrySource, route } from "../../../lib/group-link";
 import { useGroupData } from "../../../lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
@@ -27,6 +27,9 @@ function HistoryScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
+  // An entry's own history is below the entry, so it carries the entry's own
+  // `via` back up with it (lib/group-link.ts).
+  const via = parseEntrySource(params.get("via"));
   const data = useGroupData(groupId);
   const [shown, setShown] = useState(PAGE);
 
@@ -74,7 +77,7 @@ function HistoryScreen() {
 
   if (!groupId) return <BadLink />;
   if (data.loading) {
-    return <Blank back={entryId ? route.entry(groupId, entryId) : route.group(groupId)} />;
+    return <Blank back={entryId ? route.entry(groupId, entryId, via) : route.group(groupId)} />;
   }
   if (!data.group) return <BadLink />;
   const group = data.group;
@@ -94,8 +97,8 @@ function HistoryScreen() {
       const e = expenseById.get(rev.entityId);
       const label = e?.description?.trim() || copy.history.untitled;
       return e?.deletedAt
-        ? { href: route.history(groupId, rev.entityId), label: copy.history.deleted(label) }
-        : { href: route.entry(groupId, rev.entityId), label };
+        ? { href: route.history(groupId, rev.entityId, "history"), label: copy.history.deleted(label) }
+        : { href: route.entry(groupId, rev.entityId, "history"), label };
     }
     if (rev.entity === "settlement") {
       const s = settlementById.get(rev.entityId);
@@ -103,8 +106,8 @@ function HistoryScreen() {
       const to = memberById.get(s?.toMember ?? "")?.name ?? copy.unknown;
       const label = `${from} → ${to}`;
       return s?.deletedAt
-        ? { href: route.history(groupId, rev.entityId), label: copy.history.deleted(label) }
-        : { href: route.entry(groupId, rev.entityId), label };
+        ? { href: route.history(groupId, rev.entityId, "history"), label: copy.history.deleted(label) }
+        : { href: route.entry(groupId, rev.entityId, "history"), label };
     }
     return undefined;
   }
@@ -117,7 +120,7 @@ function HistoryScreen() {
           sub={copy.history.subject(
             entryId ? subjectName ?? copy.history.entry : group.name,
             plural(revisions.length, copy.noun.revision))}
-          back={entryId ? route.entry(groupId, entryId) : route.group(groupId)}
+          back={entryId ? route.entry(groupId, entryId, via) : route.group(groupId)}
         />
 
         <Scroll>

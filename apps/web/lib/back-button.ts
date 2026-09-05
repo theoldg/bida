@@ -3,9 +3,9 @@
  *
  * The two used to disagree. The arrow goes *up* — it names a parent and
  * unwinds to it ([nav.ts](./nav.ts)) — while the button replayed wherever you
- * had been, so an entry opened from the history feed went back to the feed
- * while its arrow went up to the group; and on the entry form the arrow asked
- * before throwing a typed draft away and the button just threw it away.
+ * had been, so the two parted company wherever the arrow skipped a level; and
+ * on the entry form the arrow asked before throwing a typed draft away and the
+ * button just threw it away.
  *
  * So the button runs the screen's own back action instead, whatever that
  * action is — up-link, `router.back()`, or a question. One behaviour, defined
@@ -17,8 +17,11 @@
  * arrow. Those presses are left alone: nothing is cancelled, so nothing can be
  * mistimed, and the press spends none of the one-per-interaction activation a
  * cancellation costs. What is left to take over is where the two genuinely
- * differ — an entry opened from the history feed, whose arrow climbs past it,
- * and a form that asks before losing a draft.
+ * differ — an arrow that skips a level, such as the whole group's feed reached
+ * from one entry's own history, and a form that asks before losing a draft. An
+ * entry opened from beside itself is no longer one of them: it names the screen
+ * it came from ([group-link.ts](./group-link.ts)), which is where the press was
+ * going anyway.
  *
  * Only *user*-initiated traversals are taken; the app's own traversal (the
  * arrow, mid-flight) is left alone, which is what keeps this from looping. And

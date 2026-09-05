@@ -34,6 +34,22 @@ export function parseJoinLink(input: string): JoinLink | null {
 import type { EntryKind } from "./entry-kind";
 
 /**
+ * Where an entry was opened from, when that wasn't the ledger.
+ *
+ * Three screens link *sideways* into an entry rather than down into it: the
+ * history feed, and the two "can't remove this yet" dialogs, which list what is
+ * still naming a person or a currency. Going up to the group from there threw
+ * away the list you were working through, so the link says which screen it was
+ * on and the entry unwinds to that instead (`entryParent`, ADR-0007).
+ *
+ * It rides in the URL rather than in memory because a screen is a route: a
+ * reload, or the app being killed in the background, must not change where back
+ * goes. `via` and not `from` — `/g/entry/edit` already spends `from` on a
+ * member id.
+ */
+export type EntrySource = "history" | "members" | "rates";
+
+/**
  * Internal routes. The app is a static export, so every screen is a real page
  * with the group id in the query string — no dynamic route segments to
  * pre-render, and a link that survives a refresh.
@@ -53,14 +69,20 @@ export const route = {
     `/g/entry/edit?id=${encodeURIComponent(groupId)}${kind && kind !== "expense" ? `&kind=${kind}` : ""}`,
   editEntry: (groupId: string, entryId: string) =>
     `/g/entry/edit?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`,
-  /** One detail screen for all three: the id is looked up in both tables. */
-  entry: (groupId: string, entryId: string) =>
-    `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`,
+  /**
+   * One detail screen for all three: the id is looked up in both tables.
+   * `via` is where the link was on — see `EntrySource`.
+   */
+  entry: (groupId: string, entryId: string, via?: EntrySource) =>
+    `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`
+    + (via ? `&via=${via}` : ""),
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
   /** Who-had-what: right after a scan finds line items, or "Edit who-had-what" later. */
   items: (groupId: string) => `/g/entry/items?id=${encodeURIComponent(groupId)}`,
-  history: (groupId: string, entryId?: string) =>
-    `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`,
+  /** `via` rides along on an entry's own history, so the chain back is exact. */
+  history: (groupId: string, entryId?: string, via?: EntrySource) =>
+    `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`
+    + (via ? `&via=${via}` : ""),
   /** Settle up: a transfer, pre-filled with who owes whom and how much. */
   transferBetween: (groupId: string, from: string, to: string, amount: number) =>
     `${route.addEntry(groupId, "transfer")}&from=${encodeURIComponent(from)}`
@@ -71,3 +93,16 @@ export const route = {
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,
 };
+
+/** The `via=` of a URL, or `undefined` for anything the app didn't write. */
+export function parseEntrySource(value: string | null | undefined): EntrySource | undefined {
+  return value === "history" || value === "members" || value === "rates" ? value : undefined;
+}
+
+/** The screen an entry's back arrow names: whoever linked to it, or the group. */
+export function entryParent(groupId: string, via: EntrySource | undefined): string {
+  return via === "history" ? route.history(groupId)
+    : via === "members" ? route.members(groupId)
+      : via === "rates" ? route.rates(groupId)
+        : route.group(groupId);
+}

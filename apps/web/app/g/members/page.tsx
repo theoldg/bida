@@ -202,7 +202,7 @@ function MembersScreen() {
           <div className="dbody"><p>{ask.body}</p></div>
           <div className="dlist">
             {ask.entries.map((e) => (
-              <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
+              <Link key={e.id} href={route.entry(groupId, e.id, "members")} className="drow-pick">
                 <span className="rmain">
                   <span className="rtitle">{e.label}</span>
                 </span>

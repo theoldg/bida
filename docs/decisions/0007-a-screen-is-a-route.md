@@ -1,6 +1,6 @@
 # 0007 — A screen is a route, back climbs the hierarchy, the chrome is thin
 
-**Status:** Accepted · 2026-08-27 · revised through 2026-09-03
+**Status:** Accepted · 2026-08-27 · revised through 2026-09-05
 
 **Context.** The original plan put everything inside a group in drawers and
 sheets over `/g`. Drawer state doesn't survive a reload or a back press unless
@@ -36,11 +36,18 @@ expenses you'd looked at rather than climbing out.
   replaces the current entry. The two tabs `replace`, being halves of one
   screen; `router.back()` stays where "back" is the truth — payers,
   who-had-what and the entry form are only reached from below.
+- **An entry's parent is whoever linked to it.** Three screens link in from
+  *beside* an entry rather than above it — the history feed, and the two "can't
+  remove this yet" lists on People and Rates — and climbing to the group from
+  there threw away the list you were working through. So those links name
+  themselves (`via=history|members|rates`, `lib/group-link.ts`) and the entry
+  unwinds to the list; from the ledger, with no `via`, the parent is the group
+  as before. In the URL, not in memory, because a screen is a route: a reload
+  must not move where back goes.
 - **The device's back button runs the screen's back action, whatever it is.**
-  Unwinding alone left the two disagreeing: an entry opened from the history
-  feed went back to the feed while its arrow went up to the group, and on the
-  entry form the arrow asked before throwing a typed draft away while the
-  button just threw it away. So a *user*-initiated backward traversal is
+  Unwinding alone left the two disagreeing wherever the arrow skipped a level,
+  and on the entry form the arrow asked before throwing a typed draft away
+  while the button just threw it away. So a *user*-initiated backward traversal is
   cancelled and `TopBar`'s own back runs instead (`lib/back-button.ts`). The
   app's own traversals are left alone — taking those over would call the arrow
   in a loop — and so is a browser that won't be cancelled, which is the
@@ -51,7 +58,10 @@ expenses you'd looked at rather than climbing out.
   every press over was the same behaviour on paper and a worse one in the
   hand: a cancellation has to be re-navigated, and the re-navigation was
   counted against an index the browser had already moved. Cancelling is now
-  what the history feed and the entry form need, not the app's normal path.
+  what the entry form needs, and the arrows that genuinely skip a level — the
+  whole group's feed, reached from one entry's own history — not the app's
+  normal path. Naming the source in the link took the history feed off that
+  list: the press was already going there.
 
 ## Consequences
 
@@ -85,3 +95,6 @@ expenses you'd looked at rather than climbing out.
   entry per press. The Navigation API cancels beforehand.
 - **Make every up-link `replace`** — it leaves the parent twice on the stack, so
   the first press of the device back button appears to do nothing.
+- **One fixed parent per screen, the group for every entry** (this ADR's
+  position until 2026-09-05, when the owner changed their mind): tidy on paper,
+  and it dropped you out of the list you had opened the entry from.

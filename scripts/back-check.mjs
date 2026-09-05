@@ -16,7 +16,7 @@
  * spends the activation the next would need to cancel, so the second press is
  * a different code path from the first and used to be the broken one.
  */
-import { ensureBuild, serveExport, launch, newPhone, reporter, newGroup }
+import { ensureBuild, serveExport, launch, newPhone, pick, reporter, newGroup }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -72,8 +72,26 @@ await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/);
 await rows(page);
 
+// One entry in a currency of its own: it is what the rate registry refuses to
+// remove, and the list in that refusal is one of the three ways into an entry
+// from beside it rather than from above.
+await page.getByLabel("Add an entry").click();
+await page.waitForURL(/entry\/edit/);
+await page.locator("input.amount").fill("20");
+await page.locator("#what").fill("Taxi");
+await pick(page, '[aria-label="Currency"]', "USD");
+await page.getByRole("textbox", { name: /^Rate, USD to / }).fill("0.8");
+await page.getByRole("button", { name: "Save" }).last().click();
+await page.waitForTimeout(200);
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/);
+await rows(page);
+
 // ---- one level per press, from every screen that has an arrow -----------
 const group = `/g?id=${g}`;
+const feed = `/g/history?id=${g}`;
+const people = `/g/members?id=${g}`;
+const rates = `/g/rates?id=${g}`;
 
 /** Tap the first row of a list and wait for where it goes. */
 const intoRow = async (p, until) => { await rows(p); await p.locator(".rows a.row").first().click(); await p.waitForURL(until); };
@@ -91,8 +109,8 @@ const scenes = [
     out: [group, "/"],
   },
   {
-    // The arrow climbs *past* the feed to the group, so this is the press the
-    // browser cannot get right on its own and the app has to take over.
+    // The feed is where the entry was opened, so the feed is what back owes
+    // you: the link says so (`via=history`) and the arrow reads it.
     at: "an entry opened from the history feed",
     walk: async (p) => {
       await intoGroup(p);
@@ -101,7 +119,35 @@ const scenes = [
       await p.locator("a").filter({ hasText: "Dinner" }).first().click();
       await p.waitForURL(/\/g\/entry\?/);
     },
-    out: [group, "/"],
+    out: [feed, group, "/"],
+  },
+  {
+    // The other two side doors: a list of what still names a person, and one
+    // of what is still written in a currency. Landing on the group would lose
+    // the list you were working through.
+    at: "an entry opened from the can't-remove-person dialog",
+    walk: async (p) => {
+      await intoGroup(p);
+      await p.getByLabel("People").click();
+      await p.waitForURL(/\/g\/members/);
+      await p.getByLabel("Remove Marie").click();
+      await p.locator(".dlist .drow-pick").first().click();
+      await p.waitForURL(/\/g\/entry\?/);
+    },
+    out: [people, group, "/"],
+  },
+  {
+    at: "an entry opened from the can't-remove-currency dialog",
+    walk: async (p) => {
+      await intoGroup(p);
+      await p.getByLabel("Rates").click();
+      await p.waitForURL(/\/g\/rates/);
+      await p.locator(".rows button.row").filter({ hasText: "USD" }).first().click();
+      await p.getByRole("button", { name: "Remove" }).click();
+      await p.locator(".dlist .drow-pick").first().click();
+      await p.waitForURL(/\/g\/entry\?/);
+    },
+    out: [rates, group, "/"],
   },
   {
     at: "the history feed",

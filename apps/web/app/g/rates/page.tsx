@@ -211,7 +211,7 @@ function RatesScreen() {
           </div>
           <div className="dlist">
             {ask.entries.map((e) => (
-              <Link key={e.id} href={route.entry(groupId, e.id)} className="drow-pick">
+              <Link key={e.id} href={route.entry(groupId, e.id, "rates")} className="drow-pick">
                 <span className="rmain">
                   <span className="rtitle">{e.label}</span>
                 </span>

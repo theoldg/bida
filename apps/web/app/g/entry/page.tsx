@@ -17,7 +17,7 @@ import { db } from "../../../lib/db/dexie";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
 import { clockTime, dayLabel, money, plural } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
+import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
 import { useGroupData, type GroupData } from "../../../lib/hooks";
 
 /**
@@ -35,6 +35,11 @@ function EntryScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
+  // Not the ledger, sometimes: the feed and the two blocked-removal dialogs
+  // link in from beside this screen, and back belongs to whichever it was
+  // (lib/group-link.ts).
+  const via = parseEntrySource(params.get("via"));
+  const parent = groupId ? entryParent(groupId, via) : "/";
   const data = useGroupData(groupId);
   const expense = data.expenses.find((e) => e.id === entryId);
   const settlement = expense ? undefined : data.settlements.find((s) => s.id === entryId);
@@ -48,7 +53,7 @@ function EntryScreen() {
   ) ?? 0;
 
   if (!groupId) return <BadLink />;
-  if (data.loading) return <Blank back={route.group(groupId)} />;
+  if (data.loading) return <Blank back={parent} />;
   if (!data.group) return <BadLink />;
   const group = data.group;
   const entry = expense ?? settlement;
@@ -56,7 +61,7 @@ function EntryScreen() {
   if (!entry) {
     return (
       <Screen><Body>
-        <TopBar title={copy.entry.gone.title} back={route.group(groupId)} />
+        <TopBar title={copy.entry.gone.title} back={parent} />
         <Empty title={copy.entry.gone.body}>{copy.entry.gone.why}</Empty>
       </Body></Screen>
     );
@@ -79,9 +84,9 @@ function EntryScreen() {
         <TopBar
           title={expense ? (expense.description || copy.group.untitled) : copy.group.transfer}
           sub={`${dayLabel(entry.occurredAt)} · ${clockTime(entry.occurredAt)}`}
-          back={route.group(groupId)}
+          back={parent}
           right={<>
-            <Link className="iconbtn" href={route.history(groupId, entry.id)} aria-label={copy.entry.history}>
+            <Link className="iconbtn" href={route.history(groupId, entry.id, via)} aria-label={copy.entry.history}>
               <Icon name="clock" size={18} />
             </Link>
             <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
@@ -108,7 +113,7 @@ function EntryScreen() {
               {kind !== "expense" ? <span className="chip hl">{copy.entryKind.label[kind]}</span> : null}
               {foreign ? <span className="chip">{copy.entry.rate(entry.rateToBase)}</span> : null}
               {edits > 0 ? (
-                <Link href={route.history(groupId, entry.id)} className="chip">
+                <Link href={route.history(groupId, entry.id, via)} className="chip">
                   <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
                 </Link>
               ) : null}
