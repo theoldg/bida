@@ -184,9 +184,9 @@ function ItemsScreen() {
   }
 
   /** Leaving undoes what this screen wrote; `finish` is the only way to keep it. */
-  function goBack() {
-    if (touched) { setAsking(true); return; }
-    router.back();
+  function mayLeave() {
+    if (touched) { setAsking(true); return false; }
+    return true;
   }
 
   function discard() {
@@ -209,7 +209,7 @@ function ItemsScreen() {
     <Screen>
       <Body>
         <TopBar title={copy.items.title}
-          back={goBack}
+          back={{ ask: mayLeave }}
           right={<button className="action" onClick={finish} disabled={!canFinish}>{copy.act.done}</button>} />
 
         {/* Three bands, not one scrolling page: who was there stays put at the

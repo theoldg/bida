@@ -76,12 +76,12 @@ function PayersScreen() {
   }
 
   /** Leaving throws this screen's edits away, so ask first — as the form does. */
-  function goBack() {
+  function mayLeave() {
     const was = opened.current;
     const changed = was !== null && (JSON.stringify(was.payers) !== JSON.stringify(current.payers)
       || was.paidBy !== current.paidBy);
-    if (changed) { setAsking(true); return; }
-    router.back();
+    if (changed) { setAsking(true); return false; }
+    return true;
   }
 
   function discard() {
@@ -112,7 +112,7 @@ function PayersScreen() {
     <Screen>
       <Body>
         <TopBar title={draft.kind === "income" ? copy.payers.whoReceived : copy.payers.whoPaid}
-          sub={money(amountMinor, currency)} back={goBack}
+          sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
           right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>
             {copy.act.done}
           </button>} />

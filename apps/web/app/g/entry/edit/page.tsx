@@ -468,11 +468,12 @@ function EditEntryScreen() {
 
   // Leaving throws the draft away — there is nowhere for it to be kept — so ask
   // first, but only once something has actually been typed.
-  function goBack() {
-    if (!groupId) return;
-    if (isDraftDirty(groupId)) { setAsk("discard"); return; }
+  /** May we leave? Not with a typed draft — ask, and stay put. */
+  function mayLeave() {
+    if (!groupId) return true;
+    if (isDraftDirty(groupId)) { setAsk("discard"); return false; }
     clearDraft(groupId);
-    router.back();
+    return true;
   }
 
   function discard() {
@@ -552,7 +553,7 @@ function EditEntryScreen() {
             ? (reachable.length > 1 ? copy.form.editTitle : copy.form.editKind(copy.entryKind.label[kind].toLowerCase()))
             : copy.form.newTitle}
           sub={group.name}
-          back={goBack}
+          back={{ ask: mayLeave }}
           right={<button className="action" onClick={save} disabled={!ready}>{copy.act.save}</button>}
         />
 

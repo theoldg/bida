@@ -25,29 +25,42 @@ export function Scroll({ children }: { children: ReactNode }) {
   return <div className="scroll">{children}</div>;
 }
 
+/**
+ * What a screen's back arrow is. A path climbs to that ancestor; `true` is a
+ * plain back; and `{ ask }` is a screen that would lose typed work, whose
+ * `ask()` returns false when it put a question up instead of leaving. Give it
+ * `up` as well when the arrow climbs rather than steps back.
+ */
+export type Back = string | true | { ask: () => boolean; up?: string };
+
 export function TopBar({ title, sub, back, right }: {
-  title: ReactNode; sub?: ReactNode; back?: string | true | (() => void); right?: ReactNode;
+  title: ReactNode; sub?: ReactNode; back?: Back; right?: ReactNode;
 }) {
   const router = useRouter();
-  // The device's back button does exactly what this arrow does (lib/back-button.ts).
-  // `back === true` is the exception that needs no help: it *is* a plain back.
-  // An up-link hands over its destination as well as its action, so a press the
-  // browser is already taking there needs no intervention at all.
-  useBackButton(typeof back === "function" ? { run: back }
-    : typeof back === "string" ? { run: () => goUp(back, (to) => router.replace(to)), href: back }
-      : undefined);
+  const guard = typeof back === "object" ? back : undefined;
+  const up = typeof back === "string" ? back : guard?.up;
+  const run = up !== undefined
+    ? () => goUp(up, (to) => router.replace(to))
+    : () => router.back();
+  /** The arrow: ask first where there is something to ask about. */
+  const press = () => { if (!guard || guard.ask()) run(); };
+  // The device's back button does exactly what this arrow does
+  // (lib/back-button.ts). `back === true` is the one that needs no help: it
+  // *is* a plain back, so the button is already right.
+  useBackButton(back === undefined || back === true ? undefined
+    : { up, mayLeave: guard?.ask, run });
   return (
     <div className="topbar">
-      {back === true || typeof back === "function" ? (
-        <button className="iconbtn" onClick={() => (typeof back === "function" ? back() : router.back())} aria-label={copy.act.back}>
+      {back === true || guard ? (
+        <button className="iconbtn" onClick={press} aria-label={copy.act.back}>
           <Icon name="back" size={17} />
         </button>
-      ) : back ? (
+      ) : typeof back === "string" ? (
         /* A real anchor, but not a plain push: the arrow names a parent, and
            going up unwinds the history to it rather than stacking another
            entry on top (lib/nav.ts). */
         <Link className="iconbtn" href={back} aria-label={copy.act.back}
-          onClick={(e) => { e.preventDefault(); goUp(back, (to) => router.replace(to)); }}>
+          onClick={(e) => { e.preventDefault(); run(); }}>
           <Icon name="back" size={17} />
         </Link>
       ) : null}
@@ -148,7 +161,7 @@ export function Failure({ children }: { children: ReactNode }) {
  * it is the back button's behaviour too now (lib/back-button.ts), so a press
  * during the load would otherwise land somewhere the arrow never goes.
  */
-export function Blank({ title = " ", back = true }: { title?: string; back?: string | true }) {
+export function Blank({ title = " ", back = true }: { title?: string; back?: Back }) {
   return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;
 }
 

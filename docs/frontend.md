@@ -36,12 +36,15 @@ Each now renders `BadLink` (`components/chrome.tsx`), which says what a proper
 invite link is. `/g` itself keeps its gentler "Not found": you are on the group
 screen, one id short.
 
-**Back goes up, not back.** A screen's `back` names its parent, and `goUp`
-(`lib/nav.ts`) unwinds the history to it instead of pushing; the device's back
-button runs that same action, so the button and the arrow cannot disagree
-(`lib/back-button.ts`, [ADR-0007](decisions/0007-a-screen-is-a-route.md)). It
-is only taken over where they would differ — the browser's own back is already
-the arrow on a screen opened from its parent, which is nearly every press. An
+**Back goes up, not back.** A screen's `back` is one of two things and the
+device's button agrees with both (`lib/back-button.ts`,
+[ADR-0007](decisions/0007-a-screen-is-a-route.md)). A path names a parent, and
+`goUp` (`lib/nav.ts`) unwinds the history to it instead of pushing — the button
+needs no help here, because with only descending pushing the browser's own back
+*is* the arrow; it is taken over only where the arrow skips a level. `{ ask }`
+is a screen that would lose typed work: it answers *may I leave?* before
+anything is cancelled, and a no cancels the press with the dialog as the whole
+of the answer — nothing navigates in its place. An
 entry is the one screen whose parent isn't fixed: the history feed and the two
 "can't remove this yet" lists link in from beside it, so they pass `via=` and
 `entryParent` (`lib/group-link.ts`) sends back there instead of to the group. A

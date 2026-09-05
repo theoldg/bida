@@ -44,24 +44,29 @@ expenses you'd looked at rather than climbing out.
   unwinds to the list; from the ledger, with no `via`, the parent is the group
   as before. In the URL, not in memory, because a screen is a route: a reload
   must not move where back goes.
-- **The device's back button runs the screen's back action, whatever it is.**
-  Unwinding alone left the two disagreeing wherever the arrow skipped a level,
-  and on the entry form the arrow asked before throwing a typed draft away
-  while the button just threw it away. So a *user*-initiated backward traversal is
-  cancelled and `TopBar`'s own back runs instead (`lib/back-button.ts`). The
-  app's own traversals are left alone — taking those over would call the arrow
-  in a loop — and so is a browser that won't be cancelled, which is the
-  degradation, not a second behaviour.
-- **Cancel only where the two differ.** A screen opened from its parent already
-  has that parent one entry behind it, so the browser's own back *is* the
-  arrow and the press goes through untouched — which is most of them. Taking
-  every press over was the same behaviour on paper and a worse one in the
-  hand: a cancellation has to be re-navigated, and the re-navigation was
-  counted against an index the browser had already moved. Cancelling is now
-  what the entry form needs, and the arrows that genuinely skip a level — the
-  whole group's feed, reached from one entry's own history — not the app's
-  normal path. Naming the source in the link took the history feed off that
-  list: the press was already going there.
+- **The device's back button agrees with the screen's arrow.** Unwinding alone
+  left the two disagreeing wherever the arrow skipped a level, and on the entry
+  form the arrow asked before throwing a typed draft away while the button just
+  threw it away. So a *user*-initiated backward traversal is put to the screen
+  before the browser answers it (`lib/back-button.ts`). The app's own traversals
+  are left alone — taking those over would call the arrow in a loop — and so is
+  a browser that won't be cancelled, which is the degradation, not a second
+  behaviour.
+- **Ask before cancelling; cancel only to climb.** The two kinds of arrow need
+  opposite help. A screen that would lose typed work answers *may I leave?*
+  first: no, and the press is cancelled with the dialog as the whole of the
+  answer; yes, and the press is left alone, because the browser's back is where
+  the arrow was going anyway. Nothing is re-navigated in its place. An arrow
+  that climbs needs no help either — a screen opened from its parent has that
+  parent one entry behind it — until it skips a level, and only then is the
+  press cancelled and `goUp` run instead. Taking every press over was the same
+  behaviour on paper and a worse one in the hand: a cancellation has to be
+  re-navigated, and the re-navigation was counted against an index the browser
+  had already moved. Asking first retired the busiest of those — every press on
+  the four screens that hold typed work, typed or not. Naming the source in the
+  link retired the history feed's: the press was already going there. What is
+  left is one press in the app, the whole group's feed reached from one entry's
+  own history, and it is the one the check drives.
 
 ## Consequences
 
@@ -69,6 +74,12 @@ expenses you'd looked at rather than climbing out.
   fixed build-time set of pages. The group id lands in a history entry, which
   confers nothing without the secret, and old bookmarks (`/g/options`,
   `/settings`, `/g/settle`, `/g/split`, `/g/expense*`) 404.
+- **A shared link's first back press leaves the app, and cannot do otherwise.**
+  Opening a link loads a new document, so pressing back out of it is a
+  cross-document traversal — which the Navigation API reports `cancelable:
+  false`, `canIntercept: false`. There is nothing to take over. Within a session
+  every navigation is same-document and the arrow wins as described. This is
+  that degradation, and it is the ordinary case of it rather than a rare one.
 - Each `page.tsx` carries its own "read `?id=`, look up the group, render
   not-found" preamble instead of one drawer router.
 - Anything new that goes *up* or sideways must say so — a plain `<Link>` to an

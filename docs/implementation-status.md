@@ -41,9 +41,10 @@ browser's menu. No pinch zoom, and adding a person is the last row of the
 list rather than a dialog
 — a row that refuses a name already there and follows the list down the screen
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
-parent instead of pushing, and the device's back button runs the screen's own
-back action rather than replaying where you had been — one behaviour, arrow and
-button. An entry's parent is where it was opened from: the ledger, or the
+parent instead of pushing, and the device's back button agrees with the arrow
+rather than replaying where you had been — one behaviour, arrow and button,
+which within a session leaves all but one press to the browser untouched. An
+entry's parent is where it was opened from: the ledger, or the
 screen that linked in from beside it — the history feed, or a "can't remove
 this yet" list — which the link names as `via=`
 ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).

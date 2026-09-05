@@ -51,9 +51,10 @@ export default function NewGroupPage() {
     goUp(route.groups(), (to) => router.replace(to));
   }
 
-  function goBack() {
-    if (typed && !busy) { setAsk("discard"); return; }
-    leave();
+  /** May we leave? Not with names on the screen — ask, and stay put. */
+  function mayLeave() {
+    if (typed && !busy) { setAsk("discard"); return false; }
+    return true;
   }
 
   // Your own name is on the same list as everyone else's, so it plays by the
@@ -81,7 +82,7 @@ export default function NewGroupPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.newGroup.title} back={goBack}
+        <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }}
           right={<button className="action" onClick={save} disabled={!ready}>{copy.act.create}</button>} />
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
