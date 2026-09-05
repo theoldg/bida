@@ -19,7 +19,9 @@ import { useEffect } from "react";
  * focus — stops short of the keyboard instead of under it.
  *
  * Set on `<html>` rather than the shell because dialogs and the FAB live
- * outside it, and a value on the root is reachable from all of them.
+ * outside it, and a value on the root is reachable from all of them — the
+ * dialog scrim spends it the same way, so a card asking for a number is
+ * centred above the keyboard rather than behind it.
  */
 export function KeyboardInset() {
   useEffect(() => {
@@ -45,10 +47,15 @@ export function KeyboardInset() {
      * browser has already put the field flush against the accessory bar by
      * then, and it did that before `--kb` existed. Same call as everywhere
      * else — now with somewhere to stop.
+     *
+     * A dialog is the other scroller worth following into: its card is centred
+     * in what the keyboard leaves (globals.css), and one taller than that
+     * scrolls inside itself, so a field below the fold still has to be brought
+     * up.
      */
     function follow() {
       const focused = document.activeElement;
-      if (focused instanceof HTMLElement && focused.closest(".scroll")) {
+      if (focused instanceof HTMLElement && focused.closest(".scroll, .dialog")) {
         focused.scrollIntoView({ block: "nearest" });
       }
     }

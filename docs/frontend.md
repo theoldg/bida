@@ -216,7 +216,10 @@ figure-free.
   viewport is what's left: `components/keyboard-inset.tsx` writes the covered
   strip to `--kb`, and `.scroll` spends `--kb` plus air as both padding and
   `scroll-padding-bottom`. Padding is what a last row can scroll into;
-  scroll-padding is where a field mid-form stops.
+  scroll-padding is where a field mid-form stops. A dialog sits outside the
+  shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
+  card is centred in what is left rather than behind the keys — without it the
+  rate pair's own fields and Save were under them.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past
