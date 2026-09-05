@@ -433,7 +433,9 @@ export const copy = {
     changedPhotos: (who: string, added: boolean, photos: string) =>
       `${who} ${added ? "added" : "removed"} ${photos}`,
     newDevice: (who: string) => `${who} started editing from a new device`,
-    handedOver: (who: string, to: string) => `${who} handed a device over to ${to}`,
+    /** A phone changing hands is only ever read as a change of person:
+        "Teo became Seppi", not a sentence about the device it happened on. */
+    became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,
     deletedTransfer: (who: string) => `${who} deleted a transfer`,
     editedTransfer: (who: string) => `${who} edited a transfer`,

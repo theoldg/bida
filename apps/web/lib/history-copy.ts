@@ -177,10 +177,12 @@ export function describe(
   if (rev.entity === "identity") {
     const c = field("memberId");
     const now = nameOf(c?.after);
-    // The entity id is a device, not a person: "who" is whoever was speaking
-    // for that device a moment ago, and "now" is who it speaks for next.
+    // The entity id is a device, but nobody reads the log for devices: a claim
+    // moving is one person becoming another, and the sentence says so on its
+    // own — "Teo became Seppi" needs no was/now line repeating the two names
+    // under it in red and green.
     if (rev.isCreate) return { what: said.newDevice(now) };
-    return { what: said.handedOver(who, now), diff: { was: nameOf(c?.before), now } };
+    return { what: said.became(nameOf(c?.before), now) };
   }
 
   if (rev.entity === "settlement") {
