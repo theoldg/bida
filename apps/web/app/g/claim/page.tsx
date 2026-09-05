@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Blank, Body, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
@@ -22,6 +22,11 @@ import { useGroupData } from "../../../lib/hooks";
  * the group. Nothing is written until the button: tapping a name here is a
  * selection, not a claim (which is an op, and public — ADR-0003). It can be
  * changed later on People, where the same names are.
+ *
+ * The button sits under the list rather than in a `Foot`, because it is the
+ * next thing you do after tapping your name and not a fixture of the screen:
+ * pinned to the bottom of a short list it read as unrelated to the tap that
+ * had just lit it up.
  */
 export default function ClaimPage() {
   return <QueryBoundary><ClaimScreen /></QueryBoundary>;
@@ -80,17 +85,16 @@ function ClaimScreen() {
             <AddName placeholder={copy.claim.addPlaceholder}
               taken={data.members.map((m) => m.name)} onAdd={add} />
           </div>
+
+          <div className="pad">
+            <button className="btn btn-p" onClick={proceed} disabled={!chosen || busy}>
+              {chosen
+                ? copy.claim.continueAs(data.memberById.get(chosen)?.name ?? copy.someoneLower)
+                : copy.claim.pickFirst}
+            </button>
+          </div>
         </Scroll>
       </Body>
-
-      <Foot>
-        <button className="btn btn-p" onClick={proceed} disabled={!chosen || busy}>
-          {chosen
-            ? copy.claim.continueAs(data.memberById.get(chosen)?.name ?? copy.someoneLower)
-            : copy.claim.pickFirst}
-        </button>
-      </Foot>
-
     </Screen>
   );
 }
