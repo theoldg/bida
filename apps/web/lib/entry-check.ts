@@ -162,10 +162,12 @@ export function checkEntry(input: {
   // entry was open leaves one behind that no picker on either screen can show
   // — money sitting against a name that is on no list.
   //
-  // A transfer's two sides are the same fault wearing "—". A departed member
-  // keeps whatever balance they left with, so the balances tab still offers to
-  // settle with them; following that row landed on a grey Save, an empty slot
-  // and nothing on screen saying whose name was missing.
+  // A transfer's two sides are the same fault wearing "—": a removal that
+  // lands while this form is open leaves a side naming somebody no picker
+  // offers, and Save used to be grey over an empty slot with nothing on screen
+  // saying whose name was missing. The settle-up row is no longer a way in —
+  // a removal the group goes on contradicting is undone rather than settled
+  // around (docs/data-model.md).
   const goneMember = (transfer
     ? [draft.fromMember, draft.toMember]
     : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)])
