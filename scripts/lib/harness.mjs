@@ -122,9 +122,21 @@ export async function serveWorker({ state } = {}) {
   if (migrate.status !== 0) throw new Error(`d1 migrations failed:\n${migrate.stderr ?? ""}`);
 
   const port = await freePort();
+  // `wrangler dev` is a wrapper around the `workerd` it spawns, and a signal to
+  // the wrapper alone leaves that running: `pnpm drive stop` printed "stopped"
+  // and left multi-gigabyte processes behind, until enough of them meant the
+  // next `start` never got off the ground. `detached` makes it a process group
+  // leader, so one signal takes the whole family — and the exit hooks fire it
+  // even when the caller dies without reaching `close`.
   const child = spawn("npx", [
     "wrangler", "dev", "--port", String(port), "--persist-to", persist,
-  ], { cwd: api, stdio: ["ignore", "pipe", "pipe"] });
+  ], { cwd: api, stdio: ["ignore", "pipe", "pipe"], detached: true });
+
+  const close = () => {
+    try { process.kill(-child.pid, "SIGTERM"); } catch { /* already gone */ }
+  };
+  process.once("exit", close);
+  for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { close(); process.exit(1); });
 
   const base = `http://localhost:${port}`;
   const log = [];
@@ -139,8 +151,8 @@ export async function serveWorker({ state } = {}) {
     child.on("exit", (code) => fail(new Error(`wrangler exited (${code}):\n${log.join("")}`)));
     setTimeout(() => fail(new Error(`wrangler never became ready:\n${log.join("")}`)), 90_000);
   });
-  await ready;
-  return { base, close: () => child.kill("SIGTERM") };
+  try { await ready; } catch (e) { close(); throw e; }
+  return { base, close };
 }
 
 /** An unused port, asked of the OS rather than guessed. */

@@ -295,8 +295,9 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
   app shell, so the next `goto` fails with an HTTP error that looks like a bug
   in the app. Restart the daemon after any build. A `git push` counts: pre-push
   runs `pnpm check`.
-- **The daemon holds a browser and a Worker**, and `stop` does not always take
-  them with it — it prints `stopped` while `wrangler`/`workerd` keep running.
-  Each is a multi-gigabyte process, and enough of them exhaust memory — at which
-  point a fresh `start` hangs before it ever writes `.drive/ready.json`. Check
-  with `ps` after stopping, and reap what is left.
+- **The daemon holds a browser and a Worker**, and `stop` takes both with it:
+  `serveWorker` spawns `wrangler` detached and signals the process group, so the
+  `workerd` underneath it goes too. It used to survive, and enough survivors
+  exhaust memory — at which point a fresh `start` hangs before it ever writes
+  `.drive/ready.json`. If a start ever hangs, that is still the first thing to
+  check with `ps`.
