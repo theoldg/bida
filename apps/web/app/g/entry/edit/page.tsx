@@ -686,6 +686,7 @@ function EditEntryScreen() {
                 me={data.me}
                 title={copy.entryKind.split[kind]}
                 totalMinor={baseMinor}
+                totalUnknown={foreign && groupRate === undefined}
                 currency={base}
                 spec={effectiveSplit}
                 seed={draft.entryId ?? "new"}

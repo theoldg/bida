@@ -55,13 +55,20 @@ export interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
   title: string;
   /** The expense total in the group's base currency — what the split divides. */
   totalMinor: number;
+  /**
+   * The total isn't zero, it's unknowable: a foreign amount the group has no
+   * rate for arrives here as 0, and this editor used to answer "enter an
+   * amount to split" to a form with an amount typed into it. The form says
+   * what is actually missing; this one keeps quiet rather than contradict it.
+   */
+  totalUnknown?: boolean;
   currency: string;
   spec: SplitSpec;
   seed: string;
@@ -101,7 +108,8 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
   // Nothing to check yet if the receipt tab hasn't produced a split — showing
   // whatever the underlying spec still is (often "equal") would read as a
   // verdict on a tab that has no opinion.
-  const showFooter = showReceipt ? (hasReceiptItems && !foot.ok) : (isExactTab || !foot.ok);
+  const showFooter = totalUnknown ? false
+    : showReceipt ? (hasReceiptItems && !foot.ok) : (isExactTab || !foot.ok);
 
   function switchMode(mode: "equal" | "shares" | "exact") {
     onTabChange(mode);
@@ -204,7 +212,10 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
                         the figure, and while the split is short it can't be
                         resolved anyway — a stray "€0.00" under a row saying
                         40.00 is worse than nothing. */}
-                    {!on ? copy.split.notInvolved : spec.mode === "exact" ? "" : money(shares[m.id] ?? 0, currency)}
+                    {!on ? copy.split.notInvolved
+                      : spec.mode === "exact" ? ""
+                      : totalUnknown ? copy.none
+                      : money(shares[m.id] ?? 0, currency)}
                   </span>
                 </span>
               </button>
