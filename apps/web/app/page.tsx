@@ -17,9 +17,9 @@ import { useGroupSummaries, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const summaries = useGroupSummaries();
-  // Archiving is explicit and unreachable from the UI today — nothing sets
-  // it on the path that used to (leaving no longer does) — but the filter
-  // stays cheap insurance against a group with no reason to show up here.
+  // Nothing in the app archives a group any more, but a production log may
+  // already carry an `archivedAt`, and the fold still applies one. This is the
+  // only place that decides what it means to a list of "your groups".
   const groups = summaries?.filter((g) => !g.group.archivedAt);
 
   return (

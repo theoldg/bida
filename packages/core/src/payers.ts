@@ -153,11 +153,6 @@ export function resolvePayers(expense: PayerBearing): Record<Id, number> {
   }
 }
 
-/** Convenience for a full `Expense`, which always has the fields above. */
-export function payersOf(expense: Expense): Record<Id, number> {
-  return resolvePayers(expense);
-}
-
 /**
  * Whether a member currently has a stake in this expense — paid some of it or
  * is in the split. Used to decide whether removing them from the group would

@@ -5,7 +5,7 @@
  */
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
-  | "users" | "list" | "scale" | "arrow" | "dots" | "sync" | "trash" | "edit" | "link"
+  | "users" | "list" | "scale" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -45,9 +45,6 @@ export function IconSprite() {
             what a settle-up row says: money goes this way, once. */}
         <symbol id="i-arrow" viewBox="0 0 24 24" {...S} strokeWidth="2">
           <path d="M4 12h14M12.5 6l6 6-6 6" />
-        </symbol>
-        <symbol id="i-dots" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="5.5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="18.5" r="1.7" />
         </symbol>
         <symbol id="i-sync" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M20 11a8 8 0 00-14-4.5M4 13a8 8 0 0014 4.5" /><path d="M6 3v3.8h3.8M18 21v-3.8h-3.8" />

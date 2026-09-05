@@ -318,6 +318,9 @@ function EditEntryScreen() {
   // over — some interactions (switching split tabs) call patch() twice in one
   // handler, and merging against a stale closure would let the first patch's
   // change be clobbered by the second.
+  const patch = (change: Partial<EntryDraft>) =>
+    saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
+
   /**
    * Change the entry's currency, and ask for its rate when the group has none.
    *
@@ -330,9 +333,6 @@ function EditEntryScreen() {
     patch({ currency });
     if (needsRate(currency)) setAskRate(currency);
   }
-
-  const patch = (change: Partial<EntryDraft>) =>
-    saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
   const activeTab: SplitTab = activeSplitTab(draft);
 

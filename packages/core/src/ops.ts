@@ -96,7 +96,3 @@ export function validateOp(input: unknown): Op {
     seq: (seq as number | null | undefined) ?? null,
   };
 }
-
-export function isSynced(op: Op): boolean {
-  return typeof op.seq === "number";
-}

@@ -329,8 +329,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
         ),
       });
     }
-    return out.sort((a, b) => Number(!!a.group.archivedAt) - Number(!!b.group.archivedAt)
-      || b.lastActivity - a.lastActivity);
+    return out.sort((a, b) => b.lastActivity - a.lastActivity);
   }, []);
 }
 

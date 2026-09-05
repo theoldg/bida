@@ -84,9 +84,12 @@ expenses you'd looked at rather than climbing out.
   not-found" preamble instead of one drawer router.
 - Anything new that goes *up* or sideways must say so — a plain `<Link>` to an
   ancestor re-introduces the replayed-history bug.
-- **A group cannot be renamed.** You name it when you create it. `renameGroup`
-  stays in `commands.ts` because `group.update` ops still arrive over sync and
-  must fold; nothing in the UI calls it.
+- **A group cannot be renamed, and nothing archives one.** You name it when you
+  create it. Both writes are gone from `commands.ts` — a command nothing calls
+  does not help a `group.update` arriving over sync, which `fold.ts` applies
+  without asking the command layer anything. The read side stays: the fold, and
+  the words history says about an `archivedAt` it may still find in a
+  production log.
 
 ## Rejected
 

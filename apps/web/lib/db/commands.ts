@@ -162,7 +162,7 @@ export async function createGroup(
   const memberId = newId();
   const secret = newGroupSecret();
 
-  await db().groupKeys.put({ groupId, secret, lastSeq: 0 });
+  await saveGroupKey(groupId, secret);
 
   const device = await getDevice();
 
@@ -265,22 +265,6 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   // This phone now holds something that exists nowhere else until it syncs.
   // Not awaited: whether the browser agrees to keep it doesn't gate the join.
   void requestPersistence();
-}
-
-export async function getGroupSecret(groupId: Id): Promise<string | undefined> {
-  return (await db().groupKeys.get(groupId))?.secret;
-}
-
-export async function renameGroup(groupId: Id, actor: Id, name: string): Promise<void> {
-  await appendOps(groupId, actor, [
-    { entity: "group", entityId: groupId, kind: "update", patch: { name } },
-  ]);
-}
-
-export async function archiveGroup(groupId: Id, actor: Id, now = Date.now()): Promise<void> {
-  await appendOps(groupId, actor, [
-    { entity: "group", entityId: groupId, kind: "update", patch: { archivedAt: now } },
-  ]);
 }
 
 // --------------------------------------------------------------- members

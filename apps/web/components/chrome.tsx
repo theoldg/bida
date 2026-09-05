@@ -73,10 +73,6 @@ export function TopBar({ title, sub, back, right }: {
   );
 }
 
-export function IconLink({ href, name, label }: { href: string; name: IconName; label: string }) {
-  return <Link className="iconbtn" href={href} aria-label={label}><Icon name={name} size={18} /></Link>;
-}
-
 /**
  * The app's ONE navigation. There is deliberately no top tab strip to go with
  * it: `/g` used to carry both, and the two disagreed about which section you

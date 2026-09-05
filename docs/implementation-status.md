@@ -86,7 +86,7 @@ DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
 
 ## What has been proven — tested, not just written
 
-249 tests in `packages/core`, 140 UI smoke tests in `apps/web`. What the core
+249 tests in `packages/core`, 141 UI smoke tests in `apps/web`. What the core
 suite guarantees, beyond that it runs:
 
 - **Money never floats.** BigInt internals, half-away-from-zero rounding, ISO
