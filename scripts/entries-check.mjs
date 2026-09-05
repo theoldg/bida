@@ -233,7 +233,7 @@ await page.locator("button.row").filter({ hasText: "USD" }).click();
 await page.waitForSelector('dialog[aria-label="USD rate"]');
 await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.4");
 await page.waitForTimeout(100);
-report((await page.locator(".dbody").innerText()).includes("re-values"),
+report(/re-values/i.test(await page.locator(".dbody").innerText()),
   "the dialog says how much of the ledger the change moves");
 await page.getByRole("button", { name: "Save" }).last().click();
 await page.waitForTimeout(300);
