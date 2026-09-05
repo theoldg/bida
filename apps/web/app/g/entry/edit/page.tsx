@@ -450,6 +450,15 @@ function EditEntryScreen() {
     : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)]
       .find((id) => id && !live.has(id));
 
+  // Receipt mode has to have produced the split it claims. Without this the
+  // tab could be opened over an ordinary even split and saved — the entry then
+  // said "from receipt" beside a split nobody read off a receipt, and a scan
+  // whose grid was never filled in silently went out evenly. The tab is the
+  // claim; `receiptSplit` is whether it is true.
+  const receiptUnfinished = canScan && activeTab === "receipt" && receiptSplit === null
+    ? (hasReceiptItems ? copy.form.noWhoHadWhat : copy.form.noReceipt)
+    : null;
+
   // The one place the form says why Save is grey. It used to live inside the
   // co-payer card, so the states that render the *single*-payer field — an
   // empty payer map, a payer who has left — held Save with nothing anywhere
@@ -459,7 +468,7 @@ function EditEntryScreen() {
     // A rate the group hasn't got is not a typo to be fixed in this field —
     // there is no field. Say what is missing and where it is set.
     : foreign && groupRate === undefined ? copy.rates.needed(draft.currency)
-      : payerProblemText(payerCheck, draft.currency);
+      : receiptUnfinished ?? payerProblemText(payerCheck, draft.currency);
 
   const ready = amountMinor > 0 && rateOk && splitOk && !blocker && sidesOk
     // A transfer's words are a note and optional; an expense without a name is

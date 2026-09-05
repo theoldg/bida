@@ -280,6 +280,12 @@ export const copy = {
     discardBody: "This isn’t saved anywhere.",
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
     goneMember: (name: string) => `${name} has left the group — pick somebody else.`,
+    /**
+     * Receipt mode with no bill behind it. Both say the same thing — this
+     * split doesn't exist yet — and each names the step that is missing.
+     */
+    noReceipt: "Scan a receipt, or split it another way.",
+    noWhoHadWhat: "Say who had what, or split it another way.",
     nobodyTitle: "Nobody in this group yet",
     nobodyBody: "Add the people sharing this first.",
     sentBy: "Who sent it",

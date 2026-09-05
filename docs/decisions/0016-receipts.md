@@ -26,8 +26,10 @@ the D1 schema or the Dexie schema, and the grid reopens later from any device.
 finished grid *is* a split, arrived at differently, and showing it under "As
 parts" would lose where it came from. `SplitTab` is saved explicitly — deriving
 it from "are there items?" made every save silently drop a deliberate switch
-back to Evenly. While the tab has items the amount field mirrors
-`receiptTotalMinor`, disabled — *"when in receipt mode I shouldn't be able to
+back to Evenly. **The tab is a claim, and Save is held until it is true**: with
+no bill scanned, or a bill nobody has been assigned a line of, there is no
+receipt split, and saving stored "Receipt" over an ordinary even one. While the
+tab has items the amount field mirrors `receiptTotalMinor`, disabled — *"when in receipt mode I shouldn't be able to
 change the price"* — so a misread total is fixed on the item or by rescanning.
 
 **Nothing derived is ever cached.** The total and the split are computed fresh,
