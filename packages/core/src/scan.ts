@@ -115,7 +115,7 @@ export function checkScan(result: ScanResult, currency: CurrencyCode): ScanProbl
     // A discount or a returned item sums into the total but takes no part in
     // the grid's ratios, so it would be shared out across everybody rather
     // than landing where it was earned. Refused until the grid can say who a
-    // credit belongs to — see "Needs more thought" in bugs.md.
+    // credit belongs to — an open question in docs/product.md.
     if (minor < 0) return "credit-line";
     sum += minor;
   }

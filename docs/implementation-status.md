@@ -3,66 +3,44 @@
 *For: an agent starting a cold session. What actually exists, and what's next.
 Update it in the same commit as the code it describes.*
 
-## Phases
+## Where it stands
 
-| Phase | State |
-|---|---|
-| 0 — Groundwork | ✅ |
-| 1 — Domain core | ✅ 249 tests |
-| 2 — Local-first app | ✅ |
-| 3 — Server and sync | ✅ deployed — **MVP complete** |
-| 4 — Receipts | 🟡 scanning done; multi-image capture, R2 upload, gallery still open |
-| 5 — History surfaces | ✅ timeline and feed, read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)) |
-| 6 — Polish | 🟡 install prompt, storage persistence and sync-failure surfacing done; CSV export, categories, empty states open |
-| 7 — Owner's punch list | ✅ all eight, plus follow-up rounds through 2026-08-30 |
-| 8 — Three kinds of entry | ✅ expense · income · transfer, all editable |
-| 9 — Every word in one file | ✅ `lib/copy.ts`, fenced by `pnpm check` ([ADR-0033](decisions/0033-every-word-in-one-file.md)) |
-| 10 — The group's rate registry | ✅ one live rate per currency, an op, editable both ways ([ADR-0005](decisions/0005-money-and-currency.md)) |
+The MVP — Phases 0–3 — is complete, deployed and syncing in production, and the
+app has since grown three kinds of entry, a rate registry and read-only history.
+Phase 4, receipts, is next. The phase-by-phase ticks are in
+[roadmap.md](roadmap.md); this file doesn't repeat them.
 
 **Live:** <https://hajsik.hajsik-api.workers.dev> — static export *and* sync API,
 backed by the `hajsik` D1 database. Verified against production: idempotent
 push, pull, wrong-secret rejection, and a real group synced between devices.
 
-**What it does today.** A group holds three kinds of entry — expense, income,
-transfer — all editable, on one form with a segmented control and one detail
-screen ([ADR-0010](decisions/0010-what-an-entry-is.md)). **What a foreign
-amount is worth is the group's, not the entry's**: `/g/rates` holds one rate
-per currency, synced as an op, and every screen values entries at it, so
-correcting a rate moves every entry already written in that currency. The
-dialog fetches a suggestion through the Worker, takes the number in either
-direction, and never writes without a Save
-([ADR-0005](decisions/0005-money-and-currency.md)). Every word a person
-reads lives in `apps/web/lib/copy.ts`, fenced by `pnpm check`
-([ADR-0033](decisions/0033-every-word-in-one-file.md)). Nothing the browser
-draws is used: no `prompt()`, `confirm()` or `<select>`; a long press or a
-right click on a row opens the app's own small `RowMenu`
-([ADR-0008](decisions/0008-hand-rolled-interface.md)) instead of the
-browser's menu. No pinch zoom, and adding a person is the last row of the
-list rather than a dialog
-— a row that refuses a name already there and follows the list down the screen
-([ADR-0008](decisions/0008-hand-rolled-interface.md)). An up-link unwinds to the
-parent instead of pushing, and the device's back button agrees with the arrow
-rather than replaying where you had been — one behaviour, arrow and button,
-which within a session leaves all but one press to the browser untouched. An
-entry's parent is where it was opened from: the ledger, or the
-screen that linked in from beside it — the history feed, or a "can't remove
-this yet" list — which the link names as `via=`
-([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
-History is read, not rewound — `/g/restore` and `buildRestorePatch` are gone,
-and the `restore` op kind still folds only because production groups hold some
-([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)). The look is
-one monospace face with colour only on money
-([ADR-0023](decisions/0023-monospace-monochrome.md)).
+**Known defects live in [bugs.md](../bugs.md)** — a triaged queue, not a record,
+and the first place to look before believing a screen works. Two items open:
+two members added under one name can't be merged, and a departed member's
+balance can't be cleared.
 
-**An edit writes only what the edit changed.** The form posts all fifteen
-fields; the command layer diffs them against the entity and appends a patch of
-what actually moved, so two phones editing different fields of one expense
-offline both keep their change, and a save that touched nothing appends nothing
-([sync.md](sync.md#the-operation)). Removing a rate is refused on the same
-terms as removing a person — only while nothing is written in that currency
-([data-model.md](data-model.md)) — and every `/g` route says "Bad link" for a
-group id it doesn't hold, rather than spinning
-([frontend.md](frontend.md#routing)).
+## What it does today
+
+Every screen is built; routes and their jobs are in
+[frontend.md](frontend.md#routing) — that table is the current one, don't
+duplicate it. A group holds three kinds of entry — expense, income, transfer —
+all editable, on one form with a segmented control and one detail screen
+([ADR-0010](decisions/0010-what-an-entry-is.md)).
+
+**What a foreign amount is worth is the group's, not the entry's.** `/g/rates`
+holds one rate per currency, synced as an op, and `atCurrentRates` values the
+whole ledger in one pass where state is read — so correcting a rate moves every
+entry already written in that currency. The dialog fetches a suggestion through
+the Worker, takes the number in either direction, and never writes without a
+Save ([ADR-0005](decisions/0005-money-and-currency.md)).
+
+**An edit writes only what the edit changed.** The form posts every field; the
+command layer diffs them against the entity and appends a patch of what actually
+moved, so two phones editing different fields of one expense offline both keep
+their change, and a save that touched nothing appends nothing
+([sync.md](sync.md#the-operation)). Removing a rate is refused on the same terms
+as removing a person — only while nothing is written in that currency
+([data-model.md](data-model.md)).
 
 **The two failures that could quietly cost a trip its ledger say so.** Sync
 records how every attempt went and `/g` warns after two consecutive failures —
@@ -75,6 +53,19 @@ uninstalled and there is no account to log back in with
 whole export cache-first, so the app paints with no signal
 ([ADR-0004](decisions/0004-static-export-and-offline.md); verify with `node
 scripts/offline-check.mjs`).
+
+The rest is the ADRs holding: every word a person reads lives once in
+`apps/web/lib/copy.ts`, fenced by `pnpm check`
+([ADR-0033](decisions/0033-every-word-in-one-file.md)); nothing the browser
+draws is used, down to the row menus and every picker
+([ADR-0008](decisions/0008-hand-rolled-interface.md)); a screen is a route and
+an up-link unwinds to the parent the device's back button agrees with
+([ADR-0007](decisions/0007-a-screen-is-a-route.md)); history is read, not
+rewound — `/g/restore` and `buildRestorePatch` are gone, and the `restore` op
+kind still folds only because production groups hold some
+([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)); and the
+look is one monospace face with colour only on money
+([ADR-0023](decisions/0023-monospace-monochrome.md)).
 
 ## The next action
 
@@ -93,63 +84,10 @@ downscale, R2 upload, and the gallery/viewer. Scope in
 One loose end, not blocking: a custom domain, which needs the owner to point
 DNS at Cloudflare. `workers.dev` doesn't expire, so this is cosmetic.
 
-## What's on disk
-
-```
-packages/core/   @hajsik/core — pure domain logic, no I/O, no framework
-apps/web/        @hajsik/web — Next.js static export, the whole UI
-apps/api/        @hajsik/api — Cloudflare Worker: Hono sync API + static assets
-```
-
-Root scripts: `session`, `check` (doc links · invariants · typecheck · tests ·
-export build — what pre-push runs), `verify`, `entries`, `back`, `offline`,
-`shots`, `drive`, `docs`, `rules`.
-`scripts/lib/harness.mjs` holds what the browser checks share — the build, the
-static server, a Worker-and-D1 server for the ones that need real sync, a
-phone-shaped browser, the tally, a seeded group — so they build themselves and
-the next one costs a dozen lines. `drive` is the odd one out: not a check but a
-live session that answers each command with the screen as text, several phones
-at once ([testing.md](testing.md#pnpm-drive--the-app-as-text)).
-`tsconfig.base.json`: ES2022, strict, `noUncheckedIndexedAccess`,
-`verbatimModuleSyntax`.
-
-### `apps/web`
-
-Every screen is built. Routes and their jobs are listed in
-[frontend.md](frontend.md#routing) — that table is the current one; don't
-duplicate it here. Data layer: Dexie schema, materialised stores, and
-`lib/db/commands.ts` (one function per user intent). Sync engine in
-`lib/db/sync.ts`. Every word a person reads lives once, in `lib/copy.ts`;
-`lib/entry-kind.ts` is types and arithmetic only. 140 smoke tests.
-
-### `apps/api`
-
-A Hono app with four kinds of route: the sync API (`POST`/`GET
-/api/groups/:id/ops`), `/api/health`, `GET /api/rates/:from/:to` (a cached
-passthrough to a public feed — no secret, since the input is two currency codes
-and it spends nothing), and everything else passed to the `ASSETS` binding.
-D1 schema in `migrations/0001_init.sql`. No R2 yet — Phase 4.
-Deploy steps: [hosting.md](hosting.md#deploying).
-
-### `packages/core` module map
-
-| Module | Exports |
-|---|---|
-| `money.ts` | `parseMinor`, `formatMinor`, `minorToDecimalString`, `convertMinor`, `sumMinor`, `divRound`, `exponentOf`, `isValidRate`, `sanitizeRate`, `isCurrencyCode`, `rateFromNumber`, `invertRate`, `formatRate` |
-| `hlc.ts` | `createHlcState`, `hlcSend`, `hlcReceive`, `compareHlc`, `formatHlc`, `parseHlc`, `maxHlc` |
-| `ops.ts` | `Op`, `validateOp`, `isSynced`, `IMMUTABLE_FIELDS`, `OpValidationError` |
-| `fold.ts` | `foldOps`, `foldForward`, `sortOps` |
-| `split.ts` | `resolveSplit`, `validateSplit`, `shareOf`, `convertSplitMode`, `splitParticipants` |
-| `payers.ts` | `resolvePayers`, `validatePayers`, `payerList`, `isCoSponsored` |
-| `balance.ts` | `computeBalances`, `netFor`, `assertBalanced` — the one place an income's sign is applied |
-| `settle.ts` | `settleUp`, `transfersFor`, `applyTransfers` |
-| `history.ts` | `entityHistory`, `activityFeed` |
-| `rates.ts` | `rateFor`, `repriceEntry`, `atCurrentRates`, `currenciesInUse` |
-| `types.ts` | `Group`, `Member`, `Expense`, `ExpenseKind`, `Settlement`, `Attachment`, `ExchangeRate`, `RateSource`, `SplitSpec`, `GroupState`, `emptyGroupState`, `alive` |
-| `ids.ts` | `newId`, `newNodeId`, `newGroupSecret`, `newColorSeed` |
-| `scan.ts` | `normalizeScan`, `checkScan`, `scanCurrency`, `ScanResult`, `ScanPatch`, `ScanProblem` |
-
 ## What has been proven — tested, not just written
+
+249 tests in `packages/core`, 140 UI smoke tests in `apps/web`. What the core
+suite guarantees, beyond that it runs:
 
 - **Money never floats.** BigInt internals, half-away-from-zero rounding, ISO
   4217 exponent overrides (JPY 0, TND 3, CLF 4).
@@ -182,34 +120,3 @@ date, not the code.
 net: ada −244,56  marie +461,65  sam −111,47  theo −105,62   (EUR minor ×100)
 total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo→marie 105,62
 ```
-
-## Decisions settled in code, not in an ADR
-
-1. **Seeded remainder tiebreak.** `resolveSplit` takes `tiebreakSeed` (callers
-   pass the expense id) so the leftover cent rotates instead of always landing
-   on the alphabetically-first member. Never surfaced in the UI —
-   [standing-instructions](standing-instructions.md#product).
-2. **`packages/core` excludes the DOM lib**, so `ids.ts` declares its own
-   minimal `CryptoLike` rather than depending on `Crypto`.
-
-## Gotchas
-
-- `pnpm` skips esbuild's postinstall by default, which breaks vitest. The root
-  `package.json` carries `"pnpm": { "onlyBuiltDependencies": ["esbuild"] }`.
-- Don't use `|` as a `perl -pe s|||` delimiter on a file with markdown tables.
-- `wrangler deploy --dry-run` succeeds with a bogus `database_id` — it doesn't
-  validate the id against the account. Only a real deploy (or `wrangler d1
-  list`) catches a wrong one.
-- A Cloudflare token scoped for Workers only fails D1 calls with a generic
-  `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
-  nothing; the token needs "D1 - Edit" specifically.
-- **Repricing belongs where state is read, not where ops are folded.**
-  `materialise()` folds one entity's ops, so a rate op and an expense never meet
-  there. `atCurrentRates` runs once in `stateOf()` instead
-  ([data-model.md](data-model.md#entities)).
-- **A figure shown beside a balance has to be able to reach it.** Two of the
-  three defects a blind `pnpm drive` walk turned up were a screen stating part
-  of an arithmetic it presented as the whole: a balance summary missing the
-  transfer leg, and a split asking for an amount that was typed but
-  unconvertible. Neither is caught by a test of the arithmetic, which was right
-  both times.

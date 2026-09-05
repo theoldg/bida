@@ -61,6 +61,14 @@ Leave the seam. Build none of it.
 
 Decimal comma vs. point · fixed vs. free-form categories.
 
+**What a negative line on a receipt means.** A "-5.00 loyalty card" against the
+whole bill probably should be shared; a voucher against one person's dish should
+not, and the who-had-what grid gives no way to say which. Until that is decided
+— including whether a credit is assignable to people like any other line —
+`checkScan` refuses the receipt outright rather than spread the discount across
+everybody in proportion to what they ordered
+([receipt-scanning.md](receipt-scanning.md)).
+
 *Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
 setting at all (2026-08-30,
 [ADR-0007](decisions/0007-a-screen-is-a-route.md)).

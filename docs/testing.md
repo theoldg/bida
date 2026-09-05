@@ -104,6 +104,8 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 
 ### Gotchas
 
+- **`pnpm` skips esbuild's postinstall by default, which breaks vitest.** The
+  root `package.json` carries `"pnpm": { "onlyBuiltDependencies": ["esbuild"] }`.
 - **`/g` is both a file and a directory** in the export, so the static server
   must `statSync(p).isFile()` before serving and only then fall through to
   `${file}.html`. Serving the directory hit is an `EISDIR` crash. Fixed once, in
@@ -190,6 +192,12 @@ rather than a mock. That is the stack the `/join` bug needed
 ([sync.md](sync.md#gotchas)): `ana` creates the group, `clipboard` yields the
 invite link, `bruno` opens it on a phone with no storage at all — the "never used
 the app before" device the bug reports care about.
+
+**A figure shown beside a balance has to be able to reach it.** Two of the three
+defects a blind walk turned up were a screen stating part of an arithmetic it
+presented as the whole: a balance summary missing the transfer leg, and a split
+asking for an amount that was typed but unconvertible. Neither is caught by a
+test of the arithmetic, which was right both times.
 
 **It runs as a daemon** because replaying the whole story to take one more step
 loses what makes these bugs bugs — IndexedDB, the service worker, a group's

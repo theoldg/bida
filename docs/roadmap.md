@@ -9,7 +9,7 @@ typed into is a notebook. Phases 4–6 are the finish, not the product.
 Hosting decided, MVP scope agreed, the visual direction signed off
 (2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`.
 
-## Phase 1 — Domain core ✅ *(236 tests)*
+## Phase 1 — Domain core ✅ *(249 tests)*
 `money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, `rates`, plus
 property tests that any permutation of ops folds identically.
 
@@ -90,9 +90,9 @@ the app reads its state, so a correction moves the whole ledger at once.
 Eight items after a day of living with the deployed MVP: one bottom bar, a
 neutral dark theme, in-group options, identity history, nothing selectable, a
 real amount input, generic placeholders, and co-sponsored expenses. All landed,
-then reshaped by three rounds of follow-ups on 2026-08-28 — ADRs
-[0011](decisions/0003-link-only-access.md)–[0015](decisions/0005-money-and-currency.md)
-carry what changed and why.
+then reshaped by three rounds of follow-ups on 2026-08-28 —
+[ADR-0003](decisions/0003-link-only-access.md) and
+[ADR-0005](decisions/0005-money-and-currency.md) carry what changed and why.
 
 ## Later, deliberately
 Restaurant bill splitting · recurring expenses · push notifications ·

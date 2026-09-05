@@ -123,6 +123,12 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
+- **`wrangler deploy --dry-run` succeeds with a bogus `database_id`** — it does
+  not validate the id against the account. Only a real deploy (or `wrangler d1
+  list`) catches a wrong one.
+- **A Cloudflare token scoped for Workers only fails D1 calls** with a generic
+  `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
+  nothing; the token needs "D1 - Edit" specifically.
 - **`pnpm --filter @hajsik/api deploy` does not run the package's `deploy`
   script** — `deploy` is one of pnpm's own commands. Say `run deploy`.
 - Cloudflare env vars are runtime-only; anything needed during `next build`

@@ -113,7 +113,8 @@ and nowhere else.
 - `baseAmountMinor` and `rateToBase` are **stored**, but they are not what an
   entry is worth: `atCurrentRates` (`core/rates.ts`) reprices every entry at the
   registry in `stateOf()`, so one pass values the whole app and no call site can
-  forget. Stored values are the honest record of what was believed at save, and
+  forget. It cannot live in the fold — `materialise()` folds one entity's ops,
+  so a rate op and an expense never meet there. Stored values are the honest record of what was believed at save, and
   the fallback for a currency the registry has no row for — every foreign entry
   written before the registry existed, and any rate a group removes
   ([ADR-0005](decisions/0005-money-and-currency.md)).

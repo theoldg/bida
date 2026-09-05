@@ -9,9 +9,7 @@ queue, not a record.
 
 ---
 
-## 5. Sync and multi-device
-
-### 5.2 Two members with one name should be mergeable
+## Two members with one name should be mergeable
 
 `apps/web/lib/names.ts` argues correctly that two "Ana"s are two people nothing
 on screen tells apart — then `nameTaken` only checks the local list.
@@ -52,9 +50,9 @@ in, a `/g/claim` add and a concurrent rename are others.
 
 ---
 
-## 6. Smaller, all real
+## A departed member's balance can never be cleared
 
-- **A departed member's balance can never be cleared.** Removal is refused
+Removal is refused
   while a member is named on anything, so this needs a race — a peer adding an
   entry offline while somebody removes them — but the state is reachable and
   the app already shows it: the balances tab lists them, marked as departed, and
@@ -65,21 +63,3 @@ in, a `/g/claim` add and a concurrent rename are others.
   member (only they can, and only where a balance says so), or the settle-up
   row stops offering what the form refuses — a product call, which is why it is
   here.
-
----
-
-## Needs more thought before it becomes a task
-
-**Discount and zero lines are counted two different ways.**
-`receiptTotalMinor` adds every parseable line, negatives included;
-`weightsFromItems` skips anything `<= 0`. So a discount shrinks the bill's
-total but takes no part in the ratios — which means it is spread across
-everybody in proportion to what they ordered, rather than landing on whoever
-the discount was actually for.
-
-That may well be the right answer: a "-5.00 loyalty card" on a restaurant bill
-probably *should* be shared. But a voucher against one person's dish should
-not, and today the grid gives no way to say which. So `checkScan` refuses a
-receipt with a credit line outright — nothing is mispriced, and nothing is
-importable either. Deciding what a negative line means on the grid — including
-whether it is assignable to people, like any other line — is what unblocks it.

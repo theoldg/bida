@@ -7,6 +7,7 @@ tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 |---|---|
 | [standing-instructions.md](standing-instructions.md) | **First.** The owner's rules for how this project is run |
 | [implementation-status.md](implementation-status.md) | **Starting a session.** What's built and what's next |
+| [bugs.md](../bugs.md) | Something on screen looks wrong, or you want a job |
 | [product.md](product.md) | Deciding whether something is in scope |
 | [roadmap.md](roadmap.md) | You want the phase plan |
 | [architecture.md](architecture.md) | Touching the shape of the system |
