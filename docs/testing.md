@@ -38,8 +38,10 @@ recapitalised. Run `pnpm verify` after touching a screen, not only when
 something feels wrong.
 
 `packages/core` gets real coverage — 249 tests; the bar is in
-[CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 141 smoke tests
-only; `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
+[CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 159, and they
+are not all smoke: the command layer and `checkEntry` — the two places outside
+core where being wrong costs money — are covered in earnest, the screens are
+not. `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
 `sanitizeAmount` and `groupDigits` are exported from `amount-input.tsx` rather
 than hidden in it. Rendering isn't tested — `pnpm shots` is what looks at
 screens.

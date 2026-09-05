@@ -4,11 +4,10 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  convertMinor, formatRate, isCurrencyCode, minorToDecimalString, rateFor,
-  splitParticipants, validatePayers, validateSplit,
-  type Member, type RateSource, type SplitSpec,
+  formatRate, isCurrencyCode, minorToDecimalString,
+  type RateSource,
 } from "@hajsik/core";
-import { handOffReceiptTotal, weightsFromItems } from "../../../../lib/scan/items";
+import { handOffReceiptTotal } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
 import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
@@ -16,20 +15,25 @@ import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } fr
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { RateDialog } from "../../../../components/rate-dialog";
 import { Icon } from "../../../../components/icons";
+import { TransferSides } from "../../../../components/transfer-sides";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
 import {
   addExpense, editExpense, editSettlement, recordSettlement, setRate,
 } from "../../../../lib/db/commands";
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
-import { dateInputValue, errorText, money, payerProblemText, plural, withDate } from "../../../../lib/format";
+import { checkEntry, needsRate } from "../../../../lib/entry-check";
+import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError,
 } from "../../../../lib/scan";
-import { activeSplitTab, blankDraft, clearDraft, draftAmountMinor, draftReceiptTotal, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft, useDraft, type EntryDraft, type SplitTab } from "../../../../lib/draft";
+import {
+  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft,
+  useDraft, type EntryDraft, type SplitTab,
+} from "../../../../lib/draft";
 
 /**
  * The typed amount and the currency it is held in must never disagree: JPY has
@@ -41,17 +45,6 @@ import { activeSplitTab, blankDraft, clearDraft, draftAmountMinor, draftReceiptT
 function clipAmountToCurrency(draft: EntryDraft): EntryDraft {
   const amountText = sanitizeAmount(draft.amountText, draft.currency);
   return amountText === draft.amountText ? draft : { ...draft, amountText };
-}
-
-/** `convertMinor`, or null when the product doesn't fit in a safe integer. */
-function tryConvertMinor(
-  minor: number, from: string, to: string, rate: string,
-): number | null {
-  try {
-    return convertMinor(minor, from, to, rate);
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -118,17 +111,6 @@ function EditEntryScreen() {
   const [itemsAfterRate, setItemsAfterRate] = useState(false);
   const [failed, setFailed] = useState<string>();
 
-  /**
-   * True when the group has no rate for this currency — the state in which an
-   * entry cannot honestly be converted, and the one that opens the dialog.
-   * Hoisted so the scan handler above can ask it too.
-   */
-  function needsRate(currency: string): boolean {
-    const groupBase = data.group?.baseCurrency;
-    return !!groupBase && currency !== groupBase
-      && rateFor(data.rates, groupBase, currency) === undefined;
-  }
-
   // A scan can outlive the screen that started it — it is a network round
   // trip to a model, and people put the phone down. The draft still takes the
   // result (that is the point of scanning), but nothing yanks you back here.
@@ -153,7 +135,7 @@ function EditEntryScreen() {
       // A photographed Moroccan receipt used to arrive looking complete and
       // wrong: it wrote MAD and kept whatever rate the draft had. Now it asks,
       // the same as picking the currency by hand would.
-      const wantsRate = patch.currency !== undefined && needsRate(patch.currency)
+      const wantsRate = patch.currency !== undefined && needsRate(data.rates, data.group?.baseCurrency, patch.currency)
         ? patch.currency : null;
       if (wantsRate !== null) setAskRate(wantsRate);
       // The merchant is a guess, and a title somebody typed is not. Take it
@@ -331,46 +313,21 @@ function EditEntryScreen() {
    */
   function pickCurrency(currency: string) {
     patch({ currency });
-    if (needsRate(currency)) setAskRate(currency);
+    if (needsRate(data.rates, data.group?.baseCurrency, currency)) setAskRate(currency);
   }
 
-  const activeTab: SplitTab = activeSplitTab(draft);
-
-  // A bill is a thing an expense has. An income has no receipt to read a
-  // total off, and a transfer has no split at all.
-  const canScan = kind === "expense";
-  const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
-  const onReceiptTab = canScan && activeTab === "receipt" && hasReceiptItems;
-
-  // Receipt's total is `lib/draft.ts`'s to derive, at the one place it is read
-  // (this render, and save() below) — never written into the draft as a cache
-  // for some other effect to notice and resync. Nothing can fall out of step
-  // because nothing is recorded twice (ADR-0016).
-  const receiptTotal = draftReceiptTotal(draft);
-  // The amount is derived from the bill while Receipt mode is showing it —
-  // typing over it would desync the total from what the items actually add
-  // up to, with nothing left to reconcile the two. Edit the items or the tip
-  // instead, or switch tabs to take manual control back (ADR-0016). Locked on
-  // a real, positive derived number, never merely on having items: a field
-  // that is disabled *and* empty is a screen with nothing to type in and a
-  // Save that will never light.
-  const receiptLocksAmount = receiptTotal !== null;
-  const receiptWeights = onReceiptTab
-    ? weightsFromItems(
-        draft.receiptItems ?? [],
-        (draft.receiptAssignments ?? []).map((row) => new Set(row)),
-        draft.receiptTip && draft.receiptInvolved
-          ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
-        draft.currency,
-        draft.entryId ?? "new",
-      )
-    : {};
-  // Empty until "who had what" has actually been visited (or on an old draft
-  // with nothing assigned yet) — falls back to whatever the split already
-  // was rather than claiming an opinion it doesn't have.
-  const receiptSplit: SplitSpec | null = Object.keys(receiptWeights).length > 0
-    ? { mode: "shares", weights: receiptWeights } : null;
-  const effectiveSplit = receiptSplit ?? draft.split;
+  // What the entry is worth and whether Save may light — one function, so the
+  // arithmetic behind that button has a test suite rather than a screen to
+  // mount (lib/entry-check.ts). The form reads its answers; it writes nothing.
+  const check = checkEntry({
+    draft, base, rates: data.rates,
+    liveMembers: data.members.map((m) => m.id),
+    nameOf: data.nameOf,
+  });
+  const {
+    activeTab, canScan, effectiveSplit, receiptTotal, receiptLocksAmount,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, ready,
+  } = check;
 
   // Leaving Receipt hands its derived total back to the amount field, which
   // is the only place a typed amount lives. `switchMode` in the split editor
@@ -403,83 +360,7 @@ function EditEntryScreen() {
     });
   };
 
-  // The same question the payers editor asks, answered by the same function.
-  const amountMinor = draftAmountMinor(draft);
-
-  const foreign = draft.currency !== base;
-  // The rate is the group's, read from the registry — not a field on this form
-  // and not a number frozen onto the entry (ADR-0005). Undefined means the
-  // group has never said what this currency is worth, which is the state that
-  // used to be silently `"1"` and bank a 500 MAD dinner as €500.
-  const groupRate = rateFor(data.rates, base, draft.currency);
-  // An amount and a rate can each be in range and still multiply out of it —
-  // `sanitizeAmount` allows twelve whole digits, and this runs in the render
-  // body, so an unguarded throw is a white screen with nothing to press. An
-  // out-of-range conversion is "no base amount yet", the state a missing rate
-  // already produces: the figure reads "—" and Save stays held.
-  const converted = foreign && groupRate !== undefined
-    ? tryConvertMinor(amountMinor, draft.currency, base, groupRate)
-    : null;
-  const rateOk = !foreign || converted !== null;
-  const baseMinor = foreign ? converted ?? 0 : amountMinor;
-
-  // The split editor is inline below and shows its own arithmetic; the form
-  // only needs to know whether what it currently says can be saved.
-  const splitOk = transfer
-    || validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: draft.entryId ?? "new" }).ok;
-
-  // Payers are checked against the amount in the entry's own currency: that
-  // is the number people typed and the number they'd check against a receipt.
-  const payerCheck = validatePayers(amountMinor, transfer ? null : draft.payers);
   const coPayers = Object.entries(draft.payers ?? {}).filter(([, v]) => v > 0);
-  // A side has to be somebody still in the group, not merely a non-empty
-  // string. This checked truthiness, and a removed member's id is truthy — so
-  // a settle-up row naming somebody who had left opened a transfer *from* a
-  // person who is not in the group, with Save lit up. `goneMember` below is
-  // what puts the name of the missing side on screen.
-  const live = new Set(data.members.map((m) => m.id));
-  const sidesOk = !transfer
-    || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
-
-  // Everybody an entry names has to still be in the group. `paidBy`, the payer
-  // map and the split are all lists of ids, and a member removed while this
-  // entry was open leaves one behind that no picker on either screen can show —
-  // money sitting against a name that is on no list. Save is held, and the line
-  // below says whose name it is.
-  //
-  // A transfer's two sides are the same fault wearing "—". A departed member
-  // keeps whatever balance they left with, so the balances tab still offers to
-  // settle with them; following that row landed on a grey Save, an empty slot
-  // and nothing on screen saying whose name was missing.
-  const goneMember = (transfer
-    ? [draft.fromMember, draft.toMember]
-    : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)])
-    .find((id) => id && !live.has(id));
-
-  // Receipt mode has to have produced the split it claims. Without this the
-  // tab could be opened over an ordinary even split and saved — the entry then
-  // said "from receipt" beside a split nobody read off a receipt, and a scan
-  // whose grid was never filled in silently went out evenly. The tab is the
-  // claim; `receiptSplit` is whether it is true.
-  const receiptUnfinished = canScan && activeTab === "receipt" && receiptSplit === null
-    ? (hasReceiptItems ? copy.form.noWhoHadWhat : copy.form.noReceipt)
-    : null;
-
-  // The one place the form says why Save is grey. It used to live inside the
-  // co-payer card, so the states that render the *single*-payer field — an
-  // empty payer map, a payer who has left — held Save with nothing anywhere
-  // on screen to read. A check with no visible reason is a dead end.
-  const blocker = goneMember
-    ? copy.form.goneMember(data.nameOf(goneMember))
-    // A rate the group hasn't got is not a typo to be fixed in this field —
-    // there is no field. Say what is missing and where it is set.
-    : foreign && groupRate === undefined ? copy.rates.needed(draft.currency)
-      : receiptUnfinished ?? payerProblemText(payerCheck, draft.currency);
-
-  const ready = amountMinor > 0 && rateOk && splitOk && !blocker && sidesOk
-    // A transfer's words are a note and optional; an expense without a name is
-    // a row nobody can identify a week later.
-    && (transfer || draft.description.trim().length > 0);
 
   // Leaving throws the draft away — there is nowhere for it to be kept — so ask
   // first, but only once something has actually been typed.
@@ -810,81 +691,5 @@ function EditEntryScreen() {
           onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
-  );
-}
-
-/**
- * A transfer's two sides, and the one-tap reversal between them.
- *
- * Getting the direction the wrong way round is the mistake this form invites,
- * and it is one people make *after* picking both names — so the fix is the
- * arrow itself, which points the way the money goes and reverses it when
- * pressed, rather than two pickers you have to re-open in turn.
- *
- * Each half is labelled above the person: "From" then a face, which is the
- * order the sentence is read in. Tapping one opens our own picker rather than
- * the browser's wheel (ADR-0008) — which is what lets the person already on
- * the other side stay in the list, saying what picking them does: it swaps the
- * sides, the only reading of "send this to the person who is sending it" that
- * isn't the error message below.
- */
-function TransferSides({ members, from, to, onChange }: {
-  members: Member[];
-  from: string;
-  to: string;
-  onChange: (sides: { fromMember: string; toMember: string }) => void;
-}) {
-  const [picking, setPicking] = useState<null | "from" | "to">(null);
-  const byId = new Map(members.map((m) => [m.id, m]));
-
-  const side = (which: "from" | "to") => {
-    const member = byId.get(which === "from" ? from : to);
-    return (
-      <button type="button" className="tside" onClick={() => setPicking(which)}
-        aria-label={which === "from" ? copy.form.sentBy : copy.form.receivedBy}>
-        <span className="eyebrow">{which === "from" ? copy.entry.from : copy.entry.to}</span>
-        <span className="who">{member?.name ?? copy.none}</span>
-      </button>
-    );
-  };
-
-  const pick = (id: string) => {
-    if (!picking) return;
-    // Picking the other side's person is a reversal, not an impossible transfer.
-    const swap = picking === "from" ? id === to : id === from;
-    if (swap) onChange({ fromMember: to, toMember: from });
-    else if (picking === "from") onChange({ fromMember: id, toMember: to });
-    else onChange({ fromMember: from, toMember: id });
-  };
-
-  return (
-    <div>
-      <div className="card transfer">
-        {side("from")}
-        <button type="button" className="tswap" aria-label={copy.form.swapSides}
-          onClick={() => onChange({ fromMember: to, toMember: from })}>
-          <Icon name="arrow" size={18} />
-        </button>
-        {side("to")}
-      </div>
-      {from === to ? (
-        <p className="failure" role="alert">{copy.form.sameSide}</p>
-      ) : null}
-
-      {picking ? (
-        <ChoiceDialog
-          title={picking === "from" ? copy.form.sentBy : copy.form.receivedBy}
-          value={picking === "from" ? from : to}
-          options={members.map((m) => ({
-            value: m.id,
-            label: m.name,
-            note: (picking === "from" ? m.id === to : m.id === from) && from !== to
-              ? copy.form.otherSide : undefined,
-          }))}
-          onPick={pick}
-          onClose={() => setPicking(null)}
-        />
-      ) : null}
-    </div>
   );
 }
