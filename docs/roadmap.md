@@ -6,7 +6,7 @@
 typed into is a notebook. Phases 4–6 were the finish, not the product.
 
 **Every phase below is closed** (2026-09-05). What the owner still wants doing
-is in [bugs.md](../bugs.md); what was cut rather than built is at the bottom of
+is in [invariants.md](invariants.md); what was cut rather than built is at the bottom of
 this file, seams intact.
 
 ## Phase 0 — Groundwork ✅

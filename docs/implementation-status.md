@@ -21,13 +21,17 @@ two devices.
 
 ## The next action
 
-**[bugs.md](../bugs.md)** — the defect queue, and the only open work. One item
-left, and it is the one with teeth: two members added under one name can't be
-merged, and merging two ids inside a `split` or `payers` map has to **add**
-their amounts, not overwrite, or the entry stops summing to its total.
+**[invariants.md](invariants.md)** — the only open work, and it is one subject:
+invariants the UI checks at write time that a merge can break anyway. Four are
+open there, and the owner has settled the direction for three of them — merge an
+entry whole rather than per field, make a member's name their identity and
+forbid renaming, and let a phone whose member was removed settle it on sync.
+Each removes more than it adds; none is built.
 
-Nothing else is scheduled. A session with no assignment should take the top of
-that file, or improve what is there — not start a feature the owner has cut.
+Start with the whole-entity merge: the other two sit on it, and its two
+amendments (lifecycle fields stay per-field, history diffs by re-folding) are
+what keep a stale write from undoing a repair. Nothing else is scheduled — a
+session with no assignment should take that, not start a feature the owner cut.
 
 ## What a cold session needs to know
 
