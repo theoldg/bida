@@ -219,9 +219,13 @@ export function describe(
     // the same person joining three times over.
     const them = memberById.get(rev.entityId)?.name
       ?? (typeof field("name")?.after === "string" ? field("name")!.after as string : copy.someoneLower);
+    // `self` on a create is somebody adding themselves — the one write a phone
+    // makes before it has claimed anybody, on the join screen. There is no
+    // matching self-delete: you cannot leave a group, only be removed
+    // (docs/data-model.md), and the trash button is never on your own row.
     const self = rev.op.actor === rev.entityId;
     if (rev.isCreate) return { what: self ? said.joined(them) : said.added(who, them) };
-    if (rev.isDelete) return { what: self ? said.left(them) : said.removed(who, them) };
+    if (rev.isDelete) return { what: said.removed(who, them) };
     if (field("name")) {
       const c = field("name")!;
       return {

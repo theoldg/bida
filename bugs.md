@@ -104,8 +104,8 @@ an id known on its own is not a claim.
   offers the settle-up row that squares them off. Following that row opens a
   transfer whose other side is a person no picker offers, and Save is held. The
   form now names them instead of showing a grey button over an empty slot, but
-  the debt still has no way out. Either the transfer sides accept somebody who
-  has left (only they can, and only where a balance says so), or the settle-up
+  the debt still has no way out. Either the transfer sides accept a removed
+  member (only they can, and only where a balance says so), or the settle-up
   row stops offering what the form refuses — a product call, which is why it is
   here.
 - **History stamps are wall clock while ordering is HLC.**

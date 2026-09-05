@@ -167,7 +167,7 @@ export const copy = {
     unreachablePending: (waiting: string) => `Can’t reach the server — ${waiting} stuck on this phone.`,
 
     /** Marks a balance row for somebody who is no longer in the group. */
-    hasLeft: "left the group",
+    hasLeft: "removed",
 
     tabs: { ledger: "Ledger", balances: "Balances" },
     history: "History",
@@ -213,7 +213,6 @@ export const copy = {
 
   members: {
     title: "People",
-    claimPrompt: "Tap your name.",
     addPlaceholder: "Add someone",
     /** Two people with one name are two people nothing on screen tells apart. */
     taken: (name: string) => `${name} is already here.`,
@@ -279,7 +278,7 @@ export const copy = {
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardBody: "This isn’t saved anywhere.",
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
-    goneMember: (name: string) => `${name} has left the group — pick somebody else.`,
+    goneMember: (name: string) => `${name} is no longer in the group — pick somebody else.`,
     /**
      * Receipt mode with no bill behind it. Both say the same thing — this
      * split doesn't exist yet — and each names the step that is missing.
@@ -440,7 +439,6 @@ export const copy = {
     changedNote: (who: string) => `${who} changed the note`,
     joined: (them: string) => `${them} joined the group`,
     added: (who: string, them: string) => `${who} added ${them}`,
-    left: (them: string) => `${them} left the group`,
     removed: (who: string, them: string) => `${who} removed ${them}`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,

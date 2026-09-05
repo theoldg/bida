@@ -86,6 +86,10 @@ and nowhere else.
 
 - A member is a person, not an account, and is tombstoned rather than
   hard-deleted or the fold references nothing.
+- **Nobody leaves a group; they are removed.** `removeMember` is the only
+  thing that tombstones one, People never puts a trash button on your own row,
+  and there is no un-claim — so the actor on a member delete is never its
+  subject, and history has no sentence for it.
 - Forgetting a group (`device.leftGroups`) is purely local — no op, no
   tombstone, nobody else sees it — so it drops off *your* list without
   touching membership or the group itself. Groups are never deleted. Opening
