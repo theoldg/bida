@@ -48,6 +48,45 @@ describe("foldOps", () => {
     expect(foldOps([...ops].reverse()).expenses["e1"]?.description).toBe("late");
   });
 
+  it("takes createdAt once and never again", () => {
+    // Write-once, and it has to be held here: an entry's content is written
+    // whole, so every edit carries a createdAt, and the field the list order
+    // breaks ties on would otherwise be reassigned by whoever saved last.
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner", createdAt: 100 } }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { description: "lunch", createdAt: 999 } }),
+    ];
+
+    const e = foldOps(ops).expenses["e1"];
+    expect(e?.createdAt).toBe(100);
+    expect(e?.description).toBe("lunch");
+  });
+
+  it("still accepts createdAt on an entity that has never had one", () => {
+    // Entries written before the field existed must be able to gain one.
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner" } }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { createdAt: 500 } }),
+    ];
+
+    expect(foldOps(ops).expenses["e1"]?.createdAt).toBe(500);
+  });
+
+  it("lets a whole-entity write lose to a later delete, and not undo it", () => {
+    // The amendment the whole-entity merge does not work without: content
+    // merges whole, deletedAt merges per field. A stale save must not
+    // resurrect — or re-tombstone — what a delete or a healer decided.
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner" } }),
+      op({ entityId: "e1", kind: "delete", hlc: at(2) }),
+      op({ entityId: "e1", kind: "update", hlc: at(3), patch: { description: "lunch" } }),
+    ];
+
+    const e = foldOps(ops).expenses["e1"];
+    expect(e?.description).toBe("lunch");
+    expect(e?.deletedAt).toBeTruthy();
+  });
+
   it("merges concurrent edits to different fields", () => {
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner", amountMinor: 100 } }),

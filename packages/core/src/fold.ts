@@ -1,5 +1,5 @@
 import { compareHlc, maxHlc, type Hlc } from "./hlc.js";
-import { IMMUTABLE_FIELDS, type Op } from "./ops.js";
+import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import {
   emptyGroupState,
   type Attachment, type Expense, type Group, type GroupState,
@@ -23,9 +23,22 @@ export function sortOps(ops: readonly Op[]): Op[] {
 
 type Bag = Record<string, unknown>;
 
-function applyPatch(target: Bag, patch: Record<string, unknown>): void {
+/**
+ * Apply a patch, honouring the two kinds of field a patch may not simply set.
+ *
+ * `IMMUTABLE_FIELDS` are never taken. `WRITE_ONCE_FIELDS` are taken only when
+ * the entity has not got one yet — which is what makes `createdAt` mean what it
+ * says now that an entry's content is written whole: a stale device re-sending
+ * the entity it holds carries a `createdAt` too, and without this the field an
+ * entry's list order breaks ties on would be reassigned by whoever edited last.
+ *
+ * Exported because history folds the same log and must fold it the same way; a
+ * second copy of these rules is a second answer to what the log means.
+ */
+export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(patch)) {
     if (IMMUTABLE_FIELDS.has(key)) continue;
+    if (WRITE_ONCE_FIELDS.has(key) && target[key] !== undefined && target[key] !== null) continue;
     target[key] = value;
   }
 }

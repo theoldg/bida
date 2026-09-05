@@ -45,7 +45,7 @@ the decision, or a rejected option nobody would propose, is a line to cut.
 | # | Decision |
 |---|---|
 | [0001](0001-cloudflare-workers-d1-r2.md) | Cloudflare Workers + D1 + R2 |
-| [0002](0002-append-only-op-log.md) | An append-only op log, merged per-field by last-write-wins |
+| [0002](0002-append-only-op-log.md) | An append-only op log, merged by last-write-wins |
 | [0003](0003-link-only-access.md) | Link-only access; a device's identity claim is an op |
 | [0004](0004-static-export-and-offline.md) | A static export: secret in the fragment, whole thing precached |
 | [0005](0005-money-and-currency.md) | Minor units, one rate per currency per group, one field that types money |

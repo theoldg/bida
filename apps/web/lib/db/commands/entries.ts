@@ -5,8 +5,8 @@ import {
 } from "@hajsik/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
-import { changedFields, only, setDerived } from "./patch";
-import { revalue, rateToWrite, toBase, valuationOf } from "./rates";
+import { movesAnything, only, wholeEntity } from "./patch";
+import { rateToWrite, toBase, valuationOf } from "./rates";
 
 /**
  * The three kinds of entry — expense, income and transfer (ADR-0010) — added,
@@ -116,9 +116,9 @@ export async function addExpense(
 }
 
 /**
- * Edit an expense. The patch carries only the fields that actually changed —
- * that is what lets two people edit different fields of the same expense
- * offline and have both survive.
+ * Edit an expense. The patch carries the **whole** entry, not just what moved:
+ * the last edit wins the entity, so every version anybody sees is one a person
+ * actually looked at (`patch.ts`, ADR-0002).
  */
 export async function editExpense(
   groupId: Id,
@@ -130,37 +130,45 @@ export async function editExpense(
   const existing = await db().expenses.get(expenseId);
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
+  const merged = { ...existing, ...changes } as ExpenseInput & { deletedAt?: number | null };
   // Both sides of the split comparison written one way. `sameValue` sorts
   // object keys but not array elements, so toggling a member out and back in
-  // reordered `members` and was written as an edit that changed nothing a
-  // person could see (`canonicalSplit`).
-  const input: Partial<ExpenseInput> = changes.split
-    ? { ...changes, split: canonicalSplit(changes.split) } : changes;
+  // reordered `members` and read as an edit that changed nothing a person
+  // could see (`canonicalSplit`).
+  const split = canonicalSplit(merged.split);
   const before = { ...existing, split: canonicalSplit(existing.split) };
 
-  const patch = changedFields(before, input);
+  // The payer fields are derived together — `paidBy` must never name somebody
+  // who isn't in `payers` — and a whole write carries both regardless.
+  const payer = normalisePayers({ ...merged, split });
+  const { base, rates } = await valuationOf(groupId);
+  const rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
 
-  // An expense is the *absence* of `kind` (see `addExpense`), but the form
-  // always sends one — so without this every first edit of an expense wrote a
-  // kind change against nothing, and the history read "turned this back into
-  // an expense" over an edit that only moved the amount.
-  if ("kind" in patch && (patch["kind"] ?? "expense") === (existing.kind ?? "expense")) {
-    delete patch["kind"];
-  }
+  const patch = wholeEntity({
+    // An expense is the *absence* of `kind` (see `addExpense`), so an ordinary
+    // one writes null rather than "expense": the two are the same value to the
+    // fold, and null is what every op already written means.
+    kind: merged.kind === "income" ? "income" : null,
+    description: merged.description,
+    occurredAt: merged.occurredAt,
+    amountMinor: merged.amountMinor,
+    currency: merged.currency,
+    rateToBase,
+    baseAmountMinor: toBase({ ...merged, rateToBase }, base),
+    paidBy: payer.paidBy,
+    payers: payer.payers,
+    split,
+    categoryId: merged.categoryId,
+    attachmentIds: merged.attachmentIds,
+    receiptItems: merged.receiptItems,
+    receiptTip: merged.receiptTip,
+    receiptInvolved: merged.receiptInvolved,
+    receiptAssignments: merged.receiptAssignments,
+    splitTab: merged.splitTab,
+  });
 
-  // The two payer fields move together — writing one without the other could
-  // leave `paidBy` naming somebody who isn't in `payers` at all — but only the
-  // ones that actually changed are written, or every payer edit would carry a
-  // redundant `payers: null` into the log.
-  if (patch["paidBy"] !== undefined || patch["payers"] !== undefined) {
-    const payer = normalisePayers({ ...existing, ...input } as ExpenseInput);
-    setDerived(patch, "paidBy", payer.paidBy, existing.paidBy);
-    setDerived(patch, "payers", payer.payers, existing.payers ?? null);
-  }
-
-  await revalue(groupId, patch, existing, { ...existing, ...input } as ExpenseInput);
-
-  if (Object.keys(patch).length === 0) return;
+  // A save that moved nothing is a revision saying nothing happened.
+  if (!movesAnything(before, patch)) return;
   await appendOps(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "update", patch, note: note ?? null },
   ]);
@@ -226,9 +234,9 @@ export async function recordSettlement(
 }
 
 /**
- * Edit a transfer. Same two rules as `editExpense`, by the same two functions:
- * only what changed reaches the log, and the base figure is re-derived — and
- * written only if it moved — whenever the amount, the currency or the rate does.
+ * Edit a transfer. The same rule as `editExpense`, by the same functions: the
+ * whole entry reaches the log, and the base figure is re-derived from the
+ * registry rather than carried over.
  */
 export async function editSettlement(
   groupId: Id,
@@ -240,10 +248,22 @@ export async function editSettlement(
   const existing = await db().settlements.get(settlementId);
   if (!existing) throw new Error(`unknown settlement: ${settlementId}`);
 
-  const patch = changedFields(existing, changes);
-  await revalue(groupId, patch, existing, { ...existing, ...changes });
+  const merged = { ...existing, ...changes };
+  const { base, rates } = await valuationOf(groupId);
+  const rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
 
-  if (Object.keys(patch).length === 0) return;
+  const patch = wholeEntity({
+    fromMember: merged.fromMember,
+    toMember: merged.toMember,
+    amountMinor: merged.amountMinor,
+    currency: merged.currency,
+    rateToBase,
+    baseAmountMinor: toBase({ ...merged, rateToBase }, base),
+    occurredAt: merged.occurredAt,
+    note: merged.note,
+  });
+
+  if (!movesAnything(existing, patch)) return;
   await appendOps(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "update", patch, note: note ?? null },
   ]);

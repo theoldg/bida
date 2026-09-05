@@ -31,17 +31,24 @@ one registry-driven, one that asserts the properties naming no healer at all.
 Every refusal in the UI now reads its verdict from that registry. See
 [Enforcement](invariants.md#enforcement).
 
-**Three decided calls remain unbuilt**, in this order — the second and third
-sit on the first:
+**The whole-entity merge is built.** An expense or transfer op now carries the
+entity as its saver saw it and the highest HLC wins all of it, so an amount can
+no longer sit beside a split from another phone that does not sum to it —
+[ADR-0002](decisions/0002-append-only-op-log.md). Its two amendments hold the
+repairs up: `deletedAt` merges per field, and `createdAt` is write-once in the
+fold. History diffs two folds rather than reading the patch.
 
-1. **Merge an entry whole, not per field**, with its two amendments (lifecycle
-   fields stay per-field, history diffs by re-folding), which are what keep a
-   stale write from undoing a repair. Ships whole and gets measured on a real
-   group afterwards.
-2. **A member's name is their identity** — `memberId = hash(groupId + nameKey)`
-   now that renaming is gone.
-3. **A phone whose member was removed puts them back on sync**, which is also
+**Two decided calls remain unbuilt:**
+
+1. **A member's name is their identity** — `memberId = hash(groupId + nameKey)`
+   now that renaming is gone, so two phones adding "Ana" offline mint one
+   member rather than two.
+2. **A phone whose member was removed puts them back on sync**, which is also
    what moves healing off the `/g` screen and onto the sync path.
+
+One measurement is owed: whole-entity ops repeat every field, so the log grows
+faster than it did, and that wants a number from a real group rather than an
+argument.
 
 Nothing else is scheduled — a session with no assignment should take the next
 one of those, not start a feature the owner cut.

@@ -148,3 +148,46 @@ describe("ops from a group are scoped to it", () => {
     expect(b.ops.every((o) => o.groupId === GROUP)).toBe(true);
   });
 });
+
+describe("a whole-entity write", () => {
+  /**
+   * The amendment that keeps history readable once an entry's content is
+   * written whole: a revision is the diff of two folds, not a reading of the
+   * op's keys. Without it every edit would say "changed everything".
+   */
+  it("reads as the one field that actually moved", () => {
+    const b = new OpBuilder();
+    const whole = {
+      description: "Souk haul", occurredAt: 1, amountMinor: 185_000, currency: "MAD",
+      rateToBase: "0.0921", baseAmountMinor: 17_039, paidBy: MARIE,
+      split: { mode: "equal", members: [MARIE, SAM] }, categoryId: null,
+    };
+    b.push("expense", "e-souk", "create", whole, MARIE);
+    // Every field again, one of them different — an ordinary Save.
+    b.push("expense", "e-souk", "update", { ...whole, description: "Lamp + rug" }, MARIE);
+
+    const [latest] = entityHistory(b.ops, "e-souk");
+    expect(latest?.changes.map((c) => c.field)).toEqual(["description"]);
+    expect(latest?.changes[0]).toMatchObject({ before: "Souk haul", after: "Lamp + rug" });
+  });
+
+  it("writes no revision at all when the whole entity came back unchanged", () => {
+    const b = new OpBuilder();
+    const whole = { description: "Hammam", amountMinor: 70_000, currency: "MAD" };
+    b.push("expense", "e-hammam", "create", whole, SAM);
+    b.push("expense", "e-hammam", "update", { ...whole }, SAM);
+
+    expect(entityHistory(b.ops, "e-hammam")).toHaveLength(1);
+  });
+
+  it("does not report a createdAt the fold silently ignored", () => {
+    // Write-once: a later op carrying one changes nothing, so it must not read
+    // as a change either.
+    const b = new OpBuilder();
+    b.push("expense", "e-taxi", "create", { description: "Taxi", createdAt: 100 }, THEO);
+    b.push("expense", "e-taxi", "update", { description: "Grand taxi", createdAt: 999 }, THEO);
+
+    const [latest] = entityHistory(b.ops, "e-taxi");
+    expect(latest?.changes.map((c) => c.field)).toEqual(["description"]);
+  });
+});

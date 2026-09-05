@@ -1,11 +1,20 @@
 import { compareHlc } from "./hlc.js";
-import { IMMUTABLE_FIELDS, type Op } from "./ops.js";
-import { sortOps } from "./fold.js";
+import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
+import { applyPatch, sortOps } from "./fold.js";
 import type { Id } from "./types.js";
 
 /**
  * Version history falls straight out of the op log — no extra storage, and it
  * cannot drift from the data, because it IS the data. See ADR-0002.
+ *
+ * **A revision is a diff of two folds, not a reading of the stored patch.**
+ * `running` below is the entity folded up to and including each op, by the same
+ * `applyPatch` the real fold uses, and a change is a field that moved between
+ * the fold before and the fold after. That is what lets an entry's content be
+ * written whole: the op says "here is the whole expense" and the revision still
+ * reads "changed the amount", because only the amount moved. It is also the
+ * more honest account — it shows what the revision changed in the merged
+ * timeline rather than what one device believed it was changing.
  */
 
 export interface FieldChange {
@@ -56,12 +65,19 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       changes.push({ field: "deletedAt", before: running["deletedAt"] ?? null, after: op.createdAt });
       running["deletedAt"] = op.createdAt;
     } else {
-      for (const [field, after] of Object.entries(op.patch)) {
+      // Fold the op in, then diff the two states — never read the patch as
+      // though its keys were the changes. A whole-entity write names every
+      // field it holds and moves almost none of them.
+      const before: Record<string, unknown> = { ...running };
+      applyPatch(running, op.patch);
+      for (const field of Object.keys(op.patch)) {
         if (IMMUTABLE_FIELDS.has(field)) continue;
-        const before = running[field];
-        if (equalish(before, after)) continue;
-        changes.push({ field, before: before ?? null, after });
-        running[field] = after;
+        // Silently ignored by the fold on an entity that already has one, so
+        // it is not a change anybody made and must not read as one.
+        if (WRITE_ONCE_FIELDS.has(field) && before[field] !== undefined
+          && before[field] !== null) continue;
+        if (equalish(before[field], running[field])) continue;
+        changes.push({ field, before: before[field] ?? null, after: running[field] });
       }
     }
 

@@ -32,8 +32,9 @@ one of three ways:
 1. **Unreachable** — the state cannot be written down. Natural keys, derivation
    at read, atomic entities. Always prefer this: nothing to run, nothing to test.
 2. **A healer** — a pure detector naming the *state* (not the event behind it),
-   and a repair that folds it away, declared together in `core/invariants.ts`
-   so neither can ship without the other. Its contract is below.
+   and a repair that folds it away, declared together in `core/invariants.ts`.
+   The five rules one must satisfy are stated there, beside the type that
+   requires them, and `invariants.test.ts` holds every registered entry to them.
 3. **Courtesy** — a UI refusal, which is a kindness to whoever is holding the
    phone and **not** a correctness mechanism. Every guard in the app is this,
    whether or not it was written believing so.
@@ -41,19 +42,6 @@ one of three ways:
 Reads of other entities are safe when their failure mode is **convergence**,
 not **refusal**: missing a match yields a duplicate a healer folds away, while
 missing a refusal yields a state with no trace to repair from.
-
-### What a healer must be
-
-1. **Detection is a pure function on state**, in core, named for the state —
-   whichever race produced it gets the same repair.
-2. **The repair is ordinary ops.** No new op kind, no mutation, nothing the
-   fold has to learn.
-3. **Idempotent**: the healed state fails its own detector, so a second run,
-   screen or device writes nothing.
-4. **Deterministic**, or run by exactly one device — two phones noticing at
-   once must not write two different repairs.
-5. **History names the cause, not the actor** (`copy.said.readded`), because
-   money moved without anyone asking.
 
 ## What holds each invariant
 
@@ -65,47 +53,34 @@ missing a refusal yields a state with no trace to repair from.
 | One rate per currency per group | natural key (the currency code) | held |
 | One identity row per device per group | natural key (the node id) | held |
 | A live entry names only live members | healer — `liveEntriesNameLiveMembers` | held |
-| An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | — | **open** — whole-entity merge |
+| An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | unreachable — whole-entity merge | held |
 | A device's claimed member is live | — | **open** — the phone puts them back |
 | A group has at least one live member | — | **open** — follows from the above |
 | Two live members never share a `nameKey` | — | **open** — name as identity, part built |
 | A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
 
-## Decided, not built
+## Decided
 
-Three calls from the owner, 2026-09-05. Only the rename ban has begun; each
-removes more than it adds, and together they cut the programme from five
-healers to two.
+Calls from the owner, 2026-09-05. Each removes more than it adds, and together
+they cut the programme from five healers to two. **The whole-entity merge is
+built**; the two below it are not.
 
-**An entry merges whole, not per field.** The last edit wins the entity —
-"the final version is what was seen locally by whoever edited it last". The
-concurrency this buys back is worth more than the field-level merge it gives
-up: every materialised entity becomes a state a person actually looked at, so
-an amount from one phone can no longer sit beside a split from another that
-does not sum to it. That state is currently reachable, drops the entry out of
-balances behind a warning, and is the one case no rule can repair — nothing can
-recover intent from two half-edits. Reverses the merge rule in
-[ADR-0002](decisions/0002-append-only-op-log.md).
+**An entry merges whole, not per field.** *Built — the rule and its two
+amendments are [ADR-0002](decisions/0002-append-only-op-log.md) and
+[sync.md](sync.md#the-operation).* It belongs on this list because of what it
+removes: an amount from one phone beside a split from another that does not sum
+to it was reachable, dropped the entry out of balances behind a warning, and was
+the one case no healer could repair — nothing recovers intent from two
+half-edits. Making every stored entry a version somebody looked at turns that
+invariant **unreachable**, which is always the answer to prefer.
 
-Two amendments it does not work without:
+The two amendments are what keep it from breaking the healers: `deletedAt`
+merges per field, so a save made offline cannot re-tombstone what a repair just
+lifted, and `createdAt` is write-once in the fold rather than merely documented
+as such.
 
-- **Lifecycle fields stay per-field.** A whole-entity write carries whatever
-  `deletedAt` the editor's device believed, so a stale snapshot would undo a
-  heal — a rename saved offline re-tombstoning a member a healer just put back.
-  Content merges whole; `deletedAt` merges per field. `createdAt` should join
-  `IMMUTABLE_FIELDS` at the same time, being documented as write-once and not
-  currently protected.
-- **History diffs by re-folding**, rather than reading the stored patch. Whole
-  entities would otherwise make every revision read as "changed everything" —
-  the problem `only()` and the `kind` special case were each written to fix.
-  Folding to the op before and the op after and diffing those is also more
-  honest: it shows what the revision changed in the merged timeline, not what
-  one device thought it was changing.
-
-Migration is free: `applyPatch` cannot tell a whole patch from a partial one,
-so every op already written folds exactly as it does today.
-
-**A member's name is their identity, and neither can be renamed.** The rename
+**A member's name is their identity, and neither can be renamed.** *Not built.*
+The rename
 button is already off the member row; `renameMember` survives only to fold the
 `name` updates existing groups have written. What is left is the half that pays
 for it: `memberId = hash(groupId + nameKey)`, and the same-name check in the UI
@@ -152,7 +127,8 @@ So an old "Ana" and a newly added "Ana" still collide in a group that predates
 the change. Accepted knowingly: the affected groups are known, and the merge
 healer this would otherwise need is the most expensive thing on the list.
 
-**A phone whose member was removed puts them back.** Removal is refused while
+**A phone whose member was removed puts them back.** *Not built.* Removal is
+refused while
 anybody is named on a live entry, but that needs both facts on one phone — so
 removing Bruno while Bruno's phone is offline leaves him a *ghost*:
 `device.meByGroup` still points at him, the claim gate passes, and every entry

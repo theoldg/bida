@@ -245,7 +245,7 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("patches carry only what changed", async () => {
+  it("an edit writes the whole entry, minus the two fields that never ride along", async () => {
     const { groupId, theo, marie } = await trip();
     const expenseId = await addExpense(groupId, theo, {
       description: "Taxi",
@@ -261,13 +261,24 @@ describe("commands", () => {
     const update = (await db().ops.where("entityId").equals(expenseId).toArray())
       .find((o) => o.kind === "update")!;
 
-    expect(Object.keys(update.patch)).toEqual(["paidBy"]);
+    // Whole, so the stored entry is always a version somebody looked at.
+    expect(Object.keys(update.patch).sort()).toEqual([
+      "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
+      "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
+      "receiptAssignments", "receiptInvolved", "receiptItems", "receiptTip",
+      "split", "splitTab",
+    ]);
+    // Lifecycle and identity never: a stale content save must not re-tombstone
+    // what a healer just put back, or move the field list order breaks ties on.
+    for (const never of ["deletedAt", "createdAt", "id", "groupId"]) {
+      expect(update.patch).not.toHaveProperty(never);
+    }
+    expect(update.patch["paidBy"]).toBe(marie);
   });
 
-  // The form posts its whole draft, not a diff, so these two say what the test
-  // above could not: it passed a single field by hand, and the bug lived in
-  // every field it never sent. A field written back unchanged wins its slot at
-  // fold time and undoes whatever another device did to it offline.
+  // The form posts its whole draft, so these say what a hand-passed single
+  // field cannot: what the log carries on an ordinary Save, and what happens
+  // when two phones save over each other.
   describe("an edit that sends the whole form back", () => {
     /** Exactly what `/g/entry/edit` posts on Save, for an untouched expense. */
     async function draftOf(expenseId: string) {
@@ -315,7 +326,7 @@ describe("commands", () => {
       await assertMaterialisedMatchesLog(groupId);
     });
 
-    it("carries only the field that moved, so a peer's edit survives", async () => {
+    it("carries the entry as the saver saw it, not just the field they moved", async () => {
       const { groupId, theo, expenseId } = await gelato();
 
       await editExpense(groupId, theo, expenseId, {
@@ -325,15 +336,15 @@ describe("commands", () => {
 
       const update = (await db().ops.where("entityId").equals(expenseId).toArray())
         .find((o) => o.kind === "update")!;
-      expect(Object.keys(update.patch)).toEqual(["description"]);
+      expect(update.patch["description"]).toBe("Ice cream");
+      expect(update.patch["amountMinor"]).toBe(1250);
+      expect(update.patch["split"]).toEqual({ mode: "equal", members: expect.any(Array) });
     });
 
-    // Each device patches against the expense it holds, so this runs the two
-    // saves in turn and re-reads the draft between them — what a phone that
-    // has caught up would post. The guarantee is the narrow patch: neither op
-    // may name the other's field, or folding them replays a stale value over
-    // a change that came after it.
-    it("keeps both when two devices move different fields", async () => {
+    // A device that has caught up posts the entry including whatever it just
+    // pulled, so both changes survive — the ordinary case, and the one people
+    // actually hit.
+    it("keeps both when the second device has seen the first", async () => {
       const { groupId, theo, marie, expenseId } = await gelato();
 
       await editExpense(groupId, theo, expenseId, {
@@ -343,15 +354,41 @@ describe("commands", () => {
         ...(await draftOf(expenseId)), description: "Ice cream",
       });
 
-      const updates = (await db().ops.where("entityId").equals(expenseId).toArray())
-        .filter((o) => o.kind === "update");
-      const named = updates.map((o) => Object.keys(o.patch).sort().join(","));
-      expect(named.sort()).toEqual(["amountMinor,baseAmountMinor", "description"]);
-
       await rebuild(groupId);
       const after = (await db().expenses.get(expenseId))!;
       expect(after.description).toBe("Ice cream");
       expect(after.amountMinor).toBe(2000);
+      await assertMaterialisedMatchesLog(groupId);
+    });
+
+    // The concurrency this rule deliberately gives up, asserted rather than
+    // left to be discovered: a phone that saves from a snapshot taken before
+    // its peer's edit posts that stale value with everything else, and the
+    // later HLC wins the whole entity. What it buys is that the result is a
+    // version somebody looked at — an amount can no longer sit beside a split
+    // from another phone that does not sum to it, which is the one state no
+    // healer could repair. The losing edit is still in the log, and history
+    // shows it (docs/invariants.md).
+    it("lets the last edit win the whole entry, when the second never saw the first", async () => {
+      const { groupId, theo, marie, expenseId } = await gelato();
+      // Taken before Theo's save: Marie's phone is offline and still holds this.
+      const stale = await draftOf(expenseId);
+
+      await editExpense(groupId, theo, expenseId, { ...stale, amountMinor: 2000 });
+      await editExpense(groupId, marie, expenseId, { ...stale, description: "Ice cream" });
+
+      await rebuild(groupId);
+      const after = (await db().expenses.get(expenseId))!;
+      expect(after.description).toBe("Ice cream");
+      // Theo's amount is gone — Marie's whole entry replaced it.
+      expect(after.amountMinor).toBe(1250);
+      // And the entry is coherent: the base figure belongs to this amount.
+      expect(after.baseAmountMinor).toBe(1250);
+
+      // Both ops stay in the log, so the edit that lost is still readable.
+      const updates = (await db().ops.where("entityId").equals(expenseId).toArray())
+        .filter((o) => o.kind === "update");
+      expect(updates).toHaveLength(2);
       await assertMaterialisedMatchesLog(groupId);
     });
 
@@ -401,7 +438,7 @@ describe("commands", () => {
     expect(stored?.paidBy).toBe(marie);
   });
 
-  it("writes both payer fields when an expense becomes co-sponsored, and neither when it doesn't change", async () => {
+  it("keeps the two payer fields in step, and writes nothing when they don't change", async () => {
     const { groupId, theo, marie } = await trip();
     const expenseId = await addExpense(groupId, theo, {
       description: "Dinner",
@@ -420,7 +457,8 @@ describe("commands", () => {
       .then((ops) => ops.filter((o) => o.kind === "update"));
 
     const first = (await updates())[0]!;
-    expect(Object.keys(first.patch).sort()).toEqual(["paidBy", "payers"]);
+    // Derived together — `paidBy` must never name somebody absent from `payers`.
+    expect(first.patch["payers"]).toEqual({ [theo]: 2_000, [marie]: 4_000 });
     expect(first.patch["paidBy"]).toBe(marie);
 
     // Re-submitting the same payers, spelled in the other order, is not a change.
@@ -683,7 +721,7 @@ describe("commands", () => {
     expect("kind" in op.patch).toBe(false);
   });
 
-  it("turning an expense into an income writes only that one field", async () => {
+  it("turning an expense into an income carries the whole entry, and flips the sign", async () => {
     const { groupId, theo, marie } = await trip();
     const id = await addExpense(groupId, theo, {
       description: "Ferry refund",
@@ -697,11 +735,12 @@ describe("commands", () => {
     await editExpense(groupId, theo, id, { kind: "income" });
     const update = (await db().ops.where("entityId").equals(id).toArray())
       .find((o) => o.kind === "update");
-    expect(update?.patch).toEqual({ kind: "income" });
+    expect(update?.patch["kind"]).toBe("income");
+    expect(update?.patch["description"]).toBe("Ferry refund");
     expect(computeBalances(foldOps(await db().ops.toArray())).byMember[theo]).toBe(-2000);
   });
 
-  it("edits a transfer, writing only what actually changed", async () => {
+  it("edits a transfer, writing it whole and only when something moved", async () => {
     const { groupId, theo, marie, sam } = await trip();
     const id = await recordSettlement(groupId, marie, {
       fromMember: marie,
@@ -721,7 +760,10 @@ describe("commands", () => {
 
     await editSettlement(groupId, marie, id, { toMember: sam, amountMinor: 2500 });
     const [update] = await updates();
-    expect(update?.patch).toEqual({ toMember: sam, amountMinor: 2500, baseAmountMinor: 2500 });
+    expect(update?.patch).toEqual({
+      fromMember: marie, toMember: sam, amountMinor: 2500, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 2500, occurredAt: 2, note: null,
+    });
 
     const stored = await db().settlements.get(id);
     expect(stored?.toMember).toBe(sam);
@@ -745,7 +787,7 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("leaves a transfer's base amount out when a new rate lands on the same figure", async () => {
+  it("writes a transfer's base amount unmoved when a new rate lands on the same figure", async () => {
     const { groupId, theo, marie } = await trip();
     const id = await recordSettlement(groupId, marie, {
       fromMember: marie,
@@ -755,13 +797,14 @@ describe("commands", () => {
       rateToBase: "0.0921",
       occurredAt: 2,
     });
-    // 1.00 MAD is €0.09 at either rate — the entry is worth what it was worth,
-    // so an unchanged `baseAmountMinor` must not ride along and clobber a
-    // peer's concurrent edit of it at fold time.
+    // 1.00 MAD is €0.09 at either rate. The whole entry rides along now, but
+    // the derived figure is re-derived rather than carried, so it stays the
+    // number this amount is actually worth.
     await editSettlement(groupId, marie, id, { rateToBase: "0.0925" });
     const [update] = (await db().ops.where("entityId").equals(id).toArray())
       .filter((o) => o.kind === "update");
-    expect(update?.patch).toEqual({ rateToBase: "0.0925" });
+    expect(update?.patch["rateToBase"]).toBe("0.0925");
+    expect(update?.patch["baseAmountMinor"]).toBe(9);
     await assertMaterialisedMatchesLog(groupId);
   });
 

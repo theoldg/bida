@@ -12,7 +12,7 @@ type Op = {
   entity: 'group'|'member'|'expense'|'settlement'|'attachment'|'identity'|'rate'
   entityId: string
   kind: 'create' | 'update' | 'delete' | 'restore'
-  patch: Record<string, unknown>   // changed fields ONLY, never the whole entity
+  patch: Record<string, unknown>   // an entry: the whole entity. Anything else: changed fields
   hlc: string       // hybrid logical clock
   actor: string     // memberId
   note?: string     // optional human reason, surfaced in history
@@ -21,20 +21,30 @@ type Op = {
 }
 ```
 
-`patch` carrying only changed fields is what lets concurrent edits to different
-fields of the same expense merge instead of clobbering.
+**An entry is written whole; everything else is written per field.** An expense
+or transfer op carries the entity as the person saving it saw it, and the
+highest HLC wins all of it — so the version everybody ends up looking at is one
+somebody actually read, rather than an amount from one phone beside a split from
+another that does not sum to it
+([ADR-0002](decisions/0002-append-only-op-log.md)). A `member`, `rate`,
+`identity` or `group` op still carries only what changed, so concurrent edits to
+different fields of those both survive.
 
-**The command layer is what makes that true.** An edit form posts every field
-it holds, so `editExpense` and `editSettlement` diff each one against the folded
-entity and drop what already matches. Without that a save touching the amount
-wrote all fifteen fields, and quietly undid whatever a peer had changed offline
-— the guarantee above, contradicted by the only code that writes. `null` and
-absent compare equal in that diff: `only()` leaves an unset field off the create
-entirely, so reading the two apart also recorded a revision saying the category
-changed on every first edit, of every expense, whether or not one was ever set.
-The derived `baseAmountMinor` is held to the same rule — a currency or a rate
-swapped for one that rounds to the same figure moves nothing, so it is not
-written.
+Two fields never ride along on a content save, and the repairs in
+[invariants.md](invariants.md) depend on it:
+
+- **`deletedAt` merges per field.** A whole write carries whatever lifecycle the
+  saving device believed, so a save made offline would undo a tombstone, or
+  re-apply one a healer had just lifted.
+- **`createdAt` is write-once**, held in the fold by `WRITE_ONCE_FIELDS` rather
+  than hoped for, because every whole write now carries one.
+
+**The command layer is what makes that true.** `editExpense` and
+`editSettlement` build the entity from the stored row plus the form, re-derive
+`rateToBase` and `baseAmountMinor` from the registry rather than carrying them,
+and append the lot. A save that moved nothing still writes nothing
+(`movesAnything` in `commands/patch.ts`), or every Save would be a revision
+saying nothing happened.
 
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
@@ -78,7 +88,8 @@ at the server and answers only "what have I not pulled yet".
 ## Folding
 
 Sort by `hlc` ascending, then per entity: `create` initialises; `update` assigns
-each field in `patch`, **per-field last write wins by HLC**; `delete` sets
+each field in `patch` — **last write wins by HLC**, over the whole entity for an
+entry and per field for everything else; `delete` sets
 `deletedAt` and never removes the row; `restore` applies exactly like an update
 — nothing emits one any more
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)), but groups
@@ -142,10 +153,12 @@ still queued. Not built: nothing appends an `attachment` op yet (Phase 4).
 
 ## Conflicts
 
-Two people editing the same expense while one is offline: **different fields**
-both survive, no conflict at all; **the same field**, highest HLC wins the
-materialised value and **both ops stay in the log**, so history shows the losing
-edit and who made it, in order, like any other revision.
+Two people editing the same expense while one is offline: the highest HLC wins
+the **whole entry**, and **both ops stay in the log**, so history shows the
+losing edit and who made it, in order, like any other revision. A device that
+has caught up posts what it just pulled, so in practice both changes survive —
+only a save from a snapshot older than the peer's edit loses one. Members, rates
+and identities still merge per field.
 
 `FieldChange.supersededByOpId` from `core/history.ts` marks which later op
 replaced a field, and is tested — but nothing renders it (owner, 2026-08-28:
@@ -158,8 +171,9 @@ it in one tap.
 ## History UI
 
 Falls out of the log with no extra storage. **Per expense**: `ops` filtered by
-`entityId`, newest first, each `patch` rendered against the folded state
-immediately before it. **Group feed**: all ops, same renderer. Both are read
+`entityId`, newest first, each revision being the **difference between the fold
+before the op and the fold after it** — never a reading of the patch's keys, or
+a whole-entity write would read as "changed everything". **Group feed**: all ops, same renderer. Both are read
 only: there is no restore-to-version, and undoing something is editing it
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 
