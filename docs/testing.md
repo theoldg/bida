@@ -119,16 +119,25 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.
-- **`pnpm back` is intermittently red, and it is not the check.** A different
-  journey loses each run, and the signature is always the same: one press
-  unwinds *two* screens (`/g/members` → `/`, then off the end of history). That
-  is the double-unwind `goUp` names in
-  [lib/nav.ts](../apps/web/lib/nav.ts) — a back press cancelled while the
-  browser's own traversal also lands — so the race it was written to close is
-  not fully closed. Not diagnosed; don't read a red run as your change until
-  you have run it on `main` too. Lengthening `pressBack`'s wait makes it fail
-  *more*, which is the tell: the check was sampling before the second unwind
-  arrived.
+- **`pnpm back` used to be intermittently red, and it was the check.** The
+  signature — one press unwinding *two* screens — read like the app's own
+  cancellation race, and this file said so. It wasn't: tracing every `navigate`
+  event through a whole run showed the walk cancels no press at all, so that
+  code never ran. What ran was a blind `waitForTimeout(500)` after each press,
+  which could sample mid-answer and, worse, press again while the last answer
+  was still settling — Next writes its own `replaceState` a millisecond after
+  every traversal. `settle()` waits on the app instead: no
+  `navigation.transition` in flight, and the URL unmoved for three polls.
+- **A `navigate` listener added by `addInitScript` runs before the app's**, so
+  it cannot read `defaultPrevented` in a microtask: the checkpoint runs after
+  *each* listener, not after the dispatch. Read it from a `setTimeout(…, 0)`.
+  Getting this wrong reports every press as uncancelled — which looks exactly
+  like a takeover that has stopped working.
+- **A cross-document back press cannot be taken over at all** (`cancelable:
+  false`), so a screen opened from a shared link cannot be driven to exercise
+  the app's cancellation — the only press in the app that reaches it is the
+  whole-group feed opened from one entry's own history
+  ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 ## `pnpm entries` — the form is wired to the commands
 
@@ -232,6 +241,8 @@ segment is live is a finding, and this is where it surfaces.
   app shell, so the next `goto` fails with an HTTP error that looks like a bug
   in the app. Restart the daemon after any build. A `git push` counts: pre-push
   runs `pnpm check`.
-- **The daemon holds a browser and a Worker.** Killing it without reaping those
-  leaves a multi-gigabyte process behind, and enough of them exhaust memory —
-  at which point a fresh `start` hangs before it ever writes `.drive/ready.json`.
+- **The daemon holds a browser and a Worker**, and `stop` does not always take
+  them with it — it prints `stopped` while `wrangler`/`workerd` keep running.
+  Each is a multi-gigabyte process, and enough of them exhaust memory — at which
+  point a fresh `start` hangs before it ever writes `.drive/ready.json`. Check
+  with `ps` after stopping, and reap what is left.
