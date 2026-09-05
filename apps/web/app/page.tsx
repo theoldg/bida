@@ -7,13 +7,14 @@ import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components
 import { ConfirmDialog } from "../components/dialog";
 import { Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
+import { InviteFallback } from "../components/invite";
 import { useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
-import { useGroupSummaries, type GroupSummary } from "../lib/hooks";
+import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const summaries = useGroupSummaries();
@@ -56,17 +57,25 @@ export default function GroupsPage() {
 }
 
 /**
- * One row of "your groups" — and, on a long press or a right click, the one
- * action forgetting belongs to. Mirrors the gate on the Members screen's own
- * "Forget group" row: offered once this device has claimed a member here,
- * though `forgetGroup` itself doesn't need one.
+ * One row of "your groups" — and, on a long press or a right click, the two
+ * actions that belong to a group from outside it: hand its link to someone,
+ * or forget it. Copying needs only the key this device already holds, so it is
+ * offered whether or not anyone has been claimed here; forgetting mirrors the
+ * gate on the Members screen's own "Forget group" row — offered once this
+ * device has claimed a member, though `forgetGroup` itself doesn't need one.
  */
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;
   const [asking, setAsking] = useState(false);
+  const invite = useInviteLink(group.id);
 
-  const { onContextMenu, menu } = useLongPressMenu(me === undefined ? [] : [
-    { label: copy.members.forget, icon: "trash", onSelect: () => setAsking(true) },
+  const { onContextMenu, menu } = useLongPressMenu([
+    ...(invite.copy
+      ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
+      : []),
+    ...(me === undefined
+      ? []
+      : [{ label: copy.members.forget, icon: "trash" as const, onSelect: () => setAsking(true) }]),
   ]);
 
   async function forget() {
@@ -105,6 +114,8 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       </Link>
 
       {menu}
+
+      <InviteFallback invite={invite} />
 
       {asking ? (
         <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}

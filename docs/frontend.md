@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, and the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)) · create a group, everyone in it, in one screen |
+| `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · create a group, everyone in it, in one screen |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, Rates, People and the invite link are top-bar icons |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates` is the screen that linked in from beside it, and is where back goes |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
@@ -100,11 +100,13 @@ confers nothing without the secret.
   rates, with no React in it, so the arithmetic behind that button is a test
   suite rather than a screen to mount. The form reads its answers and writes
   none of them.
-- **The invite link is `components/invite.tsx`**, on two top bars and written
-  once. `navigator.clipboard.writeText` rejects on an insecure context or a
-  denied permission, and used to reject into nothing — an inert-looking button,
-  and the link shown nowhere else. A refusal puts the link on screen to be
-  read ([ADR-0003](decisions/0003-link-only-access.md)).
+- **The invite link is `components/invite.tsx`**, written once for the two top
+  bars that carry it and the groups list's row menu, which offers it without a
+  top bar of its own. `navigator.clipboard.writeText` rejects on an insecure
+  context or a denied permission, and used to reject into nothing — an
+  inert-looking button, and the link shown nowhere else. A refusal puts the
+  link on screen to be read (`InviteFallback`,
+  [ADR-0003](decisions/0003-link-only-access.md)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
