@@ -78,7 +78,8 @@ export function BottomNav({ items }: {
       {/* `replace`: the tabs are two halves of one screen, not two places you
           travelled through, so switching them doesn't deepen the history. */}
       {items.map((i) => (
-        <Link key={i.href} href={i.href} replace className={`nav${i.on ? " on" : ""}`}>
+        <Link key={i.href} href={i.href} replace className={`nav${i.on ? " on" : ""}`}
+          aria-current={i.on ? "page" : undefined}>
           <Icon name={i.icon} size={19} />{i.label}
         </Link>
       ))}

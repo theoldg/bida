@@ -166,12 +166,18 @@ export function SplitEditor({ members, me, title, totalMinor, currency, spec, se
       </div>
 
       <div className="seg" style={{ marginBottom: 9 }}>
-        {MODES.map((mode) => (
-          <button key={mode} type="button" className={!showReceipt && !legacy && spec.mode === mode ? "on" : ""}
-            onClick={() => switchMode(mode)}>{copy.split.mode[mode]}</button>
-        ))}
+        {/* `aria-pressed`, not just the class: which mode is on is the whole
+            state of this control, and painting it says so only to an eye. */}
+        {MODES.map((mode) => {
+          const on = !showReceipt && !legacy && spec.mode === mode;
+          return (
+            <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
+              onClick={() => switchMode(mode)}>{copy.split.mode[mode]}</button>
+          );
+        })}
         {receipt ? (
-          <button type="button" className={showReceipt ? "on" : ""} onClick={() => onTabChange("receipt")}>
+          <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
+            onClick={() => onTabChange("receipt")}>
             {copy.split.receipt}
           </button>
         ) : null}
