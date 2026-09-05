@@ -14,7 +14,7 @@
 
 export {
   createGroup, saveGroupKey, forgetGroup, claimIdentity, publishExistingClaims,
-  addMember, renameMember, removeMember, type NewGroupInput,
+  addMember, renameMember, removeMember, readdStrandedMembers, type NewGroupInput,
 } from "./groups";
 export { setRate, clearRate } from "./rates";
 export {

@@ -21,14 +21,10 @@ two devices.
 
 ## The next action
 
-**[bugs.md](../bugs.md)** — the defect queue, and the only open work. Two items,
-both of which put a wrong number in front of a person:
-
-- Two members added under one name can't be merged. This is the one with
-  teeth: merging two ids inside a `split` or `payers` map has to **add** their
-  amounts, not overwrite, or the entry stops summing to its total.
-- A departed member's balance can't be cleared. Small, but it needs a product
-  call before it needs code.
+**[bugs.md](../bugs.md)** — the defect queue, and the only open work. One item
+left, and it is the one with teeth: two members added under one name can't be
+merged, and merging two ids inside a `split` or `payers` map has to **add**
+their amounts, not overwrite, or the entry stops summing to its total.
 
 Nothing else is scheduled. A session with no assignment should take the top of
 that file, or improve what is there — not start a feature the owner has cut.

@@ -440,6 +440,9 @@ export const copy = {
     joined: (them: string) => `${them} joined the group`,
     added: (who: string, them: string) => `${who} added ${them}`,
     removed: (who: string, them: string) => `${who} removed ${them}`,
+    /** Nobody asked for this one, so it names the cause rather than the actor:
+        a removal the group had already contradicted, undone. */
+    readded: (them: string) => `${them} was removed, but an entry still names them — added back`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,
     updatedMember: (who: string, them: string) => `${who} updated ${them}`,

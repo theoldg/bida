@@ -14,7 +14,9 @@ import {
   editSettlement,
   forgetGroup,
   publishExistingClaims,
+  readdStrandedMembers,
   recordSettlement,
+  removeMember,
   saveGroupKey,
   setRate,
 } from "./commands";
@@ -502,6 +504,80 @@ describe("commands", () => {
     const secret = (await db().groupKeys.get(groupId))!.secret;
     await saveGroupKey(groupId, secret);
     expect((await getDevice()).leftGroups).not.toContain(groupId);
+  });
+
+  /**
+   * The race the members screen's refusal cannot cover: it won't remove
+   * somebody named on a live entry, but two phones can each be right offline —
+   * one removes Marie, the other writes a transfer to her — and the merge is
+   * where they meet. `removeMember` itself doesn't refuse, which is what lets
+   * these three tests stand in for that merge.
+   */
+  it("puts back a member removed while an entry still named them", async () => {
+    const { groupId, theo, marie } = await trip();
+    await recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 3000,
+      currency: "EUR", rateToBase: "1", occurredAt: 2,
+    });
+    await removeMember(groupId, theo, marie);
+    expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
+
+    expect(await readdStrandedMembers(groupId, theo)).toEqual([marie]);
+
+    expect((await db().members.get(marie))?.deletedAt).toBeNull();
+    await assertMaterialisedMatchesLog(groupId);
+
+    // Idempotent: a member who is back is no longer stranded, so a second run
+    // — another screen, another device — writes nothing.
+    const ops = await db().ops.count();
+    expect(await readdStrandedMembers(groupId, theo)).toEqual([]);
+    expect(await db().ops.count()).toBe(ops);
+  });
+
+  it("leaves an ordinary departure alone", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    await addExpense(groupId, theo, {
+      description: "Dinner", occurredAt: 1, amountMinor: 9000, currency: "EUR",
+      rateToBase: "1", paidBy: theo, split: { mode: "equal", members: [theo, sam] },
+    });
+    await removeMember(groupId, theo, marie);
+
+    expect(await readdStrandedMembers(groupId, theo)).toEqual([]);
+    expect((await db().members.get(marie))?.deletedAt).toBeTruthy();
+  });
+
+  // The defect this exists for: a departed member kept whatever balance they
+  // left with, the balances tab offered the settle-up row that would square
+  // them off, and the form that row opened refused the name it opened with.
+  it("gives a stranded member's balance a way out again", async () => {
+    const { groupId, theo, marie, sam } = await trip();
+    await addExpense(groupId, theo, {
+      description: "Dinner", occurredAt: 1, amountMinor: 9000, currency: "EUR",
+      rateToBase: "1", paidBy: theo, split: { mode: "equal", members: [theo, marie, sam] },
+    });
+    await removeMember(groupId, theo, marie);
+
+    await readdStrandedMembers(groupId, theo);
+
+    const folded = async () =>
+      atCurrentRates(foldOps(await db().ops.where("groupId").equals(groupId).toArray()));
+    const state = await folded();
+    const balances = computeBalances(state);
+    const live = new Set(Object.values(state.members).filter((m) => !m.deletedAt).map((m) => m.id));
+    const rows = settleUp(balances.byMember);
+    expect(balances.byMember[marie]).toBe(-3000);
+    // Every side of every settle-up row is somebody a picker can still offer,
+    // which is the rule the transfer form holds Save on (lib/entry-check.ts).
+    expect(rows.flatMap((t) => [t.from, t.to]).filter((id) => !live.has(id))).toEqual([]);
+
+    for (const t of rows) {
+      await recordSettlement(groupId, theo, {
+        fromMember: t.from, toMember: t.to, amountMinor: t.amountMinor,
+        currency: "EUR", rateToBase: "1", occurredAt: 3,
+      });
+    }
+
+    expect(Object.values(computeBalances(await folded()).byMember)).toEqual([0, 0, 0]);
   });
 
   it("settlements clear a balance without inflating what the trip cost", async () => {

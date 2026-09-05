@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  payerList, resolvePayers, shareOf, splitParticipants,
+  payerList, resolvePayers, shareOf, splitParticipants, strandedMembers,
   type Expense, type Member, type Settlement,
 } from "@hajsik/core";
 import { kindOf, myEffect } from "../../lib/entry-kind";
@@ -17,7 +17,7 @@ import { InviteButton } from "../../components/invite";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
-import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
+import { deleteExpense, deleteSettlement, readdStrandedMembers } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -45,6 +45,25 @@ function GroupScreen() {
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
+
+  // Two phones can each be right at once: one removes Bruno while the other,
+  // offline, writes a transfer to him. The merge leaves a tombstoned member
+  // holding live money — a departed row on the balances tab below, and a
+  // settle-up row whose form then refuses the name it opened with. The
+  // removal is the half the log has since contradicted, so it gives way
+  // (docs/data-model.md).
+  //
+  // Here rather than in the sync engine because this is the screen the state
+  // shows on, and because a write needs the one thing a screen has and a
+  // background tick doesn't: a phone that has said who it is. Keyed on the
+  // stranded ids, so it fires when that set appears and not on every redraw —
+  // and the command re-reads the tables, so it never writes from a stale one.
+  const stranded = strandedMembers([...data.memberById.values()], data)
+    .map((m) => m.id).join(" ");
+  useEffect(() => {
+    if (!groupId || !data.me || !stranded) return;
+    void readdStrandedMembers(groupId, data.me).catch(() => {});
+  }, [groupId, data.me, stranded]);
 
   // Joining isn't finished until "who are you" is answered. Unclaimed, nothing
   // here works the way it reads: every row is somebody else's, and there is no

@@ -1,5 +1,5 @@
 import { resolveSplit, SplitError, splitParticipants } from "./split.js";
-import type { Expense, Id, Settlement } from "./types.js";
+import type { Expense, Id, Member, Settlement } from "./types.js";
 
 /**
  * Co-sponsored expenses: "Bob paid 400 and Alice paid 100 for these 500".
@@ -199,4 +199,21 @@ export function entriesInvolving(
 export function memberInvolved(entries: EntryTables, memberId: Id): boolean {
   const { expenses, settlements } = entriesInvolving(entries, memberId);
   return expenses.length > 0 || settlements.length > 0;
+}
+
+/**
+ * Members the group has removed and gone on naming anyway: tombstoned, and
+ * still on a live entry.
+ *
+ * The UI refuses a removal while `memberInvolved` finds anybody, so reaching
+ * this takes two phones — one removes Bruno while the other, offline, writes a
+ * transfer to him — and it appears where they merge. It is a *state*, not an
+ * event: whichever race produced it, a tombstone over live money is the same
+ * contradiction, and the app folds it away by putting the member back
+ * (`readdStrandedMembers`, `apps/web/lib/db/commands/groups.ts`).
+ */
+export function strandedMembers(
+  members: readonly Member[], entries: EntryTables,
+): Member[] {
+  return members.filter((m) => !!m.deletedAt && memberInvolved(entries, m.id));
 }

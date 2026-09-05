@@ -226,6 +226,11 @@ export function describe(
     const self = rev.op.actor === rev.entityId;
     if (rev.isCreate) return { what: self ? said.joined(them) : said.added(who, them) };
     if (rev.isDelete) return { what: said.removed(who, them) };
+    // Lifting the tombstone is the one member change nobody made: a removal
+    // that raced an entry naming them is undone automatically
+    // (`readdStrandedMembers`), and the sentence says what the log said, not
+    // which phone noticed it.
+    if (field("deletedAt")?.after === null) return { what: said.readded(them) };
     if (field("name")) {
       const c = field("name")!;
       return {

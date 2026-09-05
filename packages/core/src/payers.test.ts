@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   entriesInvolving, expenseInvolves, isCoSponsored, memberInvolved, payerList,
-  primaryPayer, resolvePayers, settlementInvolves, validatePayers,
+  primaryPayer, resolvePayers, settlementInvolves, strandedMembers, validatePayers,
 } from "./payers.js";
 import { computeBalances, assertBalanced } from "./balance.js";
 import { emptyGroupState, type Expense, type Member, type Settlement } from "./types.js";
@@ -118,6 +118,48 @@ describe("settlementInvolves / memberInvolved", () => {
 
     expect(memberInvolved(tables, BOB)).toBe(false);
     expect(memberInvolved(tables, ALICE)).toBe(false);
+  });
+});
+
+/**
+ * The state two phones can reach that neither could alone: a removal, and an
+ * entry naming the person removed. Whichever arrived first, what is left is a
+ * tombstone over live money — which the app undoes by putting them back.
+ */
+describe("strandedMembers", () => {
+  const gone = (id: string, name: string): Member => ({ ...member(id, name), deletedAt: 9 });
+
+  it("finds a removed member left on the far side of a transfer", () => {
+    const members = [member(ALICE, "Alice"), gone(BOB, "Bob")];
+    const entries = { expenses: [], settlements: [settlement({ fromMember: ALICE, toMember: BOB })] };
+
+    expect(strandedMembers(members, entries).map((m) => m.id)).toEqual([BOB]);
+  });
+
+  it("finds one left on an expense, as a payer or in the split", () => {
+    const paid = { expenses: [expense({ paidBy: BOB, split: { mode: "equal", members: [ALICE] } })], settlements: [] };
+    const split = { expenses: [expense({ paidBy: ALICE, split: { mode: "equal", members: [ALICE, BOB] } })], settlements: [] };
+
+    expect(strandedMembers([gone(BOB, "Bob")], paid).map((m) => m.id)).toEqual([BOB]);
+    expect(strandedMembers([gone(BOB, "Bob")], split).map((m) => m.id)).toEqual([BOB]);
+  });
+
+  it("leaves alone a member who is merely removed, or merely named", () => {
+    const entries = { expenses: [], settlements: [settlement({ fromMember: ALICE, toMember: BOB })] };
+
+    // Named on it, but still in the group: nothing to repair.
+    expect(strandedMembers([member(BOB, "Bob")], entries)).toEqual([]);
+    // Removed, and on nothing live: an ordinary departure.
+    expect(strandedMembers([gone(CARL, "Carl")], entries)).toEqual([]);
+  });
+
+  it("ignores an entry the group has since deleted", () => {
+    const entries = {
+      expenses: [expense({ deletedAt: 5 })],
+      settlements: [settlement({ deletedAt: 5 })],
+    };
+
+    expect(strandedMembers([gone(BOB, "Bob")], entries)).toEqual([]);
   });
 });
 

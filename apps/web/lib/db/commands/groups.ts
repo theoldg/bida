@@ -1,4 +1,7 @@
-import { newColorSeed, newGroupSecret, newId, type CurrencyCode, type Id } from "@hajsik/core";
+import {
+  newColorSeed, newGroupSecret, newId, strandedMembers,
+  type CurrencyCode, type Id,
+} from "@hajsik/core";
 import { db } from "../dexie";
 import { getDevice, hideGroup, setMe, unhideGroup } from "../device";
 import { requestPersistence } from "../../persist";
@@ -224,4 +227,44 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
   await appendOps(groupId, actor, [
     { entity: "member", entityId: memberId, kind: "delete", patch: {} },
   ]);
+}
+
+/**
+ * Put back every member the group removed and then went on naming — the state
+ * `strandedMembers` (core/payers.ts) describes.
+ *
+ * Removal is refused while anybody is named on a live entry, so this only
+ * happens when two phones are each right at once: one removes Bruno, the other
+ * — offline — writes a transfer to him, and the merge leaves a tombstoned
+ * member holding money. The tombstone is the half the log has since
+ * contradicted: an entry is money somebody typed, a removal is only the claim
+ * that nobody was naming them. So the tombstone gives way, and the debt has a
+ * way out again — before this, the balances tab offered a settle-up row that
+ * the transfer form then refused, because no picker offers a member who has
+ * left.
+ *
+ * Lifting it is an ordinary `deletedAt: null`, exactly as re-setting a cleared
+ * rate lifts that row's tombstone (rates.ts); `lib/history-copy.ts` turns it
+ * into the one sentence saying why somebody reappeared. Idempotent: it reads
+ * the tables itself, and a member who is back is no longer stranded, so every
+ * run after the first writes nothing. Two devices noticing at once write the
+ * same lift, which folds to the same state.
+ */
+export async function readdStrandedMembers(groupId: Id, actor: Id): Promise<Id[]> {
+  const d = db();
+  const [members, expenses, settlements] = await Promise.all([
+    d.members.where("groupId").equals(groupId).toArray(),
+    d.expenses.where("groupId").equals(groupId).toArray(),
+    d.settlements.where("groupId").equals(groupId).toArray(),
+  ]);
+  const stranded = strandedMembers(members, { expenses, settlements });
+  if (stranded.length === 0) return [];
+
+  await appendOps(groupId, actor, stranded.map((m) => ({
+    entity: "member" as const,
+    entityId: m.id,
+    kind: "update" as const,
+    patch: { deletedAt: null },
+  })));
+  return stranded.map((m) => m.id);
 }

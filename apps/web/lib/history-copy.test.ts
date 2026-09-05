@@ -2,8 +2,10 @@ import { beforeEach, describe as suite, expect, it } from "vitest";
 import { activityFeed, type Member, type Revision } from "@hajsik/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
-import { addExpense, addMember, clearRate, createGroup, editExpense, removeMember, setRate }
-  from "./db/commands";
+import {
+  addExpense, addMember, clearRate, createGroup, editExpense, readdStrandedMembers,
+  recordSettlement, removeMember, setRate,
+} from "./db/commands";
 import { describe } from "./history-copy";
 
 /**
@@ -196,6 +198,27 @@ suite("describe", () => {
     expect(said).toContain("Theo added Marie");
     expect(said).toContain("Theo added Sam");
     expect(said).toContain("Theo removed Marie");
+  });
+
+  // Nobody pressed anything for this line, so it names the reason rather than
+  // the phone: a removal the log had already contradicted, undone.
+  it("says why a member the group had removed is back", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const marie = await addMember(groupId, theo, "Marie");
+    // The merge two offline phones produce: a transfer to Marie, and Marie
+    // removed.
+    await recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 3000,
+      currency: "EUR", rateToBase: "1", occurredAt: 2,
+    });
+    await removeMember(groupId, theo, marie);
+
+    await readdStrandedMembers(groupId, theo);
+
+    expect((await described(groupId))[0]!.said)
+      .toBe("Marie was removed, but an entry still names them — added back");
   });
 
   it("lets somebody who joins on their own phone say so themselves", async () => {
