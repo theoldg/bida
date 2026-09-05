@@ -635,6 +635,26 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
+  it("leaves a transfer's base amount out when a new rate lands on the same figure", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await recordSettlement(groupId, marie, {
+      fromMember: marie,
+      toMember: theo,
+      amountMinor: 100,
+      currency: "MAD",
+      rateToBase: "0.0921",
+      occurredAt: 2,
+    });
+    // 1.00 MAD is €0.09 at either rate — the entry is worth what it was worth,
+    // so an unchanged `baseAmountMinor` must not ride along and clobber a
+    // peer's concurrent edit of it at fold time.
+    await editSettlement(groupId, marie, id, { rateToBase: "0.0925" });
+    const [update] = (await db().ops.where("entityId").equals(id).toArray())
+      .filter((o) => o.kind === "update");
+    expect(update?.patch).toEqual({ rateToBase: "0.0925" });
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
   it("the HLC survives a reload and keeps moving forward", async () => {
     const { groupId, theo, marie } = await trip();
     const at = Date.parse("2026-04-02T10:00:00Z");

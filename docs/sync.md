@@ -32,6 +32,9 @@ wrote all fifteen fields, and quietly undid whatever a peer had changed offline
 absent compare equal in that diff: `only()` leaves an unset field off the create
 entirely, so reading the two apart also recorded a revision saying the category
 changed on every first edit, of every expense, whether or not one was ever set.
+The derived `baseAmountMinor` is held to the same rule — a currency or a rate
+swapped for one that rounds to the same figure moves nothing, so it is not
+written.
 
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is

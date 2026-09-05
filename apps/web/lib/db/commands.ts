@@ -767,7 +767,12 @@ export async function editSettlement(
     merged.rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
     if (merged.rateToBase !== existing.rateToBase) patch["rateToBase"] = merged.rateToBase;
     else delete patch["rateToBase"];
-    patch["baseAmountMinor"] = toBase(merged, base);
+    // Same rule as `editExpense`: a currency or a rate swapped for one that
+    // lands on the same figure moves nothing, and a field written back
+    // unchanged wins its slot at fold time — undoing whatever another device
+    // did to it offline. This wrote it every time.
+    const wasBase = toBase(merged, base);
+    if (wasBase !== existing.baseAmountMinor) patch["baseAmountMinor"] = wasBase;
   }
 
   if (Object.keys(patch).length === 0) return;
