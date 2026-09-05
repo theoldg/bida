@@ -215,7 +215,8 @@ pnpm drive stop
 |---|---|
 | `as <who>` | switch phone, creating it on first mention |
 | `goto <path>` · `back` · `forward` · `reload` | move around |
-| `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key>` | act on the numbered control the last screen handed you |
+| `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key> [times]` | act on the numbered control the last screen handed you |
+| `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `clipboard` | read what the page copied — how the invite link travels |
@@ -251,9 +252,11 @@ answer it gave before:
 
 - **Layout decides the lines, not tags.** The app writes `<span>` with
   `display:block`, which a tag list read as `Split3 people`.
-- **What a modal covers is not on the screen.** With a sheet open, only what is
+- **What a sheet covers is not on the screen.** With one open, only what is
   inside it is numbered; the rest is counted as out of reach, and the text under
-  the scrim is dropped. `:modal` answers this without knowing the app's classes.
+  the scrim is dropped. `:modal` answers this for a `<dialog>`; the row menu is
+  a fixed veil with a `role="menu"` beside it and no dialog at all, so a scrim
+  is also recognised by hit-testing the centre of the screen.
 - **A phone is 844px tall.** What is below the fold is marked a scroll away.
 - **CSS is also text.** `text-transform` is what a person reads (`LEDGER`, not
   `Ledger`), `text-overflow` is what they never get to (`…`), and
@@ -266,15 +269,20 @@ dump says so. `press` is how you reach what a tap cannot, and a key sent nowhere
 looks exactly like a control that ignored it.
 
 **Alternatives are read as one question.** A `tablist`, `listbox`, `radiogroup`,
-or look-alike siblings where exactly one is painted differently come out as a
-set with the chosen one marked `(•)`. When only the styling says which, the
-header says so — a segmented control that never tells a screen reader which
-segment is live is a finding, and this is where it surfaces.
+or same-tag siblings painted in two ways come out as a set with the chosen one
+marked `(•)`. When only the styling says which, the header says so — a segmented
+control that never tells a screen reader which segment is live is a finding, and
+this is where it surfaces. Styling answers only from three members up: in a pair
+each differs from the other and nothing makes one the odd one out, so a pair with
+nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
 
 ### Gotchas
 
 - **Numbers are only good until the next screen**, like a person looking away.
-  Every answer renumbers; never reuse a number across two commands blind.
+  Every answer renumbers; never reuse a number across two commands blind. A
+  failed command stops the rest of its `do` for the same reason — the commands
+  behind it were written against a screen that never arrived, and the answer
+  says `not run` rather than pressing whatever is wearing the number now.
 - **Read a whole answer, not its tail.** The banner that says what state a phone
   is in — offline, changes waiting, link rejected — is the first line, above the
   back arrow, and `| tail` cuts exactly it.

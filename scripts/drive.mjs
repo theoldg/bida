@@ -22,9 +22,10 @@
  *   as <who>            switch phone, creating it on first mention
  *   goto <path>         open a path on the app's own origin
  *   click <n>           press the control numbered <n> on the last screen
- *   fill <n> <text>     type into field <n>
+ *   fill <n> <text>     put a value in field <n> in one go
+ *   type <n> <text>     key it in one character at a time, at the caret
  *   select <n> <label>  choose an option by its visible text
- *   press <Key>         a raw key, e.g. Enter, Escape
+ *   press <Key> [times] a raw key, e.g. Enter, Escape, Backspace 3
  *   hold <n>            long-press it, for menus a tap cannot open
  *   back | forward | reload | screen | wait <ms>
  *   offline on|off      cut this phone's network, or restore it
@@ -78,6 +79,34 @@ const READ = `(() => {
   // A native modal makes the rest of the document inert, which is exactly the
   // question being asked; :modal answers it without knowing the app's classes.
   const modal = [...document.querySelectorAll("dialog[open]")].filter((d) => d.matches(":modal")).pop() ?? null;
+
+  /**
+   * A scrim: something laid over the whole screen, swallowing the taps meant
+   * for what is under it. Not every sheet is a \`<dialog>\` — the row menu is a
+   * fixed veil with a \`role="menu"\` beside it, so \`:modal\` never saw it and
+   * the dump went on reading out the ledger behind it as though a finger could
+   * reach it. The hit test already knew better; this asks it.
+   *
+   * Walking up from what is painted at the centre finds only what is genuinely
+   * on top: a full-screen layer *behind* the content is never an ancestor of
+   * the element the point lands on.
+   */
+  const veil = (() => {
+    if (modal) return null;
+    for (let el = document.elementFromPoint(vw / 2, vh / 2); el; el = el.parentElement) {
+      if (getComputedStyle(el).position !== "fixed") continue;
+      const r = el.getBoundingClientRect();
+      if (r.width >= vw * 0.9 && r.height >= vh * 0.9) return el;
+    }
+    return null;
+  })();
+
+  /** The sheet the scrim belongs to, for naming it — it sits beside the veil, not inside it. */
+  const overlay = veil
+    ? [...document.querySelectorAll('[role="menu"],[role="dialog"],[role="listbox"]')]
+        .filter((el) => el !== veil && getComputedStyle(el).position === "fixed").pop() ?? null
+    : null;
+
   let behind = 0;
 
   const BLOCKISH = new Set(["block", "flow-root", "list-item", "table", "table-row", "table-caption", "flex", "grid"]);
@@ -124,7 +153,11 @@ const READ = `(() => {
     const y = Math.min(Math.max(r.top + r.height / 2, 1), vh - 1);
     const hit = document.elementFromPoint(x, y);
     if (!hit) return "behind";
-    return el.contains(hit) || hit.contains(el) ? "on" : "covered";
+    if (el.contains(hit) || hit.contains(el)) return "on";
+    // Under a scrim there is nothing to distinguish from being behind a modal:
+    // it is off the screen a person has. Without one, something small is merely
+    // sitting on top — a floating button over a row — and the row is still there.
+    return veil ? "behind" : "covered";
   };
 
   /** Text the box is too narrow to show — the ellipsis a person actually sees. */
@@ -216,14 +249,29 @@ const READ = `(() => {
   };
 
   /**
+   * Same-tag siblings painted in exactly two ways: the shape of a segmented
+   * control, whether or not it says so in ARIA. This only asks whether they
+   * are one question; \`oddOne\` is what answers it.
+   */
+  const alternatives = (els) =>
+    new Set(els.map((e) => e.tagName)).size === 1 && new Set(els.map(look)).size === 2;
+
+  /**
    * The odd one out of a set of look-alikes, or -1.
    *
    * The app marks some of its choice sets with ARIA and paints others without
    * saying anything, so appearance is the fallback — and when the fallback is
    * what answered, the dump says so, because a control that is only visibly
    * selected is a finding rather than a detail.
+   *
+   * Two is not a set with an odd one out: both members differ from the other
+   * one, and the tally cannot tell them apart. It answered anyway, and always
+   * with the first — under a header that then swore the styling had said so,
+   * which is worse than saying nothing. Three is the smallest number with a
+   * majority to be odd against.
    */
   const oddOne = (els) => {
+    if (els.length < 3) return -1;
     const looks = els.map(look);
     const tally = new Map();
     for (const l of looks) tally.set(l, (tally.get(l) ?? 0) + 1);
@@ -306,8 +354,7 @@ const READ = `(() => {
     // than met one button at a time on the way down.
     const role = el.getAttribute("role");
     const kids = [...el.children].filter((c) => isControl(c) && !hidden(c, getComputedStyle(c)));
-    if (kids.length >= 2 && kids.length === el.children.length &&
-        (SETS[role] || (new Set(kids.map((k) => k.tagName)).size === 1 && oddOne(kids) >= 0))) {
+    if (kids.length >= 2 && kids.length === el.children.length && (SETS[role] || alternatives(kids))) {
       flush();
       emitSet(kids, role, el.getAttribute("aria-label") ?? "");
       return;
@@ -316,9 +363,9 @@ const READ = `(() => {
     const heading = /^H[1-6]$/.test(tag);
     const br = breaks(el, style, parentStyle);
     if (br || heading) flush();
-    // Text under a modal's scrim is not on the screen either, so the line it
-    // would contribute is dropped below. Text merely under a small popup still
-    // is on the screen, which is why only \`behind\` disqualifies it.
+    // Text under a scrim is not on the screen either — \`reach\` calls it
+    // \`behind\`, and the line it would contribute is dropped below. Text merely
+    // under a small popup still is, which is what \`covered\` keeps separate.
     lineWhere = reach(el);
     // A live region is the app raising its voice; the dump does the same.
     const shouts = role === "alert" || role === "status";
@@ -345,7 +392,10 @@ const READ = `(() => {
   for (const item of out) {
     if (item.where === "behind") continue;
     if (item.where !== last && LABEL[item.where]) lines.push(\`── \${LABEL[item.where]} ──\`);
-    else if (item.where === "on" && last && last !== "on") lines.push("── back on screen ──");
+    // Only a fold has a far side to come back from. This used to fire off the
+    // end of a \`covered\` run too, announcing a return from somewhere the dump
+    // had never said you were.
+    else if (item.where === "on" && LABEL[last]) lines.push("── back on screen ──");
     last = item.where;
     lines.push(item.text);
   }
@@ -358,8 +408,12 @@ const READ = `(() => {
   else if (!active.hasAttribute("data-drive"))
     lines.push(\`── keyboard focus is on <\${active.tagName.toLowerCase()}>, not a numbered control ──\`);
 
-  if (modal) lines.unshift(\`── a sheet is open\${modal.getAttribute("aria-label") ? \`: "\${modal.getAttribute("aria-label")}"\` : ""} — only what is in it can be pressed ──\`);
-  if (behind) lines.push(\`── \${behind} control\${behind === 1 ? "" : "s"} out of reach behind it ──\`);
+  const sheet = modal ?? overlay ?? veil;
+  if (sheet) {
+    const named = sheet.getAttribute("aria-label");
+    lines.unshift(\`── a sheet is open\${named ? \`: "\${named}"\` : ""} — only what is listed can be pressed ──\`);
+  }
+  if (behind) lines.push(\`── \${behind} control\${behind === 1 ? "" : "s"} out of reach\${sheet ? " behind it" : ""} ──\`);
   return { url: location.href, title: document.title, lines };
 })()`;
 
@@ -440,8 +494,15 @@ async function start() {
       case "goto": await page.goto(arg.startsWith("http") ? arg : base + (arg.startsWith("/") ? arg : `/${arg}`), { waitUntil: "domcontentloaded" }); break;
       case "click": await page.click(await target(args[0]), { timeout: 5000, strict: true }); break;
       case "fill": await page.fill(await target(args[0]), args.slice(1).join(" "), { strict: true }); break;
+      // `fill` sets a value; it does not type one. The amount field regroups
+      // digits and puts the caret back on every keystroke, and a whole value
+      // dropped in fires that once — so the code the owner most wants stressed
+      // was the code `fill` could not reach. This keys it in one character at a
+      // time, at the caret, which is also how `press Backspace` gets to run
+      // against a separator it has to delete through.
+      case "type": await page.locator(await target(args[0])).pressSequentially(args.slice(1).join(" "), { delay: 20, timeout: 5000 }); break;
       case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
-      case "press": await page.keyboard.press(args[0]); break;
+      case "press": for (let i = Math.max(1, Number(args[1] ?? 1)); i > 0; i--) await page.keyboard.press(args[0]); break;
       // Some actions live behind a long press and nowhere else, so a driver
       // that can only click cannot reach them at all. A right click is the
       // same `contextmenu` event a touch hold sends.
@@ -482,11 +543,20 @@ async function start() {
   };
 
   let done = 0;
+  // The batch a command failed in. Everything after a failure was written
+  // against a screen that never arrived: the numbers in it mean something else
+  // now, and carrying on presses whatever happens to be wearing them — which
+  // one day is Delete. A batch stops at its first failure and says so.
+  let aborted = null;
   for (;;) {
     const lines = readFileSync(IN, "utf8").split("\n").filter(Boolean);
     for (; done < lines.length; done++) {
-      const { seq, cmd } = JSON.parse(lines[done]);
+      const { seq, batch, cmd } = JSON.parse(lines[done]);
       if (cmd === "stop") { writeFileSync(join(RESP, `${seq}.txt`), "stopped\n"); await stop(); }
+      if (batch !== undefined && batch === aborted) {
+        writeFileSync(join(RESP, `${seq}.txt`), `-- "${cmd}" not run: the command before it failed\n`);
+        continue;
+      }
       let body;
       try {
         const s = await run(cmd);
@@ -499,6 +569,7 @@ async function start() {
         ].join("\n");
       } catch (e) {
         body = `!! "${cmd}" did not work: ${e.message.split("\n")[0]}`;
+        aborted = batch;
       }
       writeFileSync(join(RESP, `${seq}.txt`), `${body}\n`);
     }
@@ -514,8 +585,12 @@ function send(commands) {
     process.exit(1);
   }
   let seq = readFileSync(IN, "utf8").split("\n").filter(Boolean).length;
+  // One `do` is one batch, so the daemon can drop the rest of it when a command
+  // in it fails. The first sequence number names it: unique without agreeing
+  // on anything, and readable in the file when something needs explaining.
+  const batch = seq;
   return commands.map((cmd) => {
-    appendFileSync(IN, `${JSON.stringify({ seq, cmd })}\n`);
+    appendFileSync(IN, `${JSON.stringify({ seq, batch, cmd })}\n`);
     return { seq: seq++, cmd };
   });
 }
