@@ -97,6 +97,17 @@ an id known on its own is not a claim.
   the peer's op arrived holds their old value and posts it as a deliberate
   change, which is per-field LWW working correctly on a lie. Either re-read the
   entity into the open form when sync brings a change, or say so.
+- **A departed member's balance can never be cleared.** Removal is refused
+  while a member is named on anything, so this needs a race — a peer adding an
+  entry offline while somebody removes them — but the state is reachable and
+  the app already shows it: the balances tab lists them, marked as departed, and
+  offers the settle-up row that squares them off. Following that row opens a
+  transfer whose other side is a person no picker offers, and Save is held. The
+  form now names them instead of showing a grey button over an empty slot, but
+  the debt still has no way out. Either the transfer sides accept somebody who
+  has left (only they can, and only where a balance says so), or the settle-up
+  row stops offering what the form refuses — a product call, which is why it is
+  here.
 - **Segmented controls don't announce which option is chosen.** Split mode,
   entry kind and the ledger/balances tabs mark selection with styling only; a
   screen reader reads four equal buttons. Wants `role="tab"`/`aria-selected`
