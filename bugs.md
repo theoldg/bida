@@ -31,34 +31,61 @@ decision, so it is here rather than done.
 ### 5.2 Two members with one name should be mergeable
 
 `apps/web/lib/names.ts` argues correctly that two "Ana"s are two people nothing
-on screen tells apart — then `nameTaken` only checks the local list. Two people
-adding "Ana" offline both sync, and you get exactly the failure the file exists
-to prevent, with no repair path: rename is blocked by the same check.
+on screen tells apart — then `nameTaken` only checks the local list.
 
-**Do:** merge them into one member. Sketch, and it wants thinking through
-before it is written:
+Reproduced with `pnpm drive`: two phones in one group, both offline, both add
+"Ana", both come back. People lists two identical rows. One €120 dinner Ana
+paid, split evenly, then prices her twice — balances read `Ana +€90.00` above a
+second `Ana -€30.00`, and settle-up instructs "Ana pays Ana €30.00".
 
-- Detect the collision by `nameKey` over live members and offer the merge where
-  it is visible — the People screen.
+Neither existing control repairs it. Rename to a distinct name is allowed and
+only makes the two legible — the money stays split across two ids — while
+renaming back onto the shared name is refused by `nameTaken`. Removal is worse:
+its own sheet says "Their past entries stay as they are", which is the problem.
+
+**Do:** converge automatically rather than offer a repair. One name is already
+one person here — that is the whole argument of `names.ts` — so two live
+members sharing a `nameKey` is a state to fold away, not a question to ask.
+Match on that state, not on the event behind it: an offline add is one route
+in, a `/g/claim` add and a concurrent rename are others.
+
+- Pick the winner from the log — earliest create by HLC, id as tiebreak — so
+  every device merges the same way with nothing to agree on first, and two
+  devices noticing at once write the same merge. Follow `mergedInto` to a root,
+  so three collisions chain instead of fight.
 - The merge is ops, not a mutation: rewrite the loser's references (`paidBy`,
   `payers` keys, `split` participants, `fromMember`/`toMember`,
   `receiptInvolved`/`receiptAssignments`, `identities`) onto the winner and
-  tombstone the loser. Each is an ordinary `update`, so history keeps a record
-  and other devices converge.
+  tombstone the loser with a `mergedInto` pointer — which is also how a device
+  that claimed the loser follows it, and how a later rename can't un-merge what
+  was merged.
 - Watch the arithmetic: two ids merging inside one `split` or `payers` map must
   have their amounts **added**, not overwritten, or the entry stops summing to
   its total. This is the part with teeth — cover it in tests before shipping
   it, per the coverage rule in [CLAUDE.md](CLAUDE.md).
-- A device that claimed the loser has to follow to the winner.
+- Say it in history, because money moves without anyone asking for it. Name the
+  cause, not whichever device did the tidying: "Ana was added twice, offline —
+  merged".
 
 ### 5.3 Anyone who learns a group id before its creator syncs can steal it
 
 `ensureGroup` registers a group id on first push and stores `sha256(secret)`
-from *that* request. A group id known before its creator has ever synced can be
-claimed with somebody else's secret, and the real owner is 403'd permanently
-with no way back. Noticed while fixing the 403 copy, which is why it is small
-here and not in section 5's original list — it needs a think about what
-registration should actually be keyed on.
+from *that* request, so the first request to name an unregistered id owns it.
+`lib/group-link.ts` states the opposite as the reason an id may travel in the
+open — it "confers nothing without the secret" — and that is the part that
+isn't true.
+
+Narrow, and worth being honest about how narrow: it needs an id that leaked
+without its secret (the id is in the address bar on every screen; the secret
+stays in the fragment) *and* a creator who has not pushed yet, which online is
+seconds. Nothing is exposed either way — the thief registers an empty group.
+What it costs is the owner's sync, permanently, while `copy.rejected` tells
+them to open the invite link again, which cannot help: there is no rotation, so
+a fresh link is byte-identical.
+
+**Do:** key the id to the secret rather than to who asked first — derive it
+(`groupId = truncate(sha256(secret))`) and check the pair at registration, so
+an id known on its own is not a claim.
 
 ---
 
@@ -70,34 +97,25 @@ registration should actually be keyed on.
   the peer's op arrived holds their old value and posts it as a deliberate
   change, which is per-field LWW working correctly on a lie. Either re-read the
   entity into the open form when sync brings a change, or say so.
-- **A group's name can never be changed.** `renameGroup` is in
-  `lib/db/commands.ts` and no screen has ever called it — a typo at `/new` is
-  permanent. The row menu on the group list is where it belongs: it already
-  exists, already holds "Forget group", and People's rename dialog is the
-  pattern to copy. One copy string and a `PromptDialog` away.
-- **A rate too large to convert at saves anyway, and re-values nothing.** The
-  dialog takes `999999999999999999999`, promises "Re-values 1 entry in USD",
-  and stores it. `repriceEntry` then throws inside
-  `convertMinor` and deliberately keeps the stored figure, so the entry does not
-  move: the rates screen shows a number the ledger is not using, with nothing
-  saying so. The catch is right — losing the row would be worse. The dialog is
-  what should refuse, on the same range `convertMinor` enforces.
 - **Segmented controls don't announce which option is chosen.** Split mode,
   entry kind and the ledger/balances tabs mark selection with styling only; a
   screen reader reads four equal buttons. Wants `role="tab"`/`aria-selected`
   or `aria-pressed` on each.
-
 - **History stamps are wall clock while ordering is HLC.**
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth
   a note in the UI or a switch to something monotonic.
 - **The scan asks for a category and throws it away.** `normalizeScan` returns
   `patch.category`; the form never reads it, and `scanReceipt(…, [])` always
-  passes an empty category list. Either wire it up or stop asking — it is
-  prompt tokens and a promise, for nothing.
-- **No throttle on `/api/groups/:id/scan`.** Anyone holding a group link
-  proxies straight to Gemini on the shared key. `copy.scan.freeTier` implies a
-  budget that nothing defends.
+  passes an empty list, so the prompt's "return one of these" line is built
+  from nothing on every call. There is also nothing for it to land in: an
+  expense carries a `categoryId`, but no category entity exists, no screen
+  makes one, and nothing turns a category *name* into an id — only
+  `history-copy.ts` knows how to say "changed the category". Categories are a
+  roadmap line nobody has built, so this is a seam held open by every scan:
+  drop `category` from the prompt, the response schema and `ScanResult` (and
+  its row in [docs/receipt-scanning.md](docs/receipt-scanning.md)), and put the
+  two lines back when there is something to match a name against.
 
 ---
 
