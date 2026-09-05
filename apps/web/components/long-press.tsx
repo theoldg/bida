@@ -9,18 +9,21 @@ import { RowMenu, type SheetAction } from "./row-menu";
  * (components/no-long-press.tsx) already listens for that event globally and
  * swallows it everywhere; `stopPropagation` here keeps this row from also
  * running that handler once it's opened its own menu instead.
+ *
+ * What is remembered is the row, not the point pressed: `RowMenu` opens in the
+ * same place for a given row however it was reached.
  */
 export function useLongPressMenu(actions: SheetAction[]) {
-  const [at, setAt] = useState<{ x: number; y: number } | null>(null);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
   return {
     onContextMenu: (e: MouseEvent) => {
       if (actions.length === 0) return;
       e.preventDefault();
       e.stopPropagation();
-      setAt({ x: e.clientX, y: e.clientY });
+      setAnchor(e.currentTarget.getBoundingClientRect());
     },
-    menu: at
-      ? <RowMenu x={at.x} y={at.y} actions={actions} onClose={() => setAt(null)} />
+    menu: anchor
+      ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} />
       : null,
   };
 }

@@ -251,7 +251,7 @@ figure-free.
   slides out from under the frozen row.
 - **Only a real `<dialog>` gets focus for free.** `Dialog` calls `showModal()`,
   so the platform moves the caret in, keeps Tab inside and makes the screen
-  behind inert. `RowMenu` is a card pinned to where the finger landed and
+  behind inert. `RowMenu` is a card anchored to the row it was opened from and
   cannot be one, so it does that by hand: it focuses its first item once it
   has been positioned — a `visibility: hidden` element cannot take focus, and
   `preventScroll`, because a scroll is what closes it — and hands focus back to

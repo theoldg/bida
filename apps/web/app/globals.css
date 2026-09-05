@@ -531,13 +531,15 @@ dialog.scrim::backdrop { background: transparent }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }
 
 /* ---- row menu ----
-   A long press or a right click's own small popup, anchored to where it
-   happened. Unlike `.dialog`, nothing dims behind it — this is a menu, not
-   a decision with a sentence to say about it (ADR-0008's "revisit" case: a
-   popover with its own positioning, not the scrim family). The veil is
-   invisible and only there to catch the tap that closes it. */
+   A long press or a right click's own small popup. Unlike `.dialog`, nothing
+   dims behind it — this is a menu, not a decision with a sentence to say
+   about it (ADR-0008's "revisit" case: a popover with its own positioning,
+   not the scrim family). The veil is invisible and only there to catch the
+   tap that closes it. `left`/`top` are set from JS: the card hangs off the
+   pressed row's bottom right corner, not off the point pressed. */
 .rowmenu-veil { position: fixed; inset: 0; z-index: 5 }
-.rowmenu { position: fixed; z-index: 6; min-width: 168px; background: var(--card);
+.rowmenu { position: fixed; z-index: 6; min-width: 168px; max-width: calc(100vw - 24px);
+  background: var(--card);
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
   padding: 4px; animation: fadein .1s ease-out }
 .rowmenu-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
