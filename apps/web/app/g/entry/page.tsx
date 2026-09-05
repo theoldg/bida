@@ -18,7 +18,7 @@ import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
 import { clockTime, dayLabel, money, plural } from "../../../lib/format";
 import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
-import { useGroupData, type GroupData } from "../../../lib/hooks";
+import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
 
 /**
  * One entry, whichever of the three it is. The id in the query string is
@@ -41,6 +41,7 @@ function EntryScreen() {
   const via = parseEntrySource(params.get("via"));
   const parent = groupId ? entryParent(groupId, via) : "/";
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const expense = data.expenses.find((e) => e.id === entryId);
   const settlement = expense ? undefined : data.settlements.find((s) => s.id === entryId);
   const [asking, setAsking] = useState(false);
@@ -53,7 +54,7 @@ function EntryScreen() {
   ) ?? 0;
 
   if (!groupId) return <BadLink />;
-  if (data.loading) return <Blank back={parent} />;
+  if (data.loading || unclaimed) return <Blank back={parent} />;
   if (!data.group) return <BadLink />;
   const group = data.group;
   const entry = expense ?? settlement;
@@ -71,8 +72,8 @@ function EntryScreen() {
   const edits = Math.max(0, opCount - 1);
   const foreign = entry.currency !== group.baseCurrency;
   async function remove() {
-    if (!groupId || !entry) return;
-    const actor = data.me ?? (expense ? expense.paidBy : settlement!.fromMember);
+    const actor = data.me;
+    if (!groupId || !entry || !actor) return;
     if (expense) await deleteExpense(groupId, actor, expense.id);
     else await deleteSettlement(groupId, actor, entry.id);
     router.replace(route.group(groupId));

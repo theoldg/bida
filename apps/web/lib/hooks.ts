@@ -1,6 +1,7 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
@@ -10,7 +11,7 @@ import {
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
 import { copy } from "./copy";
-import { formatJoinLink } from "./group-link";
+import { formatJoinLink, route } from "./group-link";
 
 /**
  * Every screen reads through these. Two rules:
@@ -235,6 +236,32 @@ export function useGroupData(groupId: string | undefined): GroupData {
       loading: false,
     };
   }, [rows, groupId]);
+}
+
+/**
+ * Send a phone that has not said who it is to the screen that asks.
+ *
+ * A device with no claimed member has no honest `actor` to sign an op with,
+ * and every screen under `/g` writes one: the fallbacks that filled the gap
+ * signed with whoever the action was *about*, so removing Bruno from an
+ * unclaimed phone went into history as "Bruno left the group". There is no
+ * leaving — only being removed — so that line could only ever be a lie.
+ *
+ * `/g` has redirected since the trash button showed up next to every name on
+ * an unclaimed phone; the rest of the group's screens are reachable on their
+ * own (a bookmark, an invite link's back arrow, a settle-up row), so they
+ * redirect too. `/g/claim` is the exception, being the destination.
+ *
+ * Returns whether we are on our way out, so the caller can draw a frame
+ * instead of somebody else's ledger while the replace lands.
+ */
+export function useClaimGate(groupId: string | undefined, data: GroupData): boolean {
+  const router = useRouter();
+  const unclaimed = !data.loading && !!data.group && !data.me;
+  useEffect(() => {
+    if (groupId && unclaimed) router.replace(route.claim(groupId));
+  }, [groupId, unclaimed, router]);
+  return unclaimed;
 }
 
 export interface GroupSummary {

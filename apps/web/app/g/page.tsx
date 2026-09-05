@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
@@ -21,7 +21,7 @@ import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
+import { useClaimGate, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "ledger" | "balances";
@@ -31,7 +31,6 @@ export default function GroupPage() {
 }
 
 function GroupScreen() {
-  const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const tab = (params.get("tab") ?? "ledger") as Tab;
@@ -47,15 +46,10 @@ function GroupScreen() {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
 
-  // Joining isn't finished until "who are you" is answered, and this screen is
-  // the one place that used to let a phone skip it — a bookmark, or the join
-  // flow's back arrow and then the group row. Unclaimed, nothing here works
-  // the way it reads: every row is somebody else's, and People offered a trash
-  // button on every name including the last.
-  const unclaimed = !data.loading && !!data.group && !data.me;
-  useEffect(() => {
-    if (groupId && unclaimed) router.replace(route.claim(groupId));
-  }, [groupId, unclaimed, router]);
+  // Joining isn't finished until "who are you" is answered. Unclaimed, nothing
+  // here works the way it reads: every row is somebody else's, and there is no
+  // honest name to sign a write with. `useClaimGate` says the rest.
+  const unclaimed = useClaimGate(groupId, data);
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
   // Loading used to be a top bar over nothing — indistinguishable from a tap
@@ -279,7 +273,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   ]);
 
   async function remove() {
-    await deleteExpense(gid, me ?? expense.paidBy, expense.id);
+    if (!me) return;
+    await deleteExpense(gid, me, expense.id);
   }
 
   return (
@@ -343,7 +338,8 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   ]);
 
   async function remove() {
-    await deleteSettlement(gid, me ?? settlement.fromMember, settlement.id);
+    if (!me) return;
+    await deleteSettlement(gid, me, settlement.id);
   }
 
   return (

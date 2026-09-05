@@ -13,7 +13,7 @@ import { copy } from "../../../lib/copy";
 import { plural, stamp } from "../../../lib/format";
 import { describe } from "../../../lib/history-copy";
 import { parseEntrySource, route } from "../../../lib/group-link";
-import { useGroupData } from "../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
  *  which is why the button can say exactly how many it is. */
@@ -31,6 +31,7 @@ function HistoryScreen() {
   // `via` back up with it (lib/group-link.ts).
   const via = parseEntrySource(params.get("via"));
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const [shown, setShown] = useState(PAGE);
 
   // History needs every member's name, including people who've since been
@@ -76,7 +77,7 @@ function HistoryScreen() {
   const rest = revisions.length - visible.length;
 
   if (!groupId) return <BadLink />;
-  if (data.loading) {
+  if (data.loading || unclaimed) {
     return <Blank back={entryId ? route.entry(groupId, entryId, via) : route.group(groupId)} />;
   }
   if (!data.group) return <BadLink />;

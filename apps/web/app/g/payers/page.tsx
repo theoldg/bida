@@ -9,7 +9,7 @@ import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
 import { bare, money, payerProblemText } from "../../../lib/format";
-import { useGroupData } from "../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../lib/hooks";
 import { draftAmountMinor, saveDraft, useDraft } from "../../../lib/draft";
 
 /**
@@ -27,6 +27,7 @@ function PayersScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const [asking, setAsking] = useState(false);
   // What the payer side looked like when this screen opened, so leaving can
@@ -37,7 +38,7 @@ function PayersScreen() {
 
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
-  if (!data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
+  if (unclaimed || !data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
   const gid = groupId, current = draft;
   const currency = draft.currency;
 

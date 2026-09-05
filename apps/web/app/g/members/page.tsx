@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
-import { BadLink, Banner, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { InviteButton } from "../../../components/invite";
@@ -16,7 +16,7 @@ import {
 } from "../../../lib/db/commands";
 import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
-import { useGroupData } from "../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../lib/hooks";
 import { nameTaken } from "../../../lib/names";
 
 /**
@@ -54,28 +54,32 @@ function MembersScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const [ask, setAsk] = useState<Ask | null>(null);
 
   if (!groupId) return <BadLink />;
-  if (data.loading) return <Blank back={route.group(groupId)} />;
+  if (data.loading || unclaimed) return <Blank back={route.group(groupId)} />;
   if (!data.group) return <BadLink />;
   const group = data.group;
   const names = data.members.map((m) => m.name);
+  // Past the gate this phone has said who it is, so every write below signs
+  // with a real name. The guards are what convince the compiler of it.
+  const me = data.me;
 
   async function claim(memberId: string) {
-    if (!groupId || memberId === data.me) return;
+    if (!groupId || memberId === me) return;
     await claimIdentity(groupId, memberId);
   }
 
   async function rename(memberId: string, name: string) {
-    if (!groupId) return;
-    await renameMember(groupId, data.me ?? memberId, memberId, name);
+    if (!groupId || !me) return;
+    await renameMember(groupId, me, memberId, name);
     setAsk(null);
   }
 
   async function remove(memberId: string) {
-    if (!groupId) return;
-    await removeMember(groupId, data.me ?? memberId, memberId);
+    if (!groupId || !me) return;
+    await removeMember(groupId, me, memberId);
     setAsk(null);
   }
 
@@ -91,9 +95,9 @@ function MembersScreen() {
   // behind it.
   function askRemove(memberId: string, name: string) {
     // A group with nobody in it is a screen with nothing to do on it: the
-    // entry form can't seed a payer and gives up, silently. Reachable only
-    // from a phone that hasn't claimed anyone — that's the state where every
-    // row, including the last, still offers a trash button.
+    // entry form can't seed a payer and gives up, silently. Your own row has
+    // no trash button, so the last one standing can only be somebody else's —
+    // which happens when everyone but you has already gone.
     if (data.members.length <= 1) {
       setAsk({ kind: "blocked", name, body: copy.members.lastBody, entries: [] });
       return;
@@ -120,10 +124,8 @@ function MembersScreen() {
   }
 
   async function add(name: string) {
-    if (!groupId) return;
-    const memberId = await addMember(groupId, data.me, name);
-    // A brand-new phone that just created this member is almost certainly them.
-    if (!data.me) await claimIdentity(groupId, memberId);
+    if (!groupId || !me) return;
+    await addMember(groupId, me, name);
   }
 
   async function forget() {
@@ -139,19 +141,13 @@ function MembersScreen() {
           right={<InviteButton groupId={groupId} />} />
 
         <Scroll>
-          {!data.me ? (
-            <div className="pad" style={{ paddingBottom: 0 }}>
-              <Banner icon="users">{copy.members.claimPrompt}</Banner>
-            </div>
-          ) : null}
-
           <div className="rows">
             {data.members.map((m) => (
               <div key={m.id} className="row" style={{ cursor: "pointer" }} onClick={() => claim(m.id)}>
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>
-                {m.id === data.me
+                {m.id === me
                   ? <Icon name="check" size={16} style={{ color: "var(--brand)", flex: "none" }} />
                   : null}
                 <div style={{ display: "flex", gap: 6 }}>
@@ -159,7 +155,7 @@ function MembersScreen() {
                     onClick={(e) => { e.stopPropagation(); setAsk({ kind: "rename", id: m.id, name: m.name }); }}>
                     <Icon name="edit" size={14} />
                   </button>
-                  {m.id !== data.me ? (
+                  {m.id !== me ? (
                     <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
                       onClick={(e) => { e.stopPropagation(); askRemove(m.id, m.name); }}>
                       <Icon name="trash" size={14} />
@@ -171,10 +167,8 @@ function MembersScreen() {
 
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
 
-            {data.me ? (
-              <GhostRow icon="trash" label={copy.members.forget}
-                onClick={() => setAsk({ kind: "forget" })} />
-            ) : null}
+            <GhostRow icon="trash" label={copy.members.forget}
+              onClick={() => setAsk({ kind: "forget" })} />
           </div>
         </Scroll>
       </Body>

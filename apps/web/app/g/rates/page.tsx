@@ -15,7 +15,7 @@ import {
 } from "../../../lib/currencies";
 import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
-import { useGroupData } from "../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../lib/hooks";
 
 /**
  * The group's exchange-rate registry: one rate per currency it spends in.
@@ -53,16 +53,19 @@ function RatesScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const [ask, setAsk] = useState<Ask | null>(null);
 
   if (!groupId) return <BadLink />;
-  if (data.loading) return <Blank title={copy.rates.title} back={route.group(groupId)} />;
+  if (data.loading || unclaimed) {
+    return <Blank title={copy.rates.title} back={route.group(groupId)} />;
+  }
   if (!data.group) return <BadLink />;
 
   const group = data.group;
   const base = group.baseCurrency;
   const { currencies } = data;
-  const actor = data.me ?? "";
+  const actor = data.me;
 
   const editing = ask?.kind === "edit"
     ? currencies.find((c) => c.currency === ask.currency)

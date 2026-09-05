@@ -10,7 +10,7 @@ import { Icon } from "../../../../components/icons";
 import { copy } from "../../../../lib/copy";
 import { bare, distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
-import { useGroupData } from "../../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../../lib/hooks";
 import { saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
 import {
   foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto, weightsFromItems,
@@ -32,6 +32,7 @@ function ItemsScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const items = draft?.receiptItems ?? [];
 
@@ -71,7 +72,7 @@ function ItemsScreen() {
     }
   }, [data.loading, data.members, items, draft?.receiptInvolved, draft?.receiptAssignments]);
 
-  if (!groupId || !data.group || !draft) {
+  if (!groupId || unclaimed || !data.group || !draft) {
     return <Blank title={copy.items.title} />;
   }
 

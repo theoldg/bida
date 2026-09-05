@@ -24,7 +24,7 @@ import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind"
 import { copy } from "../../../../lib/copy";
 import { dateInputValue, errorText, money, payerProblemText, plural, withDate } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
-import { useGroupData, useGroupSecret } from "../../../../lib/hooks";
+import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError,
@@ -95,6 +95,7 @@ function EditEntryScreen() {
   };
 
   const data = useGroupData(groupId);
+  const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const secret = useGroupSecret(groupId);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -307,7 +308,7 @@ function EditEntryScreen() {
   }
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
-  if (!data.group || !draft) return <Blank title={title} />;
+  if (unclaimed || !data.group || !draft) return <Blank title={title} />;
   const group = data.group;
   const base = group.baseCurrency;
   const kind = draft.kind;
@@ -500,7 +501,11 @@ function EditEntryScreen() {
   // guard above runs, so TypeScript wouldn't carry "draft exists" into it and
   // every read had to assert it back.
   const save = async () => {
-    if (!ready || !groupId) return;
+    // Every write below is signed by whoever this phone said it was. It has
+    // said — `useClaimGate` sends a phone that hasn't to the screen that asks
+    // — so this is the compiler being shown that, not a fallback.
+    const actor = data.me;
+    if (!ready || !groupId || !actor) return;
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
     try {
@@ -514,11 +519,9 @@ function EditEntryScreen() {
           occurredAt: draft.occurredAt,
           note: draft.description.trim() || null,
         };
-        const actor = data.me ?? draft.fromMember;
         if (draft.entryId) await editSettlement(groupId, actor, draft.entryId, input);
         else await recordSettlement(groupId, actor, input);
       } else {
-        const actor = data.me ?? draft.paidBy;
         const input = {
           kind,
           description: draft.description.trim(),
@@ -785,7 +788,7 @@ function EditEntryScreen() {
           current={data.rates[askRate]}
           entryCount={data.currencies.find((c) => c.currency === askRate)?.entryCount ?? 0}
           onSave={async (rate: string, source: RateSource, asOf: number) => {
-            await setRate(groupId, data.me ?? draft.paidBy, askRate, rate, source, asOf);
+            if (data.me) await setRate(groupId, data.me, askRate, rate, source, asOf);
           }}
           onClose={() => {
             setAskRate(null);
