@@ -36,13 +36,24 @@ apportions `baseAmountMinor` with the same seeded largest-remainder rule a
 segmented control over all three kinds and swaps only the middle of the form;
 the amount, currency, date and words survive a change of mind. The split editor
 is inline on it, in three modes — Evenly · As parts · As amounts (`equal`,
-`shares`, `exact`). `percent` stays in `SplitSpec` readable but unwritable:
-removing the variant would break the one thing the op log promises.
+`shares`, `exact`).
+
+**Each split tab holds its own input** (`SplitInputs`, `lib/draft.ts`). One
+`SplitSpec` converted on every switch made the tabs edit each other: leaving
+somebody out of Evenly deleted the parts they had under As parts, and As
+amounts would only let you type for whoever Evenly had ticked. A tab opened for
+the first time is handed what is on screen, once — "even, then nudge one
+person" is why — and keeps what was typed into it after that. `percent` stays
+in `SplitSpec` readable but unwritable: removing the variant would break the
+one thing the op log promises, and it has no tab, so the first tap converts one
+away for good.
 
 ## Consequences
 
 - **No migration.** An expense written before any of this folds and renders
   identically; ops carry `kind` only on an income.
+- `Expense.split` is still one spec: the tab showing when you press Save is the
+  one written, and the other three are the draft's alone.
 - `BalanceReport` gains `totalIncomeMinor`, `receivedMinor` and
   `incomeShareMinor`. Income is **never netted into** `totalSpendMinor` — what a
   trip cost and what it took in are different questions.

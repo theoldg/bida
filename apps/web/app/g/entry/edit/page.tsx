@@ -31,8 +31,8 @@ import {
   ScanUnreliableError,
 } from "../../../../lib/scan";
 import {
-  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, saveDraft, seedDraft,
-  useDraft, type EntryDraft, type SplitTab,
+  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, openSplitTab, saveDraft,
+  seedDraft, useDraft, withSplit, type EntryDraft, type SplitTab,
 } from "../../../../lib/draft";
 
 /**
@@ -201,7 +201,7 @@ function EditEntryScreen() {
           description: e.description,
           paidBy: e.paidBy,
           payers: e.payers ?? null,
-          split: e.split,
+          splits: withSplit({}, e.split),
           fromMember: me,
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
@@ -210,7 +210,9 @@ function EditEntryScreen() {
           receiptTip: e.receiptTip ?? null,
           receiptInvolved: e.receiptInvolved ?? null,
           receiptAssignments: e.receiptAssignments ?? null,
-          splitTab: e.splitTab ?? undefined,
+          // A percent split has no tab of its own, so it is left without one:
+          // `legacyPercent` draws it, and the first tap converts it away.
+          splitTab: e.splitTab ?? (e.split.mode === "percent" ? undefined : e.split.mode),
         }, seedKey);
         return;
       }
@@ -325,20 +327,27 @@ function EditEntryScreen() {
     nameOf: data.nameOf,
   });
   const {
-    activeTab, canScan, effectiveSplit, receiptTotal, receiptLocksAmount,
+    activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
     onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
   } = check;
 
-  // Leaving Receipt hands its derived total back to the amount field, which
-  // is the only place a typed amount lives. `switchMode` in the split editor
-  // already hands the *split* over via `convertSplitMode`; this is its other
-  // half, and without it the amount has nowhere to go and the expense
-  // silently becomes worth zero. ADR-0016.
+  /**
+   * Switching tabs. Two handoffs, each made once and only into a tab that has
+   * nothing of its own yet: `openSplitTab` gives a first-time tab a split to
+   * start from, and `handOffReceiptTotal` gives the amount field back the
+   * total Receipt was deriving — without which the amount has nowhere to go
+   * and the expense silently becomes worth zero (ADR-0016). A tab already
+   * holding an answer keeps it, whatever the others now say.
+   */
   const changeTab = (splitTab: SplitTab) => {
     const handoff = handOffReceiptTotal(
       activeTab, splitTab, draft.receiptItems, draft.receiptTip, draft.currency,
     );
-    patch({ splitTab, ...(handoff !== null ? { amountText: handoff } : {}) });
+    patch({
+      splitTab,
+      splits: openSplitTab(draft, splitTab, baseMinor),
+      ...(handoff !== null ? { amountText: handoff } : {}),
+    });
   };
 
   /**
@@ -355,7 +364,9 @@ function EditEntryScreen() {
       : null;
     patch({
       kind: next,
-      ...(leavingReceipt ? { splitTab: "equal" as SplitTab } : {}),
+      ...(leavingReceipt
+        ? { splitTab: "equal" as SplitTab, splits: openSplitTab(draft, "equal", baseMinor) }
+        : {}),
       ...(handoff !== null ? { amountText: handoff } : {}),
     });
   };
@@ -421,7 +432,9 @@ function EditEntryScreen() {
           receiptTip: canScan ? draft.receiptTip ?? null : null,
           receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
           receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
-          splitTab: canScan ? activeTab : null,
+          // The tab is a claim about the split beside it, so a legacy percent
+          // one — which no tab can hold — makes no claim (ADR-0016).
+          splitTab: canScan && effectiveSplit.mode !== "percent" ? activeTab : null,
         };
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
         else await addExpense(groupId, actor, input);
@@ -587,9 +600,10 @@ function EditEntryScreen() {
                 totalMinor={baseMinor}
                 totalUnknown={foreign && groupRate === undefined}
                 currency={base}
-                spec={effectiveSplit}
+                spec={activeSplit}
+                receiptSplit={receiptSplit}
                 seed={draft.entryId ?? "new"}
-                onChange={(split) => patch({ split })}
+                onChange={(split) => patch({ splits: withSplit(draft.splits, split) })}
                 tab={activeTab}
                 onTabChange={changeTab}
                 receipt={canScan ? {

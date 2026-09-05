@@ -2,8 +2,10 @@ import {
   convertMinor, rateFor, splitParticipants, validatePayers, validateSplit,
   type CurrencyCode, type ExchangeRate, type Rate, type SplitSpec,
 } from "@hajsik/core";
-import { activeSplitTab, draftAmountMinor, draftReceiptTotal, type EntryDraft, type SplitTab } from "./draft";
-import { weightsFromItems } from "./scan/items";
+import {
+  activeSplit, activeSplitTab, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
+  type EntryDraft, type SplitTab,
+} from "./draft";
 import { copy } from "./copy";
 import { payerProblemText } from "./format";
 
@@ -46,7 +48,15 @@ export interface EntryCheck {
   receiptLocksAmount: boolean;
   /** True while Receipt mode is showing a bill it actually has. */
   onReceiptTab: boolean;
-  /** The split in force: the receipt's, when Receipt mode has derived one. */
+  /** What the tab now showing holds — the rows the split editor draws. */
+  activeSplit: SplitSpec;
+  /**
+   * The split the receipt has read off its own bill, or null until the
+   * who-had-what grid says who had what. Receipt's answer never touches the
+   * three arithmetic tabs, which keep theirs (`SplitInputs`).
+   */
+  receiptSplit: SplitSpec | null;
+  /** The split that would be saved: the receipt's where it has one, else the tab's. */
   effectiveSplit: SplitSpec;
   /** The one sentence saying why Save is grey, or null when nothing is wrong. */
   blocker: string | null;
@@ -112,22 +122,12 @@ export function checkEntry(input: {
   // and resync. Nothing can fall out of step because nothing is recorded
   // twice (ADR-0016).
   const receiptTotal = draftReceiptTotal(draft);
-  const receiptWeights = onReceiptTab
-    ? weightsFromItems(
-        draft.receiptItems ?? [],
-        (draft.receiptAssignments ?? []).map((row) => new Set(row)),
-        draft.receiptTip && draft.receiptInvolved
-          ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
-        draft.currency,
-        draft.entryId ?? "new",
-      )
-    : {};
-  // Empty until "who had what" has actually been visited (or on an old draft
-  // with nothing assigned yet) — falls back to whatever the split already was
-  // rather than claiming an opinion it doesn't have.
-  const receiptSplit: SplitSpec | null = Object.keys(receiptWeights).length > 0
-    ? { mode: "shares", weights: receiptWeights } : null;
-  const effectiveSplit = receiptSplit ?? draft.split;
+  // Null until "who had what" has actually been visited (or on an old draft
+  // with nothing assigned yet) — the arithmetic tab behind it is what a save
+  // would then write, and `receiptBlocker` is what refuses to.
+  const receiptSplit = draftReceiptSplit(draft);
+  const tabSplit = activeSplit(draft);
+  const effectiveSplit = receiptSplit ?? tabSplit;
 
   // The same question the payers editor asks, answered by the same function.
   const amountMinor = draftAmountMinor(draft);
@@ -208,6 +208,7 @@ export function checkEntry(input: {
   return {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
-    onReceiptTab, effectiveSplit, blocker, receiptBlocker, ready,
+    onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
+    blocker, receiptBlocker, ready,
   };
 }

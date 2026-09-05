@@ -99,7 +99,7 @@ describe("checkEntry", () => {
     });
 
     it("holds Save when they are only in the split", () => {
-      const c = check(expense({ split: { mode: "equal", members: [THEO, GONE] } }));
+      const c = check(expense({ splits: { equal: { mode: "equal", members: [THEO, GONE] } } }));
       expect(c.ready).toBe(false);
       expect(c.blocker).toBe(copy.form.goneMember("Bruno"));
     });
@@ -159,6 +159,23 @@ describe("checkEntry", () => {
       expect(c.amountMinor).toBe(4000);
       // Theo had the €30 steak, Marie the €10 coffee.
       expect(c.effectiveSplit).toEqual({ mode: "shares", weights: { [THEO]: 3000, [MARIE]: 1000 } });
+    });
+
+    it("reads its split off the bill, not off the tab it was opened over", () => {
+      // A scan used to convert whatever As parts held into its own answer.
+      // The tab's parts are still 3:1 in the draft (`draft.test.ts`); what
+      // this expense is worth to each of them comes from the receipt alone.
+      const draft = expense({
+        splits: { shares: { mode: "shares", weights: { [THEO]: 3, [MARIE]: 1 } } },
+        splitTab: "receipt",
+        receiptItems: items,
+        receiptInvolved: [THEO, MARIE],
+        receiptAssignments: [[THEO], [MARIE]],
+      });
+      const c = check(draft);
+      expect(c.receiptSplit).toEqual({ mode: "shares", weights: { [THEO]: 3000, [MARIE]: 1000 } });
+      expect(c.effectiveSplit).toBe(c.receiptSplit);
+      expect(draft.splits.shares).toEqual({ mode: "shares", weights: { [THEO]: 3, [MARIE]: 1 } });
     });
 
     it("never locks the amount field on a bill worth nothing", () => {

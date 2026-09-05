@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  convertSplitMode, resolveSplit, splitParticipants, validateSplit,
+  resolveSplit, splitParticipants, validateSplit,
   type Member, type SplitSpec,
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
@@ -33,6 +33,12 @@ import type { SplitTab } from "../lib/draft";
  * spec, so it isn't a fifth `SplitMode`. It's tracked as its own tab
  * (`SplitTab`, `lib/draft.ts`) precisely so the UI can still say "Receipt"
  * once that reduction has happened, instead of falling back to "As parts".
+ *
+ * **Each tab holds its own answer.** This editor draws one of them and edits
+ * only that one: the tab bar reports a tap and nothing else — the draft is
+ * where a newly opened tab is handed a starting point (`openSplitTab`), once.
+ * Receipt's split arrives separately, as `receiptSplit`, and never lands in
+ * the arithmetic tabs' inputs.
  */
 
 /** The three arithmetic tabs, in the owner's order. "Receipt" is the fourth. */
@@ -61,7 +67,7 @@ export interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
@@ -76,7 +82,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
    */
   totalUnknown?: boolean;
   currency: string;
+  /** What the arithmetic tab now showing holds — this editor edits only it. */
   spec: SplitSpec;
+  /**
+   * What the receipt reads off its own bill, or null while its grid is
+   * unfilled. It is drawn, never edited: Receipt is a fourth answer beside
+   * the three, not a fourth way of writing one of them.
+   */
+  receiptSplit: SplitSpec | null;
   seed: string;
   onChange: (next: SplitSpec) => void;
   tab: SplitTab;
@@ -89,17 +102,22 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   receipt: ReceiptTabProps | null;
 }) {
   const opts = { tiebreakSeed: seed };
-  const included = new Set(splitParticipants(spec));
-  const check = validateSplit(totalMinor, spec, opts);
-
-  let shares: Record<string, number> = {};
-  try { shares = resolveSplit(totalMinor, spec, opts).shares; } catch { /* incomplete */ }
-
   // A legacy percent split shows its rows and its numbers, but offers no mode
   // button of its own: touching any of the three arithmetic tabs converts it away.
   const legacy = spec.mode === "percent";
   const showReceipt = tab === "receipt" && receipt !== null;
-  const hasReceiptItems = (receipt?.items?.length ?? 0) > 0;
+  // The split on screen. Receipt draws its own, and draws none at all until
+  // its grid has been filled in: what the arithmetic tabs hold is theirs, and
+  // showing one of them here would be a verdict on a tab nobody is looking at.
+  const shown: SplitSpec | null = showReceipt ? receiptSplit : spec;
+  const included = new Set(shown ? splitParticipants(shown) : []);
+  const check = shown ? validateSplit(totalMinor, shown, opts) : null;
+
+  let shares: Record<string, number> = {};
+  if (shown) {
+    try { shares = resolveSplit(totalMinor, shown, opts).shares; } catch { /* incomplete */ }
+  }
+
   // "N of total allocated" only means something where you're typing amounts
   // yourself — Evenly and As parts always land exactly on the total by
   // construction, and Receipt's total is derived from the bill, not typed.
@@ -114,18 +132,10 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // `splitFooter` — not `check` — decides both the wording and the verdict:
   // a zero total is arithmetically a satisfied split and must never be shown
   // as one, so "ok" here means "ok to show a tick", not `check.ok`.
-  const foot = receiptBlocker !== null
-    ? { ok: false, text: receiptBlocker } : splitFooter(check, currency);
-  const showFooter = totalUnknown ? false
-    : showReceipt ? (receiptBlocker !== null || (hasReceiptItems && !foot.ok))
-      : (isExactTab || !foot.ok);
-
-  function switchMode(mode: "equal" | "shares" | "exact") {
-    onTabChange(mode);
-    // Switching keeps everyone's current amounts rather than resetting them,
-    // so you can start even and nudge one person without losing the rest.
-    onChange(convertSplitMode(totalMinor, spec, mode, opts));
-  }
+  const foot = receiptBlocker !== null ? { ok: false, text: receiptBlocker }
+    : check !== null ? splitFooter(check, currency) : null;
+  const showFooter = !totalUnknown && foot !== null
+    && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {
     const next = new Set(included);
@@ -138,11 +148,8 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
         if (next.has(memberId)) weights[memberId] = 1; else delete weights[memberId];
         return onChange({ mode: "shares", weights });
       }
-      case "exact": {
-        const amounts = { ...spec.amounts };
-        if (next.has(memberId)) amounts[memberId] = 0; else delete amounts[memberId];
-        return onChange({ mode: "exact", amounts });
-      }
+      // "As amounts" has no toggle: `setExact` is the whole control.
+      case "exact": return;
       case "percent": {
         const bps = { ...spec.bps };
         if (next.has(memberId)) bps[memberId] = 0; else delete bps[memberId];
@@ -159,9 +166,17 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
     onChange({ mode: "shares", weights });
   }
 
+  /**
+   * The figure *is* the statement in "as amounts": whoever has one is in the
+   * split, and clearing it takes them out. There is no tick to hunt for first
+   * — a field you had to unlock on another tab is what made this mode only
+   * usable for whoever Evenly happened to have ticked.
+   */
   function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
-    onChange({ mode: "exact", amounts: { ...spec.amounts, [memberId]: minor } });
+    const amounts = { ...spec.amounts };
+    if (minor > 0) amounts[memberId] = minor; else delete amounts[memberId];
+    onChange({ mode: "exact", amounts });
   }
 
   /** Hand whatever is unallocated to one person — the usual last keystroke. */
@@ -189,7 +204,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
           const on = !showReceipt && !legacy && spec.mode === mode;
           return (
             <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
-              onClick={() => switchMode(mode)}>{copy.split.mode[mode]}</button>
+              onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
           );
         })}
         {receipt ? (
@@ -213,6 +228,10 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
           // is the very thing you aim at to put someone back in. "As parts"
           // and "as amounts" put their own controls there and keep them.
           const wholeRow = spec.mode === "equal" || spec.mode === "percent";
+          // "As amounts" has nothing to toggle, so its left half is a label
+          // for the field rather than a button that would do nothing.
+          const typing = spec.mode === "exact";
+          const fieldId = `sp-${m.id}`;
           const end = spec.mode === "shares" ? (
             <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
@@ -226,15 +245,19 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             </span>
           ) : spec.mode === "exact" ? (
             <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              {on && !check.ok ? (
+              {/* Offered on a row with nothing in it too: somebody who has
+                  typed no amount yet is exactly who you hand the rest to. */}
+              {check && !check.ok ? (
                 <button type="button" className="chip" onClick={() => giveRest(m.id)}
                   aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
               ) : null}
-              <MinorAmountInput className="bignum splitin" aria-label={copy.split.amountFor(m.name)}
+              {/* Never disabled. Every row can be typed into, whoever any
+                  other tab has ticked: typing is how somebody joins this one. */}
+              <MinorAmountInput id={fieldId} className="bignum splitin"
+                aria-label={copy.split.amountFor(m.name)}
                 currency={currency}
-                valueMinor={on ? spec.amounts[m.id] ?? 0 : 0}
+                valueMinor={spec.amounts[m.id] ?? 0}
                 placeholder={bare(0, currency)}
-                disabled={!on}
                 onChangeMinor={(minor) => setExact(m.id, minor)} />
             </span>
           ) : spec.mode === "percent" ? (
@@ -250,31 +273,39 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
               <Icon name={on ? "check" : "plus"} size={16} />
             </span>
           );
+          // The dimming rides on the name, not the button: the plus is the
+          // affordance for putting someone back in and must stay legible on a
+          // row that is otherwise faded out.
+          const name = (
+            <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
+              <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
+                {m.name}
+              </span>
+              <span className="rmeta" style={{ display: "block" }}>
+                {/* In "as amounts" the field beside this line already *is* the
+                    figure, and while the split is short it can't be resolved
+                    anyway — a stray "€0.00" under a row saying 40.00 is worse
+                    than nothing. */}
+                {!on ? copy.split.notInvolved
+                  : typing ? ""
+                  : totalUnknown ? copy.none
+                  : money(shares[m.id] ?? 0, currency)}
+              </span>
+            </span>
+          );
+          const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
           return (
             <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
-              <button type="button" onClick={() => toggle(m.id)}
-                aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
-                style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 }}>
-                {/* The dimming rides on the name, not the button: the plus is
-                    the affordance for putting someone back in and must stay
-                    legible on a row that is otherwise faded out. */}
-                <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
-                  <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
-                    {m.name}
-                  </span>
-                  <span className="rmeta" style={{ display: "block" }}>
-                    {/* In "as amounts" the field beside this line already *is*
-                        the figure, and while the split is short it can't be
-                        resolved anyway — a stray "€0.00" under a row saying
-                        40.00 is worse than nothing. */}
-                    {!on ? copy.split.notInvolved
-                      : spec.mode === "exact" ? ""
-                      : totalUnknown ? copy.none
-                      : money(shares[m.id] ?? 0, currency)}
-                  </span>
-                </span>
-                {wholeRow ? end : null}
-              </button>
+              {typing ? (
+                <label htmlFor={fieldId} style={lead}>{name}</label>
+              ) : (
+                <button type="button" onClick={() => toggle(m.id)}
+                  aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
+                  style={lead}>
+                  {name}
+                  {wholeRow ? end : null}
+                </button>
+              )}
               {wholeRow ? null : end}
             </div>
           );
@@ -282,7 +313,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
 
         {/* Only the satisfied verdict wears a glyph. The unsatisfied one used
             the offline icon, which says "no wifi" and nothing about a split. */}
-        {showFooter ? (
+        {showFooter && foot ? (
           <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
             {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
             <span>{foot.text}</span>

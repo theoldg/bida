@@ -24,7 +24,10 @@ the D1 schema or the Dexie schema, and the grid reopens later from any device.
 
 **Receipt is a fourth tab on the split editor**, not a fifth `SplitMode`: a
 finished grid *is* a split, arrived at differently, and showing it under "As
-parts" would lose where it came from. `SplitTab` is saved explicitly — deriving
+parts" would lose where it came from. It is a fourth *answer* beside the three,
+never a rewrite of one of them — a scan used to convert whatever As parts held
+into its own weights ([ADR-0010](0010-what-an-entry-is.md)).
+`SplitTab` is saved explicitly — deriving
 it from "are there items?" made every save silently drop a deliberate switch
 back to Evenly. **The tab is a claim, and Save is held until it is true**: with
 no bill scanned, or a bill nobody has been assigned a line of, there is no
@@ -40,9 +43,9 @@ inline, where both are read: the form's render. The who-had-what screen writes
 only raw inputs. Every bug in this feature's first week was a derived value
 mirrored into a draft field by an effect on one screen watching a write made by
 another. Recomputing is one cheap call; the cache was the bug. Leaving Receipt
-for an arithmetic tab hands the total over exactly once
-(`handOffReceiptTotal`) — the missing half of the handoff `convertSplitMode`
-already makes, not a reinstated mirror.
+hands the total over exactly once (`handOffReceiptTotal`), beside the split a
+first-time tab is handed (`openSplitTab`) — two handoffs made in the handler
+that switched tabs, not mirrors anything later resyncs.
 
 **A "×2" line unfolds into portions, and a portion is an ordinary line.**
 Tapping the count replaces the row with N rows, each carrying its share of the

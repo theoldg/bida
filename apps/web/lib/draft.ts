@@ -1,9 +1,12 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { parseMinor, type ReceiptItem, type SplitSpec, type SplitTab } from "@hajsik/core";
+import {
+  convertSplitMode, parseMinor,
+  type ReceiptItem, type SplitMode, type SplitSpec, type SplitTab,
+} from "@hajsik/core";
 import type { EntryKind } from "./entry-kind";
-import { receiptTotalMinor } from "./scan/items";
+import { receiptTotalMinor, weightsFromItems } from "./scan/items";
 
 /**
  * The entry being typed — an expense, an income or a transfer. It lives outside
@@ -19,10 +22,30 @@ import { receiptTotalMinor } from "./scan/items";
  * what you already typed: the amount, the date and the words survive a tap on
  * the segmented control, because the fields they live in are the same fields
  * (ADR-0010). The ones only a transfer uses (`fromMember`, `toMember`) and the
- * ones only an expense or income uses (`split`, `payers`, the receipt) simply
+ * ones only an expense or income uses (`splits`, `payers`, the receipt) simply
  * sit unread while the other kind is showing.
  */
 export type { SplitTab };
+
+/** Every tab but Receipt, which derives its split from the bill instead. */
+export type ArithmeticTab = Exclude<SplitTab, "receipt">;
+
+/**
+ * One split per tab, each of them the tab's own.
+ *
+ * The four tabs used to share a single `SplitSpec`, converted from one shape
+ * to another on every switch — so leaving somebody out under Evenly deleted
+ * the parts you had given them under As parts, typing amounts was only
+ * offered for whoever Evenly had ticked, and a scan overwrote all three. One
+ * spec cannot hold four answers; this holds four.
+ *
+ * A tab is `undefined` until it is first opened, and `openSplitTab` fills it
+ * in from whatever was on screen — so "start even, then nudge one person"
+ * still works, and is a handoff made once rather than a shape the tabs go on
+ * sharing. `percent` is only ever read: it is what a legacy split arrives as,
+ * and touching any tab converts it away for good (ADR-0010).
+ */
+export type SplitInputs = { [M in SplitMode]?: Extract<SplitSpec, { mode: M }> };
 
 export interface EntryDraft {
   /** Which of the three this is. The form's segmented control writes it. */
@@ -51,7 +74,7 @@ export interface EntryDraft {
    * the payers editor and adds a second person.
    */
   payers: Record<string, number> | null;
-  split: SplitSpec;
+  splits: SplitInputs;
   /** A transfer's two sides. Empty until the form seeds them. */
   fromMember: string;
   toMember: string;
@@ -80,15 +103,112 @@ export interface EntryDraft {
 }
 
 /**
- * Which split-editor tab a draft is on. Undefined — an old draft, or an
- * expense saved before the field existed — derives from what is actually on
- * the entry: a scanned bill means Receipt, otherwise whatever arithmetic mode
- * the split already is.
+ * Which split-editor tab a draft is on. Undefined — an expense saved before
+ * the field existed — derives from what is actually on the entry: a scanned
+ * bill means Receipt, and a legacy percent split shows in the As parts slot,
+ * which is the tab that would convert it.
  */
 export function activeSplitTab(draft: EntryDraft): SplitTab {
   return draft.splitTab
     ?? ((draft.receiptItems?.length ?? 0) > 0 ? "receipt"
-      : draft.split.mode === "percent" ? "shares" : draft.split.mode);
+      : draft.splits.percent ? "shares" : "equal");
+}
+
+/**
+ * The legacy percent split still in force, or null.
+ *
+ * It has no tab of its own — `percent` was dropped from the UI and only stays
+ * in `SplitSpec` so expenses already recorded that way keep folding — so it
+ * shows under whichever tab is derived for it, with none of them pressed,
+ * until the first tap converts it away.
+ */
+export function legacyPercent(draft: EntryDraft): SplitSpec | null {
+  return draft.splitTab === undefined && (draft.receiptItems?.length ?? 0) === 0
+    ? draft.splits.percent ?? null
+    : null;
+}
+
+/** A tab nothing has been typed into yet: everybody out, nothing allocated. */
+function emptySplit(tab: ArithmeticTab): SplitSpec {
+  switch (tab) {
+    case "equal": return { mode: "equal", members: [] };
+    case "shares": return { mode: "shares", weights: {} };
+    case "exact": return { mode: "exact", amounts: {} };
+  }
+}
+
+/** The same inputs with one tab's spec replaced. */
+export function withSplit(splits: SplitInputs, spec: SplitSpec): SplitInputs {
+  switch (spec.mode) {
+    case "equal": return { ...splits, equal: spec };
+    case "shares": return { ...splits, shares: spec };
+    case "exact": return { ...splits, exact: spec };
+    case "percent": return { ...splits, percent: spec };
+  }
+}
+
+/**
+ * What the bill says the split is, while Receipt mode is the thing showing
+ * it, and null until the who-had-what grid has been filled in.
+ *
+ * Each item's printed amount is divided among whoever was checked for it and
+ * summed per member, and the sums are used as *weights* against the entry's
+ * converted total — so nothing here needs a rate (ADR-0016). Derived at read
+ * time beside `draftReceiptTotal`, never written into the draft: the raw grid
+ * is the only record, and this is the one place it is read as a split.
+ */
+export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
+  const showing = draft.kind === "expense"
+    && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
+  if (!showing) return null;
+  const weights = weightsFromItems(
+    draft.receiptItems ?? [],
+    (draft.receiptAssignments ?? []).map((row) => new Set(row)),
+    draft.receiptTip && draft.receiptInvolved
+      ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
+    draft.currency,
+    draft.entryId ?? "new",
+  );
+  return Object.keys(weights).length > 0 ? { mode: "shares", weights } : null;
+}
+
+/**
+ * What the tab now showing holds — the rows the split editor draws, and what
+ * a tab opened for the first time is handed.
+ *
+ * Receipt's is read off the bill rather than typed, which is why leaving it
+ * for an untouched tab starts that tab from what the receipt worked out. It
+ * falls back to Evenly's, rather than to nothing, while the grid is unfilled.
+ */
+export function activeSplit(draft: EntryDraft): SplitSpec {
+  const legacy = legacyPercent(draft);
+  if (legacy) return legacy;
+  const tab = activeSplitTab(draft);
+  const arithmetic: ArithmeticTab = tab === "receipt" ? "equal" : tab;
+  return (tab === "receipt" ? draftReceiptSplit(draft) : null)
+    ?? draft.splits[arithmetic] ?? emptySplit(arithmetic);
+}
+
+/**
+ * Opening a tab: the inputs the draft should carry once it is showing.
+ *
+ * A tab keeps whatever was last typed into it. A tab being opened for the
+ * first time is handed what is on screen now — `convertSplitMode` — because
+ * an empty As amounts is four numbers to type where "even, then nudge one
+ * person" is one. That is a handoff, made once, in a handler: the same shape
+ * as `handOffReceiptTotal`, and not a mirror any later edit resyncs
+ * ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
+ */
+export function openSplitTab(draft: EntryDraft, tab: SplitTab, totalMinor: number): SplitInputs {
+  if (tab === "receipt") return draft.splits;
+  const kept = { ...draft.splits };
+  // Unwritable, so there is nothing to come back to: the first arithmetic tab
+  // converts a legacy percent split away for good (ADR-0010).
+  delete kept.percent;
+  if (kept[tab]) return kept;
+  return withSplit(kept, convertSplitMode(totalMinor, activeSplit(draft), tab, {
+    tiebreakSeed: draft.entryId ?? "new",
+  }));
 }
 
 /**
@@ -212,7 +332,8 @@ export function blankDraft(
     description: "",
     paidBy: me,
     payers: null,
-    split: { mode: "equal", members },
+    splits: { equal: { mode: "equal", members } },
+    splitTab: "equal",
     // A transfer starts as "me, paying somebody else" — the overwhelmingly
     // common one, and the only pair that can be guessed without asking.
     fromMember: me,

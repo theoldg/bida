@@ -94,6 +94,10 @@ confers nothing without the secret.
   **What the entry is worth is `draftAmountMinor` and nowhere else** — a
   scanned bill is worth what its lines add up to, and the payers editor
   reading `amountText` on its own is how it came to call one €0.00.
+- **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
+  draws and edits the tab showing, `openSplitTab` is the one place a newly
+  opened tab is handed a starting point, and `activeSplit` says which spec is
+  on screen — the receipt's, on its tab, read off the bill.
 - **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,
   not the form. It answers the amount, the base figure, the split in force and
   why Save is grey — from a draft and the group's rates, with no React in it,
@@ -288,8 +292,7 @@ figure-free.
   `AmountInput`'s `value` or a draft's `amountText` loses money: `parseMinor`
   throws on "1,234.50" (amount silently 0) and reads JPY "25,000" as **25**.
 - **`patch()` on the expense draft must merge against the latest saved draft,
-  not the `draft` the current render closed over.** A handler that calls
-  `patch()` twice synchronously (e.g. switching split tabs: once for the tab,
-  once for the converted `SplitSpec`) had the second call overwrite the first
-  — both merged onto the same stale closure, so `saveDraft` never saw the
-  first change. Fixed by reading `getDraft(groupId)` inside `patch()` itself.
+  not the `draft` the current render closed over.** Two `patch()` calls in one
+  handler otherwise both merge onto the same stale closure and the second
+  silently undoes the first — which is how a tab switch lost the tab it had
+  just set. `patch()` reads `getDraft(groupId)` itself, so a handler may.
