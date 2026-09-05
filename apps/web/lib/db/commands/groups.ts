@@ -208,6 +208,12 @@ export async function addMember(groupId: Id, actor: Id | undefined, name: string
   return memberId;
 }
 
+/**
+ * No screen calls this any more — the rename button is gone from People, and
+ * renaming is on its way out of the log too (owner, 2026-09-05). Kept only
+ * until that lands; folding still has to read the `name` updates already
+ * written by every group that used it.
+ */
 export async function renameMember(
   groupId: Id,
   actor: Id,

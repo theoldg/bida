@@ -42,7 +42,6 @@ export const copy = {
     done: "Done",
     edit: "Edit",
     remove: "Remove",
-    rename: "Rename",
     save: "Save",
     useIt: "Use it",
     close: "Close",
@@ -216,9 +215,12 @@ export const copy = {
     addPlaceholder: "Add someone",
     /** Two people with one name are two people nothing on screen tells apart. */
     taken: (name: string) => `${name} is already here.`,
-    rename: (name: string) => `Rename ${name}`,
     removeLabel: (name: string) => `Remove ${name}`,
-    newName: "New name",
+    /** Which of these names this phone signs with — a decision, so a dialog
+        rather than a tap on a row that also removes and invites. The list's
+        check mark already answers *which*; this only has to offer the change. */
+    whoChange: "Change who you are",
+    whoTitle: "Which one is you?",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "Their past entries stay as they are.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,

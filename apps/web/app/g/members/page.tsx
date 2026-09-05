@@ -6,31 +6,30 @@ import { useState } from "react";
 import { entriesInvolving } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
+import { ChoiceDialog, ConfirmDialog, Dialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { InviteButton } from "../../../components/invite";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
-import {
-  addMember, claimIdentity, forgetGroup, removeMember, renameMember,
-} from "../../../lib/db/commands";
+import { addMember, claimIdentity, forgetGroup, removeMember } from "../../../lib/db/commands";
 import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../lib/hooks";
-import { nameTaken } from "../../../lib/names";
 
 /**
  * People: who is in the group, and which of them this phone is.
  *
- * Identity used to be a second copy of this same list on the group options
- * screen. One list, one place to tap: the check mark is who you are, and
- * tapping another name moves it — an op on the shared log, like every other
- * change (ADR-0003).
+ * Who this phone is is a row of its own with a button on it, not a tap on
+ * somebody's name. A list whose rows silently rewrote your identity had no way
+ * to say so before it happened, and the same rows carry a trash button — one
+ * miss and you had signed the group's log as someone else. It is a decision,
+ * so it is asked: the button opens the list as a `ChoiceDialog` (ADR-0008),
+ * and picking writes the claim op (ADR-0003).
  *
  * Adding is the last row of the list rather than a dialog — a group is filled
  * in one burst of typing, and a scrim per name made that four acts instead of
- * one (components/name-adder.tsx). Renaming and removing keep their dialogs:
- * each is one decision, and a removal has a consequence to state (ADR-0008).
+ * one (components/name-adder.tsx). Removing keeps its dialog: it is one
+ * decision, and it has a consequence to state (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
@@ -44,7 +43,7 @@ interface BlockingEntry {
 }
 
 type Ask =
-  | { kind: "rename"; id: string; name: string }
+  | { kind: "who" }
   | { kind: "remove"; id: string; name: string }
   | { kind: "blocked"; name: string; body: string; entries: BlockingEntry[] }
   | { kind: "forget" };
@@ -69,12 +68,6 @@ function MembersScreen() {
   async function claim(memberId: string) {
     if (!groupId || memberId === me) return;
     await claimIdentity(groupId, memberId);
-  }
-
-  async function rename(memberId: string, name: string) {
-    if (!groupId || !me) return;
-    await renameMember(groupId, me, memberId, name);
-    setAsk(null);
   }
 
   async function remove(memberId: string) {
@@ -143,29 +136,29 @@ function MembersScreen() {
         <Scroll>
           <div className="rows">
             {data.members.map((m) => (
-              <div key={m.id} className="row" style={{ cursor: "pointer" }} onClick={() => claim(m.id)}>
+              <div key={m.id} className="row">
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>
                 {m.id === me
                   ? <Icon name="check" size={16} style={{ color: "var(--brand)", flex: "none" }} />
                   : null}
-                <div style={{ display: "flex", gap: 6 }}>
-                  <button className="iconbtn" aria-label={copy.members.rename(m.name)}
-                    onClick={(e) => { e.stopPropagation(); setAsk({ kind: "rename", id: m.id, name: m.name }); }}>
-                    <Icon name="edit" size={14} />
+                {m.id !== me ? (
+                  <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
+                    onClick={() => askRemove(m.id, m.name)}>
+                    <Icon name="trash" size={14} />
                   </button>
-                  {m.id !== me ? (
-                    <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
-                      onClick={(e) => { e.stopPropagation(); askRemove(m.id, m.name); }}>
-                      <Icon name="trash" size={14} />
-                    </button>
-                  ) : null}
-                </div>
+                ) : null}
               </div>
             ))}
 
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
+
+            {/* Under the list with the other things you can do to it, because
+                it is about this phone rather than about anyone on it. Which
+                name is yours is already on the list, as the check mark. */}
+            <GhostRow icon="users" label={copy.members.whoChange}
+              onClick={() => setAsk({ kind: "who" })} />
 
             <GhostRow icon="trash" label={copy.members.forget}
               onClick={() => setAsk({ kind: "forget" })} />
@@ -173,15 +166,10 @@ function MembersScreen() {
         </Scroll>
       </Body>
 
-      {ask?.kind === "rename" ? (
-        <PromptDialog title={copy.members.newName} initial={ask.name} confirm={copy.act.rename}
-          autoCapitalize="words" maxLength={40}
-          /* Renaming is the other door onto two people with one name, so it is
-             shut here too — Rename simply doesn't light up for a name already
-             on the list. */
-          valid={(v) => v.trim().length > 0 && v.trim() !== ask.name
-            && !nameTaken(v, names.filter((n) => n !== ask.name))}
-          onSubmit={(name) => rename(ask.id, name)} onClose={() => setAsk(null)} />
+      {ask?.kind === "who" && me ? (
+        <ChoiceDialog title={copy.members.whoTitle} value={me}
+          options={data.members.map((m) => ({ value: m.id, label: m.name }))}
+          onPick={claim} onClose={() => setAsk(null)} />
       ) : null}
 
       {ask?.kind === "remove" ? (

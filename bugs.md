@@ -19,16 +19,16 @@ Reproduced with `pnpm drive`: two phones in one group, both offline, both add
 paid, split evenly, then prices her twice — balances read `Ana +€90.00` above a
 second `Ana -€30.00`, and settle-up instructs "Ana pays Ana €30.00".
 
-Neither existing control repairs it. Rename to a distinct name is allowed and
-only makes the two legible — the money stays split across two ids — while
-renaming back onto the shared name is refused by `nameTaken`. Removal is worse:
-its own sheet says "Their past entries stay as they are", which is the problem.
+No existing control repairs it — renaming is gone from People, and it never did
+more than make the two legible anyway, since the money stays split across two
+ids. Removal is worse: its own sheet says "Their past entries stay as they
+are", which is the problem.
 
 **Do:** converge automatically rather than offer a repair. One name is already
 one person here — that is the whole argument of `names.ts` — so two live
 members sharing a `nameKey` is a state to fold away, not a question to ask.
 Match on that state, not on the event behind it: an offline add is one route
-in, a `/g/claim` add and a concurrent rename are others.
+in, and a `/g/claim` add is another.
 
 - Pick the winner from the log — earliest create by HLC, id as tiebreak — so
   every device merges the same way with nothing to agree on first, and two
