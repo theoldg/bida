@@ -197,13 +197,59 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             shares={shares} included={included} />
         ) : members.map((m) => {
           const on = included.has(m.id);
+          // Where the right-hand side is only a read-out — the tick/plus of
+          // "evenly", a legacy percentage — the toggle button swallows it, so
+          // the whole row answers to a tap. A row that looks like one target
+          // and responds on its left half only reads as broken, and the plus
+          // is the very thing you aim at to put someone back in. "As parts"
+          // and "as amounts" put their own controls there and keep them.
+          const wholeRow = spec.mode === "equal" || spec.mode === "percent";
+          const end = spec.mode === "shares" ? (
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
+                style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
+              <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
+                color: on ? "var(--ink)" : "var(--muted)" }}>
+                {spec.weights[m.id] ?? 0}
+              </span>
+              <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
+                style={{ fontSize: 18 }}>+</button>
+            </span>
+          ) : spec.mode === "exact" ? (
+            <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              {on && !check.ok ? (
+                <button type="button" className="chip" onClick={() => giveRest(m.id)}
+                  aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
+              ) : null}
+              <MinorAmountInput className="bignum splitin" aria-label={copy.split.amountFor(m.name)}
+                currency={currency}
+                valueMinor={on ? spec.amounts[m.id] ?? 0 : 0}
+                placeholder={bare(0, currency)}
+                disabled={!on}
+                onChangeMinor={(minor) => setExact(m.id, minor)} />
+            </span>
+          ) : spec.mode === "percent" ? (
+            <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
+              {(spec.bps[m.id] ?? 0) / 100}%
+            </span>
+          ) : (
+            <span style={{
+              // Ink, not credit green: being in the split is not a credit,
+              // and green is reserved for money.
+              color: on ? "var(--ink)" : "var(--muted)",
+            }}>
+              <Icon name={on ? "check" : "plus"} size={16} />
+            </span>
+          );
           return (
             <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
               <button type="button" onClick={() => toggle(m.id)}
                 aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
-                style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0,
-                  opacity: on ? 1 : .45 }}>
-                <span className="rmain">
+                style={{ display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 }}>
+                {/* The dimming rides on the name, not the button: the plus is
+                    the affordance for putting someone back in and must stay
+                    legible on a row that is otherwise faded out. */}
+                <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
                   <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
                     {m.name}
                   </span>
@@ -218,45 +264,9 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                       : money(shares[m.id] ?? 0, currency)}
                   </span>
                 </span>
+                {wholeRow ? end : null}
               </button>
-
-              {spec.mode === "shares" ? (
-                <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
-                    style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
-                  <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
-                    color: on ? "var(--ink)" : "var(--muted)" }}>
-                    {spec.weights[m.id] ?? 0}
-                  </span>
-                  <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
-                    style={{ fontSize: 18 }}>+</button>
-                </span>
-              ) : spec.mode === "exact" ? (
-                <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  {on && !check.ok ? (
-                    <button type="button" className="chip" onClick={() => giveRest(m.id)}
-                      aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
-                  ) : null}
-                  <MinorAmountInput className="bignum splitin" aria-label={copy.split.amountFor(m.name)}
-                    currency={currency}
-                    valueMinor={on ? spec.amounts[m.id] ?? 0 : 0}
-                    placeholder={bare(0, currency)}
-                    disabled={!on}
-                    onChangeMinor={(minor) => setExact(m.id, minor)} />
-                </span>
-              ) : spec.mode === "percent" ? (
-                <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
-                  {(spec.bps[m.id] ?? 0) / 100}%
-                </span>
-              ) : (
-                <span style={{
-                  // Ink, not credit green: being in the split is not a credit,
-                  // and green is reserved for money.
-                  color: on ? "var(--ink)" : "var(--muted)",
-                }}>
-                  <Icon name={on ? "check" : "plus"} size={16} />
-                </span>
-              )}
+              {wholeRow ? null : end}
             </div>
           );
         })}
