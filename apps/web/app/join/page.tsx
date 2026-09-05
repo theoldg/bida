@@ -40,12 +40,22 @@ function JoinScreen() {
   const [keySaved, setKeySaved] = useState(false);
 
   useEffect(() => {
-    setLink(parseJoinLink(window.location.hash));
+    const read = () => setLink(parseJoinLink(window.location.hash));
+    read();
+    // A second invite link opened while this screen is up is a hash change and
+    // nothing else — no navigation, no remount — so read on mount alone left
+    // the screen answering about the first link forever. Which is worst
+    // exactly where it matters: the first one was refused and the good one is
+    // what arrives next.
+    addEventListener("hashchange", read);
+    return () => removeEventListener("hashchange", read);
   }, []);
 
   useEffect(() => {
     if (!link) return;
     let cancelled = false;
+    // A new link has not been saved yet, whatever the last one did.
+    setKeySaved(false);
     (async () => {
       await saveGroupKey(link.groupId, link.secret);
       if (cancelled) return;
@@ -74,7 +84,7 @@ function JoinScreen() {
 
   if (link === undefined) return <Blank back={route.groups()} />;
 
-  if (!link || (rejected && !group)) {
+  if (!link || (keySaved && rejected && !group)) {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />

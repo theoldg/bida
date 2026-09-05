@@ -128,10 +128,10 @@ matches the group's, which retrying can never fix and a fresh invite link can
 (opening one clears the failure). `/join` reads the same flag, because that is
 where a wrong secret is usually first used: a link the server refuses is a
 wrong link, and the screen says so rather than leaving "this finishes by
-itself once the other phone syncs" up over a sync that never will. `navigator.onLine` answers a different
-question and only drives the "Offline" banner: it reports a link, not an
-answering server, so it is blind to exactly the outage that costs a trip its
-ledger.
+itself once the other phone syncs" up over a sync that never will.
+`navigator.onLine` answers a different question and only drives the "Offline"
+banner: it reports a link, not an answering server, so it is blind to exactly
+the outage that costs a trip its ledger.
 
 **Attachments will sync separately** — Wi-Fi-only by default plus a manual
 "upload now", with an expense fully synced and correct while its photos are
