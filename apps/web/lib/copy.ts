@@ -186,13 +186,8 @@ export const copy = {
       owe: "You owe",
       owed: "You’re owed",
       square: "You’re square",
-      paidAndShare: (paid: string, share: string) => `paid ${paid} · share ${share}`,
       tookAndCut: (took: string, cut: string) => `took in ${took} · cut ${cut}`,
-      /**
-       * The transfer leg. Without it the two lines above sit under a figure
-       * they cannot add up to, which reads as broken arithmetic rather than
-       * as a settlement.
-       */
+      /** The transfer leg — money moved that no entry accounts for. */
       settled: (amount: string, sent: boolean) =>
         sent ? `paid back ${amount}` : `got back ${amount}`,
     },
