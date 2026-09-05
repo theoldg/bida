@@ -8,11 +8,7 @@
  * error `checkScan` cannot see. Instructions about the page are safe; the
  * invariant it is checked against is not.
  */
-export function buildScanRequestBody(imageBase64: string, categoryNames: readonly string[]): unknown {
-  const categoryLine = categoryNames.length > 0
-    ? `If it clearly matches one of these categories, return that exact name: ${categoryNames.join(", ")}. Otherwise return null.`
-    : "Return null for category.";
-
+export function buildScanRequestBody(imageBase64: string): unknown {
   return {
     contents: [{
       parts: [
@@ -24,8 +20,8 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
             + "using the receipt's own locale and currency to tell decimal point from thousands "
             + "mark; a separate tip or service charge line if one is printed apart from the total, "
             + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
-            + "date as YYYY-MM-DD if legible; and a category. "
-            + `${categoryLine} Also return every line item: its label exactly as `
+            + "date as YYYY-MM-DD if legible. "
+            + "Also return every line item: its label exactly as "
             + "printed in the receipt's own language, an English translation of that label (null "
             + "if it's already English), its amount in the same normalized decimal notation as the "
             + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
@@ -68,7 +64,6 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
           tip: { type: "STRING", nullable: true },
           currency: { type: "STRING", nullable: true },
           date: { type: "STRING", nullable: true },
-          category: { type: "STRING", nullable: true },
           lineItems: {
             type: "ARRAY",
             items: {
@@ -84,7 +79,7 @@ export function buildScanRequestBody(imageBase64: string, categoryNames: readonl
           },
           error: { type: "STRING", nullable: true },
         },
-        required: ["merchant", "total", "tip", "currency", "date", "category", "lineItems", "error"],
+        required: ["merchant", "total", "tip", "currency", "date", "lineItems", "error"],
       },
     },
   };

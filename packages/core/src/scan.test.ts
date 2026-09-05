@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkScan, normalizeScan, scanCurrency, type ScanLineItem, type ScanResult } from "./scan.js";
 
 const blank: ScanResult = {
-  merchant: null, total: null, tip: null, currency: null, date: null, category: null, lineItems: [], error: null,
+  merchant: null, total: null, tip: null, currency: null, date: null, lineItems: [], error: null,
 };
 
 describe("normalizeScan", () => {
@@ -48,9 +48,9 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, date: "last Tuesday" })).not.toHaveProperty("occurredAt");
   });
 
-  it("passes merchant and category through as the description and category patch", () => {
-    expect(normalizeScan({ ...blank, merchant: "Carrefour", category: "Groceries" }))
-      .toMatchObject({ description: "Carrefour", category: "Groceries" });
+  it("passes the merchant through as the description", () => {
+    expect(normalizeScan({ ...blank, merchant: "Carrefour" }))
+      .toMatchObject({ description: "Carrefour" });
   });
 
   it("omits fields the model couldn't read, tip and line items included", () => {

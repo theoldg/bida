@@ -83,7 +83,6 @@ It reads. It doesn't compute.
 | tip | a separate tip/service-charge line, same normalized notation, or null |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
-| category | one of the group's, or null |
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
@@ -103,9 +102,10 @@ else.
 `EntryDraft` patch: `total` passes straight through as `amountText` — the
 prompt already asks the model for `parseMinor()`-ready notation, so there's no
 separator-guessing to do locally. Conversion to minor units stays where it
-already is — `parseMinor` on save. `category` passes through as a name;
-matching it to the group's actual category id is the caller's job, since core
-doesn't know a group's categories.
+already is — `parseMinor` on save. The scan asks for no category: an expense
+carries a `categoryId`, but nothing in the app makes a category or maps a name
+to an id, so the field went out with nowhere to land (Categories is still a
+roadmap line). Two prompt lines and a schema property bring it back.
 
 Two fields the model doesn't get the last word on:
 

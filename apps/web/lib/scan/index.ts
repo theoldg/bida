@@ -39,7 +39,6 @@ export async function scanReceipt(
   photo: File | Blob,
   groupId: string,
   secret: string,
-  categoryNames: readonly string[],
   /** The draft's currency — what a receipt that doesn't name its own is counted in. */
   currency: string,
 ): Promise<ScanResult> {
@@ -54,7 +53,7 @@ export async function scanReceipt(
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-      body: JSON.stringify(buildScanRequestBody(imageBase64, categoryNames)),
+      body: JSON.stringify(buildScanRequestBody(imageBase64)),
     });
   } catch (err) {
     // fetch only rejects when the request never reached a server — a captive

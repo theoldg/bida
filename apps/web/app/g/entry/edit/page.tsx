@@ -145,7 +145,7 @@ function EditEntryScreen() {
     setScanSource(source);
     setScanError(null);
     try {
-      const result = await scanReceipt(file, groupId, secret, [], current.currency);
+      const result = await scanReceipt(file, groupId, secret, current.currency);
       const patch = normalizeScan(result);
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }

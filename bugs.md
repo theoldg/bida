@@ -112,17 +112,6 @@ an id known on its own is not a claim.
   `stamp(rev.op.createdAt)` sorted by `compareHlc`, so on any skewed device the
   timeline shows times out of order. Less alarming once 5.1 lands, still worth
   a note in the UI or a switch to something monotonic.
-- **The scan asks for a category and throws it away.** `normalizeScan` returns
-  `patch.category`; the form never reads it, and `scanReceipt(…, [])` always
-  passes an empty list, so the prompt's "return one of these" line is built
-  from nothing on every call. There is also nothing for it to land in: an
-  expense carries a `categoryId`, but no category entity exists, no screen
-  makes one, and nothing turns a category *name* into an id — only
-  `history-copy.ts` knows how to say "changed the category". Categories are a
-  roadmap line nobody has built, so this is a seam held open by every scan:
-  drop `category` from the prompt, the response schema and `ScanResult` (and
-  its row in [docs/receipt-scanning.md](docs/receipt-scanning.md)), and put the
-  two lines back when there is something to match a name against.
 
 ---
 

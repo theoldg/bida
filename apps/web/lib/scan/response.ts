@@ -16,7 +16,6 @@ export function parseScanResponse(json: unknown): ScanResult {
     tip: parsed.tip ?? null,
     currency: parsed.currency ?? null,
     date: parsed.date ?? null,
-    category: parsed.category ?? null,
     lineItems: (parsed.lineItems ?? []).map((li) => ({ ...li, quantity: li.quantity ?? null })),
     error: parsed.error ?? null,
   };

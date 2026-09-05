@@ -1,6 +1,6 @@
 /**
  * Turns a model's reading of a receipt into an entry-draft patch. The model
- * does the reading — merchant, total, currency, date, category — and this
+ * does the reading — merchant, total, currency, date — and this
  * does no arithmetic or reformatting on top of it. See docs/receipt-scanning.md.
  *
  * Amounts and dates are trusted in the exact shape asked for in the prompt
@@ -32,8 +32,6 @@ export interface ScanResult {
   currency: string | null;
   /** YYYY-MM-DD, or null if illegible. */
   date: string | null;
-  /** One of the group's category names, or null. */
-  category: string | null;
   /** Unused by normalizeScan today — the seam for restaurant splitting (product.md). */
   lineItems: ScanLineItem[];
   /**
@@ -51,7 +49,6 @@ export interface ScanPatch {
   amountText?: string;
   currency?: string;
   occurredAt?: number;
-  category?: string;
 }
 
 export function normalizeScan(result: ScanResult): ScanPatch {
@@ -70,7 +67,6 @@ export function normalizeScan(result: ScanResult): ScanPatch {
       if (!Number.isNaN(local)) patch.occurredAt = local;
     }
   }
-  if (result.category) patch.category = result.category;
   return patch;
 }
 
