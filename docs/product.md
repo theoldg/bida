@@ -25,8 +25,10 @@ link. CSV export.
 1. **Version tracking.** Every change is an appended op with an author, a
    timestamp and an optional reason. Per-entry diffs and a group-wide feed,
    read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
-2. **Multiple images per expense.** Downscaled on-device, queued until Wi-Fi,
-   viewable full-screen.
+2. **A receipt reads itself into the form.** Photograph a bill and it fills the
+   expense, line items and all ([ADR-0016](decisions/0016-receipts.md)). The
+   photo is read and thrown away — storing it was the other half of this and
+   was cut.
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
    row did to your balance, signed and coloured; rows you're not in faded back;
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
@@ -47,6 +49,9 @@ Leave the seam. Build none of it.
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
+| Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add the R2 upload behind `uploadState` |
+| CSV export | A pure function over the fold; no schema change, no new screen |
+| Categories | `categoryId` is on the entry, diffed by the command layer and reported by history. What's missing is a picker, and the decision below |
 
 ## Principles
 
@@ -59,15 +64,14 @@ Leave the seam. Build none of it.
 
 ## Open questions
 
-Decimal comma vs. point · fixed vs. free-form categories.
-
 **What a negative line on a receipt means.** A "-5.00 loyalty card" against the
 whole bill probably should be shared; a voucher against one person's dish should
 not, and the who-had-what grid gives no way to say which. Until that is decided
 — including whether a credit is assignable to people like any other line —
 `checkScan` refuses the receipt outright rather than spread the discount across
 everybody in proportion to what they ordered
-([receipt-scanning.md](receipt-scanning.md)).
+([receipt-scanning.md](receipt-scanning.md)). This is the only one left, and
+it is not hypothetical: it refuses a real receipt today.
 
 *Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
 setting at all (2026-08-30,

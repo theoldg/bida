@@ -6,7 +6,7 @@ import { formatMinor } from "./money.js";
 import { ADA, MARIE, SAM, THEO, marrakechOps, OpBuilder, GROUP } from "./fixtures.test-helper.js";
 
 /**
- * The figures quoted in docs/implementation-status.md. If this test fails,
+ * The figures quoted in docs/testing.md. If this test fails,
  * that doc is out of date — fix the doc, not the arithmetic.
  */
 describe("the Marrakech trip", () => {

@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # links · rules · typecheck · 389 tests · export build — pre-push, ~45s
+pnpm check       # links · rules · typecheck · 390 tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time
@@ -37,13 +37,49 @@ stay red. `pnpm entries` spent a commit asserting a string the copy had since
 recapitalised. Run `pnpm verify` after touching a screen, not only when
 something feels wrong.
 
-`packages/core` gets real coverage — money, splits, folding; the bar is in
-[CLAUDE.md](../CLAUDE.md#working-agreements) and what's proven is in
-[implementation-status.md](implementation-status.md#what-has-been-proven--tested-not-just-written).
-The web app gets smoke tests only; `vitest.config.ts`
-includes `lib/**` *and* `components/**`, which is why `sanitizeAmount` and
-`groupDigits` are exported from `amount-input.tsx` rather than hidden in it.
-Rendering isn't tested — `pnpm shots` is what looks at screens.
+`packages/core` gets real coverage — 249 tests; the bar is in
+[CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 141 smoke tests
+only; `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
+`sanitizeAmount` and `groupDigits` are exported from `amount-input.tsx` rather
+than hidden in it. Rendering isn't tested — `pnpm shots` is what looks at
+screens.
+
+## What the core suite guarantees
+
+Not a list of test names — the properties they hold, which is what you'd
+otherwise have to read 249 tests to learn:
+
+- **Money never floats.** BigInt internals, half-away-from-zero rounding, ISO
+  4217 exponent overrides (JPY 0, TND 3, CLF 4).
+- **Every split sums to the total exactly**, all modes, 500 randomised cases
+  plus hand-picked edges, and identically on every device (remainders by
+  largest fractional part, ties broken by a seeded hash — no clock, no
+  iteration order).
+- **Any permutation of the same ops folds to the same state**; a late-arriving
+  op is detected (`foldForward` → `null`, caller rebuilds).
+- **`settleUp` clears every balance to zero**, 300 randomised groups.
+- **HLCs are totally ordered by string comparison**, and a peer's stamp is
+  absorbed on receive however far ahead it reads — so a reply to their op
+  always sorts after it.
+- **Payer and consumer sides both sum to `baseAmountMinor` exactly**, including
+  a payer who isn't a participant.
+- **An income is exactly the negation of the same entry as an expense**, member
+  for member, and is counted apart from spend rather than netted into it.
+- **A rate inverts and comes back.** 12 stored significant digits against 6
+  shown, so a rate typed as its own inverse round-trips; repricing at the rate
+  an entry was saved with is a no-op, and a rate that can't convert leaves the
+  entry as it was instead of throwing on a render.
+
+### The pinned fixture
+
+`fixtures.test-helper.ts` builds a four-person Marrakech trip. The numbers
+below are the ones it asserts — if `balance.test.ts` fails, this doc is out of
+date, not the code.
+
+```
+net: ada −244,56  marie +461,65  sam −111,47  theo −105,62   (EUR minor ×100)
+total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo→marie 105,62
+```
 
 ## `scripts/lib/harness.mjs` — what the browser checks share
 

@@ -6,7 +6,7 @@ import type { SplitSpec } from "./types.js";
 /**
  * The Marrakech trip — the pinned fixture, as ops.
  *
- * Its numbers are quoted in docs/implementation-status.md; if the arithmetic
+ * Its numbers are quoted in docs/testing.md; if the arithmetic
  * here changes, that doc is wrong and must be updated to match.
  */
 

@@ -3,7 +3,11 @@
 *For: an agent looking for the next job. Tick boxes as you go.*
 
 **The MVP is Phases 0–3 inclusive** — an app that only works on the phone it was
-typed into is a notebook. Phases 4–6 are the finish, not the product.
+typed into is a notebook. Phases 4–6 were the finish, not the product.
+
+**Every phase below is closed** (2026-09-05). What the owner still wants doing
+is in [bugs.md](../bugs.md); what was cut rather than built is at the bottom of
+this file, seams intact.
 
 ## Phase 0 — Groundwork ✅
 Hosting decided, MVP scope agreed, the visual direction signed off
@@ -25,19 +29,16 @@ surfacing in history. Verified live, and cross-device `/join` verified for real
 with two browser contexts — which turned up a genuine first-run bug, now fixed
 ([sync.md's gotchas](sync.md#gotchas)).
 
-- [ ] Custom domain — blocked on the owner pointing DNS at Cloudflare. Cosmetic.
+## Phase 4 — Receipts ✅ *(2026-09-05)*
+**Scan a receipt into the expense form** — [receipt-scanning.md](receipt-scanning.md),
+[ADR-0016](decisions/0016-receipts.md). It needs no storage: the photo is read
+and thrown away. Button, states, privacy line, and a who-had-what screen for
+line items — where a "×2" line unfolds into separately assignable portions —
+all live.
 
-## Phase 4 — Receipts ← next
-- [x] **Scan a receipt into the expense form** — [receipt-scanning.md](receipt-scanning.md),
-      [ADR-0016](decisions/0016-receipts.md). Needs no
-      storage: the photo is read and thrown away. Button, states, privacy
-      line, and a who-had-what screen for line items — where a "×2" line
-      unfolds into separately assignable portions
-      ([ADR-0016](decisions/0016-receipts.md)) —
-      all live.
-- [ ] Multi-image capture, on-device downscale
-- [ ] R2 upload via the worker, Wi-Fi-only default, queue UI
-- [ ] Gallery + full-screen viewer
+Storing the photo (multi-image capture, on-device downscale, R2 upload,
+gallery) was the other half and is **cut** — scanning is what a receipt was
+wanted for. The seam is below.
 
 ## Phase 5 — History surfaces ✅
 Per-entry revision timeline with field diffs and a group activity feed, read
@@ -45,14 +46,16 @@ only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md) dropped
 restore-to-version). Landed alongside Phase 7; `lib/history-copy.ts` holds the
 wording.
 
-## Phase 6 — Finish
-- [ ] CSV export
-- [ ] Categories
+## Phase 6 — Finish ✅ *(2026-09-05)*
 - [x] Install prompt — `lib/install.ts` + `components/install.tsx`
 - [x] The two ways a real trip loses data: storage evicted under a phone
       (`lib/persist.ts`) and sync failing where nothing said so (`useSyncHealth`)
-- [ ] Empty states, the rest of the error states
-- [ ] Answer the open questions in [product.md](product.md#open-questions)
+- [x] Empty states — `copy.ts` carries them for the ledger, history, the rate
+      registry and a link that opens nothing
+
+CSV export and categories were the rest of it and are **cut**, below. So is the
+custom domain, which was only ever the owner pointing DNS at Cloudflare —
+`workers.dev` doesn't expire, so it is not project work.
 
 ## Phase 8 — Three kinds of entry ✅ *(2026-08-30)*
 Expenses, incomes and transfers, all editable, on one form and one detail
@@ -96,6 +99,7 @@ then reshaped by three rounds of follow-ups on 2026-08-28 —
 
 ## Later, deliberately
 Restaurant bill splitting · recurring expenses · push notifications ·
-real-time collaboration · spend analytics. (Receipt OCR left this list on
-2026-08-28 — it's Phase 4 now.) Seams described in
+real-time collaboration · spend analytics · **storing receipt photos** ·
+**CSV export** · **categories**. (Receipt OCR left this list on 2026-08-28 and
+shipped as Phase 4; the last three joined it on 2026-09-05.) Seams described in
 [product.md](product.md#deliberately-not-in-the-mvp). Don't pre-build them.
