@@ -24,7 +24,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=][&via=]` | Version history, whole-group or per-entry. Per-entry carries the entry's own `via` so the chain back stays exact |
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
-| `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity and forgetting the group are buttons under it. Removing, changing identity and forgetting each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
+| `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 

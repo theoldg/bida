@@ -59,10 +59,10 @@ export default function GroupsPage() {
 /**
  * One row of "your groups" — and, on a long press or a right click, the two
  * actions that belong to a group from outside it: hand its link to someone,
- * or forget it. Copying needs only the key this device already holds, so it is
- * offered whether or not anyone has been claimed here; forgetting mirrors the
- * gate on the Members screen's own "Forget group" row — offered once this
- * device has claimed a member, though `forgetGroup` itself doesn't need one.
+ * or forget it — the only way to forget one. Copying needs only the key this
+ * device already holds, so it is offered whether or not anyone has been claimed
+ * here; forgetting waits until this device has claimed a member, though
+ * `forgetGroup` itself doesn't need one.
  */
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;

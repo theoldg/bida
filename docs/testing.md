@@ -145,8 +145,8 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 3. **Walks the routes in both themes** via two `newContext()`s with
    `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Eleven scenes have no URL
    worth visiting and are reached by driving instead: five dialogs (add member,
-   forget group, delete entry, a transfer side's person picker, and the rate
-   editor), `who-had-what` twice, `expense-split-amounts` (a deliberate
+   forget group — from the groups list's row menu — delete entry, a transfer
+   side's person picker, and the rate editor), `who-had-what` twice, `expense-split-amounts` (a deliberate
    shortfall) and `payers` — the last two hang off the entry form's in-memory
    draft, so their own URLs photograph an empty frame.
 

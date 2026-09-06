@@ -267,15 +267,19 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
-      // Adding someone is the last row of the list, mid-name; forgetting is the
-      // dialog this app draws in place of confirm() (ADR-0008).
+      // Adding someone is the last row of the list, mid-name.
       await page.goto(`${base}/g/members?id=${groupId}`);
       await page.getByLabel("Add someone").fill("Nadia");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
       process.stdout.write(`${theme}/add-member `);
-      await page.getByLabel("Add someone").fill("");
-      await page.getByRole("button", { name: "Forget group" }).click();
+
+      // Forgetting lives only in the groups list's row menu, so the shot goes
+      // through it: a right click opens the menu, and the confirmation is the
+      // dialog this app draws in place of confirm() (ADR-0008).
+      await page.goto(`${base}/`);
+      await page.locator(".rows .row").first().click({ button: "right" });
+      await page.getByRole("menuitem", { name: "Forget group" }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-forget.png`) });
       process.stdout.write(`${theme}/forget `);

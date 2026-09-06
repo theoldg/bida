@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
@@ -11,7 +11,7 @@ import { Icon } from "../../../components/icons";
 import { InviteButton } from "../../../components/invite";
 import { AddName } from "../../../components/name-adder";
 import { copy } from "../../../lib/copy";
-import { addMember, claimIdentity, forgetGroup, removeMember } from "../../../lib/db/commands";
+import { addMember, claimIdentity, removeMember } from "../../../lib/db/commands";
 import { money, plural } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../lib/hooks";
@@ -45,11 +45,9 @@ interface BlockingEntry {
 type Ask =
   | { kind: "who" }
   | { kind: "remove"; id: string; name: string }
-  | { kind: "blocked"; name: string; body: string; entries: BlockingEntry[] }
-  | { kind: "forget" };
+  | { kind: "blocked"; name: string; body: string; entries: BlockingEntry[] };
 
 function MembersScreen() {
-  const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
@@ -127,12 +125,6 @@ function MembersScreen() {
     await addMember(groupId, me, name);
   }
 
-  async function forget() {
-    if (!groupId) return;
-    await forgetGroup(groupId);
-    router.replace(route.groups());
-  }
-
   return (
     <Screen>
       <Body>
@@ -165,9 +157,6 @@ function MembersScreen() {
                 name is yours is already on the list, as the check mark. */}
             <GhostRow icon="users" label={copy.members.whoChange}
               onClick={() => setAsk({ kind: "who" })} />
-
-            <GhostRow icon="trash" label={copy.members.forget}
-              onClick={() => setAsk({ kind: "forget" })} />
           </div>
         </Scroll>
       </Body>
@@ -202,13 +191,6 @@ function MembersScreen() {
             <button className="btn btn-p" onClick={() => setAsk(null)}>{copy.act.close}</button>
           </div>
         </Dialog>
-      ) : null}
-
-      {ask?.kind === "forget" ? (
-        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
-          onConfirm={forget} onClose={() => setAsk(null)}>
-          <p>{copy.members.forgetBody}</p>
-        </ConfirmDialog>
       ) : null}
     </Screen>
   );
