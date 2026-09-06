@@ -10,6 +10,14 @@
 # never discarded.
 set -e
 
+# Every question below is about ancestry, and a shallow clone cannot answer one:
+# past the graft boundary a local `main` that is merely behind looks exactly like
+# a branch of unrelated work, so the safety check fires on a clone that is only
+# truncated. Deepen first — the harness clones with `--depth`, and this repo's
+# whole history is smaller than one `pnpm install`.
+if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+  git fetch --unshallow origin --quiet 2>/dev/null || true
+fi
 git fetch origin main --quiet
 work=$(git rev-parse --abbrev-ref HEAD)
 
@@ -25,6 +33,10 @@ fi
 if git show-ref --quiet refs/heads/main &&
    [ -n "$(git rev-list origin/main..main --not "$work" 2>/dev/null)" ]; then
   echo "local main has commits that are not on origin/main or $work — sort that out by hand" >&2
+  if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+    echo "(the clone is still shallow, so those commits may just be history this" >&2
+    echo " clone cannot see past; \`git fetch --unshallow\` and re-run before believing it)" >&2
+  fi
   exit 1
 fi
 
