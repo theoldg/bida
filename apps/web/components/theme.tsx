@@ -10,13 +10,20 @@
  */
 
 /**
- * Paint the OS status bar to match the shell it sits above.
+ * Tell the platform what colour the shell's top edge is.
+ *
+ * In a browser tab and a desktop PWA window this paints the chrome. On an
+ * installed Android app it no longer paints anything — the shell draws under
+ * the status bar and paints that strip itself (see layout.tsx) — but Chrome
+ * still reads it to pick the status-bar icon tint, so it has to keep saying
+ * what is actually up there or the clock goes white on white.
  *
  * The obvious version — a pair of `<meta name="theme-color" media="(prefers-
  * color-scheme: …)">` — answers the wrong question: it follows the *phone's*
- * setting, while `data-theme` can override it. Toggle a light phone to dark and
- * Android keeps a paper-white status bar over a near-black app. So resolve it
- * from the DOM instead, after `data-theme` is set, and re-run on every change.
+ * setting, while `data-theme` can override it, and the browser takes the first
+ * *matching* meta, so the pair would outrank the correction rather than lose to
+ * it. So resolve it from the DOM instead, after `data-theme` is set, and re-run
+ * on every change.
  *
  * `--card` rather than `--paper`: on a phone `.app` is full-bleed, so the card
  * is what actually abuts the status bar. Reading the token is what keeps this

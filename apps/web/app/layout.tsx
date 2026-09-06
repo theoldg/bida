@@ -41,13 +41,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // No `viewportFit: "cover"`: cover is the opt-in to drawing *behind* the
-  // system bars, and from Chrome 135 that includes Android's gesture nav bar,
-  // so the shell's height then tracks bars that come and go and the layout
-  // moves under your thumb. Without it the viewport is clamped between the
-  // bars and never resizes. The `max(_, env(safe-area-inset-*))` padding on
-  // the bars stays: the insets read 0 here, so those are their floors, and
-  // they self-heal if a platform ever reports one anyway.
+  // Load-bearing, and not for notches: on Android 15 an app that doesn't draw
+  // behind the bars cannot colour them either. `Window.setStatusBarColor` is a
+  // no-op from API 35, and it is the call Chrome falls back to for a standalone
+  // web app that hasn't asked for cover — while the icon-tint call beside it
+  // still lands, which is why the bar went white-on-white rather than simply
+  // not changing. With cover, Chrome puts the webapp in short-edges cutout
+  // mode and the shell itself paints the strip: `.topbar` pads by
+  // env(safe-area-inset-top) over `--card`, so the bar follows `data-theme`
+  // exactly, with no browser or manifest in the loop. See frontend.md#pwa.
+  viewportFit: "cover",
   // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
   // already sized for a thumb, and a zoomed page strands the fixed bottom bar
   // off-screen with no obvious way back. Android honours this pair; iOS Safari

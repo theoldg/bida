@@ -146,38 +146,36 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 }
 
 /**
- * The manifest's four colours are the CSS tokens hand-copied, and they have to
- * stay that way: on Android an installed app's status bar and splash are
- * painted from the manifest, not from the page, so a token edit that misses
- * this file leaves a light bar over a dark app with nothing to say why. There
- * is no way to share the value — the manifest is static JSON a browser reads
- * before the app exists — so the copy is checked instead of avoided.
+ * The manifest's two colours are the CSS light tokens hand-copied, and they
+ * have to stay that way: they paint the splash and the install prompt, which
+ * are what a phone shows before the app exists to paint anything. There is no
+ * way to share the value — the manifest is static JSON read before the page —
+ * so the copy is checked instead of avoided. Light only, deliberately: the
+ * manifest has no dark half that any browser reads (docs/frontend.md#pwa).
  */
 const MANIFEST = join(ROOT, "apps/web/public/manifest.webmanifest");
 const CSS = join(ROOT, "apps/web/app/globals.css");
 
-/** The value of `--token` in the last block that sets it: `:root[data-theme="dark"]`. */
-function token(css, name, { dark }) {
-  const all = [...css.matchAll(new RegExp(`--${name}\\s*:\\s*(#[0-9A-Fa-f]{6})`, "g"))];
-  const hit = dark ? all.at(-1) : all[0];
+/** The value of `--token` in the first block that sets it: light `:root`. */
+function token(css, name) {
+  const hit = css.match(new RegExp(`--${name}\\s*:\\s*(#[0-9A-Fa-f]{6})`));
   return hit?.[1].toUpperCase();
 }
 
 {
   const css = readFileSync(CSS, "utf8");
   const manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-  // theme_color paints the status bar, which abuts the full-bleed `.app`
-  // (--card); background_color paints the splash, which is the page (--paper).
+  // theme_color is the strip above the splash, which abuts the full-bleed
+  // `.app` (--card); background_color is the splash, which is the page
+  // (--paper). Once the page is up, the shell paints both for itself.
   const expected = {
-    theme_color: token(css, "card", { dark: false }),
-    background_color: token(css, "paper", { dark: false }),
-    "color_scheme_dark.theme_color": token(css, "card", { dark: true }),
-    "color_scheme_dark.background_color": token(css, "paper", { dark: true }),
+    theme_color: token(css, "card"),
+    background_color: token(css, "paper"),
   };
-  for (const [path, want] of Object.entries(expected)) {
-    const got = path.split(".").reduce((o, k) => o?.[k], manifest)?.toUpperCase();
+  for (const [member, want] of Object.entries(expected)) {
+    const got = manifest[member]?.toUpperCase();
     if (got !== want) {
-      fail(MANIFEST, `${path} is ${got ?? "missing"} — globals.css says ${want} (docs/frontend.md#pwa)`);
+      fail(MANIFEST, `${member} is ${got ?? "missing"} — globals.css says ${want} (docs/frontend.md#pwa)`);
     }
   }
 }

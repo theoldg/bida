@@ -215,37 +215,49 @@ a minute shouldn't cost you the clock or the back gesture. The three PNGs are
 the tally wordmark in paper on an ink tile; regenerate them together if the mark
 or the ink changes, and the maskable one draws its mark smaller and unrounded so
 a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
-`appleWebApp.statusBarStyle: "default"` is the equivalent lever. There is
-deliberately **no `viewport-fit: cover`**: cover is the opt-in to drawing behind
-the system bars, and from Chrome 135 that includes Android's gesture navigation
-bar, so with it the shell's height tracks bars that come and go. Without it the
-viewport is clamped between them and the layout never moves. That leaves the
-`max(_, env(safe-area-inset-*))` padding on the two bars at its floor, which is
-what it is for.
+`appleWebApp.statusBarStyle: "default"` is the equivalent lever.
 
-**On Android the status bar is painted from the manifest, not from the page.**
-An installed app ignores `<meta name="theme-color">` entirely — verified on a
-device, after chasing the meta tag for three rounds — so the colours have to be
-manifest members: `theme_color` for the status bar and `color_scheme_dark`
-overriding it when the *phone* is in dark mode. Get it wrong and dark mode gives
-white status-bar icons on a paper-white bar, because Android picks the icon tint
-from the system theme and the bar from us. `theme_color` tracks `--card` (the
-full-bleed `.app` is what abuts the bar) and `background_color` tracks `--paper`
-(the splash is the page); `scripts/rules-check.mjs` holds those four hexes to
-the tokens, since static JSON can't read CSS.
+### The status bar is ours to paint
 
-`components/theme.tsx` still writes a `theme-color` meta from the resolved
-theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change — and
-that is what a browser *tab* and a desktop PWA window read. Deliberately one
-meta rather than a `media="(prefers-color-scheme: …)"` pair: the pair follows
-the phone while `data-theme` can override it, and the browser takes the first
-*matching* meta, so a pair would outrank a correction rather than lose to it.
-It reads `--card` off the DOM, so that value can't drift.
+**`viewport-fit: cover` is what makes the status bar follow the theme, and it is
+the only thing that does.** From Android 15 (API 35) `Window.setStatusBarColor`
+is a no-op, and it is the call Chrome falls back to for a standalone web app
+that hasn't asked for cover — while the icon-tint call beside it, on the modern
+`WindowInsetsController`, still lands. That asymmetry is the whole bug, and it
+is worth recognising by sight: **a bar that keeps its colour while the clock and
+battery flip to white is the app failing to draw edge-to-edge**, not a colour
+set wrong anywhere. With cover, Chrome puts the app in short-edges cutout mode
+and hands the strip to the page: `.topbar` pads by `env(safe-area-inset-top)`
+over `--card`, so the bar *is* the app, and it tracks `data-theme` — including a
+theme toggled against the phone's, which nothing outside the page can reach.
 
-**Known limitation.** `color_scheme_dark` keys off the phone's setting, so an
-installed Android app whose theme is toggled *against* the OS still gets the
-other bar. Nothing reaches it: the manifest can't see `data-theme`, and the meta
-that can is ignored there.
+The same applies at the other end: `--navbot` (`max(11px,
+env(safe-area-inset-bottom))`) is the foot the bottom bar sits on, and the FAB
+offsets from that token rather than a constant, because under cover the foot
+grows with the gesture bar.
+
+`components/theme.tsx` writes a single `theme-color` meta from the resolved
+theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change.
+Installed on Android it paints nothing now, but Chrome reads it for the icon
+tint, so it still has to name the colour actually at the top of the screen. In a
+browser tab and a desktop PWA window it paints the chrome as it always did.
+Deliberately one meta rather than a `media="(prefers-color-scheme: …)"` pair:
+the pair follows the phone while `data-theme` can override it, and the browser
+takes the first *matching* meta, so a pair would outrank a correction rather
+than lose to it. It reads `--card` off the DOM, so that value can't drift.
+
+`:root` also declares `color-scheme` per resolved theme, which is what puts
+scrollbars, native pickers and the canvas behind an overscroll in the same mode.
+
+The manifest keeps `theme_color` (`--card`) and `background_color` (`--paper`)
+for the splash and the install prompt — the moment before the page exists to
+paint anything. **Light only: there is no dark half of the manifest that any
+browser reads.** `user_preferences.color_scheme_dark` never shipped, and
+Chromium's manifest parser has no dark colour in it at all; the
+`dark_theme_color` that survives in its mojom is marked obsolete and unset, so
+`chrome://webapks` prints "Dark theme color:" empty however you spell the
+member. `scripts/rules-check.mjs` holds the two light hexes to the tokens, since
+static JSON can't read CSS.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
