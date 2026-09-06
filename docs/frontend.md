@@ -125,7 +125,7 @@ confers nothing without the secret.
   `/new`, `/g/members` and `/g/claim`. A dialog is for a decision with a
   consequence to state; it was never right for a list you fill. Living in the
   list costs two rules: **one name, one person** — a name already on it is
-  refused as you type (`lib/names.ts`), since a member is only ever drawn as
+  refused as you type (`core/names.ts`), since a member is only ever drawn as
   their name — and the row **follows the list down**, as a browser scrolls to
   a field only as it takes focus, and this one never lets go
   — clear of the keyboard, per the `--kb` Gotcha below.

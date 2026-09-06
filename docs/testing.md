@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # links · rules · typecheck · 438 tests · export build — pre-push, ~45s
+pnpm check       # links · rules · typecheck · 491 tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time
@@ -37,7 +37,7 @@ stay red. `pnpm entries` spent a commit asserting a string the copy had since
 recapitalised. Run `pnpm verify` after touching a screen, not only when
 something feels wrong.
 
-`packages/core` gets real coverage — 253 tests; the bar is in
+`packages/core` gets real coverage — 306 tests; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets 185, and they
 are not all smoke: the command layer, `checkEntry` and the split tabs' own
 inputs — where being wrong outside core costs money — are covered in earnest,
@@ -51,7 +51,7 @@ screens.
 ## What the core suite guarantees
 
 Not a list of test names — the properties they hold, which is what you'd
-otherwise have to read 253 tests to learn:
+otherwise have to read 306 tests to learn:
 
 - **Money never floats.** BigInt internals, half-away-from-zero rounding, ISO
   4217 exponent overrides (JPY 0, TND 3, CLF 4).

@@ -2,11 +2,12 @@
 /**
  * `pnpm rules` — the rules the docs state, checked against the code.
  *
- * Three of this project's decisions are one careless line away from being
+ * Four of this project's decisions are one careless line away from being
  * quietly reversed, and each would be found months later by a person rather
- * than by a test: core stops being pure, a browser dialog creeps back in, or a
- * sentence is typed into a screen instead of into lib/copy.ts. Cheap to check,
- * expensive to rediscover — so they run in `pnpm check`.
+ * than by a test: core stops being pure, a screen decides for itself what to
+ * refuse, a browser dialog creeps back in, or a sentence is typed into a screen
+ * instead of into lib/copy.ts. Cheap to check, expensive to rediscover — so
+ * they run in `pnpm check`.
  *
  * The bar for adding one: it is written down as a decision, a single line
  * reverses it, and no test would notice. Style is not on this list — there is
@@ -134,5 +135,5 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
-  : "rules: core is pure, no browser dialogs, no stray copy");
+  : "rules: core is pure, refusals come from the registry, no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);

@@ -12,8 +12,6 @@ import { scheduleSync } from "../sync";
  * in the app appends to the log, advances the clock or touches Dexie's tables.
  */
 
-export type { OpDraft };
-
 /**
  * Append ops and materialise what they touched, atomically.
  *

@@ -1,5 +1,5 @@
 import type { CurrencyCode } from "./money.js";
-import type { EntityKind, Op, OpKind } from "./ops.js";
+import type { EntityKind, OpKind } from "./ops.js";
 import { memberInvolved } from "./payers.js";
 import { currenciesInUse } from "./rates.js";
 import {
@@ -187,16 +187,6 @@ export const INVARIANTS: readonly RegisteredInvariant[] = [
   liveEntriesHaveLiveRates,
 ];
 
-/** Every violation in the state, by invariant name. Empty when the state is legal. */
-export function detectAll(state: GroupState): Record<string, unknown[]> {
-  const found: Record<string, unknown[]> = {};
-  for (const invariant of INVARIANTS) {
-    const violations = invariant.detect(state);
-    if (violations.length > 0) found[invariant.name] = violations;
-  }
-  return found;
-}
-
 /**
  * The ops that would make this state legal. Empty when it already is, which is
  * what makes running this on every merge cost nothing.
@@ -241,5 +231,3 @@ export function restoreClaimDrafts(state: GroupState, memberId: Id): OpDraft[] {
   if (!member?.deletedAt) return [];
   return [{ entity: "member", entityId: memberId, kind: "update", patch: { deletedAt: null } }];
 }
-
-export type { Op };

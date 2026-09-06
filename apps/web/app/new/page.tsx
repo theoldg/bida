@@ -59,7 +59,7 @@ export default function NewGroupPage() {
 
   // Your own name is on the same list as everyone else's, so it plays by the
   // same rule: one Ana, and the app can tell people apart everywhere it only
-  // ever shows a name (lib/names.ts).
+  // ever shows a name (core/names.ts).
   const clash = nameTaken(myName, others);
   const ready = name.trim().length > 0 && myName.trim().length > 0
     && !clash && currency.length === 3 && !busy;

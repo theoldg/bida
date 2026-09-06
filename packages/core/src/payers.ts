@@ -213,6 +213,5 @@ export function memberInvolved(entries: EntryTables, memberId: Id): boolean {
 
 // The detector that pairs with this refusal — tombstoned, and still on a live
 // entry — is `liveEntriesNameLiveMembers` in invariants.ts, which declares the
-// guard and its repair together. It used to live here as `strandedMembers`, a
-// second function that happened to agree with `memberInvolved` and was free to
-// drift from it.
+// guard and its repair together. A second predicate here that happened to agree
+// with `memberInvolved` is the drift that file exists to prevent.

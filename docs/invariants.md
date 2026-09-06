@@ -61,15 +61,15 @@ missing a refusal yields a state with no trace to repair from.
 | Two live members never share a `nameKey` | natural key (the name) | held — legacy groups excepted |
 | A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
 
-## Decided
+## Why each is held the way it is
 
-Calls from the owner, 2026-09-05. Each removes more than it adds, and together
-they cut the programme from five healers to two. **The whole-entity merge is
-built**; the two below it are not.
+The calls that closed this, and what each one bought. The merge rule and the
+name key are the two worth copying: each retires an invariant rather than
+registering a healer for it.
 
-**An entry merges whole, not per field.** *Built — the rule and its two
-amendments are [ADR-0002](decisions/0002-append-only-op-log.md) and
-[sync.md](sync.md#the-operation).* It belongs on this list because of what it
+**An entry merges whole, not per field**
+([ADR-0002](decisions/0002-append-only-op-log.md),
+[sync.md](sync.md#the-operation)). It belongs on this list because of what it
 removes: an amount from one phone beside a split from another that does not sum
 to it was reachable, dropped the entry out of balances behind a warning, and was
 the one case no healer could repair — nothing recovers intent from two
@@ -181,16 +181,12 @@ dropped it would erase the attribution to satisfy a property nobody wanted.
 ## Gotchas
 
 - **A guard and its healer must be one declaration.** They used to be two
-  functions that happened to agree — `memberInvolved` refusing, `strandedMembers`
-  detecting — and free to drift. Every defect in this file was a guard whose
-  healer was never written: the check looked like enforcement, so nobody asked
-  what happened when it lost. `Invariant` now requires the repair and makes the
-  refusal the optional half, which is the inversion that matters.
+  functions that happened to agree — one refusing, another detecting — and free
+  to drift. Every defect in this file was a guard whose healer was never
+  written: the check looked like enforcement, so nobody asked what happened when
+  it lost. `Invariant` now requires the repair and makes the refusal the
+  optional half, which is the inversion that matters.
 - **Healers must not fight.** One that tombstones and one that lifts, pointed
   at the same row, is an op loop that syncs. Whatever runs them has to reach a
   fixed point and be tested for it, especially once healing moves onto the sync
   path where a repair triggers the push that triggers the repair.
-- **The name-as-identity decision earns an ADR when it is built** — it is
-  expensive to reverse, and a future session will argue with it. Not before:
-  an ADR records a decision the code already obeys
-  ([decisions/](decisions/README.md)).

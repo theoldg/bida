@@ -18,7 +18,7 @@ import { nameTaken } from "@hajsik/core";
  * one name, and a removal has a consequence to state first.
  *
  * Two things follow from the field living inside the list it fills. A name
- * already on that list is refused here rather than added twice (lib/names.ts),
+ * already on that list is refused here rather than added twice (core/names.ts),
  * said as it is typed and not after the fact. And each name pushes this row
  * further down, so the field follows the list rather than walking off the
  * bottom of it.

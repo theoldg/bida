@@ -110,24 +110,6 @@ export function sameValue(a: unknown, b: unknown): boolean {
 }
 
 /**
- * The fields of `changes` that differ from what the entity already holds —
- * an `update` op's patch. A form sends its whole self back on every save, so
- * without this every edit would carry every field.
- */
-export function changedFields(existing: object, changes: object): Record<string, unknown> {
-  // `object`, not `Record<string, unknown>`: an entity is an interface without
-  // an index signature, so the stricter type would refuse every caller.
-  const held = existing as Record<string, unknown>;
-  const patch: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(changes as Record<string, unknown>)) {
-    if (value === undefined) continue;
-    if (sameValue(value, held[key])) continue;
-    patch[key] = value;
-  }
-  return patch;
-}
-
-/**
  * The same rule for a field nobody typed. A derived field — a base amount, a
  * normalised payer map — is recomputed from what did change, so it has to be
  * re-tested against the stored value rather than written because its inputs

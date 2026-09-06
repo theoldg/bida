@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  INVARIANTS, detectAll, healDrafts, liveEntriesHaveLiveRates,
+  INVARIANTS, healDrafts, liveEntriesHaveLiveRates,
   liveEntriesNameLiveMembers, restoreClaimDrafts, wouldViolate, type OpDraft,
 } from "./invariants.js";
 import { foldOps } from "./fold.js";
@@ -92,7 +92,6 @@ describe("the registry", () => {
   });
 
   it("finds nothing in a state nobody has broken", () => {
-    expect(detectAll(foldOps(marrakechOps()))).toEqual({});
     expect(healDrafts(foldOps(marrakechOps()))).toEqual([]);
   });
 });
@@ -149,7 +148,6 @@ describe.each(INVARIANTS.map((i) => [i.name, i] as const))("%s", (name, invarian
       log = applyDrafts(log, drafts);
     }
     expect(healDrafts(foldOps(log))).toEqual([]);
-    expect(detectAll(foldOps(log))).toEqual({});
   });
 });
 

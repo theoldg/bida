@@ -134,7 +134,7 @@ and nowhere else.
   `restoreClaimDrafts`, signed as the person being restored. Not a registered
   invariant: its premise is which member *this* phone is, and no `GroupState`
   holds that. Forgetting the group is the exit
-  ([invariants.md](invariants.md#decided)).
+  ([invariants.md](invariants.md#why-each-is-held-the-way-it-is)).
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
   to zero; hiding them is what made the bars stop summing to zero on screen.

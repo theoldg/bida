@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changedFields, only, sameValue, setDerived } from "./patch";
+import { only, sameValue, setDerived } from "./patch";
 
 /**
  * The merge rule, asked directly. Every case here was previously reachable
@@ -40,27 +40,6 @@ describe("sameValue", () => {
     // change a person can see — which is why the expense editor canonicalises
     // the split before it gets here rather than asking this to be cleverer.
     expect(sameValue(["a", "b"], ["b", "a"])).toBe(false);
-  });
-});
-
-describe("changedFields", () => {
-  const stored = { description: "Dinner", amountMinor: 4000, currency: "EUR", payers: null };
-
-  it("is empty when the form sends its whole self back unchanged", () => {
-    expect(changedFields(stored, { ...stored })).toEqual({});
-  });
-
-  it("carries the one field that moved, and nothing beside it", () => {
-    expect(changedFields(stored, { ...stored, amountMinor: 4500 }))
-      .toEqual({ amountMinor: 4500 });
-  });
-
-  it("treats undefined as a field the caller is not editing", () => {
-    // Not the same as null, which clears it: an `update` op's absent field
-    // means "leave it alone", so a clear still has to write the null.
-    expect(changedFields(stored, { description: undefined })).toEqual({});
-    expect(changedFields({ ...stored, payers: { a: 1 } }, { payers: null }))
-      .toEqual({ payers: null });
   });
 });
 

@@ -49,8 +49,8 @@ export async function groupState(groupId: string): Promise<GroupState> {
 /**
  * Re-fold one entity from its own ops and write the result.
  *
- * Entity-scoped is safe because merging is per-field within one entity: an op
- * never affects another entity's fields. It also means a write touches one row,
+ * Entity-scoped is safe because an op only ever touches the entity it names,
+ * whichever way that entity merges. It also means a write touches one row,
  * so a live query over the expense list doesn't re-render on a member rename.
  *
  * Scoped to the group as well as the entity, which matters for exactly one
