@@ -109,8 +109,9 @@ function coPayers(state: State): [Id, number][] | null {
     .filter(([, v]) => typeof v === "number" && Number.isFinite(v) && v !== 0) as [Id, number][];
   // One contributor is a single payer written the long way — `normalisePayers`
   // stores null for it, and an edit that collapses the map to one name has
-  // changed nothing a person can see.
-  return live.length > 1 ? live.sort(([a], [b]) => (a < b ? -1 : 1)) : null;
+  // changed nothing a person can see. The order is the caller's to set, and it
+  // sets it by name — see `inNameOrder`.
+  return live.length > 1 ? live : null;
 }
 
 /**
@@ -143,8 +144,24 @@ export function describe(
     const day = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? dayLabel(v) : undefined);
     return { was: day(c.before), now: day(c.after) ?? "" };
   };
+  /**
+   * The people of a split, in the order they are printed rather than the order
+   * they are stored. `splitParticipants` sorts by id, and an id is a hash of
+   * the name now (ADR-0034), so a was/now pair came out in two unrelated
+   * orders — "Cy, Ana, Bruno" over "Ana, Bruno" — and the reader had to work
+   * out which name had gone. Sorting by the name puts the two lines in step.
+   */
+  const inNameOrder = (spec: SplitSpec) =>
+    splitParticipants(spec)
+      .map((id) => [id, memberById.get(id)?.name ?? copy.unknown] as const)
+      .sort(([, a], [, b]) => a.localeCompare(b));
   const namesOf = (spec: SplitSpec | null | undefined) =>
-    spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? copy.unknown).join(", ") : "";
+    spec ? inNameOrder(spec).map(([, name]) => name).join(", ") : "";
+  /** The payer side of a fold, ordered the same way and for the same reason. */
+  const payersByName = (state: State) =>
+    coPayers(state)
+      ?.map(([id, amount]) => [id, nameOf(id), amount] as const)
+      .sort(([, a], [, b]) => a.localeCompare(b)) ?? null;
   /**
    * What each person is down for, in the mode's own words — "Evenly", "Ana ×2
    * · Bo ×1", "Ana €12.00 · Bo €8.00". The names are already on the line above
@@ -153,12 +170,11 @@ export function describe(
   const shareLine = (spec: SplitSpec | null | undefined): string => {
     if (!spec) return "";
     if (spec.mode === "equal") return copy.split.mode.equal;
-    const name = (id: Id) => memberById.get(id)?.name ?? copy.unknown;
-    return splitParticipants(spec).map((id) => {
+    return inNameOrder(spec).map(([id, name]) => {
       const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
         : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, currency)
           : copy.history.percent((spec.bps[id] ?? 0) / 100);
-      return copy.history.shareOf(name(id), value);
+      return copy.history.shareOf(name, value);
     }).join(" · ");
   };
 
@@ -298,8 +314,8 @@ export function describe(
     if (field("payers") ?? field("paidBy")) {
       /** Who put money in, by name: `payerList`, over a state not an `Expense`. */
       const payerNames = (state: State) => {
-        const spec = coPayers(state);
-        return spec ? spec.map(([id]) => nameOf(id)).join(", ") : nameOf(state["paidBy"]);
+        const spec = payersByName(state);
+        return spec ? spec.map(([, name]) => name).join(", ") : nameOf(state["paidBy"]);
       };
       /**
        * The same people and what each of them put in, in the entry's own
@@ -307,10 +323,10 @@ export function describe(
        * one line answers both questions and neither ever repeats the other.
        */
       const payerLine = (state: State) => {
-        const spec = coPayers(state);
+        const spec = payersByName(state);
         if (!spec) return nameOf(state["paidBy"]);
         const code = ownCurrency(state);
-        return spec.map(([id, amount]) => said.shareOf(nameOf(id), money(amount, code))).join(" · ");
+        return spec.map(([, name, amount]) => said.shareOf(name, money(amount, code))).join(" · ");
       };
       const wasWho = payerNames(rev.before);
       const nowWho = payerNames(rev.after);

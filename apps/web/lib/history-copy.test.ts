@@ -116,6 +116,57 @@ suite("describe", () => {
     expect(latest!.diff!.now).not.toContain("Marie");
   });
 
+  it("reads both lines of a split in one order, so the pair can be compared", async () => {
+    // A member id is a hash of the name (ADR-0034) and `splitParticipants`
+    // sorts by id, so the stored order has nothing to do with the read one:
+    // the two lines came out shuffled against each other — "Cy, Ana, Bruno"
+    // over "Ana, Bruno" — leaving the reader to find the name that had gone.
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const ana = await addMember(groupId, theo, "Ana");
+    const bruno = await addMember(groupId, theo, "Bruno");
+    const cy = await addMember(groupId, theo, "Cy");
+    const everyone = [theo, ana, bruno, cy];
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Beers",
+      occurredAt: Date.now(),
+      amountMinor: 10_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: everyone },
+    });
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "equal", members: [theo, ana, bruno] },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who’s involved");
+    expect(latest!.diff!.was).toBe("Ana, Bruno, Cy, Theo");
+    expect(latest!.diff!.now).toBe("Ana, Bruno, Theo");
+  });
+
+  it("reads the payers in that same order", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Siurek", baseCurrency: "EUR", myName: "Theo",
+    });
+    const ana = await addMember(groupId, theo, "Ana");
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Beers",
+      occurredAt: Date.now(),
+      amountMinor: 10_000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, ana] },
+    });
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 6_000, [ana]: 4_000 } });
+
+    const [latest] = await described(groupId);
+    expect(latest!.diff!.now).toBe("Ana €40.00 · Theo €60.00");
+  });
+
   it("stays quiet about a mode swapped for one that means the same", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     // One part each is evenly, written differently — so the edit that carries
