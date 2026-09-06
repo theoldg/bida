@@ -113,6 +113,12 @@ confers nothing without the secret.
   and `receiptBlocker` — the Receipt tab with no bill, or a bill nobody has
   assigned — goes in the split's own footer beside "Enter an amount to split",
   since it is the split that is short.
+- **A press already spending the draft is the form's own `saving` flag.**
+  `checkEntry` answers whether the entry *may* be saved, which is a question
+  about the form and not about whether a save is in flight — so two taps landing
+  before `router.replace` did both went through, recording a transfer twice for
+  twice the money. Every other button in the app that writes already held one.
+  `pnpm entries` presses Save twice.
 - **The invite link is `components/invite.tsx`**, written once for the two top
   bars that carry it and the groups list's row menu, which offers it without a
   top bar of its own. `navigator.clipboard.writeText` rejects on an insecure

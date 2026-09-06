@@ -110,6 +110,17 @@ function EditEntryScreen() {
    */
   const [itemsAfterRate, setItemsAfterRate] = useState(false);
   const [failed, setFailed] = useState<string>();
+  /**
+   * A save in flight. Two taps on Save land before `router.replace` does, and
+   * both passed `ready` — which is a question about the form, not about
+   * whether one press is already spending it. That wrote a transfer twice,
+   * for twice the money, and gave an expense a second create op saying
+   * nothing. Every other button in the app that writes already holds this
+   * (`ConfirmDialog`, `RateDialog`, `NameAdder`, `WhoPicker`); this one
+   * didn't. Cleared only on failure — a save that worked is navigating away,
+   * and the press that lands during that must still find the button spent.
+   */
+  const [saving, setSaving] = useState(false);
 
   // A scan can outlive the screen that started it — it is a network round
   // trip to a model, and people put the phone down. The draft still takes the
@@ -397,7 +408,8 @@ function EditEntryScreen() {
     // said — `useClaimGate` sends a phone that hasn't to the screen that asks
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
-    if (!ready || !groupId || !actor) return;
+    if (!ready || saving || !groupId || !actor) return;
+    setSaving(true);
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
     try {
@@ -444,6 +456,7 @@ function EditEntryScreen() {
       clearDraft(groupId);
       router.replace(route.group(groupId));
     } catch (err) {
+      setSaving(false);
       setFailed(errorText(err));
     }
   };
@@ -467,7 +480,7 @@ function EditEntryScreen() {
             : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
-          right={<button className="action" onClick={save} disabled={!ready}>{copy.act.save}</button>}
+          right={<button className="action" onClick={save} disabled={!ready || saving}>{copy.act.save}</button>}
         />
 
         <Scroll>

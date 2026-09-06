@@ -211,7 +211,10 @@ three kinds through the real UI, edits them, and reads the history back. It
 also drives the rate registry end to end — a new currency opening the dialog by
 itself, the two directions of the field moving together, and correcting a saved
 rate re-valuing an entry already in the ledger
-([ADR-0005](decisions/0005-money-and-currency.md)).
+([ADR-0005](decisions/0005-money-and-currency.md)). And it presses Save twice
+from the keyboard, because one press was landing as two writes and a `click()`
+cannot reproduce that — it waits for a settled screen in between, which is
+exactly the window the second tap arrives in.
 
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping

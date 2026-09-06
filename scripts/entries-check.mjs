@@ -299,6 +299,56 @@ await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
 
+// ---- one press on Save is one entry ------------------------------------
+// Save asked `ready`, which is a question about the form, not about whether a
+// press is already spending it — so two taps landing before `router.replace`
+// did both went through. A transfer was written twice, for twice the money,
+// and an expense picked up a second create op that said nothing. Sent from the
+// keyboard because two `click()`s are two waits with a settled screen between
+// them; this is the one press arriving twice, which is what a thumb does.
+async function pressSaveTwice() {
+  await page.getByRole("button", { name: "Save" }).focus();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.waitForURL(/\/g\?id=/);
+}
+
+await page.goto(`${base}/g?id=${g}`);
+await page.waitForSelector(".rows a.row");
+const beforeDouble = await page.locator(".rows a.row").count();
+
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.getByRole("tab", { name: "Transfer" }).click();
+await page.waitForSelector(".transfer");
+await page.locator("input.amount").fill("5");
+await page.waitForTimeout(120);
+await pressSaveTwice();
+await page.waitForFunction(
+  (n) => document.querySelectorAll(".rows a.row").length > n, beforeDouble, { timeout: 8000 },
+);
+await page.waitForTimeout(400);
+report(await page.locator(".rows a.row").count() === beforeDouble + 1,
+  "two presses on Save record one transfer, not two");
+
+// The same press against a create that *is* idempotent — the draft's id makes
+// the entry one entry either way — still had a revision to spare.
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.locator("input.amount").fill("6");
+await page.locator("#what").fill("Twice");
+await page.waitForTimeout(120);
+await pressSaveTwice();
+await page.waitForFunction(
+  () => [...document.querySelectorAll(".rows a.row")].some((r) => r.innerText.includes("Twice")),
+  null, { timeout: 8000 },
+);
+await page.locator("a.row").filter({ hasText: "Twice" }).click();
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("link", { name: "History" }).click();
+await page.waitForSelector(".tle");
+const creates = (await page.locator(".what").allInnerTexts())
+  .filter((t) => /created this expense/i.test(t)).length;
+report(creates === 1, `one press creates the entry once — ${creates} create(s) in its history`);
+
 await browser.close();
 close();
 finish();

@@ -105,6 +105,15 @@ called one on every edit rather than only the crossing, each figure is priced in
 its own currency, and a scan, a who-had-what grid and a rewritten split mode
 each say so ([sync.md](sync.md#history-ui)).
 
+**One press on Save is one entry.** Save asked `checkEntry`, which answers
+whether the form may be saved and not whether a press is already spending it, so
+two taps landing before the navigation did both went through: a transfer
+recorded twice, for twice the money, and an expense given a second create op
+that said nothing. The form holds a `saving` flag now, as every other button
+that writes already did, and `pnpm entries` presses Save twice. Found by driving
+the app adversarially — mashing the controls rather than walking them
+([frontend.md](frontend.md#state)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.
