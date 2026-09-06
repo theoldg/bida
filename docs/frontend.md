@@ -130,8 +130,11 @@ confers nothing without the secret.
   a field only as it takes focus, and this one never lets go
   — clear of the keyboard, per the `--kb` Gotcha below.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
-  from `copy.history`. It must be **total** — it runs inside a render over
-  every patch the log holds, so one throw is a white screen, not a missing line.
+  from `copy.history`. One revision usually moved several fields — an entry is
+  saved whole — and then it returns no sentence about any one of them, but a
+  labelled was/now line for each ([sync.md](sync.md#history-ui)). It must be
+  **total** — it runs inside a render over every patch the log holds, so one
+  throw is a white screen, not a missing line.
 
 ## Every word, in `lib/copy.ts`
 

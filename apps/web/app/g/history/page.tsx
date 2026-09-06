@@ -144,6 +144,17 @@ function HistoryScreen() {
                           <span className="now2">{d.diff.now}</span>
                         </div>
                       ) : null}
+                      {d.also?.length ? (
+                        <div className="also">
+                          {d.also.map((a) => (
+                            <div key={a.label} className="alsoi">
+                              <span className="lbl">{a.label}</span>
+                              {a.was !== undefined ? <span className="was">{a.was}</span> : null}
+                              {a.now !== undefined ? <span className="now2">{a.now}</span> : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                       {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
                       {subject ? (
                         <Link className="tlink" href={subject.href}>

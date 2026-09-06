@@ -37,7 +37,8 @@ entity as its saver saw it and the highest HLC wins all of it, so an amount can
 no longer sit beside a split from another phone that does not sum to it —
 [ADR-0002](decisions/0002-append-only-op-log.md). Its two amendments hold the
 repairs up: `deletedAt` merges per field, and `createdAt` is write-once in the
-fold. History diffs two folds rather than reading the patch.
+fold. History diffs two folds rather than reading the patch, and a revision that
+moved several fields lists all of them rather than being captioned as one.
 
 **Healing runs on the sync path.** `syncGroup` heals right after it rebuilds
 from a pull, because a merge is the only thing that can make the state illegal

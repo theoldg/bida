@@ -86,12 +86,15 @@ async function seed(page, base) {
   await addTransfer(page, base, groupId, { amount: "800", from: "Sam", to: "Theo" });
 
   // ...and one edit, so the history screens have a revision that is not just a
-  // create: something with a diff to render.
+  // create: something with a diff to render. Two fields, because an entry is
+  // saved whole and that is what a revision usually looks like — the shot
+  // should show the sentence *and* the line under it.
   await page.getByText("Riad Jnane").click();
   await page.waitForURL(/\/g\/entry\?/);
   await page.getByRole("link", { name: "Edit" }).click();
   await page.waitForURL(/entry\/edit/);
   await page.locator("input.amount").fill("5100");
+  await page.locator("#what").fill("Riad Jnane, two nights");
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
   return groupId;

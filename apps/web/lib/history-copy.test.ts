@@ -27,13 +27,18 @@ async function wipe() {
 /** Every revision of a group, described exactly as the screens describe them. */
 async function described(
   groupId: string,
-): Promise<{ rev: Revision; said: string; diff?: { was?: string; now: string } }[]> {
+): Promise<{
+  rev: Revision;
+  said: string;
+  diff?: { was?: string; now: string };
+  also?: { label: string; was?: string; now?: string }[];
+}[]> {
   const members = await db().members.where("groupId").equals(groupId).toArray();
   const byId = new Map<string, Member>(members.map((m) => [m.id, m]));
   const group = await db().groups.get(groupId);
   return activityFeed(await opsForGroup(groupId)).map((rev) => {
     const d = describe(rev, byId.get(rev.op.actor)?.name ?? "Someone", byId, group!.baseCurrency);
-    return { rev, said: d.what, diff: d.diff };
+    return { rev, said: d.what, diff: d.diff, also: d.also };
   });
 }
 
@@ -123,6 +128,73 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.rev.changes.map((c) => c.field)).toContain("split");
     expect(latest!.said).toBe("Theo changed the amount");
+  });
+
+  // An entry is saved whole, so one revision routinely carries several changed
+  // fields. Ranking them and printing the winner is how a permanent record came
+  // to say the amount was €120 under an edit that had just put it back to €90 —
+  // so where more than one moved, none of them gets the sentence.
+  it("lists every field the same save changed, ranking none of them", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    const sam = await addMember(groupId, theo, "Sam");
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "equal", members: [theo, marie, sam] },
+      amountMinor: 12_000,
+      description: "Beers and chips",
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo edited this entry");
+    expect(latest!.diff).toBeUndefined();
+    // The names are in the split's own order, which is the members' ids — so
+    // the line is read for who is on it, and the rest for their exact values.
+    const [involved, ...rest] = latest!.also!;
+    expect(involved!.label).toBe("Who’s involved");
+    expect(involved!.was).not.toContain("Sam");
+    expect(involved!.now).toContain("Sam");
+    expect(rest).toEqual([
+      { label: "Amount", was: "€100.00", now: "€120.00" },
+      { label: "Description", was: "Beers", now: "Beers and chips" },
+    ]);
+  });
+
+  // The case history exists for: whose save put the figure back, and to what.
+  it("never lets a reverted amount go unmentioned", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, marie, expenseId, { amountMinor: 12_000 });
+    // What Marie's phone posts when it saves an entry it had not seen Theo's
+    // amount for: the whole entity as she has it, reverting the figure.
+    await editExpense(groupId, theo, expenseId, {
+      amountMinor: 10_000,
+      split: { mode: "equal", members: [theo] },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.also).toContainEqual({ label: "Amount", was: "€120.00", now: "€100.00" });
+  });
+
+  it("leaves a revision that changed one field with its own sentence", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, { description: "Beers and chips" });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed the description");
+    expect(latest!.diff).toEqual({ was: "Beers", now: "Beers and chips" });
+    expect(latest!.also).toBeUndefined();
+  });
+
+  // A crossing is the sentence a person reads that edit by — but only while it
+  // is the whole of what the save did.
+  it("puts a crossing into an income on a line with everything else it moved", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, { kind: "income", amountMinor: 12_500 });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo edited this income");
+    expect(latest!.also).toEqual([
+      { label: "Kind", was: "Expense", now: "Income" },
+      { label: "Amount", was: "€100.00", now: "€125.00" },
+    ]);
   });
 
   it("prices an exact split in real money", async () => {

@@ -416,6 +416,27 @@ export const copy = {
     untitled: "Untitled entry",
     more: (rest: string) => `Show ${rest} more`,
 
+    /**
+     * The name of a field on a secondary line — the rest of what one revision
+     * changed, under the sentence for the first of them. Short, because the
+     * sentence above has already said who and what kind of edit it was.
+     */
+    field: {
+      kind: "Kind",
+      involved: "Who’s involved",
+      split: "Split",
+      amount: "Amount",
+      currency: "Currency",
+      rate: "Rate",
+      payer: "Who paid",
+      description: "Description",
+      date: "Date",
+      category: "Category",
+      photos: "Photos",
+      sides: "Between",
+      note: "Note",
+    },
+
     /** One sentence per revision. `who` is the actor's own name. */
     createdEntry: (who: string, noun: string) => `${who} created this ${noun}`,
     deletedEntry: (who: string, noun: string) => `${who} deleted this ${noun}`,

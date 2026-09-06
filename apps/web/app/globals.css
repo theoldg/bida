@@ -725,6 +725,15 @@ dialog.scrim::backdrop { background: transparent }
   flex-direction: column; gap: 2px }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
+/* The rest of what one revision changed. An entry is saved whole, so a
+   revision routinely moves several fields; the sentence above covers the first
+   and these carry the others, since an amount that moved must never be the
+   line that goes missing. */
+.also { margin-top: 5px; display: flex; flex-direction: column; gap: 2px }
+.alsoi { font-family: var(--f-mono); font-size: 11px; display: flex; flex-wrap: wrap;
+  align-items: baseline; gap: 6px }
+.alsoi .lbl { font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted) }
 .note { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 3px }
 /* Where a whole-group revision leads: the expense it was about. Reads as a
    thing to press rather than as more text under a sentence. */

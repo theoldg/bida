@@ -3,12 +3,13 @@ import {
   type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
 } from "@hajsik/core";
 import { copy } from "./copy";
-import { money, plural } from "./format";
+import { dayLabel, money, plural } from "./format";
 
 /**
  * Which sentence the log gets for a revision. The sentences themselves are
  * `copy.history` — this file only decides which one applies, and what goes in
- * the diff line under it.
+ * the lines under it. A revision that moved several fields gets no sentence
+ * about any one of them: it says the entry was edited, and lists them.
  *
  * It must be **total**: it runs inside a render over every patch the log
  * holds, so one throw is a white screen, not a missing line.
@@ -17,6 +18,52 @@ import { money, plural } from "./format";
 export interface Described {
   what: string;
   diff?: { was?: string; now: string };
+  /**
+   * Every field the revision changed, a labelled line each — what a revision
+   * that moved more than one gets *instead* of a sentence about one of them.
+   * An entry is saved whole (`editExpense`), so several at once is ordinary,
+   * and a merge can revert somebody's amount in the same op that changes the
+   * description. Ranking the fields is what let a permanent record caption
+   * that revision "changed who's involved" and never mention the money.
+   */
+  also?: Detail[];
+}
+
+/** One field on its own line: what it is called, and what it moved between. */
+export interface Detail {
+  label: string;
+  was?: string;
+  now?: string;
+}
+
+type Values = { was?: string; now: string };
+
+/** One changed field, before it is known whether it is alone in the revision. */
+interface Part {
+  /** The sentence, where this is the only thing that moved. */
+  what: string;
+  /** The field's name, where it is one of several. */
+  label: string;
+  /** Under the sentence. */
+  diff?: Values;
+  /**
+   * On the labelled line, where that wants saying differently: a crossing into
+   * an income is a whole sentence on its own but a line needs the two words,
+   * and a count of photos is in the sentence already.
+   */
+  line?: Values;
+}
+
+/**
+ * One field moved: it gets its sentence, and its diff under it. More than one
+ * moved: no field outranks another, so the sentence says only that the entry
+ * was edited and each of them gets an equal line beneath it.
+ */
+function assemble(parts: Part[], edited: string): Described {
+  const [first] = parts;
+  if (!first) return { what: edited };
+  if (parts.length === 1) return { what: first.what, diff: first.diff };
+  return { what: edited, also: parts.map((p) => ({ label: p.label, ...(p.line ?? p.diff) })) };
 }
 
 /**
@@ -45,7 +92,10 @@ function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | n
   }
 }
 
-/** Every entity kind gets a plain-English sentence and, where it helps, a diff. */
+/**
+ * Every entity kind gets a plain-English sentence and, where it helps, a diff —
+ * or, where one revision moved several fields, a line for each of them.
+ */
 export function describe(
   rev: Revision,
   who: string,
@@ -59,6 +109,11 @@ export function describe(
   /** Money, or nothing at all — a diff line is worth less than a live screen. */
   const cash = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? money(v, currency) : undefined);
   const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
+  /** A day the way the ledger writes it — "Today", "Sat 5 April". */
+  const dayPair = (c: { before: unknown; after: unknown }) => {
+    const day = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? dayLabel(v) : undefined);
+    return { was: day(c.before), now: day(c.after) ?? "" };
+  };
   const namesOf = (spec: SplitSpec | null | undefined) =>
     spec ? splitParticipants(spec).map((id) => memberById.get(id)?.name ?? copy.unknown).join(", ") : "";
   /**
@@ -104,13 +159,27 @@ export function describe(
       };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
+
+    // Everything the revision moved, in the order the screens read it. An
+    // entry is saved whole, so this is regularly several fields — collected
+    // rather than returned one at a time, since the first one recognised is
+    // not allowed to be the only one the log mentions.
+    const parts: Part[] = [];
+    const named = said.field;
+
     // A crossing between the two is worth a sentence; the bookkeeping isn't.
     // An expense is the *absence* of `kind` on the log, so an edit that carries
     // `kind: "expense"` against nothing changed nothing — say what else the
     // edit did instead of announcing a direction it never left.
     const crossing = field("kind");
     if (crossing && (crossing.after === "income" || crossing.before === "income")) {
-      return { what: crossing.after === "income" ? said.toIncome(who) : said.toExpense(who) };
+      const kindWord = (v: unknown) =>
+        (v === "income" ? copy.entryKind.label.income : copy.entryKind.label.expense);
+      parts.push({
+        what: crossing.after === "income" ? said.toIncome(who) : said.toExpense(who),
+        label: named.kind,
+        line: { was: kindWord(crossing.before), now: kindWord(crossing.after) },
+      });
     }
     const split = field("split");
     if (split) {
@@ -123,13 +192,19 @@ export function describe(
       // nothing on screen saying what had actually moved.
       const wasWho = namesOf(was);
       const nowWho = namesOf(now);
-      if (wasWho !== nowWho) {
-        return { what: said.changedInvolved(who), diff: { was: wasWho || undefined, now: nowWho } };
-      }
       const wasHow = shareLine(was);
       const nowHow = shareLine(now);
-      if (JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now)) && wasHow !== nowHow) {
-        return { what: said.changedShares(who), diff: { was: wasHow || undefined, now: nowHow } };
+      if (wasWho !== nowWho) {
+        parts.push({
+          what: said.changedInvolved(who), label: named.involved,
+          diff: { was: wasWho || undefined, now: nowWho },
+        });
+      } else if (JSON.stringify(proportions(was)) !== JSON.stringify(proportions(now))
+        && wasHow !== nowHow) {
+        parts.push({
+          what: said.changedShares(who), label: named.split,
+          diff: { was: wasHow || undefined, now: nowHow },
+        });
       }
       // Same people, same shares: the spec was rewritten — a mode swapped for
       // an identical one, a re-picked member — and there is nothing to report.
@@ -142,36 +217,60 @@ export function describe(
     // is there to print.
     const amount = field("baseAmountMinor") ?? field("amountMinor");
     if (amount) {
-      return { what: said.changedAmount(who), diff: { was: cash(amount.before), now: cash(amount.after) ?? "" } };
+      parts.push({
+        what: said.changedAmount(who), label: named.amount,
+        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+      });
     }
-    if (field("currency")) {
-      const c = field("currency")!;
-      return { what: said.changedCurrency(who), diff: { was: text(c.before), now: text(c.after) ?? "" } };
+    const currencyChange = field("currency");
+    if (currencyChange) {
+      parts.push({
+        what: said.changedCurrency(who), label: named.currency,
+        diff: { was: text(currencyChange.before), now: text(currencyChange.after) ?? "" },
+      });
     }
-    if (field("rateToBase")) {
-      const c = field("rateToBase")!;
-      return { what: said.changedRate(who), diff: { was: text(c.before), now: text(c.after) ?? "" } };
+    const rate = field("rateToBase");
+    if (rate) {
+      parts.push({
+        what: said.changedRate(who), label: named.rate,
+        diff: { was: text(rate.before), now: text(rate.after) ?? "" },
+      });
     }
-    if (field("paidBy")) {
-      const c = field("paidBy")!;
-      return { what: said.changedPayer(who), diff: { was: nameOf(c.before), now: nameOf(c.after) } };
+    const payer = field("paidBy");
+    if (payer) {
+      parts.push({
+        what: said.changedPayer(who), label: named.payer,
+        diff: { was: nameOf(payer.before), now: nameOf(payer.after) },
+      });
     }
-    if (field("description")) {
-      const c = field("description")!;
-      return {
-        what: said.changedDescription(who),
-        diff: { was: (c.before as string) || copy.none, now: (c.after as string) || copy.none },
-      };
+    const description = field("description");
+    if (description) {
+      parts.push({
+        what: said.changedDescription(who), label: named.description,
+        diff: {
+          was: (description.before as string) || copy.none,
+          now: (description.after as string) || copy.none,
+        },
+      });
     }
-    if (field("occurredAt")) return { what: said.changedDate(who) };
-    if (field("categoryId")) return { what: said.changedCategory(who) };
-    if (field("attachmentIds")) {
-      const c = field("attachmentIds")!;
-      const before = Array.isArray(c.before) ? c.before.length : 0;
-      const after = Array.isArray(c.after) ? c.after.length : 0;
-      return { what: said.changedPhotos(who, after > before, plural(Math.abs(after - before), copy.noun.photo)) };
+    const when = field("occurredAt");
+    if (when) parts.push({ what: said.changedDate(who), label: named.date, diff: dayPair(when) });
+    // Nothing sets a category yet (it is a seam), and `describe` is handed no
+    // category names to print — so this one is a label with no values under it.
+    if (field("categoryId")) {
+      parts.push({ what: said.changedCategory(who), label: named.category });
     }
-    return { what: said.editedEntry(who, noun) };
+    const photos = field("attachmentIds");
+    if (photos) {
+      const before = Array.isArray(photos.before) ? photos.before.length : 0;
+      const after = Array.isArray(photos.after) ? photos.after.length : 0;
+      parts.push({
+        what: said.changedPhotos(who, after > before, plural(Math.abs(after - before), copy.noun.photo)),
+        label: named.photos,
+        line: { was: plural(before, copy.noun.photo), now: plural(after, copy.noun.photo) },
+      });
+    }
+    return assemble(parts, said.editedEntry(who, noun));
   }
 
   if (rev.entity === "identity") {
@@ -196,23 +295,34 @@ export function describe(
       };
     }
     if (rev.isDelete) return { what: said.deletedTransfer(who) };
+    // A transfer is saved whole too, so the same rule holds: one field moved
+    // gets a sentence, several get a line each.
+    const parts: Part[] = [];
+    const named = said.field;
     const amount = field("baseAmountMinor") ?? field("amountMinor");
     if (amount) {
-      return { what: said.changedAmount(who), diff: { was: cash(amount.before), now: cash(amount.after) ?? "" } };
+      parts.push({
+        what: said.changedAmount(who), label: named.amount,
+        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+      });
     }
-    if (field("fromMember") || field("toMember")) {
-      const c = field("fromMember") ?? field("toMember")!;
-      return { what: said.changedSides(who), diff: { was: nameOf(c.before), now: nameOf(c.after) } };
+    const side = field("fromMember") ?? field("toMember");
+    if (side) {
+      parts.push({
+        what: said.changedSides(who), label: named.sides,
+        diff: { was: nameOf(side.before), now: nameOf(side.after) },
+      });
     }
-    if (field("note")) {
-      const c = field("note")!;
-      return {
-        what: said.changedNote(who),
-        diff: { was: (c.before as string) || copy.none, now: (c.after as string) || copy.none },
-      };
+    const note = field("note");
+    if (note) {
+      parts.push({
+        what: said.changedNote(who), label: named.note,
+        diff: { was: (note.before as string) || copy.none, now: (note.after as string) || copy.none },
+      });
     }
-    if (field("occurredAt")) return { what: said.changedDate(who) };
-    return { what: said.editedTransfer(who) };
+    const when = field("occurredAt");
+    if (when) parts.push({ what: said.changedDate(who), label: named.date, diff: dayPair(when) });
+    return assemble(parts, said.editedTransfer(who));
   }
 
   if (rev.entity === "member") {

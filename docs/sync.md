@@ -194,6 +194,15 @@ names, or a share line ("Evenly" → "Ana ×2 · Bo ×1"). Where neither moved i
 says nothing at all and the next field speaks, because a spec can be rewritten
 without meaning anything different.
 
+A revision is regularly **several** fields, since an entry is saved whole: a
+merge can revert somebody's amount in the same op that changes the description.
+So the sentences above are for a revision that moved exactly one field. Where
+more than one moved, **no field outranks another**: the line says only that the
+entry was edited, and each field that moved gets a labelled was/now line under
+it. Ranking them is how the log came to caption that revision "changed who's
+involved" and never mention that the amount had gone back — the one thing an
+audit trail exists to answer.
+
 ## Gotchas
 
 - **Never garbage-collect ops.** They are the history feature. If the log ever
