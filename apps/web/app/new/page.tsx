@@ -13,7 +13,7 @@ import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY
 import { createGroup } from "../../lib/db/commands";
 import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { nameTaken } from "../../lib/names";
+import { nameTaken } from "@hajsik/core";
 import { goUp } from "../../lib/nav";
 
 /**

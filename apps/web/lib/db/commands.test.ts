@@ -607,6 +607,34 @@ describe("commands", () => {
   });
 
   /**
+   * The name is the key (core/names.ts). The refusal on the field still stands
+   * — it catches every case one phone can see both halves of — but this is what
+   * holds when two phones cannot see each other.
+   */
+  it("mints one member when two phones add the same name", async () => {
+    const { groupId, theo } = await trip();
+    const first = await addMember(groupId, theo, "Ana");
+    // The second phone, offline, typing it the way people actually type it.
+    const second = await addMember(groupId, theo, "  ana  ");
+
+    expect(second).toBe(first);
+    await rebuild(groupId);
+    const anas = (await db().members.where("groupId").equals(groupId).toArray())
+      .filter((m) => m.name.trim().toLowerCase() === "ana");
+    expect(anas).toHaveLength(1);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  it("returns the person, not a stranger with their name, when they are re-added", async () => {
+    const { groupId, theo } = await trip();
+    const ana = await addMember(groupId, theo, "Ana");
+    await removeMember(groupId, theo, ana);
+
+    expect(await addMember(groupId, theo, "Ana")).toBe(ana);
+    expect((await db().members.get(ana))?.deletedAt).toBeNull();
+  });
+
+  /**
    * The other half of healing, and the one the registry cannot hold: which
    * member this phone is. Decided in docs/invariants.md — the removal always
    * gives way, and forgetting the group is the exit that ends the argument.

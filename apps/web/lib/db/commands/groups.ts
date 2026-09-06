@@ -1,5 +1,5 @@
 import {
-  healDrafts, newColorSeed, newGroupSecret, newId, restoreClaimDrafts,
+  colorSeedFor, healDrafts, memberIdFor, newGroupSecret, newId, restoreClaimDrafts,
   type CurrencyCode, type Id,
 } from "@hajsik/core";
 import { db } from "../dexie";
@@ -28,7 +28,7 @@ export async function createGroup(
   now = Date.now(),
 ): Promise<{ groupId: Id; memberId: Id; secret: string }> {
   const groupId = newId();
-  const memberId = newId();
+  const memberId = memberIdFor(groupId, input.myName);
   const secret = newGroupSecret();
 
   await saveGroupKey(groupId, secret);
@@ -54,7 +54,9 @@ export async function createGroup(
         entity: "member",
         entityId: memberId,
         kind: "create",
-        patch: { name: input.myName, colorSeed: newColorSeed(), deletedAt: null },
+        patch: {
+          name: input.myName, colorSeed: colorSeedFor(groupId, input.myName), deletedAt: null,
+        },
       },
       {
         entity: "identity",
@@ -67,9 +69,9 @@ export async function createGroup(
       // separate arrivals a millisecond apart.
       ...(input.otherNames ?? []).map((name) => ({
         entity: "member" as const,
-        entityId: newId(),
+        entityId: memberIdFor(groupId, name),
         kind: "create" as const,
-        patch: { name, colorSeed: newColorSeed(), deletedAt: null },
+        patch: { name, colorSeed: colorSeedFor(groupId, name), deletedAt: null },
       })),
     ],
     now,
@@ -197,13 +199,18 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
  * person arriving under their own name.
  */
 export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
-  const memberId = newId();
+  // The name *is* the id (core/names.ts). Two phones adding "Ana" offline
+  // therefore write one entity rather than two people nothing on screen tells
+  // apart, and the fold merges the creates. It also means re-adding somebody
+  // who was removed returns the person, balance and history included, rather
+  // than a stranger with their name.
+  const memberId = memberIdFor(groupId, name);
   await appendOps(groupId, actor ?? memberId, [
     {
       entity: "member",
       entityId: memberId,
       kind: "create",
-      patch: { name, colorSeed: newColorSeed(), deletedAt: null },
+      patch: { name, colorSeed: colorSeedFor(groupId, name), deletedAt: null },
     },
   ]);
   return memberId;

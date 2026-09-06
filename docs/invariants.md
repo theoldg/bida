@@ -3,8 +3,10 @@
 *For: anyone adding a check that reads other entities, or touching member
 identity or the merge rule.*
 
-This is the open work. Everything else shipped; what is left is the class of
-defect below, and the direction the owner has settled on for closing it.
+The class of defect this file exists for is closed: every invariant in the
+table below is held by something the code enforces, not by a doc. It stays as
+the map — what each one is held by, why the guards alone were never enough, and
+what a new one has to do to be added.
 
 **Why this class and not another.** Every other bug costs a screen. These cost
 the ledger. Two phones that fold the same log into different balances break the
@@ -56,7 +58,7 @@ missing a refusal yields a state with no trace to repair from.
 | An entry's derived fields agree with its own (`paidBy` ∈ `payers`) | unreachable — whole-entity merge | held |
 | A device's claimed member is live | healer — `restoreClaimDrafts` | held |
 | A group has at least one live member | follows from the above | held |
-| Two live members never share a `nameKey` | — | **open** — name as identity, part built |
+| Two live members never share a `nameKey` | natural key (the name) | held — legacy groups excepted |
 | A currency with live entries has a live rate | healer — `liveEntriesHaveLiveRates` | held |
 
 ## Decided
@@ -79,31 +81,13 @@ merges per field, so a save made offline cannot re-tombstone what a repair just
 lifted, and `createdAt` is write-once in the fold rather than merely documented
 as such.
 
-**A member's name is their identity, and neither can be renamed.** *Not built.*
-The rename
-button is already off the member row; `renameMember` survives only to fold the
-`name` updates existing groups have written. What is left is the half that pays
-for it: `memberId = hash(groupId + nameKey)`, and the same-name check in the UI
-dropping to a hint. Two phones adding "Ana" offline then mint the *same id* —
-the creates are one entity, the fold merges them, and there is no duplicate to
-find. This is the third entity keyed by what it is rather than by `newId()`,
-after the rate and the identity claim ([data-model.md](data-model.md#entities)).
-
-It also closes the argument that killed this idea the first time. A natural key
-is only safe when the key is immutable — otherwise a rename frees a name whose
-id is still occupied, and the next person to type it inherits the balance.
-Forbidding rename is what makes the name immutable.
-
-What it costs, both of which are broken today rather than working:
-
-- **Two genuinely different people named Ana.** They now merge silently, with
-  no way out. `nameTaken` keeps refusing — it costs nothing and catches every
-  case one device can see both halves of — and the field gains the names
-  already in the group, so the second Ana has something to act on rather than
-  just a no. The refusal is courtesy either way: two offline phones still
-  merge, which is what `names.ts` has always claimed the app means.
-- **Typos are permanent** once any money names you, since removal is refused
-  there. Accepted rather than reintroducing rename.
+**A member's name is their identity, and neither can be renamed.**
+`memberId = hash(groupId + nameKey)`, so two phones adding "Ana" offline mint
+the *same id* — the creates are one entity, the fold merges them, and there is
+no duplicate to find. The refusal on the field stays, because it costs nothing
+and catches every case one device can see both halves of; it now says what to
+do rather than only saying no. The reasoning, what it costs and what was
+rejected: [ADR-0034](decisions/0034-a-member-is-their-name.md).
 
 **A cleared rate comes back the same way a member does.** A live entry — an
 expense *or* a transfer — written in a currency whose rate row is tombstoned
@@ -120,12 +104,6 @@ not an absence. `receiptInvolved` and `receiptAssignments` therefore join
 `payerList` and `splitParticipants` in `expenseInvolves`, which makes the
 removal refuse *and* the healer put them back from a single edit — the whole
 point of the guard and its healer being one declaration.
-
-**Legacy groups keep the gap.** Members already written carry `newId()` and
-cannot be re-keyed — every entry references them and ops are never rewritten.
-So an old "Ana" and a newly added "Ana" still collide in a group that predates
-the change. Accepted knowingly: the affected groups are known, and the merge
-healer this would otherwise need is the most expensive thing on the list.
 
 **A phone whose member was removed puts them back.** Removal is refused while
 anybody is named on a live entry, but that needs both facts on one phone — so
@@ -164,11 +142,6 @@ resurrect every claimed member and forgetting would end nothing.
   every edit, and a receipt-scanned expense is not small, and ops are never
   collected ([sync.md](sync.md#gotchas)). It ships whole and gets measured on a
   realistic group afterwards — a number settles this, not an argument.
-- **Should healing move onto the sync path?** It runs from `/g` today, which
-  needs somebody to open a screen with a claimed identity. `syncGroup` is where
-  merges actually happen, and the come-back healer above has to run there —
-  but a repair triggers the push that triggers the repair, so whatever runs it
-  there has to be shown to reach a fixed point under a loop it cannot see.
 
 ## Enforcement
 

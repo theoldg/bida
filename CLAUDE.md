@@ -37,7 +37,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
-| `docs/invariants.md` | The open work: which invariants survive a merge, and how each is held |
+| `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
 | `scripts/` | Browser checks (`entries`, `back`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
 
 ## Stack
@@ -53,9 +53,9 @@ secret link. [architecture.md](docs/architecture.md) ·
 
 Every phase is closed. The app is deployed and syncing in production, a group
 holds three kinds of entry — expense, income, transfer
-([ADR-0010](docs/decisions/0010-what-an-entry-is.md)) — and what is left is one
-class of defect: state two phones can merge into that no check can prevent.
-[docs/invariants.md](docs/invariants.md) has it, and the direction settled on.
+([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), and the last class of
+defect is closed: state two phones can merge into that no check can prevent is
+now named and repaired by [docs/invariants.md](docs/invariants.md).
 
 **Exact state and next action live in
 [docs/implementation-status.md](docs/implementation-status.md)** — not here, so

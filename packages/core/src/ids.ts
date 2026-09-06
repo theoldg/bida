@@ -46,9 +46,3 @@ export function newGroupSecret(): string {
   return [...b].map((x) => NODE_ALPHABET[x % NODE_ALPHABET.length]).join("");
 }
 
-export function newColorSeed(): number {
-  const c = getCrypto();
-  const b = new Uint32Array(1);
-  c.getRandomValues(b);
-  return b[0]! % 360;
-}

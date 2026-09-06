@@ -12,3 +12,4 @@ export * from "./balance.js";
 export * from "./invariants.js";
 export * from "./settle.js";
 export * from "./scan.js";
+export * from "./names.js";

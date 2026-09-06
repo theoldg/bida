@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
-import { nameTaken } from "../lib/names";
+import { nameTaken } from "@hajsik/core";
 
 /**
  * Adding people, in the list itself.

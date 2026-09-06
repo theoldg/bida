@@ -21,8 +21,9 @@ two devices.
 
 ## The next action
 
-**[invariants.md](invariants.md)** — the only open work, and it is one subject:
-invariants the UI checks at write time that a merge can break anyway.
+**Nothing is scheduled.** The last open subject — invariants the UI checks at
+write time that a merge can break anyway ([invariants.md](invariants.md)) — is
+closed. What follows is what closed it, newest last; one measurement is owed.
 
 **The enforcement layer is built.** `core/invariants.ts` holds each invariant's
 detector and its repair in one declaration that cannot omit the repair, the two
@@ -44,17 +45,17 @@ from a pull, because a merge is the only thing that can make the state illegal
 removed puts them back there too, signed as the person restored
 (`restoreClaimDrafts`); forgetting the group is the exit.
 
-**One decided call remains unbuilt: a member's name is their identity** —
-`memberId = hash(groupId + nameKey)` now that renaming is gone, so two phones
-adding "Ana" offline mint one member rather than two. It earns an ADR when it
-is built.
+**A member is their name.** `memberIdFor(groupId, name)` keys the member by
+`nameKey`, now that renaming is gone, so two phones adding "Ana" offline mint
+one member rather than two — [ADR-0034](decisions/0034-a-member-is-their-name.md).
+Groups that predate it keep `newId()` members and the gap that comes with them.
 
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.
 
-Nothing else is scheduled — a session with no assignment should take the next
-one of those, not start a feature the owner cut.
+A session with no assignment should take that measurement, not start a feature
+the owner cut.
 
 ## What a cold session needs to know
 

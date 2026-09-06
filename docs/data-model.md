@@ -125,6 +125,11 @@ and nowhere else.
   beat that refusal, `liveEntriesHaveLiveRates` lifts the tombstone the way the
   member healer does. A currency the group has *never* priced is a different
   state and is left alone — there is no number to put back.
+- **A member's id is their name** — `memberIdFor(groupId, name)`, so two phones
+  adding "Ana" offline write one member rather than two people nothing on
+  screen tells apart, and re-adding somebody returns the person with their
+  balance ([ADR-0034](decisions/0034-a-member-is-their-name.md)). Members
+  written before that carry `newId()` and keep the gap.
 - **A phone whose member was removed puts them back**, whatever the reason —
   `restoreClaimDrafts`, signed as the person being restored. Not a registered
   invariant: its premise is which member *this* phone is, and no `GroupState`
