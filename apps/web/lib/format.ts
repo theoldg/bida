@@ -1,5 +1,5 @@
 import { formatMinor, type CurrencyCode, type PayerValidation, type SplitValidation } from "@hajsik/core";
-import { copy, type Noun } from "./copy";
+import { copy, type Noun, type Voice } from "./copy";
 
 /**
  * Display helpers. Money formatting itself lives in core — this file only
@@ -79,11 +79,13 @@ export function splitFooter(
  * form shows it beside the payer field: same sentence either way, because a
  * person moving between the two screens is looking at one thing.
  */
-export function payerProblemText(check: PayerValidation, currency: CurrencyCode): string | null {
+export function payerProblemText(
+  check: PayerValidation, currency: CurrencyCode, voice: Voice = "expense",
+): string | null {
   if (check.ok) return null;
   // "Nobody" needs the words, not the figure: the shortfall is the whole
   // amount, and "€40.00 still unaccounted for" doesn't say the table is empty.
-  if (check.problem === "empty") return copy.payers.nobody;
+  if (check.problem === "empty") return copy.payers.nobody[voice];
   return shortfallText(check, currency, { under: copy.payers.under, over: copy.payers.over });
 }
 

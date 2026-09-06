@@ -38,8 +38,11 @@ function PayersScreen() {
 
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
-  if (unclaimed || !data.group || !draft) return <Blank title={copy.payers.whoPaid} />;
+  if (unclaimed || !data.group || !draft) return <Blank title={copy.payers.title.expense} />;
   const gid = groupId, current = draft;
+  // Which way the entry runs is which way this screen speaks: money going out
+  // is paid, money coming in is received. A transfer never reaches this screen.
+  const voice = draft.kind === "income" ? "income" : "expense";
   const currency = draft.currency;
 
   // What the form says this entry is worth, from the same function the form
@@ -112,7 +115,7 @@ function PayersScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={draft.kind === "income" ? copy.payers.whoReceived : copy.payers.whoPaid}
+        <TopBar title={copy.payers.title[voice]}
           sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
           right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>
             {copy.act.done}
@@ -126,8 +129,8 @@ function PayersScreen() {
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
                   <button onClick={() => toggle(m.id)} disabled={last}
-                    aria-label={last ? copy.payers.onlyPayer(m.name)
-                      : on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid(m.name)}
+                    aria-label={last ? copy.payers.onlyPayer[voice](m.name)
+                      : on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid[voice](m.name)}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <span className="rmain">
@@ -135,7 +138,7 @@ function PayersScreen() {
                         {m.name}
                       </span>
                       <span className="rmeta" style={{ display: "block" }}>
-                        {on ? copy.payers.putIn : copy.payers.didnt}
+                        {on ? copy.payers.putIn[voice] : copy.payers.didnt[voice]}
                       </span>
                     </span>
                   </button>
@@ -144,7 +147,7 @@ function PayersScreen() {
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <button onClick={() => giveRest(m.id)} className="chip"
                         aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
-                      <MinorAmountInput className="bignum splitin" aria-label={copy.payers.contribution(m.name)}
+                      <MinorAmountInput className="bignum splitin" aria-label={copy.payers.contribution[voice](m.name)}
                         currency={currency}
                         valueMinor={spec[m.id] ?? 0}
                         placeholder={bare(0, currency)}
@@ -167,13 +170,13 @@ function PayersScreen() {
                 {check.ok
                   ? copy.payers.accountedFor(
                       money(check.allocatedMinor, currency), money(amountMinor, currency))
-                  : payerProblemText(check, currency)}
+                  : payerProblemText(check, currency, voice)}
               </span>
             </div>
 
             {contributors.length > 1 ? (
               <button className="btn btn-s" style={{ marginTop: 10 }} onClick={onePayer}>
-                {copy.payers.onePayer}
+                {copy.payers.onePayer[voice]}
               </button>
             ) : null}
           </div>

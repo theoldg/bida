@@ -167,6 +167,13 @@ one back in ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Say it once
 and say it short: the screen already shows the amount, the name and the button,
 so the sentence beside them carries only what they can't.
 
+A string whose wording depends on which way the entry runs is `Voiced<T>` —
+`{ expense, income }`, keyed by the entry's kind. Money going out is *paid* and
+money coming in is *received*, and a screen that switches only its title
+describes the entry the person is not looking at: `/g/payers` asked "Who
+received it" and then said "Ana didn't pay" under her name. Every sentence on
+that screen is voiced now, as are the history's payer lines.
+
 ## One navigation
 
 At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and

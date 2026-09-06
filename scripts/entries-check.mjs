@@ -111,6 +111,17 @@ await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Received by").count() > 0, "an income relabels the payer picker");
 report(await page.getByText("Shared with").count() > 0, "an income relabels the split");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
+
+// Who put the money in is a different question on an income, and the screen
+// that asks it has to be asked in the same voice throughout: the title used to
+// switch on its own, so "Who received it" was followed by "didn't pay".
+await page.getByRole("link", { name: "Several people received it" }).click();
+await page.waitForURL(/\/g\/payers/);
+const payerScreen = await page.locator(".rows").innerText();
+report(/received/.test(payerScreen) && !/pay/.test(payerScreen),
+  "the payers screen asks an income in the income's voice");
+await page.getByRole("button", { name: "Done" }).click();
+await page.waitForURL(/entry\/edit/);
 await save(2);
 // No avatar marks it any more (ADR-0023): the verb and the sign are the two
 // signals that an entry runs the other way.

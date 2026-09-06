@@ -84,6 +84,12 @@ and `addExpense` writes it there; `pnpm entries` compares the two readings.
 Found by driving the app as text ([testing.md](testing.md), it was a €0.01
 disagreement no arithmetic test could see).
 
+**The payer screen speaks in the entry's voice.** Its title switched for an
+income and nothing else did, so "Who received it" was followed by "Ana didn't
+pay". A string whose wording turns on which way the entry runs is `Voiced<T>`
+now — the payers screen throughout, and the history's payer lines
+([frontend.md](frontend.md#every-word-in-libcopyts)).
+
 **The log reads the entity, not only the patch.** A revision carries the fold
 either side of it, so `history-copy` can say what the change alone could not: a
 co-payer added beside the largest contributor moves `payers` and nothing else,

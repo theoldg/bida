@@ -586,7 +586,7 @@ function EditEntryScreen() {
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
                   <Icon name="chev" size={13} className="spacer pchev" />
                 </button>
-                <Link href={route.payers(groupId)} className="chip" aria-label={copy.form.coPayers}>
+                <Link href={route.payers(groupId)} className="chip" aria-label={copy.form.coPayers[kind === "income" ? "income" : "expense"]}>
                   {copy.form.andSomeone}
                 </Link>
               </div>

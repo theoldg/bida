@@ -25,6 +25,15 @@ export interface Noun {
   many: string;
 }
 
+/**
+ * Said one way for an expense and the other for an income — money going out
+ * is *paid*, money coming in is *received*, and a screen that mixes the two
+ * describes the entry the person is not looking at. A transfer has no payer
+ * side of its own, so it is not asked for here.
+ */
+export type Voice = "expense" | "income";
+export type Voiced<T> = Record<Voice, T>;
+
 export const copy = {
   app: {
     name: "Hajsik",
@@ -289,7 +298,10 @@ export const copy = {
     note: "Note (optional)",
     when: "When",
     andSomeone: "+ someone",
-    coPayers: "Several people put money in",
+    coPayers: {
+      expense: "Several people put money in",
+      income: "Several people received it",
+    } as Voiced<string>,
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardBody: "This isn’t saved anywhere.",
     saveFailed: (why: string) => `Couldn’t save — ${why}`,
@@ -304,22 +316,51 @@ export const copy = {
     you: "you",
   },
 
+  /**
+   * The screen that says who put the money in — or, on an income, who took it
+   * in. Every sentence about a person on it is `Voiced`: the title alone used
+   * to switch, so an income asked "Who received it" and then said "Ana didn't
+   * pay" under her name.
+   */
   payers: {
-    whoPaid: "Who paid",
-    whoReceived: "Who received it",
-    putIn: "put money in",
-    didnt: "didn’t pay",
-    alsoPaid: (name: string) => `${name} put money in too`,
+    title: {
+      expense: "Who paid",
+      income: "Who received it",
+    } as Voiced<string>,
+    putIn: {
+      expense: "put money in",
+      income: "received some",
+    } as Voiced<string>,
+    didnt: {
+      expense: "didn’t pay",
+      income: "didn’t receive any",
+    } as Voiced<string>,
+    alsoPaid: {
+      expense: (name: string) => `${name} put money in too`,
+      income: (name: string) => `${name} received some too`,
+    } as Voiced<(name: string) => string>,
     leaveOut: (name: string) => `Leave ${name} out`,
-    onlyPayer: (name: string) => `${name} is the only payer — add somebody else first`,
-    contribution: (name: string) => `${name}’s contribution`,
+    onlyPayer: {
+      expense: (name: string) => `${name} is the only payer — add somebody else first`,
+      income: (name: string) => `${name} is the only one who received it — add somebody else first`,
+    } as Voiced<(name: string) => string>,
+    contribution: {
+      expense: (name: string) => `${name}’s contribution`,
+      income: (name: string) => `How much ${name} received`,
+    } as Voiced<(name: string) => string>,
     giveRest: (name: string) => `Give ${name} the rest`,
     rest: "rest",
     accountedFor: (allocated: string, total: string) => `${allocated} of ${total} accounted for`,
-    nobody: "Nobody has put money in yet",
+    nobody: {
+      expense: "Nobody has put money in yet",
+      income: "Nobody has received any of it yet",
+    } as Voiced<string>,
     under: "still unaccounted for",
     over: "more than the entry",
-    onePayer: "Back to one payer",
+    onePayer: {
+      expense: "Back to one payer",
+      income: "Back to one recipient",
+    } as Voiced<string>,
     discardTitle: "Discard these payers?",
     discardBody: "The entry goes back to whoever it named before.",
   },
@@ -482,11 +523,11 @@ export const copy = {
     payerWho: {
       expense: (who: string) => `${who} changed who paid`,
       income: (who: string) => `${who} changed who received it`,
-    } as Record<"expense" | "income", (who: string) => string>,
+    } as Voiced<(who: string) => string>,
     payerHow: {
       expense: (who: string) => `${who} changed how much each put in`,
       income: (who: string) => `${who} changed how much each received`,
-    } as Record<"expense" | "income", (who: string) => string>,
+    } as Voiced<(who: string) => string>,
     changedDescription: (who: string) => `${who} changed the description`,
     changedDate: (who: string) => `${who} changed the date`,
     changedCategory: (who: string) => `${who} changed the category`,
