@@ -118,7 +118,9 @@ await browser.close(); close(); finish();
 ```
 
 `serveExport({ intercept })` gets first refusal on every request — that is how
-offline-check drops an asset and forges a service-worker revision.
+offline-check drops an asset and forges a service-worker revision, which is what
+lets one run cover both a deploy that must fail to install and a good one taken
+from the groups list with a second tab still open on the old worker.
 `serveWorker()` is the other server: `wrangler dev` with a throwaway D1, so the
 static export and the sync API answer on one origin the way production does. It
 costs ~10s of boot, so reach for it only when a check needs two phones to

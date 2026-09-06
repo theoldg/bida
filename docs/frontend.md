@@ -207,7 +207,19 @@ after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
 `CACHE_VERSION` to bump — and the three things that make cache-first safe are
 [ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
 scripts/offline-check.mjs` after touching either file: it walks every screen
-with the network cut, then installs a deploy over a half-dead network.
+with the network cut, then installs a deploy over a half-dead network and takes
+a good one on demand.
+
+**Taking a new build is a tap, because it cannot be automatic.** A worker that
+activated on its own would delete the cache the open page is being served from,
+so `sw.js` only ever does it when asked: `lib/update.ts` registers the worker,
+watches for a successor reaching `installed`, and re-checks whenever the app
+comes back to the foreground — an installed app is resumed far more often than
+it is launched. `components/update.tsx` draws the offer at the foot of the
+groups list; the tap posts `{ type: "skip-waiting" }` and reloads on
+`controllerchange`, so nothing is left that could ask for the cache `activate`
+is about to drop. It is not dismissible and remembers nothing: take it now, or
+find it there next launch.
 
 ## Every money field is `components/amount-input.tsx`
 
@@ -247,6 +259,13 @@ figure-free.
 
 - `output: 'export'` disallows route handlers, `next/image` optimisation, ISR,
   middleware and dynamic params. Needing one is a change to ADR-0004.
+- **A waiting service worker waits on the whole origin, not on your app.** One
+  forgotten browser tab on the same domain is a client, and it pins the old
+  build for as long as it lives — closing and reopening the installed app, and
+  even clearing its storage, changes nothing, while an incognito window shows
+  the new build and makes it look like a deploy problem. It isn't: it is a
+  client that never went away, which is why the update is offered as a tap
+  (see [PWA](#pwa)) rather than waited for.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,

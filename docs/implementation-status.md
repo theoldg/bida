@@ -58,6 +58,15 @@ the finished list to the picker that joining already ended on
 and the actor on the ops creating it. The add row lost its Add button with it:
 leaving the field files the name ([frontend.md](frontend.md#state)).
 
+**A new build is taken by tapping for it.** The worker still never activates
+mid-session, but waiting for the last client of the origin to close turned out
+to mean *never* on a phone with a forgotten tab open — an installed app stuck on
+an old build with nothing on screen to say so, which is how this was found.
+`lib/update.ts` watches for the waiting worker and re-checks on every
+foreground; `components/update.tsx` offers it at the foot of the groups list.
+`pnpm offline` now covers the tap end to end
+([ADR-0004](decisions/0004-static-export-and-offline.md)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

@@ -70,8 +70,24 @@ self.addEventListener("install", (event) => {
   // Deliberately no `skipWaiting`. Serving the shell from cache is only safe if
   // a running page can't have its build deleted out from under it: activating
   // mid-session drops the old cache, and the next lazily-loaded chunk that page
-  // asks for is gone from the server too. The new worker waits for the app to
-  // be closed, which on a phone is constantly, and takes over on the next launch.
+  // asks for is gone from the server too. So the new worker waits for the last
+  // client of the origin to close — and "on a phone that is constantly" is the
+  // one thing this file got wrong. One forgotten browser tab on the same origin
+  // is a client, and it pins the old build for as long as it lives. The waiting
+  // worker is offered to the person instead, by lib/update.ts and the `message`
+  // handler below.
+});
+
+/**
+ * The one way this worker activates early, and it is never the worker's own
+ * idea. `install` deliberately doesn't call `skipWaiting` — see above — because
+ * the page whose cache it would delete is still on screen. This message says
+ * that page has volunteered to go: `applyUpdate` in lib/update.ts sends it and
+ * reloads on `controllerchange`, so by the time the old cache is gone there is
+ * nothing left that needed it.
+ */
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "skip-waiting") self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {

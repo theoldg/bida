@@ -100,6 +100,16 @@ export const copy = {
     manual: { tap: "Tap", then: "in the browser bar, then", label: "Add to Home Screen" },
   },
 
+  /**
+   * The waiting service worker (lib/update.ts). The second line is there
+   * because "restart" on a local-first app reads as "lose my ledger".
+   */
+  update: {
+    title: "A new version is ready",
+    body: "Restart to use it. Nothing on this phone is lost.",
+    act: "Restart",
+  },
+
   // ------------------------------------------------------------- new group
 
   newGroup: {

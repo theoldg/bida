@@ -142,6 +142,49 @@ page = await ctx.newPage();
 await ctx.setOffline(true);
 await tap("still loads offline on the next launch", () => page.goto(`${base}/`), ".rows a.row");
 
+// ---- a deploy the person is offered, and takes ---------------------------
+// The worker never activates on its own while a page is open (public/sw.js), so
+// a client that outlives the app — a forgotten tab on the same origin — pins
+// the old build indefinitely, which is how an installed phone gets stuck on a
+// build with nothing on screen to say so. `components/update.tsx` is the way
+// out, and only if the tap really activates the worker and lands on its cache.
+console.log("\nupdating on demand:");
+await ctx.setOffline(false);
+blocked.delete(ASSET_TO_DROP);
+swRevision = "gooddeploy01";
+await page.goto(`${base}/`);
+// A second client of the *old* worker, open across the tap: the case that made
+// waiting-forever possible. It must not hold the update up.
+const straggler = await ctx.newPage();
+await straggler.goto(`${base}/`);
+await page.bringToFront();
+
+const restart = page.getByRole("button", { name: "Restart" });
+await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
+await tap("a waiting worker is offered on the groups list",
+  () => restart.waitFor({ state: "visible", timeout: 20000 }), ".card");
+
+try {
+  await Promise.all([page.waitForNavigation({ timeout: 15000 }), restart.click()]);
+  await page.waitForSelector(".rows a.row", { timeout: 8000 });
+  report(true, "tapping it reloads onto the new build");
+} catch {
+  report(false, "tapping it reloads onto the new build", `at ${page.url().replace(base, "")}`);
+}
+
+const shells = (await page.evaluate(() => caches.keys())).filter((k) => k.startsWith("hajsik-shell-"));
+report(shells.includes(`hajsik-shell-${swRevision}`), "the new build's cache is the live one",
+  shells.join(", "));
+report(shells.length === 1, "and the old one is gone with it", shells.join(", "));
+report(await page.evaluate(() => !!navigator.serviceWorker.controller),
+  "the new worker controls the page");
+// Nothing is waiting any more, so there is nothing left to offer.
+report(await restart.count() === 0, "the offer is spent");
+await straggler.close();
+// And the point of all of it: the build it just took still works with no network.
+await ctx.setOffline(true);
+await tap("the new build loads offline too", () => page.goto(`${base}/`), ".rows a.row");
+
 await browser.close();
 close();
 finish();

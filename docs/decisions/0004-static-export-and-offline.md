@@ -1,6 +1,6 @@
 # 0004 — A static export: the secret in the fragment, the whole thing precached
 
-**Status:** Accepted · 2026-08-27 · offline 2026-08-29
+**Status:** Accepted · 2026-08-27 · offline 2026-08-29 · updates 2026-09-06
 
 **Context.** Next.js was a requirement, but the app is local-first: server
 rendering would fetch everything twice and break offline. That points at
@@ -35,10 +35,18 @@ cache-first** — so a launch and every tap after it paint without the network.
   what Tricount does and what people actually share. `output: 'export'` also
   forbids route handlers, `next/image` optimisation, ISR, middleware and dynamic
   params; nothing in the MVP wants them.
-- **No `skipWaiting`, no `clients.claim`.** Cache-first makes a mid-session
-  activation unrecoverable rather than slow: activating deletes the old cache,
-  and the next chunk the running page asks for is gone from the server too. A
-  deploy is visible one launch later, which is the price.
+- **No `skipWaiting` the worker decides on itself.** Cache-first makes a
+  mid-session activation unrecoverable rather than slow: activating deletes the
+  old cache, and the next chunk the running page asks for is gone from the
+  server too. So the new worker waits — but "for one launch", the price this
+  ADR first quoted, is not the real one. It waits for the *last client of the
+  origin*, and a forgotten browser tab is a client that outlives every launch;
+  an installed phone can sit on an old build indefinitely with nothing on
+  screen to say so. The waiting worker is therefore offered to the person
+  instead: `lib/update.ts` notices it, `components/update.tsx` says so at the
+  foot of the groups list, and a tap posts `skip-waiting` and reloads. The
+  reload is what makes activating safe, and asking is what makes it the
+  person's to spend.
 - The precache is all-or-nothing — one retry for stragglers, then the install
   fails and the old worker keeps running. A partial cache would strand an
   installed app on a build it can't paint. If the export outgrows what a phone

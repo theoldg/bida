@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { registerServiceWorker } from "../lib/update";
 
-/** Registers the app-shell service worker once, after first paint. */
+/**
+ * Registers the app-shell service worker once, after first paint — and, with
+ * it, the watch for the next build (lib/update.ts). Drawing what that watch
+ * finds is `components/update.tsx`, on the groups list.
+ */
 export function RegisterServiceWorker() {
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Offline precache is a nicety; a failed registration shouldn't be user-visible.
-    });
-  }, []);
+  useEffect(registerServiceWorker, []);
   return null;
 }

@@ -10,6 +10,7 @@ import { InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
+import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
@@ -47,6 +48,11 @@ export default function GroupsPage() {
 
             <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
           </div>
+
+          {/* Above the install offer, and not gated on owning a group: this one
+              is about the copy of the app you are already running, and a phone
+              with nothing in it still deserves the build it asked for. */}
+          <UpdateNudge />
 
           {/* Once there is something to come back to, and never before it. */}
           {groups && groups.length > 0 ? <InstallNudge /> : null}
