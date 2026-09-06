@@ -147,8 +147,9 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 
 /**
  * `env(safe-area-inset-*)` outside the two token definitions is a layout that
- * twitches. Chrome reports the *visible* bars in fullscreen, so the raw value
- * grows and collapses every time one unfolds; `--sat`/`--sab` are the part that
+ * twitches. Chrome reports the *visible* system bars, so the raw value grows
+ * and collapses every time one unfolds — a drag of the notification shade does
+ * it twice; `--sat`/`--sab` are the part that
  * stays, kept by components/bar-inset. A rule because the raw env is the
  * obvious thing to reach for and the twitch it buys is only visible on a phone
  * (docs/frontend.md#pwa).

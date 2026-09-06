@@ -5,12 +5,12 @@ import { useEffect } from "react";
 /**
  * The part of `env(safe-area-inset-*)` that is permanent, as `--sat` / `--sab`.
  *
- * In fullscreen the phone's bars are hidden and a swipe brings them back for a
- * few seconds. Chrome reports that: outside its short-edges cutout mode — a
- * flag off by default — it reads the *visible* system bars, so the safe area
- * grows when a bar unfolds and collapses when it hides again. Anything padding
- * by the raw inset therefore moves under your thumb twice per glance at the
- * clock, which is what made fullscreen feel broken before.
+ * A phone's system bars come and go — swiped in over an app that hides them,
+ * unfolded while the notification shade is dragged — and Chrome reports that:
+ * outside its short-edges cutout mode, a flag off by default, it reads the
+ * *visible* system bars, so the safe area grows when a bar appears and collapses
+ * when it goes. Anything padding by the raw inset therefore moves under your
+ * thumb twice per glance at the clock.
  *
  * Only some of that inset is real estate we can never have: a display cutout is
  * physically in the way for good, while a transient bar is an overlay that goes
@@ -20,10 +20,10 @@ import { useEffect } from "react";
  * free to draw over the top strip for its few seconds.
  *
  * Minimum, deliberately, not maximum: reserving the largest inset ever seen
- * would hand back the strip fullscreen exists to win, permanently, the first
- * time anyone checked the time. It also self-corrects, where a maximum could
- * not — an app launched while a bar happened to be up starts over-reserved and
- * settles the moment the bar hides.
+ * would give away a strip we do have, permanently, the first time anyone
+ * checked the time. It also self-corrects, where a maximum could not — an app
+ * launched while a bar happened to be up starts over-reserved and settles the
+ * moment the bar hides.
  *
  * The probe rather than reading the custom property: `env()` substitution into
  * a custom property is not something every engine reports back as pixels, and
@@ -43,6 +43,11 @@ export function BarInset() {
     let bottom = Infinity;
 
     function measure() {
+      // A keyboard takes the gesture bar's place at the foot, so the bottom
+      // inset can read 0 while one is up. That is not a reading with no bar in
+      // it — taking it as the floor would spend the rest of the session with
+      // the gesture bar's strip unpaid for.
+      if (root.hasAttribute("data-kb")) return;
       const style = getComputedStyle(probe);
       const t = parseFloat(style.paddingTop);
       const b = parseFloat(style.paddingBottom);

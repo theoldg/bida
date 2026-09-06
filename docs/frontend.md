@@ -208,20 +208,17 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: fullscreen`, and the colours Android paints before the page loads.
-Fullscreen costs the clock and the battery, which is a real price for an app you
-check for a minute — it is paid because the alternative is worse, and the next
-section is why. `display_override` lists `standalone` behind it so a browser
-without fullscreen still installs as an app. The three PNGs are
+`display: standalone`, and the colours Android paints before the page loads.
+The next section is why `standalone` and not `fullscreen`. The three PNGs are
 the tally wordmark in paper on an ink tile; regenerate them together if the mark
 or the ink changes, and the maskable one draws its mark smaller and unrounded so
 a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
 `appleWebApp.statusBarStyle: "default"` is the equivalent lever.
 
-### Why fullscreen: a status bar we cannot colour
+### A status bar we cannot colour, and the fullscreen that doesn't buy it
 
 **On Android 15 a standalone web app's status bar cannot be themed from the
-page, and this cost three rounds to establish.** From API 35
+page, and this cost four rounds to establish.** From API 35
 `Window.setStatusBarColor` is a no-op. It is the call Chromium's
 `StatusBarColorController` falls back to whenever the edge-to-edge helper is not
 in charge, and the icon-tint call beside it goes through `WindowInsetsController`
@@ -229,36 +226,45 @@ and still works. **Recognise it by sight: a bar that keeps its colour while the
 clock and battery flip to white is that pair, one call landing and one not.** No
 colour anywhere is set wrong; the app simply cannot paint there.
 
-Getting the helper in charge needs the page to draw edge-to-edge, and
-`DisplayCutoutController.shouldUseBrowserEdgeToEdge` grants that only with
-`viewport-fit: cover` **and** a compatible display mode — which, on the
-pre-flag path its own killswitch defaults to, means `fullscreen` and nothing
-else. So standalone leaves the bar to Chrome, Chrome cannot paint it, and it
-stays whatever the window behind it is. Fullscreen has no status bar to
-mismatch, and what the phone does show — a bar swiped in over the app — the app
-is drawing under and therefore colouring.
+Getting the helper in charge needs the page drawing edge-to-edge, which
+`DisplayCutoutController.shouldUseBrowserEdgeToEdge` grants only with
+`viewport-fit: cover` **and** a compatible display mode — which, on the pre-flag
+path its killswitch defaults to, reads in the source as `fullscreen` alone.
+**The phone says otherwise: `fullscreen` does not get the helper either, and
+charges for the attempt.** Installed that way the cutout strip is letterboxed
+black — the window never extends into it, so nothing the page paints can reach
+it — and the viewport resizes under the app every time a system bar unfolds,
+which one drag of the notification shade does twice. A bar whose colour is
+merely wrong is a mismatch; a black hole where the notch is, and a layout that
+resizes while you drag, are worse than the thing they were traded for.
 
-Three dead ends, so nobody walks back into them: a `theme-color` meta (read for
-the icon tint, paints nothing installed), a manifest dark colour (see below, no
-browser reads one), and `standalone` + `cover` (needs a flag we don't control).
+So `standalone` ships, and there are four dead ends behind it, so nobody walks
+back into one: a `theme-color` meta (read for the icon tint, paints nothing
+installed), a manifest dark colour (see below, no browser reads one),
+`standalone` + `cover` (needs the flag), and `fullscreen` + `cover` (needs the
+same flag, and costs the clock, the battery and the cutout). The display mode is
+baked into the WebAPK, so a phone that took the fullscreen manifest keeps it
+until Chrome re-mints the app.
 
 `viewport-fit: cover` is the other half and is load-bearing, not notch
 decoration: it is what puts the page under the bars in the first place. `.topbar`
-pads by `env(safe-area-inset-top)` over `--card`; `--navbot` (`max(11px,
-env(safe-area-inset-bottom))`) is the foot the bottom bar sits on, and the FAB
+pads by `--sat` over `--card`; `--navbot` (`max(11px, var(--sab))`) is the foot
+the bottom bar sits on, and the FAB
 offsets from that token rather than a constant, because under cover the foot
 grows with the gesture bar.
 
-**The jitter is real, and it is not cover's fault.** Outside short-edges cutout
-mode Chrome reads the *visible* system bars, so `env(safe-area-inset-*)` grows
-when a swiped-in bar appears and collapses when it hides — anything padding by
-it moves twice per glance at the clock. `components/bar-inset.tsx` takes the
-**smallest** inset seen this session, which is the reading with no bar in it:
-the layout then answers to a display cutout, which is permanent, and ignores a
-bar, which is an overlay that leaves on its own. Minimum and not maximum
-because reserving the largest would hand back the strip fullscreen exists to
-win, the first time anyone checked the time. `--sat` / `--sab` are that value,
-and `scripts/rules-check.mjs` keeps every rule off the raw `env()`.
+**A bar that comes and goes must not move the layout, and that is not cover's
+fault.** Outside short-edges cutout mode Chrome reads the *visible* system bars,
+so `env(safe-area-inset-*)` grows when one unfolds and collapses when it hides —
+anything padding by it moves twice per glance at the clock.
+`components/bar-inset.tsx` takes the **smallest** inset seen this session, which
+is the reading with no transient bar in it: the layout then answers to what is
+permanently in the way and ignores an overlay that leaves on its own. Minimum
+and not maximum because reserving the largest would give away a strip we do
+have, the first time anyone checked the time. It skips measuring while a
+keyboard is up (`data-kb` on the root), since a keyboard stands where the
+gesture bar does and a 0 read then is not a no-bar read. `--sat` / `--sab` are
+that value, and `scripts/rules-check.mjs` keeps every rule off the raw `env()`.
 
 `components/theme.tsx` writes a single `theme-color` meta from the resolved
 theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change.

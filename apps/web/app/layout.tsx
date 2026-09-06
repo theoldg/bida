@@ -42,15 +42,14 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Load-bearing, and not for notches: on Android 15 an app that doesn't draw
-  // behind the bars cannot colour them either. `Window.setStatusBarColor` is a
-  // no-op from API 35, and it is the call Chrome falls back to for a standalone
-  // web app that hasn't asked for cover — while the icon-tint call beside it
-  // still lands, which is why the bar went white-on-white rather than simply
-  // not changing. With cover, Chrome puts the webapp in short-edges cutout
-  // mode and the shell itself paints the strip: `.topbar` pads by
-  // env(safe-area-inset-top) over `--card`, so the bar follows `data-theme`
-  // exactly, with no browser or manifest in the loop. See frontend.md#pwa.
+  // Load-bearing, and not for notches: cover is what puts the page under the
+  // system bars, so the shell paints that strip rather than the browser — and on
+  // Android 15 the browser cannot, `Window.setStatusBarColor` being a no-op from
+  // API 35. Where Chrome hands the page the edge-to-edge treatment, `.topbar`
+  // pads by `--sat` over `--card` and the bar follows `data-theme` exactly; where
+  // it refuses, the bar keeps its own colour, which is the cost we take over
+  // `fullscreen` — that buys the same refusal *plus* a black cutout and a
+  // viewport that resizes under a swiped-in bar. See frontend.md#pwa.
   viewportFit: "cover",
   // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
   // already sized for a thumb, and a zoomed page strands the fixed bottom bar
