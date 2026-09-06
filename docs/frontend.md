@@ -322,6 +322,11 @@ figure-free.
   client that never went away, which is why the update is offered as a tap
   (see [PWA](#pwa)) rather than waited for.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
+- **The manifest is the one thing the worker fetches network-first.** It is
+  read by the browser, not the app, to decide whether to re-mint the WebAPK
+  below; cache-first meant that check was answered with our own stale copy, so
+  an edit couldn't reach an installed phone until a whole worker cycle had
+  turned over first.
 - **An installed Android app keeps the manifest it was installed with.** Chrome
   bakes `display`, `orientation`, icons and the rest into a WebAPK at install
   time; it re-reads the manifest at most daily and only then queues a rebuild,
