@@ -41,10 +41,13 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Still cover: the status bar is its own strip now, but the home indicator
-  // and a landscape notch are not, and the bars pad for them with
-  // env(safe-area-inset-*) — which reads 0 unless the viewport covers them.
-  viewportFit: "cover",
+  // No `viewportFit: "cover"`: cover is the opt-in to drawing *behind* the
+  // system bars, and from Chrome 135 that includes Android's gesture nav bar,
+  // so the shell's height then tracks bars that come and go and the layout
+  // moves under your thumb. Without it the viewport is clamped between the
+  // bars and never resizes. The `max(_, env(safe-area-inset-*))` padding on
+  // the bars stays: the insets read 0 here, so those are their floors, and
+  // they self-heal if a platform ever reports one anyway.
   // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
   // already sized for a thumb, and a zoomed page strands the fixed bottom bar
   // off-screen with no obvious way back. Android honours this pair; iOS Safari

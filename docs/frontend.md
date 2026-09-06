@@ -214,9 +214,13 @@ a minute shouldn't cost you the clock or the back gesture. The three PNGs are
 the tally wordmark in paper on an ink tile; regenerate them together if the mark
 or the ink changes, and the maskable one draws its mark smaller and unrounded so
 a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
-`appleWebApp.statusBarStyle: "default"` is the equivalent lever. `viewport-fit:
-cover` stays: the home indicator and a landscape notch are still the app's to
-pad around, and `env(safe-area-inset-*)` reads 0 without it.
+`appleWebApp.statusBarStyle: "default"` is the equivalent lever. There is
+deliberately **no `viewport-fit: cover`**: cover is the opt-in to drawing behind
+the system bars, and from Chrome 135 that includes Android's gesture navigation
+bar, so with it the shell's height tracks bars that come and go. Without it the
+viewport is clamped between them and the layout never moves. That leaves the
+`max(_, env(safe-area-inset-*))` padding on the two bars at its floor, which is
+what it is for.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
@@ -304,6 +308,14 @@ figure-free.
   client that never went away, which is why the update is offered as a tap
   (see [PWA](#pwa)) rather than waited for.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
+- **An installed Android app keeps the manifest it was installed with.** Chrome
+  bakes `display`, `orientation`, icons and the rest into a WebAPK at install
+  time; it re-reads the manifest at most daily and only then queues a rebuild,
+  which it applies once every window of the app is closed, on wifi, charging. So
+  a `display` change is invisible on an already-installed phone for days, and
+  the old mode is what you keep seeing. `about://webapks` has an Update button;
+  reinstalling is faster. Nothing to fix in the app — check there before
+  believing a manifest change didn't work.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
   and the bottom bar sits at the foot of a long page — invisible until you
