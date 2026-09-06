@@ -90,6 +90,12 @@ pay". A string whose wording turns on which way the entry runs is `Voiced<T>`
 now — the payers screen throughout, and the history's payer lines
 ([frontend.md](frontend.md#every-word-in-libcopyts)).
 
+**A deleted entry's history is titled by what it was.** The screen looked its
+subject up in the alive-only lists while its own links used the maps that keep
+the deleted ones, so an entry you opened *because* it is gone was titled
+"Transfer" — the branch a missing subject fell through to. Both read the same
+maps now.
+
 **The log reads the entity, not only the patch.** A revision carries the fold
 either side of it, so `history-copy` can say what the change alone could not: a
 co-payer added beside the largest contributor moves `payers` and nothing else,

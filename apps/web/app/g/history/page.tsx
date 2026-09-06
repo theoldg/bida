@@ -60,14 +60,18 @@ function HistoryScreen() {
   ) ?? [];
   const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
 
-    // One id parameter, both tables: history is per-entry, and a transfer has
-  // as much of it as an expense does (ADR-0010).
+  // One id parameter, both tables: history is per-entry, and a transfer has
+  // as much of it as an expense does (ADR-0010). Looked up in the maps that
+  // keep the deleted ones, like the feed's own links: half the reason to open
+  // this screen is an entry that is not there any more, and reading it off the
+  // alive-only lists left every one of those titled "Transfer" — the branch a
+  // missing subject fell through to.
   const subject = entryId
-    ? data.expenses.find((e) => e.id === entryId) ?? data.settlements.find((s) => s.id === entryId)
+    ? expenseById.get(entryId) ?? settlementById.get(entryId)
     : undefined;
-  const subjectName = !entryId ? undefined
-    : subject && "description" in subject
-      ? (subject.description || copy.group.untitled) : copy.group.transfer;
+  const subjectName = !subject ? undefined
+    : "description" in subject
+      ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
   // The feed is whole, and the page grows into it. It used to be sliced to 200
   // and then counted *after* the slice, so a group with more history than that
   // was told it had exactly 200 revisions — the one number on this screen, and

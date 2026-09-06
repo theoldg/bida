@@ -282,6 +282,23 @@ await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForSelector(".splitrow");
 report(await rows() === quoted, "and it is the same person once the entry is written");
 
+// ---- an entry that isn't there any more still has a name ----------------
+// Half the reason to open history is an entry that has been deleted, and the
+// screen looked it up in the alive-only list — so every one of them was
+// titled "Transfer", the branch a missing subject fell through to.
+await page.goto(`${base}/g?id=${g}`);
+await page.locator("a.row").filter({ hasText: "Coffee" }).click();
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("button", { name: "Delete" }).first().click();
+await page.getByRole("button", { name: "Delete" }).last().click();
+await page.waitForURL(/\/g\?id=/);
+await page.goto(`${base}/g/history?id=${g}`);
+await page.waitForSelector(".tle");
+await page.getByRole("link", { name: /Coffee/ }).first().click();
+await page.waitForURL(/\/g\/history\?.*e=/);
+const titled = await page.locator(".sub").first().innerText();
+report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
+
 await browser.close();
 close();
 finish();

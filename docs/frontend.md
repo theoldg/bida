@@ -160,6 +160,10 @@ confers nothing without the secret.
   not just the fields that moved ([sync.md](sync.md#history-ui)). It must be
   **total** — it runs inside a render over every patch the log holds, so one
   throw is a white screen, not a missing line.
+- **The history screen reads the deleted entries too.** Both its subject links
+  and its title come from maps built over every entry the group has ever had —
+  half the reason to open it is one that is gone, and the alive-only lists
+  titled every one of those "Transfer".
 
 ## Every word, in `lib/copy.ts`
 
