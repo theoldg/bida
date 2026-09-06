@@ -8,7 +8,38 @@
  * anything async here is a flash of the wrong theme. The Dexie device record
  * stays the source of truth and writes through to this key.
  */
-const script = `try{var t=localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+
+/**
+ * Paint the OS status bar to match the shell it sits above.
+ *
+ * The obvious version — a pair of `<meta name="theme-color" media="(prefers-
+ * color-scheme: …)">` — answers the wrong question: it follows the *phone's*
+ * setting, while `data-theme` can override it. Toggle a light phone to dark and
+ * Android keeps a paper-white status bar over a near-black app. So resolve it
+ * from the DOM instead, after `data-theme` is set, and re-run on every change.
+ *
+ * `--card` rather than `--paper`: on a phone `.app` is full-bleed, so the card
+ * is what actually abuts the status bar. Reading the token is what keeps this
+ * honest — the colours stay in globals.css, and this can't drift from them.
+ *
+ * Self-contained on purpose: it is stringified into the pre-paint script below,
+ * so it must not reference anything outside itself.
+ */
+export function syncThemeColor(): void {
+  if (typeof document === "undefined") return;
+  const card = getComputedStyle(document.documentElement).getPropertyValue("--card").trim();
+  if (!card) return;
+  let meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.setAttribute("name", "theme-color");
+    document.head.appendChild(meta);
+  }
+  meta.setAttribute("content", card);
+}
+
+const script = `try{var t=localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}
+try{var s=${syncThemeColor.toString()};s();matchMedia("(prefers-color-scheme: dark)").addEventListener("change",s)}catch(e){}`;
 
 export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
@@ -25,4 +56,5 @@ export function applyTheme(theme: Theme): void {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem("hajsik.theme", theme); } catch { /* private mode */ }
   }
+  syncThemeColor();
 }

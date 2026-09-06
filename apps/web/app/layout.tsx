@@ -55,11 +55,10 @@ export const viewport: Viewport = {
   // CSS `touch-action` and `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
-  // Matched to the --paper token in each theme.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F1F1EF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0F11" },
-  ],
+  // No `themeColor` here: a `media="(prefers-color-scheme: …)"` pair follows the
+  // phone rather than `data-theme`, and the browser takes the first matching
+  // one — so it would outrank, not lose to, the correct answer. `ThemeScript`
+  // writes the single meta from the resolved theme (components/theme.tsx).
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

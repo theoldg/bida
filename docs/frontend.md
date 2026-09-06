@@ -208,7 +208,8 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: standalone`, theme colour per theme. Standalone, not fullscreen: the
+`display: standalone`, and the colours Android paints before the page loads.
+Standalone, not fullscreen: the
 phone keeps its status bar and navigation buttons, because an app you check for
 a minute shouldn't cost you the clock or the back gesture. The three PNGs are
 the tally wordmark in paper on an ink tile; regenerate them together if the mark
@@ -221,6 +222,19 @@ bar, so with it the shell's height tracks bars that come and go. Without it the
 viewport is clamped between them and the layout never moves. That leaves the
 `max(_, env(safe-area-inset-*))` padding on the two bars at its floor, which is
 what it is for.
+
+The status bar's colour is **not** a `<meta name="theme-color" media="(prefers-
+color-scheme: …)">` pair, which is the obvious answer and the wrong one: it
+follows the phone while `data-theme` can override it, so a light phone toggled
+to dark keeps a paper-white bar over a near-black app — and since the browser
+takes the first *matching* meta, the pair outranks any correction rather than
+losing to it. `components/theme.tsx` writes the single meta from the resolved
+theme instead, reading `--card` off the DOM — the value stays in globals.css and
+can't drift, and `--card` rather than `--paper` because a full-bleed `.app` is
+what abuts the bar. It runs in the pre-paint script, on the toggle, and on
+`prefers-color-scheme` changes. The manifest's `theme_color` is the same colour
+hard-coded, for the frames before any of that: Android has only the one, so
+dark-mode phones get a light bar for the length of the splash.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
