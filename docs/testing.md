@@ -169,8 +169,8 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 - **Two things must never answer to one accessible name.** The add row's button
   once carried the field's own label, and `getByLabel("Add someone")` died of a
   strict-mode violation — which is the driver saying what a screen reader would
-  have found: the same name twice. A button that only focuses the field beside
-  it is `aria-hidden`, not labelled.
+  have found: the same name twice. It says what it does instead — "Add" — so the
+  field keeps its own name and the button is reachable by role.
 - **Scope row-level clicks to the row.** `getByRole("button", { name: /the
   rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
   member's name. Getting this wrong seeds a "co-sponsored" expense that quietly
@@ -219,19 +219,19 @@ that is what makes a check like this flake and then get deleted.
 
 ## `pnpm claim` — the name that has not been filed yet
 
-The add row lets a name be typed and not yet filed, and every screen it sits on
-has a button that must act on it anyway (`components/name-adder.tsx`). What goes
-wrong there is never arithmetic: it is a blur, a screen that rewrites itself
-between a press and its release, and a button whose label and act disagree.
-"Continue as Nadia" filed Nadia, disabled itself in the same breath, and so
-never fired — the name landed and the press that landed it did nothing.
+The add row lets a name be typed and not yet filed, and only its own plus files
+one (`components/name-adder.tsx`). What goes wrong there is never arithmetic: a
+blur that must do nothing, a plus that must be dead on a name the list already
+holds, and a screen whose button must not read intent out of a field nobody has
+pressed anything on. All of it looks perfect in jsdom.
 
 So the press is made by hand and **held**: `locator.click()` re-resolves the
 button and quietly retries a press that missed, and an instant down-up is over
-before React has re-rendered, so either shortcut reports a green on the broken
-build. Both doors are walked, because their add rows differ where it matters —
-on `/new` the list is state and grows in the same tick, on `/g/claim` it is a
-Dexie write that arrives whenever it arrives.
+before React has re-rendered, so either shortcut reports a green on a build
+where the press and the screen disagree about what is under the finger. Both
+doors are walked, because their add rows differ where it matters — on `/new`
+the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
+that arrives whenever it arrives, and the tick has to follow it there.
 
 ## `pnpm drive` — the app as text
 

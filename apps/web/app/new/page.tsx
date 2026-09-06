@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { isCurrencyCode } from "@hajsik/core";
 import { Eyebrow } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
-import { AddName, type AddNameHandle } from "../../components/name-adder";
+import { AddName } from "../../components/name-adder";
 import { WhoPicker } from "../../components/who-picker";
 import { copy } from "../../lib/copy";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
@@ -31,7 +31,9 @@ import { goUp } from "../../lib/nav";
  * it with. So the screen ends the way joining a group ends — the same picker,
  * asking which of these people you are (components/who-picker.tsx) — and
  * whoever is picked is the group's first member and the actor on every op that
- * creates it. One name typed skips the question: it can only be you.
+ * creates it — asked even of a group of one, because the answer is written into
+ * every op and a screen that sometimes skips the question is a screen you
+ * cannot learn.
  */
 export default function NewGroupPage() {
   const router = useRouter();
@@ -43,11 +45,10 @@ export default function NewGroupPage() {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
   const [ask, setAsk] = useState<null | "currency" | "other" | "discard">(null);
-  // The name still in the add row. It counts as a person for everything below:
-  // typing the only member of a group and finding Create dead beside it is the
-  // failure the row was rebuilt to stop (components/name-adder.tsx).
+  // The name still in the add row. Nothing acts on it — only its own plus files
+  // it (components/name-adder.tsx) — but it is something typed, so leaving with
+  // it on screen is leaving with work unsaved.
   const [draft, setDraft] = useState<string | null>(null);
-  const adder = useRef<AddNameHandle<string> | null>(null);
 
   // A group typed here is state and nothing else — no draft store, nothing in
   // Dexie — so both ways off this screen throw it away. The entry form asks
@@ -71,18 +72,13 @@ export default function NewGroupPage() {
     return true;
   }
 
-  const ready = name.trim().length > 0 && currency.length === 3 && !busy
-    && (people.length > 0 || draft !== null);
+  // A name still in the add row is not a person on the list: it has not been
+  // filed, and the box it sits in says so.
+  const ready = name.trim().length > 0 && currency.length === 3 && !busy && people.length > 0;
 
-  /** Create: file whatever the add row is still holding, then ask who you are
-      — unless the answer can only be one person. */
-  async function next() {
-    if (!ready) return;
-    const added = await adder.current?.flush();
-    const all = added ? [...people, added] : people;
-    const only = all.length === 1 ? all[0] : undefined;
-    if (only !== undefined) await save(only, all);
-    else if (all.length > 0) setAsking(true);
+  /** Create: ask who you are. */
+  function next() {
+    if (ready) setAsking(true);
   }
 
   async function save(me: string, all: readonly string[]) {
@@ -115,14 +111,13 @@ export default function NewGroupPage() {
               picked={picked}
               addPlaceholder={copy.members.addPlaceholder}
               onPick={setPicked}
-              // Typing a name that is already on the list picks that person
-              // rather than listing them twice — nothing is written yet, so
-              // "adding" them here is only a way of saying which one is you.
+              // A name already on the list cannot be filed here either — it
+              // is a row a tap above, and tapping it says the same thing.
               onAdd={(who) => {
-                setPeople((list) => (list.includes(who) ? list : [...list, who]));
+                setPeople((list) => [...list, who]);
                 return { id: who, name: who };
               }}
-              onContinue={(who, all) => save(who, all.map((p) => p.name))}
+              onContinue={(who) => save(who, people)}
             />
           </Scroll>
         </Body>
@@ -134,7 +129,7 @@ export default function NewGroupPage() {
     <Screen>
       <Body>
         <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }}
-          right={<button className="action" onClick={() => void next()} disabled={!ready}>
+          right={<button className="action" onClick={next} disabled={!ready}>
             {copy.act.create}
           </button>} />
         <Scroll>
@@ -171,8 +166,8 @@ export default function NewGroupPage() {
               </div>
             ))}
             <AddName placeholder={copy.members.addPlaceholder} taken={people}
-              onAdd={(who) => { setPeople((list) => [...list, who]); return who; }}
-              handle={adder} onDraft={setDraft} />
+              onAdd={(who) => setPeople((list) => [...list, who])}
+              onDraft={setDraft} />
           </div>
         </Scroll>
       </Body>

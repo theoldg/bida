@@ -267,7 +267,8 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
 
-      // Adding someone is the last row of the list, mid-name.
+      // Adding someone is the last row of the list, mid-name — boxed, because
+      // that name is not on the list until its plus is pressed.
       await page.goto(`${base}/g/members?id=${groupId}`);
       await page.getByLabel("Add someone").fill("Nadia");
       await page.waitForTimeout(200);

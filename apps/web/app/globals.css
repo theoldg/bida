@@ -263,6 +263,10 @@ a { color: inherit; text-decoration: none }
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); flex: none }
+/* A control with nothing to do says so before it is pressed rather than by
+   ignoring the press — the add row's plus, empty and on a name already taken
+   alike (components/name-adder.tsx). */
+.iconbtn:disabled { background: transparent; border-color: transparent; color: var(--muted) }
 /* The top bar's icons are destinations, not row affordances: they are the only
    way to reach People, History and the invite link, and they are pressed with a
    thumb reaching across the phone. Bigger circle, bigger glyph. */
@@ -290,24 +294,25 @@ a { color: inherit; text-decoration: none }
 
 /* The last row of a list of people *is* the field that adds the next one, and
    it is built like the rows above it — name on the left, one control on the
-   right — because it becomes one the moment you look away
+   right — because that is what it becomes once its plus is pressed
    (components/name-adder.tsx). */
 .addrow { padding-top: 16px }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
+/* A name in the field is *not* on the list: nothing files it but the plus. So
+   the moment there is one the row stops being a row and becomes a box — lifted
+   off the list on its own ground, ringed in the hard rule rather than the
+   hairline that separates rows, and no longer sharing their bottom edge. The
+   inset is one pixel of border and eight of margin, so the name and the plus
+   stay on the columns they were on: the box moves, the writing doesn't. */
+.addrow.editing { margin: 6px 8px 10px; padding: 10px 7px; width: auto;
+  background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
 /* The name that field would repeat, said under it and aligned with the names
    above — so it reads as a note on the list, not a new row in it. */
-.addrow:has(+ .addwarn) { border-bottom: 0 }
+.addrow:not(.editing):has(+ .addwarn) { border-bottom: 0 }
+.addrow.editing:has(+ .addwarn) { margin-bottom: 0 }
 .addwarn { margin: 0; padding: 0 16px 13px 16px }
-/* The empty add row, drawn one place early: while the field holds a name worth
-   filing, the row it is about to become waits under it, and tapping it is what
-   Enter is to a keyboard (components/name-adder.tsx). It is the row the field
-   will look like a moment later, so it is that row — placeholder-weight text
-   and the same plus — with no air above it, because it belongs to the row it
-   is under rather than opening a new stretch of list. */
-.addnext { text-align: left }
-.addnext .addname { color: var(--muted); font-weight: 500 }
 
 /* A mark where a row's button would be, so a list whose rows carry a check on
    one and a button on the rest has one right-hand column rather than two. */

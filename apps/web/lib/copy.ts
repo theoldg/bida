@@ -36,7 +36,6 @@ export const copy = {
     add: "Add",
     back: "Back",
     cancel: "Cancel",
-    clear: "Clear",
     create: "Create",
     delete: "Delete",
     discard: "Discard",

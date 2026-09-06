@@ -55,8 +55,8 @@ Groups that predate it keep `newId()` members and the gap that comes with them.
 are" field — your name is on the members list like everyone else's — and hands
 the finished list to the picker that joining already ended on
 (`components/who-picker.tsx`), so whoever is picked is the group's first member
-and the actor on the ops creating it. The add row lost its Add button with it:
-leaving the field files the name ([frontend.md](frontend.md#state)).
+and the actor on the ops creating it — asked even of a group of one
+([frontend.md](frontend.md#state)).
 
 **A new build is taken by tapping for it.** The worker still never activates
 mid-session, but waiting for the last client of the origin to close turned out
@@ -67,13 +67,13 @@ foreground; `components/update.tsx` offers it at the foot of the groups list.
 `pnpm offline` now covers the tap end to end
 ([ADR-0004](decisions/0004-static-export-and-offline.md)).
 
-**The add row's press is fixed.** A name typed and not yet filed is the state
-that screen turns on, and the button that acted on it filed the name on the blur
-its own press caused — which rewrote the screen mid-press and cost the press its
-click. It keeps the field's focus and files the name itself; a tick yields to a
-name being typed; and, on a list you are filling, the next empty row is drawn
-under a fileable name so a finger has the route Enter has. `pnpm claim` holds all
-of it ([testing.md](testing.md)).
+**A name is filed by pressing for it.** Filing on blur asked the rest of the
+app to guess: a screen's button had to flush the field before it acted, a tick
+had to yield to a name being typed, and a press that filed a name rewrote the
+screen out from under itself. The plus on the row files it, disabled until there
+is something to file, and the row wears a box while a name is unfiled — so the
+guessing is gone and the state is on screen instead. `pnpm claim` holds it
+([testing.md](testing.md), [frontend.md](frontend.md#state)).
 
 **The log reads the entity, not only the patch.** A revision carries the fold
 either side of it, so `history-copy` can say what the change alone could not: a

@@ -120,32 +120,31 @@ confers nothing without the secret.
   the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
-  of a list of names, built like the rows above it — name, then one control —
-  because it becomes one. **Enter files the name and so does leaving the field**,
-  so a group of six is one burst of typing and nothing is lost by reaching
-  straight for Create; a finger has neither, so on a list you are *filling* the
-  next empty row is drawn under the name as long as it is fileable, and tapping
-  it does what Enter does. There is no Add button to forget to press; the control
-  on the right is a `plus` that focuses the field and a `trash` the moment there
-  is a draft to abandon, which is the only way back out of a row that files
-  itself. A screen's own button keeps the field's focus and calls `flush()`
-  itself: letting the blur it causes do the filing rewrites the screen mid-press
-  — a row arrives, and the button, its field emptied, can disable itself — and a
-  press ending on a button that moved or went dead is no click at all, which is
-  what a dead "Continue as Nadia" was. `pnpm claim` holds it
-  ([testing.md](testing.md)).
-  Living in the list costs two rules: **one name, one person** — a name already
-  on it is refused as you type (`core/names.ts`), except on a list you are
-  picking yourself out of, where a match *is* you (`duplicates="match"`) — and
-  the row **follows the list down**, as a browser scrolls to a field only as it
-  takes focus, and this one never lets go — clear of the keyboard, per the
-  `--kb` Gotcha below.
+  of a list of names, built like the rows above it — name on the left, one
+  control on the right — because that is what it becomes. **A name is filed by
+  pressing the plus on that row, and by nothing else**; Enter is the keyboard's
+  way of pressing it. Leaving the field files nothing, so a name can sit in the
+  row unfiled — and while one does, the row draws itself as a box
+  (`.addrow.editing`), because a row that looks like the committed rows above it
+  says the opposite of what is true. The plus is `disabled` while there is
+  nothing to file: an empty field, or a name the list already holds — **one
+  name, one person** (`core/names.ts`), said as it is typed and refused before
+  the press rather than after it, on every list including the one you are
+  picking yourself out of, where the name you typed is a row one tap above.
+  A screen's own button — Create, Continue — acts on the list, never on the
+  field: an unfiled name is unfiled, whatever else is pressed. The row also
+  **follows the list down**, as a browser scrolls to a field only as it takes
+  focus, and this one never lets go — clear of the keyboard, per the `--kb`
+  Gotcha below. `pnpm claim` holds all of it ([testing.md](testing.md)).
 - **"Which one is you?" is one screen, `components/who-picker.tsx`**, ending
-  both ways into a group: joining, and creating one. Picking is never a write —
-  the button is, whether it claims an identity (ADR-0003) or creates the group
-  with that name as its actor. A name being typed outranks the tick, on the
-  button's label and on the list: most recent intent wins, and one question
-  gets one answer.
+  both ways into a group: joining, and creating one — including a group of one,
+  because the answer is written into every op and a screen that sometimes skips
+  the question is a screen you cannot learn. Picking is never a write — the
+  button is, whether it claims an identity (ADR-0003) or creates the group with
+  that name as its actor. The button answers to the tick and to nothing else; a
+  name still being typed moves neither. Filing one *does*: the row it adds is
+  ticked as it arrives, because a name typed into the list you are picking
+  yourself out of is the pick.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a

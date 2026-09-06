@@ -28,6 +28,14 @@ export interface Who {
  * this name as its actor; joining writes the claim op (ADR-0003). Both happen
  * on the button, not on the tap.
  *
+ * The button answers to the tick and to nothing else. A name still being typed
+ * in the add row is not an answer to the question — it is a name being typed,
+ * and a button that rewrote itself with every keystroke was reading intent out
+ * of a field nobody had pressed anything on. Filing that name is the plus's
+ * job (components/name-adder.tsx); what this screen does is take the row that
+ * arrives and tick it, because a name you typed into the list you are picking
+ * yourself out of is the pick.
+ *
  * The button sits under the list rather than in a `Foot`, because it is the
  * next thing you do after tapping your name and not a fixture of the screen:
  * pinned to the bottom of a short list it read as unrelated to the tap that
@@ -43,31 +51,23 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   /** Adds the name and answers to what it added, which is then the selection:
       you typed your own name, so making it one more tap asks twice. */
   onAdd: (name: string) => Who | Promise<Who>;
-  /** The pick, and the list as it stands — which is the prop plus whatever the
-      field was still holding when the button was pressed. */
-  onContinue: (id: string, people: readonly Who[]) => void | Promise<void>;
+  onContinue: (id: string) => void | Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
-  // The name still in the add row, which the button below is as willing to
-  // continue as anyone already on the list — it says so, rather than sitting
-  // dead beside a field somebody has plainly just filled in.
-  const [draft, setDraft] = useState<string | null>(null);
-  const adder = useRef<AddNameHandle<Who> | null>(null);
-  const chosen = people.find((p) => p.id === picked);
+  // Whoever the add row just filed. A row of the list is what it becomes, but
+  // on `/g/claim` that is a Dexie write arriving on its own schedule, and the
+  // button must not sit blank in the meantime saying to pick a name that has
+  // just been picked.
+  const [added, setAdded] = useState<Who | null>(null);
+  const adder = useRef<AddNameHandle | null>(null);
+  const chosen = people.find((p) => p.id === picked)
+    ?? (added?.id === picked ? added : undefined);
 
   async function proceed() {
-    if (busy) return;
+    if (busy || !picked) return;
     setBusy(true);
     try {
-      // The press files what is in the add row itself, rather than letting the
-      // blur it would otherwise cause do it (components/name-adder.tsx).
-      const added = await adder.current?.flush();
-      // `added` can be somebody already on the list — the field takes a name
-      // that matches as a way of picking them, so it is not always a new row.
-      const all = added && !people.some((p) => p.id === added.id) ? [...people, added] : people;
-      const who = added?.id ?? picked;
-      if (!who) return;
-      await onContinue(who, all);
+      await onContinue(picked);
     } finally {
       setBusy(false);
     }
@@ -76,54 +76,37 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   return (
     <>
       <div className="rows">
-        {/* Keeps the caret in the add row rather than blurring it, because a
-            blur files what is in it: half of "Nadia" and a tap on somebody
-            else's name would otherwise put a member called "Nad" in the group.
-            Picking a name is also the plainest way of saying the row was a
-            false start, so it goes. */}
+        {/* Picking a name is the plainest way of saying the row being typed was
+            a false start, so it goes — one question, one answer on screen. */}
         {people.map((p) => (
-          <button key={p.id} className="row" onMouseDown={(e) => e.preventDefault()}
+          <button key={p.id} className="row"
             onClick={() => { adder.current?.clear(); onPick(p.id); }}>
             <div className="rmain">
               <div className="rtitle">{p.name}</div>
             </div>
-            {/* A name in the add row outranks the tick for the button's label,
-                so it outranks it here too: two answers to one question, one of
-                them stale, is worse than none. The tick comes back the moment
-                the field is empty again. */}
             <span className="rmark">
-              {!draft && p.id === picked
+              {p.id === picked
                 ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
                 : null}
             </span>
           </button>
         ))}
 
-        {/* A name already on this list is you, not a clash: this is the list
-            you are picking yourself out of (components/name-adder.tsx). */}
-        <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} duplicates="match"
-          onAdd={onAdd} handle={adder} onDraft={setDraft} />
+        {/* Filing a name here is picking it: you typed your own name into the
+            list you are picking yourself out of, so asking again would be
+            asking twice. A name the list already holds cannot be filed — it is
+            a row a tap away, and that tap is the same answer. */}
+        <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
+          onAdd={async (name) => {
+            const who = await onAdd(name);
+            setAdded(who);
+            onPick(who.id);
+          }} />
       </div>
 
       <div className="pad">
-        {/* Keeps the field's focus, like the rows above. A blur files the name,
-            and filing it *between* this press and its release is what killed
-            this button: the list gains a row under the finger, and with the
-            field emptied and nobody ticked the button disables itself — either
-            way the release lands on something that is no longer this button, so
-            no click is dispatched at all. The name was added and the press that
-            added it did nothing, which is what a dead "Continue as Nadia" was.
-            The press files it instead, in `proceed`. */}
-        <button className="btn btn-p" onMouseDown={(e) => e.preventDefault()}
-          onClick={() => void proceed()}
-          disabled={busy || (!chosen && !draft)}>
-          {/* The draft outranks the selection, because pressing files it and
-              continues as it — most recent intent wins, and the label has to
-              be the one that is about to happen. Clearing the field hands the
-              button back to whoever is ticked. */}
-          {draft || chosen
-            ? copy.claim.continueAs(draft ?? chosen?.name ?? copy.someoneLower)
-            : copy.claim.pickFirst}
+        <button className="btn btn-p" onClick={() => void proceed()} disabled={busy || !chosen}>
+          {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
         </button>
       </div>
     </>
