@@ -252,9 +252,20 @@ const READ = `(() => {
    * Same-tag siblings painted in exactly two ways: the shape of a segmented
    * control, whether or not it says so in ARIA. This only asks whether they
    * are one question; \`oddOne\` is what answers it.
+   *
+   * An option a person picks has words on it, and the members of one set are
+   * labelled the same way — which is what separates a segmented control from a
+   * control standing between two fields. The transfer's two sides and the swap
+   * button between them are three buttons painted two ways, and were read out
+   * as a question whose answer was the swap: an invented choice, marked on the
+   * one control that was not an option at all.
    */
-  const alternatives = (els) =>
-    new Set(els.map((e) => e.tagName)).size === 1 && new Set(els.map(look)).size === 2;
+  const alternatives = (els) => {
+    const words = (el) => (el.innerText ?? "").trim().length > 0;
+    return new Set(els.map((e) => e.tagName)).size === 1
+      && new Set(els.map(look)).size === 2
+      && new Set(els.map(words)).size === 1;
+  };
 
   /**
    * The odd one out of a set of look-alikes, or -1.

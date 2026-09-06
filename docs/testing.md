@@ -314,7 +314,11 @@ looks exactly like a control that ignored it.
 or same-tag siblings painted in two ways come out as a set with the chosen one
 marked `(•)`. When only the styling says which, the header says so — a segmented
 control that never tells a screen reader which segment is live is a finding, and
-this is where it surfaces. Styling answers only from three members up: in a pair
+this is where it surfaces. Members of one set are labelled alike, which is what
+separates a segmented control from a control standing between two fields: the
+transfer's two sides and the swap button between them are three buttons painted
+two ways, and were read out as a question whose answer was the swap. Styling
+answers only from three members up: in a pair
 each differs from the other and nothing makes one the odd one out, so a pair with
 nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
 
