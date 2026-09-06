@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants, validateSplit,
+  canonicalSplit, convertSplitMode, fromReceipt, resolveSplit, shareOf, splitParticipants,
+  validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -243,5 +244,36 @@ describe("canonicalSplit", () => {
     const spec: SplitSpec = { mode: "shares", weights: { c: 3, a: 1, b: 2 } };
     expect(resolveSplit(6000, canonicalSplit(spec), { tiebreakSeed: "e1" }).shares)
       .toEqual(resolveSplit(6000, spec, { tiebreakSeed: "e1" }).shares);
+  });
+});
+
+describe("fromReceipt", () => {
+  // Four screens name a split — the ledger row, the entry, the history and the
+  // form's own tab — and each of them asked this question its own way until it
+  // moved here. Both wrong answers cost a screen: a bill called "as parts",
+  // and an ordinary split called "from receipt".
+  const items = [{ label: "Tea", amount: "3.00" }];
+  const shares: SplitSpec = { mode: "shares", weights: { a: 1, b: 2 } };
+
+  it("is a receipt when the tab says so and there are items behind it", () => {
+    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: items })).toBe(true);
+  });
+
+  it("is not one without items, whatever the tab says", () => {
+    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: [] })).toBe(false);
+    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: null })).toBe(false);
+  });
+
+  it("is not one when the person moved to another tab and saved", () => {
+    expect(fromReceipt({ split: shares, splitTab: "shares", receiptItems: items })).toBe(false);
+    expect(fromReceipt({ split: { mode: "equal", members: ["a"] }, splitTab: "equal", receiptItems: items }))
+      .toBe(false);
+  });
+
+  // Entries predating `splitTab` have no tab to read: a `shares` spec beside a
+  // scanned bill is the only thing a finished grid could have written.
+  it("reads an entry saved before the tab was stored", () => {
+    expect(fromReceipt({ split: shares, receiptItems: items })).toBe(true);
+    expect(fromReceipt({ split: { mode: "equal", members: ["a"] }, receiptItems: items })).toBe(false);
   });
 });

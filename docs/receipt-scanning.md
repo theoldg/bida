@@ -229,7 +229,9 @@ way to reach the who-had-what grid outside a real scan —
 - **If a UI mode needs to stick, persist it; never re-derive it from data that
   outlives the choice.** `receiptItems` stays on the expense forever, so a
   derived `splitTab` kept saying "Receipt" after the person switched away and
-  saved.
+  saved. Its flip side: a finished grid writes an ordinary `shares` spec, so
+  every screen naming a split has to ask `fromReceipt` — the ledger row was the
+  last one reading `split.mode` raw, and called a scanned bill "as parts".
 - **A model field that reaches `formatMinor` is a crash waiting to happen.**
   `Intl.NumberFormat` throws on anything but three ASCII letters, the form
   formats on every render, and there is no error boundary — one "€" in the
