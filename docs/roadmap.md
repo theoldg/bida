@@ -13,7 +13,7 @@ this file, seams intact.
 Hosting decided, MVP scope agreed, the visual direction signed off
 (2026-08-27), pnpm workspace with `packages/core`, `apps/web`, `apps/api`.
 
-## Phase 1 — Domain core ✅ *(249 tests)*
+## Phase 1 — Domain core ✅
 `money`, `hlc`, `ops`, `fold`, `split`, `payers`, `balance`, `settle`, `rates`, plus
 property tests that any permutation of ops folds identically.
 

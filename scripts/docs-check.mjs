@@ -10,8 +10,10 @@
  *
  * Checked: every relative markdown link resolves to a file; every `#anchor`
  * into a markdown file matches a heading there, by GitHub's slug rules since
- * that is where these get clicked; and the ADR index names every ADR on disk
- * and nothing else, so a folded-away decision can't leave a row behind.
+ * that is where these get clicked; the ADR index names every ADR on disk and
+ * nothing else, so a folded-away decision can't leave a row behind; and no doc
+ * states a test count, which is a number that is wrong by the next commit and
+ * tells a reader nothing they wanted to know.
  *
  * Whether a doc has grown too long, or whether it should have gained an ADR or
  * a standing instruction at all, is a judgement — CLAUDE.md and the head of
@@ -80,10 +82,22 @@ for (const f of listed) {
   if (!adrs.includes(f)) problems.push(`docs/decisions/README.md\n        indexes ${f}, which does not exist`);
 }
 
+/**
+ * A count of tests is stale the moment somebody writes one, and re-stating it
+ * says nothing `pnpm check` doesn't say out loud on every run. The owner's
+ * call, 2026-09-06: "useless and always stale". Say what the suite covers
+ * instead — that is what a reader came for and it survives a commit.
+ */
+for (const file of markdownFiles(ROOT)) {
+  for (const [said] of readFileSync(file, "utf8").matchAll(/\b\d[\d,]*\s+tests\b/gi)) {
+    problems.push(`${relative(ROOT, file)}\n        "${said}" — a test count goes stale; say what they cover`);
+  }
+}
+
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(
   problems.length
     ? `\n${problems.length} problem(s)`
-    : `docs: every link resolves, every ADR indexed`,
+    : `docs: every link resolves, every ADR indexed, no counts to go stale`,
 );
 process.exit(problems.length ? 1 : 0);
