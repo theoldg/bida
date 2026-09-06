@@ -23,40 +23,9 @@ import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { ROOT, ensureBuild, serveExport, launch, newPhone, pick, newGroup }
   from "./lib/harness.mjs";
+import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
 const SHOTS = join(ROOT, "shots");
-
-/* A stubbed bill for the who-had-what shots. The draft it fills lives in memory
-   only, so the grid can't be seeded by poking storage: the screen is reached the
-   way it is in life — a photo that comes back with line items. Only the model
-   call is faked. Long on purpose: the header of initials freezing over a bill
-   that outruns the screen is the thing the shot is there to show. */
-const RECEIPT = {
-  merchant: "Café Clock",
-  total: "76.50",
-  tip: "6.00",
-  currency: null,
-  date: null,
-  category: null,
-  error: null,
-  lineItems: [
-    { label: "Salade marocaine", amount: "9.00", quantity: 2 },
-    { label: "Chicken tagine", amount: "14.50", quantity: null },
-    { label: "Lamb couscous", amount: "16.00", quantity: null },
-    { label: "Mint tea", amount: "6.00", quantity: 3 },
-    { label: "Msemen", amount: "4.50", quantity: 2 },
-    { label: "Olives", amount: "2.00", quantity: null },
-    { label: "Bottled water", amount: "3.00", quantity: 2 },
-    { label: "Orange juice", amount: "7.00", quantity: 2 },
-    { label: "Chocolate pastilla", amount: "8.50", quantity: null },
-  ],
-};
-
-/** 1x1 PNG: the scan is stubbed, but the client really does decode and downscale. */
-const PHOTO = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-  "base64",
-);
 
 /** Build a group with three people and one of each kind of entry, via the UI. */
 async function seed(page, base) {
@@ -245,15 +214,12 @@ async function main() {
 
       // Who had what — the one screen only a scan leads to. The draft is in
       // memory, so it is reached by really uploading a photo, with the model's
-      // answer stubbed. Shot twice: the bill as printed, then with its "×2"
-      // salad unfolded into two separately assignable portions.
-      await page.route("**/api/groups/*/scan", (r) => r.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(RECEIPT) }] } }],
-        }),
-      }));
+      // answer stubbed from the same canned bill `pnpm drive` uses
+      // (`lib/receipts.mjs`). It is long on purpose: the header of initials
+      // freezing over a bill that outruns the screen is what the shot shows.
+      // Shot twice: the bill as printed, then with its "×2" salad unfolded
+      // into two separately assignable portions.
+      await stubScan(page, "cafe-clock");
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.waitForTimeout(200);
       await page.locator('input[aria-label="Upload a receipt photo"]')

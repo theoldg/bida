@@ -1,0 +1,13 @@
+{
+  "note": "a receipt that is only a total — legal, and the grid never opens on it",
+  "exercises": "ok",
+  "scan": {
+    "merchant": "Kiosk Bab Doukkala",
+    "total": "12.40",
+    "tip": null,
+    "currency": "MAD",
+    "date": "2026-04-11",
+    "error": null,
+    "lineItems": []
+  }
+}

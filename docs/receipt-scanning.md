@@ -191,6 +191,14 @@ the key is the `GEMINI_API_KEY` Worker secret —
 one handler, and `/g/entry/items` behind them. Verified end to end against the
 deployed Worker, 2026-08-28.
 
+## Driving it without a phone
+
+`pnpm drive`'s `receipt <name>` hands a phone one of the canned bills in
+`scripts/fixtures/receipts/`; the scan button is then pressed like any other
+control and everything but the round trip to Gemini really runs. It is the only
+way to reach the who-had-what grid outside a real scan —
+[testing.md](testing.md#pnpm-drive--the-app-as-text).
+
 ## Gotchas
 
 - **`mismatch` on a bill that plainly adds up means the photo was taken at an

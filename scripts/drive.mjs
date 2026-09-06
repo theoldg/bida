@@ -29,6 +29,7 @@
  *   hold <n>            long-press it, for menus a tap cannot open
  *   back | forward | reload | screen | wait <ms>
  *   offline on|off      cut this phone's network, or restore it
+ *   receipt <name>      hand this phone a canned receipt — see `receipt list`
  *   clipboard           read what the page put on this phone's clipboard
  *   forget              throw this phone away and start it factory-fresh
  *   html [n]            markup and computed style — for calibrating the reader
@@ -37,6 +38,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ROOT, ensureBuild, serveWorker, launch, newPhone } from "./lib/harness.mjs";
+import { PHOTO, receiptList, stubScan } from "./lib/receipts.mjs";
 
 const DIR = join(ROOT, ".drive");
 const IN = join(DIR, "in.jsonl");
@@ -471,7 +473,7 @@ async function start() {
         const why = r.failure()?.errorText ?? "";
         if (!offlineChatter(why)) noise.push(`request failed: ${r.url().replace(base, "")} (${why})`);
       });
-      phones.set(who, { ctx, page, noise });
+      phones.set(who, { ctx, page, noise, chooser: null });
     }
     return phones.get(who);
   };
@@ -528,6 +530,38 @@ async function start() {
       case "wait": await page.waitForTimeout(Number(args[0] ?? 500)); break;
       case "offline": await ctx.setOffline(args[0] !== "off"); break;
       case "forget": await ctx.close(); phones.delete(who); return { who, url: "(phone thrown away)", title: "", lines: [], noise: [] };
+      // Scanning is the only thing the app does that needs both a camera and
+      // a network, so a driver that can only press buttons cannot reach the
+      // who-had-what grid at all. This is the world the phone photographs,
+      // in the same family as `offline` — it arms nothing on the screen. The
+      // scan button is still the app's own, pressed by number like any other:
+      // the hidden file input's click opens a real chooser, and this answers
+      // it with a real (1x1) photo the client really downscales.
+      case "receipt": {
+        const say = (lines) => ({ who, url: page.url().replace(base, ""), title: "", lines, noise: noise.splice(0) });
+        if (!args[0] || args[0] === "list") return say(["receipts on offer:", ...receiptList()]);
+        if (args[0] === "off") {
+          await page.unroute("**/api/groups/*/scan").catch(() => {});
+          if (phones.get(who).chooser) page.off("filechooser", phones.get(who).chooser);
+          phones.get(who).chooser = null;
+          return say(["this phone scans for real again — which needs a key it hasn't got"]);
+        }
+        const fixture = await stubScan(page, args[0]);
+        // Persistent, not one-shot: rescanning is a thing people do, and an
+        // arming spent by the first press would answer the second with the
+        // silence of a cancelled chooser.
+        if (!phones.get(who).chooser) {
+          const answer = (chooser) => chooser
+            .setFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO })
+            .catch(() => { /* the page moved on; the next press arms again */ });
+          phones.get(who).chooser = answer;
+          page.on("filechooser", answer);
+        }
+        return say([
+          `the next photo this phone takes reads as "${args[0]}" (${fixture.exercises}) — ${fixture.note}`,
+          "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",
+        ]);
+      }
       case "clipboard": {
         const text = await page.evaluate(() => navigator.clipboard.readText());
         return { who, url: page.url().replace(base, ""), title: "", lines: [`clipboard: ${text}`], noise: noise.splice(0) };

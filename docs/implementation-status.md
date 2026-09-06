@@ -114,6 +114,23 @@ that writes already did, and `pnpm entries` presses Save twice. Found by driving
 the app adversarially — mashing the controls rather than walking them
 ([frontend.md](frontend.md#state)).
 
+**A receipt can be scanned without a camera.** The who-had-what grid was the
+one screen no check could reach — it hangs off an in-memory draft behind a photo
+and a network round trip — so it had none. `pnpm drive`'s `receipt <name>` hands
+a phone a canned bill from `scripts/fixtures/receipts/`, which `pnpm shots`
+now reads too, and the app's own scan button does the rest
+([testing.md](testing.md#pnpm-drive--the-app-as-text)). Each bill declares the
+verdict it is for and `lib/scan/fixtures.test.ts` holds it to that against
+`checkScan`, so the set cannot rot the way the inline one it replaced had.
+
+It found one thing on its first walk, still open: **the grid quotes a figure the
+form then writes a cent away from.** `/g/entry/items` seeds its per-item
+remainders with `draft.entryId ?? "new"` while everything downstream uses
+`splitSeed(draft)` — the `newEntryId` fix went through the form and never
+reached this screen. A €76.50 bill read €22.25 for one person on the grid and
+saved €22.24. One line, and it wants a test that ties the two seeds together
+rather than restating either.
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

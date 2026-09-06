@@ -1,0 +1,17 @@
+{
+  "note": "photographed at an angle: a wrapped label took an amount of its own, so the lines overshoot the printed total",
+  "exercises": "mismatch",
+  "scan": {
+    "merchant": "Chez Lamine",
+    "total": "24.00",
+    "tip": null,
+    "currency": "EUR",
+    "date": null,
+    "error": null,
+    "lineItems": [
+      { "label": "Mechoui", "labelEn": "Roast lamb", "amount": "12.00", "quantity": null },
+      { "label": "d'agneau", "labelEn": null, "amount": "12.00", "quantity": null },
+      { "label": "Thé", "labelEn": "Tea", "amount": "7.00", "quantity": null }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "note": "the model declined the photo — its sentence is printed verbatim, every other field empty",
+  "exercises": "rejected",
+  "scan": {
+    "merchant": null,
+    "total": null,
+    "tip": null,
+    "currency": null,
+    "date": null,
+    "error": "Too blurry — I've read tea leaves with better odds.",
+    "lineItems": []
+  }
+}

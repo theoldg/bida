@@ -259,6 +259,7 @@ pnpm drive stop
 | `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
+| `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next scan reads it |
 | `clipboard` | read what the page copied — how the invite link travels |
 | `screen` · `wait <ms>` | look again, or give something time to settle |
 | `forget` | throw this phone away and start it factory-fresh |
@@ -277,6 +278,21 @@ defects a blind walk turned up were a screen stating part of an arithmetic it
 presented as the whole: a balance summary missing the transfer leg, and a split
 asking for an amount that was typed but unconvertible. Neither is caught by a
 test of the arithmetic, which was right both times.
+
+**A scan can be driven without a camera or a key.** `receipt <name>` arms the
+phone rather than the screen — the same family as `offline` — and the scan
+button is still the app's own, pressed by number: the hidden file input opens a
+real chooser, this answers it with a real (1×1) image the client really
+downscales, and only the round trip to Gemini is faked. It is the one way to
+reach the who-had-what grid, whose screen exists nowhere else: a scanned bill
+lives in an in-memory draft, so it cannot be seeded by poking storage.
+
+The bills are `scripts/fixtures/receipts/*.json`, shared with `pnpm shots`, and
+each declares in `exercises` the verdict it is for — `ok`, `rejected`,
+`mismatch`, `busy`. That claim is checked against `checkScan` itself by
+`lib/scan/fixtures.test.ts` on every `pnpm check`, so a bill that quietly stops
+adding up fails the suite instead of testing nothing. Adding one is a file; the
+test tells you if its arithmetic is wrong.
 
 **It runs as a daemon** because replaying the whole story to take one more step
 loses what makes these bugs bugs — IndexedDB, the service worker, a group's
