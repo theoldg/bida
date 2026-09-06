@@ -82,8 +82,7 @@ export function installOffer(): InstallOffer {
   });
 }
 
-/** A phone installed under the older `fullscreen` manifest still reports that
- *  mode until the browser re-mints the app, so match both. */
+/** The manifest asks for `fullscreen`, so `standalone` alone would miss it. */
 function isStandalone(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches
     || window.matchMedia("(display-mode: fullscreen)").matches

@@ -27,29 +27,6 @@ function routeOf(url) {
   return url.pathname.slice(0, -".txt".length) || "/";
 }
 
-/**
- * The manifest, and only the manifest. Everything else here is cache-first,
- * which is right for anything the app paints with — but this file is not read
- * by the app at all. It is read by the *browser*, once a day, to decide whether
- * to re-mint the installed Android app (display mode, icons, colours are baked
- * into a WebAPK at install time). Cache-first meant that check saw our own
- * stale copy and concluded nothing had changed, so a manifest edit could not
- * reach an installed phone until a whole service-worker cycle had turned over
- * first — and then only at the next daily check. Small file, read rarely, and
- * the cache is still there for a check that happens offline.
- */
-async function networkFirst(request) {
-  try {
-    const res = await fetch(request);
-    if (res.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      await cache.put(request.url, res.clone());
-      return res;
-    }
-  } catch { /* offline — the precached copy below is the answer */ }
-  return (await caches.match(request.url, { ignoreSearch: true })) ?? fetch(request);
-}
-
 async function cacheFirst(cacheKey, request) {
   const cached = await caches.match(cacheKey, { ignoreSearch: true });
   if (cached) return cached;
@@ -144,11 +121,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname === "/manifest.webmanifest") {
-    event.respondWith(networkFirst(request));
-    return;
-  }
-
   // Everything an installed app needs is precached under a revision that
   // changes with the build, so it is all cache-first: a launch and every tap
   // after it paint without waiting on the network, online or off. A new deploy
@@ -169,6 +141,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Hashed, immutable build output, plus the icons.
+  // Hashed, immutable build output, plus icons and the manifest.
   event.respondWith(cacheFirst(request, request));
 });

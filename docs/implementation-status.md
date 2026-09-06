@@ -25,13 +25,6 @@ two devices.
 write time that a merge can break anyway ([invariants.md](invariants.md)) — is
 closed. What follows is what closed it, newest last; one measurement is owed.
 
-**The Android status bar is closed as unwinnable, not as done.** On Android 15
-a web app cannot paint its own status bar, and neither display mode buys it:
-`fullscreen` costs a black cutout strip and a viewport that resizes under a
-swiped-in bar, so `standalone` ships with a bar that may not match in dark. The
-four dead ends are listed in [frontend.md](frontend.md#pwa) — read them before
-spending a fifth round on it.
-
 **The enforcement layer is built.** `core/invariants.ts` holds each invariant's
 detector and its repair in one declaration that cannot omit the repair, the two
 healers the app needs are registered against it, and two test layers hold them:

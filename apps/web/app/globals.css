@@ -8,11 +8,6 @@
    drifted mockup is a lying one.
    ============================================================ */
 :root {
-  /* Declared, not inferred: it is what tells the platform to paint the
-     surfaces we don't own — scrollbars, native pickers, the canvas behind an
-     overscroll — in the same mode as the app. Set per *resolved* theme rather
-     than as `light dark`, because `data-theme` can override the phone. */
-  color-scheme: light;
   --paper:#F1F1EF; --paper-2:#E8E8E5;
   --card:#FBFBFA; --card-2:#F3F3F1; --card-3:#E8E8E5;
   --ink:#16171A; --ink-2:#4B4E54; --muted:#8C9096;
@@ -34,20 +29,6 @@
   --kb: 0px;
   --kb-gap: 0px;
 
-  /* What is permanently in the way at each end, kept by components/bar-inset.
-     The raw `env(safe-area-inset-*)` is the fallback and the starting value;
-     the component narrows it to the part that isn't a bar the phone hides
-     again, so nothing reflows when one unfolds. Never read the raw env in a
-     rule — that is the twitch. */
-  --sat: env(safe-area-inset-top, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-
-  /* The bottom bar's foot. `viewport-fit: cover` puts the shell under the
-     gesture bar, so this is the strip the bar sits on; 11px is the floor for a
-     phone with buttons, which reports no inset. One value because the FAB has
-     to clear whatever the nav ends up being. */
-  --navbot: max(11px, var(--sab));
-
   /* One face for everything. next/font sets --font-mono on <html>, which is
      :root, so the fallback stack only bites if the font fails to load. The
      three role names survive because the rules below still speak in roles —
@@ -59,7 +40,6 @@
 
 @media (prefers-color-scheme:dark) {
   :root:not([data-theme="light"]) {
-    color-scheme: dark;
     --paper:#0E0F11; --paper-2:#0A0B0C;
     --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
     --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
@@ -74,7 +54,6 @@
 }
 
 :root[data-theme="dark"] {
-  color-scheme: dark;
   --paper:#0E0F11; --paper-2:#0A0B0C;
   --card:#141517; --card-2:#1A1C1F; --card-3:#222427;
   --ink:#E6E7E9; --ink-2:#B4B7BC; --muted:#83878D;
@@ -274,7 +253,7 @@ a { color: inherit; text-decoration: none }
 :root { --kb-total: calc(var(--kb) + var(--kb-gap)) }
 :root[data-kb] { --kb-gap: 26px }
 
-.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, var(--sat)) 16px 12px; flex: none }
+.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px; flex: none }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 /* The wordmark and the name read as one lockup, so they sit on one baseline.
    It carries no sub-line, so the height a sub-line would have taken goes to the
@@ -391,7 +370,7 @@ a { color: inherit; text-decoration: none }
 .whostrip .itemchip { flex: none }
 .itemtablewrap { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
 .itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
-  padding: 9px 16px; padding-bottom: max(9px, var(--sab)) }
+  padding: 9px 16px; padding-bottom: max(9px, env(safe-area-inset-bottom)) }
 .footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
@@ -489,16 +468,13 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 
 /* ---- nav, fab, buttons ---- */
 .bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none;
-  padding: 7px 0 var(--navbot) }
+  padding: 7px 0 max(11px, env(safe-area-inset-bottom)) }
 .nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px;
   color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase }
 .nav.on { color: var(--ink); font-weight: 700 }
 /* A solid ink block, not a floating pill: the one thing on the screen that is
    pure figure-ground inversion, which is signal enough without a shadow. */
-.fab { position: fixed; right: max(16px, calc(50vw - 264px));
-  /* The nav's own height plus its foot: the shell draws under the gesture bar,
-     so the foot grows with the inset and a fixed 78px would sink into the nav. */
-  bottom: calc(67px + var(--navbot)); width: 50px; height: 50px;
+.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: 78px; width: 50px; height: 50px;
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);

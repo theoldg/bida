@@ -145,64 +145,9 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
-/**
- * `env(safe-area-inset-*)` outside the two token definitions is a layout that
- * twitches. Chrome reports the *visible* system bars, so the raw value grows
- * and collapses every time one unfolds — a drag of the notification shade does
- * it twice; `--sat`/`--sab` are the part that
- * stays, kept by components/bar-inset. A rule because the raw env is the
- * obvious thing to reach for and the twitch it buys is only visible on a phone
- * (docs/frontend.md#pwa).
- */
-{
-  const css = readFileSync(join(ROOT, "apps/web/app/globals.css"), "utf8");
-  for (const edge of ["top", "bottom"]) {
-    const uses = [...css.matchAll(new RegExp(`env\\(safe-area-inset-${edge}`, "g"))].length;
-    if (uses !== 1) {
-      fail("apps/web/app/globals.css",
-        `env(safe-area-inset-${edge}) appears ${uses}x — only --sa${edge[0]} may read it (docs/frontend.md#pwa)`);
-    }
-  }
-}
-
-/**
- * The manifest's two colours are the CSS light tokens hand-copied, and they
- * have to stay that way: they paint the splash and the install prompt, which
- * are what a phone shows before the app exists to paint anything. There is no
- * way to share the value — the manifest is static JSON read before the page —
- * so the copy is checked instead of avoided. Light only, deliberately: the
- * manifest has no dark half that any browser reads (docs/frontend.md#pwa).
- */
-const MANIFEST = join(ROOT, "apps/web/public/manifest.webmanifest");
-const CSS = join(ROOT, "apps/web/app/globals.css");
-
-/** The value of `--token` in the first block that sets it: light `:root`. */
-function token(css, name) {
-  const hit = css.match(new RegExp(`--${name}\\s*:\\s*(#[0-9A-Fa-f]{6})`));
-  return hit?.[1].toUpperCase();
-}
-
-{
-  const css = readFileSync(CSS, "utf8");
-  const manifest = JSON.parse(readFileSync(MANIFEST, "utf8"));
-  // theme_color is the strip above the splash, which abuts the full-bleed
-  // `.app` (--card); background_color is the splash, which is the page
-  // (--paper). Once the page is up, the shell paints both for itself.
-  const expected = {
-    theme_color: token(css, "card"),
-    background_color: token(css, "paper"),
-  };
-  for (const [member, want] of Object.entries(expected)) {
-    const got = manifest[member]?.toUpperCase();
-    if (got !== want) {
-      fail(MANIFEST, `${member} is ${got ?? "missing"} — globals.css says ${want} (docs/frontend.md#pwa)`);
-    }
-  }
-}
-
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "no browser dialogs, no stray copy, bar insets go through the tokens, manifest colours match the tokens");
+    + "no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);

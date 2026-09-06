@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { BarInset } from "../components/bar-inset";
 import { IconSprite } from "../components/icons";
 import { KeyboardInset } from "../components/keyboard-inset";
 import { NoLongPress } from "../components/no-long-press";
@@ -33,23 +32,15 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
     apple: [{ url: "/icon-192.png", sizes: "192x192" }],
   },
-  // "default" keeps the status bar beside the app rather than under it — iOS
-  // ignores the manifest's `display` entirely for home-screen web apps, so
-  // this is the lever that matches `standalone` there.
-  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "default" },
+  // "black-translucent" draws the app under the status bar instead of
+  // beside it — iOS ignores the manifest's "fullscreen" display entirely for
+  // home-screen web apps, so this is the only lever for the same effect there.
+  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // Load-bearing, and not for notches: cover is what puts the page under the
-  // system bars, so the shell paints that strip rather than the browser — and on
-  // Android 15 the browser cannot, `Window.setStatusBarColor` being a no-op from
-  // API 35. Where Chrome hands the page the edge-to-edge treatment, `.topbar`
-  // pads by `--sat` over `--card` and the bar follows `data-theme` exactly; where
-  // it refuses, the bar keeps its own colour, which is the cost we take over
-  // `fullscreen` — that buys the same refusal *plus* a black cutout and a
-  // viewport that resizes under a swiped-in bar. See frontend.md#pwa.
   viewportFit: "cover",
   // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
   // already sized for a thumb, and a zoomed page strands the fixed bottom bar
@@ -58,10 +49,11 @@ export const viewport: Viewport = {
   // CSS `touch-action` and `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
-  // No `themeColor` here: a `media="(prefers-color-scheme: …)"` pair follows the
-  // phone rather than `data-theme`, and the browser takes the first matching
-  // one — so it would outrank, not lose to, the correct answer. `ThemeScript`
-  // writes the single meta from the resolved theme (components/theme.tsx).
+  // Matched to the --paper token in each theme.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F1F1EF" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E0F11" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -69,7 +61,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={mono.variable}>
       <body>
         <ThemeScript />
-        <BarInset />
         <IconSprite />
         <KeyboardInset />
         <NoLongPress />

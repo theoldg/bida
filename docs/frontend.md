@@ -208,86 +208,13 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: standalone`, and the colours Android paints before the page loads.
-The next section is why `standalone` and not `fullscreen`. The three PNGs are
-the tally wordmark in paper on an ink tile; regenerate them together if the mark
-or the ink changes, and the maskable one draws its mark smaller and unrounded so
-a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
-`appleWebApp.statusBarStyle: "default"` is the equivalent lever.
-
-### A status bar we cannot colour, and the fullscreen that doesn't buy it
-
-**On Android 15 a standalone web app's status bar cannot be themed from the
-page, and this cost four rounds to establish.** From API 35
-`Window.setStatusBarColor` is a no-op. It is the call Chromium's
-`StatusBarColorController` falls back to whenever the edge-to-edge helper is not
-in charge, and the icon-tint call beside it goes through `WindowInsetsController`
-and still works. **Recognise it by sight: a bar that keeps its colour while the
-clock and battery flip to white is that pair, one call landing and one not.** No
-colour anywhere is set wrong; the app simply cannot paint there.
-
-Getting the helper in charge needs the page drawing edge-to-edge, which
-`DisplayCutoutController.shouldUseBrowserEdgeToEdge` grants only with
-`viewport-fit: cover` **and** a compatible display mode — which, on the pre-flag
-path its killswitch defaults to, reads in the source as `fullscreen` alone.
-**The phone says otherwise: `fullscreen` does not get the helper either, and
-charges for the attempt.** Installed that way the cutout strip is letterboxed
-black — the window never extends into it, so nothing the page paints can reach
-it — and the viewport resizes under the app every time a system bar unfolds,
-which one drag of the notification shade does twice. A bar whose colour is
-merely wrong is a mismatch; a black hole where the notch is, and a layout that
-resizes while you drag, are worse than the thing they were traded for.
-
-So `standalone` ships, and there are four dead ends behind it, so nobody walks
-back into one: a `theme-color` meta (read for the icon tint, paints nothing
-installed), a manifest dark colour (see below, no browser reads one),
-`standalone` + `cover` (needs the flag), and `fullscreen` + `cover` (needs the
-same flag, and costs the clock, the battery and the cutout). The display mode is
-baked into the WebAPK, so a phone that took the fullscreen manifest keeps it
-until Chrome re-mints the app.
-
-`viewport-fit: cover` is the other half and is load-bearing, not notch
-decoration: it is what puts the page under the bars in the first place. `.topbar`
-pads by `--sat` over `--card`; `--navbot` (`max(11px, var(--sab))`) is the foot
-the bottom bar sits on, and the FAB
-offsets from that token rather than a constant, because under cover the foot
-grows with the gesture bar.
-
-**A bar that comes and goes must not move the layout, and that is not cover's
-fault.** Outside short-edges cutout mode Chrome reads the *visible* system bars,
-so `env(safe-area-inset-*)` grows when one unfolds and collapses when it hides —
-anything padding by it moves twice per glance at the clock.
-`components/bar-inset.tsx` takes the **smallest** inset seen this session, which
-is the reading with no transient bar in it: the layout then answers to what is
-permanently in the way and ignores an overlay that leaves on its own. Minimum
-and not maximum because reserving the largest would give away a strip we do
-have, the first time anyone checked the time. It skips measuring while a
-keyboard is up (`data-kb` on the root), since a keyboard stands where the
-gesture bar does and a 0 read then is not a no-bar read. `--sat` / `--sab` are
-that value, and `scripts/rules-check.mjs` keeps every rule off the raw `env()`.
-
-`components/theme.tsx` writes a single `theme-color` meta from the resolved
-theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change.
-Installed on Android it paints nothing, but Chrome reads it for the icon tint,
-so it still has to name the colour actually at the top of the screen. In a
-browser tab and a desktop PWA window it paints the chrome as it always did.
-Deliberately one meta rather than a `media="(prefers-color-scheme: …)"` pair:
-the pair follows the phone while `data-theme` can override it, and the browser
-takes the first *matching* meta, so a pair would outrank a correction rather
-than lose to it. It reads `--card` off the DOM, so that value can't drift.
-
-`:root` also declares `color-scheme` per resolved theme, which is what puts
-scrollbars, native pickers and the canvas behind an overscroll in the same mode.
-
-The manifest keeps `theme_color` (`--card`) and `background_color` (`--paper`)
-for the splash and the install prompt — the moment before the page exists to
-paint anything. **Light only: there is no dark half of the manifest that any
-browser reads.** `user_preferences.color_scheme_dark` never shipped, and
-Chromium's manifest parser has no dark colour in it at all; the
-`dark_theme_color` that survives in its mojom is marked obsolete and unset, so
-`chrome://webapks` prints "Dark theme color:" empty however you spell the
-member. `scripts/rules-check.mjs` holds the two light hexes to the tokens, since
-static JSON can't read CSS.
+`display: fullscreen` (falls back to `standalone`), theme colour per theme. The
+three PNGs are the tally wordmark in paper on an ink tile; regenerate them
+together if the mark or the ink changes, and the maskable one draws its mark
+smaller and unrounded so a circular launcher crop can't clip it. iOS ignores
+manifest `display` entirely — `appleWebApp.statusBarStyle:
+"black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
+and `env(safe-area-inset-top)` padding on `.topbar` matter.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
@@ -375,19 +302,6 @@ figure-free.
   client that never went away, which is why the update is offered as a tap
   (see [PWA](#pwa)) rather than waited for.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
-- **The manifest is the one thing the worker fetches network-first.** It is
-  read by the browser, not the app, to decide whether to re-mint the WebAPK
-  below; cache-first meant that check was answered with our own stale copy, so
-  an edit couldn't reach an installed phone until a whole worker cycle had
-  turned over first.
-- **An installed Android app keeps the manifest it was installed with.** Chrome
-  bakes `display`, `orientation`, icons and the rest into a WebAPK at install
-  time; it re-reads the manifest at most daily and only then queues a rebuild,
-  which it applies once every window of the app is closed, on wifi, charging. So
-  a `display` change is invisible on an already-installed phone for days, and
-  the old mode is what you keep seeing. `about://webapks` has an Update button;
-  reinstalling is faster. Nothing to fix in the app — check there before
-  believing a manifest change didn't work.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
   and the bottom bar sits at the foot of a long page — invisible until you
