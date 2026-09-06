@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · create a group, everyone in it, in one screen |
+| `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, Rates, People and the invite link are top-bar icons |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates` is the screen that linked in from beside it, and is where back goes |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up links here with a transfer pre-filled |
@@ -25,7 +25,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/history?id=[&e=][&via=]` | Version history, whole-group or per-entry. Per-entry carries the entry's own `via` so the chain back stays exact |
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
 | `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
-| `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group |
+| `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
@@ -120,15 +120,24 @@ confers nothing without the secret.
   the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
-  of a list of names: Enter files the name and hands the caret back, so a group
-  of six is one burst of typing rather than six trips through a scrim. Used on
-  `/new`, `/g/members` and `/g/claim`. A dialog is for a decision with a
-  consequence to state; it was never right for a list you fill. Living in the
-  list costs two rules: **one name, one person** — a name already on it is
-  refused as you type (`core/names.ts`), since a member is only ever drawn as
-  their name — and the row **follows the list down**, as a browser scrolls to
-  a field only as it takes focus, and this one never lets go
-  — clear of the keyboard, per the `--kb` Gotcha below.
+  of a list of names, built like the rows above it — name, then one control —
+  because it becomes one. **Enter files the name and so does leaving the field**,
+  so a group of six is one burst of typing and nothing is lost by reaching
+  straight for Create. There is no Add button to forget to press; the control on
+  the right is a `plus` that focuses the field and a `trash` the moment there is
+  a draft to abandon, which is the only way back out of a row that files itself.
+  A screen's own button calls `flush()` first — blur fires *before* the click it
+  caused, so "Continue as Marie" would otherwise continue as somebody else.
+  Living in the list costs two rules: **one name, one person** — a name already
+  on it is refused as you type (`core/names.ts`), except on a list you are
+  picking yourself out of, where a match *is* you (`duplicates="match"`) — and
+  the row **follows the list down**, as a browser scrolls to a field only as it
+  takes focus, and this one never lets go — clear of the keyboard, per the
+  `--kb` Gotcha below.
+- **"Which one is you?" is one screen, `components/who-picker.tsx`**, ending
+  both ways into a group: joining, and creating one. Picking is never a write —
+  the button is, whether it claims an identity (ADR-0003) or creates the group
+  with that name as its actor.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a

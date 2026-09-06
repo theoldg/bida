@@ -51,6 +51,13 @@ removed puts them back there too, signed as the person restored
 one member rather than two — [ADR-0034](decisions/0034-a-member-is-their-name.md).
 Groups that predate it keep `newId()` members and the gap that comes with them.
 
+**Both ways into a group end on the same question.** `/new` dropped its "You
+are" field — your name is on the members list like everyone else's — and hands
+the finished list to the picker that joining already ended on
+(`components/who-picker.tsx`), so whoever is picked is the group's first member
+and the actor on the ops creating it. The add row lost its Add button with it:
+leaving the field files the name ([frontend.md](frontend.md#state)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

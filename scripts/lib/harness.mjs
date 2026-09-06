@@ -225,15 +225,21 @@ export async function pick(page, opener, row) {
 export async function newGroup(page, base, { name, me, members = [], onForm }) {
   await page.goto(`${base}/new`);
   await page.locator("#g-name").fill(name);
-  await page.locator("#g-me").fill(me);
-  // Everyone else goes in here, on the same inline row the People screen uses:
-  // this is the flow a person takes, and it is the one worth exercising.
-  for (const member of members) {
+  // Everybody goes in the same inline row, this device's owner included —
+  // there is no separate "you" field, and which of these names is yours is the
+  // question the screen ends on. This is the flow a person takes, and it is
+  // the one worth exercising.
+  for (const member of [me, ...members]) {
     await page.getByLabel("Add someone").fill(member);
-    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await page.keyboard.press("Enter");
   }
   await onForm?.();
   await page.getByRole("button", { name: "Create" }).click();
+  // One name needs no picking: it can only be you, so the group is already made.
+  if (members.length > 0) {
+    await page.locator("button.row").filter({ hasText: me }).first().click();
+    await page.getByRole("button", { name: `Continue as ${me}` }).click();
+  }
   await page.waitForURL(/\/g\?id=/);
   return new URL(page.url()).searchParams.get("id");
 }

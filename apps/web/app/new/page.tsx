@@ -1,45 +1,59 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isCurrencyCode } from "@hajsik/core";
 import { Eyebrow } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
-import { AddName } from "../../components/name-adder";
+import { AddName, type AddNameHandle } from "../../components/name-adder";
+import { WhoPicker } from "../../components/who-picker";
 import { copy } from "../../lib/copy";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
 import { createGroup } from "../../lib/db/commands";
 import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
-import { nameTaken } from "@hajsik/core";
 import { goUp } from "../../lib/nav";
 
 /**
- * The whole group, on one screen.
+ * The whole group, on one screen and then one question.
  *
  * The others used to be somebody else's problem: create, land on an empty
  * ledger, find People, add four names one dialog at a time. They belong here —
  * the names are in your head at exactly this moment, and typing them is one
  * uninterrupted run down the same list they'll appear in. Nothing is written
- * until Create, so this list is plain state, not ops.
+ * until the last button, so this list is plain state, not ops.
+ *
+ * Your own name is on that list rather than in a field of its own. A separate
+ * "You are" box asked for the same list twice and let the two disagree, and it
+ * put the question at the top of the screen, before there was a list to answer
+ * it with. So the screen ends the way joining a group ends — the same picker,
+ * asking which of these people you are (components/who-picker.tsx) — and
+ * whoever is picked is the group's first member and the actor on every op that
+ * creates it. One name typed skips the question: it can only be you.
  */
 export default function NewGroupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [myName, setMyName] = useState("");
-  const [others, setOthers] = useState<string[]>([]);
+  const [people, setPeople] = useState<string[]>([]);
   const [currency, setCurrency] = useState("EUR");
+  const [asking, setAsking] = useState(false);
+  const [picked, setPicked] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string>();
   const [ask, setAsk] = useState<null | "currency" | "other" | "discard">(null);
+  // The name still in the add row. It counts as a person for everything below:
+  // typing the only member of a group and finding Create dead beside it is the
+  // failure the row was rebuilt to stop (components/name-adder.tsx).
+  const [draft, setDraft] = useState<string | null>(null);
+  const adder = useRef<AddNameHandle<string> | null>(null);
 
   // A group typed here is state and nothing else — no draft store, nothing in
   // Dexie — so both ways off this screen throw it away. The entry form asks
   // before it does that and lets the browser ask on a reload; a list of names
   // somebody just typed is worth the same courtesy.
-  const typed = name.trim().length > 0 || myName.trim().length > 0 || others.length > 0;
+  const typed = name.trim().length > 0 || people.length > 0 || draft !== null;
   useEffect(() => {
     if (!typed) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -57,33 +71,72 @@ export default function NewGroupPage() {
     return true;
   }
 
-  // Your own name is on the same list as everyone else's, so it plays by the
-  // same rule: one Ana, and the app can tell people apart everywhere it only
-  // ever shows a name (core/names.ts).
-  const clash = nameTaken(myName, others);
-  const ready = name.trim().length > 0 && myName.trim().length > 0
-    && !clash && currency.length === 3 && !busy;
+  const ready = name.trim().length > 0 && currency.length === 3 && !busy
+    && (people.length > 0 || draft !== null);
 
-  async function save() {
+  /** Create: file whatever the add row is still holding, then ask who you are
+      — unless the answer can only be one person. */
+  async function next() {
     if (!ready) return;
+    const added = await adder.current?.flush();
+    const all = added ? [...people, added] : people;
+    const only = all.length === 1 ? all[0] : undefined;
+    if (only !== undefined) await save(only, all);
+    else if (all.length > 0) setAsking(true);
+  }
+
+  async function save(me: string, all: readonly string[]) {
     setBusy(true);
     setFailed(undefined);
     try {
       const { groupId } = await createGroup({
-        name: name.trim(), baseCurrency: currency, myName: myName.trim(), otherNames: others,
+        name: name.trim(),
+        baseCurrency: currency,
+        myName: me,
+        otherNames: all.filter((who) => who !== me),
       });
       router.replace(route.group(groupId));
     } catch (err) {
       setBusy(false);
+      setAsking(false);
       setFailed(errorText(err));
     }
+  }
+
+  if (asking) {
+    return (
+      <Screen>
+        <Body>
+          <TopBar title={copy.claim.title} sub={name.trim()}
+            back={{ ask: () => { setAsking(false); return false; } }} />
+          <Scroll>
+            <WhoPicker
+              people={people.map((who) => ({ id: who, name: who }))}
+              picked={picked}
+              addPlaceholder={copy.members.addPlaceholder}
+              onPick={setPicked}
+              // Typing a name that is already on the list picks that person
+              // rather than listing them twice — nothing is written yet, so
+              // "adding" them here is only a way of saying which one is you.
+              onAdd={(who) => {
+                setPeople((list) => (list.includes(who) ? list : [...list, who]));
+                return { id: who, name: who };
+              }}
+              onContinue={(who, all) => save(who, all.map((p) => p.name))}
+            />
+          </Scroll>
+        </Body>
+      </Screen>
+    );
   }
 
   return (
     <Screen>
       <Body>
         <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }}
-          right={<button className="action" onClick={save} disabled={!ready}>{copy.act.create}</button>} />
+          right={<button className="action" onClick={() => void next()} disabled={!ready}>
+            {copy.act.create}
+          </button>} />
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
@@ -94,13 +147,6 @@ export default function NewGroupPage() {
                 placeholder={copy.newGroup.namePlaceholder}
                 onChange={(e) => setName(e.target.value)} />
             </div>
-            <div className="field">
-              <label htmlFor="g-me">{copy.newGroup.you}</label>
-              <input id="g-me" value={myName} maxLength={40}
-                placeholder={copy.newGroup.yourNamePlaceholder}
-                onChange={(e) => setMyName(e.target.value)} />
-            </div>
-            {clash ? <Failure>{copy.members.taken(myName.trim())}</Failure> : null}
             <div className="field">
               <span className="fieldlabel" style={{ width: 62 }}>{copy.newGroup.currency}</span>
               <button type="button" id="g-cur" className="pick" aria-label={copy.newGroup.currency}
@@ -115,17 +161,18 @@ export default function NewGroupPage() {
 
           <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.newGroup.people}</Eyebrow>
           <div className="rows">
-            {others.map((who, i) => (
+            {people.map((who, i) => (
               <div key={`${who}-${i}`} className="row">
                 <div className="rmain"><div className="rtitle">{who}</div></div>
                 <button className="iconbtn" aria-label={copy.members.removeLabel(who)}
-                  onClick={() => setOthers((list) => list.filter((_, at) => at !== i))}>
+                  onClick={() => setPeople((list) => list.filter((_, at) => at !== i))}>
                   <Icon name="trash" size={14} />
                 </button>
               </div>
             ))}
-            <AddName placeholder={copy.members.addPlaceholder} taken={[myName, ...others]}
-              onAdd={(who) => setOthers((list) => [...list, who])} />
+            <AddName placeholder={copy.members.addPlaceholder} taken={people}
+              onAdd={(who) => { setPeople((list) => [...list, who]); return who; }}
+              handle={adder} onDraft={setDraft} />
           </div>
         </Scroll>
       </Body>

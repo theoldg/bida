@@ -138,15 +138,19 @@ function MembersScreen() {
                 <div className="rmain">
                   <div className="rtitle">{m.name}</div>
                 </div>
-                {m.id === me
-                  ? <Icon name="check" size={16} style={{ color: "var(--brand)", flex: "none" }} />
-                  : null}
-                {m.id !== me ? (
+                {/* Your row's check and everybody else's trash are the same
+                    slot, so the column reads as one column — including the add
+                    row's own control at the foot of the list. */}
+                {m.id === me ? (
+                  <span className="rmark">
+                    <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
+                  </span>
+                ) : (
                   <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
                     onClick={() => askRemove(m.id, m.name)}>
                     <Icon name="trash" size={14} />
                   </button>
-                ) : null}
+                )}
               </div>
             ))}
 

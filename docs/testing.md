@@ -163,6 +163,11 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   the harness — don't hand-roll a fourth server.
 - **Locate by role and id, not by guessed label text.** On `/new` the label is
   "Name"; "Group name" is only the placeholder, so `getByLabel` hangs.
+- **Two things must never answer to one accessible name.** The add row's button
+  once carried the field's own label, and `getByLabel("Add someone")` died of a
+  strict-mode violation — which is the driver saying what a screen reader would
+  have found: the same name twice. A button that only focuses the field beside
+  it is `aria-hidden`, not labelled.
 - **Scope row-level clicks to the row.** `getByRole("button", { name: /the
   rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
   member's name. Getting this wrong seeds a "co-sponsored" expense that quietly

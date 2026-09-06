@@ -3,8 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { Icon } from "../../../components/icons";
-import { AddName } from "../../../components/name-adder";
+import { WhoPicker } from "../../../components/who-picker";
 import { copy } from "../../../lib/copy";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
 import { route } from "../../../lib/group-link";
@@ -18,15 +17,10 @@ import { useGroupData } from "../../../lib/hooks";
  * management screen, so once you had tapped your name the only way onward was
  * "back", which reads like undoing what you just did.
  *
- * This is the same list with one job. Pick a name, press the button, land in
- * the group. Nothing is written until the button: tapping a name here is a
- * selection, not a claim (which is an op, and public — ADR-0003). It can be
- * changed later on People, where the same names are.
- *
- * The button sits under the list rather than in a `Foot`, because it is the
- * next thing you do after tapping your name and not a fixture of the screen:
- * pinned to the bottom of a short list it read as unrelated to the tap that
- * had just lit it up.
+ * This is the same list with one job, and the same one `/new` finishes on
+ * (components/who-picker.tsx). Nothing is written until the button: tapping a
+ * name here is a selection, not a claim (which is an op, and public —
+ * ADR-0003). It can be changed later on People, where the same names are.
  */
 export default function ClaimPage() {
   return <QueryBoundary><ClaimScreen /></QueryBoundary>;
@@ -40,28 +34,20 @@ function ClaimScreen() {
   // Re-opening an invite you have already accepted preselects who you are, so
   // it is one tap rather than a puzzle about whether you'll be duplicated.
   const [picked, setPicked] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const chosen = picked ?? data.me;
 
   if (!groupId || !data.group) return <Blank back={route.groups()} />;
   const group = data.group;
 
-  // Adding yourself here selects you too: you typed your own name, so making
-  // it one more tap to say so would be asking the same question twice.
   async function add(name: string) {
-    if (!groupId) return;
-    setPicked(await addMember(groupId, data.me, name));
+    if (!groupId) throw new Error("no group");
+    const id = await addMember(groupId, data.me, name);
+    return { id, name };
   }
 
-  async function proceed() {
-    if (!groupId || !chosen || busy) return;
-    setBusy(true);
-    try {
-      await claimIdentity(groupId, chosen);
-      router.replace(route.group(groupId));
-    } finally {
-      setBusy(false);
-    }
+  async function proceed(memberId: string) {
+    if (!groupId) return;
+    await claimIdentity(groupId, memberId);
+    router.replace(route.group(groupId));
   }
 
   return (
@@ -70,29 +56,14 @@ function ClaimScreen() {
         <TopBar title={copy.claim.title} sub={group.name} back={route.groups()} />
 
         <Scroll>
-          <div className="rows">
-            {data.members.map((m) => (
-              <button key={m.id} className="row" onClick={() => setPicked(m.id)}>
-                <div className="rmain">
-                  <div className="rtitle">{m.name}</div>
-                </div>
-                {m.id === chosen
-                  ? <Icon name="check" size={17} style={{ color: "var(--brand)" }} />
-                  : null}
-              </button>
-            ))}
-
-            <AddName placeholder={copy.claim.addPlaceholder}
-              taken={data.members.map((m) => m.name)} onAdd={add} />
-          </div>
-
-          <div className="pad">
-            <button className="btn btn-p" onClick={proceed} disabled={!chosen || busy}>
-              {chosen
-                ? copy.claim.continueAs(data.memberById.get(chosen)?.name ?? copy.someoneLower)
-                : copy.claim.pickFirst}
-            </button>
-          </div>
+          <WhoPicker
+            people={data.members.map((m) => ({ id: m.id, name: m.name }))}
+            picked={picked ?? data.me}
+            addPlaceholder={copy.claim.addPlaceholder}
+            onPick={setPicked}
+            onAdd={add}
+            onContinue={proceed}
+          />
         </Scroll>
       </Body>
     </Screen>
