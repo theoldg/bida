@@ -208,38 +208,62 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: standalone`, and the colours Android paints before the page loads.
-Standalone, not fullscreen: the
-phone keeps its status bar and navigation buttons, because an app you check for
-a minute shouldn't cost you the clock or the back gesture. The three PNGs are
+`display: fullscreen`, and the colours Android paints before the page loads.
+Fullscreen costs the clock and the battery, which is a real price for an app you
+check for a minute — it is paid because the alternative is worse, and the next
+section is why. `display_override` lists `standalone` behind it so a browser
+without fullscreen still installs as an app. The three PNGs are
 the tally wordmark in paper on an ink tile; regenerate them together if the mark
 or the ink changes, and the maskable one draws its mark smaller and unrounded so
 a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
 `appleWebApp.statusBarStyle: "default"` is the equivalent lever.
 
-### The status bar is ours to paint
+### Why fullscreen: a status bar we cannot colour
 
-**`viewport-fit: cover` is what makes the status bar follow the theme, and it is
-the only thing that does.** From Android 15 (API 35) `Window.setStatusBarColor`
-is a no-op, and it is the call Chrome falls back to for a standalone web app
-that hasn't asked for cover — while the icon-tint call beside it, on the modern
-`WindowInsetsController`, still lands. That asymmetry is the whole bug, and it
-is worth recognising by sight: **a bar that keeps its colour while the clock and
-battery flip to white is the app failing to draw edge-to-edge**, not a colour
-set wrong anywhere. With cover, Chrome puts the app in short-edges cutout mode
-and hands the strip to the page: `.topbar` pads by `env(safe-area-inset-top)`
-over `--card`, so the bar *is* the app, and it tracks `data-theme` — including a
-theme toggled against the phone's, which nothing outside the page can reach.
+**On Android 15 a standalone web app's status bar cannot be themed from the
+page, and this cost three rounds to establish.** From API 35
+`Window.setStatusBarColor` is a no-op. It is the call Chromium's
+`StatusBarColorController` falls back to whenever the edge-to-edge helper is not
+in charge, and the icon-tint call beside it goes through `WindowInsetsController`
+and still works. **Recognise it by sight: a bar that keeps its colour while the
+clock and battery flip to white is that pair, one call landing and one not.** No
+colour anywhere is set wrong; the app simply cannot paint there.
 
-The same applies at the other end: `--navbot` (`max(11px,
+Getting the helper in charge needs the page to draw edge-to-edge, and
+`DisplayCutoutController.shouldUseBrowserEdgeToEdge` grants that only with
+`viewport-fit: cover` **and** a compatible display mode — which, on the
+pre-flag path its own killswitch defaults to, means `fullscreen` and nothing
+else. So standalone leaves the bar to Chrome, Chrome cannot paint it, and it
+stays whatever the window behind it is. Fullscreen has no status bar to
+mismatch, and what the phone does show — a bar swiped in over the app — the app
+is drawing under and therefore colouring.
+
+Three dead ends, so nobody walks back into them: a `theme-color` meta (read for
+the icon tint, paints nothing installed), a manifest dark colour (see below, no
+browser reads one), and `standalone` + `cover` (needs a flag we don't control).
+
+`viewport-fit: cover` is the other half and is load-bearing, not notch
+decoration: it is what puts the page under the bars in the first place. `.topbar`
+pads by `env(safe-area-inset-top)` over `--card`; `--navbot` (`max(11px,
 env(safe-area-inset-bottom))`) is the foot the bottom bar sits on, and the FAB
 offsets from that token rather than a constant, because under cover the foot
 grows with the gesture bar.
 
+**The jitter is real, and it is not cover's fault.** Outside short-edges cutout
+mode Chrome reads the *visible* system bars, so `env(safe-area-inset-*)` grows
+when a swiped-in bar appears and collapses when it hides — anything padding by
+it moves twice per glance at the clock. `components/bar-inset.tsx` takes the
+**smallest** inset seen this session, which is the reading with no bar in it:
+the layout then answers to a display cutout, which is permanent, and ignores a
+bar, which is an overlay that leaves on its own. Minimum and not maximum
+because reserving the largest would hand back the strip fullscreen exists to
+win, the first time anyone checked the time. `--sat` / `--sab` are that value,
+and `scripts/rules-check.mjs` keeps every rule off the raw `env()`.
+
 `components/theme.tsx` writes a single `theme-color` meta from the resolved
 theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change.
-Installed on Android it paints nothing now, but Chrome reads it for the icon
-tint, so it still has to name the colour actually at the top of the screen. In a
+Installed on Android it paints nothing, but Chrome reads it for the icon tint,
+so it still has to name the colour actually at the top of the screen. In a
 browser tab and a desktop PWA window it paints the chrome as it always did.
 Deliberately one meta rather than a `media="(prefers-color-scheme: …)"` pair:
 the pair follows the phone while `data-theme` can override it, and the browser

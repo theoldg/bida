@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { BarInset } from "../components/bar-inset";
 import { IconSprite } from "../components/icons";
 import { KeyboardInset } from "../components/keyboard-inset";
 import { NoLongPress } from "../components/no-long-press";
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={mono.variable}>
       <body>
         <ThemeScript />
+        <BarInset />
         <IconSprite />
         <KeyboardInset />
         <NoLongPress />

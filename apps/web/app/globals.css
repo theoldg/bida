@@ -34,11 +34,19 @@
   --kb: 0px;
   --kb-gap: 0px;
 
+  /* What is permanently in the way at each end, kept by components/bar-inset.
+     The raw `env(safe-area-inset-*)` is the fallback and the starting value;
+     the component narrows it to the part that isn't a bar the phone hides
+     again, so nothing reflows when one unfolds. Never read the raw env in a
+     rule — that is the twitch. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+
   /* The bottom bar's foot. `viewport-fit: cover` puts the shell under the
      gesture bar, so this is the strip the bar sits on; 11px is the floor for a
      phone with buttons, which reports no inset. One value because the FAB has
      to clear whatever the nav ends up being. */
-  --navbot: max(11px, env(safe-area-inset-bottom));
+  --navbot: max(11px, var(--sab));
 
   /* One face for everything. next/font sets --font-mono on <html>, which is
      :root, so the fallback stack only bites if the font fails to load. The
@@ -266,7 +274,7 @@ a { color: inherit; text-decoration: none }
 :root { --kb-total: calc(var(--kb) + var(--kb-gap)) }
 :root[data-kb] { --kb-gap: 26px }
 
-.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px; flex: none }
+.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, var(--sat)) 16px 12px; flex: none }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 /* The wordmark and the name read as one lockup, so they sit on one baseline.
    It carries no sub-line, so the height a sub-line would have taken goes to the
@@ -383,7 +391,7 @@ a { color: inherit; text-decoration: none }
 .whostrip .itemchip { flex: none }
 .itemtablewrap { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
 .itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
-  padding: 9px 16px; padding-bottom: max(9px, env(safe-area-inset-bottom)) }
+  padding: 9px 16px; padding-bottom: max(9px, var(--sab)) }
 .footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }

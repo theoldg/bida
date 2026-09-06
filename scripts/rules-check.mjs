@@ -146,6 +146,25 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 }
 
 /**
+ * `env(safe-area-inset-*)` outside the two token definitions is a layout that
+ * twitches. Chrome reports the *visible* bars in fullscreen, so the raw value
+ * grows and collapses every time one unfolds; `--sat`/`--sab` are the part that
+ * stays, kept by components/bar-inset. A rule because the raw env is the
+ * obvious thing to reach for and the twitch it buys is only visible on a phone
+ * (docs/frontend.md#pwa).
+ */
+{
+  const css = readFileSync(join(ROOT, "apps/web/app/globals.css"), "utf8");
+  for (const edge of ["top", "bottom"]) {
+    const uses = [...css.matchAll(new RegExp(`env\\(safe-area-inset-${edge}`, "g"))].length;
+    if (uses !== 1) {
+      fail("apps/web/app/globals.css",
+        `env(safe-area-inset-${edge}) appears ${uses}x — only --sa${edge[0]} may read it (docs/frontend.md#pwa)`);
+    }
+  }
+}
+
+/**
  * The manifest's two colours are the CSS light tokens hand-copied, and they
  * have to stay that way: they paint the splash and the install prompt, which
  * are what a phone shows before the app exists to paint anything. There is no
@@ -184,5 +203,5 @@ for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "no browser dialogs, no stray copy, manifest colours match the tokens");
+    + "no browser dialogs, no stray copy, bar insets go through the tokens, manifest colours match the tokens");
 process.exit(problems.length ? 1 : 0);
