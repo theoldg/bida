@@ -32,15 +32,18 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
     apple: [{ url: "/icon-192.png", sizes: "192x192" }],
   },
-  // "black-translucent" draws the app under the status bar instead of
-  // beside it — iOS ignores the manifest's "fullscreen" display entirely for
-  // home-screen web apps, so this is the only lever for the same effect there.
-  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "black-translucent" },
+  // "default" keeps the status bar beside the app rather than under it — iOS
+  // ignores the manifest's `display` entirely for home-screen web apps, so
+  // this is the lever that matches `standalone` there.
+  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Still cover: the status bar is its own strip now, but the home indicator
+  // and a landscape notch are not, and the bars pad for them with
+  // env(safe-area-inset-*) — which reads 0 unless the viewport covers them.
   viewportFit: "cover",
   // A pinch on a ledger is a mis-grip, not a request to zoom: the layout is
   // already sized for a thumb, and a zoomed page strands the fixed bottom bar

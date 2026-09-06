@@ -208,13 +208,15 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: fullscreen` (falls back to `standalone`), theme colour per theme. The
-three PNGs are the tally wordmark in paper on an ink tile; regenerate them
-together if the mark or the ink changes, and the maskable one draws its mark
-smaller and unrounded so a circular launcher crop can't clip it. iOS ignores
-manifest `display` entirely — `appleWebApp.statusBarStyle:
-"black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
-and `env(safe-area-inset-top)` padding on `.topbar` matter.
+`display: standalone`, theme colour per theme. Standalone, not fullscreen: the
+phone keeps its status bar and navigation buttons, because an app you check for
+a minute shouldn't cost you the clock or the back gesture. The three PNGs are
+the tally wordmark in paper on an ink tile; regenerate them together if the mark
+or the ink changes, and the maskable one draws its mark smaller and unrounded so
+a circular launcher crop can't clip it. iOS ignores manifest `display` entirely —
+`appleWebApp.statusBarStyle: "default"` is the equivalent lever. `viewport-fit:
+cover` stays: the home indicator and a landscape notch are still the app's to
+pad around, and `env(safe-area-inset-*)` reads 0 without it.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
