@@ -223,18 +223,29 @@ viewport is clamped between them and the layout never moves. That leaves the
 `max(_, env(safe-area-inset-*))` padding on the two bars at its floor, which is
 what it is for.
 
-The status bar's colour is **not** a `<meta name="theme-color" media="(prefers-
-color-scheme: …)">` pair, which is the obvious answer and the wrong one: it
-follows the phone while `data-theme` can override it, so a light phone toggled
-to dark keeps a paper-white bar over a near-black app — and since the browser
-takes the first *matching* meta, the pair outranks any correction rather than
-losing to it. `components/theme.tsx` writes the single meta from the resolved
-theme instead, reading `--card` off the DOM — the value stays in globals.css and
-can't drift, and `--card` rather than `--paper` because a full-bleed `.app` is
-what abuts the bar. It runs in the pre-paint script, on the toggle, and on
-`prefers-color-scheme` changes. The manifest's `theme_color` is the same colour
-hard-coded, for the frames before any of that: Android has only the one, so
-dark-mode phones get a light bar for the length of the splash.
+**On Android the status bar is painted from the manifest, not from the page.**
+An installed app ignores `<meta name="theme-color">` entirely — verified on a
+device, after chasing the meta tag for three rounds — so the colours have to be
+manifest members: `theme_color` for the status bar and `color_scheme_dark`
+overriding it when the *phone* is in dark mode. Get it wrong and dark mode gives
+white status-bar icons on a paper-white bar, because Android picks the icon tint
+from the system theme and the bar from us. `theme_color` tracks `--card` (the
+full-bleed `.app` is what abuts the bar) and `background_color` tracks `--paper`
+(the splash is the page); `scripts/rules-check.mjs` holds those four hexes to
+the tokens, since static JSON can't read CSS.
+
+`components/theme.tsx` still writes a `theme-color` meta from the resolved
+theme — pre-paint, on the toggle, and on a `prefers-color-scheme` change — and
+that is what a browser *tab* and a desktop PWA window read. Deliberately one
+meta rather than a `media="(prefers-color-scheme: …)"` pair: the pair follows
+the phone while `data-theme` can override it, and the browser takes the first
+*matching* meta, so a pair would outrank a correction rather than lose to it.
+It reads `--card` off the DOM, so that value can't drift.
+
+**Known limitation.** `color_scheme_dark` keys off the phone's setting, so an
+installed Android app whose theme is toggled *against* the OS still gets the
+other bar. Nothing reaches it: the manifest can't see `data-theme`, and the meta
+that can is ignored there.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
