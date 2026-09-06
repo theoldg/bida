@@ -91,6 +91,34 @@ describe("entityHistory", () => {
     expect(change?.after).toBe(185_000);
   });
 
+  // A revision names the fields that moved; the sentence over it regularly
+  // needs one that didn't — the currency a contribution is in, whether this
+  // entry is an income, who the other payer was.
+  it("carries the whole entity either side of the revision", () => {
+    const { ops } = soukLog();
+    const amountRev = entityHistory(ops, "e-souk").find((r) => r.op.note === "forgot the rug");
+    expect(amountRev?.before["amountMinor"]).toBe(120_000);
+    expect(amountRev?.after["amountMinor"]).toBe(185_000);
+    // The op moved the amount alone, and both folds still hold the rest of it.
+    expect(amountRev?.after["paidBy"]).toBe(MARIE);
+    expect(amountRev?.before["currency"]).toBe("MAD");
+  });
+
+  it("holds the tombstone on the delete revision's own fold", () => {
+    const b = new OpBuilder();
+    b.push("expense", "e-gone", "create", {
+      description: "Taxi", amountMinor: 2000, currency: "EUR",
+      rateToBase: "1", baseAmountMinor: 2000, paidBy: THEO,
+      split: { mode: "equal", members: [THEO] },
+    }, THEO);
+    const gone = b.push("expense", "e-gone", "delete", {}, THEO);
+    const [latest] = entityHistory(b.ops, "e-gone");
+    expect(latest?.before["deletedAt"]).toBeUndefined();
+    expect(latest?.after["deletedAt"]).toBe(gone.createdAt);
+    // Still readable: what was deleted is the reason to open the history.
+    expect(latest?.after["description"]).toBe("Taxi");
+  });
+
   it("carries the author and the human reason", () => {
     const { ops } = soukLog();
     const splitRev = entityHistory(ops, "e-souk").find((r) => r.op.actor === SAM);

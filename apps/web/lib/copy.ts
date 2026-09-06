@@ -435,10 +435,15 @@ export const copy = {
       kind: "Kind",
       involved: "Who’s involved",
       split: "Split",
+      splitMode: "Split mode",
+      receipt: "Receipt",
+      whoHadWhat: "Who had what",
       amount: "Amount",
       currency: "Currency",
       rate: "Rate",
       payer: "Who paid",
+      receiver: "Who received it",
+      putIn: "How much each",
       description: "Description",
       date: "Date",
       category: "Category",
@@ -460,10 +465,29 @@ export const copy = {
     shareOf: (name: string, value: string) => `${name} ${value}`,
     parts: (n: number) => `×${n}`,
     percent: (n: number) => `${n}%`,
+    /** Same people, same shares, a spec written another way — which is only
+        worth a line because the entry screen prints the mode. */
+    rewroteSplit: (who: string) => `${who} changed how the split is written`,
+    addedReceipt: (who: string) => `${who} added a receipt`,
+    changedReceipt: (who: string) => `${who} changed the receipt`,
+    removedReceipt: (who: string) => `${who} removed the receipt`,
+    changedWhoHadWhat: (who: string) => `${who} changed who had what`,
     changedAmount: (who: string) => `${who} changed the amount`,
     changedCurrency: (who: string) => `${who} changed the currency`,
     changedRate: (who: string) => `${who} changed the rate`,
-    changedPayer: (who: string) => `${who} changed who paid`,
+    /**
+     * The payer side asks the split's two questions over again — who put money
+     * in, then how much each of them did — and an income asks both the other
+     * way round, the way the entry form does (`entryKind.payer`).
+     */
+    payerWho: {
+      expense: (who: string) => `${who} changed who paid`,
+      income: (who: string) => `${who} changed who received it`,
+    } as Record<"expense" | "income", (who: string) => string>,
+    payerHow: {
+      expense: (who: string) => `${who} changed how much each put in`,
+      income: (who: string) => `${who} changed how much each received`,
+    } as Record<"expense" | "income", (who: string) => string>,
     changedDescription: (who: string) => `${who} changed the description`,
     changedDate: (who: string) => `${who} changed the date`,
     changedCategory: (who: string) => `${who} changed the category`,

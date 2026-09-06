@@ -1,4 +1,4 @@
-import type { Id, SplitSpec } from "./types.js";
+import type { Id, SplitSpec, SplitTab } from "./types.js";
 
 /**
  * Splitting is the only genuinely tricky arithmetic in the app, and the one
@@ -353,4 +353,24 @@ export function convertSplitMode(
       return { mode: "percent", bps };
     }
   }
+}
+
+/**
+ * Is this split the outcome of a scanned bill?
+ *
+ * **The items are what make it a receipt, not the tab.** `splitTab` says which
+ * tab was open when the entry was saved, and opening Receipt without scanning
+ * anything stores "receipt" over an ordinary even split — which the entry
+ * screen then called "from receipt" while the row beside it said "split 2 ways".
+ * An entry saved before `splitTab` existed has no tab to read, so a `shares`
+ * spec beside a scanned bill is one. ADR-0016.
+ */
+export function fromReceipt(entry: {
+  split: SplitSpec;
+  splitTab?: SplitTab | null;
+  receiptItems?: readonly unknown[] | null;
+}): boolean {
+  if ((entry.receiptItems?.length ?? 0) === 0) return false;
+  return entry.splitTab === "receipt"
+    || (!entry.splitTab && entry.split.mode === "shares");
 }

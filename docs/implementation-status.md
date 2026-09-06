@@ -75,6 +75,15 @@ name being typed; and, on a list you are filling, the next empty row is drawn
 under a fileable name so a finger has the route Enter has. `pnpm claim` holds all
 of it ([testing.md](testing.md)).
 
+**The log reads the entity, not only the patch.** A revision carries the fold
+either side of it, so `history-copy` can say what the change alone could not: a
+co-payer added beside the largest contributor moves `payers` and nothing else,
+and used to read "edited this entry". The payer side now asks the split's two
+questions — who put money in, then how much each of them did — an income is
+called one on every edit rather than only the crossing, each figure is priced in
+its own currency, and a scan, a who-had-what grid and a rewritten split mode
+each say so ([sync.md](sync.md#history-ui)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

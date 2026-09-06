@@ -149,7 +149,8 @@ confers nothing without the secret.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a
-  labelled was/now line for each ([sync.md](sync.md#history-ui)). It must be
+  labelled was/now line for each; it reads the fold either side of the revision,
+  not just the fields that moved ([sync.md](sync.md#history-ui)). It must be
   **total** — it runs inside a render over every patch the log holds, so one
   throw is a white screen, not a missing line.
 

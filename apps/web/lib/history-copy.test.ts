@@ -3,8 +3,8 @@ import { activityFeed, type Member, type Revision } from "@hajsik/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
 import {
-  addExpense, addMember, clearRate, createGroup, editExpense, healGroup,
-  recordSettlement, removeMember, setRate,
+  addExpense, addMember, clearRate, createGroup, editExpense, editSettlement,
+  healGroup, recordSettlement, removeMember, setRate,
 } from "./db/commands";
 import { describe } from "./history-copy";
 
@@ -144,7 +144,7 @@ suite("describe", () => {
     });
 
     const [latest] = await described(groupId);
-    expect(latest!.said).toBe("Theo edited this entry");
+    expect(latest!.said).toBe("Theo edited this expense");
     expect(latest!.diff).toBeUndefined();
     // The names are in the split's own order, which is the members' ids — so
     // the line is read for who is on it, and the rest for their exact values.
@@ -254,6 +254,161 @@ suite("describe", () => {
     expect((await described(groupId))[0]!.said).toBe("Theo turned this into an income");
     await editExpense(groupId, theo, expenseId, { kind: "expense" });
     expect((await described(groupId))[0]!.said).toBe("Theo turned this back into an expense");
+  });
+
+  // The whole of what a co-payer edit used to say. `paidBy` stays on the
+  // largest contributor, so adding somebody beside them moves `payers` alone —
+  // the one field no sentence named.
+  it("names a co-payer added beside the person who was already paying", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      payers: { [theo]: 6_000, [marie]: 4_000 },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.rev.changes.map((c) => c.field)).toEqual(["payers"]);
+    expect(latest!.said).toBe("Theo changed who paid");
+    expect(latest!.diff!.was).toBe("Theo");
+    // What each of them put in, not just that there are two of them now.
+    expect(latest!.diff!.now).toContain("Theo €60.00");
+    expect(latest!.diff!.now).toContain("Marie €40.00");
+  });
+
+  it("keeps the payers on a line of their own when the save moved more", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      payers: { [theo]: 6_000, [marie]: 4_000 },
+      description: "Beers and chips",
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo edited this expense");
+    const payers = latest!.also!.find((a) => a.label === "Who paid");
+    expect(payers!.was).toBe("Theo");
+    expect(payers!.now).toContain("Marie €40.00");
+    expect(latest!.also).toContainEqual(
+      { label: "Description", was: "Beers", now: "Beers and chips" });
+  });
+
+  it("says whose contribution moved when the payers themselves did not", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 6_000, [marie]: 4_000 } });
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 7_000, [marie]: 3_000 } });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed how much each put in");
+    expect(latest!.diff!.was).toContain("Theo €60.00");
+    expect(latest!.diff!.now).toContain("Theo €70.00");
+  });
+
+  it("says nothing about a payer map collapsed back to the one payer it meant", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 6_000, [marie]: 4_000 } });
+    const before = (await described(groupId)).length;
+    // Everything on Theo again: one contributor is stored as no `payers` at
+    // all, so this is the single payer it already named.
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 10_000, [marie]: 0 } });
+
+    const [latest] = await described(groupId);
+    expect((await described(groupId)).length).toBe(before + 1);
+    expect(latest!.said).toBe("Theo changed who paid");
+    expect(latest!.diff!.now).toBe("Theo");
+  });
+
+  // An income is received, not paid — and the log only knows it is one by
+  // reading the entity, since `kind` moved on some earlier revision.
+  it("asks the payer question the other way round for an income", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, { kind: "income" });
+    await editExpense(groupId, theo, expenseId, { payers: { [theo]: 6_000, [marie]: 4_000 } });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who received it");
+    expect(latest!.rev.changes.map((c) => c.field)).not.toContain("kind");
+  });
+
+  it("keeps calling an income an income long after the crossing", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, { kind: "income" });
+    await editExpense(groupId, theo, expenseId, {
+      amountMinor: 12_500, description: "Deposit back",
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo edited this income");
+  });
+
+  // A figure in the entry's own currency printed with the group's symbol is a
+  // wrong number on a permanent record.
+  it("prices each figure in the currency it is actually in", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "PLN");
+    // Twice the zloty at half the rate: the base figure never moves, so the
+    // only amount on this revision is the one in the entry's own currency.
+    await editExpense(groupId, theo, expenseId, { amountMinor: 20_000, rateToBase: "0.5" });
+
+    const [latest] = await described(groupId);
+    expect(latest!.rev.changes.map((c) => c.field)).not.toContain("baseAmountMinor");
+    const amount = latest!.also!.find((a) => a.label === "Amount");
+    expect(amount!.now).not.toContain("€");
+    expect(amount!.now).toContain("200");
+  });
+
+  it("says a receipt arrived, and how much of one", async () => {
+    const { groupId, theo, expenseId } = await expenseIn("EUR", "EUR");
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [
+        { label: "Salad", amount: "4.00" },
+        { label: "Beer", amount: "6.00" },
+      ],
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo added a receipt");
+    expect(latest!.diff).toEqual({ now: "2 items" });
+  });
+
+  // Reassigning a line to somebody else can leave the shares exactly where
+  // they were, and then the grid is the only thing that moved.
+  it("names a who-had-what grid that moved nothing else", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [{ label: "Salad", amount: "50.00" }, { label: "Beer", amount: "50.00" }],
+      receiptAssignments: [[theo], [marie]],
+      splitTab: "receipt",
+    });
+    await editExpense(groupId, theo, expenseId, { receiptAssignments: [[marie], [theo]] });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who had what");
+  });
+
+  // The mode is a last resort, not a field: it is dropped beside a real change
+  // (the test above), and said where it is the whole of the save.
+  it("names the mode when rewriting the split is all the save did", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "shares", weights: { [theo]: 1, [marie]: 1 } },
+      splitTab: "shares",
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed how the split is written");
+    expect(latest!.diff).toEqual({ was: "Evenly", now: "As parts" });
+  });
+
+  it("puts both sides of a transfer on the line when they swap", async () => {
+    const { groupId, theo, marie } = await sharedExpense();
+    const settlementId = await recordSettlement(groupId, theo, {
+      fromMember: theo, toMember: marie, amountMinor: 3_000,
+      currency: "EUR", rateToBase: "1", occurredAt: 2,
+    });
+    await editSettlement(groupId, theo, settlementId, {
+      fromMember: marie, toMember: theo,
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed who it was between");
+    expect(latest!.diff).toEqual({ was: "Theo → Marie", now: "Marie → Theo" });
   });
 
   it("names the member a membership revision is about, not the actor", async () => {

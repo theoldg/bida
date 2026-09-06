@@ -34,6 +34,19 @@ export interface Revision {
   entityId: Id;
   entity: Op["entity"];
   changes: FieldChange[];
+  /**
+   * The whole entity as the fold held it either side of this op — every field,
+   * not only the ones that moved.
+   *
+   * `changes` says what the revision did; these say what it did it *to*, which
+   * is what lets a sentence name a field the op never moved: the currency a
+   * payer's contribution is in, whether this entry is an income, who the other
+   * payer was. Without them a co-payer added to an expense read as "edited this
+   * entry" — the one name needed to say more was on the entity, not in the
+   * change.
+   */
+  before: Readonly<Record<string, unknown>>;
+  after: Readonly<Record<string, unknown>>;
   isCreate: boolean;
   isDelete: boolean;
 }
@@ -60,6 +73,7 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
   for (const op of sorted) {
     const changes: FieldChange[] = [];
     const isDelete = op.kind === "delete";
+    const before: Record<string, unknown> = { ...running };
 
     if (isDelete) {
       changes.push({ field: "deletedAt", before: running["deletedAt"] ?? null, after: op.createdAt });
@@ -68,7 +82,6 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       // Fold the op in, then diff the two states — never read the patch as
       // though its keys were the changes. A whole-entity write names every
       // field it holds and moves almost none of them.
-      const before: Record<string, unknown> = { ...running };
       applyPatch(running, op.patch);
       for (const field of Object.keys(op.patch)) {
         if (IMMUTABLE_FIELDS.has(field)) continue;
@@ -98,6 +111,8 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       entityId,
       entity: op.entity,
       changes,
+      before,
+      after: { ...running },
       isCreate: op.kind === "create",
       isDelete,
     });

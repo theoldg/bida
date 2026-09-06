@@ -1,6 +1,7 @@
 import {
-  formatRate, isValidRate, resolveSplit, splitParticipants,
+  formatRate, fromReceipt, isValidRate, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
+  type SplitTab,
 } from "@hajsik/core";
 import { copy } from "./copy";
 import { dayLabel, money, plural } from "./format";
@@ -13,6 +14,11 @@ import { dayLabel, money, plural } from "./format";
  *
  * It must be **total**: it runs inside a render over every patch the log
  * holds, so one throw is a white screen, not a missing line.
+ *
+ * **Read the entity, not only the change.** A revision carries the fold either
+ * side of it (`Revision.before` / `after`), and half of what makes a sentence
+ * useful is in there rather than in the fields that moved: whether this entry
+ * is an income, the currency its figures are in, who the other payer was.
  */
 
 export interface Described {
@@ -92,6 +98,21 @@ function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | n
   }
 }
 
+/** The entity as the fold held it — loose fields, not a typed `Expense`. */
+type State = Readonly<Record<string, unknown>>;
+
+/** Live contributions, keyed in a fixed order, or null for a single payer. */
+function coPayers(state: State): [Id, number][] | null {
+  const spec = state["payers"];
+  if (!spec || typeof spec !== "object") return null;
+  const live = Object.entries(spec as Record<string, unknown>)
+    .filter(([, v]) => typeof v === "number" && Number.isFinite(v) && v !== 0) as [Id, number][];
+  // One contributor is a single payer written the long way — `normalisePayers`
+  // stores null for it, and an edit that collapses the map to one name has
+  // changed nothing a person can see.
+  return live.length > 1 ? live.sort(([a], [b]) => (a < b ? -1 : 1)) : null;
+}
+
 /**
  * Every entity kind gets a plain-English sentence and, where it helps, a diff —
  * or, where one revision moved several fields, a line for each of them.
@@ -107,7 +128,15 @@ export function describe(
   const nameOf = (id: unknown) =>
     (typeof id === "string" ? memberById.get(id)?.name ?? copy.someoneLower : copy.someoneLower);
   /** Money, or nothing at all — a diff line is worth less than a live screen. */
-  const cash = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? money(v, currency) : undefined);
+  const cash = (v: unknown, code: CurrencyCode = currency) =>
+    (typeof v === "number" && Number.isFinite(v) ? money(v, code) : undefined);
+  /**
+   * The currency the entry's own figures are in — its `amountMinor`, and every
+   * payer's contribution. Only `baseAmountMinor` is in the group's currency, so
+   * printing everything in that one put a euro sign over a figure in dirhams.
+   */
+  const ownCurrency = (state: State): CurrencyCode =>
+    (typeof state["currency"] === "string" ? state["currency"] : currency);
   const text = (v: unknown) => (typeof v === "string" && v ? v : undefined);
   /** A day the way the ledger writes it — "Today", "Sat 5 April". */
   const dayPair = (c: { before: unknown; after: unknown }) => {
@@ -134,23 +163,19 @@ export function describe(
   };
 
   if (rev.entity === "expense") {
-    // An income and an expense are one entity, so a revision only knows which
-    // it is when the op itself carried `kind`. Where it didn't, the sentence
-    // says "entry" rather than guessing — a wrong noun in the log is worse
-    // than a general one.
-    const noun = (() => {
-      const k = field("kind");
-      const label = copy.entryKind.label;
-      if (k) return (k.after === "income" ? label.income : label.expense).toLowerCase();
-      return rev.isCreate ? label.expense.toLowerCase() : copy.noun.entry.one;
-    })();
+    // An income and an expense are one entity, and only the revision that
+    // crossed between them carries `kind` — so this is read off the fold. Every
+    // later edit of an income used to be captioned "edited this entry", the one
+    // noun that is never wrong and never says anything either.
+    const kind = rev.after["kind"] === "income" ? "income" : "expense";
+    const noun = copy.entryKind.label[kind].toLowerCase();
 
     if (rev.isCreate) {
       const amt = cash(field("baseAmountMinor")?.after);
       const split = field("split")?.after as SplitSpec | undefined;
       const n = split ? splitParticipants(split).length : undefined;
       const ways = n ? plural(n, copy.noun.way) : undefined;
-      const shared = noun === copy.entryKind.label.income.toLowerCase();
+      const shared = kind === "income";
       return {
         what: said.createdEntry(who, noun),
         diff: amt !== undefined
@@ -206,20 +231,46 @@ export function describe(
           diff: { was: wasHow || undefined, now: nowHow },
         });
       }
-      // Same people, same shares: the spec was rewritten — a mode swapped for
-      // an identical one, a re-picked member — and there is nothing to report.
-      // Say what else the edit did instead of inventing a change.
+      // Same people, same shares: the spec was rewritten — a re-picked member,
+      // a mode swapped for an identical one — and nobody's money moved. The
+      // mode line below says whether the entry now *reads* differently.
+    }
+    // The scan behind the split, and the grid that assigned it. Both move
+    // fields no sentence above names, so a save that only reopened the receipt
+    // and moved a salad from one person to another said nothing at all.
+    const lines = (state: State) =>
+      (Array.isArray(state["receiptItems"]) ? state["receiptItems"].length : 0);
+    if (field("receiptItems") ?? field("receiptTip")) {
+      const wasLines = lines(rev.before);
+      const nowLines = lines(rev.after);
+      parts.push({
+        what: nowLines === 0 ? said.removedReceipt(who)
+          : wasLines === 0 ? said.addedReceipt(who) : said.changedReceipt(who),
+        label: named.receipt,
+        diff: {
+          was: wasLines ? plural(wasLines, copy.noun.item) : undefined,
+          now: nowLines ? plural(nowLines, copy.noun.item) : copy.none,
+        },
+      });
+    } else if (field("receiptInvolved") ?? field("receiptAssignments")) {
+      parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat });
     }
     // The three amount fields move together, but only the ones that actually
     // changed reach here: switching an expense to another currency at the same
     // rate leaves the figure alone, so there is a currency change and no
     // amount change to report. Say what changed rather than assuming a number
     // is there to print.
-    const amount = field("baseAmountMinor") ?? field("amountMinor");
+    //
+    // Each figure is printed in its own currency — the base one is the group's,
+    // and `amountMinor` is in the entry's, which is only ever the same currency
+    // by coincidence.
+    const inBase = field("baseAmountMinor");
+    const amount = inBase ?? field("amountMinor");
     if (amount) {
+      const code = inBase ? currency : ownCurrency(rev.after);
       parts.push({
         what: said.changedAmount(who), label: named.amount,
-        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+        diff: { was: cash(amount.before, code), now: cash(amount.after, code) ?? "" },
       });
     }
     const currencyChange = field("currency");
@@ -236,12 +287,47 @@ export function describe(
         diff: { was: text(rate.before), now: text(rate.after) ?? "" },
       });
     }
-    const payer = field("paidBy");
-    if (payer) {
-      parts.push({
-        what: said.changedPayer(who), label: named.payer,
-        diff: { was: nameOf(payer.before), now: nameOf(payer.after) },
-      });
+    // The payer side asks the split's two questions over again — who put money
+    // in, then how much each of them did — and answers whichever moved.
+    //
+    // Both are read off the fold, because neither is answered by the change
+    // alone: adding a co-payer beside the largest contributor moves `payers`
+    // and nothing else, and the name they join is on the entity. That is what
+    // left every co-payer edit captioned "edited this entry" — and unmentioned
+    // altogether where the same save moved something else.
+    if (field("payers") ?? field("paidBy")) {
+      /** Who put money in, by name: `payerList`, over a state not an `Expense`. */
+      const payerNames = (state: State) => {
+        const spec = coPayers(state);
+        return spec ? spec.map(([id]) => nameOf(id)).join(", ") : nameOf(state["paidBy"]);
+      };
+      /**
+       * The same people and what each of them put in, in the entry's own
+       * currency — "Ana €40.00 · Bo €10.00". It carries the names with it, so
+       * one line answers both questions and neither ever repeats the other.
+       */
+      const payerLine = (state: State) => {
+        const spec = coPayers(state);
+        if (!spec) return nameOf(state["paidBy"]);
+        const code = ownCurrency(state);
+        return spec.map(([id, amount]) => said.shareOf(nameOf(id), money(amount, code))).join(" · ");
+      };
+      const wasWho = payerNames(rev.before);
+      const nowWho = payerNames(rev.after);
+      const wasHow = payerLine(rev.before);
+      const nowHow = payerLine(rev.after);
+      const diff = { was: wasHow || undefined, now: nowHow };
+      if (wasWho !== nowWho) {
+        parts.push({
+          what: said.payerWho[kind](who),
+          label: kind === "income" ? named.receiver : named.payer,
+          diff,
+        });
+      } else if (wasHow !== nowHow) {
+        parts.push({ what: said.payerHow[kind](who), label: named.putIn, diff });
+      }
+      // Same people, same contributions: a map normalised to the single payer
+      // it already meant. Nothing moved, so nothing is said.
     }
     const description = field("description");
     if (description) {
@@ -269,6 +355,30 @@ export function describe(
         label: named.photos,
         line: { was: plural(before, copy.noun.photo), now: plural(after, copy.noun.photo) },
       });
+    }
+    // The last resort, and only that: what the entry screen calls this split —
+    // its mode, or "Receipt" where a scanned bill is behind it. A mode swapped
+    // for one that means the same thing is noise beside a real change and is
+    // dropped above, but it is the whole of some saves — switching tab and
+    // saving — and those read as "edited this entry" with nothing under them.
+    if (parts.length === 0) {
+      const modeLabel = (state: State): string => {
+        const spec = state["split"] as SplitSpec | null | undefined;
+        if (!spec?.mode) return "";
+        return fromReceipt({
+          split: spec,
+          splitTab: state["splitTab"] as SplitTab | null | undefined,
+          receiptItems: state["receiptItems"] as unknown[] | null | undefined,
+        }) ? copy.split.receipt : copy.split.mode[spec.mode] ?? "";
+      };
+      const wasMode = modeLabel(rev.before);
+      const nowMode = modeLabel(rev.after);
+      if (nowMode && wasMode !== nowMode) {
+        parts.push({
+          what: said.rewroteSplit(who), label: named.splitMode,
+          diff: { was: wasMode || undefined, now: nowMode },
+        });
+      }
     }
     return assemble(parts, said.editedEntry(who, noun));
   }
@@ -299,18 +409,40 @@ export function describe(
     // gets a sentence, several get a line each.
     const parts: Part[] = [];
     const named = said.field;
-    const amount = field("baseAmountMinor") ?? field("amountMinor");
+    const inBase = field("baseAmountMinor");
+    const amount = inBase ?? field("amountMinor");
     if (amount) {
+      const code = inBase ? currency : ownCurrency(rev.after);
       parts.push({
         what: said.changedAmount(who), label: named.amount,
-        diff: { was: cash(amount.before), now: cash(amount.after) ?? "" },
+        diff: { was: cash(amount.before, code), now: cash(amount.after, code) ?? "" },
       });
     }
-    const side = field("fromMember") ?? field("toMember");
-    if (side) {
+    // A transfer has a currency and a rate of its own, like an entry does, and
+    // a save that moved either read as "edited a transfer" and nothing else.
+    const currencyChange = field("currency");
+    if (currencyChange) {
+      parts.push({
+        what: said.changedCurrency(who), label: named.currency,
+        diff: { was: text(currencyChange.before), now: text(currencyChange.after) ?? "" },
+      });
+    }
+    const rate = field("rateToBase");
+    if (rate) {
+      parts.push({
+        what: said.changedRate(who), label: named.rate,
+        diff: { was: text(rate.before), now: text(rate.after) ?? "" },
+      });
+    }
+    // Both sides on one line, read off the fold: a swap moves both fields and
+    // named only one of them, so the log said "Ana → Bo" over an edit whose
+    // whole point was that it is now the other way round.
+    if (field("fromMember") ?? field("toMember")) {
+      const between = (state: State) =>
+        `${nameOf(state["fromMember"])} → ${nameOf(state["toMember"])}`;
       parts.push({
         what: said.changedSides(who), label: named.sides,
-        diff: { was: nameOf(side.before), now: nameOf(side.after) },
+        diff: { was: between(rev.before), now: between(rev.after) },
       });
     }
     const note = field("note");

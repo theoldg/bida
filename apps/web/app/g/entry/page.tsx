@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
+  fromReceipt, isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
 } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
@@ -159,17 +159,11 @@ function ExpenseDetail({ expense, kind, group, data }: {
     shares = resolveSplit(expense.baseAmountMinor, expense.split, { tiebreakSeed: expense.id }).shares;
   } catch { /* a broken split still deserves a readable screen */ }
   // A finished who-had-what grid writes an ordinary `shares` spec (see
-  // SplitTab in @hajsik/core) — without this check it would read as
-  // "as parts", which isn't what anyone typed.
-  //
-  // The items are what make it a receipt, not the tab: `splitTab` records
-  // which tab was open, and opening Receipt and saving without scanning
-  // anything stores "receipt" over an ordinary even split. This screen called
-  // that "from receipt" while the ledger row next to it said "split 2 ways".
-  // The form draws the same distinction, as `onReceiptTab`.
-  const isReceipt = (expense.receiptItems?.length ?? 0) > 0
-    && (expense.splitTab === "receipt"
-      || (!expense.splitTab && expense.split.mode === "shares"));
+  // SplitTab in @hajsik/core) — without this it would read as "as parts",
+  // which isn't what anyone typed. The rule is `fromReceipt` in core: the
+  // history screen has to draw the same distinction, and this screen's copy
+  // of it was the only one.
+  const isReceipt = fromReceipt(expense);
 
   return (
     <div className="pad" style={{ paddingTop: 2 }}>

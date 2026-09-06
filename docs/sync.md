@@ -192,7 +192,18 @@ joining three times. A **split** revision asks two questions in that order — w
 is involved, then what each of them owes — and answers whichever changed: the
 names, or a share line ("Evenly" → "Ana ×2 · Bo ×1"). Where neither moved it
 says nothing at all and the next field speaks, because a spec can be rewritten
-without meaning anything different.
+without meaning anything different — except where that rewrite is the whole of
+the save, which gets the mode ("Evenly" → "As parts") as a last resort rather
+than nothing. The **payer** side asks the same two questions over again — who
+put money in, then how much each of them did, priced in the entry's own
+currency — and an income asks both of them the other way round.
+
+A revision therefore carries the **whole entity either side of it**
+(`Revision.before` / `after`), not only the fields that moved: a co-payer added
+beside the largest contributor moves `payers` alone, and the name they join is
+on the entity rather than in the change. The same reading is what makes the
+noun exact — an income is called one on every later edit of it, not only on the
+revision that crossed — and what prices each figure in its own currency.
 
 A revision is regularly **several** fields, since an entry is saved whole: a
 merge can revert somebody's amount in the same op that changes the description.
