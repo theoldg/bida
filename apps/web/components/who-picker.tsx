@@ -79,7 +79,10 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
         {/* Picking a name is the plainest way of saying the row being typed was
             a false start, so it goes — one question, one answer on screen. */}
         {people.map((p) => (
-          <button key={p.id} className="row"
+          // The check mark is a shape, and a shape says nothing to a screen
+          // reader: without `aria-pressed` the only thing that named the pick
+          // was the button at the foot of the screen.
+          <button key={p.id} className="row" aria-pressed={p.id === picked}
             onClick={() => { adder.current?.clear(); onPick(p.id); }}>
             <div className="rmain">
               <div className="rtitle">{p.name}</div>

@@ -300,6 +300,11 @@ answer it gave before:
   visually-hidden text is read out by screen readers but is not on the page, so
   it is left out.
 
+**A control that says it is the chosen one** — a picked row, the page you are
+on — wears `(chosen)`. Inside a set the `(•)` says it instead, and saying it
+twice reads as two claims. What is only painted that way says nothing here, on
+purpose: that is the finding.
+
 **Where the keyboard is pointing.** A numbered control wears `(focused)`; when
 focus is anywhere else — a sheet that opened without landing it on a row — the
 dump says so. `press` is how you reach what a tap cannot, and a key sent nowhere

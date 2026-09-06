@@ -281,7 +281,7 @@ const READ = `(() => {
   };
 
   /** Number a control and describe it. Returns its rendered text, or "" if unreachable. */
-  const emit = (el) => {
+  const emit = (el, inSet = false) => {
     const where = reach(el);
     if (where === "behind" || where === "covered") { behind++; return null; }
     // Only what a finger can reach gets a number. A control you cannot press is
@@ -294,6 +294,10 @@ const READ = `(() => {
       : \`\${el.tagName === "A" ? "link" : el.tagName.toLowerCase()} \${name.text ? \`"\${name.text}"\` : "(NO ACCESSIBLE NAME)"}\`;
     const flags = [
       name?.spoken && name.text ? "icon only" : "",
+      // A control on its own can still say it is the chosen one — the row you
+      // picked, the page you are on. Inside a set the (•) already says it, and
+      // saying it twice reads as two different claims.
+      !inSet && chosenSays(el) === true ? "chosen" : "",
       el.disabled ? "disabled" : "",
       el === document.activeElement ? "focused" : "",
     ].filter(Boolean);
@@ -314,7 +318,7 @@ const READ = `(() => {
       byLook = chosen >= 0;
     }
     const rows = kids.map((el, i) => {
-      const got = emit(el);
+      const got = emit(el, true);
       if (!got) return null;
       const mark = chosen < 0 ? "" : i === chosen ? "(•) " : "( ) ";
       return { ...got, text: mark + got.text };

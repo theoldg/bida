@@ -102,6 +102,13 @@ report(await page.locator(".rmark svg").count() === 1
   && await page.getByRole("button", { name: "Continue as Nadia" }).count() === 1,
   "filing it here picks it: the check mark moves to the row that arrives");
 
+// The check mark is a shape, and a shape is not a sentence: the row itself has
+// to say it is the chosen one, or the only thing naming the pick is the button
+// at the foot of the screen.
+const picked = page.locator('.rows button.row[aria-pressed="true"]');
+report(await picked.count() === 1 && (await picked.innerText()).includes("Nadia"),
+  "and the row says so to a screen reader, not only in ink");
+
 await press(page.getByRole("button", { name: "Continue as Nadia" }));
 const made = await arrived();
 report(made, "and the button creates the group as her");

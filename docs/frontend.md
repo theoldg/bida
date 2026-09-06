@@ -150,7 +150,9 @@ confers nothing without the secret.
   that name as its actor. The button answers to the tick and to nothing else; a
   name still being typed moves neither. Filing one *does*: the row it adds is
   ticked as it arrives, because a name typed into the list you are picking
-  yourself out of is the pick.
+  yourself out of is the pick. The tick is a check mark **and** `aria-pressed`:
+  a shape is not a sentence, and without it the only thing naming the pick was
+  the button at the foot of the screen.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a
