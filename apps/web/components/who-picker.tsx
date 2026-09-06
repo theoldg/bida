@@ -59,9 +59,8 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
     if (busy) return;
     setBusy(true);
     try {
-      // Blur files the typed name and fires *before* this button's click, so
-      // the name and the press race unless the press waits for it — which on
-      // this screen decides who you are (components/name-adder.tsx).
+      // The press files what is in the add row itself, rather than letting the
+      // blur it would otherwise cause do it (components/name-adder.tsx).
       const added = await adder.current?.flush();
       // `added` can be somebody already on the list — the field takes a name
       // that matches as a way of picking them, so it is not always a new row.
@@ -88,8 +87,12 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
             <div className="rmain">
               <div className="rtitle">{p.name}</div>
             </div>
+            {/* A name in the add row outranks the tick for the button's label,
+                so it outranks it here too: two answers to one question, one of
+                them stale, is worse than none. The tick comes back the moment
+                the field is empty again. */}
             <span className="rmark">
-              {p.id === picked
+              {!draft && p.id === picked
                 ? <Icon name="check" size={16} style={{ color: "var(--brand)" }} />
                 : null}
             </span>
@@ -103,7 +106,16 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
       </div>
 
       <div className="pad">
-        <button className="btn btn-p" onClick={() => void proceed()}
+        {/* Keeps the field's focus, like the rows above. A blur files the name,
+            and filing it *between* this press and its release is what killed
+            this button: the list gains a row under the finger, and with the
+            field emptied and nobody ticked the button disables itself — either
+            way the release lands on something that is no longer this button, so
+            no click is dispatched at all. The name was added and the press that
+            added it did nothing, which is what a dead "Continue as Nadia" was.
+            The press files it instead, in `proceed`. */}
+        <button className="btn btn-p" onMouseDown={(e) => e.preventDefault()}
+          onClick={() => void proceed()}
           disabled={busy || (!chosen && !draft)}>
           {/* The draft outranks the selection, because pressing files it and
               continues as it — most recent intent wins, and the label has to

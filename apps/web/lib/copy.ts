@@ -225,9 +225,10 @@ export const copy = {
     /**
      * Two people with one name are two people nothing on screen tells apart —
      * and, since the name is the member's key, one row they would both write
-     * to. So the refusal says what to do instead of only saying no.
+     * to. The name is right there on the list above the field, so saying so is
+     * the whole message: what to do about it is the typist's business.
      */
-    taken: (name: string) => `${name} is already here — add a surname or initial.`,
+    taken: (name: string) => `${name} is already here.`,
     removeLabel: (name: string) => `Remove ${name}`,
     /** Which of these names this phone signs with — a decision, so a dialog
         rather than a tap on a row that also removes and invites. The list's

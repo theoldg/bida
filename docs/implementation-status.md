@@ -67,6 +67,14 @@ foreground; `components/update.tsx` offers it at the foot of the groups list.
 `pnpm offline` now covers the tap end to end
 ([ADR-0004](decisions/0004-static-export-and-offline.md)).
 
+**The add row's press is fixed.** A name typed and not yet filed is the state
+that screen turns on, and the button that acted on it filed the name on the blur
+its own press caused — which rewrote the screen mid-press and cost the press its
+click. It keeps the field's focus and files the name itself; a tick yields to a
+name being typed; and, on a list you are filling, the next empty row is drawn
+under a fileable name so a finger has the route Enter has. `pnpm claim` holds all
+of it ([testing.md](testing.md)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

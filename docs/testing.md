@@ -7,6 +7,7 @@ pnpm check       # links · rules · typecheck · tests · export build — pre-
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm back        # every screen with an arrow, walked back out one press at a time
+pnpm claim       # a name still being typed, and the button that acts on it
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm drive       # drive the app as text, one command at a time — see below
@@ -215,6 +216,22 @@ rate re-valuing an entry already in the ledger
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping
 that is what makes a check like this flake and then get deleted.
+
+## `pnpm claim` — the name that has not been filed yet
+
+The add row lets a name be typed and not yet filed, and every screen it sits on
+has a button that must act on it anyway (`components/name-adder.tsx`). What goes
+wrong there is never arithmetic: it is a blur, a screen that rewrites itself
+between a press and its release, and a button whose label and act disagree.
+"Continue as Nadia" filed Nadia, disabled itself in the same breath, and so
+never fired — the name landed and the press that landed it did nothing.
+
+So the press is made by hand and **held**: `locator.click()` re-resolves the
+button and quietly retries a press that missed, and an instant down-up is over
+before React has re-rendered, so either shortcut reports a green on the broken
+build. Both doors are walked, because their add rows differ where it matters —
+on `/new` the list is state and grows in the same tick, on `/g/claim` it is a
+Dexie write that arrives whenever it arrives.
 
 ## `pnpm drive` — the app as text
 

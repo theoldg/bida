@@ -123,11 +123,17 @@ confers nothing without the secret.
   of a list of names, built like the rows above it — name, then one control —
   because it becomes one. **Enter files the name and so does leaving the field**,
   so a group of six is one burst of typing and nothing is lost by reaching
-  straight for Create. There is no Add button to forget to press; the control on
-  the right is a `plus` that focuses the field and a `trash` the moment there is
-  a draft to abandon, which is the only way back out of a row that files itself.
-  A screen's own button calls `flush()` first — blur fires *before* the click it
-  caused, so "Continue as Marie" would otherwise continue as somebody else.
+  straight for Create; a finger has neither, so on a list you are *filling* the
+  next empty row is drawn under the name as long as it is fileable, and tapping
+  it does what Enter does. There is no Add button to forget to press; the control
+  on the right is a `plus` that focuses the field and a `trash` the moment there
+  is a draft to abandon, which is the only way back out of a row that files
+  itself. A screen's own button keeps the field's focus and calls `flush()`
+  itself: letting the blur it causes do the filing rewrites the screen mid-press
+  — a row arrives, and the button, its field emptied, can disable itself — and a
+  press ending on a button that moved or went dead is no click at all, which is
+  what a dead "Continue as Nadia" was. `pnpm claim` holds it
+  ([testing.md](testing.md)).
   Living in the list costs two rules: **one name, one person** — a name already
   on it is refused as you type (`core/names.ts`), except on a list you are
   picking yourself out of, where a match *is* you (`duplicates="match"`) — and
@@ -137,7 +143,9 @@ confers nothing without the secret.
 - **"Which one is you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one. Picking is never a write —
   the button is, whether it claims an identity (ADR-0003) or creates the group
-  with that name as its actor.
+  with that name as its actor. A name being typed outranks the tick, on the
+  button's label and on the list: most recent intent wins, and one question
+  gets one answer.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a

@@ -12,7 +12,9 @@ import { nameTaken } from "@hajsik/core";
  * adds one person. Four names meant four round trips through a scrim — open,
  * type, confirm, watch it close — when the act is simply typing. Here the last
  * row of the list *is* the field: Enter files the name and hands the caret
- * back, so a group of six is one uninterrupted burst of typing.
+ * back, so a group of six is one uninterrupted burst of typing — and while what
+ * is typed is fileable the next empty row is already drawn underneath, so a
+ * finger has that same one-tap route where it has no Enter to reach for.
  *
  * The dialogs stay where they belong (ADR-0008) — a rename is one field and
  * one name, and a removal has a consequence to state first.
@@ -175,6 +177,29 @@ export function AddName<T>({ placeholder, autoFocus, taken, duplicates = "refuse
         </button>
       </form>
       {already ? <p className="failure addwarn">{copy.members.taken(value.trim())}</p> : null}
+
+      {/* The touch route to a second name. Enter files one and so does leaving
+          the field, and a finger has neither: on a phone there is no keyboard
+          Enter worth reaching for and nowhere neutral to tap that isn't also a
+          name. So the row this one is about to become appears underneath while
+          what is typed is fileable — tapping it files the name and hands the
+          caret back, which is exactly what Enter does.
+
+          Only on a list you are filling. The offer it makes is "and another",
+          which on a list you are picking yourself out of is an offer to have a
+          second name — so `duplicates` decides this too.
+
+          Hidden from assistive tech, like the plus beside the field and for the
+          same reason: it answers to the field's own name, and Enter is already
+          there for anyone not tapping. */}
+      {draft && duplicates === "refuse" ? (
+        <button type="button" className="row addnext" aria-hidden={true} tabIndex={-1}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => { void commit(); field.current?.focus(); }}>
+          <span className="addname">{placeholder}</span>
+          <span className="iconbtn"><Icon name="plus" size={15} /></span>
+        </button>
+      ) : null}
     </>
   );
 }
