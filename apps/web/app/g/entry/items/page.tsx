@@ -11,9 +11,9 @@ import { copy } from "../../../../lib/copy";
 import { bare, distinctInitials, money } from "../../../../lib/format";
 import { route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../../lib/hooks";
-import { saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
+import { receiptWeights, saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
 import {
-  foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto, weightsFromItems,
+  foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto,
 } from "../../../../lib/scan/items";
 
 /**
@@ -148,11 +148,10 @@ function ItemsScreen() {
   }
 
   const involvedMembers = data.members.filter((m) => involved.has(m.id));
-  const weights = weightsFromItems(
-    items, assignments,
-    draft.receiptTip ? { amount: draft.receiptTip, members: involved } : null,
-    draft.currency, draft.entryId ?? "new",
-  );
+  // Asked of lib/draft, not of weightsFromItems directly: what these rows are
+  // worth has to be the same answer the form gives once Done has written them
+  // down, and the seed that decides it is not this screen's to pick.
+  const weights = receiptWeights(draft, items, assignments, involved);
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
   const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);

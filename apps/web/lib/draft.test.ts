@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { resolveSplit, splitParticipants, type SplitSpec } from "@hajsik/core";
 import {
-  activeSplit, activeSplitTab, blankDraft, legacyPercent, openSplitTab, splitSeed, withSplit,
-  type EntryDraft, type SplitTab,
+  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, openSplitTab,
+  receiptWeights, splitSeed, withSplit, type EntryDraft, type SplitTab,
 } from "./draft";
 
 /**
@@ -171,5 +171,57 @@ describe("what rounding ties break by", () => {
     const asWritten = resolveSplit(1000, activeSplit(d), { tiebreakSeed: d.newEntryId });
     expect(onForm.shares).toEqual(asWritten.shares);
     expect(Object.values(onForm.shares).reduce((a, b) => a + b, 0)).toBe(1000);
+  });
+});
+
+/**
+ * A bill on the grid, and the same bill once Done has written it down.
+ *
+ * Every line here divides three ways with a cent left over, which is the only
+ * thing that can differ between the two readings — and did: the grid seeded
+ * its rows with the string `"new"` while the form and the save used the id the
+ * entry would be written under, so a €76.50 bill showed one person €22.25 and
+ * saved them €22.24. `receiptWeights` is now the one place that names a seed.
+ */
+describe("a scanned bill prices the same on both screens", () => {
+  const BILL = [
+    { label: "Tagine", labelEn: null, amount: "14.50", quantity: null },
+    { label: "Couscous", labelEn: null, amount: "16.00", quantity: null },
+    { label: "Mint tea", labelEn: null, amount: "6.50", quantity: null },
+  ];
+  const HAD = [[A, B, C], [A, B, C], [A, B, C]];
+
+  const scanned = (over: Partial<EntryDraft> = {}) => expense({
+    splitTab: "receipt",
+    receiptItems: BILL,
+    receiptAssignments: HAD,
+    receiptInvolved: MEMBERS,
+    receiptTip: "5.00",
+    ...over,
+  });
+
+  it("reads the rows being edited exactly as it reads the rows saved", () => {
+    const d = scanned();
+    // The grid holds its rows in component state until Done; the form reads
+    // them off the draft. Same bill, so the same figures, to the minor unit.
+    const onTheGrid = receiptWeights(d, BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
+    expect(draftReceiptSplit(d)).toEqual({ mode: "shares", weights: onTheGrid });
+  });
+
+  it("hands the leftover cents out by the entry's own id", () => {
+    // Not a constant: two drafts of the same bill must be able to give the
+    // spare cent to different people, or every bill in the app rounds in one
+    // person's favour — and a screen that hardcodes a seed passes silently.
+    const readings = new Set(["a", "b", "c", "d", "e", "f"].map((id) =>
+      JSON.stringify(receiptWeights(
+        scanned({ newEntryId: id }), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS),
+      ))));
+    expect(readings.size).toBeGreaterThan(1);
+  });
+
+  it("still hands out every minor unit of the bill", () => {
+    const weights = receiptWeights(scanned(), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
+    // 14.50 + 16.00 + 6.50 + 5.00 tip.
+    expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(4200);
   });
 });

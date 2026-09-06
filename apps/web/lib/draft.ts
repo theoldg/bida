@@ -169,26 +169,54 @@ export function withSplit(splits: SplitInputs, spec: SplitSpec): SplitInputs {
 }
 
 /**
+ * What the bill owes each person, in the receipt's own currency, as weights:
+ * every item's printed amount divided among whoever was checked for it, summed
+ * per member, with the tip scaled to what each of them ordered.
+ *
+ * Two screens ask this of the same bill — the grid, of the rows being edited
+ * in front of you, and the form, of those rows once Done has written them down
+ * — so it takes the rows rather than reading them off the draft. They have to
+ * answer identically: dividing a line leaves a remainder cent, and a cent that
+ * lands on a different person between one screen and the next is a figure
+ * quoted and not kept. Only `tiebreakSeed` decides where it lands, so the seed
+ * is named here and offered to neither caller. That is the whole point of this
+ * function: the grid had been seeding its rows with the string `"new"`, from
+ * before the draft carried the id its entry would be written under, and priced
+ * a €76.50 bill a cent away from what the form then saved.
+ */
+export function receiptWeights(
+  draft: EntryDraft,
+  items: readonly ReceiptItem[],
+  assignments: readonly Set<string>[],
+  involved: ReadonlySet<string>,
+): Record<string, number> {
+  return weightsFromItems(
+    [...items],
+    [...assignments],
+    draft.receiptTip ? { amount: draft.receiptTip, members: new Set(involved) } : null,
+    draft.currency,
+    splitSeed(draft),
+  );
+}
+
+/**
  * What the bill says the split is, while Receipt mode is the thing showing
  * it, and null until the who-had-what grid has been filled in.
  *
- * Each item's printed amount is divided among whoever was checked for it and
- * summed per member, and the sums are used as *weights* against the entry's
- * converted total — so nothing here needs a rate (ADR-0016). Derived at read
- * time beside `draftReceiptTotal`, never written into the draft: the raw grid
- * is the only record, and this is the one place it is read as a split.
+ * The weights are used against the entry's converted total — so nothing here
+ * needs a rate (ADR-0016). Derived at read time beside `draftReceiptTotal`,
+ * never written into the draft: the raw grid is the only record, and this is
+ * the one place it is read as a split.
  */
 export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
   const showing = draft.kind === "expense"
     && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
   if (!showing) return null;
-  const weights = weightsFromItems(
+  const weights = receiptWeights(
+    draft,
     draft.receiptItems ?? [],
     (draft.receiptAssignments ?? []).map((row) => new Set(row)),
-    draft.receiptTip && draft.receiptInvolved
-      ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
-    draft.currency,
-    splitSeed(draft),
+    new Set(draft.receiptInvolved ?? []),
   );
   return Object.keys(weights).length > 0 ? { mode: "shares", weights } : null;
 }

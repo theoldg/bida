@@ -218,6 +218,14 @@ way to reach the who-had-what grid outside a real scan —
   Opening a dialog and calling `router.push` in the same tick is not a
   sequence: the navigation unmounts the dialog before anybody sees it. The
   second one waits on the first's `onClose`.
+- **What a bill is worth is asked of `receiptWeights` (lib/draft.ts), never of
+  `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
+  only `tiebreakSeed` says whose it is; the grid picked its own (`"new"`, from
+  before the draft carried the id its entry would be written under) and so
+  quoted €22.25 for someone the form then saved at €22.24 — two screens read
+  one after the other. The wrapper takes the rows and names the seed itself, so
+  a caller cannot get it wrong, and `pnpm rules` fails on a screen that reaches
+  past it.
 - **If a UI mode needs to stick, persist it; never re-derive it from data that
   outlives the choice.** `receiptItems` stays on the expense forever, so a
   derived `splitTab` kept saying "Receipt" after the person switched away and

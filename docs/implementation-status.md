@@ -123,13 +123,14 @@ now reads too, and the app's own scan button does the rest
 verdict it is for and `lib/scan/fixtures.test.ts` holds it to that against
 `checkScan`, so the set cannot rot the way the inline one it replaced had.
 
-It found one thing on its first walk, still open: **the grid quotes a figure the
-form then writes a cent away from.** `/g/entry/items` seeds its per-item
-remainders with `draft.entryId ?? "new"` while everything downstream uses
+It found one thing on its first walk, since fixed: **the grid quoted a figure
+the form then wrote a cent away from.** `/g/entry/items` seeded its per-item
+remainders with `draft.entryId ?? "new"` while everything downstream used
 `splitSeed(draft)` — the `newEntryId` fix went through the form and never
-reached this screen. A €76.50 bill read €22.25 for one person on the grid and
-saved €22.24. One line, and it wants a test that ties the two seeds together
-rather than restating either.
+reached this screen, so a €76.50 bill read €22.25 for one person and saved
+€22.24. Both screens now ask `receiptWeights` (`lib/draft.ts`), which takes the
+rows and names the seed itself; `pnpm rules` fails on anything reaching past it
+to `weightsFromItems`.
 
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an

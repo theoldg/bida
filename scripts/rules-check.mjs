@@ -76,6 +76,19 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
+// ADR-0016: what a scanned bill is worth is asked of `receiptWeights`
+// (lib/draft.ts), never of `weightsFromItems` beneath it. Both take the same
+// rows; only the wrapper knows the seed the leftover cents fall by, and a
+// screen that picks its own prices the bill a cent away from what the form
+// then saves — silently, on two screens a person reads one after the other.
+for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT, "apps/web/components")))) {
+  const src = code(readFileSync(file, "utf8"));
+  if (/\bweightsFromItems\b/.test(src)) {
+    fail(file, "calls `weightsFromItems` — a bill is priced through `receiptWeights`, "
+      + "which is the only thing that may name a tiebreak seed (docs/receipt-scanning.md)");
+  }
+}
+
 // ADR-0008, and the owner said it three times: asking is components/dialog.tsx.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
@@ -135,5 +148,6 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
-  : "rules: core is pure, refusals come from the registry, no browser dialogs, no stray copy");
+  : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
+    + "no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);
