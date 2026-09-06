@@ -62,16 +62,22 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
   return { paidBy: primaryPayer(live, input.paidBy), payers: live };
 }
 
+/**
+ * `expenseId` is the caller's to give, because the form that quoted the split
+ * has to write it under the id it quoted: the leftover minor unit goes by
+ * `tiebreakSeed`, which is that id (core/split.ts, `splitSeed` in lib/draft).
+ * Left out, one is minted here.
+ */
 export async function addExpense(
   groupId: Id,
   actor: Id,
   input: ExpenseInput,
   now = Date.now(),
+  expenseId: Id = newId(),
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
   const seed = { ...input, rateToBase: rateToWrite(input.currency, input.rateToBase, base, rates) };
   const payer = normalisePayers(input);
-  const expenseId = newId();
   await appendOps(
     groupId,
     actor,

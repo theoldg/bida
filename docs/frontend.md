@@ -94,6 +94,12 @@ confers nothing without the secret.
   **What the entry is worth is `draftAmountMinor` and nowhere else** — a
   scanned bill is worth what its lines add up to, and the payers editor
   reading `amountText` on its own is how it came to call one €0.00.
+- **A draft carries the id its entry will be written under** (`newEntryId`,
+  read through `splitSeed`). The leftover minor unit goes by `tiebreakSeed`,
+  which is the entry's id — so a form pricing its rows under a placeholder
+  showed the cent on one person's row and wrote it to another's, an arithmetic
+  right both times that still disagreed with the screen that asked. `addExpense`
+  takes the id rather than minting one. `pnpm entries` holds it.
 - **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
   draws and edits the tab showing, `openSplitTab` is the one place a newly
   opened tab is handed a starting point, and `activeSplit` says which spec is

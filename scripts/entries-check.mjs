@@ -245,6 +245,32 @@ const cabAfter = await page.locator("a.row").filter({ hasText: "Cab" })
 report(cabAfter.includes("40"),
   "correcting the rate re-values an entry that was already written");
 
+// ---- the cent the form quotes is the cent the ledger keeps -------------
+// A total that doesn't divide hands its leftover minor unit to somebody by
+// `tiebreakSeed`, which is the entry's id. A form pricing its rows under a
+// placeholder therefore showed the cent on one person's row and wrote it to
+// another's — an arithmetic that was right both times and still disagreed with
+// the screen that asked. The draft now carries the id it will be written
+// under, so these two readings are the same reading.
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.locator("input.amount").fill("10");
+await page.locator("#what").fill("Coffee");
+await page.waitForTimeout(120);
+const rows = () => page.locator(".splitrow").allInnerTexts()
+  .then((all) => all.map((t) => t.replace(/\s+/g, " ").trim()).join(" | "));
+const quoted = await rows();
+report(/3\.34/.test(quoted) && /3\.33/.test(quoted),
+  "a total that doesn't divide shows somebody the extra cent");
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/);
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 4,
+  null, { timeout: 8000 });
+await page.locator("a.row").filter({ hasText: "Coffee" }).click();
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("link", { name: "Edit" }).click();
+await page.waitForSelector(".splitrow");
+report(await rows() === quoted, "and it is the same person once the entry is written");
+
 await browser.close();
 close();
 finish();

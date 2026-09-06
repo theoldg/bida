@@ -32,7 +32,7 @@ import {
 } from "../../../../lib/scan";
 import {
   blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, openSplitTab, saveDraft,
-  seedDraft, useDraft, withSplit, type EntryDraft, type SplitTab,
+  seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
 } from "../../../../lib/draft";
 
 /**
@@ -191,7 +191,7 @@ function EditEntryScreen() {
       const e = data.expenses.find((x) => x.id === entryId);
       if (e) {
         seedDraft(groupId, {
-          kind: kindOf(e),
+          ...blankDraft(kindOf(e), me, base, data.members.map((m) => m.id)),
           entryId,
           // `minorToDecimalString`, never `bare`: this is the canonical text
           // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
@@ -437,7 +437,9 @@ function EditEntryScreen() {
           splitTab: canScan && effectiveSplit.mode !== "percent" ? activeTab : null,
         };
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
-        else await addExpense(groupId, actor, input);
+        // Written under the id the form has been quoting its split with, so
+        // the cent it showed on somebody's row is the cent the ledger keeps.
+        else await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
       }
       clearDraft(groupId);
       router.replace(route.group(groupId));
@@ -602,7 +604,7 @@ function EditEntryScreen() {
                 currency={base}
                 spec={activeSplit}
                 receiptSplit={receiptSplit}
-                seed={draft.entryId ?? "new"}
+                seed={splitSeed(draft)}
                 onChange={(split) => patch({ splits: withSplit(draft.splits, split) })}
                 tab={activeTab}
                 onTabChange={changeTab}

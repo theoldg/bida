@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { splitParticipants, type SplitSpec } from "@hajsik/core";
+import { resolveSplit, splitParticipants, type SplitSpec } from "@hajsik/core";
 import {
-  activeSplit, activeSplitTab, blankDraft, legacyPercent, openSplitTab, withSplit,
+  activeSplit, activeSplitTab, blankDraft, legacyPercent, openSplitTab, splitSeed, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -132,5 +132,44 @@ describe("a blank draft", () => {
     const d = blankDraft("expense", A, "EUR", MEMBERS);
     expect(activeSplitTab(d)).toBe("equal");
     expect(activeSplit(d)).toEqual({ mode: "equal", members: MEMBERS });
+  });
+});
+
+/**
+ * The cent the form quotes is the cent the ledger keeps.
+ *
+ * `resolveSplit` hands the leftover minor unit out by `tiebreakSeed`, and the
+ * seed is the entry's id — so a draft pricing its rows under a placeholder
+ * showed the extra cent on one person's row and wrote it to another's. The
+ * draft allocates the id it will be written under, and every screen prices
+ * under `splitSeed`.
+ */
+describe("what rounding ties break by", () => {
+  it("is the id a new entry will be written under, not a placeholder", () => {
+    const d = blankDraft("expense", A, "EUR", MEMBERS);
+    expect(d.newEntryId).toBeTruthy();
+    expect(d.newEntryId).not.toBe("new");
+    expect(splitSeed(d)).toBe(d.newEntryId);
+  });
+
+  it("gives two drafts their own, so one person doesn't take every cent", () => {
+    const one = blankDraft("expense", A, "EUR", MEMBERS);
+    const two = blankDraft("expense", A, "EUR", MEMBERS);
+    expect(one.newEntryId).not.toBe(two.newEntryId);
+  });
+
+  it("is the entry's own id once there is one to edit", () => {
+    const d = { ...blankDraft("expense", A, "EUR", MEMBERS), entryId: "e-dinner" };
+    expect(splitSeed(d)).toBe("e-dinner");
+  });
+
+  it("prices the form's rows exactly as the saved entry is priced", () => {
+    // 10.00 three ways: two get 3.33 and one gets 3.34. Which one is the whole
+    // question — the form and the ledger have to answer it the same way.
+    const d = blankDraft("expense", A, "EUR", MEMBERS);
+    const onForm = resolveSplit(1000, activeSplit(d), { tiebreakSeed: splitSeed(d) });
+    const asWritten = resolveSplit(1000, activeSplit(d), { tiebreakSeed: d.newEntryId });
+    expect(onForm.shares).toEqual(asWritten.shares);
+    expect(Object.values(onForm.shares).reduce((a, b) => a + b, 0)).toBe(1000);
   });
 });

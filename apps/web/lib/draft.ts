@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, parseMinor,
+  convertSplitMode, newId, parseMinor,
   type ReceiptItem, type SplitMode, type SplitSpec, type SplitTab,
 } from "@hajsik/core";
 import type { EntryKind } from "./entry-kind";
@@ -55,6 +55,17 @@ export interface EntryDraft {
    * expense or income, a settlement id when it's a transfer.
    */
   entryId?: string;
+  /**
+   * The id a create will be written under, allocated with the draft.
+   *
+   * The leftover minor unit goes by `tiebreakSeed`, which is the entry's id
+   * (core/split.ts) — so a form pricing its rows under a placeholder and a
+   * ledger pricing them under a real id hand the cent to two different people,
+   * and the screen that asked disagreed with what it wrote. There is nothing
+   * to look up: the form allocates the id, quotes the split under it, and
+   * `addExpense` writes the entry under the id already quoted.
+   */
+  newEntryId: string;
   /** Exactly what is typed into the amount input, e.g. "620." or "1234.5". Not a number. */
   amountText: string;
   /**
@@ -128,6 +139,16 @@ export function legacyPercent(draft: EntryDraft): SplitSpec | null {
     : null;
 }
 
+/**
+ * What rounding ties break by, everywhere this draft is priced: the id of the
+ * entry being edited, or the one a create will be written under. Every screen
+ * that shows a person a figure asks for it here, so the cent the form quotes
+ * is the cent the ledger keeps.
+ */
+export function splitSeed(draft: EntryDraft): string {
+  return draft.entryId ?? draft.newEntryId;
+}
+
 /** A tab nothing has been typed into yet: everybody out, nothing allocated. */
 function emptySplit(tab: ArithmeticTab): SplitSpec {
   switch (tab) {
@@ -167,7 +188,7 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
     draft.receiptTip && draft.receiptInvolved
       ? { amount: draft.receiptTip, members: new Set(draft.receiptInvolved) } : null,
     draft.currency,
-    draft.entryId ?? "new",
+    splitSeed(draft),
   );
   return Object.keys(weights).length > 0 ? { mode: "shares", weights } : null;
 }
@@ -207,7 +228,7 @@ export function openSplitTab(draft: EntryDraft, tab: SplitTab, totalMinor: numbe
   delete kept.percent;
   if (kept[tab]) return kept;
   return withSplit(kept, convertSplitMode(totalMinor, activeSplit(draft), tab, {
-    tiebreakSeed: draft.entryId ?? "new",
+    tiebreakSeed: splitSeed(draft),
   }));
 }
 
@@ -322,6 +343,7 @@ export function blankDraft(
 ): EntryDraft {
   return {
     kind,
+    newEntryId: newId(),
     // Empty, not a literal "0". The "0" was there so an autofocused, borderless
     // field showed *something* — but it is a real character with a caret that
     // can land either side of it, so tapping into the field and typing "5" gave

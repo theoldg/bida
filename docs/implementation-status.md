@@ -75,6 +75,15 @@ is something to file, and the row wears a box while a name is unfiled — so the
 guessing is gone and the state is on screen instead. `pnpm claim` holds it
 ([testing.md](testing.md), [frontend.md](frontend.md#state)).
 
+**A figure a screen quotes is the figure it writes.** A total that does not
+divide hands the leftover minor unit to somebody by `tiebreakSeed`, which is the
+entry's id — so the form, pricing under a placeholder until there was one,
+showed the cent on one person's row and wrote it to another's. The draft carries
+the id its entry will be written under (`newEntryId`, read through `splitSeed`)
+and `addExpense` writes it there; `pnpm entries` compares the two readings.
+Found by driving the app as text ([testing.md](testing.md), it was a €0.01
+disagreement no arithmetic test could see).
+
 **The log reads the entity, not only the patch.** A revision carries the fold
 either side of it, so `history-copy` can say what the change alone could not: a
 co-payer added beside the largest contributor moves `payers` and nothing else,

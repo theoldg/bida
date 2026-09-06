@@ -4,7 +4,7 @@ import {
 } from "@hajsik/core";
 import {
   activeSplit, activeSplitTab, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
-  type EntryDraft, type SplitTab,
+  splitSeed, type EntryDraft, type SplitTab,
 } from "./draft";
 import { copy } from "./copy";
 import { payerProblemText } from "./format";
@@ -150,7 +150,7 @@ export function checkEntry(input: {
   // The split editor shows its own arithmetic; this only needs to know
   // whether what it currently says can be saved.
   const splitOk = transfer
-    || validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: draft.entryId ?? "new" }).ok;
+    || validateSplit(baseMinor, effectiveSplit, { tiebreakSeed: splitSeed(draft) }).ok;
 
   // Payers are checked against the amount in the entry's own currency: that is
   // the number people typed and the number they'd check against a receipt.

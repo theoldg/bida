@@ -170,8 +170,10 @@ Every mode resolves to `Record<memberId, minorAmount>` summing **exactly** to
 
 ideal share as an exact rational → floor to minor units → distribute the
 remainder by **largest fractional part**, ties broken by a hash of
-`${tiebreakSeed}:${memberId}` (callers pass the expense id, so the leftover cent
-lands on a different person each time while staying identical across devices) →
+`${tiebreakSeed}:${memberId}` (callers pass the expense id — the form included,
+which quotes its rows under the id it will write, so the leftover cent lands on
+a different person each time while staying identical across devices *and* across
+the save) →
 return the map plus `remainderAbsorbedBy`.
 
 **`remainderAbsorbedBy` is diagnostic, not UI.** Determinism outranks fairness:
