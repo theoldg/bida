@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { formatRate, isCurrencyCode, type RateSource } from "@hajsik/core";
+import { formatRate, isCurrencyCode, type CurrencyInUse, type RateSource } from "@hajsik/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
+import { useLongPressMenu } from "../../../components/long-press";
 import { RateDialog } from "../../../components/rate-dialog";
 import { clearRate, setRate } from "../../../lib/db/commands";
 import { copy } from "../../../lib/copy";
@@ -121,27 +122,9 @@ function RatesScreen() {
           ) : (
             <div className="rows">
               {currencies.map((c) => (
-                <button key={c.currency} className="row" type="button"
-                  onClick={() => setAsk({ kind: "edit", currency: c.currency })}>
-                  <div className="rmain">
-                    <div className="rtitle">{currencyLabel(c.currency)}</div>
-                    <div className="rmeta">
-                      {c.entryCount > 0
-                        ? copy.rates.usedBy(plural(c.entryCount, copy.noun.entry))
-                        : copy.rates.usedByNone}
-                    </div>
-                  </div>
-                  <div className="ramt">
-                    {/* The rate, the way this screen's own heading reads it:
-                        one of theirs is this much of ours. */}
-                    <div className="ratecell">
-                      {c.rate
-                        ? copy.currency.hasRate(`${formatRate(c.rate.rate)} ${base}`)
-                        : copy.currency.noRate}
-                    </div>
-                    <div className="rmeta">{c.rate ? "" : copy.rates.unset}</div>
-                  </div>
-                </button>
+                <RateRow key={c.currency} row={c} base={base}
+                  onOpen={() => setAsk({ kind: "edit", currency: c.currency })}
+                  onDelete={() => askRemove(c.currency)} />
               ))}
             </div>
           )}
@@ -159,9 +142,6 @@ function RatesScreen() {
           current={editing.rate}
           entryCount={editing.entryCount}
           onSave={(rate, source, asOf) => save(editing.currency, rate, source, asOf)}
-          onRemove={editing.rate
-            ? () => { askRemove(editing.currency); return Promise.resolve(); }
-            : undefined}
           onClose={() => setAsk((a) => (a?.kind === "edit" ? null : a))}
         />
       ) : null}
@@ -228,5 +208,44 @@ function RatesScreen() {
         </Dialog>
       ) : null}
     </Screen>
+  );
+}
+
+/**
+ * One currency and what the group says it is worth. Tapping opens the editor;
+ * a long press offers to delete the rate, which is where deleting an entry
+ * lives too — so the editor is only ever about the number in it. Nothing to
+ * delete until a rate has been set, and an empty menu doesn't open.
+ */
+function RateRow({ row, base, onOpen, onDelete }: {
+  row: CurrencyInUse; base: string; onOpen: () => void; onDelete: () => void;
+}) {
+  const { onContextMenu, menu } = useLongPressMenu(row.rate
+    ? [{ label: copy.act.delete, icon: "trash", danger: true, onSelect: onDelete }]
+    : []);
+  return (
+    <>
+      <button className="row" type="button" onClick={onOpen} onContextMenu={onContextMenu}>
+        <div className="rmain">
+          <div className="rtitle">{currencyLabel(row.currency)}</div>
+          <div className="rmeta">
+            {row.entryCount > 0
+              ? copy.rates.usedBy(plural(row.entryCount, copy.noun.entry))
+              : copy.rates.usedByNone}
+          </div>
+        </div>
+        <div className="ramt">
+          {/* The rate, the way this screen's own heading reads it:
+              one of theirs is this much of ours. */}
+          <div className="ratecell">
+            {row.rate
+              ? copy.currency.hasRate(`${formatRate(row.rate.rate)} ${base}`)
+              : copy.currency.noRate}
+          </div>
+          <div className="rmeta">{row.rate ? "" : copy.rates.unset}</div>
+        </div>
+      </button>
+      {menu}
+    </>
   );
 }

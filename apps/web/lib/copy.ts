@@ -608,7 +608,6 @@ export const copy = {
     refetch: "Look it up",
     /** The one thing this dialog does that a person should know before doing it. */
     movesEntries: (entries: string, code: string) => `Re-values ${entries} in ${code}.`,
-    remove: "Remove",
     removeTitle: (code: string) => `Remove the ${code} rate?`,
     removeBodyEmpty: "Nothing is written in it, so nothing changes.",
     /** Removing a rate is refused on the same terms as removing a person. */

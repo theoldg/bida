@@ -83,7 +83,7 @@ function pairFrom(typed: string, side: "forward" | "inverse"): Pair {
 }
 
 export function RateDialog({
-  currency, base, current, entryCount, onSave, onRemove, onClose,
+  currency, base, current, entryCount, onSave, onClose,
 }: {
   currency: string;
   base: string;
@@ -92,8 +92,6 @@ export function RateDialog({
   /** Live entries written in this currency — what saving will re-value. */
   entryCount: number;
   onSave: (rate: Rate, source: RateSource, asOf: number) => Promise<void>;
-  /** Absent when there is no row to remove. */
-  onRemove?: () => Promise<void>;
   onClose: () => void;
 }) {
   const [pair, setPair] = useState<Pair>(() => (current ? pairOf(current.rate) : { forward: "", inverse: "" }));
@@ -180,17 +178,13 @@ export function RateDialog({
 
         {failed ? <p className="failure" role="alert">{copy.rates.failed(failed)}</p> : null}
 
+        {/* Two ways out, both about this dialog: leave it, or save it.
+            Removing the rate is the row's business, not the editor's — it
+            lives on the row's long-press menu, where deleting an entry does. */}
         <div className="drow">
-          {onRemove ? (
-            <button type="button" className="btn btn-s" disabled={busy}
-              onClick={() => { setBusy(true); void onRemove().finally(() => live.current && setBusy(false)); }}>
-              {copy.rates.remove}
-            </button>
-          ) : (
-            <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>
-              {copy.act.cancel}
-            </button>
-          )}
+          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>
+            {copy.act.cancel}
+          </button>
           <button type="submit" className="btn btn-p" disabled={!ok || busy}>
             {busy ? <span className="spinner" /> : null}{copy.act.save}
           </button>
