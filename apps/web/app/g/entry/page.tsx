@@ -239,7 +239,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
  * printed it, in the bill's own currency.
  *
  * Only the split's share of a line is theirs, so the count is a fraction —
- * "×½" for a plate shared with somebody, "×1½" for one of their own and half
+ * "×1/2" for a plate shared with somebody, "×1 1/2" for one of their own and half
  * of another, "×2" for a line they had all of and the receipt printed twice
  * (`countText`). The amounts are the same cents the split was derived from,
  * so a row and its lines agree by construction.

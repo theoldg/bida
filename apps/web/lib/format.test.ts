@@ -84,20 +84,15 @@ describe("countText", () => {
     expect(countText({ n: 6, d: 3 })).toBe("2");
   });
 
-  it("uses the glyph for a share of one", () => {
-    expect(countText({ n: 1, d: 2 })).toBe("\u00bd");
-    expect(countText({ n: 2, d: 6 })).toBe("\u2153");
-    expect(countText({ n: 3, d: 4 })).toBe("\u00be");
+  it("writes a share of one in lowest terms", () => {
+    expect(countText({ n: 1, d: 2 })).toBe("1/2");
+    expect(countText({ n: 2, d: 6 })).toBe("1/3");
+    expect(countText({ n: 3, d: 4 })).toBe("3/4");
   });
 
-  it("writes one and a half as one number", () => {
-    expect(countText({ n: 3, d: 2 })).toBe("1\u00bd");
-    expect(countText({ n: 7, d: 3 })).toBe("2\u2153");
-  });
-
-  it("falls back to n/d where no glyph exists", () => {
-    expect(countText({ n: 1, d: 7 })).toBe("1/7");
-    expect(countText({ n: 8, d: 7 })).toBe("1 1/7");
+  it("puts the whole ones in front of the rest", () => {
+    expect(countText({ n: 3, d: 2 })).toBe("1 1/2");
+    expect(countText({ n: 7, d: 3 })).toBe("2 1/3");
   });
 
   it("has nothing to say about nothing", () => {

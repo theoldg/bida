@@ -238,7 +238,7 @@ describe("receiptBreakdown", () => {
     expect(lines["a"]).toEqual([
       // Two printed beers, all a's: "Beer ×2".
       { label: "Beer", count: { n: 2, d: 1 }, minor: 400 },
-      // One order of fries and half of another: "Fries ×1½".
+      // One order of fries and half of another: "Fries ×1 1/2".
       { label: "Fries", count: { n: 3, d: 2 }, minor: 450 },
     ]);
     expect(lines["b"]).toEqual([{ label: "Fries", count: { n: 1, d: 2 }, minor: 150 }]);

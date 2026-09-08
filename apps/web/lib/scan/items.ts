@@ -54,7 +54,7 @@ export function receiptBreakdown(
   const lines: Record<string, MemberLine[]> = {};
   const add = (id: string, minor: number) => { weights[id] = (weights[id] ?? 0) + minor; };
   // One entry per label, not per row: two rows of the same thing, or a whole
-  // one plus half of another, read as "×2" and "×1½" rather than as a list
+  // one plus half of another, read as "×2" and "×1 1/2" rather than as a list
   // that says the same word twice.
   const note = (id: string, line: MemberLine) => {
     const own = lines[id] ??= [];

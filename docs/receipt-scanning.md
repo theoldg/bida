@@ -105,7 +105,7 @@ the number of people on the row — how much of it each of them had.
 The grid is kept on the expense, so the entry screen can read it back:
 `receiptBreakdown` returns the split weights *and* the lines they were summed
 from, and each person's row on a scanned expense opens onto their own copy of
-the bill — "Beer ×2", "Fries ×1½", "Tagine ×⅓", the tip on its own line. Both
+the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", the tip on its own line. Both
 come out of one pass, so a row and the lines under it cannot disagree.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
