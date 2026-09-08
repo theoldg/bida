@@ -783,3 +783,17 @@ dialog.scrim::backdrop { background: transparent }
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
+
+/* ============================================================
+   PROBE — TEMPORARY, REVERT WITH THE REST OF THE STATUS-BAR PROBE.
+   Paints the top safe area a colour nothing else uses. If the Android
+   status bar shows cyan, the bar is transparent and our own content is
+   what fills it. If a cyan band appears *below* the status bar instead,
+   the web view is inset and safe-area-inset-top is 0 — which is the same
+   answer from the other side.
+   ============================================================ */
+body::before {
+  content: ""; position: fixed; top: 0; left: 0; right: 0;
+  height: env(safe-area-inset-top, 24px);
+  background: #00FFFF; z-index: 9999; pointer-events: none;
+}

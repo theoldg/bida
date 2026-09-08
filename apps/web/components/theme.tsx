@@ -9,8 +9,13 @@
  * stays the source of truth and writes through to this key.
  */
 
-/** Matched to the --paper token in each theme, and to `viewport.themeColor`. */
-export const PAPER = { light: "#F1F1EF", dark: "#0E0F11" } as const;
+/**
+ * PROBE (temporary — revert with the rest of the status-bar probe): normally
+ * matched to the --paper token in each theme. Two colours nothing else in the
+ * app uses, so if the Android status bar shows one of them we know the live
+ * meta tag paints it, and that it still follows the in-app toggle.
+ */
+export const PAPER = { light: "#0000FF", dark: "#FFFF00" } as const;
 
 /**
  * Android paints the status bar from the first <meta name="theme-color">
