@@ -448,8 +448,11 @@ a { color: inherit; text-decoration: none }
    doesn't restack when one is pressed; only the chevron turns. */
 button.kv { width: 100%; background: none; border: 0; font: inherit; text-align: left }
 button.kv:active { background: var(--press) }
-.kvchev { color: var(--muted); margin-left: 3px; vertical-align: -1px;
-  transition: transform .12s ease }
+/* The name and its chevron are one line, laid out rather than left to flow:
+   Tailwind's preflight makes every `svg` a block, so an icon written inline
+   after a word lands under it instead of beside it. */
+button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
+.kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
 /* Indented under the row they belong to, and only as far as the chevron that
    opened it: the bill's own lines, not a second list of people. */
