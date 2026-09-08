@@ -296,6 +296,10 @@ export const copy = {
     what: "What",
     whatPlaceholder: "Title",
     note: "Note (optional)",
+    /** What a transfer is nine times out of ten, typed for you: paying
+        somebody back. It seeds a new transfer's note and is cleared if the
+        entry turns out to be an expense after all (`blankDraft`). */
+    reimbursement: "Reimbursement",
     when: "When",
     andSomeone: "+ someone",
     coPayers: {

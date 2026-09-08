@@ -32,8 +32,10 @@ them:
 
 The wire, the types and the D1 `entity` column say `settlement`; **every word a
 person reads says *transfer*** — the vocabulary lives once, in
-`apps/web/lib/entry-kind.ts`. "Reimbursement" is not a thing: paying somebody
-back is one reason to make a transfer, not a different kind of one.
+`apps/web/lib/entry-kind.ts`. "Reimbursement" is not a *kind*: paying somebody
+back is one reason to make a transfer, not a different kind of one — it is only
+what a new transfer's note says by default (`blankDraft`), and typing over it,
+or switching to another kind, takes the word away.
 
 ## Entities
 

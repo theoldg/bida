@@ -379,8 +379,16 @@ function EditEntryScreen() {
     const handoff = leavingReceipt
       ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, draft.receiptTip, draft.currency)
       : null;
+    // The note only defaults to "Reimbursement" because a transfer is one
+    // (`blankDraft`). Arriving at a transfer with nothing typed takes that
+    // default; leaving one that still carries it hands the next kind an
+    // empty field rather than a word about a transfer it no longer is.
+    const note = next === "transfer"
+      ? (draft.description.trim() === "" ? copy.form.reimbursement : draft.description)
+      : (draft.description === copy.form.reimbursement ? "" : draft.description);
     patch({
       kind: next,
+      description: note,
       ...(leavingReceipt
         ? { splitTab: "equal" as SplitTab, splits: openSplitTab(draft, "equal", baseMinor) }
         : {}),

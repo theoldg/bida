@@ -5,6 +5,7 @@ import {
   convertSplitMode, newId, parseMinor,
   type ReceiptItem, type SplitMode, type SplitSpec, type SplitTab,
 } from "@hajsik/core";
+import { copy } from "./copy";
 import type { EntryKind } from "./entry-kind";
 import { receiptTotalMinor, weightsFromItems } from "./scan/items";
 
@@ -397,7 +398,10 @@ export function blankDraft(
     // it looks like an input without containing anything you have to delete.
     amountText: "",
     currency,
-    description: "",
+    // A transfer is nearly always somebody being paid back, and the note is
+    // the only field that says so — so it says so without being typed. Any
+    // other kind starts empty, and changing kinds clears it (`changeKind`).
+    description: kind === "transfer" ? copy.form.reimbursement : "",
     paidBy: me,
     payers: null,
     splits: { equal: { mode: "equal", members } },
