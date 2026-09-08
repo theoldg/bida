@@ -93,6 +93,10 @@ building the grid that reduces to an ordinary `shares` split
 a scrolling page: who was there in one sideways-scrolling line above, running
 per-person totals stacked below, and the grid between them owning the vertical
 scroll so its row of initials freezes while a long bill passes under it.
+Everyone starts at the table and **nothing starts assigned**: ticking what you
+had is the work, so the grid asks for it rather than handing you a bill already
+split evenly to untick your way out of. Done stays disabled until every line
+has somebody.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
 total. It says how many rows that line **unfolds** into on the grid, and nothing

@@ -58,7 +58,11 @@ function ItemsScreen() {
 
   // Seeded once, when the group's members and the scan's items are both in —
   // restore a previously saved assignment if this grid was already visited,
-  // otherwise the ordinary case: everyone included, every item shared by all.
+  // otherwise an empty grid: everyone is at the table (they are the columns
+  // you tap in), and nothing is anybody's yet. Starting with every item on
+  // everybody meant reading a bill you had already been told the answer to,
+  // and unticking your way out of it; ticking what you had is the work this
+  // screen is for, so it is what the grid asks for.
   useEffect(() => {
     if (seeded.current || data.loading || items.length === 0) return;
     seeded.current = true;
@@ -68,7 +72,7 @@ function ItemsScreen() {
       setAssignments(draft.receiptAssignments.map((row) => new Set(row)));
     } else {
       setInvolved(all);
-      setAssignments(items.map(() => new Set(all)));
+      setAssignments(items.map(() => new Set<string>()));
     }
   }, [data.loading, data.members, items, draft?.receiptInvolved, draft?.receiptAssignments]);
 
@@ -89,15 +93,19 @@ function ItemsScreen() {
   const labels = distinctInitials(data.members);
   const runs = portions(items);
 
+  // Saying somebody was there opens their column and nothing more — an empty
+  // one, like the grid starts. Saying they weren't takes back every item they
+  // had been given, since a column that isn't shown can't be corrected.
   function toggleInvolved(memberId: string) {
     setTouched(true);
     const nextInvolved = new Set(involved);
     const adding = !nextInvolved.has(memberId);
     if (adding) nextInvolved.add(memberId); else nextInvolved.delete(memberId);
     setInvolved(nextInvolved);
+    if (adding) return;
     setAssignments(assignments.map((row) => {
       const next = new Set(row);
-      if (adding) next.add(memberId); else next.delete(memberId);
+      next.delete(memberId);
       return next;
     }));
   }
