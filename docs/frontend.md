@@ -208,11 +208,10 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: standalone`, and a flat `theme_color`/`background_color` the splash
-screen boots from. The status bar itself follows two media-scoped
-`<meta name="theme-color">` tags (`viewport.themeColor` in `app/layout.tsx`),
-which a manual toggle overrides with an unscoped tag `applyTheme` inserts
-ahead of them (`components/theme.tsx`). The
+`display: standalone`, and one ink `theme_color`/`background_color` — the
+status bar and the splash screen, which is why they are ink rather than paper
+and why `viewport.themeColor` repeats the same value rather than tracking the
+theme (Gotcha below). The
 three PNGs are the tally wordmark in paper on an ink tile; regenerate them
 together if the mark or the ink changes, and the maskable one draws its mark
 smaller and unrounded so a circular launcher crop can't clip it. iOS ignores
@@ -305,6 +304,17 @@ figure-free.
   the new build and makes it look like a deploy problem. It isn't: it is a
   client that never went away, which is why the update is offered as a tap
   (see [PWA](#pwa)) rather than waited for.
+- **An installed Android app's status bar is the manifest's `theme_color`, and
+  nothing can change it after install.** It is compiled into the app when the
+  browser builds it, so it cannot be media-scoped and no meta tag reaches it —
+  but `<meta name="theme-color">` *is* still read, for one thing: whether the
+  icons drawn on that bar are light or dark. Adaptive theme-color tags
+  therefore flip the icons over a bar that cannot follow, and dark mode ends as
+  white icons on a paper bar. Hence one colour in both places, ink, so the
+  white icons the app asks for always have an ink bar under them. A colour
+  probe settles which layer paints what: give the manifest's two colours and
+  the meta tag values nothing else uses, reinstall, and read the screen —
+  splash is `background_color`, status bar is `theme_color`.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,

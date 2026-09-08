@@ -7,7 +7,7 @@ import { NoLongPress } from "../components/no-long-press";
 import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
-import { PAPER, ThemeScript } from "../components/theme";
+import { ThemeScript } from "../components/theme";
 import { copy } from "../lib/copy";
 
 // One face for the whole app — headings, prose and figures alike; hierarchy is
@@ -49,13 +49,12 @@ export const viewport: Viewport = {
   // CSS `touch-action` and `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
-  // Two media-scoped tags, so the Android status bar follows the system
-  // setting with no script. A manual toggle overrides them from
-  // `applyTheme` — the manifest's flat theme_color is the boot fallback.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: PAPER.light },
-    { media: "(prefers-color-scheme: dark)", color: PAPER.dark },
-  ],
+  // One colour, deliberately not per-theme, and the same value as the
+  // manifest's theme_color: an installed Android app paints its status bar
+  // from the manifest and this tag only decides whether the icons on it are
+  // light or dark. Media-scoped or toggled tags flip the icons over a bar
+  // that cannot follow — white on white. See frontend.md#gotchas.
+  themeColor: "#0E0F11",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
