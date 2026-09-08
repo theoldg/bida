@@ -99,8 +99,14 @@ split evenly to untick your way out of. Done stays disabled until every line
 has somebody.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
-total. It says how many rows that line **unfolds** into on the grid, and nothing
-else.
+total. It says how many rows that line **unfolds** into on the grid, and — with
+the number of people on the row — how much of it each of them had.
+
+The grid is kept on the expense, so the entry screen can read it back:
+`receiptBreakdown` returns the split weights *and* the lines they were summed
+from, and each person's row on a scanned expense opens onto their own copy of
+the bill — "Beer ×2", "Fries ×1½", "Tagine ×⅓", the tip on its own line. Both
+come out of one pass, so a row and the lines under it cannot disagree.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `EntryDraft` patch: `total` passes straight through as `amountText` — the

@@ -214,3 +214,34 @@ export function withDate(ts: number, value: string): number {
   out.setFullYear(y, m - 1, d);
   return out.getTime();
 }
+
+/** The vulgar fractions a keyboard has a glyph for; everything else is n/d. */
+const VULGAR: Record<string, string> = {
+  "1/2": "½", "1/3": "⅓", "2/3": "⅔", "1/4": "¼", "3/4": "¾",
+  "1/5": "⅕", "2/5": "⅖", "3/5": "⅗", "4/5": "⅘", "1/6": "⅙", "5/6": "⅚",
+  "1/8": "⅛", "3/8": "⅜", "5/8": "⅝", "7/8": "⅞",
+};
+
+/**
+ * How many of something somebody had: "2", "½", "1½", "2⅓" — or null for
+ * exactly one, which is the ordinary case and says nothing worth printing.
+ *
+ * A count is a fraction because sharing makes it one: a plate split three ways
+ * is a third of it each, and the same plate ordered twice and shared once is
+ * one and a half. The glyph is used where there is one, since "1½ fries" reads
+ * as an amount of fries and "1 1/2 fries" reads as a typo.
+ */
+export function countText(count: { n: number; d: number }): string | null {
+  if (count.d <= 0 || count.n <= 0) return null;
+  // Reduced here rather than trusted: 2/6 has a glyph, spelled ⅓.
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  const g = gcd(count.n, count.d) || 1;
+  const [n, d] = [count.n / g, count.d / g];
+  const whole = Math.floor(n / d);
+  const rest = n - whole * d;
+  if (rest === 0) return whole === 1 ? null : String(whole);
+  const glyph = VULGAR[`${rest}/${d}`];
+  // "1½" is a number; "1 1/7", with the space, is one plus a seventh — which
+  // is the best a fraction without a glyph can be written on one line.
+  return `${whole === 0 ? "" : whole}${glyph ? "" : whole === 0 ? "" : " "}${glyph ?? `${rest}/${d}`}`;
+}

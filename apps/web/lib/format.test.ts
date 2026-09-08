@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@hajsik/core";
-import { bare, distinctInitials, initials, splitFooter } from "./format";
+import { bare, countText, distinctInitials, initials, splitFooter } from "./format";
 
 describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {
@@ -71,5 +71,36 @@ describe("initials", () => {
     ]);
     expect(out.get("a")).toBe("🐙🐙");
     expect(out.get("b")).toBe("🐙🦑");
+  });
+});
+
+describe("countText", () => {
+  it("says nothing about the ordinary case", () => {
+    expect(countText({ n: 1, d: 1 })).toBe(null);
+  });
+
+  it("counts whole ones", () => {
+    expect(countText({ n: 2, d: 1 })).toBe("2");
+    expect(countText({ n: 6, d: 3 })).toBe("2");
+  });
+
+  it("uses the glyph for a share of one", () => {
+    expect(countText({ n: 1, d: 2 })).toBe("\u00bd");
+    expect(countText({ n: 2, d: 6 })).toBe("\u2153");
+    expect(countText({ n: 3, d: 4 })).toBe("\u00be");
+  });
+
+  it("writes one and a half as one number", () => {
+    expect(countText({ n: 3, d: 2 })).toBe("1\u00bd");
+    expect(countText({ n: 7, d: 3 })).toBe("2\u2153");
+  });
+
+  it("falls back to n/d where no glyph exists", () => {
+    expect(countText({ n: 1, d: 7 })).toBe("1/7");
+    expect(countText({ n: 8, d: 7 })).toBe("1 1/7");
+  });
+
+  it("has nothing to say about nothing", () => {
+    expect(countText({ n: 0, d: 3 })).toBe(null);
   });
 });

@@ -16,7 +16,8 @@ import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
-import { clockTime, dayLabel, money, plural } from "../../../lib/format";
+import { clockTime, countText, dayLabel, money, plural } from "../../../lib/format";
+import { receiptBreakdown, type MemberLine } from "../../../lib/scan/items";
 import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
 
@@ -164,6 +165,21 @@ function ExpenseDetail({ expense, kind, group, data }: {
   // history screen has to draw the same distinction, and this screen's copy
   // of it was the only one.
   const isReceipt = fromReceipt(expense);
+  // A receipt expense keeps the grid it was built from (ADR-0016), so each
+  // person's row can be opened onto their own copy of the bill. Read with the
+  // entry's id as the seed — the same one the saved weights were rounded
+  // with — so these lines are those weights, itemised, not a second opinion.
+  const bill = isReceipt && expense.receiptItems?.length
+    ? receiptBreakdown(
+      expense.receiptItems,
+      (expense.receiptAssignments ?? []).map((row) => new Set(row)),
+      expense.receiptTip
+        ? { amount: expense.receiptTip, members: new Set(expense.receiptInvolved ?? []) }
+        : null,
+      expense.currency,
+      expense.id,
+    ).lines
+    : null;
 
   return (
     <div className="pad" style={{ paddingTop: 2 }}>
@@ -207,14 +223,57 @@ function ExpenseDetail({ expense, kind, group, data }: {
             : expense.split.mode === "percent" && inIt
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
-          return (
-            <KV key={m.id} dim={!inIt}
-              k={`${m.name}${inIt ? detail : ` · ${copy.entry.notInvolved}`}`}
-              v={inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : copy.none} />
-          );
+          const k = `${m.name}${inIt ? detail : ` · ${copy.entry.notInvolved}`}`;
+          const v = inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : copy.none;
+          const lines = inIt ? bill?.[m.id] : undefined;
+          if (!lines?.length) return <KV key={m.id} dim={!inIt} k={k} v={v} />;
+          return <MemberBill key={m.id} name={k} total={v} lines={lines} currency={expense.currency} />;
         })}
       </Card>
     </div>
+  );
+}
+
+/**
+ * One person's row on a scanned bill, opened: what they had, as the bill
+ * printed it, in the bill's own currency.
+ *
+ * Only the split's share of a line is theirs, so the count is a fraction —
+ * "×½" for a plate shared with somebody, "×1½" for one of their own and half
+ * of another, "×2" for a line they had all of and the receipt printed twice
+ * (`countText`). The amounts are the same cents the split was derived from,
+ * so a row and its lines agree by construction.
+ */
+function MemberBill({ name, total, lines, currency }: {
+  name: string; total: React.ReactNode; lines: MemberLine[]; currency: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="kv" aria-expanded={open}
+        onClick={() => setOpen(!open)}>
+        <span className="k">
+          {name}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
+        </span>
+        <span className="v">{total}</span>
+      </button>
+      {open ? (
+        <div className="billlines">
+          {lines.map((line, i) => {
+            const count = line.tip ? null : countText(line.count);
+            return (
+              <div className="billline" key={i}>
+                <span>
+                  {line.tip ? copy.items.tip : line.label}
+                  {count ? <span className="itemqty"> ×{count}</span> : null}
+                </span>
+                <span className="amt">{money(line.minor, currency)}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </>
   );
 }
 

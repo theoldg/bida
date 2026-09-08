@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseMinor } from "@hajsik/core";
 import {
-  foldPortions, handOffReceiptTotal, portions, receiptTotalMinor, unfoldItem, unfoldableInto,
-  weightsFromItems,
+  foldPortions, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor, unfoldItem,
+  unfoldableInto, weightsFromItems,
 } from "./items";
 
 describe("weightsFromItems", () => {
@@ -219,5 +219,93 @@ describe("portions", () => {
     expect(portions([p(2), { label: "Wine", amount: "4.50", portionOf: 2 }])).toEqual([null, null]);
     expect(portions([{ label: "Salad", amount: "4.50" }, { label: "Salad", amount: "4.50" }]))
       .toEqual([null, null]);
+  });
+});
+
+describe("receiptBreakdown", () => {
+  const bill = [
+    { label: "Beer", amount: "4.00", quantity: 2 },
+    { label: "Fries", amount: "3.00" },
+    { label: "Fries", amount: "3.00" },
+  ];
+
+  it("gives each person their own copy of the bill", () => {
+    const { lines } = receiptBreakdown(
+      bill,
+      [new Set(["a"]), new Set(["a"]), new Set(["a", "b"])],
+      null, "EUR", "seed",
+    );
+    expect(lines["a"]).toEqual([
+      // Two printed beers, all a's: "Beer ×2".
+      { label: "Beer", count: { n: 2, d: 1 }, minor: 400 },
+      // One order of fries and half of another: "Fries ×1½".
+      { label: "Fries", count: { n: 3, d: 2 }, minor: 450 },
+    ]);
+    expect(lines["b"]).toEqual([{ label: "Fries", count: { n: 1, d: 2 }, minor: 150 }]);
+  });
+
+  it("counts a shared line as the fraction it was", () => {
+    const { lines } = receiptBreakdown(
+      [{ label: "Tagine", amount: "30.00" }],
+      [new Set(["a", "b", "c"])],
+      null, "EUR", "seed",
+    );
+    expect(lines["a"]).toEqual([{ label: "Tagine", count: { n: 1, d: 3 }, minor: 1000 }]);
+  });
+
+  it("does not multiply a printed count out over the people sharing it", () => {
+    // "Fries ×2" shared by two is one order of fries each, not two.
+    const { lines } = receiptBreakdown(
+      [{ label: "Fries", amount: "6.00", quantity: 2 }],
+      [new Set(["a", "b"])],
+      null, "EUR", "seed",
+    );
+    expect(lines["a"]).toEqual([{ label: "Fries", count: { n: 1, d: 1 }, minor: 300 }]);
+  });
+
+  it("counts a portion of an unfolded line as one", () => {
+    // The printed count became the rows; each row is one of the thing.
+    const { lines } = receiptBreakdown(
+      [{ label: "Salade", amount: "9.00", quantity: null, portionOf: 2 },
+        { label: "Salade", amount: "9.00", quantity: null, portionOf: 2 }],
+      [new Set(["a"]), new Set(["a", "b"])],
+      null, "EUR", "seed",
+    );
+    expect(lines["a"]).toEqual([{ label: "Salade", count: { n: 3, d: 2 }, minor: 1350 }]);
+  });
+
+  it("keeps the tip as its own line, charged but not ordered", () => {
+    const { lines } = receiptBreakdown(
+      [{ label: "Beer", amount: "10.00" }],
+      [new Set(["a"])],
+      { amount: "2.00", members: new Set(["a"]) },
+      "EUR", "seed",
+    );
+    expect(lines["a"]).toEqual([
+      { label: "Beer", count: { n: 1, d: 1 }, minor: 1000 },
+      { label: "", tip: true, count: { n: 1, d: 1 }, minor: 200 },
+    ]);
+  });
+
+  it("adds up to exactly what the split is derived from", () => {
+    const assignments = [new Set(["a", "b", "c"]), new Set(["b"]), new Set(["a", "c"])];
+    const tip = { amount: "1.37", members: new Set(["a", "b", "c"]) };
+    const { weights, lines } = receiptBreakdown(
+      [{ label: "Tagine", amount: "10.00" }, { label: "Tea", amount: "3.33" },
+        { label: "Fries", amount: "5.55" }],
+      assignments, tip, "EUR", "seed",
+    );
+    for (const [id, own] of Object.entries(lines)) {
+      expect(own.reduce((sum, l) => sum + l.minor, 0)).toBe(weights[id]);
+    }
+    // And nothing of the bill goes missing on the way.
+    expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(1000 + 333 + 555 + 137);
+  });
+
+  it("is the same arithmetic weightsFromItems reports", () => {
+    const assignments = [new Set(["a", "b"]), new Set(["b"]), new Set(["a", "b"])];
+    const tip = { amount: "2.50", members: new Set(["a", "b"]) };
+    expect(receiptBreakdown(bill, assignments, tip, "EUR", "seed").weights)
+      .toEqual(weightsFromItems(bill, assignments, tip, "EUR", "seed"));
   });
 });

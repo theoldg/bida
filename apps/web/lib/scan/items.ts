@@ -1,33 +1,84 @@
 import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitTab } from "@hajsik/core";
 
+/** A line of the bill, and how much of it was one person's. */
+export interface MemberLine {
+  /** The bill's own label. Empty for the tip, which is nobody's order. */
+  label: string;
+  /** The tip line, which is charged for but not ordered. */
+  tip?: boolean;
+  /** How much of it was theirs — one, two, or a third of a shared plate. */
+  count: Count;
+  /** What that came to, in the receipt's own currency. */
+  minor: number;
+}
+
+/** A count that can be a share of one: `n/d`, always in lowest terms. */
+export interface Count { n: number; d: number }
+
+/** What a bill's line has to say for itself here. `ReceiptItem` satisfies it. */
+interface BillLine { amount: string; label?: string; quantity?: number | null; portionOf?: number | null }
+
+function gcd(a: number, b: number): number { return b === 0 ? a : gcd(b, a % b); }
+
+function count(n: number, d: number): Count {
+  const g = gcd(n, d) || 1;
+  return { n: n / g, d: d / g };
+}
+
+function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a.d * b.d); }
+
 /**
- * Turns "who had what" on a scanned receipt into split weights.
+ * Who had what, read two ways at once: as split weights, and as each person's
+ * own copy of the bill.
  *
  * Each item's printed amount is divided evenly among the members checked for
  * that row (the same largest-remainder rule as a real split), then the
  * per-member results are summed. The sum is only ever used as a *ratio*
  * against the expense's real, converted total — see the split editor's
- * "shares" mode — so it doesn't matter that it's denominated in the
- * receipt's own currency rather than the group's base currency.
+ * "shares" mode — so it doesn't matter that it's denominated in the receipt's
+ * own currency rather than the group's base currency.
+ *
+ * The lines are that same arithmetic, kept rather than summed away: one entry
+ * per label, carrying how much of it was theirs. They are what the entry
+ * screen expands a person's row into, and they add up to that person's weight
+ * by construction — there is no second calculation to drift from this one.
  */
-export function weightsFromItems(
-  items: { amount: string }[],
-  assignments: Set<string>[],
+export function receiptBreakdown(
+  items: readonly BillLine[],
+  assignments: readonly Set<string>[],
   tip: { amount: string; members: Set<string> } | null,
   currency: string,
   seed: string,
-): Record<string, number> {
+): { weights: Record<string, number>; lines: Record<string, MemberLine[]> } {
   const weights: Record<string, number> = {};
+  const lines: Record<string, MemberLine[]> = {};
   const add = (id: string, minor: number) => { weights[id] = (weights[id] ?? 0) + minor; };
+  // One entry per label, not per row: two rows of the same thing, or a whole
+  // one plus half of another, read as "×2" and "×1½" rather than as a list
+  // that says the same word twice.
+  const note = (id: string, line: MemberLine) => {
+    const own = lines[id] ??= [];
+    const same = own.find((l) => l.label === line.label && !l.tip === !line.tip);
+    if (!same) { own.push(line); return; }
+    same.count = plus(same.count, line.count);
+    same.minor += line.minor;
+  };
 
   items.forEach((item, i) => {
-    const who = [...(assignments[i] ?? new Set())];
+    const who = [...(assignments[i] ?? new Set<string>())];
     if (who.length === 0) return;
     let minor = 0;
     try { minor = parseMinor(item.amount, currency); } catch { return; }
     if (minor <= 0) return;
     const { shares } = resolveSplit(minor, { mode: "equal", members: who }, { tiebreakSeed: `${seed}:item${i}` });
-    for (const [id, v] of Object.entries(shares)) add(id, v);
+    // What the row is a row *of*: "Fries ×2" shared by two is one order of
+    // fries each. A portion carries no count of its own — unfolding is what
+    // turned the printed one into rows (`unfoldItem`).
+    const of = !item.portionOf && item.quantity && item.quantity > 1 ? Math.floor(item.quantity) : 1;
+    for (const [id, v] of Object.entries(shares)) {
+      add(id, v);
+      note(id, { label: item.label ?? "", count: count(of, who.length), minor: v });
+    }
   });
 
   if (tip && tip.members.size > 0) {
@@ -45,14 +96,28 @@ export function weightsFromItems(
       const { shares } = Object.keys(proportional).length > 0
         ? resolveSplit(minor, { mode: "shares", weights: proportional }, { tiebreakSeed: `${seed}:tip` })
         : resolveSplit(minor, { mode: "equal", members: [...tip.members] }, { tiebreakSeed: `${seed}:tip` });
-      for (const [id, v] of Object.entries(shares)) add(id, v);
+      for (const [id, v] of Object.entries(shares)) {
+        add(id, v);
+        note(id, { label: "", tip: true, count: count(1, 1), minor: v });
+      }
     }
   }
 
   // Zero-weight members are dropped, not kept at 0: "shares" mode reads
   // Object.keys() as the participant list, so a 0 would still owe nothing.
   for (const id of Object.keys(weights)) if (weights[id] === 0) delete weights[id];
-  return weights;
+  return { weights, lines };
+}
+
+/** The weights alone — what the split is derived from (ADR-0016). */
+export function weightsFromItems(
+  items: readonly BillLine[],
+  assignments: Set<string>[],
+  tip: { amount: string; members: Set<string> } | null,
+  currency: string,
+  seed: string,
+): Record<string, number> {
+  return receiptBreakdown(items, assignments, tip, currency, seed).weights;
 }
 
 /**
