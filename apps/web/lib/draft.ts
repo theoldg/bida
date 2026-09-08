@@ -230,22 +230,40 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
  * falls back to Evenly's, rather than to nothing, while the grid is unfilled.
  */
 export function activeSplit(draft: EntryDraft): SplitSpec {
+  return (activeSplitTab(draft) === "receipt" ? draftReceiptSplit(draft) : null)
+    ?? arithmeticSplit(draft);
+}
+
+/**
+ * What the arithmetic tabs hold, with the bill left out of it.
+ *
+ * The same answer as `activeSplit` on any tab but Receipt; on Receipt it is
+ * where the three would be standing had nothing been scanned — Evenly over
+ * everyone, on a draft that has not been touched. This is the only basis a
+ * tab is ever handed, so the handoff runs one way: the arithmetic tabs feed
+ * each other, and a scan feeds none of them (ADR-0016).
+ */
+export function arithmeticSplit(draft: EntryDraft): SplitSpec {
   const legacy = legacyPercent(draft);
   if (legacy) return legacy;
   const tab = activeSplitTab(draft);
   const arithmetic: ArithmeticTab = tab === "receipt" ? "equal" : tab;
-  return (tab === "receipt" ? draftReceiptSplit(draft) : null)
-    ?? draft.splits[arithmetic] ?? emptySplit(arithmetic);
+  return draft.splits[arithmetic] ?? emptySplit(arithmetic);
 }
 
 /**
  * Opening a tab: the inputs the draft should carry once it is showing.
  *
- * A tab keeps whatever was last typed into it. A tab being opened for the
- * first time is handed what is on screen now — `convertSplitMode` — because
- * an empty As amounts is four numbers to type where "even, then nudge one
- * person" is one. That is a handoff, made once, in a handler: the same shape
- * as `handOffReceiptTotal`, and not a mirror any later edit resyncs
+ * A tab keeps whatever was last typed into it. An arithmetic tab being opened
+ * for the first time is handed what the *arithmetic* tabs hold —
+ * `convertSplitMode` over `arithmeticSplit` — because an empty As amounts is
+ * four numbers to type where "even, then nudge one person" is one. That is a
+ * handoff, made once, in a handler, and not a mirror any later edit resyncs.
+ *
+ * **A scanned bill is never that basis.** Leaving Receipt for As parts used to
+ * arrive at the grid's weights already filled in, which read as parts somebody
+ * had chosen and were really the scan talking on a screen it does not own. The
+ * arithmetic tabs start where they would have had nothing been scanned
  * ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
  */
 export function openSplitTab(draft: EntryDraft, tab: SplitTab, totalMinor: number): SplitInputs {
@@ -255,7 +273,7 @@ export function openSplitTab(draft: EntryDraft, tab: SplitTab, totalMinor: numbe
   // converts a legacy percent split away for good (ADR-0010).
   delete kept.percent;
   if (kept[tab]) return kept;
-  return withSplit(kept, convertSplitMode(totalMinor, activeSplit(draft), tab, {
+  return withSplit(kept, convertSplitMode(totalMinor, arithmeticSplit(draft), tab, {
     tiebreakSeed: splitSeed(draft),
   }));
 }

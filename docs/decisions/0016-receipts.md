@@ -27,6 +27,17 @@ finished grid *is* a split, arrived at differently, and showing it under "As
 parts" would lose where it came from. It is a fourth *answer* beside the three,
 never a rewrite of one of them — a scan used to convert whatever As parts held
 into its own weights ([ADR-0010](0010-what-an-entry-is.md)).
+
+**The handoff runs one way: the bill never seeds an arithmetic tab.** The three
+feed each other, so "even, then nudge one person" costs one tap
+(`arithmeticSplit`, the only basis `openSplitTab` converts from). A scan feeds
+none of them. Both directions of the leak are shut: leaving Receipt for a
+first-time As parts arrived at the grid's weights, and reopening a saved
+receipt expense seeded the tabs from its stored `shares` spec — which is the
+grid's own arithmetic, not parts anybody chose. Either way As parts opened
+holding a number the scan had put there, on a screen it does not own, and
+editing it produced a split that agreed with neither. The arithmetic tabs now
+start where an unscanned entry starts: even, over everyone.
 `SplitTab` is saved explicitly — deriving
 it from "are there items?" made every save silently drop a deliberate switch
 back to Evenly. **The tab is a claim, and Save is held until it is true**: with

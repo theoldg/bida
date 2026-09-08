@@ -90,9 +90,11 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
     expect(activeSplit(open(d, "shares"))).toEqual({ mode: "shares", weights: { [A]: 3, [B]: 1 } });
   });
 
-  it("hands its own answer on to an arithmetic tab opened after it", () => {
-    // Ana had the €60 steak, Bo the €30 coffee. Leaving Receipt for a tab
-    // nothing has been typed into starts it from that, not from Evenly.
+  it("hands nothing on to an arithmetic tab opened after it", () => {
+    // Ana had the €60 steak, Bo the €30 coffee — a real receipt split. Leaving
+    // Receipt for a tab nothing has been typed into starts it where it would
+    // have started unscanned: evenly, over everyone. The grid's weights are
+    // the grid's answer, and As parts is not where it gets to say it.
     const d = expense({
       receiptItems: items,
       splitTab: "receipt",
@@ -100,7 +102,24 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
       receiptAssignments: [[A], [B]],
     });
     expect(activeSplit(d)).toEqual({ mode: "shares", weights: { [A]: 6000, [B]: 3000 } });
-    expect(open(d, "exact").splits.exact).toEqual({ mode: "exact", amounts: { [A]: 6000, [B]: 3000 } });
+    expect(open(d, "exact").splits.exact)
+      .toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
+    expect(open(d, "shares").splits.shares)
+      .toEqual({ mode: "shares", weights: { [A]: 1, [B]: 1, [C]: 1 } });
+  });
+
+  it("still shows the bill's own split while Receipt is the tab showing", () => {
+    // Nothing above is a licence to lose the answer: the receipt tab derives
+    // it from the grid, every read, and that is what a save writes.
+    const d = expense({
+      receiptItems: items,
+      splitTab: "receipt",
+      receiptInvolved: [A, B],
+      receiptAssignments: [[A], [B]],
+    });
+    const after = open(d, "shares");
+    expect(activeSplit({ ...after, splitTab: "receipt" }))
+      .toEqual({ mode: "shares", weights: { [A]: 6000, [B]: 3000 } });
   });
 
   it("is where a draft with a bill and no chosen tab starts", () => {

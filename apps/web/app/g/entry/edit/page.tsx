@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  formatRate, isCurrencyCode, minorToDecimalString,
+  formatRate, fromReceipt, isCurrencyCode, minorToDecimalString,
   type RateSource,
 } from "@hajsik/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
@@ -212,7 +212,13 @@ function EditEntryScreen() {
           description: e.description,
           paidBy: e.paidBy,
           payers: e.payers ?? null,
-          splits: withSplit({}, e.split),
+          // A receipt expense stores the grid's own arithmetic as `shares`,
+          // and seeding the tabs from it put those weights under As parts —
+          // a screen the scan never touched. Its tabs start where a fresh
+          // entry's do (`blankDraft` above): even, over everyone. The bill
+          // itself is reopened from the receipt fields below, and Receipt
+          // recomputes its split from them (ADR-0016).
+          ...(fromReceipt(e) ? {} : { splits: withSplit({}, e.split) }),
           fromMember: me,
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
