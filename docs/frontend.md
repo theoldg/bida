@@ -208,7 +208,11 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 ## PWA
 
 `public/manifest.webmanifest` is linked from `app/layout.tsx`: maskable icons,
-`display: fullscreen` (falls back to `standalone`), theme colour per theme. The
+`display: standalone`, and a flat `theme_color`/`background_color` the splash
+screen boots from. The status bar itself follows two media-scoped
+`<meta name="theme-color">` tags (`viewport.themeColor` in `app/layout.tsx`),
+which a manual toggle overrides with an unscoped tag `applyTheme` inserts
+ahead of them (`components/theme.tsx`). The
 three PNGs are the tally wordmark in paper on an ink tile; regenerate them
 together if the mark or the ink changes, and the maskable one draws its mark
 smaller and unrounded so a circular launcher crop can't clip it. iOS ignores

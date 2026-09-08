@@ -8,7 +8,19 @@
  * anything async here is a flash of the wrong theme. The Dexie device record
  * stays the source of truth and writes through to this key.
  */
-const script = `try{var t=localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
+
+/** Matched to the --paper token in each theme, and to `viewport.themeColor`. */
+export const PAPER = { light: "#F1F1EF", dark: "#0E0F11" } as const;
+
+/**
+ * Android paints the status bar from the first <meta name="theme-color">
+ * whose media query matches, so the two media-scoped tags in `viewport` track
+ * the system setting on their own. A manual toggle has to beat them: this is
+ * an unscoped tag inserted ahead of them, removed again on "system".
+ */
+const OVERRIDE_ID = "theme-color-override";
+
+const script = `try{var t=localStorage.getItem("hajsik.theme");if(t==="dark"||t==="light"){document.documentElement.dataset.theme=t;var m=document.createElement("meta");m.id="${OVERRIDE_ID}";m.name="theme-color";m.content=t==="dark"?"${PAPER.dark}":"${PAPER.light}";document.head.insertBefore(m,document.head.firstChild)}}catch(e){}`;
 
 export function ThemeScript() {
   return <script dangerouslySetInnerHTML={{ __html: script }} />;
@@ -25,4 +37,21 @@ export function applyTheme(theme: Theme): void {
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem("hajsik.theme", theme); } catch { /* private mode */ }
   }
+  applyThemeColor(theme);
+}
+
+function applyThemeColor(theme: Theme): void {
+  const existing = document.getElementById(OVERRIDE_ID);
+  if (theme === "system") {
+    existing?.remove();
+    return;
+  }
+  const meta = existing ?? document.createElement("meta");
+  if (!existing) {
+    meta.id = OVERRIDE_ID;
+    meta.setAttribute("name", "theme-color");
+    // First in the head, so it wins over the media-scoped tags behind it.
+    document.head.insertBefore(meta, document.head.firstChild);
+  }
+  meta.setAttribute("content", PAPER[theme]);
 }

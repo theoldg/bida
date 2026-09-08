@@ -7,7 +7,7 @@ import { NoLongPress } from "../components/no-long-press";
 import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
-import { ThemeScript } from "../components/theme";
+import { PAPER, ThemeScript } from "../components/theme";
 import { copy } from "../lib/copy";
 
 // One face for the whole app — headings, prose and figures alike; hierarchy is
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/icon-192.png", sizes: "192x192" }],
   },
   // "black-translucent" draws the app under the status bar instead of
-  // beside it — iOS ignores the manifest's "fullscreen" display entirely for
+  // beside it — iOS ignores the manifest's display mode entirely for
   // home-screen web apps, so this is the only lever for the same effect there.
   appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "black-translucent" },
 };
@@ -49,10 +49,12 @@ export const viewport: Viewport = {
   // CSS `touch-action` and `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
-  // Matched to the --paper token in each theme.
+  // Two media-scoped tags, so the Android status bar follows the system
+  // setting with no script. A manual toggle overrides them from
+  // `applyTheme` — the manifest's flat theme_color is the boot fallback.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F1F1EF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0F11" },
+    { media: "(prefers-color-scheme: light)", color: PAPER.light },
+    { media: "(prefers-color-scheme: dark)", color: PAPER.dark },
   ],
 };
 

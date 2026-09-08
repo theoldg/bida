@@ -82,10 +82,8 @@ export function installOffer(): InstallOffer {
   });
 }
 
-/** The manifest asks for `fullscreen`, so `standalone` alone would miss it. */
 function isStandalone(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches
-    || window.matchMedia("(display-mode: fullscreen)").matches
     // Safari's own flag, and the only signal iOS gives.
     || (navigator as Navigator & { standalone?: boolean }).standalone === true;
 }

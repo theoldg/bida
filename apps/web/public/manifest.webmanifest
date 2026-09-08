@@ -4,7 +4,7 @@
   "description": "Shared expenses, split fairly. Works offline.",
   "start_url": "/",
   "scope": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#F1F1EF",
   "theme_color": "#F1F1EF",
