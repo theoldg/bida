@@ -42,8 +42,7 @@ Let's redesign the receipt scanning flow. You don't need to fill the title or to
 ### Commas
 All amounts everywhere should always be formatted with comma separated thousands. Currently missing from some places.
 
-### Abdandon changes
-When editing an expense and navigating back the dialog should say "abandon changes" instead of "discard this expense"
+
 
 
 
@@ -56,6 +55,9 @@ Should not be the default for all transfers, only those prefilled from the "sett
 
 ### [DONE] Remove user
 "Remove X? Their past expenses stay as they are" is kinda wrong, it should be something like "they are not involved in any expense"
+
+### [DONE] Abdandon changes
+When editing an expense and navigating back the dialog should say "abandon changes" instead of "discard this expense"
 
 ## Refactor
 

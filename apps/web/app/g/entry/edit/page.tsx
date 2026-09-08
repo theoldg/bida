@@ -662,7 +662,11 @@ function EditEntryScreen() {
       </Body>
 
       {ask === "discard" ? (
-        <ConfirmDialog title={copy.form.discardTitle(copy.entryKind.label[kind].toLowerCase())}
+        <ConfirmDialog title={
+          entryId
+            ? copy.form.discardTitleEdits
+            : copy.form.discardTitle(copy.entryKind.label[kind].toLowerCase())
+        }
           confirm={copy.act.discard}
           danger={true} onConfirm={discard} onClose={() => setAsk(null)}>
           <p>{copy.form.discardBody}</p>
