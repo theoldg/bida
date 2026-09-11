@@ -159,13 +159,13 @@ const straggler = await ctx.newPage();
 await straggler.goto(`${base}/`);
 await page.bringToFront();
 
-const restart = page.getByRole("button", { name: "Restart" });
+const reload = page.getByRole("button", { name: "Reload" });
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 await tap("a waiting worker is offered on the groups list",
-  () => restart.waitFor({ state: "visible", timeout: 20000 }), ".card");
+  () => reload.waitFor({ state: "visible", timeout: 20000 }), ".card");
 
 try {
-  await Promise.all([page.waitForNavigation({ timeout: 15000 }), restart.click()]);
+  await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
   await page.waitForSelector(".rows a.row", { timeout: 8000 });
   report(true, "tapping it reloads onto the new build");
 } catch {
@@ -179,7 +179,7 @@ report(shells.length === 1, "and the old one is gone with it", shells.join(", ")
 report(await page.evaluate(() => !!navigator.serviceWorker.controller),
   "the new worker controls the page");
 // Nothing is waiting any more, so there is nothing left to offer.
-report(await restart.count() === 0, "the offer is spent");
+report(await reload.count() === 0, "the offer is spent");
 // A worker may only read its own cache. `activate` runs *after* the reload the
 // tap asks for, so the previous build's cache is still there while that reload
 // is being served — and an unscoped `caches.match` searched it, handing the new
