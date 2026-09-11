@@ -1,5 +1,17 @@
 # TODO
 
+## Release
+
+### Self-hosting instructions
+
+### Other cleanups
+Check for secrets, license, data disclaimer, other?
+
+### Admin panel?
+
+### Assess privacy
+Do i have access to the entire database, or is it encrypted with the group secret?
+
 ## UI
 
 Rebrand to "bida" and use the logo when i get it from Max
@@ -20,6 +32,8 @@ Open Qs:
 ### Entry search and sorting
 Maybe?
 
+### Support discounts and tax in receipts
+
 ## UX improvements
 
 ### Expense editor density
@@ -36,6 +50,10 @@ Let's redesign the receipt scanning flow. You don't need to fill the title or to
 - the trigger is not aesthetic (think)
 - inside the editor the [+] next to someone's name is not clickable while the empty space next to it is.
 - once clicked, it should focus the amount field and pull up the keyboard
+
+### Who had what
+- Include non-translated mode
+- Language choice should reflect on the expense summary outside of edit mode
 
 ## Copy/text etc
 
