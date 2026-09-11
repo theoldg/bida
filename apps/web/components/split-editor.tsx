@@ -148,8 +148,13 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
   // about something the user did do, and stays live.
   const onlyNoTotal = receiptBlocker === null && check !== null
     && check.problem !== "empty" && check.totalMinor <= 0;
+  // Receipt mode with no bill behind it yet is the same kind of complaint:
+  // "Scan a receipt" names something the user hasn't got to, not something
+  // they got wrong, so it waits for a save attempt too. The who-had-what
+  // blocker is about a bill they did scan, and stays live.
+  const onlyNoReceipt = showReceipt && (receipt.items?.length ?? 0) === 0;
   const showFooter = !totalUnknown && foot !== null
-    && (attemptedSave || !onlyNoTotal)
+    && (attemptedSave || !(onlyNoTotal || onlyNoReceipt))
     && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {

@@ -130,9 +130,10 @@ confers nothing without the secret.
   into the field it's next to, so it keeps its spot above the split editor,
   now behind the same flag; "Enter an amount to split" is the split editor's
   half of `amountMissing` and is gated on the flag too, so the editor opens
-  without a verdict; `receiptBlocker` — the Receipt tab with no bill, or a
-  bill nobody has assigned — stays in that footer, and so do the split's
-  other complaints, which can only follow an edit. Nothing
+  without a verdict; `receiptBlocker` stays in that footer, its "Scan a
+  receipt" half behind the flag for the same reason — an untouched Receipt tab
+  has no bill yet — while the bill-nobody-has-assigned half, and the split's
+  other complaints, follow an edit and stay live. Nothing
   is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
