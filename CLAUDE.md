@@ -38,7 +38,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | Browser checks (`entries`, `back`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
+| `scripts/` | Browser checks (`entries`, `claim`, `offline`, `shots`) on a shared harness, plus `docs-check`, `on-main` |
 
 ## Stack
 

@@ -6,7 +6,6 @@
 pnpm check       # links · rules · typecheck · tests · export build — pre-push, ~45s
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
-pnpm back        # every screen with an arrow, walked back out one press at a time
 pnpm claim       # a name still being typed, and the button that acts on it
 pnpm offline     # just every screen with the network cut
 pnpm shots       # PNGs into shots/ (gitignored)
@@ -180,25 +179,6 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.
-- **`pnpm back` used to be intermittently red, and it was the check.** The
-  signature — one press unwinding *two* screens — read like the app's own
-  cancellation race, and this file said so. It wasn't: tracing every `navigate`
-  event through a whole run showed the walk cancels no press at all, so that
-  code never ran. What ran was a blind `waitForTimeout(500)` after each press,
-  which could sample mid-answer and, worse, press again while the last answer
-  was still settling — Next writes its own `replaceState` a millisecond after
-  every traversal. `settle()` waits on the app instead: no
-  `navigation.transition` in flight, and the URL unmoved for three polls.
-- **A `navigate` listener added by `addInitScript` runs before the app's**, so
-  it cannot read `defaultPrevented` in a microtask: the checkpoint runs after
-  *each* listener, not after the dispatch. Read it from a `setTimeout(…, 0)`.
-  Getting this wrong reports every press as uncancelled — which looks exactly
-  like a takeover that has stopped working.
-- **A cross-document back press cannot be taken over at all** (`cancelable:
-  false`), so a screen opened from a shared link cannot be driven to exercise
-  the app's cancellation — the only press in the app that reaches it is the
-  whole-group feed opened from one entry's own history
-  ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 ## `pnpm entries` — the form is wired to the commands
 

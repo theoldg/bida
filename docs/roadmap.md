@@ -77,7 +77,7 @@ for the loop; and a scan that can't reach the network says so instead of
 blaming the photo. Two more the same day: a failed scan no longer offers "try
 again" beside the two scan buttons that already are it, and the device's back
 button runs the screen's own back action instead of replaying where you had
-been ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `pnpm back`).
+been ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 ## Phase 10 — The group's rate registry ✅ *(2026-09-04)*
 What a foreign amount is worth stopped being a number frozen onto each entry
