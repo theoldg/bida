@@ -278,7 +278,8 @@ comes back to the foreground — an installed app is resumed far more often than
 it is launched. `components/update.tsx` draws the offer at the foot of the
 groups list; the tap posts `{ type: "skip-waiting" }` and reloads on
 `controllerchange`, so nothing is left that could ask for the cache `activate`
-is about to drop. It is not dismissible and remembers nothing: take it now, or
+is about to drop. **That reload is served while the old cache still exists**, so
+every read in `sw.js` is scoped to `CACHE_NAME` (Gotcha below). It is not dismissible and remembers nothing: take it now, or
 find it there next launch.
 
 ## Every money field is `components/amount-input.tsx`
@@ -327,6 +328,17 @@ figure-free.
   the new build and makes it look like a deploy problem. It isn't: it is a
   client that never went away, which is why the update is offered as a tap
   (see [PWA](#pwa)) rather than waited for.
+- **`caches.match` searches every cache in the origin, not yours.** And there
+  is always another one to find: `controllerchange` fires *before* the new
+  worker's `activate` handler runs, so the reload the update offer asks for is
+  answered while the previous build's cache is still being deleted. Unscoped,
+  the new worker served that reload an old shell — or, worse, an old `/g.txt`,
+  whose client references name chunks this build doesn't have. The screen then
+  drew with pieces of it missing (the bottom nav among them) and stayed that
+  way until the app was launched again, because the router keeps the payload it
+  was handed. Every read goes through `lookup()`, which opens `CACHE_NAME`
+  first; `offline-check` plants a cache the precache never heard of and fails
+  on anything but a 404.
 - **An installed Android app's status bar is the manifest's `theme_color`, and
   nothing can change it after install.** It is compiled into the app when the
   browser builds it, so it cannot be media-scoped and no meta tag reaches it —
