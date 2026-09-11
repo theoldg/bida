@@ -80,11 +80,13 @@ function EditEntryScreen() {
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
   const wantedKind = params.get("kind") as EntryKind | null;
-  // Settle-up hands a transfer its two sides and its amount, in base units.
+  // Settle-up hands a transfer its two sides, its amount in base units, and
+  // its note — so a blank "+" is the only way to reach a transfer untitled.
   const prefill = {
     from: params.get("from") ?? undefined,
     to: params.get("to") ?? undefined,
     amount: Number(params.get("amount") ?? "0"),
+    title: params.get("title") ?? undefined,
   };
 
   const data = useGroupData(groupId);
@@ -252,10 +254,7 @@ function EditEntryScreen() {
     const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
     seedDraft(groupId, kind === "transfer" ? {
       ...blank,
-      // Settle up is the only caller that prefills `from` — the overwhelming
-      // case is somebody being paid back, so it's worth saying without being
-      // typed. A transfer opened any other way starts with a blank note.
-      ...(prefill.from ? { description: copy.form.reimbursement } : {}),
+      ...(prefill.title ? { description: prefill.title } : {}),
       ...(prefill.from ? { fromMember: prefill.from } : {}),
       ...(prefill.to ? { toMember: prefill.to } : {}),
       // The suggestion is already in the group's base currency, so it seeds

@@ -460,7 +460,7 @@ function BalancesTab({ data }: { data: GroupData }) {
             const involvesMe = t.from === me || t.to === me;
             return (
               <Link key={`${t.from}-${t.to}`}
-                href={route.transferBetween(group.id, t.from, t.to, t.amountMinor)}
+                href={route.transferBetween(group.id, t.from, t.to, t.amountMinor, copy.form.reimbursement)}
                 className={`card${involvesMe ? " mine" : ""}`}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.from)}</span>

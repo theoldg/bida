@@ -83,10 +83,14 @@ export const route = {
   history: (groupId: string, entryId?: string, via?: EntrySource) =>
     `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`
     + (via ? `&via=${via}` : ""),
-  /** Settle up: a transfer, pre-filled with who owes whom and how much. */
-  transferBetween: (groupId: string, from: string, to: string, amount: number) =>
+  /**
+   * Settle up: a transfer, pre-filled with who owes whom, how much, and —
+   * since the caller knows this is a reimbursement and a blank "+" doesn't —
+   * what to call it.
+   */
+  transferBetween: (groupId: string, from: string, to: string, amount: number, title: string) =>
     `${route.addEntry(groupId, "transfer")}&from=${encodeURIComponent(from)}`
-    + `&to=${encodeURIComponent(to)}&amount=${amount}`,
+    + `&to=${encodeURIComponent(to)}&amount=${amount}&title=${encodeURIComponent(title)}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /** The group's exchange-rate registry: one rate per currency it spends in. */
   rates: (groupId: string) => `/g/rates?id=${encodeURIComponent(groupId)}`,
