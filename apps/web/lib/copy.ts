@@ -402,6 +402,8 @@ export const copy = {
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
+    /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
+    assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
     /** A consequence the screen can't show. It stays. */
     freeTier: "Google’s free tier — the photo may train their models.",

@@ -103,15 +103,15 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
 /**
  * The second way an expense starts: photograph the bill.
  *
- * It sits above the "+" rather than beside it, and it is outlined where the
- * "+" is a solid ink block — two equal destinations, one of which is still
- * the primary (ADR-0023: the "+" is the only figure-ground inversion on the
- * screen, and a second one would spend that twice).
+ * It sits beside the "+", the same size, and is outlined where the "+" is a
+ * solid ink block — two equal destinations, one of which is still the primary
+ * (ADR-0023: the "+" is the only figure-ground inversion on the screen, and a
+ * second one would spend that twice).
  */
 export function ScanFab({ href }: { href: string }) {
   return (
     <Link href={href} className="fab fab-2" aria-label={copy.scan.scan}>
-      <Icon name="cam" size={21} />
+      <Icon name="cam" size={23} />
     </Link>
   );
 }

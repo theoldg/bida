@@ -144,13 +144,15 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
   // about something the user did do, and stays live.
   const onlyNoTotal = receiptBlocker === null && check !== null
     && check.problem !== "empty" && check.totalMinor <= 0;
-  // Receipt mode with no bill behind it yet is the same kind of complaint:
-  // "Scan a receipt" names something the user hasn't got to, not something
-  // they got wrong, so it waits for a save attempt too. The who-had-what
-  // blocker is about a bill they did scan, and stays live.
-  const onlyNoReceipt = showReceipt && (receipt.items?.length ?? 0) === 0;
+  // Receipt mode without the split it claims is the same kind of complaint,
+  // in both its forms: "Scan a receipt" and "Say who had what" each name a
+  // step the person has not got to, not something they got wrong. Landing on
+  // this tab straight from a scan is now the ordinary way to arrive here
+  // (`/g/scan`), so the sentence waits for a save attempt the way the missing
+  // amount does, rather than greeting a bill that read perfectly well.
+  const receiptStepLeft = receiptBlocker !== null;
   const showFooter = !totalUnknown && foot !== null
-    && (attemptedSave || !(onlyNoTotal || onlyNoReceipt))
+    && (attemptedSave || !(onlyNoTotal || receiptStepLeft))
     && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {
@@ -397,7 +399,11 @@ function ReceiptPanel({
         <Link href={editItemsHref} className="btn btn-p" style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />
-            {copy.scan.editWhoHadWhat}
+            {/* Nobody on the bill yet means the work has not been done once,
+                and "Edit" invites you to correct something that isn't there.
+                `included` is empty exactly then: it is read off the receipt
+                split, which does not exist until the grid is filled. */}
+            {included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
             {plural(items.length, copy.noun.item)}

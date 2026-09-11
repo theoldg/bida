@@ -90,7 +90,8 @@ It reads. It doesn't compute.
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
 `normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
-reached by tapping "Edit who-had-what" on the Receipt tab —
+reached by tapping the Receipt tab's button — "Assign who had what" on a bill
+nobody has been given a line of, "Edit who-had-what" once somebody has —
 building the grid that becomes a `receipt` split — its own mode, which is why
 no screen has to ask a second field whether a split came off a bill
 ([ADR-0016](decisions/0016-receipts.md)). The screen is three bands rather than
@@ -143,7 +144,10 @@ itself without renaming an expense somebody named.
 **A scan never navigates.** Finding lines used to push straight to the
 who-had-what grid, which made every scan a commitment to itemise a bill
 somebody may only have wanted the total off; the grid is one tap away on the
-Receipt tab, and going is the person's decision (ADR-0016). Nor does a bill
+Receipt tab, and going is the person's decision (ADR-0016). The tab's own
+complaint waits for a save attempt, the way the missing amount does: arriving
+from `/g/scan` is now the ordinary way to be standing here, and a bill that
+read perfectly well should not be met in red. Nor does a bill
 with no lines claim that tab — there is nothing to assign, so it leaves the
 split where it was. `/g/scan` is the near-exception: holding a filled draft
 and no form to show it on, it hands over with `replace` (back from the form is
