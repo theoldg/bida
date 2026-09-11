@@ -606,14 +606,13 @@ function EditEntryScreen() {
               </Card>
             ) : (
               <div className="field field-stack">
-                <div className="pickrow">
-                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
-                  <button type="button" id="paidby" className="pick"
-                    aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
-                    <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                    <Icon name="chev" size={13} className="spacer pchev" />
-                  </button>
-                </div>
+                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
+                <button type="button" id="paidby" className="pick"
+                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
+                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
+                  <Icon name="chev" size={13} className="spacer pchev" />
+                </button>
+                <div className="hairline" />
                 {/* A second, quieter door onto the same field: the happy path
                     above never has to make room for it. */}
                 <Link href={route.payers(groupId)} className="pick-sub">

@@ -730,12 +730,18 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
 /* The payer field, single-payer state: who paid is the whole first row, same
-   as every other picker; going multi-payer is a second, quieter row under it
-   rather than a chip competing with the name for the same line. */
-.field.field-stack { flex-direction: column; align-items: stretch; gap: 6px }
-.field-stack .pickrow { display: flex; align-items: center; gap: 10px }
-.field-stack .pick-sub { display: flex; align-items: center; gap: 6px; margin-left: 102px;
-  font-size: 12px; font-weight: 500; color: var(--muted) }
+   as every other picker; going multi-payer is a second row under it — same
+   card, same hairline, same left edge the multi-payer Card uses once there
+   is more than one payer (below). `.pick` stays a direct child of `.field`,
+   flowed onto its own line by a full-width break rather than moved into a
+   wrapping element, so it keeps the ordinary picker's press feedback
+   (`.field:has(> .pick)`, above) instead of losing it to the nesting. */
+.field.field-stack { flex-wrap: wrap }
+.field-stack .hairline { flex-basis: 100% }
+.field-stack .pick-sub { flex-basis: 100%; display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--muted); transition: background-image .2s ease }
+.field-stack .pick-sub:active { background-image: linear-gradient(var(--press), var(--press));
+  transition-duration: 0s }
 
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;
