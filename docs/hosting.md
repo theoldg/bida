@@ -18,6 +18,11 @@ property is **R2's zero egress** — this app is photo-heavy by design, and egre
 is where object storage bills come from. (Limits verified 2026-08-30; re-check,
 free tiers move.)
 
+**Actual usage, 2026-09-11:** 676 kB of D1 against the 500 MB limit, 47 groups,
+678 ops — and ~3.6k row reads a day against 5M. Three orders of magnitude of
+headroom on every axis. What the log spends it on is in
+[implementation-status.md](implementation-status.md).
+
 ### How full can it get
 
 Every group shares the one `hajsik` database, and nothing is ever deleted, so
@@ -126,6 +131,9 @@ Recognise these if you ever propose one:
 - **`wrangler deploy --dry-run` succeeds with a bogus `database_id`** — it does
   not validate the id against the account. Only a real deploy (or `wrangler d1
   list`) catches a wrong one.
+- **`wrangler d1 execute --file` prints a summary, not rows.** It reports
+  queries executed and rows read and swallows the `SELECT` output, `--json` or
+  not. To actually read something back, pass the SQL as `--command`.
 - **A Cloudflare token scoped for Workers only fails D1 calls** with a generic
   `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
   nothing; the token needs "D1 - Edit" specifically.

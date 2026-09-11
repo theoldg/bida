@@ -31,7 +31,7 @@ starts. Ask before building either.
 
 The previous open subject — invariants the UI checks at write time that a merge
 can break anyway ([invariants.md](invariants.md)) — is closed. What follows is
-what closed it, newest last; one measurement is owed.
+what closed it, newest last, and then the measurement it owed.
 
 **The enforcement layer is built.** `core/invariants.ts` holds each invariant's
 detector and its repair in one declaration that cannot omit the repair, the two
@@ -176,12 +176,16 @@ itemise it. The grid is a tap on the Receipt tab, split evenly is a tap on
 Evenly, and with nothing racing the screen the rate dialog for an unrated
 currency just opens ([receipt-scanning.md](receipt-scanning.md)).
 
-One measurement is owed: whole-entity ops repeat every field, so the log grows
-faster than it did, and that wants a number from a real group rather than an
-argument.
-
-A session with no assignment should take that measurement, not start a feature
-the owner cut.
+**The measurement is taken** (2026-09-11, production D1: 47 groups, 678 ops,
+676 kB). Whole-entity ops cost **2.55x** — 241 kB of entry ops fold to 94 kB of
+final state, at 2.29 ops per entry — which is real and is not the problem.
+**Receipts are.** An expense op carrying `receiptItems` averages 2,016 bytes
+against a plain one's 473, and those 97 ops are **74% of every patch byte in the
+database**. Since an entry is written whole, editing a scanned bill's title
+repeats its entire item array. Compaction, if it is ever wanted, is one rule:
+drop superseded `receiptItems` from ops the fold has passed. Nothing needs doing
+yet — the free tier is 500 MB and the largest real group is 45 kB
+([hosting.md](hosting.md)).
 
 ## What a cold session needs to know
 

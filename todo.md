@@ -74,10 +74,13 @@ Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people
 
 ## Engineering
 
-### Measure the log's growth
-Owed since entries went to whole-entity ops: every save repeats every field, so
-the log grows faster than it did. Wants a number from a real group, not an
-argument.
+### ~~Measure the log's growth~~ — done 2026-09-11, and it found receipts
+Whole-entity ops cost 2.55x, which is fine. But an expense op carrying
+`receiptItems` is 2,016 bytes against a plain one's 473, and those are 74% of
+every patch byte in production — editing a scanned bill's title repeats the
+whole item array. Nothing to do at 676 kB of a 500 MB limit; if it ever matters,
+the fix is one rule (drop superseded `receiptItems` from folded-past ops).
+Numbers in [docs/implementation-status.md](docs/implementation-status.md).
 
 ### End-to-end encryption (the hard one)
 See [Assess privacy](#assess-privacy). Encrypting op payloads under a key
