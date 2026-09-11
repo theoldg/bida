@@ -16,6 +16,14 @@ Do i have access to the entire database, or is it encrypted with the group secre
 
 Rebrand to "bida" and use the logo when i get it from Max
 
+### Expense rows
+- Expense rows have inconsistent height (currency makes them taller)
+- Remove the "from receipt" subtext for expenses (takes up too much space + info spam) - actually is the subtitle necessary at all? Let's rethink it
+- Drop the vertical red/green bars for expense rows
+
+### Receipt items foldable summary
+Something is off here idk
+
 ## Features
 
 ### Quick split
