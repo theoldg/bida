@@ -97,7 +97,10 @@ confers nothing without the secret.
   and the bill's lines are one list — and restores the bill it opened with.
   **What the entry is worth is `draftAmountMinor` and nowhere else** — a
   scanned bill is worth what its lines add up to, and the payers editor
-  reading `amountText` on its own is how it came to call one €0.00.
+  reading `amountText` on its own is how it came to call one €0.00. With no
+  amount at all the door onto that screen doesn't open: there is nothing to
+  divide between payers, so the tap reddens the amount field instead — the
+  same red Save gives it, held until something asks for it.
 - **A draft carries the id its entry will be written under** (`newEntryId`,
   read through `splitSeed`). The leftover minor unit goes by `tiebreakSeed`,
   which is the entry's id — so a form pricing its rows under a placeholder

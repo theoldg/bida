@@ -91,6 +91,11 @@ function EditEntryScreen() {
   // nothing, and every red state below is held until it does — an untouched
   // form shows no errors just for being empty.
   const [attemptedSave, setAttemptedSave] = useState(false);
+  // The same red, asked for by a door rather than by Save: the payers screen
+  // divides the amount between people, so opening it with no amount hands it a
+  // zero to split. The tap doesn't travel — it turns the amount field red,
+  // which is where the fix is.
+  const [askedForAmount, setAskedForAmount] = useState(false);
 
   /**
    * The rate dialog opens for whatever currency the draft is *in*, not for the
@@ -283,6 +288,9 @@ function EditEntryScreen() {
     onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
     amountMissing, titleMissing,
   } = check;
+  // Clears itself: whichever asked for it, the red is gone the moment there
+  // is an amount.
+  const amountInvalid = amountMissing && (attemptedSave || askedForAmount);
 
   /**
    * Switching tabs. Two handoffs, each made once and only into a tab that has
@@ -454,7 +462,7 @@ function EditEntryScreen() {
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               <AmountInput
-                className={attemptedSave && amountMissing ? "amount invalid" : "amount"}
+                className={amountInvalid ? "amount invalid" : "amount"}
                 fieldClassName="big"
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
@@ -552,10 +560,14 @@ function EditEntryScreen() {
                 </button>
                 {/* A second, quieter door onto the same field, on the same row:
                     one payer is the common case and costs one row. */}
-                <Link href={route.payers(groupId)} className="pick-sub">
+                <button type="button" className="pick-sub"
+                  onClick={() => {
+                    if (amountMissing) { setAskedForAmount(true); return; }
+                    router.push(route.payers(groupId));
+                  }}>
                   <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>
                   <Icon name="chev" size={11} />
-                </Link>
+                </button>
               </div>
             )}
 
