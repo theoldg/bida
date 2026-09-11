@@ -612,9 +612,11 @@ function EditEntryScreen() {
               </Card>
             ) : (
               <div className="field field-stack">
-                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
+                {/* The heading is inside the button, not beside it: the whole
+                    row is the control, so the whole row lights on a press. */}
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
+                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
                   <Icon name="chev" size={13} className="spacer pchev" />
                 </button>

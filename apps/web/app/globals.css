@@ -197,13 +197,13 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
-.itemfold, a.chip, button.chip, .action, .field:has(> .pick) {
+.itemfold, a.chip, button.chip, .action, .field:not(.field-stack):has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled),
-.field:has(> .pick:active), .action:active:not(:disabled) {
+.field:not(.field-stack):has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient, not a background-color: it composites over the element's own
      background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
@@ -737,21 +737,27 @@ dialog.scrim::backdrop { background: transparent }
 /* The payer field, single-payer state: who paid is the whole first row, same
    as every other picker; going multi-payer is a second row under it — same
    card, same hairline, same left edge the multi-payer Card uses once there
-   is more than one payer (below). `.pick` stays a direct child of `.field`,
-   flowed onto its own line by a full-width break rather than moved into a
-   wrapping element, so it keeps the ordinary picker's press feedback
-   (`.field:has(> .pick)`, above) instead of losing it to the nesting. */
-.field.field-stack { flex-wrap: wrap; row-gap: 0 }
-.field-stack .hairline { flex-basis: 100% }
-/* The card is the same height whichever state it is in, so the form doesn't
-   jump as a second payer is added: the hairline's margins carry all the space
-   (the flex row-gap above would add its own), and the row is as tall as the
-   chip row it stands in for. */
-.field-stack .pick-sub { flex-basis: 100%; display: flex; align-items: center; gap: 6px;
-  min-height: 23px;
-  font-size: 12px; font-weight: 500; color: var(--muted); transition: background-image .2s ease }
-.field-stack .pick-sub:active { background-image: linear-gradient(var(--press), var(--press));
-  transition-duration: 0s }
+   is more than one payer (below). Each row carries the card's padding itself
+   rather than taking it from `.field`, so a press lights exactly that row,
+   edge to edge and up to the hairline — the card's own press feedback
+   (`.field:has(> .pick)`, above) lit both rows at once, and a press on the
+   rows' own boxes lit a strip narrower than either. */
+.field.field-stack { display: block; padding: 0 }
+.field-stack .pick, .field-stack .pick-sub {
+  width: 100%; display: flex; align-items: center; padding: 10px 12px;
+  transition: background-image .2s ease }
+.field-stack .pick:active, .field-stack .pick-sub:active {
+  background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
+/* The 12px beside the hairline is the margin it carries in the multi-payer
+   card, moved onto the rows so the press reaches it. */
+.field-stack .pick { gap: 10px; padding-bottom: 12px }
+.field-stack .hairline { margin: 0 }
+.field-stack .pick-sub { gap: 6px; padding-top: 12px;
+  /* 12 + a chip's height + 10: the second row of the multi-payer card, so the
+     field is the same height in either state and the form doesn't jump when a
+     second payer is added. */
+  min-height: 44.75px;
+  font-size: 12px; font-weight: 500; color: var(--muted) }
 
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;
