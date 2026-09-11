@@ -27,8 +27,25 @@ function routeOf(url) {
   return url.pathname.slice(0, -".txt".length) || "/";
 }
 
+/**
+ * The only cache this worker may read is its own, and `caches.match` is not
+ * that: it searches *every* cache in the origin. There is always a moment when
+ * that matters — `controllerchange` fires before this worker's `activate`
+ * handler runs, so the page `applyUpdate` reloads is fetched while the previous
+ * build's cache is still there to be matched, oldest first. Unscoped, the new
+ * worker answered that reload out of the old cache: an old shell, or an old
+ * `/g.txt`, whose client references name chunks this build doesn't have. The
+ * screen then draws with pieces of it simply missing — the bottom nav among
+ * them — and stays that way until the app is launched again, because the router
+ * holds the payload it was given. Scoped, a miss is a fetch for a file this
+ * build still serves.
+ */
+function lookup(key) {
+  return caches.open(CACHE_NAME).then((cache) => cache.match(key, { ignoreSearch: true }));
+}
+
 async function cacheFirst(cacheKey, request) {
-  const cached = await caches.match(cacheKey, { ignoreSearch: true });
+  const cached = await lookup(cacheKey);
   if (cached) return cached;
   const res = await fetch(request);
   if (res.ok) {
@@ -115,8 +132,7 @@ self.addEventListener("fetch", (event) => {
    */
   if (request.mode === "navigate" && isPayload(url)) {
     event.respondWith(
-      caches.match(routeOf(url), { ignoreSearch: true })
-        .then((cached) => cached ?? Response.redirect(routeOf(url), 302)),
+      lookup(routeOf(url)).then((cached) => cached ?? Response.redirect(routeOf(url), 302)),
     );
     return;
   }
@@ -134,9 +150,10 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      cacheFirst(url.pathname, request).catch(() =>
-        caches.match(url.pathname, { ignoreSearch: true }).then((c) => c ?? caches.match("/")),
-      ),
+      // `cacheFirst` only reaches the network on a miss, so the catch is a dead
+      // network on a route this build hasn't cached: the app's own front door
+      // is a better answer than the browser's error page.
+      cacheFirst(url.pathname, request).catch(() => lookup("/")),
     );
     return;
   }

@@ -153,9 +153,10 @@ payer" button is gone with it — clearing every field down to nothing collapses
 the draft to a plain single payer on its own, `paidBy` set to whoever
 `primaryPayer` (`core/payers.ts`) now names as the largest contributor rather
 than whoever the map happened to iterate to first. The entry form's trigger
-into it is two rows instead of one crowded one: "Paid by: Alice" still opens
-the single-payer dialog directly, and a quieter "Multi-payer" link under it is
-the only way in from there.
+into it shares the payer row: "Paid by: Alice" still opens the single-payer
+dialog directly, and a quieter "Multi-payer" link at the right end of the same
+row is the only way in from there. One payer costs one row; only the
+multi-payer card takes two, since it has chips to show.
 
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an

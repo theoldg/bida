@@ -180,6 +180,20 @@ report(await page.evaluate(() => !!navigator.serviceWorker.controller),
   "the new worker controls the page");
 // Nothing is waiting any more, so there is nothing left to offer.
 report(await restart.count() === 0, "the offer is spent");
+// A worker may only read its own cache. `activate` runs *after* the reload the
+// tap asks for, so the previous build's cache is still there while that reload
+// is being served — and an unscoped `caches.match` searched it, handing the new
+// worker an old shell or an old `/g.txt` and drawing a screen with pieces of it
+// missing. A cache the precache has never heard of stands in for it: anything
+// but a 404 means this worker read a cache that isn't CACHE_NAME.
+const probe = await page.evaluate(async () => {
+  const cache = await caches.open("hajsik-shell-stale");
+  await cache.put("/stale-probe.txt", new Response("STALE"));
+  const status = await fetch("/stale-probe.txt").then((r) => r.status).catch(() => 0);
+  await caches.delete("hajsik-shell-stale");
+  return status;
+});
+report(probe === 404, "a stale cache is never read from", `/stale-probe.txt answered ${probe}`);
 await straggler.close();
 // And the point of all of it: the build it just took still works with no network.
 await ctx.setOffline(true);
