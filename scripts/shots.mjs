@@ -65,7 +65,9 @@ async function seed(page, base) {
   await page.locator("input.amount").fill("5100");
   await page.locator("#what").fill("Riad Jnane, two nights");
   await page.getByRole("button", { name: "Save" }).click();
-  await page.waitForURL(/\/g\?id=/);
+  // Save goes back to where the form was opened from — here, the entry we
+  // tapped Edit on, not the ledger.
+  await page.waitForURL(/\/g\/entry\?/);
   return groupId;
 }
 
@@ -229,7 +231,7 @@ async function main() {
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
       process.stdout.write(`${theme}/who-had-what `);
-      await page.getByRole("button", { name: /^Split Salade marocaine/ }).click();
+      await page.getByRole("button", { name: /^Split Moroccan salad/ }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
