@@ -57,6 +57,21 @@ export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
   return frac === undefined ? clipped : `${clipped}.${frac.slice(0, exp)}`;
 }
 
+/**
+ * The typed amount and the currency it is held in must never disagree: JPY has
+ * no minor units and BHD has three, and `sanitizeAmount` otherwise only runs on
+ * a keystroke. Switching currency with "12.34" in the field used to leave it
+ * reading "12.34" while the model saved ¥12 — no keystroke in between, and
+ * nothing on screen saying so. Every write to the entry draft goes through
+ * this, and so does every scan: a receipt names its own currency.
+ */
+export function clipAmountToCurrency<T extends { amountText: string; currency: string }>(
+  draft: T,
+): T {
+  const amountText = sanitizeAmount(draft.amountText, draft.currency);
+  return amountText === draft.amountText ? draft : { ...draft, amountText };
+}
+
 /** Digits and the separator are what the caret counts; group marks are not. */
 function significantLength(text: string): number {
   return text.replace(/[^0-9.]/g, "").length;

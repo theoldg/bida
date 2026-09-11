@@ -5,7 +5,10 @@
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
-The scan and upload buttons live on the form's "Receipt" tab.
+Two screens start one: `/g/scan`, the camera above the ledger's "+", which is
+the act with nothing else on screen; and the form's own "Receipt" tab, for a
+bill you reach for once the expense exists. Both call `useReceiptScan`
+(`components/receipt-scan.tsx`), so they cannot drift.
 
 ## The shape
 
@@ -16,7 +19,7 @@ worker: check the secret, add the API key, stream the body upstream
   ↓
 Gemini Flash, free tier, one key shared by everyone
   ↑ response streamed straight back, untouched
-phone: parse → normalizeScan() → write an EntryDraft → /g/entry
+phone: parse → normalizeScan() → write an EntryDraft, and stop
 ```
 
 The scan ends at [`lib/draft.ts`](../apps/web/lib/draft.ts). That's the whole
@@ -87,7 +90,7 @@ It reads. It doesn't compute.
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
 `normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
-reached right after a scan that found lines, or via "Edit who-had-what" later —
+reached by tapping "Edit who-had-what" on the Receipt tab —
 building the grid that becomes a `receipt` split — its own mode, which is why
 no screen has to ask a second field whether a split came off a bill
 ([ADR-0016](decisions/0016-receipts.md)). The screen is three bands rather than
@@ -135,13 +138,24 @@ who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 **A scan is a guess, and it defers to a person.** The merchant name lands in
 `description` only when that field is empty or still holds the *previous*
 scan's merchant (`EntryDraft.scannedDescription`), so a rescan can correct
-itself without renaming an expense somebody named. And a scan that resolves
-after you have left the form fills the draft but doesn't navigate: it is a
-network round trip, and the who-had-what grid stays one tap away on the
-Receipt tab either way. A receipt in a currency the group has no rate for
-owes two screens, and they come one after the other: the rate dialog first,
-the grid when it closes — saved or cancelled — since the grid prices a bill
-against a rate that has to exist first.
+itself without renaming an expense somebody named.
+
+**A scan never navigates.** Finding lines used to push straight to the
+who-had-what grid, which made every scan a commitment to itemise a bill
+somebody may only have wanted the total off; the grid is one tap away on the
+Receipt tab, and going is the person's decision (ADR-0016). Nor does a bill
+with no lines claim that tab — there is nothing to assign, so it leaves the
+split where it was. `/g/scan` is the near-exception: holding a filled draft
+and no form to show it on, it hands over with `replace` (back from the form is
+the ledger), and only if it is still on screen, since a scan outlives the
+screen that started it. It seeds the draft under the key the form uses for a
+blank expense, which is what makes the form adopt it rather than seed over it.
+
+With nothing racing it, a receipt in a currency the group has no rate for
+simply opens the rate dialog — asked for by the currency the *draft* holds
+rather than by the act of picking one, so a scan from either screen reaches
+it. One ref keeps it to a single ask: dismissing the dialog leaves the
+currency exactly as it was.
 
 **Whether the photo is readable is the model's call too.** It sets `error` to a
 short sentence — a light joke at its own expense, never the photographer's, that
@@ -198,8 +212,9 @@ per-group quota, then a decision about whether the photo is stored at all.
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
-`scanReceipt()` · the camera and library buttons on `/g/entry/edit`, which share
-one handler, and `/g/entry/items` behind them. Verified end to end against the
+`scanReceipt()` · `components/receipt-scan.tsx`, the hook both scanning screens
+share — `/g/scan` and the Receipt tab on `/g/entry/edit` — with
+`/g/entry/items` a tap behind the tab. Verified end to end against the
 deployed Worker, 2026-08-28.
 
 ## Driving it without a phone
@@ -225,10 +240,12 @@ way to reach the who-had-what grid outside a real scan —
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
-- **Two things that both want the screen after a scan have to be ordered.**
-  Opening a dialog and calling `router.push` in the same tick is not a
-  sequence: the navigation unmounts the dialog before anybody sees it. The
-  second one waits on the first's `onClose`.
+- **A scan that navigates has to be ordered against anything else wanting the
+  screen, so it stopped navigating.** Opening the rate dialog and calling
+  `router.push` in the same tick is not a sequence — the navigation unmounts
+  the dialog before anybody sees it — and the sequencing state that fixed it
+  outlived its usefulness the moment the grid became a tap rather than a
+  destination.
 - **What a bill is worth is asked of `receiptWeights` (lib/draft.ts), never of
   `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
   only `tiebreakSeed` says whose it is; the grid picked its own (`"new"`, from

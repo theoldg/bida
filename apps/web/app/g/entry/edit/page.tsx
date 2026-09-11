@@ -9,8 +9,9 @@ import {
 } from "@hajsik/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
-import { AmountInput, sanitizeAmount } from "../../../../components/amount-input";
-import { SplitEditor, type ScanSource, type ScanState } from "../../../../components/split-editor";
+import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
+import { useReceiptScan } from "../../../../components/receipt-scan";
+import { SplitEditor } from "../../../../components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { RateDialog } from "../../../../components/rate-dialog";
@@ -28,25 +29,9 @@ import { formParent, parseEntrySource, route } from "../../../../lib/group-link"
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { goUp } from "../../../../lib/nav";
 import {
-  normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
-  ScanUnreliableError,
-} from "../../../../lib/scan";
-import {
-  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, openSplitTab, saveDraft,
+  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, saveDraft,
   seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
 } from "../../../../lib/draft";
-
-/**
- * The typed amount and the currency it is held in must never disagree: JPY has
- * no minor units and BHD has three, and `sanitizeAmount` otherwise only runs on
- * a keystroke. Switching currency with "12.34" in the field used to leave it
- * reading "12.34" while the model saved ¥12 — no keystroke in between, and
- * nothing on screen saying so. Every write to the draft goes through this.
- */
-function clipAmountToCurrency(draft: EntryDraft): EntryDraft {
-  const amountText = sanitizeAmount(draft.amountText, draft.currency);
-  return amountText === draft.amountText ? draft : { ...draft, amountText };
-}
 
 /**
  * One form for all three kinds of entry.
@@ -60,19 +45,6 @@ function clipAmountToCurrency(draft: EntryDraft): EntryDraft {
  */
 export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
-}
-
-/**
- * Why the scan failed, in words. Only the model's own refusal is quoted —
- * everything else is the phone's condition or the app's own arithmetic, and
- * the app says those in its voice.
- */
-function scanErrorText(err: unknown): string | null {
-  if (err instanceof ScanOfflineError) return copy.scan.offline;
-  if (err instanceof ScanUnavailableError) return copy.scan.busy;
-  if (err instanceof ScanRejectedError) return err.message;
-  if (err instanceof ScanUnreliableError) return copy.scan.problem[err.problem];
-  return null;
 }
 
 function EditEntryScreen() {
@@ -99,24 +71,10 @@ function EditEntryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const secret = useGroupSecret(groupId);
-  const cameraInput = useRef<HTMLInputElement>(null);
-  const libraryInput = useRef<HTMLInputElement>(null);
-  const [scanState, setScanState] = useState<ScanState>("idle");
-  const [scanSource, setScanSource] = useState<ScanSource>(null);
-  const [scanError, setScanError] = useState<string | null>(null);
+  const scan = useReceiptScan(groupId, secret);
   const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
   /** Which currency's rate is being set, if any. See `pickCurrency`. */
   const [askRate, setAskRate] = useState<string | null>(null);
-  /**
-   * Set when a scan owes the who-had-what grid a visit but the rate dialog is
-   * standing in front of it. The two used to fire together, and the push won:
-   * a receipt in a currency the group had never seen opened the dialog and
-   * navigated straight over it, so the rate was never set and the grid it
-   * jumped to priced a bill nobody had told the group the worth of. They
-   * happen one after the other now — dialog first, grid when it closes,
-   * saved or cancelled.
-   */
-  const [itemsAfterRate, setItemsAfterRate] = useState(false);
   const [failed, setFailed] = useState<string>();
   /**
    * A save in flight. Two taps on Save land before `router.replace` does, and
@@ -134,62 +92,26 @@ function EditEntryScreen() {
   // form shows no errors just for being empty.
   const [attemptedSave, setAttemptedSave] = useState(false);
 
-  // A scan can outlive the screen that started it — it is a network round
-  // trip to a model, and people put the phone down. The draft still takes the
-  // result (that is the point of scanning), but nothing yanks you back here.
-  const onScreen = useRef(true);
-  useEffect(() => () => { onScreen.current = false; }, []);
-
-  async function onPhoto(e: React.ChangeEvent<HTMLInputElement>, source: "camera" | "library") {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !groupId || !secret) return;
-    const current = getDraft(groupId);
-    if (!current) return;
-    setScanState("scanning");
-    setScanSource(source);
-    setScanError(null);
-    try {
-      const result = await scanReceipt(file, groupId, secret, current.currency);
-      const patch = normalizeScan(result);
-      const receiptItems = result.lineItems.map((li) => (
-        { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
-      ));
-      // A photographed Moroccan receipt used to arrive looking complete and
-      // wrong: it wrote MAD and kept whatever rate the draft had. Now it asks,
-      // the same as picking the currency by hand would.
-      const wantsRate = patch.currency !== undefined && needsRate(data.rates, data.group?.baseCurrency, patch.currency)
-        ? patch.currency : null;
-      if (wantsRate !== null) setAskRate(wantsRate);
-      // The merchant is a guess, and a title somebody typed is not. Take it
-      // only into an empty field or over the *previous* scan's guess, so a
-      // rescan can correct itself without renaming the expense you named.
-      const keepsTyped = current.description.trim().length > 0
-        && current.description !== current.scannedDescription;
-      saveDraft(groupId, clipAmountToCurrency({
-        ...current,
-        ...(patch.description !== undefined && !keepsTyped
-          ? { description: patch.description, scannedDescription: patch.description }
-          : {}),
-        ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
-        ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
-        ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
-        receiptItems: receiptItems.length > 0 ? receiptItems : null,
-        receiptTip: result.tip,
-        // A fresh scan replaces whatever grid was saved before.
-        receiptInvolved: null,
-        receiptAssignments: null,
-        splitTab: "receipt",
-      }));
-      setScanState("idle");
-      const toItems = receiptItems.length > 0 && onScreen.current;
-      if (wantsRate !== null) setItemsAfterRate(toItems);
-      else if (toItems) router.push(route.items(groupId, via));
-    } catch (err) {
-      setScanState("error");
-      setScanError(scanErrorText(err));
-    }
-  }
+  /**
+   * The rate dialog opens for whatever currency the draft is *in*, not for the
+   * act of picking one — because a scan picks one too, and `/g/scan` fills a
+   * draft on a screen that is already navigating here. A photographed Moroccan
+   * receipt used to arrive looking complete and wrong: it wrote MAD and kept
+   * whatever rate the draft had.
+   *
+   * The ref is what keeps it to one ask: dismissing the dialog leaves the
+   * currency exactly as it was, and without it the effect would reopen what
+   * was just closed. `pickCurrency` sets it for the same reason, and clears
+   * its own claim, so picking the same currency again does ask again.
+   */
+  const rateAsked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!draft || !data.group) return;
+    if (rateAsked.current === draft.currency) return;
+    if (!needsRate(data.rates, data.group.baseCurrency, draft.currency)) return;
+    rateAsked.current = draft.currency;
+    setAskRate(draft.currency);
+  }, [draft, data.group, data.rates]);
 
   // What this screen was opened *on*: an entry's id, or — creating — everything
   // the link asked for. Coming back from the payers editor or the who-had-what
@@ -197,8 +119,7 @@ function EditEntryScreen() {
   // from a different link doesn't, so a leftover draft is replaced rather than
   // handed over (settle up used to land on whatever blank expense was left
   // behind by an abandoned "+").
-  const seedKey = entryId
-    ?? `new:${wantedKind ?? "expense"}:${prefill.from ?? ""}:${prefill.to ?? ""}:${prefill.amount || 0}`;
+  const seedKey = entryId ?? newEntryKey(wantedKind, prefill);
 
   // Seed the draft once the group is loaded: from the entry being edited —
   // which is looked up in both tables, since one id parameter covers all three
@@ -345,6 +266,7 @@ function EditEntryScreen() {
    */
   function pickCurrency(currency: string) {
     patch({ currency });
+    rateAsked.current = currency;
     if (needsRate(data.rates, data.group?.baseCurrency, currency)) setAskRate(currency);
   }
 
@@ -511,10 +433,7 @@ function EditEntryScreen() {
         />
 
         <Scroll>
-          <input ref={cameraInput} type="file" accept="image/*" capture="environment"
-            style={{ display: "none" }} onChange={(e) => onPhoto(e, "camera")} aria-label={copy.scan.camera} />
-          <input ref={libraryInput} type="file" accept="image/*"
-            style={{ display: "none" }} onChange={(e) => onPhoto(e, "library")} aria-label={copy.scan.library} />
+          {scan.inputs}
 
           {reachable.length > 1 ? (
             <div className="pad" style={{ paddingTop: 2, paddingBottom: 0 }}>
@@ -618,18 +537,18 @@ function EditEntryScreen() {
                 </div>
               </Card>
             ) : (
-              <div className="field field-stack">
-                {/* The heading is inside the button, not beside it: the whole
-                    row is the control, so the whole row lights on a press. */}
+              <div className="field field-row">
+                {/* The heading is inside the button, not beside it: the button
+                    is the row up to the quieter door beside it, so that much
+                    lights on a press. */}
                 <button type="button" id="paidby" className="pick"
                   aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                  <Icon name="chev" size={13} className="spacer pchev" />
+                  <Icon name="chev" size={13} className="pchev" />
                 </button>
-                <div className="hairline" />
-                {/* A second, quieter door onto the same field: the happy path
-                    above never has to make room for it. */}
+                {/* A second, quieter door onto the same field, on the same row:
+                    one payer is the common case and costs one row. */}
                 <Link href={route.payers(groupId)} className="pick-sub">
                   <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>
                   <Icon name="chev" size={11} />
@@ -662,13 +581,13 @@ function EditEntryScreen() {
                 onTabChange={changeTab}
                 receipt={canScan ? {
                   items: draft.receiptItems ?? null,
-                  scanDisabled: !secret,
-                  scanState,
-                  scanSource,
-                  scanError,
+                  scanDisabled: scan.disabled,
+                  scanState: scan.state,
+                  scanSource: scan.source,
+                  scanError: scan.error,
                   blocker: receiptBlocker,
-                  onScanCamera: () => cameraInput.current?.click(),
-                  onScanLibrary: () => libraryInput.current?.click(),
+                  onScanCamera: scan.openCamera,
+                  onScanLibrary: scan.openLibrary,
                   editItemsHref: route.items(groupId, via),
                 } : null}
               />
@@ -735,11 +654,7 @@ function EditEntryScreen() {
           onSave={async (rate: string, source: RateSource, asOf: number) => {
             if (data.me) await setRate(groupId, data.me, askRate, rate, source, asOf);
           }}
-          onClose={() => {
-            setAskRate(null);
-            // The grid the scan was on its way to, held back until now.
-            if (itemsAfterRate) { setItemsAfterRate(false); router.push(route.items(groupId, via)); }
-          }}
+          onClose={() => setAskRate(null)}
         />
       ) : null}
 

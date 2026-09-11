@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupDigits, sanitizeAmount } from "./amount-input";
+import { clipAmountToCurrency, groupDigits, sanitizeAmount } from "./amount-input";
 
 /**
  * The caret and the grouping are the whole point of this component, and both
@@ -47,5 +47,28 @@ describe("a separator typed with nothing before it", () => {
   it("reads as nought point something", () => {
     expect(sanitizeAmount(",5", "EUR")).toBe("0.5");
     expect(sanitizeAmount(".", "EUR")).toBe("0.");
+  });
+});
+
+/**
+ * A currency change is not a keystroke, so nothing else clips the field for
+ * one. Both writers of an entry draft go through this — the form on every
+ * patch, and a scan, which brings the receipt's own currency with it.
+ */
+describe("clipAmountToCurrency", () => {
+  it("clips the fraction the new currency has no room for", () => {
+    expect(clipAmountToCurrency({ amountText: "12.34", currency: "JPY" }).amountText).toBe("12");
+    expect(clipAmountToCurrency({ amountText: "12.345", currency: "EUR" }).amountText).toBe("12.34");
+    expect(clipAmountToCurrency({ amountText: "12.345", currency: "BHD" }).amountText).toBe("12.345");
+  });
+
+  it("returns the very same object when nothing needs clipping", () => {
+    const draft = { amountText: "12.34", currency: "EUR", extra: 1 };
+    expect(clipAmountToCurrency(draft)).toBe(draft);
+  });
+
+  it("keeps every other field of whatever it was handed", () => {
+    expect(clipAmountToCurrency({ amountText: "9.99", currency: "JPY", description: "Sushi" }))
+      .toEqual({ amountText: "9", currency: "JPY", description: "Sushi" });
   });
 });

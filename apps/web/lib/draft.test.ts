@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { resolveSplit, splitParticipants, type SplitSpec } from "@hajsik/core";
 import {
-  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, openSplitTab,
-  receiptWeights, splitSeed, withSplit, type EntryDraft, type SplitTab,
+  activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
+  openSplitTab, receiptWeights, splitSeed, withSplit, type EntryDraft, type SplitTab,
 } from "./draft";
 
 /**
@@ -247,5 +247,33 @@ describe("a scanned bill prices the same on both screens", () => {
     const weights = receiptWeights(scanned(), BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
     // 14.50 + 16.00 + 6.50 + 5.00 tip.
     expect(Object.values(weights).reduce((a, b) => a + b, 0)).toBe(4200);
+  });
+});
+
+/**
+ * The string that decides whether a screen keeps the draft in front of it or
+ * throws it away and seeds a blank. `/g/scan` writes a scanned draft under the
+ * key the form will look for, so the two have to agree exactly — and the way
+ * they disagree is silent: the scan lands on an empty form.
+ */
+describe("newEntryKey", () => {
+  it("is the same for a blank expense however it is asked for", () => {
+    expect(newEntryKey("expense")).toBe(newEntryKey(null));
+    expect(newEntryKey(undefined)).toBe(newEntryKey("expense", {}));
+    expect(newEntryKey("expense", { from: undefined, amount: 0 })).toBe(newEntryKey("expense"));
+  });
+
+  it("separates entries a link asked for differently", () => {
+    const keys = [
+      newEntryKey("expense"),
+      newEntryKey("income"),
+      newEntryKey("transfer"),
+      newEntryKey("transfer", { from: "a", to: "b", amount: 500 }),
+      newEntryKey("transfer", { from: "a", to: "b", amount: 700 }),
+      newEntryKey("transfer", { from: "b", to: "a", amount: 500 }),
+    ];
+    // Settle-up used to land on whatever blank expense an abandoned "+" had
+    // left behind, which is this set collapsing.
+    expect(new Set(keys).size).toBe(keys.length);
   });
 });

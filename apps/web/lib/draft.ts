@@ -370,6 +370,24 @@ export function seedDraft(groupId: string, draft: EntryDraft, key: string): void
   saveDraft(groupId, draft);
 }
 
+/**
+ * What a *create* was asked for, as one string — see `seedDraft`'s `key`.
+ *
+ * Two screens have to agree on it exactly: the form, which keeps a draft whose
+ * key still matches and replaces one whose key doesn't, and `/g/scan`, which
+ * fills a draft under this key precisely so the form adopts it rather than
+ * seeding a blank over the receipt it just read. A string built in both places
+ * is a string that drifts, and the failure is silent — the scan lands on an
+ * empty form.
+ */
+export function newEntryKey(
+  kind: string | null | undefined,
+  prefill?: { from?: string; to?: string; amount?: number },
+): string {
+  return `new:${kind ?? "expense"}:${prefill?.from ?? ""}:${prefill?.to ?? ""}`
+    + `:${prefill?.amount || 0}`;
+}
+
 /** What the live draft was seeded for, or undefined if there isn't one. */
 export function draftSeedKey(groupId: string): string | undefined {
   return drafts.get(groupId) ? seedKeys.get(groupId) : undefined;

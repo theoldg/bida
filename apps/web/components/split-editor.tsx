@@ -7,6 +7,7 @@ import {
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
+import type { ScanSource, ScanState } from "./receipt-scan";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -43,11 +44,6 @@ import type { SplitTab } from "../lib/draft";
 
 /** The three arithmetic tabs, in the owner's order. "Receipt" is the fourth. */
 const MODES = ["equal", "shares", "exact"] as const;
-
-/** Where a scan is: idle, in flight, or refused. Owned by the expense form. */
-export type ScanState = "idle" | "scanning" | "error";
-/** Which button started the scan in flight — only that one shows the spinner. */
-export type ScanSource = "camera" | "library" | null;
 
 export interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
