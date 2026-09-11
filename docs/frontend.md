@@ -123,6 +123,12 @@ confers nothing without the secret.
   why the entry isn't ready — from a draft and the group's rates, with no React
   in it, so the arithmetic behind that button is a test suite rather than a
   screen to mount. The form reads its answers and writes none of them.
+- **Save is the foot of the form, and the kind is the top of it.** One
+  full-width `.btn-lg` in a `Foot`, because the screen has exactly one act and
+  an underlined word in the corner read as optional; a save failure is said
+  above it rather than back in the scroll. The kind chip moved the other way,
+  onto the top bar beside the title, which is the row already naming what this
+  screen is — and gives the amount the space it used to float over.
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
   A grey button gave no reason for the two gaps every empty form starts in —
   no amount, no title — and a structural one (`blocker`: a missing rate, a
@@ -242,9 +248,11 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 status bar and the splash screen, which is why they are ink rather than paper
 and why `viewport.themeColor` repeats the same value rather than tracking the
 theme (Gotcha below). The
-three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons` — run it
-when the logo changes rather than editing them; the maskable one insets the
-artwork to 72% on its own ground so a circular launcher crop can't clip it. iOS ignores
+three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons`, which
+also copies that file to `public/logo.svg` for the top-bar mark to point at —
+run it when the logo changes rather than editing any of the four; the maskable
+one insets the artwork to 72% on its own ground so a circular launcher crop
+can't clip it. iOS ignores
 manifest `display` entirely — `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
 and `env(safe-area-inset-top)` padding on `.topbar` matter.
@@ -380,7 +388,8 @@ figure-free.
   scroll-padding is where a field mid-form stops. A dialog sits outside the
   shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
   card is centred in what is left rather than behind the keys — without it the
-  rate pair's own fields and Save were under them.
+  rate pair's own fields and Save were under them. `.foot` pays it too: a
+  pinned act under a form is a button the keyboard would otherwise sit on.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past

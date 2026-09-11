@@ -18,9 +18,11 @@ underneath: ruled rows, a red column and a green column.
 lower-case always — the light/dark toggle opposite, and nothing under it; a
 sub-line would caption the list you are already looking at. Every other top bar
 says the thing you opened, so a second wordmark would be branding where a name
-should be. The mark is a one-colour tracing of `design/brand/logo.svg`, which is
-the master artwork: the receipt's rules are knocked out of an ink block rather
-than drawn, so it reads in both themes with no second fill.
+should be. The mark is `design/brand/logo.svg` itself, shown as an <img>: it is the one
+place the app is allowed its own colours, because it carries its own ground
+and is a tile rather than a glyph — the same square as the avatars under it.
+Do not redraw it in `--brand` to make it theme-aware; that was tried, and a
+tracing of a logo is a worse logo.
 
 ## Palette roles
 
@@ -41,7 +43,10 @@ Adding a third hue is a regression. A person is identified by their printed
 name and nothing else — no tint, and no initials square
 ([ADR-0023](decisions/0023-monospace-monochrome.md)). **The one sanctioned exception:**
 destructive actions (`.btn-d`, "Remove") take `--debit` as an outline, not
-a fill — losing that warning to consistency would be a worse trade.
+a fill — losing that warning to consistency would be a worse trade. With hue
+spent, **size is the emphasis left**: a screen whose one act ends it gives that
+act the full width of a `Foot` at `.btn-lg` — taller and heavier, still square
+and still flat.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both

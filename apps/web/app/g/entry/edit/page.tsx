@@ -12,7 +12,7 @@ import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
 import { useReceiptScan } from "../../../../components/receipt-scan";
 import { SplitEditor } from "../../../../components/split-editor";
-import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { RateDialog } from "../../../../components/rate-dialog";
 import { Icon } from "../../../../components/icons";
@@ -486,27 +486,20 @@ function EditEntryScreen() {
             : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
-          right={<button className="action" onClick={save} disabled={saving}>{copy.act.save}</button>}
+          /* The kind sits up here, on the row that already names what this
+             screen is. Below the title it was a lone chip floating over the
+             amount; beside the title it reads as part of the heading, and the
+             space it vacated is the amount's. */
+          right={reachable.length > 1 ? (
+            <button type="button" className="chip" aria-label={copy.form.kindTitle}
+              onClick={() => setAsk("kind")}>
+              {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
+            </button>
+          ) : undefined}
         />
 
         <Scroll>
           {scan.inputs}
-
-          {/* One chip, not a segmented control over all three. Nothing in the
-              app opens this form asking for an income, and a transfer arrives
-              prefilled from settle up — so the kind is already right on nearly
-              every entry, and three permanent buttons for it sat above the
-              amount wearing the same `.seg` as the split's tabs directly
-              below. A chip costs the rare change of mind one tap, and the
-              common entry nothing. */}
-          {reachable.length > 1 ? (
-            <div className="pad" style={{ paddingTop: 10, paddingBottom: 0, textAlign: "center" }}>
-              <button type="button" className="chip" aria-label={copy.form.kindTitle}
-                onClick={() => setAsk("kind")}>
-                {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
-              </button>
-            </div>
-          ) : null}
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             {/* The refusal flash runs on `.amountfield`, which `AmountInput`
@@ -667,11 +660,26 @@ function EditEntryScreen() {
               />
             )}
 
-            {failed ? <p className="failure" role="alert">{copy.form.saveFailed(failed)}</p> : null}
           </div>
           <div style={{ height: 12 }} />
         </Scroll>
       </Body>
+
+      {/* One button, the width of the screen, at the thumb — this form has
+          exactly one act and the underlined word in the corner made it look
+          optional. It stays pressable when the entry isn't ready: `save`
+          answers with the refusal flash on whichever field is missing, which
+          is more use than a dead button saying nothing. */}
+      <Foot>
+        {failed ? (
+          <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
+            {copy.form.saveFailed(failed)}
+          </p>
+        ) : null}
+        <button type="button" className="btn btn-p btn-lg" onClick={save} disabled={saving}>
+          {saving ? <span className="spinner" /> : null}{copy.act.save}
+        </button>
+      </Foot>
 
       {ask === "discard" ? (
         <ConfirmDialog

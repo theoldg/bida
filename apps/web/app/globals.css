@@ -259,6 +259,7 @@ a { color: inherit; text-decoration: none }
    It carries no sub-line, so the height a sub-line would have taken goes to the
    name itself and to the air around it. */
 .brand { display: flex; align-items: center; gap: 9px; font-size: 21px; padding: 4px 0 }
+.mark { border-radius: var(--r-s); flex: none; display: block }
 .topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;
@@ -511,6 +512,11 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 /* The one place a hue is spent on something other than money: destructive is
    worth a signal, and it gets an outline rather than a filled block. */
 .btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
+/* The one act a screen exists for, given the whole width of the foot and a
+   figure to match: taller, and set in the display weight rather than the
+   body's. Still square and still flat — bigger is the only thing it spends
+   (ADR-0008). */
+.btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45 }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
@@ -604,8 +610,12 @@ dialog.scrim::backdrop { background: transparent }
 /* A failure reads like `.hint` in the one colour this design spends on trouble:
    it sits where the hint would, under whatever was being attempted. */
 .failure { font-size: 12px; color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
-/* The screen's last act, pinned under the scroll rather than floating over it. */
-.foot { flex: none; border-top: 1px solid var(--rule); padding: 11px 16px }
+/* The screen's last act, pinned under the scroll rather than floating over it.
+   The keyboard overlays the shell rather than shortening it
+   (components/keyboard-inset.tsx), so the foot pays `--kb` as padding — without
+   it the one button a form ends on sits behind the keyboard being typed on. */
+.foot { flex: none; border-top: 1px solid var(--rule); padding: 11px 16px;
+  padding-bottom: calc(var(--kb) + max(11px, env(safe-area-inset-bottom))) }
 
 /* ---- the amount input ----
    A real <input>, not a rendered figure driven by a hand-built keypad: it has

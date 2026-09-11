@@ -1,5 +1,6 @@
 /**
- * Rasterise the brand mark into the PWA's icons.
+ * Publish the brand mark: the master SVG for the app to show, and the three
+ * raster icons the platforms insist on.
  *
  * `design/brand/logo.svg` is the master — vector, square, and carrying its own
  * near-black ground, which is what lets the same artwork serve as both the
@@ -16,6 +17,15 @@ import { join } from "node:path";
 import { ROOT, launch } from "./lib/harness.mjs";
 
 const svg = await readFile(join(ROOT, "design/brand/logo.svg"), "utf8");
+
+/**
+ * The app shows the real artwork, not a redrawing of it — `components/icons.tsx`
+ * points an <img> at this copy. Copied rather than imported because the export
+ * serves `public/` verbatim and `design/` is outside it; copied by this script
+ * rather than by hand so the one in the app cannot drift from the master.
+ */
+await writeFile(join(ROOT, "apps/web/public/logo.svg"), svg);
+console.log("logo.svg  (copied from design/brand)");
 
 /**
  * A maskable icon is cropped to whatever shape the launcher fancies — a circle

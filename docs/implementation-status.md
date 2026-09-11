@@ -29,8 +29,11 @@ three are addresses that existing links and phones already point at
 
 **The entry form is being thinned.** It carried 19 tappable controls on a new
 expense where three do the work — the rest confirm defaults the form already
-has right. The kind is now one chip rather than three permanent buttons
-([ADR-0010](decisions/0010-what-an-entry-is.md)), and a refused Save points at
+has right. The kind is now one chip rather than three permanent buttons, and it
+sits in the top bar rather than over the amount
+([ADR-0010](decisions/0010-what-an-entry-is.md)); Save is the full width of the
+foot rather than an underlined word in the corner
+([frontend.md](frontend.md#state)), and a refused Save points at
 the field that stopped it by flashing it rather than holding it red
 ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)). Two further cuts are proposed
 and **not** decided: folding the "Multi-payer" link into the payer dialog, and

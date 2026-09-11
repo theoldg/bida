@@ -120,26 +120,21 @@ export function Icon({ name, size = 16, className, style }: {
 }
 
 /**
- * The bida mark: a receipt over a card, the two things a shared expense is.
- * Traced from `design/brand/logo.svg`, which is the master — edit that first,
- * then bring the proportions back here.
+ * The bida mark — the real artwork, not a redrawing of it.
  *
- * The logo is light-on-dark artwork; this is the one-colour reading of it, so
- * it survives both themes and a 26px top bar. The receipt is a solid block of
- * ink with its rules and its footer *knocked out* rather than drawn — holes in
- * one even-odd path, so whatever is behind the mark shows through them, which
- * is the same figure-ground inversion a primary button does. The card behind it
- * is a hairline the block simply covers, and that overlap is the depth.
+ * It is an <img> at `/logo.svg`, which `pnpm icons` copies from
+ * `design/brand/logo.svg`, so the app and the icons show the same file and a
+ * new logo lands everywhere in one command. An earlier version traced the mark
+ * into inline paths to make it take `--brand` in both themes; the trace was a
+ * worse drawing than the thing it traced, and inlining it would also have put
+ * the file's own `clipPath` and `filter` ids into the document.
+ *
+ * The artwork carries its own near-black ground, so it reads as a tile rather
+ * than a glyph — the same square-with-a-soft-corner as the group avatars
+ * directly under it, which is the shape the app already uses for "an icon for
+ * this thing".
  */
 export function Wordmark({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size * 20 / 24} height={size} viewBox="0 0 20 24" aria-hidden="true">
-      <rect x="5.5" y="9.4" width="13.1" height="13.7" fill="none" stroke="var(--brand)" strokeWidth="1.8" />
-      <path fill="var(--brand)" fillRule="evenodd" d={
-        "M0 0h9.1v21.9H0z" +                                /* the sheet */
-        "M2.2 2.2h4.9v0.9H2.2z M3 3.8h3.3v0.9H3z" +         /* two lines of writing */
-        "M2.9 15.3h3.4v1.1h1.5v4.2H1.3v-4.2h1.6z"           /* the total, boxed */
-      } />
-    </svg>
-  );
+  // eslint-disable-next-line @next/next/no-img-element -- static export: no optimiser
+  return <img src="/logo.svg" alt="" width={size} height={size} className="mark" />;
 }
