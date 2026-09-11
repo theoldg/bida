@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   resolveSplit, splitParticipants, validateSplit,
-  type Member, type SplitSpec,
+  type ArithmeticSplit, type Member, type SplitSpec,
 } from "@hajsik/core";
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
@@ -29,10 +29,10 @@ import type { SplitTab } from "../lib/draft";
  * one away for good.
  *
  * A fourth tab, "Receipt", sits beside them — scanning a bill and assigning
- * who-had-what (`/g/expense/items`, ADR-0016) reduces to an ordinary `shares`
- * spec, so it isn't a fifth `SplitMode`. It's tracked as its own tab
- * (`SplitTab`, `lib/draft.ts`) precisely so the UI can still say "Receipt"
- * once that reduction has happened, instead of falling back to "As parts".
+ * who-had-what (`/g/expense/items`, ADR-0016). What that produces is a
+ * `receipt` split, a mode of its own: it divides by weight the way As parts
+ * does, and that is the whole of the resemblance. This editor never writes
+ * one — the bill does, and it arrives here as `receiptSplit`.
  *
  * **Each tab holds its own answer.** This editor draws one of them and edits
  * only that one: the tab bar reports a tap and nothing else — the draft is
@@ -91,7 +91,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
    */
   receiptSplit: SplitSpec | null;
   seed: string;
-  onChange: (next: SplitSpec) => void;
+  onChange: (next: ArithmeticSplit) => void;
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
   /**

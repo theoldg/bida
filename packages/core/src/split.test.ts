@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  canonicalSplit, convertSplitMode, fromReceipt, resolveSplit, shareOf, splitParticipants,
-  validateSplit,
+  canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants,
+  upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
 
@@ -247,33 +247,69 @@ describe("canonicalSplit", () => {
   });
 });
 
-describe("fromReceipt", () => {
-  // Four screens name a split — the ledger row, the entry, the history and the
-  // form's own tab — and each of them asked this question its own way until it
-  // moved here. Both wrong answers cost a screen: a bill called "as parts",
-  // and an ordinary split called "from receipt".
+describe("upgradeReceiptSplit", () => {
+  // A receipt used to be stored as `shares` with a `splitTab: "receipt"` flag
+  // beside it, and four screens — the ledger row, the entry, the history and
+  // the form's own tab — each asked those two fields their own way. This is
+  // what is left of that: one upgrade, run where ops become state, after which
+  // a receipt is a `receipt` split and nobody asks a second field.
   const items = [{ label: "Tea", amount: "3.00" }];
-  const shares: SplitSpec = { mode: "shares", weights: { a: 1, b: 2 } };
+  const weights = { a: 1, b: 2 };
+  const legacy = (extra: Record<string, unknown>): { split: SplitSpec } => {
+    const entity: Record<string, unknown> = {
+      split: { mode: "shares", weights }, ...extra,
+    };
+    upgradeReceiptSplit(entity);
+    return entity as unknown as { split: SplitSpec };
+  };
 
-  it("is a receipt when the tab says so and there are items behind it", () => {
-    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: items })).toBe(true);
+  it("makes a flagged shares split a receipt one", () => {
+    expect(legacy({ splitTab: "receipt", receiptItems: items }).split)
+      .toEqual({ mode: "receipt", weights });
   });
 
-  it("is not one without items, whatever the tab says", () => {
-    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: [] })).toBe(false);
-    expect(fromReceipt({ split: shares, splitTab: "receipt", receiptItems: null })).toBe(false);
-  });
-
-  it("is not one when the person moved to another tab and saved", () => {
-    expect(fromReceipt({ split: shares, splitTab: "shares", receiptItems: items })).toBe(false);
-    expect(fromReceipt({ split: { mode: "equal", members: ["a"] }, splitTab: "equal", receiptItems: items }))
-      .toBe(false);
-  });
-
-  // Entries predating `splitTab` have no tab to read: a `shares` spec beside a
+  // Entries predating the flag have no tab to read: a `shares` spec beside a
   // scanned bill is the only thing a finished grid could have written.
   it("reads an entry saved before the tab was stored", () => {
-    expect(fromReceipt({ split: shares, receiptItems: items })).toBe(true);
-    expect(fromReceipt({ split: { mode: "equal", members: ["a"] }, receiptItems: items })).toBe(false);
+    expect(legacy({ receiptItems: items }).split).toEqual({ mode: "receipt", weights });
+  });
+
+  it("leaves parts somebody typed alone", () => {
+    // No bill behind it, or a person who moved to another tab and saved.
+    expect(legacy({ splitTab: "receipt", receiptItems: [] }).split.mode).toBe("shares");
+    expect(legacy({ receiptItems: null }).split.mode).toBe("shares");
+    expect(legacy({ splitTab: "shares", receiptItems: items }).split.mode).toBe("shares");
+  });
+
+  it("drops the flag either way — nothing reads it any more", () => {
+    expect("splitTab" in legacy({ splitTab: "receipt", receiptItems: items })).toBe(false);
+    expect("splitTab" in legacy({ splitTab: "equal", receiptItems: items })).toBe(false);
+  });
+
+  it("is content with an entity that has no split at all", () => {
+    const partial: Record<string, unknown> = { id: "m1", name: "Teo" };
+    expect(() => upgradeReceiptSplit(partial)).not.toThrow();
+    expect(partial).toEqual({ id: "m1", name: "Teo" });
+  });
+});
+
+describe("a receipt split", () => {
+  const spec: SplitSpec = { mode: "receipt", weights: { a: 2000, b: 1000 } };
+
+  it("divides by weight, like the parts it used to be written as", () => {
+    expect(resolveSplit(3000, spec).shares).toEqual({ a: 2000, b: 1000 });
+    expect(resolveSplit(3000, spec).shares)
+      .toEqual(resolveSplit(3000, { mode: "shares", weights: { a: 2000, b: 1000 } }).shares);
+  });
+
+  it("names its participants and canonicalises like any other spec", () => {
+    expect(splitParticipants(spec)).toEqual(["a", "b"]);
+    expect(canonicalSplit({ mode: "receipt", weights: { b: 1, a: 2 } }))
+      .toEqual({ mode: "receipt", weights: { a: 2, b: 1 } });
+  });
+
+  it("converts away into a mode somebody types", () => {
+    expect(convertSplitMode(3000, spec, "equal")).toEqual({ mode: "equal", members: ["a", "b"] });
+    expect(convertSplitMode(3000, spec, "exact")).toEqual({ mode: "exact", amounts: { a: 2000, b: 1000 } });
   });
 });

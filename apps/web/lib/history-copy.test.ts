@@ -425,12 +425,53 @@ suite("describe", () => {
     await editExpense(groupId, theo, expenseId, {
       receiptItems: [{ label: "Salad", amount: "50.00" }, { label: "Beer", amount: "50.00" }],
       receiptAssignments: [[theo], [marie]],
-      splitTab: "receipt",
+      split: { mode: "receipt", weights: { [theo]: 5000, [marie]: 5000 } },
     });
     await editExpense(groupId, theo, expenseId, { receiptAssignments: [[marie], [theo]] });
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed who had what");
+  });
+
+  // A receipt's weights are the bill divided into minor units, and the log
+  // printed them as parts: "Teo ×3943 parts · Marie ×2206 parts", a sentence
+  // about numbers nobody chose. A receipt is its own mode now, and says so.
+  it("calls a receipt a receipt, and never counts its weights as parts", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [{ label: "Salad", amount: "40.00" }, { label: "Beer", amount: "60.00" }],
+      receiptInvolved: [theo, marie],
+      receiptAssignments: [[marie], [theo]],
+      split: { mode: "receipt", weights: { [theo]: 6000, [marie]: 4000 } },
+    });
+
+    const [latest] = await described(groupId);
+    // Only what a person reads: the raw weights are in the op, as they should
+    // be, and the question is what the log makes of them.
+    const printed = JSON.stringify([latest!.said, latest!.diff, latest!.also]);
+    expect(printed).not.toContain("part");
+    expect(printed).not.toContain("6000");
+    // The split moved, and this is what moved it — the grid, not a number
+    // somebody typed into As parts.
+    expect(printed).toContain("receipt");
+  });
+
+  it("names the mode as From receipt when leaving the tab is all the save did", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [{ label: "Salad", amount: "50.00" }, { label: "Beer", amount: "50.00" }],
+      receiptInvolved: [theo, marie],
+      receiptAssignments: [[theo], [marie]],
+      split: { mode: "receipt", weights: { [theo]: 5000, [marie]: 5000 } },
+    });
+    // Back to Evenly: the same money, split the same way, written differently.
+    await editExpense(groupId, theo, expenseId, {
+      split: { mode: "equal", members: [theo, marie] },
+    });
+
+    const [latest] = await described(groupId);
+    expect(latest!.said).toBe("Theo changed how the split is written");
+    expect(latest!.diff).toEqual({ was: "From receipt", now: "Evenly" });
   });
 
   // The mode is a last resort, not a field: it is dropped beside a real change
@@ -439,7 +480,6 @@ suite("describe", () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
       split: { mode: "shares", weights: { [theo]: 1, [marie]: 1 } },
-      splitTab: "shares",
     });
 
     const [latest] = await described(groupId);

@@ -1,4 +1,4 @@
-# 0016 — A scanned receipt reduces to an ordinary split
+# 0016 — A scanned receipt is a split mode of its own
 
 **Status:** Accepted · 2026-08-28
 
@@ -10,23 +10,37 @@ own op kinds".
 
 ## Decision
 
-**The who-had-what grid reduces to an ordinary `shares` split.** Each item's
+**The who-had-what grid is its own `SplitMode`: `receipt`.** Each item's
 printed amount is divided evenly among its checked members by `resolveSplit`,
 summed per member, and used as a weight — a ratio against the FX-converted
 total, so it needs no currency conversion of its own. No new entity, no new op
 kind; the seam `product.md` describes is untouched.
 
-**The parsed bill lives on the expense, not in the draft.** `receiptItems`,
-`receiptTip`, `receiptInvolved`, `receiptAssignments` and `splitTab` are
-ordinary optional fields on `Expense`, travelling in the op's `patch` like
-`description` — so they sync, replay and fold with no change to `Op`, `fold.ts`,
-the D1 schema or the Dexie schema, and the grid reopens later from any device.
+Weighted division is the same arithmetic `shares` does, **and that is the whole
+of what the two have in common**: one is a bill read out, the other is parts
+somebody chose. They were one mode for a while, a `shares` spec with a
+`splitTab: "receipt"` flag beside it, and every screen that named a split had
+to ask both fields what it was really looking at (`fromReceipt`). Each of them
+got it wrong somewhere: the ledger row said "as parts", the log said "Teo ×3943
+parts" over weights nobody typed, leaving Receipt for As parts arrived with the
+bill's own weights in it. A receipt is a mode, it names itself
+(`copy.split.mode`), and nothing asks a second field.
 
-**Receipt is a fourth tab on the split editor**, not a fifth `SplitMode`: a
-finished grid *is* a split, arrived at differently, and showing it under "As
-parts" would lose where it came from. It is a fourth *answer* beside the three,
-never a rewrite of one of them — a scan used to convert whatever As parts held
-into its own weights ([ADR-0010](0010-what-an-entry-is.md)).
+**The parsed bill lives on the expense, not in the draft.** `receiptItems`,
+`receiptTip`, `receiptInvolved` and `receiptAssignments` are ordinary optional
+fields on `Expense`, travelling in the op's `patch` like `description` — so they
+sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
+Dexie schema, and the grid reopens later from any device. Ops already written
+in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops
+become state (`applyPatch`, so the fold and the history read it alike); the
+materialised Dexie cache in front of them takes the same function on open
+(`version(7)`), since it is only refolded when a pull brings ops.
+
+**Receipt is the fourth tab on the split editor**, and a fourth *answer* beside
+the three, never a rewrite of one of them — a scan used to convert whatever As
+parts held into its own weights ([ADR-0010](0010-what-an-entry-is.md)).
+Which tab is showing is the draft's business and never the entry's (`SplitTab`,
+`lib/draft.ts`): a tab is a mode, and a saved entry's mode is what reopens it.
 
 **The handoff runs one way: the bill never seeds an arithmetic tab.** The three
 feed each other, so "even, then nudge one person" costs one tap
@@ -38,11 +52,12 @@ grid's own arithmetic, not parts anybody chose. Either way As parts opened
 holding a number the scan had put there, on a screen it does not own, and
 editing it produced a split that agreed with neither. The arithmetic tabs now
 start where an unscanned entry starts: even, over everyone.
-`SplitTab` is saved explicitly — deriving
-it from "are there items?" made every save silently drop a deliberate switch
-back to Evenly. **The tab is a claim, and Save is held until it is true**: with
+**The tab is a claim, and Save is held until it is true**: with
 no bill scanned, or a bill nobody has been assigned a line of, there is no
-receipt split, and saving stored "Receipt" over an ordinary even one. The
+receipt split, and saving stored "Receipt" over an ordinary even one. What a
+save writes is the mode the split actually is, so a person who scans a bill and
+then switches back to Evenly saves an `equal` split beside their items, and
+reopens on Evenly. The
 holding is said in the split editor's footer, where every other unfinished
 split is complained about, not up beside Save. While the tab has items the
 amount field mirrors `receiptTotalMinor`, disabled — *"when in receipt mode I
@@ -72,9 +87,11 @@ is unique ("John"/"Jane"), and local to the one place initials survive at all
 
 ## Consequences
 
-- The computed split shows as `shares`, accurate if a little abstract next to
+- The computed split is stored as weights, accurate if a little abstract next to
   the photograph, and the tip scales to what each person ordered — an even split
-  only while nobody has ordered anything.
+  only while nobody has ordered anything. Each person's row on the entry screen
+  opens onto their own lines of the bill (`receiptBreakdown`), which is the
+  concrete reading of those weights.
 - Reopening a saved receipt expense recomputes its total and split from the
   items rather than trusting the stored values: those inputs are exactly what
   produced them, with the same seeded tiebreak.

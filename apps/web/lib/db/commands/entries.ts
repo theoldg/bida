@@ -1,7 +1,7 @@
 import {
   canonicalSplit, newId, primaryPayer,
   type CurrencyCode, type ExpenseKind, type Id, type Rate, type ReceiptItem,
-  type SplitSpec, type SplitTab,
+  type SplitSpec,
 } from "@hajsik/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
@@ -38,8 +38,6 @@ export interface ExpenseInput {
   receiptTip?: string | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
-  /** Which split tab was showing when this expense was saved. */
-  splitTab?: SplitTab | null;
 }
 
 /**
@@ -111,7 +109,6 @@ export async function addExpense(
             receiptTip: input.receiptTip,
             receiptInvolved: input.receiptInvolved,
             receiptAssignments: input.receiptAssignments,
-            splitTab: input.splitTab,
           }),
         },
       },
@@ -170,7 +167,6 @@ export async function editExpense(
     receiptTip: merged.receiptTip,
     receiptInvolved: merged.receiptInvolved,
     receiptAssignments: merged.receiptAssignments,
-    splitTab: merged.splitTab,
   });
 
   // A save that moved nothing is a revision saying nothing happened.

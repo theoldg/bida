@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  formatRate, fromReceipt, isCurrencyCode, minorToDecimalString,
+  formatRate, isCurrencyCode, minorToDecimalString,
   type RateSource,
 } from "@hajsik/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
@@ -214,13 +214,12 @@ function EditEntryScreen() {
           description: e.description,
           paidBy: e.paidBy,
           payers: e.payers ?? null,
-          // A receipt expense stores the grid's own arithmetic as `shares`,
-          // and seeding the tabs from it put those weights under As parts —
-          // a screen the scan never touched. Its tabs start where a fresh
-          // entry's do (`blankDraft` above): even, over everyone. The bill
-          // itself is reopened from the receipt fields below, and Receipt
-          // recomputes its split from them (ADR-0016).
-          ...(fromReceipt(e) ? {} : { splits: withSplit({}, e.split) }),
+          // A receipt's weights are the bill's, so they are not handed to the
+          // arithmetic tabs: those start where a fresh entry's do (`blankDraft`
+          // above), even over everyone. The bill itself is reopened from the
+          // receipt fields below, and Receipt recomputes its split from them
+          // (ADR-0016).
+          ...(e.split.mode === "receipt" ? {} : { splits: withSplit({}, e.split) }),
           fromMember: me,
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
@@ -229,9 +228,10 @@ function EditEntryScreen() {
           receiptTip: e.receiptTip ?? null,
           receiptInvolved: e.receiptInvolved ?? null,
           receiptAssignments: e.receiptAssignments ?? null,
-          // A percent split has no tab of its own, so it is left without one:
-          // `legacyPercent` draws it, and the first tap converts it away.
-          splitTab: e.splitTab ?? (e.split.mode === "percent" ? undefined : e.split.mode),
+          // The tab *is* the mode — a receipt included. The exception is a
+          // percent split, which has no tab of its own: `legacyPercent` draws
+          // it, and the first tap converts it away.
+          splitTab: e.split.mode === "percent" ? undefined : e.split.mode,
         }, seedKey);
         return;
       }
@@ -460,9 +460,6 @@ function EditEntryScreen() {
           receiptTip: canScan ? draft.receiptTip ?? null : null,
           receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
           receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
-          // The tab is a claim about the split beside it, so a legacy percent
-          // one — which no tab can hold — makes no claim (ADR-0016).
-          splitTab: canScan && effectiveSplit.mode !== "percent" ? activeTab : null,
         };
         if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
         // Written under the id the form has been quoting its split with, so

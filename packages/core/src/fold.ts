@@ -1,5 +1,6 @@
 import { compareHlc, maxHlc, type Hlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
+import { upgradeReceiptSplit } from "./split.js";
 import {
   emptyGroupState,
   type Attachment, type Expense, type Group, type GroupState,
@@ -34,6 +35,9 @@ type Bag = Record<string, unknown>;
  *
  * Exported because history folds the same log and must fold it the same way; a
  * second copy of these rules is a second answer to what the log means.
+ *
+ * It is also where an op written in an older shape is brought up to date, for
+ * the same reason: one answer, read by the fold and the history alike.
  */
 export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(patch)) {
@@ -41,6 +45,7 @@ export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
     if (WRITE_ONCE_FIELDS.has(key) && target[key] !== undefined && target[key] !== null) continue;
     target[key] = value;
   }
+  upgradeReceiptSplit(target);
 }
 
 function bucketFor(state: GroupState, entity: Op["entity"]): Record<Id, Bag> | null {

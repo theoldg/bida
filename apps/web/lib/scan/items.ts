@@ -1,4 +1,4 @@
-import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitTab } from "@hajsik/core";
+import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitMode } from "@hajsik/core";
 
 /** A line of the bill, and how much of it was one person's. */
 export interface MemberLine {
@@ -164,8 +164,8 @@ export function receiptTotalMinor(
  * arithmetic tabs never snaps a hand-typed amount back to what the bill says.
  */
 export function handOffReceiptTotal(
-  from: SplitTab,
-  to: SplitTab,
+  from: SplitMode,
+  to: SplitMode,
   items: { amount: string }[] | null | undefined,
   tip: string | null | undefined,
   currency: string,

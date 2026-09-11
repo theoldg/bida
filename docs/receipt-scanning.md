@@ -88,7 +88,8 @@ It reads. It doesn't compute.
 
 `normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
 reached right after a scan that found lines, or via "Edit who-had-what" later —
-building the grid that reduces to an ordinary `shares` split
+building the grid that becomes a `receipt` split — its own mode, which is why
+no screen has to ask a second field whether a split came off a bill
 ([ADR-0016](decisions/0016-receipts.md)). The screen is three bands rather than
 a scrolling page: who was there in one sideways-scrolling line above, running
 per-person totals stacked below, and the grid between them owning the vertical
@@ -236,12 +237,13 @@ way to reach the who-had-what grid outside a real scan —
   one after the other. The wrapper takes the rows and names the seed itself, so
   a caller cannot get it wrong, and `pnpm rules` fails on a screen that reaches
   past it.
-- **If a UI mode needs to stick, persist it; never re-derive it from data that
-  outlives the choice.** `receiptItems` stays on the expense forever, so a
-  derived `splitTab` kept saying "Receipt" after the person switched away and
-  saved. Its flip side: a finished grid writes an ordinary `shares` spec, so
-  every screen naming a split has to ask `fromReceipt` — the ledger row was the
-  last one reading `split.mode` raw, and called a scanned bill "as parts".
+- **Two things that mean different things to a person are two things in the
+  code, however alike their arithmetic.** A receipt split was a `shares` spec
+  with a flag beside it, and every screen naming a split had to read both: the
+  ledger row called a scanned bill "as parts", the log counted its weights as
+  parts ("Teo ×3943 parts"), and the flag kept saying "Receipt" over a split
+  somebody had switched back to Evenly. `receipt` is a `SplitMode` now and the
+  flag is gone — upgraded on the way out of the op log (`upgradeReceiptSplit`).
 - **A model field that reaches `formatMinor` is a crash waiting to happen.**
   `Intl.NumberFormat` throws on anything but three ASCII letters, the form
   formats on every render, and there is no error boundary — one "€" in the

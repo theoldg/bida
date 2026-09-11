@@ -3,29 +3,24 @@
 import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, newId, parseMinor,
-  type ReceiptItem, type SplitMode, type SplitSpec, type SplitTab,
+  type ArithmeticMode, type ArithmeticSplit, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@hajsik/core";
 import type { EntryKind } from "./entry-kind";
 import { receiptTotalMinor, weightsFromItems } from "./scan/items";
 
 /**
- * The entry being typed — an expense, an income or a transfer. It lives outside
- * React because several screens share it: the form, the payers editor and the
- * who-had-what grid are separate routes, and bouncing between them must not
- * lose what you've entered. In memory only: a half-typed entry is not a fact
- * about the world yet, so it never reaches the op log other devices read, and
- * it is not persisted either — a draft that outlives the screen is a draft you
- * get handed back without asking. Leaving the screen throws it away, after a
- * warning (`isDraftDirty`).
+ * Which of the split editor's four tabs is showing.
  *
- * One draft covers all three kinds so that changing your mind halfway keeps
- * what you already typed: the amount, the date and the words survive a tap on
- * the segmented control, because the fields they live in are the same fields
- * (ADR-0010). The ones only a transfer uses (`fromMember`, `toMember`) and the
- * ones only an expense or income uses (`splits`, `payers`, the receipt) simply
- * sit unread while the other kind is showing.
+ * A tab *is* a `SplitMode` — including Receipt, which is a mode of its own and
+ * not a `shares` split wearing a flag (ADR-0016) — minus the one mode with no
+ * tab: `percent` was dropped from the UI and only survives so entries already
+ * recorded that way keep rendering (ADR-0010).
+ *
+ * It lives here, on the draft, and never on a saved entry: which tab somebody
+ * had open is a fact about a screen, and the entry's own mode is what every
+ * screen reads back.
  */
-export type { SplitTab };
+export type SplitTab = Exclude<SplitMode, "percent">;
 
 /** Every tab but Receipt, which derives its split from the bill instead. */
 export type ArithmeticTab = Exclude<SplitTab, "receipt">;
@@ -45,8 +40,25 @@ export type ArithmeticTab = Exclude<SplitTab, "receipt">;
  * sharing. `percent` is only ever read: it is what a legacy split arrives as,
  * and touching any tab converts it away for good (ADR-0010).
  */
-export type SplitInputs = { [M in SplitMode]?: Extract<SplitSpec, { mode: M }> };
+export type SplitInputs = { [M in ArithmeticMode]?: Extract<SplitSpec, { mode: M }> };
 
+/**
+ * The entry being typed — an expense, an income or a transfer. It lives outside
+ * React because several screens share it: the form, the payers editor and the
+ * who-had-what grid are separate routes, and bouncing between them must not
+ * lose what you've entered. In memory only: a half-typed entry is not a fact
+ * about the world yet, so it never reaches the op log other devices read, and
+ * it is not persisted either — a draft that outlives the screen is a draft you
+ * get handed back without asking. Leaving the screen throws it away, after a
+ * warning (`isDraftDirty`).
+ *
+ * One draft covers all three kinds so that changing your mind halfway keeps
+ * what you already typed: the amount, the date and the words survive a tap on
+ * the segmented control, because the fields they live in are the same fields
+ * (ADR-0010). The ones only a transfer uses (`fromMember`, `toMember`) and the
+ * ones only an expense or income uses (`splits`, `payers`, the receipt) simply
+ * sit unread while the other kind is showing.
+ */
 export interface EntryDraft {
   /** Which of the three this is. The form's segmented control writes it. */
   kind: EntryKind;
@@ -158,8 +170,14 @@ function emptySplit(tab: ArithmeticTab): SplitSpec {
   }
 }
 
-/** The same inputs with one tab's spec replaced. */
-export function withSplit(splits: SplitInputs, spec: SplitSpec): SplitInputs {
+/**
+ * The same inputs with one tab's spec replaced.
+ *
+ * A receipt split is not one of them and cannot be typed here: its weights are
+ * the bill's, and handing them to As parts is the scan talking on a screen it
+ * does not own (`openSplitTab`, ADR-0016).
+ */
+export function withSplit(splits: SplitInputs, spec: ArithmeticSplit): SplitInputs {
   switch (spec.mode) {
     case "equal": return { ...splits, equal: spec };
     case "shares": return { ...splits, shares: spec };
@@ -207,6 +225,9 @@ export function receiptWeights(
  * needs a rate (ADR-0016). Derived at read time beside `draftReceiptTotal`,
  * never written into the draft: the raw grid is the only record, and this is
  * the one place it is read as a split.
+ *
+ * It comes back as a `receipt` split, which is what it is — the mode says so,
+ * and no screen downstream has to work it out from a flag beside it.
  */
 export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
   const showing = draft.kind === "expense"
@@ -218,7 +239,7 @@ export function draftReceiptSplit(draft: EntryDraft): SplitSpec | null {
     (draft.receiptAssignments ?? []).map((row) => new Set(row)),
     new Set(draft.receiptInvolved ?? []),
   );
-  return Object.keys(weights).length > 0 ? { mode: "shares", weights } : null;
+  return Object.keys(weights).length > 0 ? { mode: "receipt", weights } : null;
 }
 
 /**

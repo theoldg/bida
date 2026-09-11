@@ -3,7 +3,16 @@ import type { Hlc } from "./hlc.js";
 
 export type Id = string;
 
-export type SplitMode = "equal" | "exact" | "shares" | "percent";
+export type SplitMode = "equal" | "exact" | "shares" | "percent" | "receipt";
+
+/**
+ * Every mode a person can *type*: the four that are somebody's arithmetic.
+ *
+ * `receipt` is the one that isn't — its weights are read off a scanned bill,
+ * never entered — so it is the one mode nothing converts into
+ * (`convertSplitMode`) and no editor tab writes.
+ */
+export type ArithmeticMode = Exclude<SplitMode, "receipt">;
 
 /**
  * Which way an entry moves money through the group.
@@ -23,16 +32,6 @@ export type SplitMode = "equal" | "exact" | "shares" | "percent";
  */
 export type ExpenseKind = "expense" | "income";
 
-/**
- * Which of the split editor's four tabs is showing, independent of
- * `SplitSpec["mode"]` — a finished who-had-what grid writes an ordinary
- * `shares` spec, but the tab should still read "Receipt", not "As parts".
- * Persisted on `Expense` (not just the local draft) so leaving Receipt mode
- * for one of the other three sticks after save; absent means "derive it from
- * the data" for expenses saved before this field existed.
- */
-export type SplitTab = "equal" | "shares" | "exact" | "receipt";
-
 export type SplitSpec =
   | { mode: "equal"; members: Id[] }
   /** Exact minor amounts in the expense's BASE currency. Must sum to the total. */
@@ -40,7 +39,25 @@ export type SplitSpec =
   /** Arbitrary positive weights. 2 shares to one person, 1 to another. */
   | { mode: "shares"; weights: Record<Id, number> }
   /** Basis points (10000 = 100%) so percentages stay integers. */
-  | { mode: "percent"; bps: Record<Id, number> };
+  | { mode: "percent"; bps: Record<Id, number> }
+  /**
+   * What a scanned bill says each person had, as weights: every line's
+   * amount divided among whoever was ticked for it, plus their share of the
+   * tip ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
+   *
+   * Weighted division is the same arithmetic `shares` does, and that is the
+   * whole of what they have in common: one is a bill read out, the other is
+   * parts somebody chose. They were the same mode once, distinguished by a
+   * second field, and every screen that had to ask that second field what a
+   * `shares` split *really* was got it wrong somewhere — the entry read "as
+   * parts", the history said "Teo ×3943 parts", leaving Receipt for As parts
+   * arrived with the bill's weights already typed in. A receipt is its own
+   * mode, and nothing has to ask.
+   */
+  | { mode: "receipt"; weights: Record<Id, number> };
+
+/** A split in one of those modes: whatever an editor tab can hold. */
+export type ArithmeticSplit = Extract<SplitSpec, { mode: ArithmeticMode }>;
 
 export interface Group {
   id: Id;
@@ -117,8 +134,6 @@ export interface Expense {
   receiptInvolved?: Id[] | null;
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
   receiptAssignments?: Id[][] | null;
-  /** Which split tab was showing, last time this expense was saved. See `SplitTab`. */
-  splitTab?: SplitTab | null;
   deletedAt?: number | null;
 }
 

@@ -158,7 +158,7 @@ describe("checkEntry", () => {
       expect(c.receiptLocksAmount).toBe(true);
       expect(c.amountMinor).toBe(4000);
       // Theo had the €30 steak, Marie the €10 coffee.
-      expect(c.effectiveSplit).toEqual({ mode: "shares", weights: { [THEO]: 3000, [MARIE]: 1000 } });
+      expect(c.effectiveSplit).toEqual({ mode: "receipt", weights: { [THEO]: 3000, [MARIE]: 1000 } });
     });
 
     it("reads its split off the bill, not off the tab it was opened over", () => {
@@ -173,7 +173,7 @@ describe("checkEntry", () => {
         receiptAssignments: [[THEO], [MARIE]],
       });
       const c = check(draft);
-      expect(c.receiptSplit).toEqual({ mode: "shares", weights: { [THEO]: 3000, [MARIE]: 1000 } });
+      expect(c.receiptSplit).toEqual({ mode: "receipt", weights: { [THEO]: 3000, [MARIE]: 1000 } });
       expect(c.effectiveSplit).toBe(c.receiptSplit);
       expect(draft.splits.shares).toEqual({ mode: "shares", weights: { [THEO]: 3, [MARIE]: 1 } });
     });

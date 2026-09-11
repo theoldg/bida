@@ -1,4 +1,4 @@
-import type { Id, SplitSpec, SplitTab } from "./types.js";
+import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
 
 /**
  * Splitting is the only genuinely tricky arithmetic in the app, and the one
@@ -77,7 +77,7 @@ export function splitParticipants(spec: SplitSpec): Id[] {
   const ids =
     spec.mode === "equal" ? spec.members
     : spec.mode === "exact" ? Object.keys(spec.amounts)
-    : spec.mode === "shares" ? Object.keys(spec.weights)
+    : spec.mode === "shares" || spec.mode === "receipt" ? Object.keys(spec.weights)
     : Object.keys(spec.bps);
   return [...new Set(ids)].sort();
 }
@@ -106,6 +106,7 @@ export function canonicalSplit(spec: SplitSpec): SplitSpec {
     case "shares": return { mode: "shares", weights: sortedKeys(spec.weights) };
     case "exact": return { mode: "exact", amounts: sortedKeys(spec.amounts) };
     case "percent": return { mode: "percent", bps: sortedKeys(spec.bps) };
+    case "receipt": return { mode: "receipt", weights: sortedKeys(spec.weights) };
   }
 }
 
@@ -116,7 +117,7 @@ function weightsOf(spec: SplitSpec, participants: Id[]): Map<Id, bigint> {
     let w: number;
     switch (spec.mode) {
       case "equal": w = 1; break;
-      case "shares": w = spec.weights[id] ?? 0; break;
+      case "shares": case "receipt": w = spec.weights[id] ?? 0; break;
       case "percent": w = spec.bps[id] ?? 0; break;
       case "exact": w = 0; break;
     }
@@ -297,14 +298,20 @@ export function shareOf(
   return resolveSplit(totalMinor, spec, options).shares[memberId] ?? 0;
 }
 
-/** Switching modes should keep everyone's current amounts, not reset them. */
+/**
+ * Switching modes should keep everyone's current amounts, not reset them.
+ *
+ * Only into a mode somebody types: a receipt's weights come from its bill and
+ * from nowhere else, so there is no such thing as converting *to* one
+ * (`ArithmeticMode`, ADR-0016).
+ */
 export function convertSplitMode(
   totalMinor: number,
   spec: SplitSpec,
-  mode: SplitSpec["mode"],
+  mode: ArithmeticMode,
   options: SplitOptions = {},
-): SplitSpec {
-  if (spec.mode === mode) return spec;
+): ArithmeticSplit {
+  if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
   // Nobody included is a state the editor lets you sit in — zero everyone's
   // parts and the tabs must still switch. `exact` and `percent` reach it
@@ -356,21 +363,26 @@ export function convertSplitMode(
 }
 
 /**
- * Is this split the outcome of a scanned bill?
+ * Bring an expense read off the op log up to the shape the app works in.
  *
- * **The items are what make it a receipt, not the tab.** `splitTab` says which
- * tab was open when the entry was saved, and opening Receipt without scanning
- * anything stores "receipt" over an ordinary even split — which the entry
- * screen then called "from receipt" while the row beside it said "split 2 ways".
- * An entry saved before `splitTab` existed has no tab to read, so a `shares`
- * spec beside a scanned bill is one. ADR-0016.
+ * A receipt split used to be written as `shares` beside a `splitTab: "receipt"`
+ * flag, and everything that wanted to know what it was looking at had to read
+ * both. That is over: a receipt is its own `SplitMode`, and this is the only
+ * code left that knows the old shape. It runs where ops become state
+ * (`applyPatch`), so every reader — the fold, the history — sees one shape and
+ * nobody asks a second field. ADR-0016.
+ *
+ * An entry written before the flag existed has no tab to read, so a `shares`
+ * split beside a scanned bill is one, which is what the flag was derived from
+ * anyway. Mutates in place: it is folding, and the bag is the fold's own.
  */
-export function fromReceipt(entry: {
-  split: SplitSpec;
-  splitTab?: SplitTab | null;
-  receiptItems?: readonly unknown[] | null;
-}): boolean {
-  if ((entry.receiptItems?.length ?? 0) === 0) return false;
-  return entry.splitTab === "receipt"
-    || (!entry.splitTab && entry.split.mode === "shares");
+export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
+  const spec = entity["split"] as SplitSpec | undefined;
+  const tab = entity["splitTab"];
+  if (tab !== undefined) delete entity["splitTab"];
+  if (spec?.mode !== "shares") return;
+  const items = entity["receiptItems"];
+  if (!Array.isArray(items) || items.length === 0) return;
+  if (tab !== undefined && tab !== null && tab !== "receipt") return;
+  entity["split"] = { mode: "receipt", weights: spec.weights };
 }

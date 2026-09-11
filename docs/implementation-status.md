@@ -132,6 +132,17 @@ reached this screen, so a €76.50 bill read €22.25 for one person and saved
 rows and names the seed itself; `pnpm rules` fails on anything reaching past it
 to `weightsFromItems`.
 
+**A receipt split is a mode, not a `shares` split wearing a flag.** `receipt`
+is a `SplitMode` of its own: the same weighted division As parts does, and
+nothing else in common with it. The flag it replaces (`splitTab` on the entry,
+read together with `split.mode` by every screen that named a split) is gone —
+ops already written in that shape are upgraded where they become state
+(`upgradeReceiptSplit` in `applyPatch`, so the fold and the history read one
+shape). It closed a class of bug rather than one: the ledger row calling a
+scanned bill "as parts", the log counting its weights as parts ("Teo ×3943
+parts"), a tab that kept claiming Receipt after somebody switched away
+([ADR-0016](decisions/0016-receipts.md)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

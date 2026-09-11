@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  fromReceipt, payerList, resolvePayers, shareOf, splitParticipants,
+  payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@hajsik/core";
 import { kindOf, myEffect } from "../../lib/entry-kind";
@@ -266,11 +266,6 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const mine = putIn !== 0 || involved;
   const participants = splitParticipants(expense.split).length;
   const foreign = expense.currency !== base;
-  // A finished grid writes a `shares` spec, so without this the row beside an
-  // entry the entry screen calls "from receipt" read "as parts" — a mode
-  // nobody chose. `fromReceipt` is the rule; every screen naming a split asks
-  // it (ADR-0016).
-  const isReceipt = fromReceipt(expense);
   const [asking, setAsking] = useState(false);
 
   const { onContextMenu, menu } = useLongPressMenu([
@@ -293,10 +288,12 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
               payers.length > 1 ? plural(payers.length - 1, copy.noun.other) : null,
               copy.entryKind.verb[kind])}
             {" · "}
-            {expense.split.mode === "equal" && !isReceipt
+            {/* Every mode names itself, receipts included: the split's own
+                mode is the whole of what this row asks (ADR-0016). */}
+            {expense.split.mode === "equal"
               ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
               : copy.group.splitAs(plural(participants, copy.noun.person),
-                isReceipt ? copy.entry.fromReceipt : copy.split.mode[expense.split.mode].toLowerCase())}
+                copy.split.mode[expense.split.mode].toLowerCase())}
           </div>
         </div>
         <div className="ramt">

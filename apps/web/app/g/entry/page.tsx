@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  fromReceipt, isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
+  isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
 } from "@hajsik/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
@@ -159,17 +159,11 @@ function ExpenseDetail({ expense, kind, group, data }: {
   try {
     shares = resolveSplit(expense.baseAmountMinor, expense.split, { tiebreakSeed: expense.id }).shares;
   } catch { /* a broken split still deserves a readable screen */ }
-  // A finished who-had-what grid writes an ordinary `shares` spec (see
-  // SplitTab in @hajsik/core) — without this it would read as "as parts",
-  // which isn't what anyone typed. The rule is `fromReceipt` in core: the
-  // history screen has to draw the same distinction, and this screen's copy
-  // of it was the only one.
-  const isReceipt = fromReceipt(expense);
   // A receipt expense keeps the grid it was built from (ADR-0016), so each
   // person's row can be opened onto their own copy of the bill. Read with the
   // entry's id as the seed — the same one the saved weights were rounded
   // with — so these lines are those weights, itemised, not a second opinion.
-  const bill = isReceipt && expense.receiptItems?.length
+  const bill = expense.split.mode === "receipt" && expense.receiptItems?.length
     ? receiptBreakdown(
       expense.receiptItems,
       (expense.receiptAssignments ?? []).map((row) => new Set(row)),
@@ -213,13 +207,15 @@ function ExpenseDetail({ expense, kind, group, data }: {
         <div className="hairline" />
         <Eyebrow style={{ marginBottom: 4 }}>
           {copy.entry.splitMode(copy.entryKind.split[kind],
-            isReceipt ? copy.entry.fromReceipt : copy.split.mode[expense.split.mode].toLowerCase())}
+            copy.split.mode[expense.split.mode].toLowerCase())}
         </Eyebrow>
         {data.members.map((m) => {
           const inIt = participants.includes(m.id);
-          const weight = expense.split.mode === "shares" ? expense.split.weights[m.id] ?? 0 : 0;
-          const detail = expense.split.mode === "shares" && !isReceipt && inIt
-            ? ` · ${plural(weight, copy.noun.part)}`
+          // Parts are somebody's own number and worth printing; a receipt's
+          // weights are the bill's arithmetic and are shown as the bill
+          // instead, line by line, under the row (`MemberBill`).
+          const detail = expense.split.mode === "shares" && inIt
+            ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
             : expense.split.mode === "percent" && inIt
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";

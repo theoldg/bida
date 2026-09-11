@@ -1,7 +1,6 @@
 import {
-  formatRate, fromReceipt, isValidRate, resolveSplit, splitParticipants,
+  formatRate, isValidRate, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
-  type SplitTab,
 } from "@hajsik/core";
 import { copy } from "./copy";
 import { dayLabel, money, plural } from "./format";
@@ -84,7 +83,7 @@ function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | n
   const weights: Record<Id, number> = {};
   for (const id of splitParticipants(spec)) {
     const w = spec.mode === "equal" ? 1
-      : spec.mode === "shares" ? spec.weights[id] ?? 0
+      : spec.mode === "shares" || spec.mode === "receipt" ? spec.weights[id] ?? 0
         : spec.mode === "exact" ? spec.amounts[id] ?? 0
           : spec.bps[id] ?? 0;
     // Exact amounts are money and the rest are counts, but as a *ratio* they
@@ -170,6 +169,11 @@ export function describe(
   const shareLine = (spec: SplitSpec | null | undefined): string => {
     if (!spec) return "";
     if (spec.mode === "equal") return copy.split.mode.equal;
+    // A receipt's weights are the bill divided up, in minor units — they are
+    // nobody's chosen number, and printed as parts they read "Teo ×3943
+    // parts". The line for a receipt is what it is; who had what changed is
+    // the sentence above it (`changedWhoHadWhat`).
+    if (spec.mode === "receipt") return copy.split.mode.receipt;
     return inNameOrder(spec).map(([id, name]) => {
       const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
         : spec.mode === "exact" ? money(spec.amounts[id] ?? 0, currency)
@@ -372,20 +376,16 @@ export function describe(
         line: { was: plural(before, copy.noun.photo), now: plural(after, copy.noun.photo) },
       });
     }
-    // The last resort, and only that: what the entry screen calls this split —
-    // its mode, or "Receipt" where a scanned bill is behind it. A mode swapped
-    // for one that means the same thing is noise beside a real change and is
-    // dropped above, but it is the whole of some saves — switching tab and
-    // saving — and those read as "edited this entry" with nothing under them.
+    // The last resort, and only that: what the entry screen calls this split,
+    // which is its mode and nothing else — a receipt is a mode (ADR-0016), so
+    // there is no second field to consult here. A mode swapped for one that
+    // means the same thing is noise beside a real change and is dropped above,
+    // but it is the whole of some saves — switching tab and saving — and those
+    // read as "edited this entry" with nothing under them.
     if (parts.length === 0) {
       const modeLabel = (state: State): string => {
         const spec = state["split"] as SplitSpec | null | undefined;
-        if (!spec?.mode) return "";
-        return fromReceipt({
-          split: spec,
-          splitTab: state["splitTab"] as SplitTab | null | undefined,
-          receiptItems: state["receiptItems"] as unknown[] | null | undefined,
-        }) ? copy.split.receipt : copy.split.mode[spec.mode] ?? "";
+        return spec?.mode ? copy.split.mode[spec.mode] ?? "" : "";
       };
       const wasMode = modeLabel(rev.before);
       const nowMode = modeLabel(rev.after);

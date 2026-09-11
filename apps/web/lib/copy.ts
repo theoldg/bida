@@ -260,7 +260,6 @@ export const copy = {
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
-    fromReceipt: "from receipt",
     notInvolved: "not involved",
     payerCount: (label: string, people: string) => `${label} · ${people}`,
     /** "Split · evenly" · "Shared with · from receipt". */
@@ -374,12 +373,18 @@ export const copy = {
   // ------------------------------------------------------------- the split
 
   split: {
+    /** What each mode is called wherever a split is named — the ledger row,
+        the entry, the history. A receipt is one of them (ADR-0016): no screen
+        has a second rule for spotting one. */
     mode: {
       equal: "Evenly",
       shares: "As parts",
       exact: "As amounts",
       percent: "By percent",
+      receipt: "From receipt",
     } as Record<SplitSpec["mode"], string>,
+    /** The tab's own label, where "From receipt" is a sentence too long for a
+        quarter of the width. */
     receipt: "Receipt",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,

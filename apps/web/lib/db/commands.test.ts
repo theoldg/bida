@@ -266,7 +266,7 @@ describe("commands", () => {
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
       "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
       "receiptAssignments", "receiptInvolved", "receiptItems", "receiptTip",
-      "split", "splitTab",
+      "split",
     ]);
     // Lifecycle and identity never: a stale content save must not re-tombstone
     // what a healer just put back, or move the field list order breaks ties on.
@@ -298,7 +298,6 @@ describe("commands", () => {
         receiptTip: e.receiptTip ?? null,
         receiptInvolved: e.receiptInvolved ?? null,
         receiptAssignments: e.receiptAssignments ?? null,
-        splitTab: e.splitTab ?? null,
       };
     }
 

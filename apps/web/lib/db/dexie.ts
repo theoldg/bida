@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import { upgradeReceiptSplit } from "@hajsik/core";
 import type {
   Attachment,
   ExchangeRate,
@@ -149,6 +150,17 @@ export class HajsikDb extends Dexie {
     // refills this one from the `identity` ops that are the real record.
     this.version(5).stores({ identities: null });
     this.version(6).stores({ identities: "[groupId+id], groupId" });
+    // v7 brings stored expenses to the shape the fold now produces: a receipt
+    // split is its own `SplitMode` rather than `shares` beside a `splitTab`
+    // flag (ADR-0016). No table changes — these rows are a cache of the op
+    // log, and this is the same upgrade the fold applies to the ops behind
+    // them. Done here rather than left to `rebuild()`, which only runs when a
+    // pull brings ops: a phone that syncs nothing new would have gone on
+    // calling its own scanned bills "as parts".
+    this.version(7).upgrade(async (tx) => {
+      await tx.table("expenses").toCollection()
+        .modify((expense: Record<string, unknown>) => upgradeReceiptSplit(expense));
+    });
   }
 }
 

@@ -101,7 +101,7 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
       receiptInvolved: [A, B],
       receiptAssignments: [[A], [B]],
     });
-    expect(activeSplit(d)).toEqual({ mode: "shares", weights: { [A]: 6000, [B]: 3000 } });
+    expect(activeSplit(d)).toEqual({ mode: "receipt", weights: { [A]: 6000, [B]: 3000 } });
     expect(open(d, "exact").splits.exact)
       .toEqual({ mode: "exact", amounts: { [A]: 3000, [B]: 3000, [C]: 3000 } });
     expect(open(d, "shares").splits.shares)
@@ -119,7 +119,7 @@ describe("Receipt is a fourth answer, not a fourth way of writing one", () => {
     });
     const after = open(d, "shares");
     expect(activeSplit({ ...after, splitTab: "receipt" }))
-      .toEqual({ mode: "shares", weights: { [A]: 6000, [B]: 3000 } });
+      .toEqual({ mode: "receipt", weights: { [A]: 6000, [B]: 3000 } });
   });
 
   it("is where a draft with a bill and no chosen tab starts", () => {
@@ -229,7 +229,7 @@ describe("a scanned bill prices the same on both screens", () => {
     // The grid holds its rows in component state until Done; the form reads
     // them off the draft. Same bill, so the same figures, to the minor unit.
     const onTheGrid = receiptWeights(d, BILL, HAD.map((row) => new Set(row)), new Set(MEMBERS));
-    expect(draftReceiptSplit(d)).toEqual({ mode: "shares", weights: onTheGrid });
+    expect(draftReceiptSplit(d)).toEqual({ mode: "receipt", weights: onTheGrid });
   });
 
   it("hands the leftover cents out by the entry's own id", () => {

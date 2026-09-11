@@ -68,23 +68,23 @@ Expense {
   paidBy,             // memberId — the payer, or the largest co-sponsor
   payers?,            // memberId -> minor units in THIS expense's currency,
                       // summing to amountMinor. Absent = one payer (ADR-0010)
-  split: { mode: 'equal' | 'exact' | 'shares' | 'percent', ... },
+  split: { mode: 'equal' | 'exact' | 'shares' | 'percent' | 'receipt', ... },
   attachmentIds?,     // absent when there are none, which is every
                       // expense today: nothing appends an attachment op yet
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
-                      // the parsed bill behind `split`, kept so the
+                      // the parsed bill behind a `receipt` split, kept so the
                       // who-had-what grid can reopen (ADR-0016)
-  splitTab?,          // 'equal'|'shares'|'exact'|'receipt' — which split
-                      // editor tab was showing, so it survives save (ADR-0016)
   deletedAt?
 }
 ```
 
 Split payloads: `equal { members[] }`, `exact { amounts }`, `shares { weights }`,
-`percent { bps }` (basis points). **`percent` is legacy and read-only**
-([ADR-0010](decisions/0010-what-an-entry-is.md)).
-What a person calls each mode is `SPLIT_MODE_LABEL` in `apps/web/lib/format.ts`
-and nowhere else.
+`percent { bps }` (basis points), `receipt { weights }`. **`percent` is legacy
+and read-only** ([ADR-0010](decisions/0010-what-an-entry-is.md)); **`receipt` is
+the only mode nobody types** — a scanned bill writes it and `convertSplitMode`
+never converts into it ([ADR-0016](decisions/0016-receipts.md)).
+What a person calls each mode is `copy.split.mode` in `apps/web/lib/copy.ts`
+and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 
 - A member is a person, not an account, and is tombstoned rather than
   hard-deleted or the fold references nothing.

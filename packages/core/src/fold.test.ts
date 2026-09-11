@@ -158,7 +158,7 @@ describe("a create that leaves its defaults out", () => {
   const defaults = {
     categoryId: null, payers: null, attachmentIds: [], receiptItems: null,
     receiptTip: null, receiptInvolved: null, receiptAssignments: null,
-    splitTab: null, deletedAt: null,
+    deletedAt: null,
   };
   const folded = (patch: Record<string, unknown>) =>
     foldOps([op({ entityId: "e1", kind: "create", hlc: at(1), patch })])
@@ -195,9 +195,55 @@ describe("a create that leaves its defaults out", () => {
   it("still takes a later update that sets one of them", () => {
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: carried }),
-      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { splitTab: "receipt" } }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: { categoryId: "food" } }),
     ];
-    expect(foldOps(ops).expenses["e1"]?.splitTab).toBe("receipt");
+    expect(foldOps(ops).expenses["e1"]?.categoryId).toBe("food");
+  });
+});
+
+describe("an expense written in the old receipt shape", () => {
+  // Real ops in the log say `shares` with a `splitTab: "receipt"` beside them.
+  // Reading those two fields together was every screen's job and every
+  // screen's bug; the fold does it once, and hands out a `receipt` split.
+  const legacy = {
+    description: "Dinner",
+    occurredAt: 1,
+    amountMinor: 9000,
+    currency: "EUR",
+    rateToBase: "1",
+    baseAmountMinor: 9000,
+    paidBy: THEO,
+    split: { mode: "shares", weights: { a: 6000, b: 3000 } },
+    receiptItems: [{ label: "Steak", amount: "60.00" }, { label: "Coffee", amount: "30.00" }],
+    splitTab: "receipt",
+  };
+  const foldedExpense = (patch: Record<string, unknown>) =>
+    foldOps([op({ entityId: "e1", kind: "create", hlc: at(1), patch })])
+      .expenses["e1"] as unknown as Record<string, unknown>;
+
+  it("folds into a receipt split, with no flag left to read", () => {
+    const e = foldedExpense(legacy);
+    expect(e["split"]).toEqual({ mode: "receipt", weights: { a: 6000, b: 3000 } });
+    expect("splitTab" in e).toBe(false);
+  });
+
+  it("leaves parts somebody typed as parts", () => {
+    expect(foldedExpense({ ...legacy, splitTab: "shares" })["split"])
+      .toEqual({ mode: "shares", weights: { a: 6000, b: 3000 } });
+  });
+
+  // The flag was written by a later edit too, and the fold applies each op in
+  // turn: an entry whose last save left Receipt must not still read as one.
+  it("follows a later save that left the receipt behind", () => {
+    const ops = [
+      op({ entityId: "e1", kind: "create", hlc: at(1), patch: legacy }),
+      op({ entityId: "e1", kind: "update", hlc: at(2), patch: {
+        ...legacy, split: { mode: "equal", members: ["a", "b"] }, splitTab: "equal",
+      } }),
+    ];
+    const e = foldOps(ops).expenses["e1"] as unknown as Record<string, unknown>;
+    expect(e["split"]).toEqual({ mode: "equal", members: ["a", "b"] });
+    expect("splitTab" in e).toBe(false);
   });
 });
 
