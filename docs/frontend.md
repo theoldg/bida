@@ -18,7 +18,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
-| `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; History, Rates, People and the invite link are top-bar icons |
+| `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
@@ -137,9 +137,8 @@ confers nothing without the secret.
   before `router.replace` did both went through, recording a transfer twice for
   twice the money. Every other button in the app that writes already held one.
   `pnpm entries` presses Save twice.
-- **The invite link is `components/invite.tsx`**, written once for the two top
-  bars that carry it and the groups list's row menu, which offers it without a
-  top bar of its own. `navigator.clipboard.writeText` rejects on an insecure
+- **The invite link is `components/invite.tsx`**, written once for the People
+  screen's top bar, the groups list's row menu and the group's own menu. `navigator.clipboard.writeText` rejects on an insecure
   context or a denied permission, and used to reject into nothing — an
   inert-looking button, and the link shown nowhere else. A refusal puts the
   link on screen to be read (`InviteFallback`,
@@ -359,8 +358,8 @@ figure-free.
   slides out from under the frozen row.
 - **Only a real `<dialog>` gets focus for free.** `Dialog` calls `showModal()`,
   so the platform moves the caret in, keeps Tab inside and makes the screen
-  behind inert. `RowMenu` is a card anchored to the row it was opened from and
-  cannot be one, so it does that by hand: it focuses its first item once it
+  behind inert. `RowMenu` is a card anchored to the row — or the button
+  (`MenuButton`) — it was opened from and cannot be one, so it does that by hand: it focuses its first item once it
   has been positioned — a `visibility: hidden` element cannot take focus, and
   `preventScroll`, because a scroll is what closes it — and hands focus back to
   the row on the way out. Without that the long-press menu opened with the

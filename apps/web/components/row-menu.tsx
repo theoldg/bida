@@ -108,3 +108,25 @@ export function RowMenu({ anchor, actions, onClose }: {
     </>
   );
 }
+
+/**
+ * The same card, opened by a tap on an icon button instead of by a long press
+ * on a row — what a top bar uses when its actions outgrow the space for them.
+ * `RowMenu` hangs off the button's own rectangle, so the card lands under the
+ * control that opened it and its right edge lines up with the screen's.
+ */
+export function MenuButton({ icon, label, actions }: {
+  icon: IconName; label: string; actions: SheetAction[];
+}) {
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  return (
+    <>
+      <button type="button" className="iconbtn" aria-label={label} aria-haspopup="menu"
+        aria-expanded={anchor ? true : undefined}
+        onClick={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}>
+        <Icon name={icon} size={18} />
+      </button>
+      {anchor ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} /> : null}
+    </>
+  );
+}

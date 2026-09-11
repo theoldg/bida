@@ -6,7 +6,7 @@
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "sync" | "trash" | "edit" | "link"
-  | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx";
+  | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -96,6 +96,13 @@ export function IconSprite() {
         <symbol id="i-fx" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
           <path d="M3.5 8.5h15M14.5 4.5l4 4-4 4" />
           <path d="M20.5 15.5h-15M9.5 11.5l-4 4 4 4" />
+        </symbol>
+        {/* The group's own actions, which outgrew the top bar: four icons in a
+            row read as four unrelated guesses, one dot column reads as "there
+            is a menu here". */}
+        <symbol id="i-more" viewBox="0 0 24 24" {...S} strokeWidth="0" fill="currentColor">
+          <circle cx="12" cy="5.2" r="1.85" /><circle cx="12" cy="12" r="1.85" />
+          <circle cx="12" cy="18.8" r="1.85" />
         </symbol>
       </defs>
     </svg>

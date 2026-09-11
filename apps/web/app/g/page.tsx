@@ -13,7 +13,7 @@ import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
-import { InviteButton } from "../../components/invite";
+import { GroupMenu } from "../../components/group-menu";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -111,18 +111,10 @@ function GroupScreen() {
         <TopBar
           title={group.name}
           back={route.groups()}
-          right={<>
-            <Link className="iconbtn" href={route.history(group.id)} aria-label={copy.group.history}>
-              <Icon name="clock" size={18} />
-            </Link>
-            <Link className="iconbtn" href={route.rates(group.id)} aria-label={copy.rates.title}>
-              <Icon name="fx" size={18} />
-            </Link>
-            <Link className="iconbtn" href={route.members(group.id)} aria-label={copy.group.people}>
-              <Icon name="users" size={18} />
-            </Link>
-            <InviteButton groupId={groupId} />
-          </>}
+          /* One button, not the four icons this bar used to carry: the group's
+             own actions are a menu (components/group-menu.tsx), which leaves
+             the bar to the group's name. */
+          right={<GroupMenu groupId={group.id} claimed={data.me !== undefined} />}
         />
 
         {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}

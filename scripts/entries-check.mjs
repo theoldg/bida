@@ -235,7 +235,9 @@ const cabBefore = await page.locator("a.row").filter({ hasText: "Cab" })
   .locator(".ramt .big").innerText();
 report(cabBefore.includes("80"), "and banks it in the group's currency");
 
-await page.getByRole("link", { name: "Rates" }).click();
+// Rates is in the group's top-bar menu now, not an icon of its own.
+await page.locator(".topbar .iconbtn[aria-label='Group menu']").click();
+await page.getByRole("menuitem", { name: "Rates" }).click();
 await page.waitForURL(/\/g\/rates/);
 await page.waitForSelector(".rows button.row");
 report((await page.locator(".rows").first().innerText()).includes("USD"),

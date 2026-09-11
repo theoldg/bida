@@ -185,6 +185,8 @@ export const copy = {
     history: "History",
     people: "People",
     copyLink: "Copy invite link",
+    /** The top bar's one button: everything the group can be asked for. */
+    menu: "Group menu",
     /** The clipboard can refuse — an insecure context, a denied permission —
         and the link is shown nowhere else, so it is shown here. */
     linkTitle: "The invite link",

@@ -152,7 +152,9 @@ a single reason line beside the payer field rather than one per branch.
    press, no zoom.** `user-select: none` on `body`, `.selectable` to opt back
    in; `NoLongPress` swallows the touch context menu, except on a row that
    opts into the app's own small `RowMenu` instead — the same event a real
-   right-click sends (`components/long-press.tsx`, `components/row-menu.tsx`).
+   right-click sends (`components/long-press.tsx`, `components/row-menu.tsx`). A top bar
+   whose actions outgrow it opens that same card from a button instead
+   (`MenuButton`), so the app has one menu and not two.
    Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
