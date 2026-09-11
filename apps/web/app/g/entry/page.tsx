@@ -127,7 +127,7 @@ function EntryScreen() {
             : <TransferDetail settlement={settlement!} data={data} />}
 
           <div className="pad" style={{ paddingTop: 4 }}>
-            <Link href={route.editEntry(groupId, entry.id)} className="btn btn-s">{copy.act.edit}</Link>
+            <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
           </div>
           <div style={{ height: 24 }} />
         </Scroll>

@@ -9,7 +9,7 @@ import { ConfirmDialog } from "../../../../components/dialog";
 import { Icon } from "../../../../components/icons";
 import { copy } from "../../../../lib/copy";
 import { bare, distinctInitials, money } from "../../../../lib/format";
-import { route } from "../../../../lib/group-link";
+import { parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../../lib/hooks";
 import { receiptWeights, saveDraft, useDraft, type EntryDraft } from "../../../../lib/draft";
 import {
@@ -31,6 +31,10 @@ function ItemsScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
+  // Held, not read: this screen is a detour off the entry form, and the form's
+  // `via` has to survive it or saving lands somewhere else than it would have
+  // (lib/group-link.ts).
+  const via = parseEntrySource(params.get("via"));
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
@@ -84,7 +88,8 @@ function ItemsScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.items.title}
-          back={draft.entryId ? route.editEntry(groupId, draft.entryId) : route.addEntry(groupId)} />
+          back={draft.entryId ? route.editEntry(groupId, draft.entryId, via)
+            : route.addEntry(groupId, draft.kind, via)} />
         <Empty title={copy.items.none.title}>{copy.items.none.body}</Empty>
       </Body></Screen>
     );

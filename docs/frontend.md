@@ -19,8 +19,8 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 |---|---|
 | `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
-| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
-| `/g/entry/edit?id=[&e=][&kind=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled |
+| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
+| `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=][&via=]` | Version history, whole-group or per-entry. Per-entry carries the entry's own `via` so the chain back stays exact |
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog — which only ever edits the number, since deleting a rate is on the row's long-press menu, as it is for an entry. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
@@ -54,9 +54,12 @@ needs no help here, because with only descending pushing the browser's own back
 is a screen that would lose typed work: it answers *may I leave?* before
 anything is cancelled, and a no cancels the press with the dialog as the whole
 of the answer — nothing navigates in its place. An
-entry is the one screen whose parent isn't fixed: the history feed and the two
-"can't remove this yet" lists link in from beside it, so they pass `via=` and
-`entryParent` (`lib/group-link.ts`) sends back there instead of to the group. A
+entry is the one screen whose parent isn't fixed: the history feed, the two
+"can't remove this yet" lists and the balances tab's settle-up rows link in from
+beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back
+there instead of to the group. The entry form carries the same `via` — through
+who-had-what and back — so **saving** unwinds to wherever the form was opened
+from (`formParent`) rather than dropping everyone on the ledger. A
 `<Link>` to an ancestor or a sibling must `replace`; only descending pushes.
 
 **The group secret lives in the URL fragment**, which browsers never send to a

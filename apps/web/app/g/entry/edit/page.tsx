@@ -24,8 +24,9 @@ import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind"
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
-import { route } from "../../../../lib/group-link";
+import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
+import { goUp } from "../../../../lib/nav";
 import {
   normalizeScan, scanReceipt, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError,
@@ -80,6 +81,11 @@ function EditEntryScreen() {
   const groupId = params.get("id") ?? undefined;
   const entryId = params.get("e") ?? undefined;
   const wantedKind = params.get("kind") as EntryKind | null;
+  // Which screen sent us here, when it wasn't the ledger's "+" — the balances
+  // tab's settle-up row, or an entry reached from the history feed or a
+  // "can't remove this yet" list. Saving goes back there (lib/group-link.ts).
+  const via = parseEntrySource(params.get("via"));
+  const saveTo = groupId ? formParent(groupId, entryId, via) : "/";
   // Settle-up hands a transfer its two sides, its amount in base units, and
   // its note — so a blank "+" is the only way to reach a transfer untitled.
   const prefill = {
@@ -178,7 +184,7 @@ function EditEntryScreen() {
       setScanState("idle");
       const toItems = receiptItems.length > 0 && onScreen.current;
       if (wantsRate !== null) setItemsAfterRate(toItems);
-      else if (toItems) router.push(route.items(groupId));
+      else if (toItems) router.push(route.items(groupId, via));
     } catch (err) {
       setScanState("error");
       setScanError(scanErrorText(err));
@@ -473,7 +479,9 @@ function EditEntryScreen() {
         else await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
       }
       clearDraft(groupId);
-      router.replace(route.group(groupId));
+      // `goUp`, not a replace: the screen we are going back to is already
+      // behind us, and replacing would leave it on the stack twice.
+      goUp(saveTo, (to) => router.replace(to));
     } catch (err) {
       setSaving(false);
       setFailed(errorText(err));
@@ -655,7 +663,7 @@ function EditEntryScreen() {
                   blocker: receiptBlocker,
                   onScanCamera: () => cameraInput.current?.click(),
                   onScanLibrary: () => libraryInput.current?.click(),
-                  editItemsHref: route.items(groupId),
+                  editItemsHref: route.items(groupId, via),
                 } : null}
               />
             )}
@@ -730,7 +738,7 @@ function EditEntryScreen() {
           onClose={() => {
             setAskRate(null);
             // The grid the scan was on its way to, held back until now.
-            if (itemsAfterRate) { setItemsAfterRate(false); router.push(route.items(groupId)); }
+            if (itemsAfterRate) { setItemsAfterRate(false); router.push(route.items(groupId, via)); }
           }}
         />
       ) : null}

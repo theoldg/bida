@@ -36,14 +36,23 @@ expenses you'd looked at rather than climbing out.
   replaces the current entry. The two tabs `replace`, being halves of one
   screen; `router.back()` stays where "back" is the truth — payers,
   who-had-what and the entry form are only reached from below.
-- **An entry's parent is whoever linked to it.** Three screens link in from
-  *beside* an entry rather than above it — the history feed, and the two "can't
-  remove this yet" lists on People and Rates — and climbing to the group from
+- **An entry's parent is whoever linked to it.** Four screens link in from
+  *beside* an entry rather than above it — the history feed, the two "can't
+  remove this yet" lists on People and Rates, and the balances tab, whose
+  settle-up rows open a pre-filled transfer — and climbing to the group from
   there threw away the list you were working through. So those links name
-  themselves (`via=history|members|rates`, `lib/group-link.ts`) and the entry
-  unwinds to the list; from the ledger, with no `via`, the parent is the group
-  as before. In the URL, not in memory, because a screen is a route: a reload
-  must not move where back goes.
+  themselves (`via=history|members|rates|balances`, `lib/group-link.ts`) and the
+  entry unwinds to the list; from the ledger, with no `via`, the parent is the
+  group as before. In the URL, not in memory, because a screen is a route: a
+  reload must not move where back goes.
+- **Saving goes where the arrow would have.** The entry form is reached from
+  below, so its arrow is a plain back — but **Save** had one fixed destination,
+  the ledger, and that is the same lost list by another route: settling up
+  landed you on the ledger rather than the balances you were clearing, and
+  fixing an entry you had opened from the history feed lost the feed. The form
+  carries the entry's `via` (through who-had-what and back) and `formParent`
+  unwinds to it: the entry that was being edited, else whichever screen asked
+  for a new one.
 - **The device's back button agrees with the screen's arrow.** Unwinding alone
   left the two disagreeing wherever the arrow skipped a level, and on the entry
   form the arrow asked before throwing a typed draft away while the button just

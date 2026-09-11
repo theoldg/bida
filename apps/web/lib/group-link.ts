@@ -36,18 +36,19 @@ import type { EntryKind } from "./entry-kind";
 /**
  * Where an entry was opened from, when that wasn't the ledger.
  *
- * Three screens link *sideways* into an entry rather than down into it: the
- * history feed, and the two "can't remove this yet" dialogs, which list what is
- * still naming a person or a currency. Going up to the group from there threw
- * away the list you were working through, so the link says which screen it was
- * on and the entry unwinds to that instead (`entryParent`, ADR-0007).
+ * Four screens link *sideways* into an entry rather than down into it: the
+ * history feed, the two "can't remove this yet" dialogs, which list what is
+ * still naming a person or a currency, and the balances tab, whose settle-up
+ * rows open a pre-filled transfer. Going up to the group from there threw away
+ * the list you were working through, so the link says which screen it was on
+ * and the entry unwinds to that instead (`entryParent`, ADR-0007).
  *
  * It rides in the URL rather than in memory because a screen is a route: a
  * reload, or the app being killed in the background, must not change where back
  * goes. `via` and not `from` — `/g/entry/edit` already spends `from` on a
  * member id.
  */
-export type EntrySource = "history" | "members" | "rates";
+export type EntrySource = "history" | "members" | "rates" | "balances";
 
 /**
  * Internal routes. The app is a static export, so every screen is a real page
@@ -65,10 +66,12 @@ export const route = {
    * that is what "settle up" now links to, rather than a screen of its own
    * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)).
    */
-  addEntry: (groupId: string, kind?: EntryKind) =>
-    `/g/entry/edit?id=${encodeURIComponent(groupId)}${kind && kind !== "expense" ? `&kind=${kind}` : ""}`,
-  editEntry: (groupId: string, entryId: string) =>
-    `/g/entry/edit?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`,
+  addEntry: (groupId: string, kind?: EntryKind, via?: EntrySource) =>
+    `/g/entry/edit?id=${encodeURIComponent(groupId)}${kind && kind !== "expense" ? `&kind=${kind}` : ""}`
+    + (via ? `&via=${via}` : ""),
+  editEntry: (groupId: string, entryId: string, via?: EntrySource) =>
+    `/g/entry/edit?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`
+    + (via ? `&via=${via}` : ""),
   /**
    * One detail screen for all three: the id is looked up in both tables.
    * `via` is where the link was on — see `EntrySource`.
@@ -77,8 +80,13 @@ export const route = {
     `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId)}`
     + (via ? `&via=${via}` : ""),
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
-  /** Who-had-what: right after a scan finds line items, or "Edit who-had-what" later. */
-  items: (groupId: string) => `/g/entry/items?id=${encodeURIComponent(groupId)}`,
+  /**
+   * Who-had-what: right after a scan finds line items, or "Edit who-had-what"
+   * later. `via` is the form's own, held for the trip back — a detour through
+   * this screen must not be what decides where saving lands.
+   */
+  items: (groupId: string, via?: EntrySource) =>
+    `/g/entry/items?id=${encodeURIComponent(groupId)}` + (via ? `&via=${via}` : ""),
   /** `via` rides along on an entry's own history, so the chain back is exact. */
   history: (groupId: string, entryId?: string, via?: EntrySource) =>
     `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`
@@ -89,7 +97,7 @@ export const route = {
    * what to call it.
    */
   transferBetween: (groupId: string, from: string, to: string, amount: number, title: string) =>
-    `${route.addEntry(groupId, "transfer")}&from=${encodeURIComponent(from)}`
+    `${route.addEntry(groupId, "transfer", "balances")}&from=${encodeURIComponent(from)}`
     + `&to=${encodeURIComponent(to)}&amount=${amount}&title=${encodeURIComponent(title)}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /** The group's exchange-rate registry: one rate per currency it spends in. */
@@ -100,7 +108,8 @@ export const route = {
 
 /** The `via=` of a URL, or `undefined` for anything the app didn't write. */
 export function parseEntrySource(value: string | null | undefined): EntrySource | undefined {
-  return value === "history" || value === "members" || value === "rates" ? value : undefined;
+  return value === "history" || value === "members" || value === "rates" || value === "balances"
+    ? value : undefined;
 }
 
 /** The screen an entry's back arrow names: whoever linked to it, or the group. */
@@ -108,5 +117,23 @@ export function entryParent(groupId: string, via: EntrySource | undefined): stri
   return via === "history" ? route.history(groupId)
     : via === "members" ? route.members(groupId)
       : via === "rates" ? route.rates(groupId)
-        : route.group(groupId);
+        : via === "balances" ? route.group(groupId, "balances")
+          : route.group(groupId);
+}
+
+/**
+ * Where saving on the entry form lands: the screen the form was opened from.
+ *
+ * A save used to drop you on the ledger whatever you had been doing — settling
+ * up sent you to the ledger rather than back to the balances you were
+ * clearing, and correcting an entry you had reached from the history feed or a
+ * "can't remove this yet" list lost that list, which is the very thing `via`
+ * exists to keep (ADR-0007). Editing an existing entry returns to that entry,
+ * carrying its own `via` so its back arrow still climbs to whoever linked in;
+ * a new one returns to the screen that asked for it.
+ */
+export function formParent(
+  groupId: string, entryId: string | undefined, via: EntrySource | undefined,
+): string {
+  return entryId ? route.entry(groupId, entryId, via) : entryParent(groupId, via);
 }
