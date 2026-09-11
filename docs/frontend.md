@@ -373,8 +373,8 @@ itself** ([ADR-0005](decisions/0005-money-and-currency.md)).
 |---|---|---|
 | `AmountInput` | fields whose model is the typed text | `value` / `onChange(text)` |
 | `MinorAmountInput` | fields whose model is minor units | `valueMinor` / `onChangeMinor(n)` |
+| `GroupedInput` | the two above, and the rate field | `value` / `onChange(text)` / `sanitize` |
 | `sanitizeAmount(raw, currency)` | what may be typed | pure, tested |
-| `groupDigits(canonical)` | `"4800"` → `"4 800"` | pure, tested |
 
 A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
 separator — "," and "." both accepted — fraction clipped to the currency's
@@ -384,6 +384,13 @@ up hides the rest of the form before you have looked at it. `MinorAmountInput`
 holds typed text locally and re-reads the model only on outside change — don't
 go back to `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
 "12.".
+
+`GroupedInput` is the caret-and-grouping half on its own, and the rate dialog
+types into one: a rate is the other figure here with thousands in it, and it
+was the last field that didn't group them. What may be typed is its `sanitize`
+— `sanitizeRate` clips no decimals, `sanitizeAmount` clips to the currency's
+exponent. The grouping itself is `groupDigits` in `lib/format.ts`, with
+`rateText` for the rates we *print*; both are pure and tested.
 
 The other place with real logic is the **balance bar** (around a centre axis,
 debit left, credit right), drawn inline on `/g`'s Balances tab. Everything else

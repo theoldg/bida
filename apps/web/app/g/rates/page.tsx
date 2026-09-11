@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { formatRate, isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
+import { isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
@@ -14,7 +14,7 @@ import { copy } from "../../../lib/copy";
 import {
   COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
 } from "../../../lib/currencies";
-import { money, plural } from "../../../lib/format";
+import { money, plural, rateText } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../lib/hooks";
 
@@ -157,7 +157,7 @@ function RatesScreen() {
               note: c === base ? copy.currency.isBase
                 : currencies.find((u) => u.currency === c)?.rate
                   ? copy.currency.hasRate(
-                    `${formatRate(currencies.find((u) => u.currency === c)!.rate!.rate)} ${base}`)
+                    `${rateText(currencies.find((u) => u.currency === c)!.rate!.rate)} ${base}`)
                   : undefined,
             })),
             { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
@@ -239,7 +239,7 @@ function RateRow({ row, base, onOpen, onDelete }: {
               one of theirs is this much of ours. */}
           <div className="ratecell">
             {row.rate
-              ? copy.currency.hasRate(`${formatRate(row.rate.rate)} ${base}`)
+              ? copy.currency.hasRate(`${rateText(row.rate.rate)} ${base}`)
               : copy.currency.noRate}
           </div>
           <div className="rmeta">{row.rate ? "" : copy.rates.unset}</div>

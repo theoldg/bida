@@ -6,6 +6,7 @@ import {
   RATE_DIGITS, RATE_SHOWN_DIGITS, type Rate, type RateSource,
 } from "@bida/core";
 import { Dialog } from "./dialog";
+import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
 import { fetchRate, RateOfflineError } from "../lib/rates";
 import { plural } from "../lib/format";
@@ -127,9 +128,8 @@ export function RateDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on open
   }, []);
 
-  function type(value: string, side: "forward" | "inverse") {
+  function type(typed: string, side: "forward" | "inverse") {
     touched.current = true;
-    const typed = sanitizeRate(value);
     setPair(pairFrom(typed, side));
     setFrom({ kind: "typed", asOf: null });
   }
@@ -202,12 +202,14 @@ function RateSide({ code, unit, value, autofocus, onChange }: {
   return (
     <label className="rateside">
       <span className="ratelead">{copy.rates.oneOf(code)}</span>
-      <span className={`amountfield${value !== "" && !isValidRate(value) ? " bad" : ""}`}>
-        <input className="rateinput wide" value={value} inputMode="decimal"
-          aria-label={copy.form.rateLabel(code, unit)}
-          {...(autofocus ? { "data-autofocus": "" } : {})}
-          onChange={(e) => onChange(e.target.value)} />
-      </span>
+      {/* The same field as every amount in the app, with the rate's own idea
+          of what may be typed: unclipped decimals, and thousands grouped —
+          "1 EUR = 18 000 IDR" is a rate people really do type. */}
+      <GroupedInput className="rateinput wide" value={value} sanitize={sanitizeRate}
+        fieldClassName={value !== "" && !isValidRate(value) ? "bad" : undefined}
+        aria-label={copy.form.rateLabel(code, unit)}
+        {...(autofocus ? { "data-autofocus": "" } : {})}
+        onChange={onChange} />
       <span className="rateunit">{unit}</span>
     </label>
   );

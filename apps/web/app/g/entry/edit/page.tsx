@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  formatRate, isCurrencyCode, minorToDecimalString,
+  isCurrencyCode, minorToDecimalString,
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
@@ -24,7 +24,7 @@ import {
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
-import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
+import { dateInputValue, errorText, money, plural, rateText, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { goUp } from "../../../../lib/nav";
@@ -552,7 +552,7 @@ function EditEntryScreen() {
                   onClick={() => setAskRate(draft.currency)}>
                   = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} ={" "}
                   <span className={groupRate === undefined ? "bad" : undefined}>
-                    {groupRate === undefined ? copy.unknown : formatRate(groupRate)}
+                    {groupRate === undefined ? copy.unknown : rateText(groupRate)}
                   </span>{" "}
                   {base} <Icon name="chev" size={10} />
                 </button>

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { clipAmountToCurrency, groupDigits, sanitizeAmount } from "./amount-input";
+import { clipAmountToCurrency, sanitizeAmount } from "./amount-input";
 
 /**
- * The caret and the grouping are the whole point of this component, and both
- * are pure string arithmetic — so they get real tests rather than the smoke
- * test the rest of the UI gets.
+ * What may be typed is pure string arithmetic, so it gets real tests rather
+ * than the smoke test the rest of the UI gets. The grouping it displays is
+ * `groupDigits`, tested next to the rest of the formatting in `lib/format`.
  */
 describe("sanitizeAmount", () => {
   it("keeps digits, one separator, and the currency's fraction length", () => {
@@ -30,16 +30,6 @@ describe("sanitizeAmount", () => {
     expect(sanitizeAmount("007", "EUR")).toBe("7");
     expect(sanitizeAmount("0", "EUR")).toBe("0");
     expect(sanitizeAmount("0.5", "EUR")).toBe("0.5");
-  });
-});
-
-describe("groupDigits", () => {
-  it("groups the whole part and leaves the fraction alone", () => {
-    expect(groupDigits("4800")).toBe("4 800");
-    expect(groupDigits("1234567.89")).toBe("1 234 567.89");
-    expect(groupDigits("999")).toBe("999");
-    expect(groupDigits("12.")).toBe("12.");
-    expect(groupDigits("")).toBe("");
   });
 });
 

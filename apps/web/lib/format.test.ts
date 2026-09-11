@@ -1,6 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
-import { bare, countText, distinctInitials, initials, splitFooter } from "./format";
+import { bare, countText, distinctInitials, groupDigits, initials, rateText, splitFooter } from "./format";
+
+describe("groupDigits", () => {
+  it("groups the whole part and leaves the fraction alone", () => {
+    expect(groupDigits("4800")).toBe("4\u202f800");
+    expect(groupDigits("1234567.89")).toBe("1\u202f234\u202f567.89");
+    expect(groupDigits("999")).toBe("999");
+    expect(groupDigits("12.")).toBe("12.");
+    expect(groupDigits("")).toBe("");
+  });
+
+  it("never touches the fraction, however long a rate makes it", () => {
+    expect(groupDigits("0.0000555556")).toBe("0.0000555556");
+  });
+});
+
+describe("rateText", () => {
+  it("groups a rate the way the field you typed it into groups it", () => {
+    expect(rateText("13000")).toBe("13\u202f000");
+    expect(rateText("4.5")).toBe("4.5");
+  });
+
+  it("rounds to the asked-for digits first, then groups", () => {
+    expect(rateText("13000.123456789", 6)).toBe("13\u202f000.1");
+  });
+});
 
 describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {

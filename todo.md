@@ -61,11 +61,12 @@ dialog, and take "Receipt" out of the split's tab bar now `/g/scan` exists.
 
 ## Copy/text etc
 
-### Commas
-Every figure that goes through `money()`/`bare()` is Intl-grouped. What is left
-ungrouped is the text *inside* amount fields, which is deliberate —
-`parseMinor` cannot read "1,234.50" back. Close this, or decide the fields
-should group while not focused.
+### ~~Commas~~ — done 2026-09-11
+Amount fields have grouped with U+202F since 2026-08-28; the gap left was the
+*rate*, typed and printed as one digit string ("1 EUR = 13000 UZS"). The
+component's caret-and-grouping half is `GroupedInput` now, the rate field is
+one, and printed rates go through `rateText`. Nothing in the app shows an
+ungrouped figure.
 
 ### Subtitles
 Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)

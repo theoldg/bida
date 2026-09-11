@@ -1,4 +1,7 @@
-import { formatMinor, type CurrencyCode, type PayerValidation, type SplitValidation } from "@bida/core";
+import {
+  formatMinor, formatRate,
+  type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
+} from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
 
 /**
@@ -6,6 +9,38 @@ import { copy, type Noun, type Voice } from "./copy";
  * decides *which* of core's formats a given bit of chrome wants; the words
  * around the figures come from `lib/copy.ts`.
  */
+
+/**
+ * The mark between thousands, everywhere this app writes a figure itself
+ * rather than handing it to `Intl`: a narrow no-break space. A comma and a
+ * point are each somebody's decimal separator and this app accepts both as
+ * one; a space is nobody's, so a grouped figure is never ambiguous — and
+ * stripping it back out on parse cannot eat a character the typist meant.
+ */
+export const GROUP = "\u202f";
+
+/**
+ * "4800.5" -> "4\u202f800.5". Display only; never stored, never parsed.
+ *
+ * For the figures this app formats itself and `Intl` does not: what you are
+ * typing into an amount field, and a rate. Amounts already read are `money()`
+ * and `bare()` below, which are `Intl`-grouped.
+ */
+export function groupDigits(canonical: string): string {
+  const [whole = "", frac] = canonical.split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP);
+  return frac === undefined ? grouped : `${grouped}.${frac}`;
+}
+
+/**
+ * A rate, as every screen shows one — exact decimal text, thousands grouped
+ * the same way the field you typed it into groups them. A group whose base is
+ * a weak currency has rates in the thousands ("1 EUR = 13 000 UZS"), and that
+ * was the last figure in the app reading as one long digit string.
+ */
+export function rateText(rate: Rate, digits?: number): string {
+  return groupDigits(digits === undefined ? formatRate(rate) : formatRate(rate, digits));
+}
 
 export function money(minor: number, currency: CurrencyCode, signed = false): string {
   return formatMinor(minor, currency, { signDisplay: signed ? "always" : "auto" });

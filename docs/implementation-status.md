@@ -27,6 +27,11 @@ keep the old `hajsik` name, and so does the IndexedDB database, because all
 three are addresses that existing links and phones already point at
 ([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
 
+**The exchange-rate field groups its thousands** (2026-09-11) like every other
+money field: it types into `GroupedInput`, the caret-and-grouping half of the
+amount input, and printed rates go through `rateText`
+([frontend.md](frontend.md#every-money-field-is-componentsamount-inputtsx)).
+
 **The open question is why an installed phone still pauses** (2026-09-11).
 The permanent hang below is fixed, but the owner reports the skeleton rows
 still standing for 10–20s before they clear — which is suspiciously close to

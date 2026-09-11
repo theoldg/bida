@@ -1,9 +1,9 @@
 import {
-  formatRate, isValidRate, resolveSplit, splitParticipants,
+  isValidRate, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
-import { dayLabel, money, plural } from "./format";
+import { dayLabel, money, plural, rateText } from "./format";
 
 /**
  * Which sentence the log gets for a revision. The sentences themselves are
@@ -505,7 +505,7 @@ export function describe(
   if (rev.entity === "rate") {
     const code = rev.entityId;
     const pair = (v: unknown) =>
-      (typeof v === "string" && isValidRate(v) ? said.ratePair(code, formatRate(v), currency) : undefined);
+      (typeof v === "string" && isValidRate(v) ? said.ratePair(code, rateText(v), currency) : undefined);
     if (rev.isDelete) return { what: said.removedRate(who, code) };
     // The rate half of the same repair, and it has to come before the `rate`
     // field below: a lift carries only `deletedAt`, so without this it fell

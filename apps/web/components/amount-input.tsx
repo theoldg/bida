@@ -2,6 +2,7 @@
 
 import { exponentOf, minorToDecimalString, parseMinor, type CurrencyCode } from "@bida/core";
 import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes } from "react";
+import { GROUP, groupDigits } from "../lib/format";
 
 /**
  * Every field in the app where you type money.
@@ -24,16 +25,12 @@ import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes 
  * accepts either as one (see the open question in product.md). A space is
  * nobody's decimal separator, so nothing is ambiguous — and stripping it back
  * out on parse cannot eat a character the user meant.
+ *
+ * The typing half of that — group, then put the caret back where the finger
+ * thinks it is — is `GroupedInput`, and the rate dialog types into one too: a
+ * rate is the other number in this app with thousands in it ("1 EUR = 18 000
+ * IDR"), and it was the only field left that didn't group them.
  */
-
-const GROUP = "\u202f";
-
-/** "4800.5" -> "4\u202f800.5". Display only; never stored, never parsed. */
-export function groupDigits(canonical: string): string {
-  const [whole = "", frac] = canonical.split(".");
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, GROUP);
-  return frac === undefined ? grouped : `${grouped}.${frac}`;
-}
 
 /**
  * Whatever a keyboard can produce -> the canonical text we store: digits, at
@@ -94,11 +91,12 @@ type BaseProps = Omit<
   "value" | "onChange" | "type" | "inputMode"
 >;
 
-export interface AmountInputProps extends BaseProps {
+export interface GroupedInputProps extends BaseProps {
   /** Canonical text: digits and at most one ".". Never grouped. */
   value: string;
   onChange: (canonical: string) => void;
-  currency: CurrencyCode;
+  /** What may be typed. Must be idempotent, and must strip the group mark. */
+  sanitize: (raw: string) => string;
   /** Underline the field so it reads as something you can type in. */
   frame?: "underline" | "none";
   /** Grow the field to hug its own figure (the big one on the expense form). */
@@ -107,10 +105,15 @@ export interface AmountInputProps extends BaseProps {
   fieldClassName?: string;
 }
 
-export function AmountInput({
-  value, onChange, currency, frame = "underline", autoSize = false,
+/**
+ * A number field that shows its thousands grouped while holding the ungrouped
+ * text you typed. Everything here is about the caret; what a *given* field
+ * will accept is its `sanitize`.
+ */
+export function GroupedInput({
+  value, onChange, sanitize, frame = "underline", autoSize = false,
   fieldClassName, className, ...rest
-}: AmountInputProps) {
+}: GroupedInputProps) {
   const ref = useRef<HTMLInputElement>(null);
   const caret = useRef<number | null>(null);
   const shown = groupDigits(value);
@@ -128,9 +131,9 @@ export function AmountInput({
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value;
     const at = e.target.selectionStart ?? raw.length;
-    const canonical = sanitizeAmount(raw, currency);
+    const canonical = sanitize(raw);
     const before = Math.min(
-      significantLength(sanitizeAmount(raw.slice(0, at), currency)),
+      significantLength(sanitize(raw.slice(0, at))),
       significantLength(canonical),
     );
     caret.current = caretAfter(groupDigits(canonical), before);
@@ -183,6 +186,15 @@ export function AmountInput({
       {input}
     </span>
   );
+}
+
+export interface AmountInputProps extends Omit<GroupedInputProps, "sanitize"> {
+  currency: CurrencyCode;
+}
+
+/** A `GroupedInput` that accepts what this currency can hold. */
+export function AmountInput({ currency, ...rest }: AmountInputProps) {
+  return <GroupedInput {...rest} sanitize={(raw) => sanitizeAmount(raw, currency)} />;
 }
 
 function textFor(minor: number, currency: CurrencyCode): string {

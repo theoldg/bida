@@ -114,7 +114,9 @@ small radius and a `--card-2` well while focused. Disabled fields drop the rule
 to transparent rather than showing a dead one. Digits group with **U+202F**
 while typing; saved figures group the way `Intl` does — deliberately different
 ([ADR-0005](decisions/0005-money-and-currency.md)). **No
-amount is ever shown in minor units.**
+amount is ever shown in minor units.** The exchange-rate field is one of these
+too: "1 EUR = 18 000 UZS" is a rate people type, so it groups, and `rateText`
+groups the ones we print.
 
 ## An arrow points one way, and an income says so twice
 

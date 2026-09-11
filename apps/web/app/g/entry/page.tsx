@@ -16,7 +16,7 @@ import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
-import { clockTime, countText, dayLabel, money, plural } from "../../../lib/format";
+import { clockTime, countText, dayLabel, money, plural, rateText } from "../../../lib/format";
 import { receiptBreakdown, type MemberLine } from "../../../lib/scan/items";
 import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
@@ -113,7 +113,7 @@ function EntryScreen() {
               {/* Expenses are the default and say nothing; the two that run
                   differently name themselves once, here. */}
               {kind !== "expense" ? <span className="chip hl">{copy.entryKind.label[kind]}</span> : null}
-              {foreign ? <span className="chip">{copy.entry.rate(entry.rateToBase)}</span> : null}
+              {foreign ? <span className="chip">{copy.entry.rate(rateText(entry.rateToBase))}</span> : null}
               {edits > 0 ? (
                 <Link href={route.history(groupId, entry.id, via)} className="chip">
                   <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
