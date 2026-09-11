@@ -788,12 +788,18 @@ dialog.scrim::backdrop { background: transparent }
    it arrived and reads as a scold. Arriving quickly and leaving slowly says
    the same thing without raising its voice.
 
-   Two names for one animation because that is the restart mechanism. The
-   refusal state is already true on the second tap of Save, so nothing in the
-   class list would change and the animation would not replay; the form
-   alternates -a/-b per refusal, which changes `animation-name` and guarantees
-   it does. A React `key` would also restart it, by remounting the <input> and
-   taking the caret, the focus and any IME composition with it. */
+   Two names for one animation because that is the restart mechanism. A second
+   tap of Save while the first flash is still running would change nothing in
+   the class list, so the animation would not replay; the form alternates
+   -a/-b per refusal, which changes `animation-name` and guarantees it does. A
+   React `key` would also restart it, by remounting the <input> and taking the
+   caret, the focus and any IME composition with it.
+
+   The form takes the class off again when the flash ends, and that is not
+   tidiness: a `::placeholder` is not rendered while the field has text, so
+   typing a title and deleting it creates the pseudo-element afresh — and a
+   fresh pseudo-element starts any animation still declared on it. Left on,
+   the class turns every emptied field into a refusal it never earned. */
 @keyframes refuse-line-a { 15%, 45% { border-bottom-color: var(--debit) } }
 @keyframes refuse-line-b { 15%, 45% { border-bottom-color: var(--debit) } }
 @keyframes refuse-box-a { 15%, 45% { border-color: var(--debit) } }

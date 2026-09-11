@@ -176,6 +176,12 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   has one payer, and the shot looks plausible.
 - **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
   *slashed*. A mark inside a "0" is the font, not a struck-through field.
+- **A `::placeholder` is not rendered while its field has text**, so it is
+  *created* when the field goes empty — and a freshly created pseudo-element
+  starts any animation still declared on it. Leaving a one-shot animation class
+  on a settled field replays it every time the field is emptied. Take the class
+  off on `animationend`; `e.pseudoElement` says whether the event came from the
+  element or its placeholder.
 - **Nothing gates these, so they rot quietly.** `pnpm check` doesn't run them,
   so a screen change that moves a control or a landing goes in green and is
   found here weeks later. Three did at once: the multi-payer door became a

@@ -47,15 +47,20 @@ export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
 }
 
+/** A field's refusal flash: how many there have been, and whether one is running. */
+interface Refusal { n: number; live: boolean }
+const NOT_REFUSED: Refusal = { n: 0, live: false };
+
 /**
- * The class that flashes a field red, given how many times it has been
- * refused. Nothing at zero; after that it alternates between two classes
- * naming two identical animations, which is what makes a repeat refusal
- * replay rather than sit on a class that is already there.
+ * The class that flashes a field red. Nothing unless a flash is actually
+ * running — a class left on a settled field replays itself the next time the
+ * placeholder is rendered. While one is running it alternates between two
+ * classes naming two identical animations, which is what makes a repeat
+ * refusal restart rather than sit on a class that is already there.
  */
-function flashClass(refusals: number): string {
-  if (refusals === 0) return "";
-  return refusals % 2 === 1 ? " flash-a" : " flash-b";
+function flashClass(r: Refusal): string {
+  if (!r.live) return "";
+  return r.n % 2 === 1 ? " flash-a" : " flash-b";
 }
 
 function EditEntryScreen() {
@@ -104,25 +109,41 @@ function EditEntryScreen() {
   // empty.
   const [attemptedSave, setAttemptedSave] = useState(false);
   /**
-   * Refusals, counted per field. A refusal blooms the field that caused it red
-   * and lets it settle back over half a second — the amount's underline, the
-   * title's box (see "save refusal" in globals.css). The count is what replays
-   * it: the CSS alternates two identical animations by parity, so every
-   * refusal changes `animation-name` and the browser starts the flash again
-   * rather than finding the class already set and doing nothing.
+   * The refusal flash, per field. A refusal blooms the field that caused it
+   * red and lets it settle back — the amount's underline, the title's box, the
+   * placeholder in either (see "save refusal" in globals.css). Per field
+   * rather than once for the form, so a field that wasn't the problem this
+   * time stays quiet.
    *
-   * Per field rather than one counter for the form, for two reasons: a field
-   * that wasn't the problem this time shouldn't flash, and a field whose flash
-   * has already run shouldn't flash again on its own when it goes back to
-   * empty — the class stays put between refusals, and only a new refusal moves
-   * it.
+   * `live` is the half that is easy to leave out, and leaving it out is a bug:
+   * a `::placeholder` is not rendered while the field has text, so typing a
+   * title and deleting it again *creates the pseudo-element afresh* — and a
+   * newly created pseudo-element starts any animation still declared on it.
+   * The class has to come off when the flash ends, not sit there waiting to be
+   * replayed by an empty field. `settled` takes it off.
+   *
+   * `n` is the other half: a second refusal while the first is still running
+   * would change nothing in the class list, so the browser would not restart
+   * it. Its parity picks between two identical animations, which changes
+   * `animation-name` and guarantees it does. (A React `key` would restart it
+   * too, by remounting the <input> and taking the caret, the focus and any IME
+   * composition with it.)
    */
-  const [refused, setRefused] = useState({ amount: 0, title: 0 });
+  const [refused, setRefused] = useState({ amount: NOT_REFUSED, title: NOT_REFUSED });
   const refuse = (fields: { amount?: boolean; title?: boolean }) =>
     setRefused((r) => ({
-      amount: r.amount + (fields.amount ? 1 : 0),
-      title: r.title + (fields.title ? 1 : 0),
+      amount: fields.amount ? { n: r.amount.n + 1, live: true } : r.amount,
+      title: fields.title ? { n: r.title.n + 1, live: true } : r.title,
     }));
+  /**
+   * The flash is over. Only the field's own animation counts — the placeholder
+   * is a pseudo-element on the same clock, and `pseudoElement` is how an
+   * animation event says which of the two it is.
+   */
+  const settled = (field: "amount" | "title") => (e: React.AnimationEvent) => {
+    if (e.pseudoElement) return;
+    setRefused((r) => ({ ...r, [field]: { ...r[field], live: false } }));
+  };
 
   /**
    * The rate dialog opens for whatever currency the draft is *in*, not for the
@@ -488,7 +509,12 @@ function EditEntryScreen() {
           ) : null}
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+            {/* The refusal flash runs on `.amountfield`, which `AmountInput`
+                renders itself, so the row listens for it on the way up rather
+                than the component growing a prop for one screen's animation.
+                Nothing else on this row animates. */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
+              onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
                 fieldClassName={`big${flashClass(refused.amount)}`}
@@ -549,7 +575,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className={`field${flashClass(refused.title)}`}>
+            <div className={`field${flashClass(refused.title)}`} onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
                 aria-label={transfer ? copy.form.note : copy.form.what}

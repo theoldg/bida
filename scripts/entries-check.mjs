@@ -379,6 +379,28 @@ const creates = (await page.locator(".what").allInnerTexts())
   .filter((t) => /created this expense/i.test(t)).length;
 report(creates === 1, `one press creates the entry once — ${creates} create(s) in its history`);
 
+// ---- a refused Save points at the field, once -------------------------
+// The flash has to end and take its class with it. A `::placeholder` is not
+// rendered while the field has text, so a class left on a settled field gets
+// its animation started again the moment the field goes back to empty — which
+// flashed a refusal at somebody who had only deleted a title.
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.waitForSelector("input.amount");
+const titleField = page.locator("#what").locator("xpath=..");
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForTimeout(120);
+report(/flash-/.test(await titleField.getAttribute("class")),
+  "a refused Save flashes the field that stopped it");
+await page.waitForTimeout(900);
+report(!/flash-/.test(await titleField.getAttribute("class")),
+  "and the flash ends, taking its class with it");
+await page.locator("#what").fill("Beer");
+await page.waitForTimeout(80);
+await page.locator("#what").fill("");
+await page.waitForTimeout(80);
+report(!/flash-/.test(await titleField.getAttribute("class")),
+  "emptying a field again is not a refusal");
+
 await browser.close();
 close();
 finish();
