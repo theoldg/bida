@@ -635,9 +635,7 @@ dialog.scrim::backdrop { background: transparent }
    sized to hug its own text, reads as a box drawn round a single digit. */
 .amount:focus-visible { outline: none }
 .amount::placeholder { color: var(--muted); opacity: .35 }
-/* Held until a save attempt actually fails on this field — see .field.invalid
-   below for why an empty field doesn't announce itself before then. */
-.amount.invalid::placeholder { color: var(--debit); opacity: .7 }
+/* Refusal is a flash now, not a held state — see "save refusal" below. */
 /* An empty centred field draws its caret exactly where the placeholder's "0"
    is, which reads as a struck-through zero. Once you're in the field the caret
    is signal enough. */
@@ -751,8 +749,7 @@ dialog.scrim::backdrop { background: transparent }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
-/* Same held-until-attempted rule as .amount.invalid; see there. */
-.field.invalid input::placeholder { color: var(--debit) }
+/* Refusal is a flash now, not a held state — see "save refusal" below. */
 /* A value that is picked rather than typed. The whole line is the button — a
    <select> at least gave you the row; ours has to say so itself — and the
    chevron is the only mark that it opens something (ADR-0008). */
@@ -776,6 +773,64 @@ dialog.scrim::backdrop { background: transparent }
    the part that can be long; its own padding is what separates the two. */
 .field-row .pick-sub { flex: none; gap: 4px; padding-left: 6px;
   font-size: 12px; font-weight: 500; color: var(--muted) }
+
+/* ---- save refusal ----
+   A tap on Save that can't go through blooms the offending field red and lets
+   it settle back: the amount's underline, the title's box, and the placeholder
+   in either. No keyframe names 0% or 100%, so both ends are taken from the
+   element's own computed style — the field fades back to whatever it actually
+   was, which keeps this correct in both themes and while the field is focused
+   (`.amountfield:focus-within` is brand, not `--rule`).
+
+   The shape is deliberately lopsided: red in ~90ms, held ~180ms, then ~330ms
+   easing back out. An answer to a tap has to arrive fast enough to read as
+   caused by it, but a symmetric flash of the same length snaps back as hard as
+   it arrived and reads as a scold. Arriving quickly and leaving slowly says
+   the same thing without raising its voice.
+
+   Two names for one animation because that is the restart mechanism. The
+   refusal state is already true on the second tap of Save, so nothing in the
+   class list would change and the animation would not replay; the form
+   alternates -a/-b per refusal, which changes `animation-name` and guarantees
+   it does. A React `key` would also restart it, by remounting the <input> and
+   taking the caret, the focus and any IME composition with it. */
+@keyframes refuse-line-a { 15%, 45% { border-bottom-color: var(--debit) } }
+@keyframes refuse-line-b { 15%, 45% { border-bottom-color: var(--debit) } }
+@keyframes refuse-box-a { 15%, 45% { border-color: var(--debit) } }
+@keyframes refuse-box-b { 15%, 45% { border-color: var(--debit) } }
+@keyframes refuse-ph-a { 15%, 45% { color: var(--debit) } }
+@keyframes refuse-ph-b { 15%, 45% { color: var(--debit) } }
+/* The amount's placeholder sits at .35 opacity, faint enough that a colour
+   change alone barely registers; it brightens with the red and settles back
+   to whatever the computed style says, same as every other stop here. */
+@keyframes refuse-amount-ph-a { 15%, 45% { color: var(--debit); opacity: .7 } }
+@keyframes refuse-amount-ph-b { 15%, 45% { color: var(--debit); opacity: .7 } }
+
+.amountfield.flash-a { animation: refuse-line-a .6s ease-in-out }
+.amountfield.flash-b { animation: refuse-line-b .6s ease-in-out }
+.field.flash-a { animation: refuse-box-a .6s ease-in-out }
+.field.flash-b { animation: refuse-box-b .6s ease-in-out }
+.amountfield.flash-a input::placeholder { animation: refuse-amount-ph-a .6s ease-in-out }
+.amountfield.flash-b input::placeholder { animation: refuse-amount-ph-b .6s ease-in-out }
+.field.flash-a input::placeholder { animation: refuse-ph-a .6s ease-in-out }
+.field.flash-b input::placeholder { animation: refuse-ph-b .6s ease-in-out }
+
+/* The one exemption from the global reduced-motion clamp, and it is deliberate:
+   that query is about movement — transforms, parallax, anything with a vector
+   that can trigger vestibular symptoms. This has none; it is a colour settling,
+   which is what the guidance recommends you fall back *to* when you strip
+   motion out. Clamped to .01ms it isn't a calmer signal, it is no signal.
+   It wins on specificity: the clamp's selector is `*`, at (0,0,0).
+   Scoped to `animation-duration` on purpose — `.amountfield` also transitions
+   border-color for focus, and un-clamping that here would hand reduced-motion
+   users an animation they did not ask for. */
+@media (prefers-reduced-motion: reduce) {
+  .amountfield.flash-a, .amountfield.flash-b,
+  .field.flash-a, .field.flash-b,
+  .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
+  .field.flash-a input::placeholder, .field.flash-b input::placeholder {
+    animation-duration: .6s !important }
+}
 
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;

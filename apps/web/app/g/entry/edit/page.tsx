@@ -47,6 +47,17 @@ export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
 }
 
+/**
+ * The class that flashes a field red, given how many times it has been
+ * refused. Nothing at zero; after that it alternates between two classes
+ * naming two identical animations, which is what makes a repeat refusal
+ * replay rather than sit on a class that is already there.
+ */
+function flashClass(refusals: number): string {
+  if (refusals === 0) return "";
+  return refusals % 2 === 1 ? " flash-a" : " flash-b";
+}
+
 function EditEntryScreen() {
   const router = useRouter();
   const params = useSearchParams();
@@ -88,14 +99,30 @@ function EditEntryScreen() {
    */
   const [saving, setSaving] = useState(false);
   // Save is always tappable; a tap while invalid flips this instead of doing
-  // nothing, and every red state below is held until it does — an untouched
-  // form shows no errors just for being empty.
+  // nothing. It is what puts the blocker sentence on screen and turns on the
+  // split editor's own red — an untouched form shows no errors just for being
+  // empty.
   const [attemptedSave, setAttemptedSave] = useState(false);
-  // The same red, asked for by a door rather than by Save: the payers screen
-  // divides the amount between people, so opening it with no amount hands it a
-  // zero to split. The tap doesn't travel — it turns the amount field red,
-  // which is where the fix is.
-  const [askedForAmount, setAskedForAmount] = useState(false);
+  /**
+   * Refusals, counted per field. A refusal blooms the field that caused it red
+   * and lets it settle back over half a second — the amount's underline, the
+   * title's box (see "save refusal" in globals.css). The count is what replays
+   * it: the CSS alternates two identical animations by parity, so every
+   * refusal changes `animation-name` and the browser starts the flash again
+   * rather than finding the class already set and doing nothing.
+   *
+   * Per field rather than one counter for the form, for two reasons: a field
+   * that wasn't the problem this time shouldn't flash, and a field whose flash
+   * has already run shouldn't flash again on its own when it goes back to
+   * empty — the class stays put between refusals, and only a new refusal moves
+   * it.
+   */
+  const [refused, setRefused] = useState({ amount: 0, title: 0 });
+  const refuse = (fields: { amount?: boolean; title?: boolean }) =>
+    setRefused((r) => ({
+      amount: r.amount + (fields.amount ? 1 : 0),
+      title: r.title + (fields.title ? 1 : 0),
+    }));
 
   /**
    * The rate dialog opens for whatever currency the draft is *in*, not for the
@@ -288,9 +315,6 @@ function EditEntryScreen() {
     onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
     amountMissing, titleMissing,
   } = check;
-  // Clears itself: whichever asked for it, the red is gone the moment there
-  // is an amount.
-  const amountInvalid = amountMissing && (attemptedSave || askedForAmount);
 
   /**
    * Switching tabs. Two handoffs, each made once and only into a tab that has
@@ -365,7 +389,11 @@ function EditEntryScreen() {
     // said — `useClaimGate` sends a phone that hasn't to the screen that asks
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
-    if (!ready) { setAttemptedSave(true); return; }
+    if (!ready) {
+      setAttemptedSave(true);
+      refuse({ amount: amountMissing, title: titleMissing });
+      return;
+    }
     if (saving || !groupId || !actor) return;
     setSaving(true);
     setFailed(undefined);
@@ -462,8 +490,8 @@ function EditEntryScreen() {
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               <AmountInput
-                className={amountInvalid ? "amount invalid" : "amount"}
-                fieldClassName="big"
+                className="amount"
+                fieldClassName={`big${flashClass(refused.amount)}`}
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
                 placeholder="0"
@@ -521,7 +549,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className={attemptedSave && titleMissing ? "field invalid" : "field"}>
+            <div className={`field${flashClass(refused.title)}`}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
                 aria-label={transfer ? copy.form.note : copy.form.what}
@@ -562,7 +590,12 @@ function EditEntryScreen() {
                     one payer is the common case and costs one row. */}
                 <button type="button" className="pick-sub"
                   onClick={() => {
-                    if (amountMissing) { setAskedForAmount(true); return; }
+                    // The same refusal, asked for by a door rather than by
+                    // Save: the payers screen divides the amount between
+                    // people, so opening it with no amount hands it a zero to
+                    // split. The tap doesn't travel — it flashes the amount
+                    // field, which is where the fix is.
+                    if (amountMissing) { refuse({ amount: true }); return; }
                     router.push(route.payers(groupId));
                   }}>
                   <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>

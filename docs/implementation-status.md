@@ -24,7 +24,9 @@ two devices.
 **The entry form is being thinned.** It carried 19 tappable controls on a new
 expense where three do the work — the rest confirm defaults the form already
 has right. The kind is now one chip rather than three permanent buttons
-([ADR-0010](decisions/0010-what-an-entry-is.md)). Two further cuts are proposed
+([ADR-0010](decisions/0010-what-an-entry-is.md)), and a refused Save points at
+the field that stopped it by flashing it rather than holding it red
+([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)). Two further cuts are proposed
 and **not** decided: folding the "Multi-payer" link into the payer dialog, and
 taking "Receipt" out of the split's tab bar now that `/g/scan` is how a scan
 starts. Ask before building either.

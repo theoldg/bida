@@ -132,6 +132,17 @@ attempted, in `--debit`: `Failure` / `.failure`. **A held action always has
 one**: Save greyed with nothing to read is a dead end, so the entry form keeps
 a single reason line beside the payer field rather than one per branch.
 
+A *refused* action points as well as saying why: a Save that can't go through
+blooms the field that stopped it `--debit` and lets it settle back over ~600ms
+— the amount's underline, the title's box, the placeholder in either — and so
+does the multi-payer door, which has no amount to divide. A flash rather than a
+held red, because the sentence is already holding the state and two things
+saying it permanently is one too many; and it replays on every refusal, which
+is what the two identical `-a`/`-b` animations in `globals.css` are for. It is
+the one thing exempt from the global reduced-motion clamp: a colour settling is
+what that guidance asks you to fall back *to*, and clamped it would be nothing
+at all.
+
 ## Rules that are not negotiable
 
 1. **Colour is never the only signal**, and is never spent on anything but
