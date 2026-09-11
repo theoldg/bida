@@ -637,6 +637,7 @@ function EditEntryScreen() {
                 title={copy.entryKind.split[kind]}
                 totalMinor={baseMinor}
                 totalUnknown={foreign && groupRate === undefined}
+                attemptedSave={attemptedSave}
                 currency={base}
                 spec={activeSplit}
                 receiptSplit={receiptSplit}

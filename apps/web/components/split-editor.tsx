@@ -67,7 +67,7 @@ export interface ReceiptTabProps {
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, totalUnknown, attemptedSave, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
@@ -81,6 +81,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
    * what is actually missing; this one keeps quiet rather than contradict it.
    */
   totalUnknown?: boolean;
+  /**
+   * Whether Save has been tapped on an invalid form. "Enter an amount to
+   * split" is the split editor's half of `amountMissing`, and it is true of
+   * every untouched expense — so, like the form's own red states, it is held
+   * back until the user has actually asked to save. A verdict the form opens
+   * with is a complaint about nothing.
+   */
+  attemptedSave: boolean;
   currency: string;
   /** What the arithmetic tab now showing holds — this editor edits only it. */
   spec: SplitSpec;
@@ -134,7 +142,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // as one, so "ok" here means "ok to show a tick", not `check.ok`.
   const foot = receiptBlocker !== null ? { ok: false, text: receiptBlocker }
     : check !== null ? splitFooter(check, currency) : null;
+  // The footer's one complaint is that there is no amount to divide — true of
+  // every expense before a digit is typed, and the form's own way of saying it
+  // (`amountMissing`) is held back too. An empty split is a different sentence
+  // about something the user did do, and stays live.
+  const onlyNoTotal = receiptBlocker === null && check !== null
+    && check.problem !== "empty" && check.totalMinor <= 0;
   const showFooter = !totalUnknown && foot !== null
+    && (attemptedSave || !onlyNoTotal)
     && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {

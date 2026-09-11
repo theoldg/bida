@@ -125,9 +125,11 @@ confers nothing without the secret.
   word doesn't fit next to the hero figure and reads oddly in a number field.
   `blocker` is a sentence about a relationship the form can't fix by typing
   into the field it's next to, so it keeps its spot above the split editor,
-  now behind the same flag; `receiptBlocker` — the Receipt tab with no bill,
-  or a bill nobody has assigned — stays in the split's own footer beside
-  "Enter an amount to split", already scoped to the tab it concerns. Nothing
+  now behind the same flag; "Enter an amount to split" is the split editor's
+  half of `amountMissing` and is gated on the flag too, so the editor opens
+  without a verdict; `receiptBlocker` — the Receipt tab with no bill, or a
+  bill nobody has assigned — stays in that footer, and so do the split's
+  other complaints, which can only follow an edit. Nothing
   is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
