@@ -53,14 +53,14 @@ export type SplitInputs = { [M in ArithmeticMode]?: Extract<SplitSpec, { mode: M
  * warning (`isDraftDirty`).
  *
  * One draft covers all three kinds so that changing your mind halfway keeps
- * what you already typed: the amount, the date and the words survive a tap on
- * the segmented control, because the fields they live in are the same fields
+ * what you already typed: the amount, the date and the words survive a change
+ * of kind, because the fields they live in are the same fields
  * (ADR-0010). The ones only a transfer uses (`fromMember`, `toMember`) and the
  * ones only an expense or income uses (`splits`, `payers`, the receipt) simply
  * sit unread while the other kind is showing.
  */
 export interface EntryDraft {
-  /** Which of the three this is. The form's segmented control writes it. */
+  /** Which of the three this is. The form's kind chip writes it. */
   kind: EntryKind;
   /**
    * Present when editing rather than creating: an expense id when `kind` is

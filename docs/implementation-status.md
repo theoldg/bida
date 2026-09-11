@@ -21,9 +21,17 @@ two devices.
 
 ## The next action
 
-**Nothing is scheduled.** The last open subject — invariants the UI checks at
-write time that a merge can break anyway ([invariants.md](invariants.md)) — is
-closed. What follows is what closed it, newest last; one measurement is owed.
+**The entry form is being thinned.** It carried 19 tappable controls on a new
+expense where three do the work — the rest confirm defaults the form already
+has right. The kind is now one chip rather than three permanent buttons
+([ADR-0010](decisions/0010-what-an-entry-is.md)). Two further cuts are proposed
+and **not** decided: folding the "Multi-payer" link into the payer dialog, and
+taking "Receipt" out of the split's tab bar now that `/g/scan` is how a scan
+starts. Ask before building either.
+
+The previous open subject — invariants the UI checks at write time that a merge
+can break anyway ([invariants.md](invariants.md)) — is closed. What follows is
+what closed it, newest last; one measurement is owed.
 
 **The enforcement layer is built.** `core/invariants.ts` holds each invariant's
 detector and its repair in one declaration that cannot omit the repair, the two

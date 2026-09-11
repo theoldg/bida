@@ -38,10 +38,10 @@ import {
  *
  * Expense, income and transfer are one thought with one shape — an amount, a
  * date, some words, and who it moves between — so they are one screen with a
- * segmented control at the top rather than three routes that lose what you
- * typed when you realise you picked the wrong one (ADR-0010). Switching kinds
- * keeps the amount, the currency, the date and the description; only the
- * middle of the form is swapped.
+ * kind chip at the top rather than three routes that lose what you typed when
+ * you realise you picked the wrong one (ADR-0010). Switching kinds keeps the
+ * amount, the currency, the date and the description; only the middle of the
+ * form is swapped.
  */
 export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
@@ -72,7 +72,7 @@ function EditEntryScreen() {
   const draft = useDraft(groupId);
   const secret = useGroupSecret(groupId);
   const scan = useReceiptScan(groupId, secret);
-  const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer">(null);
+  const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer" | "kind">(null);
   /** Which currency's rate is being set, if any. See `pickCurrency`. */
   const [askRate, setAskRate] = useState<string | null>(null);
   const [failed, setFailed] = useState<string>();
@@ -435,16 +435,19 @@ function EditEntryScreen() {
         <Scroll>
           {scan.inputs}
 
+          {/* One chip, not a segmented control over all three. Nothing in the
+              app opens this form asking for an income, and a transfer arrives
+              prefilled from settle up — so the kind is already right on nearly
+              every entry, and three permanent buttons for it sat above the
+              amount wearing the same `.seg` as the split's tabs directly
+              below. A chip costs the rare change of mind one tap, and the
+              common entry nothing. */}
           {reachable.length > 1 ? (
-            <div className="pad" style={{ paddingTop: 2, paddingBottom: 0 }}>
-              <div className="seg" role="tablist" aria-label={copy.form.kindTablist}>
-                {reachable.map((k) => (
-                  <button key={k} type="button" role="tab" aria-selected={k === kind}
-                    className={k === kind ? "on" : ""} onClick={() => changeKind(k)}>
-                    {copy.entryKind.label[k]}
-                  </button>
-                ))}
-              </div>
+            <div className="pad" style={{ paddingTop: 10, paddingBottom: 0, textAlign: "center" }}>
+              <button type="button" className="chip" aria-label={copy.form.kindTitle}
+                onClick={() => setAsk("kind")}>
+                {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
+              </button>
             </div>
           ) : null}
 
@@ -639,6 +642,16 @@ function EditEntryScreen() {
             note: m.id === data.me ? copy.form.you : undefined,
           }))}
           onPick={(paidBy) => patch({ paidBy, payers: null })}
+          onClose={() => setAsk(null)}
+        />
+      ) : null}
+
+      {ask === "kind" ? (
+        <ChoiceDialog
+          title={copy.form.kindTitle}
+          value={kind}
+          options={reachable.map((k) => ({ value: k, label: copy.entryKind.label[k] }))}
+          onPick={changeKind}
           onClose={() => setAsk(null)}
         />
       ) : null}

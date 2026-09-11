@@ -734,7 +734,7 @@ dialog.scrim::backdrop { background: transparent }
 .field label { font-size: 13px; color: var(--muted); width: 62px; flex: none }
 /* "Received by" is the longest of the three headings over the payer picker and
    wraps at the default width. One width for all of them, so the row doesn't
-   jump as the segmented control changes the entry's kind. */
+   jump as the kind chip changes the entry's kind. */
 .field label.fieldlabel, .fieldlabel {
   font-size: 13px; color: var(--muted); width: 92px; flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;

@@ -283,7 +283,8 @@ export const copy = {
   form: {
     newTitle: "New",
     editTitle: "Edit",
-    kindTablist: "What kind of entry",
+    /** The kind chip's label, and the title of the dialog it opens. */
+    kindTitle: "What kind of entry",
     editKind: (kind: string) => `Edit ${kind}`,
     amount: (currency: string) => `Amount in ${currency}`,
     currency: "Currency",

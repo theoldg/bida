@@ -105,7 +105,7 @@ report(await page.getByText("Dinner").count() > 0, "an expense saves and lists")
 
 // ---- an income ---------------------------------------------------------
 await page.goto(`${base}/g/entry/edit?id=${g}`);
-await page.getByRole("tab", { name: "Income" }).click();
+await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
 await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Received by").count() > 0, "an income relabels the payer picker");
@@ -174,7 +174,8 @@ report((await page.locator(".topbar h3").innerText()) === "Transfer", "a transfe
 await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForURL(/entry\/edit/);
 await page.waitForSelector(".transfer");
-report(await page.getByRole("tab").count() === 0, "editing a transfer offers no kind control");
+report(await page.locator('[aria-label="What kind of entry"]').count() === 0,
+  "editing a transfer offers no kind control");
 await page.locator("input.amount").fill("12");
 await save(3);
 report((await page.locator(".ramt .big").allInnerTexts()).some((t) => t.includes("12")),
@@ -184,9 +185,15 @@ await page.getByText("Dinner").first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForURL(/entry\/edit/);
-await page.waitForSelector("[role=tab]");
-report(await page.getByRole("tab").count() === 2, "editing an expense offers expense and income only");
-await page.getByRole("tab", { name: "Income" }).click();
+// The chip opens the dialog; what is *in* it is the claim — a transfer is
+// not reachable from an expense, since the two are different entities.
+await page.locator('[aria-label="What kind of entry"]').click();
+await page.waitForSelector(".dlist");
+const kinds = (await page.locator(".drow-pick").allInnerTexts()).map((t) => t.trim());
+report(kinds.length === 2 && kinds[0] === "Expense" && kinds[1] === "Income",
+  "editing an expense offers expense and income only");
+await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();
+await page.waitForTimeout(120);
 await save(3);
 report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
   "an expense can become an income");
@@ -320,7 +327,7 @@ await page.waitForSelector(".rows a.row");
 const beforeDouble = await page.locator(".rows a.row").count();
 
 await page.goto(`${base}/g/entry/edit?id=${g}`);
-await page.getByRole("tab", { name: "Transfer" }).click();
+await pick(page, '[aria-label="What kind of entry"]', "Transfer");
 await page.waitForSelector(".transfer");
 await page.locator("input.amount").fill("5");
 await page.waitForTimeout(120);

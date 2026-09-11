@@ -1,6 +1,6 @@
 # 0010 — Three kinds of entry, and several people may have paid
 
-**Status:** Accepted · 2026-08-27 · kinds 2026-08-30
+**Status:** Accepted · 2026-08-27 · kinds 2026-08-30 · kind chip 2026-09-11
 
 **Context.** Two asks, a month apart, about the same record. First, expenses
 several people chip in on — *"Bob paid 400 and Alice paid 100 for these 500
@@ -32,11 +32,14 @@ contributor so older clients and list rows still read. `resolvePayers`
 apportions `baseAmountMinor` with the same seeded largest-remainder rule a
 `shares` split uses, so the payer side sums to the base total exactly.
 
-**One form, one detail screen, everything editable.** `/g/entry/edit` is a
-segmented control over all three kinds and swaps only the middle of the form;
-the amount, currency, date and words survive a change of mind. The split editor
-is inline on it, in three modes — Evenly · As parts · As amounts (`equal`,
-`shares`, `exact`).
+**One form, one detail screen, everything editable.** `/g/entry/edit` is one
+chip naming the kind — a picker of those still reachable — and swaps only the
+middle of the form; the amount, currency, date and words survive a change of
+mind. A chip rather than three buttons because nothing opens this form asking
+for an income and settle-up prefills the transfer: the kind is already right on
+nearly every entry, so it is worth one tap on the rare one and none on the
+rest. The split editor is inline on it, in three modes — Evenly · As parts ·
+As amounts (`equal`, `shares`, `exact`).
 
 **Each split tab holds its own input** (`SplitInputs`, `lib/draft.ts`). One
 `SplitSpec` converted on every switch made the tabs edit each other: leaving

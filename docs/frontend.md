@@ -20,7 +20,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
-| `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a segmented control, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
+| `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
 | `/g/scan?id=` | Scan first, decide after: nothing but the two scan buttons, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=][&via=]` | Version history, whole-group or per-entry. Per-entry carries the entry's own `via` so the chain back stays exact |
@@ -88,8 +88,8 @@ confers nothing without the secret.
 - **The entry draft is never stored** (`lib/draft.ts`): an in-memory store
   shared by the entry screens, so bouncing to the payers/items routes keeps
   what's typed, and nothing else does. One draft covers all three kinds, which
-  is what lets the segmented control change your mind without losing the amount
-  you already typed. Leaving asks before discarding, and a reload gets the
+  is what lets the kind chip change your mind without losing the amount you
+  already typed. Leaving asks before discarding, and a reload gets the
   browser's own warning — `seedDraft` records the baseline `isDraftDirty`
   compares against. The payers route asks too, and puts back only the payer
   side: the rest of the draft is not its to throw away. So does who-had-what,

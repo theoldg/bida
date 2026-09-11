@@ -77,7 +77,7 @@ async function addEntry(
   page, base, groupId, { kind, amount, what, coSponsor, paidBy, exclude, currency, rate },
 ) {
   await page.goto(`${base}/g/entry/edit?id=${groupId}`);
-  if (kind) await page.getByRole("tab", { name: kind }).click();
+  if (kind) await pick(page, '[aria-label="What kind of entry"]', kind);
   // Currency first: picking one the group has no rate for opens the rate
   // dialog on the spot, and there is no feed behind the static export, so the
   // number is typed the way a phone with no signal would have to type it.
@@ -181,7 +181,7 @@ async function main() {
       // An income: the same form with the segmented control flipped, so the
       // relabelled payer picker and the missing Receipt tab are visible.
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
-      await page.getByRole("tab", { name: "Income" }).click();
+      await pick(page, '[aria-label="What kind of entry"]', "Income");
       await page.locator("input.amount").fill("300");
       await page.locator("#what").fill("Deposit back");
       await page.waitForTimeout(200);

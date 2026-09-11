@@ -2,7 +2,7 @@ import type { Expense, Settlement } from "@hajsik/core";
 
 /**
  * The three things a person can add to a group, and every word the app uses
- * about them. One file, because the ledger row, the form's segmented control,
+ * about them. One file, because the ledger row, the form's kind chip,
  * the detail screen and the history feed all have to call them the same
  * things — and because two of the three are the same entity underneath, so
  * the vocabulary is the only place the distinction is visible at all.
@@ -14,7 +14,7 @@ import type { Expense, Settlement } from "@hajsik/core";
  *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, not a
  *   separate idea, which is why "reimbursement" appears nowhere any more.
  *
- * What they are *called* — the segmented control's labels, the verb in "Marie
+ * What they are *called* — the kind chip and its picker, the verb in "Marie
  * paid", the headings over the payer and the split — is `copy.entryKind`
  * (lib/copy.ts), like every other word the app says.
  *
