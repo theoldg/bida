@@ -81,7 +81,10 @@ confers nothing without the secret.
   op carries only what changed is `patch.ts`, once, for both entry editors: it
   was written out at each of them and the two copies drifted.
 - Device-local, never-synced state (who "you" are, theme, install-nudge
-  dismissal) is in the `device` store. *Changing* who you are is not device-local:
+  dismissal, the last group opened) is in the `device` store. `/new` reads
+  `lastOpenedGroupId` to default a fresh group's currency to that group's,
+  rather than always EUR — set by `/g` on every visit (`setLastOpenedGroup`).
+  *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
   device-local half; nothing outside `lib/db/device.ts` should call it.

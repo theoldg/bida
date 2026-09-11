@@ -19,6 +19,7 @@ import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
 import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
+import { setLastOpenedGroup } from "../../lib/db/device";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
@@ -45,6 +46,12 @@ function GroupScreen() {
   // the recorded failure — `useSyncHealth` reads it, nothing here needs it.
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
+  }, [groupId]);
+
+  // Remembered so `/new` can default a fresh group's currency to the one you
+  // spend in most recently, instead of always landing on EUR.
+  useEffect(() => {
+    if (groupId) void setLastOpenedGroup(groupId);
   }, [groupId]);
 
   // Joining isn't finished until "who are you" is answered. Unclaimed, nothing

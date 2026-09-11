@@ -12,8 +12,10 @@ import { WhoPicker } from "../../components/who-picker";
 import { copy } from "../../lib/copy";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
 import { createGroup } from "../../lib/db/commands";
+import { db } from "../../lib/db/dexie";
 import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
+import { useDevice } from "../../lib/hooks";
 import { goUp } from "../../lib/nav";
 
 /**
@@ -40,6 +42,19 @@ export default function NewGroupPage() {
   const [name, setName] = useState("");
   const [people, setPeople] = useState<string[]>([]);
   const [currency, setCurrency] = useState("EUR");
+  // Defaults to whatever currency the group you last opened uses — most people
+  // stay on one trip, one currency, at a time — falling back to EUR for a
+  // phone with no groups yet, or one whose last-opened group has since gone.
+  const device = useDevice();
+  useEffect(() => {
+    const lastGroupId = device?.lastOpenedGroupId;
+    if (!lastGroupId) return;
+    let cancelled = false;
+    void db().groups.get(lastGroupId).then((group) => {
+      if (!cancelled && group) setCurrency(group.baseCurrency);
+    });
+    return () => { cancelled = true; };
+  }, [device?.lastOpenedGroupId]);
   const [asking, setAsking] = useState(false);
   const [picked, setPicked] = useState<string>();
   const [busy, setBusy] = useState(false);

@@ -46,6 +46,13 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
   await updateDevice({ meByGroup: { ...device.meByGroup, [groupId]: memberId } });
 }
 
+/** Record the group this device just opened — read back by `/new` to seed its currency. */
+export async function setLastOpenedGroup(groupId: string): Promise<void> {
+  const device = await getDevice();
+  if (device.lastOpenedGroupId === groupId) return;
+  await updateDevice({ lastOpenedGroupId: groupId });
+}
+
 /** Hide a group from this phone's groups list — forgetting it, device-local only. */
 export async function hideGroup(groupId: string): Promise<void> {
   const device = await getDevice();

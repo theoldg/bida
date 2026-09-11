@@ -42,6 +42,8 @@ export interface DeviceRecord {
    */
   leftGroups?: string[];
   theme: "system" | "light" | "dark";
+  /** The group this device most recently opened — seeds a new group's currency. */
+  lastOpenedGroupId?: string;
 }
 
 /**
