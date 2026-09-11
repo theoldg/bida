@@ -618,6 +618,9 @@ dialog.scrim::backdrop { background: transparent }
    sized to hug its own text, reads as a box drawn round a single digit. */
 .amount:focus-visible { outline: none }
 .amount::placeholder { color: var(--muted); opacity: .35 }
+/* Held until a save attempt actually fails on this field — see .field.invalid
+   below for why an empty field doesn't announce itself before then. */
+.amount.invalid::placeholder { color: var(--debit); opacity: .7 }
 /* An empty centred field draws its caret exactly where the placeholder's "0"
    is, which reads as a struck-through zero. Once you're in the field the caret
    is signal enough. */
@@ -723,6 +726,8 @@ dialog.scrim::backdrop { background: transparent }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
+/* Same held-until-attempted rule as .amount.invalid; see there. */
+.field.invalid input::placeholder { color: var(--debit) }
 /* A value that is picked rather than typed. The whole line is the button — a
    <select> at least gave you the row; ours has to say so itself — and the
    chevron is the only mark that it opens something (ADR-0008). */

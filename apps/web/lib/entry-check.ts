@@ -60,6 +60,10 @@ export interface EntryCheck {
   effectiveSplit: SplitSpec;
   /** The one sentence saying why Save is grey, or null when nothing is wrong. */
   blocker: string | null;
+  /** No amount typed yet — held back from `blocker` since it names no sentence, only a field. */
+  amountMissing: boolean;
+  /** No title typed yet (expenses/incomes only — a transfer's note is optional). */
+  titleMissing: boolean;
   /**
    * Why Receipt mode hasn't produced the split it claims, or null. Kept apart
    * from `blocker` because it is read somewhere else: a complaint about the
@@ -201,15 +205,18 @@ export function checkEntry(input: {
       : payerProblemText(payerCheck, draft.currency,
         draft.kind === "income" ? "income" : "expense");
 
-  const ready = amountMinor > 0 && rateOk && splitOk && !blocker && !receiptBlocker && sidesOk
-    // A transfer's words are a note and optional; an expense without a name is
-    // a row nobody can identify a week later.
-    && (transfer || draft.description.trim().length > 0);
+  const amountMissing = amountMinor <= 0;
+  // A transfer's words are a note and optional; an expense without a name is a
+  // row nobody can identify a week later.
+  const titleMissing = !transfer && draft.description.trim().length === 0;
+
+  const ready = !amountMissing && !titleMissing && rateOk && splitOk
+    && !blocker && !receiptBlocker && sidesOk;
 
   return {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
-    blocker, receiptBlocker, ready,
+    blocker, amountMissing, titleMissing, receiptBlocker, ready,
   };
 }

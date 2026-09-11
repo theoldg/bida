@@ -54,13 +54,21 @@ describe("checkEntry", () => {
   it("holds Save on an expense with no words on it", () => {
     // A transfer's words are a note; an expense without a name is a row nobody
     // can identify a week later.
-    expect(check(expense({ description: "  " })).ready).toBe(false);
-    expect(check({ ...expense({ description: "" }), kind: "transfer" }).ready).toBe(true);
+    const c = check(expense({ description: "  " }));
+    expect(c.ready).toBe(false);
+    expect(c.titleMissing).toBe(true);
+    expect(c.amountMissing).toBe(false);
+    const t = check({ ...expense({ description: "" }), kind: "transfer" });
+    expect(t.ready).toBe(true);
+    expect(t.titleMissing).toBe(false);
   });
 
   it("holds Save on an amount of nothing", () => {
+    expect(check(expense({ amountText: "" })).amountMissing).toBe(true);
+    expect(check(expense({ amountText: "0" })).amountMissing).toBe(true);
     expect(check(expense({ amountText: "" })).ready).toBe(false);
     expect(check(expense({ amountText: "0" })).ready).toBe(false);
+    expect(check(expense()).amountMissing).toBe(false);
   });
 
   describe("a currency the group has no rate for", () => {

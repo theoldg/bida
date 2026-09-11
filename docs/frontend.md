@@ -110,13 +110,25 @@ confers nothing without the secret.
   mode, and that is what reopens it.
 - **Whether the entry may be saved is `checkEntry` (`lib/entry-check.ts`)**,
   not the form. It answers the amount, the base figure, the split in force and
-  why Save is grey — from a draft and the group's rates, with no React in it,
-  so the arithmetic behind that button is a test suite rather than a screen to
-  mount. The form reads its answers and writes none of them. Two sentences,
-  because they are read in two places: `blocker` sits above the split editor,
-  and `receiptBlocker` — the Receipt tab with no bill, or a bill nobody has
-  assigned — goes in the split's own footer beside "Enter an amount to split",
-  since it is the split that is short.
+  why the entry isn't ready — from a draft and the group's rates, with no React
+  in it, so the arithmetic behind that button is a test suite rather than a
+  screen to mount. The form reads its answers and writes none of them.
+- **Save is never disabled, and nothing reads as wrong before a tap says so.**
+  A grey button gave no reason for the two gaps every empty form starts in —
+  no amount, no title — and a structural one (`blocker`: a missing rate, a
+  removed member, an unbalanced payer split) used to render the moment it
+  became true, before the user had done anything to earn a red line. Tapping
+  Save while `!checkEntry(...).ready` sets the form's own `attemptedSave`
+  instead of saving; every red state is gated on it, so a fresh screen shows
+  none of them. `amountMissing`/`titleMissing` turn their field's placeholder
+  red (`.amount.invalid`, `.field.invalid`) rather than adding a caption — a
+  word doesn't fit next to the hero figure and reads oddly in a number field.
+  `blocker` is a sentence about a relationship the form can't fix by typing
+  into the field it's next to, so it keeps its spot above the split editor,
+  now behind the same flag; `receiptBlocker` — the Receipt tab with no bill,
+  or a bill nobody has assigned — stays in the split's own footer beside
+  "Enter an amount to split", already scoped to the tab it concerns. Nothing
+  is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
   about the form and not about whether a save is in flight — so two taps landing

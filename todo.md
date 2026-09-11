@@ -47,9 +47,6 @@ Maybe?
 ### Expense editor density
 Too many buttons in expense editor mode? Think. Maybe entry type and split mode should be foldout/popover.
 
-### Save conditions
-Conditions for saving are too eagerly red, and don't work for unfilled amounts/titles. Need to redesign hinting what's missing (highlight missing element on attempted save?)
-
 ### Scan flow
 Let's redesign the receipt scanning flow. You don't need to fill the title or total, but it seems like you do - amount input jumps out at you with an open keyboard... Maybe there should be a second button next to the "add expense" [+] for adding a receipt directly without having to deal with that
 

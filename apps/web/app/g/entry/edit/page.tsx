@@ -123,6 +123,10 @@ function EditEntryScreen() {
    * and the press that lands during that must still find the button spent.
    */
   const [saving, setSaving] = useState(false);
+  // Save is always tappable; a tap while invalid flips this instead of doing
+  // nothing, and every red state below is held until it does — an untouched
+  // form shows no errors just for being empty.
+  const [attemptedSave, setAttemptedSave] = useState(false);
 
   // A scan can outlive the screen that started it — it is a network round
   // trip to a model, and people put the phone down. The draft still takes the
@@ -349,6 +353,7 @@ function EditEntryScreen() {
   const {
     activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
     onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
+    amountMissing, titleMissing,
   } = check;
 
   /**
@@ -424,7 +429,8 @@ function EditEntryScreen() {
     // said — `useClaimGate` sends a phone that hasn't to the screen that asks
     // — so this is the compiler being shown that, not a fallback.
     const actor = data.me;
-    if (!ready || saving || !groupId || !actor) return;
+    if (!ready) { setAttemptedSave(true); return; }
+    if (saving || !groupId || !actor) return;
     setSaving(true);
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
@@ -493,7 +499,7 @@ function EditEntryScreen() {
             : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
-          right={<button className="action" onClick={save} disabled={!ready || saving}>{copy.act.save}</button>}
+          right={<button className="action" onClick={save} disabled={saving}>{copy.act.save}</button>}
         />
 
         <Scroll>
@@ -518,7 +524,7 @@ function EditEntryScreen() {
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
               <AmountInput
-                className="amount"
+                className={attemptedSave && amountMissing ? "amount invalid" : "amount"}
                 fieldClassName="big"
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
@@ -578,7 +584,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className="field">
+            <div className={attemptedSave && titleMissing ? "field invalid" : "field"}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
                 aria-label={transfer ? copy.form.note : copy.form.what}
@@ -622,7 +628,7 @@ function EditEntryScreen() {
               </div>
             )}
 
-            {blocker ? <div className="failure">{blocker}</div> : null}
+            {attemptedSave && blocker ? <div className="failure">{blocker}</div> : null}
 
             {transfer ? null : (
               <SplitEditor
