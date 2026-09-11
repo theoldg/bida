@@ -636,6 +636,14 @@ dialog.scrim::backdrop { background: transparent }
 /* It is a list inside a card rather than full-bleed `.row`s: it sits between
    two fields on a form, and a full-width list there reads as a different
    screen rather than as one more answer to the same question. */
+/* Tabs and the tab they opened are one box. The mode buttons choose what the
+   list below shows and nothing else, so a floating segmented control with air
+   under it read as a second, unrelated control; attached, it reads as the
+   lid of the thing it governs. The border lives here, once, and the parts
+   inside give theirs up. */
+.splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
+  border-radius: var(--r-s); overflow: hidden }
+.splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
   border-bottom: 1px solid var(--rule-soft); position: relative }

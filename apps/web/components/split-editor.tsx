@@ -212,128 +212,131 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
         </span>
       </div>
 
-      <div className="seg" style={{ marginBottom: 9 }}>
-        {/* `aria-pressed`, not just the class: which mode is on is the whole
-            state of this control, and painting it says so only to an eye. */}
-        {MODES.map((mode) => {
-          const on = !showReceipt && !legacy && spec.mode === mode;
-          return (
-            <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
-              onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
-          );
-        })}
-        {receipt ? (
-          <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
-            onClick={() => onTabChange("receipt")}>
-            {copy.split.receipt}
-          </button>
-        ) : null}
-      </div>
+      {/* Tabs and the tab's contents are one box — `.splitbox`. */}
+      <div className="splitbox">
+        <div className="seg">
+          {/* `aria-pressed`, not just the class: which mode is on is the whole
+              state of this control, and painting it says so only to an eye. */}
+          {MODES.map((mode) => {
+            const on = !showReceipt && !legacy && spec.mode === mode;
+            return (
+              <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
+                onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
+            );
+          })}
+          {receipt ? (
+            <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
+              onClick={() => onTabChange("receipt")}>
+              {copy.split.receipt}
+            </button>
+          ) : null}
+        </div>
 
-      <div className="card splitlist">
-        {showReceipt && receipt ? (
-          <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
-            shares={shares} included={included} />
-        ) : members.map((m) => {
-          const on = included.has(m.id);
-          // Where the right-hand side is only a read-out — the tick/plus of
-          // "evenly", a legacy percentage — the toggle button swallows it, so
-          // the whole row answers to a tap. A row that looks like one target
-          // and responds on its left half only reads as broken, and the plus
-          // is the very thing you aim at to put someone back in. "As parts"
-          // and "as amounts" put their own controls there and keep them.
-          const wholeRow = spec.mode === "equal" || spec.mode === "percent";
-          // "As amounts" has nothing to toggle, so its left half is a label
-          // for the field rather than a button that would do nothing.
-          const typing = spec.mode === "exact";
-          const fieldId = `sp-${m.id}`;
-          const end = spec.mode === "shares" ? (
-            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
-                style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
-              <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
-                color: on ? "var(--ink)" : "var(--muted)" }}>
-                {spec.weights[m.id] ?? 0}
+        <div className="splitlist">
+          {showReceipt && receipt ? (
+            <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
+              shares={shares} included={included} />
+          ) : members.map((m) => {
+            const on = included.has(m.id);
+            // Where the right-hand side is only a read-out — the tick/plus of
+            // "evenly", a legacy percentage — the toggle button swallows it, so
+            // the whole row answers to a tap. A row that looks like one target
+            // and responds on its left half only reads as broken, and the plus
+            // is the very thing you aim at to put someone back in. "As parts"
+            // and "as amounts" put their own controls there and keep them.
+            const wholeRow = spec.mode === "equal" || spec.mode === "percent";
+            // "As amounts" has nothing to toggle, so its left half is a label
+            // for the field rather than a button that would do nothing.
+            const typing = spec.mode === "exact";
+            const fieldId = `sp-${m.id}`;
+            const end = spec.mode === "shares" ? (
+              <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
+                  style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
+                <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
+                  color: on ? "var(--ink)" : "var(--muted)" }}>
+                  {spec.weights[m.id] ?? 0}
+                </span>
+                <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
+                  style={{ fontSize: 18 }}>+</button>
               </span>
-              <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
-                style={{ fontSize: 18 }}>+</button>
-            </span>
-          ) : spec.mode === "exact" ? (
-            <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              {/* Offered on a row with nothing in it too: somebody who has
-                  typed no amount yet is exactly who you hand the rest to. */}
-              {check && !check.ok ? (
-                <button type="button" className="chip" onClick={() => giveRest(m.id)}
-                  aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
-              ) : null}
-              {/* Never disabled. Every row can be typed into, whoever any
-                  other tab has ticked: typing is how somebody joins this one. */}
-              <MinorAmountInput id={fieldId} className="bignum splitin"
-                aria-label={copy.split.amountFor(m.name)}
-                currency={currency}
-                valueMinor={spec.amounts[m.id] ?? 0}
-                placeholder={bare(0, currency)}
-                onChangeMinor={(minor) => setExact(m.id, minor)} />
-            </span>
-          ) : spec.mode === "percent" ? (
-            <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
-              {(spec.bps[m.id] ?? 0) / 100}%
-            </span>
-          ) : (
-            <span style={{
-              // Ink, not credit green: being in the split is not a credit,
-              // and green is reserved for money.
-              color: on ? "var(--ink)" : "var(--muted)",
-            }}>
-              <Icon name={on ? "check" : "plus"} size={16} />
-            </span>
-          );
-          // The dimming rides on the name, not the button: the plus is the
-          // affordance for putting someone back in and must stay legible on a
-          // row that is otherwise faded out.
-          const name = (
-            <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
-              <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
-                {m.name}
+            ) : spec.mode === "exact" ? (
+              <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                {/* Offered on a row with nothing in it too: somebody who has
+                    typed no amount yet is exactly who you hand the rest to. */}
+                {check && !check.ok ? (
+                  <button type="button" className="chip" onClick={() => giveRest(m.id)}
+                    aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
+                ) : null}
+                {/* Never disabled. Every row can be typed into, whoever any
+                    other tab has ticked: typing is how somebody joins this one. */}
+                <MinorAmountInput id={fieldId} className="bignum splitin"
+                  aria-label={copy.split.amountFor(m.name)}
+                  currency={currency}
+                  valueMinor={spec.amounts[m.id] ?? 0}
+                  placeholder={bare(0, currency)}
+                  onChangeMinor={(minor) => setExact(m.id, minor)} />
               </span>
-              <span className="rmeta" style={{ display: "block" }}>
-                {/* In "as amounts" the field beside this line already *is* the
-                    figure, and while the split is short it can't be resolved
-                    anyway — a stray "€0.00" under a row saying 40.00 is worse
-                    than nothing. */}
-                {!on ? copy.split.notInvolved
-                  : typing ? ""
-                  : totalUnknown ? copy.none
-                  : money(shares[m.id] ?? 0, currency)}
+            ) : spec.mode === "percent" ? (
+              <span className="bignum" style={{ fontSize: 14, color: on ? "var(--ink)" : "var(--muted)" }}>
+                {(spec.bps[m.id] ?? 0) / 100}%
               </span>
-            </span>
-          );
-          const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
-          return (
-            <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
-              {typing ? (
-                <label htmlFor={fieldId} style={lead}>{name}</label>
-              ) : (
-                <button type="button" onClick={() => toggle(m.id)}
-                  aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
-                  style={lead}>
-                  {name}
-                  {wholeRow ? end : null}
-                </button>
-              )}
-              {wholeRow ? null : end}
+            ) : (
+              <span style={{
+                // Ink, not credit green: being in the split is not a credit,
+                // and green is reserved for money.
+                color: on ? "var(--ink)" : "var(--muted)",
+              }}>
+                <Icon name={on ? "check" : "plus"} size={16} />
+              </span>
+            );
+            // The dimming rides on the name, not the button: the plus is the
+            // affordance for putting someone back in and must stay legible on a
+            // row that is otherwise faded out.
+            const name = (
+              <span className="rmain" style={{ opacity: on ? 1 : .45 }}>
+                <span className="rtitle" style={{ display: "block", fontSize: 13.5 }}>
+                  {m.name}
+                </span>
+                <span className="rmeta" style={{ display: "block" }}>
+                  {/* In "as amounts" the field beside this line already *is* the
+                      figure, and while the split is short it can't be resolved
+                      anyway — a stray "€0.00" under a row saying 40.00 is worse
+                      than nothing. */}
+                  {!on ? copy.split.notInvolved
+                    : typing ? ""
+                    : totalUnknown ? copy.none
+                    : money(shares[m.id] ?? 0, currency)}
+                </span>
+              </span>
+            );
+            const lead = { display: "flex", gap: 10, alignItems: "center", flex: 1, minWidth: 0 } as const;
+            return (
+              <div key={m.id} className={`splitrow${m.id === me ? " mine" : ""}`}>
+                {typing ? (
+                  <label htmlFor={fieldId} style={lead}>{name}</label>
+                ) : (
+                  <button type="button" onClick={() => toggle(m.id)}
+                    aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
+                    style={lead}>
+                    {name}
+                    {wholeRow ? end : null}
+                  </button>
+                )}
+                {wholeRow ? null : end}
+              </div>
+            );
+          })}
+
+          {/* Only the satisfied verdict wears a glyph. The unsatisfied one used
+              the offline icon, which says "no wifi" and nothing about a split. */}
+          {showFooter && foot ? (
+            <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
+              {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
+              <span>{foot.text}</span>
             </div>
-          );
-        })}
-
-        {/* Only the satisfied verdict wears a glyph. The unsatisfied one used
-            the offline icon, which says "no wifi" and nothing about a split. */}
-        {showFooter && foot ? (
-          <div className={`splitfoot ${foot.ok ? "ok" : "bad"}`}>
-            {foot.ok ? <Icon name="check" size={14} style={{ flex: "none" }} /> : null}
-            <span>{foot.text}</span>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </section>
   );
