@@ -12,7 +12,7 @@ import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
 import { useReceiptScan } from "../../../../components/receipt-scan";
 import { SplitEditor } from "../../../../components/split-editor";
-import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
 import { RateDialog } from "../../../../components/rate-dialog";
 import { Icon } from "../../../../components/icons";
@@ -660,25 +660,26 @@ function EditEntryScreen() {
             )}
 
           </div>
-          <div style={{ height: 12 }} />
+
+          {/* One button, the width of the form, as its last row rather than a
+              bar pinned to the bottom: pinned, it fought the phone keyboard,
+              which overlays the shell instead of shortening it. Scrolling with
+              the fields costs a swipe on a long form and nothing else — it
+              stays pressable when the entry isn't ready, because `save`
+              answers with the refusal flash on whichever field is missing,
+              which is more use than a dead button saying nothing. */}
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+            {failed ? (
+              <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
+                {copy.form.saveFailed(failed)}
+              </p>
+            ) : null}
+            <button type="button" className="btn btn-p btn-lg" onClick={save} disabled={saving}>
+              {saving ? <span className="spinner" /> : null}{copy.act.save}
+            </button>
+          </div>
         </Scroll>
       </Body>
-
-      {/* One button, the width of the screen, at the thumb — this form has
-          exactly one act and the underlined word in the corner made it look
-          optional. It stays pressable when the entry isn't ready: `save`
-          answers with the refusal flash on whichever field is missing, which
-          is more use than a dead button saying nothing. */}
-      <Foot>
-        {failed ? (
-          <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
-            {copy.form.saveFailed(failed)}
-          </p>
-        ) : null}
-        <button type="button" className="btn btn-p btn-lg" onClick={save} disabled={saving}>
-          {saving ? <span className="spinner" /> : null}{copy.act.save}
-        </button>
-      </Foot>
 
       {ask === "discard" ? (
         <ConfirmDialog

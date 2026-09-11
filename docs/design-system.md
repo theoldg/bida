@@ -45,7 +45,7 @@ name and nothing else — no tint, and no initials square
 destructive actions (`.btn-d`, "Remove") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade. With hue
 spent, **size is the emphasis left**: a screen whose one act ends it gives that
-act the full width of a `Foot` at `.btn-lg` — taller and heavier, still square
+act the full width of the screen at `.btn-lg` — taller and heavier, still square
 and still flat.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark

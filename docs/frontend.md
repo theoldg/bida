@@ -123,13 +123,15 @@ confers nothing without the secret.
   why the entry isn't ready — from a draft and the group's rates, with no React
   in it, so the arithmetic behind that button is a test suite rather than a
   screen to mount. The form reads its answers and writes none of them.
-- **Save is the foot of the form, and the kind is the top of it.** One
-  full-width `.btn-lg` in a `Foot`, because the screen has exactly one act and
-  an underlined word in the corner read as optional; a save failure is said
-  above it rather than back in the scroll. The kind chip moved the other way,
-  onto the top bar — centred on the bar itself (`TopBar`'s `mid` slot), not
-  wedged between the title and the edge, which is what the `capped` title is
-  for — and gives the amount the space it used to float over.
+- **Save is the last row of the form, and the kind is the top of it.** One
+  full-width `.btn-lg`, because the screen has exactly one act and an
+  underlined word in the corner read as optional; a save failure is said above
+  it. It scrolls with the fields rather than sitting in a `Foot`: a pinned bar
+  fights the phone keyboard, which overlays the shell instead of shortening it,
+  and the form's last row is where a thumb arrives anyway. The kind chip moved
+  the other way, onto the top bar — centred on the bar itself (`TopBar`'s `mid`
+  slot), not wedged between the title and the edge, which is what the `capped`
+  title is for — and gives the amount the space it used to float over.
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
   A grey button gave no reason for the two gaps every empty form starts in —
   no amount, no title — and a structural one (`blocker`: a missing rate, a
@@ -389,8 +391,9 @@ figure-free.
   scroll-padding is where a field mid-form stops. A dialog sits outside the
   shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
   card is centred in what is left rather than behind the keys — without it the
-  rate pair's own fields and Save were under them. `.foot` pays it too: a
-  pinned act under a form is a button the keyboard would otherwise sit on.
+  rate pair's own fields and Save were under them. `.foot` pays it too, for the
+  screens that still pin an act; the entry form stopped pinning Save and lets
+  it scroll instead.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past
