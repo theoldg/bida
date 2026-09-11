@@ -14,6 +14,7 @@ import {
   TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
+import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
@@ -23,6 +24,7 @@ import { setLastOpenedGroup } from "../../lib/db/device";
 import { syncGroup } from "../../lib/db/sync";
 import { dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
+import { expenseMeta, transferMeta } from "../../lib/row-meta";
 import { useClaimGate, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
@@ -291,18 +293,16 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
         className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
-          <div className="rmeta">
-            {copy.group.payers(payer?.name ?? copy.someone,
-              payers.length > 1 ? plural(payers.length - 1, copy.noun.other) : null,
-              copy.entryKind.verb[kind])}
-            {" · "}
-            {/* Every mode names itself, receipts included: the split's own
-                mode is the whole of what this row asks (ADR-0016). */}
-            {expense.split.mode === "equal"
-              ? (income ? copy.group.sharedWays : copy.group.splitWays)(plural(participants, copy.noun.way))
-              : copy.group.splitAs(plural(participants, copy.noun.person),
-                copy.split.mode[expense.split.mode].toLowerCase())}
-          </div>
+          {/* Who paid, how many ways, in what mode — more than a phone's
+              width holds when a name is long. The ladder that decides what
+              goes first is `lib/row-meta.ts`; this only picks off it. */}
+          <FitLine className="rmeta" options={expenseMeta({
+            payer: payer?.name ?? copy.someone,
+            coPayers: payers.length - 1,
+            kind,
+            ways: participants,
+            mode: expense.split.mode,
+          })} />
         </div>
         <div className="ramt">
           {/* An income's figure carries a "+": it is the group's number, not
@@ -360,9 +360,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
           <div className="rtitle">
             {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}
           </div>
-          <div className="rmeta">
-            {settlement.note ? copy.group.transferNote(settlement.note) : copy.group.transfer}
-          </div>
+          <FitLine className="rmeta" options={transferMeta(settlement.note)} />
         </div>
         <div className="ramt">
           <div className="big" style={{ color: "var(--muted)" }}>

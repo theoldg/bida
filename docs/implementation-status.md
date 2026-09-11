@@ -27,6 +27,12 @@ keep the old `hajsik` name, and so does the IndexedDB database, because all
 three are addresses that existing links and phones already point at
 ([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
 
+**A ledger row shortens itself rather than being cut off** (2026-09-11). Its
+second line comes as several wordings — `lib/row-meta.ts` — and `FitLine`
+renders the longest that measures under the box, so a long name costs the split
+mode rather than half a word
+([design-system.md](design-system.md#a-row-says-less-rather-than-being-cut-off)).
+
 **The exchange-rate field groups its thousands** (2026-09-11) like every other
 money field: it types into `GroupedInput`, the caret-and-grouping half of the
 amount input, and printed rates go through `rateText`

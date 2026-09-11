@@ -21,9 +21,9 @@ left in the project — see the note at the foot of this file.
 
 ### Expense rows
 - Expense rows have inconsistent height (a foreign entry carries an extra line)
-- The subtitle: "from receipt" is gone (a receipt is a split mode now and names
-  itself), but the line is still "Alice paid · split 5 people as receipt" —
-  rethink whether it earns its place at all
+- The subtitle now shortens rather than overflowing (see
+  [Subtitles](#subtitles--done-2026-09-11)), but the question underneath is
+  still open: does the line earn its place at all, at full width?
 - Drop the vertical red/green bars for expense rows (`.row.up/.down::before`)
 
 ### Receipt items foldable summary
@@ -68,8 +68,12 @@ component's caret-and-grouping half is `GroupedInput` now, the rate field is
 one, and printed rates go through `rateText`. Nothing in the app shows an
 ungrouped figure.
 
-### Subtitles
-Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)
+### ~~Subtitles~~ — done 2026-09-11
+`FitLine` renders the longest of several wordings that fits, measured on a
+canvas. The order — mode, then share count, then the payer's co-payers
+abbreviated but never dropped — is `lib/row-meta.ts`, and it is the part to
+argue with. At 390px a four-way receipt split with a long name now loses the
+mode instead of half a word.
 
 ## Engineering
 

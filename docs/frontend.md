@@ -406,6 +406,18 @@ Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and
 Never print core's `message` for an amount problem — it is deliberately
 figure-free.
 
+## A row would rather say less than be cut off
+
+`FitLine` (`components/fit-line.tsx`) takes several wordings of one line,
+longest first, and renders the longest that fits its own box — measured on a
+canvas in a layout effect, so it is picked before paint and there is no
+feedback loop between the text and the box deciding it. `lib/fit.ts` is the
+measuring (`fitIndex` is pure and tested); `lib/row-meta.ts` is the editorial
+order, which is the part worth arguing about
+([design-system.md](design-system.md#a-row-says-less-rather-than-being-cut-off)).
+It renders the longest rung when it cannot measure — no canvas, no layout yet —
+so the static export ships the full line and the browser narrows it.
+
 ## Gotchas
 
 - **A read that never answers is indistinguishable from a slow one.** Both are

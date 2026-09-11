@@ -238,9 +238,17 @@ export const copy = {
     /** "Marie paid" · "Marie + 1 other received". */
     payers: (who: string, others: string | null, verb: string) =>
       (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
+    /**
+     * The same fact for a row with no room for "+ 1 other". Dropping the
+     * co-payers instead would make the line say something untrue, so this is
+     * how the ladder in `lib/row-meta.ts` shortens them.
+     */
+    payersTight: (who: string, others: number, verb: string) => `${who} +${others} ${verb}`,
     sharedWays: (n: string) => `shared ${n}`,
     splitWays: (n: string) => `split ${n}`,
     splitAs: (people: string, mode: string) => `${people}, ${mode}`,
+    /** Two facts on one line: "Marie paid · split 3 ways". */
+    metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
     transferNote: (note: string) => `Transfer · ${note}`,
     paidTo: (from: string, to: string) => `${from} paid ${to}`,

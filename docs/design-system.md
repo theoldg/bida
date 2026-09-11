@@ -118,6 +118,19 @@ amount is ever shown in minor units.** The exchange-rate field is one of these
 too: "1 EUR = 18 000 UZS" is a rate people type, so it groups, and `rateText`
 groups the ones we print.
 
+## A row says less rather than being cut off
+
+A ledger row's second line is a stack of facts — who paid, how many ways, in
+what mode — and a long name pushes it past the width of a phone. `ellipsis`
+cuts at the end, so the line loses whatever happened to be *last* rather than
+whatever mattered *least*. `FitLine` takes several wordings of the line,
+longest first, and renders the longest that measures under the box. Two rules
+set the order, and they live with the copy in `lib/row-meta.ts`: **shortening
+must not lie** (co-payers get abbreviated, "Alice +1 paid", never dropped), and
+**drop what the entry's own screen says better** — the split mode first, the
+share count next, the payer never. `.rmeta` keeps its ellipsis for the last
+rung, because a name can be any length at all.
+
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
