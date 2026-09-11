@@ -100,6 +100,22 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
   return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={24} /></Link>;
 }
 
+/**
+ * The second way an expense starts: photograph the bill.
+ *
+ * It sits above the "+" rather than beside it, and it is outlined where the
+ * "+" is a solid ink block — two equal destinations, one of which is still
+ * the primary (ADR-0023: the "+" is the only figure-ground inversion on the
+ * screen, and a second one would spend that twice).
+ */
+export function ScanFab({ href }: { href: string }) {
+  return (
+    <Link href={href} className="fab fab-2" aria-label={copy.scan.scan}>
+      <Icon name="cam" size={21} />
+    </Link>
+  );
+}
+
 export function Banner({ children, icon }: { children: ReactNode; icon?: IconName }) {
   return (
     <div className="banner">

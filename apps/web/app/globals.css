@@ -197,13 +197,13 @@ a, button, label, select, .seg button, .itemcell {
 }
 
 a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
-.itemfold, a.chip, button.chip, .action, .field:not(.field-stack):has(> .pick) {
+.itemfold, a.chip, button.chip, .action, .field:not(.field-row):has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled),
-.field:not(.field-stack):has(> .pick:active), .action:active:not(:disabled) {
+.field:not(.field-row):has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient, not a background-color: it composites over the element's own
      background instead of replacing it. */
   background-image: linear-gradient(var(--press), var(--press));
@@ -495,6 +495,10 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 .fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: 78px; width: 50px; height: 50px;
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
+/* Stacked on top of the "+", and outlined rather than inverted: the same
+   destination weight, half the voice. */
+.fab-2 { bottom: 138px; width: 44px; height: 44px; background: var(--card-2); color: var(--ink);
+  border: 1px solid var(--rule); margin-right: 3px }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100% }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
@@ -742,29 +746,22 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
-/* The payer field, single-payer state: who paid is the whole first row, same
-   as every other picker; going multi-payer is a second row under it — same
-   card, same hairline, same left edge the multi-payer Card uses once there
-   is more than one payer (below). Each row carries the card's padding itself
-   rather than taking it from `.field`, so a press lights exactly that row,
-   edge to edge and up to the hairline — the card's own press feedback
-   (`.field:has(> .pick)`, above) lit both rows at once, and a press on the
-   rows' own boxes lit a strip narrower than either. */
-.field.field-stack { display: block; padding: 0 }
-.field-stack .pick, .field-stack .pick-sub {
-  width: 100%; display: flex; align-items: center; padding: 10px 12px;
+/* The payer field, single-payer state: who paid and the door to more than one
+   payer share one row. One payer is the common case, so it costs one row; only
+   the multi-payer Card below takes two, because it has chips to show. Each
+   control carries the card's padding itself rather than taking it from
+   `.field`, so a press lights exactly that control — the card's own press
+   feedback (`.field:has(> .pick)`, above) lit the whole row for either. */
+.field.field-row { padding: 0; gap: 0 }
+.field-row .pick, .field-row .pick-sub {
+  display: flex; align-items: center; padding: 10px 12px;
   transition: background-image .2s ease }
-.field-stack .pick:active, .field-stack .pick-sub:active {
+.field-row .pick:active, .field-row .pick-sub:active {
   background-image: linear-gradient(var(--press), var(--press)); transition-duration: 0s }
-/* The 12px beside the hairline is the margin it carries in the multi-payer
-   card, moved onto the rows so the press reaches it. */
-.field-stack .pick { gap: 10px; padding-bottom: 12px }
-.field-stack .hairline { margin: 0 }
-.field-stack .pick-sub { gap: 6px; padding-top: 12px;
-  /* 12 + a chip's height + 10: the second row of the multi-payer card, so the
-     field is the same height in either state and the form doesn't jump when a
-     second payer is added. */
-  min-height: 44.75px;
+.field-row .pick { gap: 10px }
+/* The door shrinks to its own text and gives the rest to the name, which is
+   the part that can be long; its own padding is what separates the two. */
+.field-row .pick-sub { flex: none; gap: 4px; padding-left: 6px;
   font-size: 12px; font-weight: 500; color: var(--muted) }
 
 /* ---- balance bars ---- */

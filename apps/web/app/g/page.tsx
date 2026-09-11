@@ -10,7 +10,8 @@ import {
 import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
-  Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, Screen, Scroll, SkeletonRows, TopBar,
+  Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
+  TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
 import { GroupMenu } from "../../components/group-menu";
@@ -64,7 +65,7 @@ function GroupScreen() {
           <TopBar title=" " back={route.groups()} />
           <Scroll><SkeletonRows count={6} /></Scroll>
         </Body>
-        {tab === "ledger" ? <Fab href={route.addEntry(groupId)} /> : null}
+        {tab === "ledger" ? <><ScanFab href={route.scan(groupId)} /><Fab href={route.addEntry(groupId)} /></> : null}
         <BottomNav items={[
           { label: copy.group.tabs.ledger, icon: "list", href: route.group(groupId), on: tab === "ledger" },
           { label: copy.group.tabs.balances, icon: "scale", href: route.group(groupId, "balances"),
@@ -120,7 +121,15 @@ function GroupScreen() {
         {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}
       </Body>
 
-      {tab === "ledger" ? <Fab href={route.addEntry(group.id)} /> : null}
+      {/* Two ways to start an expense: type it, or photograph the bill. Both
+          live on the ledger only — the balances tab is a reading, not a place
+          you add to. */}
+      {tab === "ledger" ? (
+        <>
+          <ScanFab href={route.scan(group.id)} />
+          <Fab href={route.addEntry(group.id)} />
+        </>
+      ) : null}
 
       {/* One navigation, at the bottom, and only what a group actually is: what
           moved through it, and who is up or down because of it. "Settle" was a

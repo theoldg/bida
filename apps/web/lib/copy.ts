@@ -393,6 +393,10 @@ export const copy = {
 
   scan: {
     scan: "Scan a receipt",
+    /** The scan-first screen: its title, what it promises, and its camera button. */
+    title: "Scan a receipt",
+    blurb: "Photograph the bill and the expense fills itself in — what it cost, what it’s called, and when.",
+    takePhoto: "Take a photo",
     rescan: "Rescan",
     upload: "Upload",
     reading: "Reading…",

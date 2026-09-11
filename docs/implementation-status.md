@@ -158,6 +158,16 @@ dialog directly, and a quieter "Multi-payer" link at the right end of the same
 row is the only way in from there. One payer costs one row; only the
 multi-payer card takes two, since it has chips to show.
 
+**Scanning starts from the ledger.** A camera above the "+" opens `/g/scan` —
+the two scan buttons and nothing else — and what comes back is an ordinary
+expense form with the bill's title, amount, date and currency already in it.
+Both scanning screens run one hook (`components/receipt-scan.tsx`) and **a
+scan no longer navigates**: it used to push straight to the who-had-what grid
+whenever the bill had lines, which made photographing a bill a commitment to
+itemise it. The grid is a tap on the Receipt tab, split evenly is a tap on
+Evenly, and with nothing racing the screen the rate dialog for an unrated
+currency just opens ([receipt-scanning.md](receipt-scanning.md)).
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

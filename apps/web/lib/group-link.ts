@@ -81,6 +81,13 @@ export const route = {
     + (via ? `&via=${via}` : ""),
   payers: (groupId: string) => `/g/payers?id=${encodeURIComponent(groupId)}`,
   /**
+   * Scan first, decide after: a screen holding nothing but the two scan
+   * buttons, which hands the filled draft to the form. Reached from the
+   * ledger, beside the "+" — photographing a bill is how an expense most
+   * often starts, and it used to be four taps inside the form.
+   */
+  scan: (groupId: string) => `/g/scan?id=${encodeURIComponent(groupId)}`,
+  /**
    * Who-had-what: right after a scan finds line items, or "Edit who-had-what"
    * later. `via` is the form's own, held for the trip back — a detour through
    * this screen must not be what decides where saving lands.
