@@ -252,6 +252,10 @@ function EditEntryScreen() {
     const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
     seedDraft(groupId, kind === "transfer" ? {
       ...blank,
+      // Settle up is the only caller that prefills `from` — the overwhelming
+      // case is somebody being paid back, so it's worth saying without being
+      // typed. A transfer opened any other way starts with a blank note.
+      ...(prefill.from ? { description: copy.form.reimbursement } : {}),
       ...(prefill.from ? { fromMember: prefill.from } : {}),
       ...(prefill.to ? { toMember: prefill.to } : {}),
       // The suggestion is already in the group's base currency, so it seeds
@@ -379,13 +383,12 @@ function EditEntryScreen() {
     const handoff = leavingReceipt
       ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, draft.receiptTip, draft.currency)
       : null;
-    // The note only defaults to "Reimbursement" because a transfer is one
-    // (`blankDraft`). Arriving at a transfer with nothing typed takes that
-    // default; leaving one that still carries it hands the next kind an
-    // empty field rather than a word about a transfer it no longer is.
-    const note = next === "transfer"
-      ? (draft.description.trim() === "" ? copy.form.reimbursement : draft.description)
-      : (draft.description === copy.form.reimbursement ? "" : draft.description);
+    // "Reimbursement" is only ever typed in by settle up's prefill, never by
+    // switching kind here. Leaving a transfer that still carries it hands the
+    // next kind an empty field rather than a word about a transfer it no
+    // longer is.
+    const note = next !== "transfer" && draft.description === copy.form.reimbursement
+      ? "" : draft.description;
     patch({
       kind: next,
       description: note,

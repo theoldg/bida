@@ -45,9 +45,6 @@ All amounts everywhere should always be formatted with comma separated thousands
 ### Subtitles
 Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)
 
-### "Reimbursement"
-Should not be the default for all transfers, only those prefilled from the "settle up" screen.
-
 ## Refactor
 
 ### Receipt / "as parts" intertwined

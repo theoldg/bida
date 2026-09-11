@@ -152,6 +152,11 @@ describe("a blank draft", () => {
     expect(activeSplitTab(d)).toBe("equal");
     expect(activeSplit(d)).toEqual({ mode: "equal", members: MEMBERS });
   });
+
+  it("never defaults a transfer's note — only settle up's prefill does that", () => {
+    const d = blankDraft("transfer", A, "EUR", MEMBERS);
+    expect(d.description).toBe("");
+  });
 });
 
 /**

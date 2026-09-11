@@ -296,9 +296,10 @@ export const copy = {
     what: "What",
     whatPlaceholder: "Title",
     note: "Note (optional)",
-    /** What a transfer is nine times out of ten, typed for you: paying
-        somebody back. It seeds a new transfer's note and is cleared if the
-        entry turns out to be an expense after all (`blankDraft`). */
+    /** What a transfer prefilled from settle up is nine times out of ten:
+        paying somebody back. Seeded only by that prefill (`edit/page.tsx`),
+        never by a blank "+" or a mid-edit kind switch, and cleared if the
+        entry turns out not to be a transfer after all (`changeKind`). */
     reimbursement: "Reimbursement",
     when: "When",
     andSomeone: "+ someone",
