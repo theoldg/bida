@@ -9,7 +9,7 @@ export function useUpdateState(): UpdateState {
 }
 
 /**
- * The offer to restart into a new build, at the foot of the groups list beside
+ * The offer to reload into a new build, at the foot of the groups list beside
  * the install nudge — the same place, for the same reason: it is the app
  * talking about itself, so it waits below whatever you came to read.
  *
@@ -26,7 +26,6 @@ export function UpdateNudge() {
     <div className="pad" style={{ paddingTop: 18, paddingBottom: 22 }}>
       <div className="card">
         <div style={{ fontSize: 14, fontWeight: 600 }}>{copy.update.title}</div>
-        <p className="hint" style={{ marginTop: 4 }}>{copy.update.body}</p>
         <button className="btn btn-p" style={{ marginTop: 11 }}
           disabled={state === "applying"} onClick={applyUpdate}>
           {state === "applying" ? <span className="spinner" /> : null}{copy.update.act}
