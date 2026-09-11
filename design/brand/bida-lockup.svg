@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" role="img" aria-label="bida">
+  <title>bida</title>
+  <!-- Mark plus wordmark. The word is live text in JetBrains Mono, the app's
+       one face — it renders correctly anywhere the font is installed or linked,
+       and falls back to a monospace stack elsewhere. For print or a context
+       without the font, convert this text to outlines. -->
+  <mask id="bida-nail-lock" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
+    <rect width="120" height="120" fill="#fff"/>
+    <path d="M26 34a6 6 0 0 1 12 0" fill="none" stroke="#000" stroke-width="3.6"
+          stroke-linecap="round"/>
+  </mask>
+  <g mask="url(#bida-nail-lock)" fill="none" stroke="currentColor" stroke-linecap="round">
+    <path d="M32 25V95" stroke-width="20"/>
+    <circle cx="66" cy="73" r="24" stroke-width="15"/>
+  </g>
+  <text x="120" y="87" fill="currentColor" stroke="none"
+        font-family="'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace"
+        font-size="62" font-weight="700" letter-spacing="-1.2">bida</text>
+</svg>

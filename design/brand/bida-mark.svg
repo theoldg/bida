@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="bida">
+  <title>bida</title>
+  <!-- An upright finger and the coin it holds, fused into a lowercase b.
+       The stem is one round-capped stroke — its cap is the fingertip; the bowl
+       is a ring whose outer edge bites 7.5 units into the stem, so the two read
+       as one letter rather than two objects. Both land on the same baseline
+       (y≈105). Everything is currentColor, so the mark inherits the ink token and
+       needs no dark-mode variant. -->
+  <mask id="bida-nail" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
+    <rect width="120" height="120" fill="#fff"/>
+    <!-- the fingernail, knocked out rather than drawn, so the mark stays one colour -->
+    <path d="M26 34a6 6 0 0 1 12 0" fill="none" stroke="#000" stroke-width="3.6"
+          stroke-linecap="round"/>
+  </mask>
+  <g mask="url(#bida-nail)" fill="none" stroke="currentColor" stroke-linecap="round">
+    <path d="M32 25V95" stroke-width="20"/>
+    <circle cx="66" cy="73" r="24" stroke-width="15"/>
+  </g>
+</svg>

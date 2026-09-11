@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="bida">
+  <title>bida</title>
+  <!-- The same mark with the sketch's 1 struck on the coin. Legible from about
+       40px up; below that use bida-mark.svg, whose bowl stays open. -->
+  <mask id="bida-nail-coin" maskUnits="userSpaceOnUse" x="0" y="0" width="120" height="120">
+    <rect width="120" height="120" fill="#fff"/>
+    <path d="M26 34a6 6 0 0 1 12 0" fill="none" stroke="#000" stroke-width="3.6"
+          stroke-linecap="round"/>
+  </mask>
+  <g mask="url(#bida-nail-coin)" fill="none" stroke="currentColor" stroke-linecap="round">
+    <path d="M32 25V95" stroke-width="20"/>
+    <circle cx="66" cy="73" r="24" stroke-width="15"/>
+  </g>
+  <path d="M61 66l5-4v21M59 83h14" fill="none" stroke="currentColor" stroke-width="3.8"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
