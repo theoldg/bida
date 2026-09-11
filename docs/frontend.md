@@ -350,6 +350,7 @@ figure-free.
   probe settles which layer paints what: give the manifest's two colours and
   the meta tag values nothing else uses, reinstall, and read the screen —
   splash is `background_color`, status bar is `theme_color`.
+- **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
