@@ -292,9 +292,10 @@ itself** ([ADR-0005](decisions/0005-money-and-currency.md)).
 A real `<input inputMode="decimal">`. It sanitises as you type (digits, one
 separator — "," and "." both accepted — fraction clipped to the currency's
 exponent, leading zeros stripped), **restores the caret** across its own
-reformatting, and autofocuses on a *new* expense only. `MinorAmountInput` holds
-typed text locally and re-reads the model only on outside change — don't go back
-to `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
+reformatting, and **never autofocuses** — a draft that opens with the keyboard
+up hides the rest of the form before you have looked at it. `MinorAmountInput`
+holds typed text locally and re-reads the model only on outside change — don't
+go back to `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
 "12.".
 
 The other place with real logic is the **balance bar** (around a centre axis,

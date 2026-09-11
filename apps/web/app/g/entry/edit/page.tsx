@@ -528,7 +528,6 @@ function EditEntryScreen() {
                 fieldClassName="big"
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
-                autoFocus={!draft.entryId}
                 placeholder="0"
                 currency={draft.currency}
                 value={receiptTotal !== null

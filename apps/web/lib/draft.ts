@@ -411,11 +411,11 @@ export function blankDraft(
   return {
     kind,
     newEntryId: newId(),
-    // Empty, not a literal "0". The "0" was there so an autofocused, borderless
-    // field showed *something* — but it is a real character with a caret that
-    // can land either side of it, so tapping into the field and typing "5" gave
-    // you "50". The field now has an underline and a muted "0" placeholder, so
-    // it looks like an input without containing anything you have to delete.
+    // Empty, not a literal "0". The "0" was there so a borderless field showed
+    // *something* — but it is a real character with a caret that can land either
+    // side of it, so tapping into the field and typing "5" gave you "50". The
+    // field now has an underline and a muted "0" placeholder, so it looks like
+    // an input without containing anything you have to delete.
     amountText: "",
     currency,
     description: "",
