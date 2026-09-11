@@ -103,7 +103,6 @@ export const copy = {
   install: {
     title: "Keep Hajsik on your home screen",
     body: "Own icon, no browser bar, works offline.",
-    notNow: "Not now",
     /** iOS has no install API, so name the button that does it. */
     manual: { tap: "Tap", then: "in the browser bar, then", label: "Add to Home Screen" },
   },

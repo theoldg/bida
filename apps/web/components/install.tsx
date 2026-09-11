@@ -2,9 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
-import { updateDevice } from "../lib/db/device";
 import { copy } from "../lib/copy";
-import { useDevice } from "../lib/hooks";
 import { installOffer, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
@@ -12,19 +10,16 @@ export function useInstallOffer(): InstallOffer {
 }
 
 /**
- * The nudge on the groups list. It asks once, quietly, at the foot of the
- * list — the app is only worth a home-screen slot once there is something in
- * it, and a bar across the top of the first screen would be the app talking
- * about itself before it has told you a single number.
+ * The nudge on the groups list. It sits quietly at the foot of the list — the
+ * app is only worth a home-screen slot once there is something in it, and a
+ * bar across the top of the first screen would be the app talking about itself
+ * before it has told you a single number.
  *
- * "Not now" is remembered on the phone rather than for the session: asking
- * again next launch is what makes install banners hated. It is the app's only
- * offer, so "Not now" is final here — the browser's own menu still installs.
+ * It has no dismiss: the offer stands until the phone installs, at which point
+ * `offer` becomes "installed" and the nudge stops rendering by itself.
  */
 export function InstallNudge() {
   const offer = useInstallOffer();
-  const device = useDevice();
-  if (device?.installDismissedAt) return null;
   if (offer !== "ready" && offer !== "manual") return null;
 
   return (
@@ -32,10 +27,6 @@ export function InstallNudge() {
       <div className="card">
         <div style={{ fontSize: 14, fontWeight: 600 }}>{copy.install.title}</div>
         <Offer offer={offer} />
-        <button className="action" style={{ marginTop: 12, color: "var(--muted)" }}
-          onClick={() => updateDevice({ installDismissedAt: Date.now() })}>
-          {copy.install.notNow}
-        </button>
       </div>
     </div>
   );

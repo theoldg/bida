@@ -250,10 +250,9 @@ so the app asks to be installed too. `lib/install.ts` captures
 object can open the install sheet later — and reduces the situation to
 `installed | ready | manual | none`; iOS has no such event, hence `manual`.
 `components/install.tsx` puts the nudge at the foot of the groups list, only
-once there is a group worth coming back to. "Not now" writes
-`device.installDismissedAt` and is never cleared: a banner that returns each
-launch is what makes install prompts hated, and the browser's menu still
-installs.
+once there is a group worth coming back to. It has no dismiss — persisting
+storage is worth the standing ask, and installing is what ends it: the offer
+becomes `installed` and the nudge disappears on its own.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

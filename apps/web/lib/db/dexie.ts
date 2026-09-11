@@ -42,11 +42,6 @@ export interface DeviceRecord {
    */
   leftGroups?: string[];
   theme: "system" | "light" | "dark";
-  /**
-   * When "Not now" was tapped on the install nudge. Set once and never
-   * cleared — the app asks about installing exactly once.
-   */
-  installDismissedAt?: number;
 }
 
 /**
