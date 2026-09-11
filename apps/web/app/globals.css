@@ -640,6 +640,13 @@ dialog.scrim::backdrop { background: transparent }
 .rowmenu-item:active { background: var(--press) }
 @media (prefers-reduced-motion: reduce) { .rowmenu { animation: none } }
 
+/* The one act of the diagnostics screen, held at the top of the scroll while
+   the report runs on underneath it. `.scroll` is the containing block —
+   it is `position: relative` — so `top: 0` is the top of the report, not of
+   the page. Opaque, or the log slides under it and is read through it. */
+.diag-act { position: sticky; top: 0; z-index: 1; padding: 10px 16px;
+  background: var(--card); border-bottom: 1px solid var(--rule) }
+
 /* The diagnostics readout: one block of preformatted text, scrolling sideways
    on its own rather than widening the screen behind it. Small and mono because
    it is a log, and the only screen in the app that is not for a person using

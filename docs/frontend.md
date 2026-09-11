@@ -257,6 +257,13 @@ completion is how that would have been the one line missing. And the timeline
 is ordered by when things **started**, not when they ended, so a long `rebuild`
 prints above the read it was blocking rather than below it.
 
+Its Copy button sticks to the top of the scroll rather than sitting in a
+`Foot`. The bottom of an installed app is where the system navigation bar is,
+and `env(safe-area-inset-bottom)` reads 0 on Android often enough that a foot
+there is a button with its lower half cut off — which is what happened. The
+top is also where it belongs: the screen is opened in order to copy, and the
+report under it is hundreds of lines.
+
 Read it at **`/diag`** — long-press the wordmark on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
 reads. The previous session is kept in `localStorage` (not a table — this has

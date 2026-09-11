@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Body, Foot, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
 import { format, lastSession, loadedAt, timeline } from "../../lib/diag";
@@ -44,25 +44,32 @@ export default function DiagPage() {
       <Body>
         <TopBar title={copy.diag.title} back={route.groups()} />
         <Scroll>
+          {/* Stuck to the top of the scroll rather than pinned in a `Foot`,
+              which is the one thing this screen cannot use: the bottom of an
+              installed app is where the system navigation bar sits, and
+              `env(safe-area-inset-bottom)` reads 0 on Android often enough
+              that a foot there is a button with its lower half cut off. The
+              top is also simply where it belongs — this screen is opened in
+              order to copy, and the report below it is hundreds of lines. */}
+          <div className="diag-act">
+            <button type="button" className="btn btn-p" disabled={!report}
+              onClick={() => {
+                navigator.clipboard.writeText(report ?? "").then(
+                  () => setCopied(true),
+                  // The clipboard refuses on an insecure context or a denied
+                  // permission. The whole report is already on screen to be
+                  // selected or photographed, so there is nothing to recover.
+                  () => setCopied(false),
+                );
+              }}>
+              {copied ? copy.diag.copied : copy.diag.copyAll}
+            </button>
+          </div>
           {/* One <pre>, not a laid-out table: it is read on a phone, pasted
               into a message and diffed against the next one. */}
           <pre className="diag">{report ?? copy.diag.reading}</pre>
         </Scroll>
       </Body>
-      <Foot>
-        <button type="button" className="btn btn-p btn-lg" disabled={!report}
-          onClick={() => {
-            navigator.clipboard.writeText(report ?? "").then(
-              () => setCopied(true),
-              // The clipboard refuses on an insecure context or a denied
-              // permission. The whole report is already on screen to be
-              // selected or photographed, so there is nothing to recover.
-              () => setCopied(false),
-            );
-          }}>
-          {copied ? copy.diag.copied : copy.diag.copyAll}
-        </button>
-      </Foot>
     </Screen>
   );
 }
