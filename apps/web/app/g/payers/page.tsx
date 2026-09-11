@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { validatePayers } from "@hajsik/core";
+import { primaryPayer, validatePayers } from "@hajsik/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
@@ -13,10 +13,19 @@ import { useClaimGate, useGroupData } from "../../../lib/hooks";
 import { draftAmountMinor, saveDraft, useDraft } from "../../../lib/draft";
 
 /**
- * Who put the money in. The mirror of the split editor, and deliberately
- * simpler than it: there are no modes here, because nobody pays "30% of the
- * bill" — they hand over a number the receipt knows. Amounts are in the
- * expense's own currency for the same reason (ADR-0010).
+ * Who put the money in. The mirror of the split editor's "as amounts" tab,
+ * and deliberately simpler than the editor as a whole: there are no other
+ * modes here, because nobody pays "30% of the bill" — they hand over a number
+ * the receipt knows. Amounts are in the expense's own currency for the same
+ * reason (ADR-0010).
+ *
+ * Every row's field is open from the start, typed zero or blank drops that
+ * person rather than a tap toggling them out — the field *is* the statement,
+ * same reasoning as `SplitEditor`'s exact mode. Falling back to nobody typed
+ * in at all collapses the draft to a plain single payer (`payers: null`)
+ * rather than sitting on a degenerate all-zero map, which is also how "back
+ * to one payer" used to work as an explicit button — clearing the fields
+ * reaches the same place without one.
  */
 export default function PayersPage() {
   return <QueryBoundary><PayersScreen /></QueryBoundary>;
@@ -53,30 +62,27 @@ function PayersScreen() {
   // A draft with no `payers` yet means the ordinary one-payer expense; show it
   // as that person holding the whole amount rather than as an empty table.
   const spec: Record<string, number> = draft.payers ?? { [draft.paidBy]: amountMinor };
-  const contributors = Object.keys(spec).filter((id) => (spec[id] ?? 0) > 0);
   const check = validatePayers(amountMinor, spec);
 
-  const setSpec = (next: Record<string, number>) => saveDraft(groupId, {
-    ...draft,
-    payers: next,
-    // Keep paidBy pointing at somebody who is actually in the map, so the row
-    // in the list and the avatar never name a non-payer.
-    paidBy: Object.keys(next).find((id) => (next[id] ?? 0) > 0) ?? draft.paidBy,
-  });
-
-  function toggle(memberId: string) {
+  /**
+   * The figure *is* the statement, same as the split editor's "as amounts"
+   * tab: typing a positive amount puts someone in, clearing it to nothing
+   * takes them out. Nobody left with anything typed in is not a payers list
+   * of zero people, it's the single-payer case this screen started from —
+   * so that's where it goes back to, `paidBy` unchanged, rather than stranding
+   * the form on a map every entry with money has to have at least one of.
+   */
+  function setAmount(memberId: string, minor: number) {
     const next = { ...spec };
-    const removing = memberId in next;
-    // The last person can't be taken off. An expense nobody paid for isn't a
-    // half-finished edit, it's a nonsense one — and an empty map stranded the
-    // form, which reads it as the *single-payer* case and had nowhere to put
-    // the reason Save was grey. Swapping payers still works: add the new one,
-    // then remove the old. The row is `disabled` so the refusal is visible
-    // rather than a tap that does nothing.
-    if (removing && Object.keys(next).length <= 1) return;
-    if (removing) delete next[memberId];
-    else next[memberId] = 0;
-    setSpec(next);
+    if (minor > 0) next[memberId] = minor; else delete next[memberId];
+    if (Object.values(next).every((v) => (v ?? 0) === 0)) {
+      saveDraft(gid, { ...current, payers: null });
+      return;
+    }
+    // Same rule the fold keeps `paidBy` by (core/payers.ts): the largest
+    // contributor is who the entry names outside this screen — the picker,
+    // the row's avatar, history's summary line.
+    saveDraft(gid, { ...current, payers: next, paidBy: primaryPayer(next, current.paidBy) });
   }
 
   /** Leaving throws this screen's edits away, so ask first — as the form does. */
@@ -94,22 +100,12 @@ function PayersScreen() {
     router.back();
   }
 
-  function setAmount(memberId: string, minor: number) {
-    setSpec({ ...spec, [memberId]: minor });
-  }
-
   /** Hand the unallocated remainder to one person — the usual last step. */
   function giveRest(memberId: string) {
     const others = Object.entries(spec)
       .filter(([id]) => id !== memberId)
       .reduce((a, [, v]) => a + (v ?? 0), 0);
-    setSpec({ ...spec, [memberId]: Math.max(0, amountMinor - others) });
-  }
-
-  /** Back to a single payer: the whole amount to whoever is largest now. */
-  function onePayer() {
-    saveDraft(gid, { ...current, payers: null });
-    router.back();
+    setAmount(memberId, Math.max(0, amountMinor - others));
   }
 
   return (
@@ -124,13 +120,11 @@ function PayersScreen() {
         <Scroll>
           <div className="rows">
             {data.members.map((m) => {
-              const on = m.id in spec;
-              const last = on && Object.keys(spec).length <= 1;
+              const on = (spec[m.id] ?? 0) > 0;
+              const fieldId = `payer-${m.id}`;
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
-                  <button onClick={() => toggle(m.id)} disabled={last}
-                    aria-label={last ? copy.payers.onlyPayer[voice](m.name)
-                      : on ? copy.payers.leaveOut(m.name) : copy.payers.alsoPaid[voice](m.name)}
+                  <label htmlFor={fieldId}
                     style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 0,
                       opacity: on ? 1 : .45 }}>
                     <span className="rmain">
@@ -138,24 +132,29 @@ function PayersScreen() {
                         {m.name}
                       </span>
                       <span className="rmeta" style={{ display: "block" }}>
-                        {on ? copy.payers.putIn[voice] : copy.payers.didnt[voice]}
+                        {/* The field beside this line already is the figure —
+                            a stray "€0.00" under it would say the same thing
+                            twice, same as the split editor's exact mode. */}
+                        {on ? "" : copy.payers.didnt[voice]}
                       </span>
                     </span>
-                  </button>
+                  </label>
 
-                  {on ? (
-                    <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {/* Offered on a row with nothing in it too: somebody who
+                        hasn't typed an amount yet is exactly who you hand the
+                        shortfall to. */}
+                    {!check.ok ? (
                       <button onClick={() => giveRest(m.id)} className="chip"
                         aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
-                      <MinorAmountInput className="bignum splitin" aria-label={copy.payers.contribution[voice](m.name)}
-                        currency={currency}
-                        valueMinor={spec[m.id] ?? 0}
-                        placeholder={bare(0, currency)}
-                        onChangeMinor={(minor) => setAmount(m.id, minor)} />
-                    </span>
-                  ) : (
-                    <span style={{ color: "var(--muted)" }}><Icon name="plus" size={16} /></span>
-                  )}
+                    ) : null}
+                    <MinorAmountInput id={fieldId} className="bignum splitin"
+                      aria-label={copy.payers.contribution[voice](m.name)}
+                      currency={currency}
+                      valueMinor={spec[m.id] ?? 0}
+                      placeholder={bare(0, currency)}
+                      onChangeMinor={(minor) => setAmount(m.id, minor)} />
+                  </span>
                 </div>
               );
             })}
@@ -173,12 +172,6 @@ function PayersScreen() {
                   : payerProblemText(check, currency, voice)}
               </span>
             </div>
-
-            {contributors.length > 1 ? (
-              <button className="btn btn-s" style={{ marginTop: 10 }} onClick={onePayer}>
-                {copy.payers.onePayer[voice]}
-              </button>
-            ) : null}
           </div>
           <div style={{ height: 24 }} />
         </Scroll>

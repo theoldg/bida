@@ -143,6 +143,20 @@ scanned bill "as parts", the log counting its weights as parts ("Teo ×3943
 parts"), a tab that kept claiming Receipt after somebody switched away
 ([ADR-0016](decisions/0016-receipts.md)).
 
+**The payer screen is a field, not a toggle.** Every row's amount was hidden
+until a tap turned that person "on", so the plus icon that did it sat outside
+the row's own button and the last payer could not be removed — two dead
+corners `todo.md` named. Every row now carries an always-open amount field,
+the same reasoning as `SplitEditor`'s "as amounts" tab: the figure *is* the
+statement, typing it in is how somebody joins. The explicit "back to one
+payer" button is gone with it — clearing every field down to nothing collapses
+the draft to a plain single payer on its own, `paidBy` set to whoever
+`primaryPayer` (`core/payers.ts`) now names as the largest contributor rather
+than whoever the map happened to iterate to first. The entry form's trigger
+into it is two rows instead of one crowded one: "Paid by: Alice" still opens
+the single-payer dialog directly, and a quieter "Multi-payer" link under it is
+the only way in from there.
+
 One measurement is owed: whole-entity ops repeat every field, so the log grows
 faster than it did, and that wants a number from a real group rather than an
 argument.

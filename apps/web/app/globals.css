@@ -729,6 +729,13 @@ dialog.scrim::backdrop { background: transparent }
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
+/* The payer field, single-payer state: who paid is the whole first row, same
+   as every other picker; going multi-payer is a second, quieter row under it
+   rather than a chip competing with the name for the same line. */
+.field.field-stack { flex-direction: column; align-items: stretch; gap: 6px }
+.field-stack .pickrow { display: flex; align-items: center; gap: 10px }
+.field-stack .pick-sub { display: flex; align-items: center; gap: 6px; margin-left: 102px;
+  font-size: 12px; font-weight: 500; color: var(--muted) }
 
 /* ---- balance bars ---- */
 .balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;

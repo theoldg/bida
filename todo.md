@@ -53,12 +53,6 @@ Conditions for saving are too eagerly red, and don't work for unfilled amounts/t
 ### Scan flow
 Let's redesign the receipt scanning flow. You don't need to fill the title or total, but it seems like you do - amount input jumps out at you with an open keyboard... Maybe there should be a second button next to the "add expense" [+] for adding a receipt directly without having to deal with that
 
-### Who paid
-"Who paid" is clunky
-- the trigger is not aesthetic (think)
-- inside the editor the [+] next to someone's name is not clickable while the empty space next to it is.
-- once clicked, it should focus the amount field and pull up the keyboard
-
 ### Who had what
 - Include non-translated mode
 - Language choice should reflect on the expense summary outside of edit mode

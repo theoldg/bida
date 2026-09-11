@@ -605,15 +605,20 @@ function EditEntryScreen() {
                 </div>
               </Card>
             ) : (
-              <div className="field">
-                <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
-                <button type="button" id="paidby" className="pick"
-                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
-                  <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
-                  <Icon name="chev" size={13} className="spacer pchev" />
-                </button>
-                <Link href={route.payers(groupId)} className="chip" aria-label={copy.form.coPayers[kind === "income" ? "income" : "expense"]}>
-                  {copy.form.andSomeone}
+              <div className="field field-stack">
+                <div className="pickrow">
+                  <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
+                  <button type="button" id="paidby" className="pick"
+                    aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
+                    <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
+                    <Icon name="chev" size={13} className="spacer pchev" />
+                  </button>
+                </div>
+                {/* A second, quieter door onto the same field: the happy path
+                    above never has to make room for it. */}
+                <Link href={route.payers(groupId)} className="pick-sub">
+                  <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>
+                  <Icon name="chev" size={11} />
                 </Link>
               </div>
             )}

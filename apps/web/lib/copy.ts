@@ -301,10 +301,9 @@ export const copy = {
         entry turns out not to be a transfer after all (`changeKind`). */
     reimbursement: "Reimbursement",
     when: "When",
-    andSomeone: "+ someone",
-    coPayers: {
-      expense: "Several people put money in",
-      income: "Several people received it",
+    multiPayer: {
+      expense: "Multi-payer",
+      income: "Multi-recipient",
     } as Voiced<string>,
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardTitleEdits: "Discard edits?",
@@ -332,23 +331,10 @@ export const copy = {
       expense: "Who paid",
       income: "Who received it",
     } as Voiced<string>,
-    putIn: {
-      expense: "put money in",
-      income: "received some",
-    } as Voiced<string>,
     didnt: {
       expense: "didn’t pay",
       income: "didn’t receive any",
     } as Voiced<string>,
-    alsoPaid: {
-      expense: (name: string) => `${name} put money in too`,
-      income: (name: string) => `${name} received some too`,
-    } as Voiced<(name: string) => string>,
-    leaveOut: (name: string) => `Leave ${name} out`,
-    onlyPayer: {
-      expense: (name: string) => `${name} is the only payer — add somebody else first`,
-      income: (name: string) => `${name} is the only one who received it — add somebody else first`,
-    } as Voiced<(name: string) => string>,
     contribution: {
       expense: (name: string) => `${name}’s contribution`,
       income: (name: string) => `How much ${name} received`,
@@ -362,10 +348,6 @@ export const copy = {
     } as Voiced<string>,
     under: "still unaccounted for",
     over: "more than the entry",
-    onePayer: {
-      expense: "Back to one payer",
-      income: "Back to one recipient",
-    } as Voiced<string>,
     discardTitle: "Discard these payers?",
     discardBody: "The entry goes back to whoever it named before.",
   },

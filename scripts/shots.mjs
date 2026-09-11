@@ -95,12 +95,11 @@ async function addEntry(
   // is a tap here rather than a trip to a screen and back.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
-    await page.getByRole("link", { name: /several people put money in/i }).click();
+    await page.getByRole("link", { name: "Multi-payer" }).click();
     await page.waitForURL(/\/g\/payers/);
     // Marie chips in 20,00; whoever was already paying takes the rest.
-    const marie = page.locator(".rows .row").filter({ hasText: "Marie" });
-    await marie.getByRole("button", { name: /put money in too/i }).click();
-    await marie.getByLabel(/contribution/).fill("2000");
+    await page.locator(".rows .row").filter({ hasText: "Marie" })
+      .getByLabel(/contribution/).fill("2000");
     // ...and the person who was already paying takes the remainder.
     await page.locator(".rows .row").filter({ hasText: "Theo" })
       .getByRole("button", { name: /the rest$/i }).click();
@@ -204,10 +203,12 @@ async function main() {
       // Who paid, mid-allocation: the payer side's verdict line, in the two
       // colours the split editor's own footer uses. It hangs off the draft the
       // block above just typed, which is why it can't be reached by URL.
-      await page.getByRole("link", { name: /several people put money in/i }).click();
+      await page.getByRole("link", { name: "Multi-payer" }).click();
       await page.waitForURL(/\/g\/payers/);
+      // Marie's field, typed into without touching Theo's — the same shortfall
+      // the split screen shot above catches, on the payer side this time.
       await page.locator(".rows .row").filter({ hasText: "Marie" })
-        .getByRole("button", { name: /put money in too/i }).click();
+        .getByLabel(/contribution/).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-payers.png`) });
       process.stdout.write(`${theme}/payers `);
