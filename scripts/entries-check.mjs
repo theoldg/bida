@@ -189,7 +189,8 @@ await page.waitForURL(/entry\/edit/);
 // not reachable from an expense, since the two are different entities.
 await page.locator('[aria-label="What kind of entry"]').click();
 await page.waitForSelector(".dlist");
-const kinds = (await page.locator(".drow-pick").allInnerTexts()).map((t) => t.trim());
+// `.rtitle`, not the row: each row carries its blurb underneath as well.
+const kinds = (await page.locator(".drow-pick .rtitle").allInnerTexts()).map((t) => t.trim());
 report(kinds.length === 2 && kinds[0] === "Expense" && kinds[1] === "Income",
   "editing an expense offers expense and income only");
 await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();

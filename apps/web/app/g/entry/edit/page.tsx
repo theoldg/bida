@@ -650,7 +650,9 @@ function EditEntryScreen() {
         <ChoiceDialog
           title={copy.form.kindTitle}
           value={kind}
-          options={reachable.map((k) => ({ value: k, label: copy.entryKind.label[k] }))}
+          options={reachable.map((k) => ({
+            value: k, label: copy.entryKind.label[k], note: copy.entryKind.blurb[k],
+          }))}
           onPick={changeKind}
           onClose={() => setAsk(null)}
         />

@@ -276,6 +276,14 @@ export const copy = {
     payer: { expense: "Paid by", income: "Received by", transfer: "From" } as Record<EntryKind, string>,
     /** Over the split: who it was spent on, or who it belongs to. */
     split: { expense: "Split", income: "Shared with", transfer: "To" } as Record<EntryKind, string>,
+    /** Under each kind in the form's picker. Three words nobody has to already
+        know the app to tell apart — "transfer" against "expense" is the pair
+        that actually gets picked wrong, so each says where the money goes. */
+    blurb: {
+      expense: "Money the group spent",
+      income: "Money the group took in",
+      transfer: "Money moved between two people",
+    } as Record<EntryKind, string>,
   },
 
   // ------------------------------------------------------------- entry form
