@@ -1,4 +1,4 @@
-# TODO 
+# TODO
 
 ## UI
 
@@ -7,14 +7,14 @@ Rebrand to "bida" and use the logo when i get it from Max
 ## Features
 
 ### Quick split
-Help me design a "quick split" mode which allows splitting a receipt straight from the home screen, without creating a group. 
+Help me design a "quick split" mode which allows splitting a receipt straight from the home screen, without creating a group.
 1. "Quick split"
 2. Input members
 3. Scan or upload receipt
 4. Select items
 5. Summary with export link
 Open Qs:
-- disregard currency? 
+- disregard currency?
 - how are results exported? Text summary? Image with itemized subtotals? Both?
 
 ### Entry search and sorting
@@ -34,7 +34,7 @@ Let's redesign the receipt scanning flow. You don't need to fill the title or to
 ### Who paid
 "Who paid" is clunky
 - the trigger is not aesthetic (think)
-- inside the editor the [+] next to someone's name is not clickable while the empty space next to it is. 
+- inside the editor the [+] next to someone's name is not clickable while the empty space next to it is.
 - once clicked, it should focus the amount field and pull up the keyboard
 
 ## Copy/text etc
@@ -42,25 +42,13 @@ Let's redesign the receipt scanning flow. You don't need to fill the title or to
 ### Commas
 All amounts everywhere should always be formatted with comma separated thousands. Currently missing from some places.
 
-
-
-
-
 ### Subtitles
 Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)
 
 ### "Reimbursement"
-
 Should not be the default for all transfers, only those prefilled from the "settle up" screen.
-
-### [DONE] Remove user
-"Remove X? Their past expenses stay as they are" is kinda wrong, it should be something like "they are not involved in any expense"
-
-### [DONE] Abdandon changes
-When editing an expense and navigating back the dialog should say "abandon changes" instead of "discard this expense"
 
 ## Refactor
 
 ### Receipt / "as parts" intertwined
 Definitively decouple receipt splitting mode from "as parts", there's been tons of bugs and counter intuitive behaviours everywhere - currently in history text. They don't have anything to do with each other from a user perspective, they should be decoupled in the code. Refactor as much as you need.
-

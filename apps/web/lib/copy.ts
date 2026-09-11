@@ -244,7 +244,7 @@ export const copy = {
     whoChange: "Change who you are",
     whoTitle: "Which one is you?",
     removeTitle: (name: string) => `Remove ${name}?`,
-    removeBody: "They aren't involved in any entry.",
+    removeBody: "They aren’t involved in any entry.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
     /** "entries", not "expenses": a transfer blocks removal too. */
     blockedBody: (entries: string) => `Named on ${entries}.`,
