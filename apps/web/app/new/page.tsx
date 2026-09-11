@@ -143,10 +143,7 @@ export default function NewGroupPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }}
-          right={<button className="action" onClick={next} disabled={!ready}>
-            {copy.act.create}
-          </button>} />
+        <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }} />
         <Scroll>
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
             <div className="field">
@@ -165,7 +162,6 @@ export default function NewGroupPage() {
                 <Icon name="chev" size={13} className="spacer pchev" />
               </button>
             </div>
-            {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <p className="hint">{copy.newGroup.currencyHint}</p>
           </div>
 
@@ -183,6 +179,18 @@ export default function NewGroupPage() {
             <AddName placeholder={copy.members.addPlaceholder} taken={people}
               onAdd={(who) => setPeople((list) => [...list, who])}
               onDraft={setDraft} />
+          </div>
+
+          {/* The screen's one act, at the foot of the form rather than an
+              underlined word in the corner — same button as the entry form's
+              Save, and for the same reason: beside a back arrow it read as
+              optional. It scrolls with the fields, so the keyboard under a
+              name being typed never sits on it. */}
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+            {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
+            <button type="button" className="btn btn-p btn-lg" onClick={next} disabled={!ready}>
+              {copy.act.create}
+            </button>
           </div>
         </Scroll>
       </Body>

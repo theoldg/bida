@@ -221,9 +221,7 @@ function ItemsScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.items.title}
-          back={{ ask: mayLeave }}
-          right={<button className="action" onClick={finish} disabled={!canFinish}>{copy.act.done}</button>} />
+        <TopBar title={copy.items.title} back={{ ask: mayLeave }} />
 
         {/* Three bands, not one scrolling page: who was there stays put at the
             top, the running totals at the foot, and the grid in between owns
@@ -349,21 +347,28 @@ function ItemsScreen() {
         {/* What the grid adds up to, kept in sight while it's being tapped
             rather than at the bottom of a scroll — one name per line, so the
             figures share a right edge and none of them is off-screen. */}
-        {note || involvedMembers.length > 0 ? (
-          <div className="itemfoot">
-            {note}
-            {involvedMembers.length > 0 ? (
-              <div className="totalstrip">
-                {involvedMembers.map((m) => (
-                  <div key={m.id} className="tot" aria-label={copy.items.share(m.name)}>
-                    <span className="who">{m.name}</span>
-                    <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="itemfoot">
+          {note}
+          {involvedMembers.length > 0 ? (
+            <div className="totalstrip">
+              {involvedMembers.map((m) => (
+                <div key={m.id} className="tot" aria-label={copy.items.share(m.name)}>
+                  <span className="who">{m.name}</span>
+                  <span className="amt">{money(weights[m.id] ?? 0, draft.currency)}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {/* The same button the entry form ends on, under the totals it
+              agrees with. It can't scroll with the content the way that one
+              does — the grid owns this screen's scroll, sideways as well as
+              down — so it stays in the band, which pays `--kb` for the tip
+              being typed a row above it. */}
+          <button type="button" className="btn btn-p btn-lg itemsave"
+            onClick={finish} disabled={!canFinish}>
+            {copy.act.done}
+          </button>
+        </div>
       </Body>
 
       {asking ? (

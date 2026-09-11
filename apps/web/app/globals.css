@@ -391,8 +391,13 @@ a { color: inherit; text-decoration: none }
 .whostrip { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch }
 .whostrip .itemchip { flex: none }
 .itemtablewrap { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
+/* Pays `--kb` like `.foot` does: the tip is typed a row above this band, and
+   the keyboard overlays the shell rather than shortening it, so without it the
+   button this screen ends on sits under the keyboard. */
 .itemfoot { flex: none; border-top: 1px solid var(--rule); background: var(--card-2);
-  padding: 9px 16px; padding-bottom: max(9px, env(safe-area-inset-bottom)) }
+  padding: 9px 16px;
+  padding-bottom: calc(var(--kb) + max(9px, env(safe-area-inset-bottom))) }
+.itemsave { margin-top: 9px }
 .footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }

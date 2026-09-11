@@ -47,7 +47,12 @@ destructive actions (`.btn-d`, "Remove") take `--debit` as an outline, not
 a fill — losing that warning to consistency would be a worse trade. With hue
 spent, **size is the emphasis left**: a screen whose one act ends it gives that
 act the full width of the screen at `.btn-lg` — taller and heavier, still square
-and still flat.
+and still flat. It is the last row of the scroll, not a pinned bar: pinned, it
+fights the phone keyboard, which overlays the shell rather than shortening it.
+Where the screen has no scroll of its own to ride — the who-had-what grid owns
+its, sideways as well as down — the button sits in the fixed foot, and that
+band pays `--kb` in its place. The entry form, the new-group form and the
+who-had-what grid all end this way.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both

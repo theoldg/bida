@@ -125,11 +125,9 @@ confers nothing without the secret.
   in it, so the arithmetic behind that button is a test suite rather than a
   screen to mount. The form reads its answers and writes none of them.
 - **Save is the last row of the form, and the kind is the top of it.** One
-  full-width `.btn-lg`, because the screen has exactly one act and an
-  underlined word in the corner read as optional; a save failure is said above
-  it. It scrolls with the fields rather than sitting in a `Foot`: a pinned bar
-  fights the phone keyboard, which overlays the shell instead of shortening it,
-  and the form's last row is where a thumb arrives anyway. The kind chip moved
+  full-width `.btn-lg` ([design-system.md](design-system.md)), because the
+  screen has exactly one act and an underlined word in the corner read as
+  optional; a save failure is said above it. The kind chip moved
   the other way, onto the top bar — centred on the bar itself (`TopBar`'s `mid`
   slot), not wedged between the title and the edge, which is what the `capped`
   title is for — and gives the amount the space it used to float over.
