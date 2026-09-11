@@ -72,17 +72,16 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
   totalMinor: number;
   /**
    * The total isn't zero, it's unknowable: a foreign amount the group has no
-   * rate for arrives here as 0, and this editor used to answer "enter an
-   * amount to split" to a form with an amount typed into it. The form says
-   * what is actually missing; this one keeps quiet rather than contradict it.
+   * rate for arrives here as 0. Each member's share reads "—" rather than a
+   * confident €0.00, and the footer stays out of it — what is missing is a
+   * rate, and the form above says so.
    */
   totalUnknown?: boolean;
   /**
-   * Whether Save has been tapped on an invalid form. "Enter an amount to
-   * split" is the split editor's half of `amountMissing`, and it is true of
-   * every untouched expense — so, like the form's own red states, it is held
-   * back until the user has actually asked to save. A verdict the form opens
-   * with is a complaint about nothing.
+   * Whether Save has been tapped on an invalid form. Receipt mode's "Scan a
+   * receipt" is true of every untouched scan, so it is held back until the
+   * user has actually asked to save — a verdict the form opens with is a
+   * complaint about nothing.
    */
   attemptedSave: boolean;
   currency: string;
@@ -133,26 +132,21 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
   // split of its own, whatever spec is underneath (often "equal") is not what
   // is being judged, so its verdict would be a verdict on nothing.
   const receiptBlocker = showReceipt ? receipt?.blocker ?? null : null;
-  // `splitFooter` — not `check` — decides both the wording and the verdict:
-  // a zero total is arithmetically a satisfied split and must never be shown
-  // as one, so "ok" here means "ok to show a tick", not `check.ok`.
+  // `splitFooter` — not `check` — decides the wording, the verdict and whether
+  // there is a footer at all: a zero total is arithmetically a satisfied split
+  // and must never be shown as one, so "ok" here means "ok to show a tick",
+  // not `check.ok`, and a split with no amount behind it says nothing.
   const foot = receiptBlocker !== null ? { ok: false, text: receiptBlocker }
     : check !== null ? splitFooter(check, currency) : null;
-  // The footer's one complaint is that there is no amount to divide — true of
-  // every expense before a digit is typed, and the form's own way of saying it
-  // (`amountMissing`) is held back too. An empty split is a different sentence
-  // about something the user did do, and stays live.
-  const onlyNoTotal = receiptBlocker === null && check !== null
-    && check.problem !== "empty" && check.totalMinor <= 0;
-  // Receipt mode without the split it claims is the same kind of complaint,
+  // Receipt mode without the split it claims is a complaint of a kind,
   // in both its forms: "Scan a receipt" and "Say who had what" each name a
   // step the person has not got to, not something they got wrong. Landing on
   // this tab straight from a scan is now the ordinary way to arrive here
-  // (`/g/scan`), so the sentence waits for a save attempt the way the missing
-  // amount does, rather than greeting a bill that read perfectly well.
+  // (`/g/scan`), so the sentence waits for a save attempt rather than greeting
+  // a bill that read perfectly well.
   const receiptStepLeft = receiptBlocker !== null;
   const showFooter = !totalUnknown && foot !== null
-    && (attemptedSave || !(onlyNoTotal || receiptStepLeft))
+    && (attemptedSave || !receiptStepLeft)
     && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {

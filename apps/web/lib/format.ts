@@ -58,9 +58,13 @@ export function shortfallText(
 export function splitFooter(
   check: SplitValidation,
   currency: CurrencyCode,
-): { ok: boolean; text: string } {
+): { ok: boolean; text: string } | null {
   if (check.problem === "empty") return { ok: false, text: copy.split.nobody };
-  if (check.totalMinor <= 0) return { ok: false, text: copy.split.noTotal };
+  // No total is not a sentence here any more. A zero total is arithmetically a
+  // satisfied split and must never be shown as one — but the amount field is
+  // what's missing and the amount field is what says so, by flashing red on a
+  // refused Save. Two places saying it made the second one noise.
+  if (check.totalMinor <= 0) return null;
   if (check.ok) {
     return {
       ok: true,

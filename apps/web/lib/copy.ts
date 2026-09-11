@@ -381,9 +381,8 @@ export const copy = {
     giveRest: (name: string) => `Give ${name} the rest`,
     rest: "rest",
     notInvolved: "not involved",
-    /** The footer's three verdicts. Wording checked by lib/format.test.ts. */
+    /** The footer's verdicts. Wording checked by lib/format.test.ts. */
     nobody: "Nobody is included yet",
-    noTotal: "Enter an amount to split",
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
     under: "left to split",
     over: "too much",

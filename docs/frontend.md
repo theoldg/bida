@@ -130,17 +130,19 @@ confers nothing without the secret.
   became true, before the user had done anything to earn a red line. Tapping
   Save while `!checkEntry(...).ready` sets the form's own `attemptedSave`
   instead of saving; every red state is gated on it, so a fresh screen shows
-  none of them. `amountMissing`/`titleMissing` turn their field's placeholder
-  red (`.amount.invalid`, `.field.invalid`) rather than adding a caption — a
-  word doesn't fit next to the hero figure and reads oddly in a number field.
-  `blocker` is a sentence about a relationship the form can't fix by typing
-  into the field it's next to, so it keeps its spot above the split editor,
-  now behind the same flag; "Enter an amount to split" is the split editor's
-  half of `amountMissing` and is gated on the flag too, so the editor opens
-  without a verdict; `receiptBlocker` stays in that footer, its "Scan a
-  receipt" half behind the flag for the same reason — an untouched Receipt tab
-  has no bill yet — while the bill-nobody-has-assigned half, and the split's
-  other complaints, follow an edit and stay live. Nothing
+  none of them. `amountMissing`/`titleMissing` *flash* their field red rather
+  than adding a caption — a word doesn't fit next to the hero figure and reads
+  oddly in a number field — counted per field so a repeat refusal replays
+  ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
+  That flash is the only thing that reports a missing amount: the split editor
+  used to answer "Enter an amount to split" in its footer, which was the same
+  fact in a second place, and `splitFooter` now returns `null` for a zero
+  total. `blocker` is a sentence about a relationship the form can't fix by
+  typing into the field it's next to, so it keeps its spot above the split
+  editor, behind the same flag; `receiptBlocker` stays in the split's footer,
+  its "Scan a receipt" half behind the flag for the same reason — an untouched
+  Receipt tab has no bill yet — while the bill-nobody-has-assigned half, and
+  the split's other complaints, follow an edit and stay live. Nothing
   is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question

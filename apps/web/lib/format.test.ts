@@ -6,11 +6,13 @@ describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {
     // The owner's recurring report, reproduced: an expense whose amount is
     // still blank, split "as amounts" with everyone on zero. validateSplit is
-    // arithmetically right that 0 === 0, but "€0.00 of €0.00 allocated"
-    // claims the split is settled when there is nothing to settle.
+    // arithmetically right that 0 === 0, but "€0.00 of €0.00 allocated" would
+    // claim the split is settled when there is nothing to settle. It says
+    // nothing at all instead — the missing amount is the amount field's to
+    // report, and it flashes red on a refused Save.
     const check = validateSplit(0, { mode: "exact", amounts: { a: 0, b: 0 } });
     expect(check.ok).toBe(true);
-    expect(splitFooter(check, "EUR")).toEqual({ ok: false, text: "Enter an amount to split" });
+    expect(splitFooter(check, "EUR")).toBeNull();
   });
 
   it("says nobody is included before it mentions the total", () => {
@@ -21,18 +23,18 @@ describe("splitFooter", () => {
   it("reports a real allocation once there is a total", () => {
     const check = validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 2000 } });
     const foot = splitFooter(check, "EUR");
-    expect(foot.ok).toBe(true);
-    expect(foot.text).toContain("allocated");
+    expect(foot).toMatchObject({ ok: true });
+    expect(foot?.text).toContain("allocated");
   });
 
   it("reports a shortfall and an excess against a real total", () => {
     const under = splitFooter(validateSplit(4500, { mode: "exact", amounts: { a: 2500, b: 1000 } }), "EUR");
     expect(under).toMatchObject({ ok: false });
-    expect(under.text).toContain("left to split");
+    expect(under?.text).toContain("left to split");
 
     const over = splitFooter(validateSplit(4500, { mode: "exact", amounts: { a: 4000, b: 1000 } }), "EUR");
     expect(over).toMatchObject({ ok: false });
-    expect(over.text).toContain("too much");
+    expect(over?.text).toContain("too much");
   });
 });
 
