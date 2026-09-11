@@ -639,6 +639,12 @@ function EditEntryScreen() {
 
             {attemptedSave && blocker ? <div className="failure">{blocker}</div> : null}
 
+            <div className="field">
+              <label htmlFor="when">{copy.form.when}</label>
+              <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
+                onChange={(e) => patch({ occurredAt: withDate(draft.occurredAt, e.target.value) })} />
+            </div>
+
             {transfer ? null : (
               <SplitEditor
                 members={data.members}
@@ -667,12 +673,6 @@ function EditEntryScreen() {
                 } : null}
               />
             )}
-
-            <div className="field">
-              <label htmlFor="when">{copy.form.when}</label>
-              <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
-                onChange={(e) => patch({ occurredAt: withDate(draft.occurredAt, e.target.value) })} />
-            </div>
 
             {failed ? <p className="failure" role="alert">{copy.form.saveFailed(failed)}</p> : null}
           </div>
