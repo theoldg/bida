@@ -496,9 +496,11 @@ button.tswap:active { background: var(--press); color: var(--ink) }
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
 /* Stacked on top of the "+", and outlined rather than inverted: the same
-   destination weight, half the voice. */
-.fab-2 { bottom: 138px; width: 44px; height: 44px; background: var(--card-2); color: var(--ink);
-  border: 1px solid var(--rule); margin-right: 3px }
+   destination, half the voice. The border is ink and the fill is paper —
+   `--card-2` on `--rule` vanished into the ledger rows it floats over, which
+   are that colour every other row. */
+.fab-2 { bottom: 138px; width: 44px; height: 44px; background: var(--card); color: var(--ink);
+  border: 1.5px solid var(--ink); margin-right: 3px }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100% }
 .btn-p { background: var(--brand); color: var(--brand-ink) }

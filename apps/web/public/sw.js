@@ -41,7 +41,7 @@ function routeOf(url) {
  * build still serves.
  */
 function lookup(key) {
-  return caches.open(CACHE_NAME).then((cache) => cache.match(key, { ignoreSearch: true }));
+  return caches.match(key, { ignoreSearch: true });
 }
 
 async function cacheFirst(cacheKey, request) {

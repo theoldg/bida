@@ -239,7 +239,8 @@ function LedgerTab({ data }: { data: GroupData }) {
             );
           })}
         </div>
-        <div style={{ height: 88 }} />
+        {/* Clears both fabs, not just the "+". */}
+        <div style={{ height: 148 }} />
       </Scroll>
     </>
   );

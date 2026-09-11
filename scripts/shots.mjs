@@ -223,10 +223,20 @@ async function main() {
       // Shot twice: the bill as printed, then with its "×2" salad unfolded
       // into two separately assignable portions.
       await stubScan(page, "cafe-clock");
+
+      // Scan first: the whole screen behind the camera above the ledger's "+".
+      await page.goto(`${base}/g/scan?id=${groupId}`);
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-scan.png`) });
+      process.stdout.write(`${theme}/scan `);
+
       await page.goto(`${base}/g/entry/edit?id=${groupId}`);
       await page.waitForTimeout(200);
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+      // A scan fills the form and stops there — the grid is the tap after it,
+      // never a place the scan sends you (docs/receipt-scanning.md).
+      await page.getByRole("link", { name: /Edit who-had-what/ }).click();
       await page.waitForURL(/entry\/items/);
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
