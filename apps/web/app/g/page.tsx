@@ -464,25 +464,20 @@ function BalancesTab({ data }: { data: GroupData }) {
         </div>
       </div>
 
-      <div className="pad" style={{ paddingTop: 12 }}>
-        <Card>
-          <div className="kv">
-            <span className="k">{copy.group.spentTogether}</span>
-            <span className="v">{money(balances.totalSpendMinor, group.baseCurrency)}</span>
-          </div>
-          {/* Income is never netted into what the trip cost — the two are
-              different questions and the card asks both, but only once there
-              is an answer to the second one. */}
-          {balances.totalIncomeMinor > 0 ? (
+      {/* Income is never netted into the balances above, so it gets its own
+          line — and only once there is one to show. */}
+      {balances.totalIncomeMinor > 0 ? (
+        <div className="pad" style={{ paddingTop: 12 }}>
+          <Card>
             <div className="kv">
               <span className="k">{copy.group.takenIn}</span>
               <span className="v">
                 {money(balances.totalIncomeMinor, group.baseCurrency, true)}
               </span>
             </div>
-          ) : null}
-        </Card>
-      </div>
+          </Card>
+        </div>
+      ) : null}
       <div style={{ height: 24 }} />
     </Scroll>
   );
