@@ -33,7 +33,7 @@ apportions `baseAmountMinor` with the same seeded largest-remainder rule a
 `shares` split uses, so the payer side sums to the base total exactly.
 
 **One form, one detail screen, everything editable.** `/g/entry/edit` is one
-chip naming the kind, in the top bar beside the title — a picker of those still
+chip naming the kind, centred on the top bar — a picker of those still
 reachable — and swaps only the middle of the form; the amount, currency, date and words survive a change of
 mind. A chip rather than three buttons because nothing opens this form asking
 for an income and settle-up prefills the transfer: the kind is already right on

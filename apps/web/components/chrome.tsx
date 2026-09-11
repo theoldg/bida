@@ -33,8 +33,8 @@ export function Scroll({ children }: { children: ReactNode }) {
  */
 export type Back = string | true | { ask: () => boolean; up?: string };
 
-export function TopBar({ title, sub, back, right }: {
-  title: ReactNode; sub?: ReactNode; back?: Back; right?: ReactNode;
+export function TopBar({ title, sub, back, mid, right }: {
+  title: ReactNode; sub?: ReactNode; back?: Back; mid?: ReactNode; right?: ReactNode;
 }) {
   const router = useRouter();
   const guard = typeof back === "object" ? back : undefined;
@@ -64,10 +64,15 @@ export function TopBar({ title, sub, back, right }: {
           <Icon name="back" size={17} />
         </Link>
       ) : null}
-      <div style={{ minWidth: 0 }}>
+      <div className={`topbar-title${mid ? " capped" : ""}`}>
         <h3>{title}</h3>
         {sub ? <div className="sub">{sub}</div> : null}
       </div>
+      {/* Centred on the bar itself, not between its neighbours: a control that
+          belongs to the whole screen rather than to the title or the arrow.
+          It is out of the flow, so the title is capped short of it
+          (`.capped`) rather than trusted to be brief. */}
+      {mid ? <div className="topbar-mid">{mid}</div> : null}
       {right ? <div className="spacer" style={{ display: "flex", gap: 8, alignItems: "center" }}>{right}</div> : null}
     </div>
   );

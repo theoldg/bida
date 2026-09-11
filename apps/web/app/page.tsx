@@ -31,7 +31,7 @@ export default function GroupsPage() {
             carries the one switch that belongs to the phone rather than to any
             group (ADR-0007). The name is the whole bar: a sub-line under it
             described the screen you could already see. */}
-        <TopBar title={<span className="brand"><Wordmark size={26} /> {copy.app.name}</span>}
+        <TopBar title={<span className="brand"><Wordmark size={38} /> {copy.app.name}</span>}
           right={<ThemeToggle />} />
 
         <Scroll>

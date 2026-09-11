@@ -134,7 +134,7 @@ export function Icon({ name, size = 16, className, style }: {
  * directly under it, which is the shape the app already uses for "an icon for
  * this thing".
  */
-export function Wordmark({ size = 26 }: { size?: number }) {
+export function Wordmark({ size = 38 }: { size?: number }) {
   // eslint-disable-next-line @next/next/no-img-element -- static export: no optimiser
   return <img src="/logo.svg" alt="" width={size} height={size} className="mark" />;
 }

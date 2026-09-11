@@ -127,8 +127,9 @@ confers nothing without the secret.
   full-width `.btn-lg` in a `Foot`, because the screen has exactly one act and
   an underlined word in the corner read as optional; a save failure is said
   above it rather than back in the scroll. The kind chip moved the other way,
-  onto the top bar beside the title, which is the row already naming what this
-  screen is — and gives the amount the space it used to float over.
+  onto the top bar — centred on the bar itself (`TopBar`'s `mid` slot), not
+  wedged between the title and the edge, which is what the `capped` title is
+  for — and gives the amount the space it used to float over.
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
   A grey button gave no reason for the two gaps every empty form starts in —
   no amount, no title — and a structural one (`blocker`: a missing rate, a

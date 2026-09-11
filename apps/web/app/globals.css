@@ -253,8 +253,22 @@ a { color: inherit; text-decoration: none }
 :root { --kb-total: calc(var(--kb) + var(--kb-gap)) }
 :root[data-kb] { --kb-gap: 26px }
 
-.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px; flex: none }
+.topbar { display: flex; align-items: center; gap: 11px; padding: max(10px, env(safe-area-inset-top)) 16px 12px;
+  flex: none; position: relative }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
+.topbar-title { min-width: 0 }
+/* A `mid` control is centred on the bar, so the title has to end before it
+   whatever it says — capped at the gap in front of the widest chip, and
+   elided rather than wrapped into a second line the bar has no room for. */
+.topbar-title.capped { max-width: calc(50% - 52px) }
+.topbar-title.capped h3, .topbar-title.capped .sub {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* Inset to the bar's own padding rather than centred on its box: the top
+   padding grows with the safe area and the bottom doesn't, so a `top: 50%`
+   would ride high on a notched phone. */
+.topbar-mid { position: absolute; inset: max(10px, env(safe-area-inset-top)) 0 12px;
+  display: flex; align-items: center; justify-content: center; pointer-events: none }
+.topbar-mid > * { pointer-events: auto }
 /* The wordmark and the name read as one lockup, so they sit on one baseline.
    It carries no sub-line, so the height a sub-line would have taken goes to the
    name itself and to the air around it. */
