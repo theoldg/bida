@@ -75,6 +75,18 @@ export const copy = {
     },
   },
 
+  /**
+   * `/diag`, which is not linked from anywhere — long-press the wordmark on
+   * the groups list. Four words, because the screen itself is one block of
+   * preformatted text and nothing there is translated.
+   */
+  diag: {
+    title: "Diagnostics",
+    reading: "Reading…",
+    copyAll: "Copy the report",
+    copied: "Copied",
+  },
+
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */
   unknown: "?",
   none: "—",

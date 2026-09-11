@@ -243,6 +243,10 @@ Dexie times out against. The skeleton is expected, and then the notice over it
 is. Measured against the app with the watchdog taken out, the second assertion
 fails, which is what makes it a check rather than a screenshot.
 
+It also opens `/diag` while the database is still wedged and fails unless the
+readout names what never came back. A diagnostics screen that hangs on the
+fault it reports is worse than none, and that is what the first one did.
+
 Then the database is deleted from another connection, which is what a browser
 reclaiming storage looks like from inside the page. That half is a smoke test
 and says so in the file: it passes with the `close` handler removed too,

@@ -27,6 +27,17 @@ keep the old `hajsik` name, and so does the IndexedDB database, because all
 three are addresses that existing links and phones already point at
 ([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
 
+**The open question is why an installed phone still pauses** (2026-09-11).
+The permanent hang below is fixed, but the owner reports the skeleton rows
+still standing for 10–20s before they clear — which is suspiciously close to
+the watchdog's own 6s and 12s, and so may be the repair rather than the fault.
+Three candidates look identical from outside the app: a slow `indexedDB.open`,
+a read queued behind `rebuild`'s readwrite lock on every table, or a read that
+died and was re-armed. **`lib/diag.ts` records all four spans on one clock and
+`/diag` prints them** — long-press the wordmark
+([frontend.md](frontend.md#the-flight-recorder-and-diag)). **The next action is
+to read a timeline off the owner's phone**, not to guess again.
+
 **A read of this phone's database can no longer hang forever** (2026-09-11).
 The installed Android app was hanging on its skeleton rows: Dexie's
 `liveQuery` swallows the two error names the browser uses when it kills a query

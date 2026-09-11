@@ -242,6 +242,35 @@ screen.
 `pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
 
+## The flight recorder, and `/diag`
+
+`lib/diag.ts` records what the app spends its time on, always, into a bounded
+array — a debug flag records nothing on the launch that goes wrong, which is
+the only launch worth recording. Timed spans around the four things that can
+make a screen wait: `db.open`, each live read by name, `rebuild`, and
+`sync.pushpull` (plus `heal`). One clock for all of them, because the question
+is never "was this slow" but "what was it waiting for", and that is always an
+overlap.
+
+Two properties do the work, and `lib/diag.test.ts` holds both. A span that has
+**not finished** still prints, marked `STILL RUNNING` — a read hanging right
+now is the reason somebody has the screen open, and recording only on
+completion is how that would have been the one line missing. And the timeline
+is ordered by when things **started**, not when they ended, so a long `rebuild`
+prints above the read it was blocking rather than below it.
+
+Read it at **`/diag`** — long-press the wordmark on the groups list. It is
+linked from nowhere; a diagnostics screen earns no room in a menu a person
+reads. The previous session is kept in `localStorage` (not a table — this has
+to work on the launch where IndexedDB is the broken thing), because the launch
+that hung is the launch you killed the app to escape.
+
+**`/diag` must never wait on the database.** It is opened *because* the
+database is not answering. Everything that can block is raced against a 2s
+patience window and the timeline, which needs no database at all, prints either
+way. The first version asked Dexie for row counts and sat on "Reading…"
+forever; `pnpm stall` now fails if that comes back.
+
 ## Every word, in `lib/copy.ts`
 
 Screens import `copy` and hold no literal a person can read — `aria-label`,

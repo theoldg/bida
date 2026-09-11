@@ -1,4 +1,5 @@
 import { createHlcState, hlcReceive, type Op } from "@bida/core";
+import { started } from "../diag";
 import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";
@@ -118,12 +119,16 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   const pending = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
   let response: PushPullResponse;
+  // The one step here that waits on a network rather than on this phone.
+  const sent = started("sync.pushpull");
   try {
     response = await pushPullGroup(groupId, key.secret, key.lastSeq, pending);
   } catch (err) {
+    sent("failed");
     await recordFailure(groupId, err);
     throw err;
   }
+  sent(`${pending.length} up, ${response.ops.length} down`);
   const { assigned, ops: pulled, latestSeq } = response;
 
   await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
@@ -172,7 +177,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     // layer imports this file (`appendOps` schedules a sync); a static import
     // would close the cycle.
     const { healGroup } = await import("./commands/groups");
-    await healGroup(groupId).catch(() => {});
+    // Up to eight passes, each folding the whole log — worth its own line.
+    const healed = started("heal");
+    await healGroup(groupId).then((n) => healed(`${n} ops`), () => healed("failed"));
   }
 
   return { pushed: pending.length, pulled: pulled.length };

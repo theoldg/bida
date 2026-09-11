@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar, GhostRow, signClass } from "../components/bits";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
@@ -18,6 +19,7 @@ import { route } from "../lib/group-link";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
+  const router = useRouter();
   const summaries = useGroupSummaries();
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
@@ -31,7 +33,16 @@ export default function GroupsPage() {
             carries the one switch that belongs to the phone rather than to any
             group (ADR-0007). The name is the whole bar: a sub-line under it
             described the screen you could already see. */}
-        <TopBar title={<span className="brand"><Wordmark size={38} /> {copy.app.name}</span>}
+        {/* The wordmark is also the door to /diag, on a long press. Hidden
+            rather than listed: a diagnostics screen is for the two minutes
+            after something went wrong on a phone with no devtools attached,
+            and it has no business in a menu a person reads. */}
+        <TopBar
+          title={
+            <span className="brand" onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); router.push(route.diag()); }}>
+              <Wordmark size={38} /> {copy.app.name}
+            </span>
+          }
           right={<ThemeToggle />} />
 
         <Scroll>

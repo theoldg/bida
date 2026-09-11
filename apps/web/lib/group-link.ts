@@ -58,6 +58,8 @@ export type EntrySource = "history" | "members" | "rates" | "balances";
 export const route = {
   groups: () => "/",
   newGroup: () => "/new",
+  /** Not linked from anywhere: long-press the wordmark. See app/diag/page.tsx. */
+  diag: () => "/diag",
   group: (groupId: string, tab?: "ledger" | "balances") =>
     `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "ledger" ? `&tab=${tab}` : ""}`,
   /**

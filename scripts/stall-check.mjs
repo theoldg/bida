@@ -56,6 +56,21 @@ const { report, finish } = reporter();
     said && ((await notice.textContent()) ?? "").includes("Try again"),
     "with something to press",
   );
+  // The diagnostics screen is opened *because* the database is not answering,
+  // so it must never wait on one. The first version asked Dexie for row counts
+  // and sat on "Reading…" forever — a readout that hangs on the fault it is
+  // there to report.
+  await page.locator(".brand").dispatchEvent("contextmenu");
+  await page.waitForURL(/\/diag/);
+  await page.waitForSelector(".diag");
+  await page.waitForTimeout(3000); // its own patience window, then it gives up
+  const shown = (await page.locator(".diag").textContent()) ?? "";
+  report(shown.includes("NO ANSWER"), "/diag answers even with the database wedged");
+  report(shown.includes("db.open") && shown.includes("STILL RUNNING"),
+    "and names what never came back",
+    shown.includes("db.open") ? undefined : "no db.open span in the timeline");
+  report(shown.includes("live.retry"), "and shows the watchdog firing");
+
   await ctx.close();
 }
 

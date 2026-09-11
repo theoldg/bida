@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import { started } from "../diag";
 import { upgradeReceiptSplit } from "@bida/core";
 import type {
   Attachment,
@@ -175,6 +176,13 @@ export class BidaDb extends Dexie {
 let instance: BidaDb | undefined;
 
 export function db(): BidaDb {
-  if (!instance) instance = new BidaDb();
+  if (!instance) {
+    instance = new BidaDb();
+    // How long the first read waits before it has even started. `indexedDB.open`
+    // has no timeout and can take seconds on a phone that has just woken up —
+    // one of the three things a skeleton on screen could mean (lib/diag.ts).
+    const opened = started("db.open");
+    instance.on("ready", () => opened(`v${instance?.verno ?? "?"}`), false);
+  }
   return instance;
 }

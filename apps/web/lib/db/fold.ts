@@ -1,5 +1,6 @@
 import type { Table } from "dexie";
 import { foldOps, type EntityKind, type GroupState } from "@bida/core";
+import { started } from "../diag";
 import { db, type StoredOp } from "./dexie";
 
 /**
@@ -77,12 +78,18 @@ export async function materialise(
  */
 export async function rebuild(groupId: string): Promise<void> {
   const d = db();
+  // The readwrite lock here covers every table a screen reads, so a read that
+  // arrives mid-rebuild waits for all of it. If a skeleton and one of these
+  // lines overlap on the timeline, that is the whole answer (lib/diag.ts).
+  const done = started("rebuild");
+  let ops = 0;
   await d.transaction(
     "rw",
     [d.ops, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities, d.rates],
     async () => {
-      const ops = await d.ops.where("groupId").equals(groupId).toArray();
-      const state = foldOps(ops);
+      const rows = await d.ops.where("groupId").equals(groupId).toArray();
+      ops = rows.length;
+      const state = foldOps(rows);
 
       await Promise.all([
         d.members.where("groupId").equals(groupId).delete(),
@@ -102,6 +109,7 @@ export async function rebuild(groupId: string): Promise<void> {
       await d.rates.bulkPut(Object.values(state.rates));
     },
   );
+  done(`${ops} ops`);
 }
 
 /** Every op for a group, for history and for the sync push. */

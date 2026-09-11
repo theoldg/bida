@@ -635,6 +635,13 @@ dialog.scrim::backdrop { background: transparent }
 .rowmenu-item:active { background: var(--press) }
 @media (prefers-reduced-motion: reduce) { .rowmenu { animation: none } }
 
+/* The diagnostics readout: one block of preformatted text, scrolling sideways
+   on its own rather than widening the screen behind it. Small and mono because
+   it is a log, and the only screen in the app that is not for a person using
+   it (app/diag/page.tsx). */
+.diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
+  overflow-x: auto; padding: 12px 16px; color: var(--ink) }
+
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
 /* A read of this phone's own database that stopped answering

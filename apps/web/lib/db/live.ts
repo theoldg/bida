@@ -1,7 +1,8 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { keep, mark, started } from "../diag";
 import { db } from "./dexie";
 
 /**
@@ -90,13 +91,18 @@ let armed = false;
 function arm(): void {
   if (armed) return;
   armed = true;
+  keep();
 
   // The browser closed the connection under us. Dexie has already left
   // `autoOpen` on, so a fresh query re-opens; it is the *existing* ones that
   // are beyond saving.
-  db().on("close", bump);
+  db().on("close", () => {
+    mark("db.close");
+    bump();
+  });
 
   db().on("blocked", () => {
+    mark("db.blocked");
     health.blocked = true;
     announce();
   });
@@ -113,8 +119,20 @@ function arm(): void {
   // result in a ref), so re-arming a healthy screen costs a query, not a flash
   // of skeleton.
   document.addEventListener("visibilitychange", () => {
+    mark(`app.${document.visibilityState}`);
     if (document.visibilityState === "visible") bump();
   });
+}
+
+/** How much came back, for the timeline. Rough on purpose — it is a size, not data. */
+function size(result: unknown): string {
+  if (Array.isArray(result)) return `${result.length} rows`;
+  if (result && typeof result === "object") {
+    const counted = Object.values(result).filter(Array.isArray);
+    if (counted.length) return `${counted.reduce((n, a) => n + a.length, 0)} rows`;
+    return "1";
+  }
+  return result === undefined ? "nothing" : "1";
 }
 
 /** One mounted read has given up. Returns the undo. */
@@ -130,11 +148,17 @@ function addStall(): () => void {
 /**
  * A live read of the database, re-armed when it dies.
  *
+ * `name` is what this read is called on the /diag timeline, and it is the
+ * first argument because a read nobody can name is a read nobody can explain
+ * a ten-second wait with.
+ *
  * The same contract as `useLiveQuery` — `undefined` until the first value —
  * with the difference that `undefined` now decays into something a person is
  * told about rather than lasting forever. See `useStalled`.
  */
-export function useLive<T>(querier: () => Promise<T>, deps: readonly unknown[]): T | undefined {
+export function useLive<T>(
+  name: string, querier: () => Promise<T>, deps: readonly unknown[],
+): T | undefined {
   useEffect(arm, []);
 
   const epoch = useSyncExternalStore(subscribe, () => health.epoch, () => 0);
@@ -148,20 +172,48 @@ export function useLive<T>(querier: () => Promise<T>, deps: readonly unknown[]):
   // its watchdog from zero on the same render that starts the read.
   const n = probe.key === key ? probe.n : 0;
 
-  const value = useLiveQuery(querier, [key, epoch, n]);
+  // Every read, timed and named. This is the line the whole recorder is for:
+  // a screen showing a skeleton is a read that has not come back, and its
+  // duration next to `rebuild`, `sync.pushpull` and `db.open` on one clock is
+  // what says which of them it was waiting for. `n > 0` means the watchdog had
+  // already given up on it once.
+  const label = `${name}${n > 0 ? ` retry#${n}` : ""}`;
+  const timedQuerier = useMemo(() => async () => {
+    const done = started("live", label);
+    try {
+      const result = await querier();
+      done(`${label} ${size(result)}`);
+      return result;
+    } catch (err) {
+      done(`${label} threw ${(err as Error)?.name ?? "?"}`);
+      throw err;
+    }
+    // `querier` is a fresh closure every render and is deliberately not a
+    // dependency — `useLiveQuery` re-subscribes on `deps`, and so does this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, epoch, n, label]);
+
+  const value = useLiveQuery(timedQuerier, [key, epoch, n]);
   const waiting = value === undefined;
 
   useEffect(() => {
     if (!waiting || n >= PROBES) return;
-    const timer = setTimeout(() => setProbe({ key, n: n + 1 }), PROBE_MS);
+    const timer = setTimeout(() => {
+      mark("live.retry", `${name} after ${PROBE_MS}ms with nothing`);
+      setProbe({ key, n: n + 1 });
+    }, PROBE_MS);
     return () => clearTimeout(timer);
-  }, [waiting, key, n]);
+  }, [waiting, key, n, name]);
 
   // Out of probes, or blocked, which no number of probes can clear. The last
   // subscription is left running either way: if it does eventually answer,
   // `waiting` goes false and the notice takes itself down.
   const stalled = waiting && (blocked || n >= PROBES);
-  useEffect(() => (stalled ? addStall() : undefined), [stalled]);
+  useEffect(() => {
+    if (!stalled) return;
+    mark("live.stalled", name);
+    return addStall();
+  }, [stalled, name]);
 
   return value;
 }
