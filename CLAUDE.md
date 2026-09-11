@@ -68,8 +68,7 @@ pnpm session && pnpm check
 ## Working agreements
 
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`),
-  one concern each. Never put a model, agent or session identifier in
-  anything committed. Retry a failed push four times with backoff (2/4/8/16s).
+  one concern each. Retry a failed push four times with backoff (2/4/8/16s).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
   runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
