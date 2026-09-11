@@ -245,7 +245,10 @@ function MemberBill({ name, total, lines, currency }: {
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <>
+    // Row and lines are one band while it is open — the highlighter-and-edge
+    // the bill screen uses for the portions of a single dish. Without it the
+    // lines read as loose rows of the card rather than as this person's bill.
+    <div className={`billgroup${open ? " on" : ""}`}>
       <button type="button" className="kv" aria-expanded={open}
         onClick={() => setOpen(!open)}>
         <span className="k">
@@ -258,18 +261,21 @@ function MemberBill({ name, total, lines, currency }: {
           {lines.map((line, i) => {
             const count = line.tip ? null : countText(line.count);
             return (
-              <div className="billline" key={i}>
-                <span>
+              <div className={`billline${line.tip ? " tip" : ""}`} key={i}>
+                <span className="lbl">
                   {line.tip ? copy.items.tip : line.label}
-                  {count ? <span className="itemqty"> ×{count}</span> : null}
+                  {count ? <span className="billqty">×{count}</span> : null}
                 </span>
+                {/* A printed bill's dotted leader: what carries the eye from a
+                    label of any length to the figure at the right margin. */}
+                <span className="lead" aria-hidden="true" />
                 <span className="amt">{money(line.minor, currency)}</span>
               </div>
             );
           })}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
 

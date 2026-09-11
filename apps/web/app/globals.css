@@ -481,13 +481,42 @@ button.kv:active { background: var(--press) }
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
+/* An opened person is one band: their row, their lines, and a rule down the
+   left edge — the same highlighter the bill screen puts across the portions of
+   one dish. It bleeds to the card's edges (`.card` pads 14px) so the tint reads
+   as a band rather than as a second card floating inside the first. */
+.billgroup { margin: 0 -14px; padding: 0 14px }
+.billgroup.on { background: var(--hl); box-shadow: inset 3px 0 0 var(--hl-edge);
+  border-radius: var(--r-s) }
+/* The open row is the heading of what is under it, so it stops being one more
+   muted key in the list. */
+.billgroup.on > .kv .k { color: var(--ink-2) }
+.billgroup.on > .kv .kvchev { color: var(--ink-2) }
 /* Indented under the row they belong to, and only as far as the chevron that
    opened it: the bill's own lines, not a second list of people. */
-.billlines { padding: 1px 0 6px 10px }
-.billline { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0;
+.billlines { padding: 0 0 8px 10px; animation: billopen .13s ease-out }
+@keyframes billopen { from { opacity: 0; transform: translateY(-2px) } to { opacity: 1; transform: none } }
+@media (prefers-reduced-motion: reduce) { .billlines { animation: none } }
+/* Baseline, not centre: the leader is set against the text it runs between. */
+.billline { display: flex; align-items: baseline; gap: 6px; padding: 2px 0;
   font-size: 12px; color: var(--ink-2) }
+.billline .lbl { min-width: 0; overflow-wrap: anywhere }
+/* The dotted leader of a printed bill. It takes the slack, so every figure
+   lands on the same right margin however short the label. */
+.billline .lead { flex: 1; min-width: 10px; align-self: center;
+  border-bottom: 1px dotted var(--rule) }
 .billline .amt { font-family: var(--f-mono); font-variant-numeric: tabular-nums;
-  color: var(--muted); flex: none }
+  color: var(--ink-2); flex: none }
+/* The tip is charged, not ordered: ruled off from the things they had. */
+.billline.tip { color: var(--muted); margin-top: 3px; padding-top: 5px;
+  border-top: 1px solid var(--rule) }
+.billline.tip .amt { color: var(--muted) }
+.billline.tip .lead { border-bottom-color: transparent }
+/* A count is how much of a line was theirs, so it rides the label as a token
+   rather than as more words: "1/2" after a dish name is not part of its name. */
+.billqty { margin-left: 5px; padding: 1px 4px; border-radius: var(--r-s);
+  background: var(--card-3); color: var(--muted); font-size: 10.5px;
+  font-variant-numeric: tabular-nums; white-space: nowrap }
 
 /* A transfer's two sides, with the direction between them. The side is labelled
    above the person, so "From"/"To" is read before the name it qualifies rather
