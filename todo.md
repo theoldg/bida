@@ -10,16 +10,23 @@ Check for secrets, license, data disclaimer, other?
 ### Admin panel?
 
 ### Assess privacy
-Do i have access to the entire database, or is it encrypted with the group secret?
+**Answered, and the answer is bad:** ops land in D1 as plain JSON. The group
+secret is only a bearer token, stored as a SHA-256 hash (`apps/api/src/auth.ts`,
+`store.ts`), so anyone with database access reads every title, amount, name and
+note. Decide: say so plainly in the disclaimer, or encrypt the op payload under
+a key derived from the link secret. The second is the biggest piece of work
+left in the project — see the note at the foot of this file.
 
 ## UI
 
 Rebrand to "bida" and use the logo when i get it from Max
 
 ### Expense rows
-- Expense rows have inconsistent height (currency makes them taller)
-- Remove the "from receipt" subtext for expenses (takes up too much space + info spam) - actually is the subtitle necessary at all? Let's rethink it
-- Drop the vertical red/green bars for expense rows
+- Expense rows have inconsistent height (a foreign entry carries an extra line)
+- The subtitle: "from receipt" is gone (a receipt is a split mode now and names
+  itself), but the line is still "Alice paid · split 5 people as receipt" —
+  rethink whether it earns its place at all
+- Drop the vertical red/green bars for expense rows (`.row.up/.down::before`)
 
 ### Receipt items foldable summary
 Something is off here idk
@@ -45,10 +52,10 @@ Maybe?
 ## UX improvements
 
 ### Expense editor density
-Too many buttons in expense editor mode? Think. Maybe entry type and split mode should be foldout/popover.
-
-### Scan flow
-Let's redesign the receipt scanning flow. You don't need to fill the title or total, but it seems like you do - amount input jumps out at you with an open keyboard... Maybe there should be a second button next to the "add expense" [+] for adding a receipt directly without having to deal with that
+Half done: the kind is one chip rather than three buttons, the date sits above
+the split, and everything that can be wrong stays quiet until Save is pressed.
+Two cuts proposed and **not** decided — fold "Multi-payer" into the payer
+dialog, and take "Receipt" out of the split's tab bar now `/g/scan` exists.
 
 ### Who had what
 - Include non-translated mode
@@ -57,7 +64,24 @@ Let's redesign the receipt scanning flow. You don't need to fill the title or to
 ## Copy/text etc
 
 ### Commas
-All amounts everywhere should always be formatted with comma separated thousands. Currently missing from some places.
+Every figure that goes through `money()`/`bare()` is Intl-grouped. What is left
+ungrouped is the text *inside* amount fields, which is deliberate —
+`parseMinor` cannot read "1,234.50" back. Close this, or decide the fields
+should group while not focused.
 
 ### Subtitles
 Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)
+
+## Engineering
+
+### Measure the log's growth
+Owed since entries went to whole-entity ops: every save repeats every field, so
+the log grows faster than it did. Wants a number from a real group, not an
+argument.
+
+### End-to-end encryption (the hard one)
+See [Assess privacy](#assess-privacy). Encrypting op payloads under a key
+derived from the link secret keeps the server honest, but it costs the server
+every ability that depends on reading content, needs a migration for groups
+already in D1, and has to survive a link shared by someone who then changes
+nothing. An ADR before a line of code.
