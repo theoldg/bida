@@ -741,9 +741,14 @@ dialog.scrim::backdrop { background: transparent }
    flowed onto its own line by a full-width break rather than moved into a
    wrapping element, so it keeps the ordinary picker's press feedback
    (`.field:has(> .pick)`, above) instead of losing it to the nesting. */
-.field.field-stack { flex-wrap: wrap }
+.field.field-stack { flex-wrap: wrap; row-gap: 0 }
 .field-stack .hairline { flex-basis: 100% }
+/* The card is the same height whichever state it is in, so the form doesn't
+   jump as a second payer is added: the hairline's margins carry all the space
+   (the flex row-gap above would add its own), and the row is as tall as the
+   chip row it stands in for. */
 .field-stack .pick-sub { flex-basis: 100%; display: flex; align-items: center; gap: 6px;
+  min-height: 23px;
   font-size: 12px; font-weight: 500; color: var(--muted); transition: background-image .2s ease }
 .field-stack .pick-sub:active { background-image: linear-gradient(var(--press), var(--press));
   transition-duration: 0s }
