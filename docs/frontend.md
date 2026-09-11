@@ -326,6 +326,12 @@ figure-free.
 
 ## Gotchas
 
+- **The theme is a hydration mismatch on purpose.** `<ThemeScript />` sets
+  `data-theme` on `<html>` before paint, but the export is prerendered light,
+  so React finds an attribute it did not write and says so. `<html>` carries
+  `suppressHydrationWarning` for exactly that; removing it brings the console
+  error back, and "fixing" the mismatch instead means a flash of paper white
+  on every dark-mode launch.
 - `output: 'export'` disallows route handlers, `next/image` optimisation, ISR,
   middleware and dynamic params. Needing one is a change to ADR-0004.
 - **A waiting service worker waits on the whole origin, not on your app.** One

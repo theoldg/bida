@@ -59,7 +59,14 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={mono.variable}>
+    // `suppressHydrationWarning` is here for one attribute and one only:
+    // `data-theme`, which <ThemeScript /> writes before React ever runs (see
+    // components/theme.tsx). The export is prerendered light, so on a phone
+    // set to dark the server HTML and the hydrating client genuinely
+    // disagree — deliberately, because the alternative is a flash of paper
+    // white. It suppresses this element's own attributes, not its subtree, so
+    // a real mismatch inside the app still reports itself.
+    <html lang="en" className={mono.variable} suppressHydrationWarning>
       <body>
         <ThemeScript />
         <IconSprite />
