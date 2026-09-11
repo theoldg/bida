@@ -122,7 +122,7 @@ try {
 // its own leaves an installed phone unable to paint the build it now has.
 console.log("\nupdate over a flaky network:");
 await ctx.setOffline(false);
-const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("hajsik-shell-"));
+const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
 blocked.add(ASSET_TO_DROP);
 swRevision = "flakydeploy01";
 /** `update()` resolves before the install settles, so watch the worker itself. */
@@ -174,8 +174,8 @@ try {
   report(false, "tapping it reloads onto the new build", `at ${page.url().replace(base, "")}`);
 }
 
-const shells = (await page.evaluate(() => caches.keys())).filter((k) => k.startsWith("hajsik-shell-"));
-report(shells.includes(`hajsik-shell-${swRevision}`), "the new build's cache is the live one",
+const shells = (await page.evaluate(() => caches.keys())).filter((k) => k.startsWith("bida-shell-"));
+report(shells.includes(`bida-shell-${swRevision}`), "the new build's cache is the live one",
   shells.join(", "));
 report(shells.length === 1, "and the old one is gone with it", shells.join(", "));
 report(await page.evaluate(() => !!navigator.serviceWorker.controller),
@@ -189,10 +189,10 @@ report(await reload.count() === 0, "the offer is spent");
 // missing. A cache the precache has never heard of stands in for it: anything
 // but a 404 means this worker read a cache that isn't CACHE_NAME.
 const probe = await page.evaluate(async () => {
-  const cache = await caches.open("hajsik-shell-stale");
+  const cache = await caches.open("bida-shell-stale");
   await cache.put("/stale-probe.txt", new Response("STALE"));
   const status = await fetch("/stale-probe.txt").then((r) => r.status).catch(() => 0);
-  await caches.delete("hajsik-shell-stale");
+  await caches.delete("bida-shell-stale");
   return status;
 });
 report(probe === 404, "a stale cache is never read from", `/stale-probe.txt answered ${probe}`);

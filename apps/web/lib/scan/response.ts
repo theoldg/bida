@@ -1,4 +1,4 @@
-import type { ScanResult } from "@hajsik/core";
+import type { ScanResult } from "@bida/core";
 
 interface GeminiResponse {
   candidates?: { content?: { parts?: { text?: string }[] } }[];

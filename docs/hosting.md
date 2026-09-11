@@ -75,14 +75,14 @@ the hook (`--no-verify`) can still deploy.
 **Manually**, e.g. from a phone session with no local hook:
 
 ```bash
-pnpm --filter @hajsik/web build        # next build → apps/web/out
-pnpm --filter @hajsik/api run deploy   # wrangler deploy
+pnpm --filter @bida/web build        # next build → apps/web/out
+pnpm --filter @bida/api run deploy   # wrangler deploy
 ```
 
 The scan endpoint needs one Worker secret, once, not per deploy:
 
 ```bash
-pnpm --filter @hajsik/api exec wrangler secret put GEMINI_API_KEY
+pnpm --filter @bida/api exec wrangler secret put GEMINI_API_KEY
 ```
 
 `wrangler.toml` binds `[assets] directory = "../web/out"` with
@@ -105,6 +105,14 @@ log has no infrastructure-level undo.
 
 **Live at <https://hajsik.hajsik-api.workers.dev>** — permanent; `workers.dev`
 subdomains don't expire while the Worker exists.
+
+The Worker and the D1 database are still called `hajsik`, from before the
+rebrand, and they keep those names. A Worker's name *is* its hostname, and a
+group is a secret link to that hostname ([ADR-0003](decisions/0003-link-only-access.md)):
+rename it and every link anyone has shared points at nothing. Renaming the D1
+is worse — it creates an empty database beside the live one. Whatever the app
+is called, these two names are addresses, not branding. A real `bida.` domain
+is the way to change what people see; that is a redirect, not a rename.
 
 ### The `CLOUDFLARE_API_TOKEN`
 
@@ -137,7 +145,7 @@ Recognise these if you ever propose one:
 - **A Cloudflare token scoped for Workers only fails D1 calls** with a generic
   `Authentication error [code: 10000]`. `wrangler whoami` succeeding proves
   nothing; the token needs "D1 - Edit" specifically.
-- **`pnpm --filter @hajsik/api deploy` does not run the package's `deploy`
+- **`pnpm --filter @bida/api deploy` does not run the package's `deploy`
   script** — `deploy` is one of pnpm's own commands. Say `run deploy`.
 - Cloudflare env vars are runtime-only; anything needed during `next build`
   must come from the build environment, not Worker secrets.

@@ -242,9 +242,9 @@ your money nor your share drop to `opacity: .42`. What it looks like and why:
 status bar and the splash screen, which is why they are ink rather than paper
 and why `viewport.themeColor` repeats the same value rather than tracking the
 theme (Gotcha below). The
-three PNGs are the tally wordmark in paper on an ink tile; regenerate them
-together if the mark or the ink changes, and the maskable one draws its mark
-smaller and unrounded so a circular launcher crop can't clip it. iOS ignores
+three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons` — run it
+when the logo changes rather than editing them; the maskable one insets the
+artwork to 72% on its own ground so a circular launcher crop can't clip it. iOS ignores
 manifest `display` entirely — `appleWebApp.statusBarStyle:
 "black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
 and `env(safe-area-inset-top)` padding on `.topbar` matter.

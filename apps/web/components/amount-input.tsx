@@ -1,6 +1,6 @@
 "use client";
 
-import { exponentOf, minorToDecimalString, parseMinor, type CurrencyCode } from "@hajsik/core";
+import { exponentOf, minorToDecimalString, parseMinor, type CurrencyCode } from "@bida/core";
 import { useEffect, useLayoutEffect, useRef, useState, type InputHTMLAttributes } from "react";
 
 /**

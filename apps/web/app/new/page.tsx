@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { isCurrencyCode } from "@hajsik/core";
+import { isCurrencyCode } from "@bida/core";
 import { Eyebrow } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   formatRate, isCurrencyCode, minorToDecimalString,
   type RateSource,
-} from "@hajsik/core";
+} from "@bida/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
 import { Card, Chip } from "../../../../components/bits";
 import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";

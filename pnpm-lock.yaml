@@ -20,7 +20,7 @@ importers:
 
   apps/api:
     dependencies:
-      '@hajsik/core':
+      '@bida/core':
         specifier: workspace:*
         version: link:../../packages/core
       hono:
@@ -39,7 +39,7 @@ importers:
 
   apps/web:
     dependencies:
-      '@hajsik/core':
+      '@bida/core':
         specifier: workspace:*
         version: link:../../packages/core
       dexie:

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp } from "@hajsik/core";
+import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp } from "@bida/core";
 import { db } from "./dexie";
 import { rebuild } from "./fold";
 import { getDevice, getMe, updateDevice } from "./device";

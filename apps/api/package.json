@@ -1,5 +1,5 @@
 {
-  "name": "@hajsik/api",
+  "name": "@bida/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "db:migrate:local": "wrangler d1 migrations apply hajsik --local"
   },
   "dependencies": {
-    "@hajsik/core": "workspace:*",
+    "@bida/core": "workspace:*",
     "hono": "^4.6.16"
   },
   "devDependencies": {

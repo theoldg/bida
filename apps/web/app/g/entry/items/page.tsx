@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { parseMinor } from "@hajsik/core";
+import { parseMinor } from "@bida/core";
 import { AmountInput } from "../../../../components/amount-input";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { ConfirmDialog } from "../../../../components/dialog";

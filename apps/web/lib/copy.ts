@@ -1,4 +1,4 @@
-import type { ScanProblem, SplitSpec } from "@hajsik/core";
+import type { ScanProblem, SplitSpec } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -36,7 +36,7 @@ export type Voiced<T> = Record<Voice, T>;
 
 export const copy = {
   app: {
-    name: "Hajsik",
+    name: "bida",
     description: "Shared expenses, split fairly. Works offline.",
   },
 
@@ -101,7 +101,7 @@ export const copy = {
   },
 
   install: {
-    title: "Keep Hajsik on your home screen",
+    title: "Keep bida on your home screen",
     body: "Own icon, no browser bar, works offline.",
     /** iOS has no install API, so name the button that does it. */
     manual: { tap: "Tap", then: "in the browser bar, then", label: "Add to Home Screen" },

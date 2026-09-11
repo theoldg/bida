@@ -4,7 +4,7 @@
  * never send a fragment to a server, so it cannot leak into an access log,
  * a Referer header, or a Cloudflare analytics row. See ADR-0004.
  *
- *   https://hajsik.app/join#<groupId>.<secret>
+ *   https://bida.app/join#<groupId>.<secret>
  *
  * The path part of the app's own routes carries only the group id, which is a
  * random opaque string on its own and confers nothing without the secret.

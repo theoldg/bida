@@ -1,7 +1,7 @@
 import {
   colorSeedFor, healDrafts, memberIdFor, newGroupSecret, newId, restoreClaimDrafts,
   type CurrencyCode, type Id,
-} from "@hajsik/core";
+} from "@bida/core";
 import { db } from "../dexie";
 import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup } from "../device";

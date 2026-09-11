@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import {
   isCurrencyCode, rateFromNumber, validateOp, OpValidationError, type Op,
-} from "@hajsik/core";
+} from "@bida/core";
 import { bearerSecret, sha256Hex } from "./auth";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 

@@ -1,7 +1,7 @@
 import {
   convertMinor, isValidRate, rateFor,
   type CurrencyCode, type ExchangeRate, type Id, type Rate, type RateSource,
-} from "@hajsik/core";
+} from "@bida/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
 import { setDerived } from "./patch";

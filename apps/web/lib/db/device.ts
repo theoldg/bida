@@ -1,4 +1,4 @@
-import { newNodeId } from "@hajsik/core";
+import { newNodeId } from "@bida/core";
 import { db, type DeviceRecord } from "./dexie";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {

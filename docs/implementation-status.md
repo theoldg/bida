@@ -21,6 +21,12 @@ two devices.
 
 ## The next action
 
+**The app is called bida** since 2026-09-11 — name, icons and the top-bar
+mark all come from `design/brand/logo.svg`. The Worker and the D1 database
+keep the old `hajsik` name, and so does the IndexedDB database, because all
+three are addresses that existing links and phones already point at
+([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
+
 **The entry form is being thinned.** It carried 19 tappable controls on a new
 expense where three do the work — the rest confirm defaults the form already
 has right. The kind is now one chip rather than three permanent buttons

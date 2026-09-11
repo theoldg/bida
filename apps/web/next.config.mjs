@@ -6,7 +6,7 @@ const nextConfig = {
   output: "export",
   reactStrictMode: true,
   images: { unoptimized: true },
-  transpilePackages: ["@hajsik/core"],
+  transpilePackages: ["@bida/core"],
   webpack(config) {
     // packages/core imports its siblings as "./hlc.js" etc — valid under
     // TS's "bundler" moduleResolution (which tsc/next dev understand), but

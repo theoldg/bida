@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Member } from "@hajsik/core";
+import type { Member } from "@bida/core";
 import { ChoiceDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";

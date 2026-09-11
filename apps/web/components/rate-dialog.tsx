@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   formatRate, invertRate, isValidRate, sanitizeRate,
   RATE_DIGITS, RATE_SHOWN_DIGITS, type Rate, type RateSource,
-} from "@hajsik/core";
+} from "@bida/core";
 import { Dialog } from "./dialog";
 import { copy } from "../lib/copy";
 import { fetchRate, RateOfflineError } from "../lib/rates";

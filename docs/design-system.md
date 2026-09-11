@@ -14,10 +14,13 @@ corners. Colour is a scarce resource spent only on money —
 [ADR-0023](decisions/0023-monospace-monochrome.md). The ledger reading survives
 underneath: ruled rows, a red column and a green column.
 
-**The app names itself once**, on the groups list: the tally wordmark beside
-*Hajsik*, the light/dark toggle opposite, and nothing under it — a sub-line
-would caption the list you are already looking at. Every other top bar says the
-thing you opened, so a second wordmark would be branding where a name should be.
+**The app names itself once**, on the groups list: the mark beside *bida* —
+lower-case always — the light/dark toggle opposite, and nothing under it; a
+sub-line would caption the list you are already looking at. Every other top bar
+says the thing you opened, so a second wordmark would be branding where a name
+should be. The mark is a one-colour tracing of `design/brand/logo.svg`, which is
+the master artwork: the receipt's rules are knocked out of an ink block rather
+than drawn, so it reads in both themes with no second fill.
 
 ## Palette roles
 

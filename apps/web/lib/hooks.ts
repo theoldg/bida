@@ -9,7 +9,7 @@ import {
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
   type Settlement, type Transfer,
-} from "@hajsik/core";
+} from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
 import { getDevice } from "./db/device";
 import { copy } from "./copy";

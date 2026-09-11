@@ -1,4 +1,4 @@
-import { isCurrencyCode, isValidRate, type Rate } from "@hajsik/core";
+import { isCurrencyCode, isValidRate, type Rate } from "@bida/core";
 
 /**
  * Asking the Worker what a currency is worth today.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { minorToDecimalString, parseMinor, validateSplit } from "@hajsik/core";
+import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import { bare, countText, distinctInitials, initials, splitFooter } from "./format";
 
 describe("splitFooter", () => {

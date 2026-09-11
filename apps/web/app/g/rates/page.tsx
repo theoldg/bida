@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { formatRate, isCurrencyCode, type CurrencyInUse, type RateSource } from "@hajsik/core";
+import { formatRate, isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { activityFeed, entityHistory, type Revision } from "@hajsik/core";
+import { activityFeed, entityHistory, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { db } from "../../../lib/db/dexie";

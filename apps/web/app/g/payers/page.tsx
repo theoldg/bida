@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import { primaryPayer, validatePayers } from "@hajsik/core";
+import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";

@@ -1,4 +1,4 @@
-import type { Op } from "@hajsik/core";
+import type { Op } from "@bida/core";
 
 /**
  * The D1-backed half of the sync protocol (docs/sync.md). The server appends

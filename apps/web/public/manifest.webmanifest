@@ -1,6 +1,6 @@
 {
-  "name": "Hajsik",
-  "short_name": "Hajsik",
+  "name": "bida",
+  "short_name": "bida",
   "description": "Shared expenses, split fairly. Works offline.",
   "start_url": "/",
   "scope": "/",

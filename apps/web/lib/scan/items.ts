@@ -1,4 +1,4 @@
-import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitMode } from "@hajsik/core";
+import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitMode } from "@bida/core";
 
 /** A line of the bill, and how much of it was one person's. */
 export interface MemberLine {

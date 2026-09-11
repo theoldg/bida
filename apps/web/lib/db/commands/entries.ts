@@ -2,7 +2,7 @@ import {
   canonicalSplit, newId, primaryPayer,
   type CurrencyCode, type ExpenseKind, type Id, type Rate, type ReceiptItem,
   type SplitSpec,
-} from "@hajsik/core";
+} from "@bida/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
 import { movesAnything, only, wholeEntity } from "./patch";

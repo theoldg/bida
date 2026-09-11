@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMinor } from "@hajsik/core";
+import { parseMinor } from "@bida/core";
 import {
   foldPortions, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor, unfoldItem,
   unfoldableInto, weightsFromItems,

@@ -1,4 +1,4 @@
-import { formatMinor, type CurrencyCode, type PayerValidation, type SplitValidation } from "@hajsik/core";
+import { formatMinor, type CurrencyCode, type PayerValidation, type SplitValidation } from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
 
 /**

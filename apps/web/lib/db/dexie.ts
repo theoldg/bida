@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import { upgradeReceiptSplit } from "@hajsik/core";
+import { upgradeReceiptSplit } from "@bida/core";
 import type {
   Attachment,
   ExchangeRate,
@@ -9,7 +9,7 @@ import type {
   Member,
   Op,
   Settlement,
-} from "@hajsik/core";
+} from "@bida/core";
 
 /**
  * The op log is the truth. Every other table in here is a materialised view of
@@ -77,7 +77,14 @@ export interface GroupKey {
   failure?: SyncFailure;
 }
 
-export class HajsikDb extends Dexie {
+/**
+ * The IndexedDB database is still named `hajsik`, from before the app was
+ * called bida. It stays that way: the name is the address every phone's groups
+ * are already stored at, and renaming it opens an empty database next to the
+ * real one — every existing install would launch with no groups and no way to
+ * ask for them back. A brand is not worth that.
+ */
+export class BidaDb extends Dexie {
   ops!: Table<StoredOp, string>;
   groups!: Table<Group, string>;
   members!: Table<Member, string>;
@@ -103,7 +110,7 @@ export class HajsikDb extends Dexie {
   rates!: Table<ExchangeRate, [string, string]>;
 
   constructor() {
-    super("hajsik");
+    super("hajsik"); // deliberately not "bida" — see above
     this.version(1).stores({
       ops: "id, groupId, entityId, hlc, pending, [groupId+hlc]",
       groups: "id, archivedAt",
@@ -165,9 +172,9 @@ export class HajsikDb extends Dexie {
  * One connection per tab. Constructed lazily so that importing this module
  * during a static export (where there is no indexedDB) doesn't throw.
  */
-let instance: HajsikDb | undefined;
+let instance: BidaDb | undefined;
 
-export function db(): HajsikDb {
-  if (!instance) instance = new HajsikDb();
+export function db(): BidaDb {
+  if (!instance) instance = new BidaDb();
   return instance;
 }

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { foldOps } from "@hajsik/core";
+import { foldOps } from "@bida/core";
 import { db } from "./dexie";
-import { formatHlc, createHlcState } from "@hajsik/core";
+import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, saveGroupKey } from "./commands";
 import { getDevice } from "./device";
 import { syncAll, syncGroup } from "./sync";

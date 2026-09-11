@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { entriesInvolving } from "@hajsik/core";
+import { entriesInvolving } from "@bida/core";
 import { GhostRow } from "../../../components/bits";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, Dialog } from "../../../components/dialog";

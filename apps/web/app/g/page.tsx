@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
-} from "@hajsik/core";
+} from "@bida/core";
 import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {

@@ -19,8 +19,6 @@ left in the project — see the note at the foot of this file.
 
 ## UI
 
-Rebrand to "bida" and use the logo when i get it from Max
-
 ### Expense rows
 - Expense rows have inconsistent height (a foreign entry carries an extra line)
 - The subtitle: "from receipt" is gone (a receipt is a split mode now and names

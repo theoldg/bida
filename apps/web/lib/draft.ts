@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import {
   convertSplitMode, newId, parseMinor,
   type ArithmeticMode, type ArithmeticSplit, type ReceiptItem, type SplitMode, type SplitSpec,
-} from "@hajsik/core";
+} from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import { receiptTotalMinor, weightsFromItems } from "./scan/items";
 

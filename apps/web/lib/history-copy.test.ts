@@ -1,5 +1,5 @@
 import { beforeEach, describe as suite, expect, it } from "vitest";
-import { activityFeed, type Member, type Revision } from "@hajsik/core";
+import { activityFeed, type Member, type Revision } from "@bida/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
 import {

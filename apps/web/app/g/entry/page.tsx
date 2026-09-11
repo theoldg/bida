@@ -7,7 +7,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
-} from "@hajsik/core";
+} from "@bida/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";

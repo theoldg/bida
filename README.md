@@ -1,6 +1,6 @@
-# Hajsik
+# bida
 
-*"a bit of cash"* — a Tricount-style shared-expense splitter. Mobile web / PWA,
+A Tricount-style shared-expense splitter. Mobile web / PWA,
 local-first, offline, full edit history, personal-lens view. Personal project,
 very few users, £0 hosting.
 

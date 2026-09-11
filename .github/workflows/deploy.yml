@@ -15,7 +15,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @hajsik/web build
-      - run: pnpm --filter @hajsik/api run deploy
+      - run: pnpm --filter @bida/web build
+      - run: pnpm --filter @bida/api run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

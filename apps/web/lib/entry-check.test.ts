@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ExchangeRate } from "@hajsik/core";
+import type { ExchangeRate } from "@bida/core";
 import { checkEntry, needsRate } from "./entry-check";
 import { blankDraft, type EntryDraft } from "./draft";
 import { copy } from "./copy";

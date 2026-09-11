@@ -1,3 +1,5 @@
+# Not "bida": the Worker name is the hostname every shared group link points
+# at, and the D1 name is where the ops already are. See hosting.md.
 name = "hajsik"
 main = "src/index.ts"
 compatibility_date = "2026-08-27"

@@ -1,7 +1,7 @@
 import {
   createHlcState, hlcSend, newId,
   type EntityKind, type Id, type Op, type OpDraft,
-} from "@hajsik/core";
+} from "@bida/core";
 import { db, type StoredOp } from "../dexie";
 import { getDevice } from "../device";
 import { materialise } from "../fold";

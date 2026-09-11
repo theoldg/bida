@@ -1,7 +1,7 @@
 import {
   formatRate, isValidRate, resolveSplit, splitParticipants,
   type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
-} from "@hajsik/core";
+} from "@bida/core";
 import { copy } from "./copy";
 import { dayLabel, money, plural } from "./format";
 

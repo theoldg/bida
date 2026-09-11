@@ -1,4 +1,4 @@
-import { createHlcState, hlcReceive, type Op } from "@hajsik/core";
+import { createHlcState, hlcReceive, type Op } from "@bida/core";
 import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";

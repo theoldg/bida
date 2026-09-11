@@ -4,7 +4,7 @@ import Link from "next/link";
 import {
   resolveSplit, splitParticipants, validateSplit,
   type ArithmeticSplit, type Member, type SplitSpec,
-} from "@hajsik/core";
+} from "@bida/core";
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import type { ScanSource, ScanState } from "./receipt-scan";

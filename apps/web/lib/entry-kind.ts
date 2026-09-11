@@ -1,4 +1,4 @@
-import type { Expense, Settlement } from "@hajsik/core";
+import type { Expense, Settlement } from "@bida/core";
 
 /**
  * The three things a person can add to a group, and every word the app uses

@@ -119,12 +119,27 @@ export function Icon({ name, size = 16, className, style }: {
   );
 }
 
-/** Five tally strokes strucked through — one for each person you have to chase. */
+/**
+ * The bida mark: a receipt over a card, the two things a shared expense is.
+ * Traced from `design/brand/logo.svg`, which is the master — edit that first,
+ * then bring the proportions back here.
+ *
+ * The logo is light-on-dark artwork; this is the one-colour reading of it, so
+ * it survives both themes and a 26px top bar. The receipt is a solid block of
+ * ink with its rules and its footer *knocked out* rather than drawn — holes in
+ * one even-odd path, so whatever is behind the mark shows through them, which
+ * is the same figure-ground inversion a primary button does. The card behind it
+ * is a hairline the block simply covers, and that overlap is the depth.
+ */
 export function Wordmark({ size = 26 }: { size?: number }) {
   return (
-    <svg width={size} height={size * 22 / 26} viewBox="0 0 26 22" fill="none" stroke="var(--brand)"
-      strokeWidth="2.6" strokeLinecap="round" aria-hidden="true">
-      <path d="M4 4v14M9.5 4v14M15 4v14M20.5 4v14M2 18.5L23 3.5" />
+    <svg width={size * 20 / 24} height={size} viewBox="0 0 20 24" aria-hidden="true">
+      <rect x="5.5" y="9.4" width="13.1" height="13.7" fill="none" stroke="var(--brand)" strokeWidth="1.8" />
+      <path fill="var(--brand)" fillRule="evenodd" d={
+        "M0 0h9.1v21.9H0z" +                                /* the sheet */
+        "M2.2 2.2h4.9v0.9H2.2z M3 3.8h3.3v0.9H3z" +         /* two lines of writing */
+        "M2.9 15.3h3.4v1.1h1.5v4.2H1.3v-4.2h1.6z"           /* the total, boxed */
+      } />
     </svg>
   );
 }

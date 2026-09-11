@@ -9,7 +9,7 @@
  */
 const REVISION = "__PRECACHE_REVISION__";
 const ASSETS = ["__PRECACHE_ASSETS__"];
-const CACHE_NAME = `hajsik-shell-${REVISION}`;
+const CACHE_NAME = `bida-shell-${REVISION}`;
 
 /**
  * Next fetches an RSC payload — `/g.txt?id=…&_rsc=…` — on every in-app tap, and

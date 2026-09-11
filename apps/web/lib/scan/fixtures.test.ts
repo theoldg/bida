@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { checkScan, normalizeScan, parseMinor, scanCurrency, type ScanProblem, type ScanResult } from "@hajsik/core";
+import { checkScan, normalizeScan, parseMinor, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
 import { parseScanResponse } from "./response";
 
 /**

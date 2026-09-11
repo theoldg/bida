@@ -1,10 +1,10 @@
-import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@hajsik/core";
+import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { buildScanRequestBody } from "./request";
 import { parseScanResponse } from "./response";
 
-export { normalizeScan } from "@hajsik/core";
-export type { ScanResult, ScanPatch } from "@hajsik/core";
+export { normalizeScan } from "@bida/core";
+export type { ScanResult, ScanPatch } from "@bida/core";
 
 /** The model read the photo fine but declined it — not a receipt, too blurry, etc. Message is model-written, shown verbatim. */
 export class ScanRejectedError extends Error {}

@@ -73,6 +73,6 @@ everybody in proportion to what they ordered
 ([receipt-scanning.md](receipt-scanning.md)). This is the only one left, and
 it is not hypothetical: it refuses a real receipt today.
 
-*Settled:* the name is **Hajsik** (2026-08-27); the personal lens isn't a
+*Settled:* the name is **bida** (2026-09-11); the personal lens isn't a
 setting at all (2026-08-30,
 [ADR-0007](decisions/0007-a-screen-is-a-route.md)).

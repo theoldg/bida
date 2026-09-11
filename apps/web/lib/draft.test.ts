@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveSplit, splitParticipants, type SplitSpec } from "@hajsik/core";
+import { resolveSplit, splitParticipants, type SplitSpec } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
   openSplitTab, receiptWeights, splitSeed, withSplit, type EntryDraft, type SplitTab,

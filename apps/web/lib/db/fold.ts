@@ -1,5 +1,5 @@
 import type { Table } from "dexie";
-import { foldOps, type EntityKind, type GroupState } from "@hajsik/core";
+import { foldOps, type EntityKind, type GroupState } from "@bida/core";
 import { db, type StoredOp } from "./dexie";
 
 /**

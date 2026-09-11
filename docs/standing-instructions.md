@@ -58,8 +58,10 @@ to remove more from this list than you add.
 
 ## Product
 
-- **The product is called Hajsik.** *2026-08-27.* ("Tally" was the placeholder
-  that produced the tally-mark wordmark. The mark stayed.)
+- **The product is called bida**, lower-case, and its mark is
+  `design/brand/logo.svg`. *2026-09-11, replacing "Hajsik" (2026-08-27).*
+  The mark is the master artwork: the icons are rasterised from it by
+  `pnpm icons`, and the in-app wordmark is traced from it.
 - **The app answers "does this help me or hurt me?"** *2026-08-28, made
   unconditional 2026-08-30* — every row shows what it did to *your* balance,
   signed and coloured. "Personal mode should be always on": it is the app, not a

@@ -20,7 +20,17 @@ import { chromium } from "playwright-core";
 
 export const ROOT = resolve(import.meta.dirname, "../..");
 export const OUT = join(ROOT, "apps/web/out");
-const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
+/**
+ * The agent environment ships a chromium at a fixed path; a laptop has
+ * whatever `playwright install` left in its cache instead. Try the fixed path,
+ * then the cache, then let playwright-core name its own default — so the same
+ * check runs in both places without an env var.
+ */
+const EXECUTABLE = (() => {
+  if (process.env.CHROMIUM_PATH) return process.env.CHROMIUM_PATH;
+  if (existsSync("/opt/pw-browsers/chromium")) return "/opt/pw-browsers/chromium";
+  return undefined;
+})();
 
 /* ---- the build ---------------------------------------------------------- */
 
@@ -53,7 +63,7 @@ export function ensureBuild() {
   const source = Math.max(...SOURCES.map((s) => newestMtime(join(ROOT, s))));
   if (built > source) return;
   console.log(built ? "sources changed since the last build — rebuilding" : "no build yet — building");
-  const { status } = spawnSync("pnpm", ["--filter", "@hajsik/web", "build"], {
+  const { status } = spawnSync("pnpm", ["--filter", "@bida/web", "build"], {
     cwd: ROOT, stdio: "inherit",
   });
   if (status !== 0) process.exit(status ?? 1);
@@ -168,7 +178,7 @@ function freePort() {
 
 /* ---- the browser -------------------------------------------------------- */
 
-export const launch = () => chromium.launch({ executablePath: EXECUTABLE });
+export const launch = () => chromium.launch(EXECUTABLE ? { executablePath: EXECUTABLE } : {});
 
 /** A phone: 390×844, touch, mobile. What every screen is designed against. */
 export const newPhone = (browser, opts = {}) => browser.newContext({

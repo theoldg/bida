@@ -1,7 +1,7 @@
 import {
   convertMinor, rateFor, splitParticipants, validatePayers, validateSplit,
   type CurrencyCode, type ExchangeRate, type Rate, type SplitSpec,
-} from "@hajsik/core";
+} from "@bida/core";
 import {
   activeSplit, activeSplitTab, draftAmountMinor, draftReceiptSplit, draftReceiptTotal,
   splitSeed, type EntryDraft, type SplitTab,
