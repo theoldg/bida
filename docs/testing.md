@@ -176,6 +176,14 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   has one payer, and the shot looks plausible.
 - **Screenshots miss the caret** (it blinks), and JetBrains Mono's zero is
   *slashed*. A mark inside a "0" is the font, not a struck-through field.
+- **Nothing gates these, so they rot quietly.** `pnpm check` doesn't run them,
+  so a screen change that moves a control or a landing goes in green and is
+  found here weeks later. Three did at once: the multi-payer door became a
+  `<button>` held shut until there is an amount, so `getByRole("link")` hung;
+  and saving now returns you where you came from — the balances tab, an entry's
+  own screen — so a wait for the ledger's rows timed out on a page that had
+  none. When you move a control or change where a save lands, grep these
+  scripts for it in the same commit.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.

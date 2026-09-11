@@ -99,7 +99,9 @@ await tap("theme toggle", async () => {
 await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");
 // Reached only from the form, and only with a draft in hand — the one screen
 // that can't be checked by typing its URL in.
-await tap("who paid", () => page.getByRole("link", { name: /multi-payer/i }).click(), ".rows .row");
+// The door is held shut until there is an amount to divide, so give it one.
+await page.locator("input.amount").fill("999");
+await tap("who paid", () => page.getByRole("button", { name: /multi-payer/i }).click(), ".rows .row");
 await tap("back to the form",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), "input.amount");
 try {

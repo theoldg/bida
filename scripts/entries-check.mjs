@@ -34,6 +34,20 @@ async function save(expectRows) {
   );
 }
 
+/**
+ * Save from an edit opened on an entry's own screen. That goes back where it
+ * came from (`goUp`) rather than to the ledger, so the ledger is a navigation
+ * away — and the rows still have to be waited for once we get there.
+ */
+async function saveAndList(expectRows) {
+  await page.getByRole("button", { name: "Save" }).click();
+  await page.waitForURL(/\/g\/entry\?/);
+  await page.goto(`${base}/g?id=${g}`);
+  await page.waitForFunction(
+    (n) => document.querySelectorAll(".rows a.row").length >= n, expectRows, { timeout: 8000 },
+  );
+}
+
 // ---- seed --------------------------------------------------------------
 const g = await newGroup(page, base, {
   name: "Trip", me: "Theo", members: ["Marie", "Sam"],
@@ -115,7 +129,7 @@ report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an in
 // Who put the money in is a different question on an income, and the screen
 // that asks it has to be asked in the same voice throughout: the title used to
 // switch on its own, so "Who received it" was followed by "didn't pay".
-await page.getByRole("link", { name: "Multi-recipient" }).click();
+await page.getByRole("button", { name: "Multi-recipient" }).click();
 await page.waitForURL(/\/g\/payers/);
 const payerScreen = await page.locator(".rows").innerText();
 report(/receive/.test(payerScreen) && !/pay/.test(payerScreen),
@@ -162,7 +176,13 @@ report((await page.locator(".tside .who").first().innerText()) === otherSide
   "picking the other side swaps them");
 await page.locator(".tswap").click();
 await page.waitForTimeout(100);
-await save(3);
+// Not `save()`: settling up came from the balances tab, and saving returns you
+// to the tab you came from rather than dropping you on the ledger.
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/tab=balances/);
+await page.goto(`${base}/g?id=${g}`);
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3, null,
+  { timeout: 8000 });
 report((await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
   "a transfer saves and lists");
 
@@ -177,7 +197,7 @@ await page.waitForSelector(".transfer");
 report(await page.locator('[aria-label="What kind of entry"]').count() === 0,
   "editing a transfer offers no kind control");
 await page.locator("input.amount").fill("12");
-await save(3);
+await saveAndList(3);
 report((await page.locator(".ramt .big").allInnerTexts()).some((t) => t.includes("12")),
   "the transfer edit stuck");
 
@@ -195,7 +215,7 @@ report(kinds.length === 2 && kinds[0] === "Expense" && kinds[1] === "Income",
   "editing an expense offers expense and income only");
 await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();
 await page.waitForTimeout(120);
-await save(3);
+await saveAndList(3);
 report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
   "an expense can become an income");
 
