@@ -54,6 +54,25 @@ export const copy = {
     save: "Save",
     useIt: "Use it",
     close: "Close",
+    retry: "Try again",
+    reload: "Reload",
+  },
+
+  /**
+   * When reading this phone's own database goes wrong. Rare, and until these
+   * existed it was silent: the screen simply stayed on its skeleton rows.
+   * See lib/db/live.ts.
+   */
+  db: {
+    /** A read that has stopped answering — the app is asking again. */
+    stalled: "Still reading this phone’s data…",
+    /** Another copy of the app is holding the database open on an old version. */
+    blocked: "Another copy of bida is open. Close it to carry on here.",
+    /** The read didn’t just stall, it failed — the screen can’t draw. */
+    broken: {
+      title: "Can’t read this phone’s data",
+      body: "Nothing is lost — it is still on this phone. Reloading usually clears this.",
+    },
   },
 
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */

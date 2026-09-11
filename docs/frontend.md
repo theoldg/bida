@@ -70,11 +70,12 @@ confers nothing without the secret.
 
 ## State
 
-- **Dexie is the store.** Read with `useLiveQuery`. No Redux, no Zustand, no
-  server-state library; adding one is an ADR.
-  `undefined` from a live query means *not answered yet*, not *empty* — the two
+- **Dexie is the store.** Read with **`useLive`** (`lib/db/live.ts`), never
+  `useLiveQuery` directly — see [A live read can die](#a-live-read-can-die).
+  No Redux, no Zustand, no server-state library; adding one is an ADR.
+  `undefined` from a live read means *not answered yet*, not *empty* — the two
   used to render the same blank. A list screen shows `SkeletonRows` in that
-  window and its empty state only once the query has answered.
+  window and its empty state only once the read has answered.
 - Writes go through `lib/db/commands/` — one function per user intent, each
   building an op, appending it and materialising it in one transaction
   (`append.ts`). **Components never write to Dexie directly.** The rule that an
@@ -212,6 +213,35 @@ confers nothing without the secret.
   half the reason to open it is one that is gone, and the alive-only lists
   titled every one of those "Transfer".
 
+## A live read can die
+
+Dexie's `liveQuery` swallows two error names — `DatabaseClosedError` and
+`AbortError` — rather than delivering them. It means to ignore a query it
+superseded itself; it also ignores one the *browser* killed, and those arrive
+by the same door. An installed Android app is frozen when backgrounded and its
+in-flight IndexedDB transactions are aborted; Chrome force-closes the
+connection under storage pressure. Either way nothing is emitted — no value, no
+error — and the subscription is then **dead**: the querier is never run again,
+not even by a write to the table it reads. A screen reads "no value yet" as
+"still loading", so the app sat on its skeleton rows until it was killed and
+relaunched, silently.
+
+`lib/db/live.ts` is why **every live read goes through `useLive`**. A dead
+subscription cannot be revived, so three things make a new one: the connection
+closing (`db.on('close')`), the app returning to the foreground, and a read
+that has returned nothing for 6s — twice, and then the notice in `Screen` says
+so and offers the retry. `db.on('blocked')` feeds the same notice a different
+sentence: an upgrade held open by another copy of the app never resolves on its
+own, because `indexedDB.open` has no timeout and Dexie's handler only logs.
+
+`ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
+reports a failed read by throwing during render, and the app had no boundary at
+all, so every error `liveQuery` did *not* swallow took the tree to a white
+screen.
+
+`pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
+Dexie behaviour itself, so an upgrade that fixes it tells us.
+
 ## Every word, in `lib/copy.ts`
 
 Screens import `copy` and hold no literal a person can read — `aria-label`,
@@ -337,6 +367,11 @@ figure-free.
 
 ## Gotchas
 
+- **A read that never answers is indistinguishable from a slow one.** Both are
+  `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
+  `liveQuery` whose error was swallowed. Every screen that draws a skeleton
+  needs something that eventually stops believing it
+  ([A live read can die](#a-live-read-can-die)).
 - **The theme is a hydration mismatch on purpose.** `<ThemeScript />` sets
   `data-theme` on `<html>` before paint, but the export is prerendered light,
   so React finds an attribute it did not write and says so. `<html>` carries

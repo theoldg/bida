@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Component, Suspense, type ErrorInfo, type ReactNode } from "react";
 import { copy } from "../lib/copy";
 import { useBackButton } from "../lib/back-button";
+import { retryLive, useStalled } from "../lib/db/live";
 import { goUp } from "../lib/nav";
 import { Icon, type IconName } from "./icons";
 
@@ -14,7 +15,37 @@ import { Icon, type IconName } from "./icons";
  * pocket app, not a responsive site.
  */
 export function Screen({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={`app${className ? ` ${className}` : ""}`}>{children}</div>;
+  return (
+    <div className={`app${className ? ` ${className}` : ""}`}>
+      {/* Here rather than on the screens, because it belongs to all of them:
+          every screen in the app is a `Screen`, and the read that stalled
+          could be any of the nine that check `data.loading`. */}
+      <StallNotice />
+      {children}
+    </div>
+  );
+}
+
+/**
+ * A read of this phone's database that has stopped answering.
+ *
+ * It draws over whatever the screen was showing while it waited — which is a
+ * skeleton, and which without this stood there forever looking like a slow
+ * phone. `lib/db/live.ts` says why a read dies and what re-arming it means;
+ * this is only the part a person sees.
+ */
+function StallNotice() {
+  const { stalled, blocked } = useStalled();
+  if (!stalled) return null;
+  return (
+    <div className="stall" role="alert">
+      <Icon name="sync" size={15} style={{ flex: "none" }} />
+      <span>{blocked ? copy.db.blocked : copy.db.stalled}</span>
+      {/* One button for both. Blocked clears when the other copy closes, and
+          asking again is how this one finds out that it has. */}
+      <button className="stall-act" onClick={retryLive}>{copy.act.retry}</button>
+    </div>
+  );
 }
 
 export function Body({ children }: { children: ReactNode }) {
@@ -211,7 +242,55 @@ export function Foot({ children }: { children: ReactNode }) {
  * Every screen reads its group id from the query string, and Next needs the
  * hook that does that to sit behind a Suspense boundary when the page is
  * statically exported. One wrapper, used by every page, instead of nine.
+ *
+ * Errors are not its job — `Suspense` is not an error boundary, and
+ * `ReadErrorBoundary` below sits in the root layout so that the two screens
+ * with no query string to read are covered too.
  */
 export function QueryBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="app" />}>{children}</Suspense>;
+}
+
+/**
+ * The app had no error boundary at all, and needed one: `dexie-react-hooks`
+ * reports a failed read by **throwing during render**, so every Dexie error
+ * that `liveQuery` does not swallow (see lib/db/live.ts for the two it does)
+ * unmounted the whole tree to a white screen. Here it is a sentence and a
+ * button. Wrapped around the whole app in app/layout.tsx, once.
+ *
+ * The one class in the app. React has no hook for this — catching a render
+ * error requires `componentDidCatch`/`getDerivedStateFromError`, and there is
+ * no function-component equivalent.
+ */
+export class ReadErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(error: Error, info: ErrorInfo) {
+    // The screen says what a person can do; this is for whoever is looking at
+    // a phone over USB, and it is the only trace the failure leaves.
+    console.error("bida: a screen failed to read the database", error, info.componentStack);
+  }
+
+  override render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <Screen>
+        <Body>
+          <Empty title={copy.db.broken.title}>{copy.db.broken.body}</Empty>
+        </Body>
+        {/* A reload, not a retry: this tree is already half-built, and the
+            service worker serves the shell from cache, so it costs nothing
+            and works offline. */}
+        <Foot>
+          <button type="button" className="btn btn-p btn-lg" onClick={() => location.reload()}>
+            {copy.act.reload}
+          </button>
+        </Foot>
+      </Screen>
+    );
+  }
 }

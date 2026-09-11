@@ -146,6 +146,30 @@ describe("syncGroup", () => {
     expect(foldOps(ops).group?.name).toBe("Marrakech");
   });
 
+  // Opening a group syncs it directly (app/g/page.tsx) rather than through
+  // syncAll's guard, so it raced the loop's run for the same group: the same
+  // ops pushed and pulled twice, and two rebuilds taking the readwrite lock on
+  // every table while the screen was waiting to read them.
+  it("joins a run already in flight for the same group", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    let calls = 0;
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      calls += 1;
+      await new Promise((r) => setTimeout(r, 5));
+      return new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }), { status: 200 });
+    }));
+
+    const first = syncGroup(groupId);
+    const second = syncGroup(groupId);
+    expect(second).toBe(first);
+    await Promise.all([first, second]);
+    expect(calls).toBe(1);
+
+    // And the group is free to sync again once that run is done.
+    await syncGroup(groupId);
+    expect(calls).toBe(2);
+  });
+
   it("surfaces a failed push instead of silently dropping ops", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     vi.stubGlobal("fetch", vi.fn(async () => new Response("nope", { status: 403 })));

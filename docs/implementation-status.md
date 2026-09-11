@@ -27,6 +27,16 @@ keep the old `hajsik` name, and so does the IndexedDB database, because all
 three are addresses that existing links and phones already point at
 ([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
 
+**A read of this phone's database can no longer hang forever** (2026-09-11).
+The installed Android app was hanging on its skeleton rows: Dexie's
+`liveQuery` swallows the two error names the browser uses when it kills a query
+under a frozen or evicted page, and the dead subscription reads to a screen as
+"still loading". Every live read now goes through `useLive`, which re-arms on a
+close, on resume, and on a watchdog, and says so when it gives up
+([frontend.md](frontend.md#a-live-read-can-die)). The app has an error boundary
+for the first time, and `syncGroup` is single-flight per group — opening a
+group raced the sync loop into rebuilding the same group twice.
+
 **The entry form is being thinned.** It carried 19 tappable controls on a new
 expense where three do the work — the rest confirm defaults the form already
 has right. The kind is now one chip rather than three permanent buttons, and it

@@ -35,6 +35,7 @@ tracing of a logo is a worse logo.
 | `--credit` / `--debit` | **The only two hues in the app.** Money owed to you / by you |
 | `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: your own rows, and pending sync |
 | `--press` | The wash under a thumb. Composited, not a background |
+| `--press-i` | The same wash for a control that is already ink: the primary button, the FAB |
 
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
 never colour a control with `--credit`; and because `--brand` is just ink, a
@@ -77,7 +78,10 @@ identical. Two states cover the gap, and neither is a spinner:
 
 - **Press.** `--press` on `:active`, as a `linear-gradient` rather than a
   `background-color` so it composites over what the control already sits on.
-  Instant down, `.2s` up; nothing moves and nothing scales. The browser's own
+  Instant down, `.2s` up; nothing moves and nothing scales. An inverted control
+  — the primary button, the FAB — takes `--press-i` instead: ink washed over
+  ink is a tint nobody can see, and a big Save that doesn't answer the thumb
+  reads as a dead button. The browser's own
   tap highlight is off (late, and it disagrees), with `touch-action:
   manipulation` to drop the 300ms double-tap wait.
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
@@ -146,7 +150,10 @@ blooms the field that stopped it `--debit` and lets it settle back over ~600ms
 does the multi-payer door, which has no amount to divide. A flash rather than a
 held red, because the sentence is already holding the state and two things
 saying it permanently is one too many; and it replays on every refusal, which
-is what the two identical `-a`/`-b` animations in `globals.css` are for. It is
+is what the two identical `-a`/`-b` animations in `globals.css` are for. Save
+is spent for exactly as long as the flash — greyed instantly, eased back —
+which is the press saying it landed, and stops the same press arriving again
+over a form that is mid-way through saying no. It is
 the one thing exempt from the global reduced-motion clamp: a colour settling is
 what that guidance asks you to fall back *to*, and clamped it would be nothing
 at all.

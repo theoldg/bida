@@ -134,9 +134,12 @@ later request is checked against it. A `GET` on a never-pushed group returns
 (debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the
-whole run, and an overlapping call gets back the promise already in flight.
-A run that attempted nothing must never conclude "no failures" and reset a
-backoff the failing run had grown.
+whole run and `syncGroup` over one group, and an overlapping call gets back the
+promise already in flight. Both guards are needed: opening a group syncs it
+directly, and that raced the loop into pushing and pulling the same ops twice
+and taking the `rebuild()` lock on every table twice, under a screen that was
+waiting to read them. A run that attempted nothing must never conclude "no
+failures" and reset a backoff the failing run had grown.
 
 **A forgotten group is skipped**, not synced in the background forever. It
 keeps its secret: opening the invite link again un-forgets it.

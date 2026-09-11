@@ -136,6 +136,13 @@ function EditEntryScreen() {
       title: fields.title ? { n: r.title.n + 1, live: true } : r.title,
     }));
   /**
+   * A refusal is still on screen. Save is spent for exactly as long: a press
+   * that can't go through has to look like it landed, and a button that stays
+   * live while the form is busy saying no invites the same press again. Read
+   * off the flash rather than a timer of its own, so the two can't drift.
+   */
+  const refusing = refused.amount.live || refused.title.live;
+  /**
    * The flash is over. Only the field's own animation counts — the placeholder
    * is a pseudo-element on the same clock, and `pseudoElement` is how an
    * animation event says which of the two it is.
@@ -674,7 +681,8 @@ function EditEntryScreen() {
                 {copy.form.saveFailed(failed)}
               </p>
             ) : null}
-            <button type="button" className="btn btn-p btn-lg" onClick={save} disabled={saving}>
+            <button type="button" className="btn btn-p btn-lg" onClick={save}
+              disabled={saving || refusing}>
               {saving ? <span className="spinner" /> : null}{copy.act.save}
             </button>
           </div>

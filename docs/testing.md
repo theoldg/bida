@@ -8,6 +8,7 @@ pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm claim       # a name still being typed, and the button that acts on it
 pnpm offline     # just every screen with the network cut
+pnpm stall       # what a screen does when reading this phone's database stops working
 pnpm shots       # PNGs into shots/ (gitignored)
 pnpm drive       # drive the app as text, one command at a time — see below
 pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms
@@ -229,6 +230,25 @@ where the press and the screen disagree about what is under the finger. Both
 doors are walked, because their add rows differ where it matters — on `/new`
 the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
 that arrives whenever it arrives, and the tick has to follow it there.
+
+## `pnpm stall` — a read of this phone's database that dies
+
+The defect it was written for is the one no screen could report: an installed
+Android app hanging on its skeleton rows, indefinitely, with nothing in the
+console ([frontend.md](frontend.md#a-live-read-can-die)). Two halves.
+
+`indexedDB.open` is stubbed to return a request that never fires an event —
+what a wedged backing store or a blocked upgrade does, and what nothing in
+Dexie times out against. The skeleton is expected, and then the notice over it
+is. Measured against the app with the watchdog taken out, the second assertion
+fails, which is what makes it a check rather than a screenshot.
+
+Then the database is deleted from another connection, which is what a browser
+reclaiming storage looks like from inside the page. That half is a smoke test
+and says so in the file: it passes with the `close` handler removed too,
+because re-opening an absent database happens to wake the reads by itself. It
+is there for the property — a forced close must not strand the app on rows that
+are no longer there — not for the mechanism.
 
 ## `pnpm drive` — the app as text
 

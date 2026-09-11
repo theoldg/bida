@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ReadErrorBoundary } from "../components/chrome";
 import { IconSprite } from "../components/icons";
 import { KeyboardInset } from "../components/keyboard-inset";
 import { NoLongPress } from "../components/no-long-press";
@@ -75,7 +76,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NoPinchZoom />
         <RegisterServiceWorker />
         <StartSync />
-        {children}
+        {/* Every screen, including the two that carry no QueryBoundary. */}
+        <ReadErrorBoundary>{children}</ReadErrorBoundary>
       </body>
     </html>
   );

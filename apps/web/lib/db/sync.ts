@@ -85,6 +85,9 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
   });
 }
 
+/** One run per group at a time — see `syncGroup`. */
+const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
+
 /**
  * Push this device's unsynced ops for one group and pull whatever the server
  * has that this device hasn't seen. A no-op (returns `undefined`) if this
@@ -92,8 +95,23 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
  *
  * Rejects on failure, having recorded it on the group's key first — callers
  * are free to ignore the rejection, and the UI reads the record instead.
+ *
+ * Single-flight per group: a second call joins the run already going rather
+ * than starting another. `syncAll` has a guard of its own, but opening a group
+ * calls this directly (app/g/page.tsx) and used to race the loop's run for the
+ * same group — the same ops pushed twice, the same ops pulled twice, and two
+ * `rebuild()`s taking the readwrite lock on every table in turn at exactly the
+ * moment the screen was waiting to read them.
  */
-export async function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
+export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
+  const already = inFlight.get(groupId);
+  if (already) return already;
+  const run = syncGroupOnce(groupId).finally(() => { inFlight.delete(groupId); });
+  inFlight.set(groupId, run);
+  return run;
+}
+
+async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> {
   const d = db();
   const key = await d.groupKeys.get(groupId);
   if (!key) return undefined;

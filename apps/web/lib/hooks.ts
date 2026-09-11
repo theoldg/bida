@@ -1,6 +1,5 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -11,6 +10,7 @@ import {
   type Settlement, type Transfer,
 } from "@bida/core";
 import { db, type DeviceRecord } from "./db/dexie";
+import { useLive } from "./db/live";
 import { getDevice } from "./db/device";
 import { copy } from "./copy";
 import { formatJoinLink, route } from "./group-link";
@@ -73,8 +73,8 @@ function byWhenThenCreated(a: Expense | Settlement, b: Expense | Settlement): nu
 
 export function useDevice(): DeviceRecord | undefined {
   const [fallback, setFallback] = useState<DeviceRecord>();
-  const live = useLiveQuery(() => db().device.get("device"), []);
-  // The record is created on first read; useLiveQuery alone would sit at
+  const live = useLive(() => db().device.get("device"), []);
+  // The record is created on first read; a live read alone would sit at
   // undefined forever on a brand-new phone.
   useEffect(() => {
     if (live === undefined) void getDevice().then(setFallback);
@@ -84,7 +84,7 @@ export function useDevice(): DeviceRecord | undefined {
 
 /** The invite secret for a group, if this device holds it (creator or a device that joined). */
 export function useGroupSecret(groupId: string | undefined): string | undefined {
-  return useLiveQuery(async () => {
+  return useLive(async () => {
     if (!groupId) return undefined;
     return (await db().groupKeys.get(groupId))?.secret;
   }, [groupId]);
@@ -188,7 +188,7 @@ const EMPTY_REPORT: BalanceReport = {
 };
 
 export function useGroupData(groupId: string | undefined): GroupData {
-  const rows = useLiveQuery(async () => {
+  const rows = useLive(async () => {
     if (!groupId) return undefined;
     const d = db();
     const [group, members, expenses, settlements, pending, device] = await Promise.all([
@@ -303,7 +303,7 @@ export interface GroupSummary {
 
 /** The groups list, with each group's net for whoever is holding the phone. */
 export function useGroupSummaries(): GroupSummary[] | undefined {
-  return useLiveQuery(async () => {
+  return useLive(async () => {
     const d = db();
     // Five reads, not three per group. Every row on this phone belongs to a
     // group in this list, so fetching each table whole and bucketing it here
@@ -386,7 +386,7 @@ export interface SyncHealth {
 const FAILURES_BEFORE_WARNING = 2;
 
 export function useSyncHealth(groupId: string | undefined): SyncHealth {
-  const key = useLiveQuery(async () => {
+  const key = useLive(async () => {
     if (!groupId) return undefined;
     return (await db().groupKeys.get(groupId)) ?? null;
   }, [groupId]);

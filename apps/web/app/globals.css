@@ -17,8 +17,13 @@
   --brand:#16171A; --brand-ink:#FBFBFA;
   --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
   /* Laid over whatever a control already sits on, so one value covers a row on
-     paper, a highlighted row, and the inverted FAB alike. */
+     paper and a highlighted row alike. */
   --press:rgba(22,23,26,.09);
+  /* The same press, for the two controls that are already ink: the primary
+     button and the FAB. `--press` is ink on ink there — a tint nobody can see
+     is a button that reads as dead under the thumb — so an inverted control
+     takes its press in paper. */
+  --press-i:rgba(251,251,250,.17);
   /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
@@ -49,6 +54,7 @@
     --brand:#E6E7E9; --brand-ink:#0E0F11;
     --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
     --press:rgba(230,231,233,.11);
+    --press-i:rgba(14,15,17,.15);
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -63,6 +69,7 @@
   --brand:#E6E7E9; --brand-ink:#0E0F11;
   --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
   --press:rgba(230,231,233,.11);
+  --press-i:rgba(14,15,17,.15);
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -520,18 +527,27 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 .fab-2 { right: calc(max(16px, 50vw - 264px) + 60px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
-  padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100% }
+  padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
+  /* Opacity joins the shared press transition here because a button greys and
+     un-greys: a refused Save is spent for the length of the field's flash, and
+     it comes back the way the flash does — off instantly, back on eased. */
+  transition: background-image .2s ease, opacity .3s ease }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
+/* An inverted control presses in paper, not in ink — see `--press-i`. Later
+   than the shared `:active` rule above and at least its specificity, which is
+   what lets it take the tint over. `.fab-2` is exempt: it is outlined on paper
+   rather than inverted, so the ordinary press is the visible one there. */
+.btn-p:active:not(:disabled), .fab:not(.fab-2):active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 .btn-s { background: var(--card-2); color: var(--ink); border: 1px solid var(--rule) }
 /* The one place a hue is spent on something other than money: destructive is
    worth a signal, and it gets an outline rather than a filled block. */
 .btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
-/* The one act a screen exists for, given the whole width of the foot and a
+/* The one act a screen exists for, given the whole width of the screen and a
    figure to match: taller, and set in the display weight rather than the
    body's. Still square and still flat — bigger is the only thing it spends
    (ADR-0008). */
 .btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
-.btn:disabled { opacity: .45 }
+.btn:disabled { opacity: .45; transition-duration: 0s }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
@@ -621,6 +637,18 @@ dialog.scrim::backdrop { background: transparent }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
+/* A read of this phone's own database that stopped answering
+   (components/chrome.tsx). It reads like `.banner` because it is the same
+   kind of news, and sits above the screen's own head rather than inside its
+   body: the screen underneath is a skeleton, and the one thing it must not
+   look like is part of the layout that is still loading. */
+.stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
+  font-size: 12.5px; font-weight: 500;
+  background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
+.stall span { flex: 1; min-width: 0 }
+.stall-act { flex: none; font-size: 12.5px; font-weight: 700; text-decoration: underline;
+  text-underline-offset: 3px; padding: 2px 0 }
+.stall-act:active { opacity: .6 }
 /* A failure reads like `.hint` in the one colour this design spends on trouble:
    it sits where the hint would, under whatever was being attempted. */
 .failure { font-size: 12px; color: var(--debit); line-height: 1.5; font-weight: 500; margin: 8px 2px 0 }
