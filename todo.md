@@ -70,8 +70,3 @@ All amounts everywhere should always be formatted with comma separated thousands
 
 ### Subtitles
 Some row subtitles are too long and overflow e.g. "name + 1 other paid, 5 people, from receipt". It's always better to drop some of this info rather than overflow. Figure out how to avoid this (define an order of that to drop and measure if it fits?)
-
-## Refactor
-
-### Receipt / "as parts" intertwined
-Definitively decouple receipt splitting mode from "as parts", there's been tons of bugs and counter intuitive behaviours everywhere - currently in history text. They don't have anything to do with each other from a user perspective, they should be decoupled in the code. Refactor as much as you need.
