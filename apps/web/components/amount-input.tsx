@@ -188,13 +188,39 @@ export function GroupedInput({
   );
 }
 
+/**
+ * What a half-typed amount settles to once the field is left: "5" -> "5.00",
+ * "1." -> "1.00", "1.5" -> "1.50". The text you type is deliberately left
+ * alone while you type it (see above), which means a finished field could sit
+ * there reading "5" next to a column of "12.00"s — the same number written two
+ * ways, and the only one on screen that looks unfinished. Empty stays empty,
+ * so a placeholder survives a tap that changed nothing, and a currency with no
+ * minor units has nothing to pad.
+ */
+export function settleAmount(text: string, currency: CurrencyCode): string {
+  if (text === "") return "";
+  try { return minorToDecimalString(parseMinor(text, currency), currency); } catch { return text; }
+}
+
 export interface AmountInputProps extends Omit<GroupedInputProps, "sanitize"> {
   currency: CurrencyCode;
 }
 
 /** A `GroupedInput` that accepts what this currency can hold. */
-export function AmountInput({ currency, ...rest }: AmountInputProps) {
-  return <GroupedInput {...rest} sanitize={(raw) => sanitizeAmount(raw, currency)} />;
+export function AmountInput({ currency, value, onChange, onBlur, ...rest }: AmountInputProps) {
+  return (
+    <GroupedInput
+      {...rest}
+      value={value}
+      onChange={onChange}
+      sanitize={(raw) => sanitizeAmount(raw, currency)}
+      onBlur={(e) => {
+        const settled = settleAmount(value, currency);
+        if (settled !== value) onChange(settled);
+        onBlur?.(e);
+      }}
+    />
+  );
 }
 
 function textFor(minor: number, currency: CurrencyCode): string {

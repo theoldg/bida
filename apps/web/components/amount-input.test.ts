@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipAmountToCurrency, sanitizeAmount } from "./amount-input";
+import { clipAmountToCurrency, sanitizeAmount, settleAmount } from "./amount-input";
 
 /**
  * What may be typed is pure string arithmetic, so it gets real tests rather
@@ -60,5 +60,38 @@ describe("clipAmountToCurrency", () => {
   it("keeps every other field of whatever it was handed", () => {
     expect(clipAmountToCurrency({ amountText: "9.99", currency: "JPY", description: "Sushi" }))
       .toEqual({ amountText: "9", currency: "JPY", description: "Sushi" });
+  });
+});
+
+/**
+ * What the field does when you leave it — the other half of holding the text
+ * you typed rather than a round-trip of it.
+ */
+describe("settleAmount", () => {
+  it("pads a finished amount to the currency's fraction", () => {
+    expect(settleAmount("5", "EUR")).toBe("5.00");
+    expect(settleAmount("1.5", "EUR")).toBe("1.50");
+    expect(settleAmount("5", "BHD")).toBe("5.000");
+  });
+
+  it("finishes a separator left hanging", () => {
+    expect(settleAmount("1.", "EUR")).toBe("1.00");
+    expect(settleAmount("0.", "EUR")).toBe("0.00");
+  });
+
+  it("leaves an empty field empty, so its placeholder survives", () => {
+    expect(settleAmount("", "EUR")).toBe("");
+  });
+
+  it("has nothing to pad in a currency with no minor units", () => {
+    expect(settleAmount("5", "JPY")).toBe("5");
+  });
+
+  it("settles what the field can hold, whatever half of it was typed", () => {
+    // `sanitizeAmount` never produces a bare separator, but the settling has
+    // to be total: every text the field can be left holding settles to a
+    // figure or to nothing, never to something a parse would drop.
+    expect(settleAmount(".", "EUR")).toBe("0.00");
+    expect(settleAmount("0", "EUR")).toBe("0.00");
   });
 });
