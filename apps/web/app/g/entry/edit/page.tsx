@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  isCurrencyCode, minorToDecimalString,
+  isCurrencyCode, minorToDecimalString, receiptExtras,
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
@@ -228,6 +228,8 @@ function EditEntryScreen() {
           categoryId: e.categoryId ?? null,
           receiptItems: e.receiptItems ?? null,
           receiptTip: e.receiptTip ?? null,
+          receiptTax: e.receiptTax ?? null,
+          receiptDiscounts: e.receiptDiscounts ?? null,
           receiptInvolved: e.receiptInvolved ?? null,
           receiptAssignments: e.receiptAssignments ?? null,
           // The tab *is* the mode — a receipt included. The exception is a
@@ -365,7 +367,7 @@ function EditEntryScreen() {
    */
   const changeTab = (splitTab: SplitTab) => {
     const handoff = handOffReceiptTotal(
-      activeTab, splitTab, draft.receiptItems, draft.receiptTip, draft.currency,
+      activeTab, splitTab, draft.receiptItems, receiptExtras(draft), draft.currency,
     );
     patch({
       splitTab,
@@ -384,7 +386,7 @@ function EditEntryScreen() {
     if (next === kind) return;
     const leavingReceipt = onReceiptTab && next !== "expense";
     const handoff = leavingReceipt
-      ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, draft.receiptTip, draft.currency)
+      ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, receiptExtras(draft), draft.currency)
       : null;
     // "Reimbursement" is only ever typed in by settle up's prefill, never by
     // switching kind here. Leaving a transfer that still carries it hands the
@@ -467,6 +469,8 @@ function EditEntryScreen() {
           // show it again.
           receiptItems: canScan ? draft.receiptItems ?? null : null,
           receiptTip: canScan ? draft.receiptTip ?? null : null,
+          receiptTax: canScan ? draft.receiptTax ?? null : null,
+          receiptDiscounts: canScan ? draft.receiptDiscounts ?? null : null,
           receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
           receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
         };

@@ -2,8 +2,8 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, newId, parseMinor,
-  type ArithmeticMode, type ArithmeticSplit, type ReceiptItem, type SplitMode, type SplitSpec,
+  convertSplitMode, newId, parseMinor, receiptExtras,
+  type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import { receiptTotalMinor, weightsFromItems } from "./scan/items";
@@ -111,6 +111,10 @@ export interface EntryDraft {
   receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
+  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
+  receiptTax?: string | null;
+  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
+  receiptDiscounts?: ReceiptDiscount[] | null;
   /** Who was marked present, last time the who-had-what grid was saved. */
   receiptInvolved?: string[] | null;
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
@@ -211,7 +215,8 @@ export function receiptWeights(
   return weightsFromItems(
     [...items],
     [...assignments],
-    draft.receiptTip ? { amount: draft.receiptTip, members: new Set(involved) } : null,
+    receiptExtras(draft),
+    involved,
     draft.currency,
     splitSeed(draft),
   );
@@ -313,7 +318,7 @@ export function draftReceiptTotal(draft: EntryDraft): number | null {
   const showing = draft.kind === "expense"
     && activeSplitTab(draft) === "receipt" && (draft.receiptItems?.length ?? 0) > 0;
   if (!showing) return null;
-  const total = receiptTotalMinor(draft.receiptItems ?? [], draft.receiptTip ?? null, draft.currency);
+  const total = receiptTotalMinor(draft.receiptItems ?? [], receiptExtras(draft), draft.currency);
   return total !== null && total > 0 ? total : null;
 }
 

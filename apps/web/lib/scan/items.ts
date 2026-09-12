@@ -1,11 +1,14 @@
-import { minorToDecimalString, parseMinor, resolveSplit, type ReceiptItem, type SplitMode } from "@bida/core";
+import {
+  extrasMinor, minorToDecimalString, parseMinor, resolveSplit,
+  type BillExtras, type ExtraKind, type ReceiptItem, type SplitMode,
+} from "@bida/core";
 
 /** A line of the bill, and how much of it was one person's. */
 export interface MemberLine {
-  /** The bill's own label. Empty for the tip, which is nobody's order. */
+  /** The bill's own label. Empty for an extra, which is nobody's order. */
   label: string;
-  /** The tip line, which is charged for but not ordered. */
-  tip?: boolean;
+  /** Which bill-level line this is, when it is one — charged for, but not ordered. */
+  extra?: ExtraKind;
   /** How much of it was theirs — one, two, or a third of a shared plate. */
   count: Count;
   /** What that came to, in the receipt's own currency. */
@@ -27,6 +30,27 @@ function count(n: number, d: number): Count {
 
 function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a.d * b.d); }
 
+/** One bill-level charge to spread: a tip, a tax, or one of the deductions. */
+interface BillCharge { kind: ExtraKind; label: string; amount: string; seed: string }
+
+/**
+ * The extras as a flat list, in the order a printed bill rules them off under
+ * the items — every deduction by name, then the tax, then the tip.
+ *
+ * Each deduction is spread on its own rather than as one pooled figure. The
+ * two divide identically, but this way each person's copy of the bill can say
+ * "2 for 1 −4.44" rather than one number they'd have to take on trust.
+ */
+export function billCharges(extras: BillExtras | null): BillCharge[] {
+  if (!extras) return [];
+  const off = extras.discounts.map((d, i) => (
+    { kind: "discount" as const, label: d.label, amount: d.amount, seed: `discount${i}` }
+  ));
+  const on = ([["tax", extras.tax], ["tip", extras.tip]] as const).flatMap(([kind, amount]) =>
+    amount ? [{ kind, label: "", amount, seed: kind }] : []);
+  return [...off, ...on];
+}
+
 /**
  * Who had what, read two ways at once: as split weights, and as each person's
  * own copy of the bill.
@@ -38,6 +62,14 @@ function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a
  * "shares" mode — so it doesn't matter that it's denominated in the receipt's
  * own currency rather than the group's base currency.
  *
+ * The extras — tip, tax, discount — are nobody's order, so they can't be
+ * ticked for: each is spread across everyone at the table in proportion to
+ * what they did order, and the discount is the one that comes off
+ * (`BillExtras`). Proportional is the only division the grid can justify while
+ * it has no way to say who a particular credit belongs to, and it is the
+ * fairest one anyway: a discount exists because of the whole order, so it is
+ * shared the way the order was (ADR-0016).
+ *
  * The lines are that same arithmetic, kept rather than summed away: one entry
  * per label, carrying how much of it was theirs. They are what the entry
  * screen expands a person's row into, and they add up to that person's weight
@@ -46,7 +78,8 @@ function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a
 export function receiptBreakdown(
   items: readonly BillLine[],
   assignments: readonly Set<string>[],
-  tip: { amount: string; members: Set<string> } | null,
+  extras: BillExtras | null,
+  involved: ReadonlySet<string>,
   currency: string,
   seed: string,
 ): { weights: Record<string, number>; lines: Record<string, MemberLine[]> } {
@@ -58,7 +91,7 @@ export function receiptBreakdown(
   // that says the same word twice.
   const note = (id: string, line: MemberLine) => {
     const own = lines[id] ??= [];
-    const same = own.find((l) => l.label === line.label && !l.tip === !line.tip);
+    const same = own.find((l) => l.label === line.label && l.extra === line.extra);
     if (!same) { own.push(line); return; }
     same.count = plus(same.count, line.count);
     same.minor += line.minor;
@@ -81,27 +114,39 @@ export function receiptBreakdown(
     }
   });
 
-  if (tip && tip.members.size > 0) {
+  // What each person ordered, fixed before a single extra is spread: all of
+  // them divide by that same ratio, so the tip a person pays doesn't change
+  // how much of the tax or of a discount is theirs, and the order they're
+  // applied in can't matter.
+  const ordered = { ...weights };
+  for (const charge of billCharges(extras)) {
+    if (involved.size === 0) continue;
     let minor = 0;
-    try { minor = parseMinor(tip.amount, currency); } catch { /* no tip, no problem */ }
-    if (minor > 0) {
-      // Scale the tip to what each person already ordered, not an even split —
-      // someone who had the €40 steak tips more than someone who had a coffee.
-      // Only members with a positive item weight can take a proportional
-      // share; if none of the tip's members have one yet (nobody's assigned
-      // anything), fall back to splitting the tip evenly so it isn't silently
-      // dropped.
-      const proportional: Record<string, number> = {};
-      for (const id of tip.members) if (weights[id]) proportional[id] = weights[id];
-      const { shares } = Object.keys(proportional).length > 0
-        ? resolveSplit(minor, { mode: "shares", weights: proportional }, { tiebreakSeed: `${seed}:tip` })
-        : resolveSplit(minor, { mode: "equal", members: [...tip.members] }, { tiebreakSeed: `${seed}:tip` });
-      for (const [id, v] of Object.entries(shares)) {
-        add(id, v);
-        note(id, { label: "", tip: true, count: count(1, 1), minor: v });
-      }
+    try { minor = parseMinor(charge.amount, currency); } catch { continue; /* mid-type */ }
+    if (minor <= 0) continue;
+    // Scaled to what each person already ordered, not split evenly — someone
+    // who had the €40 steak tips more, and takes more of the loyalty discount,
+    // than someone who had a coffee. Only members with a positive item weight
+    // can take a proportional share; if none of them have one yet (nobody's
+    // assigned anything), fall back to an even split so the figure isn't
+    // silently dropped.
+    const proportional: Record<string, number> = {};
+    for (const id of involved) if (ordered[id]) proportional[id] = ordered[id];
+    const { shares } = Object.keys(proportional).length > 0
+      ? resolveSplit(minor, { mode: "shares", weights: proportional }, { tiebreakSeed: `${seed}:${charge.seed}` })
+      : resolveSplit(minor, { mode: "equal", members: [...involved] }, { tiebreakSeed: `${seed}:${charge.seed}` });
+    // The one place a discount's sign is applied (`BillExtras`).
+    const sign = charge.kind === "discount" ? -1 : 1;
+    for (const [id, v] of Object.entries(shares)) {
+      add(id, sign * v);
+      note(id, { label: charge.label, extra: charge.kind, count: count(1, 1), minor: sign * v });
     }
   }
+
+  // A discount worth more than the bill it comes off would owe somebody money,
+  // which is not a thing an expense can do. `checkScan` refuses such a receipt
+  // outright, so this is the floor under a bill typed into that state by hand.
+  for (const [id, v] of Object.entries(weights)) if (v < 0) weights[id] = 0;
 
   // Zero-weight members are dropped, not kept at 0: "shares" mode reads
   // Object.keys() as the participant list, so a 0 would still owe nothing.
@@ -113,24 +158,25 @@ export function receiptBreakdown(
 export function weightsFromItems(
   items: readonly BillLine[],
   assignments: Set<string>[],
-  tip: { amount: string; members: Set<string> } | null,
+  extras: BillExtras | null,
+  involved: ReadonlySet<string>,
   currency: string,
   seed: string,
 ): Record<string, number> {
-  return receiptBreakdown(items, assignments, tip, currency, seed).weights;
+  return receiptBreakdown(items, assignments, extras, involved, currency, seed).weights;
 }
 
 /**
- * The receipt's own total: every line item plus the tip, in the receipt's
- * currency. This is what Receipt mode treats as the expense amount — derived
- * from the bill, not typed separately — so it stays in lockstep with whatever
- * "who had what" actually adds up to. Returns null when there's nothing to
- * sum (no items parse), so the caller can leave the amount alone rather than
- * overwrite it with zero.
+ * The receipt's own total: every line item, plus the tip and the tax, less the
+ * discounts, in the receipt's currency. This is what Receipt mode treats as
+ * the expense amount — derived from the bill, not typed separately — so it
+ * stays in lockstep with whatever "who had what" actually adds up to. Returns
+ * null when there's nothing to sum (no items parse), so the caller can leave
+ * the amount alone rather than overwrite it with zero.
  */
 export function receiptTotalMinor(
   items: { amount: string }[],
-  tip: string | null,
+  extras: BillExtras | null,
   currency: string,
 ): number | null {
   let total = 0;
@@ -138,9 +184,9 @@ export function receiptTotalMinor(
   for (const item of items) {
     try { total += parseMinor(item.amount, currency); any = true; } catch { /* unreadable line, skip it */ }
   }
-  if (tip) {
-    try { total += parseMinor(tip, currency); } catch { /* no tip, no problem */ }
-  }
+  // Null when a figure is mid-type and unreadable — worth nothing rather than
+  // worth guessing at, the same as an unreadable line above.
+  if (extras) total += extrasMinor(extras, currency) ?? 0;
   return any ? total : null;
 }
 
@@ -167,11 +213,11 @@ export function handOffReceiptTotal(
   from: SplitMode,
   to: SplitMode,
   items: { amount: string }[] | null | undefined,
-  tip: string | null | undefined,
+  extras: BillExtras | null,
   currency: string,
 ): string | null {
   if (from !== "receipt" || to === "receipt") return null;
-  const total = receiptTotalMinor(items ?? [], tip ?? null, currency);
+  const total = receiptTotalMinor(items ?? [], extras, currency);
   // `minorToDecimalString`, not `bare`: what goes into `amountText` has to
   // be canonical text `parseMinor` can read back. `bare` groups thousands.
   return total === null ? null : minorToDecimalString(total, currency);

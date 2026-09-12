@@ -86,12 +86,14 @@ It reads. It doesn't compute.
 | title | string → `description` — the merchant's name, minus the parts that aren't the name ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what was bought where the name alone wouldn't say ("Lidl - barbecue"). Nothing added when the merchant already says it, when the lines are too mixed, or when none are printed: a bare name beats a wrong guess |
 | total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code |
 | tip | a separate tip/service-charge line, same normalized notation, or null |
+| tax | tax charged *on top of* the lines, same notation, or null — VAT already inside the printed prices, which most European receipts break out near the foot, is not this and would be counted twice |
+| discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
-`normalizeScan` uses neither `lineItems` nor `tip`. `/g/entry/items` does —
+`normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
 reached by tapping the Receipt tab's button — "Assign who had what" on a bill
 nobody has been given a line of, "Edit who-had-what" once somebody has —
 building the grid that becomes a `receipt` split — its own mode, which is why
@@ -104,6 +106,34 @@ Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. Done stays disabled until every line
 has somebody.
+
+**Tip, tax and discount are one family — `BillExtras`.** They are the lines a
+bill charges for that nobody ordered, so none of them can be ticked for on the
+grid: each is spread across everyone at the table in proportion to what they
+*did* order, and the discount is the one that comes off. `readBill` (core)
+gathers every deduction into `discounts` first, wherever it arrived — a
+negative line item, a negative tip, the field itself — so the arithmetic
+downstream sees positive lines and a list of figures that come off, and never a
+sign to get the wrong way round. Only the tip is typed; the other two are read
+off the bill and drawn as rows with no cells (`copy.items.extra`).
+
+**The deductions are kept apart, not summed.** They divide identically either
+way, so this is for the reader: "Discounts −9.25" cannot tell a two-for-one
+from a loyalty card. Several of them collapse into one row wearing the same
+`×N` the repeated items wear, and open into the names the bill printed —
+display only, since the rows aren't assignable either way, so unlike an item's
+unfold it writes nothing to the draft. Each person's own copy of the bill names
+them one by one too (`billCharges`, `receiptBreakdown`).
+
+Proportional is the reading [ADR-0016](decisions/0016-receipts.md) settles on,
+and the argument is the "buy 1 get 1 free" the owner asked about — ham pizza
+10, cheese pizza 8, discount 8. The credit exists because *both* pizzas were
+bought, so giving all of it to the cheaper one leaves the other person paying
+full price for a promotion their order created. Pro rata (5.56 / 4.44) is the
+same rule a whole-bill loyalty deduction follows, scoped to what it came off,
+which is why the code has one rule and not two. A whole-bill discount, pooled
+this way, leaves every ratio between people exactly where the items put them —
+it is only the total that moves.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
 total. It says how many rows that line **unfolds** into on the grid, and — with
@@ -178,17 +208,15 @@ prints it verbatim.
 
 **Whether it adds up is not the model's call.** `checkScan` (core) is an
 absolute arithmetic bar, and `scanReceipt` throws `ScanUnreliableError` at the
-first thing it finds: a total it can't read (`no-total`), a line it can't read
-(`unreadable-line`), a credit line (`credit-line` — a discount sums into the
-total but takes no part in the grid's ratios, so it would be shared out across
-everybody), or lines plus tip that miss the printed total by any amount, a
-non-positive total included (`mismatch`). No tolerance: a bill the app can't
-reconcile prices the who-had-what grid against a total the receipt never
-printed, silently. Refusing costs one more photo — which is what
-`copy.scan.problem.mismatch` asks for, in the words that actually help: flatter,
-square-on (see Gotchas). **A receipt printing tax or service on top of its lines
-is refused too** — the prompt asks for the tip alone, so the sum falls short of
-the total.
+first thing it finds: a total it can't read (`no-total`), a line or an extra it
+can't read (`unreadable-line`), or lines plus tip plus tax less the discounts
+missing the printed total by any amount, a non-positive total included
+(`mismatch`). No tolerance: a bill the app can't reconcile prices the
+who-had-what grid against a total the receipt never printed, silently. Refusing
+costs one more photo — which is what `copy.scan.problem.mismatch` asks for, in
+the words that actually help: flatter, square-on (see Gotchas). A deduction
+counted twice — once as a negative line and once in `discount` — lands here
+too, which is the safe way for that particular misreading to fail.
 
 Two conditions of the *phone* are told apart from that, because neither has
 anything to do with the photo and the generic message sent people back to
@@ -231,7 +259,7 @@ share — `/g/scan` and the Receipt tab on `/g/entry/edit` — with
 trip as a bar filling over the ~2s a scan usually takes, falling back to the
 spinner only when the model is slower
 ([design-system.md](design-system.md#palette-roles)). Verified end to end
-against the deployed Worker, 2026-08-28.
+against the deployed Worker, 2026-08-28; discounts and tax added 2026-09-12.
 
 ## Driving it without a phone
 
@@ -243,6 +271,17 @@ way to reach the who-had-what grid outside a real scan —
 
 ## Gotchas
 
+- **A discount is spread across everybody, and that is a decision, not a
+  fallback.** The grid has no way to say who a particular credit belongs to, so
+  there is no "this voucher was on my dish" to honour — and pro rata is the
+  answer with the best argument anyway (see above, and ADR-0016). If per-item
+  scope is ever wanted, the seam is `readBill`: stop pooling, and give a
+  deduction the lines it came off.
+- **VAT printed for information is not tax charged on top.** Most European
+  receipts show "of which VAT 20%" under a total that already includes it;
+  adding that figure charges the table for it twice, and the bill then misses
+  its own printed total. The prompt says so twice, and `checkScan` catches it
+  when the model does it anyway.
 - **`mismatch` on a bill that plainly adds up means the photo was taken at an
   angle.** The shear pulls the amount column out of line with the labels, and a
   wrapped continuation row ends up taking an amount of its own — one line lost

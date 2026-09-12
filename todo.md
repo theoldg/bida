@@ -45,7 +45,13 @@ Open Qs:
 ### Entry search and sorting
 Maybe?
 
-### Support discounts and tax in receipts
+### ~~Support discounts and tax in receipts~~ — done 2026-09-12
+A bill's tip, tax and discount are one family (`BillExtras`): nobody ordered
+them, so none is tickable on the grid, and each is spread in proportion to what
+everybody did order. Deductions are gathered wherever the model files them
+(`readBill`) and kept by name, so a "buy 1 get 1 free" comes off both items pro
+rata and the grid can still say so —
+[ADR-0016](docs/decisions/0016-receipts.md).
 
 ## UX improvements
 

@@ -5,6 +5,8 @@
     "title": "Chez Lamine",
     "total": "24.00",
     "tip": null,
+    "tax": null,
+    "discounts": [],
     "currency": "EUR",
     "date": null,
     "error": null,

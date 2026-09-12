@@ -130,6 +130,10 @@ export interface Expense {
   receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
   receiptTip?: string | null;
+  /** Tax charged on top of the lines, printed as-is. `BillExtras`. */
+  receiptTax?: string | null;
+  /** What the bill took off, one entry per printed deduction. `BillExtras`. */
+  receiptDiscounts?: ReceiptDiscount[] | null;
   /** Who was marked present, last time the who-had-what grid was saved. */
   receiptInvolved?: Id[] | null;
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
@@ -144,6 +148,18 @@ export interface Expense {
  * what the receipt printed next to it ("2x", a qty column) and is never used
  * as a multiplier, only shown.
  */
+/**
+ * One deduction as kept on the expense: what the bill called it, and the
+ * positive magnitude it took off. ADR-0016.
+ *
+ * Nobody ordered it, so it carries no assignment — it comes off everybody in
+ * proportion to what they did order (`receiptBreakdown`).
+ */
+export interface ReceiptDiscount {
+  label: string;
+  amount: string;
+}
+
 export interface ReceiptItem {
   label: string;
   amount: string;

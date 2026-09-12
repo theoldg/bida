@@ -1,4 +1,4 @@
-import type { ScanProblem, SplitSpec } from "@bida/core";
+import type { ExtraKind, ScanProblem, SplitSpec } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -454,14 +454,13 @@ export const copy = {
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**
-     * The app's own four refusals, one per way a reading can fail to add up
+     * The app's own three refusals, one per way a reading can fail to add up
      * (`checkScan`). Each says which it is, because each asks for something
      * different back: another photo, a straighter one, or the form instead.
      */
     problem: {
       "no-total": "I can’t make out the total on that one.",
       "unreadable-line": "I can’t read every line on that one.",
-      "credit-line": "There’s a credit on that receipt — I can’t split those yet.",
       mismatch: "The lines don’t add up to the total — try a flatter, square-on photo.",
     } satisfies Record<ScanProblem, string>,
     offline: "You’re offline — scanning needs a connection.",
@@ -474,7 +473,12 @@ export const copy = {
     whoWasThere: "Who was there",
     wasThere: (name: string) => `${name} was there`,
     wasntThere: (name: string) => `${name} wasn’t there`,
-    tip: "Tip + service",
+    /**
+     * The three lines nobody ordered (`BillExtras`). "Discounts", plural,
+     * because the row is everything the bill took off, pooled — one loyalty
+     * card and one two-for-one read as one figure here.
+     */
+    extra: { tip: "Tip + service", tax: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
     tipPercent: (percent: number) => `${percent}%`,
     tipLabel: (currency: string) => `Tip and service, in ${currency}`,
     /** The one affordance a person misses: the tip is a field, not a printed line. */
@@ -483,12 +487,16 @@ export const copy = {
     splitInto: (n: number) => `Split into ${n} lines`,
     splitItem: (label: string, n: number) => `Split ${label} into ${n} lines`,
     mergeBack: "Merge back into one line",
+    splitDiscounts: (n: number) => `Show the ${n} discounts one by one`,
+    mergeDiscounts: (n: number) => `Show the ${n} discounts as one figure`,
     mergeItem: (label: string, n: number) => `Merge the ${n} ${label} lines back into one`,
     had: (name: string, label: string) => `${name} had ${label}`,
     hadPortion: (name: string, label: string, index: number, of: number) =>
       `${name} had ${label}, portion ${index} of ${of}`,
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
+    /** Why two rows have no cells to tap. Said once, under the grid, not per row. */
+    extraNote: "Tax and discounts follow what each person ordered.",
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
     unfoldHint: { before: "Tap a", after: "to split a line." },

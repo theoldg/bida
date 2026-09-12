@@ -1,6 +1,6 @@
 # 0016 — A scanned receipt is a split mode of its own
 
-**Status:** Accepted · 2026-08-28
+**Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -81,6 +81,26 @@ inferred from equal labels, and sum to the printed line exactly, because a
 display control must not move the bill's total. Unfolding is offered only where
 the receipt printed a count: deciding a line was really three is data entry.
 
+**A discount is shared in proportion to what each person ordered**, and so are
+the tip and any tax charged on top: they are one family (`BillExtras`), the
+lines a bill charges for that nobody ordered, and none of them can be ticked
+for. Every deduction is gathered into one list first (`readBill`) wherever it
+printed — a negative line item, a bill-level credit, a two-for-one — because
+the grid has no way to say who a particular credit belongs to, and inventing
+one is a scope-picking UI on a screen asked to be minimal. They are kept apart
+rather than summed, and collapse behind the same `×N` a repeated item wears,
+because the arithmetic does not care and a person reading the bill does.
+
+Proportional is not the fallback it looks like. Take the owner's own case: ham
+pizza 10, cheese pizza 8, "buy 1 get 1 free" −8. Crediting the cheaper pizza
+literally leaves the ham eater paying 10 for a promotion their own order
+created; splitting it evenly makes the cheaper pizza subsidise the dearer one,
+which no other rule in the app does. Pro rata (5.56 / 4.44) is the same rule a
+whole-bill loyalty deduction follows, and a whole-bill deduction spread this
+way moves nobody relative to anybody — only the total changes. One rule, both
+scopes. It also closes the last open question in
+[product.md](../product.md).
+
 **The grid's initials are `distinctInitials()`**, growing each prefix until it
 is unique ("John"/"Jane"), and local to the one place initials survive at all
 ([0023](0023-monospace-monochrome.md)) — there they are column headings.
@@ -108,5 +128,9 @@ is unique ("John"/"Jane"), and local to the one place initials survive at all
 - **A row holding N sub-assignments** instead of unfolding — it makes
   `receiptAssignments` three-dimensional and gives every reader a second case.
 - **A `receiptTipPercent` field** — the items already carry the proportion.
+- **A scope on each discount** — which lines it came off, picked on the grid.
+  It is the honest model and the seam is left at `readBill`, but it buys a
+  line-picker dialog for an answer pro rata already gets right whenever the
+  people who shared the discounted items are the people who ordered them.
 - **Deriving the receipt total on every tab** — it would make the amount field
   unownable, which is the entire point of switching to Evenly.

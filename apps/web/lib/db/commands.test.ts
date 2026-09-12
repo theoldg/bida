@@ -265,7 +265,8 @@ describe("commands", () => {
     expect(Object.keys(update.patch).sort()).toEqual([
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
       "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
-      "receiptAssignments", "receiptInvolved", "receiptItems", "receiptTip",
+      "receiptAssignments", "receiptDiscounts", "receiptInvolved", "receiptItems",
+      "receiptTax", "receiptTip",
       "split",
     ]);
     // Lifecycle and identity never: a stale content save must not re-tombstone

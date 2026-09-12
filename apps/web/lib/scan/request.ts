@@ -31,6 +31,19 @@ export function buildScanRequestBody(imageBase64: string): unknown {
             + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
             + "are printed — a bare name beats a wrong guess. Keep the whole title under 40 "
             + "characters, and null if no name is legible and the lines say nothing either. "
+            + "Return tax only where it is charged on top of the line items — a figure the "
+            + "receipt adds to them to reach the total. Tax already inside the printed prices, "
+            + "which most VAT-inclusive receipts break out for information near the foot "
+            + "(\"of which VAT 20%\", \"TVA incluse\"), is not that: return null for it, or the "
+            + "bill gets charged for twice. "
+            + "Return discounts as one entry per deduction the receipt prints — loyalty "
+            + "deductions, vouchers, staff discounts, a \"2 for 1\" or \"buy one get one free\" "
+            + "credit — each with its label as printed, an English translation of that label "
+            + "(null if it's already English), and its amount written WITHOUT a minus sign as "
+            + "the amount that comes off (a line reading \"2 FOR 1  -8.00\" has amount "
+            + "\"8.00\"). Use an empty list if the receipt takes nothing off. It doesn't matter "
+            + "whether a deduction is printed against one item or against the whole bill; "
+            + "either way it belongs in this list and not in the line items. "
             + "Also return every line item: its label exactly as "
             + "printed in the receipt's own language, an English translation of that label (null "
             + "if it's already English), its amount in the same normalized decimal notation as the "
@@ -46,6 +59,8 @@ export function buildScanRequestBody(imageBase64: string): unknown {
             + "still one line item with one amount — join the rows, and don't let a wrapped row "
             + "that has drifted under the amount column take an amount of its own. Every printed "
             + "amount belongs to exactly one line item: none dropped, none counted twice. "
+            + "No line item's amount is negative: a line that only takes money off is a "
+            + "deduction, so leave it out of the list and put it in discounts instead. "
             + "Use null for anything illegible or absent, "
             + "and an empty list if there are no line items. Don't compute or guess any amount "
             + "that isn't printed — only reformat the separators. If the photo isn't a receipt at "
@@ -72,6 +87,19 @@ export function buildScanRequestBody(imageBase64: string): unknown {
           title: { type: "STRING", nullable: true },
           total: { type: "STRING", nullable: true },
           tip: { type: "STRING", nullable: true },
+          tax: { type: "STRING", nullable: true },
+          discounts: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                label: { type: "STRING" },
+                labelEn: { type: "STRING", nullable: true },
+                amount: { type: "STRING" },
+              },
+              required: ["label", "labelEn", "amount"],
+            },
+          },
           currency: { type: "STRING", nullable: true },
           date: { type: "STRING", nullable: true },
           lineItems: {
@@ -89,7 +117,9 @@ export function buildScanRequestBody(imageBase64: string): unknown {
           },
           error: { type: "STRING", nullable: true },
         },
-        required: ["title", "total", "tip", "currency", "date", "lineItems", "error"],
+        required: [
+          "title", "total", "tip", "tax", "discounts", "currency", "date", "lineItems", "error",
+        ],
       },
     },
   };

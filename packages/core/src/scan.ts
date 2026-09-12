@@ -8,7 +8,8 @@
  * multi-format parser to maintain here.
  */
 
-import { isCurrencyCode, parseMinor, type CurrencyCode } from "./money.js";
+import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
+import type { ReceiptDiscount } from "./types.js";
 
 /** One printed line: what it's called, translated, and what it cost. */
 export interface ScanLineItem {
@@ -20,6 +21,14 @@ export interface ScanLineItem {
   amount: string;
   /** The count printed for this line (e.g. "2x", a qty column), or null if none is printed — not inferred. */
   quantity: number | null;
+}
+
+/** One deduction, as the receipt printed it. `amount` is what comes off, written positive. */
+export interface ScanDiscount {
+  label: string;
+  /** English translation, or null if `label` already is English. */
+  labelEn: string | null;
+  amount: string;
 }
 
 export interface ScanResult {
@@ -35,6 +44,10 @@ export interface ScanResult {
   total: string | null;
   /** A separate tip or service charge line, same notation as `total`, or null if none. */
   tip: string | null;
+  /** Tax charged on top of the printed lines — never VAT already inside them. Same notation, or null. */
+  tax: string | null;
+  /** Every deduction the bill printed, one entry each. Empty when it takes nothing off. */
+  discounts: ScanDiscount[];
   /** ISO 4217, or null if illegible. */
   currency: string | null;
   /** YYYY-MM-DD, or null if illegible. */
@@ -98,43 +111,156 @@ export function scanCurrency(result: ScanResult, fallback: CurrencyCode): Curren
   return readCurrency(result) ?? fallback;
 }
 
+/**
+ * The three lines a bill charges for but nobody ordered: a tip, tax printed on
+ * top of the items, and everything taken off. They are one family because they
+ * divide the same way — in proportion to what each person did order — and
+ * because none of them can be ticked for on the who-had-what grid.
+ *
+ * All three are magnitudes: `discount` is what comes *off*, written positive,
+ * and the sign is applied where it is spent (`receiptBreakdown`) and nowhere
+ * else — the same rule money follows everywhere in this codebase
+ * (docs/data-model.md#money).
+ */
+export interface BillExtras {
+  tip: string | null;
+  tax: string | null;
+  /**
+   * Every deduction, kept apart rather than summed. They divide identically,
+   * so the arithmetic would not know the difference — but a person reading
+   * "Discounts −9.25" cannot tell a two-for-one from a loyalty card, and both
+   * the grid and each person's own copy of the bill name them one by one.
+   */
+  discounts: ReceiptDiscount[];
+}
+
+/** The extras in the order a printed bill rules them off under the items. */
+export const EXTRAS = ["discount", "tax", "tip"] as const;
+export type ExtraKind = (typeof EXTRAS)[number];
+
+/** A bill the app can work with: positive lines, and the extras beside them. */
+export interface Bill {
+  items: ScanLineItem[];
+  extras: BillExtras;
+}
+
+/**
+ * A reading, with every deduction gathered into one place.
+ *
+ * A receipt writes a discount wherever it likes — a "-5.00 LOYALTY" line among
+ * the items, a "2 FOR 1  -8.00" under the two pizzas, a bill-level figure
+ * above the total — and which of those a model files under `discount` and
+ * which it returns as a negative line is not worth depending on. So every
+ * negative amount, whichever field it arrived on, is moved into the discount
+ * pool, and everything downstream sees one shape: items that are all positive,
+ * and a single figure that comes off the lot.
+ *
+ * That pooling is what makes a discount **proportional**: it is taken off each
+ * person in the ratio of what they ordered, which is also the only reading the
+ * grid can justify while it has no way to say who a particular credit belongs
+ * to (ADR-0016, docs/product.md).
+ */
+export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
+  const discounts: ReceiptDiscount[] = [];
+  /** Keeps a positive extra; a negative one is a deduction and joins the list. */
+  const keep = (text: string | null, label: string): string | null => {
+    const minor = readAmount(text, currency);
+    if (minor === null || minor >= 0) return text;
+    discounts.push({ label, amount: minorToDecimalString(-minor, currency) });
+    return null;
+  };
+
+  const tip = keep(result.tip, "");
+  const tax = keep(result.tax, "");
+  const items = result.lineItems.filter((item) => {
+    const minor = readAmount(item.amount, currency);
+    if (minor === null || minor >= 0) return true;
+    discounts.push({ label: item.labelEn ?? item.label, amount: minorToDecimalString(-minor, currency) });
+    return false;
+  });
+  for (const printed of result.discounts) {
+    const minor = readAmount(printed.amount, currency);
+    // `Math.abs`, because a model asked for a magnitude still sometimes echoes
+    // the minus sign the receipt printed — and a sign read the wrong way round
+    // turns a deduction into a surcharge, silently, on somebody's money.
+    if (minor === null || minor === 0) continue;
+    discounts.push({
+      label: printed.labelEn ?? printed.label,
+      amount: minorToDecimalString(Math.abs(minor), currency),
+    });
+  }
+
+  return { items, extras: { tip, tax, discounts } };
+}
+
+/** The extras' net effect on a total: what is added, less what comes off. Null if any is illegible. */
+export function extrasMinor(extras: BillExtras, currency: CurrencyCode): number | null {
+  let net = 0;
+  for (const text of [extras.tip, extras.tax]) {
+    if (!text) continue;
+    const minor = readAmount(text, currency);
+    if (minor === null) return null;
+    net += minor;
+  }
+  for (const off of extras.discounts) {
+    const minor = readAmount(off.amount, currency);
+    if (minor === null) return null;
+    net -= minor;
+  }
+  return net;
+}
+
+/** The extras as an entry keeps them — three flat fields on `Expense` and on the draft. */
+export function receiptExtras(source: {
+  receiptTip?: string | null;
+  receiptTax?: string | null;
+  receiptDiscounts?: ReceiptDiscount[] | null;
+}): BillExtras {
+  return {
+    tip: source.receiptTip ?? null,
+    tax: source.receiptTax ?? null,
+    discounts: source.receiptDiscounts ?? [],
+  };
+}
+
 /** Why a reading can't be trusted, when the model itself didn't object to the photo. */
-export type ScanProblem = "no-total" | "unreadable-line" | "credit-line" | "mismatch";
+export type ScanProblem = "no-total" | "unreadable-line" | "mismatch";
 
 /**
  * Does this reading hold together? `null` when it does.
  *
- * The bar is arithmetic, not judgement, and it is absolute: every line
- * readable, nothing given back, and the lines plus the tip equal to the
- * printed total, to the minor unit. A scan the app can't reconcile is a scan
- * that failed — importing one prices everybody in the who-had-what grid
- * against a total the receipt never printed, silently, on a bill nobody
- * re-reads. Refusing costs one more photo; accepting costs somebody money.
+ * The bar is arithmetic, not judgement, and it is absolute: every line and
+ * every extra readable, and the lines plus tip plus tax less the discounts
+ * equal to the printed total, to the minor unit. A scan the app can't
+ * reconcile is a scan that failed — importing one prices everybody in the
+ * who-had-what grid against a total the receipt never printed, silently, on a
+ * bill nobody re-reads. Refusing costs one more photo; accepting costs
+ * somebody money.
  */
 export function checkScan(result: ScanResult, currency: CurrencyCode): ScanProblem | null {
   const total = readAmount(result.total, currency);
   if (total === null) return "no-total";
 
-  let sum = 0;
-  for (const item of result.lineItems) {
-    const minor = readAmount(item.amount, currency);
-    if (minor === null) return "unreadable-line";
-    // A discount or a returned item sums into the total but takes no part in
-    // the grid's ratios, so it would be shared out across everybody rather
-    // than landing where it was earned. Refused until the grid can say who a
-    // credit belongs to — an open question in docs/product.md.
-    if (minor < 0) return "credit-line";
-    sum += minor;
-  }
-  if (result.tip) {
-    const tip = readAmount(result.tip, currency);
-    if (tip === null) return "unreadable-line";
-    if (tip < 0) return "credit-line";
-    sum += tip;
+  // Read before `readBill` gathers them: it takes an illegible figure for
+  // nothing at all, and a discount silently worth zero is the one error this
+  // function exists to catch.
+  for (const text of [result.tip, result.tax, ...result.discounts.map((d) => d.amount)]) {
+    if (text && readAmount(text, currency) === null) return "unreadable-line";
   }
 
+  const bill = readBill(result, currency);
+  let sum = 0;
+  for (const item of bill.items) {
+    const minor = readAmount(item.amount, currency);
+    if (minor === null) return "unreadable-line";
+    sum += minor;
+  }
+  sum += extrasMinor(bill.extras, currency) ?? 0;
+
   // Legible and still not a bill. It lands here rather than in "no-total"
-  // because the number was read fine; what it says is the problem.
+  // because the number was read fine; what it says is the problem. A discount
+  // bigger than everything it comes off arrives here too, which is the right
+  // door: what is wrong is the arithmetic, not any one line.
   if (total <= 0) return "mismatch";
   // Nothing to reconcile when no lines were printed — a receipt that is just
   // a total is an ordinary expense, and the grid never opens on it.

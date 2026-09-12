@@ -1,6 +1,6 @@
 import {
   canonicalSplit, newId, primaryPayer,
-  type CurrencyCode, type ExpenseKind, type Id, type Rate, type ReceiptItem,
+  type CurrencyCode, type ExpenseKind, type Id, type Rate, type ReceiptDiscount, type ReceiptItem,
   type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
@@ -36,6 +36,8 @@ export interface ExpenseInput {
   /** The parsed bill behind `split`, kept so the who-had-what grid can reopen. */
   receiptItems?: ReceiptItem[] | null;
   receiptTip?: string | null;
+  receiptTax?: string | null;
+  receiptDiscounts?: ReceiptDiscount[] | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
 }
@@ -107,6 +109,8 @@ export async function addExpense(
             attachmentIds: input.attachmentIds,
             receiptItems: input.receiptItems,
             receiptTip: input.receiptTip,
+            receiptTax: input.receiptTax,
+            receiptDiscounts: input.receiptDiscounts,
             receiptInvolved: input.receiptInvolved,
             receiptAssignments: input.receiptAssignments,
           }),
@@ -165,6 +169,8 @@ export async function editExpense(
     attachmentIds: merged.attachmentIds,
     receiptItems: merged.receiptItems,
     receiptTip: merged.receiptTip,
+    receiptTax: merged.receiptTax,
+    receiptDiscounts: merged.receiptDiscounts,
     receiptInvolved: merged.receiptInvolved,
     receiptAssignments: merged.receiptAssignments,
   });

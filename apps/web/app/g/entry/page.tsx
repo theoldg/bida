@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import {
-  isCoSponsored, payerList, resolvePayers, resolveSplit, splitParticipants,
+  isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
@@ -167,9 +167,8 @@ function ExpenseDetail({ expense, kind, group, data }: {
     ? receiptBreakdown(
       expense.receiptItems,
       (expense.receiptAssignments ?? []).map((row) => new Set(row)),
-      expense.receiptTip
-        ? { amount: expense.receiptTip, members: new Set(expense.receiptInvolved ?? []) }
-        : null,
+      receiptExtras(expense),
+      new Set(expense.receiptInvolved ?? []),
       expense.currency,
       expense.id,
     ).lines
@@ -259,11 +258,13 @@ function MemberBill({ name, total, lines, currency }: {
       {open ? (
         <div className="billlines">
           {lines.map((line, i) => {
-            const count = line.tip ? null : countText(line.count);
+            const count = line.extra ? null : countText(line.count);
             return (
-              <div className={`billline${line.tip ? " tip" : ""}`} key={i}>
+              <div className={`billline${line.extra ? " tip" : ""}`} key={i}>
                 <span className="lbl">
-                  {line.tip ? copy.items.tip : line.label}
+                  {/* A deduction carries the name the bill gave it ("2 for 1");
+                      the tip and the tax are only ever what they are. */}
+                  {line.extra ? line.label || copy.items.extra[line.extra] : line.label}
                   {count ? <span className="billqty">×{count}</span> : null}
                 </span>
                 {/* A printed bill's dotted leader: what carries the eye from a

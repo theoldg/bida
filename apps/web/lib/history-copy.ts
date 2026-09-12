@@ -260,7 +260,8 @@ export function describe(
     // and moved a salad from one person to another said nothing at all.
     const lines = (state: State) =>
       (Array.isArray(state["receiptItems"]) ? state["receiptItems"].length : 0);
-    if (field("receiptItems") ?? field("receiptTip")) {
+    if (field("receiptItems") ?? field("receiptTip")
+      ?? field("receiptTax") ?? field("receiptDiscount")) {
       const wasLines = lines(rev.before);
       const nowLines = lines(rev.after);
       parts.push({

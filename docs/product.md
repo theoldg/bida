@@ -64,15 +64,11 @@ Leave the seam. Build none of it.
 
 ## Open questions
 
-**What a negative line on a receipt means.** A "-5.00 loyalty card" against the
-whole bill probably should be shared; a voucher against one person's dish should
-not, and the who-had-what grid gives no way to say which. Until that is decided
-— including whether a credit is assignable to people like any other line —
-`checkScan` refuses the receipt outright rather than spread the discount across
-everybody in proportion to what they ordered
-([receipt-scanning.md](receipt-scanning.md)). This is the only one left, and
-it is not hypothetical: it refuses a real receipt today.
+None open.
 
-*Settled:* the name is **bida** (2026-09-11); the personal lens isn't a
-setting at all (2026-08-30,
+*Settled:* a negative line on a receipt is a **discount, shared in proportion
+to what each person ordered**, whether it printed against one item or against
+the whole bill (2026-09-12,
+[ADR-0016](decisions/0016-receipts.md)); the name is **bida** (2026-09-11);
+the personal lens isn't a setting at all (2026-08-30,
 [ADR-0007](decisions/0007-a-screen-is-a-route.md)).

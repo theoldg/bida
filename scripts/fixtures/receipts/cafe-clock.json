@@ -5,6 +5,8 @@
     "title": "Café Clock",
     "total": "76.50",
     "tip": "6.00",
+    "tax": null,
+    "discounts": [],
     "currency": null,
     "date": null,
     "error": null,

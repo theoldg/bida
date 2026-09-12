@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { parseMinor } from "@bida/core";
+import { parseMinor, receiptExtras } from "@bida/core";
 import { AmountInput } from "../../../../components/amount-input";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { ConfirmDialog } from "../../../../components/dialog";
@@ -44,17 +44,22 @@ function ItemsScreen() {
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
   const [asking, setAsking] = useState(false);
+  // Whether the deductions are showing one by one or as one figure. Display
+  // only — it changes nothing the bill is worth, so nothing is written down.
+  const [openDiscounts, setOpenDiscounts] = useState(false);
   // Splitting a line and merging one back have to be written to the draft as
   // they happen — the grid's rows and the bill's lines are one list, and the
   // seeding effect above trusts them to be the same length. So this screen
   // keeps what it found, and leaving puts it back: tapping ×N to see what a
   // shared bottle would look like was otherwise a change you couldn't undo.
   const opened = useRef<Pick<EntryDraft,
-    "receiptItems" | "receiptTip" | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
+    "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
+    | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
   if (draft && !opened.current) {
     opened.current = {
       receiptItems: draft.receiptItems, receiptTip: draft.receiptTip,
+      receiptTax: draft.receiptTax, receiptDiscounts: draft.receiptDiscounts,
       receiptInvolved: draft.receiptInvolved, receiptAssignments: draft.receiptAssignments,
       splitTab: draft.splitTab,
     };
@@ -168,13 +173,37 @@ function ItemsScreen() {
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
   const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
+  // The extras the bill printed, in the order it printed them, and signed the
+  // way they are worth: a deduction is the one figure on this screen that comes
+  // off. The tip is not among them — it is typed, and has its own row.
+  const minorOf = (amount: string) => {
+    try { return parseMinor(amount, draft.currency); } catch { return null; }
+  };
+  const discounts = (draft.receiptDiscounts ?? []).flatMap((d) => {
+    const minor = minorOf(d.amount);
+    return minor === null || minor <= 0 ? [] : [{ label: d.label, minor: -minor }];
+  });
+  const taxMinor = draft.receiptTax ? minorOf(draft.receiptTax) : null;
+  // Several deductions collapse into one row the way repeated items do, and
+  // open the same way — the printed names are worth reading ("2 for 1" is not
+  // "Loyalty"), but four of them above the tip is a bill nobody can see past.
+  // Unlike an item's ×N this changes nothing about the bill: the rows are not
+  // assignable either way, so it is this screen's own state, not a draft write.
+  const discountTotal = discounts.reduce((sum, d) => sum + d.minor, 0);
+  const discountRows = discounts.length > 1 && !openDiscounts
+    ? [{ label: "", minor: discountTotal, of: discounts.length }]
+    : discounts.map((d) => ({ ...d, of: discounts.length > 1 ? discounts.length : 0 }));
 
+  // A tip is a percentage of what the food actually came to, so the discounts
+  // are already off it and the tax is not on it — which is how a bill prints a
+  // suggested tip, and how anybody works one out in their head.
   let tipPercent: number | null = null;
   if (draft.receiptTip) {
     try {
       const tipMinor = parseMinor(draft.receiptTip, draft.currency);
-      const subtotal = receiptTotalMinor(items, null, draft.currency) ?? 0;
-      if (subtotal > 0) tipPercent = Math.round((tipMinor / subtotal) * 100);
+      const ordered = receiptTotalMinor(
+        items, { tip: null, tax: null, discounts: draft.receiptDiscounts ?? [] }, draft.currency) ?? 0;
+      if (ordered > 0) tipPercent = Math.round((tipMinor / ordered) * 100);
     } catch { /* mid-type */ }
   }
 
@@ -216,6 +245,8 @@ function ItemsScreen() {
     <div className="footnote">
       {copy.items.unfoldHint.before} <b>×N</b> {copy.items.unfoldHint.after}
     </div>
+  ) : discounts.length > 0 || taxMinor !== null ? (
+    <div className="footnote">{copy.items.extraNote}</div>
   ) : null;
 
   return (
@@ -313,10 +344,58 @@ function ItemsScreen() {
                   </tr>
                 );
               })}
+              {/* What the bill took off and what it added on. Read off the
+                  receipt rather than typed, and with no cells to tap: nobody
+                  ordered them, so they follow what everybody did order
+                  (`receiptBreakdown`). */}
+              {discountRows.map((row, i) => (
+                <tr key={`off${i}`} className={discountRows.length > 1 ? "part" : undefined}>
+                  <td className="itemlabel">
+                    <div className="itemrow">
+                      <span className="itemtext">
+                        <span className="itemname">
+                          {row.label || copy.items.extra.discount}
+                        </span>
+                        <span className="itemamount">{bare(row.minor, draft.currency)}</span>
+                      </span>
+                      {/* The same ×N the repeated items wear, so one control
+                          means one thing on this screen. */}
+                      {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
+                        <button className={`itemfold${openDiscounts ? " on" : ""}`}
+                          onClick={() => setOpenDiscounts(!openDiscounts)}
+                          title={openDiscounts ? copy.items.mergeBack : copy.items.splitInto(row.of)}
+                          aria-label={openDiscounts
+                            ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
+                          aria-expanded={openDiscounts}>
+                          ×{row.of}<Icon name={openDiscounts ? "merge" : "split"} size={12} />
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
+                  {involvedMembers.map((m) => (
+                    <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>
+                  ))}
+                </tr>
+              ))}
+              {taxMinor !== null ? (
+                <tr>
+                  <td className="itemlabel">
+                    <div className="itemrow">
+                      <span className="itemtext">
+                        <span className="itemname">{copy.items.extra.tax}</span>
+                        <span className="itemamount">{bare(taxMinor, draft.currency)}</span>
+                      </span>
+                    </div>
+                  </td>
+                  {involvedMembers.map((m) => (
+                    <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>
+                  ))}
+                </tr>
+              ) : null}
               <tr>
                 <td className="itemlabel">
                   <span className="itemname">
-                    {copy.items.tip}
+                    {copy.items.extra.tip}
                     {tipPercent !== null ? <span className="itemqty"> {copy.items.tipPercent(tipPercent)}</span> : null}
                   </span>
                   {/* The only figure on this screen that is typed rather than

@@ -1,0 +1,23 @@
+{
+  "note": "the owner's own puzzle: two pizzas and the cheaper one credited back, a loyalty deduction beside it, and tax charged on top — the one bill exercising both extras rows and the discounts unfold",
+  "exercises": "ok",
+  "scan": {
+    "merchant": "Slice House",
+    "total": "20.55",
+    "tip": "3.00",
+    "tax": "1.30",
+    "discounts": [
+      { "label": "2 for 1 pizza", "labelEn": null, "amount": "8.00" },
+      { "label": "Fidelidad", "labelEn": "Loyalty card", "amount": "1.25" }
+    ],
+    "currency": "USD",
+    "date": "2026-09-05",
+    "error": null,
+    "lineItems": [
+      { "label": "Ham pizza", "labelEn": null, "amount": "10.00", "quantity": null },
+      { "label": "Cheese pizza", "labelEn": null, "amount": "8.00", "quantity": null },
+      { "label": "Garlic knots", "labelEn": null, "amount": "4.50", "quantity": 2 },
+      { "label": "Soda", "labelEn": null, "amount": "3.00", "quantity": 2 }
+    ]
+  }
+}

@@ -5,6 +5,8 @@
     "title": null,
     "total": null,
     "tip": null,
+    "tax": null,
+    "discounts": [],
     "currency": null,
     "date": null,
     "error": "Too blurry — I've read tea leaves with better odds.",

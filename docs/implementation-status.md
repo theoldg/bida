@@ -41,6 +41,18 @@ keep the old `hajsik` name, and so does the IndexedDB database, because all
 three are addresses that existing links and phones already point at
 ([hosting.md](hosting.md#deploying)). A `bida.` domain is the open question.
 
+**A receipt may take money off** (2026-09-12). Tip, tax and discount are one
+family on a bill (`BillExtras`): nobody ordered them, so none can be ticked for
+on the who-had-what grid, and each is spread in proportion to what everybody
+did order. Every deduction is gathered into one list, whichever field the
+model filed it under (`readBill`), and kept by name behind the same `×N` a
+repeated item wears, so a "buy 1 get 1 free" comes off both pizzas in the ratio
+they were ordered in and says which credit did it, and a receipt printing tax on top of
+its lines reconciles instead of being refused. This closes the last open
+question in [product.md](product.md)
+([receipt-scanning.md](receipt-scanning.md),
+[ADR-0016](decisions/0016-receipts.md)).
+
 **A ledger row shortens itself rather than being cut off** (2026-09-11). Its
 second line comes as several wordings — `lib/row-meta.ts` — and `FitLine`
 renders the longest that measures under the box, so a long name costs the split

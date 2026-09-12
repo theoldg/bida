@@ -5,6 +5,7 @@ import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
 import { Icon } from "./icons";
 import { getDraft, saveDraft } from "../lib/draft";
+import { readBill, scanCurrency } from "@bida/core";
 import {
   normalizeScan, scanReceipt,
   ScanOfflineError, ScanRejectedError, ScanUnavailableError, ScanUnreliableError,
@@ -90,7 +91,11 @@ export function useReceiptScan(
     try {
       const result = await scanReceipt(file, groupId, secret, current.currency);
       const patch = normalizeScan(result);
-      const receiptItems = result.lineItems.map((li) => (
+      // Read as a bill rather than off the raw result: a deduction printed as
+      // a negative line belongs in the discount, not in the grid as something
+      // to tick (`readBill`).
+      const bill = readBill(result, scanCurrency(result, current.currency));
+      const receiptItems = bill.items.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));
       // The scan's title is a guess, and a title somebody typed is not. Take it
@@ -109,7 +114,9 @@ export function useReceiptScan(
         ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
         ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
         receiptItems: receiptItems.length > 0 ? receiptItems : null,
-        receiptTip: result.tip,
+        receiptTip: bill.extras.tip,
+        receiptTax: bill.extras.tax,
+        receiptDiscounts: bill.extras.discounts.length > 0 ? bill.extras.discounts : null,
         // A fresh scan replaces whatever grid was saved before.
         receiptInvolved: null,
         receiptAssignments: null,

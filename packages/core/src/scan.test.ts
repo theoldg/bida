@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { checkScan, normalizeScan, scanCurrency, type ScanLineItem, type ScanResult } from "./scan.js";
+import {
+  checkScan, normalizeScan, readBill, receiptExtras, scanCurrency,
+  type ScanDiscount, type ScanLineItem, type ScanResult,
+} from "./scan.js";
 
 const blank: ScanResult = {
-  title: null, total: null, tip: null, currency: null, date: null, lineItems: [], error: null,
+  title: null, total: null, tip: null, tax: null, discounts: [],
+  currency: null, date: null, lineItems: [], error: null,
 };
 
 describe("normalizeScan", () => {
@@ -82,6 +86,9 @@ describe("scanCurrency", () => {
   });
 });
 
+/** A deduction, named. `off("8.00")` is one the receipt didn't label. */
+const off = (amount: string, label = ""): ScanDiscount => ({ label, labelEn: null, amount });
+
 /** `label`/`labelEn` play no part in the arithmetic; every line here is a number. */
 const line = (amount: string): ScanLineItem => ({ label: "x", labelEn: null, amount, quantity: null });
 
@@ -130,13 +137,46 @@ describe("checkScan", () => {
     expect(checkScan({ ...blank, total: "30.00", tip: "n/a" }, "EUR")).toBe("unreadable-line");
   });
 
-  it("refuses a credit line, even one the total accounts for", () => {
-    const result = { ...blank, total: "25.00", lineItems: [line("30.00"), line("-5.00")] };
-    expect(checkScan(result, "EUR")).toBe("credit-line");
+  it("refuses a discount it can't read", () => {
+    expect(checkScan({ ...blank, total: "30.00", discounts: [off("half off")] }, "EUR"))
+      .toBe("unreadable-line");
   });
 
-  it("refuses a negative tip", () => {
-    expect(checkScan({ ...blank, total: "30.00", tip: "-1.00" }, "EUR")).toBe("credit-line");
+  it("accepts a bill-level discount the total accounts for", () => {
+    const result = { ...blank, total: "25.00", discounts: [off("5.00")], lineItems: [line("30.00")] };
+    expect(checkScan(result, "EUR")).toBeNull();
+  });
+
+  it("accepts a deduction printed as a negative line", () => {
+    const result = { ...blank, total: "25.00", lineItems: [line("30.00"), line("-5.00")] };
+    expect(checkScan(result, "EUR")).toBeNull();
+  });
+
+  // The "buy 1 get 1 free" the owner asked about: two pizzas and the cheaper
+  // one credited back. It reconciles, and `readBill` pools the credit.
+  it("accepts a buy-one-get-one credit", () => {
+    const result = {
+      ...blank, total: "10.00", discounts: [off("8.00", "2 for 1")],
+      lineItems: [line("10.00"), line("8.00")],
+    };
+    expect(checkScan(result, "EUR")).toBeNull();
+  });
+
+  it("accepts tax charged on top of the lines", () => {
+    const result = { ...blank, total: "33.00", tax: "3.00", lineItems: [line("12.50"), line("17.50")] };
+    expect(checkScan(result, "EUR")).toBeNull();
+  });
+
+  it("refuses a discount counted twice — once as a line and once in the field", () => {
+    const result = {
+      ...blank, total: "25.00", discounts: [off("5.00")], lineItems: [line("30.00"), line("-5.00")],
+    };
+    expect(checkScan(result, "EUR")).toBe("mismatch");
+  });
+
+  it("refuses a discount worth more than the bill it comes off", () => {
+    const result = { ...blank, total: "-5.00", discounts: [off("35.00")], lineItems: [line("30.00")] };
+    expect(checkScan(result, "EUR")).toBe("mismatch");
   });
 
   // The whole point of the check: one missed line is the failure that prices
@@ -149,5 +189,62 @@ describe("checkScan", () => {
   it("refuses lines that add up only if the tip is ignored", () => {
     const result = { ...blank, total: "30.00", tip: "3.00", lineItems: [line("12.50"), line("17.50")] };
     expect(checkScan(result, "EUR")).toBe("mismatch");
+  });
+});
+
+describe("readBill", () => {
+  it("leaves an ordinary bill alone", () => {
+    const bill = readBill({ ...blank, tip: "3.00", lineItems: [line("12.50")] }, "EUR");
+    expect(bill.items).toHaveLength(1);
+    expect(bill.extras).toEqual({ tip: "3.00", tax: null, discounts: [] });
+  });
+
+  it("moves a negative line out of the items and into the discounts, name and all", () => {
+    const credit = { label: "Remise", labelEn: "Discount", amount: "-5.00", quantity: null };
+    const bill = readBill({ ...blank, lineItems: [line("30.00"), credit] }, "EUR");
+    expect(bill.items.map((i) => i.amount)).toEqual(["30.00"]);
+    expect(bill.extras.discounts).toEqual([{ label: "Discount", amount: "5.00" }]);
+  });
+
+  it("gathers every deduction, wherever it arrived, and keeps them apart", () => {
+    const bill = readBill({
+      ...blank, tip: "-1.00", tax: "-2.00", discounts: [off("5.00", "Loyalty")],
+      lineItems: [line("30.00"), line("-4.00")],
+    }, "EUR");
+    expect(bill.extras.tip).toBeNull();
+    expect(bill.extras.tax).toBeNull();
+    expect(bill.extras.discounts.map((d) => d.amount)).toEqual(["1.00", "2.00", "4.00", "5.00"]);
+    expect(bill.extras.discounts.at(-1)!.label).toBe("Loyalty");
+  });
+
+  // A magnitude is what the prompt asks for, but a model that echoes the
+  // printed minus sign must not turn a deduction into a surcharge.
+  it("reads a discount as a magnitude whichever way the sign arrives", () => {
+    for (const amount of ["8.00", "-8.00"]) {
+      expect(readBill({ ...blank, discounts: [off(amount)] }, "EUR").extras.discounts)
+        .toEqual([{ label: "", amount: "8.00" }]);
+    }
+  });
+
+  it("counts in the currency's own exponent", () => {
+    expect(readBill({ ...blank, discounts: [off("-500")] }, "JPY").extras.discounts[0]!.amount)
+      .toBe("500");
+  });
+
+  it("drops a deduction worth nothing rather than drawing a row for it", () => {
+    expect(readBill({ ...blank, discounts: [off("0.00")], lineItems: [line("1.00")] }, "EUR")
+      .extras.discounts).toEqual([]);
+  });
+});
+
+describe("receiptExtras", () => {
+  it("reads the three flat fields an entry keeps", () => {
+    const off = [{ label: "Loyalty", amount: "5.00" }];
+    expect(receiptExtras({ receiptTip: "3.00", receiptDiscounts: off }))
+      .toEqual({ tip: "3.00", tax: null, discounts: off });
+  });
+
+  it("is all-null on an expense that was never scanned", () => {
+    expect(receiptExtras({})).toEqual({ tip: null, tax: null, discounts: [] });
   });
 });
