@@ -667,8 +667,15 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    explain, the control acts, and at a normal gap the drawing read as a
    caption on the button rather than as the thing the button leads to. Adding
    the line pushed them closer again, so the gap grew to keep them apart. */
+/* Centred on the screen, not on the scroll below the top bar. `min-height:100%`
+   is the scroll area, which starts under the bar, so centring in it alone put
+   the block half a bar-height low — read as a gap above. The extra bottom
+   padding is that bar (its own `max(10px, safe-area)` plus a 37px control and
+   12px under it), and centring inside the shorter box lifts the block by half
+   of it, which is the offset exactly. */
 .scanpage { min-height: 100%; display: flex; flex-direction: column;
-  justify-content: center; gap: 56px }
+  justify-content: center; gap: 56px;
+  padding-bottom: calc(14px + max(10px, env(safe-area-inset-top)) + 49px) }
 /* Picture and caption are one thing, so they sit close; the screen's wide gap
    falls below them, not between them. */
 .scanshow { display: flex; flex-direction: column; gap: 14px }
