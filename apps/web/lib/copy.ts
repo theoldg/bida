@@ -433,7 +433,31 @@ export const copy = {
     scan: "Scan a receipt",
     /** The scan-first screen: its title and what it promises. */
     title: "Scan a receipt",
-    blurb: "Photograph the bill and the expense fills itself in — what it cost, what it’s called, and when.",
+    /**
+     * The screen's one picture, drawn rather than written: a bill, and the
+     * expense it comes back as. These words are the *contents* of that
+     * picture — a plausible dinner and the three fields a scan fills — not a
+     * caption. `alt` is the sentence they replaced, kept for whoever can't
+     * see the drawing.
+     */
+    diagram: {
+      alt: "Photograph the bill and the expense fills itself in — what it cost, what it’s called, and when.",
+      /**
+       * The bill on the left. Its lines add up to `amount`, which is also the
+       * number the form on the right comes back with — the drawing's whole
+       * claim, so `copy.test.ts` adds them up rather than trusting the eye.
+       */
+      lines: [
+        ["Tagine", "18.00"],
+        ["Couscous", "14.50"],
+        ["Salad", "9.40"],
+        ["Mint tea", "6.30"],
+      ],
+      total: "Total",
+      title: "Dinner",
+      amount: "48.20",
+      date: "12 Sep",
+    },
     /**
      * The two halves of the one control that scans (`ScanPair`), naming the
      * two doors into the same act and not the act itself: what is being

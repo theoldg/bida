@@ -645,6 +645,39 @@ button.tswap:active { background: var(--press); color: var(--ink) }
   text-underline-offset: 3px; text-decoration-thickness: 1px }
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }
 
+/* ---- the scan screen ----
+   One act and nothing else, so the screen is one block in the middle of it:
+   the picture of what a photo becomes, and directly under it the control that
+   takes one. This is the exception to "the act is the last row of the scroll"
+   — with nothing else on the screen, a control at the foot is a control
+   stranded a long way from the only thing explaining it. `min-height: 100%`
+   is what gives the column the room to centre in. */
+.scanpage { min-height: 100%; display: flex; flex-direction: column;
+  justify-content: center; gap: 18px }
+/* The screen's one sentence, drawn: a bill, and the expense that comes back
+   from it. Both are the app's own card — same ground, same hairline, same
+   square corner — each taking half the width the control below takes, so the
+   picture is made of the interface it explains and lines up with it. */
+.scandiagram { display: flex; align-items: stretch; gap: 10px }
+.scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px;
+  border: 1px solid var(--rule-soft); border-radius: var(--r-s); background: var(--card-2) }
+.scanpaper { display: flex; flex-direction: column; gap: 5px; font-size: 9.5px;
+  color: var(--muted); line-height: 1.2 }
+.scanpaper span { display: flex; justify-content: space-between; gap: 8px }
+/* Preflight italicises a bare `i`; these are a label and a price, not emphasis. */
+.scanpaper i { font-style: normal; font-variant-numeric: tabular-nums }
+/* The total is the one line a scan has to come away with, and the one number
+   that reappears on the right, so it is the line drawn in ink. */
+.scanpaper .tot { color: var(--ink-2) }
+.scanpaper hr { border: 0; border-top: 1px solid var(--rule); margin: 2px 0 }
+.scanform { display: flex; flex-direction: column; justify-content: center; gap: 3px;
+  line-height: 1.25 }
+.scanform .t { font-size: 10px; color: var(--ink-2) }
+.scanform .a { font-size: 15px; color: var(--ink) }
+.scanform .d { font-size: 9px; color: var(--muted) }
+.scanarrow { color: var(--muted); flex: none; align-self: center }
+.scanterms { font-size: 11px; color: var(--muted); text-align: center; margin: 0 }
+
 /* ---- dialogs ----
    Our own, in place of prompt() and confirm(): those arrive in another app's
    typeface and have nowhere to put the sentence naming what is about to change

@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { ScanPair, useReceiptScan } from "../../../components/receipt-scan";
 import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
 import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "../../../lib/draft";
 import { route } from "../../../lib/group-link";
@@ -70,24 +71,47 @@ function ScanScreen() {
         <TopBar title={copy.scan.title} sub={data.group.name} back={route.group(groupId)} />
         <Scroll>
           {scan.inputs}
-          <div className="pad" style={{ paddingTop: 22, display: "flex", flexDirection: "column", gap: 10 }}>
-            {/* This screen exists for this one act, so the control takes the
-                full width at `.btn-lg` and the primary register — the same
-                emphasis the entry form's Save gets, size being the only
-                emphasis this palette has left. */}
-            <ScanPair state={scan.state} disabled={scan.disabled} register="lg"
-              onCamera={scan.openCamera} onLibrary={scan.openLibrary} />
+          <div className="pad scanpage">
+            {/* The one thing this screen can't show: where the photo goes.
+                So it draws it — a bill, and the expense that comes back from
+                it — and the control sits under the drawing rather than at the
+                foot, so the picture and the act it explains are one block in
+                the middle of the screen. The sentence this replaced is its
+                `alt`. */}
+            <div className="scandiagram" role="img" aria-label={copy.scan.diagram.alt}>
+              {/* The bill: printed lines, a rule, the total under it. They add
+                  up to the number the form comes back with — `copy.test.ts`
+                  keeps it that way. */}
+              <div className="scanpaper">
+                {copy.scan.diagram.lines.map(([label, price]) => (
+                  <span key={label}><i>{label}</i><i>{price}</i></span>
+                ))}
+                <hr />
+                <span className="tot"><i>{copy.scan.diagram.total}</i><i>{copy.scan.diagram.amount}</i></span>
+              </div>
+              <Icon name="arrow" size={14} className="scanarrow" />
+              {/* The same bill as an expense: the three fields a scan fills. */}
+              <div className="scanform">
+                <span className="t">{copy.scan.diagram.title}</span>
+                <span className="a bignum">{copy.scan.diagram.amount}</span>
+                <span className="d">{copy.scan.diagram.date}</span>
+              </div>
+            </div>
 
-            {/* No "try again" beside the message: the control above it is
-                still enabled, and it is the retry. */}
-            {scan.state === "error" ? <Failure>{scan.error ?? copy.scan.failed}</Failure> : null}
+            <div className="scanact">
+              {/* This screen exists for this one act, so the control takes the
+                  full width at `.btn-lg` and the primary register — the same
+                  emphasis the entry form's Save gets, size being the only
+                  emphasis this palette has left. */}
+              <ScanPair state={scan.state} disabled={scan.disabled} register="lg"
+                onCamera={scan.openCamera} onLibrary={scan.openLibrary} />
 
-            <p style={{ fontSize: 12.5, color: "var(--ink-2)", margin: "6px 0 0", lineHeight: 1.45 }}>
-              {copy.scan.blurb}
-            </p>
-            <p style={{ fontSize: 11, color: "var(--muted)", margin: 0 }}>
-              {copy.scan.freeTier}
-            </p>
+              {/* No "try again" beside the message: the control above it is
+                  still enabled, and it is the retry. */}
+              {scan.state === "error" ? <Failure>{scan.error ?? copy.scan.failed}</Failure> : null}
+
+              <p className="scanterms">{copy.scan.freeTier}</p>
+            </div>
           </div>
         </Scroll>
       </Body>

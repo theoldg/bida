@@ -12,6 +12,15 @@ bill you reach for once the expense exists. Both call `useReceiptScan` and wear
 control can drift — one act, two doors, one button cut in two
 ([design-system.md](design-system.md#palette-roles)).
 
+`/g/scan` has to promise something it can't show, since a scan's result is on
+another screen, so it draws it: a bill of four lines and a total, an arrow, and
+the expense that comes back — a title, that same total, a date
+(`copy.scan.diagram`). The picture and the control under it sit centred
+together. It replaced a sentence saying the same thing, and the sentence is now
+the drawing's `alt`. The drawn lines really do add to the drawn total, because
+a receipt that doesn't add up is the one thing this screen can't be caught
+showing — `apps/web/lib/copy.test.ts` sums them.
+
 ## The shape
 
 ```

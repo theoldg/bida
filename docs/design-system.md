@@ -52,7 +52,10 @@ fights the phone keyboard, which overlays the shell rather than shortening it.
 Where the screen has no scroll of its own to ride — the who-had-what grid owns
 its, sideways as well as down — the button sits in the fixed foot, and that
 band pays `--kb` in its place. The entry form, the new-group form and the
-who-had-what grid all end this way.
+who-had-what grid all end this way. `/g/scan` is the one exception: it holds a
+picture and the button that picture explains, and at the foot the button is a
+long way from the only thing explaining it, so the two sit centred as one
+block instead.
 
 **One act with two doors is one button cut in two.** Scanning a bill starts at
 the camera or at the library, and which of those is a detail of the same job:
@@ -67,8 +70,15 @@ control filling, not a track inside it, and it hands over to the spinner only
 if the model is slower than usual; an answer that beats it never shows one.
 Three registers, so where it sits changes its size and nothing else: ink block
 where the screen exists for it (`/g/scan`), outlined on the Receipt tab, chip
-scale to replace a bill already assigned. The halves name the doors ("Scan", "Upload"); the screen around them
-has already named the job.
+scale to replace a bill already assigned. The halves name the doors ("Scan",
+"Upload"); the screen around them
+has already named the job — and on `/g/scan` it draws what it promises, since
+that result lands on another screen: a bill of four lines and a total, the
+arrow, and the expense that comes back carrying that same total. The app's one
+picture, built out of `.card-2`, `--rule` and `.bignum` at half the type size,
+so it is made of the interface it explains rather than of illustration. Each
+half is as wide as half the control beneath it, and the sentence the picture
+replaced is its `alt`.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both
