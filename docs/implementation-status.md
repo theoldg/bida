@@ -42,7 +42,7 @@ one gate (`useClaimGate`) decides who still has that question to answer
 **The entry form's amount says less** (2026-09-12). Under the figure it prints
 only what the entry is worth in the group's currency — the rate itself is not
 printed there, because the form is not where it is set. What each figure came
-from is a badge on the same grid: "set EUR rate" beside the converted figure,
+from is a badge on the same grid: "set rate" beside the converted figure,
 "read from receipt" on a row of its own ending on the amount's last digit, each
 opening where that number is changed — and a Save refused for a rate the group has
 never set fills that badge red instead of writing a sentence under the fields,

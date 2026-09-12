@@ -104,7 +104,7 @@ report((await page.getByLabel("Set the USD rate").innerText()).includes("7,200.0
   "the form's rate line values the entry at what the group now says");
 report(!(await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
   "and does not print the rate itself");
-report(await page.getByRole("button", { name: "set USD rate" }).count() === 1,
+report(await page.getByRole("button", { name: "set rate" }).count() === 1,
   "the badge under it says where the rate is set");
 
 // Picked a second time, the rate is already the group's, so nothing is asked.
@@ -409,7 +409,7 @@ if (await page.locator("dialog.scrim").count() > 0) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(200);
 }
-const rateNote = page.getByRole("button", { name: "set MAD rate" });
+const rateNote = page.getByRole("button", { name: "set rate" });
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForTimeout(120);
 report(/flash-/.test(await rateNote.getAttribute("class")),

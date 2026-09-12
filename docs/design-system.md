@@ -225,7 +225,7 @@ under it is gone. Both of those are ink blocks, so both fill (below). Pointing b
 true of every untouched bill and read as a scolding for arriving. A number that
 is not on the form at all blooms the way *to* it and loses its sentence for the
 same reason: a foreign entry whose currency the group has no rate for points at
-its "set EUR rate" badge. **An inverted or edgeless control fills whole**,
+its "set rate" badge. **An inverted or edgeless control fills whole**,
 ground and border together, rather than colouring its label: that badge, 11px
 on a wash, and the two ink blocks — the who-had-what door and the scan pair.
 A filled ground is the same size of signal as a bloomed edge; a label alone is
