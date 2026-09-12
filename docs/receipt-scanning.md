@@ -259,7 +259,8 @@ share — `/g/scan` and the Receipt tab on `/g/entry/edit` — with
 trip as a bar filling over the ~2s a scan usually takes, falling back to the
 spinner only when the model is slower
 ([design-system.md](design-system.md#palette-roles)). Verified end to end
-against the deployed Worker, 2026-08-28; discounts and tax added 2026-09-12.
+against the deployed Worker, 2026-08-28; discounts and tax added 2026-09-12 and
+walked with `pnpm drive`'s `two-for-one` bill, grid to saved entry.
 
 ## Driving it without a phone
 
