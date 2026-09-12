@@ -34,6 +34,15 @@ export interface Noun {
 export type Voice = "expense" | "income";
 export type Voiced<T> = Record<Voice, T>;
 
+/**
+ * How each of the bill's own charges is named inside a sentence, as against
+ * the row labels in `copy.items.extra` — mid-sentence and lower case, and the
+ * tip takes an article where the other two don't.
+ */
+const extraSubject: Record<ExtraKind, string> = {
+  discount: "discounts", tax: "tax", tip: "the tip",
+};
+
 export const copy = {
   app: {
     name: "bida",
@@ -536,8 +545,22 @@ export const copy = {
       `${name} had ${label}, portion ${index} of ${of}`,
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
-    /** Why two rows have no cells to tap. Said once, under the grid, not per row. */
-    extraNote: "Tax and discounts follow what each person ordered.",
+    /**
+     * Why the rows under the items have no cells to tap. Said once, beneath
+     * them rather than in the footer: it explains rows, so it belongs with
+     * them, and the footer's other two lines are things still to be done.
+     * Named for what this bill actually has — a receipt with no tax should
+     * not explain one — so the kinds arrive in the order the rows print.
+     */
+    extraNote: (kinds: ExtraKind[]) => {
+      const names = kinds.map((k) => extraSubject[k]);
+      const subject = names.length < 2
+        ? names.join("")
+        : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+      const verb = names.length === 1 && kinds[0] !== "discount" ? "is" : "are";
+      return `${subject[0]?.toUpperCase() ?? ""}${subject.slice(1)} ${verb} applied `
+        + "proportionally to the whole bill.";
+    },
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
     unfoldHint: { before: "Tap a", after: "to split a line." },

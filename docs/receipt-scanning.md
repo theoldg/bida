@@ -135,7 +135,10 @@ gathers every deduction into `discounts` first, wherever it arrived — a
 negative line item, a negative tip, the field itself — so the arithmetic
 downstream sees positive lines and a list of figures that come off, and never a
 sign to get the wrong way round. Only the tip is typed; the other two are read
-off the bill and drawn as rows with no cells (`copy.items.extra`).
+off the bill and drawn as rows with no cells (`copy.items.extra`), and a caption
+under them says so — naming only the charges this bill actually has
+(`copy.items.extraNote`). It sits in the table rather than in the footer below
+it, because it explains those rows and the footer's line is what to do next.
 
 **The deductions are kept apart, not summed.** They divide identically either
 way, so this is for the reader: "Discounts −9.25" cannot tell a two-for-one

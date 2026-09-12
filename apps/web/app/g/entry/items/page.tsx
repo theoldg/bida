@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { parseMinor, receiptExtras } from "@bida/core";
+import { parseMinor, receiptExtras, type ExtraKind } from "@bida/core";
 import { AmountInput } from "../../../../components/amount-input";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { ConfirmDialog } from "../../../../components/dialog";
@@ -194,13 +194,21 @@ function ItemsScreen() {
     ? [{ label: "", minor: discountTotal, of: discounts.length }]
     : discounts.map((d) => ({ ...d, of: discounts.length > 1 ? discounts.length : 0 }));
 
+  // Which of the bill's own charges this receipt actually has, in the order
+  // their rows print — what the caption under them names (`copy.items.extraNote`).
+  const tipMinor = draft.receiptTip ? minorOf(draft.receiptTip) : null;
+  const extraKinds: ExtraKind[] = [
+    ...(discounts.length > 0 ? ["discount" as const] : []),
+    ...(taxMinor !== null ? ["tax" as const] : []),
+    ...(tipMinor !== null && tipMinor > 0 ? ["tip" as const] : []),
+  ];
+
   // A tip is a percentage of what the food actually came to, so the discounts
   // are already off it and the tax is not on it — which is how a bill prints a
   // suggested tip, and how anybody works one out in their head.
   let tipPercent: number | null = null;
-  if (draft.receiptTip) {
+  if (tipMinor !== null) {
     try {
-      const tipMinor = parseMinor(draft.receiptTip, draft.currency);
       const ordered = receiptTotalMinor(
         items, { tip: null, tax: null, discounts: draft.receiptDiscounts ?? [] }, draft.currency) ?? 0;
       if (ordered > 0) tipPercent = Math.round((tipMinor / ordered) * 100);
@@ -245,8 +253,6 @@ function ItemsScreen() {
     <div className="footnote">
       {copy.items.unfoldHint.before} <b>×N</b> {copy.items.unfoldHint.after}
     </div>
-  ) : discounts.length > 0 || taxMinor !== null ? (
-    <div className="footnote">{copy.items.extraNote}</div>
   ) : null;
 
   return (
@@ -419,6 +425,14 @@ function ItemsScreen() {
                 </td>
                 {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
               </tr>
+              {/* Why the rows above have no cells to tap. Under them rather
+                  than in the footer: the footer's line is what to do next,
+                  and this is what the grid is already doing. */}
+              {extraKinds.length > 0 ? (
+                <tr className="itemnote">
+                  <td colSpan={1 + involvedMembers.length}>{copy.items.extraNote(extraKinds)}</td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>

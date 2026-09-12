@@ -465,6 +465,12 @@ a { color: inherit; text-decoration: none }
 /* A highlighter band across the portions of one printed line, capped by a rule
    down its left edge: they read as one dish shared out, not as two lines the
    receipt happened to print. */
+/* The caption under the rows nobody ordered: the table's own last line rather
+   than a block below it, so it scrolls with the rows it is about and can't be
+   read as a fourth charge. Left-aligned across the whole width — it is a
+   sentence, not a figure in the initials columns. */
+.itemtable tr.itemnote td { text-align: left; font-size: 11px; line-height: 1.35;
+  color: var(--muted); padding-top: 8px; padding-bottom: 9px }
 .itemtable tr.part td { background: color-mix(in srgb, var(--hl) 30%, transparent) }
 .itemtable tr.part .itemlabel { padding-left: 13px; box-shadow: inset 3px 0 0 var(--hl-edge) }
 .itemtable tr.part .itemname { font-weight: 400 }
