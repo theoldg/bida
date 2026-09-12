@@ -706,6 +706,5 @@ export const copy = {
     setRate: (code: string) => `set ${code} rate`,
     /** That row is a button, and what it opens is not what the fields inside it are. */
     openFor: (code: string) => `Set the ${code} rate`,
-    needed: (code: string) => `Set what a ${code} is worth before saving this.`,
   },
 } as const;

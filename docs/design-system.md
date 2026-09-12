@@ -199,9 +199,11 @@ rows — a name, a check on the current one, and a `note` saying what an
 unobvious pick does. A date is the exception, being a calendar and not a list
 ([ADR-0008](decisions/0008-hand-rolled-interface.md)). A *failure* is not
 a dialog at all — there is nothing to decide — so it is said under whatever was
-attempted, in `--debit`: `Failure` / `.failure`. **A held action always has
-one**: Save greyed with nothing to read is a dead end, so the entry form keeps
-a single reason line beside the payer field rather than one per branch.
+attempted, in `--debit`: `Failure` / `.failure`. **A held action always says
+why**: Save greyed with nothing to read is a dead end, so the entry form keeps
+a single reason line beside the payer field rather than one per branch — but a
+line is not the only way to say it, and where the fix is a control on screen
+the control blooms and the sentence goes.
 
 A *refused* action points instead of explaining: a Save that can't go through
 blooms whatever stopped it `--debit` and lets it settle back over ~600ms. A
@@ -211,11 +213,11 @@ to divide. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Receipt tab's entire complaint now that the red sentence
 under it is gone. Pointing beats wording there, because "scan a receipt" was
-true of every untouched bill and read as a scolding for arriving. A number
-that is not on the form at all blooms the way *to* it: a foreign entry whose
-currency the group has no rate for fills its "set EUR rate" badge whole, ink
-and ground, because 11px on a wash has no edge to bloom and too little text for
-a colour alone to carry. A flash
+true of every untouched bill and read as a scolding for arriving. A number that
+is not on the form at all blooms the way *to* it, and loses its sentence for
+the same reason: a foreign entry whose currency the group has no rate for fills
+its "set EUR rate" badge whole, ink and ground, because 11px on a wash has no
+edge to bloom and too little text for a colour alone to carry. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

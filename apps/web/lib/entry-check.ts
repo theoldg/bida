@@ -197,13 +197,14 @@ export function checkEntry(input: {
   // co-payer card, so the states that render the *single*-payer field — an
   // empty payer map, a payer who has left — held Save with nothing anywhere on
   // screen to read. A check with no visible reason is a dead end.
+  // A rate the group hasn't got says nothing here: it is not a typo in a field
+  // on this form, and there is no field. The badge that opens where it is set
+  // blooms on a refused Save instead, the way the Receipt tab's control does
+  // (design-system.md) — pointing at the fix beats a sentence beside it.
   const blocker = goneMember
     ? copy.form.goneMember(nameOf(goneMember))
-    // A rate the group hasn't got is not a typo to be fixed in this field —
-    // there is no field. Say what is missing and where it is set.
-    : foreign && groupRate === undefined ? copy.rates.needed(draft.currency)
-      : payerProblemText(payerCheck, draft.currency,
-        draft.kind === "income" ? "income" : "expense");
+    : payerProblemText(payerCheck, draft.currency,
+      draft.kind === "income" ? "income" : "expense");
 
   const amountMissing = amountMinor <= 0;
   // A transfer's words are a note and optional; an expense without a name is a

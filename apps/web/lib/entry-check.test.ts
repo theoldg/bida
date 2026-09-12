@@ -72,10 +72,12 @@ describe("checkEntry", () => {
   });
 
   describe("a currency the group has no rate for", () => {
-    it("holds Save and says where the number is set", () => {
+    it("holds Save, and says so by pointing rather than in words", () => {
       const c = check(expense({ currency: "MAD" }));
       expect(c.ready).toBe(false);
-      expect(c.blocker).toBe(copy.rates.needed("MAD"));
+      // The form's rate badge blooms on the refused Save; nothing is written
+      // under the fields, because the number is not set on this screen.
+      expect(c.blocker).toBeNull();
       // Not silently 1:1 — that is how a 500 MAD dinner was banked as €500.
       expect(c.groupRate).toBeUndefined();
       expect(c.baseMinor).toBe(0);
