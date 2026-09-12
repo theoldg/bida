@@ -612,7 +612,7 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    bordered box with a hairline between the halves. The box owns the border and
    the halves give theirs up, the same rule `.splitbox` follows.
    Deliberately not `.seg`: that is the mode switch sitting directly above this
-   on the Receipt tab, and a track with a selected pill underneath it would
+   on the Items tab, and a track with a selected pill underneath it would
    read as "which of these am I in" rather than "do this". */
 .btn-pair { display: flex; border: 1px solid var(--rule); border-radius: var(--r-s);
   background: var(--card-2); overflow: hidden }
@@ -1057,12 +1057,6 @@ button.amtnote:active { background: var(--hl-edge) }
    placeholder, or the label on a control that is what's missing. */
 @keyframes refuse-text-a { 15%, 45% { color: var(--debit) } }
 @keyframes refuse-text-b { 15%, 45% { color: var(--debit) } }
-/* A half of the scan pair: its label, and the rule between the two halves.
-   That divider is the second half's `border-left`, so it is the one line of
-   the control the box's own border animation cannot reach — and a frame that
-   goes red around a bar that stays grey reads as a control half-refusing. */
-@keyframes refuse-half-a { 15%, 45% { color: var(--debit); border-left-color: var(--debit) } }
-@keyframes refuse-half-b { 15%, 45% { color: var(--debit); border-left-color: var(--debit) } }
 /* The amount's placeholder sits at .35 opacity, faint enough that a colour
    change alone barely registers; it brightens with the red and settles back
    to whatever the computed style says, same as every other stop here. */
@@ -1070,14 +1064,21 @@ button.amtnote:active { background: var(--hl-edge) }
 @keyframes refuse-amount-ph-b { 15%, 45% { color: var(--debit); opacity: .7 } }
 
 /* A filled control has no border to bloom and too little of it is text for a
-   colour change alone to carry the refusal: the "Assign who had what" door is
-   `--brand` on `--brand`, and the rate badge under the amount is 11px of ink
-   on a wash. Both fill instead — the whole control goes red and its label
-   rides along. `--debit` runs with `--brand`'s polarity in both themes — dark
-   on the light ground, light on the dark one — so `--brand-ink` is the one ink
-   token that stays readable on top of it. */
-@keyframes refuse-fill-a { 15%, 45% { background: var(--debit); color: var(--brand-ink) } }
-@keyframes refuse-fill-b { 15%, 45% { background: var(--debit); color: var(--brand-ink) } }
+   colour change alone to carry the refusal: the "Assign who had what" door and
+   the scan pair are `--brand` on `--brand`, and the rate badge under the
+   amount is 11px of ink on a wash. They fill instead — the whole control goes
+   red and its label rides along. `--debit` runs with `--brand`'s polarity in
+   both themes — dark on the light ground, light on the dark one — so
+   `--brand-ink` is the one ink token that stays readable on top of it, which
+   is why the labels need no animation of their own: they are that token
+   already, and the divider between the pair's halves is mixed from it.
+   `border-color` goes with the fill for the one of the three that has a
+   border: a `--brand` frame left around a red block reads as a control
+   half-refusing. */
+@keyframes refuse-fill-a { 15%, 45% {
+  background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
+@keyframes refuse-fill-b { 15%, 45% {
+  background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 
 .amountfield.flash-a { animation: refuse-line-a .6s ease-in-out }
 .amountfield.flash-b { animation: refuse-line-b .6s ease-in-out }
@@ -1087,20 +1088,13 @@ button.amtnote:active { background: var(--hl-edge) }
 .amountfield.flash-b input::placeholder { animation: refuse-amount-ph-b .6s ease-in-out }
 .field.flash-a input::placeholder { animation: refuse-text-a .6s ease-in-out }
 .field.flash-b input::placeholder { animation: refuse-text-b .6s ease-in-out }
-/* The Receipt tab refuses the same way a field does, because what is missing
-   there is a step and not a figure: the control that takes it blooms. The
-   scan pair has a border of its own, so it borrows the box animation; the
-   door to the grid is an ink block, so it takes the fill one. A control is
-   more than its edge, so the whole of it goes red: the labels, their icons
-   (`currentColor`) and the rule between the halves. That is set on the halves
-   rather than the box — `.pair-xs` sets its own `color` and would not inherit
-   an animated one, and the divider belongs to a half either way. */
-.btn-pair.flash-a { animation: refuse-box-a .6s ease-in-out }
-.btn-pair.flash-b { animation: refuse-box-b .6s ease-in-out }
-.btn-pair.flash-a .btn { animation: refuse-half-a .6s ease-in-out }
-.btn-pair.flash-b .btn { animation: refuse-half-b .6s ease-in-out }
-.btn.flash-a, .amtnote.flash-a { animation: refuse-fill-a .6s ease-in-out }
-.btn.flash-b, .amtnote.flash-b { animation: refuse-fill-b .6s ease-in-out }
+/* The Items tab refuses the same way a field does, because what is missing
+   there is a step and not a figure: the control that takes it blooms. Both
+   controls that take one are ink blocks — the scan pair and the door to the
+   grid — so both fill, and a control is more than its edge: ground, border,
+   labels and their icons (`currentColor`) all go at once. */
+.btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector
@@ -1116,7 +1110,6 @@ button.amtnote:active { background: var(--hl-edge) }
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
   .amtnote.flash-a, .amtnote.flash-b,
-  .btn-pair.flash-a .btn, .btn-pair.flash-b .btn,
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
   .field.flash-a input::placeholder, .field.flash-b input::placeholder {
     animation-duration: .6s !important }

@@ -8,7 +8,7 @@ import { copy } from "./copy";
  * The arithmetic behind one grey button. Every case here was previously only
  * reachable by mounting the entry form and reading a disabled attribute, which
  * is why several of them shipped broken — a rate silently defaulting to "1", a
- * transfer to somebody who had left with Save lit up, a Receipt tab over a
+ * transfer to somebody who had left with Save lit up, an Items tab over a
  * split nobody read off a receipt. They are questions now.
  */
 

@@ -52,7 +52,7 @@ interface Refusal { n: number; live: boolean }
 const NOT_REFUSED: Refusal = { n: 0, live: false };
 /**
  * What a refused Save can bloom. Two fields, a step and a number that isn't
- * on this form: the Receipt tab is short of a photograph or of a who-had-what
+ * on this form: the Items tab is short of a photograph or of a who-had-what
  * grid, and the control that takes whichever it is flashes exactly as the
  * amount's underline does; a currency the group has no rate for blooms the
  * badge that opens where the rate is set, because that is the whole of the

@@ -6,7 +6,7 @@
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
 Two screens start one: `/g/scan`, the camera above the ledger's "+", which is
-the act with nothing else on screen; and the form's own "Receipt" tab, for a
+the act with nothing else on screen; and the form's own "Items" tab, for a
 bill you reach for once the expense exists. Both call `useReceiptScan` and wear
 `ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
 control can drift — one act, two doors, one button cut in two
@@ -17,7 +17,7 @@ another screen, so it draws it: a bill of four lines and a total — torn off at
 both ends, outlineless, so it reads as paper and not as a second card — an arrow, and
 the expense that comes back — a title, that same total, a date, and under them
 what the bill came to for three of the group's own members, which is what the
-Receipt tab would leave. Under the drawing, one line (`copy.scan.lede`) says
+Items tab would leave. Under the drawing, one line (`copy.scan.lede`) says
 the two things it can only imply: the whole form comes back filled, and the
 bill's own lines are a way to split it. Picture and line are one block, centred
 with the control under it and a wide gap between the two, so the drawing reads
@@ -114,7 +114,7 @@ It reads. It doesn't compute.
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
-reached by tapping the Receipt tab's button — "Assign who had what" on a bill
+reached by tapping the Items tab's button — "Assign who had what" on a bill
 nobody has been given a line of, "Edit who-had-what" once somebody has —
 building the grid that becomes a `receipt` split — its own mode, which is why
 no screen has to ask a second field whether a split came off a bill
@@ -203,7 +203,7 @@ downstream treats it as the merchant of record.
 **A scan never navigates.** Finding lines used to push straight to the
 who-had-what grid, which made every scan a commitment to itemise a bill
 somebody may only have wanted the total off; the grid is one tap away on the
-Receipt tab, and going is the person's decision (ADR-0016). The tab's own
+Items tab, and going is the person's decision (ADR-0016). The tab's own
 complaint waits for a save attempt, the way the missing amount does: arriving
 from `/g/scan` is now the ordinary way to be standing here, and a bill that
 read perfectly well should not be met in red. Nor does a bill
@@ -274,7 +274,7 @@ the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
 `scanReceipt()` · `components/receipt-scan.tsx`, the hook both scanning screens
-share — `/g/scan` and the Receipt tab on `/g/entry/edit` — with
+share — `/g/scan` and the Items tab on `/g/entry/edit` — with
 `/g/entry/items` a tap behind the tab. The control they wear draws the round
 trip as a bar filling over the ~2s a scan usually takes, falling back to the
 spinner only when the model is slower

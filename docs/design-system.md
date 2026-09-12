@@ -70,9 +70,10 @@ over the two seconds a scan usually takes — the one wait in the app whose
 length we can guess, so it is drawn rather than shrugged at. The bar *is* the
 control filling, not a track inside it, and it hands over to the spinner only
 if the model is slower than usual; an answer that beats it never shows one.
-Three registers, so where it sits changes its size and nothing else: ink block
-where the screen exists for it (`/g/scan`), outlined on the Receipt tab, chip
-scale to replace a bill already assigned. The halves name the doors ("Scan",
+Three registers, so where it sits changes its size and almost nothing else:
+an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
+where it is likewise the only thing to do, and chip scale — on paper, so it
+doesn't outweigh what it replaces — to replace a bill already assigned. The halves name the doors ("Scan",
 "Upload"); the screen around them
 has already named the job — and on `/g/scan` it draws what it promises, since
 that result lands on another screen: a bill of four lines and a total, the
@@ -214,15 +215,16 @@ missing figure blooms its field — the amount's underline, the title's box, the
 placeholder in either — and so does the multi-payer door, which has no amount
 to divide. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
-grid, which is the Receipt tab's entire complaint now that the red sentence
-under it is gone. Pointing beats wording there, because "scan a receipt" was
+grid, which is the Items tab's entire complaint now that the red sentence
+under it is gone. Both of those are ink blocks, so both fill (below). Pointing beats wording there, because "scan a receipt" was
 true of every untouched bill and read as a scolding for arriving. A number that
 is not on the form at all blooms the way *to* it and loses its sentence for the
 same reason: a foreign entry whose currency the group has no rate for points at
-its "set EUR rate" badge. A control with no edge of its own fills whole, ground
-and ink, rather than colouring its label: that badge, 11px on a wash, and the
-who-had-what door, `--brand` on `--brand`. A filled ground is the same size of
-signal as a bloomed edge; a label alone is not. A flash
+its "set EUR rate" badge. **An inverted or edgeless control fills whole**,
+ground and border together, rather than colouring its label: that badge, 11px
+on a wash, and the two ink blocks — the who-had-what door and the scan pair.
+A filled ground is the same size of signal as a bloomed edge; a label alone is
+not, and a `--brand` frame left around a red block reads as half a refusal. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

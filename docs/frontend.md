@@ -149,7 +149,7 @@ confers nothing without the secret.
   typing into the field it's next to, so it keeps its spot above the split
   editor, behind the same flag; `receiptBlocker` stays in the split's footer,
   its "Scan a receipt" half behind the flag for the same reason — an untouched
-  Receipt tab has no bill yet — while the bill-nobody-has-assigned half, and
+  Items tab has no bill yet — while the bill-nobody-has-assigned half, and
   the split's other complaints, follow an edit and stay live. Nothing
   is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**

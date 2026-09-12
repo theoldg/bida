@@ -36,7 +36,9 @@ become state (`applyPatch`, so the fold and the history read it alike); the
 materialised Dexie cache in front of them takes the same function on open
 (`version(7)`), since it is only refolded when a pull brings ops.
 
-**Receipt is the fourth tab on the split editor**, and a fourth *answer* beside
+**The receipt split is the fourth tab on the split editor** — labelled
+"Items", for what the tab holds rather than for the photograph — and a fourth
+*answer* beside
 the three, never a rewrite of one of them — a scan used to convert whatever As
 parts held into its own weights ([ADR-0010](0010-what-an-entry-is.md)).
 Which tab is showing is the draft's business and never the entry's (`SplitTab`,

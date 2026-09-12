@@ -107,7 +107,7 @@ and a refused Save points at
 the field that stopped it by flashing it rather than holding it red
 ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)). Two further cuts are proposed
 and **not** decided: folding the "Multi-payer" link into the payer dialog, and
-taking "Receipt" out of the split's tab bar now that `/g/scan` is how a scan
+taking "Items" out of the split's tab bar now that `/g/scan` is how a scan
 starts. Ask before building either.
 
 The previous open subject — invariants the UI checks at write time that a merge
@@ -253,7 +253,7 @@ expense form with the bill's title, amount, date and currency already in it.
 Both scanning screens run one hook (`components/receipt-scan.tsx`) and **a
 scan no longer navigates**: it used to push straight to the who-had-what grid
 whenever the bill had lines, which made photographing a bill a commitment to
-itemise it. The grid is a tap on the Receipt tab, split evenly is a tap on
+itemise it. The grid is a tap on the Items tab, split evenly is a tap on
 Evenly, and with nothing racing the screen the rate dialog for an unrated
 currency just opens ([receipt-scanning.md](receipt-scanning.md)).
 

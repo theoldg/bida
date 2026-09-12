@@ -42,7 +42,7 @@ export interface ReceiptScan {
 /**
  * Photograph a bill; the draft comes back filled in.
  *
- * Two screens scan: the expense form's Receipt tab, and `/g/scan`, which is
+ * Two screens scan: the expense form's Items tab, and `/g/scan`, which is
  * the same act reached before there is a form. They share this so the two
  * cannot drift — one downscale, one prompt, one set of words for a failure,
  * and one rule about what a scan is allowed to overwrite.
@@ -50,7 +50,7 @@ export interface ReceiptScan {
  * **A scan never navigates.** It fills the draft and stops there. It used to
  * push straight to the who-had-what grid whenever the bill had lines, which
  * made every scan a commitment to itemise; the grid is one tap away on the
- * Receipt tab, and reaching it is the person's decision (ADR-0016). Nothing
+ * Items tab, and reaching it is the person's decision (ADR-0016). Nothing
  * else wants the screen after a scan either, which is what lets the rate
  * dialog simply open when it is needed.
  *
@@ -121,7 +121,7 @@ export function useReceiptScan(
         receiptInvolved: null,
         receiptAssignments: null,
         // Only a bill with lines on it is something to assign, so only that
-        // claims the Receipt tab. A receipt that is just a total is an
+        // claims the Items tab. A receipt that is just a total is an
         // ordinary expense — the grid never opens on it — and showing the tab
         // for one put "Scan a receipt" over a form a scan had just filled in.
         ...(receiptItems.length > 0 ? { splitTab: "receipt" as const } : {}),
@@ -202,11 +202,13 @@ function barSeconds(): number {
  * two buttons should spin.
  *
  * Three registers of the same control, so where it sits changes its size and
- * nothing else: `lg` where the screen exists for it, `s` on the Receipt tab,
- * `xs` for replacing a bill already assigned.
+ * almost nothing else: `lg` where the screen exists for it, `s` on the Items
+ * tab, `xs` for replacing a bill already assigned. The first two are ink
+ * blocks, because each is the one act of the surface it sits on; only the chip
+ * is on paper.
  *
- * `flash` is the entry form's refusal: a Save tapped on a Receipt tab with no
- * bill behind it blooms this box red and lets it settle, which is what the
+ * `flash` is the entry form's refusal: a Save tapped on an Items tab with no
+ * bill behind it fills this box red and lets it settle, which is what the
  * amount and the title have always done. The box carries it, not a half —
  * neither half is the one that was wrong.
  */
@@ -231,7 +233,11 @@ export function ScanPair({
   useEffect(() => { if (!busy) setFull(false); }, [busy]);
   const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  const box = `btn-pair${register === "lg" ? " pair-p" : ""}${register === "xs" ? " pair-xs" : ""}${flash}`;
+  // Inverted at both sizes that act: on `/g/scan` it is the screen's one act,
+  // and on the Items tab it is the only thing to do on an empty tab. Only
+  // the chip register stays on paper — it stands beside a bill already
+  // assigned, where an ink block would outweigh the thing it replaces.
+  const box = `btn-pair${register === "xs" ? " pair-xs" : " pair-p"}${flash}`;
 
   // One element, so the box keeps the height it had and nothing under it moves
   // while the model reads. Disabled through the same `.btn:disabled` every

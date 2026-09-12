@@ -199,7 +199,7 @@ export function checkEntry(input: {
   // screen to read. A check with no visible reason is a dead end.
   // A rate the group hasn't got says nothing here: it is not a typo in a field
   // on this form, and there is no field. The badge that opens where it is set
-  // blooms on a refused Save instead, the way the Receipt tab's control does
+  // blooms on a refused Save instead, the way the Items tab's control does
   // (design-system.md) — pointing at the fix beats a sentence beside it.
   const blocker = goneMember
     ? copy.form.goneMember(nameOf(goneMember))

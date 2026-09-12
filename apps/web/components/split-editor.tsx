@@ -29,7 +29,7 @@ import type { SplitTab } from "../lib/draft";
  * rendering; nothing new can be written in it, and switching mode converts
  * one away for good.
  *
- * A fourth tab, "Receipt", sits beside them — scanning a bill and assigning
+ * A fourth tab, "Items", sits beside them — scanning a bill and assigning
  * who-had-what (`/g/expense/items`, ADR-0016). What that produces is a
  * `receipt` split, a mode of its own: it divides by weight the way As parts
  * does, and that is the whole of the resemblance. This editor never writes
@@ -42,7 +42,7 @@ import type { SplitTab } from "../lib/draft";
  * the arithmetic tabs' inputs.
  */
 
-/** The three arithmetic tabs, in the owner's order. "Receipt" is the fourth. */
+/** The three arithmetic tabs, in the owner's order. "Items" is the fourth. */
 const MODES = ["equal", "shares", "exact"] as const;
 
 export interface ReceiptTabProps {
@@ -99,7 +99,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   tab: SplitTab;
   onTabChange: (next: SplitTab) => void;
   /**
-   * The Receipt tab, or null where scanning a bill makes no sense — an income
+   * The Items tab, or null where scanning a bill makes no sense — an income
    * has no receipt to read a total off, and offering the tab there would put
    * a dead end in the middle of the form.
    */
@@ -138,7 +138,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // and must never be shown as one, so "ok" here means "ok to show a tick",
   // not `check.ok`, and a split with no amount behind it says nothing.
   //
-  // A Receipt tab still short of its own split says nothing here either. The
+  // A Items tab still short of its own split says nothing here either. The
   // step left — a bill to photograph, or a bill to assign — used to be a red
   // sentence in this footer, and it was a sentence for a state that is true of
   // every untouched scan; a refused Save now blooms the control that takes the
@@ -406,9 +406,9 @@ function ReceiptPanel({
 
   return (
     <div style={{ padding: 12 }}>
-      {/* The tab above says "Receipt", so the two halves name their two doors
-          and not the job — reading as "Receipt: Scan | Upload". With no bill
-          yet, this is the control a refused Save blooms. */}
+      {/* The halves name their two doors and not the job, which the line
+          under them says: a photograph is what fills this tab. With no bill
+          yet, this is the control a refused Save fills. */}
       <ScanPair state={scanState} disabled={scanDisabled} register="s"
         flash={flash} onFlashEnd={onFlashEnd}
         onCamera={onScanCamera} onLibrary={onScanLibrary} />

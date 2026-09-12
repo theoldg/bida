@@ -409,9 +409,11 @@ export const copy = {
       percent: "By percent",
       receipt: "From receipt",
     } as Record<SplitSpec["mode"], string>,
-    /** The tab's own label, where "From receipt" is a sentence too long for a
-        quarter of the width. */
-    receipt: "Receipt",
+    /** The tab's own label. Not "From receipt", which is a sentence too long
+        for a quarter of the width, and not "Receipt" either: the tab is where
+        a bill becomes lines somebody can be given, so it is named for what it
+        holds once the scan is done rather than for the photograph. */
+    receipt: "Items",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,
     fewerParts: (name: string) => `Fewer parts for ${name}`,
@@ -474,8 +476,9 @@ export const copy = {
     /**
      * The two halves of the one control that scans (`ScanPair`), naming the
      * two doors into the same act and not the act itself: what is being
-     * scanned is said by the screen — the top bar on `/g/scan`, the "Receipt"
-     * tab on the form — so the halves that used to repeat it don't.
+     * scanned is said by the screen — the top bar on `/g/scan`, and on the
+     * form the line under this control — so the halves that used to repeat it
+     * don't.
      */
     snap: "Scan",
     rescan: "Rescan",
