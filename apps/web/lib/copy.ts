@@ -239,10 +239,6 @@ export const copy = {
       owe: "You owe",
       owed: "You’re owed",
       square: "You’re square",
-      tookAndCut: (took: string, cut: string) => `took in ${took} · cut ${cut}`,
-      /** The transfer leg — money moved that no entry accounts for. */
-      settled: (amount: string, sent: boolean) =>
-        sent ? `paid back ${amount}` : `got back ${amount}`,
     },
     /** "Marie paid" · "Marie + 1 other received". */
     payers: (who: string, others: string | null, verb: string) =>

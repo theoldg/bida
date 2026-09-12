@@ -203,24 +203,6 @@ function LedgerTab({ data }: { data: GroupData }) {
             <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
               {money(net, group.baseCurrency, net !== 0)}
             </div>
-            {/* Only where there is income to account for: on a group with
-                none, this line would be two zeroes explaining nothing. */}
-            {(balances.receivedMinor[me] ?? 0) > 0 || (balances.incomeShareMinor[me] ?? 0) > 0 ? (
-              <div style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: 2 }}>
-                {copy.group.you.tookAndCut(
-                  money(balances.receivedMinor[me] ?? 0, group.baseCurrency),
-                  money(balances.incomeShareMinor[me] ?? 0, group.baseCurrency))}
-              </div>
-            ) : null}
-            {/* Net, so a phone that has both sent and received says one
-                thing. */}
-            {(balances.settledMinor[me] ?? 0) !== 0 ? (
-              <div style={{ fontSize: 11.5, color: "var(--ink-2)", marginTop: 2 }}>
-                {copy.group.you.settled(
-                  money(Math.abs(balances.settledMinor[me] ?? 0), group.baseCurrency),
-                  (balances.settledMinor[me] ?? 0) > 0)}
-              </div>
-            ) : null}
           </Card>
         </div>
       ) : null}

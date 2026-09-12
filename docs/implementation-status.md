@@ -21,6 +21,12 @@ two devices.
 
 ## The next action
 
+**The ledger's summary is one figure** (2026-09-12). The card at the top of the
+ledger says which way you stand and how much, and nothing else: the "took in ·
+cut" and "paid back / got back" lines under it were terms of the balance shown
+beside the balance itself, and the answer is the figure
+([design-system.md](design-system.md#your-own-rows-are-highlighted)).
+
 **A split by items says so** (2026-09-12). `receipt` is named "By items"
 wherever a split is named — the ledger row, the entry, the log — because the
 photograph is an input modality and a mode's name is how the money divides. The
