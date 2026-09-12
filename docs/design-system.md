@@ -143,6 +143,15 @@ must not lie** (co-payers get abbreviated, "Alice +1 paid", never dropped), and
 share count next, the payer never. `.rmeta` keeps its ellipsis for the last
 rung, because a name can be any length at all.
 
+A ledger row is always the same height, whether or not it carries a second
+figure — the sum as it was spent, before the group's currency. A row that grew a
+line for that one broke the rhythm of the list wherever one landed, so the row
+is held to the height of the three-figure case and its column is centred in it
+(`.entryrow`): a two-figure row keeps the sum and your share together and takes
+the slack as air above and below. The amount column is leaded tighter than it
+was, so that fixed height stays close to the old two-line row's and the ledger
+holds as many entries per screen.
+
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two

@@ -290,7 +290,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, expense.id)}
-        className={`row ${mine ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${mine ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
           {/* Who paid, how many ways, in what mode — more than a phone's
@@ -355,7 +355,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, settlement.id)}
-        className={`row ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
         <div className="rmain">
           <div className="rtitle">
             {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}

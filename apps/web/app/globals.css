@@ -350,6 +350,16 @@ a { color: inherit; text-decoration: none }
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }
 .ramt .sm { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted);
   font-variant-numeric: tabular-nums; margin-top: 1px }
+/* A ledger row's height must not depend on what is in it. Only some entries
+   carry a second figure — the sum as it was spent, before the group's currency
+   — and a row that grew a line for it broke the rhythm of the list wherever one
+   landed. So the row is held to the height of the three-figure case and the
+   column is centred in it: a row with two figures keeps them together and takes
+   the slack as air above and below, rather than opening a gap between the sum
+   and your share. The tighter leading is what keeps that height near the old
+   two-line row's, so the ledger holds as many entries per screen as before. */
+.entryrow { min-height: 68px }
+.entryrow .ramt { line-height: 1.25 }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- your own money, pulled out of the group's ---- */
