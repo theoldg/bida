@@ -184,7 +184,7 @@ const CODE_MAX = 3;
  * half of that to lose. The chips under "Who was there" carry the full names,
  * which is where a repeated code is read.
  */
-export function distinctInitials(members: { id: string; name: string }[]): Map<string, string> {
+export function distinctInitials(members: readonly { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
   const chars = new Map(members.map((m) => [m.id, graphemes(m.name.trim())]));
   const prefix = (id: string, len: number) => chars.get(id)!.slice(0, len).join("") || copy.unknown;

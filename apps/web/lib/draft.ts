@@ -6,7 +6,7 @@ import {
   type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
-import { receiptTotalMinor, weightsFromItems } from "./scan/items";
+import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
 
 /**
@@ -236,7 +236,25 @@ export function receiptWeights(
   assignments: readonly Set<string>[],
   involved: ReadonlySet<string>,
 ): Record<string, number> {
-  return weightsFromItems(
+  return receiptBill(draft, items, assignments, involved).weights;
+}
+
+/**
+ * The same reading, with each person's own lines of the bill beside their
+ * figure — what `receiptWeights` is the totals half of.
+ *
+ * A saved expense asks `receiptBreakdown` directly, seeded by the entry's id.
+ * A draft cannot: the seed is `splitSeed`'s to name, for the reason above, and
+ * a quick split reads its answer off a bill that will never become an entry
+ * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+ */
+export function receiptBill(
+  draft: EntryDraft,
+  items: readonly ReceiptItem[],
+  assignments: readonly Set<string>[],
+  involved: ReadonlySet<string>,
+): { weights: Record<string, number>; lines: Record<string, MemberLine[]> } {
+  return receiptBreakdown(
     [...items],
     [...assignments],
     receiptExtras(draft),

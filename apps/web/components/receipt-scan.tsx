@@ -69,6 +69,13 @@ export function useReceiptScan(
   groupId: string | undefined,
   secret: string | undefined,
   onScanned?: () => void,
+  /**
+   * Run once the photo is in hand and before anything is sent — a quick split
+   * introduces its scan credential to the server here, since there is no group
+   * whose first sync already did it (ADR-0035). It must not throw: a phone that
+   * cannot reach us cannot scan either, and the scan says that far better.
+   */
+  prepare?: () => Promise<void>,
 ): ReceiptScan {
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
@@ -83,6 +90,9 @@ export function useReceiptScan(
   // started the scan.
   const scanned = useRef(onScanned);
   scanned.current = onScanned;
+  // Read at the start of the round trip, and held for the same reason.
+  const before = useRef(prepare);
+  before.current = prepare;
 
   const onPhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,6 +105,7 @@ export function useReceiptScan(
     const tabAtStart = activeSplitTab(current);
     beginScan(groupId);
     try {
+      await before.current?.();
       const result = await scanReceipt(file, groupId, secret, current.currency);
       const patch = normalizeScan(result);
       // Read as a bill rather than off the raw result: a deduction printed as
@@ -220,14 +231,17 @@ function ScanBar({ startedAt, seconds, onFull }: {
  * neither half is the one that was wrong.
  */
 export function ScanPair({
-  scan, register, flash = "", onFlashEnd,
+  scan, register, flash = "", onFlashEnd, disabled: held = false,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
+  /** Held shut by the screen as well: a quick split has nobody to divide by yet. */
+  disabled?: boolean;
 }) {
-  const { live, disabled } = scan;
+  const { live } = scan;
+  const disabled = scan.disabled || held;
   const busy = live?.state === "scanning";
   /**
    * The sweep has run out and the scan is still going, so the spinner takes

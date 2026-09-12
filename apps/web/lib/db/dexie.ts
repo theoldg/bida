@@ -45,6 +45,17 @@ export interface DeviceRecord {
   theme: "system" | "light" | "dark";
   /** The group this device most recently opened — seeds a new group's currency. */
   lastOpenedGroupId?: string;
+  /**
+   * What this phone scans with when it is not in a group — a quick split
+   * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+   *
+   * An id and a secret shaped exactly like a group's, because that is what the
+   * scan endpoint authenticates, and deliberately **not** in `groupKeys`,
+   * which is the table the sync engine walks. `registeredAt` is when the
+   * server first saw the pair; it is cleared if the row ever goes missing, so
+   * a wiped database heals on the next scan. See lib/quick.ts.
+   */
+  scan?: { id: string; secret: string; registeredAt?: number };
 }
 
 /**

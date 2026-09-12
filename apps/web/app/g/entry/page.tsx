@@ -9,6 +9,7 @@ import {
   type Expense, type Group, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "../../../components/bits";
+import { MemberBill } from "../../../components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
@@ -16,8 +17,8 @@ import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
-import { clockTime, countText, dayLabel, money, plural, rateText } from "../../../lib/format";
-import { receiptBreakdown, type MemberLine } from "../../../lib/scan/items";
+import { clockTime, dayLabel, money, plural, rateText } from "../../../lib/format";
+import { receiptBreakdown } from "../../../lib/scan/items";
 import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
 
@@ -222,60 +223,10 @@ function ExpenseDetail({ expense, kind, group, data }: {
           const v = inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : copy.none;
           const lines = inIt ? bill?.[m.id] : undefined;
           if (!lines?.length) return <KV key={m.id} dim={!inIt} k={k} v={v} />;
-          return <MemberBill key={m.id} name={k} total={v} lines={lines} currency={expense.currency} />;
+          return <MemberBill key={m.id} name={k} total={v} lines={lines}
+            format={(minor) => money(minor, expense.currency)} />;
         })}
       </Card>
-    </div>
-  );
-}
-
-/**
- * One person's row on a scanned bill, opened: what they had, as the bill
- * printed it, in the bill's own currency.
- *
- * Only the split's share of a line is theirs, so the count is a fraction —
- * "×1/2" for a plate shared with somebody, "×1 1/2" for one of their own and half
- * of another, "×2" for a line they had all of and the receipt printed twice
- * (`countText`). The amounts are the same cents the split was derived from,
- * so a row and its lines agree by construction.
- */
-function MemberBill({ name, total, lines, currency }: {
-  name: string; total: React.ReactNode; lines: MemberLine[]; currency: string;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    // Row and lines are one band while it is open — the highlighter-and-edge
-    // the bill screen uses for the portions of a single dish. Without it the
-    // lines read as loose rows of the card rather than as this person's bill.
-    <div className={`billgroup${open ? " on" : ""}`}>
-      <button type="button" className="kv" aria-expanded={open}
-        onClick={() => setOpen(!open)}>
-        <span className="k">
-          {name}<Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
-        </span>
-        <span className="v">{total}</span>
-      </button>
-      {open ? (
-        <div className="billlines">
-          {lines.map((line, i) => {
-            const count = line.extra ? null : countText(line.count);
-            return (
-              <div className={`billline${line.extra ? " tip" : ""}`} key={i}>
-                <span className="lbl">
-                  {/* A deduction carries the name the bill gave it ("2 for 1");
-                      the tip and the tax are only ever what they are. */}
-                  {line.extra ? line.label || copy.items.extra[line.extra] : line.label}
-                  {count ? <span className="billqty">×{count}</span> : null}
-                </span>
-                {/* A printed bill's dotted leader: what carries the eye from a
-                    label of any length to the figure at the right margin. */}
-                <span className="lead" aria-hidden="true" />
-                <span className="amt">{money(line.minor, currency)}</span>
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
     </div>
   );
 }

@@ -295,6 +295,42 @@ export const copy = {
     forgetBody: "The invite link brings it back.",
   },
 
+  // ------------------------------------------------------------- quick split
+
+  /**
+   * A bill split with people who are not a group (ADR-0035). It ends by
+   * handing you text, so half of this is words that leave the app.
+   */
+  quick: {
+    title: "Quick split",
+    who: "Who’s splitting",
+    /** Why the scan control is dead: a bill needs somebody to divide it. */
+    needTwo: "Add two people, then photograph the bill.",
+    /** The one bill this flow can do nothing with: a total and no lines. */
+    noLines: "That receipt has no lines on it. There’s nothing to assign.",
+    discardTitle: "Discard this split?",
+    discardBody: "Nothing about it is kept.",
+    split: "The split",
+    copy: "Copy the split",
+    copied: "Copied",
+    /** The clipboard refused; the text has to be read off the screen instead. */
+    fallbackTitle: "Copy it from here",
+    fallbackBody: "This phone wouldn’t take it to the clipboard.",
+    /**
+     * The text itself. Plain lines with an em dash, because it is read in a
+     * chat app: nothing there is monospaced, so a table drawn with spaces
+     * arrives as a mess. Figures are bare — nothing in a quick split converts
+     * (ADR-0035).
+     */
+    summary: {
+      line: (label: string, amount: string) => `${label} — ${amount}`,
+      item: (label: string, amount: string) => `  ${label} — ${amount}`,
+      count: (label: string, count: string) => `${label} ×${count}`,
+      /** Stands in as the heading when the scan read no merchant name. */
+      total: "Total",
+    },
+  },
+
   // ------------------------------------------------------------- one entry
 
   entry: {

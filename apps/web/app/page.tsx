@@ -96,8 +96,9 @@ export default function GroupsPage() {
  * neither half is a group, and the ghost row's dashed square is the mark for
  * a slot in the list it sat in.
  *
- * PLACEHOLDER on the right half only: `/quick` does not exist yet (todo.md,
- * "Quick split"). "New group" is a real link and always was.
+ * The right half is a bill split with people who are not a group, and who
+ * never become one: it writes no op and leaves nothing behind
+ * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
  */
 function StartPair() {
   return (
@@ -107,10 +108,10 @@ function StartPair() {
           <Icon name="plus" size={17} />
           {copy.groups.newGroup}
         </Link>
-        <button type="button" className="btn">
+        <Link href={route.quick()} className="btn">
           <Icon name="cam" size={16} />
           {copy.groups.quickSplit}
-        </button>
+        </Link>
       </div>
     </div>
   );

@@ -113,6 +113,15 @@ export const route = {
   rates: (groupId: string) => `/g/rates?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */
   claim: (groupId: string) => `/g/claim?id=${encodeURIComponent(groupId)}`,
+  /**
+   * A bill split with people who are not a group
+   * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+   * No id in the query string: there is no group to name, and the one thing
+   * these three screens share lives in memory for as long as the split does.
+   */
+  quick: () => "/quick",
+  quickItems: () => "/quick/items",
+  quickResult: () => "/quick/result",
 };
 
 /** The `via=` of a URL, or `undefined` for anything the app didn't write. */
