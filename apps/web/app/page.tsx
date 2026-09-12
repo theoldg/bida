@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Avatar, GhostRow, signClass } from "../components/bits";
+import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog } from "../components/dialog";
 import { Wordmark } from "../components/icons";
@@ -64,6 +65,9 @@ export default function GroupsPage() {
             {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
 
             <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
+
+            {/* PLACEHOLDER — the screen behind it is not built (todo.md). */}
+            <QuickSplitRow />
           </div>
 
           {/* The two cards the app spends on itself, and they are mutually
@@ -77,6 +81,23 @@ export default function GroupsPage() {
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/**
+ * Splitting a bill with people who are not a group — the other thing you can
+ * start from this screen, and deliberately the lesser of the two: it runs to
+ * the right where "New group" runs to the left, so the pair reads as one act
+ * and its shortcut rather than as two equal doors.
+ *
+ * PLACEHOLDER: there is no screen behind it yet (todo.md, "Quick split").
+ */
+function QuickSplitRow() {
+  return (
+    <button type="button" className="row quickrow">
+      <span className="qlabel">{copy.groups.quickSplit}</span>
+      <Icon name="cam" size={16} />
+    </button>
   );
 }
 

@@ -33,6 +33,10 @@ create an info screen with information and my email
 ## Features
 
 ### Quick split
+**The entry point is already on the groups list** — a right-aligned row under
+"New group" (`QuickSplitRow` in `apps/web/app/page.tsx`), and it is dead until
+this is built. Wire it or remove it; don't leave it.
+
 Help me design a "quick split" mode which allows splitting a receipt straight from the home screen, without creating a group.
 1. "Quick split"
 2. Input members

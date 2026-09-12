@@ -326,6 +326,17 @@ a { color: inherit; text-decoration: none }
 .ghostrow { padding-top: 16px }
 .ghostrow + .ghostrow { padding-top: 11px }
 
+/* The second way to start, and the quieter one: it takes the same line as the
+   ghost row above it but runs the other way, label then glyph hard against the
+   right edge. No dashed square — that mark says "a slot in this list", and a
+   quick split never joins the list. Mirroring rather than shrinking is what
+   keeps it a peer of "New group" while reading second. */
+.quickrow { justify-content: flex-end; padding-top: 11px; color: var(--muted) }
+/* The two starts are one block, so no hairline between them: the ruling
+   separates things in the list, and neither of these is in it. */
+.row:has(+ .quickrow) { border-bottom: 0 }
+.quickrow .qlabel { font-size: 13.5px; font-weight: 500 }
+
 /* The last row of a list of people *is* the field that adds the next one, and
    it is built like the rows above it — name on the left, one control on the
    right — because that is what it becomes once its plus is pressed

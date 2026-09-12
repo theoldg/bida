@@ -133,6 +133,7 @@ export const copy = {
       body: "A trip, a flat, a dinner — anything several people pay for.",
     },
     newGroup: "New group",
+    quickSplit: "Quick split",
     whoAreYou: "who are you?",
     youOwe: "you owe",
     youreOwed: "you’re owed",
