@@ -14,13 +14,23 @@ export function buildScanRequestBody(imageBase64: string): unknown {
       parts: [
         { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
         {
-          text: "Read this receipt. Return the merchant name; the total normalized to plain "
-            + "decimal notation — '.' as the decimal point, no thousands separators, e.g. "
+          text: "Read this receipt. Return a title for the expense (described below); the total "
+            + "normalized to plain decimal notation — '.' as the decimal point, no thousands separators, e.g. "
             + "\"1234.50\" whether the receipt prints \"1.234,50\", \"1,234.50\" or \"1234,50\" — "
             + "using the receipt's own locale and currency to tell decimal point from thousands "
             + "mark; a separate tip or service charge line if one is printed apart from the total, "
             + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
             + "date as YYYY-MM-DD if legible. "
+            + "The title is the merchant's name as printed, with two adjustments. Strip whatever "
+            + "isn't the name — a legal form or registered owner, a branch address or store "
+            + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
+            + "Zahra\", \"Hotel Amira, 12 Rue Bab Doukkala\" is \"Hotel Amira\". And when the "
+            + "name alone wouldn't tell somebody what the money went on, add two or three English "
+            + "words for what was bought, after \" - \": \"Lidl - barbecue\", \"Carrefour - "
+            + "breakfast\". Add nothing when the merchant already says it (a restaurant, a café, "
+            + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
+            + "are printed — a bare name beats a wrong guess. Keep the whole title under 40 "
+            + "characters, and null if no name is legible and the lines say nothing either. "
             + "Also return every line item: its label exactly as "
             + "printed in the receipt's own language, an English translation of that label (null "
             + "if it's already English), its amount in the same normalized decimal notation as the "
@@ -59,7 +69,7 @@ export function buildScanRequestBody(imageBase64: string): unknown {
       responseSchema: {
         type: "OBJECT",
         properties: {
-          merchant: { type: "STRING", nullable: true },
+          title: { type: "STRING", nullable: true },
           total: { type: "STRING", nullable: true },
           tip: { type: "STRING", nullable: true },
           currency: { type: "STRING", nullable: true },
@@ -79,7 +89,7 @@ export function buildScanRequestBody(imageBase64: string): unknown {
           },
           error: { type: "STRING", nullable: true },
         },
-        required: ["merchant", "total", "tip", "currency", "date", "lineItems", "error"],
+        required: ["title", "total", "tip", "currency", "date", "lineItems", "error"],
       },
     },
   };

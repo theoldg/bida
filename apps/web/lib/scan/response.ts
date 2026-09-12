@@ -11,7 +11,7 @@ export function parseScanResponse(json: unknown): ScanResult {
 
   const parsed = JSON.parse(text) as Partial<ScanResult>;
   return {
-    merchant: parsed.merchant ?? null,
+    title: parsed.title ?? null,
     total: parsed.total ?? null,
     tip: parsed.tip ?? null,
     currency: parsed.currency ?? null,

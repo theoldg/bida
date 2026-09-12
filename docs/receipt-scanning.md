@@ -83,7 +83,7 @@ It reads. It doesn't compute.
 
 | It returns | Type |
 |---|---|
-| merchant | string → `description` |
+| title | string → `description` — the merchant's name, minus the parts that aren't the name ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what was bought where the name alone wouldn't say ("Lidl - barbecue"). Nothing added when the merchant already says it, when the lines are too mixed, or when none are printed: a bare name beats a wrong guess |
 | total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code |
 | tip | a separate tip/service-charge line, same normalized notation, or null |
 | currency | ISO 4217 if legible, else null |
@@ -141,10 +141,14 @@ Two fields the model doesn't get the last word on:
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.
 
-**A scan is a guess, and it defers to a person.** The merchant name lands in
+**A scan is a guess, and it defers to a person.** The title lands in
 `description` only when that field is empty or still holds the *previous*
-scan's merchant (`EntryDraft.scannedDescription`), so a rescan can correct
-itself without renaming an expense somebody named.
+scan's title (`EntryDraft.scannedDescription`), so a rescan can correct
+itself without renaming an expense somebody named. The adapting is the model's
+— it holds the whole page, and the alternative is a local rule guessing at
+which half of "Hotel Amira, 12 Rue Bab Doukkala" is the name. It is a title,
+not a reading, which is why the field is `title` and not `merchant`: nothing
+downstream treats it as the merchant of record.
 
 **A scan never navigates.** Finding lines used to push straight to the
 who-had-what grid, which made every scan a commitment to itemise a bill

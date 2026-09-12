@@ -2,7 +2,7 @@
   "note": "a restaurant bill that adds up: nine lines, two of them printed with a count, and a tip on top",
   "exercises": "ok",
   "scan": {
-    "merchant": "Café Clock",
+    "title": "Café Clock",
     "total": "76.50",
     "tip": "6.00",
     "currency": null,

@@ -21,6 +21,14 @@ two devices.
 
 ## The next action
 
+**A scanned expense gets a title, not just a merchant** (2026-09-12). The
+model returns `title`: the name with the parts that aren't the name stripped
+("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what
+was bought where the name alone wouldn't say ("Lidl - barbecue"). Its
+judgement, not a local rule — nothing downstream reads the field as the
+merchant of record
+([receipt-scanning.md](receipt-scanning.md#what-the-model-decides-and-what-it-must-not)).
+
 **The app is called bida** since 2026-09-11 — name, icons and the top-bar
 mark all come from `design/brand/logo.svg`. The Worker and the D1 database
 keep the old `hajsik` name, and so does the IndexedDB database, because all

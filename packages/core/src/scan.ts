@@ -1,6 +1,6 @@
 /**
  * Turns a model's reading of a receipt into an entry-draft patch. The model
- * does the reading — merchant, total, currency, date — and this
+ * does the reading — title, total, currency, date — and this
  * does no arithmetic or reformatting on top of it. See docs/receipt-scanning.md.
  *
  * Amounts and dates are trusted in the exact shape asked for in the prompt
@@ -23,7 +23,14 @@ export interface ScanLineItem {
 }
 
 export interface ScanResult {
-  merchant: string | null;
+  /**
+   * What to call the expense: the merchant's name with the parts that aren't
+   * the name stripped ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), and a few
+   * words of what was bought when the name alone wouldn't say ("Lidl -
+   * barbecue"). The model's judgement, asked for in the prompt — null when no
+   * name is legible.
+   */
+  title: string | null;
   /** Plain decimal notation, e.g. "42.50" or "1234.50" — parseMinor()-ready. Not a number. */
   total: string | null;
   /** A separate tip or service charge line, same notation as `total`, or null if none. */
@@ -53,7 +60,7 @@ export interface ScanPatch {
 
 export function normalizeScan(result: ScanResult): ScanPatch {
   const patch: ScanPatch = {};
-  if (result.merchant) patch.description = result.merchant;
+  if (result.title) patch.description = result.title;
   if (result.total) patch.amountText = result.total;
   const currency = readCurrency(result);
   if (currency) patch.currency = currency;

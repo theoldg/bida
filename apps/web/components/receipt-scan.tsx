@@ -93,7 +93,7 @@ export function useReceiptScan(
       const receiptItems = result.lineItems.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));
-      // The merchant is a guess, and a title somebody typed is not. Take it
+      // The scan's title is a guess, and a title somebody typed is not. Take it
       // only into an empty field or over the *previous* scan's guess, so a
       // rescan can correct itself without renaming the expense you named.
       // Read fresh: the round trip is long enough to have been typed through.

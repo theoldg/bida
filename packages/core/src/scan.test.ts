@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { checkScan, normalizeScan, scanCurrency, type ScanLineItem, type ScanResult } from "./scan.js";
 
 const blank: ScanResult = {
-  merchant: null, total: null, tip: null, currency: null, date: null, lineItems: [], error: null,
+  title: null, total: null, tip: null, currency: null, date: null, lineItems: [], error: null,
 };
 
 describe("normalizeScan", () => {
@@ -48,9 +48,12 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, date: "last Tuesday" })).not.toHaveProperty("occurredAt");
   });
 
-  it("passes the merchant through as the description", () => {
-    expect(normalizeScan({ ...blank, merchant: "Carrefour" }))
-      .toMatchObject({ description: "Carrefour" });
+  // The title is the model's, adaptations and all — the prompt asks it to
+  // strip what isn't the name and to say what was bought where the name alone
+  // wouldn't. Nothing here second-guesses that; it lands as typed.
+  it("passes the title through as the description", () => {
+    expect(normalizeScan({ ...blank, title: "Lidl - barbecue" }))
+      .toMatchObject({ description: "Lidl - barbecue" });
   });
 
   it("omits fields the model couldn't read, tip and line items included", () => {
