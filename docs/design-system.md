@@ -214,9 +214,11 @@ the control blooms and the sentence goes.
 
 A *refused* action points instead of explaining: a Save that can't go through
 blooms whatever stopped it `--debit` and lets it settle back over ~600ms. A
-missing figure blooms its field — the amount's underline, the title's box, the
-placeholder in either — and so does the multi-payer door, which has no amount
-to divide. A missing *step* blooms the whole control that takes it, edge, label,
+missing figure blooms its field — the amount's underline, the title's box, and
+the label and placeholder in either — and so does the multi-payer door, which
+has no amount to divide. The label goes red with the box because it is the word
+that says *which* field was refused, and a box around typed-over text has no
+placeholder left to colour. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Items tab's entire complaint now that the red sentence
 under it is gone. Both of those are ink blocks, so both fill (below). Pointing beats wording there, because "scan a receipt" was

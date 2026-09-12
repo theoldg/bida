@@ -1107,6 +1107,12 @@ button.amtnote:active { background: var(--hl-edge) }
 .amountfield.flash-b input::placeholder { animation: refuse-amount-ph-b .6s ease-in-out }
 .field.flash-a input::placeholder { animation: refuse-text-a .6s ease-in-out }
 .field.flash-b input::placeholder { animation: refuse-text-b .6s ease-in-out }
+/* And its label. "What:" is the one word that says which field is being
+   refused, and a box blooming around a placeholder that has been typed over —
+   the title is empty on a refusal, but the note beside a transfer needn't
+   be — left the red with nothing to name. */
+.field.flash-a label { animation: refuse-text-a .6s ease-in-out }
+.field.flash-b label { animation: refuse-text-b .6s ease-in-out }
 /* The Items tab refuses the same way a field does, because what is missing
    there is a step and not a figure: the control that takes it blooms. Both
    controls that take one are ink blocks — the scan pair and the door to the
@@ -1130,7 +1136,8 @@ button.amtnote:active { background: var(--hl-edge) }
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
   .amtnote.flash-a, .amtnote.flash-b,
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
-  .field.flash-a input::placeholder, .field.flash-b input::placeholder {
+  .field.flash-a input::placeholder, .field.flash-b input::placeholder,
+  .field.flash-a label, .field.flash-b label {
     animation-duration: .6s !important }
 }
 
