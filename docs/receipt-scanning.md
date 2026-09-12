@@ -14,12 +14,19 @@ control can drift — one act, two doors, one button cut in two
 
 `/g/scan` has to promise something it can't show, since a scan's result is on
 another screen, so it draws it: a bill of four lines and a total, an arrow, and
-the expense that comes back — a title, that same total, a date
-(`copy.scan.diagram`). The picture and the control under it sit centred
-together. It replaced a sentence saying the same thing, and the sentence is now
-the drawing's `alt`. The drawn lines really do add to the drawn total, because
-a receipt that doesn't add up is the one thing this screen can't be caught
-showing — `apps/web/lib/copy.test.ts` sums them.
+the expense that comes back — a title, that same total, a date, and under them
+what the bill came to for three of the group's own members, which is what the
+Receipt tab would leave. The picture and the control under it sit centred
+together; it replaced a sentence saying the same thing, and that sentence is
+now the drawing's `alt`.
+
+The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.ts`
+sums the shares from the same lines the left-hand card prints, and picks the
+three members by the group's id, so a group sees the same faces each time and
+two groups don't see the same ones. A group of fewer than three borrows
+stand-ins. Nothing in the app would notice a picture whose shares stopped
+adding to its own total — on the one screen whose whole job is reading totals
+off receipts — so `diagram.test.ts` adds them up.
 
 ## The shape
 

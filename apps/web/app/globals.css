@@ -24,6 +24,10 @@
      is a button that reads as dead under the thumb — so an inverted control
      takes its press in paper. */
   --press-i:rgba(251,251,250,.17);
+  /* The scan screen's drawing. Its own three tokens because it is the one
+     place in the app that is a picture, and a picture has to sit further off
+     its ground than text does — at palette values it went to mush in dark. */
+  --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
   /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
@@ -55,6 +59,7 @@
     --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
     --press:rgba(230,231,233,.11);
     --press-i:rgba(14,15,17,.15);
+    --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD;
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -70,6 +75,7 @@
   --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
   --press:rgba(230,231,233,.11);
   --press-i:rgba(14,15,17,.15);
+  --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD;
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -652,31 +658,40 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    — with nothing else on the screen, a control at the foot is a control
    stranded a long way from the only thing explaining it. `min-height: 100%`
    is what gives the column the room to centre in. */
+/* The gap between the two is wide on purpose: the picture explains, the
+   control acts, and at a normal gap the drawing read as a caption on the
+   button rather than as the thing the button leads to. */
 .scanpage { min-height: 100%; display: flex; flex-direction: column;
-  justify-content: center; gap: 18px }
-/* The screen's one sentence, drawn: a bill, and the expense that comes back
-   from it. Both are the app's own card — same ground, same hairline, same
-   square corner — each taking half the width the control below takes, so the
-   picture is made of the interface it explains and lines up with it. */
+  justify-content: center; gap: 40px }
+/* The screen's one sentence, drawn: a bill, and the expense it comes back as,
+   split by that bill between three of this group's own members. Both halves
+   are the app's own card — same square corner, same two columns, the same
+   hairline under a total — at half the type size and on `--draw-*`, so the
+   picture is made of the interface it explains and still reads as a picture.
+   Each is half as wide as the control below, so the three line up. */
 .scandiagram { display: flex; align-items: stretch; gap: 10px }
-.scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px;
-  border: 1px solid var(--rule-soft); border-radius: var(--r-s); background: var(--card-2) }
-.scanpaper { display: flex; flex-direction: column; gap: 5px; font-size: 9.5px;
-  color: var(--muted); line-height: 1.2 }
-.scanpaper span { display: flex; justify-content: space-between; gap: 8px }
+.scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px; font-size: 9.5px;
+  line-height: 1.25; color: var(--draw-ink); background: var(--draw-bg);
+  border: 1px solid var(--draw-rule); border-radius: var(--r-s) }
+.scanpaper, .scanform { display: flex; flex-direction: column; gap: 5px }
+.scanform { justify-content: center }
+/* Every row of both cards is a label and a number, the ledger's own shape. */
+.scanpaper span, .scanform span { display: flex; justify-content: space-between;
+  align-items: baseline; gap: 8px }
 /* Preflight italicises a bare `i`; these are a label and a price, not emphasis. */
-.scanpaper i { font-style: normal; font-variant-numeric: tabular-nums }
+.scanpaper i, .scanform i { font-style: normal; font-variant-numeric: tabular-nums }
+/* A member's name is the one thing here we don't choose the length of. */
+.scanform .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.scanpaper hr, .scanform hr { border: 0; border-top: 1px solid var(--draw-rule); margin: 1px 0 }
 /* The total is the one line a scan has to come away with, and the one number
-   that reappears on the right, so it is the line drawn in ink. */
-.scanpaper .tot { color: var(--ink-2) }
-.scanpaper hr { border: 0; border-top: 1px solid var(--rule); margin: 2px 0 }
-.scanform { display: flex; flex-direction: column; justify-content: center; gap: 3px;
-  line-height: 1.25 }
-.scanform .t { font-size: 10px; color: var(--ink-2) }
-.scanform .a { font-size: 15px; color: var(--ink) }
-.scanform .d { font-size: 9px; color: var(--muted) }
-.scanarrow { color: var(--muted); flex: none; align-self: center }
-.scanterms { font-size: 11px; color: var(--muted); text-align: center; margin: 0 }
+   that reappears on the right, so both ends of it are drawn in ink. */
+.scanpaper .tot, .scanform .t { color: var(--ink-2) }
+.scanform .t { font-size: 10px }
+.scanform .a { font-size: 15px; color: var(--ink); align-self: flex-start }
+.scanarrow { color: var(--draw-ink); flex: none; align-self: center }
+/* A touch off the control: the line is a consequence of pressing it, not a
+   caption on it. */
+.scanterms { font-size: 11px; color: var(--muted); text-align: center; margin: 5px 0 0 }
 
 /* ---- dialogs ----
    Our own, in place of prompt() and confirm(): those arrive in another app's

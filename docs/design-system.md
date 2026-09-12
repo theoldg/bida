@@ -36,6 +36,7 @@ tracing of a logo is a worse logo.
 | `--hl`, `--hl-edge`, `--hl-ink` | A neutral wash: your own rows, and pending sync |
 | `--press` | The wash under a thumb. Composited, not a background |
 | `--press-i` | The same wash for a control that is already ink: the primary button, the FAB |
+| `--draw-bg`, `--draw-rule`, `--draw-ink` | The scan screen's drawing, and only that. Palette values in light; lifted off them in dark, where a picture has to sit further from its ground than text does |
 
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
 never colour a control with `--credit`; and because `--brand` is just ink, a
@@ -74,11 +75,14 @@ scale to replace a bill already assigned. The halves name the doors ("Scan",
 "Upload"); the screen around them
 has already named the job — and on `/g/scan` it draws what it promises, since
 that result lands on another screen: a bill of four lines and a total, the
-arrow, and the expense that comes back carrying that same total. The app's one
-picture, built out of `.card-2`, `--rule` and `.bignum` at half the type size,
-so it is made of the interface it explains rather than of illustration. Each
-half is as wide as half the control beneath it, and the sentence the picture
-replaced is its `alt`.
+arrow, and the expense that comes back split by that bill between three of the
+group's own members. The app's one picture, and it is built out of the
+interface it explains rather than of illustration — the same square card, the
+same label-and-number rows, the same hairline under a total, at half the type
+size on `--draw-*`. Each half is as wide as half the control beneath it, so the
+three line up; the sentence the picture replaced is its `alt`; and the shares
+are summed from the lines on the left (`lib/scan/diagram.ts`), never typed, so
+the two halves can't drift apart.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both

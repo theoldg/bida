@@ -457,6 +457,12 @@ export const copy = {
       title: "Dinner",
       amount: "48.20",
       date: "12 Sep",
+      /**
+       * Stand-ins for the drawing's right-hand side, which splits the bill
+       * between three of the group's own members — a group with fewer than
+       * three borrows from here, in order, to fill the picture out.
+       */
+      people: ["Ana", "Ben", "Cleo"],
     },
     /**
      * The two halves of the one control that scans (`ScanPair`), naming the

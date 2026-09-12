@@ -6,6 +6,7 @@ import { ScanPair, useReceiptScan } from "../../../components/receipt-scan";
 import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
+import { drawnShares } from "../../../lib/scan/diagram";
 import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "../../../lib/draft";
 import { route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../lib/hooks";
@@ -90,11 +91,23 @@ function ScanScreen() {
                 <span className="tot"><i>{copy.scan.diagram.total}</i><i>{copy.scan.diagram.amount}</i></span>
               </div>
               <Icon name="arrow" size={14} className="scanarrow" />
-              {/* The same bill as an expense: the three fields a scan fills. */}
+              {/* The same bill as an expense, split by the receipt: the three
+                  fields a scan fills, and under them what it came to for three
+                  of this group's own members. The shares are summed from the
+                  lines on the left (`lib/scan/diagram.ts`), so the two halves
+                  of the picture can't drift apart. */}
               <div className="scanform">
-                <span className="t">{copy.scan.diagram.title}</span>
+                <span className="head">
+                  <i className="t">{copy.scan.diagram.title}</i>
+                  <i className="d">{copy.scan.diagram.date}</i>
+                </span>
                 <span className="a bignum">{copy.scan.diagram.amount}</span>
-                <span className="d">{copy.scan.diagram.date}</span>
+                <hr />
+                {drawnShares(data.members.map((m) => m.name), groupId).map((share) => (
+                  <span key={share.name}>
+                    <i className="who">{share.name}</i><i>{share.amount}</i>
+                  </span>
+                ))}
               </div>
             </div>
 
