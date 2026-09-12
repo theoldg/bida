@@ -512,6 +512,13 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billgroup { margin: 0 -14px; padding: 0 14px }
 .billgroup.on { background: var(--hl); box-shadow: inset 3px 0 0 var(--hl-edge);
   border-radius: var(--r-s) }
+/* The pressed row fills the band, not the column of text inside it: at 100% of
+   `.billgroup`'s content box the highlight stopped 14px short of the tint it
+   sits in at both ends, which read as a misaligned box rather than as this row
+   answering the tap. It carries the 14px itself instead, so the text stays
+   where the `.kv` rows above it are. */
+.billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
+  padding: 5px 14px; border-radius: var(--r-s) }
 /* The open row is the heading of what is under it, so it stops being one more
    muted key in the list. */
 .billgroup.on > .kv .k { color: var(--ink-2) }

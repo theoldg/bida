@@ -121,7 +121,9 @@ identical. Two states cover the gap, and neither is a spinner:
   Instant down, `.2s` up; nothing moves and nothing scales. An inverted control
   — the primary button, the FAB — takes `--press-i` instead: ink washed over
   ink is a tint nobody can see, and a big Save that doesn't answer the thumb
-  reads as a dead button. The browser's own
+  reads as a dead button. The tint fills the control, not the column of text
+  inside it: a press inset from the band it sits in reads as a misaligned box
+  rather than as an answer (`.billgroup > button.kv`). The browser's own
   tap highlight is off (late, and it disagrees), with `touch-action:
   manipulation` to drop the 300ms double-tap wait.
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
