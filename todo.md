@@ -35,21 +35,6 @@ line at the foot of the scroll, dead until this screen exists.
 
 ## Features
 
-### Quick split
-**The entry point is already on the groups list** — the right half of the
-`StartPair` split button (`apps/web/app/page.tsx`), beside "New group", and it
-is dead until this is built. Wire it or remove it; don't leave it.
-
-Help me design a "quick split" mode which allows splitting a receipt straight from the home screen, without creating a group.
-1. "Quick split"
-2. Input members
-3. Scan or upload receipt
-4. Select items
-5. Summary with export link
-Open Qs:
-- disregard currency?
-- how are results exported? Text summary? Image with itemized subtotals? Both?
-
 ### Entry search and sorting
 
 Maybe? Low priority. Needed together with variable exchange rates for the "super long running group" use case.

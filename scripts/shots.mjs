@@ -137,6 +137,8 @@ const routes = (g) => [
   ["rates", `/g/rates?id=${g}`],
   ["entry-expense", `/g/entry/edit?id=${g}`],
   ["entry-transfer", `/g/entry/edit?id=${g}&kind=transfer`],
+  // A quick split has no group in it at all (ADR-0035) — the id is ignored.
+  ["quick", "/quick"],
 ];
 
 async function main() {
@@ -250,6 +252,40 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
+
+      // A quick split, all the way through: the same grid with nobody's
+      // group behind it, and the answer it ends on (ADR-0035). Bare figures
+      // throughout — nothing here converts, so a currency would be a label.
+      await stubScan(page, "two-for-one");
+      await page.goto(`${base}/quick`);
+      for (const who of ["Ana", "Bo", "Cy"]) {
+        await page.getByLabel("Add someone").fill(who);
+        await page.getByLabel("Add someone").press("Enter");
+      }
+      await page.waitForTimeout(150);
+      // The empty screen is in `routes` above; this is the same one with a
+      // table's worth of people on it and the camera live.
+      await page.screenshot({ path: join(SHOTS, `${theme}-quick-people.png`) });
+      process.stdout.write(`${theme}/quick-people `);
+      await page.locator('input[aria-label="Upload a receipt photo"]')
+        .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+      await page.waitForURL(/quick\/items/);
+      // Everybody had the knots and the soda; a pizza each for the other two.
+      for (const label of [
+        /^Ana had Ham pizza/, /^Bo had Cheese pizza/,
+        /^Ana had Garlic knots/, /^Bo had Garlic knots/, /^Cy had Garlic knots/,
+        /^Ana had Soda/, /^Bo had Soda/, /^Cy had Soda/,
+      ]) await page.getByRole("button", { name: label }).click();
+      await page.waitForTimeout(150);
+      await page.screenshot({ path: join(SHOTS, `${theme}-quick-items.png`) });
+      process.stdout.write(`${theme}/quick-items `);
+      await page.getByRole("button", { name: "Done" }).click();
+      await page.waitForURL(/quick\/result/);
+      // Every row open, which is how the screen arrives: the answer is the
+      // bill, not a summary of one.
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-quick-result.png`) });
+      process.stdout.write(`${theme}/quick-result `);
 
       // Adding someone is the last row of the list, mid-name — boxed, because
       // that name is not on the list until its plus is pressed.

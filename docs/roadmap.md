@@ -5,9 +5,11 @@
 **The MVP is Phases 0–3 inclusive** — an app that only works on the phone it was
 typed into is a notebook. Phases 4–6 were the finish, not the product.
 
-**Every phase below is closed** (2026-09-05). What the owner still wants doing
-is in [invariants.md](invariants.md); what was cut rather than built is at the bottom of
-this file, seams intact.
+**Every phase below is closed** (2026-09-05), and quick split landed after
+them (2026-09-12,
+[ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)). What the
+owner still wants doing is in [todo.md](../todo.md); what was cut rather than
+built is at the bottom of this file, seams intact.
 
 ## Phase 0 — Groundwork ✅
 Hosting decided, MVP scope agreed, the visual direction signed off

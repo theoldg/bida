@@ -33,6 +33,11 @@ link. CSV export.
    row did to your balance, signed and coloured; rows you're not in faded back;
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
+**A bill with no group.** Quick split: name who is at the table, photograph
+the receipt, assign the lines, and copy the answer out as text. It writes no
+op and keeps nothing — the one thing here that is not a ledger
+([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
 Shared, not solo — sync is part of the MVP. Multi-currency, with one rate per
 currency held by the group and corrected in one place

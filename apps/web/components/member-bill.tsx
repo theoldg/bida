@@ -20,18 +20,25 @@ import type { MemberLine } from "../lib/scan/items";
  * answer a quick split ends on (ADR-0035). How a figure is printed is the
  * caller's — the group's currency, or bare.
  */
-export function MemberBill({ name, total, lines, format }: {
+export function MemberBill({ name, total, lines, format, startOpen = false }: {
   name: string;
   total: React.ReactNode;
   lines: MemberLine[];
   format: (minor: number) => string;
+  /**
+   * Open from the start. A saved expense keeps its rows shut — the split is
+   * one line of a screen about the whole entry — but a quick split's answer
+   * *is* the bill, and somebody reading it out at the table should not have
+   * to open three rows first (ADR-0035).
+   */
+  startOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   return (
     // Row and lines are one band while it is open — the highlighter-and-edge
     // the bill screen uses for the portions of a single dish. Without it the
     // lines read as loose rows of the card rather than as this person's bill.
-    <div className={`billgroup${open ? " on" : ""}`}>
+    <div className={`billgroup${startOpen ? " flat" : ""}${open ? " on" : ""}`}>
       <button type="button" className="kv" aria-expanded={open}
         onClick={() => setOpen(!open)}>
         <span className="k">

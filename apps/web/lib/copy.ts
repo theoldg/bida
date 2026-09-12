@@ -309,6 +309,8 @@ export const copy = {
     /** The one bill this flow can do nothing with: a total and no lines. */
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
+    /** Done is the way out of the answer, and the answer is not kept either. */
+    doneTitle: "Finished with this split?",
     discardBody: "Nothing about it is kept.",
     split: "The split",
     copy: "Copy the split",

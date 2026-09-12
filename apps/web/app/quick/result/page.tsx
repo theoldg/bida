@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "../../../components/bits";
 import { Blank, Body, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { Dialog } from "../../../components/dialog";
+import { ConfirmDialog, Dialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { MemberBill } from "../../../components/member-bill";
 import { copy } from "../../../lib/copy";
@@ -35,6 +35,10 @@ export default function QuickResultPage() {
   const draft = useDraft(cred?.id);
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
+  // Done is the end of the split and the end of the split is the end of the
+  // bill: nothing here is written anywhere, so leaving without the text
+  // copied loses the evening's arithmetic. Worth one question.
+  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     if (!copied) return;
@@ -43,10 +47,15 @@ export default function QuickResultPage() {
   }, [copied]);
 
   const ready = draft !== undefined && (draft.receiptItems?.length ?? 0) > 0;
+  // Leaving on purpose throws the split away too, and this screen must not
+  // read that as "arrived with nothing" and send anybody back to the start:
+  // the two are the same state one tick apart, and the redirect below won
+  // the race against the way out.
+  const leaving = useRef(false);
   // A reload loses a quick split — it is a draft, and no draft in this app
   // outlives its screens. Start again rather than show an empty answer.
   useEffect(() => {
-    if (cred && !ready) router.replace(route.quick());
+    if (cred && !ready && !leaving.current) router.replace(route.quick());
   }, [cred, ready, router]);
 
   if (!cred || !draft || !ready) return <Blank title={copy.quick.split} />;
@@ -69,6 +78,7 @@ export default function QuickResultPage() {
   }
 
   function done() {
+    leaving.current = true;
     if (cred) clearDraft(cred.id);
     clearQuickPeople();
     // Unwind rather than push: the three screens behind this one are a flow
@@ -91,7 +101,8 @@ export default function QuickResultPage() {
                 <MemberBill key={share.name} name={share.name}
                   total={bare(share.minor, draft.currency)}
                   lines={share.lines}
-                  format={(minor) => bare(minor, draft.currency)} />
+                  format={(minor) => bare(minor, draft.currency)}
+                  startOpen={true} />
               ))}
             </Card>
           </div>
@@ -104,10 +115,21 @@ export default function QuickResultPage() {
             </button>
           </div>
           <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            <button type="button" className="btn" onClick={done}>{copy.act.done}</button>
+            {/* The way out, in the secondary register: the act this screen
+                exists for is the one above it. */}
+            <button type="button" className="btn btn-s" onClick={() => setAsking(true)}>
+              {copy.act.done}
+            </button>
           </div>
         </Scroll>
       </Body>
+
+      {asking ? (
+        <ConfirmDialog title={copy.quick.doneTitle} confirm={copy.act.done}
+          danger={true} onConfirm={done} onClose={() => setAsking(false)}>
+          <p>{copy.quick.discardBody}</p>
+        </ConfirmDialog>
+      ) : null}
 
       {failed ? (
         <Dialog title={copy.quick.fallbackTitle} onClose={() => setFailed(false)}>

@@ -21,11 +21,19 @@ two devices.
 
 ## The next action
 
-**Two doors off the home screen are drawn but dead** (2026-09-12). "New group ·
-Quick split" is one `.btn-pair` below the list and "About bida" a centred line
-under everything; the right half of the pair and the about line have no screen
-behind them yet. **Build them or take them off — do not leave a dead control on
-the screen the app opens on** (todo.md: "Quick split", "About/feedback/privacy").
+**One door off the home screen is still drawn and dead** (2026-09-12). "About
+bida", the centred line under everything, has no screen behind it. **Build it
+or take it off — do not leave a dead control on the screen the app opens on**
+(todo.md: "About/feedback/privacy").
+
+**Quick split is built** (2026-09-12). A bill divided with people who are not
+a group and never become one: `/quick` → `/quick/items` → `/quick/result`,
+ending on text for the clipboard. It appends no op and asks nobody who they
+are; the who-had-what grid is now a component both it and the entry form wear,
+and the phone carries its own scan credential so a scan needs no group
+([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)). If the
+shared Gemini key ever needs a rate limit, `receipt-scanning.md` says where
+it goes.
 
 **A row is a row on every screen** (2026-09-12). The groups list and the
 skeleton drawn while either list loads are held to the ledger row's height, so

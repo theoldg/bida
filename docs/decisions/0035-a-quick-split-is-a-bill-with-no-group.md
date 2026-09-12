@@ -33,14 +33,25 @@ is worse than none ([0005](0005-money-and-currency.md) governs the group case
 and does not reach this one). A currency is still read off the bill for its
 minor-unit exponent, since the split is integer minor units like all the rest.
 
-**The scan endpoint authenticates a secret, not a membership.** It refuses an
-id D1 has never seen, because the alternative is an open proxy to our Gemini
-key — so a quick split mints an id and a secret the way a group does, and the
-Worker registers the pair on first sight (`ensureGroup`, as the ops endpoint
-already does) rather than 404ing it. The row holds an id, a SHA-256 hash and a
-timestamp; no op is ever pushed under it, so **the server learns strictly less
-about a quick split than about a group**. The credential is deliberately not in
-`groupKeys`, which is the table the sync engine walks.
+**The scan endpoint authenticates a secret, not a membership**, and it refuses
+an id D1 has never seen, because the alternative is an open proxy to our Gemini
+key. So a quick split brings a credential shaped like a group's, and registers
+it the way a group's first sync does: an empty `POST …/ops`, which is already
+the call that writes an id and a secret hash on first sight (`ensureGroup`).
+**No API change** — the endpoint that spends money stays read-only, which is
+where a rate limit would go and not something to widen first. The row holds an
+id, a hash and a timestamp; no op is ever pushed under it, so **the server
+learns strictly less about a quick split than about a group**. The credential
+is deliberately not in `groupKeys`, the table the sync engine walks.
+
+**One credential per phone, not per bill**, minted on first need and kept in
+the device store. A fresh id per split would write a row for every bill
+anybody photographs and would make the caller unidentifiable across two scans
+a minute apart — and a stable caller is exactly the unit anything we ever
+throttle has to count, alongside the IP Cloudflare hands us. It is registered
+before *every* scan rather than once and remembered: it costs one D1 read when
+the row is already there, and it is the only version of this that survives the
+database being wiped, which the owner does.
 
 **One grid, two doors.** The who-had-what screen becomes a component the group
 route and the quick route both wear, as the scan control already is
@@ -62,9 +73,12 @@ would disagree within a month.
   again.** The seam is the draft: it is already the shape `addExpense` takes.
   What stops it is not the code but two questions — who paid, and who you are —
   that this flow exists to avoid.
-- Empty rows accumulate in D1, one per split that reaches the camera. They cost
-  a few dozen bytes and hold nothing; a sweep of `last_op_seq = 0` rows is
-  available if that ever matters.
+- One empty row per phone accumulates in D1, holding nothing. A sweep of
+  `last_op_seq = 0` rows is available if that ever matters.
+- **A quick split's scans are linkable to each other server-side**, by that
+  stable id, where per-split credentials would have been unlinkable. That is
+  the price of being able to throttle a caller at all, and it buys the server
+  nothing else: there is no content under the id to link them to.
 
 ## Rejected
 
@@ -75,6 +89,10 @@ would disagree within a month.
   regrets. The flow's whole value is the questions it does not ask.
 - **An unauthenticated scan endpoint.** One line shorter, and it is our key
   behind it: anybody who reads the bundle gets a free vision model.
+- **Registering the credential *in* the scan route** — `ensureGroup` instead of
+  `getGroup`, one word, and it saves a round trip per scan. It also makes the
+  one endpoint that spends money the one that writes rows, so a flood costs
+  twice and the limiter has two things to reason about instead of one.
 - **Keeping the split on the device so it survives a reload.** A quick split
   outlives a form, and losing one at the table is a real annoyance — but it is
   the only screen in the app that would remember what you half-typed, and

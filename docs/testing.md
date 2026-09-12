@@ -146,12 +146,13 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
-   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Eleven scenes have no URL
+   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Fourteen scenes have no URL
    worth visiting and are reached by driving instead: five dialogs (add member,
    forget group — from the groups list's row menu — delete entry, a transfer
    side's person picker, and the rate editor), `who-had-what` twice, `expense-split-amounts` (a deliberate
-   shortfall) and `payers` — the last two hang off the entry form's in-memory
-   draft, so their own URLs photograph an empty frame.
+   shortfall), `payers`, and the three of a quick split (people, grid, answer)
+   — every one of them hangs off an in-memory draft, so its own URL
+   photographs an empty frame.
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
@@ -309,8 +310,9 @@ phone rather than the screen — the same family as `offline` — and the scan
 button is still the app's own, pressed by number: the hidden file input opens a
 real chooser, this answers it with a real (1×1) image the client really
 downscales, and only the round trip to Gemini is faked. It is the one way to
-reach the who-had-what grid, whose screen exists nowhere else: a scanned bill
-lives in an in-memory draft, so it cannot be seeded by poking storage.
+reach the who-had-what grid — by either door, the entry form's or a quick
+split's — since a scanned bill lives in an in-memory draft and cannot be
+seeded by poking storage.
 
 The bills are `scripts/fixtures/receipts/*.json`, shared with `pnpm shots`, and
 each declares in `exercises` the verdict it is for — `ok`, `rejected`,

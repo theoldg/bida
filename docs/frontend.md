@@ -27,6 +27,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog — which only ever edits the number, since deleting a rate is on the row's long-press menu, as it is for an entry. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
 | `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on |
+| `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): who is splitting and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then opens the group. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
@@ -82,7 +83,9 @@ confers nothing without the secret.
   op carries only what changed is `patch.ts`, once, for both entry editors: it
   was written out at each of them and the two copies drifted.
 - Device-local, never-synced state (who "you" are, theme, install-nudge
-  dismissal, the last group opened) is in the `device` store. Two screens read
+  dismissal, the last group opened, and the scan credential a quick split
+  photographs with — [ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
+  is in the `device` store. Two screens read
   `lastOpenedGroupId`, which `/g` sets on every visit (`setLastOpenedGroup`):
   `/new` defaults a fresh group's currency to that group's rather than always
   EUR, and `/` reopens the group itself on a launch (`lib/launch.ts`) — nearly
@@ -111,6 +114,10 @@ confers nothing without the secret.
   side: the rest of the draft is not its to throw away. So does who-had-what,
   which has to write a split or merged line through as it happens — its rows
   and the bill's lines are one list — and restores the bill it opened with.
+  A **quick split** is this same store, keyed by the phone's scan credential
+  rather than by a group, which is what makes the whole of it — bill, grid and
+  answer — something leaving throws away
+  ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
   **What the entry is worth is `draftAmountMinor` and nowhere else** — a
   scanned bill is worth what its lines add up to, and the payers editor
   reading `amountText` on its own is how it came to call one €0.00. With no
@@ -313,8 +320,8 @@ At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
 none outside one. The groups list carries its starts below the list instead of
 in it: **New group · Quick split** as one `.btn-pair` (`.homepair`), and
 **About bida** as a centred line that falls to the foot of the scroll
-(`.homeabout` in a full-height `.homescroll`). Quick split and About are
-placeholders — neither screen exists yet (todo.md). `Tabs` was deleted
+(`.homeabout` in a full-height `.homescroll`). About is still a placeholder —
+that screen does not exist yet (todo.md). `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 

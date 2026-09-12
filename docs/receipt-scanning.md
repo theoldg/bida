@@ -5,11 +5,13 @@
 
 Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
-Two screens start one: `/g/scan`, the camera above the ledger's "+", which is
-the act with nothing else on screen; and the form's own "Items" tab, for a
-bill you reach for once the expense exists. Both call `useReceiptScan` and wear
+Three screens start one: `/g/scan`, the camera above the ledger's "+", which is
+the act with nothing else on screen; the form's own "Items" tab, for a
+bill you reach for once the expense exists; and `/quick`, where there is no
+group at all ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+All three call `useReceiptScan` and wear
 `ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
-control can drift — one act, two doors, one button cut in two
+control can drift — one act, three doors, one button cut in two
 ([design-system.md](design-system.md#palette-roles)).
 
 `/g/scan` has to promise something it can't show, since a scan's result is on
@@ -92,7 +94,16 @@ The rules that follow from it:
   control enabled — the retry is the same button, not a second one.
 - **No throttling, no counters, no D1 writes.** Auth is the existing
   `bearerSecret` + `sha256Hex` check against the group row: one D1 read, no new
-  table, and it's the difference between "my friends" and "the internet".
+  table, and it's the difference between "my friends" and "the internet". It
+  authenticates a *secret*, not a membership — which is what lets a quick
+  split scan with a credential of its own (below).
+- **Whoever is paying for the scan is the id in the path.** A group, or — for
+  a quick split — the phone, which carries an id and a secret shaped like a
+  group's and introduces the pair with an empty `POST …/ops` before each scan
+  (`lib/quick.ts`, ADR-0035). One per phone rather than one per bill, because
+  a stable caller is the unit anything we ever throttle would count; **if this
+  ever needs a rate limit, that path parameter and `cf-connecting-ip` are what
+  it has to key on**, and the scan handler is the one place to put it.
 
 Nothing changes in `sw.js` — it already ignores non-GET and cross-origin, and
 `/api/*` was never cached.
@@ -281,9 +292,10 @@ per-group quota, then a decision about whether the photo is stored at all.
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
 `request.ts` (prompt and structured output schema), `response.ts`,
-`scanReceipt()` · `components/receipt-scan.tsx`, the hook both scanning screens
-share — `/g/scan` and the Items tab on `/g/entry/edit` — with
-`/g/entry/items` a tap behind the tab. The control they wear draws the round
+`scanReceipt()` · `components/receipt-scan.tsx`, the hook all three scanning screens
+share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
+the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and
+the screen after the scan respectively. The control they wear draws the round
 trip as a bar filling over the ~2s a scan usually takes, falling back to the
 spinner only when the model is slower
 ([design-system.md](design-system.md#palette-roles)). Where the scan is *up
