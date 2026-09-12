@@ -45,17 +45,19 @@ Obey them; adding one is rare and has a bar at the head of that file.
 Next.js (`output: 'export'`) + Tailwind + hand-rolled components
 ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)), served with a
 Hono API by one Cloudflare Worker. Data is an append-only op log in IndexedDB
-(Dexie), synced to D1. R2 for receipts, not built. No accounts — a group is a
-secret link. [architecture.md](docs/architecture.md) ·
+(Dexie), synced to D1 **sealed** — the server cannot read a group
+([ADR-0036](docs/decisions/0036-the-server-cannot-read-a-group.md)). No accounts
+— a group is a secret link, and that link is now the key as well. [architecture.md](docs/architecture.md) ·
 [hosting.md](docs/hosting.md).
 
 ## Current state
 
 Every phase is closed. The app is deployed and syncing in production, a group
 holds three kinds of entry — expense, income, transfer
-([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), and the last class of
-defect is closed: state two phones can merge into that no check can prevent is
-now named and repaired by [docs/invariants.md](docs/invariants.md).
+([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), state two phones can
+merge into that no check can prevent is named and repaired by
+[docs/invariants.md](docs/invariants.md), and what syncs is encrypted end to
+end.
 
 **Exact state and next action live in
 [docs/implementation-status.md](docs/implementation-status.md)** — not here, so

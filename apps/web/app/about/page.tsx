@@ -14,9 +14,9 @@ import { route } from "../../lib/group-link";
  *
  * The privacy section is the reason the screen is worth its slot. There are no
  * accounts and the group is a link, which makes "who can see this?" the first
- * question a person actually has — and the honest answer today is that the
- * server stores what syncs as plain text (todo.md, "Assess privacy"). Saying so
- * costs a paragraph; discovering it later costs the project its one asset.
+ * question a person actually has — and since ADR-0036 the answer is a good one:
+ * the link is the key, and the server holds what it cannot open. A claim like
+ * that has to be exact, which is why the scan keeps a line of its own.
  */
 export default function AboutPage() {
   return (
@@ -31,8 +31,8 @@ export default function AboutPage() {
             <Section title={copy.about.onYourPhone.title}>{copy.about.onYourPhone.body}</Section>
             {/* The scan line is a second paragraph rather than a clause in the
                 first: the photograph leaves for somebody else's server
-                entirely, which is a different claim from "ours keeps it in the
-                clear". */}
+                entirely, and it is now the one thing about this app that is
+                not sealed. An exception buried in a sentence is a lie. */}
             <Section title={copy.about.privacy.title} under={
               <p className="hint">{copy.about.privacy.scan}</p>
             }>{copy.about.privacy.body}</Section>

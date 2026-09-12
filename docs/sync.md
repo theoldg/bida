@@ -111,26 +111,40 @@ later. Don't throw on out-of-order ops.
 ## The protocol
 
 Two endpoints — `apps/api/src/index.ts` (routes), `store.ts` (D1), `auth.ts`
-(bearer check). Both authenticate with the group secret as a bearer token
-([ADR-0003](decisions/0003-link-only-access.md)).
+(bearer check). Both authenticate with a **token derived from the group secret**
+([ADR-0003](decisions/0003-link-only-access.md),
+[ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)); the secret itself
+never leaves the phone.
+
+**An op crosses the wire sealed.** What is sent is an envelope —
+`{ id, groupId, sealed, seq }` — where `sealed` is the rest of the op encrypted
+under the other branch of the same derivation (`core/seal.ts`). `id` is the
+idempotency key and `groupId` the address, so those two are what routing needs
+and all it gets.
 
 **`POST /api/groups/:id/ops`**
 ```jsonc
-// → { "ops": [ /* unsynced Op[], no seq */ ], "since": 412 }
+// → { "ops": [ /* unsynced SealedOp[], no seq */ ], "since": 412 }
 // ← { "assigned": { "<opId>": 413 }, "ops": [ /* seq > 412, unseen */ ],
 //     "latestSeq": 419 }
 ```
 Accepting is idempotent on `Op.id`, which is what makes retry safe on a flaky
-connection. **There is no create-group endpoint**: a group's first push
-registers it, storing `sha256(secret)` from that request's token, and every
-later request is checked against it. A `GET` on a never-pushed group returns
-404 — the creating device must sync once before an invite link is pullable.
+connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
+and the id is what says they are one op. **There is no create-group endpoint**:
+a group's first push registers it, storing `sha256(token)` from that request,
+and every later request is checked against it. A `GET` on a never-pushed group
+returns 404 — the creating device must sync once before an invite link is
+pullable.
 
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
 
 ## The sync engine
 
-`apps/web/lib/db/sync.ts`. A single-flight loop triggered by a local write
+`apps/web/lib/db/sync.ts`, which is also **the boundary the plaintext stops
+at**: ops are plain in Dexie and on every screen, and the `sealOp`/`openOp` pair
+in `pushPullGroup` is the whole of why the server holds ciphertext. A pulled op
+is opened before anything is stored, so a body this phone cannot read fails the
+run rather than half-applying it. A single-flight loop triggered by a local write
 (debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the
@@ -219,6 +233,9 @@ audit trail exists to answer.
 
 ## Gotchas
 
+- **A second path to the server is a second place to forget the seal.** Anything
+  that ships an op has to go through `pushPullGroup`, or the claim on `/about`
+  quietly stops being true.
 - **Never garbage-collect ops.** They are the history feature. If the log ever
   got genuinely large the answer is snapshotting, and that's a new ADR.
 - `createdAt` is display-only. Sort by it and conflicts start resolving

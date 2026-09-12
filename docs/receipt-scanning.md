@@ -93,7 +93,7 @@ The rules that follow from it:
   requests and the shared daily Gemini quota. A failure says so and leaves the
   control enabled — the retry is the same button, not a second one.
 - **No throttling, no counters, no D1 writes.** Auth is the existing
-  `bearerSecret` + `sha256Hex` check against the group row: one D1 read, no new
+  `bearerToken` + `sha256Hex` check against the group row: one D1 read, no new
   table, and it's the difference between "my friends" and "the internet". It
   authenticates a *secret*, not a membership — which is what lets a quick
   split scan with a credential of its own (below).
@@ -276,7 +276,11 @@ Deliberate, for a group of friends under fifty people:
   (we don't need per group throttling etc)"*.
 - **Free tier trains on the input.** Google uses free-tier prompts to improve
   its products and human reviewers may see them. These are receipts: a place,
-  a date, a card's last four. The scan button carries one plain line saying so.
+  a date, a card's last four. The scan button carries one plain line saying so,
+  and since op bodies are sealed
+  ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) this is **the
+  one thing in the app that leaves a phone readable** — `/about` names it as the
+  exception rather than burying it in a clause.
 - **Free-tier terms can change overnight.** If they do, scanning 404s and the
   button hides. The app is unaffected.
 
@@ -287,7 +291,7 @@ per-group quota, then a decision about whether the photo is stored at all.
 ## What it's made of
 
 `packages/core/src/scan.ts` — the normaliser, no network · `apps/api`'s `POST
-/api/groups/:id/scan`, the same bearer-secret check as sync, passing through to
+/api/groups/:id/scan`, the same bearer-token check as sync, passing through to
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,

@@ -7,7 +7,7 @@ probably in its "Rejected" section, which is the half worth keeping.
 ## Adding one: the default is no
 
 **Most sessions add none, and a session that adds two is documenting its work
-rather than deciding anything.** There are fourteen, and that number should move
+rather than deciding anything.** There are fifteen, and that number should move
 about as often as the architecture does. All four of these must hold:
 
 1. **It is built and shipped**, not proposed. An ADR records a decision the
@@ -58,3 +58,4 @@ the decision, or a rejected option nobody would propose, is a line to cut.
 | [0033](0033-every-word-in-one-file.md) | Every word the app says lives in one file |
 | [0034](0034-a-member-is-their-name.md) | A member is their name, and a name cannot be changed |
 | [0035](0035-a-quick-split-is-a-bill-with-no-group.md) | A quick split is a bill with no group |
+| [0036](0036-the-server-cannot-read-a-group.md) | The server cannot read a group: op bodies are sealed under the link secret |

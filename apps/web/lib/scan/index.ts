@@ -1,4 +1,5 @@
 import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
+import { groupToken } from "../seal";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { buildScanRequestBody } from "./request";
 import { parseScanResponse } from "./response";
@@ -38,6 +39,8 @@ export class ScanOfflineError extends Error {}
 export async function scanReceipt(
   photo: File | Blob,
   groupId: string,
+  /** The group's link secret, or this phone's scan credential. Derived from,
+   *  never sent: the bearer is the token beside the key (ADR-0036). */
   secret: string,
   /** The draft's currency — what a receipt that doesn't name its own is counted in. */
   currency: string,
@@ -48,11 +51,12 @@ export async function scanReceipt(
     throw new ScanOfflineError("offline");
   }
   const imageBase64 = await downscaleToBase64Jpeg(photo);
+  const token = await groupToken(groupId, secret);
   let res: Response;
   try {
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(buildScanRequestBody(imageBase64)),
     });
   } catch (err) {

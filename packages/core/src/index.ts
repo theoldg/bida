@@ -13,3 +13,4 @@ export * from "./invariants.js";
 export * from "./settle.js";
 export * from "./scan.js";
 export * from "./names.js";
+export * from "./seal.js";

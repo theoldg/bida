@@ -210,38 +210,31 @@ at most `n−1` transfers — not provably minimal (NP-hard), just good. Say
 
 ## D1 schema
 
-The server stores the log and the attachment index. That is all — there is no
+The server stores **sealed** ops and nothing else it could read
+([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). There is no
 `expenses` table on the server, which is the whole point of
-[ADR-0002](decisions/0002-append-only-op-log.md).
+[ADR-0002](decisions/0002-append-only-op-log.md) — and now no `entity`, `patch`
+or `actor` column either, because those said what an op meant.
 
 ```sql
 CREATE TABLE groups (
-  id TEXT PRIMARY KEY, secret_hash TEXT NOT NULL,   -- sha256, never the secret
+  id TEXT PRIMARY KEY, token_hash TEXT NOT NULL,    -- sha256 of the derived token
   created_at INTEGER NOT NULL, last_op_seq INTEGER NOT NULL DEFAULT 0);
 
 CREATE TABLE ops (
   seq INTEGER NOT NULL,          -- per-group, assigned by the server
   id TEXT PRIMARY KEY,           -- client UUID = idempotency key
   group_id TEXT NOT NULL REFERENCES groups(id),
-  entity TEXT NOT NULL,          -- group|member|expense|settlement|attachment|
-                                 -- identity|rate
-  entity_id TEXT NOT NULL,
-  kind TEXT NOT NULL,            -- create|update|delete|restore
-  patch TEXT NOT NULL,           -- JSON, changed fields only
-  hlc TEXT NOT NULL,             -- lexicographically sortable
-  actor TEXT NOT NULL,           -- memberId that made the change
-  note TEXT, created_at INTEGER NOT NULL);
+  sealed TEXT NOT NULL,          -- base64: version byte, IV, AES-GCM ciphertext
+  received_at INTEGER NOT NULL); -- our clock; the phone's createdAt is sealed
 CREATE UNIQUE INDEX ops_group_seq ON ops(group_id, seq);
-CREATE INDEX ops_group_entity ON ops(group_id, entity_id);
-
-CREATE TABLE attachments (
-  id TEXT PRIMARY KEY, group_id TEXT NOT NULL REFERENCES groups(id),
-  expense_id TEXT NOT NULL, r2_key TEXT NOT NULL, mime TEXT NOT NULL,
-  bytes INTEGER NOT NULL, width INTEGER, height INTEGER,
-  created_at INTEGER NOT NULL);
 ```
 
-## IndexedDB (Dexie), schema v6
+The `attachments` table is gone with it: it indexed R2 objects for a feature
+that was cut ([product.md](product.md#deliberately-not-in-the-mvp)), and an
+encrypted one would want different columns anyway.
+
+## IndexedDB (Dexie), schema v8
 
 | Store | Key | Notes |
 |---|---|---|
@@ -250,11 +243,14 @@ CREATE TABLE attachments (
 | `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
 | `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
-| `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op — [ADR-0003](decisions/0003-link-only-access.md) |
+| `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
 
-`identityLog` existed in v2 and is **dropped** — identity claims are ops now.
-v5/v6 re-key `identities` from `id` to `[groupId+id]`, in two steps because
-Dexie refuses to change a primary key in place.
+**One version declares all of it.** The chain of seven that got here has been
+collapsed: every phone had run them, and what a schema was on the way here is
+the git log's business. The v8 upgrade does one thing — re-arm every op as
+pending and reset each sync cursor — because the server's copy was wiped when
+sealing landed and the phone's log is what refills it
+([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
 
 The materialised stores are a **cache**: if a migration gets confusing, drop
 them and re-fold from `ops`. Never migrate materialised data by hand — which is

@@ -1,6 +1,5 @@
 import Dexie, { type Table } from "dexie";
 import { started } from "../diag";
-import { upgradeReceiptSplit } from "@bida/core";
 import type {
   Attachment,
   ExchangeRate,
@@ -131,7 +130,17 @@ export class BidaDb extends Dexie {
 
   constructor() {
     super("hajsik"); // deliberately not "bida" — see above
-    this.version(1).stores({
+    /**
+     * One version, where there used to be seven.
+     *
+     * The chain that got here described upgrades every phone has long since
+     * run — a device-local identity log and its replacement by `identity` ops,
+     * the rate registry, two re-keyings of `identities`, and the receipt-split
+     * rewrite — and none of it could still fire. Declaring the schema once is
+     * what this file is for; the history of how it got that shape is the git
+     * log's job.
+     */
+    this.version(8).stores({
       ops: "id, groupId, entityId, hlc, pending, [groupId+hlc]",
       groups: "id, archivedAt",
       members: "id, groupId",
@@ -140,50 +149,20 @@ export class BidaDb extends Dexie {
       attachments: "id, groupId, expenseId, uploadState",
       device: "key",
       groupKeys: "groupId",
-    });
-    // v2 added `identityLog`, a device-local table of identity changes. Only
-    // the tables that change are listed — Dexie carries the rest forward.
-    this.version(2).stores({
-      identityLog: "++id, groupId, at",
-    });
-    // v3 replaces it with `identities`, materialised from `identity` ops:
-    // who a device says it is became a shared fact, so the log of it is the
-    // op log like everything else (ADR-0003). The old
-    // table is dropped rather than migrated — its rows have no ops behind
-    // them, and the shared record honestly starts here.
-    this.version(3).stores({
-      identities: "id, groupId",
-      identityLog: null,
-    });
-    // v4 adds the group's exchange-rate registry (ADR-0005). Materialised from
-    // `rate` ops like everything else, so there is nothing to migrate: a phone
-    // that upgrades has an empty table until the log gives it rows, and every
-    // foreign entry keeps converting at the rate it was saved with until then.
-    this.version(4).stores({
+      identities: "[groupId+id], groupId",
       rates: "[groupId+id], groupId",
-    });
-    // v5/v6 re-key `identities` by `[groupId+id]`. Its `id` is the device's
-    // HLC node id — one string per install, the same in every group — so keyed
-    // by that alone a phone in two groups had one row, and re-folding either
-    // group deleted the other group's claim.
-    //
-    // Two versions because Dexie refuses to change a table's primary key in
-    // place ("Not yet support for changing primary key"): drop, then recreate,
-    // exactly as `identityLog` did. Nothing is migrated and nothing is lost —
-    // the materialised tables are a cache of the op log, and `rebuild()`
-    // refills this one from the `identity` ops that are the real record.
-    this.version(5).stores({ identities: null });
-    this.version(6).stores({ identities: "[groupId+id], groupId" });
-    // v7 brings stored expenses to the shape the fold now produces: a receipt
-    // split is its own `SplitMode` rather than `shares` beside a `splitTab`
-    // flag (ADR-0016). No table changes — these rows are a cache of the op
-    // log, and this is the same upgrade the fold applies to the ops behind
-    // them. Done here rather than left to `rebuild()`, which only runs when a
-    // pull brings ops: a phone that syncs nothing new would have gone on
-    // calling its own scanned bills "as parts".
-    this.version(7).upgrade(async (tx) => {
-      await tx.table("expenses").toCollection()
-        .modify((expense: Record<string, unknown>) => upgradeReceiptSplit(expense));
+    }).upgrade(async (tx) => {
+      // The one thing the collapse *does* do, and it runs once per phone.
+      //
+      // Encryption (ADR-0036) changed what the server stores, so its copy of
+      // every group was wiped the day it landed. The ops are still here — this
+      // table is the truth and the server is a relay — so the phone re-offers
+      // its whole log, sealed this time, and asks for the group back from
+      // sequence zero. Without it a group would look healthy and be an island:
+      // nothing left to push, and a cursor pointing past the end of a log that
+      // starts again at 1.
+      await tx.table("ops").toCollection().modify({ pending: 1, seq: null });
+      await tx.table("groupKeys").toCollection().modify({ lastSeq: 0 });
     });
   }
 }

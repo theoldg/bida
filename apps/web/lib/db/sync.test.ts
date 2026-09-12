@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { foldOps } from "@bida/core";
+import { deriveGroupCrypto, foldOps, openOp, sealOp, type Op, type SealedOp } from "@bida/core";
 import { db } from "./dexie";
 import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, saveGroupKey } from "./commands";
@@ -11,7 +11,19 @@ import { syncAll, syncGroup } from "./sync";
  * comes back, and never lose or duplicate anything in the process. The wire
  * format itself (docs/sync.md) is exercised here against a mocked fetch —
  * the real server round-trip is apps/api's job.
+ *
+ * The mocked server is held to the real one's ignorance: it is handed sealed
+ * ops and it answers with sealed ops, because that is all the real one has
+ * (ADR-0036). `serverOps` is the seam — a peer's phone sealing what this one
+ * will have to open.
  */
+
+/** What a peer pushed, as the server would hand it back: sealed, never plain. */
+async function serverOps(groupId: string, ops: readonly Op[]): Promise<SealedOp[]> {
+  const key = await db().groupKeys.get(groupId);
+  const crypto = await deriveGroupCrypto(key!.secret, groupId);
+  return Promise.all(ops.map((op) => sealOp(crypto, op)));
+}
 
 async function wipe() {
   const d = db();
@@ -76,8 +88,9 @@ describe("syncGroup", () => {
       hlc: formatHlc(createHlcState("peer", Date.now() + 3600_000, 0)),
       actor: "someone-else", note: null, createdAt: Date.now(), seq: 1,
     };
+    const sealed = await serverOps(groupId, [removal]);
     vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ assigned: {}, ops: [removal], latestSeq: 1 }), { status: 200 }),
+      new Response(JSON.stringify({ assigned: {}, ops: sealed, latestSeq: 1 }), { status: 200 }),
     ));
 
     await syncGroup(groupId);
@@ -104,8 +117,9 @@ describe("syncGroup", () => {
       hlc: formatHlc(createHlcState("peer", Date.now() + 3600_000, 0)),
       actor: theo, note: null, createdAt: Date.now(), seq: 1,
     };
+    const sealed = await serverOps(groupId, [removal]);
     vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ assigned: {}, ops: [removal], latestSeq: 1 }), { status: 200 }),
+      new Response(JSON.stringify({ assigned: {}, ops: sealed, latestSeq: 1 }), { status: 200 }),
     ));
 
     await syncGroup(groupId);
@@ -128,8 +142,9 @@ describe("syncGroup", () => {
     await wipe();
     await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
 
+    const sealed = await serverOps(groupId, remoteOps);
     vi.stubGlobal("fetch", vi.fn(async () =>
-      new Response(JSON.stringify({ assigned: {}, ops: remoteOps, latestSeq: 1 }), { status: 200 }),
+      new Response(JSON.stringify({ assigned: {}, ops: sealed, latestSeq: 1 }), { status: 200 }),
     ));
 
     const outcome = await syncGroup(groupId);
@@ -168,6 +183,45 @@ describe("syncGroup", () => {
     // And the group is free to sync again once that run is done.
     await syncGroup(groupId);
     expect(calls).toBe(2);
+  });
+
+  /**
+   * The claim the about screen makes, at the one place it can be broken: what
+   * leaves this phone. If a future change routes an op to the server without
+   * going through `sealOp`, this is what notices.
+   */
+  it("sends a sealed body and a derived token, never the secret or the words in it", async () => {
+    const { groupId } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh-the-link-secret", lastSeq: 0 });
+    let sent: { body: string; auth: string | null } | undefined;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      sent = {
+        body: init.body as string,
+        auth: new Headers(init.headers).get("Authorization"),
+      };
+      return new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 0 }), { status: 200 });
+    }));
+
+    await syncGroup(groupId);
+
+    expect(sent).toBeDefined();
+    // Probes are long on purpose: base64 has no space in its alphabet and 64
+    // symbols in it, so a three-letter one like "EUR" turns up in a few hundred
+    // random characters by chance — see the note in core's seal.test.ts. The
+    // exact key set below is what actually pins the envelope down.
+    for (const probe of ["Marrakech", "baseCurrency", "colorSeed", "claimedAt",
+      "shh-the-link-secret"]) {
+      expect(sent!.body).not.toContain(probe);
+    }
+    expect(sent!.auth).not.toContain("shh-the-link-secret");
+    const pushed = (JSON.parse(sent!.body) as { ops: SealedOp[] }).ops;
+    expect(pushed.length).toBeGreaterThan(0);
+    expect(Object.keys(pushed[0]!).sort()).toEqual(["groupId", "id", "sealed", "seq"]);
+    // And it is this group's ops — sealed, not mangled.
+    const crypto = await deriveGroupCrypto("shh-the-link-secret", groupId);
+    expect((await openOp(crypto, pushed[0]!)).groupId).toBe(groupId);
   });
 
   it("surfaces a failed push instead of silently dropping ops", async () => {
@@ -252,16 +306,17 @@ describe("sync health", () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     const before = await getDevice();
     const fromTheFuture = formatHlc(createHlcState("peer", Date.now() + 3 * 3600_000, 0));
-    const remote = {
+    const remote: Op = {
       id: "op-from-a-fast-phone", groupId, entity: "group", entityId: groupId,
       kind: "update", patch: { name: "Marrakesh" }, hlc: fromTheFuture,
       actor: "someone", note: null, createdAt: Date.now(), seq: 1,
     };
 
+    const sealed = await serverOps(groupId, [remote]);
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
       const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, i + 1]));
-      return new Response(JSON.stringify({ assigned, ops: [remote], latestSeq: 1 }), { status: 200 });
+      return new Response(JSON.stringify({ assigned, ops: sealed, latestSeq: 1 }), { status: 200 });
     }));
 
     await syncGroup(groupId);

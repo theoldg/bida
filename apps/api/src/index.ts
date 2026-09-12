@@ -1,14 +1,16 @@
 import { Hono } from "hono";
 import {
-  isCurrencyCode, rateFromNumber, validateOp, OpValidationError, type Op,
+  isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
-import { bearerSecret, sha256Hex } from "./auth";
+import { bearerToken, sha256Hex } from "./auth";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
 /**
  * The one Worker that hosts both the static app and the op-log sync API (see
  * docs/hosting.md). Sync is two endpoints, both under one group id and both
- * authenticated by the group secret as a bearer token — see docs/sync.md.
+ * authenticated by a token the phone derives from the link secret — see
+ * docs/sync.md. Ops arrive sealed and leave sealed: nothing in this file can
+ * read one, by design (ADR-0036).
  */
 const app = new Hono<{ Bindings: { ASSETS: Fetcher; DB: D1Database; GEMINI_API_KEY: string } }>();
 
@@ -89,12 +91,12 @@ app.get("/api/rates/:from/:to", async (c) => {
 
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");
-  const secret = bearerSecret(c.req.header("Authorization") ?? null);
-  if (!secret) return c.json({ error: "missing bearer secret" }, 401);
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
 
   const group = await getGroup(c.env.DB, groupId);
   if (!group) return c.json({ error: "unknown group" }, 404);
-  if (group.secret_hash !== (await sha256Hex(secret))) return c.json({ error: "wrong secret" }, 403);
+  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
 
   // Passthrough only: no parse, no re-serialize, so this never charges CPU
   // for the wait on Gemini. The client built the request body and will parse
@@ -111,13 +113,13 @@ app.post("/api/groups/:id/scan", async (c) => {
 
 app.post("/api/groups/:id/ops", async (c) => {
   const groupId = c.req.param("id");
-  const secret = bearerSecret(c.req.header("Authorization") ?? null);
-  if (!secret) return c.json({ error: "missing bearer secret" }, 401);
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
 
   const now = Date.now();
-  const secretHash = await sha256Hex(secret);
-  const group = await ensureGroup(c.env.DB, groupId, secretHash, now);
-  if (group.secret_hash !== secretHash) return c.json({ error: "wrong secret" }, 403);
+  const tokenHash = await sha256Hex(token);
+  const group = await ensureGroup(c.env.DB, groupId, tokenHash, now);
+  if (group.token_hash !== tokenHash) return c.json({ error: "wrong token" }, 403);
 
   let body: { ops?: unknown; since?: unknown };
   try {
@@ -128,19 +130,22 @@ app.post("/api/groups/:id/ops", async (c) => {
   if (!Array.isArray(body.ops)) return c.json({ error: "ops must be an array" }, 400);
   const since = typeof body.since === "number" ? body.since : 0;
 
-  let incoming: Op[];
+  // The envelope is all there is to check. What an op *says* is sealed, so
+  // there is no server-side validation of it left — and a client that pushed
+  // nonsense would only be lying to its own group.
+  let incoming: SealedOp[];
   try {
     incoming = body.ops.map((o) => {
-      const op = validateOp(o);
-      if (op.groupId !== groupId) throw new OpValidationError("op.groupId doesn't match the route");
+      const op = validateSealedOp(o);
+      if (op.groupId !== groupId) throw new SealError("op.groupId doesn't match the route");
       return op;
     });
   } catch (err) {
-    if (err instanceof OpValidationError) return c.json({ error: err.message }, 400);
+    if (err instanceof SealError) return c.json({ error: err.message }, 400);
     throw err;
   }
 
-  const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming);
+  const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, now);
   const pushedIds = new Set(incoming.map((op) => op.id));
   const pulled = (await opsSince(c.env.DB, groupId, since)).filter((op) => !pushedIds.has(op.id));
 
@@ -149,12 +154,12 @@ app.post("/api/groups/:id/ops", async (c) => {
 
 app.get("/api/groups/:id/ops", async (c) => {
   const groupId = c.req.param("id");
-  const secret = bearerSecret(c.req.header("Authorization") ?? null);
-  if (!secret) return c.json({ error: "missing bearer secret" }, 401);
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
 
   const group = await getGroup(c.env.DB, groupId);
   if (!group) return c.json({ error: "unknown group" }, 404);
-  if (group.secret_hash !== (await sha256Hex(secret))) return c.json({ error: "wrong secret" }, 403);
+  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
 
   const since = Number(c.req.query("since") ?? "0") || 0;
   const ops = await opsSince(c.env.DB, groupId, since);

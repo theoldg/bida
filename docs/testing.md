@@ -161,6 +161,11 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 
 - **`pnpm` skips esbuild's postinstall by default, which breaks vitest.** The
   root `package.json` carries `"pnpm": { "onlyBuiltDependencies": ["esbuild"] }`.
+- **Never probe ciphertext for a short word.** The "nothing readable crossed the
+  wire" checks (`core/seal.test.ts`, `lib/db/sync.test.ts`) look for plaintext
+  in a sealed body; base64 is 64 symbols, so `"EUR"` turns up in a few hundred
+  random characters about once in fifty runs. Probes are seven characters or
+  longer, and the exact envelope key set is what actually pins the shape down.
 - **`/g` is both a file and a directory** in the export, so the static server
   must `statSync(p).isFile()` before serving and only then fall through to
   `${file}.html`. Serving the directory hit is an `EISDIR` crash. Fixed once, in

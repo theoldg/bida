@@ -1,14 +1,15 @@
-import type { Op } from "@bida/core";
+import type { SealedOp } from "@bida/core";
 
 /**
  * The D1-backed half of the sync protocol (docs/sync.md). The server appends
  * and assigns sequence numbers; it never folds ops into entities — that stays
- * client-only (ADR-0002).
+ * client-only (ADR-0002) — and since ADR-0036 it cannot, because every op
+ * arrives sealed and the key is derived from a secret it never receives.
  */
 
 interface GroupRow {
   id: string;
-  secret_hash: string;
+  token_hash: string;
   created_at: number;
   last_op_seq: number;
 }
@@ -17,30 +18,11 @@ interface OpRow {
   seq: number;
   id: string;
   group_id: string;
-  entity: string;
-  entity_id: string;
-  kind: string;
-  patch: string;
-  hlc: string;
-  actor: string;
-  note: string | null;
-  created_at: number;
+  sealed: string;
 }
 
-function rowToOp(row: OpRow): Op {
-  return {
-    id: row.id,
-    groupId: row.group_id,
-    entity: row.entity as Op["entity"],
-    entityId: row.entity_id,
-    kind: row.kind as Op["kind"],
-    patch: JSON.parse(row.patch) as Record<string, unknown>,
-    hlc: row.hlc,
-    actor: row.actor,
-    note: row.note,
-    createdAt: row.created_at,
-    seq: row.seq,
-  };
+function rowToOp(row: OpRow): SealedOp {
+  return { id: row.id, groupId: row.group_id, sealed: row.sealed, seq: row.seq };
 }
 
 export async function getGroup(db: D1Database, groupId: string): Promise<GroupRow | null> {
@@ -51,30 +33,34 @@ export async function getGroup(db: D1Database, groupId: string): Promise<GroupRo
 export async function ensureGroup(
   db: D1Database,
   groupId: string,
-  secretHash: string,
+  tokenHash: string,
   now: number,
 ): Promise<GroupRow> {
   const existing = await getGroup(db, groupId);
   if (existing) return existing;
   await db
-    .prepare("INSERT INTO groups (id, secret_hash, created_at, last_op_seq) VALUES (?, ?, ?, 0)")
-    .bind(groupId, secretHash, now)
+    .prepare("INSERT INTO groups (id, token_hash, created_at, last_op_seq) VALUES (?, ?, ?, 0)")
+    .bind(groupId, tokenHash, now)
     .run();
-  return { id: groupId, secret_hash: secretHash, created_at: now, last_op_seq: 0 };
+  return { id: groupId, token_hash: tokenHash, created_at: now, last_op_seq: 0 };
 }
 
-export async function opsSince(db: D1Database, groupId: string, since: number): Promise<Op[]> {
+export async function opsSince(
+  db: D1Database, groupId: string, since: number,
+): Promise<SealedOp[]> {
   const { results } = await db
-    .prepare("SELECT * FROM ops WHERE group_id = ? AND seq > ? ORDER BY seq ASC")
+    .prepare("SELECT seq, id, group_id, sealed FROM ops WHERE group_id = ? AND seq > ? ORDER BY seq ASC")
     .bind(groupId, since)
     .all<OpRow>();
   return results.map(rowToOp);
 }
 
 /**
- * Accept a batch of unsynced ops. Idempotent on `Op.id`: an op already in the
- * log keeps its original seq instead of being reassigned or duplicated, which
- * is what makes retrying a push after a dropped response safe.
+ * Accept a batch of sealed ops. Idempotent on `SealedOp.id`: an op already in
+ * the log keeps its original seq instead of being reassigned or duplicated,
+ * which is what makes retrying a push after a dropped response safe. A retry
+ * seals the same op under a fresh IV, so the two ciphertexts differ — the id is
+ * what says they are one op, and the first one stored is the one that stays.
  *
  * Not fully race-proof against two concurrent pushes to the *same* group
  * racing the seq counter — acceptable at this app's scale (a handful of
@@ -83,7 +69,8 @@ export async function opsSince(db: D1Database, groupId: string, since: number): 
 export async function acceptOps(
   db: D1Database,
   groupId: string,
-  ops: readonly Op[],
+  ops: readonly SealedOp[],
+  now: number,
 ): Promise<{ assigned: Record<string, number>; latestSeq: number }> {
   const assigned: Record<string, number> = {};
   if (ops.length === 0) {
@@ -119,22 +106,9 @@ export async function acceptOps(
     assigned[op.id] = seq;
     return db
       .prepare(
-        `INSERT INTO ops (seq, id, group_id, entity, entity_id, kind, patch, hlc, actor, note, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        "INSERT INTO ops (seq, id, group_id, sealed, received_at) VALUES (?, ?, ?, ?, ?)",
       )
-      .bind(
-        seq,
-        op.id,
-        groupId,
-        op.entity,
-        op.entityId,
-        op.kind,
-        JSON.stringify(op.patch),
-        op.hlc,
-        op.actor,
-        op.note ?? null,
-        op.createdAt,
-      );
+      .bind(seq, op.id, groupId, op.sealed, now);
   });
   await db.batch(inserts);
 

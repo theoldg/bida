@@ -1,5 +1,6 @@
-import { createHlcState, hlcReceive, type Op } from "@bida/core";
+import { createHlcState, hlcReceive, openOp, sealOp, type Op, type SealedOp } from "@bida/core";
 import { started } from "../diag";
+import { groupCrypto } from "../seal";
 import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";
@@ -10,6 +11,12 @@ import { rebuild } from "./fold";
  * visibility, connectivity, and a slow foreground interval. Never blocks the
  * UI — every write already lands in Dexie synchronously via commands.ts;
  * this only ships the log to the server and pulls what's new.
+ *
+ * **This is the boundary the plaintext stops at.** Ops are plain in Dexie and
+ * plain in every screen; the two lines below that seal and open them are the
+ * whole of why the server holds ciphertext (ADR-0036). Anything that adds a
+ * second path to the server has to come through here, or the guarantee the
+ * about screen makes stops being true.
  */
 
 /**
@@ -26,17 +33,26 @@ export class SyncHttpError extends Error {
 
 interface PushPullResponse {
   assigned: Record<string, number>;
-  ops: Op[];
+  /** Sealed: the server has never seen one of these open. */
+  ops: SealedOp[];
   latestSeq: number;
 }
 
+/**
+ * Push this group's unsynced ops and pull what's new, sealed both ways.
+ *
+ * The bearer is the derived token, not the secret in the link — handing the
+ * secret over would let the server derive the key that opens everything it is
+ * storing, which is the whole point of the exercise.
+ */
 async function pushPullGroup(
   groupId: string,
   secret: string,
   since: number,
   pending: readonly StoredOp[],
-): Promise<PushPullResponse> {
-  const ops: Op[] = pending.map((op) => ({
+): Promise<{ response: PushPullResponse; pulled: Op[] }> {
+  const crypto = await groupCrypto(groupId, secret);
+  const ops = await Promise.all(pending.map((op) => sealOp(crypto, {
     id: op.id,
     groupId: op.groupId,
     entity: op.entity,
@@ -48,17 +64,23 @@ async function pushPullGroup(
     note: op.note,
     createdAt: op.createdAt,
     seq: null,
-  }));
+  })));
 
   const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` },
     body: JSON.stringify({ ops, since }),
   });
   if (!res.ok) {
     throw new SyncHttpError(res.status, await res.text().catch(() => ""));
   }
-  return (await res.json()) as PushPullResponse;
+  const response = (await res.json()) as PushPullResponse;
+  // Opened before anything is stored, so a body this device cannot read fails
+  // the whole run rather than half-applying it. `openOp` throws `SealError`,
+  // which can only mean a bug or a tampered row — a *wrong key* never gets
+  // this far, because the token derived beside it would have been a 403.
+  const pulled = await Promise.all(response.ops.map((op) => openOp(crypto, op)));
+  return { response, pulled };
 }
 
 export interface SyncOutcome {
@@ -118,18 +140,18 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   if (!key) return undefined;
 
   const pending = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
-  let response: PushPullResponse;
+  let sealed: { response: PushPullResponse; pulled: Op[] };
   // The one step here that waits on a network rather than on this phone.
   const sent = started("sync.pushpull");
   try {
-    response = await pushPullGroup(groupId, key.secret, key.lastSeq, pending);
+    sealed = await pushPullGroup(groupId, key.secret, key.lastSeq, pending);
   } catch (err) {
     sent("failed");
     await recordFailure(groupId, err);
     throw err;
   }
-  sent(`${pending.length} up, ${response.ops.length} down`);
-  const { assigned, ops: pulled, latestSeq } = response;
+  const { response: { assigned, latestSeq }, pulled } = sealed;
+  sent(`${pending.length} up, ${pulled.length} down`);
 
   await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
     for (const op of pending) {

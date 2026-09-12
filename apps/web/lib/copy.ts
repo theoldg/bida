@@ -162,9 +162,10 @@ export const copy = {
    * the three questions someone asks of an app with no sign-up: what is this,
    * who can read what I type into it, and who do I complain to.
    *
-   * The privacy paragraph says what is true today rather than what would
-   * sound better — ops reach the server as plain JSON (todo.md, "Assess
-   * privacy"). If that changes, this changes in the same commit.
+   * The privacy paragraph is a claim about the code, not a promise: op bodies
+   * are sealed on the phone under a key the server never sees
+   * ([ADR-0036](../../../docs/decisions/0036-the-server-cannot-read-a-group.md)).
+   * If that ever stops being true, this changes in the same commit.
    */
   about: {
     title: "About bida",
@@ -179,8 +180,8 @@ export const copy = {
     },
     privacy: {
       title: "What the server can see",
-      body: "Plainly: what syncs is stored unencrypted. Titles, amounts, names and notes reach the server as ordinary text, so whoever runs it could read them. The link’s secret keeps other people out, not the server. Nothing is sold, nothing is tracked — no analytics, no third-party scripts, no advertising — but don’t keep anything here you would mind being read.",
-      scan: "A receipt you photograph goes to Google to be read, on their free tier: the photo may train their models.",
+      body: "Almost nothing. Your phone locks every entry with a key it makes from the link, and the link never leaves the phone — so titles, amounts, names and notes arrive here as a jumble I have no way to open. What is left is the shape: that a group exists, how many changes it has had, roughly when. Nothing is sold, nothing is tracked — no analytics, no third-party scripts, no advertising.",
+      scan: "The one exception is a receipt you photograph: it goes to Google to be read, on their free tier, and the photo may train their models.",
     },
     feedback: {
       title: "Tell me it’s broken",

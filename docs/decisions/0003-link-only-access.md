@@ -14,8 +14,10 @@ started or stopped speaking for a member.
 `secret`; anyone with the link has full read/write access.
 
 - The secret is generated client-side (128 bits, `crypto.getRandomValues`).
-- The server stores only `sha256(secret)` — a database leak hands out nothing.
-- The client sends it as a bearer token over TLS.
+- The server never receives it: the bearer is a token derived from it, and the
+  key that opens the ops is the other branch of that derivation
+  ([0036](0036-the-server-cannot-read-a-group.md)). A database leak hands out a
+  hash of the token and a pile of ciphertext.
 - It lives in the **URL fragment**, never a path or query string, so it never
   reaches a server, an access log, or a `Referer`
   ([0004](0004-static-export-and-offline.md)).
@@ -33,8 +35,9 @@ was always possible. The claim makes an existing signal legible.
 
 - Zero auth code, zero email infrastructure, zero recovery flow, and onboarding
   is "tap this link".
-- **Losing the link loses the group.** Mitigated by the local IndexedDB copy and
-  a "copy invite link" affordance, not by us storing anything for you.
+- **Losing the link loses the group** — now literally: nobody, us included, can
+  read a group without its secret. Mitigated by the local IndexedDB copy and a
+  "copy invite link" affordance, not by us storing anything for you.
 - **Attribution is soft** — anyone in the group can act as anyone. Correct trade
   for friends splitting a holiday; wrong for a product with strangers in it.
 - A claim cannot be retracted; clearing site data no longer erases the record.

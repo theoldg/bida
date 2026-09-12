@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { memberIdFor, newGroupSecret, newId, receiptExtras } from "@bida/core";
 import { copy } from "./copy";
+import { groupToken } from "./seal";
 import { getDevice, updateDevice } from "./db/device";
 import { receiptBill, type EntryDraft } from "./draft";
 import { bare, countText } from "./format";
@@ -29,7 +30,7 @@ export interface QuickPerson {
 /**
  * What this phone scans with when it is not in a group.
  *
- * `/api/groups/:id/scan` authenticates a secret against a row in D1 and
+ * `/api/groups/:id/scan` authenticates a bearer token against a row in D1 and
  * refuses an id it has never seen, because the alternative is an open proxy
  * to our Gemini key. So a quick split brings a credential shaped exactly like
  * a group's. It is one per *phone* rather than one per split — a stable
@@ -64,7 +65,7 @@ export function useScanCredential(): ScanCredential | undefined {
 /**
  * Introduce the credential to the server, so the scan endpoint knows the id.
  *
- * The ops endpoint registers an id and a secret hash on first sight
+ * The ops endpoint registers an id and a token hash on first sight
  * (`ensureGroup`), and this is that call with nothing in it: the row it leaves
  * holds an id, a hash and a timestamp, and **no op is ever pushed under it**,
  * so the server learns strictly less about a quick split than about a group.
@@ -81,7 +82,10 @@ export async function registerScanCredential(cred: ScanCredential): Promise<void
   try {
     await fetch(`/api/groups/${encodeURIComponent(cred.id)}/ops`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${cred.secret}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await groupToken(cred.id, cred.secret)}`,
+      },
       body: JSON.stringify({ ops: [], since: 0 }),
     });
   } catch { /* the scan is about to say so, in words about the network */ }

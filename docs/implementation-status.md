@@ -16,21 +16,28 @@ queued — receipt photo storage, CSV export and categories are seams in
 **Live** at <https://hajsik.hajsik-api.workers.dev> — one Worker serving the
 static export *and* the sync API, backed by the `hajsik` D1 database
 ([hosting.md](hosting.md)). Verified against production, not just locally:
-idempotent push, pull, a wrong secret refused, and a real group synced between
+idempotent push, pull, a wrong token refused, and a real group synced between
 two devices.
 
 ## The next action
 
-**Nothing is queued.** The last dead control is gone: "About bida" at the foot
-of the groups list now opens `/about` (below). What the owner still wants is in
-[../todo.md](../todo.md), and the largest of it — encrypting op payloads so the
-server cannot read a group — is an ADR before a line of code.
+**Nothing is queued.** What the owner still wants is in
+[../todo.md](../todo.md), and the largest of it is now built.
+
+**The server cannot read a group** (2026-09-12,
+[ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). Two HKDF branches
+of the link secret: one is the bearer token the server hashes, the other is an
+AES-GCM key the server never meets, and every op body crosses the wire sealed
+under it. What D1 holds per op is an id, a group id, a sequence number and
+ciphertext — `core/seal.ts` seals, `lib/db/sync.ts` is the only door, and the
+production log was wiped once at the cutover so phones could refill it sealed.
+The `/about` privacy paragraph and the D1 schema changed in the same commit.
 
 **The about screen is built** (2026-09-12). `/about`: what the app is, that a
-group is a link, that the phone holds it, **what the server can see** — plainly,
-that what syncs is stored unencrypted — and an address to complain to
-([frontend.md](frontend.md)). Its privacy paragraph is a claim about the code:
-if op payloads are ever encrypted, it changes in the same commit.
+group is a link, that the phone holds it, **what the server can see** — which is
+now almost nothing, the receipt scan excepted — and an address to complain to
+([frontend.md](frontend.md)). Its privacy paragraph is a claim about the code,
+and it changes in the same commit as the code.
 
 **Quick split is built** (2026-09-12). A bill divided with people who are not
 a group and never become one: `/quick` → `/quick/items` → `/quick/result`,
@@ -327,7 +334,8 @@ Evenly, and with nothing racing the screen the rate dialog for an unrated
 currency just opens ([receipt-scanning.md](receipt-scanning.md)).
 
 **The measurement is taken** (2026-09-11, production D1: 47 groups, 678 ops,
-676 kB). Whole-entity ops cost **2.55x** — 241 kB of entry ops fold to 94 kB of
+676 kB — before the log was reset and re-filled sealed, which costs roughly a
+third more per op and reads the same way). Whole-entity ops cost **2.55x** — 241 kB of entry ops fold to 94 kB of
 final state, at 2.29 ops per entry — which is real and is not the problem.
 **Receipts are.** An expense op carrying `receiptItems` averages 2,016 bytes
 against a plain one's 473, and those 97 ops are **74% of every patch byte in the

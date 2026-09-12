@@ -12,12 +12,11 @@ Check for secrets, license, data disclaimer, other?
 
 ### Assess privacy
 
-**Answered, and the answer is bad:** ops land in D1 as plain JSON. The group
-secret is only a bearer token, stored as a SHA-256 hash (`apps/api/src/auth.ts`,
-`store.ts`), so anyone with database access reads every title, amount, name and
-note. Decide: say so plainly in the disclaimer, or encrypt the op payload under
-a key derived from the link secret. The second is the biggest piece of work
-left in the project — see the note at the foot of this file.
+**Answered in code** (2026-09-12): op bodies are sealed under a key derived from
+the link secret, which the server never receives
+([ADR-0036](docs/decisions/0036-the-server-cannot-read-a-group.md)). What is
+left to decide is whether the receipt scan — the one thing that still leaves in
+the clear, to Google — is worth keeping on those terms.
 
 ### paying for the Gemini API
 
@@ -29,8 +28,7 @@ Figure out some payment integrator to use.
 
 **Built** — `/about`, off the "About bida" line at the foot of the groups list.
 It says what the app is, that a group is a link, that the phone holds it, what
-the server can see, and where to write. Rewrite its privacy paragraph the day
-[Assess privacy](#assess-privacy) is answered with code rather than with prose.
+the server can see, and where to write.
 
 
 ## Features
@@ -47,9 +45,6 @@ Maybe? Low priority. Needed together with variable exchange rates for the "super
 
 ## Engineering
 
-### End-to-end encryption (the hard one)
-See [Assess privacy](#assess-privacy). Encrypting op payloads under a key
-derived from the link secret keeps the server honest, but it costs the server
-every ability that depends on reading content, needs a migration for groups
-already in D1, and has to survive a link shared by someone who then changes
-nothing. An ADR before a line of code.
+### End-to-end encryption
+**Done** (2026-09-12) —
+[ADR-0036](docs/decisions/0036-the-server-cannot-read-a-group.md).

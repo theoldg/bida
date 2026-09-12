@@ -21,11 +21,11 @@ phone: Next.js static export ──reads── Dexie/IndexedDB ──fold(ops)�
                                             │ (ops, materialised entities, blobs)
                                             │ sync engine: push unsynced, pull since seq
                                             ▼ HTTPS
+       (sealed under a key derived from the link secret — ADR-0036)
 Cloudflare: ONE Worker ── static assets + Hono /api/*
                             POST /groups/:id/ops        append + assign seq
                             GET  /groups/:id/ops?since=N
-                            POST /groups/:id/attachments (Phase 4)
-                              └─ D1 (the op log)   └─ R2 (receipt photos)
+                              └─ D1 (the sealed op log)
 ```
 
 ## Layers, and what may import what
@@ -35,28 +35,31 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
 | `packages/core` — op types, fold, splits, balances, settle, HLC | **Nothing.** Pure: no Dexie, no React, no Cloudflare |
 | `apps/web/lib/db` — Dexie schema, queries, sync engine | `core` |
 | `apps/web/app`, `components` | `core`, `lib/db` |
-| `apps/api` — Hono routes, D1/R2 bindings | `core` (op validation only) |
+| `apps/api` — Hono routes, D1 binding | `core` (envelope validation only) |
 
 Core being pure is what makes the money logic testable and lets client and
 server agree without a second implementation. Keep it that way.
 
-## The server is deliberately stupid
+## The server is deliberately stupid, and now deliberately blind
 
-It appends ops, assigns a per-group sequence number, hands them back, and stores
-images. **It does not fold**, does not compute balances, and knows nothing about
-what an expense means beyond validating the envelope. That halves the code,
-removes a class of client/server disagreement, and keeps us trivially inside
-D1's free tier. If server-side state is ever needed (email digests, a public
-summary page), import the same `core` fold into the Worker — that path is open
-by design.
+It appends ops, assigns a per-group sequence number and hands them back. **It
+does not fold**, does not compute balances, and cannot read an op at all: every
+body arrives sealed under a key derived from the link secret, which it never
+receives ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). All it
+validates is the envelope it routes on.
+
+That halves the code, removes a class of client/server disagreement, and keeps
+us trivially inside D1's free tier. It also closes a door that used to be open:
+anything wanting to read content — email digests, a public summary page — has to
+run on a device that holds a key, or reverse the ADR.
 
 ## Lifecycle of a new expense
 
 1. UI builds an `expense.create` op with a client UUID and an HLC stamp.
 2. Op is written to Dexie **and** applied to the materialised tables in one
    transaction; the UI re-renders. This is the whole user-visible latency.
-3. Sync engine wakes (on write, focus, reconnect, slow interval) and POSTs
-   unsynced ops.
+3. Sync engine wakes (on write, focus, reconnect, slow interval), seals the
+   unsynced ops and POSTs them.
 4. Server dedupes by op id, assigns `seq`, returns them plus anything unseen.
 5. Client marks its ops synced, folds the remote ones, re-materialises.
 

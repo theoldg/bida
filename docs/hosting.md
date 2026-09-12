@@ -9,7 +9,7 @@ Decision and rejected alternatives:
 | Service | Role | Free tier |
 |---|---|---|
 | **Workers** | Serves the static app *and* the API from one script | 100k req/day, 10 ms CPU per invocation |
-| **D1** | The op log (SQLite) | 500 MB per database (5 GB account total), 5M row reads/day, 100k writes/day |
+| **D1** | The op log (SQLite), sealed | 500 MB per database (5 GB account total), 5M row reads/day, 100k writes/day |
 | **R2** | Receipt images | 10 GB, **zero egress fees** |
 | Static Assets · custom domain | The Next.js export · a nice URL | included · free with DNS on Cloudflare |
 
@@ -20,15 +20,18 @@ free tiers move.)
 
 **Actual usage, 2026-09-11:** 676 kB of D1 against the 500 MB limit, 47 groups,
 678 ops — and ~3.6k row reads a day against 5M. Three orders of magnitude of
-headroom on every axis. What the log spends it on is in
-[implementation-status.md](implementation-status.md).
+headroom on every axis. (The log was reset on 2026-09-12 when sealing landed —
+[ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) — and phones
+refilled it. A sealed op is roughly a third larger than the JSON it replaced:
+base64 over an IV and a tag, minus the two indexes that are gone.) What the log
+spends it on is in [implementation-status.md](implementation-status.md).
 
 ### How full can it get
 
 Every group shares the one `hajsik` database, and nothing is ever deleted, so
 the caps only ever move one way. Replaying realistic ops into
-[the real schema](../apps/api/migrations/0001_init.sql) costs **~970 bytes per
-op**, indexes included, so **500 MB is about 515k ops**. At the ~1.3 ops a
+[the real schema](../apps/api/migrations/0001_init.sql) cost **~970 bytes per
+op** before sealing, so **500 MB is somewhere around 400k ops**. At the ~1.3 ops a
 lived-in expense ends up costing (the entry, plus edits and the occasional
 delete) that is:
 
@@ -102,6 +105,20 @@ pnpm db:migrate                 # applies migrations to the remote DB
 `pnpm db:migrate:local` does the same to `wrangler dev`'s local SQLite. Preview
 deploys use a separate D1 — **never point a preview at production data**; the op
 log has no infrastructure-level undo.
+
+**A schema change is not part of the deploy.** `deploy.yml` builds and deploys;
+it never runs migrations, so a change to
+[`0001_init.sql`](../apps/api/migrations/0001_init.sql) has to be applied by
+hand, with a token the owner pastes, in the same window as the push that needs
+it. Sealing (2026-09-12) took the log's old columns away, so that cutover was a
+wipe:
+
+```bash
+npx wrangler d1 execute hajsik --remote --command \
+  "DROP TABLE IF EXISTS ops; DROP TABLE IF EXISTS attachments;
+   DROP TABLE IF EXISTS groups; DROP TABLE IF EXISTS d1_migrations;"
+pnpm db:migrate
+```
 
 **Live at <https://hajsik.hajsik-api.workers.dev>** — permanent; `workers.dev`
 subdomains don't expire while the Worker exists.
