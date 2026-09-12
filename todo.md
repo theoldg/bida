@@ -17,18 +17,6 @@ note. Decide: say so plainly in the disclaimer, or encrypt the op payload under
 a key derived from the link secret. The second is the biggest piece of work
 left in the project — see the note at the foot of this file.
 
-## UI
-
-### Expense rows
-- Expense rows have inconsistent height (a foreign entry carries an extra line)
-- The subtitle now shortens rather than overflowing (see
-  [Subtitles](#subtitles--done-2026-09-11)), but the question underneath is
-  still open: does the line earn its place at all, at full width?
-- Drop the vertical red/green bars for expense rows (`.row.up/.down::before`)
-
-### Receipt items foldable summary
-Something is off here idk
-
 ## Features
 
 ### Quick split
@@ -43,53 +31,16 @@ Open Qs:
 - how are results exported? Text summary? Image with itemized subtotals? Both?
 
 ### Entry search and sorting
-Maybe?
 
-### ~~Support discounts and tax in receipts~~ — done 2026-09-12
-A bill's tip, tax and discount are one family (`BillExtras`): nobody ordered
-them, so none is tickable on the grid, and each is spread in proportion to what
-everybody did order. Deductions are gathered wherever the model files them
-(`readBill`) and kept by name, so a "buy 1 get 1 free" comes off both items pro
-rata and the grid can still say so —
-[ADR-0016](docs/decisions/0016-receipts.md).
+Maybe? Low priority. Needed together with variable exchange rates for the "super long running group" use case.
 
 ## UX improvements
 
-### Expense editor density
-Half done: the kind is one chip rather than three buttons, the date sits above
-the split, and everything that can be wrong stays quiet until Save is pressed.
-Two cuts proposed and **not** decided — fold "Multi-payer" into the payer
-dialog, and take "Receipt" out of the split's tab bar now `/g/scan` exists.
-
 ### Who had what
 - Include non-translated mode
-- Language choice should reflect on the expense summary outside of edit mode
-
-## Copy/text etc
-
-### ~~Commas~~ — done 2026-09-11
-Amount fields have grouped with U+202F since 2026-08-28; the gap left was the
-*rate*, typed and printed as one digit string ("1 EUR = 13000 UZS"). The
-component's caret-and-grouping half is `GroupedInput` now, the rate field is
-one, and printed rates go through `rateText`. Nothing in the app shows an
-ungrouped figure.
-
-### ~~Subtitles~~ — done 2026-09-11
-`FitLine` renders the longest of several wordings that fits, measured on a
-canvas. The order — mode, then share count, then the payer's co-payers
-abbreviated but never dropped — is `lib/row-meta.ts`, and it is the part to
-argue with. At 390px a four-way receipt split with a long name now loses the
-mode instead of half a word.
+- Language choice should reflect on the expense summary outside of edit mode?
 
 ## Engineering
-
-### ~~Measure the log's growth~~ — done 2026-09-11, and it found receipts
-Whole-entity ops cost 2.55x, which is fine. But an expense op carrying
-`receiptItems` is 2,016 bytes against a plain one's 473, and those are 74% of
-every patch byte in production — editing a scanned bill's title repeats the
-whole item array. Nothing to do at 676 kB of a 500 MB limit; if it ever matters,
-the fix is one rule (drop superseded `receiptItems` from folded-past ops).
-Numbers in [docs/implementation-status.md](docs/implementation-status.md).
 
 ### End-to-end encryption (the hard one)
 See [Assess privacy](#assess-privacy). Encrypting op payloads under a key
