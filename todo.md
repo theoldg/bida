@@ -5,17 +5,30 @@
 ### Self-hosting instructions
 
 ### Other cleanups
+
 Check for secrets, license, data disclaimer, other?
 
 ### Admin panel?
 
 ### Assess privacy
+
 **Answered, and the answer is bad:** ops land in D1 as plain JSON. The group
 secret is only a bearer token, stored as a SHA-256 hash (`apps/api/src/auth.ts`,
 `store.ts`), so anyone with database access reads every title, amount, name and
 note. Decide: say so plainly in the disclaimer, or encrypt the op payload under
 a key derived from the link secret. The second is the biggest piece of work
 left in the project — see the note at the foot of this file.
+
+### paying for the Gemini API
+
+Invent an option to record a donation as a shared expense with a special look. "thanks bida!" or "the group liked bida".
+
+Figure out some payment integrator to use.
+
+### About/feedback/privacy
+
+create an info screen with information and my email
+
 
 ## Features
 
