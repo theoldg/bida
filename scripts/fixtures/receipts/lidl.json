@@ -5,6 +5,8 @@
     "title": "Lidl - barbecue",
     "total": "34.00",
     "tip": null,
+    "tax": null,
+    "discounts": [],
     "currency": "EUR",
     "date": "2026-07-18",
     "error": null,

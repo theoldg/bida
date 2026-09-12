@@ -2,7 +2,7 @@
   "note": "the owner's own puzzle: two pizzas and the cheaper one credited back, a loyalty deduction beside it, and tax charged on top — the one bill exercising both extras rows and the discounts unfold",
   "exercises": "ok",
   "scan": {
-    "merchant": "Slice House",
+    "title": "Slice House - pizza",
     "total": "20.55",
     "tip": "3.00",
     "tax": "1.30",

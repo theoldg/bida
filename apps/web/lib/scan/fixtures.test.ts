@@ -42,7 +42,7 @@ describe("the canned receipts", () => {
     // And one carrying tax and *several* deductions, which no other fixture
     // reaches: they are the grid's rows with no cells, and the discounts are
     // the one row that unfolds to say what it is made of.
-    expect(fixtures.some(([, f]) => (f.scan?.discounts.length ?? 0) > 1 && f.scan!.tax)).toBe(true);
+    expect(fixtures.some(([, f]) => (f.scan?.discounts?.length ?? 0) > 1 && f.scan!.tax)).toBe(true);
   });
 
   it.each(fixtures)("%s is what it says it is", (_name, fixture) => {
