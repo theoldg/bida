@@ -21,6 +21,12 @@ two devices.
 
 ## The next action
 
+**The app opens where you left off** (2026-09-12). Launching it reopens the
+group you were last in, and an invite link opened again by someone already in
+the group opens it too, instead of asking "which one is you?" a second time —
+one gate (`useClaimGate`) decides who still has that question to answer
+([frontend.md](frontend.md#state)).
+
 **The entry form's amount says less** (2026-09-12). Under the figure it prints
 only what the entry is worth in the group's currency — the rate itself is not
 printed there, because the form is not where it is set. What each figure came

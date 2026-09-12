@@ -24,9 +24,14 @@ import { parseJoinLink, route } from "../../lib/group-link";
  * (from this attempt or a later background retry), it moves on by itself —
  * nobody has to be told to reopen the link.
  *
- * Where it moves on *to* is `/g/claim`, not `/g/members`: joining ends with
- * "which one is you?" and a button into the group, rather than dropping a new
- * arrival on a management screen whose only way onward is "back".
+ * Where it moves on *to* is the group itself. A first arrival still ends on
+ * "which one is you?", but it is `useClaimGate` that sends it there — one
+ * place decides whether this phone has said who it is, and this screen is not
+ * a second one. Re-opening a link you have already accepted used to reopen
+ * that question, which reads as being asked to join a group you are in; now it
+ * just opens the group. (It is not `/g/members` either way: that is a
+ * management screen, and a new arrival dropped on it has "back" as its only
+ * way onward.)
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -79,7 +84,7 @@ function JoinScreen() {
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
 
   useEffect(() => {
-    if (link && group) router.replace(route.claim(link.groupId));
+    if (link && group) router.replace(route.group(link.groupId));
   }, [link, group, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;

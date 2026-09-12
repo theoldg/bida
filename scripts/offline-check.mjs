@@ -12,7 +12,7 @@
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { ensureBuild, OUT, serveExport, launch, newPhone, reporter, newGroup }
+import { ensureBuild, OUT, serveExport, launch, newPhone, openGroupsList, reporter, newGroup }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -81,7 +81,7 @@ async function tap(label, act, expect) {
   }
 }
 
-await tap("groups list loads", () => page.goto(`${base}/`), ".rows a.row");
+await tap("groups list loads", () => openGroupsList(page, base), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
 await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bignum");
 await tap("in-app Back to the group",
@@ -92,7 +92,7 @@ await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
 // The one switch that isn't in a group: light/dark, on the groups list.
 await tap("theme toggle", async () => {
-  await page.goto(`${base}/`);
+  await openGroupsList(page, base);
   await page.locator(".topbar .iconbtn").first().click();
 }, "html[data-theme]");
 
@@ -142,7 +142,7 @@ report((await page.evaluate(() => caches.keys())).includes(cacheBefore), "the wo
 await page.close();
 page = await ctx.newPage();
 await ctx.setOffline(true);
-await tap("still loads offline on the next launch", () => page.goto(`${base}/`), ".rows a.row");
+await tap("still loads offline on the next launch", () => openGroupsList(page, base), ".rows a.row");
 
 // ---- a deploy the person is offered, and takes ---------------------------
 // The worker never activates on its own while a page is open (public/sw.js), so
@@ -154,7 +154,7 @@ console.log("\nupdating on demand:");
 await ctx.setOffline(false);
 blocked.delete(ASSET_TO_DROP);
 swRevision = "gooddeploy01";
-await page.goto(`${base}/`);
+await openGroupsList(page, base);
 // A second client of the *old* worker, open across the tap: the case that made
 // waiting-forever possible. It must not hold the update up — and it must not be
 // left behind by it either, so this one sits on a group, where being left behind
@@ -173,6 +173,9 @@ await tap("a waiting worker is offered on the groups list",
 
 try {
   await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
+  // The reload is a launch, so it lands in the group again; the list it came
+  // from is where the check reads the shell back off.
+  await openGroupsList(page, base);
   await page.waitForSelector(".rows a.row", { timeout: 8000 });
   report(true, "tapping it reloads onto the new build");
 } catch {
@@ -228,7 +231,7 @@ await page.bringToFront();
 await straggler.close();
 // And the point of all of it: the build it just took still works with no network.
 await ctx.setOffline(true);
-await tap("the new build loads offline too", () => page.goto(`${base}/`), ".rows a.row");
+await tap("the new build loads offline too", () => openGroupsList(page, base), ".rows a.row");
 
 await browser.close();
 close();

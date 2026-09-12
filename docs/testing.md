@@ -231,6 +231,12 @@ doors are walked, because their add rows differ where it matters — on `/new`
 the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
 that arrives whenever it arrives, and the tick has to follow it there.
 
+It ends on the other half of that question: a phone that has answered it is
+never asked again. The invite link is copied out of People and opened a second
+time — it must land in the group, not back on the picker — and the app is
+launched, which reopens the group last open, while backing out of that group
+must leave the list alone (`apps/web/lib/launch.ts`).
+
 ## `pnpm stall` — a read of this phone's database that dies
 
 The defect it was written for is the one no screen could report: an installed

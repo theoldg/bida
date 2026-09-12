@@ -18,7 +18,7 @@
  *     Nothing re-queries on its own afterwards, so the screen went on showing
  *     rows that were no longer there.
  */
-import { ensureBuild, launch, newPhone, newGroup, reporter, serveExport } from "./lib/harness.mjs";
+import { ensureBuild, launch, newPhone, newGroup, openGroupsList, reporter, serveExport } from "./lib/harness.mjs";
 
 ensureBuild();
 
@@ -80,7 +80,7 @@ const { report, finish } = reporter();
   const page = await ctx.newPage();
   await newGroup(page, base, { name: "Marrakech", me: "Theo", members: ["Marie"] });
 
-  await page.goto(`${base}/`);
+  await openGroupsList(page, base);
   await page.waitForSelector(".row .rmain");
   report(true, "the groups list draws its group");
 

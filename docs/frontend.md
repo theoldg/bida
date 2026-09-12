@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
+| `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
@@ -27,7 +27,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog — which only ever edits the number, since deleting a rate is on the row's long-press menu, as it is for an entry. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
 | `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on |
-| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, hands over to `/g/claim` |
+| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then opens the group. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
 (`lib/hooks.ts`), which sends a phone that hasn't answered "who are you" to
@@ -82,9 +82,16 @@ confers nothing without the secret.
   op carries only what changed is `patch.ts`, once, for both entry editors: it
   was written out at each of them and the two copies drifted.
 - Device-local, never-synced state (who "you" are, theme, install-nudge
-  dismissal, the last group opened) is in the `device` store. `/new` reads
-  `lastOpenedGroupId` to default a fresh group's currency to that group's,
-  rather than always EUR — set by `/g` on every visit (`setLastOpenedGroup`).
+  dismissal, the last group opened) is in the `device` store. Two screens read
+  `lastOpenedGroupId`, which `/g` sets on every visit (`setLastOpenedGroup`):
+  `/new` defaults a fresh group's currency to that group's rather than always
+  EUR, and `/` reopens the group itself on a launch (`lib/launch.ts`) — nearly
+  everyone is in one group at a time, and the list was a screen passed through
+  on the way to it. A *launch* and not every arrival: the back arrow out of a
+  group must not be turned around, so the resume happens once per running copy
+  of the app (a module flag) and only on a fresh `navigate` — never on a reload
+  or a back/forward traversal. A group forgotten, archived or gone stays on the
+  list; `resumeGroupId` is that decision, pure and tested.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the

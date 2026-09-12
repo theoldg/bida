@@ -13,6 +13,10 @@
  * Both doors are walked, because their add rows differ where it matters: on
  * `/new` the list is state and grows in the same tick, on `/g/claim` it is a
  * Dexie write and the row arrives whenever it arrives.
+ *
+ * It ends on the other half of the same question: once a phone has answered
+ * it, nothing may ask again — not the invite link opened a second time, and
+ * not the app being launched.
  */
 import { ensureBuild, serveExport, launch, newPhone, reporter } from "./lib/harness.mjs";
 
@@ -144,6 +148,28 @@ if (claimed) {
     && await page.getByRole("button", { name: "Remove Nadia" }).count() === 1,
     "and the phone is her: her row carries the check, not a trash");
 }
+
+// ---- and never asked again ---------------------------------------------
+// A link is how a group is passed around, so the same one lands on a phone
+// that is already in the group — off a chat thread, weeks later. That is not
+// joining: it opens the group, the way tapping the group's row would.
+await ctx.grantPermissions(["clipboard-read", "clipboard-write"]);
+await page.goto(`${base}/g/members?id=${g}`);
+await page.getByRole("button", { name: "Copy invite link" }).first().click();
+const link = await page.evaluate(() => navigator.clipboard.readText());
+await page.goto(`${base}/join#${new URL(link).hash.slice(1)}`);
+const reopened = await arrived();
+report(reopened, "re-opening the invite link opens the group, not the question");
+
+// And launching the app puts you back where you were, rather than on a list
+// with one thing on it (apps/web/lib/launch.ts).
+await page.goto(`${base}/`);
+report(await arrived(), "launching the app reopens the group last open");
+// Backing out of it is not a launch: the list stays put once it is asked for.
+await page.locator(".iconbtn[aria-label='Back']").first().click();
+await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+await page.waitForTimeout(500);
+report(new URL(page.url()).pathname === "/", "and Back out of it stays on the list");
 
 await browser.close();
 close();

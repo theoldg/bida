@@ -251,3 +251,22 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
   await page.waitForURL(/\/g\?id=/);
   return new URL(page.url()).searchParams.get("id");
 }
+
+/**
+ * Launch the app and end up on the groups list.
+ *
+ * A phone that has opened a group is put straight back into it
+ * (`apps/web/lib/launch.ts`), so on every phone but a brand-new one the list
+ * is one Back away — and taking that hop is what these checks mean by "the
+ * groups list", the same as a thumb does.
+ */
+export async function openGroupsList(page, base) {
+  await page.goto(`${base}/`);
+  // The resume is a `replace` a tick after the load, so a URL read before it
+  // lands would say "already there" and skip the hop that is coming.
+  await page.waitForTimeout(400);
+  if (new URL(page.url()).pathname !== "/") {
+    await page.locator(".iconbtn[aria-label='Back']").first().click();
+    await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+  }
+}

@@ -16,15 +16,21 @@ import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
+import { useResumeLastGroup } from "../lib/launch";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
   const summaries = useGroupSummaries();
+  // Launching the app reopens the group you were last in (lib/launch.ts), so
+  // this screen may be on its way out before it has drawn anything. Until that
+  // is settled the list is "not answered yet" — the frame it already draws
+  // while Dexie is thinking — rather than a list that flashes and is replaced.
+  const resuming = useResumeLastGroup();
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
   // only place that decides what it means to a list of "your groups".
-  const groups = summaries?.filter((g) => !g.group.archivedAt);
+  const groups = resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt);
 
   return (
     <Screen>
