@@ -59,11 +59,11 @@ export interface DeviceRecord {
    *
    * An id and a secret shaped exactly like a group's, because that is what the
    * scan endpoint authenticates, and deliberately **not** in `groupKeys`,
-   * which is the table the sync engine walks. `registeredAt` is when the
-   * server first saw the pair; it is cleared if the row ever goes missing, so
-   * a wiped database heals on the next scan. See lib/quick.ts.
+   * which is the table the sync engine walks. One per phone, minted on first
+   * need and never rotated; whether the *server* has seen it is not recorded
+   * here, since introducing it is part of every scan. See lib/quick.ts.
    */
-  scan?: { id: string; secret: string; registeredAt?: number };
+  scan?: { id: string; secret: string };
 }
 
 /**
