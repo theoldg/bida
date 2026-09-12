@@ -23,8 +23,9 @@ somebody chose. They were one mode for a while, a `shares` spec with a
 to ask both fields what it was really looking at (`fromReceipt`). Each of them
 got it wrong somewhere: the ledger row said "as parts", the log said "Teo ×3943
 parts" over weights nobody typed, leaving Receipt for As parts arrived with the
-bill's own weights in it. A receipt is a mode, it names itself
-(`copy.split.mode`), and nothing asks a second field.
+bill's own weights in it. A receipt is a mode — **"By items"**, because the
+photograph is how the lines got typed in and a mode's name is how the money
+divides — it names itself (`copy.split.mode`), and nothing asks a second field.
 
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
 `receiptTip`, `receiptInvolved` and `receiptAssignments` are ordinary optional

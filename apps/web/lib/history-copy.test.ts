@@ -436,7 +436,7 @@ suite("describe", () => {
   // A receipt's weights are the bill divided into minor units, and the log
   // printed them as parts: "Teo ×3943 parts · Marie ×2206 parts", a sentence
   // about numbers nobody chose. A receipt is its own mode now, and says so.
-  it("calls a receipt a receipt, and never counts its weights as parts", async () => {
+  it("names the mode and the bill, and never counts the weights as parts", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
       receiptItems: [{ label: "Salad", amount: "40.00" }, { label: "Beer", amount: "60.00" }],
@@ -452,11 +452,13 @@ suite("describe", () => {
     expect(printed).not.toContain("part");
     expect(printed).not.toContain("6000");
     // The split moved, and this is what moved it — the grid, not a number
-    // somebody typed into As parts.
-    expect(printed).toContain("receipt");
+    // somebody typed into As parts. The mode is how the money divides ("By
+    // items"); the bill it was read off is its own line ("Receipt").
+    expect(printed).toContain("By items");
+    expect(printed).toContain("Receipt");
   });
 
-  it("names the mode as From receipt when leaving the tab is all the save did", async () => {
+  it("names the mode as By items when leaving the tab is all the save did", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
       receiptItems: [{ label: "Salad", amount: "50.00" }, { label: "Beer", amount: "50.00" }],
@@ -471,7 +473,7 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how the split is written");
-    expect(latest!.diff).toEqual({ was: "From receipt", now: "Evenly" });
+    expect(latest!.diff).toEqual({ was: "By items", now: "Evenly" });
   });
 
   // The mode is a last resort, not a field: it is dropped beside a real change

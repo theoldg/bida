@@ -196,7 +196,7 @@ is involved, then what each of them owes — and answers whichever changed: the
 names, or a share line ("Evenly" → "Ana ×2 · Bo ×1"). Where neither moved it
 says nothing at all and the next field speaks, because a spec can be rewritten
 without meaning anything different — except where that rewrite is the whole of
-the save, which gets the mode ("Evenly" → "From receipt") as a last resort
+the save, which gets the mode ("Evenly" → "By items") as a last resort
 rather than nothing. The **payer** side asks the same two questions over again — who
 put money in, then how much each of them did, priced in the entry's own
 currency — and an income asks both of them the other way round.

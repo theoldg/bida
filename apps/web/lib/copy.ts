@@ -297,7 +297,7 @@ export const copy = {
     rate: (rate: string) => `@ ${rate}`,
     notInvolved: "not involved",
     payerCount: (label: string, people: string) => `${label} · ${people}`,
-    /** "Split · evenly" · "Shared with · from receipt". */
+    /** "Split · evenly" · "Shared with · by items". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
     deleteBody: "The history keeps a record.",
@@ -401,18 +401,19 @@ export const copy = {
   split: {
     /** What each mode is called wherever a split is named — the ledger row,
         the entry, the history. A receipt is one of them (ADR-0016): no screen
-        has a second rule for spotting one. */
+        has a second rule for spotting one. It is named "By items" and not
+        "From receipt" because a receipt is how the items got typed in — an
+        input modality — and these five words name how the money divides. The
+        photograph has its own badge under the amount (`form.fromReceipt`). */
     mode: {
       equal: "Evenly",
       shares: "As parts",
       exact: "As amounts",
       percent: "By percent",
-      receipt: "From receipt",
+      receipt: "By items",
     } as Record<SplitSpec["mode"], string>,
-    /** The tab's own label. Not "From receipt", which is a sentence too long
-        for a quarter of the width, and not "Receipt" either: the tab is where
-        a bill becomes lines somebody can be given, so it is named for what it
-        holds once the scan is done rather than for the photograph. */
+    /** The tab's own label — the mode's name without the preposition, which a
+        quarter of the width has no room for. */
     receipt: "Items",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,

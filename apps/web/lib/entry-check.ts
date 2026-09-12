@@ -186,7 +186,7 @@ export function checkEntry(input: {
 
   // Receipt mode has to have produced the split it claims. Without this the
   // tab could be opened over an ordinary even split and saved — the entry then
-  // said "from receipt" beside a split nobody read off a receipt, and a scan
+  // said "by items" beside a split nobody read off a receipt, and a scan
   // whose grid was never filled in silently went out evenly. The tab is the
   // claim; `receiptSplit` is whether it is true. Which of the two steps is
   // outstanding is not recorded here: the tab has the bill or it hasn't, and

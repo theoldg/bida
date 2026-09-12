@@ -6,7 +6,7 @@ const base = { payer: "Alice", coPayers: 0, kind: "expense" as const, ways: 5, m
 describe("expenseMeta", () => {
   it("shortens a receipt split, mode first", () => {
     expect(expenseMeta({ ...base, coPayers: 1, mode: "receipt" })).toEqual([
-      "Alice + 1 other paid · 5 people, from receipt",
+      "Alice + 1 other paid · 5 people, by items",
       "Alice + 1 other paid · split 5 ways",
       "Alice +1 paid · split 5 ways",
       "Alice +1 paid · 5 ways",
