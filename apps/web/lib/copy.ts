@@ -36,11 +36,11 @@ export type Voiced<T> = Record<Voice, T>;
 
 /**
  * How each of the bill's own charges is named inside a sentence, as against
- * the row labels in `copy.items.extra` — mid-sentence and lower case, and the
- * tip takes an article where the other two don't.
+ * the row labels in `copy.items.extra` — mid-sentence, lower case, and bare:
+ * the caption they go in has one line to fit three of them and the verb.
  */
 const extraSubject: Record<ExtraKind, string> = {
-  discount: "discounts", tax: "tax", tip: "the tip",
+  discount: "discount", tax: "tax", tip: "tip",
 };
 
 export const copy = {
@@ -557,9 +557,8 @@ export const copy = {
       const subject = names.length < 2
         ? names.join("")
         : `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-      const verb = names.length === 1 && kinds[0] !== "discount" ? "is" : "are";
-      return `${subject[0]?.toUpperCase() ?? ""}${subject.slice(1)} ${verb} applied `
-        + "proportionally to the whole bill.";
+      const verb = names.length === 1 ? "is" : "are";
+      return `${subject[0]?.toUpperCase() ?? ""}${subject.slice(1)} ${verb} applied proportionally.`;
     },
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
