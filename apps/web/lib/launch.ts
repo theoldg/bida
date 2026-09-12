@@ -59,16 +59,23 @@ export function useResumeLastGroup(): boolean {
     // is a person's choice rather than a door to be shut again.
     resumed = true;
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
     void (async () => {
       const device = await getDevice();
       const last = device.lastOpenedGroupId;
       const group = last ? await db().groups.get(last) : undefined;
       if (cancelled) return;
       const id = resumeGroupId(device, group);
-      if (id) router.replace(route.group(id));
-      else setDeciding(false);
+      if (!id) { setDeciding(false); return; }
+      router.replace(route.group(id));
+      // Still here a moment later means the replace didn't take — the router
+      // is the app's, not the browser's, and this is the first thing asked of
+      // it. Whatever the cause, the answer is the list: a resume that quietly
+      // fails must cost a launch, not leave the app on a skeleton nothing
+      // will ever fill.
+      timer = setTimeout(() => setDeciding(false), 2000);
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [deciding, router]);
 
   return deciding;

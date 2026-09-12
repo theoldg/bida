@@ -91,7 +91,9 @@ confers nothing without the secret.
   group must not be turned around, so the resume happens once per running copy
   of the app (a module flag) and only on a fresh `navigate` — never on a reload
   or a back/forward traversal. A group forgotten, archived or gone stays on the
-  list; `resumeGroupId` is that decision, pure and tested.
+  list; `resumeGroupId` is that decision, pure and tested. A replace that
+  doesn't take releases the list after two seconds rather than leaving the app
+  on a skeleton nothing will fill.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
