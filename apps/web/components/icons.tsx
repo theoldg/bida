@@ -6,7 +6,7 @@
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "sync" | "trash" | "edit" | "link"
-  | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more";
+  | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more" | "info";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -28,6 +28,9 @@ export function IconSprite() {
         <symbol id="i-check" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M4 12.5l5.5 5.5L20 7" /></symbol>
         <symbol id="i-clock" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />
+        </symbol>
+        <symbol id="i-info" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 8h.01" />
         </symbol>
         <symbol id="i-users" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <circle cx="9" cy="8" r="3.4" />

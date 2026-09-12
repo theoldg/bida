@@ -65,10 +65,10 @@ export default function GroupsPage() {
             {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
 
             <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
-
-            {/* PLACEHOLDER — the screen behind it is not built (todo.md). */}
-            <QuickSplitRow />
           </div>
+
+          {/* PLACEHOLDER — neither screen behind it is built (todo.md). */}
+          <HomePair />
 
           {/* The two cards the app spends on itself, and they are mutually
               exclusive by construction: the update offer draws only in the
@@ -85,19 +85,28 @@ export default function GroupsPage() {
 }
 
 /**
- * Splitting a bill with people who are not a group — the other thing you can
- * start from this screen, and deliberately the lesser of the two: it runs to
- * the right where "New group" runs to the left, so the pair reads as one act
- * and its shortcut rather than as two equal doors.
+ * The two doors off this screen that aren't a group — one bordered box cut in
+ * two, the same control the scan screens wear (`.btn-pair`, design-system).
+ * It sits below the list with air above it, so it is the foot of the screen
+ * rather than the last of the groups.
  *
- * PLACEHOLDER: there is no screen behind it yet (todo.md, "Quick split").
+ * PLACEHOLDER: neither screen behind it exists yet (todo.md — "Quick split",
+ * "About/feedback/privacy").
  */
-function QuickSplitRow() {
+function HomePair() {
   return (
-    <button type="button" className="row quickrow">
-      <span className="qlabel">{copy.groups.quickSplit}</span>
-      <Icon name="cam" size={16} />
-    </button>
+    <div className="homepair">
+      <div className="btn-pair pair-p">
+        <button type="button" className="btn">
+          <Icon name="cam" size={16} />
+          {copy.groups.quickSplit}
+        </button>
+        <button type="button" className="btn">
+          <Icon name="info" size={16} />
+          {copy.groups.about}
+        </button>
+      </div>
+    </div>
   );
 }
 

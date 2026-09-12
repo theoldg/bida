@@ -134,6 +134,7 @@ export const copy = {
     },
     newGroup: "New group",
     quickSplit: "Quick split",
+    about: "About",
     whoAreYou: "who are you?",
     youOwe: "you owe",
     youreOwed: "you’re owed",

@@ -29,6 +29,11 @@ Figure out some payment integrator to use.
 
 create an info screen with information and my email
 
+**The entry point is already on the groups list** — the right half of the
+`HomePair` split button, dead until this screen exists. Open question on it:
+an ink block is the heaviest thing on that screen, which is a lot of weight
+for the least-pressed destination in the app.
+
 
 ## Features
 

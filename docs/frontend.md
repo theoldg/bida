@@ -307,9 +307,9 @@ that screen is voiced now, as are the history's payer lines.
 ## One navigation
 
 At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
-none outside one — the groups list carries its two starts as rows instead:
-"New group", and under it **Quick split** mirrored to the right edge
-(`.quickrow`), a placeholder until the screen behind it is built (todo.md). `Tabs` was deleted
+none outside one. The groups list keeps "New group" as a row in the list and
+puts its other two doors — **Quick split** and **About** — in one `.btn-pair`
+below it (`.homepair`), a placeholder until either screen is built (todo.md). `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
