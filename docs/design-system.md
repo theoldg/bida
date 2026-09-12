@@ -54,6 +54,18 @@ its, sideways as well as down — the button sits in the fixed foot, and that
 band pays `--kb` in its place. The entry form, the new-group form and the
 who-had-what grid all end this way.
 
+**One act with two doors is one button cut in two.** Scanning a bill starts at
+the camera or at the library, and which of those is a detail of the same job:
+`.btn-pair` is one bordered box with a hairline between two halves, the box
+owning the border as in `.splitbox`. Two buttons side by side is the shape for
+two *different* jobs, and `.seg` is the app's mode switch — under the split
+editor's tabs it would read "which of these am I in". Mid-scan the divider goes
+and the box holds one strip, "Reading…". Three registers, so where it sits
+changes its size and nothing else: ink block where the screen exists for it
+(`/g/scan`), outlined on the Receipt tab, chip scale to replace a bill already
+assigned. The halves name the doors ("Scan", "Upload"); the screen around them
+has already named the job.
+
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both
 themes (`#0E0F11`, `#141517`, `#1A1C1F` dark), and `--credit`/`--debit` keep

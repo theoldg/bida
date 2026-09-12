@@ -439,10 +439,16 @@ export const copy = {
 
   scan: {
     scan: "Scan a receipt",
-    /** The scan-first screen: its title, what it promises, and its camera button. */
+    /** The scan-first screen: its title and what it promises. */
     title: "Scan a receipt",
     blurb: "Photograph the bill and the expense fills itself in — what it cost, what it’s called, and when.",
-    takePhoto: "Take a photo",
+    /**
+     * The two halves of the one control that scans (`ScanPair`), naming the
+     * two doors into the same act and not the act itself: what is being
+     * scanned is said by the screen — the top bar on `/g/scan`, the "Receipt"
+     * tab on the form — so the halves that used to repeat it don't.
+     */
+    snap: "Scan",
     rescan: "Rescan",
     upload: "Upload",
     reading: "Reading…",

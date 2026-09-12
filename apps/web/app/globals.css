@@ -582,6 +582,33 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    (ADR-0008). */
 .btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45; transition-duration: 0s }
+
+/* ---- a button cut in two ----
+   One act, two doors. Whether the bill is photographed now or picked from the
+   library is a detail of the same job, and two buttons side by side is the
+   vocabulary for two jobs — which is how the scan pair read, and why the two
+   screens that scan drifted into two different sets of words for it. So: one
+   bordered box with a hairline between the halves. The box owns the border and
+   the halves give theirs up, the same rule `.splitbox` follows.
+   Deliberately not `.seg`: that is the mode switch sitting directly above this
+   on the Receipt tab, and a track with a selected pill underneath it would
+   read as "which of these am I in" rather than "do this". */
+.btn-pair { display: flex; border: 1px solid var(--rule); border-radius: var(--r-s);
+  background: var(--card-2); overflow: hidden }
+.btn-pair .btn { width: auto; flex: 1; border-radius: 0 }
+.btn-pair .btn + .btn { border-left: 1px solid var(--rule) }
+/* The primary register, for the screen whose one act this is. The divider is
+   paper over ink: a `--rule` hairline across an ink block is invisible. */
+.btn-pair.pair-p { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
+.btn-pair.pair-p .btn + .btn { border-left-color: color-mix(in srgb, var(--brand-ink) 26%, transparent) }
+.btn-pair.pair-p .btn:active:not(:disabled) {
+  background-image: linear-gradient(var(--press-i), var(--press-i)) }
+/* Chip scale, for replacing a bill that is already assigned: the same control
+   at the size of the chips it stands among, so it shrinks to a footnote
+   without becoming a second kind of thing. */
+.btn-pair.pair-xs { display: inline-flex }
+.btn-pair.pair-xs .btn { font-size: 10.5px; font-weight: 500; padding: 4.5px 9px; gap: 5px;
+  color: var(--ink-2) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }

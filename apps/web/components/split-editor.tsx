@@ -7,7 +7,7 @@ import {
 } from "@bida/core";
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
-import type { ScanSource, ScanState } from "./receipt-scan";
+import { ScanPair, type ScanState } from "./receipt-scan";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -49,7 +49,6 @@ export interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
   scanDisabled: boolean;
   scanState: ScanState;
-  scanSource: ScanSource;
   /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
   scanError: string | null;
   /**
@@ -340,43 +339,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
 }
 
 /**
- * The fourth tab's content: scan/upload before there's a bill, "edit
- * who-had-what" plus a smaller rescan/upload pair once there is one — always
- * available, including on an already-saved expense (ADR-0016, superseding
- * ADR-0016's new-expense-only restriction). A fresh scan replaces the old
- * items/tip and resets the who-had-what grid, same as the first scan.
+ * The fourth tab's content: the one control that scans before there's a bill,
+ * "edit who-had-what" plus that same control at chip scale once there is one —
+ * always available, including on an already-saved expense (ADR-0016,
+ * superseding ADR-0016's new-expense-only restriction). A fresh scan replaces
+ * the old items/tip and resets the who-had-what grid, same as the first scan.
  */
-function ScanButtons({ scanDisabled, scanState, scanSource, onScanCamera, onScanLibrary, size }: {
-  scanDisabled: boolean;
-  scanState: ScanState;
-  scanSource: ScanSource;
-  onScanCamera: () => void;
-  onScanLibrary: () => void;
-  /** "s" for the first-scan pair, "xs" for the smaller replace-receipt pair. */
-  size: "s" | "xs";
-}) {
-  const busy = scanState === "scanning";
-  const disabledOpacity = size === "xs" ? { opacity: scanDisabled || busy ? .5 : 1 } : undefined;
-  return (
-    <div style={{ display: "flex", gap: 7 }}>
-      <button type="button" className={size === "s" ? "btn btn-s" : "chip"} disabled={scanDisabled || busy}
-        style={disabledOpacity} onClick={onScanCamera}>
-        {busy && scanSource === "camera"
-          ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={size === "s" ? 16 : 13} />}
-        {busy && scanSource === "camera" ? copy.scan.reading : size === "s" ? copy.scan.scan : copy.scan.rescan}
-      </button>
-      <button type="button" className={size === "s" ? "btn btn-s" : "chip"} disabled={scanDisabled || busy}
-        style={disabledOpacity} onClick={onScanLibrary}>
-        {busy && scanSource === "library"
-          ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={size === "s" ? 16 : 13} />}
-        {busy && scanSource === "library" ? copy.scan.reading : copy.scan.upload}
-      </button>
-    </div>
-  );
-}
-
 function ReceiptPanel({
-  items, scanDisabled, scanState, scanSource, scanError, onScanCamera, onScanLibrary, editItemsHref,
+  items, scanDisabled, scanState, scanError, onScanCamera, onScanLibrary, editItemsHref,
   members, me, currency, shares, included,
 }: ReceiptTabProps & {
   members: Member[];
@@ -414,8 +384,8 @@ function ReceiptPanel({
           </div>
         ))}
         <div>
-          <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
-            onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="xs" />
+          <ScanPair state={scanState} disabled={scanDisabled} register="xs"
+            onCamera={onScanCamera} onLibrary={onScanLibrary} />
           {scanState === "error" ? (
             <Failure>{scanError ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
           ) : null}
@@ -426,11 +396,13 @@ function ReceiptPanel({
 
   return (
     <div style={{ padding: 12 }}>
-      <ScanButtons scanDisabled={scanDisabled} scanState={scanState} scanSource={scanSource}
-        onScanCamera={onScanCamera} onScanLibrary={onScanLibrary} size="s" />
+      {/* The tab above says "Receipt", so the two halves name their two doors
+          and not the job — reading as "Receipt: Scan | Upload". */}
+      <ScanPair state={scanState} disabled={scanDisabled} register="s"
+        onCamera={onScanCamera} onLibrary={onScanLibrary} />
       {scanState === "error" ? (
-        /* No "try again" beside the message: the two scan buttons are right
-           above it, still enabled, and one of them is the retry. */
+        /* No "try again" beside the message: the control is right above it,
+           still enabled, and it is the retry. */
         <Failure>{scanError ?? copy.scan.failed}</Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>

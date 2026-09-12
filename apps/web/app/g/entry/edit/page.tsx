@@ -656,7 +656,6 @@ function EditEntryScreen() {
                   items: draft.receiptItems ?? null,
                   scanDisabled: scan.disabled,
                   scanState: scan.state,
-                  scanSource: scan.source,
                   scanError: scan.error,
                   blocker: receiptBlocker,
                   onScanCamera: scan.openCamera,

@@ -2,9 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useReceiptScan } from "../../../components/receipt-scan";
+import { ScanPair, useReceiptScan } from "../../../components/receipt-scan";
 import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
 import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "../../../lib/draft";
 import { route } from "../../../lib/group-link";
@@ -65,8 +64,6 @@ function ScanScreen() {
   if (!data.loading && !data.group) return <BadLink />;
   if (unclaimed || !data.group) return <Blank title={copy.scan.title} back={route.group(groupId)} />;
 
-  const busy = scan.state === "scanning";
-
   return (
     <Screen>
       <Body>
@@ -74,21 +71,15 @@ function ScanScreen() {
         <Scroll>
           {scan.inputs}
           <div className="pad" style={{ paddingTop: 22, display: "flex", flexDirection: "column", gap: 10 }}>
-            <button type="button" className="btn btn-p" disabled={scan.disabled || busy}
-              onClick={scan.openCamera}>
-              {busy && scan.source === "camera"
-                ? <span className="spinner" aria-hidden="true" /> : <Icon name="cam" size={17} />}
-              {busy && scan.source === "camera" ? copy.scan.reading : copy.scan.takePhoto}
-            </button>
-            <button type="button" className="btn btn-s" disabled={scan.disabled || busy}
-              onClick={scan.openLibrary}>
-              {busy && scan.source === "library"
-                ? <span className="spinner" aria-hidden="true" /> : <Icon name="image" size={17} />}
-              {busy && scan.source === "library" ? copy.scan.reading : copy.scan.upload}
-            </button>
+            {/* This screen exists for this one act, so the control takes the
+                full width at `.btn-lg` and the primary register — the same
+                emphasis the entry form's Save gets, size being the only
+                emphasis this palette has left. */}
+            <ScanPair state={scan.state} disabled={scan.disabled} register="lg"
+              onCamera={scan.openCamera} onLibrary={scan.openLibrary} />
 
-            {/* No "try again" beside the message: the two buttons above it are
-                still enabled, and one of them is the retry. */}
+            {/* No "try again" beside the message: the control above it is
+                still enabled, and it is the retry. */}
             {scan.state === "error" ? <Failure>{scan.error ?? copy.scan.failed}</Failure> : null}
 
             <p style={{ fontSize: 12.5, color: "var(--ink-2)", margin: "6px 0 0", lineHeight: 1.45 }}>

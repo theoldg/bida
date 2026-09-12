@@ -7,8 +7,10 @@ Photograph a receipt, get the expense form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
 Two screens start one: `/g/scan`, the camera above the ledger's "+", which is
 the act with nothing else on screen; and the form's own "Receipt" tab, for a
-bill you reach for once the expense exists. Both call `useReceiptScan`
-(`components/receipt-scan.tsx`), so they cannot drift.
+bill you reach for once the expense exists. Both call `useReceiptScan` and wear
+`ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
+control can drift — one act, two doors, one button cut in two
+([design-system.md](design-system.md#palette-roles)).
 
 ## The shape
 
@@ -67,7 +69,7 @@ The rules that follow from it:
   (`await c.req.text()`, if stream passthrough misbehaves) still fits in 10 ms.
 - **One request per scan.** No automatic retry — a retry doubles both our
   requests and the shared daily Gemini quota. A failure says so and leaves the
-  scan buttons enabled — the retry is the same button, not a second one.
+  control enabled — the retry is the same button, not a second one.
 - **No throttling, no counters, no D1 writes.** Auth is the existing
   `bearerSecret` + `sha256Hex` check against the group row: one D1 read, no new
   table, and it's the difference between "my friends" and "the internet".

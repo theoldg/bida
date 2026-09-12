@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
+import { Icon } from "./icons";
 import { getDraft, saveDraft } from "../lib/draft";
 import {
   normalizeScan, scanReceipt,
@@ -11,8 +12,6 @@ import {
 
 /** Where a scan is: idle, in flight, or refused. */
 export type ScanState = "idle" | "scanning" | "error";
-/** Which button started the scan in flight — only that one shows the spinner. */
-export type ScanSource = "camera" | "library" | null;
 
 /**
  * Why the scan failed, in words. Only the model's own refusal is quoted —
@@ -29,14 +28,13 @@ export function scanErrorText(err: unknown): string | null {
 
 export interface ReceiptScan {
   state: ScanState;
-  source: ScanSource;
   /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
   error: string | null;
-  /** Nothing can be sent without the group's secret, so every button asks this. */
+  /** Nothing can be sent without the group's secret, so the control asks this. */
   disabled: boolean;
   openCamera: () => void;
   openLibrary: () => void;
-  /** The two hidden file inputs the buttons above click. Render once per screen. */
+  /** The two hidden file inputs the halves above click. Render once per screen. */
   inputs: React.ReactNode;
 }
 
@@ -69,7 +67,6 @@ export function useReceiptScan(
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<ScanState>("idle");
-  const [source, setSource] = useState<ScanSource>(null);
   const [error, setError] = useState<string | null>(null);
 
   const onScreen = useRef(true);
@@ -82,16 +79,13 @@ export function useReceiptScan(
   const scanned = useRef(onScanned);
   scanned.current = onScanned;
 
-  const onPhoto = useCallback(async (
-    e: React.ChangeEvent<HTMLInputElement>, from: "camera" | "library",
-  ) => {
+  const onPhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file || !groupId || !secret) return;
     const current = getDraft(groupId);
     if (!current) return;
     setState("scanning");
-    setSource(from);
     setError(null);
     try {
       const result = await scanReceipt(file, groupId, secret, current.currency);
@@ -135,7 +129,6 @@ export function useReceiptScan(
 
   return {
     state,
-    source,
     error,
     disabled: !secret,
     openCamera: () => cameraInput.current?.click(),
@@ -143,12 +136,71 @@ export function useReceiptScan(
     inputs: (
       <>
         <input ref={cameraInput} type="file" accept="image/*" capture="environment"
-          style={{ display: "none" }} onChange={(e) => void onPhoto(e, "camera")}
+          style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.camera} />
         <input ref={libraryInput} type="file" accept="image/*"
-          style={{ display: "none" }} onChange={(e) => void onPhoto(e, "library")}
+          style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.library} />
       </>
     ),
   };
+}
+
+/**
+ * The control both scanning screens wear: one button cut in two.
+ *
+ * Photographing the bill and picking a photo of it are the same act with two
+ * doors, and this says so — one bordered box, one hairline down the middle
+ * (`.btn-pair`). It replaced two buttons standing side by side, which is the
+ * shape for two *different* jobs and read as one: equal weight on the form,
+ * primary-above-secondary on `/g/scan`, and two different words for the
+ * camera on the two screens.
+ *
+ * While a scan is in flight the halves are gone and the box holds one strip
+ * saying "Reading…", because there was only ever one act in it — which is
+ * also what retired `ScanSource`, a type whose whole job was knowing which of
+ * two buttons should spin.
+ *
+ * Three registers of the same control, so where it sits changes its size and
+ * nothing else: `lg` where the screen exists for it, `s` on the Receipt tab,
+ * `xs` for replacing a bill already assigned.
+ */
+export function ScanPair({ state, disabled, onCamera, onLibrary, register }: {
+  state: ScanState;
+  disabled: boolean;
+  onCamera: () => void;
+  onLibrary: () => void;
+  register: "lg" | "s" | "xs";
+}) {
+  const busy = state === "scanning";
+  const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
+  const half = `btn${register === "lg" ? " btn-lg" : ""}`;
+  const box = `btn-pair${register === "lg" ? " pair-p" : ""}${register === "xs" ? " pair-xs" : ""}`;
+
+  // One element, so the box keeps the height it had and nothing under it moves
+  // while the model reads. Disabled through the same `.btn:disabled` every
+  // other spent button in the app uses.
+  if (busy) {
+    return (
+      <div className={box}>
+        <button type="button" className={half} disabled aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          {copy.scan.reading}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={box}>
+      <button type="button" className={half} disabled={disabled} onClick={onCamera}>
+        <Icon name="cam" size={icon} />
+        {register === "xs" ? copy.scan.rescan : copy.scan.snap}
+      </button>
+      <button type="button" className={half} disabled={disabled} onClick={onLibrary}>
+        <Icon name="image" size={icon} />
+        {copy.scan.upload}
+      </button>
+    </div>
+  );
 }
