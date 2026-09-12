@@ -7,7 +7,7 @@ import {
 } from "@bida/core";
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
-import { ScanPair, type ScanState } from "./receipt-scan";
+import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -47,10 +47,8 @@ const MODES = ["equal", "shares", "exact"] as const;
 
 export interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
-  scanDisabled: boolean;
-  scanState: ScanState;
-  /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
-  scanError: string | null;
+  /** The scan, whole: its state, its clock and its two doors — `useReceiptScan`. */
+  scan: ReceiptScan;
   /**
    * This tab hasn't produced a split yet — `checkEntry`'s `receiptMissing`.
    * Nothing is said about it in words: it suppresses the arithmetic verdict
@@ -66,8 +64,6 @@ export interface ReceiptTabProps {
    */
   flash: string;
   onFlashEnd: (e: React.AnimationEvent) => void;
-  onScanCamera: () => void;
-  onScanLibrary: () => void;
   editItemsHref: string;
 }
 
@@ -349,8 +345,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
  * the old items/tip and resets the who-had-what grid, same as the first scan.
  */
 function ReceiptPanel({
-  items, scanDisabled, scanState, scanError, flash, onFlashEnd,
-  onScanCamera, onScanLibrary, editItemsHref,
+  items, scan, flash, onFlashEnd, editItemsHref,
   members, me, currency, shares, included,
 }: ReceiptTabProps & {
   members: Member[];
@@ -394,10 +389,9 @@ function ReceiptPanel({
         <div>
           {/* Nothing to refuse here: with a bill on screen the outstanding
               step is the door above, not another photograph. */}
-          <ScanPair state={scanState} disabled={scanDisabled} register="xs"
-            onCamera={onScanCamera} onLibrary={onScanLibrary} />
-          {scanState === "error" ? (
-            <Failure>{scanError ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
+          <ScanPair scan={scan} register="xs" />
+          {scan.live?.state === "error" ? (
+            <Failure>{scan.live.error ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
           ) : null}
         </div>
       </div>
@@ -409,13 +403,11 @@ function ReceiptPanel({
       {/* The halves name their two doors and not the job, which the line
           under them says: a photograph is what fills this tab. With no bill
           yet, this is the control a refused Save fills. */}
-      <ScanPair state={scanState} disabled={scanDisabled} register="s"
-        flash={flash} onFlashEnd={onFlashEnd}
-        onCamera={onScanCamera} onLibrary={onScanLibrary} />
-      {scanState === "error" ? (
+      <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
+      {scan.live?.state === "error" ? (
         /* No "try again" beside the message: the control is right above it,
            still enabled, and it is the retry. */
-        <Failure>{scanError ?? copy.scan.failed}</Failure>
+        <Failure>{scan.live.error ?? copy.scan.failed}</Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
           {copy.scan.freeTier}

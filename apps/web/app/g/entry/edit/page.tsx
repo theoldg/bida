@@ -676,14 +676,10 @@ function EditEntryScreen() {
                 onTabChange={changeTab}
                 receipt={canScan ? {
                   items: draft.receiptItems ?? null,
-                  scanDisabled: scan.disabled,
-                  scanState: scan.state,
-                  scanError: scan.error,
+                  scan,
                   missing: receiptMissing,
                   flash: flashClass(refused.receipt),
                   onFlashEnd: settled("receipt"),
-                  onScanCamera: scan.openCamera,
-                  onScanLibrary: scan.openLibrary,
                   editItemsHref: route.items(groupId, via),
                 } : null}
               />

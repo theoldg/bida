@@ -125,12 +125,12 @@ function ScanScreen() {
                   full width at `.btn-lg` and the primary register — the same
                   emphasis the entry form's Save gets, size being the only
                   emphasis this palette has left. */}
-              <ScanPair state={scan.state} disabled={scan.disabled} register="lg"
-                onCamera={scan.openCamera} onLibrary={scan.openLibrary} />
+              <ScanPair scan={scan} register="lg" />
 
               {/* No "try again" beside the message: the control above it is
                   still enabled, and it is the retry. */}
-              {scan.state === "error" ? <Failure>{scan.error ?? copy.scan.failed}</Failure> : null}
+              {scan.live?.state === "error"
+                ? <Failure>{scan.live.error ?? copy.scan.failed}</Failure> : null}
 
               <p className="scanterms">{copy.scan.freeTier}</p>
             </div>

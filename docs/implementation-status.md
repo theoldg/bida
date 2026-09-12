@@ -31,6 +31,13 @@ never set fills that badge red instead of writing a sentence under the fields,
 since the fix is a control on screen and not a field to correct
 ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
 
+**A scan in flight is the group's, not the screen's** (2026-09-12). Where a
+scan is up to now lives beside the draft (`lib/scan/live.ts`), so the Items tab
+is somewhere you can leave and come back to: the bar resumes where the scan
+actually is instead of restarting, and an answer landing while you are on
+Evenly fills the draft without dragging the form back to Items
+([receipt-scanning.md](receipt-scanning.md#what-the-model-decides-and-what-it-must-not)).
+
 **The ledger stopped highlighting itself** (2026-09-12). Nearly every entry is
 one of yours, so the personal-lens wash and its red/green left edge covered the
 whole list and marked nothing: ledger rows are now the plain rows of the groups

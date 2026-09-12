@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { resolveSplit, splitParticipants, type SplitSpec } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
-  openSplitTab, receiptWeights, splitSeed, withSplit, type EntryDraft, type SplitTab,
+  openSplitTab, receiptWeights, splitSeed, tabAfterScan, withSplit,
+  type EntryDraft, type SplitTab,
 } from "./draft";
 
 /**
@@ -275,5 +276,34 @@ describe("newEntryKey", () => {
     // Settle-up used to land on whatever blank expense an abandoned "+" had
     // left behind, which is this set collapsing.
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+/**
+ * A scan is a round trip to a model, and the tab bar stays live while it runs.
+ * What is checked here is that the answer landing does not overrule a person
+ * who has since decided this expense splits some other way.
+ */
+describe("where a scan leaves the split editor", () => {
+  it("claims Items when the tab hasn't moved since the scan started", () => {
+    expect(tabAfterScan(expense({ splitTab: "receipt" }), "receipt", true)).toBe("receipt");
+  });
+
+  it("claims Items for /g/scan, which seeds a draft and never touches its tab", () => {
+    expect(tabAfterScan(expense({ splitTab: "equal" }), "equal", true)).toBe("receipt");
+  });
+
+  it("leaves the tab alone when somebody moved off it while the model read", () => {
+    expect(tabAfterScan(expense({ splitTab: "equal" }), "receipt", true)).toBeUndefined();
+  });
+
+  it("claims it again once they come back to Items before the answer lands", () => {
+    const left = expense({ splitTab: "equal" });
+    expect(tabAfterScan(left, "receipt", true)).toBeUndefined();
+    expect(tabAfterScan({ ...left, splitTab: "receipt" }, "receipt", true)).toBe("receipt");
+  });
+
+  it("claims nothing off a bill with no lines — that is an ordinary expense", () => {
+    expect(tabAfterScan(expense({ splitTab: "equal" }), "equal", false)).toBeUndefined();
   });
 });

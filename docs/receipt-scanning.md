@@ -208,7 +208,12 @@ complaint waits for a save attempt, the way the missing amount does: arriving
 from `/g/scan` is now the ordinary way to be standing here, and a bill that
 read perfectly well should not be met in red. Nor does a bill
 with no lines claim that tab — there is nothing to assign, so it leaves the
-split where it was. `/g/scan` is the near-exception: holding a filled draft
+split where it was. **Nor does one that has lines, if the tab moved while the
+model read** (`tabAfterScan`, lib/draft.ts): tapping Evenly is a decision about
+how this expense divides, and an answer landing two seconds later and dragging
+the form back to Items overrules a person with a stale intention. Started from
+Items and left there, it claims Items; started from `/g/scan`, which has no tab
+bar to move off, it claims Items too. `/g/scan` is the near-exception: holding a filled draft
 and no form to show it on, it hands over with `replace` (back from the form is
 the ledger), and only if it is still on screen, since a scan outlives the
 screen that started it. It seeds the draft under the key the form uses for a
@@ -278,7 +283,12 @@ share — `/g/scan` and the Items tab on `/g/entry/edit` — with
 `/g/entry/items` a tap behind the tab. The control they wear draws the round
 trip as a bar filling over the ~2s a scan usually takes, falling back to the
 spinner only when the model is slower
-([design-system.md](design-system.md#palette-roles)). Verified end to end
+([design-system.md](design-system.md#palette-roles)). Where the scan is *up
+to* is `lib/scan/live.ts`, a store keyed by group beside the draft rather than
+state in the control: the bar is a clock on the scan (a negative
+`animation-delay` puts a remounted bar where the scan actually is), so
+switching tabs or stepping out to the payers editor no longer restarts it, and
+a scan whose draft was discarded on the way out drops its result on arrival. Verified end to end
 against the deployed Worker, 2026-08-28; discounts and tax added 2026-09-12 and
 walked with `pnpm drive`'s `two-for-one` bill, grid to saved entry.
 
@@ -316,6 +326,11 @@ way to reach the who-had-what grid outside a real scan —
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
+- **A screen coming back is not a scan starting.** "Reading…" and its bar were
+  `useState` in the control, so the Items tab unmounting — a tab switch, or the
+  payers editor — read as the scan ending, and coming back read as a new one:
+  the sweep began again on a scan already two seconds old. What is durable is
+  the scan, not the control drawing it.
 - **A scan that navigates has to be ordered against anything else wanting the
   screen, so it stopped navigating.** Opening the rate dialog and calling
   `router.push` in the same tick is not a sequence — the navigation unmounts

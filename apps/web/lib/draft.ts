@@ -7,6 +7,7 @@ import {
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 import { receiptTotalMinor, weightsFromItems } from "./scan/items";
+import { clearScan } from "./scan/live";
 
 /**
  * Which of the split editor's four tabs is showing.
@@ -139,6 +140,29 @@ export function activeSplitTab(draft: EntryDraft): SplitTab {
   return draft.splitTab
     ?? ((draft.receiptItems?.length ?? 0) > 0 ? "receipt"
       : draft.splits.percent ? "shares" : "equal");
+}
+
+/**
+ * Which tab a scan that has just landed leaves the editor on — `undefined`
+ * where it leaves it alone.
+ *
+ * Only a bill with lines on it is something to assign, so only that claims the
+ * Items tab. A receipt that is just a total is an ordinary expense — the grid
+ * never opens on it — and showing the tab for one put "Scan a receipt" over a
+ * form a scan had just filled in.
+ *
+ * And only where nobody moved off the tab the scan was started from. A scan is
+ * a round trip to a model, and tapping Evenly while it reads is a decision
+ * about how this expense divides; a scan landing two seconds later and
+ * dragging the form back to Items overrules a person with a stale intention.
+ * `/g/scan` passes the tab it seeded and never touched, so a scan started
+ * before there is a form still arrives at one showing Items.
+ */
+export function tabAfterScan(
+  draft: EntryDraft, tabAtStart: SplitTab, hasItems: boolean,
+): SplitTab | undefined {
+  if (!hasItems) return undefined;
+  return activeSplitTab(draft) === tabAtStart ? "receipt" : undefined;
 }
 
 /**
@@ -402,6 +426,11 @@ export function clearDraft(groupId: string): void {
   drafts.set(groupId, undefined);
   baselines.delete(groupId);
   seedKeys.delete(groupId);
+  // A scan belongs to the draft it fills. Throwing the draft away leaves
+  // nothing for one still in flight to land in — it drops its result on
+  // arrival — so the "Reading…" strip goes with it rather than greeting the
+  // next expense.
+  clearScan(groupId);
   emit();
 }
 
