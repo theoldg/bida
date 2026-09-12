@@ -366,7 +366,7 @@ function ReceiptPanel({
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
         {/* The step outstanding on a scanned bill is assigning it, so this is
             the control a refused Save blooms — an ink block, which takes the
-            flash as an inset outline rather than a border. */}
+            flash as a fill rather than a border. */}
         <Link href={editItemsHref} className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>

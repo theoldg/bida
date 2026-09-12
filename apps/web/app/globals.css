@@ -1069,17 +1069,13 @@ button.amtnote:active { background: var(--hl-edge) }
 @keyframes refuse-amount-ph-a { 15%, 45% { color: var(--debit); opacity: .7 } }
 @keyframes refuse-amount-ph-b { 15%, 45% { color: var(--debit); opacity: .7 } }
 
-/* An ink block has no border to bloom — the "Assign who had what" door is
-   `--brand` on `--brand`. Its refusal is an inset outline instead, which paints
-   over the fill and, unlike a border appearing, moves nothing. */
-@keyframes refuse-out-a { 15%, 45% { outline-color: var(--debit) } }
-@keyframes refuse-out-b { 15%, 45% { outline-color: var(--debit) } }
-
-/* A badge under the amount is 11px of ink on a wash: no border to bloom, and
-   too little text for its colour alone to carry a refusal at that size. The
-   whole chip fills instead. `--debit` runs with `--brand`'s polarity in both
-   themes — dark on the light ground, light on the dark one — so `--brand-ink`
-   is the one ink token that stays readable on top of it. */
+/* A filled control has no border to bloom and too little of it is text for a
+   colour change alone to carry the refusal: the "Assign who had what" door is
+   `--brand` on `--brand`, and the rate badge under the amount is 11px of ink
+   on a wash. Both fill instead — the whole control goes red and its label
+   rides along. `--debit` runs with `--brand`'s polarity in both themes — dark
+   on the light ground, light on the dark one — so `--brand-ink` is the one ink
+   token that stays readable on top of it. */
 @keyframes refuse-fill-a { 15%, 45% { background: var(--debit); color: var(--brand-ink) } }
 @keyframes refuse-fill-b { 15%, 45% { background: var(--debit); color: var(--brand-ink) } }
 
@@ -1094,7 +1090,7 @@ button.amtnote:active { background: var(--hl-edge) }
 /* The Receipt tab refuses the same way a field does, because what is missing
    there is a step and not a figure: the control that takes it blooms. The
    scan pair has a border of its own, so it borrows the box animation; the
-   door to the grid is an ink block, so it takes the outline one. A control is
+   door to the grid is an ink block, so it takes the fill one. A control is
    more than its edge, so the whole of it goes red: the labels, their icons
    (`currentColor`) and the rule between the halves. That is set on the halves
    rather than the box — `.pair-xs` sets its own `color` and would not inherit
@@ -1103,11 +1099,8 @@ button.amtnote:active { background: var(--hl-edge) }
 .btn-pair.flash-b { animation: refuse-box-b .6s ease-in-out }
 .btn-pair.flash-a .btn { animation: refuse-half-a .6s ease-in-out }
 .btn-pair.flash-b .btn { animation: refuse-half-b .6s ease-in-out }
-.btn.flash-a, .btn.flash-b { outline: 1.5px solid transparent; outline-offset: -1.5px }
-.btn.flash-a { animation: refuse-out-a .6s ease-in-out, refuse-text-a .6s ease-in-out }
-.btn.flash-b { animation: refuse-out-b .6s ease-in-out, refuse-text-b .6s ease-in-out }
-.amtnote.flash-a { animation: refuse-fill-a .6s ease-in-out }
-.amtnote.flash-b { animation: refuse-fill-b .6s ease-in-out }
+.btn.flash-a, .amtnote.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.btn.flash-b, .amtnote.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector

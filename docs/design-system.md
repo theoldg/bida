@@ -217,10 +217,12 @@ icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Receipt tab's entire complaint now that the red sentence
 under it is gone. Pointing beats wording there, because "scan a receipt" was
 true of every untouched bill and read as a scolding for arriving. A number that
-is not on the form at all blooms the way *to* it, and loses its sentence for
-the same reason: a foreign entry whose currency the group has no rate for fills
-its "set EUR rate" badge whole, ink and ground, because 11px on a wash has no
-edge to bloom and too little text for a colour alone to carry. A flash
+is not on the form at all blooms the way *to* it and loses its sentence for the
+same reason: a foreign entry whose currency the group has no rate for points at
+its "set EUR rate" badge. A control with no edge of its own fills whole, ground
+and ink, rather than colouring its label: that badge, 11px on a wash, and the
+who-had-what door, `--brand` on `--brand`. A filled ground is the same size of
+signal as a bloomed edge; a label alone is not. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the
