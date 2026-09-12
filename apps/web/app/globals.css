@@ -816,8 +816,11 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card);
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
   padding: 4px; animation: fadein .1s ease-out }
+/* 12px of vertical padding, not 9: at 13.5px over 1.5 the row was 38px tall,
+   under the 44px a finger is measured against, and a menu of them read as a
+   list squeezed into a card. */
 .rowmenu-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-  padding: 9px 10px; border-radius: var(--r-s); font-size: 13.5px; font-weight: 600 }
+  padding: 12px 10px; border-radius: var(--r-s); font-size: 13.5px; font-weight: 600 }
 .rowmenu-item:active { background: var(--press) }
 @media (prefers-reduced-motion: reduce) { .rowmenu { animation: none } }
 
