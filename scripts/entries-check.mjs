@@ -97,8 +97,15 @@ await page.waitForTimeout(80);
 await page.getByRole("button", { name: "Save" }).last().click();
 await page.waitForTimeout(200);
 report(await page.locator("dialog.scrim").count() === 0, "saving the rate closes the dialog");
-report((await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
-  "the form's rate line shows what the group now says");
+// What the line says is what the entry is worth in the group's currency — the
+// rate itself is not printed on the form, only the badge that opens where it
+// is set. 9000 USD at 0.8 is €7,200.00.
+report((await page.getByLabel("Set the USD rate").innerText()).includes("7,200.00"),
+  "the form's rate line values the entry at what the group now says");
+report(!(await page.getByLabel("Set the USD rate").innerText()).includes("0.8"),
+  "and does not print the rate itself");
+report(await page.getByRole("button", { name: "set USD rate" }).count() === 1,
+  "the badge under it says where the rate is set");
 
 // Picked a second time, the rate is already the group's, so nothing is asked.
 await pick(page, '[aria-label="Currency"]', "EUR");
@@ -394,6 +401,24 @@ report(/flash-/.test(await titleField.getAttribute("class")),
 await page.waitForTimeout(900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "and the flash ends, taking its class with it");
+// A number that isn't on this form has nowhere to bloom but the way to it:
+// an entry in a currency the group has no rate for flashes that badge.
+await pick(page, '[aria-label="Currency"]', "MAD");
+await page.waitForTimeout(200);
+if (await page.locator("dialog.scrim").count() > 0) {
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+}
+const rateNote = page.getByRole("button", { name: "set MAD rate" });
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForTimeout(120);
+report(/flash-/.test(await rateNote.getAttribute("class")),
+  "a missing rate flashes the badge that opens where it is set");
+await page.waitForTimeout(900);
+report(!/flash-/.test(await rateNote.getAttribute("class")),
+  "and that flash ends too");
+await pick(page, '[aria-label="Currency"]', "EUR");
+
 await page.locator("#what").fill("Beer");
 await page.waitForTimeout(80);
 await page.locator("#what").fill("");

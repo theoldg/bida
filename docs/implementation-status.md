@@ -21,6 +21,15 @@ two devices.
 
 ## The next action
 
+**The entry form's amount says less** (2026-09-12). Under the figure it prints
+only what the entry is worth in the group's currency — the rate itself is not
+printed there, because the form is not where it is set. What each figure came
+from is a badge below both of them: "read from receipt" and "set EUR rate",
+side by side when the entry has a scan *and* a foreign currency, each opening
+where that number is changed — and a Save refused for a rate the group has
+never set fills that badge red, since the fix is not on this screen
+([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
+
 **A scan draws the two seconds it takes** (2026-09-12). The scan control fills
 with the press wash over about two seconds — the length a scan usually is,
 jittered a little so it doesn't read as a canned animation — and hands over to

@@ -211,7 +211,11 @@ to divide. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Receipt tab's entire complaint now that the red sentence
 under it is gone. Pointing beats wording there, because "scan a receipt" was
-true of every untouched bill and read as a scolding for arriving. A flash
+true of every untouched bill and read as a scolding for arriving. A number
+that is not on the form at all blooms the way *to* it: a foreign entry whose
+currency the group has no rate for fills its "set EUR rate" badge whole, ink
+and ground, because 11px on a wash has no edge to bloom and too little text for
+a colour alone to carry. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

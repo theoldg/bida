@@ -24,7 +24,7 @@ import {
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
-import { dateInputValue, errorText, money, plural, rateText, withDate } from "../../../../lib/format";
+import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { goUp } from "../../../../lib/nav";
@@ -51,11 +51,14 @@ export default function EditEntryPage() {
 interface Refusal { n: number; live: boolean }
 const NOT_REFUSED: Refusal = { n: 0, live: false };
 /**
- * What a refused Save can bloom. Two fields and a step: the Receipt tab is
- * short of a photograph or of a who-had-what grid, and the control that takes
- * whichever it is flashes exactly as the amount's underline does.
+ * What a refused Save can bloom. Two fields, a step and a number that isn't
+ * on this form: the Receipt tab is short of a photograph or of a who-had-what
+ * grid, and the control that takes whichever it is flashes exactly as the
+ * amount's underline does; a currency the group has no rate for blooms the
+ * badge that opens where the rate is set, because that is the whole of the
+ * fix and there is no field here to point at.
  */
-const REFUSABLE = ["amount", "title", "receipt"] as const;
+const REFUSABLE = ["amount", "title", "receipt", "rate"] as const;
 type Refusable = typeof REFUSABLE[number];
 
 /**
@@ -138,7 +141,7 @@ function EditEntryScreen() {
    * composition with it.)
    */
   const [refused, setRefused] = useState<Record<Refusable, Refusal>>({
-    amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED,
+    amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED, rate: NOT_REFUSED,
   });
   const refuse = (fields: Partial<Record<Refusable, boolean>>) =>
     setRefused((r) => {
@@ -432,7 +435,10 @@ function EditEntryScreen() {
     const actor = data.me;
     if (!ready) {
       setAttemptedSave(true);
-      refuse({ amount: amountMissing, title: titleMissing, receipt: receiptMissing });
+      refuse({
+        amount: amountMissing, title: titleMissing, receipt: receiptMissing,
+        rate: foreign && groupRate === undefined,
+      });
       return;
     }
     if (saving || !groupId || !actor) return;
@@ -549,33 +555,38 @@ function EditEntryScreen() {
               </button>
             </div>
 
-            {receiptLocksAmount ? (
-              <div style={{
-                fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
-                padding: "2px 7px", borderRadius: 2, marginTop: 7,
-              }}>{copy.form.fromReceipt}</div>
+            {/* The rate is no longer a field on this form, and no longer a
+                figure on it either: what this line is for is what the entry
+                is worth in the group's currency. The number behind it belongs
+                to the group, and the badge below opens the registry's own
+                dialog to change it — where changing it also says how much of
+                the ledger moves. */}
+            {foreign ? (
+              <button type="button" className="ratelink"
+                aria-label={copy.rates.openFor(draft.currency)}
+                onClick={() => setAskRate(draft.currency)}>
+                ={" "}
+                <span className={rateOk ? undefined : "bad"}>
+                  {rateOk ? money(baseMinor, base) : copy.none}
+                </span>{" "}
+                <Icon name="chev" size={10} />
+              </button>
             ) : null}
 
-            {/* The rate is no longer a field on this form. It is the group's
-                one number for this currency, so the row says what that number
-                is and opens the registry's own dialog to change it — where
-                changing it also says how much of the ledger moves. */}
-            {foreign ? (
-              <>
-                <button type="button" className="ratelink"
-                  aria-label={copy.rates.openFor(draft.currency)}
-                  onClick={() => setAskRate(draft.currency)}>
-                  = {rateOk ? money(baseMinor, base) : copy.none} · 1 {draft.currency} ={" "}
-                  <span className={groupRate === undefined ? "bad" : undefined}>
-                    {groupRate === undefined ? copy.unknown : rateText(groupRate)}
-                  </span>{" "}
-                  {base} <Icon name="chev" size={10} />
-                </button>
-                <div style={{
-                  fontSize: 11, color: "var(--hl-ink)", background: "var(--hl)", display: "inline-block",
-                  padding: "2px 7px", borderRadius: 2, marginTop: 7,
-                }}>{copy.rates.groupRate}</div>
-              </>
+            {/* Where the figures above came from, under both of them: the
+                scan that typed the amount and the rate that converted it,
+                side by side when the entry has both. */}
+            {receiptLocksAmount || foreign ? (
+              <div className="amtnotes">
+                {receiptLocksAmount ? <div className="amtnote">{copy.form.fromReceipt}</div> : null}
+                {foreign ? (
+                  <button type="button" className={`amtnote${flashClass(refused.rate)}`}
+                    onAnimationEnd={settled("rate")}
+                    onClick={() => setAskRate(draft.currency)}>
+                    {copy.rates.setRate(draft.currency)}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </div>
 

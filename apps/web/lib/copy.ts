@@ -701,8 +701,9 @@ export const copy = {
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate — ${why}`,
-    /** The form's rate row, which now points at the group's number. */
-    groupRate: "group rate",
+    /** The badge under the entry form's converted figure. The rate itself is
+        not printed there — this is the way to the number, not the number. */
+    setRate: (code: string) => `set ${code} rate`,
     /** That row is a button, and what it opens is not what the fields inside it are. */
     openFor: (code: string) => `Set the ${code} rate`,
     needed: (code: string) => `Set what a ${code} is worth before saving this.`,
