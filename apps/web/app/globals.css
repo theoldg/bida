@@ -1000,9 +1000,14 @@ dialog.scrim::backdrop { background: transparent }
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* Under the amount: where it came from, when it did — the scan that typed it. */
-.amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 6px; margin-top: 7px }
+/* Under the amount: where it came from, when it did — the scan that typed it.
+   A third row of `.amtgrid` rather than a centred line below it, so it ends on
+   the amount's last digit instead of on the middle of the figure — the same
+   right edge `.ratelink` lines up on, and for the same reason. `justify-self`
+   comes from the grid's odd/even rule; the right padding is the big amount's
+   own inset (9px wrapper + 2px caret room). */
+.amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 6px; margin-top: 3px; padding-right: 11px }
 .amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
   padding: 2px 7px; border-radius: 2px }
 button.amtnote:active { background: var(--hl-edge) }

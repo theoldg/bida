@@ -21,6 +21,18 @@ two devices.
 
 ## The next action
 
+**A split by items says so** (2026-09-12). `receipt` is named "By items"
+wherever a split is named — the ledger row, the entry, the log — because the
+photograph is an input modality and a mode's name is how the money divides. The
+badge under the amount still says "read from receipt": that one is the
+photograph talking ([ADR-0016](decisions/0016-receipts.md)).
+
+**The who-had-what grid survives an adversarial name** (2026-09-12). Its column
+headings are capped at three graphemes and numbered where they still collide
+("Ba1"/"Ba2"), so "Bartholomew" beside "Bartholomew Junior" can no longer grow
+the columns until the bill has no room left
+([ADR-0016](decisions/0016-receipts.md)).
+
 **The app opens where you left off** (2026-09-12). Launching it reopens the
 group you were last in, and an invite link opened again by someone already in
 the group opens it too, instead of asking "which one is you?" a second time —
@@ -30,9 +42,9 @@ one gate (`useClaimGate`) decides who still has that question to answer
 **The entry form's amount says less** (2026-09-12). Under the figure it prints
 only what the entry is worth in the group's currency — the rate itself is not
 printed there, because the form is not where it is set. What each figure came
-from is a badge below both of them: "read from receipt" and "set EUR rate",
-side by side when the entry has a scan *and* a foreign currency, each opening
-where that number is changed — and a Save refused for a rate the group has
+from is a badge on the same grid: "set EUR rate" beside the converted figure,
+"read from receipt" on a row of its own ending on the amount's last digit, each
+opening where that number is changed — and a Save refused for a rate the group has
 never set fills that badge red instead of writing a sentence under the fields,
 since the fix is a control on screen and not a field to correct
 ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).

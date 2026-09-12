@@ -529,12 +529,13 @@ function EditEntryScreen() {
           {scan.inputs}
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            {/* Two rows of a grid, not two centred lines: the typed amount and
-                its converted figure share a right edge, and the currency chip
-                and the rate control share a left edge below it. The refusal
-                flash runs on `.amountfield`, which `AmountInput` renders
-                itself, so the grid listens for it on the way up rather than
-                the component growing a prop for one screen's animation. */}
+            {/* Rows of a grid, not centred lines: the typed amount, its
+                converted figure and the scan's badge share a right edge, and
+                the currency chip and the rate control share a left edge
+                between them. The refusal flash runs on `.amountfield`, which
+                `AmountInput` renders itself, so the grid listens for it on the
+                way up rather than the component growing a prop for one
+                screen's animation. */}
             <div className="amtgrid" onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
@@ -577,14 +578,17 @@ function EditEntryScreen() {
                   </button>
                 </>
               ) : null}
-            </div>
 
-            {/* Where the amount came from, when it did: the scan that typed it. */}
-            {receiptLocksAmount ? (
-              <div className="amtnotes">
-                <div className="amtnote">{copy.form.fromReceipt}</div>
-              </div>
-            ) : null}
+              {/* Where the amount came from, when it did: the scan that typed
+                  it. A row of this grid rather than a line under it, so it
+                  ends on the amount's last digit — the grid's odd children are
+                  the right-hand column, and this is one. */}
+              {receiptLocksAmount ? (
+                <div className="amtnotes">
+                  <div className="amtnote">{copy.form.fromReceipt}</div>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="pad" style={{ paddingTop: 4, display: "flex", flexDirection: "column", gap: 9 }}>
