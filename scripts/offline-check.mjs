@@ -156,9 +156,14 @@ blocked.delete(ASSET_TO_DROP);
 swRevision = "gooddeploy01";
 await page.goto(`${base}/`);
 // A second client of the *old* worker, open across the tap: the case that made
-// waiting-forever possible. It must not hold the update up.
+// waiting-forever possible. It must not hold the update up — and it must not be
+// left behind by it either, so this one sits on a group, where being left behind
+// shows.
 const straggler = await ctx.newPage();
-await straggler.goto(`${base}/`);
+await straggler.goto(`${base}/g?id=${g}`);
+await straggler.waitForSelector(".bottomnav a");
+// Survives everything but a reload, which is the whole question below.
+await straggler.evaluate(() => { window.__beforeTheUpdate = true; });
 await page.bringToFront();
 
 const reload = page.getByRole("button", { name: "Reload" });
@@ -196,6 +201,30 @@ const probe = await page.evaluate(async () => {
   return status;
 });
 report(probe === 404, "a stale cache is never read from", `/stale-probe.txt answered ${probe}`);
+
+// The client that did *not* tap Reload. `activate` has deleted the cache it is
+// running out of and the server has moved on, so its next tap fetches the new
+// build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
+// navigates to the bare route — dropping the `?id=` this app keeps the group in.
+// What a person saw was a group screen that became "No group", with the ledger
+// and balances tabs gone. So it reloads instead, when it is looked at again.
+await straggler.bringToFront();
+try {
+  await straggler.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: 10000 });
+  report(true, "the client that didn't tap reloads itself when it is looked at again");
+} catch {
+  report(false, "the client that didn't tap reloads itself when it is looked at again");
+}
+await straggler.locator("a[href*='tab=balances']").first().click().catch(() => {});
+try {
+  await straggler.waitForSelector(".bottomnav a", { timeout: 8000 });
+  const kept = new URL(straggler.url()).searchParams.get("id") === g;
+  report(kept && await straggler.locator(".bottomnav a").count() === 2,
+    "and still knows which group it was on", straggler.url().replace(base, ""));
+} catch {
+  report(false, "and still knows which group it was on", straggler.url().replace(base, ""));
+}
+await page.bringToFront();
 await straggler.close();
 // And the point of all of it: the build it just took still works with no network.
 await ctx.setOffline(true);

@@ -362,8 +362,11 @@ it is launched. `components/update.tsx` draws the offer at the foot of the
 groups list; the tap posts `{ type: "skip-waiting" }` and reloads on
 `controllerchange`, so nothing is left that could ask for the cache `activate`
 is about to drop. **That reload is served while the old cache still exists**, so
-every read in `sw.js` is scoped to `CACHE_NAME` (Gotcha below). It is not dismissible and remembers nothing: take it now, or
-find it there next launch.
+every read in `sw.js` is scoped to `CACHE_NAME` (Gotcha below). Every *other*
+client of the origin hears that activation too, and is left running a build
+whose cache has just gone; each reloads itself the next time it is looked at
+(Gotcha below). The offer is not dismissible and remembers nothing: take it
+now, or find it there next launch.
 
 ## Every money field is `components/amount-input.tsx`
 
@@ -452,6 +455,16 @@ so the static export ships the full line and the browser narrows it.
   was handed. Every read goes through `lookup()`, which opens `CACHE_NAME`
   first; `offline-check` plants a cache the precache never heard of and fails
   on anything but a 404.
+- **The client that didn't tap is the one that breaks.** `controllerchange`
+  reaches every client of the origin, and for the ones that didn't ask it is not
+  news — `activate` has just deleted the cache they are running out of. The next
+  tap there fetches the new build's `/g.txt`, Next refuses a payload from a build
+  it didn't boot with and hands the browser a plain navigation to the route,
+  dropping the query string — which is where the group id lives. The screen
+  lands on "No group": no ledger, no balances, no bottom nav to get back with.
+  So an unasked-for `controllerchange` reloads the page too, but when it is next
+  *visible* — never while hidden, where `beforeunload` cannot ask about a
+  half-typed expense. `offline-check` keeps a second client open across the tap.
 - **An installed Android app's status bar is the manifest's `theme_color`, and
   nothing can change it after install.** It is compiled into the app when the
   browser builds it, so it cannot be media-scoped and no meta tag reaches it —

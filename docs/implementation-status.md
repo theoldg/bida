@@ -161,7 +161,11 @@ to mean *never* on a phone with a forgotten tab open — an installed app stuck 
 an old build with nothing on screen to say so, which is how this was found.
 `lib/update.ts` watches for the waiting worker and re-checks on every
 foreground; `components/update.tsx` offers it at the foot of the groups list.
-`pnpm offline` now covers the tap end to end
+Taking it activates for **every** client of the origin, not only the one that
+tapped, so the others reload themselves when they are next looked at — without
+that, the phone you didn't tap on answered its next tap with "No group" and no
+ledger or balances tabs ([frontend.md](frontend.md#gotchas)). `pnpm offline`
+covers the tap end to end, both clients
 ([ADR-0004](decisions/0004-static-export-and-offline.md)).
 
 **A name is filed by pressing for it.** Filing on blur asked the rest of the

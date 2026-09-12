@@ -60,11 +60,18 @@ export function registerServiceWorker(): void {
   if (started || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   started = true;
 
-  // Fired by the activation `applyUpdate` asks for. Guarded, because this also
-  // fires for a worker that activated on its own, and a page that reloads
-  // itself unbidden is worse than one showing an old build.
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (applying) window.location.reload();
+    // The activation `applyUpdate` asked for: reload, as it promised to.
+    if (applying) {
+      window.location.reload();
+      return;
+    }
+    // Somebody else's tap, heard by every client of the origin — and for one
+    // that didn't ask, it is the ground going: `activate` has just deleted the
+    // cache this page is running out of. Carrying on is what a person sees as
+    // a group screen turning into "No group" with no tabs on it
+    // (docs/frontend.md#gotchas), so this page goes too, gently.
+    reloadWhenSeen();
   });
 
   navigator.serviceWorker.register("/sw.js").then((registration) => {
@@ -87,6 +94,29 @@ export function registerServiceWorker(): void {
   }).catch(() => {
     // Offline precache is a nicety; a failed registration shouldn't be user-visible.
   });
+}
+
+/**
+ * Reload a page left behind by somebody else's update — at the moment it is
+ * looked at again, not the moment it is stranded.
+ *
+ * Hidden is precisely when a reload must not happen: `beforeunload` can't put
+ * its question up, so the half-typed expense on `/g/entry/edit` would go
+ * without being asked about. Coming back is both safe and the honest moment —
+ * on a phone the stranded client is the app in the background, and a reload as
+ * it is resumed is the launch it already looks like.
+ */
+function reloadWhenSeen(): void {
+  if (document.visibilityState === "visible") {
+    window.location.reload();
+    return;
+  }
+  const seen = () => {
+    if (document.visibilityState !== "visible") return;
+    document.removeEventListener("visibilitychange", seen);
+    window.location.reload();
+  };
+  document.addEventListener("visibilitychange", seen);
 }
 
 export function subscribeUpdate(listener: () => void): () => void {

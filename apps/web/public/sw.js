@@ -27,6 +27,14 @@ function routeOf(url) {
   return url.pathname.slice(0, -".txt".length) || "/";
 }
 
+/** The same route, still carrying the state the payload URL was asked for. */
+function routeWithQuery(url) {
+  const params = new URLSearchParams(url.search);
+  params.delete("_rsc");
+  const query = params.toString();
+  return routeOf(url) + (query ? `?${query}` : "");
+}
+
 /**
  * The only cache this worker may read is its own, and `caches.match` is not
  * that: it searches *every* cache in the origin. There is always a moment when
@@ -132,7 +140,10 @@ self.addEventListener("fetch", (event) => {
    */
   if (request.mode === "navigate" && isPayload(url)) {
     event.respondWith(
-      lookup(routeOf(url)).then((cached) => cached ?? Response.redirect(routeOf(url), 302)),
+      // The query is not decoration: `?id=` is which group the screen is of,
+      // so the fallback carries it across rather than landing on a bare route
+      // that can only say "No group". `_rsc` is the router's own and goes.
+      lookup(routeOf(url)).then((cached) => cached ?? Response.redirect(routeWithQuery(url), 302)),
     );
     return;
   }
