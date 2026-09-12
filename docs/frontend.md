@@ -172,7 +172,11 @@ confers nothing without the secret.
   context or a denied permission, and used to reject into nothing — an
   inert-looking button, and the link shown nowhere else. A refusal puts the
   link on screen to be read (`InviteFallback`,
-  [ADR-0003](decisions/0003-link-only-access.md)).
+  [ADR-0003](decisions/0003-link-only-access.md)). A copy that works says so
+  where it was asked for: the People bar's own button flips to a check for a
+  second and a half, and so does the group menu's kebab (`MenuButton`'s
+  `confirmed`) — the menu card closes on the tap, so without it the one action
+  in the app with no visible result had no result at all.
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is

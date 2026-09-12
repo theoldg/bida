@@ -50,7 +50,8 @@ export function GroupMenu({ groupId, claimed }: {
 
   return (
     <>
-      <MenuButton icon="more" label={copy.group.menu} actions={actions} />
+      <MenuButton icon="more" label={copy.group.menu} actions={actions}
+        confirmed={invite.copied} />
 
       <InviteFallback invite={invite} />
 

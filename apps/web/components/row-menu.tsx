@@ -115,8 +115,16 @@ export function RowMenu({ anchor, actions, onClose }: {
  * `RowMenu` hangs off the button's own rectangle, so the card lands under the
  * control that opened it and its right edge lines up with the screen's.
  */
-export function MenuButton({ icon, label, actions }: {
+export function MenuButton({ icon, label, actions, confirmed = false }: {
   icon: IconName; label: string; actions: SheetAction[];
+  /**
+   * An action inside the menu has just done something, and there is nothing
+   * left on screen to say so: the card closed on the tap. The button wears the
+   * check the same action's own button wears elsewhere (`InviteButton`), so
+   * copying the link from the menu and copying it from People's top bar
+   * confirm themselves the same way.
+   */
+  confirmed?: boolean;
 }) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   return (
@@ -124,7 +132,8 @@ export function MenuButton({ icon, label, actions }: {
       <button type="button" className="iconbtn" aria-label={label} aria-haspopup="menu"
         aria-expanded={anchor ? true : undefined}
         onClick={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}>
-        <Icon name={icon} size={18} />
+        <Icon name={confirmed ? "check" : icon} size={18}
+          style={confirmed ? { color: "var(--brand)" } : undefined} />
       </button>
       {anchor ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} /> : null}
     </>
