@@ -78,7 +78,9 @@ export default function GroupsPage() {
           {groups && groups.length > 0 ? <InstallNudge /> : null}
 
           {/* PLACEHOLDER — the screen behind it is not built (todo.md). */}
-          <button type="button" className="homeabout">{copy.groups.about}</button>
+          <button type="button" className="homeabout">
+            <Icon name="info" size={14} />{copy.groups.about}
+          </button>
          </div>
         </Scroll>
       </Body>

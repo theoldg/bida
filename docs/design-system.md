@@ -24,8 +24,9 @@ and is a tile rather than a glyph — the same square as the avatars under it.
 Do not redraw it in `--brand` to make it theme-aware; that was tried, and a
 tracing of a logo is a worse logo. The one other place the name is printed is
 the "About bida" line at the foot of that same screen, which names what the
-link is *about* rather than heading the screen — the smallest, faintest type
-in the app, so it reads as a footer and not as a second title.
+link is *about* rather than heading the screen — set below body size in
+`--ink-2` with the info glyph beside it, quiet enough to read as a footer and
+not as a second title, loud enough to be found.
 
 ## Palette roles
 
