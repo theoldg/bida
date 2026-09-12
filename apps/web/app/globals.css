@@ -978,7 +978,7 @@ dialog.scrim::backdrop { background: transparent }
 /* The typed amount and its converted figure, and the currency chip and rate
    control beneath them: two grid rows so both amounts share a right edge and
    both controls share a left edge, instead of each line centring on its own. */
-.amtgrid { display: grid; grid-template-columns: max-content max-content;
+.amtgrid { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, max-content);
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
 .amtgrid > :nth-child(odd) { justify-self: end }
 .amtgrid > :nth-child(even) { justify-self: start }
