@@ -31,6 +31,14 @@ never set fills that badge red instead of writing a sentence under the fields,
 since the fix is a control on screen and not a field to correct
 ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
 
+**The ledger stopped highlighting itself** (2026-09-12). Nearly every entry is
+one of yours, so the personal-lens wash and its red/green left edge covered the
+whole list and marked nothing: ledger rows are now the plain rows of the groups
+list, the effect on your balance is said by the signed figure alone, and only a
+row you are no part of is marked — dimmed. The wash stays where it still picks
+out a minority: balances, payers, split editor, pending sync
+([design-system.md](design-system.md#your-own-rows-are-highlighted)).
+
 **A scan draws the two seconds it takes** (2026-09-12). The scan control fills
 with the press wash over about two seconds — the length a scan usually is,
 jittered a little so it doesn't read as a canned animation — and hands over to

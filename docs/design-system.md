@@ -97,18 +97,19 @@ Change one, change the other.
 
 ## Your own rows are highlighted
 
-Always, not as a mode
-([ADR-0007](decisions/0007-a-screen-is-a-route.md)). Your
-rows take a translucent neutral wash, laid *over* the ledger; the same wash
-marks pending sync, both meaning "this is about you, not the shared record".
-Neutral rather than tinted, so the row's own green or red stays the only colour
-on the line — and the *only* way you are marked, since a member is always
-printed by name, never as "You".
+Always, not as a mode ([ADR-0007](decisions/0007-a-screen-is-a-route.md)). A row
+that is about you takes a translucent neutral wash laid *over* the list, plus a
+left-edge bar so it survives colour-blindness; the same wash marks pending sync,
+both meaning "this is about you, not the shared record". Neutral rather than
+tinted, so a row's own green or red stays the only colour on the line — and the
+*only* way you are marked, since a member is always printed by name, never as
+"You".
 
-The wash never carries meaning alone: each row shows what it did to your balance
-— `+€45,00` green, `−€14,28` red, left-edge bar to match. A row netting to
-nothing keeps a grey edge; rows you're not part of drop to 42% opacity rather
-than disappearing.
+**Not on the ledger.** There nearly every entry is one of yours, so a wash on
+each lit the whole screen and marked nothing: ledger rows are the plain rows of
+the groups list. What they did to your balance is said on the figure — `+€45,00`
+green, `−€14,28` red — and the exception is what the list marks: a row you are
+no part of drops to 58% opacity rather than disappearing.
 
 ## Nothing waits in silence
 

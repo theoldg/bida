@@ -156,11 +156,6 @@ function GroupScreen() {
   );
 }
 
-/** Which way a row moves your balance — drives the coloured edge on the row. */
-function lean(minor: number): string {
-  return minor > 0 ? "up" : minor < 0 ? "down" : "flat";
-}
-
 // ------------------------------------------------------------- expenses
 
 /**
@@ -180,7 +175,8 @@ function LedgerTab({ data }: { data: GroupData }) {
 
   // The ledger's whole job is answering "does this one help me or hurt me?",
   // so every row carries its own effect on your balance — what you put in for
-  // it, minus what you owe for it — signed and coloured. They add up to `net`.
+  // it, minus what you owe for it — signed and coloured in the figure itself.
+  // They add up to `net`.
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   const entries: Entry[] = [
@@ -290,7 +286,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, expense.id)}
-        className={`row entryrow ${mine ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${mine ? "" : "notmine"}`} onContextMenu={onContextMenu}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
           {/* Who paid, how many ways, in what mode — more than a phone's
@@ -355,7 +351,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, settlement.id)}
-        className={`row entryrow ${myNet !== 0 ? `mine ${lean(myNet)}` : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${myNet !== 0 ? "" : "notmine"}`} onContextMenu={onContextMenu}>
         <div className="rmain">
           <div className="rtitle">
             {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}

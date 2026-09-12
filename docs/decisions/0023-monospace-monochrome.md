@@ -36,9 +36,9 @@ The tokens and their roles are
 
 ## Consequences
 
-- Rows are text from their left edge. What marks a row is its coloured left
-  edge, the sign on its figure and the personal-lens wash — all about *your*
-  money rather than whose initials they are. `Avatar` takes a name, not a
+- Rows are text from their left edge. What marks a row is the sign on its
+  figure — and, off the ledger, the personal-lens wash and its edge — all about
+  *your* money rather than whose initials they are. `Avatar` takes a name, not a
   member; the only caller is the groups list.
 - Body text is monospace at 14px, so it sets wider: titles truncate a word
   earlier and long labels have less room. The cost of the look, paid

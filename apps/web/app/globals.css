@@ -174,8 +174,9 @@ input, textarea, .selectable {
   font-weight: 500;
 }
 
-/* The highlighter over the ledger: a wash laid *over* the rows that are yours,
-   plus a left edge bar so it survives colour-blindness. Never the only signal. */
+/* The highlighter: a wash laid *over* the rows that are yours, plus a left edge
+   bar so it survives colour-blindness. Never the only signal, and never on the
+   ledger — there almost every row is yours (see `.notmine` below). */
 .mine {
   background: var(--hl);
 }
@@ -374,18 +375,20 @@ a { color: inherit; text-decoration: none }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- your own money, pulled out of the group's ---- */
-/* Every row says which way it moved you, three ways over: a sign, a colour,
-   and a coloured left edge — so the answer survives colour-blindness and a
-   phone in the sun. Green is money coming back to you, red is money you owe. */
+/* A ledger row says which way it moved you on its own figure — a sign and a
+   colour, which survives colour-blindness together and a phone in the sun.
+   Green is money coming back to you, red is money you owe. The row itself
+   stays the plain row of the groups list: nearly every entry is one of yours,
+   so the wash and the coloured edge that used to mark them lit the whole
+   screen and marked nothing. What is *not* yours is still the exception, so
+   that is what the list dims — lightly, since the figure says it too. */
 .share { display: block; font-weight: 700; color: var(--muted) }
 .share.credit { color: var(--credit) }
 .share.debit { color: var(--debit) }
-.row.up::before { background: var(--credit) }
-.row.down::before { background: var(--debit) }
 /* Two highlighted rows in a row would otherwise merge into one grey block:
    the ordinary hairline is invisible against the wash. */
 .mine { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
-.notmine { opacity: .42 }
+.notmine { opacity: .58 }
 .notmine .rtitle { font-weight: 500 }
 .mysummary { display: flex }
 

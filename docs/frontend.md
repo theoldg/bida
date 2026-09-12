@@ -305,7 +305,8 @@ and it changes rendering only — never data or what syncs. Every row carries a
 signed, coloured effect: what you put in for that entry minus what you owe for
 it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
 The column adds up to the net printed above the list. Rows involving neither
-your money nor your share drop to `opacity: .42`. What it looks like and why:
+your money nor your share drop to `opacity: .58`; the rest are plain rows, with
+no wash or coloured edge. What it looks like and why:
 [design-system.md](design-system.md#your-own-rows-are-highlighted).
 
 ## PWA
