@@ -235,7 +235,8 @@ It ends on the other half of that question: a phone that has answered it is
 never asked again. The invite link is copied out of People and opened a second
 time — it must land in the group, not back on the picker — and the app is
 launched, which reopens the group last open, while backing out of that group
-must leave the list alone (`apps/web/lib/launch.ts`).
+must leave the list alone — and must be remembered, so the launch after it
+lands on the list until the group is opened again (`apps/web/lib/launch.ts`).
 
 ## `pnpm stall` — a read of this phone's database that dies
 

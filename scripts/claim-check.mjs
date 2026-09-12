@@ -170,6 +170,16 @@ await page.locator(".iconbtn[aria-label='Back']").first().click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
 await page.waitForTimeout(500);
 report(new URL(page.url()).pathname === "/", "and Back out of it stays on the list");
+// And the next launch honours where that left the app: leaving from the list
+// is an instruction, so the group is not walked back into.
+await page.goto(`${base}/`);
+await page.waitForTimeout(800);
+report(new URL(page.url()).pathname === "/", "a launch after that lands on the list, not the group");
+// Opening the group again makes it the place to come back to once more.
+await page.goto(`${base}/g?id=${g}`);
+await page.waitForSelector(".bottomnav a");
+await page.goto(`${base}/`);
+report(await arrived(), "and opening it again makes the next launch reopen it");
 
 await browser.close();
 close();

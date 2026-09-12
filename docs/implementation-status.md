@@ -51,7 +51,8 @@ the columns until the bill has no room left
 ([ADR-0016](decisions/0016-receipts.md)).
 
 **The app opens where you left off** (2026-09-12). Launching it reopens the
-group you were last in, and an invite link opened again by someone already in
+group you were last in — unless you had backed out to the groups list, which is
+where you left off then — and an invite link opened again by someone already in
 the group opens it too, instead of asking "which one is you?" a second time —
 one gate (`useClaimGate`) decides who still has that question to answer
 ([frontend.md](frontend.md#state)).

@@ -46,11 +46,25 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
   await updateDevice({ meByGroup: { ...device.meByGroup, [groupId]: memberId } });
 }
 
-/** Record the group this device just opened — read back by `/new` to seed its currency. */
+/**
+ * Record the group this device just opened — read back by `/new` to seed its
+ * currency, and by a launch to reopen it (lib/launch.ts). Being in a group is
+ * also how this device stops being on the list.
+ */
 export async function setLastOpenedGroup(groupId: string): Promise<void> {
   const device = await getDevice();
-  if (device.lastOpenedGroupId === groupId) return;
-  await updateDevice({ lastOpenedGroupId: groupId });
+  if (device.lastOpenedGroupId === groupId && !device.leftOnList) return;
+  await updateDevice({ lastOpenedGroupId: groupId, leftOnList: false });
+}
+
+/**
+ * Record that the groups list is where this device now is, so the next launch
+ * leaves it there rather than reopening the last group (lib/launch.ts).
+ */
+export async function setLeftOnList(): Promise<void> {
+  const device = await getDevice();
+  if (device.leftOnList) return;
+  await updateDevice({ leftOnList: true });
 }
 
 /** Hide a group from this phone's groups list — forgetting it, device-local only. */

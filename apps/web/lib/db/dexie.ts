@@ -46,6 +46,14 @@ export interface DeviceRecord {
   /** The group this device most recently opened — seeds a new group's currency. */
   lastOpenedGroupId?: string;
   /**
+   * True while the groups list is the last screen this device was on, so a
+   * launch leaves it there instead of reopening `lastOpenedGroupId` — backing
+   * out of a group is how you say you are done with it. Absent on records
+   * written before this existed, which reads as "in the group", the behaviour
+   * those records already had. See lib/launch.ts.
+   */
+  leftOnList?: boolean;
+  /**
    * What this phone scans with when it is not in a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    *

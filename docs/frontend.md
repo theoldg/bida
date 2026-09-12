@@ -91,7 +91,10 @@ confers nothing without the secret.
   group must not be turned around, so the resume happens once per running copy
   of the app (a module flag) and only on a fresh `navigate` — never on a reload
   or a back/forward traversal. A group forgotten, archived or gone stays on the
-  list; `resumeGroupId` is that decision, pure and tested. A replace that
+  list, and so does one you backed out of: `/` records itself as this phone's
+  place (`leftOnList`, cleared by the next `setLastOpenedGroup`), so a launch
+  reopens whichever of list and group was last. `resumeGroupId` is that
+  decision, pure and tested. A replace that
   doesn't take releases the list after two seconds rather than leaving the app
   on a skeleton nothing will fill.
   *Changing* who you are is not device-local:

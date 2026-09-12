@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { Group } from "@bida/core";
-import { getDevice } from "./db/device";
+import { getDevice, setLeftOnList } from "./db/device";
 import { db, type DeviceRecord } from "./db/dexie";
 import { route } from "./group-link";
 
@@ -14,6 +14,12 @@ import { route } from "./group-link";
  * list was a screen you passed through on the way to the only thing you came
  * for. `/g` already records which group that was (`setLastOpenedGroup`, kept
  * for `/new`'s currency default); this reads it back at the door.
+ *
+ * Unless the list is where you left off. Backing out of a group is how a
+ * person says they are done with it, and an app that walks straight back in
+ * on the next launch has ignored the one instruction it was given — so the
+ * list records itself as this device's place (`setLeftOnList`) exactly as a
+ * group does, and a launch reopens whichever of the two was last.
  *
  * A *launch*, and not every arrival at `/`: the list is still where the back
  * arrow goes, and going back must not be turned around. Two things say which
@@ -30,14 +36,17 @@ let resumed = false;
  *
  * A group this phone has forgotten (`leftGroups`) or archived is not somewhere
  * to be put back into, and neither is one whose row is gone — the id outlives
- * the group it names, since nothing clears it when a group is forgotten.
+ * the group it names, since nothing clears it when a group is forgotten. Nor
+ * is one you left behind on the list (`leftOnList`): the id outlives that too,
+ * because `/new` and `/quick` still want it for their currency.
  */
 export function resumeGroupId(
-  device: Pick<DeviceRecord, "lastOpenedGroupId" | "leftGroups"> | undefined,
+  device: Pick<DeviceRecord, "lastOpenedGroupId" | "leftGroups" | "leftOnList"> | undefined,
   group: Pick<Group, "id" | "archivedAt"> | undefined,
 ): string | undefined {
   const id = device?.lastOpenedGroupId;
-  if (!id || !group || group.id !== id) return undefined;
+  if (!id || device?.leftOnList) return undefined;
+  if (!group || group.id !== id) return undefined;
   if (device?.leftGroups?.includes(id) || group.archivedAt) return undefined;
   return id;
 }
@@ -77,6 +86,15 @@ export function useResumeLastGroup(): boolean {
     })();
     return () => { cancelled = true; clearTimeout(timer); };
   }, [deciding, router]);
+
+  // Settled on the list — a launch that found nowhere to go, an in-app return,
+  // a reload — and so the list is this device's place until a group takes it
+  // back. Written on the way in rather than on the way out, because a phone
+  // gives no reliable word before the app is killed.
+  useEffect(() => {
+    if (deciding) return;
+    void setLeftOnList();
+  }, [deciding]);
 
   return deciding;
 }
