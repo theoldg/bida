@@ -704,9 +704,9 @@ export const copy = {
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate — ${why}`,
-    /** The badge under the entry form's converted figure. The rate itself is
+    /** The badge beside the entry form's converted figure. The rate itself is
         not printed there — this is the way to the number, not the number. */
-    setRate: (code: string) => `set ${code} rate`,
+    setRate: () => `set rate`,
     /** That row is a button, and what it opens is not what the fields inside it are. */
     openFor: (code: string) => `Set the ${code} rate`,
   },

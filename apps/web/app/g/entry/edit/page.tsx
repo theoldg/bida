@@ -529,12 +529,13 @@ function EditEntryScreen() {
           {scan.inputs}
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            {/* The refusal flash runs on `.amountfield`, which `AmountInput`
-                renders itself, so the row listens for it on the way up rather
-                than the component growing a prop for one screen's animation.
-                Nothing else on this row animates. */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}
-              onAnimationEnd={settled("amount")}>
+            {/* Two rows of a grid, not two centred lines: the typed amount and
+                its converted figure share a right edge, and the currency chip
+                and the rate control share a left edge below it. The refusal
+                flash runs on `.amountfield`, which `AmountInput` renders
+                itself, so the grid listens for it on the way up rather than
+                the component growing a prop for one screen's animation. */}
+            <div className="amtgrid" onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
                 fieldClassName={`big${flashClass(refused.amount)}`}
@@ -549,43 +550,39 @@ function EditEntryScreen() {
                 disabled={receiptLocksAmount}
               />
               <button type="button" className="chip" aria-label={copy.form.currency}
-                style={{ alignSelf: "center", marginLeft: 3 }}
                 onClick={() => setAsk("currency")}>
                 {draft.currency} <Icon name="chev" size={10} />
               </button>
-            </div>
 
-            {/* The rate is no longer a field on this form, and no longer a
-                figure on it either: what this line is for is what the entry
-                is worth in the group's currency. The number behind it belongs
-                to the group, and the badge below opens the registry's own
-                dialog to change it — where changing it also says how much of
-                the ledger moves. */}
-            {foreign ? (
-              <button type="button" className="ratelink"
-                aria-label={copy.rates.openFor(draft.currency)}
-                onClick={() => setAskRate(draft.currency)}>
-                ={" "}
-                <span className={rateOk ? undefined : "bad"}>
-                  {rateOk ? money(baseMinor, base) : copy.none}
-                </span>{" "}
-                <Icon name="chev" size={10} />
-              </button>
-            ) : null}
-
-            {/* Where the figures above came from, under both of them: the
-                scan that typed the amount and the rate that converted it,
-                side by side when the entry has both. */}
-            {receiptLocksAmount || foreign ? (
-              <div className="amtnotes">
-                {receiptLocksAmount ? <div className="amtnote">{copy.form.fromReceipt}</div> : null}
-                {foreign ? (
+              {/* The rate is no longer a field on this form, and no longer a
+                  figure on it either: what this line is for is what the entry
+                  is worth in the group's currency. The number belongs to the
+                  group, and both controls on this row open the registry's own
+                  dialog to change it — where changing it also says how much
+                  of the ledger moves. */}
+              {foreign ? (
+                <>
+                  <button type="button" className="ratelink"
+                    aria-label={copy.rates.openFor(draft.currency)}
+                    onClick={() => setAskRate(draft.currency)}>
+                    ={" "}
+                    <span className={rateOk ? undefined : "bad"}>
+                      {rateOk ? money(baseMinor, base) : copy.none}
+                    </span>
+                  </button>
                   <button type="button" className={`amtnote${flashClass(refused.rate)}`}
                     onAnimationEnd={settled("rate")}
                     onClick={() => setAskRate(draft.currency)}>
-                    {copy.rates.setRate(draft.currency)}
+                    {copy.rates.setRate()}
                   </button>
-                ) : null}
+                </>
+              ) : null}
+            </div>
+
+            {/* Where the amount came from, when it did: the scan that typed it. */}
+            {receiptLocksAmount ? (
+              <div className="amtnotes">
+                <div className="amtnote">{copy.form.fromReceipt}</div>
               </div>
             ) : null}
           </div>

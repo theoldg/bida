@@ -975,13 +975,18 @@ dialog.scrim::backdrop { background: transparent }
 /* A rate on the registry's rows. Mono like every other figure, but not the
    colour money gets — a rate isn't credit or debit (ADR-0023). */
 .ratecell { font-family: var(--f-mono); font-size: 13px; font-weight: 600; color: var(--ink) }
+/* The typed amount and its converted figure, and the currency chip and rate
+   control beneath them: two grid rows so both amounts share a right edge and
+   both controls share a left edge, instead of each line centring on its own. */
+.amtgrid { display: grid; grid-template-columns: max-content max-content;
+  justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
+.amtgrid > :nth-child(odd) { justify-self: end }
+.amtgrid > :nth-child(even) { justify-self: start }
 /* The entry form's rate line. It reads as the note it always was, but it is a
    button now: the number belongs to the group, and this opens where it lives. */
-.ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
-  margin-top: 5px; display: inline-flex; align-items: center; gap: 3px }
+.ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted) }
 .ratelink .bad { color: var(--debit) }
-/* Under the amount: where each figure above came from — the scan that typed
-   one, the rate that converted the other — side by side when both apply. */
+/* Under the amount: where it came from, when it did — the scan that typed it. */
 .amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
   gap: 6px; margin-top: 7px }
 .amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
