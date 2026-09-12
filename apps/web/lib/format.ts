@@ -161,27 +161,58 @@ export function initials(name: string): string {
 }
 
 /**
+ * How wide a who-had-what column heading is allowed to get. Three graphemes:
+ * the grid is one tappable cell per person per line, so the headings set the
+ * column width, and a name that keeps growing until it is unique took the
+ * whole screen — "Bartholomew" beside "Bartholomew Junior" used to print both
+ * names in full and leave no room for the bill.
+ */
+const CODE_MAX = 3;
+
+/**
  * The shortest prefix of each name that tells everyone apart — "John" and
- * "Jane" become "Jo"/"Ja" rather than colliding on "J". Grows a letter at a
- * time until every id has a unique prefix; two people with the identical name
- * fall back to the name in full.
+ * "Jane" become "Jo"/"Ja" rather than colliding on "J". Grows a grapheme at a
+ * time, but never past three: whoever still collides there is numbered
+ * instead, so "Bartholomew" and "Bartholomew Junior" are "Ba1" and "Ba2"
+ * rather than two headings as wide as the grid.
+ *
+ * The numbering is why no name may already contain a digit. "ba1" as a name
+ * would be indistinguishable from "Ba" numbered 1, so a group holding one
+ * gives up on unique codes altogether and takes the bare three-grapheme
+ * prefixes, repeats and all — three characters cannot be injective over
+ * arbitrary names, and a group that names somebody "ba1" has chosen which
+ * half of that to lose. The chips under "Who was there" carry the full names,
+ * which is where a repeated code is read.
  */
 export function distinctInitials(members: { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
   const chars = new Map(members.map((m) => [m.id, graphemes(m.name.trim())]));
-  const maxLen = Math.max(1, ...[...chars.values()].map((g) => g.length));
-  for (let len = 1; len <= maxLen; len++) {
+  const prefix = (id: string, len: number) => chars.get(id)!.slice(0, len).join("") || copy.unknown;
+  for (let len = 1; len <= CODE_MAX; len++) {
     const byPrefix = new Map<string, string[]>();
     for (const m of members) {
       if (out.has(m.id)) continue;
-      const prefix = chars.get(m.id)!.slice(0, len).join("") || copy.unknown;
-      byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), m.id]);
+      const p = prefix(m.id, len);
+      byPrefix.set(p, [...(byPrefix.get(p) ?? []), m.id]);
     }
-    for (const [prefix, ids] of byPrefix) {
-      if (ids.length === 1) out.set(ids[0]!, prefix);
+    for (const [p, ids] of byPrefix) {
+      if (ids.length === 1) out.set(ids[0]!, p);
     }
   }
-  for (const m of members) if (!out.has(m.id)) out.set(m.id, m.name.trim() || copy.unknown);
+  const left = members.filter((m) => !out.has(m.id));
+  // ASCII digits only: the suffix is written with those, so those are the ones
+  // a name can be confused with.
+  const numbered = !members.some((m) => /[0-9]/.test(m.name));
+  left.forEach((m, i) => {
+    if (!numbered) { out.set(m.id, prefix(m.id, CODE_MAX)); return; }
+    // Numbered across all the leftovers rather than within each colliding
+    // group, so the digits alone tell them apart: a code ends in exactly as
+    // many digits as its number has (no name holds one), so no two can land on
+    // the same string however their prefixes were cut.
+    const n = String(i + 1);
+    const room = CODE_MAX - n.length;
+    out.set(m.id, (room > 0 ? prefix(m.id, room) : "") + n);
+  });
   return out;
 }
 

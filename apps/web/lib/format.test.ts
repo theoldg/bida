@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
-import { bare, countText, distinctInitials, groupDigits, initials, rateText, splitFooter } from "./format";
+import {
+  bare, countText, distinctInitials, graphemes, groupDigits, initials, rateText, splitFooter,
+} from "./format";
 
 describe("groupDigits", () => {
   it("groups the whole part and leaves the fraction alone", () => {
@@ -98,6 +100,62 @@ describe("initials", () => {
     ]);
     expect(out.get("a")).toBe("🐙🐙");
     expect(out.get("b")).toBe("🐙🦑");
+  });
+});
+
+// The who-had-what grid's column headings. They set the column width, so the
+// adversarial case — long names sharing a long prefix — must not be allowed to
+// widen them: three graphemes, whatever the names.
+describe("distinctInitials", () => {
+  const codes = (names: string[]) => {
+    const out = distinctInitials(names.map((name, i) => ({ id: String(i), name })));
+    return names.map((_, i) => out.get(String(i))!);
+  };
+
+  it("grows a prefix only as far as it has to", () => {
+    expect(codes(["Alice", "Bob"])).toEqual(["A", "B"]);
+    expect(codes(["John", "Jane"])).toEqual(["Jo", "Ja"]);
+    expect(codes(["Ana", "Anouk", "Bea"])).toEqual(["Ana", "Ano", "B"]);
+  });
+
+  it("numbers whoever still collides at three, rather than growing", () => {
+    expect(codes(["Bartholomew", "Bartholomew Junior"])).toEqual(["Ba1", "Ba2"]);
+  });
+
+  it("caps every code at three graphemes, however adversarial the names", () => {
+    const names = [
+      "Bartholomew", "Bartholomew Junior", "Bartholomew Senior",
+      "Bart", "Bartholomea", "Ba", "Bar",
+    ];
+    for (const code of codes(names)) expect(graphemes(code).length).toBeLessThanOrEqual(3);
+  });
+
+  it("still tells everybody apart once it has started numbering", () => {
+    const names = ["Bartholomew", "Bartholomew Junior", "Barnaby", "Barnabas", "Bax", "Zoe"];
+    const out = codes(names);
+    expect(new Set(out).size).toBe(names.length);
+  });
+
+  // Ten or more in one collision needs two digits, and the prefix gives up the
+  // grapheme rather than the code growing a fourth.
+  it("keeps the cap when the numbers reach two digits", () => {
+    const names = Array.from({ length: 12 }, (_, i) => `Bartholomew ${"x".repeat(i + 1)}`);
+    const out = codes(names);
+    expect(new Set(out).size).toBe(names.length);
+    for (const code of out) expect(graphemes(code).length).toBeLessThanOrEqual(3);
+    expect(out[0]).toBe("Ba1");
+    expect(out[9]).toBe("B10");
+  });
+
+  // A digit in a name is indistinguishable from the numbering, so the whole
+  // group drops back to bare prefixes and the codes may repeat.
+  it("gives up on unique codes when a name holds a digit", () => {
+    expect(codes(["Bar1", "Bartholomew", "Bartholomew Junior"]))
+      .toEqual(["Bar", "Bar", "Bar"]);
+  });
+
+  it("does not number a group that has no collision left at three", () => {
+    expect(codes(["ba12", "Zoe"])).toEqual(["b", "Z"]);
   });
 });
 
