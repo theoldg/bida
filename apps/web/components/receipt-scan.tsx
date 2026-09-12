@@ -147,6 +147,39 @@ export function useReceiptScan(
 }
 
 /**
+ * The wash sweeping across the control while the model reads.
+ *
+ * A scan is about two seconds of network and model — long enough that a
+ * spinner alone says only "no idea" — so the control fills at the pace a scan
+ * usually takes, and `onFull` hands over to the spinner if this one is slower.
+ * The bar promises the *usual* scan and not this one, which is why it is
+ * `aria-hidden`: what a screen reader is owed is the "Reading…" beside it.
+ *
+ * Two details it cannot do without. The duration is inline because it is a
+ * different number every sweep and the class holds only the shape. And the
+ * animation's end is the one event the box must not hear — `.btn-pair`
+ * listens on the way up for the refusal flash (`onFlashEnd`), and an
+ * unstopped `animationend` reads there as a flash that has settled.
+ */
+function ScanBar({ onFull }: { onFull: () => void }) {
+  const [seconds] = useState(barSeconds);
+  return (
+    <span className="scanbar" aria-hidden="true"
+      style={{ animationDuration: `${seconds}s` }}
+      onAnimationEnd={(e) => { e.stopPropagation(); onFull(); }} />
+  );
+}
+
+/**
+ * How long one sweep lasts. Two seconds, jittered: drawn once per sweep so a
+ * second scan doesn't repeat the first to the frame, which is what makes a bar
+ * read as a canned animation rather than an estimate.
+ */
+function barSeconds(): number {
+  return 1.8 + Math.random() * 0.4;
+}
+
+/**
  * The control both scanning screens wear: one button cut in two.
  *
  * Photographing the bill and picking a photo of it are the same act with two
@@ -182,6 +215,13 @@ export function ScanPair({
   onFlashEnd?: (e: React.AnimationEvent) => void;
 }) {
   const busy = state === "scanning";
+  /**
+   * The sweep has run out and the scan is still going, so the spinner takes
+   * over. Reset the moment the scan ends — the next one is a fresh two
+   * seconds, and an answer that beat the sweep never shows a spinner at all.
+   */
+  const [full, setFull] = useState(false);
+  useEffect(() => { if (!busy) setFull(false); }, [busy]);
   const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   const box = `btn-pair${register === "lg" ? " pair-p" : ""}${register === "xs" ? " pair-xs" : ""}${flash}`;
@@ -191,9 +231,10 @@ export function ScanPair({
   // other spent button in the app uses.
   if (busy) {
     return (
-      <div className={box} onAnimationEnd={onFlashEnd}>
+      <div className={`${box} pair-busy`} onAnimationEnd={onFlashEnd}>
+        {full ? null : <ScanBar onFull={() => setFull(true)} />}
         <button type="button" className={half} disabled aria-live="polite">
-          <span className="spinner" aria-hidden="true" />
+          {full ? <span className="spinner" aria-hidden="true" /> : null}
           {copy.scan.reading}
         </button>
       </div>

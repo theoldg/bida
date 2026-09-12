@@ -227,8 +227,11 @@ the key is the `GEMINI_API_KEY` Worker secret —
 `request.ts` (prompt and structured output schema), `response.ts`,
 `scanReceipt()` · `components/receipt-scan.tsx`, the hook both scanning screens
 share — `/g/scan` and the Receipt tab on `/g/entry/edit` — with
-`/g/entry/items` a tap behind the tab. Verified end to end against the
-deployed Worker, 2026-08-28.
+`/g/entry/items` a tap behind the tab. The control they wear draws the round
+trip as a bar filling over the ~2s a scan usually takes, falling back to the
+spinner only when the model is slower
+([design-system.md](design-system.md#palette-roles)). Verified end to end
+against the deployed Worker, 2026-08-28.
 
 ## Driving it without a phone
 

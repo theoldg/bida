@@ -21,6 +21,12 @@ two devices.
 
 ## The next action
 
+**A scan draws the two seconds it takes** (2026-09-12). The scan control fills
+with the press wash over about two seconds — the length a scan usually is,
+jittered a little so it doesn't read as a canned animation — and hands over to
+the spinner only if the model is slower than that; an answer that beats the bar
+never shows one ([design-system.md](design-system.md#palette-roles)).
+
 **A scanned expense gets a title, not just a merchant** (2026-09-12). The
 model returns `title`: the name with the parts that aren't the name stripped
 ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what

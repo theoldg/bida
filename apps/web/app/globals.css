@@ -622,6 +622,25 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
+/* The two seconds a scan takes, drawn.
+   The wash fills the box left to right over about as long as the model
+   usually needs, and the spinner only appears if it is slower than that — so
+   the common scan is a bar that finishes rather than a spinner that says
+   nothing. It is the press wash sweeping across the control itself, not a
+   track with a fill inside it: the control is already the shape, and a second
+   bordered thing inside a bordered box is a widget this design doesn't own
+   (ADR-0008). `.btn-pair` already clips to its own radius.
+   No exemption from the reduced-motion clamp, unlike the refusal flash: this
+   one really is movement, and clamped to .01ms it lands straight on the
+   spinner — the state it was standing in front of. */
+.pair-busy { position: relative }
+/* Positioned, so the label paints over the wash rather than under it. */
+.pair-busy .btn { position: relative }
+.scanbar { position: absolute; inset: 0; transform-origin: left; transform: scaleX(0);
+  background: var(--press); animation: scanfill 2s linear forwards }
+/* Ink washed over ink is invisible — the same swap `--press-i` exists for. */
+.pair-p .scanbar { background: var(--press-i) }
+@keyframes scanfill { to { transform: scaleX(1) } }
 .action { font-size: 13px; font-weight: 700; color: var(--ink); text-decoration: underline;
   text-underline-offset: 3px; text-decoration-thickness: 1px }
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }

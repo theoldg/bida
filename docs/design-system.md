@@ -60,10 +60,14 @@ the camera or at the library, and which of those is a detail of the same job:
 owning the border as in `.splitbox`. Two buttons side by side is the shape for
 two *different* jobs, and `.seg` is the app's mode switch — under the split
 editor's tabs it would read "which of these am I in". Mid-scan the divider goes
-and the box holds one strip, "Reading…". Three registers, so where it sits
-changes its size and nothing else: ink block where the screen exists for it
-(`/g/scan`), outlined on the Receipt tab, chip scale to replace a bill already
-assigned. The halves name the doors ("Scan", "Upload"); the screen around them
+and the box holds one strip, "Reading…", with the press wash sweeping across it
+over the two seconds a scan usually takes — the one wait in the app whose
+length we can guess, so it is drawn rather than shrugged at. The bar *is* the
+control filling, not a track inside it, and it hands over to the spinner only
+if the model is slower than usual; an answer that beats it never shows one.
+Three registers, so where it sits changes its size and nothing else: ink block
+where the screen exists for it (`/g/scan`), outlined on the Receipt tab, chip
+scale to replace a bill already assigned. The halves name the doors ("Scan", "Upload"); the screen around them
 has already named the job.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
@@ -242,3 +246,6 @@ guidance asks you to fall back *to*, and clamped it would be nothing at all.
 - No shadcn/ui dependency exists, and no component library's variable names sit
   between the tokens and the app.
   [ADR-0008](decisions/0008-hand-rolled-interface.md).
+- **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
+  way up, so anything else that animates inside it — the scan's own sweep —
+  has to stop the event, or a flash that never ran reads as one that settled.
