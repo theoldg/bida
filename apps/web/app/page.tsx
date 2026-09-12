@@ -77,10 +77,11 @@ export default function GroupsPage() {
           {/* Once there is something to come back to, and never before it. */}
           {groups && groups.length > 0 ? <InstallNudge /> : null}
 
-          {/* PLACEHOLDER — the screen behind it is not built (todo.md). */}
-          <button type="button" className="homeabout">
+          {/* The only door to the screen the app spends on itself: what this
+              is, what the server can see, and where to complain (app/about). */}
+          <Link href={route.about()} className="homeabout">
             <Icon name="info" size={14} />{copy.groups.about}
-          </button>
+          </Link>
          </div>
         </Scroll>
       </Body>

@@ -21,10 +21,16 @@ two devices.
 
 ## The next action
 
-**One door off the home screen is still drawn and dead** (2026-09-12). "About
-bida", the centred line under everything, has no screen behind it. **Build it
-or take it off — do not leave a dead control on the screen the app opens on**
-(todo.md: "About/feedback/privacy").
+**Nothing is queued.** The last dead control is gone: "About bida" at the foot
+of the groups list now opens `/about` (below). What the owner still wants is in
+[../todo.md](../todo.md), and the largest of it — encrypting op payloads so the
+server cannot read a group — is an ADR before a line of code.
+
+**The about screen is built** (2026-09-12). `/about`: what the app is, that a
+group is a link, that the phone holds it, **what the server can see** — plainly,
+that what syncs is stored unencrypted — and an address to complain to
+([frontend.md](frontend.md)). Its privacy paragraph is a claim about the code:
+if op payloads are ever encrypted, it changes in the same commit.
 
 **Quick split is built** (2026-09-12). A bill divided with people who are not
 a group and never become one: `/quick` → `/quick/items` → `/quick/result`,

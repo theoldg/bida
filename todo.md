@@ -27,10 +27,10 @@ Figure out some payment integrator to use.
 
 ### About/feedback/privacy
 
-create an info screen with information and my email
-
-**The entry point is already on the groups list** — the centred "About bida"
-line at the foot of the scroll, dead until this screen exists.
+**Built** — `/about`, off the "About bida" line at the foot of the groups list.
+It says what the app is, that a group is a link, that the phone holds it, what
+the server can see, and where to write. Rewrite its privacy paragraph the day
+[Assess privacy](#assess-privacy) is answered with code rather than with prose.
 
 
 ## Features

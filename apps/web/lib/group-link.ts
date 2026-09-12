@@ -60,6 +60,8 @@ export const route = {
   newGroup: () => "/new",
   /** Not linked from anywhere: long-press the wordmark. See app/diag/page.tsx. */
   diag: () => "/diag",
+  /** What this is, who can read it, and where to complain. Off the groups list. */
+  about: () => "/about",
   group: (groupId: string, tab?: "ledger" | "balances") =>
     `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "ledger" ? `&tab=${tab}` : ""}`,
   /**

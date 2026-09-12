@@ -155,6 +155,42 @@ export const copy = {
     act: "Reload",
   },
 
+  // ----------------------------------------------------------------- about
+
+  /**
+   * The one screen the app spends on itself (app/about/page.tsx). It answers
+   * the three questions someone asks of an app with no sign-up: what is this,
+   * who can read what I type into it, and who do I complain to.
+   *
+   * The privacy paragraph says what is true today rather than what would
+   * sound better — ops reach the server as plain JSON (todo.md, "Assess
+   * privacy"). If that changes, this changes in the same commit.
+   */
+  about: {
+    title: "About bida",
+    lede: "Shared expenses, split. A trip, a flat, a dinner — put in what people paid for, see who owes whom, settle up.",
+    noAccounts: {
+      title: "No accounts",
+      body: "A group is a secret link. Whoever holds it is in, and that is the whole of signing up — so keep the link somewhere you can find it again. It is also the only thing standing between your group and a stranger, so hand it out the way you would a key.",
+    },
+    onYourPhone: {
+      title: "It lives on your phone",
+      body: "Every entry is written here first and works with no signal at all. When there is one, it syncs so the rest of the group sees it — and their entries and yours merge without either of you losing a thing.",
+    },
+    privacy: {
+      title: "What the server can see",
+      body: "Plainly: what syncs is stored unencrypted. Titles, amounts, names and notes reach the server as ordinary text, so whoever runs it could read them. The link’s secret keeps other people out, not the server. Nothing is sold, nothing is tracked — no analytics, no third-party scripts, no advertising — but don’t keep anything here you would mind being read.",
+      scan: "A receipt you photograph goes to Google to be read, on their free tier: the photo may train their models.",
+    },
+    feedback: {
+      title: "Tell me it’s broken",
+      body: "One person builds this, which is why it is free and why the rough edges are where they are. A bug, something that felt stupid, something you wanted and didn’t find — write to me.",
+      email: "teodor.lamort@gmail.com",
+      source: "Source on GitHub",
+      sourceUrl: "https://github.com/theoldg/money",
+    },
+  },
+
   // ------------------------------------------------------------- new group
 
   newGroup: {

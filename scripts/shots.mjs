@@ -128,6 +128,7 @@ const pickSide = (page, label, name) => pick(page, `[aria-label="${label}"]`, na
 
 const routes = (g) => [
   ["groups", "/"],
+  ["about", "/about"],
   ["new", "/new"],
   ["group-ledger", `/g?id=${g}`],
   ["group-balances", `/g?id=${g}&tab=balances`],
