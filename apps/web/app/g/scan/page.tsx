@@ -79,36 +79,45 @@ function ScanScreen() {
                 foot, so the picture and the act it explains are one block in
                 the middle of the screen. The sentence this replaced is its
                 `alt`. */}
-            <div className="scandiagram" role="img" aria-label={copy.scan.diagram.alt}>
-              {/* The bill: printed lines, a rule, the total under it. They add
-                  up to the number the form comes back with — `copy.test.ts`
-                  keeps it that way. */}
-              <div className="scanpaper">
-                {copy.scan.diagram.lines.map(([label, price]) => (
-                  <span key={label}><i>{label}</i><i>{price}</i></span>
-                ))}
-                <hr />
-                <span className="tot"><i>{copy.scan.diagram.total}</i><i>{copy.scan.diagram.amount}</i></span>
-              </div>
-              <Icon name="arrow" size={14} className="scanarrow" />
-              {/* The same bill as an expense, split by the receipt: the three
-                  fields a scan fills, and under them what it came to for three
-                  of this group's own members. The shares are summed from the
-                  lines on the left (`lib/scan/diagram.ts`), so the two halves
-                  of the picture can't drift apart. */}
-              <div className="scanform">
-                <span className="head">
-                  <i className="t">{copy.scan.diagram.title}</i>
-                  <i className="d">{copy.scan.diagram.date}</i>
-                </span>
-                <span className="a bignum">{copy.scan.diagram.amount}</span>
-                <hr />
-                {drawnShares(data.members.map((m) => m.name), groupId).map((share) => (
-                  <span key={share.name}>
-                    <i className="who">{share.name}</i><i>{share.amount}</i>
+            <div className="scanshow">
+              <div className="scandiagram" role="img" aria-label={copy.scan.diagram.alt}>
+                {/* The bill: printed lines, a rule, the total under it. They add
+                    up to the number the form comes back with — `copy.test.ts`
+                    keeps it that way. */}
+                <div className="scanpaper">
+                  {copy.scan.diagram.lines.map(([label, price]) => (
+                    <span key={label}><i>{label}</i><i>{price}</i></span>
+                  ))}
+                  <hr />
+                  <span className="tot"><i>{copy.scan.diagram.total}</i><i>{copy.scan.diagram.amount}</i></span>
+                </div>
+                <Icon name="arrow" size={14} className="scanarrow" />
+                {/* The same bill as an expense, split by the receipt: the three
+                    fields a scan fills, and under them what it came to for three
+                    of this group's own members. The shares are summed from the
+                    lines on the left (`lib/scan/diagram.ts`), so the two halves
+                    of the picture can't drift apart. */}
+                <div className="scanform">
+                  <span className="head">
+                    <i className="t">{copy.scan.diagram.title}</i>
+                    <i className="d">{copy.scan.diagram.date}</i>
                   </span>
-                ))}
+                  <span className="a bignum">{copy.scan.diagram.amount}</span>
+                  <hr />
+                  {drawnShares(data.members.map((m) => m.name), groupId).map((share) => (
+                    <span key={share.name}>
+                      <i className="who">{share.name}</i><i>{share.amount}</i>
+                    </span>
+                  ))}
+                </div>
               </div>
+
+              {/* What the drawing can only imply, said once: the whole form
+                  comes back filled, and the bill's own lines are a way to
+                  split it. It belongs to the picture — hence inside the same
+                  block, a line under it — and the screen's wide gap still
+                  falls between that block and the control. */}
+              <p className="scanlede">{copy.scan.lede}</p>
             </div>
 
             <div className="scanact">

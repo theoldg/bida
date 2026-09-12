@@ -658,11 +658,20 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    — with nothing else on the screen, a control at the foot is a control
    stranded a long way from the only thing explaining it. `min-height: 100%`
    is what gives the column the room to centre in. */
-/* The gap between the two is wide on purpose: the picture explains, the
-   control acts, and at a normal gap the drawing read as a caption on the
-   button rather than as the thing the button leads to. */
+/* The gap between the two is wide on purpose: the picture and its one line
+   explain, the control acts, and at a normal gap the drawing read as a
+   caption on the button rather than as the thing the button leads to. Adding
+   the line pushed them closer again, so the gap grew to keep them apart. */
 .scanpage { min-height: 100%; display: flex; flex-direction: column;
-  justify-content: center; gap: 40px }
+  justify-content: center; gap: 56px }
+/* Picture and caption are one thing, so they sit close; the screen's wide gap
+   falls below them, not between them. */
+.scanshow { display: flex; flex-direction: column; gap: 14px }
+/* The sentence under the drawing: the width of the drawing it explains, and
+   centred on it, so it reads as part of the picture rather than as a heading
+   over the control. */
+.scanlede { margin: 0; text-align: center; text-wrap: balance;
+  font-size: 13px; line-height: 1.45; color: var(--ink-2) }
 /* The screen's one sentence, drawn: a bill, and the expense it comes back as,
    split by that bill between three of this group's own members. Both halves
    are the app's own card — same square corner, same two columns, the same

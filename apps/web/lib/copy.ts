@@ -465,6 +465,13 @@ export const copy = {
       people: ["Ana", "Ben", "Cleo"],
     },
     /**
+     * Under the drawing, the two things the drawing can only imply: that the
+     * whole form comes back filled, and that the lines on the bill are a way
+     * to split it. It sits with the picture, not with the control — the gap
+     * below it is what keeps the two apart.
+     */
+    lede: "One photo fills the expense in — then split it evenly, or by who had what.",
+    /**
      * The two halves of the one control that scans (`ScanPair`), naming the
      * two doors into the same act and not the act itself: what is being
      * scanned is said by the screen — the top bar on `/g/scan`, the "Receipt"

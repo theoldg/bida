@@ -16,9 +16,12 @@ control can drift — one act, two doors, one button cut in two
 another screen, so it draws it: a bill of four lines and a total, an arrow, and
 the expense that comes back — a title, that same total, a date, and under them
 what the bill came to for three of the group's own members, which is what the
-Receipt tab would leave. The picture and the control under it sit centred
-together; it replaced a sentence saying the same thing, and that sentence is
-now the drawing's `alt`.
+Receipt tab would leave. Under the drawing, one line (`copy.scan.lede`) says
+the two things it can only imply: the whole form comes back filled, and the
+bill's own lines are a way to split it. Picture and line are one block, centred
+with the control under it and a wide gap between the two, so the drawing reads
+as what the control leads to rather than as a caption on it. The drawing
+replaced a sentence saying the same thing, and that sentence is now its `alt`.
 
 The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.ts`
 sums the shares from the same lines the left-hand card prints, and picks the
