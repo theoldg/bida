@@ -66,8 +66,6 @@ export default function GroupsPage() {
             {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
           </div>
 
-          <StartPair />
-
           {/* The two cards the app spends on itself, and they are mutually
               exclusive by construction: the update offer draws only in the
               installed app, the install offer only outside it. At most one of
@@ -76,6 +74,12 @@ export default function GroupsPage() {
 
           {/* Once there is something to come back to, and never before it. */}
           {groups && groups.length > 0 ? <InstallNudge /> : null}
+
+          {/* The act this screen exists for, at the bottom of it: under the
+              list however short the list is, and where a thumb already rests
+              on a phone. It carries the column's `margin-top: auto`, so it and
+              the about line under it are one block at the foot of the screen. */}
+          <StartPair />
 
           {/* The only door to the screen the app spends on itself: what this
               is, what the server can see, and where to complain (app/about). */}

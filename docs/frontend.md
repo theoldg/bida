@@ -318,11 +318,11 @@ that screen is voiced now, as are the history's payer lines.
 ## One navigation
 
 At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
-none outside one. The groups list carries its starts below the list instead of
-in it: **New group · Quick split** as one `.btn-pair` (`.homepair`), and
-**About bida** as a centred line that falls to the foot of the scroll
-(`.homeabout` in a full-height `.homescroll`). About is still a placeholder —
-that screen does not exist yet (todo.md). `Tabs` was deleted
+none outside one. The groups list carries its starts below the list instead
+of in it, and at the foot of the scroll rather than under the last row:
+**New group · Quick split** as one `.btn-pair` (`.homepair`, which takes the
+`margin-top: auto` in a full-height `.homescroll`), with **About bida** as a
+centred line under it (`.homeabout` → `/about`). `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
