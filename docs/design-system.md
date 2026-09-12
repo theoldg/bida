@@ -22,7 +22,10 @@ should be. The mark is `design/brand/logo.svg` itself, shown as an <img>: it is 
 place the app is allowed its own colours, because it carries its own ground
 and is a tile rather than a glyph — the same square as the avatars under it.
 Do not redraw it in `--brand` to make it theme-aware; that was tried, and a
-tracing of a logo is a worse logo.
+tracing of a logo is a worse logo. The one other place the name is printed is
+the "About bida" line at the foot of that same screen, which names what the
+link is *about* rather than heading the screen — the smallest, faintest type
+in the app, so it reads as a footer and not as a second title.
 
 ## Palette roles
 
@@ -59,7 +62,11 @@ picture and the button that picture explains, and at the foot the button is a
 long way from the only thing explaining it, so the two sit centred as one
 block instead.
 
-**One act with two doors is one button cut in two.** Scanning a bill starts at
+**One act with two doors is one button cut in two.** Starting is the other one:
+a group, or a bill split with people who aren't one, is "New group · Quick
+split" below the groups list rather than two rows in it — neither half is a
+group, and the ghost row's dashed square marks a slot in the list it sat in.
+Scanning a bill starts at
 the camera or at the library, and which of those is a detail of the same job:
 `.btn-pair` is one bordered box with a hairline between two halves, the box
 owning the border as in `.splitbox`. Two buttons side by side is the shape for

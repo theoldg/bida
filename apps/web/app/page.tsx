@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Avatar, GhostRow, signClass } from "../components/bits";
+import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog } from "../components/dialog";
@@ -53,6 +53,7 @@ export default function GroupsPage() {
           right={<ThemeToggle />} />
 
         <Scroll>
+         <div className="homescroll">
           {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
               two used to look the same, and the blank was the one you saw. */}
           {groups === undefined ? <SkeletonRows count={4} /> : null}
@@ -63,12 +64,9 @@ export default function GroupsPage() {
 
           <div className="rows">
             {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
-
-            <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
           </div>
 
-          {/* PLACEHOLDER — neither screen behind it is built (todo.md). */}
-          <HomePair />
+          <StartPair />
 
           {/* The two cards the app spends on itself, and they are mutually
               exclusive by construction: the update offer draws only in the
@@ -78,6 +76,10 @@ export default function GroupsPage() {
 
           {/* Once there is something to come back to, and never before it. */}
           {groups && groups.length > 0 ? <InstallNudge /> : null}
+
+          {/* PLACEHOLDER — the screen behind it is not built (todo.md). */}
+          <button type="button" className="homeabout">{copy.groups.about}</button>
+         </div>
         </Scroll>
       </Body>
     </Screen>
@@ -85,25 +87,27 @@ export default function GroupsPage() {
 }
 
 /**
- * The two doors off this screen that aren't a group — one bordered box cut in
- * two, the same control the scan screens wear (`.btn-pair`, design-system).
- * It sits below the list with air above it, so it is the foot of the screen
- * rather than the last of the groups.
+ * Starting something: a group, or a bill split with people who are not one.
+ * Two doors onto the one act this screen exists for, so it is one bordered
+ * box cut in two — the control the scan screens wear (`.btn-pair`,
+ * design-system) — rather than two rows in the list. It left the list because
+ * neither half is a group, and the ghost row's dashed square is the mark for
+ * a slot in the list it sat in.
  *
- * PLACEHOLDER: neither screen behind it exists yet (todo.md — "Quick split",
- * "About/feedback/privacy").
+ * PLACEHOLDER on the right half only: `/quick` does not exist yet (todo.md,
+ * "Quick split"). "New group" is a real link and always was.
  */
-function HomePair() {
+function StartPair() {
   return (
     <div className="homepair">
       <div className="btn-pair pair-p">
+        <Link href={route.newGroup()} className="btn">
+          <Icon name="plus" size={17} />
+          {copy.groups.newGroup}
+        </Link>
         <button type="button" className="btn">
           <Icon name="cam" size={16} />
           {copy.groups.quickSplit}
-        </button>
-        <button type="button" className="btn">
-          <Icon name="info" size={16} />
-          {copy.groups.about}
         </button>
       </div>
     </div>

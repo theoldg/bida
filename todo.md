@@ -29,18 +29,16 @@ Figure out some payment integrator to use.
 
 create an info screen with information and my email
 
-**The entry point is already on the groups list** — the right half of the
-`HomePair` split button, dead until this screen exists. Open question on it:
-an ink block is the heaviest thing on that screen, which is a lot of weight
-for the least-pressed destination in the app.
+**The entry point is already on the groups list** — the centred "About bida"
+line at the foot of the scroll, dead until this screen exists.
 
 
 ## Features
 
 ### Quick split
-**The entry point is already on the groups list** — a right-aligned row under
-"New group" (`QuickSplitRow` in `apps/web/app/page.tsx`), and it is dead until
-this is built. Wire it or remove it; don't leave it.
+**The entry point is already on the groups list** — the right half of the
+`StartPair` split button (`apps/web/app/page.tsx`), beside "New group", and it
+is dead until this is built. Wire it or remove it; don't leave it.
 
 Help me design a "quick split" mode which allows splitting a receipt straight from the home screen, without creating a group.
 1. "Quick split"

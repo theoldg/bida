@@ -21,6 +21,12 @@ two devices.
 
 ## The next action
 
+**Two doors off the home screen are drawn but dead** (2026-09-12). "New group ·
+Quick split" is one `.btn-pair` below the list and "About bida" a centred line
+under everything; the right half of the pair and the about line have no screen
+behind them yet. **Build them or take them off — do not leave a dead control on
+the screen the app opens on** (todo.md: "Quick split", "About/feedback/privacy").
+
 **A row is a row on every screen** (2026-09-12). The groups list and the
 skeleton drawn while either list loads are held to the ledger row's height, so
 the home screen keeps the ledger's rhythm and arrival no longer resizes the
