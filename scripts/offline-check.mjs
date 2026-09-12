@@ -12,7 +12,7 @@
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { ensureBuild, OUT, serveExport, launch, newPhone, openGroupsList, reporter, newGroup }
+import { asInstalledApp, ensureBuild, OUT, serveExport, launch, newPhone, openGroupsList, reporter, newGroup }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -154,6 +154,10 @@ console.log("\nupdating on demand:");
 await ctx.setOffline(false);
 blocked.delete(ASSET_TO_DROP);
 swRevision = "gooddeploy01";
+// From here on the phone is the installed app, because that is the only place
+// the offer is drawn: a tab has a reload button already, and a standalone
+// window has neither that nor a worker that activates by itself.
+await asInstalledApp(page);
 await openGroupsList(page, base);
 // A second client of the *old* worker, open across the tap: the case that made
 // waiting-forever possible. It must not hold the update up — and it must not be

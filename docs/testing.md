@@ -170,6 +170,12 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   must `statSync(p).isFile()` before serving and only then fall through to
   `${file}.html`. Serving the directory hit is an `EISDIR` crash. Fixed once, in
   the harness — don't hand-roll a fourth server.
+- **A check that needs the installed app has to say so.** The update offer is
+  drawn only when `display-mode: standalone` matches, and neither playwright nor
+  CDP's media emulation can set that — `asInstalledApp(page)` answers the query
+  instead, before the navigation that should see it. Four assertions in
+  `offline-check` sat red for a day because the offer they tap had quietly
+  become installed-only.
 - **Locate by role and id, not by guessed label text.** On `/new` the label is
   "Name"; "Group name" is only the placeholder, so `getByLabel` hangs.
 - **Two things must never answer to one accessible name.** The add row's button

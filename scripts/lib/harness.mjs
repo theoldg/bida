@@ -180,6 +180,34 @@ function freePort() {
 
 export const launch = () => chromium.launch(EXECUTABLE ? { executablePath: EXECUTABLE } : {});
 
+/**
+ * Make this page look like the app installed to a home screen.
+ *
+ * `components/update.tsx` draws the update offer only when the app is
+ * standalone — a browser tab has a reload button of its own — and playwright
+ * has no API for `display-mode` — nor, it turns out, does CDP's media
+ * emulation. So the query itself is answered, for this page and every
+ * navigation it makes. Which signal means "installed" is `lib/install.ts`'s
+ * subject and has its own tests; what is being driven here is the screen
+ * behind it.
+ */
+export async function asInstalledApp(page) {
+  await page.addInitScript(() => {
+    const real = window.matchMedia.bind(window);
+    // Only this one query is answered here; the theme asks about
+    // prefers-color-scheme through the same function and must still get a real
+    // answer. CDP's media emulation does not cover display-mode, and nothing
+    // reads these beyond `.matches`.
+    window.matchMedia = (query) => (query.includes("display-mode")
+      ? {
+        matches: query.includes("standalone"), media: query, onchange: null,
+        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false,
+        addListener() {}, removeListener() {},
+      }
+      : real(query));
+  });
+}
+
 /** A phone: 390×844, touch, mobile. What every screen is designed against. */
 export const newPhone = (browser, opts = {}) => browser.newContext({
   viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...opts,
