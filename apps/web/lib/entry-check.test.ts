@@ -138,10 +138,10 @@ describe("checkEntry", () => {
     it("holds Save on the tab with no bill behind it", () => {
       const c = check(expense({ splitTab: "receipt" }));
       expect(c.ready).toBe(false);
-      // In the split editor's own footer, not beside Save: `blocker` and
-      // `receiptBlocker` are read in two different places on the form.
+      // Nothing beside Save: the refusal is the scan control blooming, so this
+      // says only that a step is outstanding — never which sentence to print.
       expect(c.blocker).toBeNull();
-      expect(c.receiptBlocker).toBe(copy.split.noReceipt);
+      expect(c.receiptMissing).toBe(true);
     });
 
     it("holds Save on a scanned bill nobody has assigned", () => {
@@ -150,7 +150,7 @@ describe("checkEntry", () => {
       // hadn't.
       const c = check(expense({ splitTab: "receipt", receiptItems: items }));
       expect(c.ready).toBe(false);
-      expect(c.receiptBlocker).toBe(copy.split.noWhoHadWhat);
+      expect(c.receiptMissing).toBe(true);
     });
 
     it("derives the amount and the split once the grid is filled in", () => {
@@ -197,7 +197,7 @@ describe("checkEntry", () => {
       const c = check(expense({ kind: "income", splitTab: "receipt", receiptItems: items }));
       expect(c.canScan).toBe(false);
       expect(c.blocker).toBeNull();
-      expect(c.receiptBlocker).toBeNull();
+      expect(c.receiptMissing).toBe(false);
       expect(c.ready).toBe(true);
     });
   });

@@ -931,13 +931,27 @@ dialog.scrim::backdrop { background: transparent }
 @keyframes refuse-line-b { 15%, 45% { border-bottom-color: var(--debit) } }
 @keyframes refuse-box-a { 15%, 45% { border-color: var(--debit) } }
 @keyframes refuse-box-b { 15%, 45% { border-color: var(--debit) } }
-@keyframes refuse-ph-a { 15%, 45% { color: var(--debit) } }
-@keyframes refuse-ph-b { 15%, 45% { color: var(--debit) } }
+/* Text and, through `currentColor`, the icons beside it — a field's
+   placeholder, or the label on a control that is what's missing. */
+@keyframes refuse-text-a { 15%, 45% { color: var(--debit) } }
+@keyframes refuse-text-b { 15%, 45% { color: var(--debit) } }
+/* A half of the scan pair: its label, and the rule between the two halves.
+   That divider is the second half's `border-left`, so it is the one line of
+   the control the box's own border animation cannot reach — and a frame that
+   goes red around a bar that stays grey reads as a control half-refusing. */
+@keyframes refuse-half-a { 15%, 45% { color: var(--debit); border-left-color: var(--debit) } }
+@keyframes refuse-half-b { 15%, 45% { color: var(--debit); border-left-color: var(--debit) } }
 /* The amount's placeholder sits at .35 opacity, faint enough that a colour
    change alone barely registers; it brightens with the red and settles back
    to whatever the computed style says, same as every other stop here. */
 @keyframes refuse-amount-ph-a { 15%, 45% { color: var(--debit); opacity: .7 } }
 @keyframes refuse-amount-ph-b { 15%, 45% { color: var(--debit); opacity: .7 } }
+
+/* An ink block has no border to bloom — the "Assign who had what" door is
+   `--brand` on `--brand`. Its refusal is an inset outline instead, which paints
+   over the fill and, unlike a border appearing, moves nothing. */
+@keyframes refuse-out-a { 15%, 45% { outline-color: var(--debit) } }
+@keyframes refuse-out-b { 15%, 45% { outline-color: var(--debit) } }
 
 .amountfield.flash-a { animation: refuse-line-a .6s ease-in-out }
 .amountfield.flash-b { animation: refuse-line-b .6s ease-in-out }
@@ -945,8 +959,23 @@ dialog.scrim::backdrop { background: transparent }
 .field.flash-b { animation: refuse-box-b .6s ease-in-out }
 .amountfield.flash-a input::placeholder { animation: refuse-amount-ph-a .6s ease-in-out }
 .amountfield.flash-b input::placeholder { animation: refuse-amount-ph-b .6s ease-in-out }
-.field.flash-a input::placeholder { animation: refuse-ph-a .6s ease-in-out }
-.field.flash-b input::placeholder { animation: refuse-ph-b .6s ease-in-out }
+.field.flash-a input::placeholder { animation: refuse-text-a .6s ease-in-out }
+.field.flash-b input::placeholder { animation: refuse-text-b .6s ease-in-out }
+/* The Receipt tab refuses the same way a field does, because what is missing
+   there is a step and not a figure: the control that takes it blooms. The
+   scan pair has a border of its own, so it borrows the box animation; the
+   door to the grid is an ink block, so it takes the outline one. A control is
+   more than its edge, so the whole of it goes red: the labels, their icons
+   (`currentColor`) and the rule between the halves. That is set on the halves
+   rather than the box — `.pair-xs` sets its own `color` and would not inherit
+   an animated one, and the divider belongs to a half either way. */
+.btn-pair.flash-a { animation: refuse-box-a .6s ease-in-out }
+.btn-pair.flash-b { animation: refuse-box-b .6s ease-in-out }
+.btn-pair.flash-a .btn { animation: refuse-half-a .6s ease-in-out }
+.btn-pair.flash-b .btn { animation: refuse-half-b .6s ease-in-out }
+.btn.flash-a, .btn.flash-b { outline: 1.5px solid transparent; outline-offset: -1.5px }
+.btn.flash-a { animation: refuse-out-a .6s ease-in-out, refuse-text-a .6s ease-in-out }
+.btn.flash-b { animation: refuse-out-b .6s ease-in-out, refuse-text-b .6s ease-in-out }
 
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector
@@ -960,6 +989,8 @@ dialog.scrim::backdrop { background: transparent }
 @media (prefers-reduced-motion: reduce) {
   .amountfield.flash-a, .amountfield.flash-b,
   .field.flash-a, .field.flash-b,
+  .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
+  .btn-pair.flash-a .btn, .btn-pair.flash-b .btn,
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
   .field.flash-a input::placeholder, .field.flash-b input::placeholder {
     animation-duration: .6s !important }

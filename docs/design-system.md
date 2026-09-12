@@ -176,19 +176,24 @@ attempted, in `--debit`: `Failure` / `.failure`. **A held action always has
 one**: Save greyed with nothing to read is a dead end, so the entry form keeps
 a single reason line beside the payer field rather than one per branch.
 
-A *refused* action points as well as saying why: a Save that can't go through
-blooms the field that stopped it `--debit` and lets it settle back over ~600ms
-— the amount's underline, the title's box, the placeholder in either — and so
-does the multi-payer door, which has no amount to divide. A flash rather than a
-held red, because the sentence is already holding the state and two things
-saying it permanently is one too many; and it replays on every refusal, which
-is what the two identical `-a`/`-b` animations in `globals.css` are for. Save
-is spent for exactly as long as the flash — greyed instantly, eased back —
-which is the press saying it landed, and stops the same press arriving again
-over a form that is mid-way through saying no. It is
-the one thing exempt from the global reduced-motion clamp: a colour settling is
-what that guidance asks you to fall back *to*, and clamped it would be nothing
-at all.
+A *refused* action points instead of explaining: a Save that can't go through
+blooms whatever stopped it `--debit` and lets it settle back over ~600ms. A
+missing figure blooms its field — the amount's underline, the title's box, the
+placeholder in either — and so does the multi-payer door, which has no amount
+to divide. A missing *step* blooms the whole control that takes it, edge, label,
+icons and any rule inside it: the scan pair and the door to the who-had-what
+grid, which is the Receipt tab's entire complaint now that the red sentence
+under it is gone. Pointing beats wording there, because "scan a receipt" was
+true of every untouched bill and read as a scolding for arriving. A flash
+rather than a held red, and it replays on every refusal — the two identical
+`-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
+for exactly as long as the flash — greyed instantly, eased back — which is the
+press saying it landed, and stops the same press arriving again over a form
+mid-way through saying no. The bloom is a jump in *contrast* and not only in
+hue (`--debit` is far darker than `--rule` on paper and far lighter in the
+dark), so it survives being unable to tell red from grey. It is the one thing
+exempt from the global reduced-motion clamp: a colour settling is what that
+guidance asks you to fall back *to*, and clamped it would be nothing at all.
 
 ## Rules that are not negotiable
 

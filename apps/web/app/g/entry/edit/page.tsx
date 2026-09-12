@@ -50,6 +50,13 @@ export default function EditEntryPage() {
 /** A field's refusal flash: how many there have been, and whether one is running. */
 interface Refusal { n: number; live: boolean }
 const NOT_REFUSED: Refusal = { n: 0, live: false };
+/**
+ * What a refused Save can bloom. Two fields and a step: the Receipt tab is
+ * short of a photograph or of a who-had-what grid, and the control that takes
+ * whichever it is flashes exactly as the amount's underline does.
+ */
+const REFUSABLE = ["amount", "title", "receipt"] as const;
+type Refusable = typeof REFUSABLE[number];
 
 /**
  * The class that flashes a field red. Nothing unless a flash is actually
@@ -104,9 +111,10 @@ function EditEntryScreen() {
    */
   const [saving, setSaving] = useState(false);
   // Save is always tappable; a tap while invalid flips this instead of doing
-  // nothing. It is what puts the blocker sentence on screen and turns on the
-  // split editor's own red — an untouched form shows no errors just for being
-  // empty.
+  // nothing. It is what puts the blocker sentence on screen — an untouched
+  // form shows no errors just for being empty. What is *missing* rather than
+  // wrong says so by blooming its own control instead, and needs no flag: the
+  // flash is the event.
   const [attemptedSave, setAttemptedSave] = useState(false);
   /**
    * The refusal flash, per field. A refusal blooms the field that caused it
@@ -129,25 +137,28 @@ function EditEntryScreen() {
    * too, by remounting the <input> and taking the caret, the focus and any IME
    * composition with it.)
    */
-  const [refused, setRefused] = useState({ amount: NOT_REFUSED, title: NOT_REFUSED });
-  const refuse = (fields: { amount?: boolean; title?: boolean }) =>
-    setRefused((r) => ({
-      amount: fields.amount ? { n: r.amount.n + 1, live: true } : r.amount,
-      title: fields.title ? { n: r.title.n + 1, live: true } : r.title,
-    }));
+  const [refused, setRefused] = useState<Record<Refusable, Refusal>>({
+    amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED,
+  });
+  const refuse = (fields: Partial<Record<Refusable, boolean>>) =>
+    setRefused((r) => {
+      const next = { ...r };
+      for (const f of REFUSABLE) if (fields[f]) next[f] = { n: r[f].n + 1, live: true };
+      return next;
+    });
   /**
    * A refusal is still on screen. Save is spent for exactly as long: a press
    * that can't go through has to look like it landed, and a button that stays
    * live while the form is busy saying no invites the same press again. Read
    * off the flash rather than a timer of its own, so the two can't drift.
    */
-  const refusing = refused.amount.live || refused.title.live;
+  const refusing = REFUSABLE.some((f) => refused[f].live);
   /**
    * The flash is over. Only the field's own animation counts — the placeholder
    * is a pseudo-element on the same clock, and `pseudoElement` is how an
    * animation event says which of the two it is.
    */
-  const settled = (field: "amount" | "title") => (e: React.AnimationEvent) => {
+  const settled = (field: Refusable) => (e: React.AnimationEvent) => {
     if (e.pseudoElement) return;
     setRefused((r) => ({ ...r, [field]: { ...r[field], live: false } }));
   };
@@ -340,7 +351,7 @@ function EditEntryScreen() {
   });
   const {
     activeTab, canScan, activeSplit, receiptSplit, effectiveSplit, receiptTotal, receiptLocksAmount,
-    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptBlocker, ready,
+    onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptMissing, ready,
     amountMissing, titleMissing,
   } = check;
 
@@ -419,7 +430,7 @@ function EditEntryScreen() {
     const actor = data.me;
     if (!ready) {
       setAttemptedSave(true);
-      refuse({ amount: amountMissing, title: titleMissing });
+      refuse({ amount: amountMissing, title: titleMissing, receipt: receiptMissing });
       return;
     }
     if (saving || !groupId || !actor) return;
@@ -644,7 +655,6 @@ function EditEntryScreen() {
                 title={copy.entryKind.split[kind]}
                 totalMinor={baseMinor}
                 totalUnknown={foreign && groupRate === undefined}
-                attemptedSave={attemptedSave}
                 currency={base}
                 spec={activeSplit}
                 receiptSplit={receiptSplit}
@@ -657,7 +667,9 @@ function EditEntryScreen() {
                   scanDisabled: scan.disabled,
                   scanState: scan.state,
                   scanError: scan.error,
-                  blocker: receiptBlocker,
+                  missing: receiptMissing,
+                  flash: flashClass(refused.receipt),
+                  onFlashEnd: settled("receipt"),
                   onScanCamera: scan.openCamera,
                   onScanLibrary: scan.openLibrary,
                   editItemsHref: route.items(groupId, via),

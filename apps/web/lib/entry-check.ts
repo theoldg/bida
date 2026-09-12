@@ -65,12 +65,12 @@ export interface EntryCheck {
   /** No title typed yet (expenses/incomes only — a transfer's note is optional). */
   titleMissing: boolean;
   /**
-   * Why Receipt mode hasn't produced the split it claims, or null. Kept apart
-   * from `blocker` because it is read somewhere else: a complaint about the
-   * split belongs in the split editor's own footer, beside "enter an amount to
-   * split", not up against Save with the payer problems.
+   * Receipt mode hasn't produced the split it claims. A missing step rather
+   * than a sentence, like `amountMissing` and `titleMissing` above and read
+   * the same way: it blooms the control that takes the step — the scan pair,
+   * or the door to the who-had-what grid — and never says anything in words.
    */
-  receiptBlocker: string | null;
+  receiptMissing: boolean;
   /** Whether Save may light. */
   ready: boolean;
 }
@@ -188,10 +188,10 @@ export function checkEntry(input: {
   // tab could be opened over an ordinary even split and saved — the entry then
   // said "from receipt" beside a split nobody read off a receipt, and a scan
   // whose grid was never filled in silently went out evenly. The tab is the
-  // claim; `receiptSplit` is whether it is true.
-  const receiptBlocker = canScan && activeTab === "receipt" && receiptSplit === null
-    ? (hasReceiptItems ? copy.split.noWhoHadWhat : copy.split.noReceipt)
-    : null;
+  // claim; `receiptSplit` is whether it is true. Which of the two steps is
+  // outstanding is not recorded here: the tab has the bill or it hasn't, and
+  // that is what decides which of its controls blooms.
+  const receiptMissing = canScan && activeTab === "receipt" && receiptSplit === null;
 
   // The one place the form says why Save is grey. It used to live inside the
   // co-payer card, so the states that render the *single*-payer field — an
@@ -211,12 +211,12 @@ export function checkEntry(input: {
   const titleMissing = !transfer && draft.description.trim().length === 0;
 
   const ready = !amountMissing && !titleMissing && rateOk && splitOk
-    && !blocker && !receiptBlocker && sidesOk;
+    && !blocker && !receiptMissing && sidesOk;
 
   return {
     amountMinor, baseMinor, foreign, groupRate, rateOk,
     activeTab, canScan, receiptTotal, receiptLocksAmount: receiptTotal !== null,
     onReceiptTab, activeSplit: tabSplit, receiptSplit, effectiveSplit,
-    blocker, amountMissing, titleMissing, receiptBlocker, ready,
+    blocker, amountMissing, titleMissing, receiptMissing, ready,
   };
 }

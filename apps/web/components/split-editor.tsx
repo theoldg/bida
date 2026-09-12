@@ -52,17 +52,26 @@ export interface ReceiptTabProps {
   /** Why the last scan failed, already worded for a person. Null falls back to the generic message. */
   scanError: string | null;
   /**
-   * Why this tab hasn't produced a split yet — `checkEntry`'s `receiptBlocker`.
-   * It is shown in the split footer with the arithmetic tabs' own verdicts,
-   * because it is the same complaint: this split isn't finished.
+   * This tab hasn't produced a split yet — `checkEntry`'s `receiptMissing`.
+   * Nothing is said about it in words: it suppresses the arithmetic verdict
+   * underneath, which would be a verdict on a split nobody is saving, and a
+   * refused Save blooms the control instead (`flash` below).
    */
-  blocker: string | null;
+  missing: boolean;
+  /**
+   * The refusal flash, from the form that owns it: the class that blooms
+   * whichever control takes the step still outstanding — the scan pair where
+   * there is no bill, the door to the grid where nobody has been assigned a
+   * line of one. Empty while no flash is running.
+   */
+  flash: string;
+  onFlashEnd: (e: React.AnimationEvent) => void;
   onScanCamera: () => void;
   onScanLibrary: () => void;
   editItemsHref: string;
 }
 
-export function SplitEditor({ members, me, title, totalMinor, totalUnknown, attemptedSave, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
+export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
   /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
@@ -76,13 +85,6 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
    * rate, and the form above says so.
    */
   totalUnknown?: boolean;
-  /**
-   * Whether Save has been tapped on an invalid form. Receipt mode's "Scan a
-   * receipt" is true of every untouched scan, so it is held back until the
-   * user has actually asked to save — a verdict the form opens with is a
-   * complaint about nothing.
-   */
-  attemptedSave: boolean;
   currency: string;
   /** What the arithmetic tab now showing holds — this editor edits only it. */
   spec: SplitSpec;
@@ -130,22 +132,23 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
   // Receipt's own shortfall outranks the arithmetic: while the tab has no
   // split of its own, whatever spec is underneath (often "equal") is not what
   // is being judged, so its verdict would be a verdict on nothing.
-  const receiptBlocker = showReceipt ? receipt?.blocker ?? null : null;
+  const receiptMissing = showReceipt && (receipt?.missing ?? false);
   // `splitFooter` — not `check` — decides the wording, the verdict and whether
   // there is a footer at all: a zero total is arithmetically a satisfied split
   // and must never be shown as one, so "ok" here means "ok to show a tick",
   // not `check.ok`, and a split with no amount behind it says nothing.
-  const foot = receiptBlocker !== null ? { ok: false, text: receiptBlocker }
+  //
+  // A Receipt tab still short of its own split says nothing here either. The
+  // step left — a bill to photograph, or a bill to assign — used to be a red
+  // sentence in this footer, and it was a sentence for a state that is true of
+  // every untouched scan; a refused Save now blooms the control that takes the
+  // step, the way a missing amount blooms the amount. What the footer must
+  // still not do is fall through to the arithmetic underneath: the spec behind
+  // the tab (often "equal") is not what a save would write, so its verdict
+  // would be a verdict on nothing.
+  const foot = receiptMissing ? null
     : check !== null ? splitFooter(check, currency) : null;
-  // Receipt mode without the split it claims is a complaint of a kind,
-  // in both its forms: "Scan a receipt" and "Say who had what" each name a
-  // step the person has not got to, not something they got wrong. Landing on
-  // this tab straight from a scan is now the ordinary way to arrive here
-  // (`/g/scan`), so the sentence waits for a save attempt rather than greeting
-  // a bill that read perfectly well.
-  const receiptStepLeft = receiptBlocker !== null;
   const showFooter = !totalUnknown && foot !== null
-    && (attemptedSave || !receiptStepLeft)
     && (showReceipt ? !foot.ok : (isExactTab || !foot.ok));
 
   function toggle(memberId: string) {
@@ -346,7 +349,8 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, atte
  * the old items/tip and resets the who-had-what grid, same as the first scan.
  */
 function ReceiptPanel({
-  items, scanDisabled, scanState, scanError, onScanCamera, onScanLibrary, editItemsHref,
+  items, scanDisabled, scanState, scanError, flash, onFlashEnd,
+  onScanCamera, onScanLibrary, editItemsHref,
   members, me, currency, shares, included,
 }: ReceiptTabProps & {
   members: Member[];
@@ -360,7 +364,11 @@ function ReceiptPanel({
     const involved = members.filter((m) => included.has(m.id));
     return (
       <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 10 }}>
-        <Link href={editItemsHref} className="btn btn-p" style={{ textDecoration: "none", justifyContent: "space-between" }}>
+        {/* The step outstanding on a scanned bill is assigning it, so this is
+            the control a refused Save blooms — an ink block, which takes the
+            flash as an inset outline rather than a border. */}
+        <Link href={editItemsHref} className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
+          style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />
             {/* Nobody on the bill yet means the work has not been done once,
@@ -384,6 +392,8 @@ function ReceiptPanel({
           </div>
         ))}
         <div>
+          {/* Nothing to refuse here: with a bill on screen the outstanding
+              step is the door above, not another photograph. */}
           <ScanPair state={scanState} disabled={scanDisabled} register="xs"
             onCamera={onScanCamera} onLibrary={onScanLibrary} />
           {scanState === "error" ? (
@@ -397,8 +407,10 @@ function ReceiptPanel({
   return (
     <div style={{ padding: 12 }}>
       {/* The tab above says "Receipt", so the two halves name their two doors
-          and not the job — reading as "Receipt: Scan | Upload". */}
+          and not the job — reading as "Receipt: Scan | Upload". With no bill
+          yet, this is the control a refused Save blooms. */}
       <ScanPair state={scanState} disabled={scanDisabled} register="s"
+        flash={flash} onFlashEnd={onFlashEnd}
         onCamera={onScanCamera} onLibrary={onScanLibrary} />
       {scanState === "error" ? (
         /* No "try again" beside the message: the control is right above it,

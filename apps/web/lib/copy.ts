@@ -425,14 +425,6 @@ export const copy = {
     allocated: (allocated: string, total: string) => `${allocated} of ${total} allocated`,
     under: "left to split",
     over: "too much",
-    /**
-     * Receipt mode with no bill behind it. Both say the same thing — this
-     * split doesn’t exist yet — and each names the step that is missing. They
-     * sit in the same footer as the three above: it is the split that is
-     * short, so it is read where every other shortfall in a split is read.
-     */
-    noReceipt: "Scan a receipt, or split it another way",
-    noWhoHadWhat: "Say who had what, or split it another way",
   },
 
   // ------------------------------------------------------------- receipts

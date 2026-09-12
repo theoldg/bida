@@ -164,25 +164,34 @@ export function useReceiptScan(
  * Three registers of the same control, so where it sits changes its size and
  * nothing else: `lg` where the screen exists for it, `s` on the Receipt tab,
  * `xs` for replacing a bill already assigned.
+ *
+ * `flash` is the entry form's refusal: a Save tapped on a Receipt tab with no
+ * bill behind it blooms this box red and lets it settle, which is what the
+ * amount and the title have always done. The box carries it, not a half —
+ * neither half is the one that was wrong.
  */
-export function ScanPair({ state, disabled, onCamera, onLibrary, register }: {
+export function ScanPair({
+  state, disabled, onCamera, onLibrary, register, flash = "", onFlashEnd,
+}: {
   state: ScanState;
   disabled: boolean;
   onCamera: () => void;
   onLibrary: () => void;
   register: "lg" | "s" | "xs";
+  flash?: string;
+  onFlashEnd?: (e: React.AnimationEvent) => void;
 }) {
   const busy = state === "scanning";
   const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  const box = `btn-pair${register === "lg" ? " pair-p" : ""}${register === "xs" ? " pair-xs" : ""}`;
+  const box = `btn-pair${register === "lg" ? " pair-p" : ""}${register === "xs" ? " pair-xs" : ""}${flash}`;
 
   // One element, so the box keeps the height it had and nothing under it moves
   // while the model reads. Disabled through the same `.btn:disabled` every
   // other spent button in the app uses.
   if (busy) {
     return (
-      <div className={box}>
+      <div className={box} onAnimationEnd={onFlashEnd}>
         <button type="button" className={half} disabled aria-live="polite">
           <span className="spinner" aria-hidden="true" />
           {copy.scan.reading}
@@ -192,7 +201,7 @@ export function ScanPair({ state, disabled, onCamera, onLibrary, register }: {
   }
 
   return (
-    <div className={box}>
+    <div className={box} onAnimationEnd={onFlashEnd}>
       <button type="button" className={half} disabled={disabled} onClick={onCamera}>
         <Icon name="cam" size={icon} />
         {register === "xs" ? copy.scan.rescan : copy.scan.snap}
