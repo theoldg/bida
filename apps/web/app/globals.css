@@ -369,8 +369,10 @@ a { color: inherit; text-decoration: none }
    column is centred in it: a row with two figures keeps them together and takes
    the slack as air above and below, rather than opening a gap between the sum
    and your share. The tighter leading is what keeps that height near the old
-   two-line row's, so the ledger holds as many entries per screen as before. */
-.entryrow { min-height: 68px }
+   two-line row's, so the ledger holds as many entries per screen as before.
+   The groups list and the skeleton drawn for both are held to the same height,
+   so a row is a row everywhere and loading doesn't resize the list. */
+.entryrow, .grouprow, .skelrow { min-height: 68px }
 .entryrow .ramt { line-height: 1.25 }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 

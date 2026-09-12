@@ -107,7 +107,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
 
   return (
     <>
-      <Link href={route.group(group.id)} className="row" onContextMenu={onContextMenu}>
+      <Link href={route.group(group.id)} className="row grouprow" onContextMenu={onContextMenu}>
         <Avatar name={group.name} />
         <div className="rmain">
           <div className="rtitle">{group.name}</div>

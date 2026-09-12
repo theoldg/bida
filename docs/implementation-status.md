@@ -21,6 +21,11 @@ two devices.
 
 ## The next action
 
+**A row is a row on every screen** (2026-09-12). The groups list and the
+skeleton drawn while either list loads are held to the ledger row's height, so
+the home screen keeps the ledger's rhythm and arrival no longer resizes the
+list ([design-system.md](design-system.md#a-row-says-less-rather-than-being-cut-off)).
+
 **The ledger's summary is one figure** (2026-09-12). The card at the top of the
 ledger says which way you stand and how much, and nothing else: the "took in ·
 cut" and "paid back / got back" lines under it were terms of the balance shown

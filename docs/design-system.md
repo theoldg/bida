@@ -175,7 +175,8 @@ A ledger row is always the same height, whether or not it carries a second
 figure — the sum as it was spent, before the group's currency. A row that grew a
 line for that one broke the rhythm of the list wherever one landed, so the row
 is held to the height of the three-figure case and its column is centred in it
-(`.entryrow`): a two-figure row keeps the sum and your share together and takes
+(`.entryrow`, and `.grouprow`/`.skelrow` with it, so a row is a row on every
+screen): a two-figure row keeps the sum and your share together and takes
 the slack as air above and below. The amount column is leaded tighter than it
 was, so that fixed height stays close to the old two-line row's and the ledger
 holds as many entries per screen.
