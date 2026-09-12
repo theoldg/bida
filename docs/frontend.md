@@ -372,7 +372,10 @@ so `sw.js` only ever does it when asked: `lib/update.ts` registers the worker,
 watches for a successor reaching `installed`, and re-checks whenever the app
 comes back to the foreground — an installed app is resumed far more often than
 it is launched. `components/update.tsx` draws the offer at the foot of the
-groups list; the tap posts `{ type: "skip-waiting" }` and reloads on
+groups list, **and only in the installed app**: a tab has the browser's own
+reload button, and closing it is what lets the waiting worker activate by
+itself. So the two self-referential cards never share the screen — the install
+nudge shows on exactly the phones the update nudge doesn't. The tap posts `{ type: "skip-waiting" }` and reloads on
 `controllerchange`, so nothing is left that could ask for the cache `activate`
 is about to drop. **That reload is served while the old cache still exists**, so
 every read in `sw.js` is scoped to `CACHE_NAME` (Gotcha below). Every *other*

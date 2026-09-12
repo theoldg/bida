@@ -66,9 +66,10 @@ export default function GroupsPage() {
             <GhostRow icon="plus" label={copy.groups.newGroup} href={route.newGroup()} />
           </div>
 
-          {/* Above the install offer, and not gated on owning a group: this one
-              is about the copy of the app you are already running, and a phone
-              with nothing in it still deserves the build it asked for. */}
+          {/* The two cards the app spends on itself, and they are mutually
+              exclusive by construction: the update offer draws only in the
+              installed app, the install offer only outside it. At most one of
+              them is ever under the list. */}
           <UpdateNudge />
 
           {/* Once there is something to come back to, and never before it. */}
