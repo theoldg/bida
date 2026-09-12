@@ -470,7 +470,7 @@ export const copy = {
      * to split it. It sits with the picture, not with the control — the gap
      * below it is what keeps the two apart.
      */
-    lede: "One photo fills the expense in — then split it evenly, or by who had what.",
+    lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
     /**
      * The two halves of the one control that scans (`ScanPair`), naming the
      * two doors into the same act and not the act itself: what is being
