@@ -30,7 +30,9 @@ of the link secret: one is the bearer token the server hashes, the other is an
 AES-GCM key the server never meets, and every op body crosses the wire sealed
 under it. What D1 holds per op is an id, a group id, a sequence number and
 ciphertext — `core/seal.ts` seals, `lib/db/sync.ts` is the only door, and the
-production log was wiped once at the cutover so phones could refill it sealed.
+production log was wiped once at the cutover so phones could refill it sealed —
+**the last reset it gets**, and a schema change from here is a new numbered
+migration ([hosting.md](hosting.md#a-schema-change-from-here-on)).
 The `/about` privacy paragraph and the D1 schema changed in the same commit.
 
 **The about screen is built** (2026-09-12). `/about`: what the app is, that a

@@ -51,7 +51,8 @@ a minute apart — and a stable caller is exactly the unit anything we ever
 throttle has to count, alongside the IP Cloudflare hands us. It is registered
 before *every* scan rather than once and remembered: it costs one D1 read when
 the row is already there, and it is the only version of this that survives the
-database being wiped, which the owner does.
+row not being there — a phone that kept a credential the server has no record
+of would otherwise be unable to scan, with nothing to say why.
 
 **One grid, two doors.** The who-had-what screen becomes a component the group
 route and the quick route both wear, as the scan control already is

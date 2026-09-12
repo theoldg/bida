@@ -40,7 +40,9 @@ server is now what holds confidentiality rather than just access.
 - **The D1 log was wiped once**, at the cutover on 2026-09-12: the old rows had
   no ciphertext and the old schema had no column for one. Phones re-offered
   their own logs sealed, because the op log on the phone is the truth and the
-  server is a relay ([sync.md](../sync.md)).
+  server is a relay ([sync.md](../sync.md)). That was **the last wipe** — what
+  is in D1 now is data
+  ([standing-instructions.md](../standing-instructions.md#product)).
 - **Shape still leaks.** The server sees how many ops a group has, when each
   arrived, roughly how long each is, and the IP that pushed it. Metadata is the
   price of a server that can route at all.

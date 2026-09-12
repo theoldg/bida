@@ -106,19 +106,25 @@ pnpm db:migrate                 # applies migrations to the remote DB
 deploys use a separate D1 — **never point a preview at production data**; the op
 log has no infrastructure-level undo.
 
-**A schema change is not part of the deploy.** `deploy.yml` builds and deploys;
-it never runs migrations, so a change to
-[`0001_init.sql`](../apps/api/migrations/0001_init.sql) has to be applied by
-hand, with a token the owner pastes, in the same window as the push that needs
-it. Sealing (2026-09-12) took the log's old columns away, so that cutover was a
-wipe:
+### A schema change, from here on
 
-```bash
-npx wrangler d1 execute hajsik --remote --command \
-  "DROP TABLE IF EXISTS ops; DROP TABLE IF EXISTS attachments;
-   DROP TABLE IF EXISTS groups; DROP TABLE IF EXISTS d1_migrations;"
-pnpm db:migrate
-```
+**The database is finished, and wiping it is no longer on the table**
+([standing-instructions.md](standing-instructions.md#product)). The sealing
+cutover on 2026-09-12 was the last reset the owner will authorise; what is in
+D1 now is somebody's ledger, and there is no other copy but the phones'.
+
+So a schema change is **a new numbered migration that keeps what is there** —
+`0002_*.sql`, then `0003_*.sql`. [`0001_init.sql`](../apps/api/migrations/0001_init.sql)
+has been applied and is history: editing it changes nothing on the live
+database (`d1_migrations` records it as done) while quietly disagreeing with
+what is actually there, which is worse than either. Reach for `ALTER TABLE`,
+or a new table beside the old one.
+
+**Applying it is not part of the deploy.** `deploy.yml` builds and deploys and
+never runs migrations, so `pnpm db:migrate` has to be run by hand — with a
+token the owner pastes — in the same window as the push that needs it. Migrate
+first when the new code requires the new shape, and write migrations that an
+older Worker survives, because for a minute or two one will be serving them.
 
 **Live at <https://hajsik.hajsik-api.workers.dev>** — permanent; `workers.dev`
 subdomains don't expire while the Worker exists.

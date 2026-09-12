@@ -57,7 +57,8 @@ holds three kinds of entry — expense, income, transfer
 ([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), state two phones can
 merge into that no check can prevent is named and repaired by
 [docs/invariants.md](docs/invariants.md), and what syncs is encrypted end to
-end.
+end. **The D1 log is finished data now** — the encryption cutover was the last
+reset it will ever get ([standing-instructions](docs/standing-instructions.md#product)).
 
 **Exact state and next action live in
 [docs/implementation-status.md](docs/implementation-status.md)** — not here, so

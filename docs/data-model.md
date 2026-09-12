@@ -216,6 +216,11 @@ The server stores **sealed** ops and nothing else it could read
 [ADR-0002](decisions/0002-append-only-op-log.md) — and now no `entity`, `patch`
 or `actor` column either, because those said what an op meant.
 
+**Changing it keeps what is in it.** The 2026-09-12 reset was the last one the
+owner authorises, so a change here is a new numbered migration beside
+`0001_init.sql` rather than an edit to it —
+[hosting.md](hosting.md#a-schema-change-from-here-on).
+
 ```sql
 CREATE TABLE groups (
   id TEXT PRIMARY KEY, token_hash TEXT NOT NULL,    -- sha256 of the derived token

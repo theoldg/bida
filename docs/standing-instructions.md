@@ -91,10 +91,13 @@ to remove more from this list than you add.
 - **State that should outlive one browser tab belongs on the server.**
   *2026-08-28* — a parsed receipt "should obviously be stored on the server", so
   it syncs like everything else.
-- **The test data is disposable.** *2026-08-30* — "feel free to delete the
-  entire database and make a new one … it's all testing nonsense." A schema
-  change may break what's on a phone or in D1; it must still not break the *log
-  format* other clients read.
+- **The database is finished. Never wipe it again.** *2026-09-12*, replacing
+  "the test data is disposable" (2026-08-30) — the encryption cutover was the
+  "one last time", and the D1 log is now real data: "the db is finalized and
+  not ok to delete anymore". A schema change from here keeps what is there —
+  a new numbered migration, never an edit to one already applied
+  ([hosting.md](hosting.md#deploying)) — and must not break the *log format*
+  other clients read.
 
 ## Interface
 

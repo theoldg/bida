@@ -72,8 +72,9 @@ export function useScanCredential(): ScanCredential | undefined {
  *
  * Run before every scan rather than once and remembered. It is one small
  * request beside a photo upload, it costs one D1 read when the row is already
- * there, and it is the only version of this that survives the database being
- * wiped — which the owner does ([standing-instructions.md](../../../docs/standing-instructions.md)).
+ * there, and it is the only version of this that survives the row not being
+ * there — a phone holding a credential the server has no record of could
+ * otherwise never scan again, with nothing on screen to say why.
  *
  * It never throws. A phone that cannot reach us cannot scan either, and the
  * scan says *that* far better than a registration failure could.
