@@ -37,6 +37,7 @@ tracing of a logo is a worse logo.
 | `--press` | The wash under a thumb. Composited, not a background |
 | `--press-i` | The same wash for a control that is already ink: the primary button, the FAB |
 | `--draw-bg`, `--draw-rule`, `--draw-ink` | The scan screen's drawing, and only that. Palette values in light; lifted off them in dark, where a picture has to sit further from its ground than text does |
+| `--draw-paper` | The bill half of that drawing, which has no outline to hold its shape. Darker than the ground in light, lighter in dark — white paper on a near-white ground is a receipt that vanishes, teeth and all |
 
 Two hues, and they mean one thing each. A "Save" button is not a credit, so
 never colour a control with `--credit`; and because `--brand` is just ink, a
@@ -79,8 +80,10 @@ arrow, and the expense that comes back split by that bill between three of the
 group's own members. The app's one picture, and it is built out of the
 interface it explains rather than of illustration — the same square card, the
 same label-and-number rows, the same hairline under a total, at half the type
-size on `--draw-*`. Each half is as wide as half the control beneath it, so the
-three line up; the sentence the picture replaced is its `alt`; and the shares
+size on `--draw-*`. The bill is the one exception, and deliberately so: it is
+torn off top and bottom and has no outline or radius at all, because a square
+card is exactly what it would otherwise be mistaken for — the form beside it.
+Each half is as wide as half the control beneath it, so the three line up; the sentence the picture replaced is its `alt`; and the shares
 are summed from the lines on the left (`lib/scan/diagram.ts`), never typed, so
 the two halves can't drift apart.
 

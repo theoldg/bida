@@ -13,7 +13,8 @@ control can drift — one act, two doors, one button cut in two
 ([design-system.md](design-system.md#palette-roles)).
 
 `/g/scan` has to promise something it can't show, since a scan's result is on
-another screen, so it draws it: a bill of four lines and a total, an arrow, and
+another screen, so it draws it: a bill of four lines and a total — torn off at
+both ends, outlineless, so it reads as paper and not as a second card — an arrow, and
 the expense that comes back — a title, that same total, a date, and under them
 what the bill came to for three of the group's own members, which is what the
 Receipt tab would leave. Under the drawing, one line (`copy.scan.lede`) says

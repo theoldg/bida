@@ -28,6 +28,11 @@
      place in the app that is a picture, and a picture has to sit further off
      its ground than text does — at palette values it went to mush in dark. */
   --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
+  /* The bill half only. With no outline left on it, the torn strip has nothing
+     but its fill to hold its shape, so it sits further off the ground than the
+     form beside it does. It goes *down* in light, not up: white paper on this
+     near-white ground is a receipt that vanishes, teeth and all. */
+  --draw-paper:var(--card-3);
   /* Not a drop shadow — a hairline ring. Nothing in this design floats. */
   --shadow-s:0 0 0 1px rgba(22,23,26,.09);
   --r-s:2px; --r-m:3px; --r-l:4px;
@@ -59,7 +64,7 @@
     --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
     --press:rgba(230,231,233,.11);
     --press-i:rgba(14,15,17,.15);
-    --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD;
+    --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD; --draw-paper:#2E3238;
     --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   }
 }
@@ -75,7 +80,7 @@
   --hl:rgba(230,231,233,.07); --hl-edge:#787C83; --hl-ink:#E6E7E9;
   --press:rgba(230,231,233,.11);
   --press-i:rgba(14,15,17,.15);
-  --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD;
+  --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD; --draw-paper:#2E3238;
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
 }
 
@@ -676,7 +681,8 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    split by that bill between three of this group's own members. Both halves
    are the app's own card — same square corner, same two columns, the same
    hairline under a total — at half the type size and on `--draw-*`, so the
-   picture is made of the interface it explains and still reads as a picture.
+   picture is made of the interface it explains and still reads as a picture —
+   except for the bill's torn ends, below.
    Each is half as wide as the control below, so the three line up. */
 .scandiagram { display: flex; align-items: stretch; gap: 10px }
 .scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px; font-size: 9.5px;
@@ -684,6 +690,22 @@ button.tswap:active { background: var(--press); color: var(--ink) }
   border: 1px solid var(--draw-rule); border-radius: var(--r-s) }
 .scanpaper, .scanform { display: flex; flex-direction: column; gap: 5px }
 .scanform { justify-content: center }
+/* The left half is a till roll, so it is torn off at both ends: the one place
+   the drawing stops borrowing the interface's shape, because a square card is
+   the thing it would otherwise be mistaken for — the form beside it. The teeth
+   are cut out of the card with a mask (two rows of triangles, the body between
+   them), which is why this half loses the radius and the rules along the top
+   and bottom: a torn edge has no outline to draw. `--tooth` is the height cut
+   away, so the padding carries it to keep the printed lines off the teeth. */
+.scanpaper { --tooth: 8px; border-radius: 0; border: 0;
+  background: var(--draw-paper);
+  padding-block: calc(11px + var(--tooth));
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg)
+      top / 16px var(--tooth) repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
+      bottom / 16px var(--tooth) repeat-x,
+    linear-gradient(#000 0 0) center / 100% calc(100% - var(--tooth) * 2) no-repeat }
 /* Every row of both cards is a label and a number, the ledger's own shape. */
 .scanpaper span, .scanform span { display: flex; justify-content: space-between;
   align-items: baseline; gap: 8px }
