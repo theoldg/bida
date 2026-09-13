@@ -162,7 +162,12 @@ const reopened = await arrived();
 report(reopened, "re-opening the invite link opens the group, not the question");
 
 // And launching the app puts you back where you were, rather than on a list
-// with one thing on it (apps/web/lib/launch.ts).
+// with one thing on it (apps/web/lib/launch.ts). Which group that is, `/g`
+// records in an effect once it has drawn — so the launch waits for the write,
+// not merely for the URL `arrived()` saw. Without this the check raced it and
+// failed about a third of the time.
+await page.waitForSelector(".bottomnav a");
+await page.waitForTimeout(400);
 await page.goto(`${base}/`);
 report(await arrived(), "launching the app reopens the group last open");
 // Backing out of it is not a launch: the list stays put once it is asked for.
