@@ -11,3 +11,6 @@ Tailwind · Dexie/IndexedDB · Cloudflare Worker + D1.
 **Coding agent? Read [CLAUDE.md](CLAUDE.md), then [`docs/`](docs/README.md).**
 This file is deliberately thin so it can't go stale; current state lives in
 [docs/implementation-status.md](docs/implementation-status.md).
+
+**Licence:** [MIT](LICENSE) — take it, fork it, run your own. The name *bida*
+and the logo are not covered: those stay with the author.
