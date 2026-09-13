@@ -3,7 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ReadErrorBoundary } from "../components/chrome";
 import { IconSprite } from "../components/icons";
-import { KeyboardInset } from "../components/keyboard-inset";
+import { MeasureViewport } from "../components/viewport";
 import { NoLongPress } from "../components/no-long-press";
 import { NoPinchZoom } from "../components/no-pinch-zoom";
 import { RegisterServiceWorker } from "../components/register-sw";
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeScript />
         <IconSprite />
-        <KeyboardInset />
+        <MeasureViewport />
         <NoLongPress />
         <NoPinchZoom />
         <RegisterServiceWorker />

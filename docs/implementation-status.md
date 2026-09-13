@@ -234,6 +234,19 @@ ledger or balances tabs ([frontend.md](frontend.md#gotchas)). `pnpm offline`
 covers the tap end to end, both clients
 ([ADR-0004](decisions/0004-static-export-and-offline.md)).
 
+**The strip at the foot of a screen going missing after that tap is not
+settled.** The bottom nav on a group and the about line under the groups list
+both sit at the bottom of a shell that is exactly one screen tall and never
+scrolls, so both vanish together when the shell is drawn taller than the phone
+it is on — which is not something either build can be caught doing here: the
+two viewports agree in every browser these checks can run. So the shell is
+capped at the box that clips it (`max-height: 100%`), a keyboard inset is no
+longer paid for a gap with nobody typing, and the gap itself is recorded as
+`viewport.gap` in the flight recorder with a `screen:` line in the report
+beside it ([frontend.md](frontend.md#gotchas)). The next occurrence names its
+own cause: `layout` against `visible` against `shell` in that line says whether
+the shell outgrew the phone, and which of the two measurements lied.
+
 **A name is filed by pressing for it.** Filing on blur asked the rest of the
 app to guess: a screen's button had to flush the field before it acted, a tick
 had to yield to a name being typed, and a press that filed a name rewrote the

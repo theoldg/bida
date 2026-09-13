@@ -102,6 +102,29 @@ async function within<T>(promise: Promise<T>, otherwise: T): Promise<T> {
 }
 
 /**
+ * The layout viewport, the visible one, and the shell drawn into them.
+ *
+ * `shell` is this screen's own `.app`, which is every screen's: if it is taller
+ * than `visible`, its last strip is off the bottom of the phone with nothing
+ * that can scroll to it. `safe` is what the browser admits the system bars
+ * cover, which on Android is 0 more often than it is true.
+ */
+function screenLine(): string {
+  const view = window.visualViewport;
+  const probe = document.createElement("div");
+  probe.style.cssText = "position:fixed;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)";
+  document.body.append(probe);
+  const { paddingTop, paddingBottom } = getComputedStyle(probe);
+  probe.remove();
+  const shell = document.querySelector(".app")?.getBoundingClientRect().height;
+  return `${window.innerWidth}×${window.innerHeight} layout`
+    + (view ? `, ${Math.round(view.height)}+${Math.round(view.offsetTop)} visible @${view.scale}` : "")
+    + `, ${shell === undefined ? "no" : Math.round(shell)} shell`
+    + `, safe ${parseInt(paddingTop, 10)}/${parseInt(paddingBottom, 10)}`
+    + `, kb ${getComputedStyle(document.documentElement).getPropertyValue("--kb").trim()}`;
+}
+
+/**
  * The report: what this phone holds, then what it has been doing.
  *
  * The counts come first because they are the scale the timings have to be read
@@ -156,6 +179,12 @@ async function collect(): Promise<string> {
   ));
 
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
+  // The screen the app is actually being painted on, beside the one it was laid
+  // out for. They are the same number on a phone that is behaving; when they
+  // are not, the difference is the strip at the foot of every screen that a
+  // person reports as "the tabs are gone" — so the report says it in one line
+  // rather than leaving the next session to guess (lib/viewport.ts).
+  say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
 

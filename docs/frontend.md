@@ -288,6 +288,12 @@ there is a button with its lower half cut off — which is what happened. The
 top is also where it belongs: the screen is opened in order to copy, and the
 report under it is hundreds of lines.
 
+A `screen:` line sits above the timeline: the layout viewport, the visible one,
+the height the shell actually took, and what the browser admits the system bars
+cover. They are one number on a phone that is behaving, and when they are not,
+the difference is the strip at the foot of every screen that gets reported as
+"the tabs are gone" (see [Gotchas](#gotchas)).
+
 Read it at **`/diag`** — long-press the wordmark on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
 reads. The previous session is kept in `localStorage` (not a table — this has
@@ -512,13 +518,27 @@ so the static export ships the full line and the browser narrows it.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
   and the bottom bar sits at the foot of a long page — invisible until you
-  scroll. `.app` is `height: 100dvh; overflow: hidden`, `html, body` too, and
-  every scrolling child of a flex column needs `min-height: 0`.
+  scroll. `.app` is `height: 100dvh; max-height: 100%; overflow: hidden`,
+  `html, body` too, and every scrolling child of a flex column needs
+  `min-height: 0`.
+- **A shell taller than the box that clips it loses its last strip, silently.**
+  `body` is what clips `.app` (`height: 100%`, `overflow: hidden`), so the two
+  have to agree about how tall the screen is — and they are two different
+  measurements, `dvh` and a percentage of the initial containing block. A
+  browser that reports `dvh` larger than that (which is a bug, and one that has
+  been reported after an in-place reload rather than a launch) draws the bottom
+  of the shell below the fold, where nothing scrolls: the bottom nav on a
+  group, the about line under the groups list. Hence the `max-height: 100%`
+  cap, which costs a browser that agrees nothing at all. The same symptom from
+  the other direction — a layout viewport bigger than the screen it is painted
+  on — cannot be fixed in CSS, so it is measured instead: `viewport.gap` in the
+  `/diag` timeline is how much of the layout viewport is off screen with
+  nobody typing.
 - **`dvh` does not shrink for the keyboard.** On iOS the keyboard and its
   accessory bar are drawn *over* the layout viewport, so the shell keeps its
   full height and `.scroll` ends behind them — a field scrolled to that edge,
   by us or by the browser on focus, sits under the strip's buttons. The visual
-  viewport is what's left: `components/keyboard-inset.tsx` writes the covered
+  viewport is what's left: `components/viewport.tsx` writes the covered
   strip to `--kb`, and `.scroll` spends `--kb` plus air as both padding and
   `scroll-padding-bottom`. Padding is what a last row can scroll into;
   scroll-padding is where a field mid-form stops. A dialog sits outside the
@@ -526,7 +546,11 @@ so the static export ships the full line and the browser narrows it.
   card is centred in what is left rather than behind the keys — without it the
   rate pair's own fields and Save were under them. `.foot` pays it too, for the
   screens that still pin an act; the entry form stopped pinning Save and lets
-  it scroll instead.
+  it scroll instead. **A gap with nobody typing is not a keyboard** and is
+  never paid as one (`lib/viewport.ts`): the difference between the two
+  viewports is a keyboard only while something has the caret, and measuring it
+  at load on a browser that reports the two differently made permanent padding
+  at the foot of every list out of a keyboard nobody had opened.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past
