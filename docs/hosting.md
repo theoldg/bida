@@ -23,8 +23,17 @@ free tiers move.)
 headroom on every axis. (The log was reset on 2026-09-12 when sealing landed —
 [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) — and phones
 refilled it. A sealed op is roughly a third larger than the JSON it replaced:
-base64 over an IV and a tag, minus the two indexes that are gone.) What the log
-spends it on is in [implementation-status.md](implementation-status.md).
+base64 over an IV and a tag, minus the two indexes that are gone.)
+
+**What the log spends it on is receipts.** Whole-entity ops
+([ADR-0002](decisions/0002-append-only-op-log.md)) cost 2.55x — 241 kB of entry
+ops fold to 94 kB of final state, at 2.29 ops per entry — which is real and is
+not the problem. An expense op carrying `receiptItems` averages 2,016 bytes
+against a plain one's 473, and those 97 ops were **74% of every patch byte in
+the database**: an entry is written whole, so editing a scanned bill's title
+repeats its entire item array. Compaction, if it is ever wanted, is one rule —
+drop superseded `receiptItems` from ops the fold has passed — and nothing needs
+doing yet, the largest real group being 45 kB.
 
 ### How full can it get
 
