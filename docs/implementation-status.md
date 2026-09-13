@@ -21,6 +21,12 @@ static export *and* the sync API, backed by the `hajsik` D1 database
 idempotent push, pull, a wrong token refused, and a real group synced between
 two devices.
 
+**The scan endpoint composes its own request** since 2026-09-13: the phone
+sends the photo and nothing else, so the shared Gemini key cannot be handed a
+prompt of someone's choosing
+([receipt-scanning.md](receipt-scanning.md#the-worker-owns-the-envelope)).
+Still no rate limit — Gemini's free tier is the quota, and it answers 429.
+
 **Sealed** since 2026-09-12 — the server cannot read a group
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log was
 wiped once at that cutover so phones could refill it sealed, and that was **the

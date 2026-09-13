@@ -1,6 +1,11 @@
 /**
- * The Gemini request body. Prompt and response schema live here, not on the
- * Worker — see docs/receipt-scanning.md#why-the-key-sits-on-the-worker.
+ * The Gemini request body, composed **here** and not on the phone.
+ *
+ * The client sends one thing — the base64 JPEG — and this file wraps it in the
+ * only envelope the endpoint will ever send: this prompt, this schema, one
+ * image and nothing else. That is what keeps `/api/groups/:id/scan` a receipt
+ * reader rather than a general-purpose model endpoint with our key on it —
+ * docs/receipt-scanning.md#the-worker-owns-the-envelope.
  *
  * The prompt says how to *read* a bill and never what the answer has to come
  * to. Told that the lines have to equal the printed total, a model closes the
@@ -128,4 +133,90 @@ export function buildScanRequestBody(imageBase64: string): unknown {
       },
     },
   };
+}
+
+/**
+ * The envelope, split in two around where the photo goes.
+ *
+ * Built by calling the builder above with a sentinel and cutting the JSON at
+ * it, so there is still exactly one description of the request in this file
+ * and no second copy of the prompt to drift. Done once per isolate: a scan
+ * pays for a stream copy of two short byte arrays and nothing else.
+ */
+const SENTINEL = "__RECEIPT_IMAGE__";
+const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL)).split(SENTINEL);
+const PREFIX = new TextEncoder().encode(prefix);
+const SUFFIX = new TextEncoder().encode(suffix!);
+
+/**
+ * The largest base64 body we will wrap. The phone downscales to a ~200 KB
+ * JPEG (`lib/scan/downscale.ts`), which is ~270 KB once base64 grows it by a
+ * third; this is that with room to spare, and an answer to the caller who
+ * would rather send us a 50 MB "photo" to pay Gemini for.
+ */
+export const MAX_IMAGE_BYTES = 400_000;
+
+/** The base64 alphabet, as a byte lookup — see `wrapImage` for why. */
+const BASE64 = (() => {
+  const ok = new Uint8Array(256);
+  for (const ch of "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=") {
+    ok[ch.charCodeAt(0)] = 1;
+  }
+  return ok;
+})();
+
+/** The body was not a base64 image — `wrapImage` refuses to send it anywhere. */
+export class NotAnImageError extends Error {}
+
+/**
+ * The request body for one scan: our envelope with the caller's image in it.
+ *
+ * The image is *streamed* between the two halves rather than read, so the
+ * Worker never holds the photo and never parses a body — the 10 ms CPU budget
+ * that shaped this endpoint is untouched (docs/hosting.md). The only work per
+ * chunk is the alphabet check, which is not politeness about content types:
+ * the bytes land inside a JSON string, so a body carrying a quote or a
+ * backslash could close that string and write its own `contents` — the arbitrary
+ * request this endpoint exists to not forward. Base64 has neither character,
+ * so rejecting everything outside its alphabet closes the hole outright and
+ * costs one table lookup per byte.
+ */
+export function wrapImage(
+  image: ReadableStream<Uint8Array>,
+  /** Told before the stream errors, because a refusal surfaces at `fetch` as
+   *  whatever the runtime wraps it in, and the caller deserves the real one. */
+  onRefuse?: (err: NotAnImageError) => void,
+): ReadableStream<Uint8Array> {
+  const reader = image.getReader();
+  const refuse = (why: string): never => {
+    const err = new NotAnImageError(why);
+    onRefuse?.(err);
+    throw err;
+  };
+  let sent = 0;
+  let opened = false;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      if (!opened) {
+        opened = true;
+        controller.enqueue(PREFIX);
+        return;
+      }
+      const { done, value } = await reader.read();
+      if (done) {
+        controller.enqueue(SUFFIX);
+        controller.close();
+        return;
+      }
+      sent += value.length;
+      if (sent > MAX_IMAGE_BYTES) refuse("image too large");
+      for (const byte of value) {
+        if (!BASE64[byte]) refuse("body is not base64");
+      }
+      controller.enqueue(value);
+    },
+    cancel(reason) {
+      void reader.cancel(reason);
+    },
+  });
 }

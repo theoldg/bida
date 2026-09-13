@@ -1,7 +1,6 @@
 import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
 import { groupToken } from "../seal";
 import { downscaleToBase64Jpeg } from "./downscale";
-import { buildScanRequestBody } from "./request";
 import { parseScanResponse } from "./response";
 
 export { normalizeScan } from "@bida/core";
@@ -54,10 +53,13 @@ export async function scanReceipt(
   const token = await groupToken(groupId, secret);
   let res: Response;
   try {
+    // The body is the photo and nothing else: the prompt and the response
+    // schema are the Worker's, which is what stops our Gemini key from being
+    // an open one — docs/receipt-scanning.md#the-worker-owns-the-envelope.
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(buildScanRequestBody(imageBase64)),
+      headers: { "Content-Type": "text/plain", Authorization: `Bearer ${token}` },
+      body: imageBase64,
     });
   } catch (err) {
     // fetch only rejects when the request never reached a server — a captive

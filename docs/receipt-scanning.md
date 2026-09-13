@@ -50,9 +50,9 @@ off receipts — so `diagram.test.ts` adds them up.
 ## The shape
 
 ```
-phone: capture or pick from library → downscale → build the request body
-  ↓ POST /api/groups/:id/scan   (bearer = group secret)
-worker: check the secret, add the API key, stream the body upstream
+phone: capture or pick from library → downscale → base64
+  ↓ POST /api/groups/:id/scan   (body = the image; bearer = group secret)
+worker: check the secret, wrap the image in our prompt + schema, add the API key
   ↓
 Gemini Flash, free tier, one key shared by everyone
   ↑ response streamed straight back, untouched
@@ -73,43 +73,66 @@ so a device-direct call to Gemini isn't available. Free tier means no card, no
 per-user signup, and hosting stays £0 — the price is a shared key behind our own
 endpoint, and **Trust** below is what that costs.
 
-## Minimal Cloudflare quota: the Worker never touches the bytes
+## The Worker owns the envelope
+
+The client sends **the photo and nothing else** — the base64 JPEG as the whole
+body, `text/plain`. The prompt and the response schema are Worker-side
+constants (`apps/api/src/scan-body.ts`), so the only thing a caller decides is
+which image Gemini reads.
+
+That is deliberate, and it is what the endpoint is *for*. A scan credential
+costs one unauthenticated request to mint — `ensureGroup` registers any id on
+first sight, which is what a quick split relies on (below) — so the bearer check
+is a speed bump, not a gate. What keeps our key off the open internet is that
+there is no request a caller can compose: not a prompt, not a schema, not a
+second image. The worst a minted credential buys is having a picture read.
+
+## Minimal Cloudflare quota: the Worker still never touches the bytes
 
 The free plan gives **10 ms CPU per request** and 100k requests/day. Requests
 aren't the problem — a scan is one. CPU is, and only if we *deserialize* the
 image: waiting on the upstream call is wall time, which doesn't count.
 
-So the Worker is a pipe that adds a credential:
+So the envelope is pre-encoded once per isolate and the photo is streamed
+between its halves. The Worker never parses a body and never holds the image:
 
 ```ts
-// apps/api/src/index.ts — no parse, no re-serialize, no base64 in our heap
-const upstream = await fetch(GEMINI_URL, {
-  method: "POST",
-  headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
-  body: c.req.raw.body,                     // ReadableStream, passed through
-});
-return new Response(upstream.body, { status: upstream.status });
+// apps/api/src/scan-body.ts — the prompt and schema, cut in two at the image
+const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL)).split(SENTINEL);
+// apps/api/src/index.ts — PREFIX, then the caller's bytes, then SUFFIX
+body: wrapImage(c.req.raw.body, (err) => { refusal.err = err; }),
 ```
 
 The rules that follow from it:
 
-- **The client composes the request body and parses the response.** The prompt
-  and the response schema live in `apps/web/lib/scan/`, not in the Worker.
+- **The Worker composes the request body; the client parses the response.** The
+  prompt and the response schema live in `apps/api/src/scan-body.ts`. They used
+  to live on the phone, for the CPU reason above — which the streamed envelope
+  keeps, at the cost of one table lookup per byte.
+- **That lookup is the security boundary, not a content-type nicety.** The
+  caller's bytes land inside a JSON string, so a body carrying a `"` or a `\`
+  closes that string and writes its own `contents` — the arbitrary request this
+  endpoint exists not to forward. Base64 has neither character, so `wrapImage`
+  rejects every byte outside its alphabet and the hole closes outright.
+  `scan-body.test.ts` is mostly attempts to get a second field past it.
 - **The client never names the destination.** URL, model and key are Worker-side
   constants. A client-supplied URL would make this an open proxy to anywhere
   with our key attached.
 - **Downscale to ≤1024px long edge, JPEG ~0.7, target ≤200 KB**, encoded to
-  base64 in the browser. Vision models don't read a receipt better above that,
-  and it keeps the streamed body small enough that the fallback path
-  (`await c.req.text()`, if stream passthrough misbehaves) still fits in 10 ms.
+  base64 in the browser. Vision models don't read a receipt better above that.
+  The Worker caps the body at `MAX_IMAGE_BYTES` (400 kB — that with room to
+  spare), refusing on `content-length` before a byte is streamed anywhere, and
+  counting again as it streams for the caller whose header lied.
 - **One request per scan.** No automatic retry — a retry doubles both our
   requests and the shared daily Gemini quota. A failure says so and leaves the
   control enabled — the retry is the same button, not a second one.
 - **No throttling, no counters, no D1 writes.** Auth is the existing
   `bearerToken` + `sha256Hex` check against the group row: one D1 read, no new
-  table, and it's the difference between "my friends" and "the internet". It
-  authenticates a *secret*, not a membership — which is what lets a quick
-  split scan with a credential of its own (below).
+  table. It authenticates a *secret*, not a membership — which is what lets a
+  quick split scan with a credential of its own (below). **Gemini's own free
+  tier is the quota**: it caps the day and answers 429, which the app already
+  reads as "busy". A cap of ours would add little and would hand one caller the
+  power to spend everyone else's day.
 - **Whoever is paying for the scan is the id in the path.** A group, or — for
   a quick split — the phone, which carries an id and a secret shaped like a
   group's and introduces the pair with an empty `POST …/ops` before each scan
@@ -285,8 +308,10 @@ error to sentence. Anything else falls back to the generic message.
 Deliberate, for a group of friends under fifty people:
 
 - **One key, shared globally.** Anyone with the app URL and a group secret
-  spends it. No per-group limits — the owner: *"assume maximum trust for now
-  (we don't need per group throttling etc)"*.
+  spends it, and a secret costs one request to mint. No per-group limits — the
+  owner: *"assume maximum trust for now (we don't need per group throttling
+  etc)"*. What that trust is now confined to is *having images read*: since the
+  Worker owns the envelope, nobody can put their own prompt on our key.
 - **Free tier trains on the input.** Google uses free-tier prompts to improve
   its products and human reviewers may see them. These are receipts: a place,
   a date, a card's last four. The scan button carries one plain line saying so,
@@ -298,8 +323,11 @@ Deliberate, for a group of friends under fifty people:
   button hides. The app is unaffected.
 
 **If this is ever productionised**, the things to fix, in order: per-user keys
-or a paid tier (kills both the shared-spend and the training problem), then
-per-group quota, then a decision about whether the photo is stored at all.
+or a paid tier (kills both the shared-spend and the training problem), then a
+rate limit (Cloudflare's rate-limiting binding keyed on the path id and
+`cf-connecting-ip` — no D1 write, no counter to keep), then a decision about
+whether the photo is stored at all. Turnstile in front of minting a credential
+is the only one of these that answers *distributed* abuse.
 
 ## What it's made of
 
@@ -307,9 +335,10 @@ per-group quota, then a decision about whether the photo is stored at all.
 /api/groups/:id/scan`, the same bearer-token check as sync, passing through to
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
-[hosting.md](hosting.md#deploying)) · `apps/web/lib/scan/` — `downscale.ts`,
-`request.ts` (prompt and structured output schema), `response.ts`,
-`scanReceipt()` · `components/receipt-scan.tsx`, the hook all three scanning screens
+[hosting.md](hosting.md#deploying)) and the envelope is
+`apps/api/src/scan-body.ts` (prompt, structured output schema, and the
+base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
+`response.ts`, `scanReceipt()` · `components/receipt-scan.tsx`, the hook all three scanning screens
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
 the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and
 the screen after the scan respectively. The control they wear draws the round
@@ -334,6 +363,18 @@ way to reach the who-had-what grid outside a real scan —
 
 ## Gotchas
 
+- **`fetch` resolves when the response *headers* arrive, not when the request
+  body finishes.** A streamed request body that errors after that point
+  resolves the promise rather than rejecting it, so the `catch` around the
+  upstream call never runs and a refused image answered **200**. Whatever a
+  streaming body needs to report has to be read from a flag on both paths, not
+  caught — which is what `refusal` in the scan handler is. Verified against
+  workerd with the upstream pointed at a local echo.
+- **A refusal still opens the upstream connection.** The alphabet check happens
+  mid-stream, so by the time a bad body is found Gemini already has our prefix;
+  refusing truncates the request, and what upstream receives is an unterminated
+  JSON string and never the caller's bytes. Unavoidable while the image streams
+  rather than being read, and harmless — a truncated request is not a request.
 - **A discount is spread across everybody, and that is a decision, not a
   fallback.** The grid has no way to say who a particular credit belongs to, so
   there is no "this voucher was on my dish" to honour — and pro rata is the

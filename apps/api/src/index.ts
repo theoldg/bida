@@ -3,6 +3,7 @@ import {
   isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
+import { MAX_IMAGE_BYTES, NotAnImageError, wrapImage } from "./scan-body";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
 /**
@@ -89,6 +90,16 @@ app.get("/api/rates/:from/:to", async (c) => {
   return c.json({ error: `no rate for ${from} to ${to}` }, 502);
 });
 
+/**
+ * Read a receipt. The body is the photo, base64, and nothing else.
+ *
+ * The prompt and the response schema are ours (`scan-body.ts`), so the only
+ * thing a caller decides is which image Gemini reads — this is a receipt
+ * reader, not our API key behind an open prompt. The image is streamed into
+ * the envelope rather than read, so the Worker still parses no body and holds
+ * no photo; what it costs is one table lookup per byte, and the reason it is
+ * worth that is in `wrapImage`.
+ */
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");
   const token = bearerToken(c.req.header("Authorization") ?? null);
@@ -98,16 +109,38 @@ app.post("/api/groups/:id/scan", async (c) => {
   if (!group) return c.json({ error: "unknown group" }, 404);
   if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
 
-  // Passthrough only: no parse, no re-serialize, so this never charges CPU
-  // for the wait on Gemini. The client built the request body and will parse
-  // the response — see apps/web/lib/scan/.
-  const upstream = await fetch(GEMINI_URL, {
-    method: "POST",
-    headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
-    body: c.req.raw.body,
-    // @ts-expect-error -- required by Workers to stream a request body through
-    duplex: "half",
-  });
+  // Asked of the header first because it is the one check that costs nothing
+  // and the only one that can refuse a body before it is streamed anywhere.
+  // `wrapImage` counts the bytes too, for the caller whose header lies.
+  const declared = Number(c.req.header("content-length") ?? NaN);
+  if (!Number.isFinite(declared)) return c.json({ error: "content-length required" }, 411);
+  if (declared > MAX_IMAGE_BYTES) return c.json({ error: "image too large" }, 413);
+
+  const image = c.req.raw.body;
+  if (!image) return c.json({ error: "no image" }, 400);
+
+  // A body that isn't base64 is only found mid-stream, by which time the
+  // request to Gemini is open. Refusing truncates it, so what upstream gets is
+  // an unterminated JSON string and never the caller's bytes — but it is not
+  // an exception we can rely on catching: `fetch` resolves once the *response
+  // headers* arrive, so a body that errors after that resolves rather than
+  // rejects. Hence `refusal`, checked on both paths: it is set before the
+  // throw that truncates the request, so it cannot lose the race with a reply.
+  const refusal: { err: NotAnImageError | null } = { err: null };
+  let upstream: Response;
+  try {
+    upstream = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
+      body: wrapImage(image, (err) => { refusal.err = err; }),
+      // @ts-expect-error -- required by Workers to stream a request body through
+      duplex: "half",
+    });
+  } catch (err) {
+    if (refusal.err) return c.json({ error: refusal.err.message }, 400);
+    throw err;
+  }
+  if (refusal.err) return c.json({ error: refusal.err.message }, 400);
   return new Response(upstream.body, { status: upstream.status });
 });
 
