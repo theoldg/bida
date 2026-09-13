@@ -242,12 +242,14 @@ else is right: the FAB has not moved, and the groups list's start pair has slid
 *lower*. A `position: fixed` FAB is placed against the initial containing
 block, so that pair of observations says the ICB is honest and `100dvh` is
 over-reporting. `.app` is therefore capped at `max-height: 100%`, and `.dialog`
-is sized to its scrim rather than to `dvh` for the same reason. It cannot be
-reproduced here — every browser these checks can drive reports the two the same
-— so the phone is also asked: the unexplained gap is recorded as `viewport.gap`
-in the flight recorder, and /diag's `screen:` line prints layout against
-visible against shell ([frontend.md](frontend.md#gotchas)). If the strip comes
-back with the cap in place, that line says which measurement lied.
+is sized to its scrim rather than to `dvh` for the same reason. **Fixed on the phone that
+reported it** (2026-09-13): the strip survives the update reload, and /diag
+reads `411×841 layout, 842+0 visible @1, 842 shell` with no `viewport.gap` —
+the three agree to a rounding pixel, which is what the cap leaves when `dvh`
+and the ICB do. It still cannot be reproduced here, every browser these checks
+can drive reporting the two the same, so the phone stays the instrument: the
+unexplained gap is recorded as `viewport.gap` in the flight recorder and the
+`screen:` line prints all three ([frontend.md](frontend.md#gotchas)).
 
 **A name is filed by pressing for it.** Filing on blur asked the rest of the
 app to guess: a screen's button had to flush the field before it acted, a tick
