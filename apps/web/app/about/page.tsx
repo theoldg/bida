@@ -1,57 +1,53 @@
 import type { ReactNode } from "react";
+import { AboutInstall } from "../../components/about-install";
+import { AboutPrivacy } from "../../components/about-privacy";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { copy } from "../../lib/copy";
 import { route } from "../../lib/group-link";
 
 /**
- * What this is, who can read it, and where to complain.
+ * Who can edit, whether it works on a train, where to complain, and — folded at
+ * the foot of it — who can read what you typed. Four claims, no pitch: this
+ * screen is reached from the foot of the groups list, so whoever is on it
+ * already has the app and does not need it described back to them.
  *
- * The one screen the app spends on itself, reached from the quiet "About bida"
- * line at the foot of the groups list — which was drawn and dead until this
- * existed. It is prose and two links, so it is a server component: nothing here
- * reads the database, the clock or the phone.
- *
- * The privacy section is the reason the screen is worth its slot. There are no
- * accounts and the group is a link, which makes "who can see this?" the first
- * question a person actually has — and since ADR-0036 the answer is a good one:
- * the link is the key, and the server holds what it cannot open. A claim like
- * that has to be exact, which is why the scan keeps a line of its own.
+ * The page itself is prose and two links, so it stays a server component. Two
+ * client islands sit in it, and both are there because a sentence alone would
+ * be worse: the install offer under "Works offline", and the fold over the
+ * privacy section (components/about-privacy.tsx).
  */
 export default function AboutPage() {
+  const { feedback } = copy.about;
   return (
     <Screen>
       <Body>
         <TopBar title={copy.about.title} back={route.groups()} />
         <Scroll>
           <div className="pad about">
-            <p className="aboutlede">{copy.about.lede}</p>
-
             <Section title={copy.about.noAccounts.title}>{copy.about.noAccounts.body}</Section>
-            <Section title={copy.about.onYourPhone.title}>{copy.about.onYourPhone.body}</Section>
-            {/* The scan line is a second paragraph rather than a clause in the
-                first: the photograph leaves for somebody else's server
-                entirely, and it is now the one thing about this app that is
-                not sealed. An exception buried in a sentence is a lie. */}
-            <Section title={copy.about.privacy.title} under={
-              <p className="hint">{copy.about.privacy.scan}</p>
-            }>{copy.about.privacy.body}</Section>
 
-            {/* The two doors out of the app, and the only ones in it. A
-                mailto rather than a form: a form needs an endpoint, an inbox
-                and a spam story, and the address is the whole of what a form
-                would have sent. */}
-            <Section title={copy.about.feedback.title} under={
+            <Section title={copy.about.offline.title} under={<AboutInstall />}>
+              {copy.about.offline.body}
+            </Section>
+
+            {/* The two doors out of the app, and the only ones in it. A mailto
+                rather than a form: a form needs an endpoint, an inbox and a
+                spam story, and the address is the whole of what it would have
+                sent. */}
+            <Section title={feedback.title} under={
               <div className="aboutlinks">
-                <a className="aboutlink" href={`mailto:${copy.about.feedback.email}`}>
-                  <Icon name="mail" size={14} />{copy.about.feedback.email}
+                <a className="aboutlink" href={`mailto:${feedback.email}`}>
+                  <Icon name="mail" size={14} />{feedback.email}
                 </a>
-                <a className="aboutlink" href={copy.about.feedback.sourceUrl}
+                <a className="aboutlink" href={feedback.sourceUrl}
                   target="_blank" rel="noreferrer noopener">
-                  <Icon name="link" size={14} />{copy.about.feedback.source}
+                  <Icon name="link" size={14} />{feedback.source}
                 </a>
               </div>
-            }>{copy.about.feedback.body}</Section>
+            }>{feedback.body}</Section>
+
+            <AboutPrivacy />
           </div>
         </Scroll>
       </Body>
@@ -60,8 +56,8 @@ export default function AboutPage() {
 }
 
 /**
- * One claim: its heading, its paragraph, and whatever hangs under that — a
- * second line, or the links. Four of these and the screen is done; a card
+ * One claim: its heading, its paragraph, and whatever hangs under that — the
+ * install offer, or the links. Four of these and the screen is done; a card
  * apiece would have made a settings list out of something read top to bottom,
  * once.
  */

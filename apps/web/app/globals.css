@@ -360,12 +360,40 @@ a { color: inherit; text-decoration: none }
    top to bottom. */
 .about { display: flex; flex-direction: column; gap: 22px;
   max-width: 34em; padding-top: 6px; padding-bottom: 34px }
-/* The opening line carries the weight the sections don't: it is the sentence
-   that says what the app is, to somebody who may have been handed a link. */
-.aboutlede { font-size: 15px; line-height: 1.45; color: var(--ink); text-wrap: pretty }
 .aboutsect h4 { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--muted); margin-bottom: 7px }
 .aboutsect p { font-size: 13px; line-height: 1.55; color: var(--ink-2); text-wrap: pretty }
+.aboutsect p + p { margin-top: 9px }
+/* The privacy section wears its heading as a disclosure (components/
+   about-privacy.tsx): the same monospace eyebrow as the three above it, plus
+   the chevron the rest of the app already turns to mean "there is more under
+   this". Shut, the row is the whole section, so the hit area is the full width
+   rather than the width of the word. */
+.aboutfold { display: flex; align-items: center; gap: 5px; width: 100%;
+  background: none; border: 0; padding: 4px 0; font: inherit; text-align: left }
+.aboutfold h4 { margin-bottom: 0 }
+.aboutfold:active { opacity: .6 }
+.aboutfolded { margin-top: 9px }
+/* The exception to everything the paragraph above it promises, so it is boxed
+   off rather than set as a fourth paragraph: a rule down the side, the way this
+   app already marks a line you are not allowed to skim past. */
+.aboutwarn { margin-top: 13px; padding-left: 11px; border-left: 2px solid var(--rule) }
+.aboutwarn strong { color: var(--ink); font-weight: 600 }
+/* One stored row, shown because the claim above it can be shown. Everything on
+   this screen is already monospace, so the block earns its separateness with a
+   card ground and a size step down rather than a typeface. Labels recede and
+   values carry the weight: the ciphertext is the thing being pointed at, and it
+   wraps rather than truncating, because an ellipsis would be hiding exactly the
+   part the paragraph is about. */
+.aboutrow { margin-top: 13px; padding: 3px 12px;
+  background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
+  font-size: 11.5px; line-height: 1.5 }
+.aboutrowline { display: grid; grid-template-columns: 5.5em 1fr; gap: 12px;
+  padding: 8px 0; border-top: 1px solid var(--rule-soft) }
+.aboutrowline:first-child { border-top: 0 }
+.aboutrowline dt { color: var(--muted) }
+.aboutrowline dd { color: var(--ink); overflow-wrap: anywhere }
+.aboutrow + p { margin-top: 13px }
 /* The two ways out of the app, stacked rather than side by side: an address is
    long, a phone is narrow, and a row of two would wrap into a worse version of
    this. Underlined because they leave — `.action` is the app's mark for that. */

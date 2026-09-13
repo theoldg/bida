@@ -159,33 +159,49 @@ export const copy = {
 
   /**
    * The one screen the app spends on itself (app/about/page.tsx). It answers
-   * the three questions someone asks of an app with no sign-up: what is this,
-   * who can read what I type into it, and who do I complain to.
+   * the three questions someone asks of an app with no sign-up: who can edit
+   * this, does it work on a train, and who can read what I typed.
    *
-   * The privacy paragraph is a claim about the code, not a promise: op bodies
-   * are sealed on the phone under a key the server never sees
-   * ([ADR-0036](../../../docs/decisions/0036-the-server-cannot-read-a-group.md)).
-   * If that ever stops being true, this changes in the same commit.
+   * The privacy section is a claim about the code, not a promise: op bodies are
+   * sealed on the phone under a key the server never sees
+   * ([ADR-0036](../../../docs/decisions/0036-the-server-cannot-read-a-group.md)),
+   * which is why the sample below is a real `SealedOp` and not a drawing. If
+   * either ever stops being true, this changes in the same commit.
    */
   about: {
     title: "About bida",
-    lede: "Shared expenses, split. A trip, a flat, a dinner — put in what people paid for, see who owes whom, settle up.",
     noAccounts: {
-      title: "No accounts",
-      body: "A group is a secret link. Whoever holds it is in, and that is the whole of signing up — so keep the link somewhere you can find it again. It is also the only thing standing between your group and a stranger, so hand it out the way you would a key.",
+      title: "No account",
+      body: "A group is a secret link. Whoever has it can edit, and every edit is recorded in the group’s history.",
     },
-    onYourPhone: {
-      title: "It lives on your phone",
-      body: "Every entry is written here first and works with no signal at all. When there is one, it syncs so the rest of the group sees it — and their entries and yours merge without either of you losing a thing.",
+    offline: {
+      title: "Works offline",
+      body: "Add bida to your home screen and it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
+      /** Shown once it already is on the home screen, where the link would be. */
+      installed: "It’s on your home screen already.",
     },
     privacy: {
-      title: "What the server can see",
-      body: "Almost nothing. Your phone locks every entry with a key it makes from the link, and the link never leaves the phone — so titles, amounts, names and notes arrive here as a jumble I have no way to open. What is left is the shape: that a group exists, how many changes it has had, roughly when. Nothing is sold, nothing is tracked — no analytics, no third-party scripts, no advertising.",
-      scan: "The one exception is a receipt you photograph: it goes to Google to be read, on their free tier, and the photo may train their models.",
+      title: "Privacy",
+      body: "When you save an expense, the server (and I, the developer) can see something like this:",
+      /**
+       * One row of D1: a `SealedOp` (core/seal.ts). The labels are plain
+       * English because the reader is not a developer, and the values are the
+       * real four fields because the whole point is that there are only four.
+       */
+      sealed: [
+        { k: "group", v: "c9f0f895…a3d7" },
+        { k: "edit", v: "8f14e45f…b2c1" },
+        { k: "number", v: "42" },
+        { k: "contents", v: "AQz8kU2pR…Xq7Rr1v9Lw==" },
+      ],
+      key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
+      shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
+      scanTitle: "Receipt scanning is not private.",
+      scan: "Receipt photos are sent to a free-tier Gemini API, where they may be read by humans or used to train models.",
     },
     feedback: {
-      title: "Tell me it’s broken",
-      body: "One person builds this, which is why it is free and why the rough edges are where they are. A bug, something that felt stupid, something you wanted and didn’t find — write to me.",
+      title: "Feedback",
+      body: "I made this alone. Tell me what you think! Bug reports, feature requests, words of encouragement, words of discouragement.",
       email: "teodor.lamort@gmail.com",
       source: "Source on GitHub",
       sourceUrl: "https://github.com/theoldg/money",
