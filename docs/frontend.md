@@ -206,7 +206,11 @@ confers nothing without the secret.
   the press rather than after it, on every list including the one you are
   picking yourself out of, where the name you typed is a row one tap above.
   A screen's own button — Create, Continue — acts on the list, never on the
-  field: an unfiled name is unfiled, whatever else is pressed. The row also
+  field: an unfiled name is unfiled, whatever else is pressed. The quick
+  split's scan pair is the one act that *refuses* instead of ignoring, because
+  a photograph there opens a grid of the people on the list and nobody else:
+  it blooms the plus and is spent for the length of that flash, the entry
+  form's refusal exactly (`lib/refusal.ts`). The row also
   **follows the list down**, as a browser scrolls to a field only as it takes
   focus, and this one never lets go — clear of the keyboard, per the `--kb`
   Gotcha below. `pnpm claim` holds all of it ([testing.md](testing.md)).

@@ -231,7 +231,7 @@ function ScanBar({ startedAt, seconds, onFull }: {
  * neither half is the one that was wrong.
  */
 export function ScanPair({
-  scan, register, flash = "", onFlashEnd, disabled: held = false,
+  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
@@ -239,6 +239,13 @@ export function ScanPair({
   onFlashEnd?: (e: React.AnimationEvent) => void;
   /** Held shut by the screen as well: a quick split has nobody to divide by yet. */
   disabled?: boolean;
+  /**
+   * The screen's own veto on the press, for what it can only know at the
+   * moment of pressing: a quick split with a name still unfiled in the add row
+   * refuses the photograph rather than taking one that leaves somebody off the
+   * bill. Returns true when it refused, and neither door opens.
+   */
+  refuse?: () => boolean;
 }) {
   const { live } = scan;
   const disabled = scan.disabled || held;
@@ -263,6 +270,7 @@ export function ScanPair({
   // the chip register stays on paper — it stands beside a bill already
   // assigned, where an ink block would outweigh the thing it replaces.
   const box = `btn-pair${register === "xs" ? " pair-xs" : " pair-p"}${flash}`;
+  const open = (door: () => void) => () => { if (!refuse?.()) door(); };
 
   // One element, so the box keeps the height it had and nothing under it moves
   // while the model reads. Disabled through the same `.btn:disabled` every
@@ -285,11 +293,11 @@ export function ScanPair({
 
   return (
     <div className={box} onAnimationEnd={onFlashEnd}>
-      <button type="button" className={half} disabled={disabled} onClick={scan.openCamera}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}>
         <Icon name="cam" size={icon} />
         {register === "xs" ? copy.scan.rescan : copy.scan.snap}
       </button>
-      <button type="button" className={half} disabled={disabled} onClick={scan.openLibrary}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}>
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>

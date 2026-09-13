@@ -40,7 +40,9 @@ export interface AddNameHandle {
   clear: () => void;
 }
 
-export function AddName({ placeholder, autoFocus, taken, onAdd, handle, onDraft }: {
+export function AddName({
+  placeholder, autoFocus, taken, onAdd, handle, onDraft, flash = "", onFlashEnd,
+}: {
   placeholder: string;
   autoFocus?: boolean;
   /** The names already on the list. One of these cannot be filed again. */
@@ -53,6 +55,10 @@ export function AddName({ placeholder, autoFocus, taken, onAdd, handle, onDraft 
       guards against losing what has been typed can count it. Nothing acts on
       it: an unfiled name is unfiled, and only the plus files. */
   onDraft?: (name: string | null) => void;
+  /** A screen's refusal, blooming the plus: what is unfiled is what stopped
+      the press, and the plus is the whole of the fix (lib/refusal.ts). */
+  flash?: string;
+  onFlashEnd?: (e: React.AnimationEvent) => void;
 }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -121,7 +127,8 @@ export function AddName({ placeholder, autoFocus, taken, onAdd, handle, onDraft 
             It keeps the field's focus: nothing is filed by a blur any more, but
             a keyboard that shuts on the press and reopens on the refocus is a
             flinch under the thumb. */}
-        <button type="submit" className="iconbtn" aria-label={copy.act.add} disabled={!ready}
+        <button type="submit" className={`iconbtn${flash}`} aria-label={copy.act.add}
+          disabled={!ready} onAnimationEnd={onFlashEnd}
           onMouseDown={(e) => e.preventDefault()}>
           <Icon name="plus" size={15} />
         </button>

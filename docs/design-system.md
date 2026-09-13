@@ -246,7 +246,10 @@ its "set rate" badge. **An inverted or edgeless control fills whole**,
 ground and border together, rather than colouring its label: that badge, 11px
 on a wash, and the two ink blocks — the who-had-what door and the scan pair.
 A filled ground is the same size of signal as a bloomed edge; a label alone is
-not, and a `--brand` frame left around a red block reads as half a refusal. A flash
+not, and a `--brand` frame left around a red block reads as half a refusal. A
+small bordered control does neither: the add row's plus — what a quick split's
+scan pair points at over a name nobody has filed — blooms its edge and its
+glyph together, since 15px of icon in a 32px box is too little of either alone. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

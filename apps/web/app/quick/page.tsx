@@ -14,6 +14,7 @@ import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "../../lib
 import { route } from "../../lib/group-link";
 import { useDevice } from "../../lib/hooks";
 import { goUp } from "../../lib/nav";
+import { useRefusal } from "../../lib/refusal";
 import {
   addQuickPerson, clearQuickPeople, registerScanCredential, removeQuickPerson,
   useQuickPeople, useScanCredential,
@@ -44,6 +45,15 @@ export default function QuickPage() {
   // files it — but it is something typed, so leaving with it on screen is
   // leaving with work unsaved (components/name-adder.tsx).
   const [typing, setTyping] = useState<string | null>(null);
+  /**
+   * A scan refused because a name is still unfiled. The photograph is the end
+   * of this screen — the grid it opens is the people on the list and nobody
+   * else — so taking one over an unfiled name is the one way to lose somebody
+   * off a bill they are sitting at. The plus is the whole of the fix, so the
+   * plus is what blooms, and the pair is spent for the length of the flash:
+   * exactly the entry form's refusal (lib/refusal.ts).
+   */
+  const unfiled = useRefusal();
 
   /**
    * What the bill is counted in, until a scan says otherwise.
@@ -118,14 +128,21 @@ export default function QuickPage() {
             <AddName placeholder={copy.members.addPlaceholder}
               taken={people.map((p) => p.name)}
               onAdd={(name) => { if (cred) addQuickPerson(cred.id, name); }}
-              onDraft={setTyping} />
+              onDraft={setTyping}
+              flash={unfiled.flash} onFlashEnd={unfiled.onFlashEnd} />
           </div>
 
           {/* The act the screen ends on, under the people it needs first. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {/* Held shut until there is somebody to divide by: a bill
                 photographed for one person is not a split. */}
-            <ScanPair scan={scan} register="lg" disabled={people.length < 2} />
+            <ScanPair scan={scan} register="lg"
+              disabled={people.length < 2 || unfiled.live}
+              refuse={() => {
+                if (typing === null) return false;
+                unfiled.refuse();
+                return true;
+              }} />
 
             {/* No "try again" beside either message: the control above is
                 still enabled, and it is the retry. */}

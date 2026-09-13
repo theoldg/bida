@@ -186,6 +186,38 @@ await page.waitForSelector(".bottomnav a");
 await page.goto(`${base}/`);
 report(await arrived(), "and opening it again makes the next launch reopen it");
 
+// ---- the one screen whose act refuses instead of ignoring ---------------
+// A quick split ends on the camera, and the grid a photograph opens is the
+// people on the list and nobody else — so a scan taken over an unfiled name
+// is the one way to lose somebody off a bill they are sitting at. It refuses
+// the press rather than acting on the list without them
+// (apps/web/app/quick/page.tsx).
+await page.goto(`${base}/quick`);
+for (const who of ["Ana", "Bo"]) {
+  await field().fill(who);
+  await field().press("Enter");
+}
+await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 3);
+await field().fill("Cy");
+await page.waitForTimeout(80);
+await press(page.getByRole("button", { name: "Upload" }));
+report(new URL(page.url()).pathname === "/quick"
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "a scan pressed over an unfiled name is refused, and the plus blooms");
+report(await page.getByRole("button", { name: "Upload" }).isDisabled(),
+  "and the pair is spent while the refusal is on screen");
+// Spent for the length of the flash and no longer: the retry is the same
+// control, once the screen has finished saying no.
+await page.waitForTimeout(800);
+report(!await page.getByRole("button", { name: "Upload" }).isDisabled()
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
+  "and it comes back when the flash settles");
+// Filing the name is the fix, and then the same press goes through.
+await press(plus());
+await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 4);
+report(await field().inputValue() === "" && !await page.getByRole("button", { name: "Upload" }).isDisabled(),
+  "filing the name leaves the scan free to run");
+
 await browser.close();
 close();
 finish();

@@ -24,6 +24,7 @@ import {
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
+import { flashClass, NOT_REFUSED, refused, type Refusal } from "../../../../lib/refusal";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
@@ -47,9 +48,6 @@ export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
 }
 
-/** A field's refusal flash: how many there have been, and whether one is running. */
-interface Refusal { n: number; live: boolean }
-const NOT_REFUSED: Refusal = { n: 0, live: false };
 /**
  * What a refused Save can bloom. Two fields, a step and a number that isn't
  * on this form: the Items tab is short of a photograph or of a who-had-what
@@ -60,18 +58,6 @@ const NOT_REFUSED: Refusal = { n: 0, live: false };
  */
 const REFUSABLE = ["amount", "title", "receipt", "rate"] as const;
 type Refusable = typeof REFUSABLE[number];
-
-/**
- * The class that flashes a field red. Nothing unless a flash is actually
- * running — a class left on a settled field replays itself the next time the
- * placeholder is rendered. While one is running it alternates between two
- * classes naming two identical animations, which is what makes a repeat
- * refusal restart rather than sit on a class that is already there.
- */
-function flashClass(r: Refusal): string {
-  if (!r.live) return "";
-  return r.n % 2 === 1 ? " flash-a" : " flash-b";
-}
 
 function EditEntryScreen() {
   const router = useRouter();
@@ -120,33 +106,19 @@ function EditEntryScreen() {
   // flash is the event.
   const [attemptedSave, setAttemptedSave] = useState(false);
   /**
-   * The refusal flash, per field. A refusal blooms the field that caused it
-   * red and lets it settle back — the amount's underline, the title's box, the
-   * placeholder in either (see "save refusal" in globals.css). Per field
-   * rather than once for the form, so a field that wasn't the problem this
-   * time stays quiet.
-   *
-   * `live` is the half that is easy to leave out, and leaving it out is a bug:
-   * a `::placeholder` is not rendered while the field has text, so typing a
-   * title and deleting it again *creates the pseudo-element afresh* — and a
-   * newly created pseudo-element starts any animation still declared on it.
-   * The class has to come off when the flash ends, not sit there waiting to be
-   * replayed by an empty field. `settled` takes it off.
-   *
-   * `n` is the other half: a second refusal while the first is still running
-   * would change nothing in the class list, so the browser would not restart
-   * it. Its parity picks between two identical animations, which changes
-   * `animation-name` and guarantees it does. (A React `key` would restart it
-   * too, by remounting the <input> and taking the caret, the focus and any IME
-   * composition with it.)
+   * The refusal flash, per field (`lib/refusal.ts`). A refusal blooms the
+   * field that caused it red and lets it settle back — the amount's
+   * underline, the title's box, the placeholder in either (see "save refusal"
+   * in globals.css). Per field rather than once for the form, so a field that
+   * wasn't the problem this time stays quiet.
    */
-  const [refused, setRefused] = useState<Record<Refusable, Refusal>>({
+  const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
     amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED, rate: NOT_REFUSED,
   });
   const refuse = (fields: Partial<Record<Refusable, boolean>>) =>
     setRefused((r) => {
       const next = { ...r };
-      for (const f of REFUSABLE) if (fields[f]) next[f] = { n: r[f].n + 1, live: true };
+      for (const f of REFUSABLE) if (fields[f]) next[f] = refused(r[f]);
       return next;
     });
   /**
@@ -155,7 +127,7 @@ function EditEntryScreen() {
    * live while the form is busy saying no invites the same press again. Read
    * off the flash rather than a timer of its own, so the two can't drift.
    */
-  const refusing = REFUSABLE.some((f) => refused[f].live);
+  const refusing = REFUSABLE.some((f) => refusedFields[f].live);
   /**
    * The flash is over. Only the field's own animation counts — the placeholder
    * is a pseudo-element on the same clock, and `pseudoElement` is how an
@@ -539,7 +511,7 @@ function EditEntryScreen() {
             <div className="amtgrid" onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
-                fieldClassName={`big${flashClass(refused.amount)}`}
+                fieldClassName={`big${flashClass(refusedFields.amount)}`}
                 aria-label={copy.form.amount(draft.currency)}
                 enterKeyHint="done"
                 placeholder="0"
@@ -571,7 +543,7 @@ function EditEntryScreen() {
                       {rateOk ? money(baseMinor, base) : copy.none}
                     </span>
                   </button>
-                  <button type="button" className={`amtnote${flashClass(refused.rate)}`}
+                  <button type="button" className={`amtnote${flashClass(refusedFields.rate)}`}
                     onAnimationEnd={settled("rate")}
                     onClick={() => setAskRate(draft.currency)}>
                     {copy.rates.setRate()}
@@ -601,7 +573,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className={`field${flashClass(refused.title)}`} onAnimationEnd={settled("title")}>
+            <div className={`field${flashClass(refusedFields.title)}`} onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
                 aria-label={transfer ? copy.form.note : copy.form.what}
@@ -682,7 +654,7 @@ function EditEntryScreen() {
                   items: draft.receiptItems ?? null,
                   scan,
                   missing: receiptMissing,
-                  flash: flashClass(refused.receipt),
+                  flash: flashClass(refusedFields.receipt),
                   onFlashEnd: settled("receipt"),
                   editItemsHref: route.items(groupId, via),
                 } : null}

@@ -1202,6 +1202,14 @@ button.amtnote:active { background: var(--hl-edge) }
    labels and their icons (`currentColor`) all go at once. */
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b { animation: refuse-fill-b .6s ease-in-out }
+/* The add row's plus, refused: a quick split's scan pair pressed over a name
+   still sitting unfiled in the field points at the plus, which is the whole of
+   the fix (components/name-adder.tsx). Not a fill — this one is neither
+   inverted nor edgeless, it is a 15px glyph in a bordered 32px box, and too
+   little of either alone carries a refusal — so both existing shapes run at
+   once, the border blooming and the glyph reddening with it. */
+.iconbtn.flash-a { animation: refuse-box-a .6s ease-in-out, refuse-text-a .6s ease-in-out }
+.iconbtn.flash-b { animation: refuse-box-b .6s ease-in-out, refuse-text-b .6s ease-in-out }
 
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector
@@ -1216,7 +1224,7 @@ button.amtnote:active { background: var(--hl-edge) }
   .amountfield.flash-a, .amountfield.flash-b,
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
-  .amtnote.flash-a, .amtnote.flash-b,
+  .amtnote.flash-a, .amtnote.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
   .field.flash-a input::placeholder, .field.flash-b input::placeholder,
   .field.flash-a label, .field.flash-b label {
