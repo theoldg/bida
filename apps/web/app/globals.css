@@ -755,6 +755,13 @@ button.tswap:active { background: var(--press); color: var(--ink) }
 /* Picture and caption are one thing, so they sit close; the screen's wide gap
    falls below them, not between them. */
 .scanshow { display: flex; flex-direction: column; gap: 14px }
+/* The same drawing at the head of a quick split, where it is not the whole
+   screen but the thing the screen leads to. Picture and line sit close, the
+   way they do on `/g/scan`; the generous space is around the pair, so the list
+   of people below reads as the next step rather than as the picture's own
+   caption, and the drawing gets room off the top bar to read as a picture. */
+.quickshow { display: flex; flex-direction: column; gap: 14px;
+  padding-top: 22px; padding-bottom: 34px }
 /* The sentence under the drawing: the width of the drawing it explains, and
    centred on it, so it reads as part of the picture rather than as a heading
    over the control. */

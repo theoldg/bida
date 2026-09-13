@@ -14,23 +14,36 @@ All three call `useReceiptScan` and wear
 control can drift — one act, three doors, one button cut in two
 ([design-system.md](design-system.md#palette-roles)).
 
-`/g/scan` has to promise something it can't show, since a scan's result is on
-another screen, so it draws it: a bill of four lines and a total — torn off at
-both ends, outlineless, so it reads as paper and not as a second card — an arrow, and
-the expense that comes back — a title, that same total, a date, and under them
-what the bill came to for three of the group's own members, which is what the
-Items tab would leave. Under the drawing, one line (`copy.scan.lede`) says
-the two things it can only imply: the whole form comes back filled, and the
-bill's own lines are a way to split it. Picture and line are one block, centred
-with the control under it and a wide gap between the two, so the drawing reads
-as what the control leads to rather than as a caption on it. The drawing
-replaced a sentence saying the same thing, and that sentence is now its `alt`.
+`/g/scan` and `/quick` both have to promise something they can't show, since a
+scan's result is on another screen, so they draw it — one drawing,
+`components/scan-diagram.tsx`, shared rather than copied: a bill of four lines
+and a total — torn off at both ends, outlineless, so it reads as paper and not
+as a second card — an arrow, and the expense that comes back — a title, that
+same total, a date, and under them what the bill came to for three of the
+people splitting it, which is what the Items tab would leave.
+
+On `/g/scan` the drawing is the screen: under it, one line (`copy.scan.lede`)
+says the two things it can only imply — the whole form comes back filled, and
+the bill's own lines are a way to split it — and picture and line are one
+block, centred with the control under it and a wide gap between the two, so the
+drawing reads as what the control leads to rather than as a caption on it. The
+drawing replaced a sentence saying the same thing, and that sentence is now its
+`alt`.
+
+On `/quick` it is the head of the screen instead (`.quickshow`), over the list
+of who is splitting, with a line of its own: `copy.quick.lede`, not
+`copy.scan.lede`, because what comes back there is the who-had-what grid and
+then text to hand over, never the expense form the group's line promises. The
+generous space is around the picture-and-line pair rather than inside it, so
+the eyebrow under it reads as the next step and not as its caption. It divides
+its bill between the people on that list, so it fills in with their names as
+they are added.
 
 The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.ts`
 sums the shares from the same lines the left-hand card prints, and picks the
-three members by the group's id, so a group sees the same faces each time and
-two groups don't see the same ones. A group of fewer than three borrows
-stand-ins. Nothing in the app would notice a picture whose shares stopped
+three names by the seed it is given — the group's id, or the quick split's
+credential — so one group or one split sees the same faces each time and two
+don't see the same ones. Fewer than three names borrows stand-ins. Nothing in the app would notice a picture whose shares stopped
 adding to its own total — on the one screen whose whole job is reading totals
 off receipts — so `diagram.test.ts` adds them up.
 

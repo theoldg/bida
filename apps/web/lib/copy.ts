@@ -340,6 +340,14 @@ export const copy = {
    */
   quick: {
     title: "Quick split",
+    /**
+     * Under the screen's drawing, the two things it can't show: the tap
+     * between the photo and the figures, and that this flow keeps nothing.
+     * Not `copy.scan.lede` — that one promises an expense form, which is what
+     * a group's scan comes back as and what a quick split never becomes
+     * (ADR-0035).
+     */
+    lede: "Take a photo of the bill, then tap who had what. It ends in text to paste, and nothing is kept.",
     who: "Who’s splitting",
     /** The one bill this flow can do nothing with: a total and no lines. */
     noLines: "That receipt has no lines on it. There’s nothing to assign.",

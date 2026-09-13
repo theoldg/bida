@@ -88,10 +88,11 @@ an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
 where it is likewise the only thing to do, and chip scale — on paper, so it
 doesn't outweigh what it replaces — to replace a bill already assigned. The halves name the doors ("Scan",
 "Upload"); the screen around them
-has already named the job — and on `/g/scan` it draws what it promises, since
-that result lands on another screen: a bill of four lines and a total, the
-arrow, and the expense that comes back split by that bill between three of the
-group's own members. The app's one picture, and it is built out of the
+has already named the job — and on `/g/scan` and `/quick` it draws what it
+promises, since that result lands on another screen: a bill of four lines and a
+total, the arrow, and the expense that comes back split by that bill between
+three of the people splitting it. One drawing on both screens
+(`components/scan-diagram.tsx`) — the app's one picture, and it is built out of the
 interface it explains rather than of illustration — the same square card, the
 same label-and-number rows, the same hairline under a total, at half the type
 size on `--draw-*`. The bill is the one exception, and deliberately so: it is
@@ -99,7 +100,10 @@ torn off top and bottom and has no outline or radius at all, because a square
 card is exactly what it would otherwise be mistaken for — the form beside it.
 Each half is as wide as half the control beneath it, so the three line up; the sentence the picture replaced is its `alt`; and the shares
 are summed from the lines on the left (`lib/scan/diagram.ts`), never typed, so
-the two halves can't drift apart.
+the two halves can't drift apart. Each screen gives it its own
+line: `/g/scan` centres the pair, `/quick` wears it as a head over the list of
+who is splitting — with the space around the pair, not inside it — and the
+names in it are that list.
 
 **Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
 theme is ugly make it less green/yellow".)* Grounds are near-neutral in both

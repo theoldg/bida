@@ -8,6 +8,7 @@ import { ConfirmDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
 import { AddName } from "../../components/name-adder";
 import { ScanPair, useReceiptScan } from "../../components/receipt-scan";
+import { ScanDiagram } from "../../components/scan-diagram";
 import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
 import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "../../lib/draft";
@@ -26,9 +27,10 @@ import {
  *
  * Both halves of one act — the inputs — so they share a screen: naming people
  * before the photo is also what makes the grid ready the moment the model
- * answers. There is no drawing of what a scan becomes, as there is on
- * `/g/scan`: that screen needs one because it is otherwise empty, and this one
- * already has your friends' names on it.
+ * answers. It opens on the same drawing `/g/scan` opens on, for the same
+ * reason — what a scan becomes lands on another screen — except that here the
+ * drawing splits its bill between the people on this list, so it fills in as
+ * they are named.
  *
  * Nothing here is written anywhere. The names live beside the draft, in
  * memory, and leaving throws both away.
@@ -114,6 +116,19 @@ export default function QuickPage() {
         <TopBar title={copy.quick.title} back={{ ask: mayLeave, up: route.groups() }} />
         {scan.inputs}
         <Scroll>
+          {/* What this screen leads to, drawn rather than described — the same
+              picture `/g/scan` opens on (components/scan-diagram.tsx), with
+              its own line under it, since what a quick split comes back as is
+              not the expense form `copy.scan.lede` promises. It is divided
+              between the people below it, so adding somebody is visible in it.
+              Picture and line are one block, and the air around that block is
+              what keeps the eyebrow under it reading as the next step rather
+              than as its caption. */}
+          <div className="pad quickshow">
+            <ScanDiagram names={people.map((p) => p.name)} seed={cred?.id ?? ""} />
+            <p className="scanlede">{copy.quick.lede}</p>
+          </div>
+
           <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.quick.who}</Eyebrow>
           <div className="rows">
             {people.map((person) => (
