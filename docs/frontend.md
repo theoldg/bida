@@ -524,16 +524,22 @@ so the static export ships the full line and the browser narrows it.
 - **A shell taller than the box that clips it loses its last strip, silently.**
   `body` is what clips `.app` (`height: 100%`, `overflow: hidden`), so the two
   have to agree about how tall the screen is — and they are two different
-  measurements, `dvh` and a percentage of the initial containing block. A
-  browser that reports `dvh` larger than that (which is a bug, and one that has
-  been reported after an in-place reload rather than a launch) draws the bottom
-  of the shell below the fold, where nothing scrolls: the bottom nav on a
-  group, the about line under the groups list. Hence the `max-height: 100%`
-  cap, which costs a browser that agrees nothing at all. The same symptom from
-  the other direction — a layout viewport bigger than the screen it is painted
-  on — cannot be fixed in CSS, so it is measured instead: `viewport.gap` in the
-  `/diag` timeline is how much of the layout viewport is off screen with
-  nobody typing.
+  measurements, `dvh` and a percentage of the initial containing block. A `dvh`
+  reported larger than the ICB puts the bottom of the shell below the fold,
+  where nothing scrolls: the bottom nav on a group, the about line under the
+  groups list. Reported on an installed phone after tapping Reload for a new
+  build, never on a launch, and never reproduced in a browser these checks can
+  drive. **How to recognise it:** everything else is right, the FAB is exactly
+  where it belongs, and the groups list's start pair has slid *lower* than
+  usual — a `position: fixed` FAB is placed against the ICB, so a FAB that has
+  not moved while `margin-top: auto` pushes the pair down says the ICB is the
+  honest one and `dvh` is not. Hence `max-height: 100%` on `.app`, and `100%`
+  rather than `100dvh` wherever else a box is sized to the screen (`.dialog`);
+  it costs a browser that agrees nothing at all. The same symptom from the
+  other direction — a layout viewport bigger than the screen it is painted on,
+  which no CSS can see — is measured instead: `viewport.gap` in the `/diag`
+  timeline is how much of the layout viewport is off screen with nobody
+  typing.
 - **`dvh` does not shrink for the keyboard.** On iOS the keyboard and its
   accessory bar are drawn *over* the layout viewport, so the shell keeps its
   full height and `.scroll` ends behind them — a field scrolled to that edge,

@@ -828,14 +828,17 @@ dialog.scrim { inset: 0; width: 100%; height: 100%; max-width: 100%; max-height:
 dialog.scrim[open] { display: flex; align-items: center; justify-content: center }
 dialog.scrim::backdrop { background: transparent }
 /* Matches the scrim's content box, keyboard included, so a card too tall for
-   what is left scrolls inside itself rather than under the keys. */
+   what is left scrolls inside itself rather than under the keys. `100%` of the
+   scrim, not `100dvh` minus its padding, which is the same number until `dvh`
+   is the one that is wrong — and then the card is taller than the screen, the
+   way the shell was (`.app`). */
 /* 380, not 340: a picker's rows carry a sentence under the name now, and at
    340 the scrim's 22px either side left no phone a line that fitted. Wider
    than the widest of them is pointless — the card is already full width on a
    phone; this is what the room is for where there is any. */
 .dialog { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--rule);
   border-radius: var(--r-m); padding: 15px 15px 13px; animation: fadein .12s ease-out;
-  max-height: calc(100dvh - 44px - var(--kb)); overflow-y: auto }
+  max-height: 100%; overflow-y: auto }
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { dialog.scrim, .dialog { animation: none } }
 .dtitle { font-size: 15.5px; letter-spacing: -.03em }
