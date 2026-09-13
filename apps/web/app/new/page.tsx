@@ -66,13 +66,15 @@ export default function NewGroupPage() {
   // it on screen is leaving with work unsaved.
   const [draft, setDraft] = useState<string | null>(null);
   /**
-   * Create, refused because a name is still unfiled. Everything typed here is
-   * thrown away by the button that leaves the screen — the group is written in
-   * one go — so a name left in the add row when the group is created is a
-   * person who was never in it. The plus is the whole of the fix, so the plus
-   * blooms and Create is spent for the length of the flash (lib/refusal.ts).
+   * Create, refused for either of two reasons: a name still unfiled in the
+   * add row, or nobody on the list yet. Everything typed here is thrown away
+   * by the button that leaves the screen — the group is written in one go —
+   * so a name left in the add row when the group is created is a person who
+   * was never in it, same as a group with nobody on the list at all. The plus
+   * is the fix for both, so the plus blooms and Create is spent for the
+   * length of the flash (lib/refusal.ts).
    */
-  const unfiled = useRefusal();
+  const refusal = useRefusal();
 
   // A group typed here is state and nothing else — no draft store, nothing in
   // Dexie — so both ways off this screen throw it away. The entry form asks
@@ -97,17 +99,19 @@ export default function NewGroupPage() {
   }
 
   // A name still in the add row is not a person on the list: it has not been
-  // filed, and the box it sits in says so. Create does not count it — it
-  // refuses over it instead (`next`).
-  const ready = name.trim().length > 0 && currency.length === 3 && !busy && people.length > 0;
+  // filed, and the box it sits in says so. Neither is an empty list a group —
+  // one person is enough, but zero isn't. Create does not count either as
+  // ready — it refuses over them instead (`next`).
+  const ready = name.trim().length > 0 && currency.length === 3 && !busy;
 
-  /** Create: ask who you are — unless somebody is still half-typed. */
+  /** Create: ask who you are — unless the list isn't one yet. */
   function next() {
     if (!ready) return;
     // Held and refused are different answers, and Create keeps both: it is
-    // grey while there is nothing to create, and refuses a press it could
-    // otherwise have gone through with while a name sits unfiled.
-    if (draft !== null) { unfiled.refuse(); return; }
+    // grey while there is nothing to create at all (no name, no currency),
+    // and refuses a press it could otherwise have gone through with — a name
+    // still sitting unfiled, or nobody on the list yet.
+    if (draft !== null || people.length < 1) { refusal.refuse(); return; }
     setAsking(true);
   }
 
@@ -194,7 +198,7 @@ export default function NewGroupPage() {
             <AddName placeholder={copy.members.addPlaceholder} taken={people}
               onAdd={(who) => setPeople((list) => [...list, who])}
               onDraft={setDraft}
-              flash={unfiled.flash} onFlashEnd={unfiled.onFlashEnd} />
+              flash={refusal.flash} onFlashEnd={refusal.onFlashEnd} />
           </div>
 
           {/* The screen's one act, at the foot of the form rather than an
@@ -205,7 +209,7 @@ export default function NewGroupPage() {
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <button type="button" className="btn btn-p btn-lg" onClick={next}
-              disabled={!ready || unfiled.live}>
+              disabled={!ready || refusal.live}>
               {copy.act.create}
             </button>
           </div>

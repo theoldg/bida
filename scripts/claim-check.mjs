@@ -14,6 +14,10 @@
  * `/new` the list is state and grows in the same tick, on `/g/claim` it is a
  * Dexie write and the row arrives whenever it arrives.
  *
+ * Alongside it: the two screens whose one act — Create, a quick split's scan
+ * pair — refuses instead of going through with too short a list, tappable the
+ * whole time rather than held shut.
+ *
  * It ends on the other half of the same question: once a phone has answered
  * it, nothing may ask again — not the invite link opened a second time, and
  * not the app being launched.
@@ -53,6 +57,21 @@ const members = () => page.locator('[aria-label^="Remove "]').count();
 // ---- the list you type -------------------------------------------------
 await page.goto(`${base}/new`);
 await page.locator("#g-name").fill("Trip");
+
+// Create is tappable even with nobody on the list yet — a group of nobody
+// isn't a group, but it refuses over that instead of sitting grey, the same
+// mechanics as the quick split's scan pair below.
+report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "Create is tappable before anybody is on the list");
+await press(page.getByRole("button", { name: "Create" }));
+report(await page.locator(".rows button.row").count() === 0
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "and pressing it with nobody on the list refuses, the plus blooming");
+report(await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "spent while that refusal is on screen");
+await page.waitForTimeout(800);
+report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "and comes back when the flash settles");
 
 report(await plus().isDisabled(), "an empty add row cannot file anything");
 
@@ -206,15 +225,38 @@ report(await arrived(), "and opening it again makes the next launch reopen it");
 
 // ---- the one screen whose act refuses instead of ignoring ---------------
 // A quick split ends on the camera, and the grid a photograph opens is the
-// people on the list and nobody else — so a scan taken over an unfiled name
-// is the one way to lose somebody off a bill they are sitting at. It refuses
-// the press rather than acting on the list without them
-// (apps/web/app/quick/page.tsx).
+// people on the list and nobody else — so a scan taken over an unfiled name,
+// or over fewer than two people to divide a bill between, is the one way to
+// lose somebody off a bill they are sitting at. It refuses the press rather
+// than acting on the list without them (apps/web/app/quick/page.tsx).
 await page.goto(`${base}/quick`);
-for (const who of ["Ana", "Bo"]) {
-  await field().fill(who);
-  await field().press("Enter");
-}
+
+// The pair stays tappable with nobody on the list at all — same mechanics as
+// Create above — and a press refuses rather than opening the camera on a
+// bill nobody could divide. Wait out the scan credential's own round trip
+// first: the pair is legitimately disabled until it has one.
+await page.waitForFunction(() => {
+  const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Upload"));
+  return btn && !btn.disabled;
+});
+report(!await page.getByRole("button", { name: "Upload" }).isDisabled(),
+  "the scan pair is tappable before anybody is on the list");
+await press(page.getByRole("button", { name: "Upload" }));
+report(await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "and pressing it with nobody on the list refuses, the plus blooming");
+await page.waitForTimeout(800);
+
+// One person is still not enough to split a bill.
+await field().fill("Ana");
+await field().press("Enter");
+await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 2);
+await press(page.getByRole("button", { name: "Upload" }));
+report(await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "and still refuses with only one person on the list");
+await page.waitForTimeout(800);
+
+await field().fill("Bo");
+await field().press("Enter");
 await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 3);
 await field().fill("Cy");
 await page.waitForTimeout(80);

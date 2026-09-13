@@ -266,8 +266,9 @@ on a wash, and the two ink blocks — the who-had-what door and the scan pair.
 A filled ground is the same size of signal as a bloomed edge; a label alone is
 not, and a `--brand` frame left around a red block reads as half a refusal. The
 add row's plus fills for the same reason — what Create and a quick split's scan
-pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
-too little ink to be seen going red, so the ground goes instead. A flash
+pair point at, whether over a name nobody has filed or over too short a list to
+divide anything between, is 15px of glyph in a 32px box, far too little ink to
+be seen going red, so the ground goes instead. A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

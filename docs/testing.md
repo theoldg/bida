@@ -249,8 +249,9 @@ doors are walked, because their add rows differ where it matters — on `/new`
 the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
 that arrives whenever it arrives, and the tick has to follow it there.
 
-The two acts that refuse an unfiled name rather than leaving without it are
-checked here too — `/new`'s Create and a quick split's scan pair: the plus
+The two acts that refuse rather than acting without enough people are checked
+here too — `/new`'s Create (an unfiled name, or nobody on the list yet) and a
+quick split's scan pair (an unfiled name, or fewer than two people): the plus
 blooms, the button is spent for the length of the flash, then both come back.
 
 It ends on the other half of that question: a phone that has answered it is

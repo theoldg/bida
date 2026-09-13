@@ -34,10 +34,12 @@ On `/quick` it is the head of the screen instead (`.quickshow`), over the list
 of who is splitting, with a line of its own: `copy.quick.lede`, not
 `copy.scan.lede`, because what comes back there is the who-had-what grid and
 then text to hand over, never the expense form the group's line promises. The
-generous space is around the picture-and-line pair rather than inside it, so
-the eyebrow under it reads as the next step and not as its caption. It divides
-its bill between the people on that list, so it fills in with their names as
-they are added.
+line sits above the picture here, not under it, so the screen opens on the
+sentence rather than a drawing with nothing said about it yet. The generous
+space is around the line-and-picture pair rather than inside it, so the
+eyebrow under it reads as the next step and not as its caption. It divides its
+bill between the people on that list, so it fills in with their names as they
+are added.
 
 The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.ts`
 sums the shares from the same lines the left-hand card prints, and picks the

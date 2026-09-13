@@ -48,14 +48,16 @@ export default function QuickPage() {
   // leaving with work unsaved (components/name-adder.tsx).
   const [typing, setTyping] = useState<string | null>(null);
   /**
-   * A scan refused because a name is still unfiled. The photograph is the end
-   * of this screen — the grid it opens is the people on the list and nobody
-   * else — so taking one over an unfiled name is the one way to lose somebody
-   * off a bill they are sitting at. The plus is the whole of the fix, so the
-   * plus is what blooms, and the pair is spent for the length of the flash:
-   * exactly the entry form's refusal (lib/refusal.ts).
+   * A scan refused, for either of two reasons: a name still unfiled in the
+   * add row, or fewer than two people on the list to divide a bill between.
+   * The photograph is the end of this screen — the grid it opens is the
+   * people on the list and nobody else — so a scan taken over either one is
+   * the one way to end up with a bill nobody can actually split. The add
+   * row's plus is the fix for both, so the plus is what blooms, and the pair
+   * is spent for the length of the flash: exactly the entry form's refusal
+   * (lib/refusal.ts).
    */
-  const unfiled = useRefusal();
+  const refusal = useRefusal();
 
   /**
    * What the bill is counted in, until a scan says otherwise.
@@ -118,15 +120,15 @@ export default function QuickPage() {
         <Scroll>
           {/* What this screen leads to, drawn rather than described — the same
               picture `/g/scan` opens on (components/scan-diagram.tsx), with
-              its own line under it, since what a quick split comes back as is
+              its own line over it, since what a quick split comes back as is
               not the expense form `copy.scan.lede` promises. It is divided
               between the people below it, so adding somebody is visible in it.
-              Picture and line are one block, and the air around that block is
+              Line and picture are one block, and the air around that block is
               what keeps the eyebrow under it reading as the next step rather
               than as its caption. */}
           <div className="pad quickshow">
-            <ScanDiagram names={people.map((p) => p.name)} seed={cred?.id ?? ""} />
             <p className="scanlede">{copy.quick.lede}</p>
+            <ScanDiagram names={people.map((p) => p.name)} seed={cred?.id ?? ""} />
           </div>
 
           <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.quick.who}</Eyebrow>
@@ -144,19 +146,21 @@ export default function QuickPage() {
               taken={people.map((p) => p.name)}
               onAdd={(name) => { if (cred) addQuickPerson(cred.id, name); }}
               onDraft={setTyping}
-              flash={unfiled.flash} onFlashEnd={unfiled.onFlashEnd} />
+              flash={refusal.flash} onFlashEnd={refusal.onFlashEnd} />
           </div>
 
           {/* The act the screen ends on, under the people it needs first. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {/* Held shut until there is somebody to divide by: a bill
-                photographed for one person is not a split. */}
+            {/* Always tappable, like the entry form's Save: a press that
+                can't go through refuses instead of doing nothing, whether the
+                add row has a name still unfiled or the list has fewer than
+                two people on it — either way the fix is the plus beside
+                "Add someone", so that's what blooms. */}
             <ScanPair scan={scan} register="lg"
-              disabled={people.length < 2 || unfiled.live}
+              disabled={refusal.live}
               refuse={() => {
-                if (typing === null) return false;
-                unfiled.refuse();
-                return true;
+                if (typing !== null || people.length < 2) { refusal.refuse(); return true; }
+                return false;
               }} />
 
             {/* No "try again" beside either message: the control above is

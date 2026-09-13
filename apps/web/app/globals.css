@@ -784,15 +784,19 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    falls below them, not between them. */
 .scanshow { display: flex; flex-direction: column; gap: 14px }
 /* The same drawing at the head of a quick split, where it is not the whole
-   screen but the thing the screen leads to. Picture and line sit close, the
-   way they do on `/g/scan`; the generous space is around the pair, so the list
-   of people below reads as the next step rather than as the picture's own
-   caption, and the drawing gets room off the top bar to read as a picture. */
+   screen but the thing the screen leads to. Line and picture sit close, the
+   way they do on `/g/scan` — reversed, line first, so the screen opens on a
+   sentence rather than a picture with nothing said about it yet; the generous
+   space is around the pair, so the list of people below reads as the next
+   step rather than as the picture's own caption, and the drawing gets room
+   off the top bar to read as a picture. */
 .quickshow { display: flex; flex-direction: column; gap: 14px;
   padding-top: 22px; padding-bottom: 34px }
-/* The sentence under the drawing: the width of the drawing it explains, and
-   centred on it, so it reads as part of the picture rather than as a heading
-   over the control. */
+/* The sentence beside the drawing — under it on `/g/scan`, over it on
+   `/quick`, where it reads as the screen's opening line rather than a caption
+   on a picture it hasn't seen the control for yet. Either way, the width of
+   the drawing it explains, and centred on it, so it reads as part of the
+   picture rather than as a heading over the control. */
 .scanlede { margin: 0; text-align: center; text-wrap: balance;
   font-size: 13px; line-height: 1.45; color: var(--ink-2) }
 /* The screen's one sentence, drawn: a bill, and the expense it comes back as,

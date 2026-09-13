@@ -237,13 +237,15 @@ export function ScanPair({
   register: "lg" | "s" | "xs";
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
-  /** Held shut by the screen as well: a quick split has nobody to divide by yet. */
+  /** Held shut by the screen as well: spent for the length of its own
+      refusal flash, same as Save on the entry form. */
   disabled?: boolean;
   /**
    * The screen's own veto on the press, for what it can only know at the
-   * moment of pressing: a quick split with a name still unfiled in the add row
-   * refuses the photograph rather than taking one that leaves somebody off the
-   * bill. Returns true when it refused, and neither door opens.
+   * moment of pressing: a quick split with a name still unfiled in the add
+   * row, or fewer than two people on the list, refuses the photograph rather
+   * than taking one nobody can actually divide. Returns true when it
+   * refused, and neither door opens.
    */
   refuse?: () => boolean;
 }) {
