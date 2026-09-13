@@ -336,6 +336,19 @@ centred line under it (`.homeabout` → `/about`). `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
+## A screen comes back where you left it
+
+The app scrolls inside a div — one `.scroll` per screen — so the browser's own
+restoration, which knows only about the document, restored nothing: the
+fortieth entry of a ledger, opened and backed out of, put you at the top of the
+list. `lib/scroll-memory.ts` keeps one offset per route in memory (the query
+included: `?id=` is which group, `?tab=` is which list), and `Scroll` puts it
+back on the way in. It aims at the furthest point the content has reached and
+stays unfinished until the real one exists, because the rows arrive from Dexie
+after the frame draws; it records nothing until that lands, the finger takes
+over, or a second and a bit passes, since every position on the way there is
+shorter than the target and saving one would walk the list towards the top.
+
 ## Your own money, pulled out of the group's
 
 Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)),

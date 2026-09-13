@@ -203,6 +203,12 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
   own screen — so a wait for the ledger's rows timed out on a page that had
   none. When you move a control or change where a save lands, grep these
   scripts for it in the same commit.
+- **`page.goto` between screens is a different app.** The app never reloads in
+  normal use — every move is one document, back included — so anything the
+  browser keeps in memory (where each screen was scrolled,
+  `lib/scroll-memory.ts`) is gone the moment a check navigates with `goto`
+  instead of pressing what a person would press. A `goto` is for arriving; from
+  there, click.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.

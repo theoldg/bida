@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Component, Suspense, type ErrorInfo, type ReactNode } from "react";
+import { Component, Suspense, useRef, type ErrorInfo, type ReactNode } from "react";
 import { copy } from "../lib/copy";
 import { useBackButton } from "../lib/back-button";
 import { retryLive, useStalled } from "../lib/db/live";
+import { useScrollMemory } from "../lib/scroll-memory";
 import { goUp } from "../lib/nav";
 import { Icon, type IconName } from "./icons";
 
@@ -52,8 +53,15 @@ export function Body({ children }: { children: ReactNode }) {
   return <div className="appbody">{children}</div>;
 }
 
+/**
+ * The one scrolling middle of a screen — and the only scroller in the app the
+ * browser would otherwise forget, since it is a div rather than the document.
+ * `lib/scroll-memory.ts` is what puts it back where you left it.
+ */
 export function Scroll({ children }: { children: ReactNode }) {
-  return <div className="scroll">{children}</div>;
+  const ref = useRef<HTMLDivElement>(null);
+  useScrollMemory(ref);
+  return <div className="scroll" ref={ref}>{children}</div>;
 }
 
 /**
