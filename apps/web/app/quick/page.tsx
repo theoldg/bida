@@ -123,11 +123,9 @@ export default function QuickPage() {
 
           {/* The act the screen ends on, under the people it needs first. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {/* Held shut until there is somebody to divide by, with the one
-                line the screen cannot otherwise say. A bill photographed for
-                one person is not a split. */}
+            {/* Held shut until there is somebody to divide by: a bill
+                photographed for one person is not a split. */}
             <ScanPair scan={scan} register="lg" disabled={people.length < 2} />
-            {people.length < 2 ? <p className="hint">{copy.quick.needTwo}</p> : null}
 
             {/* No "try again" beside either message: the control above is
                 still enabled, and it is the retry. */}

@@ -341,8 +341,6 @@ export const copy = {
   quick: {
     title: "Quick split",
     who: "Who’s splitting",
-    /** Why the scan control is dead: a bill needs somebody to divide it. */
-    needTwo: "Add two people, then photograph the bill.",
     /** The one bill this flow can do nothing with: a total and no lines. */
     noLines: "That receipt has no lines on it. There’s nothing to assign.",
     discardTitle: "Discard this split?",
