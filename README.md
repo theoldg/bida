@@ -12,5 +12,7 @@ Tailwind · Dexie/IndexedDB · Cloudflare Worker + D1.
 This file is deliberately thin so it can't go stale; current state lives in
 [docs/implementation-status.md](docs/implementation-status.md).
 
+**Running your own:** [SELFHOSTING.md](SELFHOSTING.md).
+
 **Licence:** [MIT](LICENSE) — take it, fork it, run your own. The name *bida*
 and the logo are not covered: those stay with the author.

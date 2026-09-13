@@ -103,7 +103,8 @@ is a real multi-page site, one HTML file per route), and a `[[d1_databases]]`
 entry with `binding = "DB"`, `database_name = "hajsik"`, its `database_id`, and
 `migrations_dir = "migrations"`.
 
-**One-time, per Cloudflare account:**
+**One-time, per Cloudflare account** (a fresh instance on someone else's
+account is [SELFHOSTING.md](../SELFHOSTING.md)):
 
 ```bash
 cd apps/api

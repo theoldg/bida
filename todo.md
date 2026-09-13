@@ -4,6 +4,9 @@
 
 ### Self-hosting instructions
 
+- [x] [SELFHOSTING.md](SELFHOSTING.md) — deploy, CI token, the scan proxy caveat,
+      local dev, renaming.
+
 ### Other cleanups
 
 - [x] Secrets — the full history greps clean for key and token shapes;
