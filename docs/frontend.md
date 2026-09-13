@@ -205,12 +205,15 @@ confers nothing without the secret.
   name, one person** (`core/names.ts`), said as it is typed and refused before
   the press rather than after it, on every list including the one you are
   picking yourself out of, where the name you typed is a row one tap above.
-  A screen's own button — Create, Continue — acts on the list, never on the
-  field: an unfiled name is unfiled, whatever else is pressed. The quick
-  split's scan pair is the one act that *refuses* instead of ignoring, because
-  a photograph there opens a grid of the people on the list and nobody else:
-  it blooms the plus and is spent for the length of that flash, the entry
-  form's refusal exactly (`lib/refusal.ts`). The row also
+  A screen's own button never *files* what is in the field — an unfiled name is
+  unfiled, whatever else is pressed — but the two that leave the screen with
+  the list behind them **refuse** rather than going on without the name:
+  `/new`'s Create, which writes the group in one go, and the quick split's scan
+  pair, whose photograph opens a grid of the people on the list and nobody
+  else. Both bloom the plus and are spent for the length of that flash, the
+  entry form's refusal exactly (`lib/refusal.ts`). The picker's Continue is the
+  exception that stays: filing a name there *is* picking it, so a name that has
+  only been typed is a question it simply does not read. The row also
   **follows the list down**, as a browser scrolls to a field only as it takes
   focus, and this one never lets go — clear of the keyboard, per the `--kb`
   Gotcha below. `pnpm claim` holds all of it ([testing.md](testing.md)).

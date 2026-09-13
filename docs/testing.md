@@ -249,9 +249,9 @@ doors are walked, because their add rows differ where it matters — on `/new`
 the list is state and grows in the same tick, on `/g/claim` it is a Dexie write
 that arrives whenever it arrives, and the tick has to follow it there.
 
-One screen's act does not ignore the field, and that is checked here too: a
-quick split's scan pair pressed over an unfiled name refuses — the plus blooms
-and the pair is spent for the length of the flash, then both come back.
+The two acts that refuse an unfiled name rather than leaving without it are
+checked here too — `/new`'s Create and a quick split's scan pair: the plus
+blooms, the button is spent for the length of the flash, then both come back.
 
 It ends on the other half of that question: a phone that has answered it is
 never asked again. The invite link is copied out of People and opened a second

@@ -17,6 +17,7 @@ import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { useDevice } from "../../lib/hooks";
 import { goUp } from "../../lib/nav";
+import { useRefusal } from "../../lib/refusal";
 
 /**
  * The whole group, on one screen and then one question.
@@ -64,6 +65,14 @@ export default function NewGroupPage() {
   // it (components/name-adder.tsx) — but it is something typed, so leaving with
   // it on screen is leaving with work unsaved.
   const [draft, setDraft] = useState<string | null>(null);
+  /**
+   * Create, refused because a name is still unfiled. Everything typed here is
+   * thrown away by the button that leaves the screen — the group is written in
+   * one go — so a name left in the add row when the group is created is a
+   * person who was never in it. The plus is the whole of the fix, so the plus
+   * blooms and Create is spent for the length of the flash (lib/refusal.ts).
+   */
+  const unfiled = useRefusal();
 
   // A group typed here is state and nothing else — no draft store, nothing in
   // Dexie — so both ways off this screen throw it away. The entry form asks
@@ -88,12 +97,18 @@ export default function NewGroupPage() {
   }
 
   // A name still in the add row is not a person on the list: it has not been
-  // filed, and the box it sits in says so.
+  // filed, and the box it sits in says so. Create does not count it — it
+  // refuses over it instead (`next`).
   const ready = name.trim().length > 0 && currency.length === 3 && !busy && people.length > 0;
 
-  /** Create: ask who you are. */
+  /** Create: ask who you are — unless somebody is still half-typed. */
   function next() {
-    if (ready) setAsking(true);
+    if (!ready) return;
+    // Held and refused are different answers, and Create keeps both: it is
+    // grey while there is nothing to create, and refuses a press it could
+    // otherwise have gone through with while a name sits unfiled.
+    if (draft !== null) { unfiled.refuse(); return; }
+    setAsking(true);
   }
 
   async function save(me: string, all: readonly string[]) {
@@ -178,7 +193,8 @@ export default function NewGroupPage() {
             ))}
             <AddName placeholder={copy.members.addPlaceholder} taken={people}
               onAdd={(who) => setPeople((list) => [...list, who])}
-              onDraft={setDraft} />
+              onDraft={setDraft}
+              flash={unfiled.flash} onFlashEnd={unfiled.onFlashEnd} />
           </div>
 
           {/* The screen's one act, at the foot of the form rather than an
@@ -188,7 +204,8 @@ export default function NewGroupPage() {
               name being typed never sits on it. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
-            <button type="button" className="btn btn-p btn-lg" onClick={next} disabled={!ready}>
+            <button type="button" className="btn btn-p btn-lg" onClick={next}
+              disabled={!ready || unfiled.live}>
               {copy.act.create}
             </button>
           </div>

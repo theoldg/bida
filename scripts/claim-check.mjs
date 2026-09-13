@@ -88,6 +88,24 @@ report(await page.locator(".addwarn").count() === 1 && await plus().isDisabled()
 await field().fill("");
 await page.waitForTimeout(80);
 
+// Create is the button that leaves this screen, and everything on it is state:
+// a name still in the row when the group is written is a person who was never
+// in it. So it refuses rather than acting on the list without them — the plus
+// blooms and Create is spent for the length of that flash.
+await field().fill("Sam");
+await page.waitForTimeout(80);
+await press(page.getByRole("button", { name: "Create" }));
+report(await page.locator(".rows button.row").count() === 0
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "Create over an unfiled name is refused, and the plus blooms");
+report(await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "and Create is spent while the refusal is on screen");
+await page.waitForTimeout(800);
+report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "and comes back when the flash settles");
+await field().fill("");
+await page.waitForTimeout(80);
+
 // ---- the question it ends on -------------------------------------------
 await page.getByRole("button", { name: "Create" }).click();
 await page.waitForSelector(".rows button.row");
