@@ -19,7 +19,9 @@ import type { Id } from "./types.js";
  *
  * The derivation is one HKDF-SHA256 over the secret with two `info` strings, so
  * the token tells you nothing about the key. It is not a password KDF and does
- * not need to be: a secret is 128 random bits, not something a person typed.
+ * not need to be: a secret is ~83 random bits (`newGroupSecret`), not something
+ * a person typed. That margin is what buys the single pass — shorten the secret
+ * and this choice has to be made again.
  */
 
 /** The slice of WebCrypto we need, so core stays free of DOM lib types. */

@@ -27,8 +27,9 @@ on; the group id is the address. Everything that carries meaning, `patch` and
 envelope is the AES-GCM additional data, so a body cannot be moved onto another
 op or another group without every phone noticing.
 
-The link itself does not change. A secret is still 128 bits in the URL fragment
-([0004](0004-static-export-and-offline.md)), and that fragment never reaching a
+The link itself does not change. The secret is the same ~83 bits in the URL
+fragment ([0003](0003-link-only-access.md),
+[0004](0004-static-export-and-offline.md)), and that fragment never reaching a
 server is now what holds confidentiality rather than just access.
 
 ## Consequences
@@ -67,4 +68,6 @@ server is now what holds confidentiality rather than just access.
   would keep server-side validation and per-entity queries. Neither is used,
   and "who edited what, when" is most of what a log gives away.
 - **A slow KDF (PBKDF2, Argon2).** They defend a secret a person chose; this one
-  is 128 random bits, where the attack is the cipher, not the guess.
+  is ~83 random bits, still far enough past brute force that the attack is the
+  cipher and not the guess — but that is the number deciding it, so a shorter
+  secret reopens this entry.

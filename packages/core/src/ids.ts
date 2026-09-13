@@ -36,7 +36,9 @@ export function newNodeId(): string {
 }
 
 /**
- * The group's shared secret. 128 bits, base32-ish, URL-fragment safe.
+ * The group's shared secret. 16 characters of base36, URL-fragment safe —
+ * ~83 bits, not the 128 the byte count suggests: a base36 character carries
+ * log2(36) ≈ 5.17 bits, so `% 36` drops most of each byte on the way out.
  * Whoever holds this holds the group — see ADR-0003.
  */
 export function newGroupSecret(): string {

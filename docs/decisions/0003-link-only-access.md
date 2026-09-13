@@ -13,7 +13,10 @@ started or stopped speaking for a member.
 **No accounts, no passwords, no email.** A group is `groupId` + a high-entropy
 `secret`; anyone with the link has full read/write access.
 
-- The secret is generated client-side (128 bits, `crypto.getRandomValues`).
+- The secret is generated client-side (`crypto.getRandomValues`): 16 base36
+  characters, ~83 bits and not the 128 the byte count suggests, because a base36
+  character carries log2(36). Unguessable at any rate this server answers, and
+  the margin the single-pass HKDF in `core/seal.ts` rests on.
 - The server never receives it: the bearer is a token derived from it, and the
   key that opens the ops is the other branch of that derivation
   ([0036](0036-the-server-cannot-read-a-group.md)). A database leak hands out a
