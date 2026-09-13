@@ -20,10 +20,25 @@ link to that hostname, so **renaming later breaks every link already shared**.
 Choose it now. Edit `apps/api/wrangler.toml`: set `name`, and set
 `database_name` to whatever you want the database called.
 
-Create the database and paste the id it prints back into `wrangler.toml`:
+Every `wrangler` command below talks to your account and has to authenticate.
+Interactively that is once, in a browser:
 
 ```bash
 cd apps/api
+npx wrangler login        # OAuth; stored in ~/.wrangler
+npx wrangler whoami       # confirms which account you're on
+```
+
+With no browser — a container, a remote shell — export an API token instead.
+Same variable CI uses, same scopes as [below](#deploying-on-push):
+
+```bash
+export CLOUDFLARE_API_TOKEN=...   # never commit it; keep it out of the repo
+```
+
+Create the database and paste the id it prints back into `wrangler.toml`:
+
+```bash
 npx wrangler d1 create <database_name>   # prints database_id
 npx wrangler d1 migrations apply <database_name> --remote
 ```
@@ -49,8 +64,11 @@ configure.
 
 `.github/workflows/deploy.yml` builds and deploys on every push to `main`. It
 needs a `CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
-Actions) with **Workers Scripts: Edit** and **D1: Edit**. A token missing D1
-fails with a generic `Authentication error [code: 10000]`.
+Actions). Create it under My Profile → API Tokens → Create Custom Token with
+**Account → Workers Scripts: Edit** and **Account → D1: Edit**; a token missing
+D1 fails with a generic `Authentication error [code: 10000]`, and `wrangler
+whoami` succeeding proves nothing about that. `wrangler` reads the variable
+straight out of the environment, so the same token works for a manual deploy.
 
 The workflow does not run migrations and does not run tests. Migrations are
 yours to apply by hand, in the same window as the push that needs them. Tests
@@ -64,7 +82,8 @@ run in the `pre-push` hook, which `pnpm install` wires up.
 pnpm --filter @bida/api exec wrangler secret put GEMINI_API_KEY
 ```
 
-Set it once, not per deploy. Without it the scan button fails and the rest of
+That is your Google AI Studio key, and it needs the Cloudflare auth above like
+anything else here. Set it once, not per deploy. Without it the scan button fails and the rest of
 the app is unaffected.
 
 **Don't put this on a public instance as it stands.** The endpoint authenticates
