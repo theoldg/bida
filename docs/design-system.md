@@ -142,6 +142,15 @@ identical. Two states cover the gap, and neither is a spinner:
 - **Waiting.** A list still coming out of Dexie draws `SkeletonRows`: same row
   height, same three columns, pulsing, staggered — arrival changes the text and
   not the layout. The frame around it is real and tappable.
+- **A tick, where neither of those reaches.** `lib/haptics.ts` — one 8ms
+  vibration, and the only one the app has. It is spent on the two answers that
+  land away from the thumb: a long press deciding it was a hold, where the menu
+  opens above the finger and there is no wash under it, and a link reaching the
+  clipboard, where the check is a glyph in a top bar or in a menu that has
+  already closed. A tap with a press wash under it needs nothing added, and iOS
+  has no such API at all — so it is an addition to a screen that already reads
+  without it, never the thing that says an action worked. Off under
+  `prefers-reduced-motion`.
 
 ## Type
 

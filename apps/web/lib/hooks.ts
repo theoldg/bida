@@ -13,6 +13,7 @@ import { db, type DeviceRecord } from "./db/dexie";
 import { useLive } from "./db/live";
 import { getDevice } from "./db/device";
 import { copy } from "./copy";
+import { tick } from "./haptics";
 import { formatJoinLink, route } from "./group-link";
 
 /**
@@ -129,6 +130,9 @@ export function useInviteLink(groupId: string | undefined): {
       try {
         await navigator.clipboard.writeText(link);
         setCopied(true);
+        // The check that says so is a small glyph in a top bar, and on the
+        // groups list it is in a menu that has already closed (lib/haptics.ts).
+        tick();
       } catch {
         setFailed(true);
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type MouseEvent } from "react";
+import { tick } from "../lib/haptics";
 import { RowMenu, type SheetAction } from "./row-menu";
 
 /**
@@ -20,6 +21,10 @@ export function useLongPressMenu(actions: SheetAction[]) {
       if (actions.length === 0) return;
       e.preventDefault();
       e.stopPropagation();
+      // The one press in the app with no wash under it — the finger is still
+      // down and the menu opens above it, so the tick is what says the hold
+      // landed (lib/haptics.ts).
+      tick();
       setAnchor(e.currentTarget.getBoundingClientRect());
     },
     menu: anchor
