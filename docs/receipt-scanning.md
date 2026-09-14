@@ -172,7 +172,8 @@ Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. Done is never held grey: pressed on a bill
 with a line nobody has been given, it refuses — every unassigned line's name and
-amount bloom, the button is spent for the length of that flash, and only then
+amount bloom, the grid scrolling to the nearest of them first if they are all
+past the fold, the button is spent for that travel and the flash, and only then
 does the sentence under the grid appear, until the last line has somebody
 ([design-system.md](design-system.md)). It waits for that press because on
 arrival nothing is assigned yet, and a red line printed then scolds a grid for

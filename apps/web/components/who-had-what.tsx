@@ -9,6 +9,7 @@ import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
+import { nearestOutOfView } from "../lib/reveal";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
@@ -34,6 +35,31 @@ import {
  * question: the form says split it by hand instead, and a quick split has
  * nothing left to be.
  */
+/**
+ * How long a scroll is waited on before the flash runs anyway. A smooth scroll
+ * has no end event every browser here agrees on, and a person who has taken the
+ * list over mid-travel is owed an answer more than a tidy one.
+ */
+const SETTLED_MS = 800;
+
+/** The scroller has arrived — or has been given long enough to. */
+function whenStill(box: Element, target: number, done: () => void) {
+  const giveUp = Date.now() + SETTLED_MS;
+  const look = () => {
+    if (Math.abs(box.scrollTop - target) <= 1 || Date.now() > giveUp) { done(); return; }
+    requestAnimationFrame(look);
+  };
+  requestAnimationFrame(look);
+}
+
+/**
+ * Whether to travel at all. The flash itself is exempt from reduced motion —
+ * a colour settling is what that guidance asks for (globals.css) — but this is
+ * movement, and movement is exactly what it asks to be spared: the row is put
+ * in place at once instead.
+ */
+const calmly = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack }: {
   title: string;
   /** The columns: everybody who might have been at this table. */
@@ -70,7 +96,14 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // second press replays every one together. Done itself doesn't: it is the
   // control that was pressed, not what is missing, so it greys for exactly as
   // long as the flash and comes back, the entry form's Save exactly.
+  // What blooms has to be on screen to be a signal at all, and on a twenty-line
+  // bill it may not be: with every unassigned line scrolled past, the nearest
+  // is brought in first and the flash waits for the list to land (`reveal`
+  // below). Done stays spent across both, so one press is one answer.
   const refusal = useRefusal();
+  const [seeking, setSeeking] = useState(false);
+  const wrap = useRef<HTMLDivElement | null>(null);
+  const rows = useRef<(HTMLTableRowElement | null)[]>([]);
   const [told, setTold] = useState(false);
   if (!opened.current) {
     opened.current = {
@@ -217,6 +250,40 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     } catch { /* mid-type */ }
   }
 
+  /**
+   * The refusal, once the lines it points at can be seen.
+   *
+   * Nothing moves while any of them is in view — a list that jumps under
+   * somebody already looking at the answer is worse than one that sits still.
+   * Otherwise the nearest is scrolled to, and only then does the flash run:
+   * a bloom spent while the rows are still travelling is a bloom nobody saw.
+   */
+  function reveal() {
+    const box = wrap.current;
+    // The cells are what is sticky, not the row around them (globals.css):
+    // `thead`'s own box stays where the table put it, halfway up the bill.
+    const head = box?.querySelector("thead th");
+    const seen = missing.flatMap((gap, i) => {
+      const el = gap ? rows.current[i] : null;
+      if (!el) return [];
+      const { top, bottom } = el.getBoundingClientRect();
+      return [{ top, bottom }];
+    });
+    if (!box || seen.length === 0) { refusal.refuse(); return; }
+    // The header is sticky, so the top of the scroller is not where a row
+    // becomes visible — it is where it goes underneath something.
+    const view = box.getBoundingClientRect();
+    const reach = nearestOutOfView(seen, {
+      top: head ? head.getBoundingClientRect().bottom : view.top, bottom: view.bottom,
+    });
+    if (reach === null) { refusal.refuse(); return; }
+    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    if (target === box.scrollTop) { refusal.refuse(); return; }
+    setSeeking(true);
+    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
+    whenStill(box, target, () => { setSeeking(false); refusal.refuse(); });
+  }
+
   function finish() {
     // Never held grey: a Done that can't go through points at what is missing
     // rather than sitting dead with a sentence beside it (design-system.md).
@@ -225,7 +292,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       // The flash lives on the lines, so there has to be one to put it on:
       // the button is spent until that animation ends, and waiting on one
       // that never runs would leave it spent for good.
-      if (!refusal.live && missing.some(Boolean)) refusal.refuse();
+      if (!refusal.live && !seeking && missing.some(Boolean)) reveal();
       return;
     }
     // This screen owns only the raw grid: who was there, and who had what.
@@ -295,7 +362,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
           </div>
         </div>
 
-        <div className="itemtablewrap">
+        <div className="itemtablewrap" ref={wrap}>
           <table className="itemtable">
             <thead>
               <tr>
@@ -314,7 +381,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                 const part = runs[i] ?? null;
                 const into = part ? null : unfoldableInto(item, draft.currency);
                 return (
-                  <tr key={i} className={part ? "part" : undefined}>
+                  <tr key={i} className={part ? "part" : undefined}
+                    ref={(el) => { rows.current[i] = el; }}>
                     <td className="itemlabel">
                       <div className="itemrow">
                         {/* A line nobody has been given blooms with the
@@ -475,7 +543,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
               down — so it stays in the band, which pays `--kb` for the tip
               being typed a row above it. */}
           <button type="button" className="btn btn-p btn-lg itemsave"
-            onClick={finish} disabled={refusal.live} {...keepsFocus}>
+            onClick={finish} disabled={refusal.live || seeking} {...keepsFocus}>
             {copy.act.done}
           </button>
         </div>
