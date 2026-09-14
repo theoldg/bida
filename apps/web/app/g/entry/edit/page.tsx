@@ -231,20 +231,25 @@ function EditEntryScreen() {
 
     const kind: EntryKind = wantedKind && ENTRY_KINDS.includes(wantedKind) ? wantedKind : "expense";
     const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
-    seedDraft(groupId, kind === "transfer" ? {
+    seedDraft(groupId, {
       ...blank,
+      // A name and an amount are things any caller may know — settle-up knows
+      // both, the tip screen knows only the name. The two sides are the
+      // transfer's alone, because no other kind has them.
       ...(prefill.title ? { description: prefill.title } : {}),
-      ...(prefill.from ? { fromMember: prefill.from } : {}),
-      ...(prefill.to ? { toMember: prefill.to } : {}),
       // The suggestion is already in the group's base currency, so it seeds
       // the amount directly rather than going back through a rate.
       ...(Number.isFinite(prefill.amount) && prefill.amount > 0
         ? { amountText: minorToDecimalString(prefill.amount, base) } : {}),
-    } : blank, seedKey);
+      ...(kind === "transfer" ? {
+        ...(prefill.from ? { fromMember: prefill.from } : {}),
+        ...(prefill.to ? { toMember: prefill.to } : {}),
+      } : {}),
+    }, seedKey);
     // `prefill` is rebuilt each render; the query params behind it are what
     // actually change, and the draft is only ever seeded once per entry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, entryId, seedKey, wantedKind, prefill.from, prefill.to, prefill.amount,
+  }, [groupId, entryId, seedKey, wantedKind, prefill.from, prefill.to, prefill.amount, prefill.title,
     data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
   // Nothing is stored, so a reload or a closed tab loses what's typed. Let the

@@ -272,6 +272,10 @@ describe("newEntryKey", () => {
       newEntryKey("transfer", { from: "a", to: "b", amount: 500 }),
       newEntryKey("transfer", { from: "a", to: "b", amount: 700 }),
       newEntryKey("transfer", { from: "b", to: "a", amount: 500 }),
+      // The tip screen's named expense: a "+" left half-filled must not be
+      // what the donation link lands on.
+      newEntryKey("expense", { title: "Coffee for bida" }),
+      newEntryKey("expense", { title: "Something else" }),
     ];
     // Settle-up used to land on whatever blank expense an abandoned "+" had
     // left behind, which is this set collapsing.

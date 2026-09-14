@@ -429,10 +429,13 @@ export function seedDraft(groupId: string, draft: EntryDraft, key: string): void
  */
 export function newEntryKey(
   kind: string | null | undefined,
-  prefill?: { from?: string; to?: string; amount?: number },
+  prefill?: { from?: string; to?: string; amount?: number; title?: string },
 ): string {
+  // The title is part of the key, not decoration: a named expense (the tip
+  // screen's) and a blank one are different asks, and without it the form
+  // adopts whichever draft is already there and the name silently vanishes.
   return `new:${kind ?? "expense"}:${prefill?.from ?? ""}:${prefill?.to ?? ""}`
-    + `:${prefill?.amount || 0}`;
+    + `:${prefill?.amount || 0}:${prefill?.title ?? ""}`;
 }
 
 /** What the live draft was seeded for, or undefined if there isn't one. */
