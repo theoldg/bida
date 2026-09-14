@@ -59,11 +59,11 @@ function TipScreen() {
                 every other amount, because it is the same kind of claim. */}
             <div className="tiprate">{rate}</div>
 
-            {/* One paragraph, broken by hand: the joke is the same aside as
-                the line above it, and a paragraph's worth of air between them
-                would make it a second thought instead of the same one. */}
+            {/* One paragraph and no hand-placed break: the joke is the same
+                aside as the line before it, and a `<br>` that lands mid-wrap
+                on a narrow screen is worse than no break at all. */}
             <p className="tipeach">
-              {copy.tip.each(money(each, "USD"))}<br />{copy.tip.yacht}
+              {copy.tip.each(money(each, "USD"))} {copy.tip.yacht}
             </p>
 
             <div className="tipacts">
