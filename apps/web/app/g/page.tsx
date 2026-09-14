@@ -62,6 +62,10 @@ function GroupScreen() {
   const unclaimed = useClaimGate(groupId, data);
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
+
+  // The two tabs are one screen, and the ledger is the one you arrive on — so
+  // back from balances is the ledger, and only the ledger leaves the group.
+  const back = tab === "balances" ? route.group(groupId) : route.groups();
   // Loading used to be a top bar over nothing — indistinguishable from a tap
   // that didn't land. Draw the whole frame instead: the group's name is the
   // only thing here that has to wait for Dexie.
@@ -71,7 +75,7 @@ function GroupScreen() {
     return (
       <Screen>
         <Body>
-          <TopBar title=" " back={route.groups()} />
+          <TopBar title=" " back={back} />
           <Scroll><SkeletonRows count={6} /></Scroll>
         </Body>
         {tab === "ledger"
@@ -122,7 +126,7 @@ function GroupScreen() {
 
         <TopBar
           title={group.name}
-          back={route.groups()}
+          back={back}
           /* One button, not the four icons this bar used to carry: the group's
              own actions are a menu (components/group-menu.tsx), which leaves
              the bar to the group's name. */
