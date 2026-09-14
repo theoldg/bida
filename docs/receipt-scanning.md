@@ -173,10 +173,10 @@ per-person totals stacked below, and the grid between them owning the vertical
 scroll so its row of initials freezes while a long bill passes under it.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
-split evenly to untick your way out of. Done is never grey: pressed on a bill
-with a line nobody has been given, it refuses — the button and every unassigned
-line's name and amount bloom together, and only then does the sentence under the
-grid appear, until the last line has somebody
+split evenly to untick your way out of. Done is never held grey: pressed on a bill
+with a line nobody has been given, it refuses — every unassigned line's name and
+amount bloom, the button is spent for the length of that flash, and only then
+does the sentence under the grid appear, until the last line has somebody
 ([design-system.md](design-system.md)). It waits for that press because on
 arrival nothing is assigned yet, and a red line printed then scolds a grid for
 being untouched.

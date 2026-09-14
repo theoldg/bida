@@ -65,9 +65,11 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
   // A refused Done, and what it leaves behind: the flash is spent in ~600ms,
-  // the sentence stays until the grid is actually finishable. Both controls
-  // this screen blooms — the button and the lines with nobody on them — wear
-  // the one refusal, so a second press replays every one of them together.
+  // the sentence stays until the grid is actually finishable. What blooms is
+  // the lines with nobody on them — all of them, off the one refusal, so a
+  // second press replays every one together. Done itself doesn't: it is the
+  // control that was pressed, not what is missing, so it greys for exactly as
+  // long as the flash and comes back, the entry form's Save exactly.
   const refusal = useRefusal();
   const [told, setTold] = useState(false);
   if (!opened.current) {
@@ -169,6 +171,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // worth has to be the same answer the form gives once Done has written them
   // down, and the seed that decides it is not this screen's to pick.
   const weights = receiptWeights(draft, items, assignments, involved);
+  const missing = items.map((_, i) => (assignments[i]?.size ?? 0) === 0);
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
   const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
@@ -215,10 +218,14 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   function finish() {
-    // Never grey: a Done that can't go through points at what is missing
+    // Never held grey: a Done that can't go through points at what is missing
     // rather than sitting dead with a sentence beside it (design-system.md).
     if (!canFinish) {
-      if (!refusal.live) { refusal.refuse(); setTold(true); }
+      setTold(true);
+      // The flash lives on the lines, so there has to be one to put it on:
+      // the button is spent until that animation ends, and waiting on one
+      // that never runs would leave it spent for good.
+      if (!refusal.live && missing.some(Boolean)) refusal.refuse();
       return;
     }
     // This screen owns only the raw grid: who was there, and who had what.
@@ -313,8 +320,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                         {/* A line nobody has been given blooms with the
                             refusal — name and amount, which is how you find
                             it again in twenty rows of bill. */}
-                        <span className={`itemtext${
-                          (assignments[i]?.size ?? 0) === 0 ? refusal.flash : ""}`}>
+                        <span className={`itemtext${missing[i] ? refusal.flash : ""}`}
+                          onAnimationEnd={refusal.onFlashEnd}>
                           <span className="itemname">
                             {item.label}
                             {/* The printed count, but only where the button
@@ -467,8 +474,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
               does — the grid owns this screen's scroll, sideways as well as
               down — so it stays in the band, which pays `--kb` for the tip
               being typed a row above it. */}
-          <button type="button" className={`btn btn-p btn-lg itemsave${refusal.flash}`}
-            onClick={finish} onAnimationEnd={refusal.onFlashEnd} {...keepsFocus}>
+          <button type="button" className="btn btn-p btn-lg itemsave"
+            onClick={finish} disabled={refusal.live} {...keepsFocus}>
             {copy.act.done}
           </button>
         </div>

@@ -270,9 +270,11 @@ icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Items tab's entire complaint now that the red sentence
 under it is gone. Both of those are ink blocks, so both fill (below). Pointing beats wording there, because "scan a receipt" was
 true of every untouched bill and read as a scolding for arriving. Where what is missing is spread over
-several rows, every one of them blooms and the control keeps the press: a Done
-on the who-had-what grid points at each line nobody has been given, name and
-amount, which is how you find it again in twenty rows of bill. A number that
+several rows, every one of them blooms: a Done on the who-had-what grid points
+at each line nobody has been given, name and amount, which is how you find it
+again in twenty rows of bill. The button itself never goes red — it is the
+control that was pressed, not what is missing — it only greys for the length of
+the flash, like Save. A number that
 is not on the form at all blooms the way *to* it and loses its sentence for the
 same reason: a foreign entry whose currency the group has no rate for points at
 its "set rate" badge. **An inverted or edgeless control fills whole**,
