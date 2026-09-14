@@ -215,7 +215,6 @@ export const copy = {
     name: "Name",
     namePlaceholder: "Group name",
     currency: "Currency",
-    currencyHint: "Balances settle in this. Entries can be any currency.",
     people: "Members",
     failed: (why: string) => `Couldn’t create the group — ${why}`,
     discardTitle: "Discard this group?",

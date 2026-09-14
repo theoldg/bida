@@ -164,7 +164,9 @@ export default function NewGroupPage() {
       <Body>
         <TopBar title={copy.newGroup.title} back={{ ask: mayLeave, up: route.groups() }} />
         <Scroll>
-          <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+          {/* The hint the currency row used to carry is gone; its bottom
+              margin is not, so the Members eyebrow still clears the field. */}
+          <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9, paddingBottom: 10 }}>
             <div className="field">
               <label htmlFor="g-name">{copy.newGroup.name}</label>
               {/* The same cap every name in the app has: a member's is 40, and
@@ -181,7 +183,6 @@ export default function NewGroupPage() {
                 <Icon name="chev" size={13} className="spacer pchev" />
               </button>
             </div>
-            <p className="hint">{copy.newGroup.currencyHint}</p>
           </div>
 
           <Eyebrow style={{ padding: "6px 16px 0" }}>{copy.newGroup.people}</Eyebrow>
