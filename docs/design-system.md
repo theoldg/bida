@@ -72,11 +72,18 @@ one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
 sit centred as one block instead.
 
-**One act with two doors is one button cut in two.** Starting is the other one:
-a group, or a bill split with people who aren't one, is "New group · Quick
-split" below the groups list rather than two rows in it — neither half is a
-group, and the ghost row's dashed square marks a slot in the list it sat in.
-Scanning a bill starts at
+**Two jobs are two figures, and the ledger says that shape twice.** The ledger
+floats an ink "+" with the outlined scan FAB beside it — two equal
+destinations, one of which is still the primary
+([ADR-0023](decisions/0023-monospace-monochrome.md): the "+" is the screen's
+only figure-ground inversion, and a second would spend that twice). The groups
+list ends in the same pair grown up (`.starttile`): two squares below the list
+rather than two rows in it — neither is a group, and the ghost row's dashed
+square marks a slot in the list they left — big enough to stack a word under
+the icon, capped so a square doesn't become a 170px tile, and "New group"
+inked on the right where a thumb rests with "Quick split" outlined beside it.
+
+**One act with two doors is one button cut in two.** Scanning a bill starts at
 the camera or at the library, and which of those is a detail of the same job:
 `.btn-pair` is one bordered box with a hairline between two halves, the box
 owning the border as in `.splitbox`. Two buttons side by side is the shape for

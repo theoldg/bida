@@ -95,41 +95,33 @@ export default function GroupsPage() {
 
 /**
  * Starting something: a group, or a bill split with people who are not one.
- * Two doors onto the one act this screen exists for, so it is one bordered
- * box cut in two — the control the scan screens wear (`.btn-pair`,
- * design-system) — rather than two rows in the list. It left the list because
- * neither half is a group, and the ghost row's dashed square is the mark for
- * a slot in the list it sat in.
+ * Two different jobs, so two figures rather than one box cut in two — the
+ * ledger's two FABs at a size that can carry a word as well as an icon. The
+ * ghost row's dashed square is the mark for a slot in the list these left.
  *
- * The right half is a bill split with people who are not a group, and who
- * never become one: it writes no op and leaves nothing behind
- * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
+ * "New group" is the inked one and takes the right, where a thumb rests; the
+ * left is a bill split with people who are not a group, and who never become
+ * one: it writes no op and leaves nothing behind
+ * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
+ * so it wears the scan FAB's outline instead of the ink.
  */
 function StartPair() {
   return (
     <div className="homepair">
-      <div className="btn-pair pair-p">
-        <Link href={route.newGroup()} className="btn">
-          <Icon name="plus" size={17} />
-          {copy.groups.newGroup}
-        </Link>
-        <Link href={route.quick()} className="btn">
-          <Icon name="cam" size={16} />
+      <div className="starttiles">
+        <Link href={route.quick()} className="starttile start-s">
+          <Icon name="cam" size={23} />
           {copy.groups.quickSplit}
+        </Link>
+        <Link href={route.newGroup()} className="starttile start-p">
+          <Icon name="plus" size={24} />
+          {copy.groups.newGroup}
         </Link>
       </div>
     </div>
   );
 }
 
-/**
- * One row of "your groups" — and, on a long press or a right click, the two
- * actions that belong to a group from outside it: hand its link to someone,
- * or forget it — the only way to forget one. Copying needs only the key this
- * device already holds, so it is offered whether or not anyone has been claimed
- * here; forgetting waits until this device has claimed a member, though
- * `forgetGroup` itself doesn't need one.
- */
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;
   const [asking, setAsking] = useState(false);
