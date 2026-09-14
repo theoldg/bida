@@ -17,7 +17,7 @@ import { errorText } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { useDevice } from "../../lib/hooks";
 import { goUp } from "../../lib/nav";
-import { useRefusal } from "../../lib/refusal";
+import { flashClass, NOT_REFUSED, refused, type Refusal } from "../../lib/refusal";
 
 /**
  * The whole group, on one screen and then one question.
@@ -38,6 +38,17 @@ import { useRefusal } from "../../lib/refusal";
  * every op and a screen that sometimes skips the question is a screen you
  * cannot learn.
  */
+
+/**
+ * What a refused Create can bloom: an empty name blooms the field itself,
+ * the same way an empty title does on the entry form, and a name still
+ * sitting unfiled in the add row or nobody on the list yet blooms the plus
+ * that fixes either — two different problems, so two fields to remember
+ * (lib/refusal.ts).
+ */
+const REFUSABLE = ["name", "list"] as const;
+type Refusable = typeof REFUSABLE[number];
+
 export default function NewGroupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -66,15 +77,35 @@ export default function NewGroupPage() {
   // it on screen is leaving with work unsaved.
   const [draft, setDraft] = useState<string | null>(null);
   /**
-   * Create, refused for either of two reasons: a name still unfiled in the
-   * add row, or nobody on the list yet. Everything typed here is thrown away
-   * by the button that leaves the screen — the group is written in one go —
-   * so a name left in the add row when the group is created is a person who
-   * was never in it, same as a group with nobody on the list at all. The plus
-   * is the fix for both, so the plus blooms and Create is spent for the
-   * length of the flash (lib/refusal.ts).
+   * The refusal flash, per field (`lib/refusal.ts`) — same shape as the
+   * entry form's. Create is always tappable; a tap that isn't ready yet
+   * blooms whichever of the two is the reason instead of doing nothing:
+   * a blank name blooms the field itself, and a name still unfiled in the
+   * add row or nobody on the list yet blooms the plus that fixes either.
+   * Everything typed here is thrown away by the button that leaves the
+   * screen — the group is written in one go — so a name left in the add row
+   * when the group is created is a person who was never in it, same as a
+   * group with nobody on the list at all.
    */
-  const refusal = useRefusal();
+  const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
+    name: NOT_REFUSED, list: NOT_REFUSED,
+  });
+  const refuse = (fields: Partial<Record<Refusable, boolean>>) =>
+    setRefused((r) => {
+      const next = { ...r };
+      for (const f of REFUSABLE) if (fields[f]) next[f] = refused(r[f]);
+      return next;
+    });
+  /** A refusal is still on screen, so Create is spent for exactly as long. */
+  const refusing = REFUSABLE.some((f) => refusedFields[f].live);
+  /**
+   * The flash is over. Only the field's own animation counts — the
+   * placeholder is a pseudo-element on the same clock.
+   */
+  const settled = (field: Refusable) => (e: React.AnimationEvent) => {
+    if (e.pseudoElement) return;
+    setRefused((r) => ({ ...r, [field]: { ...r[field], live: false } }));
+  };
 
   // A group typed here is state and nothing else — no draft store, nothing in
   // Dexie — so both ways off this screen throw it away. The entry form asks
@@ -98,20 +129,19 @@ export default function NewGroupPage() {
     return true;
   }
 
-  // A name still in the add row is not a person on the list: it has not been
-  // filed, and the box it sits in says so. Neither is an empty list a group —
-  // one person is enough, but zero isn't. Create does not count either as
-  // ready — it refuses over them instead (`next`).
-  const ready = name.trim().length > 0 && currency.length === 3 && !busy;
-
-  /** Create: ask who you are — unless the list isn't one yet. */
+  /** Create: ask who you are — unless the form isn't ready to answer yet. */
   function next() {
-    if (!ready) return;
-    // Held and refused are different answers, and Create keeps both: it is
-    // grey while there is nothing to create at all (no name, no currency),
-    // and refuses a press it could otherwise have gone through with — a name
-    // still sitting unfiled, or nobody on the list yet.
-    if (draft !== null || people.length < 1) { refusal.refuse(); return; }
+    if (busy) return;
+    // A name still in the add row is not a person on the list: it has not
+    // been filed, and the box it sits in says so. Neither is an empty list a
+    // group — one person is enough, but zero isn't. Both bloom their own
+    // control rather than holding the button grey.
+    const nameMissing = name.trim().length === 0;
+    const listMissing = draft !== null || people.length < 1;
+    if (nameMissing || listMissing) {
+      refuse({ name: nameMissing, list: listMissing });
+      return;
+    }
     setAsking(true);
   }
 
@@ -167,7 +197,7 @@ export default function NewGroupPage() {
           {/* The hint the currency row used to carry is gone; its bottom
               margin is not, so the Members eyebrow still clears the field. */}
           <div className="pad" style={{ display: "flex", flexDirection: "column", gap: 9, paddingBottom: 10 }}>
-            <div className="field">
+            <div className={`field${flashClass(refusedFields.name)}`} onAnimationEnd={settled("name")}>
               <label htmlFor="g-name">{copy.newGroup.name}</label>
               {/* The same cap every name in the app has: a member's is 40, and
                   a group drawn beside them has no more room than they do. */}
@@ -200,18 +230,20 @@ export default function NewGroupPage() {
             <AddName placeholder={copy.members.addPlaceholder} taken={people}
               onAdd={(who) => setPeople((list) => [...list, who])}
               onDraft={setDraft}
-              flash={refusal.flash} onFlashEnd={refusal.onFlashEnd} />
+              flash={flashClass(refusedFields.list)} onFlashEnd={settled("list")} />
           </div>
 
           {/* The screen's one act, at the foot of the form rather than an
               underlined word in the corner — same button as the entry form's
               Save, and for the same reason: beside a back arrow it read as
               optional. It scrolls with the fields, so the keyboard under a
-              name being typed never sits on it. */}
+              name being typed never sits on it. Never grey: a blank name or
+              an empty list points at itself instead of holding the button
+              dead with no reason on screen (design-system.md). */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <button type="button" className="btn btn-p btn-lg" onClick={next}
-              disabled={!ready || refusal.live} {...keepsFocus}>
+              disabled={busy || refusing} {...keepsFocus}>
               {copy.act.create}
             </button>
           </div>

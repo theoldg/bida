@@ -211,7 +211,10 @@ confers nothing without the secret.
   `/new`'s Create, which writes the group in one go, and the quick split's scan
   pair, whose photograph opens a grid of the people on the list and nobody
   else. Both bloom the plus and are spent for the length of that flash, the
-  entry form's refusal exactly (`lib/refusal.ts`). The picker's Continue is the
+  entry form's refusal exactly (`lib/refusal.ts`). Create is never grey either:
+  a blank group name is the entry form's blank title over again, so it blooms
+  the Name field the same way instead of holding the button dead, and a press
+  missing both blooms both at once. The picker's Continue is the
   exception that stays: filing a name there *is* picking it, so a name that has
   only been typed is a question it simply does not read. The row also
   **follows the list down**, as a browser scrolls to a field only as it takes
