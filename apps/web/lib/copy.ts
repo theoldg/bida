@@ -177,8 +177,9 @@ export const copy = {
     offline: {
       title: "Works offline",
       body: "Add bida to your home screen and it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
-      /** Shown once it already is on the home screen, where the link would be. */
-      installed: "It’s on your home screen already.",
+      /** Once it already is: the claim's premise is already true, so the
+       * sentence says that instead of repeating the offer under it. */
+      bodyInstalled: "Because bida is added to your home screen, it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
     },
     privacy: {
       title: "Privacy",

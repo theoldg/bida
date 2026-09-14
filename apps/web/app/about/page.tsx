@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AboutInstall } from "../../components/about-install";
+import { AboutOffline } from "../../components/about-offline";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { copy } from "../../lib/copy";
@@ -14,8 +14,8 @@ import { route } from "../../lib/group-link";
  * since it is the one thing here somebody might come looking for on its own.
  *
  * The page itself is prose and links, so it stays a server component. One
- * client island sits in it — the install offer under "Works offline" — because
- * a sentence alone would be worse.
+ * client island sits in it — the whole of "Works offline" (`AboutOffline`) —
+ * because what that claim says depends on whether the phone already did it.
  */
 export default function AboutPage() {
   const { feedback, privacy } = copy.about;
@@ -32,9 +32,7 @@ export default function AboutPage() {
 
             <Section title={copy.about.noAccounts.title}>{copy.about.noAccounts.body}</Section>
 
-            <Section title={copy.about.offline.title} under={<AboutInstall />}>
-              {copy.about.offline.body}
-            </Section>
+            <AboutOffline />
 
             {/* The one door out of the app besides the source link above. A
                 mailto rather than a form: a form needs an endpoint, an inbox
@@ -94,10 +92,10 @@ function SealedRow() {
 }
 
 /**
- * One claim: its heading, its paragraph, and whatever hangs under that — the
- * install offer, or the links. Four of these and the screen is done; a card
- * apiece would have made a settings list out of something read top to bottom,
- * once.
+ * One claim: its heading, its paragraph, and whatever hangs under that —
+ * links, or the sealed-row table. `AboutOffline` draws its own version of the
+ * same markup, because its paragraph isn't fixed at build time. A card apiece
+ * would have made a settings list out of something read top to bottom, once.
  */
 function Section({ title, children, under }: {
   title: string; children: ReactNode; under?: ReactNode;
