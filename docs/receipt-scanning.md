@@ -427,6 +427,14 @@ way to reach the who-had-what grid outside a real scan —
 
 ## Gotchas
 
+- **A driven scan spends the budget too.** `pnpm drive`'s `receipt <name>`
+  stubs the round trip to Gemini, not `lib/scan/budget.ts`, so an eleventh scan
+  on one phone is refused by the app itself with `copy.scan.limit.you`. That is
+  correct and worth recognising before it reads as a broken driver; `forget`
+  is a factory-fresh phone and a fresh budget.
+- **Our 429 and Gemini's mean opposite things.** "Come back in a minute" fixes
+  an overloaded model and does nothing about a spent budget, so the Worker adds
+  a `scope` field and the phone reads it — a 429 with no `scope` is Google's.
 - **`fetch` resolves when the response *headers* arrive, not when the request
   body finishes.** A streamed request body that errors after that point
   resolves the promise rather than rejecting it, so the `catch` around the

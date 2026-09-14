@@ -16,19 +16,18 @@
       the scan as the exception. Missing: a liability line for the hosted
       service, and any way at all to ask for a group to be deleted.
 
-### Before advertising: the scan endpoint is an open proxy
+### Before advertising: the scan endpoint
 
-`ensureGroup` registers any unseen id under whatever bearer arrives — by
-design, it is how a quick split mints its credential (`lib/quick.ts`) — so two
-unauthenticated requests reach `/scan` and spend the Gemini key. And the client
-builds the whole Gemini body, so what is on offer is any prompt, not just
-receipts. The same door writes unbounded ops into a D1 that may never be wiped
-again, and nothing anywhere is rate-limited.
-
-The shape of the fix: move the prompt to the Worker (splice it around the image
-stream, so the CPU budget survives), a rate-limit binding per credential and
-per IP, a daily cap that 404s the way the button already expects, and give
-credential-minting its own door so throttling it doesn't throttle sync.
+- [x] The Worker owns the prompt, so the key relays receipts and nothing else.
+- [x] A budget — per caller, per address, and a global daily cap that is the
+      one number bounding the bill — plus Turnstile in front of every scan.
+      [docs/receipt-scanning.md](docs/receipt-scanning.md#what-the-scan-costs).
+- [ ] **The owner still has to turn it on**: create the Turnstile widget, set
+      `TURNSTILE_SITE_KEY` (repo variable) and the two Worker secrets, and set
+      a hard project quota in Google AI Studio just above the global cap.
+- [ ] The same door still writes unbounded ops into a D1 that may never be
+      wiped again. `POST /ops` has no budget and registers any unseen id;
+      giving credential-minting its own door is the shape of that fix.
 
 ### Admin panel?
 
