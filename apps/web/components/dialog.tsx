@@ -24,16 +24,26 @@ export function Dialog({ title, onClose, children }: {
   title: string; onClose: () => void; children: ReactNode;
 }) {
   const frame = useRef<HTMLDialogElement>(null);
+  const card = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = frame.current;
     if (!el || el.open) return;
     el.showModal();
     // A prompt opens on its field, with the old value selected — the one habit
-    // worth keeping from prompt(). A confirm opens on nothing, deliberately:
-    // its buttons are one Tab away and neither should fire on a stray Enter.
+    // worth keeping from prompt(). Every other dialog opens on nothing: its
+    // buttons are one Tab away and neither should fire on a stray Enter.
+    //
+    // That second half needs saying out loud, because `showModal()` does not
+    // open on nothing. With no `autofocus` in the card it focuses the first
+    // focusable descendant itself, which in a dialog whose first control is a
+    // field is the field — the rate editor opened with the keyboard up over
+    // the line saying how many entries saving re-values, long after the
+    // `data-autofocus` that used to do it was taken off. So focus lands on the
+    // card, which is inside the dialog (Escape and the tab ring still belong
+    // to it) and is not something you can type into.
     const field = el.querySelector<HTMLInputElement>("input[data-autofocus]");
-    if (field) { field.focus(); field.select(); }
+    if (field) { field.focus(); field.select(); } else card.current?.focus();
   }, []);
 
   return (
@@ -43,7 +53,7 @@ export function Dialog({ title, onClose, children }: {
       // the scrim. mousedown, not click: a drag that starts on the card and
       // ends outside it isn't a tap outside it.
       onMouseDown={(e) => { if (e.target === frame.current) onClose(); }}>
-      <div className="dialog" role="document">
+      <div className="dialog" role="document" ref={card} tabIndex={-1}>
         <h3 className="dtitle">{title}</h3>
         {children}
       </div>

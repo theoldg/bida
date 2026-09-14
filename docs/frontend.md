@@ -620,9 +620,14 @@ so the static export ships the full line and the browser narrows it.
   it, and looks implemented. The wrapper must own the vertical scroll too, with
   `border-collapse: separate`, or the collapsed border belongs to the table and
   slides out from under the frozen row.
-- **Only a real `<dialog>` gets focus for free.** `Dialog` calls `showModal()`,
-  so the platform moves the caret in, keeps Tab inside and makes the screen
-  behind inert. `RowMenu` is a card anchored to the row — or the button
+- **Only a real `<dialog>` gets focus for free — and it spends it without
+  asking.** `Dialog` calls `showModal()`, so the platform keeps Tab inside and
+  makes the screen behind inert, but it also focuses the first focusable
+  descendant when nothing in the card claims focus. In a dialog whose first
+  control is a field that is the field, keyboard and all: taking
+  `data-autofocus` off the rate editor's field changed nothing on a phone.
+  `Dialog` therefore parks focus on the card itself unless an
+  `input[data-autofocus]` asks for it, which only `PromptDialog` does. `RowMenu` is a card anchored to the row — or the button
   (`MenuButton`) — it was opened from and cannot be one, so it does that by hand: it focuses its first item once it
   has been positioned — a `visibility: hidden` element cannot take focus, and
   `preventScroll`, because a scroll is what closes it — and hands focus back to

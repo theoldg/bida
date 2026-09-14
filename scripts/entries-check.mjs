@@ -86,6 +86,12 @@ const forward = page.getByRole("textbox", { name: "Rate, USD to EUR" });
 const inverse = page.getByRole("textbox", { name: "Rate, EUR to USD" });
 report(await forward.count() === 1 && await inverse.count() === 1,
   "the rate dialog offers the rate both ways round");
+
+// It opens on neither of them. Taking `data-autofocus` off the field wasn't
+// enough on its own: showModal() focuses the first focusable descendant when
+// the card names none, so the keyboard came up over the dialog anyway.
+report(await page.evaluate(() => document.activeElement?.tagName !== "INPUT"),
+  "the rate dialog opens with the caret in neither field");
 await forward.fill("0.8");
 await page.waitForTimeout(80);
 report((await inverse.inputValue()) === "1.25", "typing one direction fills in the other");

@@ -939,6 +939,10 @@ dialog.scrim::backdrop { background: transparent }
 .dialog { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--rule);
   border-radius: var(--r-m); padding: 15px 15px 13px; animation: fadein .12s ease-out;
   max-height: 100%; overflow-y: auto }
+/* The card takes focus on open so showModal() can't put it in a field
+   (components/dialog.tsx); it is a parking space, not a control, so it says
+   nothing about being focused. */
+.dialog:focus { outline: none }
 @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
 @media (prefers-reduced-motion: reduce) { dialog.scrim, .dialog { animation: none } }
 .dtitle { font-size: 15.5px; letter-spacing: -.03em }
