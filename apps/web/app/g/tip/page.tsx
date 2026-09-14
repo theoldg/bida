@@ -73,7 +73,7 @@ function TipScreen() {
               </a>
               <Link className="btn btn-s btn-lg"
                 href={route.tipEntry(groupId, split.entryTitle)}>
-                <Icon name="split" size={16} />{split.cta(data.group.name)}
+                <Icon name="split" size={16} />{split.cta}
               </Link>
             </div>
           </div>

@@ -264,7 +264,7 @@ export const copy = {
      * how much you gave is a thing only you know.
      */
     split: {
-      cta: (group: string) => `Record it in ${group}`,
+      cta: "Add as a group expense",
       /**
        * What the prefilled expense calls itself, in the ledger, forever. It
        * is written in the first person plural because by the time it is saved
