@@ -204,9 +204,11 @@ Both **derived on read, never stored.** In base minor units over every entry,
 `balance(member) = Σ(paid) − Σ(share) − Σ(received) + Σ(income share)`, plus
 transfers out and minus transfers in; the set always sums to zero (assert it in
 dev). The income terms are the expense terms with the sign flipped, applied in
-`core/balance.ts` and nowhere else. Settle-up is a greedy largest-debtor↔largest-creditor match,
-at most `n−1` transfers — not provably minimal (NP-hard), just good. Say
-"simplest way to settle", never "optimal".
+`core/balance.ts` and nowhere else. Settle-up serves the **smallest debtor first**, each against
+the smallest creditor who can take the whole debt: owing a little buys you one
+transfer, and only a debt too big for any single creditor gets split. At most
+`n−1` transfers — not provably minimal (NP-hard), just good. Say "simplest way
+to settle", never "optimal".
 
 ## D1 schema
 

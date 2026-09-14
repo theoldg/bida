@@ -96,7 +96,7 @@ date, not the code.
 
 ```
 net: ada −244,56  marie +461,65  sam −111,47  theo −105,62   (EUR minor ×100)
-total spend 963,14 · transfers ada→marie 244,56 · sam→marie 111,47 · theo→marie 105,62
+total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada→marie 244,56
 ```
 
 ## `scripts/lib/harness.mjs` — what the browser checks share

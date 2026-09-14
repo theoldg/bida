@@ -45,9 +45,9 @@ describe("the Marrakech trip", () => {
   it("settles in three payments, all to Marie", () => {
     const transfers = settleUp(report.byMember);
     expect(transfers).toEqual([
-      { from: ADA, to: MARIE, amountMinor: 24_456 },
-      { from: SAM, to: MARIE, amountMinor: 11_147 },
       { from: THEO, to: MARIE, amountMinor: 10_562 },
+      { from: SAM, to: MARIE, amountMinor: 11_147 },
+      { from: ADA, to: MARIE, amountMinor: 24_456 },
     ]);
     expect(Object.values(applyTransfers(report.byMember, transfers)).every((v) => v === 0)).toBe(true);
   });
