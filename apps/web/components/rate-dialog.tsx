@@ -5,6 +5,7 @@ import {
   formatRate, invertRate, isValidRate, sanitizeRate,
   RATE_DIGITS, RATE_SHOWN_DIGITS, type Rate, type RateSource,
 } from "@bida/core";
+import { keepsFocus } from "./bits";
 import { Dialog } from "./dialog";
 import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
@@ -165,7 +166,7 @@ export function RateDialog({
         <div className="ratefrom">
           <span>{provenanceText(from)}</span>
           <button type="button" className="chip" onClick={() => { touched.current = false; void look(); }}
-            disabled={from.kind === "loading"}>
+            disabled={from.kind === "loading"} {...keepsFocus}>
             {copy.rates.refetch}
           </button>
         </div>
@@ -182,10 +183,11 @@ export function RateDialog({
             Removing the rate is the row's business, not the editor's — it
             lives on the row's long-press menu, where deleting an entry does. */}
         <div className="drow">
-          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>
+          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}
+            {...keepsFocus}>
             {copy.act.cancel}
           </button>
-          <button type="submit" className="btn btn-p" disabled={!ok || busy}>
+          <button type="submit" className="btn btn-p" disabled={!ok || busy} {...keepsFocus}>
             {busy ? <span className="spinner" /> : null}{copy.act.save}
           </button>
         </div>
