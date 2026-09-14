@@ -80,7 +80,8 @@ only figure-ground inversion, and a second would spend that twice). The groups
 list ends in the same pair grown up (`.starttile`): two squares below the list
 rather than two rows in it — neither is a group, and the ghost row's dashed
 square marks a slot in the list they left — big enough to stack a word under
-the icon, capped so a square doesn't become a 170px tile, and "New group"
+the icon, capped so a square doesn’t become a 170px tile, set apart rather than
+abutting — the air between them is what says two jobs — and "New group"
 inked on the right where a thumb rests with "Quick split" outlined beside it.
 
 **One act with two doors is one button cut in two.** Scanning a bill starts at

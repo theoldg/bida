@@ -110,11 +110,11 @@ function StartPair() {
     <div className="homepair">
       <div className="starttiles">
         <Link href={route.quick()} className="starttile start-s">
-          <Icon name="cam" size={23} />
+          <Icon name="cam" size={21} />
           {copy.groups.quickSplit}
         </Link>
         <Link href={route.newGroup()} className="starttile start-p">
-          <Icon name="plus" size={24} />
+          <Icon name="plus" size={22} />
           {copy.groups.newGroup}
         </Link>
       </div>
