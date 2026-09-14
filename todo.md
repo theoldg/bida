@@ -43,10 +43,8 @@ Figure out some payment integrator to use.
 - [x] `dev` branch → `hajsik-dev` Worker and its own D1, released to `main` by
       hand or by the Actions button
       ([docs/hosting.md](docs/hosting.md#dev-and-production)).
-- [ ] Add `hajsik-dev.hajsik-api.workers.dev` to the Turnstile widget's domain
-      list, then set `GEMINI_API_KEY`, `SCAN_IP_SALT` and
-      `TURNSTILE_SECRET_KEY` with `--env dev`. Console and owner only; until
-      then dev can do everything except scan a receipt.
+- [x] Scanning armed on dev: the widget names both hostnames, all three
+      secrets are set `--env dev`, and the gate refuses an unverified scan.
 
 
 ## Features

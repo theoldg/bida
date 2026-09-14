@@ -161,13 +161,13 @@ landed on `main` behind the branch's back, and the fix is `git merge main` from
 there is no merge commit and nothing is ever merged *back*. Merging does not
 consume `dev` — it keeps moving and is released again, as often as you like.
 
-**Worker secrets are per-environment.** `GEMINI_API_KEY`, `SCAN_IP_SALT` and
-`TURNSTILE_SECRET_KEY` set on production are invisible to dev; set them again
-with `--env dev` if a session needs scanning to work there. The Turnstile *site*
-key is shared, so `hajsik-dev.hajsik-api.workers.dev` has to be on the widget's
-domain list or every dev scan is refused. Note that dev's scan budget is counted
-in dev's database — arming it there doubles the only number bounding the Gemini
-bill ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
+**Worker secrets are per-environment**, and dev has all three since
+2026-09-14 — a scan works there, gate and budget included. One Turnstile widget
+serves both: its domain list names each hostname, which is why the same site key
+can ship in both builds. **Dev's scan budget is counted in dev's own database**,
+so the global daily cap — the one number bounding the Gemini bill
+([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) — now exists
+twice, and the worst case is two of them.
 
 ### A schema change, from here on
 
@@ -228,6 +228,11 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
+- **A Turnstile widget's secret is readable back**, at `GET
+  /accounts/:id/challenges/widgets/:sitekey` — it is in the response beside the
+  domains. So a second Worker reuses the widget without rotating anything, and
+  rotating (which would break production until its secret is replaced too) is
+  never the way to get a key you already own.
 - **A push made with the built-in `GITHUB_TOKEN` triggers no workflow.** This
   is deliberate on GitHub's part (it stops a loop), and it is why
   `release.yml` calls `deploy.yml` itself instead of pushing `main` and
