@@ -73,21 +73,23 @@ export default function AboutPage() {
  * One saved expense as the database actually holds it: the answer to "what can
  * you see?", shown instead of asserted.
  *
- * A labelled table rather than the JSON it really is — the reader of this
- * screen is somebody splitting a dinner bill, and braces would make the shape
- * look like a developer's aside rather than the short list it is. Four rows,
- * three of them meaningless on their own, and the fourth unreadable.
+ * An actual table rather than the JSON it really is, and rather than a
+ * label/value list — the reader of this screen is somebody splitting a dinner
+ * bill, and braces would make the shape look like a developer's aside rather
+ * than the short row it is. Four fields, three of them meaningless on their
+ * own, and the fourth unreadable.
  */
 function SealedRow() {
+  const { sealed } = copy.about.privacy;
   return (
-    <dl className="aboutrow">
-      {copy.about.privacy.sealed.map(({ k, v }) => (
-        <div className="aboutrowline" key={k}>
-          <dt>{k}</dt>
-          <dd>{v}</dd>
-        </div>
-      ))}
-    </dl>
+    <table className="aboutrow">
+      <thead>
+        <tr>{sealed.map(({ k }) => <th key={k}>{k}</th>)}</tr>
+      </thead>
+      <tbody>
+        <tr>{sealed.map(({ k, v }) => <td key={k}>{v}</td>)}</tr>
+      </tbody>
+    </table>
   );
 }
 

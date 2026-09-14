@@ -189,10 +189,10 @@ export const copy = {
        * real four fields because the whole point is that there are only four.
        */
       sealed: [
-        { k: "group", v: "c9f0f895…a3d7" },
-        { k: "edit", v: "8f14e45f…b2c1" },
+        { k: "group", v: "c9f0f8…" },
+        { k: "edit", v: "8f14e4…" },
         { k: "number", v: "42" },
-        { k: "contents", v: "AQz8kU2pR…Xq7Rr1v9Lw==" },
+        { k: "contents", v: "AQz8k…w==" },
       ],
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
       shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
