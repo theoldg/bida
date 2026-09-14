@@ -363,9 +363,15 @@ overloaded Gemini and does nothing at all about a spent budget.
 **Both secrets are optional, and a deployment without them is the old
 unlimited one.** No `TURNSTILE_SECRET_KEY` and the Worker checks no token; no
 `SCAN_IP_SALT` and the client bucket is absent rather than shared. That is what
-lets someone self-host without a Turnstile account (SELFHOSTING.md) — and it is
-also the order to set them in: **the site key and a rebuild first, the Worker
-secret last**, or every scan is refused in the window between.
+lets someone self-host without a Turnstile account (SELFHOSTING.md).
+
+The pair that has to agree is the site key and `TURNSTILE_SECRET_KEY`: a build
+sending no token to a Worker demanding one refuses every scan. So the site key
+is **committed, in `.github/workflows/deploy.yml`** — it is public by nature,
+it only works on the domains its widget names, and a repo variable somebody
+forgets to set is exactly the disagreement that breaks scanning silently.
+Turning Turnstile on is then: deploy a build carrying the site key, *then* set
+the Worker secret. Never the other way round.
 
 ## Trust, and what we're accepting
 

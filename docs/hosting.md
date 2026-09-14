@@ -102,10 +102,11 @@ pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
 The last two are the scan budget
 ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) and both are
 optional — without them the endpoint is the old unlimited one. **Set
-`TURNSTILE_SECRET_KEY` last**, after a deploy carrying the matching
-`NEXT_PUBLIC_TURNSTILE_SITE_KEY` (a build-time env var, public by nature): a
-Worker checking for a token the app isn't sending yet refuses every scan.
-Rotating `SCAN_IP_SALT` is free — it resets buckets that live a day.
+`TURNSTILE_SECRET_KEY` last**, after a deploy carrying the matching site key
+(committed in `.github/workflows/deploy.yml`, since it is public and only
+works on its own domains): a Worker checking for a token the app isn't sending
+yet refuses every scan. Rotating `SCAN_IP_SALT` is free — it resets buckets
+that live a day.
 
 `wrangler.toml` binds `[assets] directory = "../web/out"` with
 `not_found_handling = "404-page"` (**not** `single-page-application`: the export

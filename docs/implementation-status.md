@@ -28,8 +28,8 @@ prompt of someone's choosing
 and **it has a budget** since 2026-09-14: three buckets, a global daily cap
 that is the only number bounding the bill, and a Turnstile token in front of
 every scan ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
-The code ships inert — it is the owner's two secrets and one repo variable
-that arm it, and until then the endpoint is the unlimited one it was.
+Armed in production on the same day: widget, both Worker secrets, and
+migration `0002` applied to the live D1.
 
 **Sealed** since 2026-09-12 — the server cannot read a group
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log was
@@ -39,15 +39,10 @@ last reset it gets**: a schema change from here is a new numbered migration
 
 ## The next action
 
-**Arm the scan budget.** The code is in and the numbers are chosen; what is
-left is not code — the Turnstile widget, `TURNSTILE_SITE_KEY`, the two Worker
-secrets, migration `0002` against the remote D1, and a hard quota in Google AI
-Studio ([hosting.md](hosting.md#deploying), [../todo.md](../todo.md)).
-**Migration 0002 has to be applied before the Worker carrying it is deployed**,
-or every scan hits a table that isn't there.
-
-Past that, what the owner still wants is in [../todo.md](../todo.md). Two
-things are open rather than queued:
+**Nothing is queued.** One thing is owed and is not code: a hard project quota
+in Google AI Studio just above `SCAN_LIMITS.global`, which only the owner can
+set ([../todo.md](../todo.md)). What else the owner wants is in
+[../todo.md](../todo.md); two things are open rather than queued:
 
 - **Why an installed phone still pauses.** The permanent hang is fixed
   ([frontend.md](frontend.md#a-live-read-can-die)), but the owner reports the

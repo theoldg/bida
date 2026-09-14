@@ -101,9 +101,11 @@ pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
 `SCAN_IP_SALT` keys the one-way hash of the caller's address, so the per-address
 limit works without your database ever holding an IP. `TURNSTILE_SECRET_KEY` is
 the secret half of a [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
-widget; the public half goes in the build as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
-**Set the Worker secret last**, after deploying a build that carries the site
-key — a Worker looking for a token the app isn't sending refuses every scan.
+widget; the public half is `NEXT_PUBLIC_TURNSTILE_SITE_KEY` at build time, and
+`.github/workflows/deploy.yml` carries **this** instance's, which will not work
+on your domain — put yours there. **Set the Worker secret last**, after
+deploying a build that carries your site key: a Worker looking for a token the
+app isn't sending refuses every scan.
 
 Without Turnstile the remaining limits are honest but voluntary: registering a
 fresh group id is one unauthenticated request by design (it is how a quick

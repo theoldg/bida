@@ -15,14 +15,17 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Public by nature — it identifies the Turnstile widget to Cloudflare and
-      # is readable in the shipped bundle either way, so a repo *variable* and
-      # not a secret. Unset, the build ships no Turnstile and the Worker must
-      # have no TURNSTILE_SECRET_KEY either, or every scan is refused —
+      # Not a secret: a Turnstile *site* key identifies the widget in the page
+      # source, and this one only works on the domains the widget names. Here
+      # rather than in a repo variable because this file is bida's own
+      # deployment — the same place `wrangler.toml` hard-codes the Worker name
+      # and the database id — and a variable someone forgets to set is a build
+      # that ships no token to a Worker demanding one, which refuses every
+      # scan. A fork changes it here, or exports the var to override it.
       # docs/receipt-scanning.md#what-the-scan-costs.
       - run: pnpm --filter @bida/web build
         env:
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: 0x4AAAAAAEz1vIlldxKNntfQ
       - run: pnpm --filter @bida/api run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
