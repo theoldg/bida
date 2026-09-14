@@ -105,8 +105,7 @@ export default function GroupsPage() {
  * ledger's two FABs at a size that can carry a word as well as an icon. The
  * ghost row's dashed square is the mark for a slot in the list these left.
  *
- * "New group" is the inked one and takes the right of the pair, and the pair
- * hangs off the right edge on the same rail as the FABs; the
+ * "New group" is the inked one and takes the right, where a thumb rests; the
  * left is a bill split with people who are not a group, and who never become
  * one: it writes no op and leaves nothing behind
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),

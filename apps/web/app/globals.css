@@ -340,18 +340,22 @@ a { color: inherit; text-decoration: none }
    that pair grown up: big enough to carry a word as well as the icon, and
    below the list rather than in it, because neither is a group and the dashed
    square said they were. The block sits at the *foot* of the column
-   (`margin-top: auto`), within reach of a thumb, and nothing under it: the
-   about line that used to sit there is an icon in the bar now, which is where
-   a door read once belongs. */
-.homepair { padding: 22px 16px 20px; margin-top: auto }
-/* Right-aligned on the same rail the ledger's FABs hang from
-   (`max(16px, 50vw - 264px)`), and spaced the way that pair is: these are the
-   same two destinations at a size that can carry a word, so they line up over
-   the same edge rather than floating centred in a band of their own. Not
-   full-bleed either — a square stretched to half the screen would be a 170px
-   tile, which outweighs the list it sits under. */
-.starttiles { display: flex; justify-content: flex-end; gap: 20px;
-  padding-right: max(0px, calc(50vw - 264px - 16px)) }
+   (`margin-top: auto`), within reach of a thumb — and off the bottom edge
+   rather than against it, since nothing sits under it any more: the about line
+   that used to is an icon in the bar now, which is where a door read once
+   belongs. */
+.homepair { padding: 22px 16px 52px; margin-top: auto }
+/* Centred rather than full-bleed: a square that stretched to half the screen
+   would be a 170px tile, which outweighs the list it sits under — and the air
+   between the two is what says they are two jobs rather than one control.
+   That air is measured against the margin, not chosen: the gap is the slack
+   either side of the pair, a hair under it so the two still read as a pair
+   rather than as one tile per half of the screen. The 168px is the two tiles
+   less the 16px `.homepair` pads with, so the sum works in screen terms; the
+   clamp keeps a narrow phone from closing the gap and a wide one from tearing
+   it open. */
+.starttiles { display: flex; justify-content: center;
+  gap: clamp(20px, calc((100% - 168px) / 3.4), 72px) }
 /* Square, like the FABs, and stacked icon-over-word because that is the only
    way a word fits inside a square without turning it into a row. */
 .starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
