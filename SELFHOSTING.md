@@ -64,12 +64,11 @@ configure.
 
 `.github/workflows/deploy.yml` builds and deploys on every push to `main` (the
 production Worker) and to `dev` (a second Worker and D1 that this repo's own
-deployment keeps —
-[hosting.md](docs/hosting.md#dev-and-production); a fork wanting only one world
-can drop the `dev` branch from the trigger and the `[env.dev]` block from
-`wrangler.toml`). It needs a `CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
-Actions). Create it under My Profile → API Tokens → Create Custom Token with
-**Account → Workers Scripts: Edit** and **Account → D1: Edit**; a token missing
+deployment keeps — [hosting.md](docs/hosting.md#dev-and-production)). A fork
+wanting only one world drops `dev` from the trigger and the `[env.dev]` block
+from `wrangler.toml`. It needs a `CLOUDFLARE_API_TOKEN` repo secret (Settings →
+Secrets and variables → Actions). Create it under My Profile → API Tokens →
+Create Custom Token with **Account → Workers Scripts: Edit** and **Account → D1: Edit**; a token missing
 D1 fails with a generic `Authentication error [code: 10000]`, and `wrangler
 whoami` succeeding proves nothing about that. `wrangler` reads the variable
 straight out of the environment, so the same token works for a manual deploy.
