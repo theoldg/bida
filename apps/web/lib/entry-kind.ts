@@ -12,7 +12,8 @@ import type { Expense, Settlement } from "@bida/core";
  *   `Expense` with `kind: "income"`; the sign lives in `computeBalances`.
  * - **Transfer** — money moved from one person to another and the group is no
  *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, not a
- *   separate idea, which is why "reimbursement" appears nowhere any more.
+ *   separate idea, so "reimbursement" is not a kind: it survives only as the
+ *   title settle-up prefills into the form (`copy.form.reimbursement`).
  *
  * What they are *called* — the kind chip and its picker, the verb in "Marie
  * paid", the headings over the payer and the split — is `copy.entryKind`

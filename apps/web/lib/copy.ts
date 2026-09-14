@@ -478,8 +478,10 @@ export const copy = {
   /** The three kinds, and every word the app uses about them (ADR-0010). */
   entryKind: {
     label: { expense: "Expense", income: "Income", transfer: "Transfer" } as Record<EntryKind, string>,
-    /** The verb in "Marie paid". */
-    verb: { expense: "paid", income: "received", transfer: "sent" } as Record<EntryKind, string>,
+    /** The verb in "Marie paid". Only the two kinds that have a payer side: a
+        transfer's row is titled `group.paidTo` ("Alice paid Bob") and never
+        reaches this. */
+    verb: { expense: "paid", income: "received" } as Voiced<string>,
     /** Over the payer picker: who put it in, or who took it in. */
     payer: { expense: "Paid by", income: "Received by", transfer: "From" } as Record<EntryKind, string>,
     /** Over the split: who it was spent on, or who it belongs to. */

@@ -1,6 +1,5 @@
 import type { SplitSpec } from "@bida/core";
 import { copy } from "./copy";
-import type { EntryKind } from "./entry-kind";
 import { plural } from "./format";
 
 /**
@@ -31,7 +30,8 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
   payer: string;
   /** How many people paid *besides* `payer`. */
   coPayers: number;
-  kind: EntryKind;
+  /** Only the kinds with a payer side; a transfer uses `transferMeta`. */
+  kind: "expense" | "income";
   /** How many shares the amount was cut into. */
   ways: number;
   mode: SplitSpec["mode"];
