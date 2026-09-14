@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  bare, countText, distinctInitials, graphemes, groupDigits, initials, rateText, splitFooter,
+  bare, countText, distinctInitials, graphemes, groupDigits, initials, rateText, splitFooter, usd,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -82,6 +82,16 @@ describe("bare", () => {
 
 // An avatar is a name's first character, and a name can start with one the
 // browser stores as two code units. Half a surrogate pair renders as "�".
+describe("usd", () => {
+  it("writes a plain dollar sign whatever the reader's locale is", () => {
+    // The tip screen sets `$5` in copy and the share right under it; in a
+    // non-US locale the Intl default would be "US$1.25" and the pair would
+    // read as two different currencies.
+    expect(usd(125)).toBe("$1.25");
+    expect(usd(500)).toBe("$5.00");
+  });
+});
+
 describe("initials", () => {
   it("keeps an emoji whole", () => {
     expect(initials("🐙 Kraken")).toBe("🐙K");

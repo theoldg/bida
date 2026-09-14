@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
-import { money } from "../../../lib/format";
+import { usd } from "../../../lib/format";
 import { route } from "../../../lib/group-link";
 import { tipShareMinor } from "../../../lib/tip";
 import { useClaimGate, useGroupData } from "../../../lib/hooks";
@@ -63,7 +63,7 @@ function TipScreen() {
                 aside as the line before it, and a `<br>` that lands mid-wrap
                 on a narrow screen is worse than no break at all. */}
             <p className="tipeach">
-              {copy.tip.each(money(each, "USD"))} {copy.tip.yacht}
+              {copy.tip.each(usd(each))} {copy.tip.yacht}
             </p>
 
             <div className="tipacts">

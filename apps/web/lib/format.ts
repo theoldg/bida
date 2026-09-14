@@ -47,6 +47,17 @@ export function money(minor: number, currency: CurrencyCode, signed = false): st
 }
 
 /**
+ * The tip screen's dollars, and nothing else's. `money()` hands `Intl` the
+ * reader's locale, which is right for the group's own money and wrong here:
+ * outside the US that renders USD as "US$1.25", one line under a `$5` the
+ * copy writes by hand, and the two figures stop looking like the same five
+ * dollars. Pinned to en-US so the cut matches the price it is a cut of.
+ */
+export function usd(minor: number): string {
+  return formatMinor(minor, "USD", { locale: "en-US" });
+}
+
+/**
  * Bare figure, no symbol — for columns with their own header.
  *
  * **Display only.** It is `Intl`-grouped, so it is not what `parseMinor` reads

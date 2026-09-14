@@ -356,3 +356,7 @@ guidance asks you to fall back *to*, and clamped it would be nothing at all.
   it. The compound selector wins the properties it sets and nothing more.
   Prefix a modifier with its block (`billextra`) rather than naming it after
   what it holds.
+- **`money()` is locale-dependent, so a hand-written symbol beside it drifts.**
+  `Intl` renders USD as "US$1.25" anywhere but en-US, which put a `US$` share
+  under the tip jar's hand-set `$5`. Dollars quoted in copy get `usd()`
+  (`lib/format.ts`), pinned to en-US; the group's own money stays the reader's.
