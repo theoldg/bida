@@ -348,17 +348,17 @@ a { color: inherit; text-decoration: none }
    between the two is what says they are two jobs rather than one control.
    That air is measured against the margin, not chosen: the gap is the slack
    either side of the pair, a hair under it so the two still read as a pair
-   rather than as one tile per half of the screen. The 192px is the two tiles
+   rather than as one tile per half of the screen. The 168px is the two tiles
    less the 16px `.homepair` pads with, so the sum works in screen terms; the
    clamp keeps a narrow phone from closing the gap and a wide one from tearing
    it open. */
 .starttiles { display: flex; justify-content: center;
-  gap: clamp(20px, calc((100% - 192px) / 3.4), 72px) }
+  gap: clamp(20px, calc((100% - 168px) / 3.4), 72px) }
 /* Square, like the FABs, and stacked icon-over-word because that is the only
    way a word fits inside a square without turning it into a row. */
-.starttile { flex: 1; max-width: 112px; aspect-ratio: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 10px; border-radius: var(--r-s);
-  font-weight: 600; font-size: 12.5px; letter-spacing: -.01em; text-align: center }
+.starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 9px; border-radius: var(--r-s);
+  font-weight: 600; font-size: 12px; letter-spacing: -.01em; text-align: center }
 /* The primary of the two, and the ledger's "+" at this size: the one
    figure-ground inversion on the screen, so it presses in paper (`--press-i`)
    and takes the right, where the thumb is. */
