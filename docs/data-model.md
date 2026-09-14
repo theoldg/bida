@@ -233,7 +233,18 @@ CREATE TABLE ops (
   sealed TEXT NOT NULL,          -- base64: version byte, IV, AES-GCM ciphertext
   received_at INTEGER NOT NULL); -- our clock; the phone's createdAt is sealed
 CREATE UNIQUE INDEX ops_group_seq ON ops(group_id, seq);
+
+CREATE TABLE scan_hits (             -- 0002: the scan budget, pruned at 24h
+  at INTEGER NOT NULL,               -- ms, our clock
+  caller TEXT NOT NULL,              -- the :id a scan was billed to
+  client TEXT NOT NULL);             -- HMAC(ip, SCAN_IP_SALT) — never the address
+CREATE INDEX scan_hits_at ON scan_hits(at);
 ```
+
+`scan_hits` is the one table here that is not a ledger: rows live a day,
+because every window it answers is an hour or a day, and nothing in it says
+what was photographed — only that somebody spent a call
+([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
 
 The `attachments` table is gone with it: it indexed R2 objects for a feature
 that was cut ([product.md](product.md#deliberately-not-in-the-mvp)), and an

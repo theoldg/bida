@@ -1434,3 +1434,12 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
+
+/* Turnstile's widget — the one third-party pixel in the app, and normally no
+   pixel at all: `interaction-only` draws nothing unless a challenge actually
+   needs a tap. This is where it lands when it does, which is why it is on
+   screen rather than parked off it — a checkbox nobody can reach is a scan
+   that waits out its own timeout. Above the bottom bar and over everything,
+   since it is the only thing being asked for at that moment. */
+.turnstile { position: fixed; left: 50%; z-index: 7;
+  bottom: calc(env(safe-area-inset-bottom) + 76px); transform: translateX(-50%) }

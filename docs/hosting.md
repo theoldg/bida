@@ -91,11 +91,21 @@ pnpm --filter @bida/web build        # next build → apps/web/out
 pnpm --filter @bida/api run deploy   # wrangler deploy
 ```
 
-The scan endpoint needs one Worker secret, once, not per deploy:
+The scan endpoint needs three Worker secrets, once, not per deploy:
 
 ```bash
 pnpm --filter @bida/api exec wrangler secret put GEMINI_API_KEY
+pnpm --filter @bida/api exec wrangler secret put SCAN_IP_SALT        # any long random string
+pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
 ```
+
+The last two are the scan budget
+([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) and both are
+optional — without them the endpoint is the old unlimited one. **Set
+`TURNSTILE_SECRET_KEY` last**, after a deploy carrying the matching
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` (a build-time env var, public by nature): a
+Worker checking for a token the app isn't sending yet refuses every scan.
+Rotating `SCAN_IP_SALT` is free — it resets buckets that live a day.
 
 `wrangler.toml` binds `[assets] directory = "../web/out"` with
 `not_found_handling = "404-page"` (**not** `single-page-application`: the export
@@ -166,6 +176,11 @@ Recognise these if you ever propose one:
 - Folding the op log server-side per request (10 ms CPU → paid plan).
 - Polling every few seconds instead of on focus/reconnect (100k req/day).
 - Durable Objects for real-time — cheap, but not free-tier-free.
+- Raising `SCAN_LIMITS.global` without doing the arithmetic: it is the only
+  number that bounds the Gemini bill, at roughly $0.0005 a scan
+  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). Set a hard
+  project quota in Google AI Studio just above it, too — a belt under the
+  braces, for the day our own counter has a bug.
 
 ## Gotchas
 

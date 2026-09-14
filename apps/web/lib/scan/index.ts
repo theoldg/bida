@@ -1,7 +1,13 @@
-import { checkScan, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
+import {
+  checkScan, scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
+} from "@bida/core";
 import { groupToken } from "../seal";
+import { noteScan, overCallerBudget } from "./budget";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { parseScanResponse } from "./response";
+import { TurnstileBlockedError, turnstileToken } from "./turnstile";
+
+export { TurnstileBlockedError } from "./turnstile";
 
 export { normalizeScan } from "@bida/core";
 export type { ScanResult, ScanPatch } from "@bida/core";
@@ -31,6 +37,28 @@ export class ScanUnreliableError extends Error {
 export class ScanOfflineError extends Error {}
 
 /**
+ * The budget for this scan is spent — ours, not Gemini's, and a different
+ * thing from `ScanUnavailableError` because waiting a minute will not fix it.
+ * Carries which bucket it came out of: a person who has scanned ten bills this
+ * hour is told something quite different from one who arrived at a shared
+ * daily cap somebody else spent. See docs/receipt-scanning.md#what-the-scan-costs.
+ */
+export class ScanLimitError extends Error {
+  constructor(readonly scope: ScanLimitScope) {
+    super(scope);
+  }
+}
+
+/** Which of our own buckets refused this, if it was ours at all. */
+async function refusalScope(res: Response): Promise<ScanLimitScope | "turnstile" | null> {
+  const body = await res.json().catch(() => null) as { scope?: unknown } | null;
+  const scope = body?.scope;
+  return scope === "caller" || scope === "client" || scope === "global" || scope === "turnstile"
+    ? scope
+    : null;
+}
+
+/**
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
  * retry doubles both our requests and the shared daily Gemini quota; the scan
  * buttons stay enabled and the person decides. See docs/receipt-scanning.md.
@@ -49,8 +77,17 @@ export async function scanReceipt(
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     throw new ScanOfflineError("offline");
   }
+  // Asked before the downscale too, and for the same reason: this phone
+  // already knows the answer, so there is nothing to resize and nothing to
+  // send. The Worker asks again — this copy is advice (./budget.ts).
+  if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
+
   const imageBase64 = await downscaleToBase64Jpeg(photo);
   const token = await groupToken(groupId, secret);
+  // Single-use and short-lived, so it is fetched per scan and never held. A
+  // blocked script is a refusal, not a fallback — see ./turnstile.ts.
+  const turnstile = await turnstileToken();
+  await noteScan(groupId);
   let res: Response;
   try {
     // The body is the photo and nothing else: the prompt and the response
@@ -58,13 +95,25 @@ export async function scanReceipt(
     // an open one — docs/receipt-scanning.md#the-worker-owns-the-envelope.
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
-      headers: { "Content-Type": "text/plain", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "text/plain",
+        Authorization: `Bearer ${token}`,
+        ...(turnstile ? { "X-Turnstile-Token": turnstile } : {}),
+      },
       body: imageBase64,
     });
   } catch (err) {
     // fetch only rejects when the request never reached a server — a captive
     // portal or a dead radio that `navigator.onLine` still calls online.
     throw new ScanOfflineError(err instanceof Error ? err.message : "offline");
+  }
+  // Our own 429 and Gemini's are the same status and mean opposite things —
+  // "come back in a minute" versus "this budget is spent". `scope` is what the
+  // Worker adds to tell them apart; Google's error body has no such field.
+  if (res.status === 429 || res.status === 403) {
+    const scope = await refusalScope(res);
+    if (scope === "turnstile") throw new TurnstileBlockedError("the worker would not verify this browser");
+    if (scope) throw new ScanLimitError(scope);
   }
   if (res.status === 429 || res.status === 503) {
     throw new ScanUnavailableError("busy");

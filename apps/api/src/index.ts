@@ -4,6 +4,7 @@ import {
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, wrapImage } from "./scan-body";
+import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
 /**
@@ -13,7 +14,17 @@ import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
  * docs/sync.md. Ops arrive sealed and leave sealed: nothing in this file can
  * read one, by design (ADR-0036).
  */
-const app = new Hono<{ Bindings: { ASSETS: Fetcher; DB: D1Database; GEMINI_API_KEY: string } }>();
+const app = new Hono<{
+  Bindings: {
+    ASSETS: Fetcher;
+    DB: D1Database;
+    GEMINI_API_KEY: string;
+    /** Both optional, and a deployment without them is the old unlimited one —
+     *  see docs/receipt-scanning.md#what-the-scan-costs and SELFHOSTING.md. */
+    TURNSTILE_SECRET_KEY?: string;
+    SCAN_IP_SALT?: string;
+  };
+}>();
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
@@ -108,6 +119,27 @@ app.post("/api/groups/:id/scan", async (c) => {
   const group = await getGroup(c.env.DB, groupId);
   if (!group) return c.json({ error: "unknown group" }, 404);
   if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+
+  const ip = c.req.header("cf-connecting-ip") ?? "";
+
+  // Asked before anything that costs a D1 round trip, because it is the check
+  // a script cannot opt out of and therefore the one worth failing on first.
+  if (c.env.TURNSTILE_SECRET_KEY) {
+    const verified = await turnstileOk(
+      c.env.TURNSTILE_SECRET_KEY, c.req.header("x-turnstile-token") ?? null, ip,
+    );
+    if (!verified) return c.json({ error: "unverified browser", scope: "turnstile" }, 403);
+  }
+
+  // Counted, then booked, then spent — in that order, so a call that hangs or
+  // a photo the model refuses has still been paid for. `scope` is what tells
+  // the phone which sentence to print; without it a 429 of ours is
+  // indistinguishable from Gemini's own, which means something else entirely.
+  const now = Date.now();
+  const client = c.env.SCAN_IP_SALT ? await clientKey(ip, c.env.SCAN_IP_SALT) : null;
+  const full = overLimit(await countScans(c.env.DB, groupId, client, now));
+  if (full) return c.json({ error: `${full} scan limit reached`, scope: full }, 429);
+  await recordScan(c.env.DB, groupId, client, now);
 
   // Asked of the header first because it is the one check that costs nothing
   // and the only one that can refuse a body before it is streamed anywhere.

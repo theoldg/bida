@@ -63,6 +63,14 @@ export interface DeviceRecord {
    * here, since introducing it is part of every scan. See lib/quick.ts.
    */
   scan?: { id: string; secret: string };
+  /**
+   * Scans this phone has spent in the last day, per caller — its own copy of
+   * `SCAN_LIMITS.caller`, so a scan already over budget is refused before a
+   * request is made rather than after (lib/scan/budget.ts). Advice: the Worker
+   * counts again and decides. Absent on records written before this existed,
+   * which reads as "no scans yet".
+   */
+  scanLog?: { id: string; at: number }[];
 }
 
 /**

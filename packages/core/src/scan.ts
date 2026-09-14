@@ -276,3 +276,29 @@ function readAmount(text: string | null, currency: CurrencyCode): number | null 
     return null;
   }
 }
+
+/**
+ * What a scan is allowed to cost, and who is allowed to spend it.
+ *
+ * Here rather than in the Worker because both ends need the same numbers: the
+ * phone refuses a scan it already knows is over the caller's budget, so the
+ * refusal is instant and costs no request, and the Worker refuses it again
+ * because the phone's copy is advice. Two copies of "10 an hour" would drift
+ * into the app quoting one number and enforcing another.
+ *
+ * The reasoning behind each is docs/receipt-scanning.md#what-the-scan-costs;
+ * only `caller` is checkable from a phone, which is the whole of what a phone
+ * knows about.
+ */
+export const SCAN_LIMITS = {
+  /** The `:id` a scan is billed to — a group, shared by everyone in it, or one phone's credential. */
+  caller: { hour: 10, day: 30 },
+  /** One address, HMAC'd server-side. Loose enough for a table of friends on one restaurant wifi. */
+  client: { hour: 20, day: 50 },
+  /** The bill. The only bucket nothing can be minted around; the hourly sub-cap keeps a burst from eating the day. */
+  global: { hour: 250, day: 1500 },
+} as const;
+
+/** Which bucket a refusal came out of. The phone prints a different sentence for each. */
+export type ScanLimitScope = keyof typeof SCAN_LIMITS;
+

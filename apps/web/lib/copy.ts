@@ -611,6 +611,22 @@ export const copy = {
     } satisfies Record<ScanProblem, string>,
     offline: "You’re offline — scanning needs a connection.",
     busy: "Gemini’s busy — try again in a minute.",
+    /**
+     * Our own cap, which is a different thing from `busy` above: waiting a
+     * minute fixes Gemini being overloaded and does nothing at all about a
+     * spent budget. Two sentences and not three, because "you" and "this
+     * address" are one fact to the person reading it — what genuinely differs
+     * is a budget somebody else spent.
+     *
+     * They are the only place the cap is ever mentioned: a counter nobody is
+     * near is fat, and the refusal says the whole of it when it matters.
+     */
+    limit: {
+      you: "That’s your scans for now — scanning is capped. Type this one in, or come back later.",
+      global: "The shared scan budget is spent — type this one in, or try later.",
+    },
+    /** Fail-closed, and named: a blocked script is not a bad photograph. */
+    unverified: "Couldn’t check this browser — scanning needs challenges.cloudflare.com.",
   },
 
   items: {

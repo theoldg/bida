@@ -52,9 +52,10 @@ off receipts — so `diagram.test.ts` adds them up.
 ## The shape
 
 ```
-phone: capture or pick from library → downscale → base64
+phone: capture or pick from library → downscale → base64 (+ a Turnstile token)
   ↓ POST /api/groups/:id/scan   (body = the image; bearer = group secret)
-worker: check the secret, wrap the image in our prompt + schema, add the API key
+worker: verify the browser, count the budget, book the scan,
+        then wrap the image in our prompt + schema and add the API key
   ↓
 Gemini Flash, free tier, one key shared by everyone
   ↑ response streamed straight back, untouched
@@ -128,20 +129,16 @@ The rules that follow from it:
 - **One request per scan.** No automatic retry — a retry doubles both our
   requests and the shared daily Gemini quota. A failure says so and leaves the
   control enabled — the retry is the same button, not a second one.
-- **No throttling, no counters, no D1 writes.** Auth is the existing
-  `bearerToken` + `sha256Hex` check against the group row: one D1 read, no new
-  table. It authenticates a *secret*, not a membership — which is what lets a
-  quick split scan with a credential of its own (below). **Gemini's own free
-  tier is the quota**: it caps the day and answers 429, which the app already
-  reads as "busy". A cap of ours would add little and would hand one caller the
-  power to spend everyone else's day.
+- **Auth authenticates a *secret*, not a membership** — the existing
+  `bearerToken` + `sha256Hex` check against the group row, which is what lets a
+  quick split scan with a credential of its own (below). It is a speed bump:
+  what actually bounds the spend is the budget below.
 - **Whoever is paying for the scan is the id in the path.** A group, or — for
   a quick split — the phone, which carries an id and a secret shaped like a
   group's and introduces the pair with an empty `POST …/ops` before each scan
   (`lib/quick.ts`, ADR-0035). One per phone rather than one per bill, because
-  a stable caller is the unit anything we ever throttle would count; **if this
-  ever needs a rate limit, that path parameter and `cf-connecting-ip` are what
-  it has to key on**, and the scan handler is the one place to put it.
+  a stable caller is the unit the budget counts, and that path parameter is
+  what it keys on.
 
 Nothing changes in `sw.js` — it already ignores non-GET and cross-origin, and
 `/api/*` was never cached.
@@ -310,15 +307,74 @@ captive portal `navigator.onLine` calls online. The words are `copy.scan.*`
 ([ADR-0033](decisions/0033-every-word-in-one-file.md)); `scanErrorText` maps
 error to sentence. Anything else falls back to the generic message.
 
+## What the scan costs
+
+This is the one endpoint in the app that spends money, so it is the one with a
+budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
+`packages/core/src/scan.ts` holds the numbers, because both ends need them:
+
+| bucket | limit | what it is |
+|---|---|---|
+| **caller** | 10/hour, 30/day | the `:id` a scan is billed to — a group, shared by everyone in it, or one phone's quick-split credential |
+| **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
+| **global** | 250/hour, 1500/day | the bill — roughly a dollar a day at the ceiling, against real use of tens of scans a day |
+
+**Only the global cap bounds what the owner pays.** A credential costs one
+unauthenticated request to mint, by design, so the caller bucket is politeness:
+it stops a phone double-tapping through the shared budget, and a caller who
+doesn't want it simply brings another id. The client bucket is a gate, because
+an address is expensive to rotate. The global one cannot be escaped by minting
+anything, and its **hourly sub-cap is the part worth keeping**: without it a
+burst eats the day at 06:00 and the app is dark until midnight.
+
+**Turnstile is what makes the cheap credential survivable.** Every scan carries
+a token (`X-Turnstile-Token`), verified server-side before the image is
+streamed anywhere: a fresh id buys nothing without a fresh token, and a token
+costs a real browser. It **fails closed** — a blocked script is a refusal that
+says so (`copy.scan.unverified`), because failing open makes the check optional
+for precisely the people who would want it to be.
+
+**The phone keeps its own copy of the caller bucket** (`lib/scan/budget.ts`,
+one log per caller in the device record), so a scan already over budget is
+refused before the photo is downscaled and the request is never spent. It is
+advice: the Worker counts again and decides, and wiping it reaches only the
+bucket that was politeness anyway.
+
+**Counted, booked, then spent** — in that order. A call that hangs, or a photo
+the model refuses, has still been paid for, so `recordScan` runs before the
+upstream request rather than after. Rows live 24h (`scan_hits`,
+[data-model.md](data-model.md#d1-schema)); the prune rides in the same batch as
+the insert because that is the same round trip and the only moment that
+reliably happens once per scan.
+
+**The address is never stored.** `HMAC(ip, SCAN_IP_SALT)`, truncated to 16 hex
+— a bare `sha256` of an IP is an IP with extra steps, since four billion of
+them is minutes of rainbow table. The salt is a Worker secret
+([hosting.md](hosting.md#deploying)), so a leaked row is noise to anyone
+without it, and rotating it only resets buckets that live a day.
+
+**Nothing says any of this on screen until it refuses.** A counter nobody is
+near is fat ([standing-instructions](standing-instructions.md#interface)), and
+the two sentences say the whole of it when it matters: `copy.scan.limit.you`
+for a bucket you spent, `copy.scan.limit.global` for one somebody else did.
+They are deliberately not `copy.scan.busy` — waiting a minute fixes an
+overloaded Gemini and does nothing at all about a spent budget.
+
+**Both secrets are optional, and a deployment without them is the old
+unlimited one.** No `TURNSTILE_SECRET_KEY` and the Worker checks no token; no
+`SCAN_IP_SALT` and the client bucket is absent rather than shared. That is what
+lets someone self-host without a Turnstile account (SELFHOSTING.md) — and it is
+also the order to set them in: **the site key and a rebuild first, the Worker
+secret last**, or every scan is refused in the window between.
+
 ## Trust, and what we're accepting
 
 Deliberate, for a group of friends under fifty people:
 
 - **One key, shared globally.** Anyone with the app URL and a group secret
-  spends it, and a secret costs one request to mint. No per-group limits — the
-  owner: *"assume maximum trust for now (we don't need per group throttling
-  etc)"*. What that trust is now confined to is *having images read*: since the
-  Worker owns the envelope, nobody can put their own prompt on our key.
+  spends it, and a secret costs one request to mint. What that buys is confined
+  twice over: the Worker owns the envelope, so nobody can put their own prompt
+  on our key, and the budget above caps what having images read can cost.
 - **Free tier trains on the input.** Google uses free-tier prompts to improve
   its products and human reviewers may see them. These are receipts: a place,
   a date, a card's last four. The scan button carries one plain line saying so,
@@ -329,16 +385,17 @@ Deliberate, for a group of friends under fifty people:
 - **Free-tier terms can change overnight.** If they do, scanning 404s and the
   button hides. The app is unaffected.
 
-**If this is ever productionised**, the things to fix, in order: per-user keys
-or a paid tier (kills both the shared-spend and the training problem), then a
-rate limit (Cloudflare's rate-limiting binding keyed on the path id and
-`cf-connecting-ip` — no D1 write, no counter to keep), then a decision about
-whether the photo is stored at all. Turnstile in front of minting a credential
-is the only one of these that answers *distributed* abuse.
+**What is still unfixed** is the training problem, and only a paid tier or
+per-user keys answers it — the budget above answers the spend. The other open
+question is whether the photo is stored at all, and the answer is still no
+([product.md](product.md#deliberately-not-in-the-mvp)).
 
 ## What it's made of
 
-`packages/core/src/scan.ts` — the normaliser, no network · `apps/api`'s `POST
+`packages/core/src/scan.ts` — the normaliser and `SCAN_LIMITS`, no network ·
+`apps/api`'s `scan-limits.ts` — the budget, the client key and Turnstile ·
+`apps/web/lib/scan/budget.ts` and `turnstile.ts`, their two halves on the phone
+· `apps/api`'s `POST
 /api/groups/:id/scan`, the same bearer-token check as sync, passing through to
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —

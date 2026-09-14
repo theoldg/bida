@@ -86,13 +86,30 @@ That is your Google AI Studio key, and it needs the Cloudflare auth above like
 anything else here. Set it once, not per deploy. Without it the scan button fails and the rest of
 the app is unaffected.
 
-**Don't put this on a public instance as it stands.** The endpoint authenticates
-against a group token, but any unseen group id registers itself under whatever
-bearer arrives — that is how a quick split mints its credential — so two
-unauthenticated requests reach the proxy and spend your key, and the client
-supplies the whole request body, so it will relay any prompt, not just receipts.
-Nothing is rate-limited. Fine for a handful of people you know; not fine on an
-address you advertise. See `todo.md` for the shape of the fix.
+Scanning is the one thing here that costs money, so it has a budget — the
+numbers, and the reasoning, are in
+[docs/receipt-scanning.md](docs/receipt-scanning.md#what-the-scan-costs). Two
+more secrets turn its two halves on, and **both are optional: without them the
+endpoint is unlimited**, which is what you want only behind an address you
+don't advertise.
+
+```bash
+pnpm --filter @bida/api exec wrangler secret put SCAN_IP_SALT         # any long random string
+pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
+```
+
+`SCAN_IP_SALT` keys the one-way hash of the caller's address, so the per-address
+limit works without your database ever holding an IP. `TURNSTILE_SECRET_KEY` is
+the secret half of a [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+widget; the public half goes in the build as `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+**Set the Worker secret last**, after deploying a build that carries the site
+key — a Worker looking for a token the app isn't sending refuses every scan.
+
+Without Turnstile the remaining limits are honest but voluntary: registering a
+fresh group id is one unauthenticated request by design (it is how a quick
+split mints its credential), so a caller who doesn't want a per-caller budget
+brings another id. What still holds is the per-address limit and the global
+daily cap, which is the one that bounds your bill.
 
 The same door writes ops into D1 with no cap, which matters more on a public
 instance than on the numbers in [docs/hosting.md](docs/hosting.md#how-full-can-it-get).
