@@ -422,6 +422,17 @@ a { color: inherit; text-decoration: none }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
+/* The plus is what files a name, and 32px — the size every `.iconbtn` draws
+   at — is under the ~44px a thumb reliably lands on. The row around it has
+   room to spare (16px of its own padding, 12px of gap to the field), so the
+   pseudo-element borrows from that instead of growing the button and
+   throwing off every other row that shares its size. `position: relative`
+   here, not on `.iconbtn` generally, is what keeps the enlarged box anchored
+   to the button rather than to the row (`.row` is already positioned) — and
+   disabled swallows the press same as ever, since a disabled control takes
+   none of it, pseudo-element included. */
+.addrow .iconbtn { position: relative }
+.addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
 /* Every list of names ends on the act it was typed for — Create, "Continue as
    …", the scan pair, "Change who you are" — and that act sits *below* the add
    row, on the scroll rather than in a pinned foot (design-system). A field
