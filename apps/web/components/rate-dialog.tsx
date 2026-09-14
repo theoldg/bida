@@ -29,8 +29,11 @@ import { plural } from "../lib/format";
  * than "4.500000001" (see `invertRate`).
  *
  * It opens on a fetched number when it can get one, and says which it is
- * showing: today's rate, or yours. Nothing is written until Save — a rate
- * moves every balance in the group, so it is never a background write
+ * showing: today's rate, or yours. It opens on neither field: with two of them
+ * the caret would have to guess a direction, and a keyboard covering the half
+ * of the dialog that says what saving moves is a poor trade for a tap.
+ * Nothing is written until Save — a rate moves every balance in the group, so
+ * it is never a background write
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 
@@ -157,7 +160,7 @@ export function RateDialog({
     <Dialog title={copy.rates.editTitle(currency)} onClose={onClose}>
       <form onSubmit={(e) => { e.preventDefault(); void save(); }}>
         <div className="ratepair">
-          <RateSide code={currency} unit={base} value={pair.forward} autofocus={!!current}
+          <RateSide code={currency} unit={base} value={pair.forward}
             onChange={(v) => type(v, "forward")} />
           <RateSide code={base} unit={currency} value={pair.inverse}
             onChange={(v) => type(v, "inverse")} />
@@ -197,8 +200,8 @@ export function RateDialog({
 }
 
 /** "1 PLN = [ 0.234 ] EUR" — one direction of the pair. */
-function RateSide({ code, unit, value, autofocus, onChange }: {
-  code: string; unit: string; value: string; autofocus?: boolean;
+function RateSide({ code, unit, value, onChange }: {
+  code: string; unit: string; value: string;
   onChange: (value: string) => void;
 }) {
   return (
@@ -210,7 +213,6 @@ function RateSide({ code, unit, value, autofocus, onChange }: {
       <GroupedInput className="rateinput wide" value={value} sanitize={sanitizeRate}
         fieldClassName={value !== "" && !isValidRate(value) ? "bad" : undefined}
         aria-label={copy.form.rateLabel(code, unit)}
-        {...(autofocus ? { "data-autofocus": "" } : {})}
         onChange={onChange} />
       <span className="rateunit">{unit}</span>
     </label>
