@@ -202,13 +202,17 @@ confers nothing without the secret.
   (`.addrow.editing`), because a row that looks like the committed rows above it
   says the opposite of what is true. **The plus is never dead** — a control
   that looks like a button and answers nothing reads as a broken app — so a
-  press with nothing to file blooms it and puts the caret back in the field,
-  where the fix is typed, filing nothing either way. Nothing to file is an
-  empty field, or a name the list already holds — **one name, one person**
-  (`core/names.ts`), said under the row as it is typed and again by the
-  refusal, on every list including the one you are picking yourself out of,
-  where the name you typed is a row one tap above. It is not spent by its own
-  flash the way Create is: the next press of that same plus has to file.
+  press with nothing to file refuses instead, blooming and handing back the
+  caret, and files nothing either way. **What blooms is whatever has to
+  change**, which is the plus only while a good name sits unfiled: an empty row
+  reddens "Add someone" itself, and a name the list already holds reddens that
+  name — **one name, one person** (`core/names.ts`), said under the row in
+  words as it is typed and pointed at by the refusal, on every list including
+  the one you are picking yourself out of, where the name you typed is a row
+  one tap above. The same routing catches a screen's refusal, so Create over an
+  empty list blooms the field it needs a name in and Create over an unfiled
+  name blooms the plus that would file it. The plus is not spent by its own
+  flash the way Create is: the next press of it has to file.
   A screen's own button never *files* what is in the field — an unfiled name is
   unfiled, whatever else is pressed — but the two that leave the screen with
   the list behind them **refuse** rather than going on without the name:

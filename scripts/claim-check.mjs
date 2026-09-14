@@ -65,8 +65,9 @@ report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
   "Create is tappable before anybody is on the list");
 await press(page.getByRole("button", { name: "Create" }));
 report(await page.locator(".rows button.row").count() === 0
-  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
-  "and pressing it with nobody on the list refuses, the plus blooming");
+  && await page.locator(".addrow[class*=flash]").count() === 1
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
+  "and pressing it with nobody on the list refuses, the empty field blooming");
 report(await page.getByRole("button", { name: "Create" }).isDisabled(),
   "spent while that refusal is on screen");
 await page.waitForTimeout(800);
@@ -78,8 +79,9 @@ report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
 report(!await plus().isDisabled(), "the plus is tappable on an empty add row");
 await press(plus());
 report(await members() === 0
-  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
-  "and pressing it with an empty field refuses, blooming, and files nothing");
+  && await page.locator(".addrow[class*=flash]").count() === 1
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
+  "pressing it on an empty field blooms the field, not the plus, and files nothing");
 await page.waitForTimeout(800);
 
 // Enter is the keyboard's press of that same plus.
@@ -113,8 +115,9 @@ report(await page.locator(".addwarn").count() === 1 && !await plus().isDisabled(
   "a name already on the list says why, the plus still tappable");
 await press(plus());
 report(await members() === 2
-  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
-  "and pressing it over that name refuses rather than filing a second Marie");
+  && await page.locator(".addrow[class*=flash]").count() === 1
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
+  "and pressing it over that name blooms the name, filing no second Marie");
 await page.waitForTimeout(800);
 report(await field().inputValue() === "Marie",
   "a refused press leaves the name where it was typed");
@@ -129,8 +132,9 @@ await field().fill("Sam");
 await page.waitForTimeout(80);
 await press(page.getByRole("button", { name: "Create" }));
 report(await page.locator(".rows button.row").count() === 0
-  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
-  "Create over an unfiled name is refused, and the plus blooms");
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1
+  && await page.locator(".addrow[class*=flash]").count() === 0,
+  "Create over an unfiled name is refused, and the plus blooms — not the field");
 report(await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and Create is spent while the refusal is on screen");
 await page.waitForTimeout(800);
@@ -256,8 +260,9 @@ await page.waitForFunction(() => {
 report(!await page.getByRole("button", { name: "Upload" }).isDisabled(),
   "the scan pair is tappable before anybody is on the list");
 await press(page.getByRole("button", { name: "Upload" }));
-report(await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
-  "and pressing it with nobody on the list refuses, the plus blooming");
+report(await page.locator(".addrow[class*=flash]").count() === 1
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
+  "and pressing it with nobody on the list refuses, the empty field blooming");
 await page.waitForTimeout(800);
 
 // One person is still not enough to split a bill.
@@ -265,7 +270,7 @@ await field().fill("Ana");
 await field().press("Enter");
 await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 2);
 await press(page.getByRole("button", { name: "Upload" }));
-report(await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+report(await page.locator(".addrow[class*=flash]").count() === 1,
   "and still refuses with only one person on the list");
 await page.waitForTimeout(800);
 

@@ -1311,6 +1311,21 @@ button.amtnote:active { background: var(--hl-edge) }
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
+/* The other half of that refusal: the plus is the fix only while a good name
+   sits unfiled in the row, and when the field itself is what's wrong the row
+   blooms instead — "Add someone" on an empty field, the typed name on one the
+   list already holds (components/name-adder.tsx). A row is neither a field nor
+   a filled control, so it refuses the way a `.field` does, in text: the
+   placeholder carries the empty case and the input's own colour the typed one.
+   Both are named, and the input's is load-bearing beyond the ink — a
+   `::placeholder` animation ends as a pseudo-element event, which every
+   refusal handler here ignores on purpose, so the element's own animation is
+   what tells a screen its flash is over. */
+.addrow.flash-a .addname, .addrow.flash-a .addname::placeholder {
+  animation: refuse-text-a .6s ease-in-out }
+.addrow.flash-b .addname, .addrow.flash-b .addname::placeholder {
+  animation: refuse-text-b .6s ease-in-out }
+
 /* A refused Done on the who-had-what grid blooms the button and, with it, every
    line nobody has been given — which is what is actually missing, and the only
    way to find it again in twenty rows of bill. A row has no field and no filled
@@ -1340,6 +1355,8 @@ button.amtnote:active { background: var(--hl-edge) }
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
   .field.flash-a input::placeholder, .field.flash-b input::placeholder,
   .field.flash-a label, .field.flash-b label,
+  .addrow.flash-a .addname, .addrow.flash-b .addname,
+  .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder,
   .itemtext.flash-a .itemname, .itemtext.flash-b .itemname,
   .itemtext.flash-a .itemamount, .itemtext.flash-b .itemamount,
   .itemtext.flash-a .itemqty, .itemtext.flash-b .itemqty {

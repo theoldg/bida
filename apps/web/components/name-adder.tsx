@@ -30,14 +30,22 @@ import { nameTaken } from "@bida/core";
  * file, and a control that looks like a button and answers nothing reads as a
  * broken app rather than as a refusal. So it presses like Create and the quick
  * split's scan pair do: a press that cannot go through blooms and puts the
- * caret back in the field, which is where every fix for it is typed
- * (`lib/refusal.ts`). Nothing it refuses is filed — an empty field files
- * nothing, and neither does a name the list already holds (`core/names.ts` —
- * two people with one name are two people nothing on screen tells apart, and
- * the same key besides); the note under the row says which.
+ * caret back in the field (`lib/refusal.ts`), filing nothing either way.
  *
- * Unlike Create, it is *not* spent for the length of its own flash: the fix is
- * a keystroke away and the very next press of this same plus has to file, so a
+ * **The bloom lands on whatever has to change** — a refusal points, and this
+ * row has two things to point at. The plus is the fix only when the name in
+ * the field is good and unfiled; then pressing it is the whole of the answer,
+ * and it is what blooms, for this row's own refusals and for a screen's alike.
+ * When the *field* is the problem the field blooms instead: an empty row
+ * reddens "Add someone" itself, because what is missing is a name and no
+ * number of presses will produce one, and a name the list already holds
+ * reddens the typed name, because that name is what has to be edited
+ * (`core/names.ts` — two people with one name are two people nothing on screen
+ * tells apart, and the same key besides; the note under the row says so in
+ * words).
+ *
+ * Unlike Create, the plus is *not* spent for the length of its own flash: the
+ * fix is a keystroke away and the very next press of it has to file, so a
  * second refusal restarts the flash instead of being swallowed.
  *
  * While the field holds anything, the row draws itself as a box
@@ -70,8 +78,10 @@ export function AddName({
       guards against losing what has been typed can count it. Nothing acts on
       it: an unfiled name is unfiled, and only the plus files. */
   onDraft?: (name: string | null) => void;
-  /** A screen's refusal, blooming the plus: what is unfiled is what stopped
-      the press, and the plus is the whole of the fix (lib/refusal.ts). */
+  /** A screen's refusal, blooming this row: the name it is missing is the one
+      in this field, whether that is a name nobody has filed — the plus is the
+      whole of that fix — or a name nobody has typed, which blooms the field
+      instead (lib/refusal.ts). */
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
 }) {
@@ -81,10 +91,13 @@ export function AddName({
   const already = nameTaken(value, taken);
   const ready = value.trim().length > 0 && !already && !busy;
   // Its own refusal, for a press with nothing fileable under it. A screen's
-  // `flash` blooms the same plus for its own reasons, and the two are one
-  // animation: whichever is running wins, and both hear it end.
+  // `flash` blooms this row for its own reasons, and the two are one
+  // animation: whichever is running wins, and both hear it end. Where it lands
+  // is this component's to decide — the plus when a good name is waiting to be
+  // filed, the field when the field is what's wrong.
   const own = useRefusal();
   const blooming = flash || own.flash;
+  const onField = !ready;
 
   // The list grows above this row, so past a screenful the field is below the
   // fold and the rest of the names are typed blind — the browser scrolls to a
@@ -125,8 +138,8 @@ export function AddName({
     e.preventDefault();
     if (busy) return;
     if (!ready) {
-      // Nothing to file: say no where the press landed, and hand back the
-      // caret — an empty field and a duplicate are both fixed by typing.
+      // Nothing to file. The bloom lands on the field (see above), so hand the
+      // caret back with it: both fixes are typed, not pressed.
       own.refuse();
       field.current?.focus();
       return;
@@ -147,8 +160,13 @@ export function AddName({
 
   return (
     <>
-      <form className={`row addrow${typing ? " editing" : ""}`}
-        onSubmit={(e) => void submit(e)} onClick={() => field.current?.focus()}>
+      {/* One `onAnimationEnd` for the row, because the flash may be running on
+          either the plus or the field and both bubble to here — including the
+          `::placeholder`'s, which the handlers below know to ignore
+          (`lib/refusal.ts`). */}
+      <form className={`row addrow${typing ? " editing" : ""}${onField ? blooming : ""}`}
+        onSubmit={(e) => void submit(e)} onClick={() => field.current?.focus()}
+        onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
           enterKeyHint="done" onChange={(e) => setValue(e.target.value)} />
@@ -160,8 +178,8 @@ export function AddName({
             nothing is filed by a blur any more, but a keyboard that shuts on
             the press and reopens on the refocus is a flinch under the thumb —
             and a press spent closing one is a press that never lands. */}
-        <button type="submit" className={`iconbtn${blooming}`} aria-label={copy.act.add}
-          onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }} {...keepsFocus}>
+        <button type="submit" className={`iconbtn${onField ? "" : blooming}`} aria-label={copy.act.add}
+          {...keepsFocus}>
           <Icon name="plus" size={15} />
         </button>
       </form>

@@ -239,8 +239,10 @@ that is what makes a check like this flake and then get deleted.
 The add row lets a name be typed and not yet filed, and only its own plus files
 one (`components/name-adder.tsx`). What goes wrong there is never arithmetic: a
 blur that must do nothing, a plus that must refuse — never file, never sit
-dead — on an empty field or a name the list already holds, and a screen whose
-button must not read intent out of a field nobody has pressed anything on. All of it looks perfect in jsdom.
+dead — on an empty field or a name the list already holds, a refusal that must
+bloom whichever of the two (the plus, or the field's own text) is what has to
+change, and a screen whose button must not read intent out of a field nobody
+has pressed anything on. All of it looks perfect in jsdom.
 
 So the press is made by hand and **held**: `locator.click()` re-resolves the
 button and quietly retries a press that missed, and an instant down-up is over
@@ -253,7 +255,9 @@ that arrives whenever it arrives, and the tick has to follow it there.
 The two acts that refuse rather than acting without enough people are checked
 here too — `/new`'s Create (an unfiled name, or nobody on the list yet) and a
 quick split's scan pair (an unfiled name, or fewer than two people): the plus
-blooms, the button is spent for the length of the flash, then both come back.
+blooms over an unfiled name and the field's placeholder over a list that is
+simply too short, the button is spent for the length of the flash, then both
+come back.
 
 It ends on the other half of that question: a phone that has answered it is
 never asked again. The invite link is copied out of People and opened a second
