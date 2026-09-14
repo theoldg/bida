@@ -337,7 +337,19 @@ a token (`X-Turnstile-Token`), verified server-side before the image is
 streamed anywhere: a fresh id buys nothing without a fresh token, and a token
 costs a real browser. It **fails closed** — no valid token is a refusal that
 says so, because failing open makes the check optional for precisely the people
-who would want it to be. The refusal is **two sentences, not one**
+who would want it to be.
+
+One token is spent per scan, but it is not minted at the press: a token is
+single-use and good for a few minutes, so the challenge runs while a scan
+control is merely on screen (`warmTurnstile`, called by `ScanPair` on mount and
+again each time the button comes back from a scan) and is usually waiting by
+the time anybody photographs anything. `turnstileToken` **takes** it, so the
+slot is empty behind it and no two scans can send the same one; one older than
+`WARM_TTL_MS` is dropped and minted again at the press. A warm gives up the
+moment Cloudflare wants a tap — a checkbox floating over the Items tab, asked
+for by nobody, is worse than the second it saves — and a warm that fails is
+silent, because the press mints again and *that* is where a blocked browser is
+named. The refusal is **two sentences, not one**
 (`copy.scan.unverified`): a script this phone could not load is the person's
 network and worth a retry, while a token the Worker rejected is this
 deployment's secret disagreeing with its site key, where retrying is the only
@@ -441,7 +453,7 @@ base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
 the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and
 the screen after the scan respectively. The control they wear draws the round
-trip as a bar filling over the ~2s a scan usually takes, falling back to the
+trip as a bar filling over the ~3s a scan usually takes, falling back to the
 spinner only when the model is slower
 ([design-system.md](design-system.md#palette-roles)). Where the scan is *up
 to* is `lib/scan/live.ts`, a store keyed by group beside the draft rather than
@@ -513,10 +525,15 @@ way to reach the who-had-what grid outside a real scan —
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
 - **The sweep is an estimate of a real scan, so it moves when the scan does.**
-  It was two seconds; a round trip now carries a Turnstile challenge as well
-  as the model, and the upstream API is slower under load, so `sweepSeconds`
-  is three. A bar that fills early and hands over to the spinner is this
-  control admitting it was guessing — the one failure it has.
+  It was two seconds, calibrated before Turnstile and the budget existed; those
+  put two third-party round trips and two D1 ones in front of the model, so
+  `sweepSeconds` is three. A bar that fills early and hands over to the spinner
+  is this control admitting it was guessing — the one failure it has.
+- **What the scan waits on, it waits on in parallel.** Resizing the photo is
+  CPU and the challenge is a round trip; run one after the other they simply
+  added up, so `scanReceipt` starts the downscale, the bearer token and
+  `turnstileToken` together. The warm above is the other half of the same
+  idea — the cheapest round trip is the one that already happened.
 - **A screen coming back is not a scan starting.** "Reading…" and its bar were
   `useState` in the control, so the Items tab unmounting — a tab switch, or the
   payers editor — read as the scan ending, and coming back read as a new one:

@@ -82,11 +82,18 @@ export async function scanReceipt(
   // send. The Worker asks again — this copy is advice (./budget.ts).
   if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
 
-  const imageBase64 = await downscaleToBase64Jpeg(photo);
-  const token = await groupToken(groupId, secret);
-  // Single-use and short-lived, so it is fetched per scan and never held. A
-  // blocked script is a refusal, not a fallback — see ./turnstile.ts.
-  const turnstile = await turnstileToken();
+  // Started together, not one after the other: resizing the photo is CPU and
+  // the challenge is a round trip to Cloudflare, so run in sequence they
+  // simply added up. `turnstileToken` usually has a warmed one to hand over
+  // (`warmTurnstile`), and where it doesn't the challenge hides behind the
+  // resize instead of following it.
+  const [imageBase64, token, turnstile] = await Promise.all([
+    downscaleToBase64Jpeg(photo),
+    groupToken(groupId, secret),
+    // One token is spent per scan and never reused. A blocked script is a
+    // refusal, not a fallback — see ./turnstile.ts.
+    turnstileToken(),
+  ]);
   await noteScan(groupId);
   let res: Response;
   try {

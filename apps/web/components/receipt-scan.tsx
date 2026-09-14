@@ -13,6 +13,7 @@ import {
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import { warmTurnstile } from "../lib/scan/turnstile";
 
 export type { ScanState } from "../lib/scan/live";
 
@@ -270,6 +271,13 @@ export function ScanPair({
    */
   const [full, setFull] = useState(false);
   useEffect(() => { if (!busy) setFull(false); }, [busy]);
+  // Run the challenge while the button is merely sitting there, so pressing it
+  // doesn't wait for a round trip to Cloudflare (`warmTurnstile`). Every screen
+  // that scans wears this control, so warming here is what "wherever a scan
+  // button appears" actually means — including the Items tab, which mounts one
+  // the moment that tab is picked. Keyed on `busy` as well as mount: a scan
+  // spends the token, and the button coming back is the next scan's cue.
+  useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
   const overrun = live !== undefined && Date.now() - live.startedAt >= live.seconds * 1000;
   const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
