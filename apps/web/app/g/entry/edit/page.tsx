@@ -486,10 +486,10 @@ function EditEntryScreen() {
             : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
-          /* The kind sits up here, centred on the row that already names what
-             this screen is. Below the title it was a lone chip floating over
-             the amount; the space it vacated is the amount's. */
-          mid={reachable.length > 1 ? (
+          /* The kind sits up here, on the row that already names what this
+             screen is. Below the title it was a lone chip floating over the
+             amount; the space it vacated is the amount's. */
+          right={reachable.length > 1 ? (
             <button type="button" className="chip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")}>
               {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
