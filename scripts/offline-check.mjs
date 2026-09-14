@@ -91,9 +91,13 @@ await tap("tap a suggested transfer", () => page.locator("a.card").first().click
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
 // The one switch that isn't in a group: light/dark, on the groups list.
+// `button.iconbtn` and not `.iconbtn` first: "About bida" moved into the same
+// bar and took that position, so the check quietly started tapping a link to
+// /about and reporting the theme toggle broken. The toggle is the only
+// *button* up there; the position was never the thing that identified it.
 await tap("theme toggle", async () => {
   await openGroupsList(page, base);
-  await page.locator(".topbar .iconbtn").first().click();
+  await page.locator(".topbar button.iconbtn").first().click();
 }, "html[data-theme]");
 
 await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");

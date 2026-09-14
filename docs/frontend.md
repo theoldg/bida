@@ -317,7 +317,7 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the tabs are gone" (see [Gotchas](#gotchas)).
 
-Read it at **`/diag`** — long-press the wordmark on the groups list. It is
+Read it at **`/diag`** — long-press the app's name on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
 reads. The previous session is kept in `localStorage` (not a table — this has
 to work on the launch where IndexedDB is the broken thing), because the launch

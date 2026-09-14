@@ -126,23 +126,3 @@ export function Icon({ name, size = 16, className, style }: {
     </svg>
   );
 }
-
-/**
- * The bida mark — the real artwork, not a redrawing of it.
- *
- * It is an <img> at `/logo.svg`, which `pnpm icons` copies from
- * `design/brand/logo.svg`, so the app and the icons show the same file and a
- * new logo lands everywhere in one command. An earlier version traced the mark
- * into inline paths to make it take `--brand` in both themes; the trace was a
- * worse drawing than the thing it traced, and inlining it would also have put
- * the file's own `clipPath` and `filter` ids into the document.
- *
- * The artwork carries its own near-black ground, so it reads as a tile rather
- * than a glyph — the same square-with-a-soft-corner as the group avatars
- * directly under it, which is the shape the app already uses for "an icon for
- * this thing".
- */
-export function Wordmark({ size = 38 }: { size?: number }) {
-  // eslint-disable-next-line @next/next/no-img-element -- static export: no optimiser
-  return <img src="/logo.svg" alt="" width={size} height={size} className="mark" />;
-}

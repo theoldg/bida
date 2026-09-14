@@ -14,20 +14,17 @@ corners. Colour is a scarce resource spent only on money —
 [ADR-0023](decisions/0023-monospace-monochrome.md). The ledger reading survives
 underneath: ruled rows, a red column and a green column.
 
-**The app names itself once**, on the groups list: the mark beside *bida* —
-lower-case always — the light/dark toggle opposite, and nothing under it; a
-sub-line would caption the list you are already looking at. Every other top bar
-says the thing you opened, so a second wordmark would be branding where a name
-should be. The mark is `design/brand/logo.svg` itself, shown as an <img>: it is the one
-place the app is allowed its own colours, because it carries its own ground
-and is a tile rather than a glyph — the same square as the avatars under it.
-Do not redraw it in `--brand` to make it theme-aware; that was tried, and a
-tracing of a logo is a worse logo. The one other place the name is printed is
-the "About bida" line at the foot of that same screen, which names what the
-link is *about* rather than heading the screen — set below body size in
-`--ink-2` with the info glyph beside it, quiet enough to read as a footer and
-not as a second title, loud enough to be found. The screen behind it (`/about`)
-is the app's only prose: a measured column (`.about`, ~34em), each claim under a
+**The app names itself once**, on the groups list: *bida* — lower-case always
+— with "About bida" and the light/dark toggle as icons opposite, and nothing
+under it; a sub-line would caption the list you are already looking at. Every
+other top bar says the thing you opened, so a second name would be branding
+where a title should be. **The mark is not in the app**: `design/brand/logo.svg`
+is the home-screen icon `pnpm icons` rasterises, and in the bar it sat beside a
+three-letter name that did not need illustrating. If it ever comes back it
+comes back as that file in an `<img>`, never redrawn in `--brand` to make it
+theme-aware — that was tried, and a tracing of a logo is a worse logo.
+
+The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em), each claim under a
 monospace eyebrow in `--ink-2` — the `.daylabel` register, which is how this app
 already writes a heading that is not a title. No cards there; a box per
 paragraph makes a settings list out of something read once, top to bottom. One

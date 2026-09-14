@@ -295,11 +295,10 @@ a { color: inherit; text-decoration: none }
 .topbar-mid { position: absolute; inset: max(10px, env(safe-area-inset-top)) 0 12px;
   display: flex; align-items: center; justify-content: center; pointer-events: none }
 .topbar-mid > * { pointer-events: auto }
-/* The wordmark and the name read as one lockup, so they sit on one baseline.
-   It carries no sub-line, so the height a sub-line would have taken goes to the
-   name itself and to the air around it. */
-.brand { display: flex; align-items: center; gap: 9px; font-size: 21px; padding: 4px 0 }
-.mark { border-radius: var(--r-s); flex: none; display: block }
+/* The app's name, and the whole of the bar it heads. It carries no sub-line,
+   so the height a sub-line would have taken goes to the name itself and to the
+   air around it. */
+.brand { display: flex; align-items: center; font-size: 21px; padding: 4px 0 }
 .topbar .sub { font-size: 10.5px; color: var(--muted); font-family: var(--f-mono); letter-spacing: .02em;
   text-transform: uppercase }
 .iconbtn { width: 32px; height: 32px; border-radius: var(--r-s); display: grid; place-items: center;

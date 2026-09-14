@@ -39,7 +39,7 @@ export default function GroupsPage() {
             carries the one switch that belongs to the phone rather than to any
             group (ADR-0007). The name is the whole bar: a sub-line under it
             described the screen you could already see. */}
-        {/* The wordmark is also the door to /diag, on a long press. Hidden
+        {/* The name is also the door to /diag, on a long press. Hidden
             rather than listed: a diagnostics screen is for the two minutes
             after something went wrong on a phone with no devtools attached,
             and it has no business in a menu a person reads. */}
