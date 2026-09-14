@@ -46,7 +46,10 @@ const extraSubject: Record<ExtraKind, string> = {
 export const copy = {
   app: {
     name: "bida",
-    description: "Shared expenses, split fairly. Works offline.",
+    /** Not shown in the app at all: this is the page description, so it is
+        the line under the wordmark when somebody pastes a link into a chat
+        — where the title is only "bida" and means nothing yet. */
+    description: "No-nonsense expense splitter.",
   },
 
   /** Buttons. One verb each — a button never says "OK". */

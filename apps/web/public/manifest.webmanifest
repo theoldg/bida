@@ -1,7 +1,7 @@
 {
   "name": "bida",
   "short_name": "bida",
-  "description": "Shared expenses, split fairly. Works offline.",
+  "description": "No-nonsense expense splitter.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
