@@ -38,6 +38,15 @@ the receipt, assign the lines, and copy the answer out as text. It writes no
 op and keeps nothing — the one thing here that is not a ledger
 ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 
+**The tip jar.** One screen (`/g/tip`, off a FAB on the balances tab), and the
+only ask in the app: no ads, no tier, nothing locked. It is a figure and two
+buttons — `$5 ≈ 10,000 receipt scans`
+([what a scan costs](receipt-scanning.md#what-the-scan-costs)), cut by the
+group the way the group cuts everything else, then Buy Me a Coffee and an
+ordinary expense to record what you gave. Donating happens on somebody else's
+site; this writes no entry on its own, and the split opens the normal form
+because it is a row in everyone else's ledger.
+
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
 Shared, not solo — sync is part of the MVP. Multi-currency, with one rate per
 currency held by the group and corrected in one place

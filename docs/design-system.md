@@ -86,6 +86,14 @@ groups to scroll — ungrounded, as the FABs it echoes are, so two figures pass
 over the rows rather than a dock cutting the screen in two; they never go out
 of reach either.
 
+**Balances has a corner of its own.** The ledger's two never appear there — it
+is a reading, not a place you add to — so the tip jar takes the spot
+(`.fab-w`, [product.md](product.md#the-mvp)). It wears the scan FAB's outline,
+never the ink, which this screen spends on the numbers, and it is the only FAB
+that carries a word: "+" and a camera are guessable, an ask is not. Wider than
+it is tall, so the shape says it is a different kind of thing before the word
+is read.
+
 **One act with two doors is one button cut in two.** Scanning a bill starts at
 the camera or at the library, and which of those is a detail of the same job:
 `.btn-pair` is one bordered box with a hairline between two halves, the box

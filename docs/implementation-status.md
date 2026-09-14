@@ -38,6 +38,11 @@ Armed in production on the same day — widget, both Worker secrets, migration
 `0002` on the live D1 — and walked end to end by a person: challenge tapped,
 receipt read.
 
+**The app asks for money** since 2026-09-14, in one place: a FAB on the
+balances tab opens `/g/tip`, which prices the only paid part of the app and
+offers to split a donation like any other expense
+([product.md](product.md#the-mvp)). The Buy Me a Coffee page is the owner's own.
+
 **Sealed** since 2026-09-12 — the server cannot read a group
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log was
 wiped once at that cutover so phones could refill it sealed, and that was **the

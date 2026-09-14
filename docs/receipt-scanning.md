@@ -319,6 +319,11 @@ budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
 | **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
 | **global** | 250/hour, 1500/day | the bill — roughly a dollar a day at the ceiling, against real use of tens of scans a day |
 
+At the model's price this is **about $5 per 10,000 scans** — where the day cap
+comes from, and the one figure the tip jar puts on screen. It lives in
+`TIP_USD_MINOR` (`web/lib/tip.ts`) as well, because that screen divides it by
+the group; if the price moves, both move.
+
 **Only the global cap bounds what the owner pays.** A credential costs one
 unauthenticated request to mint, by design, so the caller bucket is politeness:
 it stops a phone double-tapping through the shared budget, and a caller who
