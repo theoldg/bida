@@ -53,6 +53,14 @@ export interface DeviceRecord {
    */
   leftOnList?: boolean;
   /**
+   * True while the install offer on the groups list is folded shut. It is a
+   * collapse and not a dismissal: the card never leaves, because persisting
+   * storage is worth a standing ask and installing is the only thing that
+   * should end it (components/install.tsx). Absent on records written before
+   * this existed, which reads as open — the behaviour those records had.
+   */
+  installNudgeCollapsed?: boolean;
+  /**
    * What this phone scans with when it is not in a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    *

@@ -375,6 +375,14 @@ a { color: inherit; text-decoration: none }
    the screen rather than wherever the content happened to stop. */
 .homescroll { display: flex; flex-direction: column; min-height: 100% }
 
+/* The install card's title doubles as its disclosure (components/install.tsx).
+   A row, not a `.kv`: that one is the bill's, and carries the two-column
+   grid this has no second column for. The chevron is the bill's own, rotation
+   and all — one idiom for "this folds" across the app. */
+.nudgehead { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
+  color: var(--ink) }
+
 /* The screen behind that line (app/about/page.tsx): prose, which is the one
    thing this app otherwise never shows. So it is set as prose — a column with
    air between its claims, measured rather than full-bleed, and no cards: a box

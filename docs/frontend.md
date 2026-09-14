@@ -83,8 +83,8 @@ confers nothing without the secret.
   (`append.ts`). **Components never write to Dexie directly.** The rule that an
   op carries only what changed is `patch.ts`, once, for both entry editors: it
   was written out at each of them and the two copies drifted.
-- Device-local, never-synced state (who "you" are, theme, install-nudge
-  dismissal, the last group opened, and the scan credential a quick split
+- Device-local, never-synced state (who "you" are, theme, whether the install
+  nudge is folded, the last group opened, and the scan credential a quick split
   photographs with — [ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
   is in the `device` store. Two screens read
   `lastOpenedGroupId`, which `/g` sets on every visit (`setLastOpenedGroup`):
@@ -406,9 +406,13 @@ so the app asks to be installed too. `lib/install.ts` captures
 object can open the install sheet later — and reduces the situation to
 `installed | ready | manual | none`; iOS has no such event, hence `manual`.
 `components/install.tsx` puts the nudge at the foot of the groups list, only
-once there is a group worth coming back to. It has no dismiss — persisting
-storage is worth the standing ask, and installing is what ends it: the offer
-becomes `installed` and the nudge disappears on its own.
+once there is a group worth coming back to. **It folds, it does not dismiss** —
+persisting storage is worth the standing ask, and installing is what ends it:
+the offer becomes `installed` and the nudge disappears on its own. The title is
+its disclosure, and `installNudgeCollapsed` on the device record remembers the
+fold. On the `manual` branch the card also says what declining costs
+(`copy.install.manual.warn`), which is only true there: the seven days are
+WebKit's, and every iOS browser is one.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

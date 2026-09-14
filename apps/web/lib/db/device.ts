@@ -80,3 +80,10 @@ export async function unhideGroup(groupId: string): Promise<void> {
   if (!device.leftGroups?.includes(groupId)) return;
   await updateDevice({ leftGroups: device.leftGroups.filter((id) => id !== groupId) });
 }
+
+/** Fold the groups list's install offer shut, or open it again. */
+export async function setInstallNudgeCollapsed(collapsed: boolean): Promise<void> {
+  const device = await getDevice();
+  if ((device.installNudgeCollapsed ?? false) === collapsed) return;
+  await updateDevice({ installNudgeCollapsed: collapsed });
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "./icons";
-import { useInstallOffer } from "./install";
+import { ManualSteps, useInstallOffer } from "./install";
 import { copy } from "../lib/copy";
 import { promptInstall } from "../lib/install";
 
@@ -32,15 +32,7 @@ export function AboutOffline() {
           </button>
         </div>
       ) : null}
-      {offer === "manual" ? (
-        // Same sentence as the nudge on the groups list: iOS gives no install
-        // API, so the honest thing is to point at the button that does it.
-        <p className="hint" style={{ marginTop: 11 }}>
-          {copy.install.manual.tap} <Icon name="share" size={15}
-            style={{ display: "inline", verticalAlign: "-2px", color: "var(--ink-2)" }} />{" "}
-          {copy.install.manual.then} <b style={{ fontWeight: 600 }}>{copy.install.manual.label}</b>.
-        </p>
-      ) : null}
+      {offer === "manual" ? <ManualSteps /> : null}
     </section>
   );
 }
