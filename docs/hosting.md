@@ -76,19 +76,20 @@ export matters more than it looks.
 
 `apps/api` is the one Worker: static assets plus the sync API backed by D1.
 
-**Automatic:** every push to `main` runs
+**Automatic:** every push runs
 [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — build the
-web export, then `wrangler deploy` — using the `CLOUDFLARE_API_TOKEN` repo
-secret (Settings → Secrets and variables → Actions). It does not re-run
-typecheck/test; that's the local pre-push hook's job (see
-[working agreements](../CLAUDE.md#working-agreements)), so a push that skips
-the hook (`--no-verify`) can still deploy.
+web export, then `wrangler deploy` at the branch's environment — using the
+`CLOUDFLARE_API_TOKEN` repo secret (Settings → Secrets and variables →
+Actions). It does not re-run typecheck/test; that's the local pre-push hook's
+job (see [working agreements](../CLAUDE.md#working-agreements)), so a push that
+skips the hook (`--no-verify`) can still deploy.
 
 **Manually**, e.g. from a phone session with no local hook:
 
 ```bash
-pnpm --filter @bida/web build        # next build → apps/web/out
-pnpm --filter @bida/api run deploy   # wrangler deploy
+pnpm --filter @bida/web build            # next build → apps/web/out
+pnpm --filter @bida/api run deploy:dev   # wrangler deploy --env dev
+pnpm --filter @bida/api run deploy       # …or production, which is the owner's call
 ```
 
 The scan endpoint needs three Worker secrets, once, not per deploy:
@@ -123,9 +124,50 @@ npx wrangler d1 create hajsik   # prints a database_id — paste into wrangler.t
 pnpm db:migrate                 # applies migrations to the remote DB
 ```
 
-`pnpm db:migrate:local` does the same to `wrangler dev`'s local SQLite. Preview
-deploys use a separate D1 — **never point a preview at production data**; the op
-log has no infrastructure-level undo.
+`pnpm db:migrate:local` does the same to `wrangler dev`'s local SQLite, and
+`pnpm db:migrate:dev` to the dev Worker's own remote database.
+
+### Dev and production
+
+Two Workers, two D1 databases, one repo. The only differences are the name and
+the `database_id` — the [`[env.dev]` block in
+`wrangler.toml`](../apps/api/wrangler.toml) restates them, and the web export
+is byte-identical, so what production gets is a build that already ran on dev.
+
+| | Branch | Worker | D1 | Holds |
+|---|---|---|---|---|
+| **Production** | `main` | `hajsik` | `hajsik` | Somebody's ledger. Never wiped. |
+| **Dev** | `dev` | `hajsik-dev` | `hajsik-dev` | Disposable. Wipe it freely. |
+
+**A group link is same-origin** — `https://<worker-host>/g/<id>#key`, and the
+app syncs against the host it was loaded from. So these are two sealed worlds
+with no flag to get wrong: a group made on dev can only ever reach `hajsik-dev`,
+and the production log is unreachable from a dev session. That, not care, is
+what keeps ["never wipe it again"](standing-instructions.md#product) true.
+
+**`main` only ever fast-forwards.** Nothing is committed to it, so it is a
+pointer at what production is serving, and releasing is the owner's — a button
+on github.com → Actions → **Release dev to main** → *Run workflow*
+([`release.yml`](../.github/workflows/release.yml)), which needs no laptop and
+no token. By hand it is the same two commands:
+
+```bash
+git checkout main && git merge --ff-only dev && git push && git checkout dev
+```
+
+`--ff-only` is the rail, not a formality: it refuses exactly when something
+landed on `main` behind the branch's back, and the fix is `git merge main` from
+`dev` once before releasing again. Because it holds, the branches never diverge,
+there is no merge commit and nothing is ever merged *back*. Merging does not
+consume `dev` — it keeps moving and is released again, as often as you like.
+
+**Worker secrets are per-environment.** `GEMINI_API_KEY`, `SCAN_IP_SALT` and
+`TURNSTILE_SECRET_KEY` set on production are invisible to dev; set them again
+with `--env dev` if a session needs scanning to work there. The Turnstile *site*
+key is shared, so `hajsik-dev.hajsik-api.workers.dev` has to be on the widget's
+domain list or every dev scan is refused. Note that dev's scan budget is counted
+in dev's database — arming it there doubles the only number bounding the Gemini
+bill ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
 
 ### A schema change, from here on
 
@@ -147,7 +189,8 @@ token the owner pastes — in the same window as the push that needs it. Migrate
 first when the new code requires the new shape, and write migrations that an
 older Worker survives, because for a minute or two one will be serving them.
 
-**Live at <https://hajsik.hajsik-api.workers.dev>** — permanent; `workers.dev`
+**Live at <https://hajsik.hajsik-api.workers.dev>**, dev at
+<https://hajsik-dev.hajsik-api.workers.dev> — permanent; `workers.dev`
 subdomains don't expire while the Worker exists.
 
 The Worker and the D1 database are still called `hajsik`, from before the
@@ -185,6 +228,13 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
+- **A push made with the built-in `GITHUB_TOKEN` triggers no workflow.** This
+  is deliberate on GitHub's part (it stops a loop), and it is why
+  `release.yml` calls `deploy.yml` itself instead of pushing `main` and
+  trusting the push trigger to notice.
+- **Wrangler environments inherit nothing.** `[env.dev]` restates `[assets]`
+  and the D1 binding in full; a block left out is simply absent from that
+  Worker, with no warning at deploy time.
 - **`wrangler deploy --dry-run` succeeds with a bogus `database_id`** — it does
   not validate the id against the account. Only a real deploy (or `wrangler d1
   list`) catches a wrong one.

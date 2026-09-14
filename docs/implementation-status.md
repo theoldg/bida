@@ -21,6 +21,12 @@ static export *and* the sync API, backed by the `hajsik` D1 database
 idempotent push, pull, a wrong token refused, and a real group synced between
 two devices.
 
+**There is a dev world beside it** since 2026-09-14:
+<https://hajsik-dev.hajsik-api.workers.dev>, its own D1, deployed by every push
+to `dev` — which is the branch sessions push to now. Production moves only when
+the owner releases, by a button or by hand
+([hosting.md](hosting.md#dev-and-production)).
+
 **The scan endpoint composes its own request** since 2026-09-13: the phone
 sends the photo and nothing else, so the shared Gemini key cannot be handed a
 prompt of someone's choosing

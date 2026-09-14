@@ -6,17 +6,17 @@ hosted for free. Read this, then the doc your task points at.
 ## Non-negotiables
 
 1. **Run `pnpm session` first thing, every session.** It is `pnpm install`
-   plus `scripts/on-main.sh`, and it settles both of the things that go wrong
+   plus `scripts/on-dev.sh`, and it settles both of the things that go wrong
    before a single line is written:
    - **Install.** A fresh clone has no `node_modules` and no `core.hooksPath`,
      so the `pre-push` hook that runs `pnpm check` cannot fire — a push before
      then leaves with zero local verification and no error telling you so.
      Installing is what wires the hook up (`postinstall`).
-   - **Branch.** This project pushes directly to `main`; there are no pull
-     requests. If your harness assigned a feature branch, `on-main.sh` moves you
-     to `main` and carries over anything already committed. Run it before you
-     commit; noticing later still works, as it fast-forwards `main` and deletes
-     the stray branch.
+   - **Branch.** This project pushes directly to `dev`; there are no pull
+     requests. `main` is the owner's, moved only by their hand. If your harness
+     assigned a feature branch, `on-dev.sh` moves you to `dev` and carries over
+     anything already committed. Run it before you commit; noticing later still
+     works, as it fast-forwards `dev` and deletes the stray branch.
 2. **Commit and push at every checkpoint**, not once at the end.
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
@@ -38,7 +38,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | Browser checks (`entries`, `claim`, `offline`, `shots`) on a shared harness, plus `icons`, `docs-check`, `on-main` |
+| `scripts/` | Browser checks (`entries`, `claim`, `offline`, `shots`) on a shared harness, plus `icons`, `docs-check`, `on-dev` |
 
 ## Stack
 
@@ -78,8 +78,9 @@ pnpm session && pnpm check
   typecheck, tests and the static export build, ~45s. Nothing else gates a
   push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
-  photographs it — [testing.md](docs/testing.md). Push to `main` then
-  auto-deploys — [hosting.md](docs/hosting.md#deploying).
+  photographs it — [testing.md](docs/testing.md). A push to `dev` auto-deploys
+  to the dev Worker; production moves when the owner fast-forwards `main` —
+  [hosting.md](docs/hosting.md#dev-and-production).
 - **Code.** TypeScript strict, no un-narrowed `any`. `packages/core` is pure —
   no I/O, no framework, and take a clock as an argument. Prefer a function to a
   class, plain data to a wrapper. Comments explain *why*.
@@ -99,7 +100,7 @@ pnpm session && pnpm check
 **Done means:** `pnpm check` passes · arithmetic has passing tests · the doc
 describing the changed behaviour is updated in the same commit · a preference
 that clears the bar is in standing-instructions, dated · implementation-status
-and roadmap reflect reality · pushed to `main`.
+and roadmap reflect reality · pushed to `dev`.
 
 ## Doc upkeep
 

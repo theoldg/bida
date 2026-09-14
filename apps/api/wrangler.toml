@@ -16,3 +16,25 @@ binding = "DB"
 database_name = "hajsik"
 database_id = "809ab9d2-f6b3-4183-a9b1-8204848655f3"
 migrations_dir = "migrations"
+
+# The dev Worker: its own hostname, its own D1, deployed from the `dev` branch.
+# Wrangler environments inherit nothing — [assets] and the binding are restated
+# here or the dev Worker ships without them. A group link is same-origin, so
+# these two worlds cannot reach each other: a link made on dev only ever talks
+# to `hajsik-dev`, and production's finished log is unreachable from here.
+# docs/hosting.md#dev-and-production.
+[env.dev]
+name = "hajsik-dev"
+
+[env.dev.assets]
+directory = "../web/out"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+# Created by `wrangler d1 create hajsik-dev` on 2026-09-14. Disposable, unlike
+# the production database — this is the one a schema change gets tried on.
+[[env.dev.d1_databases]]
+binding = "DB"
+database_name = "hajsik-dev"
+database_id = "add4467a-ebc2-43e5-800d-93cb3545fbbb"
+migrations_dir = "migrations"

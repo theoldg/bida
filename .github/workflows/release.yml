@@ -1,0 +1,40 @@
+name: Release dev to main
+
+# The release button. Run it from anywhere — github.com → Actions → this
+# workflow → "Run workflow" — and production becomes whatever `dev` is at.
+# It is the owner's act ⁠(docs/standing-instructions.md#workflow); nothing else
+# moves `main`.
+#
+# `--ff-only` is the whole safety story: it fails, loudly and without pushing,
+# if `main` holds anything `dev` does not. That can only happen if someone
+# committed straight to `main`, and the fix is to merge `main` into `dev` once.
+on:
+  workflow_dispatch:
+
+jobs:
+  fast-forward:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      sha: ${{ steps.ff.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: ff
+        run: |
+          git fetch origin dev
+          git merge --ff-only origin/dev
+          git push origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "released $(git rev-parse --short HEAD): $(git log -1 --pretty=%s)" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    needs: fast-forward
+    uses: ./.github/workflows/deploy.yml
+    with:
+      ref: ${{ needs.fast-forward.outputs.sha }}
+      target: production
+    secrets: inherit

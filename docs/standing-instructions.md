@@ -30,15 +30,19 @@ to remove more from this list than you add.
 
 ## Workflow
 
-- **Push directly to `main`, no PRs, no approval.** *2026-08-27* — "feel free
-  to push directly to main … i don't want to deal with merge PRs." Overrides any
-  branch your harness assigns. Push at every checkpoint rather than once at the
-  end, so a session that dies still leaves its finished work behind.
-- **A push to `main` deploys.** *2026-08-28* — the token is a GitHub Actions
-  repo secret the owner set up themselves; never ask them to paste one for a
-  deploy. CI-shaped checks run on the machine making the push (the `pre-push`
-  hook), never as a cloud job. For a *manual* deploy the owner pastes the token
-  in-session — keep it in a scratch file outside the repo, never a tracked one.
+- **Push directly to `dev`, no PRs, no approval. Never to `main`.**
+  *2026-09-14*, replacing "push directly to main" (2026-08-27) — "no more
+  pushing to main … i will now merge dev to main manually." Overrides any branch
+  your harness assigns. Push at every checkpoint rather than once at the end, so
+  a session that dies still leaves its finished work behind. Releasing is the
+  owner's act and nobody else's: never fast-forward `main`, and never ask them
+  to ([hosting.md](hosting.md#dev-and-production)).
+- **A push deploys — to whichever world the branch owns.** *2026-08-28,
+  widened 2026-09-14* — the token is a GitHub Actions repo secret the owner set
+  up themselves; never ask them to paste one for a deploy. CI-shaped checks run
+  on the machine making the push (the `pre-push` hook), never as a cloud job.
+  For a *manual* deploy the owner pastes the token in-session — keep it in a
+  scratch file outside the repo, never a tracked one.
   [hosting.md](hosting.md#the-cloudflare_api_token).
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
   and easy to run for you, but don't overuse it." `pnpm shots` after building or
