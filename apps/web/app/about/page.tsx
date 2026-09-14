@@ -6,7 +6,8 @@ import { copy } from "../../lib/copy";
 import { route } from "../../lib/group-link";
 
 /**
- * Who can edit, whether it works on a train, where to complain, and who can
+ * Who can edit, whether it works on a train, where to complain, and — last,
+ * since it is the longest and the one fewest people are here for — who can
  * read what you typed. Four claims, no pitch: this screen is reached from the
  * foot of the groups list, so whoever is on it already has the app and does
  * not need it described back to them. The source link sits above all four,
@@ -35,19 +36,6 @@ export default function AboutPage() {
               {copy.about.offline.body}
             </Section>
 
-            <Section title={privacy.title} under={
-              <>
-                <SealedRow />
-                <p>{privacy.key}</p>
-                <p>{privacy.shape}</p>
-                {/* Set apart and led by its own bold sentence: the photograph
-                    leaves for somebody else's server entirely, and it is the
-                    one thing about this app that is not sealed. An exception
-                    buried in a paragraph is a lie. */}
-                <p className="aboutwarn"><strong>{privacy.scanTitle}</strong> {privacy.scan}</p>
-              </>
-            }>{privacy.body}</Section>
-
             {/* The one door out of the app besides the source link above. A
                 mailto rather than a form: a form needs an endpoint, an inbox
                 and a spam story, and the address is the whole of what it
@@ -59,6 +47,21 @@ export default function AboutPage() {
                 </a>
               </div>
             }>{feedback.body}</Section>
+
+            {/* Led by its own bold sentence, ahead of the paragraph it is an
+                exception to: the photograph leaves for somebody else's server
+                entirely, and it is the one thing about this app that is not
+                sealed. Said after the rest, it would read like a footnote. */}
+            <Section title={privacy.title} under={
+              <>
+                <p>{privacy.body}</p>
+                <SealedRow />
+                <p>{privacy.key}</p>
+                <p>{privacy.shape}</p>
+              </>
+            }>
+              <><strong>{privacy.scanTitle}</strong> {privacy.scan}</>
+            </Section>
           </div>
         </Scroll>
       </Body>
@@ -95,7 +98,7 @@ function SealedRow() {
  * once.
  */
 function Section({ title, children, under }: {
-  title: string; children: string; under?: ReactNode;
+  title: string; children: ReactNode; under?: ReactNode;
 }) {
   return (
     <section className="aboutsect">

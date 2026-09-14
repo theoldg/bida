@@ -28,15 +28,14 @@ link is *about* rather than heading the screen — set below body size in
 `--ink-2` with the info glyph beside it, quiet enough to read as a footer and
 not as a second title, loud enough to be found. The screen behind it (`/about`)
 is the app's only prose: a measured column (`.about`, ~34em), each claim under a
-monospace eyebrow — the `.daylabel` register, which is how this app already
-writes a heading that is not a title. No cards there; a box per paragraph makes
-a settings list out of something read once, top to bottom. Two exceptions, both
-earning it: the stored row under Privacy takes a card ground and a size step
-down (`.aboutrow`) because every word on the screen is already monospace and a
-typeface can't mark it, and the receipt-scan line takes a side rule
-(`.aboutwarn`) because an exception buried in a paragraph is a lie. The last
-eyebrow is a disclosure — same register, plus the `.kvchev` the rest of the app
-turns — and what hangs under it is shut until asked for.
+monospace eyebrow in `--ink-2` — the `.daylabel` register, which is how this app
+already writes a heading that is not a title. No cards there; a box per
+paragraph makes a settings list out of something read once, top to bottom. One
+exception earns it: the stored row under Privacy takes a card ground and a size
+step down (`.aboutrow`) because every word on the screen is already monospace
+and a typeface can't mark it. The receipt-scan line leads that same section
+instead — an exception said before the rule it is an exception to, not buried
+under it — set apart by nothing but its own bold lead-in (`strong`).
 
 ## Palette roles
 
