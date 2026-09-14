@@ -67,11 +67,11 @@ and still flat. It is the last row of the scroll, not a pinned bar: pinned, it
 fights the phone keyboard, which overlays the shell rather than shortening it.
 Where the screen has no scroll of its own to ride — the who-had-what grid owns
 its, sideways as well as down — the button sits in the fixed foot, and that
-band pays `--kb` in its place. The entry form, the new-group form and the
-who-had-what grid all end this way. `/g/scan` is the one exception: it holds a
-picture and the button that picture explains, and at the foot the button is a
-long way from the only thing explaining it, so the two sit centred as one
-block instead.
+band pays `--kb` in its place. The entry form, the new-group form, the
+who-had-what grid and "Which one is you?" all end this way. `/g/scan` is the
+one exception: it holds a picture and the button that picture explains, and at
+the foot the button is a long way from the only thing explaining it, so the two
+sit centred as one block instead.
 
 **One act with two doors is one button cut in two.** Starting is the other one:
 a group, or a bill split with people who aren't one, is "New group · Quick

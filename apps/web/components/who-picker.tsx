@@ -40,7 +40,8 @@ export interface Who {
  * The button sits under the list rather than in a `Foot`, because it is the
  * next thing you do after tapping your name and not a fixture of the screen:
  * pinned to the bottom of a short list it read as unrelated to the tap that
- * had just lit it up.
+ * had just lit it up. It is the act the screen exists for, so it is the same
+ * `.btn-lg` register as Create and Save (docs/design-system.md).
  */
 export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue }: {
   people: readonly Who[];
@@ -109,7 +110,7 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
       </div>
 
       <div className="pad">
-        <button className="btn btn-p" onClick={() => void proceed()} disabled={busy || !chosen}
+        <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}
           {...keepsFocus}>
           {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
         </button>
