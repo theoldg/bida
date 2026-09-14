@@ -458,21 +458,6 @@ function BalancesTab({ data }: { data: GroupData }) {
           })}
         </div>
       </div>
-
-      {/* Income is never netted into the balances above, so it gets its own
-          line — and only once there is one to show. */}
-      {balances.totalIncomeMinor > 0 ? (
-        <div className="pad" style={{ paddingTop: 12 }}>
-          <Card>
-            <div className="kv">
-              <span className="k">{copy.group.takenIn}</span>
-              <span className="v">
-                {money(balances.totalIncomeMinor, group.baseCurrency, true)}
-              </span>
-            </div>
-          </Card>
-        </div>
-      ) : null}
       <div style={{ height: 24 }} />
     </Scroll>
   );

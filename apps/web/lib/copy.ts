@@ -383,7 +383,6 @@ export const copy = {
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
     settleUp: "Settle up",
     allSquare: "Everyone’s square",
-    takenIn: "Taken in",
   },
 
   // ------------------------------------------------------------- people
