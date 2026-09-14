@@ -76,16 +76,16 @@ describe("the text it hands over", () => {
     const { totalMinor, shares } = quickShares(draft, PEOPLE);
     expect(quickSummaryText(draft.description, totalMinor, shares, draft.currency)).toBe(
       [
-        "Bar Zahra — 38.80",
+        "Bar Zahra: 38.80",
         "",
-        "Ana — 20.10",
-        "  Tagine — 18.00",
-        "  Mint tea ×1/3 — 2.10",
-        "Bo — 16.60",
-        "  Couscous — 14.50",
-        "  Mint tea ×1/3 — 2.10",
-        "Cy — 2.10",
-        "  Mint tea ×1/3 — 2.10",
+        "Ana: 20.10",
+        "  Tagine: 18.00",
+        "  Mint tea ×1/3: 2.10",
+        "Bo: 16.60",
+        "  Couscous: 14.50",
+        "  Mint tea ×1/3: 2.10",
+        "Cy: 2.10",
+        "  Mint tea ×1/3: 2.10",
       ].join("\n"),
     );
   });
@@ -94,13 +94,13 @@ describe("the text it hands over", () => {
     const draft = bill({ description: "" });
     const { totalMinor, shares } = quickShares(draft, PEOPLE);
     expect(quickSummaryText("", totalMinor, shares, draft.currency).split("\n")[0])
-      .toBe("Total — 38.80");
+      .toBe("Total: 38.80");
   });
 
   it("names a deduction the way the bill printed it", () => {
     const draft = bill({ receiptDiscounts: [{ label: "2 for 1", amount: "3.00" }] });
     const { totalMinor, shares } = quickShares(draft, PEOPLE);
     const text = quickSummaryText(draft.description, totalMinor, shares, draft.currency);
-    expect(text).toContain("2 for 1 — -");
+    expect(text).toContain("2 for 1: -");
   });
 });

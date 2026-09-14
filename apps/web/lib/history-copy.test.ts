@@ -538,7 +538,7 @@ suite("describe", () => {
     await healGroup(groupId);
 
     expect((await described(groupId))[0]!.said)
-      .toBe("Marie was removed, but an entry still names them — added back");
+      .toBe("Marie was removed, but an entry still names them: added back");
   });
 
   it("lets somebody who joins on their own phone say so themselves", async () => {

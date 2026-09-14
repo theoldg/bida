@@ -83,7 +83,7 @@ export const copy = {
     /** The read didn’t just stall, it failed — the screen can’t draw. */
     broken: {
       title: "Can’t read this phone’s data",
-      body: "Nothing is lost — it is still on this phone. Reloading usually clears this.",
+      body: "Nothing is lost: it is still on this phone. Reloading usually clears this.",
     },
   },
 
@@ -133,7 +133,7 @@ export const copy = {
   groups: {
     empty: {
       title: "No groups yet",
-      body: "A trip, a flat, a dinner — anything several people pay for.",
+      body: "A trip, a flat, a dinner: anything several people pay for.",
     },
     newGroup: "New group",
     quickSplit: "Quick split",
@@ -283,7 +283,7 @@ export const copy = {
     namePlaceholder: "Group name",
     currency: "Currency",
     people: "Members",
-    failed: (why: string) => `Couldn’t create the group — ${why}`,
+    failed: (why: string) => `Couldn’t create the group: ${why}`,
     discardTitle: "Discard this group?",
     discardBody: "Nothing has been created yet.",
   },
@@ -329,14 +329,14 @@ export const copy = {
       body: "Ask someone in the group to send you the invite link.",
     },
     /** Three ways to be out of step, in the order of how badly you need to know. */
-    offlineIdle: "Offline — you may not have everyone’s latest.",
-    offlinePending: (waiting: string) => `Offline — ${waiting} waiting.`,
+    offlineIdle: "Offline: you may not have everyone’s latest.",
+    offlinePending: (waiting: string) => `Offline: ${waiting} waiting.`,
     // Not "ask for a fresh one": there is no secret rotation, so a fresh link
     // is byte-identical. Opening the invite link again is what actually clears
     // this — `saveGroupKey` unsets the failure.
     rejected: "This phone’s link doesn’t open this group. Open the invite link again.",
-    unreachableIdle: "Can’t reach the server — you may not have everyone’s latest.",
-    unreachablePending: (waiting: string) => `Can’t reach the server — ${waiting} stuck on this phone.`,
+    unreachableIdle: "Can’t reach the server: you may not have everyone’s latest.",
+    unreachablePending: (waiting: string) => `Can’t reach the server: ${waiting} stuck on this phone.`,
 
     /** Marks a balance row for somebody who is no longer in the group. */
     hasLeft: "removed",
@@ -350,7 +350,7 @@ export const copy = {
     /** The clipboard can refuse — an insecure context, a denied permission —
         and the link is shown nowhere else, so it is shown here. */
     linkTitle: "The invite link",
-    linkBody: "Copying didn’t work — hold the link to copy it.",
+    linkBody: "Copying didn’t work: hold the link to copy it.",
     addEntry: "Add an entry",
 
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
@@ -380,7 +380,7 @@ export const copy = {
     paidTo: (from: string, to: string) => `${from} paid ${to}`,
 
     unsplittable: (n: string) => `${n} couldn’t be split`,
-    unsplittableWhy: (reason: string) => `${reason} — left out of the balances.`,
+    unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
     settleUp: "Settle up",
     allSquare: "Everyone’s square",
     takenIn: "Taken in",
@@ -450,8 +450,8 @@ export const copy = {
      * (ADR-0035).
      */
     summary: {
-      line: (label: string, amount: string) => `${label} — ${amount}`,
-      item: (label: string, amount: string) => `  ${label} — ${amount}`,
+      line: (label: string, amount: string) => `${label}: ${amount}`,
+      item: (label: string, amount: string) => `  ${label}: ${amount}`,
       count: (label: string, count: string) => `${label} ×${count}`,
       /** Stands in as the heading when the scan read no merchant name. */
       total: "Total",
@@ -522,15 +522,15 @@ export const copy = {
     discardTitle: (kind: string) => `Discard this ${kind}?`,
     discardTitleEdits: "Discard edits?",
     discardBody: "Changes will be lost.",
-    saveFailed: (why: string) => `Couldn’t save — ${why}`,
-    goneMember: (name: string) => `${name} is no longer in the group — pick somebody else.`,
+    saveFailed: (why: string) => `Couldn’t save: ${why}`,
+    goneMember: (name: string) => `${name} is no longer in the group. Pick somebody else.`,
     nobodyTitle: "Nobody in this group yet",
     nobodyBody: "Add the people sharing this first.",
     sentBy: "Who sent it",
     receivedBy: "Who received it",
     swapSides: "Swap the two sides",
     sameSide: "Pick two different people.",
-    otherSide: "the other side — picking swaps them",
+    otherSide: "the other side: picking swaps them",
     you: "you",
   },
 
@@ -614,7 +614,7 @@ export const copy = {
      * see the drawing.
      */
     diagram: {
-      alt: "Photograph the bill and the expense fills itself in — what it cost, what it’s called, and when.",
+      alt: "Photograph the bill and the expense fills itself in: what it cost, what it’s called, and when.",
       /**
        * The bill on the left. Its lines add up to `amount`, which is also the
        * number the form on the right comes back with — the drawing's whole
@@ -674,10 +674,10 @@ export const copy = {
     problem: {
       "no-total": "I can’t make out the total on that one.",
       "unreadable-line": "I can’t read every line on that one.",
-      mismatch: "The lines don’t add up to the total — try a flatter, square-on photo.",
+      mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
     } satisfies Record<ScanProblem, string>,
-    offline: "You’re offline — scanning needs a connection.",
-    busy: "Gemini’s busy — try again in a minute.",
+    offline: "You’re offline: scanning needs a connection.",
+    busy: "Gemini’s busy. Try again in a minute.",
     /**
      * Our own cap, which is a different thing from `busy` above: waiting a
      * minute fixes Gemini being overloaded and does nothing at all about a
@@ -689,8 +689,8 @@ export const copy = {
      * near is fat, and the refusal says the whole of it when it matters.
      */
     limit: {
-      you: "That’s your scans for now — scanning is capped. Type this one in, or come back later.",
-      global: "The shared scan budget is spent — type this one in, or try later.",
+      you: "That’s your scans for now: scanning is capped. Type this one in, or come back later.",
+      global: "The shared scan budget is spent. Type this one in, or try later.",
     },
     /**
      * Fail-closed, and named: a blocked script is not a bad photograph. Two
@@ -700,8 +700,8 @@ export const copy = {
      * thing that cannot help.
      */
     unverified: {
-      browser: "Couldn’t check this browser — scanning needs challenges.cloudflare.com.",
-      server: "This browser check was refused — scanning is misconfigured here. Type this one in.",
+      browser: "Couldn’t check this browser: scanning needs challenges.cloudflare.com.",
+      server: "This browser check was refused: scanning is misconfigured here. Type this one in.",
     },
   },
 
@@ -846,10 +846,10 @@ export const copy = {
     removed: (who: string, them: string) => `${who} removed ${them}`,
     /** Nobody asked for this one, so it names the cause rather than the actor:
         a removal the group had already contradicted, undone. */
-    readded: (them: string) => `${them} was removed, but an entry still names them — added back`,
+    readded: (them: string) => `${them} was removed, but an entry still names them: added back`,
     /** The rate half of the same repair. Names the cause, not the actor. */
     restoredRate: (code: string) =>
-      `The ${code} rate was cleared, but entries still use it — put back`,
+      `The ${code} rate was cleared, but entries still use it: put back`,
     renamedSelf: (who: string) => `${who} changed their name`,
     renamed: (who: string, was: string) => `${who} renamed ${was}`,
     updatedMember: (who: string, them: string) => `${who} updated ${them}`,
@@ -901,8 +901,8 @@ export const copy = {
       typed: "yours",
       typedOn: (date: string) => `yours, ${date}`,
       loading: "looking it up…",
-      offline: "offline — type it",
-      unavailable: "couldn’t look it up — type it",
+      offline: "offline: type it",
+      unavailable: "couldn’t look it up: type it",
     },
     refetch: "Look it up",
     /** The one thing this dialog does that a person should know before doing it. */
@@ -914,7 +914,7 @@ export const copy = {
     blockedBody: (entries: string) => `Used by ${entries}.`,
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
-    failed: (why: string) => `Couldn’t save the rate — ${why}`,
+    failed: (why: string) => `Couldn’t save the rate: ${why}`,
     /** The badge beside the entry form's converted figure. The rate itself is
         not printed there — this is the way to the number, not the number. */
     setRate: () => `set rate`,
