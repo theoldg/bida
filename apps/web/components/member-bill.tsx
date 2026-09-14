@@ -51,7 +51,7 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
           {lines.map((line, i) => {
             const count = line.extra ? null : countText(line.count);
             return (
-              <div className={`billline${line.extra ? " tip" : ""}`} key={i}>
+              <div className={`billline${line.extra ? " billextra" : ""}`} key={i}>
                 <span className="lbl">
                   {/* A deduction carries the name the bill gave it ("2 for 1");
                       the tip and the tax are only ever what they are. */}

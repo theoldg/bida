@@ -101,7 +101,7 @@ owning the border as in `.splitbox`. Two buttons side by side is the shape for
 two *different* jobs, and `.seg` is the app's mode switch — under the split
 editor's tabs it would read "which of these am I in". Mid-scan the divider goes
 and the box holds one strip, "Reading…", with the press wash sweeping across it
-over the two seconds a scan usually takes — the one wait in the app whose
+over the three seconds a scan usually takes — the one wait in the app whose
 length we can guess, so it is drawn rather than shrugged at. The bar *is* the
 control filling, not a track inside it, and it hands over to the spinner only
 if the model is slower than usual; an answer that beats it never shows one.
@@ -349,3 +349,10 @@ guidance asks you to fall back *to*, and clamped it would be nothing at all.
 - **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
   way up, so anything else that animates inside it — the scan's own sweep —
   has to stop the event, or a flash that never ran reads as one that settled.
+- **One global stylesheet means a bare class name lands everywhere it is
+  spelled.** `.billline.tip` was compounded and still took the tip jar's `.tip`
+  — a centred flex column with 22px of gap — so every discount and tax line in
+  a person's bill stacked its label over its figure with a band of air around
+  it. The compound selector wins the properties it sets and nothing more.
+  Prefix a modifier with its block (`billextra`) rather than naming it after
+  what it holds.

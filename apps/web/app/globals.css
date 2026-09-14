@@ -681,11 +681,20 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
   border-bottom: 1px dotted var(--rule) }
 .billline .amt { font-family: var(--f-mono); font-variant-numeric: tabular-nums;
   color: var(--ink-2); flex: none }
-/* The tip is charged, not ordered: ruled off from the things they had. */
-.billline.tip { color: var(--muted); margin-top: 3px; padding-top: 5px;
+/* What the bill charged for rather than what they ordered — a discount, the
+   tax, the tip — ruled off from the things they had. The rule and the gap
+   belong to the *block*, so only the first of them wears them: a bill with two
+   deductions and a tax on it drew four hairlines with a band of air around
+   each, which reads as four sections rather than as the foot of one bill.
+
+   `billextra`, not `tip`: `.tip` is the tip jar's own screen, a centred
+   column with 22px of gap and a `min-height`, and a compound selector does
+   not stop a bare class name from landing on the same element. */
+.billline.billextra { color: var(--muted); margin-top: 3px; padding-top: 5px;
   border-top: 1px solid var(--rule) }
-.billline.tip .amt { color: var(--muted) }
-.billline.tip .lead { border-bottom-color: transparent }
+.billline.billextra + .billline.billextra { margin-top: 0; padding-top: 2px; border-top: none }
+.billline.billextra .amt { color: var(--muted) }
+.billline.billextra .lead { border-bottom-color: transparent }
 /* A count is how much of a line was theirs, so it rides the label as a token
    rather than as more words: "1/2" after a dish name is not part of its name. */
 .billqty { margin-left: 5px; padding: 1px 4px; border-radius: var(--r-s);
