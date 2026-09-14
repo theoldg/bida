@@ -50,7 +50,19 @@ export default function GroupsPage() {
               <Wordmark size={38} /> {copy.app.name}
             </span>
           }
-          right={<ThemeToggle />} />
+          right={
+            <>
+              {/* The only door to the screen the app spends on itself: what
+                  this is, what the server can see, and where to complain
+                  (app/about). Icon-only in the bar rather than a line under
+                  the list — it is read once, and at the foot it stood between
+                  a thumb and the two things this screen is for. */}
+              <Link href={route.about()} className="iconbtn" aria-label={copy.groups.about}>
+                <Icon name="info" size={17} />
+              </Link>
+              <ThemeToggle />
+            </>
+          } />
 
         <Scroll>
          <div className="homescroll">
@@ -77,15 +89,9 @@ export default function GroupsPage() {
 
           {/* The act this screen exists for, at the bottom of it: under the
               list however short the list is, and where a thumb already rests
-              on a phone. It carries the column's `margin-top: auto`, so it and
-              the about line under it are one block at the foot of the screen. */}
+              on a phone. It carries the column's `margin-top: auto`, so it
+              falls to the foot of the screen however short the list is. */}
           <StartPair />
-
-          {/* The only door to the screen the app spends on itself: what this
-              is, what the server can see, and where to complain (app/about). */}
-          <Link href={route.about()} className="homeabout">
-            <Icon name="info" size={14} />{copy.groups.about}
-          </Link>
          </div>
         </Scroll>
       </Body>

@@ -340,9 +340,10 @@ a { color: inherit; text-decoration: none }
    that pair grown up: big enough to carry a word as well as the icon, and
    below the list rather than in it, because neither is a group and the dashed
    square said they were. The block sits at the *foot* of the column
-   (`margin-top: auto`), within reach of a thumb, with only the about line
-   beneath it. */
-.homepair { padding: 22px 16px 4px; margin-top: auto }
+   (`margin-top: auto`), within reach of a thumb, and nothing under it: the
+   about line that used to sit there is an icon in the bar now, which is where
+   a door read once belongs. */
+.homepair { padding: 22px 16px 20px; margin-top: auto }
 /* Right-aligned on the same rail the ledger's FABs hang from
    (`max(16px, 50vw - 264px)`), and spaced the way that pair is: these are the
    same two destinations at a size that can carry a word, so they line up over
@@ -365,13 +366,7 @@ a { color: inherit; text-decoration: none }
    inverted — the same weight of destination, half the voice. */
 .start-s { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink) }
 
-/* What this app is: the quietest line on the screen, centred under everything
-   else. It is a footer — read once, never again — so it takes no weight, no
-   box and no row of its own. */
-.homeabout { width: 100%; display: flex; align-items: center; justify-content: center;
-  gap: 7px; padding: 26px 16px 18px;
-  font-size: 13px; font-weight: 500; color: var(--ink-2) }
-/* The column the start pair and the about line under it fall to the bottom of.
+/* The column the start pair falls to the bottom of.
    Full height even when the list is two rows, so "bottom" means the bottom of
    the screen rather than wherever the content happened to stop — and it still
    scrolls past when the list is long. */
