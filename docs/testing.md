@@ -64,7 +64,9 @@ otherwise have to read the whole suite to learn:
   iteration order).
 - **Any permutation of the same ops folds to the same state**; a late-arriving
   op is detected (`foldForward` → `null`, caller rebuilds).
-- **`settleUp` clears every balance to zero**, 300 randomised groups.
+- **`settleUp` clears every balance to zero**, 300 randomised groups, and uses
+  **the fewest transfers possible** — checked against a brute-force minimum
+  written a different way, over 2,000 randomised groups.
 - **HLCs are totally ordered by string comparison**, and a peer's stamp is
   absorbed on receive however far ahead it reads — so a reply to their op
   always sorts after it.

@@ -204,11 +204,16 @@ Both **derived on read, never stored.** In base minor units over every entry,
 `balance(member) = Σ(paid) − Σ(share) − Σ(received) + Σ(income share)`, plus
 transfers out and minus transfers in; the set always sums to zero (assert it in
 dev). The income terms are the expense terms with the sign flipped, applied in
-`core/balance.ts` and nowhere else. Settle-up serves the **smallest debtor first**, each against
-the smallest creditor who can take the whole debt: owing a little buys you one
-transfer, and only a debt too big for any single creditor gets split. At most
-`n−1` transfers — not provably minimal (NP-hard), just good. Say "simplest way
-to settle", never "optimal".
+`core/balance.ts` and nowhere else. Settle-up is **the fewest transfers there are**, up to 16
+members holding a non-zero balance. Cut the group into as many zero-sum pieces
+as possible — `core/settle.ts` does it with a subset DP, the NP-hard part — and
+each piece then takes exactly `size − 1` payments, so the total `n − pieces` is
+the proven minimum. Past 16 the cut is skipped for cost and the group settles as
+one piece: still `≤ n−1`, no longer provably minimal, so the UI says "simplest
+way to settle" rather than "optimal". Which of the equally-short answers you get
+is the second question: smallest debtor first, into the smallest creditor who
+can absorb the whole debt, so owing a little means one transfer and only a debt
+too big for any single creditor is split.
 
 ## D1 schema
 
