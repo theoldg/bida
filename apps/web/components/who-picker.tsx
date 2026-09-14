@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AddName, type AddNameHandle } from "./name-adder";
+import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 
@@ -83,7 +84,7 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           // reader: without `aria-pressed` the only thing that named the pick
           // was the button at the foot of the screen.
           <button key={p.id} className="row" aria-pressed={p.id === picked}
-            onClick={() => { adder.current?.clear(); onPick(p.id); }}>
+            onClick={() => { adder.current?.clear(); onPick(p.id); }} {...keepsFocus}>
             <div className="rmain">
               <div className="rtitle">{p.name}</div>
             </div>
@@ -108,7 +109,8 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
       </div>
 
       <div className="pad">
-        <button className="btn btn-p" onClick={() => void proceed()} disabled={busy || !chosen}>
+        <button className="btn btn-p" onClick={() => void proceed()} disabled={busy || !chosen}
+          {...keepsFocus}>
           {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
         </button>
       </div>

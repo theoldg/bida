@@ -8,6 +8,7 @@ import { useBackButton } from "../lib/back-button";
 import { retryLive, useStalled } from "../lib/db/live";
 import { useScrollMemory } from "../lib/scroll-memory";
 import { goUp } from "../lib/nav";
+import { keepsFocus } from "./bits";
 import { Icon, type IconName } from "./icons";
 
 /**
@@ -91,7 +92,7 @@ export function TopBar({ title, sub, back, mid, right }: {
   return (
     <div className="topbar">
       {back === true || guard ? (
-        <button className="iconbtn" onClick={press} aria-label={copy.act.back}>
+        <button className="iconbtn" onClick={press} aria-label={copy.act.back} {...keepsFocus}>
           <Icon name="back" size={17} />
         </button>
       ) : typeof back === "string" ? (
@@ -99,7 +100,7 @@ export function TopBar({ title, sub, back, mid, right }: {
            going up unwinds the history to it rather than stacking another
            entry on top (lib/nav.ts). */
         <Link className="iconbtn" href={back} aria-label={copy.act.back}
-          onClick={(e) => { e.preventDefault(); run(); }}>
+          onClick={(e) => { e.preventDefault(); run(); }} {...keepsFocus}>
           <Icon name="back" size={17} />
         </Link>
       ) : null}

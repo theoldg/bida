@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
@@ -132,12 +133,12 @@ export function AddName({
             answering to the field's own name — two things called "Add someone"
             is one too many, for a screen reader and for a test alike.
 
-            It keeps the field's focus: nothing is filed by a blur any more, but
-            a keyboard that shuts on the press and reopens on the refocus is a
-            flinch under the thumb. */}
+            It keeps the field's focus (`keepsFocus`, components/bits.tsx):
+            nothing is filed by a blur any more, but a keyboard that shuts on
+            the press and reopens on the refocus is a flinch under the thumb —
+            and a press spent closing one is a press that never lands. */}
         <button type="submit" className={`iconbtn${flash}`} aria-label={copy.act.add}
-          disabled={!ready} onAnimationEnd={onFlashEnd}
-          onMouseDown={(e) => e.preventDefault()}>
+          disabled={!ready} onAnimationEnd={onFlashEnd} {...keepsFocus}>
           <Icon name="plus" size={15} />
         </button>
       </form>

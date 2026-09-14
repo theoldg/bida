@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 
@@ -118,8 +119,9 @@ export function PromptDialog({
           enterKeyHint="done" onChange={(e) => setValue(clean(e.target.value))} />
         {hint ? <div className="hint">{hint}</div> : null}
         <div className="drow">
-          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}>{copy.act.cancel}</button>
-          <button type="submit" className="btn btn-p" disabled={!ok || busy}>
+          <button type="button" className="btn btn-s" onClick={onClose} disabled={busy}
+            {...keepsFocus}>{copy.act.cancel}</button>
+          <button type="submit" className="btn btn-p" disabled={!ok || busy} {...keepsFocus}>
             {busy ? <span className="spinner" /> : null}{confirm}
           </button>
         </div>

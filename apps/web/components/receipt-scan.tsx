@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
+import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft";
 import { readBill, scanCurrency } from "@bida/core";
@@ -295,11 +296,13 @@ export function ScanPair({
 
   return (
     <div className={box} onAnimationEnd={onFlashEnd}>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}
+        {...keepsFocus}>
         <Icon name="cam" size={icon} />
         {register === "xs" ? copy.scan.rescan : copy.scan.snap}
       </button>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}
+        {...keepsFocus}>
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>

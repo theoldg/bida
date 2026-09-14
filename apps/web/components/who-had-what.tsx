@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { parseMinor, type ExtraKind } from "@bida/core";
 import { AmountInput } from "./amount-input";
+import { keepsFocus } from "./bits";
 import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
@@ -449,7 +450,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
               down — so it stays in the band, which pays `--kb` for the tip
               being typed a row above it. */}
           <button type="button" className="btn btn-p btn-lg itemsave"
-            onClick={finish} disabled={!canFinish}>
+            onClick={finish} disabled={!canFinish} {...keepsFocus}>
             {copy.act.done}
           </button>
         </div>

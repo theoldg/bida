@@ -80,3 +80,25 @@ export function Eyebrow({ children, style }: { children: ReactNode; style?: CSSP
 export function signClass(minor: number): string {
   return minor > 0 ? "credit" : minor < 0 ? "debit" : "";
 }
+
+/**
+ * Props for a control that may be pressed while a field on the same screen
+ * still has the caret: it keeps that focus instead of taking it.
+ *
+ * Without this, the first press on an act button is spent closing the
+ * keyboard. The field blurs on `mousedown`, the phone's keyboard retracts,
+ * the visual viewport grows, the page reflows under a thumb that has not
+ * lifted yet — and the `click` never lands on the button, because the button
+ * is no longer where the press began. It reads as a button that does nothing
+ * until pressed twice, and the smaller the field's contents the more certain
+ * it is, since an empty field is the one people are most likely to leave this
+ * way. Preventing the default on `mousedown` is what stops the blur, so
+ * nothing moves and the press goes through the first time.
+ *
+ * Only the pointer is held off. Tab and Enter still focus and fire the button
+ * as they always did — a keyboard never moves the layout out from under
+ * itself.
+ */
+export const keepsFocus = {
+  onMouseDown: (e: React.MouseEvent) => e.preventDefault(),
+} as const;

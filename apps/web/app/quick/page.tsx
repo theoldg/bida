@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Eyebrow } from "../../components/bits";
+import { Eyebrow, keepsFocus } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
@@ -137,7 +137,7 @@ export default function QuickPage() {
               <div key={person.id} className="row">
                 <div className="rmain"><div className="rtitle">{person.name}</div></div>
                 <button className="iconbtn" aria-label={copy.members.removeLabel(person.name)}
-                  onClick={() => removeQuickPerson(person.id)}>
+                  onClick={() => removeQuickPerson(person.id)} {...keepsFocus}>
                   <Icon name="trash" size={14} />
                 </button>
               </div>

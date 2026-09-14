@@ -587,6 +587,16 @@ so the static export ships the full line and the browser narrows it.
   viewports is a keyboard only while something has the caret, and measuring it
   at load on a browser that reports the two differently made permanent padding
   at the foot of every list out of a keyboard nobody had opened.
+- **A press that closes the keyboard is a press that never lands.** A button
+  tapped while a field has the caret blurs it on `mousedown`; the keyboard
+  retracts, the visual viewport grows, the page reflows — and the `click` misses,
+  because the button has moved out from under a thumb that hasn't lifted. It
+  reads as a button needing two taps, and it took Create, the scan pair, Save,
+  Continue, the back arrow and every icon button beside a field. `keepsFocus`
+  (`components/bits.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
+  the field keeps focus and nothing moves. Spread it on anything pressable that
+  shares a screen with a field. Tab and Enter are untouched — a keyboard never
+  moves the layout out from under itself.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past

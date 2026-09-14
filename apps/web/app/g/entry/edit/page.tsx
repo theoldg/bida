@@ -8,7 +8,7 @@ import {
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "../../../../lib/scan/items";
-import { Card, Chip } from "../../../../components/bits";
+import { Card, Chip, keepsFocus } from "../../../../components/bits";
 import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
 import { useReceiptScan } from "../../../../components/receipt-scan";
 import { SplitEditor } from "../../../../components/split-editor";
@@ -677,7 +677,7 @@ function EditEntryScreen() {
               </p>
             ) : null}
             <button type="button" className="btn btn-p btn-lg" onClick={save}
-              disabled={saving || refusing}>
+              disabled={saving || refusing} {...keepsFocus}>
               {saving ? <span className="spinner" /> : null}{copy.act.save}
             </button>
           </div>

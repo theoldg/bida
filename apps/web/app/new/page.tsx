@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isCurrencyCode } from "@bida/core";
-import { Eyebrow } from "../../components/bits";
+import { Eyebrow, keepsFocus } from "../../components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";
 import { Icon } from "../../components/icons";
@@ -178,7 +178,7 @@ export default function NewGroupPage() {
             <div className="field">
               <span className="fieldlabel" style={{ width: 62 }}>{copy.newGroup.currency}</span>
               <button type="button" id="g-cur" className="pick" aria-label={copy.newGroup.currency}
-                onClick={() => setAsk("currency")}>
+                onClick={() => setAsk("currency")} {...keepsFocus}>
                 <span className="ptext">{currencyLabel(currency)}</span>
                 <Icon name="chev" size={13} className="spacer pchev" />
               </button>
@@ -191,7 +191,8 @@ export default function NewGroupPage() {
               <div key={`${who}-${i}`} className="row">
                 <div className="rmain"><div className="rtitle">{who}</div></div>
                 <button className="iconbtn" aria-label={copy.members.removeLabel(who)}
-                  onClick={() => setPeople((list) => list.filter((_, at) => at !== i))}>
+                  onClick={() => setPeople((list) => list.filter((_, at) => at !== i))}
+                  {...keepsFocus}>
                   <Icon name="trash" size={14} />
                 </button>
               </div>
@@ -210,7 +211,7 @@ export default function NewGroupPage() {
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <button type="button" className="btn btn-p btn-lg" onClick={next}
-              disabled={!ready || refusal.live}>
+              disabled={!ready || refusal.live} {...keepsFocus}>
               {copy.act.create}
             </button>
           </div>
