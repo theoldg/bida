@@ -52,7 +52,7 @@ export default function AboutPage() {
                 sealed. Said after the rest, it would read like a footnote. */}
             <Section title={privacy.title} under={
               <>
-                <p>{privacy.body}</p>
+                <p> <strong> {privacy.e2eTitle} </strong> {privacy.body}</p>
                 <SealedRow />
                 <p>{privacy.key}</p>
                 <p>{privacy.shape}</p>

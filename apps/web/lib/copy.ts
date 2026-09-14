@@ -183,6 +183,9 @@ export const copy = {
     },
     privacy: {
       title: "Privacy",
+      scanTitle: "Receipt scanning is not private.",
+      scan: "Receipt photos are sent to a free-tier Gemini API, where they may be read by humans or used to train models.",
+      e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
        * One row of D1: a `SealedOp` (core/seal.ts). The labels are plain
@@ -197,8 +200,6 @@ export const copy = {
       ],
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
       shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
-      scanTitle: "Receipt scanning is not private.",
-      scan: "Receipt photos are sent to a free-tier Gemini API, where they may be read by humans or used to train models.",
     },
     feedback: {
       title: "Feedback",
