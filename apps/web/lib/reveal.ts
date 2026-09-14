@@ -7,10 +7,10 @@
  * scrolled past — a Done pressed there flashes red where nobody is looking,
  * which is a press that did nothing as far as the person can tell.
  *
- * So the scroller is asked first: is *any* of them on screen? If one is, the
- * flash goes ahead where it stands — moving a list under somebody who can
+ * So the scroller is asked first: is *any* of them wholly on screen? If one is,
+ * the flash goes ahead where it stands — moving a list under somebody who can
  * already see the answer is worse than not moving it. If none is, the nearest
- * is brought in and the flash waits for the scroll to land.
+ * is brought in whole and the flash waits for the scroll to land.
  *
  * The geometry is here and the scrolling is not: what this decides is worth a
  * test, and none of it needs a DOM.
@@ -27,11 +27,11 @@ export interface RowBox { top: number; bottom: number }
 export interface ViewBand { top: number; bottom: number }
 
 /**
- * How much of a row has to be showing to count as seen. A line of it is
- * enough — this is asking whether a person would notice it go red, not whether
- * they can read it — and a sliver under the sticky header is not.
+ * Sub-pixel slack. A row is measured in fractions of a pixel and the band it
+ * sits in is too, so "all of it is showing" has to mean *near enough*, or a
+ * row flush against the fold is chased by a scroll of half a pixel.
  */
-const SEEN = 14;
+const SLACK = 1;
 
 /**
  * What to add to the scroller's `scrollTop` to reach the nearest row that is
@@ -46,9 +46,10 @@ export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): numbe
   let best: number | null = null;
   for (const row of rows) {
     const showing = Math.min(row.bottom, band.bottom) - Math.max(row.top, band.top);
-    // A row taller than the band, or one shorter than `SEEN`, is in view as
-    // soon as all of it that can be is.
-    if (showing >= Math.min(SEEN, row.bottom - row.top, band.bottom - band.top)) return null;
+    // In view means *all* of it: a name with its amount cut off by the fold is
+    // a line you have to go looking for anyway, so the flash goes where it can
+    // be read whole. A row taller than the band is in view once it fills it.
+    if (showing >= Math.min(row.bottom - row.top, band.bottom - band.top) - SLACK) return null;
     // Which way it lies is read off its top edge rather than off a gap: a row
     // half under the sticky header is above the fold, not below it.
     const delta = Math.round(row.top < band.top ? row.top - band.top : row.bottom - band.bottom);

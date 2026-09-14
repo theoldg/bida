@@ -9,12 +9,14 @@ describe("nearestOutOfView", () => {
     expect(nearestOutOfView([row(20), row(200), row(900)], band)).toBeNull();
   });
 
-  it("does not move for a row showing a line of itself under the header", () => {
-    expect(nearestOutOfView([row(80)], band)).toBeNull();
+  it("moves for a row the fold cuts, however little of it is missing", () => {
+    expect(nearestOutOfView([row(70)], band)).toBe(-30);
+    expect(nearestOutOfView([row(98)], band)).toBe(-2);
+    expect(nearestOutOfView([row(362)], band)).toBe(2);
   });
 
-  it("moves for a row with only a sliver showing", () => {
-    expect(nearestOutOfView([row(70)], band)).toBe(-30);
+  it("forgives a fraction of a pixel", () => {
+    expect(nearestOutOfView([row(99.6)], band)).toBeNull();
   });
 
   it("scrolls up to a row above the fold, minimally", () => {

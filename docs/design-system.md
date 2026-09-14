@@ -277,11 +277,12 @@ under it is gone. Both of those are ink blocks, so both fill (below). Pointing b
 true of every untouched bill and read as a scolding for arriving. Where what is missing is spread over
 several rows, every one of them blooms: a Done on the who-had-what grid points
 at each line nobody has been given, name and amount, which is how you find it
-again in twenty rows of bill. **A refusal nobody can see is a press that did
-nothing**, so if every one of those rows is scrolled past, the nearest is
-brought into the grid smoothly first and the flash runs when it lands
-(`lib/reveal.ts`); one still in view moves nothing, because a list that jumps
-under somebody already looking at the answer is worse than one that sits still.
+again in twenty rows of bill. **A refusal nobody can see whole is a press that
+did nothing**, so unless one of those rows is fully in view — a name with its
+amount cut off by the fold is not — the nearest is brought into the grid
+smoothly first and the flash runs when it lands (`lib/reveal.ts`); one already
+wholly in view moves nothing, because a list that jumps under somebody looking
+at the answer is worse than one that sits still.
 The button itself never goes red — it is the
 control that was pressed, not what is missing — it only greys for the length of
 the flash and any travel before it, like Save. A number that
