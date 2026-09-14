@@ -343,14 +343,14 @@ a { color: inherit; text-decoration: none }
    reach of a thumb; `position: sticky; bottom: 0` is what a long one needs —
    pinned to the bottom of `.scroll` (its containing block, per `.diag-act`
    below) once scrolling would otherwise carry it past the last row and out of
-   reach, rather than only after that row is in view. It floats over the rows
-   it pins in front of, so it needs its own ground rather than the transparent
-   one a foot-of-a-short-list box could get away with — the same hairline
-   `.foot` uses to say "the scroll ends here", read from the other side as
-   "the dock starts here". */
-.homepair { padding: 16px 16px max(16px, env(safe-area-inset-bottom));
-  margin-top: auto; position: sticky; bottom: 0; z-index: 1;
-  background: var(--card); border-top: 1px solid var(--rule) }
+   reach, rather than only after that row is in view. It floats over those rows
+   with no ground and no hairline, exactly as the FABs it echoes do: each tile
+   is opaque on its own — an ink block and an outline on paper — so the pair
+   reads as two figures over the list rather than a dock cutting the screen in
+   two. The extra bottom padding is what holds them clear of the edge now that
+   there is no band under them doing it. */
+.homepair { padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px));
+  margin-top: auto; position: sticky; bottom: 0; z-index: 1 }
 /* Centred rather than full-bleed: a square that stretched to half the screen
    would be a 170px tile, which outweighs the list it sits under. The gap is
    the ledger FABs' 10px at double the tile — close enough that the two read as

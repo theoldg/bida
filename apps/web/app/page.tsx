@@ -113,7 +113,8 @@ export default function GroupsPage() {
  *
  * Sticky (`.homepair`), not just last-in-flow: a group list long enough to
  * scroll would otherwise carry this off the bottom of the screen, the one
- * thing the two figures the ledger echoes never do.
+ * thing the two figures the ledger echoes never do. It floats over the rows
+ * rather than docking above them — on its own two grounds, as the FABs do.
  */
 function StartPair() {
   return (

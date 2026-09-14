@@ -84,9 +84,10 @@ the icon, capped so a square doesn’t become a 170px tile, and centred with the
 FAB pair's own gap between them — near enough to read as one pair, with the
 margin around it doing the separating. "New group" is the inked one and takes
 the right, where a thumb rests, with "Quick split" outlined beside it. The
-pair is sticky (`.homepair`), floating over the list on its own hairline and
-ground once there are enough groups to scroll — the FABs it echoes never go
-out of reach either.
+pair is sticky (`.homepair`), floating over the list once there are enough
+groups to scroll — ungrounded, as the FABs it echoes are, so two figures pass
+over the rows rather than a dock cutting the screen in two; they never go out
+of reach either.
 
 **One act with two doors is one button cut in two.** Scanning a bill starts at
 the camera or at the library, and which of those is a detail of the same job:
