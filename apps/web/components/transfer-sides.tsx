@@ -28,7 +28,16 @@ export function TransferSides({ members, from, to, onChange }: {
   onChange: (sides: { fromMember: string; toMember: string }) => void;
 }) {
   const [picking, setPicking] = useState<null | "from" | "to">(null);
+  // Same restart trick as lib/refusal.ts: alternate the class name so a
+  // second swap replays the animation even while the first is still running.
+  const [swapN, setSwapN] = useState(0);
+  const swapClass = swapN === 0 ? "" : swapN % 2 === 1 ? " swap-a" : " swap-b";
   const byId = new Map(members.map((m) => [m.id, m]));
+
+  const doSwap = () => {
+    onChange({ fromMember: to, toMember: from });
+    setSwapN((n) => n + 1);
+  };
 
   const side = (which: "from" | "to") => {
     const member = byId.get(which === "from" ? from : to);
@@ -36,7 +45,7 @@ export function TransferSides({ members, from, to, onChange }: {
       <button type="button" className="tside" onClick={() => setPicking(which)}
         aria-label={which === "from" ? copy.form.sentBy : copy.form.receivedBy}>
         <span className="eyebrow">{which === "from" ? copy.entry.from : copy.entry.to}</span>
-        <span className="who">{member?.name ?? copy.none}</span>
+        <span className={"who" + swapClass}>{member?.name ?? copy.none}</span>
       </button>
     );
   };
@@ -45,7 +54,7 @@ export function TransferSides({ members, from, to, onChange }: {
     if (!picking) return;
     // Picking the other side's person is a reversal, not an impossible transfer.
     const swap = picking === "from" ? id === to : id === from;
-    if (swap) onChange({ fromMember: to, toMember: from });
+    if (swap) doSwap();
     else if (picking === "from") onChange({ fromMember: id, toMember: to });
     else onChange({ fromMember: from, toMember: id });
   };
@@ -54,8 +63,7 @@ export function TransferSides({ members, from, to, onChange }: {
     <div>
       <div className="card transfer">
         {side("from")}
-        <button type="button" className="tswap" aria-label={copy.form.swapSides}
-          onClick={() => onChange({ fromMember: to, toMember: from })}>
+        <button type="button" className="tswap" aria-label={copy.form.swapSides} onClick={doSwap}>
           <Icon name="arrow" size={18} />
         </button>
         {side("to")}

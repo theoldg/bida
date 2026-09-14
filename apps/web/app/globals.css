@@ -676,6 +676,18 @@ button.tside:active { background: var(--press) }
 .tside .who { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap }
 .tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
+/* A swap changes both names in place: rather than cross-fade the old into the
+   new, each sinks out of sight and the (already-swapped) text re-emerges from
+   below on the way back up, so the read is "these two traded places" and not
+   "this text changed". Two names, two animation-names — see lib/refusal.ts's
+   `n`-parity note for why an unchanged class name would not restart it. */
+.tside .who.swap-a { animation: swapdip .22s ease-in }
+.tside .who.swap-b { animation: swapdip2 .22s ease-in }
+@keyframes swapdip { 0% { opacity: 1; transform: translateY(0) }
+  45%, 55% { opacity: 0; transform: translateY(7px) } 100% { opacity: 1; transform: translateY(0) } }
+@keyframes swapdip2 { 0% { opacity: 1; transform: translateY(0) }
+  45%, 55% { opacity: 0; transform: translateY(7px) } 100% { opacity: 1; transform: translateY(0) } }
+@media (prefers-reduced-motion: reduce) { .tside .who.swap-a, .tside .who.swap-b { animation: none } }
 .tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted);
   border-left: 1px solid var(--rule-soft); border-right: 1px solid var(--rule-soft) }
 /* The editable arrow is a control, not the divider the detail screen's is: a
