@@ -22,8 +22,8 @@
 - [x] A budget — per caller, per address, and a global daily cap that is the
       one number bounding the bill — plus Turnstile in front of every scan.
       [docs/receipt-scanning.md](docs/receipt-scanning.md#what-the-scan-costs).
-- [x] Armed in production: widget, site key, `SCAN_IP_SALT`,
-      `TURNSTILE_SECRET_KEY`, migration `0002`.
+- [x] Armed in production and walked by a human: widget, site key,
+      `SCAN_IP_SALT`, `TURNSTILE_SECRET_KEY`, migration `0002`.
 - [ ] Set a hard project quota in Google AI Studio just above the global daily
       cap — the belt under our own counter's braces. Console only.
 - [ ] The same door still writes unbounded ops into a D1 that may never be

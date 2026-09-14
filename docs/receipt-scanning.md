@@ -330,9 +330,24 @@ burst eats the day at 06:00 and the app is dark until midnight.
 **Turnstile is what makes the cheap credential survivable.** Every scan carries
 a token (`X-Turnstile-Token`), verified server-side before the image is
 streamed anywhere: a fresh id buys nothing without a fresh token, and a token
-costs a real browser. It **fails closed** — a blocked script is a refusal that
+costs a real browser. It **fails closed** — no valid token is a refusal that
 says so (`copy.scan.unverified`), because failing open makes the check optional
 for precisely the people who would want it to be.
+
+The widget is **Managed**, and Managed does sometimes challenge a real person:
+a "verify you are human" box, which they tap, after which the scan runs. That
+friction was weighed against dropping Turnstile — the global cap bounds the
+bill either way, so what Turnstile buys is that one script cannot spend
+everybody's day — and the owner kept it (2026-09-14). It is why the host sits
+**on screen** (`.turnstile`, above the bottom bar) rather than parked
+off it: a challenge nobody can reach is a scan that waits out its own timeout.
+
+**The phone refuses before it uploads.** `turnstileToken()` throwing ends the
+scan in `scanReceipt` rather than sending a tokenless request for the Worker to
+refuse — the Worker would refuse it, but only after the phone had downscaled
+and pushed 200 KB over whatever signal it has. The server is still the
+authority: a deployment with no `TURNSTILE_SECRET_KEY` also has no site key in
+its build, so nothing is asked for and nothing is refused.
 
 **The phone keeps its own copy of the caller bucket** (`lib/scan/budget.ts`,
 one log per caller in the device record), so a scan already over budget is
@@ -433,6 +448,12 @@ way to reach the who-had-what grid outside a real scan —
 
 ## Gotchas
 
+- **Turnstile cannot be verified by a browser you automate.** Playwright is
+  detected — headless renders no widget at all, headful renders the checkbox
+  and then fails `600010` when nothing clicks it — so neither outcome says
+  anything about whether real people get through. Two automated failures were
+  nearly read as a broken deployment; what settled it was a person scanning a
+  receipt on a phone. **If you change the widget, a human has to test it.**
 - **A driven scan spends the budget too.** `pnpm drive`'s `receipt <name>`
   stubs the round trip to Gemini, not `lib/scan/budget.ts`, so an eleventh scan
   on one phone is refused by the app itself with `copy.scan.limit.you`. That is

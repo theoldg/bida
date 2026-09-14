@@ -28,8 +28,9 @@ prompt of someone's choosing
 and **it has a budget** since 2026-09-14: three buckets, a global daily cap
 that is the only number bounding the bill, and a Turnstile token in front of
 every scan ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
-Armed in production on the same day: widget, both Worker secrets, and
-migration `0002` applied to the live D1.
+Armed in production on the same day — widget, both Worker secrets, migration
+`0002` on the live D1 — and walked end to end by a person: challenge tapped,
+receipt read.
 
 **Sealed** since 2026-09-12 — the server cannot read a group
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log was
