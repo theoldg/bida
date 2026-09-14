@@ -343,17 +343,14 @@ a { color: inherit; text-decoration: none }
    (`margin-top: auto`), within reach of a thumb, with only the about line
    beneath it. */
 .homepair { padding: 22px 16px 4px; margin-top: auto }
-/* Centred rather than full-bleed: a square that stretched to half the screen
-   would be a 170px tile, which outweighs the list it sits under — and the air
-   between the two is what says they are two jobs rather than one control.
-   That air is measured against the margin, not chosen: the gap is the slack
-   either side of the pair, a hair under it so the two still read as a pair
-   rather than as one tile per half of the screen. The 168px is the two tiles
-   less the 16px `.homepair` pads with, so the sum works in screen terms; the
-   clamp keeps a narrow phone from closing the gap and a wide one from tearing
-   it open. */
-.starttiles { display: flex; justify-content: center;
-  gap: clamp(20px, calc((100% - 168px) / 3.4), 72px) }
+/* Right-aligned on the same rail the ledger's FABs hang from
+   (`max(16px, 50vw - 264px)`), and spaced the way that pair is: these are the
+   same two destinations at a size that can carry a word, so they line up over
+   the same edge rather than floating centred in a band of their own. Not
+   full-bleed either — a square stretched to half the screen would be a 170px
+   tile, which outweighs the list it sits under. */
+.starttiles { display: flex; justify-content: flex-end; gap: 20px;
+  padding-right: max(0px, calc(50vw - 264px - 16px)) }
 /* Square, like the FABs, and stacked icon-over-word because that is the only
    way a word fits inside a square without turning it into a row. */
 .starttile { flex: 1; max-width: 100px; aspect-ratio: 1; display: flex; flex-direction: column;
