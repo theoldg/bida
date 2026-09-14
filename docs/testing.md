@@ -7,6 +7,7 @@ pnpm check       # links · rules · typecheck · tests · export build — pre-
 pnpm verify      # every browser check against a real build, ~60s
 pnpm entries     # just the three kinds of entry, end to end
 pnpm claim       # a name still being typed, and the button that acts on it
+pnpm keyboard    # the act a list of names is typed for, against an open keyboard
 pnpm offline     # just every screen with the network cut
 pnpm stall       # what a screen does when reading this phone's database stops working
 pnpm shots       # PNGs into shots/ (gitignored)
@@ -260,6 +261,26 @@ time — it must land in the group, not back on the picker — and the app is
 launched, which reopens the group last open, while backing out of that group
 must leave the list alone — and must be remembered, so the launch after it
 lands on the list until the group is opened again (`apps/web/lib/launch.ts`).
+
+## `pnpm keyboard` — the act under the add row, against an open keyboard
+
+Four screens ask for people in that same row, and each ends on the act those
+people are for — Create, "Continue as …", the scan pair, "Change who you are" —
+sitting *below* the row on the scroll. So the scroll that lifts the field over
+the keyboard is the same one that can leave the act behind it, and what holds
+the two together is a single number, `--act-below`
+([frontend.md](frontend.md#gotchas)). Nothing else here would notice that number
+going stale: a button gains a line, a row gains padding, and the fix is quietly
+a few pixels short on a phone nobody in this repo is holding.
+
+There is no keyboard in a headless browser, so one is faked where the app reads
+it — `visualViewport.height` — and everything after that is the app's own:
+`gapOf` calls the gap a keyboard, `--kb` is paid, and the scroll is the one
+`components/viewport.tsx` makes. The assertion is what a thumb cares about, the
+field *and* the act still above the top of the keys. The list is ten people
+deep on every screen on purpose: three fit above a keyboard whatever the scroll
+does, and a check that passes with the fix deleted is worse than none — with
+`--act-below` at zero, all five assertions fail.
 
 ## `pnpm stall` — a read of this phone's database that dies
 

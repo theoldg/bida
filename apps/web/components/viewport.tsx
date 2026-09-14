@@ -2,7 +2,33 @@
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
-import { gapOf, isTyping } from "../lib/viewport";
+import { gapOf, isTyping, reachOf } from "../lib/viewport";
+
+/**
+ * Bring a field into view, and whatever it says has to come up with it.
+ *
+ * `nearest` scrolls the least that works, which is the whole answer for an
+ * ordinary field and most of it for the add row — where the act the list ends
+ * on sits underneath, on the scroll rather than in a pinned foot. A field says
+ * how much room that act needs in `scroll-margin-bottom` (`--act-below`,
+ * globals.css); the browser spends it when it has to scroll anyway and skips it
+ * when it decides the field is already in view, which is exactly the case a
+ * keyboard makes — so the remainder is paid here (`reachOf`).
+ *
+ * The one scroll every path shares: ours when a name is filed
+ * (name-adder.tsx), ours when the keyboard opens (`follow` below), and the
+ * browser's own on focus, which this one lands on top of.
+ */
+export function bringIntoView(el: Element) {
+  el.scrollIntoView({ block: "nearest" });
+  const room = parseFloat(getComputedStyle(el).scrollMarginBottom);
+  if (!room) return;
+  const box = el.closest(".scroll");
+  if (!box) return;
+  const stop = box.getBoundingClientRect().bottom
+    - (parseFloat(getComputedStyle(box).scrollPaddingBottom) || 0);
+  box.scrollTop += reachOf({ bottom: el.getBoundingClientRect().bottom, room, stop });
+}
 
 /**
  * The one place the visual viewport is measured, and the two things that fall
@@ -71,11 +97,15 @@ export function MeasureViewport() {
      * in what the keyboard leaves (globals.css), and one taller than that
      * scrolls inside itself, so a field below the fold still has to be brought
      * up.
+     *
+     * Where a field needs more than itself in view — the add row, which the
+     * screen's act sits under — the field says so in `scroll-margin-bottom`,
+     * and `bringIntoView` spends it. One call for every field either way.
      */
     function follow() {
       const focused = document.activeElement;
       if (focused instanceof HTMLElement && focused.closest(".scroll, .dialog")) {
-        focused.scrollIntoView({ block: "nearest" });
+        bringIntoView(focused);
       }
     }
 

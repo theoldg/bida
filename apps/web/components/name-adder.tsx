@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
+import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
 import { nameTaken } from "@bida/core";
 
@@ -33,7 +34,9 @@ import { nameTaken } from "@bida/core";
  * The box is the difference between typed and filed, made visible.
  *
  * The row **follows the list down**, as a browser scrolls to a field only as it
- * takes focus, and this one never lets go.
+ * takes focus, and this one never lets go — far enough down to keep the act the
+ * list ends on in view with it, rather than flush against the keyboard with
+ * that act behind one (`--act-below`, globals.css).
  */
 export interface AddNameHandle {
   /** Throw away whatever is in the field, filing nothing. */
@@ -63,20 +66,25 @@ export function AddName({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const field = useRef<HTMLInputElement>(null);
-  const row = useRef<HTMLFormElement>(null);
   const already = nameTaken(value, taken);
   const ready = value.trim().length > 0 && !already && !busy;
 
   // The list grows above this row, so past a screenful the field is below the
   // fold and the rest of the names are typed blind — the browser scrolls to a
-  // field when it takes focus, and this one never loses it. Follow the row
-  // once it has actually moved: after the render that added the name, not in
-  // the handler that asked for it. `nearest` scrolls the least that works, so
-  // a field already in view doesn't jump.
+  // field when it takes focus, and this one never loses it. Follow it once it
+  // has actually moved: after the render that added the name, not in the
+  // handler that asked for it. `nearest` scrolls the least that works, so a
+  // field already in view doesn't jump.
+  //
+  // The field rather than the row, because the browser's own scroll on focus
+  // and the one the keyboard opening makes both aim at the field: one target,
+  // one `scroll-margin-bottom`, and three scrolls that land in the same place —
+  // far enough down that the act the list ends on comes up too
+  // (`bringIntoView`, components/viewport.tsx).
   const count = taken.length;
   const seen = useRef(count);
   useEffect(() => {
-    if (count > seen.current) row.current?.scrollIntoView({ block: "nearest" });
+    if (count > seen.current && field.current) bringIntoView(field.current);
     seen.current = count;
   }, [count]);
 
@@ -115,7 +123,7 @@ export function AddName({
 
   return (
     <>
-      <form ref={row} className={`row addrow${typing ? " editing" : ""}`}
+      <form className={`row addrow${typing ? " editing" : ""}`}
         onSubmit={(e) => void submit(e)} onClick={() => field.current?.focus()}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}

@@ -58,6 +58,36 @@ export function gapOf(v: ViewportReading): ViewportGap {
   return v.typing ? { kb: covered, unexplained: 0 } : { kb: 0, unexplained: covered };
 }
 
+/** One look at a field being scrolled to, and the line it has to clear. */
+export interface ReachReading {
+  /** The field's bottom edge. */
+  bottom: number;
+  /** What has to stay visible *under* it — its `scroll-margin-bottom`, which is
+      how a field says the act its screen ends on travels with it
+      (`--act-below`, globals.css). Zero for an ordinary field. */
+  room: number;
+  /** Where a scroll has to stop: the scroller's bottom edge less the strip the
+      keyboard covers (`scroll-padding-bottom`). */
+  stop: number;
+}
+
+/**
+ * How much further a scroller must go for a field *and the room it asks for*
+ * to be clear of the keys.
+ *
+ * The browser will not always spend that room itself: `scrollIntoView`'s
+ * `nearest` reads "already in view" off the field's own box, so a field the
+ * browser has just parked above the keyboard is done as far as it is concerned
+ * and whatever sits under it stays behind the keys.
+ *
+ * Never negative, because this only ever scrolls **up**: a field already high
+ * enough is left alone, and a keyboard closing must not drag the list down to
+ * re-hang it at the bottom of the screen.
+ */
+export function reachOf(r: ReachReading): number {
+  return Math.max(0, Math.round(r.bottom + r.room - r.stop));
+}
+
 /**
  * Whether this element is one a keyboard opens for. Buttons and checkboxes are
  * inputs too and open nothing, which is why the types are named rather than the

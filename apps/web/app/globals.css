@@ -414,6 +414,21 @@ a { color: inherit; text-decoration: none }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
+/* Every list of names ends on the act it was typed for — Create, "Continue as
+   …", the scan pair, "Change who you are" — and that act sits *below* the add
+   row, on the scroll rather than in a pinned foot (design-system). A field
+   lifted to the top of the keyboard leaves it behind one: you can add the sixth
+   person and not see what to do next. So this field asks for room under itself,
+   and `components/viewport.tsx` is what spends it — the browser keeps the
+   margin for scrolls it was making anyway and ignores it for a field it has
+   already parked above the keys, which is this case exactly.
+   One value for four screens, cut for the tallest of them: the quick split's
+   scan pair, 101px below the field while the row is drawn as a box. The other
+   three buy a few pixels of air above the keys with it. A screen whose act
+   outgrows this raises it on its own scroller; `pnpm keyboard` is what says so
+   (docs/testing.md). */
+:root { --act-below: 104px }
+.addname { scroll-margin-bottom: var(--act-below) }
 /* A name in the field is *not* on the list: nothing files it but the plus. So
    the moment there is one the row stops being a row and becomes a box — lifted
    off the list on its own ground, ringed in the hard rule rather than the

@@ -215,8 +215,9 @@ confers nothing without the secret.
   exception that stays: filing a name there *is* picking it, so a name that has
   only been typed is a question it simply does not read. The row also
   **follows the list down**, as a browser scrolls to a field only as it takes
-  focus, and this one never lets go — clear of the keyboard, per the `--kb`
-  Gotcha below. `pnpm claim` holds all of it ([testing.md](testing.md)).
+  focus, and this one never lets go — clear of the keyboard, and far enough
+  clear that the act the list ends on comes up with it, per the `--kb` Gotcha
+  below. `pnpm claim` holds all of it ([testing.md](testing.md)).
 - **"Which one is you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one — including a group of one,
   because the answer is written into every op and a screen that sometimes skips
@@ -572,7 +573,16 @@ so the static export ships the full line and the browser narrows it.
   card is centred in what is left rather than behind the keys — without it the
   rate pair's own fields and Save were under them. `.foot` pays it too, for the
   screens that still pin an act; the entry form stopped pinning Save and lets
-  it scroll instead. **A gap with nobody typing is not a keyboard** and is
+  it scroll instead. **An act that scrolls has to be scrolled to**: the four
+  screens that ask for people put Create, "Continue as …", the scan pair or
+  "Change who you are" under the add row, so the field asks for that much room
+  beneath itself (`--act-below`) and `bringIntoView` spends it. It has to be
+  spent in script, because `scrollIntoView`'s `nearest` reads "already in view"
+  off the field's own box — a field the browser has just parked above the keys
+  is finished as far as it is concerned, `scroll-margin-bottom` and all, and the
+  button under it stays behind them. Only ever upward: a keyboard closing must
+  not drag the list down to re-hang the field at the bottom of the screen.
+  `pnpm keyboard` holds all four ([testing.md](testing.md)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
   viewports is a keyboard only while something has the caret, and measuring it
   at load on a browser that reports the two differently made permanent padding
