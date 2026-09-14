@@ -336,11 +336,12 @@ that screen is voiced now, as are the history's payer lines.
 
 At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
 none outside one. The groups list carries its starts below the list instead
-of in it, and at the foot of the scroll rather than under the last row:
-**New group** and **Quick split** as two centred `.starttile` squares
-(`.homepair`, which takes the `margin-top: auto` in a full-height
-`.homescroll`), with nothing under them — **About bida** is an icon in the top
-bar, left of the theme toggle. `Tabs` was deleted
+of in it: **New group** and **Quick split** as two centred `.starttile`
+squares (`.homepair`, which takes the `margin-top: auto` in a full-height
+`.homescroll` to settle at the foot of a short list, and `position: sticky;
+bottom: 0` to stay there — floating over the rows — once a long one would
+otherwise scroll it out of reach), with nothing under them — **About bida**
+is an icon in the top bar, left of the theme toggle. `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 

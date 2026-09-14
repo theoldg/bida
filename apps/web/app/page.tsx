@@ -110,17 +110,21 @@ export default function GroupsPage() {
  * one: it writes no op and leaves nothing behind
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
  * so it wears the scan FAB's outline instead of the ink.
+ *
+ * Sticky (`.homepair`), not just last-in-flow: a group list long enough to
+ * scroll would otherwise carry this off the bottom of the screen, the one
+ * thing the two figures the ledger echoes never do.
  */
 function StartPair() {
   return (
     <div className="homepair">
       <div className="starttiles">
         <Link href={route.quick()} className="starttile start-s">
-          <Icon name="cam" size={19} />
+          <Icon name="cam" size={26} />
           {copy.groups.quickSplit}
         </Link>
         <Link href={route.newGroup()} className="starttile start-p">
-          <Icon name="plus" size={20} />
+          <Icon name="plus" size={28} />
           {copy.groups.newGroup}
         </Link>
       </div>
