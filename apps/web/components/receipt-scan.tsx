@@ -23,7 +23,7 @@ export type { ScanState } from "../lib/scan/live";
  */
 export function scanErrorText(err: unknown): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
-  if (err instanceof TurnstileBlockedError) return copy.scan.unverified;
+  if (err instanceof TurnstileBlockedError) return copy.scan.unverified[err.side];
   if (err instanceof ScanLimitError) {
     return err.scope === "global" ? copy.scan.limit.global : copy.scan.limit.you;
   }

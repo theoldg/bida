@@ -112,7 +112,9 @@ export async function scanReceipt(
   // Worker adds to tell them apart; Google's error body has no such field.
   if (res.status === 429 || res.status === 403) {
     const scope = await refusalScope(res);
-    if (scope === "turnstile") throw new TurnstileBlockedError("the worker would not verify this browser");
+    if (scope === "turnstile") {
+      throw new TurnstileBlockedError("the worker would not verify this browser", "server");
+    }
     if (scope) throw new ScanLimitError(scope);
   }
   if (res.status === 429 || res.status === 503) {

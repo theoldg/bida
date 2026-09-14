@@ -331,8 +331,13 @@ burst eats the day at 06:00 and the app is dark until midnight.
 a token (`X-Turnstile-Token`), verified server-side before the image is
 streamed anywhere: a fresh id buys nothing without a fresh token, and a token
 costs a real browser. It **fails closed** — no valid token is a refusal that
-says so (`copy.scan.unverified`), because failing open makes the check optional
-for precisely the people who would want it to be.
+says so, because failing open makes the check optional for precisely the people
+who would want it to be. The refusal is **two sentences, not one**
+(`copy.scan.unverified`): a script this phone could not load is the person's
+network and worth a retry, while a token the Worker rejected is this
+deployment's secret disagreeing with its site key, where retrying is the only
+thing that cannot help. Said identically, the second sends the wrong person
+looking.
 
 The widget is **Managed**, and Managed does sometimes challenge a real person:
 a "verify you are human" box, which they tap, after which the scan runs. That

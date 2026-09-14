@@ -8,15 +8,30 @@
  * and short-lived, so one is fetched per scan and never cached.
  *
  * **Fail closed.** A blocked script means no token and no scan, named as such
- * (`copy.scan.unverified`) rather than dressed up as a failed photo. Failing
+ * (`copy.scan.unverified.browser`) rather than dressed up as a failed photo. Failing
  * open would make the check optional for exactly the people who want it to be.
  */
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
-/** The script never loaded, the widget never answered, or it answered "no". */
-export class TurnstileBlockedError extends Error {}
+/**
+ * No token, or a token the Worker would not accept.
+ *
+ * `side` is which end refused, because the two have nothing in common but the
+ * outcome: `"browser"` is a script that never loaded or a widget that never
+ * answered — the person's own network, and their retry might work. `"server"`
+ * is a token this browser minted and the Worker's `siteverify` rejected, which
+ * is a deployment whose secret and site key disagree
+ * (docs/receipt-scanning.md#what-the-scan-costs) and no amount of retrying
+ * fixes. Said as one sentence, the second reads as the first and sends the
+ * wrong person looking.
+ */
+export class TurnstileBlockedError extends Error {
+  constructor(message: string, readonly side: "browser" | "server" = "browser") {
+    super(message);
+  }
+}
 
 interface Turnstile {
   render(el: HTMLElement, opts: Record<string, unknown>): string | undefined;

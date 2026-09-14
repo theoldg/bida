@@ -625,8 +625,17 @@ export const copy = {
       you: "That’s your scans for now — scanning is capped. Type this one in, or come back later.",
       global: "The shared scan budget is spent — type this one in, or try later.",
     },
-    /** Fail-closed, and named: a blocked script is not a bad photograph. */
-    unverified: "Couldn’t check this browser — scanning needs challenges.cloudflare.com.",
+    /**
+     * Fail-closed, and named: a blocked script is not a bad photograph. Two
+     * sentences because the two failures ask different people to act —
+     * `browser` is this phone's network, where retrying on another one is the
+     * fix, and `server` is the deployment's own key, where retrying is the one
+     * thing that cannot help.
+     */
+    unverified: {
+      browser: "Couldn’t check this browser — scanning needs challenges.cloudflare.com.",
+      server: "This browser check was refused — scanning is misconfigured here. Type this one in.",
+    },
   },
 
   items: {
