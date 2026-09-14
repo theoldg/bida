@@ -23,6 +23,7 @@
     "keyboard": "node scripts/keyboard-check.mjs",
     "stall": "node scripts/stall-check.mjs",
     "shots": "node scripts/shots.mjs",
+    "readme-shots": "node scripts/readme-shots.mjs",
     "icons": "node scripts/icons.mjs",
     "drive": "node scripts/drive.mjs"
   },

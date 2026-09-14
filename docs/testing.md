@@ -3,17 +3,18 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check       # links · rules · typecheck · tests · export build — pre-push, ~45s
-pnpm verify      # every browser check against a real build, ~60s
-pnpm entries     # just the three kinds of entry, end to end
-pnpm claim       # a name still being typed, and the button that acts on it
-pnpm keyboard    # the act a list of names is typed for, against an open keyboard
-pnpm offline     # just every screen with the network cut
-pnpm stall       # what a screen does when reading this phone's database stops working
-pnpm shots       # PNGs into shots/ (gitignored)
-pnpm drive       # drive the app as text, one command at a time — see below
-pnpm run docs    # every relative link resolves, every ADR is indexed, ~30ms
-pnpm run rules   # core is still pure, no browser dialogs crept back, ~30ms
+pnpm check        # links · rules · typecheck · tests · export build — pre-push, ~45s
+pnpm verify       # every browser check against a real build, ~60s
+pnpm entries      # just the three kinds of entry, end to end
+pnpm claim        # a name still being typed, and the button that acts on it
+pnpm keyboard     # the act a list of names is typed for, against an open keyboard
+pnpm offline      # just every screen with the network cut
+pnpm stall        # what a screen does when reading this phone's database stops working
+pnpm shots        # PNGs into shots/ (gitignored)
+pnpm readme-shots # the four pictures in README.md, into docs/media/ (committed)
+pnpm drive        # drive the app as text, one command at a time — see below
+pnpm run docs     # every relative link resolves, every ADR is indexed, ~30ms
+pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
 ```
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
@@ -157,6 +158,26 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
+
+## `pnpm readme-shots` — the four pictures in the README
+
+`scripts/readme-shots.mjs` walks the same UI with the opposite brief. `shots`
+leans on states worth catching — a split that doesn't add up, a payer who
+overpaid, a server that can't be reached; a stranger deciding whether to open
+the app should see none of those, so this one seeds a trip that adds up in
+prices a person might actually pay, and photographs the ledger, balances, a
+split that balances, and the scan screen.
+
+Two differences that are the whole reason it is a second script:
+
+- **It serves the real Worker** (`serveWorker`), not the export. Against a
+  static server every push 404s and the ledger wears "Can't reach the server",
+  which is the first thing a reader would see. That costs ~10s of `wrangler
+  dev` boot, and `settled()` waits for the banner to be gone rather than for a
+  timeout.
+- **Its output is committed.** `shots/` is gitignored, so a README cannot point
+  at it; `docs/media/` is not. Re-run and commit what moves when one of the
+  four screens changes.
 
 ### Gotchas
 
