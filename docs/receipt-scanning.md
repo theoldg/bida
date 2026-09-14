@@ -386,7 +386,11 @@ unlimited one.** No `TURNSTILE_SECRET_KEY` and the Worker checks no token; no
 lets someone self-host without a Turnstile account (SELFHOSTING.md).
 
 The pair that has to agree is the site key and `TURNSTILE_SECRET_KEY`: a build
-sending no token to a Worker demanding one refuses every scan. So the site key
+sending no token to a Worker demanding one refuses every scan. **The widget's
+domain list has to name the hostname people actually open** — production is
+`bida.bid`, not the `workers.dev` name the Worker is called after
+([hosting.md](hosting.md#deploying)) — or the widget refuses the origin on the
+phone and no request is ever made. So the site key
 is **committed, in `.github/workflows/deploy.yml`** — it is public by nature,
 it only works on the domains its widget names, and a repo variable somebody
 forgets to set is exactly the disagreement that breaks scanning silently.

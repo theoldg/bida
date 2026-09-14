@@ -4,7 +4,7 @@ A Tricount-style shared-expense splitter. Mobile web / PWA,
 local-first, offline, full edit history, personal-lens view. Personal project,
 very few users, £0 hosting.
 
-**Live:** <https://hajsik.hajsik-api.workers.dev>
+**Live:** <https://bida.bid>
 Next.js static export · hand-rolled components ·
 Tailwind · Dexie/IndexedDB · Cloudflare Worker + D1.
 

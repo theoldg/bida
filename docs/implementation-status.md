@@ -15,7 +15,7 @@ queued — receipt photo storage, CSV export and categories are seams in
 [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 [roadmap.md](roadmap.md) has the phase-by-phase record.
 
-**Live** at <https://hajsik.hajsik-api.workers.dev> — one Worker serving the
+**Live** at <https://bida.bid> — one Worker serving the
 static export *and* the sync API, backed by the `hajsik` D1 database
 ([hosting.md](hosting.md)). Verified against production, not just locally:
 idempotent push, pull, a wrong token refused, and a real group synced between

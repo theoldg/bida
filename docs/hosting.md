@@ -189,9 +189,14 @@ token the owner pastes — in the same window as the push that needs it. Migrate
 first when the new code requires the new shape, and write migrations that an
 older Worker survives, because for a minute or two one will be serving them.
 
-**Live at <https://hajsik.hajsik-api.workers.dev>**, dev at
-<https://hajsik-dev.hajsik-api.workers.dev> — permanent; `workers.dev`
-subdomains don't expire while the Worker exists.
+**Live at <https://bida.bid>** — a custom domain bound to the `hajsik`
+Worker, which also answers on <https://hajsik.hajsik-api.workers.dev>. Dev is
+<https://hajsik-dev.hajsik-api.workers.dev>. All three are permanent;
+`workers.dev` subdomains don't expire while the Worker exists. **Production has
+two hostnames, and anything keyed to an origin has to name `bida.bid`** — the
+one people actually open. The Turnstile widget is the live example: it named
+only the `workers.dev` pair, so every scan on `bida.bid` was refused while the
+same build scanned fine on the other host.
 
 The Worker and the D1 database are still called `hajsik`, from before the
 rebrand, and they keep those names. A Worker's name *is* its hostname, and a
@@ -232,7 +237,8 @@ Recognise these if you ever propose one:
   /accounts/:id/challenges/widgets/:sitekey` — it is in the response beside the
   domains. So a second Worker reuses the widget without rotating anything, and
   rotating (which would break production until its secret is replaced too) is
-  never the way to get a key you already own.
+  never the way to get a key you already own. Editing one is `PUT`, sending the
+  whole widget back — `PATCH` answers 10405 on an account token.
 - **A push made with the built-in `GITHUB_TOKEN` triggers no workflow.** This
   is deliberate on GitHub's part (it stops a loop), and it is why
   `release.yml` calls `deploy.yml` itself instead of pushing `main` and
