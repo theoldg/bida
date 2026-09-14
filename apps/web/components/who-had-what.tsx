@@ -8,6 +8,7 @@ import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
+import { useRefusal } from "../lib/refusal";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
@@ -63,6 +64,12 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
+  // A refused Done, and what it leaves behind: the flash is spent in ~600ms,
+  // the sentence stays until the grid is actually finishable. Both controls
+  // this screen blooms — the button and the lines with nobody on them — wear
+  // the one refusal, so a second press replays every one of them together.
+  const refusal = useRefusal();
+  const [told, setTold] = useState(false);
   if (!opened.current) {
     opened.current = {
       receiptItems: draft.receiptItems, receiptTip: draft.receiptTip,
@@ -208,7 +215,12 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   function finish() {
-    if (!canFinish) return;
+    // Never grey: a Done that can't go through points at what is missing
+    // rather than sitting dead with a sentence beside it (design-system.md).
+    if (!canFinish) {
+      if (!refusal.live) { refusal.refuse(); setTold(true); }
+      return;
+    }
     // This screen owns only the raw grid: who was there, and who had what.
     // The total and the split it implies are derived from these fields
     // wherever they're needed (the expense form's render, and its save) —
@@ -236,10 +248,12 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     onBack();
   }
 
-  // One line under the grid at a time: what still has to be fixed, or — until
-  // the control has been found once — what the ×N does. A control you've used
-  // doesn't need explaining, and the footer is one line tall.
-  const note = !everyItemAssigned ? (
+  // One line under the grid at a time: what a refused Done was pointing at, or
+  // — until the control has been found once — what the ×N does. The sentence
+  // waits for the refusal that earns it: on arrival nothing is assigned yet, so
+  // printing it then scolds a grid for being untouched. A control you've used
+  // doesn't need explaining either, and the footer is one line tall.
+  const note = told && !everyItemAssigned ? (
     <div className="footnote bad">{copy.items.needsSomeone}</div>
   ) : canUnfoldSomething && runs.every((r) => r === null) ? (
     <div className="footnote">
@@ -296,7 +310,11 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                   <tr key={i} className={part ? "part" : undefined}>
                     <td className="itemlabel">
                       <div className="itemrow">
-                        <span className="itemtext">
+                        {/* A line nobody has been given blooms with the
+                            refusal — name and amount, which is how you find
+                            it again in twenty rows of bill. */}
+                        <span className={`itemtext${
+                          (assignments[i]?.size ?? 0) === 0 ? refusal.flash : ""}`}>
                           <span className="itemname">
                             {item.label}
                             {/* The printed count, but only where the button
@@ -371,7 +389,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                     </div>
                   </td>
                   {involvedMembers.map((m) => (
-                    <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>
+                    <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>
                   ))}
                 </tr>
               ))}
@@ -386,7 +404,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                     </div>
                   </td>
                   {involvedMembers.map((m) => (
-                    <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>
+                    <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>
                   ))}
                 </tr>
               ) : null}
@@ -415,7 +433,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                   </span>
                   {draft.receiptTip ? null : <span className="tiphint">{copy.items.tipHint}</span>}
                 </td>
-                {involvedMembers.map((m) => <td key={m.id}><span className="dot" style={{ opacity: .35 }} /></td>)}
+                {involvedMembers.map((m) => <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>)}
               </tr>
               {/* Why the rows above have no cells to tap. Under them rather
                   than in the footer: the footer's line is what to do next,
@@ -449,8 +467,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
               does — the grid owns this screen's scroll, sideways as well as
               down — so it stays in the band, which pays `--kb` for the tip
               being typed a row above it. */}
-          <button type="button" className="btn btn-p btn-lg itemsave"
-            onClick={finish} disabled={!canFinish} {...keepsFocus}>
+          <button type="button" className={`btn btn-p btn-lg itemsave${refusal.flash}`}
+            onClick={finish} onAnimationEnd={refusal.onFlashEnd} {...keepsFocus}>
             {copy.act.done}
           </button>
         </div>

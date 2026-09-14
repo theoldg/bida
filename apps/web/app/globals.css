@@ -604,6 +604,12 @@ a { color: inherit; text-decoration: none }
 .tiphint { font-size: 10px; color: var(--muted); display: block; margin-top: 2px }
 .itemcell { width: 40px; height: 34px; display: grid; place-items: center }
 .itemcell .dot { width: 10px; height: 10px }
+/* The rows nobody ordered wear the same cell, minus the button: their faint dot
+   was a bare span centred by the cell's `text-align`, while every dot above it
+   rides a 40px grid box that ignores that — which left the two columns of dots
+   a few pixels out of line with each other, visibly so down a long bill. */
+.itemcell.ghost { opacity: .35 }
+.itemcell.ghost .dot { width: 6px; height: 6px }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
@@ -1295,6 +1301,18 @@ button.amtnote:active { background: var(--hl-edge) }
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
+/* A refused Done on the who-had-what grid blooms the button and, with it, every
+   line nobody has been given — which is what is actually missing, and the only
+   way to find it again in twenty rows of bill. A row has no field and no filled
+   control to go red, so its own words do: the printed name, the amount under
+   it, and the ×N or portion beside either. All three are named, because the two
+   quiet ones carry their own `--muted` and would not take a colour inherited
+   from the line. */
+.itemtext.flash-a .itemname, .itemtext.flash-a .itemamount, .itemtext.flash-a .itemqty {
+  animation: refuse-text-a .6s ease-in-out }
+.itemtext.flash-b .itemname, .itemtext.flash-b .itemamount, .itemtext.flash-b .itemqty {
+  animation: refuse-text-b .6s ease-in-out }
+
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector
    that can trigger vestibular symptoms. This has none; it is a colour settling,
@@ -1311,7 +1329,10 @@ button.amtnote:active { background: var(--hl-edge) }
   .amtnote.flash-a, .amtnote.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
   .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
   .field.flash-a input::placeholder, .field.flash-b input::placeholder,
-  .field.flash-a label, .field.flash-b label {
+  .field.flash-a label, .field.flash-b label,
+  .itemtext.flash-a .itemname, .itemtext.flash-b .itemname,
+  .itemtext.flash-a .itemamount, .itemtext.flash-b .itemamount,
+  .itemtext.flash-a .itemqty, .itemtext.flash-b .itemqty {
     animation-duration: .6s !important }
 }
 
