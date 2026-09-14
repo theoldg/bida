@@ -3,24 +3,43 @@ import type { Id } from "./types.js";
 /**
  * Reduce a set of balances to the fewest payments that clear everyone.
  *
- * Two passes, and the first is what makes the count minimal. The minimum number
- * of transfers is `n − p`, where `p` is the largest number of disjoint groups
- * the members can be cut into that each sum to zero: money never has to cross
- * between two such groups, and inside one that cannot be cut further every
- * payment can clear at most one person, so `size − 1` is both the floor and the
- * ceiling. So: find the best cut (`partition`), then settle each piece
- * (`fill`). Finding the cut is the NP-hard part — `partition` is a subset DP,
- * exact but exponential, so above `EXACT_LIMIT` people we skip it and settle
- * the group as one piece, which is the old behaviour and no longer minimal.
+ * The minimum is `n − p`, where `p` is the largest number of disjoint zero-sum
+ * pieces the group cuts into: money never crosses between two such pieces, and
+ * inside a piece that cannot be cut further every payment clears at most one
+ * person, so `size − 1` is both floor and ceiling. Finding the cut is the whole
+ * problem, and it is NP-hard — it contains subset-sum. So `partition` does it
+ * in three moves, each of which is what makes the next affordable:
  *
- * `fill` decides *who pays whom*, which the count alone leaves open: smallest
- * debtor first, into the smallest creditor who can absorb the whole debt. Owing
- * a little means one transfer; only a debt too big for any single creditor is
- * split. This never costs a transfer — every piece takes exactly `size − 1`
- * however it is filled — so it is free to be kind about it.
+ * 1. **Cancel exact opposites.** If someone is owed exactly what another owes,
+ *    some best answer pairs them off. (Take any best cut: if `x` and `−x` sit
+ *    in different pieces, swapping them out into a piece of their own leaves
+ *    the rest of both still summing to zero — same count. If they sit in the
+ *    same piece, splitting them out gains one.) Every pair removed is two
+ *    people the search never sees, and it is the common case: one person's
+ *    share of one dinner.
+ * 2. **Search over amounts, not people.** Two members owing the same amount are
+ *    interchangeable, so the state is *how many* people hold each amount, not
+ *    which. A group where everyone owes the same collapses from millions of
+ *    subsets to a handful of states, and that is the shape real groups have —
+ *    an evenly split trip.
+ * 3. **Stop at the first zero.** When enumerating a candidate piece, a running
+ *    total that reaches zero is a piece already; extending it can only merge
+ *    two pieces into one, which never wins. That prunes most of the tree.
  *
- * "Simplest way to settle" is still the honest UI wording for a group past
- * `EXACT_LIMIT`; "fewest possible" is true below it.
+ * Together these settle an evenly-split group of 100 in under a millisecond,
+ * where the subset DP this replaced could not pass 18 people at any price. What
+ * survives all three is a group of ~18+ whose balances are all different, which
+ * is also the shape with the least to gain — usually nothing cancels and the
+ * answer is one piece. There `partition` spends a fixed work budget, falls back
+ * to peeling off what zero-sum triples and quadruples it can find, and settles
+ * the rest as one piece: still `≤ n−1` transfers, no longer provably fewest.
+ * So the UI says "simplest way to settle" and not "optimal".
+ *
+ * `fill` then decides who pays whom, which the count alone leaves open:
+ * smallest debtor first, into the smallest creditor who can absorb the whole
+ * debt. Owing a little means one transfer; only a debt too big for any single
+ * creditor is split. Every piece costs `size − 1` however it is filled, so this
+ * is free.
  */
 
 export interface Transfer {
@@ -35,24 +54,24 @@ interface Party {
 }
 
 /**
- * Above this many members holding a non-zero balance, skip the exact pass.
- * The DP walks the zero-sum subsets, so cost is worst when many members hold
- * the same amount: 16 costs ~10ms there, 18 costs ~100ms, 20 over a second.
- * A bill-splitting group this size is already unusual, and it still settles —
- * just not provably in the fewest transfers.
+ * Steps of search before `partition` gives up on being exact. Reached only by a
+ * group of ~18 or more with no two balances alike; everything below that
+ * finishes far inside it, and the ceiling costs about 2ms.
  */
-const EXACT_LIMIT = 16;
+const SEARCH_BUDGET = 50_000;
+
+class OutOfBudget extends Error {}
 
 export function settleUp(balances: Record<Id, number>): Transfer[] {
-  // Sorted by id so the mask indices below — and so the answer — are the same
-  // on every device, whatever order the record was built in.
+  // Sorted by id so the answer is the same on every device, whatever order the
+  // record was built in.
   const people: Party[] = Object.entries(balances)
     .filter(([, balance]) => balance !== 0)
     .map(([id, balance]) => ({ id, amount: balance }))
     .sort((a, b) => (a.id < b.id ? -1 : 1));
   if (people.length === 0) return [];
 
-  const pieces = people.length <= EXACT_LIMIT ? partition(people) : [people];
+  const pieces = partition(people);
   // Smallest debt first across pieces too, so the whole list reads the way each
   // piece does.
   pieces.sort((a, b) => smallestDebt(a) - smallestDebt(b) || (a[0]!.id < b[0]!.id ? -1 : 1));
@@ -63,52 +82,160 @@ function smallestDebt(piece: readonly Party[]): number {
   return Math.min(...piece.filter((p) => p.amount < 0).map((p) => -p.amount));
 }
 
-/**
- * Cut the members into as many zero-sum groups as possible.
- *
- * `parts[m]` is the most groups the members in bitmask `m` can be cut into, and
- * `take[m]` the group peeled off to get there — enough to rebuild the cut.
- * Only zero-sum masks can be cut at all, so the walk skips the rest.
- */
+/** Cut the members into as many zero-sum pieces as possible. See the header. */
 function partition(people: readonly Party[]): Party[][] {
-  const n = people.length;
-  const full = (1 << n) - 1;
-
-  // Float64 because a group's total can pass 2^31 minor units, and every
-  // integer below 2^53 is exact in a double.
-  const sum = new Float64Array(1 << n);
-  for (let m = 1; m <= full; m++) {
-    const low = m & -m;
-    sum[m] = sum[m ^ low]! + people[31 - Math.clz32(low)]!.amount;
+  // People holding the same amount, in id order: the search moves counts
+  // between these queues, and taking from the front keeps it deterministic.
+  const holders = new Map<number, Party[]>();
+  for (const person of people) {
+    const queue = holders.get(person.amount);
+    if (queue) queue.push(person);
+    else holders.set(person.amount, [person]);
   }
 
-  const parts = new Int8Array(1 << n).fill(-1);
-  const take = new Int32Array(1 << n);
-  parts[0] = 0;
-  for (let m = 1; m <= full; m++) {
-    if (sum[m]! !== 0) continue;
-    // Every subset is tried once, as the piece holding `m`'s lowest member.
-    const low = m & -m;
-    for (let s = m; s > 0; s = (s - 1) & m) {
-      if ((s & low) === 0 || sum[s]! !== 0) continue;
-      const rest = parts[m ^ s]!;
-      if (rest >= 0 && rest + 1 > parts[m]!) {
-        parts[m] = rest + 1;
-        take[m] = s;
-      }
+  const pieces: Party[][] = [];
+
+  // (1) Exact opposites, paired off and set aside.
+  for (const amount of [...holders.keys()].sort((a, b) => a - b)) {
+    if (amount <= 0) continue;
+    const owed = holders.get(amount)!;
+    const owing = holders.get(-amount);
+    while (owing && owed.length > 0 && owing.length > 0) {
+      pieces.push([owed.shift()!, owing.shift()!]);
     }
   }
 
-  // Balances that don't sum to zero have no cut at all. They shouldn't reach
-  // here (`core/balance.ts` asserts it), but settling something beats throwing.
-  if (parts[full]! < 0) return [[...people]];
+  const amounts = [...holders.keys()].filter((a) => holders.get(a)!.length > 0).sort((a, b) => a - b);
+  const counts = amounts.map((a) => holders.get(a)!.length);
+  const take = (chosen: readonly number[]) =>
+    pieces.push(amounts.flatMap((a, i) => holders.get(a)!.splice(0, chosen[i]!)));
 
-  const pieces: Party[][] = [];
-  for (let m = full; m > 0; m ^= take[m]!) {
-    const piece = take[m]!;
-    pieces.push(people.filter((_, i) => (piece >> i) & 1));
+  if (counts.some((c) => c > 0)) {
+    try {
+      // (2) + (3): search the counts, then replay the cut onto the people.
+      const memo = new Map<string, { best: number; cut: number[] | null }>();
+      const work = { steps: 0 };
+      search(amounts, counts, memo, work);
+      for (let state = counts; state.some((c) => c > 0); ) {
+        const cut = memo.get(state.join(","))!.cut;
+        if (!cut) break;
+        take(cut);
+        state = state.map((c, i) => c - cut[i]!);
+      }
+    } catch (error) {
+      if (!(error instanceof OutOfBudget)) throw error;
+      for (const cut of peel(amounts, amounts.map((a) => holders.get(a)!.length))) take(cut);
+    }
+    // Whatever the search or the fallback left over is one last piece.
+    const rest = amounts.flatMap((a) => holders.get(a)!.splice(0));
+    if (rest.length > 0) pieces.push(rest);
   }
+
   return pieces;
+}
+
+/**
+ * The most zero-sum pieces the remaining counts cut into, memoised per state.
+ * Records the piece it took first, so the caller can replay the cut.
+ */
+function search(
+  amounts: readonly number[],
+  counts: readonly number[],
+  memo: Map<string, { best: number; cut: number[] | null }>,
+  work: { steps: number },
+): number {
+  if (counts.every((c) => c === 0)) return 0;
+  const key = counts.join(",");
+  const seen = memo.get(key);
+  if (seen) return seen.best;
+  if (++work.steps > SEARCH_BUDGET) throw new OutOfBudget();
+
+  const entry = { best: 1, cut: null as number[] | null }; // worst case: all one piece
+  memo.set(key, entry);
+
+  const size = counts.reduce((a, b) => a + b, 0);
+  // Exact opposites are gone, so no piece is smaller than three.
+  const ceiling = Math.max(1, Math.floor(size / 3));
+  const chosen = counts.map(() => 0);
+  const first = counts.findIndex((c) => c > 0);
+
+  const walk = (i: number, total: number, picked: number) => {
+    if (entry.best >= ceiling) return; // cannot do better; stop looking
+    if (total === 0 && picked > 0) {
+      const got = 1 + search(amounts, counts.map((c, j) => c - chosen[j]!), memo, work);
+      if (got > entry.best) {
+        entry.best = got;
+        entry.cut = [...chosen];
+      }
+      return; // a piece already — extending it could only merge two into one
+    }
+    if (i >= counts.length) return;
+    if (++work.steps > SEARCH_BUDGET) throw new OutOfBudget();
+    // Can what is left still bring the running total back to zero?
+    let low = total;
+    let high = total;
+    for (let j = i; j < counts.length; j++) {
+      const swing = amounts[j]! * (counts[j]! - chosen[j]!);
+      if (swing < 0) low += swing;
+      else high += swing;
+    }
+    if (low > 0 || high < 0) return;
+    for (let more = counts[i]! - chosen[i]!; more >= 0; more--) {
+      chosen[i] = chosen[i]! + more;
+      walk(i + 1, total + amounts[i]! * more, picked + more);
+      chosen[i] = chosen[i]! - more;
+    }
+  };
+
+  // Anchor on one holder of the first amount — every piece contains one, and
+  // fixing it means no piece is enumerated twice. Carry on at the same index:
+  // a piece may hold several people owing that same amount.
+  chosen[first] = 1;
+  walk(first, amounts[first]!, 1);
+  chosen[first] = 0;
+  return entry.best;
+}
+
+/**
+ * Out of budget: take the zero-sum triples and quadruples that a table of pair
+ * sums can find, and leave the rest. Cheap, and better than giving up whole.
+ */
+function peel(amounts: readonly number[], counts: readonly number[]): number[][] {
+  const items: number[] = [];
+  for (const [i, count] of counts.entries()) for (let k = 0; k < count; k++) items.push(i);
+  const cuts: number[][] = [];
+
+  for (;;) {
+    const pairs = new Map<number, [number, number]>();
+    for (let a = 0; a < items.length; a++) {
+      for (let b = a + 1; b < items.length; b++) {
+        const sum = amounts[items[a]!]! + amounts[items[b]!]!;
+        if (!pairs.has(sum)) pairs.set(sum, [a, b]);
+      }
+    }
+
+    let hit: number[] | undefined;
+    for (let a = 0; a < items.length && !hit; a++) {
+      const pair = pairs.get(-amounts[items[a]!]!);
+      if (pair && pair[0] !== a && pair[1] !== a) hit = [a, ...pair];
+    }
+    if (!hit) {
+      for (const [sum, pair] of pairs) {
+        const other = pairs.get(-sum);
+        if (other && !other.some((x) => pair.includes(x))) {
+          hit = [...pair, ...other];
+          break;
+        }
+      }
+    }
+    if (!hit) return cuts;
+
+    const cut = counts.map(() => 0);
+    for (const at of hit) cut[items[at]!] = cut[items[at]!]! + 1;
+    cuts.push(cut);
+    const drop = new Set(hit);
+    for (let i = items.length - 1; i >= 0; i--) if (drop.has(i)) items.splice(i, 1);
+  }
 }
 
 /** Settle one zero-sum piece. Always `piece.length − 1` transfers. */

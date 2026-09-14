@@ -119,9 +119,32 @@ describe("settleUp", () => {
     }
   });
 
+  it("settles an evenly split trip of 60, exactly and fast", () => {
+    // Everyone owes or is owed the same: the shape the search collapses best,
+    // and the shape a real trip has. 30 pieces of two, so 30 transfers.
+    const balances: Record<string, number> = {};
+    for (let i = 0; i < 30; i++) balances[`owes${i}`] = -2_500;
+    for (let i = 0; i < 30; i++) balances[`owed${i}`] = 2_500;
+    const started = Date.now();
+    const transfers = settleUp(balances);
+    expect(transfers).toHaveLength(30);
+    expect(Date.now() - started).toBeLessThan(500);
+    expect(Object.values(applyTransfers(balances, transfers)).every((v) => v === 0)).toBe(true);
+  });
+
+  it("finds the pieces in a group of 40 that splits three ways", () => {
+    // Ten rounds of "one person paid for three": pieces of four, and no two
+    // members cancel exactly, so this is the search working, not the pairing.
+    const balances: Record<string, number> = {};
+    for (let i = 0; i < 30; i++) balances[`ate${i}`] = -1_000;
+    for (let i = 0; i < 10; i++) balances[`paid${i}`] = 3_000;
+    expect(settleUp(balances)).toHaveLength(30);
+  });
+
   it("still clears a group too large for the exact pass", () => {
-    // 20 members is past EXACT_LIMIT: the cut is skipped, so this is only the
-    // greedy fill — which must still square everyone off.
+    // Twenty members, no two balances alike: this is the shape that exhausts
+    // the search budget, so it settles on the fallback. Not provably fewest —
+    // but it must still square everyone off, in at most n−1 payments.
     const balances: Record<string, number> = {};
     let running = 0;
     for (let i = 0; i < 19; i++) {

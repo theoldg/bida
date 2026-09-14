@@ -204,16 +204,22 @@ Both **derived on read, never stored.** In base minor units over every entry,
 `balance(member) = Σ(paid) − Σ(share) − Σ(received) + Σ(income share)`, plus
 transfers out and minus transfers in; the set always sums to zero (assert it in
 dev). The income terms are the expense terms with the sign flipped, applied in
-`core/balance.ts` and nowhere else. Settle-up is **the fewest transfers there are**, up to 16
-members holding a non-zero balance. Cut the group into as many zero-sum pieces
-as possible — `core/settle.ts` does it with a subset DP, the NP-hard part — and
-each piece then takes exactly `size − 1` payments, so the total `n − pieces` is
-the proven minimum. Past 16 the cut is skipped for cost and the group settles as
-one piece: still `≤ n−1`, no longer provably minimal, so the UI says "simplest
-way to settle" rather than "optimal". Which of the equally-short answers you get
-is the second question: smallest debtor first, into the smallest creditor who
-can absorb the whole debt, so owing a little means one transfer and only a debt
-too big for any single creditor is split.
+`core/balance.ts` and nowhere else. Settle-up is **the fewest transfers there are**, for
+every group shape the app realistically sees. Cut the members into as many
+zero-sum pieces as possible and each piece takes exactly `size − 1` payments,
+so `n − pieces` is the minimum; finding the cut is the NP-hard part, and
+`core/settle.ts` explains the three moves that make it affordable — pair off
+exact opposites first, search over *amounts* rather than people so members
+owing the same are one state, and stop extending a candidate piece the moment
+its total hits zero. An evenly split group of 100 settles exactly in under a
+millisecond. What defeats all three is ~18+ members with no two balances alike,
+where the search spends a fixed budget, peels off what zero-sum triples and
+quadruples it can, and settles the rest as one piece — still `≤ n−1`, no longer
+provably fewest, which is why the UI says "simplest way to settle" and never
+"optimal". Which of the equally-short answers you get is the second question:
+smallest debtor first, into the smallest creditor who can absorb the whole
+debt, so owing a little means one transfer and only a debt too big for any
+single creditor is split.
 
 ## D1 schema
 

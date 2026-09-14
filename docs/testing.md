@@ -66,7 +66,10 @@ otherwise have to read the whole suite to learn:
   op is detected (`foldForward` → `null`, caller rebuilds).
 - **`settleUp` clears every balance to zero**, 300 randomised groups, and uses
   **the fewest transfers possible** — checked against a brute-force minimum
-  written a different way, over 2,000 randomised groups.
+  written a different way, over 2,000 randomised groups of four shapes (a few
+  repeated amounts, all different, two amounts, wide random). That differential
+  is what caught the search missing pieces that held two people owing the same;
+  keep all four shapes if you touch it.
 - **HLCs are totally ordered by string comparison**, and a peer's stamp is
   absorbed on receive however far ahead it reads — so a reply to their op
   always sorts after it.
