@@ -184,7 +184,7 @@ export const copy = {
     privacy: {
       title: "Privacy",
       scanTitle: "Receipt scanning is not private.",
-      scan: "Receipt photos are sent to a free-tier Gemini API, where they may be read by humans or used to train models.",
+      scan: "Receipt photos are sent to the Google Gemini API, where they may be read by humans or used to train models. For a day afterwards, the server remembers that this group scanned something: not the photo, just the count the cap needs.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
@@ -657,8 +657,10 @@ export const copy = {
     /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
-    /** A consequence the screen can't show. It stays. */
-    freeTier: "Google’s free tier — the photo may train their models.",
+    /** A consequence the screen can't show. It stays. Names the API rather
+        than its tier: the tip jar says scanning is the one thing here that
+        costs money to run, and "free" contradicts it. */
+    terms: "Google Gemini API: photo may train their models.",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**

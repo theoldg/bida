@@ -101,7 +101,7 @@ function ScanScreen() {
               {scan.live?.state === "error"
                 ? <Failure>{scan.live.error ?? copy.scan.failed}</Failure> : null}
 
-              <p className="scanterms">{copy.scan.freeTier}</p>
+              <p className="scanterms">{copy.scan.terms}</p>
             </div>
           </div>
         </Scroll>

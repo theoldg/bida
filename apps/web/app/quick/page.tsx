@@ -171,8 +171,8 @@ export default function QuickPage() {
               ? <Failure>{copy.quick.noLines}</Failure> : null}
 
             {/* The same disclosure the group's scan screen carries: the photo
-                goes to a free-tier model that may train on it. */}
-            <p className="scanterms">{copy.scan.freeTier}</p>
+                goes to Google's model, which may train on it. */}
+            <p className="scanterms">{copy.scan.terms}</p>
           </div>
         </Scroll>
       </Body>

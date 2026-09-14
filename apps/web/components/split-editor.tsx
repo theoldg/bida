@@ -410,7 +410,7 @@ function ReceiptPanel({
         <Failure>{scan.live.error ?? copy.scan.failed}</Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
-          {copy.scan.freeTier}
+          {copy.scan.terms}
         </div>
       )}
     </div>
