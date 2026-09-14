@@ -110,6 +110,19 @@ export const route = {
   transferBetween: (groupId: string, from: string, to: string, amount: number, title: string) =>
     `${route.addEntry(groupId, "transfer", "balances")}&from=${encodeURIComponent(from)}`
     + `&to=${encodeURIComponent(to)}&amount=${amount}&title=${encodeURIComponent(title)}`,
+  /**
+   * What a scan costs, where to chip in, and the offer to split what you gave
+   * with the group. Off the foot of the balances tab — not a FAB: the balances
+   * tab is a reading, and the app's two floating buttons are the ledger's.
+   */
+  tip: (groupId: string) => `/g/tip?id=${encodeURIComponent(groupId)}`,
+  /**
+   * The donation as an ordinary expense, named and otherwise blank — the
+   * amount is whatever was actually given, which only the giver knows. `via`
+   * is "balances" so saving lands back where the tip screen was reached from.
+   */
+  tipEntry: (groupId: string, title: string) =>
+    `${route.addEntry(groupId, "expense", "balances")}&title=${encodeURIComponent(title)}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /** The group's exchange-rate registry: one rate per currency it spends in. */
   rates: (groupId: string) => `/g/rates?id=${encodeURIComponent(groupId)}`,

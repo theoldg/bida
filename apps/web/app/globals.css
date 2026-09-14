@@ -726,6 +726,39 @@ button.tswap { align-self: center; width: 36px; height: 36px; margin: 0 6px; bor
   border: 1px solid var(--rule-soft); background: var(--card-2) }
 button.tswap:active { background: var(--press); color: var(--ink) }
 
+/* ---- the tip jar (app/g/tip) ----
+   One screen, one claim: a line, a figure, and what the figure comes to here.
+   Wide gaps and short centred lines — everything on it is read once and acted
+   on, so nothing is set at reading-column width. */
+/* Centred in what is left under the top bar, not parked at the top of it.
+   There are five short things on this screen and no sixth coming, so the
+   scroll's own height is the frame: `min-height: 100%` makes the block as tall
+   as the viewport it sits in, and `justify-content` does the rest. It still
+   scrolls if a long group name or a large text size overflows it.
+
+   The extra padding at the foot is what lifts it: dead centre of the scroll is
+   below centre of the *screen*, because the top bar is above the scroll and
+   nothing is below it. The uneven pair puts the block back where the eye
+   looks for it. */
+.tip { display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 22px; min-height: 100%; padding-top: 24px; padding-bottom: 76px; text-align: center }
+/* No `max-width` on any of these three: each is written to fit a phone's
+   width on one line, and a measure that wraps them at 20em turns a sentence
+   somebody reads at a glance into a stack. The screen is narrow enough to be
+   its own measure. */
+.tiplede { margin: 0; font-size: 14px; line-height: 1.5; text-wrap: balance }
+/* Body size, like the lede above it — only the colour steps back. A smaller
+   type size here made the one sentence that justifies the ask read as its
+   disclaimer. */
+.tipwhy { margin: -12px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted);
+  text-wrap: balance }
+/* The one number in the app that isn't somebody's balance, so it is the one
+   allowed to be this size. Ink, not a hue: it is a price, not a position. */
+.tiprate { font-family: var(--f-mono); font-size: 20px; font-weight: 700;
+  letter-spacing: -.03em; line-height: 1.25 }
+.tipeach { margin: -8px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted) }
+.tipacts { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px }
+
 /* ---- nav, fab, buttons ---- */
 .bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none }
 /* The dock's padding lives on the tabs, not on the dock: a press tints the
@@ -746,6 +779,19 @@ button.tswap:active { background: var(--press); color: var(--ink) }
    are that colour every other row. */
 .fab-2 { right: calc(max(16px, 50vw - 264px) + 60px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
+/* The balances tab's one button (app/g/tip). It wears `.fab-2`'s outline —
+   nothing on this screen may take the ink, which balances spends on the
+   numbers — and it is the only FAB that carries a word, because "+" and a
+   camera are guessable and an ask is not. Wider than it is tall, so the shape
+   itself says it is a different kind of thing from the ledger's two squares.
+
+   It takes back the "+"'s own `right`, which `.fab-2` had shifted left to sit
+   beside it: there is nothing beside this one. Every floating button in the
+   app ends against the same edge, under the same thumb, whichever tab is
+   open. */
+.fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
+  right: max(16px, calc(50vw - 264px));
+  font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
   /* Opacity joins the shared press transition here because a button greys and

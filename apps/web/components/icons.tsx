@@ -7,7 +7,7 @@ export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more" | "info"
-  | "mail";
+  | "mail" | "dollar";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -58,6 +58,16 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-edit" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <path d="M15.5 4.5l4 4L7 21l-4.5.5.5-4.5z" /><path d="M13.5 6.5l4 4" />
+        </symbol>
+        {/* A dollar sign, for the one screen that asks for money
+            (app/g/tip/page.tsx). Not a cup and not a heart: both say "pay the
+            person", and the ask is narrower — it is a bill being paid, which
+            is the whole claim that screen makes. The currency it draws is not
+            the group's, and needn't be: this is the glyph for money itself,
+            the way a "+" is the glyph for another row. */}
+        <symbol id="i-dollar" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M12 2.8v18.4" />
+          <path d="M16.2 7.1a3.9 3.9 0 00-3.7-2.3h-1.2a3.6 3.6 0 000 7.2h1.4a3.6 3.6 0 010 7.2h-1.4a3.9 3.9 0 01-3.7-2.4" />
         </symbol>
         {/* An envelope, for the one address in the app (app/about/page.tsx). */}
         <symbol id="i-mail" viewBox="0 0 24 24" {...S} strokeWidth="1.8">

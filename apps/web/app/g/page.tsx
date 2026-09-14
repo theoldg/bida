@@ -11,7 +11,7 @@ import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
   Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
-  TopBar,
+  SupportFab, TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
@@ -74,7 +74,9 @@ function GroupScreen() {
           <TopBar title=" " back={route.groups()} />
           <Scroll><SkeletonRows count={6} /></Scroll>
         </Body>
-        {tab === "ledger" ? <><ScanFab href={route.scan(groupId)} /><Fab href={route.addEntry(groupId)} /></> : null}
+        {tab === "ledger"
+          ? <><ScanFab href={route.scan(groupId)} /><Fab href={route.addEntry(groupId)} /></>
+          : <SupportFab href={route.tip(groupId)} />}
         <BottomNav items={[
           { label: copy.group.tabs.ledger, icon: "list", href: route.group(groupId), on: tab === "ledger" },
           { label: copy.group.tabs.balances, icon: "scale", href: route.group(groupId, "balances"),
@@ -132,13 +134,14 @@ function GroupScreen() {
 
       {/* Two ways to start an expense: type it, or photograph the bill. Both
           live on the ledger only — the balances tab is a reading, not a place
-          you add to. */}
+          you add to, so the corner is free there for the one thing this app
+          asks for (app/g/tip). */}
       {tab === "ledger" ? (
         <>
           <ScanFab href={route.scan(group.id)} />
           <Fab href={route.addEntry(group.id)} />
         </>
-      ) : null}
+      ) : <SupportFab href={route.tip(group.id)} />}
 
       {/* One navigation, at the bottom, and only what a group actually is: what
           moved through it, and who is up or down because of it. "Settle" was a

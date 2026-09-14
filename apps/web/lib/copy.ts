@@ -210,6 +210,68 @@ export const copy = {
     },
   },
 
+  // ------------------------------------------------------------- tip jar
+
+  /**
+   * The one screen in the app that asks for money, reached from the foot of
+   * the balances tab.
+   *
+   * The ask is deliberately narrow: not "love this app", but the one thing in
+   * it that is not free to run. A number the reader can check beats a plea
+   * they cannot — and it is the same number the ceiling in `SCAN_LIMITS` is
+   * set from (core/scan.ts, docs/receipt-scanning.md#what-the-scan-costs).
+   */
+  tip: {
+    title: "Support bida",
+    /** The balances tab's FAB, which says the whole thing: it is the only
+     *  floating button in the app with a word in it, and half an ask is
+     *  worse than none. */
+    fab: "Support bida",
+    lede: "Enjoying bida? Consider donating a few bucks.",
+    /** Why there is an ask at all, in one line, above the figure it explains. */
+    why: "Scanning is the only part of bida that costs money to run. I pay for it.",
+    /**
+     * The claim, as a figure and the thing it buys. The figure is the same one
+     * the day cap is set from (`SCAN_LIMITS`, core/scan.ts) — if the price
+     * moves, both move.
+     */
+    rate: "$5 ≈ 10,000 receipt scans",
+    /**
+     * The same $5, cut the way this group cuts everything else — and the
+     * offer, said before the button that takes it. Splitting is the thing
+     * this app is for, so the ask gets to be a thing five people share rather
+     * than a thing one person pays.
+     */
+    each: (share: string) => `You can split it! In this group, that’s ${share} each.`,
+    /**
+     * The joke that lets the screen stop asking. Everything above it is a
+     * number and a claim about a number; one line that is obviously neither
+     * is what keeps four earnest sentences from reading as a pitch.
+     */
+    yacht: "If there’s any money left over, I’ll buy a yacht.",
+    donate: {
+      cta: "Donate",
+      url: "https://buymeacoffee.com/theoldg",
+    },
+    /**
+     * A donation split is an ordinary expense — one person paid, everyone
+     * shares ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)),
+     * so this needs no new kind of entry and no new op. It opens the form
+     * rather than writing itself: it is a row in everyone else's ledger, and
+     * how much you gave is a thing only you know.
+     */
+    split: {
+      cta: (group: string) => `Record it in ${group}`,
+      /**
+       * What the prefilled expense calls itself, in the ledger, forever. It
+       * is written in the first person plural because by the time it is saved
+       * it is the group's row and not the giver's — and it is a sentence
+       * somebody will read months later next to a restaurant and a taxi.
+       */
+      entryTitle: "We liked bida",
+    },
+  },
+
   // ------------------------------------------------------------- new group
 
   newGroup: {

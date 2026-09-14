@@ -161,6 +161,24 @@ export function ScanFab({ href }: { href: string }) {
   );
 }
 
+/**
+ * The balances tab's own button: what a scan costs, and where to chip in
+ * (app/g/tip).
+ *
+ * Outlined rather than inked — the "+" is the app's one figure-ground
+ * inversion (ADR-0023), and this screen spends its contrast on the numbers —
+ * and the only FAB with a word in it, because a "+" and a camera are guessable
+ * where an ask is not. It has the corner to itself: the ledger's two never
+ * appear on this tab.
+ */
+export function SupportFab({ href }: { href: string }) {
+  return (
+    <Link href={href} className="fab fab-2 fab-w">
+      <Icon name="dollar" size={16} />{copy.tip.fab}
+    </Link>
+  );
+}
+
 export function Banner({ children, icon }: { children: ReactNode; icon?: IconName }) {
   return (
     <div className="banner">
