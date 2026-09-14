@@ -33,14 +33,21 @@ export interface LiveScan {
 }
 
 /**
- * How long one sweep lasts. Two seconds, jittered: drawn once per *scan* so a
- * second scan doesn't repeat the first to the frame, which is what makes a bar
- * read as a canned animation rather than an estimate. Per scan and not per
+ * How long one sweep lasts. Three seconds, jittered: drawn once per *scan* so
+ * a second scan doesn't repeat the first to the frame, which is what makes a
+ * bar read as a canned animation rather than an estimate. Per scan and not per
  * mount — a bar that redrew its own guess on the way back would be a different
  * estimate of the same wait.
+ *
+ * It was two, which is what a scan used to take. It no longer is: the round
+ * trip now carries a Turnstile challenge as well as the model, and the
+ * upstream API is slower under load than it was. A bar that fills early and
+ * then hands over to a spinner is the one failure this control has — it
+ * promises an answer and then admits it was guessing — so the estimate tracks
+ * the scan rather than the other way round.
  */
 function sweepSeconds(): number {
-  return 1.8 + Math.random() * 0.4;
+  return 2.8 + Math.random() * 0.4;
 }
 
 const scans = new Map<string, LiveScan>();

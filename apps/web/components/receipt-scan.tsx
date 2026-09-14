@@ -179,10 +179,10 @@ export function useReceiptScan(
 /**
  * The wash sweeping across the control while the model reads.
  *
- * A scan is about two seconds of network and model — long enough that a
- * spinner alone says only "no idea" — so the control fills at the pace a scan
- * usually takes, and `onFull` hands over to the spinner if this one is slower.
- * The bar promises the *usual* scan and not this one, which is why it is
+ * A scan is about three seconds of network, challenge and model — long enough
+ * that a spinner alone says only "no idea" — so the control fills at the pace
+ * a scan usually takes, and `onFull` hands over to the spinner if this one is
+ * slower. The bar promises the *usual* scan and not this one, which is why it is
  * `aria-hidden`: what a screen reader is owed is the "Reading…" beside it.
  *
  * Three details it cannot do without. The duration is inline because it is a
@@ -260,8 +260,8 @@ export function ScanPair({
   const busy = live?.state === "scanning";
   /**
    * The sweep has run out and the scan is still going, so the spinner takes
-   * over. Reset the moment the scan ends — the next one is a fresh two
-   * seconds, and an answer that beat the sweep never shows a spinner at all.
+   * over. Reset the moment the scan ends — the next one is a fresh sweep of
+   * its own, and an answer that beat it never shows a spinner at all.
    *
    * Two ways to be past it, because this control can mount onto a scan
    * already in flight: the sweep finished under us (`setFull`), or it had

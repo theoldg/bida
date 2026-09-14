@@ -28,8 +28,8 @@ describe("a scan in flight", () => {
   it("keeps the sweep it was given, so a second look is the same estimate", () => {
     beginScan(G);
     const first = getLiveScan(G)?.seconds;
-    expect(first).toBeGreaterThanOrEqual(1.8);
-    expect(first).toBeLessThanOrEqual(2.2);
+    expect(first).toBeGreaterThanOrEqual(2.8);
+    expect(first).toBeLessThanOrEqual(3.2);
     expect(getLiveScan(G)?.seconds).toBe(first);
   });
 

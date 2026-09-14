@@ -512,6 +512,11 @@ way to reach the who-had-what grid outside a real scan —
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
+- **The sweep is an estimate of a real scan, so it moves when the scan does.**
+  It was two seconds; a round trip now carries a Turnstile challenge as well
+  as the model, and the upstream API is slower under load, so `sweepSeconds`
+  is three. A bar that fills early and hands over to the spinner is this
+  control admitting it was guessing — the one failure it has.
 - **A screen coming back is not a scan starting.** "Reading…" and its bar were
   `useState` in the control, so the Items tab unmounting — a tab switch, or the
   payers editor — read as the scan ending, and coming back read as a new one:
