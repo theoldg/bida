@@ -5,6 +5,7 @@ import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
+import { useRefusal } from "../lib/refusal";
 import { nameTaken } from "@bida/core";
 
 /**
@@ -23,11 +24,21 @@ import { nameTaken } from "@bida/core";
  * once filed it, so a name could land while you were looking at something else
  * and a screen could rewrite itself between a press and its release. It is the
  * plus on the right of the row that files — the same button a finger presses,
- * a keyboard reaches with Enter, and a screen reader announces. It is
- * `disabled` while there is nothing to file: an empty field, or a name the list
- * already holds (`core/names.ts` — two people with one name are two people
- * nothing on screen tells apart, and the same key besides). So a duplicate does
- * not need refusing at the moment of filing; it simply cannot be filed.
+ * a keyboard reaches with Enter, and a screen reader announces.
+ *
+ * **The plus is never dead.** It was `disabled` while there was nothing to
+ * file, and a control that looks like a button and answers nothing reads as a
+ * broken app rather than as a refusal. So it presses like Create and the quick
+ * split's scan pair do: a press that cannot go through blooms and puts the
+ * caret back in the field, which is where every fix for it is typed
+ * (`lib/refusal.ts`). Nothing it refuses is filed — an empty field files
+ * nothing, and neither does a name the list already holds (`core/names.ts` —
+ * two people with one name are two people nothing on screen tells apart, and
+ * the same key besides); the note under the row says which.
+ *
+ * Unlike Create, it is *not* spent for the length of its own flash: the fix is
+ * a keystroke away and the very next press of this same plus has to file, so a
+ * second refusal restarts the flash instead of being swallowed.
  *
  * While the field holds anything, the row draws itself as a box
  * (`globals.css`) — because a name sitting in it is *not* on the list yet, and
@@ -69,6 +80,11 @@ export function AddName({
   const field = useRef<HTMLInputElement>(null);
   const already = nameTaken(value, taken);
   const ready = value.trim().length > 0 && !already && !busy;
+  // Its own refusal, for a press with nothing fileable under it. A screen's
+  // `flash` blooms the same plus for its own reasons, and the two are one
+  // animation: whichever is running wins, and both hear it end.
+  const own = useRefusal();
+  const blooming = flash || own.flash;
 
   // The list grows above this row, so past a screenful the field is below the
   // fold and the rest of the names are typed blind — the browser scrolls to a
@@ -107,7 +123,14 @@ export function AddName({
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!ready) return;
+    if (busy) return;
+    if (!ready) {
+      // Nothing to file: say no where the press landed, and hand back the
+      // caret — an empty field and a duplicate are both fixed by typing.
+      own.refuse();
+      field.current?.focus();
+      return;
+    }
     setBusy(true);
     try {
       await onAdd(value.trim());
@@ -137,8 +160,8 @@ export function AddName({
             nothing is filed by a blur any more, but a keyboard that shuts on
             the press and reopens on the refocus is a flinch under the thumb —
             and a press spent closing one is a press that never lands. */}
-        <button type="submit" className={`iconbtn${flash}`} aria-label={copy.act.add}
-          disabled={!ready} onAnimationEnd={onFlashEnd} {...keepsFocus}>
+        <button type="submit" className={`iconbtn${blooming}`} aria-label={copy.act.add}
+          onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }} {...keepsFocus}>
           <Icon name="plus" size={15} />
         </button>
       </form>

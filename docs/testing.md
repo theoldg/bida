@@ -238,9 +238,9 @@ that is what makes a check like this flake and then get deleted.
 
 The add row lets a name be typed and not yet filed, and only its own plus files
 one (`components/name-adder.tsx`). What goes wrong there is never arithmetic: a
-blur that must do nothing, a plus that must be dead on a name the list already
-holds, and a screen whose button must not read intent out of a field nobody has
-pressed anything on. All of it looks perfect in jsdom.
+blur that must do nothing, a plus that must refuse — never file, never sit
+dead — on an empty field or a name the list already holds, and a screen whose
+button must not read intent out of a field nobody has pressed anything on. All of it looks perfect in jsdom.
 
 So the press is made by hand and **held**: `locator.click()` re-resolves the
 button and quietly retries a press that missed, and an instant down-up is over

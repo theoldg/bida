@@ -200,11 +200,15 @@ confers nothing without the secret.
   way of pressing it. Leaving the field files nothing, so a name can sit in the
   row unfiled — and while one does, the row draws itself as a box
   (`.addrow.editing`), because a row that looks like the committed rows above it
-  says the opposite of what is true. The plus is `disabled` while there is
-  nothing to file: an empty field, or a name the list already holds — **one
-  name, one person** (`core/names.ts`), said as it is typed and refused before
-  the press rather than after it, on every list including the one you are
-  picking yourself out of, where the name you typed is a row one tap above.
+  says the opposite of what is true. **The plus is never dead** — a control
+  that looks like a button and answers nothing reads as a broken app — so a
+  press with nothing to file blooms it and puts the caret back in the field,
+  where the fix is typed, filing nothing either way. Nothing to file is an
+  empty field, or a name the list already holds — **one name, one person**
+  (`core/names.ts`), said under the row as it is typed and again by the
+  refusal, on every list including the one you are picking yourself out of,
+  where the name you typed is a row one tap above. It is not spent by its own
+  flash the way Create is: the next press of that same plus has to file.
   A screen's own button never *files* what is in the field — an unfiled name is
   unfiled, whatever else is pressed — but the two that leave the screen with
   the list behind them **refuse** rather than going on without the name:

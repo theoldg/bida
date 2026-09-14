@@ -73,7 +73,14 @@ await page.waitForTimeout(800);
 report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and comes back when the flash settles");
 
-report(await plus().isDisabled(), "an empty add row cannot file anything");
+// The plus is never dead — an empty press refuses where the finger landed and
+// files nothing, rather than sitting grey.
+report(!await plus().isDisabled(), "the plus is tappable on an empty add row");
+await press(plus());
+report(await members() === 0
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "and pressing it with an empty field refuses, blooming, and files nothing");
+await page.waitForTimeout(800);
 
 // Enter is the keyboard's press of that same plus.
 await field().fill("Theo");
@@ -102,8 +109,15 @@ report(await members() === 2 && await field().inputValue() === "Sam",
 // rather than warning after the press.
 await field().fill("Marie");
 await page.waitForTimeout(80);
-report(await page.locator(".addwarn").count() === 1 && await plus().isDisabled(),
-  "a name already on the list disables the plus and says why");
+report(await page.locator(".addwarn").count() === 1 && !await plus().isDisabled(),
+  "a name already on the list says why, the plus still tappable");
+await press(plus());
+report(await members() === 2
+  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
+  "and pressing it over that name refuses rather than filing a second Marie");
+await page.waitForTimeout(800);
+report(await field().inputValue() === "Marie",
+  "a refused press leaves the name where it was typed");
 await field().fill("");
 await page.waitForTimeout(80);
 
