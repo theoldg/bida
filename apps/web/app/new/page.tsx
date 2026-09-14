@@ -100,10 +100,11 @@ export default function NewGroupPage() {
   const refusing = REFUSABLE.some((f) => refusedFields[f].live);
   /**
    * The flash is over. Only the field's own animation counts — the
-   * placeholder is a pseudo-element on the same clock.
+   * placeholder is a pseudo-element on the same clock — and no event at all is
+   * the add row saying the fix landed before the animation ran out.
    */
-  const settled = (field: Refusable) => (e: React.AnimationEvent) => {
-    if (e.pseudoElement) return;
+  const settled = (field: Refusable) => (e?: React.AnimationEvent) => {
+    if (e?.pseudoElement) return;
     setRefused((r) => ({ ...r, [field]: { ...r[field], live: false } }));
   };
 

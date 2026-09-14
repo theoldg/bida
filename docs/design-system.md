@@ -287,8 +287,12 @@ pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
 too little ink to be seen going red, so the ground goes instead. **A refusal
 blooms what has to change**, and on that row that is the plus only while a good
 name is waiting to be pressed in; when the field is the problem the field
-blooms in text instead — "Add someone" on an empty row, the typed name on one
-the list already holds, since no press files either (`name-adder.tsx`). A flash
+blooms in text instead — the placeholder when a screen refuses over a list too
+short to go on with, the typed name when the list already holds it, since no
+press files that one. A press of the plus on an empty row refuses nothing at
+all: it takes the caret, which is the whole answer. And a keystroke ends any
+flash there on the spot, rather than reddening writing that is being typed over
+(`name-adder.tsx`). A flash
 rather than a held red, and it replays on every refusal — the two identical
 `-a`/`-b` animations in `globals.css` are the restart mechanism. Save is spent
 for exactly as long as the flash — greyed instantly, eased back — which is the

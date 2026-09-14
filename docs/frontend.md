@@ -201,18 +201,22 @@ confers nothing without the secret.
   row unfiled — and while one does, the row draws itself as a box
   (`.addrow.editing`), because a row that looks like the committed rows above it
   says the opposite of what is true. **The plus is never dead** — a control
-  that looks like a button and answers nothing reads as a broken app — so a
-  press with nothing to file refuses instead, blooming and handing back the
-  caret, and files nothing either way. **What blooms is whatever has to
-  change**, which is the plus only while a good name sits unfiled: an empty row
-  reddens "Add someone" itself, and a name the list already holds reddens that
-  name — **one name, one person** (`core/names.ts`), said under the row in
-  words as it is typed and pointed at by the refusal, on every list including
-  the one you are picking yourself out of, where the name you typed is a row
-  one tap above. The same routing catches a screen's refusal, so Create over an
-  empty list blooms the field it needs a name in and Create over an unfiled
-  name blooms the plus that would file it. The plus is not spent by its own
-  flash the way Create is: the next press of it has to file.
+  that looks like a button and answers nothing reads as a broken app — and on
+  an empty row it does not refuse either: it takes the caret, and the next
+  press of that same button files what gets typed. The one press of it that
+  says no is a name the list already holds, which blooms that name, since
+  editing it is the fix — **one name, one person** (`core/names.ts`), said
+  under the row in words as it is typed and pointed at by the refusal, on every
+  list including the one you are picking yourself out of, where the name you
+  typed is a row one tap above. **A screen's refusal blooms whatever has to
+  change**, so Create over an unfiled name points at the plus that would file
+  it and Create over a list too short to go on with reddens the placeholder,
+  which is the only thing that ever does. **A keystroke ends any flash on the
+  row** rather than letting it run out — typing is the fix landing, and a
+  placeholder just typed over cannot carry a refusal — and it tells whoever
+  owns that flash, so Create un-greys with it (`lib/refusal.ts`; a flash cut
+  short fires no `animationend`). The plus is never spent by a flash the way
+  Create is: the next press of it has to file.
   A screen's own button never *files* what is in the field — an unfiled name is
   unfiled, whatever else is pressed — but the two that leave the screen with
   the list behind them **refuse** rather than going on without the name:

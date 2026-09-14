@@ -26,27 +26,31 @@ import { nameTaken } from "@bida/core";
  * plus on the right of the row that files — the same button a finger presses,
  * a keyboard reaches with Enter, and a screen reader announces.
  *
- * **The plus is never dead.** It was `disabled` while there was nothing to
- * file, and a control that looks like a button and answers nothing reads as a
- * broken app rather than as a refusal. So it presses like Create and the quick
- * split's scan pair do: a press that cannot go through blooms and puts the
- * caret back in the field (`lib/refusal.ts`), filing nothing either way.
+ * **The plus is never dead**, and on an empty row it does not refuse either —
+ * it focuses the field. A control that looks like a button and answers nothing
+ * reads as a broken app, but there is nothing to say no *about* before a name
+ * is typed: the keyboard opening is the answer, and the same button files what
+ * gets typed into it. The one press of it that refuses is a name the list
+ * already holds (`core/names.ts` — two people with one name are two people
+ * nothing on screen tells apart, and the same key besides): that name blooms,
+ * because editing it is the fix and no press will ever file it, and the note
+ * under the row says so in words.
  *
- * **The bloom lands on whatever has to change** — a refusal points, and this
- * row has two things to point at. The plus is the fix only when the name in
- * the field is good and unfiled; then pressing it is the whole of the answer,
- * and it is what blooms, for this row's own refusals and for a screen's alike.
- * When the *field* is the problem the field blooms instead: an empty row
- * reddens "Add someone" itself, because what is missing is a name and no
- * number of presses will produce one, and a name the list already holds
- * reddens the typed name, because that name is what has to be edited
- * (`core/names.ts` — two people with one name are two people nothing on screen
- * tells apart, and the same key besides; the note under the row says so in
- * words).
+ * **A screen's refusal blooms whatever has to change**, which is why `flash`
+ * is routed here rather than hung on one control: a Create pressed over an
+ * unfiled name points at the plus, the whole of that fix, and one pressed over
+ * a list too short to go on with points at the field, where the missing name
+ * has to be typed. That second case is the only thing that reddens the
+ * placeholder — the plus's own press never does.
  *
- * Unlike Create, the plus is *not* spent for the length of its own flash: the
- * fix is a keystroke away and the very next press of it has to file, so a
- * second refusal restarts the flash instead of being swallowed.
+ * **A keystroke ends any flash on this row**, rather than leaving it to run
+ * out: typing *is* the fix landing, and a placeholder that has just been typed
+ * over cannot carry a refusal anyway. Whoever owns the flash is told
+ * (`lib/refusal.ts`), because a control spent for the length of one is spent
+ * until it hears the end.
+ *
+ * Unlike Create, the plus is *not* spent for the length of a flash: the fix is
+ * a keystroke away and the very next press of it has to file.
  *
  * While the field holds anything, the row draws itself as a box
  * (`globals.css`) — because a name sitting in it is *not* on the list yet, and
@@ -80,24 +84,33 @@ export function AddName({
   onDraft?: (name: string | null) => void;
   /** A screen's refusal, blooming this row: the name it is missing is the one
       in this field, whether that is a name nobody has filed — the plus is the
-      whole of that fix — or a name nobody has typed, which blooms the field
-      instead (lib/refusal.ts). */
+      whole of that fix — or a name nobody has typed, which reddens the
+      placeholder instead. Ends early, with no event, when a keystroke makes it
+      moot (lib/refusal.ts). */
   flash?: string;
-  onFlashEnd?: (e: React.AnimationEvent) => void;
+  onFlashEnd?: (e?: React.AnimationEvent) => void;
 }) {
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const field = useRef<HTMLInputElement>(null);
   const already = nameTaken(value, taken);
   const ready = value.trim().length > 0 && !already && !busy;
-  // Its own refusal, for a press with nothing fileable under it. A screen's
-  // `flash` blooms this row for its own reasons, and the two are one
-  // animation: whichever is running wins, and both hear it end. Where it lands
-  // is this component's to decide — the plus when a good name is waiting to be
-  // filed, the field when the field is what's wrong.
+  // Its own refusal, for the one press it has to say no to: a name already on
+  // the list. A screen's `flash` blooms this row for its own reasons, and the
+  // two are one animation: whichever is running wins, and both hear it end.
+  // Where it lands is this component's to decide — the plus when a good name
+  // is waiting to be filed, the field when the field is what's wrong.
   const own = useRefusal();
   const blooming = flash || own.flash;
   const onField = !ready;
+
+  // Typing is the fix arriving, so it ends the flash rather than letting it
+  // run out under the keystrokes. Both owners hear it: `own` for the duplicate
+  // it refused, the screen for the refusal it is spending a button on.
+  function typed(next: string) {
+    if (blooming) { own.onFlashEnd(); onFlashEnd?.(); }
+    setValue(next);
+  }
 
   // The list grows above this row, so past a screenful the field is below the
   // fold and the rest of the names are typed blind — the browser scrolls to a
@@ -138,9 +151,11 @@ export function AddName({
     e.preventDefault();
     if (busy) return;
     if (!ready) {
-      // Nothing to file. The bloom lands on the field (see above), so hand the
-      // caret back with it: both fixes are typed, not pressed.
-      own.refuse();
+      // An empty row has nothing to refuse — the caret is the whole answer,
+      // and the next press of this same plus files what was typed. A name the
+      // list already holds is the one press that says no, and it says it on
+      // the name, which is what has to change.
+      if (value.trim().length > 0 && already) own.refuse();
       field.current?.focus();
       return;
     }
@@ -169,7 +184,7 @@ export function AddName({
         onAnimationEnd={(e) => { own.onFlashEnd(e); onFlashEnd?.(e); }}>
         <input ref={field} className="addname" value={value} placeholder={placeholder}
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
-          enterKeyHint="done" onChange={(e) => setValue(e.target.value)} />
+          enterKeyHint="done" onChange={(e) => typed(e.target.value)} />
         {/* The one way a name gets filed, so it says what it does rather than
             answering to the field's own name — two things called "Add someone"
             is one too many, for a screen reader and for a test alike.

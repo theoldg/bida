@@ -46,6 +46,13 @@ export function flashClass(r: Refusal): string {
  * A refusal on one control, for a screen with only one thing to refuse. A
  * form with several fields to bloom keeps its own record of them instead
  * (`app/g/entry/edit/page.tsx`).
+ *
+ * `onFlashEnd` takes the animation's own event, and takes **nothing** when the
+ * fix arrives before the animation does — a keystroke in the add row ends its
+ * flash on the spot (`components/name-adder.tsx`). Something has to say so:
+ * the class comes off with the refusal, so no `animationend` ever fires for a
+ * flash that was cut short, and a control spent for the length of one would
+ * stay spent forever.
  */
 export function useRefusal(): {
   /** Hang on the control that blooms, with `onFlashEnd` beside it. */
@@ -53,7 +60,8 @@ export function useRefusal(): {
   /** A refusal is still on screen, so the control that was pressed is spent. */
   live: boolean;
   refuse: () => void;
-  onFlashEnd: (e: React.AnimationEvent) => void;
+  /** The flash is over — because it ran out, or because the fix landed. */
+  onFlashEnd: (e?: React.AnimationEvent) => void;
 } {
   const [state, setState] = useState<Refusal>(NOT_REFUSED);
   return {
@@ -62,9 +70,10 @@ export function useRefusal(): {
     refuse: () => setState(refused),
     // Only the control's own animation counts: a placeholder is a
     // pseudo-element on the same clock, and `pseudoElement` is how an
-    // animation event says which of the two it is.
+    // animation event says which of the two it is. No event at all is the fix
+    // arriving early, and that always counts.
     onFlashEnd: (e) => {
-      if (e.pseudoElement) return;
+      if (e?.pseudoElement) return;
       setState((r) => ({ ...r, live: false }));
     },
   };

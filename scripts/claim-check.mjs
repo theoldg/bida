@@ -74,15 +74,29 @@ await page.waitForTimeout(800);
 report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and comes back when the flash settles");
 
-// The plus is never dead — an empty press refuses where the finger landed and
-// files nothing, rather than sitting grey.
+// A keystroke is the fix landing, so it ends the flash where it stands rather
+// than letting it run out — and whoever was spending a button on that flash
+// has to hear it, or Create never comes back.
+await press(page.getByRole("button", { name: "Create" }));
+report(await page.locator(".addrow[class*=flash]").count() === 1,
+  "a refusal over an empty list blooms the placeholder again");
+await field().type("T");
+await page.waitForTimeout(60);
+report(await page.locator(".addrow[class*=flash]").count() === 0
+  && !await page.getByRole("button", { name: "Create" }).isDisabled(),
+  "and typing ends it on the spot, Create with it — no waiting the flash out");
+await field().fill("");
+await page.waitForTimeout(80);
+
+// The plus is never dead, and on an empty row it does not refuse either: the
+// caret is the answer, and the next press of it files what was typed.
 report(!await plus().isDisabled(), "the plus is tappable on an empty add row");
 await press(plus());
+await page.waitForTimeout(80);
 report(await members() === 0
-  && await page.locator(".addrow[class*=flash]").count() === 1
-  && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
-  "pressing it on an empty field blooms the field, not the plus, and files nothing");
-await page.waitForTimeout(800);
+  && await page.locator("[class*=flash]").count() === 0
+  && await page.evaluate(() => document.activeElement?.className.includes("addname")),
+  "pressing it on an empty row files nothing and blooms nothing — it takes the caret");
 
 // Enter is the keyboard's press of that same plus.
 await field().fill("Theo");
