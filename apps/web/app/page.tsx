@@ -7,7 +7,6 @@ import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog } from "../components/dialog";
-import { Wordmark } from "../components/icons";
 import { InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { useLongPressMenu } from "../components/long-press";
@@ -47,7 +46,7 @@ export default function GroupsPage() {
         <TopBar
           title={
             <span className="brand" onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); router.push(route.diag()); }}>
-              <Wordmark size={38} /> {copy.app.name}
+              {copy.app.name}
             </span>
           }
           right={
@@ -65,34 +64,34 @@ export default function GroupsPage() {
           } />
 
         <Scroll>
-         <div className="homescroll">
-          {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
+          <div className="homescroll">
+            {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
               two used to look the same, and the blank was the one you saw. */}
-          {groups === undefined ? <SkeletonRows count={4} /> : null}
+            {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-          {groups && groups.length === 0 ? (
-            <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
-          ) : null}
+            {groups && groups.length === 0 ? (
+              <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+            ) : null}
 
-          <div className="rows">
-            {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
-          </div>
+            <div className="rows">
+              {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
+            </div>
 
-          {/* The two cards the app spends on itself, and they are mutually
+            {/* The two cards the app spends on itself, and they are mutually
               exclusive by construction: the update offer draws only in the
               installed app, the install offer only outside it. At most one of
               them is ever under the list. */}
-          <UpdateNudge />
+            <UpdateNudge />
 
-          {/* Once there is something to come back to, and never before it. */}
-          {groups && groups.length > 0 ? <InstallNudge /> : null}
+            {/* Once there is something to come back to, and never before it. */}
+            {groups && groups.length > 0 ? <InstallNudge /> : null}
 
-          {/* The act this screen exists for, at the bottom of it: under the
+            {/* The act this screen exists for, at the bottom of it: under the
               list however short the list is, and where a thumb already rests
               on a phone. It carries the column's `margin-top: auto`, so it
               falls to the foot of the screen however short the list is. */}
-          <StartPair />
-         </div>
+            <StartPair />
+          </div>
         </Scroll>
       </Body>
     </Screen>
