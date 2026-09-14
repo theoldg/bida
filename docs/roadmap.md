@@ -9,9 +9,9 @@ typed into is a notebook. Phases 4–6 were the finish, not the product.
 ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)) and then
 end-to-end encryption
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) landed after
-them, both 2026-09-12. What the owner still wants doing is in
-[todo.md](../todo.md); what was cut rather than built is at the bottom of this
-file, seams intact.
+them, both 2026-09-12. What is still open is in
+[implementation-status.md](implementation-status.md#the-next-action); what was
+cut rather than built is at the bottom of this file, seams intact.
 
 ## Phase 0 — Groundwork ✅
 Hosting decided, MVP scope agreed, the visual direction signed off

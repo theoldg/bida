@@ -52,9 +52,18 @@ last reset it gets**: a schema change from here is a new numbered migration
 ## The next action
 
 **Nothing is queued.** One thing is owed and is not code: a hard project quota
-in Google AI Studio just above `SCAN_LIMITS.global`, which only the owner can
-set ([../todo.md](../todo.md)). What else the owner wants is in
-[../todo.md](../todo.md); two things are open rather than queued:
+in Google AI Studio just above `SCAN_LIMITS.global`, the belt under our own
+counter's braces, which only the owner can set in the console. Four things are
+open rather than queued:
+
+- **The hosted service has no liability line and no way to ask for a group to
+  be deleted.** `/about` already says what the server sees and names the scan
+  as the exception ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md));
+  this is the rest of it, and it is what the repo going public makes due.
+- **`POST /ops` has no budget.** It registers any unseen group id and writes
+  unbounded ops into a D1 that gets no further resets — the only door in the
+  app with no ceiling on it ([sync.md](sync.md)). Giving credential-minting its
+  own door is the shape of the fix.
 
 - **Why an installed phone still pauses.** The permanent hang is fixed
   ([frontend.md](frontend.md#a-live-read-can-die)), but the owner reports the
