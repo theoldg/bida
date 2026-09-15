@@ -4,66 +4,51 @@
 
 **Cloudflare, entirely free, with no realistic path to a bill at our scale.**
 Decision and rejected alternatives:
-[ADR-0001](decisions/0001-cloudflare-workers-d1-r2.md).
+[ADR-0001](decisions/0001-cloudflare-workers-and-d1.md).
 
 | Service | Role | Free tier |
 |---|---|---|
 | **Workers** | Serves the static app *and* the API from one script | 100k req/day, 10 ms CPU per invocation |
 | **D1** | The op log (SQLite), sealed | 500 MB per database (5 GB account total), 5M row reads/day, 100k writes/day |
-| **R2** | Receipt images | 10 GB, **zero egress fees** |
 | Static Assets · custom domain | The Next.js export · a nice URL | included · free with DNS on Cloudflare |
 
-We expect a few hundred requests/day and thousands of rows, ever. The decisive
-property is **R2's zero egress** — this app is photo-heavy by design, and egress
-is where object storage bills come from. (Limits verified 2026-08-30; re-check,
-free tiers move.)
+We expect a few hundred requests/day and thousands of rows, ever. (Limits
+verified 2026-08-30; re-check, free tiers move.) Nothing is stored outside D1:
+receipt photos were the one thing that would have been, and they were cut
+([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)).
 
-**Actual usage, 2026-09-11:** 676 kB of D1 against the 500 MB limit, 47 groups,
-678 ops — and ~3.6k row reads a day against 5M. Three orders of magnitude of
-headroom on every axis. (The log was reset on 2026-09-12 when sealing landed —
-[ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) — and phones
-refilled it. A sealed op is roughly a third larger than the JSON it replaced:
-base64 over an IV and a tag, minus the two indexes that are gone.)
-
-**What the log spends it on is receipts.** Whole-entity ops
-([ADR-0002](decisions/0002-append-only-op-log.md)) cost 2.55x — 241 kB of entry
-ops fold to 94 kB of final state, at 2.29 ops per entry — which is real and is
-not the problem. An expense op carrying `receiptItems` averages 2,016 bytes
-against a plain one's 473, and those 97 ops were **74% of every patch byte in
-the database**: an entry is written whole, so editing a scanned bill's title
-repeats its entire item array. Compaction, if it is ever wanted, is one rule —
-drop superseded `receiptItems` from ops the fold has passed — and nothing needs
-doing yet, the largest real group being 45 kB.
+The one endpoint that spends actual money is the scan, and its budget is
+[receipt-scanning.md](receipt-scanning.md#what-the-scan-costs).
 
 ### How full can it get
 
-Every group shares the one `hajsik` database, and nothing is ever deleted, so
-the caps only ever move one way. Replaying realistic ops into
+Every group shares the one `hajsik` database, nothing is ever deleted, and the
+caps only ever move one way. Replaying realistic ops into
 [the real schema](../apps/api/migrations/0001_init.sql) cost **~970 bytes per
-op** before sealing, so **500 MB is somewhere around 400k ops**. At the ~1.3 ops a
-lived-in expense ends up costing (the entry, plus edits and the occasional
-delete) that is:
-
-| | Fills 500 MB |
-|---|---|
-| Expenses | ~380,000 |
-| Typical trip groups (5 people, 50 expenses, ~71 KB) | ~7,000 |
-| Heavy groups (200 expenses, ~270 KB) | ~1,900 |
+op**, and a sealed op is roughly a third larger again (base64 over an IV and a
+tag, minus the two indexes that are gone) — so **500 MB is a few hundred
+thousand ops**. At the ~1.3 ops a lived-in expense ends up costing (the entry,
+plus edits and the occasional delete), that is hundreds of thousands of
+expenses, or thousands of trip-sized groups.
 
 Nothing else comes close first. Pulls are incremental (`seq > ?`), so the 5M
 daily row reads are unreachable; writes touch three rows per op (row + two
 indexes), leaving ~30k ops/day, which is more entries than this app will see in
-a year. **R2 is the cap that actually bites**: 10 GB at the ≤200 KB a receipt is
-downscaled to ([receipt-scanning.md](receipt-scanning.md)) is ~50,000 photos, so
-once more than about one expense in eight carries one, receipts run out of room
-before the op log does.
+a year.
+
+**What the log spends its bytes on is receipts.** Whole-entity ops
+([ADR-0002](decisions/0002-append-only-op-log.md)) repeat every field on every
+edit, which costs about 2.5x and is not the problem. An expense op carrying
+`receiptItems` is four to five times the size of a plain one, and on a measured
+database those ops were three quarters of every byte: editing a scanned bill's
+title repeats its entire item array. Compaction, if it is ever wanted, is one
+rule — drop superseded `receiptItems` from ops the fold has passed — and
+nothing needs doing yet.
 
 **So: no eviction strategy, and no near date for one.** At this project's real
 scale — a few trips a year — 500 MB is centuries of use. It becomes a question
 only at roughly a thousand new groups a month, i.e. only if this stops being an
-app for its owner's friends. If that day comes the lever is receipts (R2 first,
-and old photos are the disposable part), not the op log, which is the thing a
-group's link is promising to still hold.
+app for its owner's friends.
 
 **Nothing expires and nothing sleeps.** D1 storage has no TTL, a Worker is not
 paused or deleted for being idle, and a `workers.dev` subdomain lives as long as
@@ -220,8 +205,10 @@ git-tracked, never in a git-tracked one.
 
 Recognise these if you ever propose one:
 
-- Storing full-resolution photos. Downscale to ~1600 px longest edge first
-  (~4 MB → ~250 KB).
+- Sending a full-resolution photo to the scan. It is downscaled on the phone
+  first — ≤1024 px long edge, ≤200 KB
+  ([receipt-scanning.md](receipt-scanning.md#the-shape)) — and the Worker
+  refuses a body past `MAX_IMAGE_BYTES`.
 - Folding the op log server-side per request (10 ms CPU → paid plan).
 - Polling every few seconds instead of on focus/reconnect (100k req/day).
 - Durable Objects for real-time — cheap, but not free-tier-free.

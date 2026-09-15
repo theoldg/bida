@@ -11,7 +11,8 @@ rather than deciding anything.** There are fifteen, and that number should move
 about as often as the architecture does. All four of these must hold:
 
 1. **It is built and shipped**, not proposed. An ADR records a decision the
-   code already obeys; a plan goes in the roadmap.
+   code already obeys; a plan goes in
+   [implementation-status.md](../implementation-status.md).
 2. **Reversing it would cost far more than the diff that made it** — other
    packages, every future screen, or ops already written to a log.
 3. **You can name the alternative a competent person would have chosen**, and
@@ -44,7 +45,7 @@ the decision, or a rejected option nobody would propose, is a line to cut.
 
 | # | Decision |
 |---|---|
-| [0001](0001-cloudflare-workers-d1-r2.md) | Cloudflare Workers + D1 + R2 |
+| [0001](0001-cloudflare-workers-and-d1.md) | Cloudflare Workers + D1 |
 | [0002](0002-append-only-op-log.md) | An append-only op log, merged by last-write-wins |
 | [0003](0003-link-only-access.md) | Link-only access; a device's identity claim is an op |
 | [0004](0004-static-export-and-offline.md) | A static export: secret in the fragment, whole thing precached |

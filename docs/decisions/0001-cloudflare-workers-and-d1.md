@@ -1,18 +1,22 @@
-# 0001 — Cloudflare Workers + D1 + R2
+# 0001 — Cloudflare Workers + D1
 
-**Status:** Accepted · 2026-08-27
+**Status:** Accepted · 2026-08-27 · R2 dropped 2026-09-05
 
 **Context.** Personal project, a handful of users, indefinite lifespan, and the
-owner's requirement was "hosted super cheaply or for free". It stores receipt
-photos — the part with a plausible route to a real bill.
+owner's requirement was "hosted super cheaply or for free".
 
 **Decision.** Everything on Cloudflare: one Worker serving both the static app
-and the Hono API, D1 for the op log, R2 for images.
+and the Hono API, D1 for the op log.
+
+R2 was part of this decision while receipt photos were going to be stored — its
+zero egress was the reason — and left with them
+([product.md](../product.md#deliberately-not-in-the-mvp)). There is no bucket
+and no binding. Storing photos means adding one back, not a new ADR.
 
 ## Consequences
 
-- £0/month with orders of magnitude of headroom, and **R2 charges nothing for
-  egress** — the decisive property for an app that serves photos.
+- £0/month with orders of magnitude of headroom
+  ([hosting.md](../hosting.md#how-full-can-it-get)).
 - One vendor, one `wrangler deploy`. No cold-pause, no idle timeout.
 - D1 is SQLite, so Postgres-specific features are out. Accepted.
 - The 10 ms free-tier CPU limit means the server can't do heavy work, which

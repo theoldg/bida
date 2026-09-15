@@ -158,8 +158,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 - A settlement (a **transfer**) is structurally separate from an expense so it
   never pollutes "how much did the trip cost". So is income, which is counted in
   `totalIncomeMinor` and never netted into `totalSpendMinor`.
-- An attachment's binary lives in R2; until upload succeeds the blob is in a
-  Dexie table keyed by attachment id.
+- `Attachment` is a seam, not a feature: nothing appends one, there is no
+  bucket, and `attachmentIds` is absent on every expense
+  ([product.md](product.md#deliberately-not-in-the-mvp)).
 - **Identity is one row per device**, keyed by the node id ending every HLC that
   device stamped. Claims are ops
   ([ADR-0003](decisions/0003-link-only-access.md)); the device's own
@@ -259,9 +260,9 @@ because every window it answers is an hour or a day, and nothing in it says
 what was photographed — only that somebody spent a call
 ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
 
-The `attachments` table is gone with it: it indexed R2 objects for a feature
-that was cut ([product.md](product.md#deliberately-not-in-the-mvp)), and an
-encrypted one would want different columns anyway.
+There is no `attachments` table: it indexed R2 objects for a feature that was
+cut ([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one
+would want different columns anyway.
 
 ## IndexedDB (Dexie), schema v8
 

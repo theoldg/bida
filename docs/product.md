@@ -18,7 +18,7 @@ not an account). Three kinds of entry — **expenses**, **incomes** and
 for) ([ADR-0010](decisions/0010-what-an-entry-is.md)). Split modes: evenly,
 as parts, as amounts — remainders distributed deterministically and quietly.
 Balances, derived, never stored. Settle-up, which records a transfer. Invite by
-link. CSV export.
+link.
 
 **The three additions.**
 
@@ -63,9 +63,9 @@ Leave the seam. Build none of it.
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
-| Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add the R2 upload behind `uploadState` |
+| Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add an R2 bucket and the upload behind `uploadState` ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)) |
 | CSV export | A pure function over the fold; no schema change, no new screen |
-| Categories | `categoryId` is on the entry, diffed by the command layer and reported by history. What's missing is a picker, and the decision below |
+| Categories | `categoryId` is on the entry, diffed by the command layer and reported by history. What's missing is a picker, and a decision about what the categories are |
 
 ## Principles
 
@@ -78,11 +78,4 @@ Leave the seam. Build none of it.
 
 ## Open questions
 
-None open.
-
-*Settled:* a negative line on a receipt is a **discount, shared in proportion
-to what each person ordered**, whether it printed against one item or against
-the whole bill (2026-09-12,
-[ADR-0016](decisions/0016-receipts.md)); the name is **bida** (2026-09-11);
-the personal lens isn't a setting at all (2026-08-30,
-[ADR-0007](decisions/0007-a-screen-is-a-route.md)).
+None.

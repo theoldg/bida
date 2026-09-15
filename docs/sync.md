@@ -172,10 +172,6 @@ itself once the other phone syncs" up over a sync that never will.
 banner: it reports a link, not an answering server, so it is blind to exactly
 the outage that costs a trip its ledger.
 
-**Attachments will sync separately** — Wi-Fi-only by default plus a manual
-"upload now", with an expense fully synced and correct while its photos are
-still queued. Not built: nothing appends an `attachment` op yet (Phase 4).
-
 ## Conflicts
 
 Two people editing the same expense while one is offline: the highest HLC wins

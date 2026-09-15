@@ -38,7 +38,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | Browser checks (`entries`, `claim`, `offline`, `shots`) on a shared harness, plus `icons`, `docs-check`, `on-dev` |
+| `scripts/` | Browser checks (`entries`, `claim`, `keyboard`, `offline`, `stall`) and `shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
 
 ## Stack
 
@@ -100,7 +100,7 @@ pnpm session && pnpm check
 **Done means:** `pnpm check` passes · arithmetic has passing tests · the doc
 describing the changed behaviour is updated in the same commit · a preference
 that clears the bar is in standing-instructions, dated · implementation-status
-and roadmap reflect reality · pushed to `dev`.
+reflects reality · pushed to `dev`.
 
 ## Doc upkeep
 
@@ -112,8 +112,8 @@ every session pays in. **Before you finish:**
    the ADR on that subject** so it says where we stand now.
 3. Learned something the hard way → one line in the relevant **Gotchas**
    section.
-4. Update [implementation-status.md](docs/implementation-status.md) and the
-   roadmap checkboxes.
+4. Update [implementation-status.md](docs/implementation-status.md) if what is
+   built or what is open moved.
 
 **A new ADR and a new standing instruction are the two things a session almost
 never adds.** Each file states its own bar — [decisions/](docs/decisions/README.md)

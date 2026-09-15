@@ -23,8 +23,10 @@ expenses you'd looked at rather than climbing out.
   it. A split is half of what an entry *is*, so the split editor is a component
   on the form. *Who put money in* is a genuinely different and rare question, so
   `/g/payers` stays a screen.
-- **Two bottom tabs — Ledger · Balances — and three top-bar icons**: History,
-  People, invite link. There is no settings or options screen: the two
+- **Two bottom tabs — Ledger · Balances — and one top-bar menu** holding the
+  invite link, People, Rates, History and "Forget group"
+  (`components/group-menu.tsx`). Three icons is the ceiling for a top bar and
+  the group outgrew it. There is no settings or options screen: the two
   device-wide preferences were a taste you set once (light/dark, one button on
   the groups list) and a way of reading the ledger the app simply does (the
   personal lens, unconditional).

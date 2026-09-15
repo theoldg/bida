@@ -9,7 +9,6 @@ tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | [implementation-status.md](implementation-status.md) | **Starting a session.** What's built and what's next |
 | [invariants.md](invariants.md) | You are adding a check that reads other entities, or touching member identity |
 | [product.md](product.md) | Deciding whether something is in scope |
-| [roadmap.md](roadmap.md) | You want the phase plan |
 | [architecture.md](architecture.md) | Touching the shape of the system |
 | [data-model.md](data-model.md) | Touching entities, money, splits, or the D1 schema |
 | [sync.md](sync.md) | Touching the op log, offline behaviour, or history |

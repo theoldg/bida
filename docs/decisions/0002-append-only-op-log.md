@@ -82,7 +82,7 @@ so every op already written folds exactly as it did.
   a binary format and metadata overhead to solve a conflict rate of roughly
   "twice a year, on a trip".
 - **Server-side conflict resolution** — needs the server to fold, against both
-  [0001](0001-cloudflare-workers-d1-r2.md)'s CPU limit and the stupid-server
+  [0001](0001-cloudflare-workers-and-d1.md)'s CPU limit and the stupid-server
   principle.
 
 **Revisit if** element-wise set merging or concurrent text editing matters, or

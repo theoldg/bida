@@ -247,8 +247,8 @@ prompt already asks the model for `parseMinor()`-ready notation, so there's no
 separator-guessing to do locally. Conversion to minor units stays where it
 already is — `parseMinor` on save. The scan asks for no category: an expense
 carries a `categoryId`, but nothing in the app makes a category or maps a name
-to an id, so the field went out with nowhere to land (Categories is still a
-roadmap line). Two prompt lines and a schema property bring it back.
+to an id, so the field went out with nowhere to land (Categories is
+deferred — [product.md](product.md#deliberately-not-in-the-mvp)). Two prompt lines and a schema property bring it back.
 
 Two fields the model doesn't get the last word on:
 
