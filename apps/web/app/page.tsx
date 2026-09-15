@@ -145,7 +145,7 @@ function StartTiles() {
       <div className="starttiles">
         <button type="button" onClick={handlePaste} className="starttile start-s">
           <Icon name="link" size={26} />
-          Paste
+          {copy.groups.paste}
         </button>
         <Link href={route.quick()} className="starttile start-s">
           <Icon name="cam" size={26} />

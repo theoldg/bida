@@ -137,6 +137,7 @@ export const copy = {
     },
     newGroup: "New group",
     quickSplit: "Quick split",
+    paste: "Paste",
     about: "About bida",
     whoAreYou: "who are you?",
     youOwe: "you owe",
