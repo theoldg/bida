@@ -232,12 +232,14 @@ the number of people on the row — how much of it each of them had.
 The grid is kept on the expense, so the entry screen can read it back:
 `receiptBreakdown` returns the split weights *and* the lines they were summed
 from, and each person's row on a scanned expense opens onto their own copy of
-the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", the tip ruled off below what
-was ordered. The people are a plain list — nothing ruled or washed between them
-— and each line carries a printed bill's dotted leader out to its figure, the
-same reading a quick split ends on (ADR-0035), which differs only in starting
-with every row open. Weights and lines come out of one pass, so a row and the
-lines under it cannot disagree.
+the bill — "Beer ×2", "Fries ×1 1/2", "Tagine ×1/3", then the tip and the tax,
+muted, below what was ordered. Nothing is ruled or washed anywhere in it: not
+between the people, not between a person's items and their extras, because a
+name, a figure and a shift to muted ink already say where one thing ends. Each
+line carries a printed bill's dotted leader out to its figure. It is the same
+reading a quick split ends on (ADR-0035), which differs only in starting with
+every row open. Weights and lines come out of one pass, so a row and the lines
+under it cannot disagree.
 
 `normalizeScan()` in `packages/core/src/scan.ts` turns the rest into an
 `EntryDraft` patch: `total` passes straight through as `amountText` — the
