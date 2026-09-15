@@ -90,7 +90,7 @@ export default function GroupsPage() {
               list however short the list is, and where a thumb already rests
               on a phone. It carries the column's `margin-top: auto`, so it
               falls to the foot of the screen however short the list is. */}
-            <StartPair />
+            <StartTiles />
           </div>
         </Scroll>
       </Body>
@@ -115,10 +115,38 @@ export default function GroupsPage() {
  * thing the two figures the ledger echoes never do. It floats over the rows
  * rather than docking above them — on its own two grounds, as the FABs do.
  */
-function StartPair() {
+function StartTiles() {
+  const router = useRouter();
+
+  async function handlePaste() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return;
+
+      // Extract path or path + search from clipboard string if it contains a URL
+      const trimmed = text.trim();
+      let targetPath = trimmed;
+
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        const url = new URL(trimmed);
+        targetPath = url.pathname + url.search;
+      }
+
+      if (targetPath) {
+        router.push(targetPath);
+      }
+    } catch (err) {
+      console.error("Failed to read clipboard:", err);
+    }
+  }
+
   return (
     <div className="homepair">
       <div className="starttiles">
+        <button type="button" onClick={handlePaste} className="starttile start-s">
+          <Icon name="link" size={26} />
+          Paste
+        </button>
         <Link href={route.quick()} className="starttile start-s">
           <Icon name="cam" size={26} />
           {copy.groups.quickSplit}
