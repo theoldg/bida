@@ -479,9 +479,7 @@ to* is `lib/scan/live.ts`, a store keyed by group beside the draft rather than
 state in the control: the bar is a clock on the scan (a negative
 `animation-delay` puts a remounted bar where the scan actually is), so
 switching tabs or stepping out to the payers editor no longer restarts it, and
-a scan whose draft was discarded on the way out drops its result on arrival. Verified end to end
-against the deployed Worker, 2026-08-28; discounts and tax added 2026-09-12 and
-walked with `pnpm drive`'s `two-for-one` bill, grid to saved entry.
+a scan whose draft was discarded on the way out drops its result on arrival.
 
 ## Driving it without a phone
 
@@ -489,7 +487,7 @@ walked with `pnpm drive`'s `two-for-one` bill, grid to saved entry.
 `scripts/fixtures/receipts/`; the scan button is then pressed like any other
 control and everything but the round trip to Gemini really runs. It is the only
 way to reach the who-had-what grid outside a real scan —
-[testing.md](testing.md#pnpm-drive--the-app-as-text).
+[drive.md](drive.md).
 
 ## Gotchas
 

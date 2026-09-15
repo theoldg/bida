@@ -127,8 +127,8 @@ line: `/g/scan` centres the pair, `/quick` wears it as a head over the list of
 who is splitting — with the space around the pair, not inside it — and the
 names in it are that list.
 
-**Dark is not the light palette turned down.** *(2026-08-27, owner: "the dark
-theme is ugly make it less green/yellow".)* Grounds are near-neutral in both
+**Dark is not the light palette turned down** — the owner's call, against a
+first pass that was green and yellow. Grounds are near-neutral in both
 themes (`#0E0F11`, `#141517`, `#1A1C1F` dark), and `--credit`/`--debit` keep
 their hues — they're semantic and must not drift. Both dark blocks
 (`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values.
@@ -232,8 +232,8 @@ holds as many entries per screen.
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
-people are connected, which is what the double-headed swap arrow said
-*(2026-08-28)*. `i-arrow` always points payer → payee, left to right, matching
+people are connected, which is what the double-headed swap arrow said.
+`i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
 control exists to make cheap. Each side is labelled above the name, so "From" is
@@ -359,7 +359,7 @@ reads as an ordinary assignment.
    Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is
-   left alone. *(Owner, 2026-08-27, 2026-08-30.)*
+   left alone.
 
 ## Gotchas
 

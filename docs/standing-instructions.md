@@ -52,7 +52,7 @@ to remove more from this list than you add.
   behaviour is introduced or modified … this can catch bugs and inform test
   design", and "only for nontrivial changes". `pnpm drive` the thing you just
   built, then let what it turns up shape the tests you write —
-  [testing.md](testing.md#pnpm-drive--the-app-as-text).
+  [drive.md](drive.md).
 - **Keep the docs and ADRs short.** *2026-08-30, restated 2026-09-03* — the
   owner had 32 ADRs folded into 11, then: "every time i make a request, the ADRs,
   owner preferences and whatnot get more inflated. compress those back down."
@@ -100,7 +100,7 @@ to remove more from this list than you add.
   "one last time", and the D1 log is now real data: "the db is finalized and
   not ok to delete anymore". A schema change from here keeps what is there —
   a new numbered migration, never an edit to one already applied
-  ([hosting.md](hosting.md#deploying)) — and must not break the *log format*
+  ([hosting.md](hosting.md#a-schema-change-from-here-on)) — and must not break the *log format*
   other clients read.
 
 ## Interface

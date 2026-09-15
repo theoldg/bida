@@ -18,7 +18,7 @@ about to break all three simultaneously.
 
 ```
 phone: Next.js static export ──reads── Dexie/IndexedDB ──fold(ops)── packages/core
-                                            │ (ops, materialised entities, blobs)
+                                            │ (ops + the entities they fold into)
                                             │ sync engine: push unsynced, pull since seq
                                             ▼ HTTPS
        (sealed under a key derived from the link secret — ADR-0036)
@@ -26,7 +26,15 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
                             POST /groups/:id/ops        append + assign seq
                             GET  /groups/:id/ops?since=N
                               └─ D1 (the sealed op log)
+                            POST /groups/:id/scan       the one endpoint that
+                              └─ D1 (scan_hits)         spends money
+                            GET  /rates/:from/:to       a rate suggestion
 ```
+
+The two op endpoints are [sync.md](sync.md#the-protocol); the scan is
+[receipt-scanning.md](receipt-scanning.md), and it is the one route that never
+parses its body — the photo is streamed between the halves of a prompt the
+Worker owns, to stay inside 10 ms of CPU.
 
 ## Layers, and what may import what
 
@@ -35,7 +43,7 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
 | `packages/core` — op types, fold, splits, balances, settle, HLC | **Nothing.** Pure: no Dexie, no React, no Cloudflare |
 | `apps/web/lib/db` — Dexie schema, queries, sync engine | `core` |
 | `apps/web/app`, `components` | `core`, `lib/db` |
-| `apps/api` — Hono routes, D1 binding | `core` (envelope validation only) |
+| `apps/api` — Hono routes, D1 binding | `core` — envelope types and `SCAN_LIMITS`; never the fold |
 
 Core being pure is what makes the money logic testable and lets client and
 server agree without a second implementation. Keep it that way.

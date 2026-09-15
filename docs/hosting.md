@@ -146,8 +146,8 @@ landed on `main` behind the branch's back, and the fix is `git merge main` from
 there is no merge commit and nothing is ever merged *back*. Merging does not
 consume `dev` — it keeps moving and is released again, as often as you like.
 
-**Worker secrets are per-environment**, and dev has all three since
-2026-09-14 — a scan works there, gate and budget included. One Turnstile widget
+**Worker secrets are per-environment**, and dev has all three — a scan works
+there, gate and budget included. One Turnstile widget
 serves both: its domain list names each hostname, which is why the same site key
 can ship in both builds. **Dev's scan budget is counted in dev's own database**,
 so the global daily cap — the one number bounding the Gemini bill
@@ -193,7 +193,7 @@ is the way to change what people see; that is a redirect, not a rename.
 
 ### The `CLOUDFLARE_API_TOKEN`
 
-`wrangler deploy` needs it in the environment. Since 2026-08-28 it lives as the
+`wrangler deploy` needs it in the environment. It lives as the
 `CLOUDFLARE_API_TOKEN` GitHub Actions repo secret, used by
 [`deploy.yml`](../.github/workflows/deploy.yml) — it is **not** in the repo
 itself and must never be committed. A manual deploy from a session still needs
