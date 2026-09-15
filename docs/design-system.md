@@ -316,14 +316,17 @@ guidance asks you to fall back *to*, and clamped it would be nothing at all.
 
 **Not every flash is a refusal.** Where a tap is answered by the screen
 rearranging itself — tapping a folded run of portions on the who-had-what grid
-opens it — the rows it opened are scrolled into view whole and then the tapped
-column is pointed at: **the column meets in the middle**, the dots that are
-there fading back and the empty cells fading a dot of their own up, both to the
-same faint ink, so for half a second every cell in that column is one of the
-places an answer could go. The empty ones carry a dot because what is being
-shown is *where an answer would go*, and the pointer has to be the shape of
-one; the assigned ones fade rather than darken because `--ink-2` has nowhere
-darker to go. Never `--debit`: nothing is wrong and nothing is being asked for.
+opens it — the tapped column is faint from the first frame those rows are
+painted, holds that way while they are scrolled into view whole, and is
+released once they have stopped moving, each dot easing back to what it really
+is. **The column meets in the middle**: assigned and empty cells alike sit at
+one faint ink, so what an opened run shows first is the places an answer could
+go. The empty ones carry a dot because that is what is being shown, and the
+pointer has to be the shape of one; the assigned ones fade rather than darken
+because `--ink-2` has nowhere darker to go. **A pointer starts held, not
+animated** — rows painted at full strength and dimmed a beat later flicker, and
+nothing can ease into a row that did not exist a frame ago. Never `--debit`:
+nothing is wrong and nothing is being asked for.
 The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
 the same grounds. A cell that cannot be tapped like its neighbours doesn't look
 like them either — a run handed out unevenly wears the dot **broken into two

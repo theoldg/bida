@@ -42,6 +42,13 @@ import {
  */
 const SETTLED_MS = 800;
 
+/**
+ * How long the pointed column stays faint at the least. The scroll is usually
+ * longer and sets the pace; this is the floor under a run that was already in
+ * view, so opening one always reads the same way.
+ */
+const HOLD_MS = 280;
+
 /** The scroller has arrived — or has been given long enough to. */
 function whenStill(box: Element, target: number, done: () => void) {
   const giveUp = Date.now() + SETTLED_MS;
@@ -51,6 +58,13 @@ function whenStill(box: Element, target: number, done: () => void) {
   };
   requestAnimationFrame(look);
 }
+
+/** Whether a drawn row and column are the ones being pointed at. */
+const inColumn = (
+  at: { start: number; count: number; member: string } | null,
+  start: number,
+  memberId: string,
+) => !!at && at.member === memberId && start >= at.start && start < at.start + at.count;
 
 /**
  * Whether to travel at all. The flash itself is exempt from reduced motion —
@@ -261,11 +275,21 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     const box = wrap.current;
     const head = rowEl.current[pending.start];
     const tail = rowEl.current[pending.start + pending.count - 1];
+    // The column is already faint by now — it was painted that way with the
+    // rows (`point-hold`) — so `aim` is the *release*: the hold ends and the
+    // dots ease back to what they really are. Never sooner than `HOLD_MS`,
+    // or a run that needed no scrolling would open and resolve in one frame,
+    // which is the pointer not happening at all.
+    const since = Date.now();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const aim = () => {
-      setPoint((was) => ({ ...pending, n: (was?.n ?? 0) + 1 }));
-      setPending(null);
+      timer = setTimeout(() => {
+        setPoint((was) => ({ ...pending, n: (was?.n ?? 0) + 1 }));
+        setPending(null);
+      }, Math.max(0, HOLD_MS - (Date.now() - since)));
     };
-    if (!box || !head || !tail) { aim(); return; }
+    const stop = () => clearTimeout(timer);
+    if (!box || !head || !tail) { aim(); return stop; }
     const sticky = box.querySelector("thead th");
     const view = box.getBoundingClientRect();
     const reach = revealWhole(
@@ -273,9 +297,10 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       { top: sticky ? sticky.getBoundingClientRect().bottom : view.top, bottom: view.bottom },
     );
     const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
-    if (target === box.scrollTop) { aim(); return; }
+    if (target === box.scrollTop) { aim(); return stop; }
     box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
     whenStill(box, target, aim);
+    return stop;
   }, [pending]);
 
   const involvedMembers = people.filter((m) => involved.has(m.id));
@@ -548,11 +573,14 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                       const mark = run
                         ? run.marks.get(m.id) ?? null
                         : assignments[line.start]?.has(m.id) ? "all" : null;
-                      const aimed = point && point.member === m.id
-                        && line.start >= point.start && line.start < point.start + point.count;
+                      // Faint from the moment the rows appear, and eased back
+                      // once they have stopped moving: a column that paints at
+                      // full strength and is dimmed a beat later flickers.
+                      const held = inColumn(pending, line.start, m.id);
+                      const aimed = inColumn(point, line.start, m.id);
                       return (
                         <td key={m.id}>
-                          <button className={`itemcell${aimed ? pointClass : ""}`}
+                          <button className={`itemcell${held ? " point-hold" : aimed ? pointClass : ""}`}
                             onAnimationEnd={() => setPoint(null)}
                             onClick={() => (run?.detailed
                               ? openForEditing(line.start, line.count, m.id)
