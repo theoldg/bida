@@ -695,18 +695,16 @@ button.kv:active { background: var(--press) }
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
-/* A list of people, each opening onto their own bill. A hairline between
-   neighbours is what separates them — a wash under the open one was tried and
-   dropped: on a quick split's answer, where every row is open at once
-   (ADR-0035), three washes in a row stop picking anybody out, and one style
-   for both screens beats two. The group still bleeds to the card's edges
-   (`.card` pads 14px) so a pressed row fills the row rather than the column of
-   text inside it. */
+/* A list of people, each opening onto their own bill. Nothing is drawn between
+   them and nothing is drawn under the open one: a wash was tried and dropped
+   (on a quick split's answer every row is open at once, ADR-0035, and three
+   washes in a row pick nobody out), and so were the hairlines that replaced it
+   — a name, a figure and the indented lines under them already separate one
+   person from the next. What is left is the same list on both screens, which
+   differ only in whether the rows start open. The group bleeds to the card's
+   edges (`.card` pads 14px) so a pressed row fills the row rather than the
+   column of text inside it. */
 .billgroup { margin: 0 -14px; padding: 0 14px }
-/* A row without lines of its own is a plain `.kv` in the same list, so it is
-   ruled off with the rest. */
-.billgroup + .billgroup, .kv + .billgroup, .billgroup + .kv {
-  border-top: 1px solid var(--rule); margin-top: 4px; padding-top: 6px }
 /* The pressed row fills the row, not the column of text inside it: at 100% of
    `.billgroup`'s content box the wash stopped 14px short of the card's padding
    at both ends, which read as a misaligned box rather than as this row

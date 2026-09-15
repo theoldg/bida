@@ -36,8 +36,8 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
 }) {
   const [open, setOpen] = useState(startOpen);
   return (
-    // A hairline between neighbours separates people; an open row is marked by
-    // its chevron and its darkened name, not by a wash under it (`globals.css`).
+    // Nothing between people and nothing under the open one: it is marked by
+    // its chevron and its darkened name alone (`globals.css`).
     <div className={`billgroup${open ? " on" : ""}`}>
       <button type="button" className="kv" aria-expanded={open}
         onClick={() => setOpen(!open)}>
