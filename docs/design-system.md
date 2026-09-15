@@ -314,6 +314,19 @@ dark), so it survives being unable to tell red from grey. It is the one thing
 exempt from the global reduced-motion clamp: a colour settling is what that
 guidance asks you to fall back *to*, and clamped it would be nothing at all.
 
+**Not every flash is a refusal.** Where a tap is answered by the screen
+rearranging itself — tapping a folded run of portions on the who-had-what grid
+opens it — the rows it opened are scrolled into view whole and then the tapped
+column is pointed at: the assignment dots there go up in contrast, and the
+empty cells fade up a dot of their own, because what is being shown is *where
+an answer would go* and the pointer has to be the shape of one. Quiet ink
+(`--hl-ink`), never `--debit`: nothing is wrong and nothing is being asked for.
+The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
+the same grounds. A cell that cannot be tapped like its neighbours doesn't look
+like them either — a run handed out unevenly wears the dot **broken into two
+overlapping squares** on everyone who had any of it, so no cell in that row
+reads as an ordinary assignment.
+
 ## Rules that are not negotiable
 
 1. **Colour is never the only signal**, and is never spent on anything but

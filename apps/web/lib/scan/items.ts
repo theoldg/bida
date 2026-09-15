@@ -301,15 +301,21 @@ export function unfoldItem(
 }
 
 /**
- * The inverse: `count` rows from `start` become the one line they came from,
- * amounts summed back up and the count printed again as its quantity.
+ * The portions of one run, read as the single line they came from: amounts
+ * summed back up and the count printed again as its quantity.
+ *
+ * A **view**, not an edit. Folding a run used to write this line back over the
+ * portions, which threw away which of them was whose — and could move money by
+ * a cent, since three portions of 5.67/5.67/5.66 shared two ways do not round
+ * like one 17.00 line does. The bill keeps its portions once it has them; this
+ * is only how the grid draws them while the run is closed.
  */
-export function foldPortions(
+export function foldedLine(
   items: readonly ReceiptItem[],
   start: number,
   count: number,
   currency: string,
-): { items: ReceiptItem[]; at: number } | null {
+): ReceiptItem | null {
   const rows = items.slice(start, start + count);
   const head = rows[0];
   if (!head || rows.length < 2) return null;
@@ -318,11 +324,41 @@ export function foldPortions(
   for (const row of rows) {
     try { minor += parseMinor(row.amount, currency); } catch { return null; }
   }
-  const merged: ReceiptItem = {
+  return {
     label: head.label,
     amount: minorToDecimalString(minor, currency),
     quantity: rows.reduce((n, row) => n + (row.quantity ?? 1), 0),
     portionOf: null,
   };
-  return { items: [...items.slice(0, start), merged, ...items.slice(start + count)], at: start };
+}
+
+/** What one person's cell shows on a folded run. No mark at all means none. */
+export type RunMark = "some" | "all";
+
+/** How a run of portions has been handed out, as its one folded row shows it. */
+export interface RunAssignment {
+  /**
+   * Somebody has some of the portions and not the others, so the run cannot be
+   * edited while it is folded: a tap on one cell could mean either portion.
+   */
+  detailed: boolean;
+  /** What each person's cell shows; absent from the map is an empty cell. */
+  marks: Map<string, RunMark>;
+}
+
+/**
+ * The run's rows, read as one row.
+ *
+ * A detailed run marks **everyone who had any of it** the same split way, even
+ * the person who had all three: no cell in such a row may look like an ordinary
+ * assignment, because none of them can be tapped like one. What "2 of 3" was is
+ * still in the rows underneath, a tap away — this is the cover, not the record.
+ */
+export function runAssignment(rows: readonly ReadonlySet<string>[]): RunAssignment {
+  const counts = new Map<string, number>();
+  for (const row of rows) for (const id of row) counts.set(id, (counts.get(id) ?? 0) + 1);
+  const detailed = [...counts.values()].some((n) => n < rows.length);
+  const marks = new Map<string, RunMark>();
+  for (const id of counts.keys()) marks.set(id, detailed ? "some" : "all");
+  return { detailed, marks };
 }

@@ -627,6 +627,47 @@ a { color: inherit; text-decoration: none }
    a few pixels out of line with each other, visibly so down a long bill. */
 .itemcell.ghost { opacity: .35 }
 .itemcell.ghost .dot { width: 6px; height: 6px }
+/* The split mark: two smaller squares, overlapping on the diagonal. A run of
+   portions handed out unevenly can't be drawn as a dot — that would say "all of
+   it" — and it can't be drawn as nothing either, so it gets the dot broken in
+   two. The card-coloured edge on the lower square is what keeps the overlap
+   readable; without it the pair is one blob at 10px. */
+.itemcell .dot.some { background: none; position: relative }
+.itemcell .dot.some::before, .itemcell .dot.some::after {
+  content: ""; position: absolute; width: 6.5px; height: 6.5px; border-radius: 1px;
+  background: var(--ink-2) }
+.itemcell .dot.some::before { top: 0; left: 0 }
+.itemcell .dot.some::after { bottom: 0; right: 0; box-shadow: -1px -1px 0 var(--card) }
+/* Every empty cell carries a dot it doesn't show, so there is something in the
+   shape of an answer to point at when the grid says "here". */
+.itemcell .dot.off { opacity: 0 }
+
+/* Pointing at a column: the run a tap just opened, in the tapper's own column.
+   Not a refusal — nothing is wrong and nothing is being asked for — so it is
+   the quiet end of the palette rather than `--debit`: the dots that are there
+   go up in contrast, and the spots where one could go fade up from nothing.
+   Two identical animations for the same reason the refusal has two: a second
+   point at the same cells must replay (lib/refusal.ts). */
+@keyframes point-a { 15%, 55% { background: var(--hl-ink) } }
+@keyframes point-b { 15%, 55% { background: var(--hl-ink) } }
+@keyframes point-off-a { 15%, 55% { opacity: .45 } }
+@keyframes point-off-b { 15%, 55% { opacity: .45 } }
+.itemcell.point-a .dot:not(.off), .itemcell.point-a .dot.some::before,
+.itemcell.point-a .dot.some::after { animation: point-a .85s ease-in-out }
+.itemcell.point-b .dot:not(.off), .itemcell.point-b .dot.some::before,
+.itemcell.point-b .dot.some::after { animation: point-b .85s ease-in-out }
+.itemcell.point-a .dot.off { animation: point-off-a .85s ease-in-out }
+.itemcell.point-b .dot.off { animation: point-off-b .85s ease-in-out }
+/* Exempt from the reduced-motion clamp on the same grounds as the refusal
+   flash below: there is no vector here, only ink settling, and clamped to
+   .01ms the tap would answer with nothing at all. */
+@media (prefers-reduced-motion: reduce) {
+  .itemcell.point-a .dot:not(.off), .itemcell.point-b .dot:not(.off),
+  .itemcell.point-a .dot.some::before, .itemcell.point-b .dot.some::before,
+  .itemcell.point-a .dot.some::after, .itemcell.point-b .dot.some::after,
+  .itemcell.point-a .dot.off, .itemcell.point-b .dot.off {
+    animation-duration: .85s !important }
+}
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }

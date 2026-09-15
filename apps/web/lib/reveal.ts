@@ -57,3 +57,19 @@ export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): numbe
   }
   return best;
 }
+
+/**
+ * What to add to `scrollTop` to show all of one box — a run of portions just
+ * opened, whose first and last row are one thing now.
+ *
+ * **The top wins when it cannot all fit.** A run of six portions in a band that
+ * holds four has to start somewhere, and starting at its head is the only
+ * choice that reads: the label and the first portion are what says which line
+ * opened, and the rest is plainly below.
+ */
+export function revealWhole(box: RowBox, band: ViewBand): number {
+  const tooTall = box.bottom - box.top > band.bottom - band.top + SLACK;
+  if (tooTall || box.top < band.top - SLACK) return Math.round(box.top - band.top);
+  if (box.bottom > band.bottom + SLACK) return Math.round(box.bottom - band.bottom);
+  return 0;
+}

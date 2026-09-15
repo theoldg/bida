@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nearestOutOfView } from "./reveal";
+import { nearestOutOfView, revealWhole } from "./reveal";
 
 const band = { top: 100, bottom: 400 };
 const row = (top: number, height = 40) => ({ top, bottom: top + height });
@@ -38,5 +38,29 @@ describe("nearestOutOfView", () => {
 
   it("counts a row taller than the band as seen once it fills it", () => {
     expect(nearestOutOfView([row(50, 500)], band)).toBeNull();
+  });
+});
+
+describe("revealWhole", () => {
+  it("leaves a box that is already all in view alone", () => {
+    expect(revealWhole({ top: 150, bottom: 300 }, band)).toBe(0);
+    expect(revealWhole({ top: 100, bottom: 400 }, band)).toBe(0);
+  });
+
+  it("brings a box up from below by the least that shows the end of it", () => {
+    expect(revealWhole({ top: 300, bottom: 450 }, band)).toBe(50);
+  });
+
+  it("brings a box down from above by the least that shows the start of it", () => {
+    expect(revealWhole({ top: 40, bottom: 190 }, band)).toBe(-60);
+  });
+
+  it("starts a box too tall to fit at its top, wherever it is", () => {
+    expect(revealWhole({ top: 200, bottom: 800 }, band)).toBe(100);
+    expect(revealWhole({ top: -50, bottom: 550 }, band)).toBe(-150);
+  });
+
+  it("forgives a fraction of a pixel", () => {
+    expect(revealWhole({ top: 99.6, bottom: 400.4 }, band)).toBe(0);
   });
 });

@@ -179,6 +179,21 @@ does the sentence under the grid appear, until the last line has somebody
 arrival nothing is assigned yet, and a red line printed then scolds a grid for
 being untouched.
 
+**×N stops editing the bill after the first press.** That press really does
+split a printed "Salad ×2" into portions — there have to be rows before there
+is anything to assign — but from then on the same button only opens and closes
+a *view* of them (`foldedLine`), and the portions stay in the draft. So folding
+can no longer throw away which portion was whose, and it cannot move a cent
+either: three portions of 5.67/5.67/5.66 shared two ways do not round like one
+17.00 line. A folded run whose portions went to different people wears the
+split mark on everyone who had any of it, and a tap on one of those cells opens
+the line rather than guessing which portion it meant — the run is scrolled into
+view whole and the tapped column is pointed at
+([design-system.md](design-system.md)). A run nobody is split across is the
+single line it is drawn as, and edits like one: the tap lands on every portion.
+A restored draft opens with every run folded, which is the compact reading of
+it.
+
 **Tip, tax and discount are one family — `BillExtras`.** They are the lines a
 bill charges for that nobody ordered, so none of them can be ticked for on the
 grid: each is spread across everyone at the table in proportion to what they

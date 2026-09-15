@@ -740,13 +740,26 @@ export const copy = {
     /** The one affordance a person misses: the tip is a field, not a printed line. */
     tipHint: "tap to edit",
     portion: (index: number, of: number) => `${index} of ${of}`,
+    /**
+     * ×N says one thing on this screen: show the portions, or show them as the
+     * line they came from. Only the very first press also *splits* the bill —
+     * there have to be rows before there is anything to assign — and after
+     * that the same button only opens and closes a view, which is why folding
+     * is never described as merging anything back.
+     */
     splitInto: (n: number) => `Split into ${n} lines`,
     splitItem: (label: string, n: number) => `Split ${label} into ${n} lines`,
-    mergeBack: "Merge back into one line",
+    showPortions: (n: number) => `Show the ${n} portions one by one`,
+    openItem: (label: string, n: number) => `Show the ${n} ${label} portions one by one`,
+    mergeBack: "Show as one line",
     splitDiscounts: (n: number) => `Show the ${n} discounts one by one`,
     mergeDiscounts: (n: number) => `Show the ${n} discounts as one figure`,
-    mergeItem: (label: string, n: number) => `Merge the ${n} ${label} lines back into one`,
+    mergeItem: (label: string, n: number) => `Show the ${n} ${label} portions as one line`,
     had: (name: string, label: string) => `${name} had ${label}`,
+    hadAll: (name: string, label: string, n: number) => `${name} had all ${n} ${label}`,
+    /** A cell that cannot be tapped like the others: the tap opens the line. */
+    hadSome: (name: string, label: string, n: number) =>
+      `${name} had some of the ${n} ${label} — open the line to see which`,
     hadPortion: (name: string, label: string, index: number, of: number) =>
       `${name} had ${label}, portion ${index} of ${of}`,
     share: (name: string) => `${name}’s share`,

@@ -9,11 +9,11 @@ import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
-import { nearestOutOfView } from "../lib/reveal";
+import { nearestOutOfView, revealWhole } from "../lib/reveal";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
-  foldPortions, portions, receiptTotalMinor, unfoldItem, unfoldableInto,
+  foldedLine, portions, receiptTotalMinor, runAssignment, unfoldItem, unfoldableInto,
 } from "../lib/scan/items";
 
 /**
@@ -103,8 +103,20 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   const refusal = useRefusal();
   const [seeking, setSeeking] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
-  const rows = useRef<(HTMLTableRowElement | null)[]>([]);
+  /** Every drawn row, by the item it starts at — a folded run is one row. */
+  const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const [told, setTold] = useState(false);
+  // Which runs of portions are drawn open, by the item index they start at.
+  // **This is the whole of folding now**: the bill keeps its portions once a
+  // line has been split, and folding is a view of them (`foldedLine`), never a
+  // rewrite that would throw away which portion was whose. A restored draft
+  // starts with every run folded, which is the compact reading of it.
+  const [open, setOpen] = useState<Set<number>>(new Set());
+  // A run just opened by tapping a cell in it, and the column that tap was in:
+  // it is scrolled to whole and only then does that column flash (`follow`).
+  const [pending, setPending] = useState<{ start: number; count: number; member: string } | null>(null);
+  const [point, setPoint] = useState<
+    { start: number; count: number; member: string; n: number } | null>(null);
   if (!opened.current) {
     opened.current = {
       receiptItems: draft.receiptItems, receiptTip: draft.receiptTip,
@@ -170,24 +182,34 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     });
   }
 
-  /** "Salad ×2" becomes two salads, each starting with whoever had the line. */
+  /**
+   * "Salad ×2" becomes two salads, each starting with whoever had the line.
+   * The one press on this screen that still changes the bill: there have to be
+   * rows before there is anything to assign per portion. Every press after it
+   * only opens and closes the view.
+   */
   function unfold(index: number) {
     if (!draft) return;
     const next = unfoldItem(items, index, draft.currency);
     if (!next) return;
+    // The rows below shift down by what the line grew, and any run already
+    // open down there has to travel with them.
+    const grew = next.count - 1;
+    setOpen((was) => {
+      const now = new Set<number>();
+      for (const start of was) now.add(start > index ? start + grew : start);
+      now.add(index);
+      return now;
+    });
     commitRows(next.items, assignments.flatMap((row, i) =>
       i === index ? Array.from({ length: next.count }, () => new Set(row)) : [row]));
   }
 
-  /** And back — everyone who had any portion had the line it becomes again. */
-  function fold(start: number, count: number) {
-    if (!draft) return;
-    const next = foldPortions(items, start, count, draft.currency);
-    if (!next) return;
-    const merged = new Set<string>();
-    for (const row of assignments.slice(start, start + count)) for (const id of row) merged.add(id);
-    commitRows(next.items, [...assignments.slice(0, start), merged, ...assignments.slice(start + count)]);
-  }
+  /** Closed and opened again — a view, so nothing is written down either way. */
+  const showAsOneLine = (start: number) =>
+    setOpen((was) => { const now = new Set(was); now.delete(start); return now; });
+  const showPortions = (start: number) =>
+    setOpen((was) => new Set(was).add(start));
 
   function toggleCell(itemIndex: number, memberId: string) {
     setTouched(true);
@@ -199,12 +221,87 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     }));
   }
 
+  /**
+   * A folded run where nobody is split across its portions edits like the one
+   * line it is drawn as: the tap lands on all of them at once, and the run
+   * stays as trivial as it was.
+   */
+  function toggleRun(start: number, count: number, memberId: string, had: boolean) {
+    setTouched(true);
+    setAssignments(assignments.map((row, i) => {
+      if (i < start || i >= start + count) return row;
+      const next = new Set(row);
+      if (had) next.delete(memberId); else next.add(memberId);
+      return next;
+    }));
+  }
+
+  /**
+   * And a run that *is* split cannot: a tap on one of those cells could mean
+   * either portion, so it opens the line instead of guessing. What it costs is
+   * a second tap; what it buys is that the split is never quietly flattened.
+   * The rest happens once the rows are on screen (`follow`).
+   */
+  function openForEditing(start: number, count: number, memberId: string) {
+    showPortions(start);
+    setPending({ start, count, member: memberId });
+  }
+
+  /**
+   * The run that was just opened, brought into view whole and then pointed at.
+   *
+   * Two rows have to be in view, not one — the portions are the answer to
+   * "which of them?" and half an answer is no answer — and when there are more
+   * of them than fit, the top wins (`revealWhole`). The flash waits for the
+   * scroll for the same reason the refusal's does: a pointer spent on rows
+   * still travelling is a pointer nobody saw.
+   */
+  useEffect(() => {
+    if (!pending) return;
+    const box = wrap.current;
+    const head = rowEl.current[pending.start];
+    const tail = rowEl.current[pending.start + pending.count - 1];
+    const aim = () => {
+      setPoint((was) => ({ ...pending, n: (was?.n ?? 0) + 1 }));
+      setPending(null);
+    };
+    if (!box || !head || !tail) { aim(); return; }
+    const sticky = box.querySelector("thead th");
+    const view = box.getBoundingClientRect();
+    const reach = revealWhole(
+      { top: head.getBoundingClientRect().top, bottom: tail.getBoundingClientRect().bottom },
+      { top: sticky ? sticky.getBoundingClientRect().bottom : view.top, bottom: view.bottom },
+    );
+    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    if (target === box.scrollTop) { aim(); return; }
+    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
+    whenStill(box, target, aim);
+  }, [pending]);
+
   const involvedMembers = people.filter((m) => involved.has(m.id));
   // Asked of lib/draft, not of weightsFromItems directly: what these rows are
   // worth has to be the same answer the form gives once Done has written them
   // down, and the seed that decides it is not this screen's to pick.
   const weights = receiptWeights(draft, items, assignments, involved);
   const missing = items.map((_, i) => (assignments[i]?.size ?? 0) === 0);
+  // What the grid actually draws: one entry per row, which is one item —
+  // or one closed run of portions read as the line it came from.
+  const lines: { start: number; count: number }[] = [];
+  for (let i = 0; i < items.length; ) {
+    const part = runs[i];
+    if (part && part.index === 1 && !open.has(part.start)) {
+      lines.push({ start: part.start, count: part.of });
+      i += part.of;
+    } else {
+      lines.push({ start: i, count: 1 });
+      i++;
+    }
+  }
+  // A drawn row is missing somebody if any of the items under it is: a folded
+  // run with one unassigned portion blooms whole, because that row is all
+  // there is to point at.
+  const lineMissing = lines.map(
+    (line) => missing.slice(line.start, line.start + line.count).some(Boolean));
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
   const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
@@ -263,8 +360,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     // The cells are what is sticky, not the row around them (globals.css):
     // `thead`'s own box stays where the table put it, halfway up the bill.
     const head = box?.querySelector("thead th");
-    const seen = missing.flatMap((gap, i) => {
-      const el = gap ? rows.current[i] : null;
+    const seen = lines.flatMap((line, li) => {
+      const el = lineMissing[li] ? rowEl.current[line.start] : null;
       if (!el) return [];
       const { top, bottom } = el.getBoundingClientRect();
       return [{ top, bottom }];
@@ -327,6 +424,10 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // waits for the refusal that earns it: on arrival nothing is assigned yet, so
   // printing it then scolds a grid for being untouched. A control you've used
   // doesn't need explaining either, and the footer is one line tall.
+  // The gentle pointer's restart, the refusal flash's trick exactly
+  // (lib/refusal.ts): two identical animations, so a second one replays.
+  const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
+
   const note = told && !everyItemAssigned ? (
     <div className="footnote bad">{copy.items.needsSomeone}</div>
   ) : canUnfoldSomething && runs.every((r) => r === null) ? (
@@ -377,24 +478,32 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => {
-                const part = runs[i] ?? null;
-                const into = part ? null : unfoldableInto(item, draft.currency);
+              {lines.map((line, li) => {
+                const item = items[line.start];
+                if (!item) return null;
+                // A closed run is drawn as the line it came from, which is a
+                // reading of the rows rather than a replacement for them.
+                const folded = line.count > 1;
+                const shown = (folded && foldedLine(items, line.start, line.count, draft.currency)) || item;
+                const run = folded
+                  ? runAssignment(assignments.slice(line.start, line.start + line.count)) : null;
+                const part = folded ? null : runs[line.start] ?? null;
+                const into = folded || part ? null : unfoldableInto(item, draft.currency);
                 return (
-                  <tr key={i} className={part ? "part" : undefined}
-                    ref={(el) => { rows.current[i] = el; }}>
+                  <tr key={line.start} className={part ? "part" : undefined}
+                    ref={(el) => { rowEl.current[line.start] = el; }}>
                     <td className="itemlabel">
                       <div className="itemrow">
                         {/* A line nobody has been given blooms with the
                             refusal — name and amount, which is how you find
                             it again in twenty rows of bill. */}
-                        <span className={`itemtext${missing[i] ? refusal.flash : ""}`}
+                        <span className={`itemtext${lineMissing[li] ? refusal.flash : ""}`}
                           onAnimationEnd={refusal.onFlashEnd}>
                           <span className="itemname">
-                            {item.label}
+                            {shown.label}
                             {/* The printed count, but only where the button
                                 below isn't already carrying it. */}
-                            {!part && into === null && item.quantity && item.quantity > 1 ? (
+                            {!folded && !part && into === null && item.quantity && item.quantity > 1 ? (
                               <span className="itemqty"> ×{item.quantity}</span>
                             ) : null}
                           </span>
@@ -402,36 +511,71 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                               the label's own line has a button to share
                               with and a name of any length in it. */}
                           <span className="itemamount">
-                            {item.amount}
+                            {shown.amount}
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
                         </span>
-                        {into !== null ? (
-                          <button className="itemfold" onClick={() => unfold(i)}
+                        {/* One button, one meaning: show the portions, or show
+                            them as one line. Only the first press of all —
+                            on a line the receipt printed a count for — also
+                            splits the bill into the rows to assign. */}
+                        {folded ? (
+                          <button className="itemfold" onClick={() => showPortions(line.start)}
+                            title={copy.items.showPortions(line.count)}
+                            aria-label={copy.items.openItem(item.label, line.count)}
+                            aria-expanded={false}>
+                            ×{line.count}<Icon name="split" size={12} />
+                          </button>
+                        ) : into !== null ? (
+                          <button className="itemfold" onClick={() => unfold(line.start)}
                             title={copy.items.splitInto(into)}
                             aria-label={copy.items.splitItem(item.label, into)}>
                             ×{into}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
-                          <button className="itemfold on" onClick={() => fold(part.start, part.of)}
+                          <button className="itemfold on" onClick={() => showAsOneLine(part.start)}
                             title={copy.items.mergeBack}
-                            aria-label={copy.items.mergeItem(item.label, part.of)}>
+                            aria-label={copy.items.mergeItem(item.label, part.of)}
+                            aria-expanded={true}>
                             ×{part.of}<Icon name="merge" size={12} />
                           </button>
                         ) : null}
                       </div>
                     </td>
-                    {involvedMembers.map((m) => (
-                      <td key={m.id}>
-                        <button className="itemcell" onClick={() => toggleCell(i, m.id)}
-                          aria-pressed={assignments[i]?.has(m.id) ?? false}
-                          aria-label={part
-                            ? copy.items.hadPortion(m.name, item.label, part.index, part.of)
-                            : copy.items.had(m.name, item.label)}>
-                          {assignments[i]?.has(m.id) ? <span className="dot" /> : null}
-                        </button>
-                      </td>
-                    ))}
+                    {involvedMembers.map((m) => {
+                      // What this cell shows: nothing, a dot, or the split mark
+                      // a folded run wears while somebody is on some of it.
+                      const mark = run
+                        ? run.marks.get(m.id) ?? null
+                        : assignments[line.start]?.has(m.id) ? "all" : null;
+                      const aimed = point && point.member === m.id
+                        && line.start >= point.start && line.start < point.start + point.count;
+                      return (
+                        <td key={m.id}>
+                          <button className={`itemcell${aimed ? pointClass : ""}`}
+                            onAnimationEnd={() => setPoint(null)}
+                            onClick={() => (run?.detailed
+                              ? openForEditing(line.start, line.count, m.id)
+                              : folded
+                                ? toggleRun(line.start, line.count, m.id, mark === "all")
+                                : toggleCell(line.start, m.id))}
+                            aria-pressed={mark === "some" ? "mixed" : mark === "all"}
+                            aria-label={folded
+                              ? (run?.detailed
+                                ? copy.items.hadSome(m.name, item.label, line.count)
+                                : copy.items.hadAll(m.name, item.label, line.count))
+                              : part
+                                ? copy.items.hadPortion(m.name, item.label, part.index, part.of)
+                                : copy.items.had(m.name, item.label)}>
+                            {/* The empty cells carry a dot too, invisible until
+                                something points at this column: what a person
+                                is being shown is where their answer would go,
+                                so the pointer has to be the shape of one. */}
+                            <span className={`dot${mark === "some" ? " some" : mark ? "" : " off"}`} />
+                          </button>
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}
@@ -454,7 +598,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                       {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
                         <button className={`itemfold${openDiscounts ? " on" : ""}`}
                           onClick={() => setOpenDiscounts(!openDiscounts)}
-                          title={openDiscounts ? copy.items.mergeBack : copy.items.splitInto(row.of)}
+                          title={openDiscounts
+                            ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
                           aria-label={openDiscounts
                             ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
                           aria-expanded={openDiscounts}>

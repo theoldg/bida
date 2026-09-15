@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseMinor, type BillExtras } from "@bida/core";
 import {
-  billCharges, foldPortions, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
+  billCharges, foldedLine, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
+  runAssignment,
   unfoldItem,
   unfoldableInto, weightsFromItems,
 } from "./items";
@@ -191,27 +192,53 @@ describe("unfoldItem", () => {
   });
 });
 
-describe("foldPortions", () => {
-  it("puts the portions back on one line, exactly", () => {
+describe("foldedLine", () => {
+  it("reads the portions as the one line they came from, exactly", () => {
     const unfolded = unfoldItem([{ label: "Beer", amount: "9.01", quantity: 3 }], 0, "EUR")!;
-    const folded = foldPortions(unfolded.items, 0, 3, "EUR")!;
-    expect(folded.items).toEqual([{ label: "Beer", amount: "9.01", quantity: 3, portionOf: null }]);
+    expect(foldedLine(unfolded.items, 0, 3, "EUR"))
+      .toEqual({ label: "Beer", amount: "9.01", quantity: 3, portionOf: null });
   });
 
-  it("round-trips a line unfolded and merged back", () => {
+  it("reads a run in the middle of a bill without touching the rest", () => {
     const before = [{ label: "Soup", amount: "3.00" }, { label: "Salad", amount: "9.00", quantity: 2 }];
     const unfolded = unfoldItem(before, 1, "EUR")!;
-    const folded = foldPortions(unfolded.items, 1, 2, "EUR")!;
-    expect(folded.items).toEqual([
-      { label: "Soup", amount: "3.00" },
-      { label: "Salad", amount: "9.00", quantity: 2, portionOf: null },
-    ]);
+    expect(foldedLine(unfolded.items, 1, 2, "EUR"))
+      .toEqual({ label: "Salad", amount: "9.00", quantity: 2, portionOf: null });
+    // The bill itself is untouched: folding is a view now, not an edit.
+    expect(unfolded.items).toHaveLength(3);
   });
 
-  it("refuses to merge fewer than two rows, or unreadable ones", () => {
-    expect(foldPortions([{ label: "Soup", amount: "3.00" }], 0, 1, "EUR")).toBeNull();
-    expect(foldPortions([{ label: "A", amount: "1.00" }, { label: "A", amount: "??" }], 0, 2, "EUR")).toBeNull();
-    expect(foldPortions([], 0, 2, "EUR")).toBeNull();
+  it("has no line to show for fewer than two rows, or unreadable ones", () => {
+    expect(foldedLine([{ label: "Soup", amount: "3.00" }], 0, 1, "EUR")).toBeNull();
+    expect(foldedLine([{ label: "A", amount: "1.00" }, { label: "A", amount: "??" }], 0, 2, "EUR")).toBeNull();
+    expect(foldedLine([], 0, 2, "EUR")).toBeNull();
+  });
+});
+
+describe("runAssignment", () => {
+  const sets = (...rows: string[][]) => rows.map((r) => new Set(r));
+
+  it("is not detailed while everybody has all of it or none of it", () => {
+    const { detailed, marks } = runAssignment(sets(["a", "b"], ["a", "b"]));
+    expect(detailed).toBe(false);
+    expect([...marks]).toEqual([["a", "all"], ["b", "all"]]);
+  });
+
+  it("has nothing to show for a run nobody has been given", () => {
+    expect(runAssignment(sets([], []))).toEqual({ detailed: false, marks: new Map() });
+  });
+
+  it("is detailed as soon as one person has some and not the others", () => {
+    const { detailed, marks } = runAssignment(sets(["a"], ["b"]));
+    expect(detailed).toBe(true);
+    expect([...marks]).toEqual([["a", "some"], ["b", "some"]]);
+  });
+
+  it("marks the person who had all of a detailed run the same split way", () => {
+    // Nothing in such a row may look like an ordinary assignment: none of it
+    // can be tapped like one.
+    const { marks } = runAssignment(sets(["a", "b"], ["a"], ["a"]));
+    expect([...marks]).toEqual([["a", "some"], ["b", "some"]]);
   });
 });
 
