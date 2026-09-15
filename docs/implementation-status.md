@@ -22,7 +22,7 @@ progress.
 
 ## What is open
 
-Nothing is queued. Five things are open; none is started, and two are not code.
+None of these is started, and the first is not code at all.
 
 - **A hard project quota in Google AI Studio**, just above `SCAN_LIMITS.global`
   — the belt under our own counter's braces. Only the owner can set it, in the

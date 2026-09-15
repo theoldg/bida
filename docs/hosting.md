@@ -20,7 +20,7 @@ receipt photos were the one thing that would have been, and they were cut
 The one endpoint that spends actual money is the scan, and its budget is
 [receipt-scanning.md](receipt-scanning.md#what-the-scan-costs).
 
-### How full can it get
+## How full can it get
 
 Every group shares the one `hajsik` database, nothing is ever deleted, and the
 caps only ever move one way. Replaying realistic ops into
