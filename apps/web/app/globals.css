@@ -692,22 +692,21 @@ button.kv:active { background: var(--press) }
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
-/* An opened person is one band: their row, their lines, and a rule down the
-   left edge — the same highlighter the bill screen puts across the portions of
-   one dish. It bleeds to the card's edges (`.card` pads 14px) so the tint reads
-   as a band rather than as a second card floating inside the first. */
+/* A list of people, each opening onto their own bill. A hairline between
+   neighbours is what separates them — a wash under the open one was tried and
+   dropped: on a quick split's answer, where every row is open at once
+   (ADR-0035), three washes in a row stop picking anybody out, and one style
+   for both screens beats two. The group still bleeds to the card's edges
+   (`.card` pads 14px) so a pressed row fills the row rather than the column of
+   text inside it. */
 .billgroup { margin: 0 -14px; padding: 0 14px }
-.billgroup.on { background: var(--hl); box-shadow: inset 3px 0 0 var(--hl-edge);
-  border-radius: var(--r-s) }
-/* A screen whose rows are *all* open from the start has nothing to pick out,
-   and three washes in a row stop separating anybody — so the band comes off
-   and a hairline between people does that job instead (a quick split's
-   answer, ADR-0035). */
-.billgroup.flat.on { background: none; box-shadow: none }
-.billgroup.flat + .billgroup.flat { border-top: 1px solid var(--rule); margin-top: 4px; padding-top: 6px }
-/* The pressed row fills the band, not the column of text inside it: at 100% of
-   `.billgroup`'s content box the highlight stopped 14px short of the tint it
-   sits in at both ends, which read as a misaligned box rather than as this row
+/* A row without lines of its own is a plain `.kv` in the same list, so it is
+   ruled off with the rest. */
+.billgroup + .billgroup, .kv + .billgroup, .billgroup + .kv {
+  border-top: 1px solid var(--rule); margin-top: 4px; padding-top: 6px }
+/* The pressed row fills the row, not the column of text inside it: at 100% of
+   `.billgroup`'s content box the wash stopped 14px short of the card's padding
+   at both ends, which read as a misaligned box rather than as this row
    answering the tap. It carries the 14px itself instead, so the text stays
    where the `.kv` rows above it are. */
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;

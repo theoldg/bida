@@ -17,8 +17,9 @@ import type { MemberLine } from "../lib/scan/items";
  * from, so a row and its lines agree by construction.
  *
  * Two screens read a bill back this way: a saved expense (ADR-0016) and the
- * answer a quick split ends on (ADR-0035). How a figure is printed is the
- * caller's — the group's currency, or bare.
+ * answer a quick split ends on (ADR-0035). Both wear the same ruled list of
+ * people; only whether the rows start open differs. How a figure is printed is
+ * the caller's — the group's currency, or bare.
  */
 export function MemberBill({ name, total, lines, format, startOpen = false }: {
   name: string;
@@ -35,10 +36,9 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
 }) {
   const [open, setOpen] = useState(startOpen);
   return (
-    // Row and lines are one band while it is open — the highlighter-and-edge
-    // the bill screen uses for the portions of a single dish. Without it the
-    // lines read as loose rows of the card rather than as this person's bill.
-    <div className={`billgroup${startOpen ? " flat" : ""}${open ? " on" : ""}`}>
+    // A hairline between neighbours separates people; an open row is marked by
+    // its chevron and its darkened name, not by a wash under it (`globals.css`).
+    <div className={`billgroup${open ? " on" : ""}`}>
       <button type="button" className="kv" aria-expanded={open}
         onClick={() => setOpen(!open)}>
         <span className="k">
