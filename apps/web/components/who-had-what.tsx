@@ -220,8 +220,13 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   /** Closed and opened again — a view, so nothing is written down either way. */
-  const showAsOneLine = (start: number) =>
+  const showAsOneLine = (start: number) => {
+    // The pointed cells go with the rows, and an animation removed mid-flight
+    // reports nothing: drop the point rather than leave it to be replayed on
+    // whatever opens next.
+    setPoint(null);
     setOpen((was) => { const now = new Set(was); now.delete(start); return now; });
+  };
   const showPortions = (start: number) =>
     setOpen((was) => new Set(was).add(start));
 
@@ -327,6 +332,26 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // there is to point at.
   const lineMissing = lines.map(
     (line) => missing.slice(line.start, line.start + line.count).some(Boolean));
+  // Whether anything is left to bloom at all. Kept in a ref as well, because a
+  // scroll that finishes after the grid was fixed would otherwise start a
+  // refusal off a stale reading of it.
+  const blooms = missing.some(Boolean);
+  const stillBlooms = useRef(blooms);
+  stillBlooms.current = blooms;
+
+  /**
+   * A refusal whose lines stopped being refused.
+   *
+   * The flash lives on the rows nobody has been given, so assigning the last of
+   * them inside those ~600ms takes the class off every element that was
+   * carrying it — and an animation that is removed never fires `animationend`.
+   * Nothing would then say the flash was over, and Done, spent for exactly as
+   * long as one, would stay greyed for good. The fix arriving early is the one
+   * thing that has to be said out loud (lib/refusal.ts).
+   */
+  useEffect(() => {
+    if (refusal.live && !blooms) refusal.onFlashEnd();
+  }, [refusal, blooms]);
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
   const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
@@ -403,7 +428,12 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     if (target === box.scrollTop) { refusal.refuse(); return; }
     setSeeking(true);
     box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
-    whenStill(box, target, () => { setSeeking(false); refusal.refuse(); });
+    whenStill(box, target, () => {
+      setSeeking(false);
+      // Fixed while the list was still travelling: there is nothing left to
+      // point at, and a refusal with nothing blooming never ends itself.
+      if (stillBlooms.current) refusal.refuse();
+    });
   }
 
   function finish() {

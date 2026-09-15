@@ -374,6 +374,13 @@ reads as an ordinary assignment.
 - **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
   way up, so anything else that animates inside it — the scan's own sweep —
   has to stop the event, or a flash that never ran reads as one that settled.
+- **An animation taken off mid-flight reports nothing.** The refusal class is
+  conditional on what is wrong, so fixing it *during* the flash removes the
+  class and no `animationend` ever fires — and a control spent for the length
+  of one stays spent for good. Whatever put the flash there has to notice the
+  fix arriving early and end the refusal by hand (`refusal.onFlashEnd()` with
+  no event). It has cost a locked Save on the who-had-what grid and a locked
+  add row before it (`lib/refusal.ts`).
 - **One global stylesheet means a bare class name lands everywhere it is
   spelled.** `.billline.tip` was compounded and still took the tip jar's `.tip`
   — a centred flex column with 22px of gap — so every discount and tax line in
