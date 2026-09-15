@@ -35,8 +35,8 @@ exist and how many edits each has had, and that's it.
 edit in place, so two phones writing up the same dinner underground merge
 cleanly when they surface.
 
-**One part isn't private.** Receipt photos go to Google's Gemini API, which may
-train on them.
+**No tracking.** Data is encrypted end-to-end, the server can't read it.
+Receipt photos go to Google's Gemini API.
 
 ## Stack
 
