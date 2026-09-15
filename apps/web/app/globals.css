@@ -643,19 +643,22 @@ a { color: inherit; text-decoration: none }
 .itemcell .dot.off { opacity: 0 }
 
 /* Pointing at a column: the run a tap just opened, in the tapper's own column.
-   Not a refusal — nothing is wrong and nothing is being asked for — so it is
-   the quiet end of the palette rather than `--debit`: the dots that are there
-   go up in contrast, and the spots where one could go fade up from nothing.
+   Not a refusal — nothing is wrong and nothing is being asked for — so no
+   `--debit` and no going darker: **the column meets in the middle**. The dots
+   that are there fade back and the spots where one could go fade up, both to
+   the same `.35` the rows nobody ordered wear, so for half a second every cell
+   in the column is the same faint dot — the five places an answer could go —
+   and then the real state returns. Fading down is also the only half of it
+   that can be *seen* on an assigned dot: `--ink-2` has nowhere darker to go.
    Two identical animations for the same reason the refusal has two: a second
    point at the same cells must replay (lib/refusal.ts). */
-@keyframes point-a { 15%, 55% { background: var(--hl-ink) } }
-@keyframes point-b { 15%, 55% { background: var(--hl-ink) } }
-@keyframes point-off-a { 15%, 55% { opacity: .45 } }
-@keyframes point-off-b { 15%, 55% { opacity: .45 } }
-.itemcell.point-a .dot:not(.off), .itemcell.point-a .dot.some::before,
-.itemcell.point-a .dot.some::after { animation: point-a .85s ease-in-out }
-.itemcell.point-b .dot:not(.off), .itemcell.point-b .dot.some::before,
-.itemcell.point-b .dot.some::after { animation: point-b .85s ease-in-out }
+@keyframes point-a { 15%, 55% { opacity: .35 } }
+@keyframes point-b { 15%, 55% { opacity: .35 } }
+@keyframes point-off-a { 15%, 55% { opacity: .35 } }
+@keyframes point-off-b { 15%, 55% { opacity: .35 } }
+/* On the span, so the split mark's two squares travel with it as one. */
+.itemcell.point-a .dot:not(.off) { animation: point-a .85s ease-in-out }
+.itemcell.point-b .dot:not(.off) { animation: point-b .85s ease-in-out }
 .itemcell.point-a .dot.off { animation: point-off-a .85s ease-in-out }
 .itemcell.point-b .dot.off { animation: point-off-b .85s ease-in-out }
 /* Exempt from the reduced-motion clamp on the same grounds as the refusal
@@ -663,8 +666,6 @@ a { color: inherit; text-decoration: none }
    .01ms the tap would answer with nothing at all. */
 @media (prefers-reduced-motion: reduce) {
   .itemcell.point-a .dot:not(.off), .itemcell.point-b .dot:not(.off),
-  .itemcell.point-a .dot.some::before, .itemcell.point-b .dot.some::before,
-  .itemcell.point-a .dot.some::after, .itemcell.point-b .dot.some::after,
   .itemcell.point-a .dot.off, .itemcell.point-b .dot.off {
     animation-duration: .85s !important }
 }
