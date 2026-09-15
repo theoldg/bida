@@ -38,6 +38,10 @@ cleanly when they surface.
 **No tracking.** Data is encrypted end-to-end, the server can't read it.
 Receipt photos go to Google's Gemini API.
 
+## Vibe-coded... but tested
+
+I crafted bida with care. Core logic is extensively unit-tested. I tried to break the UI for hours; Claude also tried, via a custom-built text-based driver.
+
 ## Stack
 
 Next.js static export · hand-rolled components · Tailwind · Dexie/IndexedDB ·
