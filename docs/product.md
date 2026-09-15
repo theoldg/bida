@@ -58,7 +58,7 @@ Leave the seam. Build none of it.
 
 | Deferred | The seam |
 |---|---|
-| Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds — the scan already reads them, and a receipt scan can assign them ad hoc into a `shares` split today ([ADR-0016](decisions/0016-receipts.md)), but they aren't stored or re-editable after saving |
+| Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds. A scan already reads them and the who-had-what grid already assigns them, into a `receipt` split that the expense stores and can reopen ([ADR-0016](decisions/0016-receipts.md)) — what is missing is editing a line as a thing in its own right |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
 | Push notifications | Needs a member→device map, awkward under link-only access |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
@@ -75,7 +75,3 @@ Leave the seam. Build none of it.
   but transparency isn't noise: a rounding cent is not worth a line of UI.
 - **Colour is never the only signal.** Every debit/credit carries a sign and a
   word as well as a hue.
-
-## Open questions
-
-None.

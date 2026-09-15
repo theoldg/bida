@@ -33,9 +33,11 @@ fields on `Expense`, travelling in the op's `patch` like `description` — so th
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
 Dexie schema, and the grid reopens later from any device. Ops already written
 in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops
-become state (`applyPatch`, so the fold and the history read it alike); the
-materialised Dexie cache in front of them takes the same function on open
-(`version(7)`), since it is only refolded when a pull brings ops.
+become state (`applyPatch`, so the fold and the history read it alike). The
+Dexie migration that carried the materialised cache over has been collapsed
+away with the rest of the chain
+([data-model.md](../data-model.md#indexeddb-dexie-schema-v8)); the fold is what
+holds it now.
 
 **The receipt split is the fourth tab on the split editor** — labelled
 "Items", for what the tab holds rather than for the photograph — and a fourth
@@ -101,8 +103,7 @@ created; splitting it evenly makes the cheaper pizza subsidise the dearer one,
 which no other rule in the app does. Pro rata (5.56 / 4.44) is the same rule a
 whole-bill loyalty deduction follows, and a whole-bill deduction spread this
 way moves nobody relative to anybody — only the total changes. One rule, both
-scopes. It also closes the last open question in
-[product.md](../product.md).
+scopes.
 
 **The grid's initials are `distinctInitials()`**, growing each prefix until it
 is unique ("John"/"Jane") but **never past three graphemes** — they are the

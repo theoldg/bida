@@ -52,7 +52,7 @@ Hono API by one Cloudflare Worker. Data is an append-only op log in IndexedDB
 
 ## Current state
 
-Every phase is closed. The app is deployed and syncing in production, a group
+The app is built, deployed and syncing in production. A group
 holds three kinds of entry — expense, income, transfer
 ([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), state two phones can
 merge into that no check can prevent is named and repaired by

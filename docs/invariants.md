@@ -138,10 +138,12 @@ resurrect every claimed member and forgetting would end nothing.
   the group or lost the phone. That is the intended behaviour, but the sheet
   still reads as though removing is final, and it is the one screen that would
   then be lying.
-- **Does the log stay small enough?** Whole-entity ops repeat every field on
-  every edit, and a receipt-scanned expense is not small, and ops are never
-  collected ([sync.md](sync.md#gotchas)). It ships whole and gets measured on a
-  realistic group afterwards — a number settles this, not an argument.
+- **Does the log stay small enough?** Measured, and the answer is yes for now:
+  whole-entity ops cost about 2.5x, and a scanned expense's `receiptItems` is
+  most of what the database holds
+  ([hosting.md](hosting.md#how-full-can-it-get)). Ops are never collected
+  ([sync.md](sync.md#gotchas)), so it wants re-measuring rather than
+  re-arguing; compaction, if it is ever needed, is one rule.
 
 ## Enforcement
 

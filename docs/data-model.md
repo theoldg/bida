@@ -292,6 +292,6 @@ why re-keying a table costs a drop and a `rebuild()`, not a data migration.
   `core/money.ts`; don't reach for `toFixed`.
 - **A device's identity id is its HLC node id** — one string per install, the
   same in every group it joins. So `identities` is keyed by `[groupId+id]`, like
-  `rates`: keyed by the node id alone (as it was until Dexie v6) a phone in two
+  `rates`: keyed by the node id alone, as it once was, a phone in two
   groups had one row, and re-folding either group deleted the other's claim.
   Anything re-folding one entity has to scope by group as well as by id.
