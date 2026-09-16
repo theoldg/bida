@@ -99,7 +99,7 @@ home-screen app are unchanged. Wording is in `copy.install` and `copy.join.choic
 
 A route of its own, in `/about`'s register: short prose, no cards. Every
 "this browser" on these screens names Safari or Chrome when `iosBrowser` can
-tell. From the list it carries, in this order:
+tell. It carries, in this order:
 
 1. untitled — Safari forgets your groups after a week unused; the
    home-screen app doesn't.
