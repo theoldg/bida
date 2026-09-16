@@ -25,6 +25,8 @@ import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind"
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
 import { flashClass, NOT_REFUSED, refused, type Refusal } from "../../../../lib/refusal";
+import { nearestOutOfView } from "../../../../lib/reveal";
+import { calmly, whenStill } from "../../../../lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
@@ -121,6 +123,36 @@ function EditEntryScreen() {
       for (const f of REFUSABLE) if (fields[f]) next[f] = refused(r[f]);
       return next;
     });
+  /**
+   * What is missing as of the latest render, written once `checkEntry` has
+   * run below. A refusal that travels first reads it when the scroll lands,
+   * not when Save was pressed: a field fixed mid-scroll has nothing left to
+   * bloom, and a flash on it would lock Save for nothing.
+   */
+  const missingNow = useRef<Partial<Record<Refusable, boolean>>>({});
+  /**
+   * Scrolling to what a refusal points at. Save is spent for the travel as
+   * well as the flash, the who-had-what grid's rule: a second press mid-scroll
+   * would start a second journey over the first.
+   */
+  const [seeking, setSeeking] = useState(false);
+  /**
+   * A flash whose field stopped being missing ends here, by hand. The flash
+   * can leave with its element — the Items tab switched away, a currency put
+   * back to the group's own takes "set rate" off the form — and an animation
+   * removed mid-flight never fires `animationend`, so Save would stay spent
+   * for good (design-system.md's Gotchas). Every render, after `missingNow`
+   * has caught up with it.
+   */
+  useEffect(() => {
+    const stale = REFUSABLE.filter((f) => refusedFields[f].live && !missingNow.current[f]);
+    if (stale.length === 0) return;
+    setRefused((r) => {
+      const next = { ...r };
+      for (const f of stale) next[f] = { ...r[f], live: false };
+      return next;
+    });
+  });
   /**
    * A refusal is still on screen. Save is spent for exactly as long: a press
    * that can't go through has to look like it landed, and a button that stays
@@ -336,6 +368,47 @@ function EditEntryScreen() {
     onReceiptTab, amountMinor, baseMinor, foreign, groupRate, rateOk, blocker, receiptMissing, ready,
     amountMissing, titleMissing,
   } = check;
+  missingNow.current = {
+    amount: amountMissing, title: titleMissing, receipt: receiptMissing,
+    rate: foreign && groupRate === undefined,
+  };
+
+  /**
+   * A refusal, once what it points at can be seen — the grid's `reveal`, on
+   * the form's own scroll. With the keyboard up the form is a strip of a few
+   * rows, and Save at its foot is a long way from an empty amount at its head:
+   * a flash spent up there was a press that did nothing. So unless one of the
+   * refused controls is wholly in view, the nearest is scrolled to and only
+   * then does it bloom, off a fresh reading of what is still missing.
+   */
+  const refuseInView = (fields: Partial<Record<Refusable, boolean>>) => {
+    const box = document.querySelector(".scroll");
+    const seen = REFUSABLE.flatMap((f) => {
+      const el = fields[f] ? box?.querySelector(`[data-refuse="${f}"]`) : null;
+      if (!el) return [];
+      const { top, bottom } = el.getBoundingClientRect();
+      return [{ top, bottom }];
+    });
+    if (!box || seen.length === 0) { refuse(fields); return; }
+    // The band a control can be read in: the scroller less its scroll padding,
+    // which at the bottom is the keyboard it is drawn over (`--kb`).
+    const view = box.getBoundingClientRect();
+    const pad = getComputedStyle(box);
+    const reach = nearestOutOfView(seen, {
+      top: view.top + (parseFloat(pad.scrollPaddingTop) || 0),
+      bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
+    });
+    if (reach === null) { refuse(fields); return; }
+    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    if (target === box.scrollTop) { refuse(fields); return; }
+    setSeeking(true);
+    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
+    whenStill(box, target, () => {
+      setSeeking(false);
+      const still = missingNow.current;
+      refuse(Object.fromEntries(REFUSABLE.map((f) => [f, !!fields[f] && !!still[f]])));
+    });
+  };
 
   /**
    * Switching tabs. Two handoffs, each made once and only into a tab that has
@@ -412,7 +485,8 @@ function EditEntryScreen() {
     const actor = data.me;
     if (!ready) {
       setAttemptedSave(true);
-      refuse({
+      if (seeking) return;
+      refuseInView({
         amount: amountMissing, title: titleMissing, receipt: receiptMissing,
         rate: foreign && groupRate === undefined,
       });
@@ -513,7 +587,7 @@ function EditEntryScreen() {
                 `AmountInput` renders itself, so the grid listens for it on the
                 way up rather than the component growing a prop for one
                 screen's animation. */}
-            <div className="amtgrid" onAnimationEnd={settled("amount")}>
+            <div className="amtgrid" data-refuse="amount" onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
                 fieldClassName={`big${flashClass(refusedFields.amount)}`}
@@ -542,7 +616,7 @@ function EditEntryScreen() {
                 <>
                   <button type="button" className="ratelink"
                     aria-label={copy.rates.openFor(draft.currency)}
-                    onClick={() => setAskRate(draft.currency)}>
+                    onClick={() => setAskRate(draft.currency)} {...keepsFocus}>
                     ={" "}
                     <span className={rateOk ? undefined : "bad"}>
                       {rateOk ? money(baseMinor, base) : copy.none}
@@ -550,7 +624,7 @@ function EditEntryScreen() {
                   </button>
                   <button type="button" data-refuse="rate" className={`amtnote${flashClass(refusedFields.rate)}`}
                     onAnimationEnd={settled("rate")} {...keepsFocus}
-                    onClick={() => setAskRate(draft.currency)} {...keepsFocus}>
+                    onClick={() => setAskRate(draft.currency)}>
                     {copy.rates.setRate()}
                   </button>
                 </>
@@ -578,7 +652,7 @@ function EditEntryScreen() {
               />
             ) : null}
 
-            <div className={`field${flashClass(refusedFields.title)}`} onAnimationEnd={settled("title")}>
+            <div className={`field${flashClass(refusedFields.title)}`} data-refuse="title" onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
               <input id="what" value={draft.description}
                 aria-label={transfer ? copy.form.note : copy.form.what}
@@ -624,7 +698,7 @@ function EditEntryScreen() {
                     // people, so opening it with no amount hands it a zero to
                     // split. The tap doesn't travel — it flashes the amount
                     // field, which is where the fix is.
-                    if (amountMissing) { refuse({ amount: true }); return; }
+                    if (amountMissing) { if (!seeking) refuseInView({ amount: true }); return; }
                     router.push(route.payers(groupId));
                   }}>
                   <span>{copy.form.multiPayer[kind === "income" ? "income" : "expense"]}</span>

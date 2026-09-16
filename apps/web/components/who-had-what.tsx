@@ -10,11 +10,26 @@ import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
 import { nearestOutOfView, revealWhole } from "../lib/reveal";
+import { calmly, whenStill } from "../lib/seek";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
   foldedLine, portions, receiptTotalMinor, runAssignment, unfoldItem, unfoldableInto,
 } from "../lib/scan/items";
+
+/**
+ * How long the pointed column stays faint at the least. The scroll is usually
+ * longer and sets the pace; this is the floor under a run that was already in
+ * view, so opening one always reads the same way.
+ */
+const HOLD_MS = 280;
+
+/** Whether a drawn row and column are the ones being pointed at. */
+const inColumn = (
+  at: { start: number; count: number; member: string } | null,
+  start: number,
+  memberId: string,
+) => !!at && at.member === memberId && start >= at.start && start < at.start + at.count;
 
 /**
  * Who had what: the grid a scanned bill is assigned on (ADR-0016).
@@ -35,45 +50,6 @@ import {
  * question: the form says split it by hand instead, and a quick split has
  * nothing left to be.
  */
-/**
- * How long a scroll is waited on before the flash runs anyway. A smooth scroll
- * has no end event every browser here agrees on, and a person who has taken the
- * list over mid-travel is owed an answer more than a tidy one.
- */
-const SETTLED_MS = 800;
-
-/**
- * How long the pointed column stays faint at the least. The scroll is usually
- * longer and sets the pace; this is the floor under a run that was already in
- * view, so opening one always reads the same way.
- */
-const HOLD_MS = 280;
-
-/** The scroller has arrived — or has been given long enough to. */
-function whenStill(box: Element, target: number, done: () => void) {
-  const giveUp = Date.now() + SETTLED_MS;
-  const look = () => {
-    if (Math.abs(box.scrollTop - target) <= 1 || Date.now() > giveUp) { done(); return; }
-    requestAnimationFrame(look);
-  };
-  requestAnimationFrame(look);
-}
-
-/** Whether a drawn row and column are the ones being pointed at. */
-const inColumn = (
-  at: { start: number; count: number; member: string } | null,
-  start: number,
-  memberId: string,
-) => !!at && at.member === memberId && start >= at.start && start < at.start + at.count;
-
-/**
- * Whether to travel at all. The flash itself is exempt from reduced motion —
- * a colour settling is what that guidance asks for (globals.css) — but this is
- * movement, and movement is exactly what it asks to be spared: the row is put
- * in place at once instead.
- */
-const calmly = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
 export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack }: {
   title: string;
   /** The columns: everybody who might have been at this table. */

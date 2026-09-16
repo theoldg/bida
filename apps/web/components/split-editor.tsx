@@ -363,7 +363,7 @@ function ReceiptPanel({
         {/* The step outstanding on a scanned bill is assigning it, so this is
             the control a refused Save blooms — an ink block, which takes the
             flash as a fill rather than a border. */}
-        <Link href={editItemsHref} className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
+        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd} {...keepsFocus}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />
@@ -404,7 +404,9 @@ function ReceiptPanel({
       {/* The halves name their two doors and not the job, which the line
           under them says: a photograph is what fills this tab. With no bill
           yet, this is the control a refused Save fills. */}
-      <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
+      <div data-refuse="receipt">
+        <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
+      </div>
       {scan.live?.state === "error" ? (
         /* No "try again" beside the message: the control is right above it,
            still enabled, and it is the retry. */
