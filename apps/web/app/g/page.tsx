@@ -10,13 +10,12 @@ import {
 import { kindOf, myEffect } from "../../lib/entry-kind";
 import { Card, Eyebrow, signClass } from "../../components/bits";
 import {
-  Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
+  BadLink, Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
   SupportFab, TopBar,
 } from "../../components/chrome";
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
-import { KeylessLink } from "../../components/keyless-link";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -91,12 +90,7 @@ function GroupScreen() {
     );
   }
   if (!data.group) {
-    return (
-      <Screen><Body>
-        <TopBar title={copy.group.notFound.title} back={route.groups()} />
-        <Scroll><KeylessLink /></Scroll>
-      </Body></Screen>
-    );
+    return <BadLink />;
   }
 
   const { group } = data;

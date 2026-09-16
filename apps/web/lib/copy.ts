@@ -352,17 +352,6 @@ export const copy = {
 
   group: {
     noGroup: "No group",
-    notFound: {
-      title: "Not found",
-    },
-    /**
-     * For a link that names nothing this phone has — a deep link into a group
-     * that was never joined or has been forgotten. `notFound` above is the
-     * gentler case: you are on the group screen, one id short.
-     */
-    badLink: {
-      title: "Bad link",
-    },
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline: you may not have everyone’s latest.",
     offlinePending: (waiting: string) => `Offline: ${waiting} waiting.`,

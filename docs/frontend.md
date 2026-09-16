@@ -47,9 +47,8 @@ the removal it wrote was signed by the person being removed.
 string, and a link naming a group this phone doesn't have — a stale bookmark, a
 URL shared to somebody who never joined — used to leave the sub-screens holding
 a back arrow and nothing else, or spinning forever on `useGroupData(undefined)`.
-Each now renders `BadLink` (`components/chrome.tsx`), which says what a proper
-invite link is. `/g` itself keeps its gentler "Not found": you are on the group
-screen, one id short.
+Each, `/g` included, renders `BadLink` (`components/chrome.tsx`), which says
+what a proper invite link is, under a bar with no title.
 
 **Back goes up, not back.** A screen's `back` is one of two things and the
 device's button agrees with both (`lib/back-button.ts`,

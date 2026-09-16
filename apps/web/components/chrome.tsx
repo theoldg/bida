@@ -246,12 +246,13 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: Bac
  * needs one: they all read the group out of the query string, and without this
  * a stale bookmark or a shared URL left them holding a back arrow and nothing
  * else. It always offers the way out — the group list — rather than only
- * saying no.
+ * saying no. No title: the page's own heading already says what is wrong, and
+ * a bar reading "Not found" over it said less.
  */
 export function BadLink() {
   return (
     <Screen><Body>
-        <TopBar title={copy.group.badLink.title} back={"/"} />
+        <TopBar title=" " back={"/"} />
         <Scroll><KeylessLink /></Scroll>
       </Body></Screen>
   );
