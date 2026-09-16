@@ -1,10 +1,10 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
 import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
-import { getDevice, setInstallNudgeCollapsed } from "../lib/db/device";
+import { setInstallNudgeCollapsed } from "../lib/db/device";
+import { useDevice } from "../lib/hooks";
 import { installOffer, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
@@ -26,7 +26,7 @@ export function useInstallOffer(): InstallOffer {
  */
 export function InstallNudge() {
   const offer = useInstallOffer();
-  const device = useLiveQuery(() => getDevice(), []);
+  const device = useDevice();
   if (offer !== "ready" && offer !== "manual") return null;
   // undefined is "Dexie hasn't answered yet", and drawing the card open before
   // it does would snap it shut a frame later on a phone that folded it.

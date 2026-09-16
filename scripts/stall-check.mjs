@@ -4,7 +4,7 @@
  * working. The defect it was written for: an installed Android PWA that hung
  * on its skeleton rows, indefinitely, with nothing in the console.
  *
- * Two ways for a read to die, both of them silent before lib/db/live.ts:
+ * Three ways for a read to die, all of them silent before lib/db/live.ts:
  *
  *  1. **It never answers.** Dexie's `liveQuery` swallows the two error names
  *     the browser uses when it kills a query under a frozen or evicted page
@@ -17,6 +17,8 @@
  *     inside the page: `versionchange`, then Dexie closing the connection.
  *     Nothing re-queries on its own afterwards, so the screen went on showing
  *     rows that were no longer there.
+ *  3. **Another copy holds the lock.** Every read waits, and keeps waiting —
+ *     see section 3.
  */
 import { ensureBuild, launch, newPhone, newGroup, openGroupsList, reporter, serveExport } from "./lib/harness.mjs";
 
@@ -101,6 +103,75 @@ const { report, finish } = reporter();
     () => report(false, "closing the connection re-reads: the list empties without a reload",
       "still showing the group that is no longer there"),
   );
+  await ctx.close();
+}
+
+// ---- 3. another copy holding the database ------------------------------
+// What the owner's phone recorded: every read hanging at once, and all of them
+// clearing together a minute later. A copy of the app frozen half way through
+// a readwrite transaction keeps its lock, and every read on the origin queues
+// behind it. No page can break another's lock, so what is held here is what
+// this copy does meanwhile: show what it last read, say it is waiting, and
+// come back by itself once the lock goes.
+{
+  const ctx = await newPhone(browser);
+  const page = await ctx.newPage();
+  await newGroup(page, base, { name: "Marrakech", me: "Theo", members: ["Marie"] });
+  await openGroupsList(page, base);
+  const back = () => page.locator(".iconbtn[aria-label='Back']").first().click();
+  const settled = () => page.waitForFunction(() => !document.querySelector(".skelrow"));
+
+  // Read both screens once, so there is an answer to remember.
+  await page.locator(".grouprow").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await settled();
+  await back();
+  await page.waitForURL((url) => url.pathname === "/");
+  await page.waitForSelector(".grouprow");
+
+  // The other copy: a second tab of the app that takes a readwrite
+  // transaction over every store and keeps it alive with request after request
+  // — the lock a frozen page holds, without needing a way to freeze one.
+  const other = await ctx.newPage();
+  await other.goto(`${base}/diag`);
+  await other.evaluate(() => new Promise((resolve) => {
+    window.__hold = true;
+    const req = window.indexedDB.open("hajsik");
+    req.onsuccess = () => {
+      const idb = req.result;
+      const tx = idb.transaction([...idb.objectStoreNames], "readwrite");
+      const store = tx.objectStore("device");
+      const spin = () => { if (window.__hold) store.get("device").onsuccess = spin; };
+      spin();
+      resolve();
+    };
+  }));
+
+  await page.bringToFront();
+  await page.locator(".grouprow").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForTimeout(800);
+  const drawn = await page.locator(".skelrow").count() === 0;
+  report(drawn, "a screen read before shows what it read while the database is held elsewhere",
+    drawn ? undefined : "skeleton rows over a group this copy had already drawn");
+
+  const said = await page.locator(".stall").waitFor({ timeout: 20000 }).then(() => true, () => false);
+  report(said, "and still says the database is not answering", said ? undefined : "no notice after 20s");
+
+  await other.evaluate(() => { window.__hold = false; });
+  const cleared = await page.locator(".stall").waitFor({ state: "detached", timeout: 15000 })
+    .then(() => true, () => false);
+  report(cleared, "the notice takes itself down once the other copy lets go",
+    cleared ? undefined : "still stalled after the lock was released");
+
+  // /diag names the other copy, which is the line the next report needs.
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.goto(`${base}/diag`);
+  const copies = await page.locator(".diag").filter({ hasText: "copies:" })
+    .waitFor({ timeout: 8000 }).then(async () => (await page.locator(".diag").textContent()) ?? "", () => "");
+  const listed = /copies:\s+2\b/.test(copies) && copies.includes("OTHER");
+  report(listed, "/diag lists the other copy",
+    listed ? undefined : copies.split("\n").find((l) => l.startsWith("copies:")) ?? "no copies line");
   await ctx.close();
 }
 

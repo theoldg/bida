@@ -47,6 +47,37 @@ describe("syncGroup", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("holds a commit whose answer lands while the app is hidden until it is seen", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+
+    // The phone goes to the background between asking and hearing back.
+    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+    vi.stubGlobal("document", page);
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      page.visibilityState = "hidden";
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, i + 1]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: body.ops.length }));
+    }));
+
+    let finished = false;
+    const run = syncGroup(groupId).then(() => { finished = true; });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(finished).toBe(false);
+    const parked = await db().ops.where("groupId").equals(groupId).toArray();
+    expect(parked.every((op) => op.pending === 1)).toBe(true);
+    // And nothing new starts behind it while hidden.
+    const fetches = (fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length;
+    await syncAll();
+    expect((fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length).toBe(fetches);
+
+    page.visibilityState = "visible";
+    page.dispatchEvent(new Event("visibilitychange"));
+    await run;
+    const after = await db().ops.where("groupId").equals(groupId).toArray();
+    expect(after.every((op) => op.pending === 0)).toBe(true);
+  });
+
   it("pushes pending ops and marks them synced with the server's assigned seq", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     const pendingBefore = await db().ops.where("groupId").equals(groupId).toArray();

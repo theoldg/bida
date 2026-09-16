@@ -125,6 +125,28 @@ function screenLine(): string {
 }
 
 /**
+ * Every copy of the app open on this origin, as the service worker sees them.
+ * More than one, with another hidden or frozen, is the likeliest reason for
+ * reads that all hang at once and all clear together.
+ */
+function copies(): Promise<string> {
+  const worker = navigator.serviceWorker?.controller;
+  if (!worker) return Promise.resolve("no worker to ask");
+  return new Promise((resolve) => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = ({ data }: MessageEvent<{
+      build: string;
+      clients: { self: boolean; path: string; visibility: string; focused: boolean; lifecycle?: string }[];
+    }>) => {
+      resolve(`${data.clients.length} (worker ${data.build.slice(0, 8)})` + data.clients.map((c) =>
+        `\n              ${c.self ? "this" : "OTHER"} ${c.path} ${c.visibility}`
+        + `${c.focused ? " focused" : ""}${c.lifecycle ? ` ${c.lifecycle}` : ""}`).join(""));
+    };
+    worker.postMessage({ type: "clients" }, [channel.port2]);
+  });
+}
+
+/**
  * The report: what this phone holds, then what it has been doing.
  *
  * The counts come first because they are the scale the timings have to be read
@@ -187,6 +209,7 @@ async function collect(): Promise<string> {
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
+  say("copies", await within(copies(), "no answer from the worker"));
 
   const rows = timeline();
   const before = lastSession();

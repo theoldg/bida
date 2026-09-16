@@ -34,13 +34,14 @@ None of these is started, and the first is not code at all.
   unbounded ops into a D1 that gets no further resets — the only door in the app
   with no ceiling on it ([sync.md](sync.md)). Giving credential-minting its own
   door is the shape of the fix.
-- **Why an installed phone still pauses.** The permanent hang is fixed
-  ([frontend.md](frontend.md#a-live-read-can-die)), but the owner reports
-  skeleton rows standing for 10–20s before they clear — suspiciously close to
-  the watchdog's own 6s and 12s, so it may be the repair rather than the fault.
-  `/diag` prints every span on one clock
-  ([frontend.md](frontend.md#the-flight-recorder-and-diag)); **the next action
-  is to read a timeline off the owner's phone**, not to guess again.
+- **Who holds the lock when an installed phone hangs.** The owner's `/diag`
+  showed every read queued behind a sync commit that could not start, clearing
+  all at once a minute later — a lock held outside the page, most likely by
+  another copy of the app frozen mid-transaction; it happens after the app sits
+  inactive, perhaps more after an update. What a page can do is built
+  ([frontend.md](frontend.md#a-live-read-can-die)). **Next: the owner's
+  `chrome://indexeddb-internals` and `/diag` `copies:` line from the next
+  hang**, which say which copy holds it and whether the fix belongs there.
 - **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is the proposal; **the

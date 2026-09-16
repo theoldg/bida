@@ -153,7 +153,11 @@ promise already in flight. Both guards are needed: opening a group syncs it
 directly, and that raced the loop into pushing and pulling the same ops twice
 and taking the `rebuild()` lock on every table twice, under a screen that was
 waiting to read them. A run that attempted nothing must never conclude "no
-failures" and reset a backoff the failing run had grown.
+failures" and reset a backoff the failing run had grown. **Nothing writes while
+the app is hidden:** no run starts, and a response that lands after the app
+went to the background waits for it to come back before its transaction opens
+(`sync.parked` on `/diag`) — a phone freezes a hidden app, and a transaction
+frozen half way keeps its lock ([frontend.md](frontend.md#a-live-read-can-die)).
 
 **A forgotten group is skipped**, not synced in the background forever. It
 keeps its secret: opening the invite link again un-forgets it.

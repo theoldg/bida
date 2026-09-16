@@ -113,7 +113,35 @@ self.addEventListener("install", (event) => {
  */
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "skip-waiting") self.skipWaiting();
+  if (event.data && event.data.type === "clients" && event.ports[0]) {
+    event.waitUntil(describeClients(event.source, event.ports[0]));
+  }
 });
+
+/**
+ * Every copy of the app open on this origin, for /diag.
+ *
+ * Another copy is the one thing a page cannot see from inside, and it is the
+ * prime suspect for a database that stops answering: a tab or window frozen in
+ * the background half way through a transaction keeps its lock, and every read
+ * everywhere else queues behind it (docs/frontend.md#a-live-read-can-die).
+ * Paths only — a join link's secret is in the fragment, and this report is
+ * pasted into messages.
+ */
+async function describeClients(source, port) {
+  const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  port.postMessage({
+    build: REVISION,
+    clients: all.map((c) => ({
+      self: !!source && c.id === source.id,
+      path: new URL(c.url).pathname,
+      visibility: c.visibilityState,
+      focused: c.focused,
+      // Chrome's Page Lifecycle state, where it is exposed: "frozen" is the finding.
+      lifecycle: c.lifecycleState,
+    })),
+  });
+}
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(

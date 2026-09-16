@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
 import { activityFeed, entityHistory, type Revision } from "@bida/core";
 import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { Icon } from "../../../components/icons";
 import { db } from "../../../lib/db/dexie";
+import { useLive } from "../../../lib/db/live";
 import { opsForGroup } from "../../../lib/db/fold";
 import { copy } from "../../../lib/copy";
 import { plural, stamp } from "../../../lib/format";
@@ -37,24 +37,27 @@ function HistoryScreen() {
   // History needs every member's name, including people who've since been
   // removed — the alive-only map from useGroupData would erase them from
   // their own past.
-  const allMembers = useLiveQuery(
+  const allMembers = useLive(
+    "historyMembers",
     async () => (groupId ? db().members.where("groupId").equals(groupId).toArray() : []),
     [groupId],
   ) ?? [];
   const memberById = new Map(allMembers.map((m) => [m.id, m]));
 
-  const ops = useLiveQuery(async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
+  const ops = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
 
   // Every expense the group has ever had, deleted ones included: the feed links
   // to what a revision was about, and half the reason to open history is an
   // expense that isn't there any more.
-  const allExpenses = useLiveQuery(
+  const allExpenses = useLive(
+    "historyExpenses",
     async () => (groupId ? db().expenses.where("groupId").equals(groupId).toArray() : []),
     [groupId],
   ) ?? [];
   const expenseById = new Map(allExpenses.map((e) => [e.id, e]));
 
-  const allSettlements = useLiveQuery(
+  const allSettlements = useLive(
+    "historySettlements",
     async () => (groupId ? db().settlements.where("groupId").equals(groupId).toArray() : []),
     [groupId],
   ) ?? [];

@@ -2,10 +2,10 @@
 /**
  * `pnpm rules` — the rules the docs state, checked against the code.
  *
- * Four of this project's decisions are one careless line away from being
+ * Five of this project's decisions are one careless line away from being
  * quietly reversed, and each would be found months later by a person rather
  * than by a test: core stops being pure, a screen decides for itself what to
- * refuse, a browser dialog creeps back in, or a sentence is typed into a screen
+ * refuse, a browser dialog creeps back in, a live read skips its watchdog, or a sentence is typed into a screen
  * instead of into lib/copy.ts. Cheap to check, expensive to rediscover — so
  * they run in `pnpm check`.
  *
@@ -73,6 +73,18 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   if (/\bmemberInvolved\b/.test(src)) {
     fail(file, "calls `memberInvolved` — a refusal comes from `data.guard`, so it "
       + "cannot outlive its healer (docs/invariants.md)");
+  }
+}
+
+// docs/frontend.md#a-live-read-can-die: every live read goes through `useLive`.
+// A direct `useLiveQuery` has no watchdog, no reconnect and no remembered
+// answer, so it is the one screen left on skeleton rows when the database
+// stalls — four of them had drifted back before this check existed.
+for (const file of sources(join(ROOT, "apps/web"))) {
+  if (file.endsWith(join("lib", "db", "live.ts"))) continue;
+  if (/\buseLiveQuery\b/.test(code(readFileSync(file, "utf8")))) {
+    fail(file, "calls `useLiveQuery` — read through `useLive`, which notices a read that "
+      + "never answers (docs/frontend.md#a-live-read-can-die)");
   }
 }
 
@@ -149,5 +161,5 @@ for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "no browser dialogs, no stray copy");
+    + "every live read watched, no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);

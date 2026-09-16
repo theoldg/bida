@@ -1,5 +1,6 @@
 import Dexie, { liveQuery } from "dexie";
 import { beforeEach, describe, expect, it } from "vitest";
+import { forget, timeline } from "../diag";
 import { db } from "./dexie";
 import { testing } from "./live";
 
@@ -145,6 +146,23 @@ describe("the health record behind useLive", () => {
 
     stop();
     await db().open();
+  });
+
+  it("reopens the connection once per window, re-subscribing every read", async () => {
+    testing.arm();
+    await db().open();
+    forget();
+
+    const before = testing.health.epoch;
+    testing.reopen();
+    testing.reopen(); // every read on screen gives up in the same tick
+    expect(testing.health.epoch).toBe(before + 1);
+
+    // The new connection answers, and the timeline says we closed it, not the browser.
+    await db().device.count();
+    const what = timeline().map((e) => e.what);
+    expect(what).toContain("db.reopen");
+    expect(what).not.toContain("db.close");
   });
 
   it("counts stalls up and back down", () => {

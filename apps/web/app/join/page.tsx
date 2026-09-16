@@ -1,12 +1,12 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { FailedLink, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
+import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
 import { useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
@@ -80,8 +80,12 @@ function JoinScreen() {
     return () => { cancelled = true; };
   }, [link]);
 
-  const group = useLiveQuery(
-    () => (link ? db().groups.get(link.groupId) : undefined),
+  // `null`, not `undefined`, for a group that hasn't arrived yet: waiting on
+  // the network is an answer, and only a read that hasn't answered may be
+  // retried (lib/db/live.ts).
+  const group = useLive(
+    "joinGroup",
+    async () => (link ? (await db().groups.get(link.groupId)) ?? null : null),
     [link?.groupId],
   );
 

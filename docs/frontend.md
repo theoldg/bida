@@ -75,7 +75,8 @@ confers nothing without the secret.
 ## State
 
 - **Dexie is the store.** Read with **`useLive`** (`lib/db/live.ts`), never
-  `useLiveQuery` directly — see [A live read can die](#a-live-read-can-die).
+  `useLiveQuery` directly (`pnpm run rules` fails one) — see
+  [A live read can die](#a-live-read-can-die).
   No Redux, no Zustand, no server-state library; adding one is an ADR.
   `undefined` from a live read means *not answered yet*, not *empty* — the two
   used to render the same blank. A list screen shows `SkeletonRows` in that
@@ -281,6 +282,21 @@ so and offers the retry. `db.on('blocked')` feeds the same notice a different
 sentence: an upgrade held open by another copy of the app never resolves on its
 own, because `indexedDB.open` has no timeout and Dexie's handler only logs.
 
+**A read can also be alive and queued.** An IndexedDB lock belongs to the
+origin, not to the page: a readwrite transaction that another copy of the app
+(a forgotten tab, a window left behind by an update) was frozen half way
+through holds it, and every read everywhere waits — the owner's `/diag`
+showed every read hanging at once and all of them clearing in the same
+millisecond a minute later. No page can break another's lock, so three
+things limit it. This copy never opens a write while hidden
+([sync.md](sync.md)), so it cannot be the one frozen holding it. `useLive`
+remembers each read's last answer by name and deps for the life of the page,
+so a screen opened during the wait shows that instead of skeleton rows — while
+still counting as waiting, so the notice stands. And the last probe, and the
+notice's button, open a fresh connection (`db.reopen`), the one lever a page
+has on a stuck backend of its own. `/diag`'s `copies:` line names every copy
+the service worker can see, and whether it is hidden.
+
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
 reports a failed read by throwing during render, and the app had no boundary at
 all, so every error `liveQuery` did *not* swallow took the tree to a white
@@ -295,7 +311,9 @@ Dexie behaviour itself, so an upgrade that fixes it tells us.
 array — a debug flag records nothing on the launch that goes wrong, which is
 the only launch worth recording. Timed spans around the four things that can
 make a screen wait: `db.open`, each live read by name, `rebuild`, and
-`sync.pushpull` (plus `heal`). One clock for all of them, because the question
+`sync.pushpull` (plus `heal`), and each write — `sync.commit`, `append`,
+`device.write` — since a write queued behind a lock is what every read then
+queues behind; `sw.waiting` and `sw.controllerchange` mark updates. One clock for all of them, because the question
 is never "was this slow" but "what was it waiting for", and that is always an
 overlap.
 

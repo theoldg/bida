@@ -16,6 +16,8 @@
  * makes activating safe — and here it is the person asking for it.
  */
 
+import { mark } from "./diag";
+
 /** What, if anything, there is to offer. */
 export type UpdateState =
   /** Running the newest build we know of. */
@@ -42,6 +44,7 @@ function announce(): void {
 function offer(worker: ServiceWorker | null | undefined): void {
   if (!worker || worker.state !== "installed") return;
   if (!navigator.serviceWorker.controller) return;
+  if (waiting !== worker) mark("sw.waiting");
   waiting = worker;
   announce();
 }
@@ -61,6 +64,9 @@ export function registerServiceWorker(): void {
   started = true;
 
   navigator.serviceWorker.addEventListener("controllerchange", () => {
+    // On the timeline because an update is when a second copy of the app is
+    // most likely to be left behind, holding the database (lib/db/live.ts).
+    mark("sw.controllerchange", applying ? "asked for" : "another copy's update");
     // The activation `applyUpdate` asked for: reload, as it promised to.
     if (applying) {
       window.location.reload();

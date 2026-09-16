@@ -337,3 +337,9 @@ and says so in the file: it passes with the `close` handler removed too,
 because re-opening an absent database happens to wake the reads by itself. It
 is there for the property — a forced close must not strand the app on rows that
 are no longer there — not for the mechanism.
+
+Last, a second tab holds a readwrite transaction open over every store — the
+lock a frozen copy keeps. A screen already read must show its remembered
+answer rather than skeleton rows (it fails with that taken out), the notice
+must still stand and then leave once the lock goes, and `/diag` must list the
+other copy.

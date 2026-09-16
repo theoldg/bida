@@ -37,6 +37,12 @@ import { db } from "./dexie";
  * A dead subscription can't be revived from outside, so the repair is to make
  * a new one. Three things ask for that, below: the connection closing, the app
  * coming back to the foreground, and a read that has simply taken too long.
+ *
+ * A read can also be *alive and waiting*: queued behind a readwrite
+ * transaction that a frozen copy of the app will never finish. A new
+ * subscription joins the same queue, so the last probe opens a fresh
+ * connection instead, and every read remembers its last answer so that a
+ * screen opened during the wait shows that rather than skeleton rows.
  */
 
 /** How long a read may return nothing before we assume it never will. */
@@ -82,6 +88,48 @@ function bump(): void {
   announce();
 }
 
+/**
+ * The last answer each read gave, by name and deps, for the life of the page.
+ *
+ * `useLiveQuery` holds a value per mounted component, so every navigation
+ * starts again from `undefined` — skeleton rows for as long as the database
+ * takes, which is forever while a lock is held elsewhere. A screen coming back
+ * to what it read a minute ago shows that instead, and the live answer
+ * replaces it the moment there is one. Bounded by the groups on the phone.
+ */
+const remembered = new Map<string, unknown>();
+
+/** At most one reopen per probe window, however many reads give up in it. */
+let lastReopen = -Infinity;
+/** Set while *we* close the connection, so `on('close')` doesn't record the browser doing it. */
+let reopening = false;
+
+/**
+ * Close this page's connection and open a new one.
+ *
+ * What a re-subscription can't do: a read waiting in the browser's queue on
+ * this connection stays there however many times it is asked again. A fresh
+ * connection is the one lever this page has on a stuck backend. It cannot
+ * release a lock another copy of the app holds — /diag lists those copies —
+ * and closing never aborts a transaction already running: `IDBDatabase.close`
+ * lets them finish.
+ */
+function reopen(): void {
+  const now = Date.now();
+  if (now - lastReopen < PROBE_MS) return;
+  lastReopen = now;
+  const done = started("db.reopen");
+  reopening = true;
+  try {
+    // `disableAutoOpen: false` fires `close`, which bumps every read onto the
+    // new connection (`arm`), and lets the first of them open it.
+    db().close({ disableAutoOpen: false });
+  } finally {
+    reopening = false;
+  }
+  db().open().then(() => done(), (err: unknown) => done(`failed ${(err as Error)?.name ?? "?"}`));
+}
+
 let armed = false;
 
 /**
@@ -97,7 +145,7 @@ function arm(): void {
   // `autoOpen` on, so a fresh query re-opens; it is the *existing* ones that
   // are beyond saving.
   db().on("close", () => {
-    mark("db.close");
+    if (!reopening) mark("db.close");
     bump();
   });
 
@@ -194,12 +242,18 @@ export function useLive<T>(
   }, [key, epoch, n, label]);
 
   const value = useLiveQuery(timedQuerier, [key, epoch, n]);
+  // `waiting` is about the live answer only: a remembered one on screen is
+  // still a read that hasn't come back, and the watchdog and the notice say so.
   const waiting = value === undefined;
+  const memo = `${name} ${key}`;
+  if (!waiting) remembered.set(memo, value);
 
   useEffect(() => {
     if (!waiting || n >= PROBES) return;
     const timer = setTimeout(() => {
       mark("live.retry", `${name} after ${PROBE_MS}ms with nothing`);
+      // The last probe is the new connection; see `reopen`.
+      if (n + 1 === PROBES) reopen();
       setProbe({ key, n: n + 1 });
     }, PROBE_MS);
     return () => clearTimeout(timer);
@@ -215,7 +269,7 @@ export function useLive<T>(
     return addStall();
   }, [stalled, name]);
 
-  return value;
+  return waiting ? remembered.get(memo) as T | undefined : value;
 }
 
 /**
@@ -229,9 +283,11 @@ export function useStalled(): { stalled: boolean; blocked: boolean } {
   return { stalled: stalls > 0, blocked };
 }
 
-/** Ask every live read to start over. The notice's button, and nothing else. */
+/** Ask every live read to start over, on a new connection. The notice's button, and nothing else. */
 export function retryLive(): void {
-  bump();
+  lastReopen = -Infinity;
+  // Its `close` is what re-subscribes every read and clears `blocked`.
+  reopen();
 }
 
 /**
@@ -241,6 +297,8 @@ export function retryLive(): void {
 export const testing = {
   health,
   arm,
+  reopen,
+  remembered,
   subscribe,
   addStall,
   reset(): void {
@@ -248,5 +306,7 @@ export const testing = {
     health.blocked = false;
     health.stalls = 0;
     listeners.clear();
+    remembered.clear();
+    lastReopen = -Infinity;
   },
 };

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
@@ -15,6 +14,7 @@ import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
 import { db } from "../../../lib/db/dexie";
+import { useLive } from "../../../lib/db/live";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
 import { clockTime, dayLabel, money, plural, rateText } from "../../../lib/format";
@@ -50,7 +50,8 @@ function EntryScreen() {
 
   // "edited ×3" comes from the log itself: revisions are ops, not a counter
   // somebody has to remember to increment.
-  const opCount = useLiveQuery(
+  const opCount = useLive(
+    "entryOpCount",
     async () => (entryId ? db().ops.where("entityId").equals(entryId).count() : 0),
     [entryId],
   ) ?? 0;
