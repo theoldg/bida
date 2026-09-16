@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { entryParent, formParent, readPastedLink, parseEntrySource, route } from "./group-link";
+import {
+  entryParent, formParent, isKeylessFragment, parseJoinLink, readPastedLink, parseEntrySource, route,
+} from "./group-link";
 
 describe("where an entry goes back to", () => {
   it("is the group when the ledger opened it", () => {
@@ -72,5 +74,32 @@ describe("a join link pasted from the clipboard", () => {
       "g1.s3cr3t", "https://bida.app/g?id=g1", "https://bida.app/join#nodot",
       "https://dev.bida.app/about", "dinner was 42 euros", "",
     ]) expect(readPastedLink(text, origin)).toEqual({ kind: "none" });
+  });
+});
+
+describe("a link that lost its password", () => {
+  it("is a group id alone, with or without its hash, or with the dot left dangling", () => {
+    expect(isKeylessFragment("#g1")).toBe(true);
+    expect(isKeylessFragment("g1")).toBe(true);
+    expect(isKeylessFragment("#abc_DEF-123.")).toBe(true);
+  });
+
+  it("is not a whole link, which joins", () => {
+    expect(isKeylessFragment("#g1.s3cr3t")).toBe(false);
+    expect(parseJoinLink("#g1.s3cr3t")).not.toBeNull();
+  });
+
+  it("is not nothing at all, or a fragment with characters no link has", () => {
+    expect(isKeylessFragment("")).toBe(false);
+    expect(isKeylessFragment("#")).toBe(false);
+    expect(isKeylessFragment("#g1%20")).toBe(false);
+    expect(isKeylessFragment("#g1)")).toBe(false);
+    expect(isKeylessFragment("#.s3cr3t")).toBe(false);
+  });
+
+  it("never overlaps a link that parses, so the two screens cannot disagree", () => {
+    for (const hash of ["#g1", "#g1.", "#g1.s", "#.s", "#", "", "#g1.s.t", "#g 1"]) {
+      expect(isKeylessFragment(hash) && parseJoinLink(hash) !== null).toBe(false);
+    }
   });
 });

@@ -9,7 +9,7 @@ import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
-import { nearestOutOfView, revealWhole } from "../lib/reveal";
+import { nearestOutOfView, revealWhole, scrollTarget } from "../lib/reveal";
 import { calmly, whenStill } from "../lib/seek";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
@@ -277,7 +277,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       { top: head.getBoundingClientRect().top, bottom: tail.getBoundingClientRect().bottom },
       { top: sticky ? sticky.getBoundingClientRect().bottom : view.top, bottom: view.bottom },
     );
-    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { aim(); return stop; }
     box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
     whenStill(box, target, aim);
@@ -400,7 +400,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       top: head ? head.getBoundingClientRect().bottom : view.top, bottom: view.bottom,
     });
     if (reach === null) { refusal.refuse(); return; }
-    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { refusal.refuse(); return; }
     setSeeking(true);
     box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });

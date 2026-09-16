@@ -59,6 +59,19 @@ export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): numbe
 }
 
 /**
+ * Where a scroll by `reach` actually lands: a scroller stops at its ends, so a
+ * row near the foot of the list is reached as far as the list goes and no
+ * further. What a caller waits on has to be this, not `scrollTop + reach`, or
+ * it waits for a position the scroller can never report.
+ */
+export function scrollTarget(
+  box: { scrollTop: number; scrollHeight: number; clientHeight: number },
+  reach: number,
+): number {
+  return Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+}
+
+/**
  * What to add to `scrollTop` to show all of one box — a run of portions just
  * opened, whose first and last row are one thing now.
  *

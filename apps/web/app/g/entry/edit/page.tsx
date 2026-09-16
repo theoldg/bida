@@ -24,8 +24,8 @@ import {
 import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
 import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
-import { flashClass, NOT_REFUSED, refused, type Refusal } from "../../../../lib/refusal";
-import { nearestOutOfView } from "../../../../lib/reveal";
+import { flashClass, NOT_REFUSED, refused, staleFlashes, stillMissing, type Refusal } from "../../../../lib/refusal";
+import { nearestOutOfView, scrollTarget } from "../../../../lib/reveal";
 import { calmly, whenStill } from "../../../../lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
@@ -145,7 +145,7 @@ function EditEntryScreen() {
    * has caught up with it.
    */
   useEffect(() => {
-    const stale = REFUSABLE.filter((f) => refusedFields[f].live && !missingNow.current[f]);
+    const stale = staleFlashes(refusedFields, missingNow.current);
     if (stale.length === 0) return;
     setRefused((r) => {
       const next = { ...r };
@@ -399,14 +399,13 @@ function EditEntryScreen() {
       bottom: view.bottom - (parseFloat(pad.scrollPaddingBottom) || 0),
     });
     if (reach === null) { refuse(fields); return; }
-    const target = Math.max(0, Math.min(box.scrollTop + reach, box.scrollHeight - box.clientHeight));
+    const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { refuse(fields); return; }
     setSeeking(true);
     box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
     whenStill(box, target, () => {
       setSeeking(false);
-      const still = missingNow.current;
-      refuse(Object.fromEntries(REFUSABLE.map((f) => [f, !!fields[f] && !!still[f]])));
+      refuse(stillMissing(fields, missingNow.current));
     });
   };
 

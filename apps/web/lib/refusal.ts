@@ -34,6 +34,33 @@ export function refused(r: Refusal): Refusal {
 }
 
 /**
+ * Of the fields a refusal was aimed at, the ones still missing now. A refusal
+ * that scrolls first is aimed when Save is pressed and lands when the scroll
+ * does, and a field fixed in between has nothing left to bloom — a flash on it
+ * would spend Save for a problem that is gone.
+ */
+export function stillMissing<K extends string>(
+  aimed: Partial<Record<K, boolean>>,
+  missing: Partial<Record<K, boolean>>,
+): Partial<Record<K, boolean>> {
+  const out: Partial<Record<K, boolean>> = {};
+  for (const k of Object.keys(aimed) as K[]) out[k] = !!aimed[k] && !!missing[k];
+  return out;
+}
+
+/**
+ * The flashes still running on fields that stopped being missing. The flash
+ * can leave with its element, and an animation removed mid-flight never fires
+ * `animationend`, so these have to be ended by hand or Save stays spent.
+ */
+export function staleFlashes<K extends string>(
+  state: Record<K, Refusal>,
+  missing: Partial<Record<K, boolean>>,
+): K[] {
+  return (Object.keys(state) as K[]).filter((k) => state[k].live && !missing[k]);
+}
+
+/**
  * The class that flashes a control red. Nothing unless a flash is actually
  * running — see `live` above.
  */

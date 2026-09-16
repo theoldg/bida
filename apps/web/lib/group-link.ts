@@ -31,6 +31,16 @@ export function parseJoinLink(input: string): JoinLink | null {
   return { groupId, secret };
 }
 
+/**
+ * A fragment that names a group and carries no password: `#<groupId>`, or the
+ * same with its dot left dangling. That is a link cut short, and it is told
+ * apart from a malformed one because it has its own fix — the invite link
+ * from the app, not the address bar (`components/keyless-link.tsx`).
+ */
+export function isKeylessFragment(hash: string): boolean {
+  return /^#?[A-Za-z0-9_-]+\.?$/.test(hash);
+}
+
 /** What pasting found: a link to join, one for another server, or nothing. */
 export type PastedLink =
   | { kind: "join"; link: JoinLink }

@@ -10,7 +10,7 @@ import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
 import { useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
-import { parseJoinLink, route } from "../../lib/group-link";
+import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
 
 /**
  * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the
@@ -51,7 +51,7 @@ function JoinScreen() {
   useEffect(() => {
     const read = () => {
       setLink(parseJoinLink(window.location.hash));
-      setKeyless(/^#?[A-Za-z0-9_-]+\.?$/.test(window.location.hash));
+      setKeyless(isKeylessFragment(window.location.hash));
     };
     read();
     // A second invite link opened while this screen is up is a hash change and

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nearestOutOfView, revealWhole } from "./reveal";
+import { nearestOutOfView, revealWhole, scrollTarget } from "./reveal";
 
 const band = { top: 100, bottom: 400 };
 const row = (top: number, height = 40) => ({ top, bottom: top + height });
@@ -62,5 +62,26 @@ describe("revealWhole", () => {
 
   it("forgives a fraction of a pixel", () => {
     expect(revealWhole({ top: 99.6, bottom: 400.4 }, band)).toBe(0);
+  });
+});
+
+describe("scrollTarget", () => {
+  const box = (scrollTop: number) => ({ scrollTop, scrollHeight: 1000, clientHeight: 400 });
+
+  it("is where the scroll goes when the list has room for it", () => {
+    expect(scrollTarget(box(100), 250)).toBe(350);
+    expect(scrollTarget(box(300), -120)).toBe(180);
+  });
+
+  it("stops at the foot of the list, not past it", () => {
+    expect(scrollTarget(box(500), 300)).toBe(600);
+  });
+
+  it("stops at the head of the list, not above it", () => {
+    expect(scrollTarget(box(80), -300)).toBe(0);
+  });
+
+  it("stays at the top of a list too short to scroll", () => {
+    expect(scrollTarget({ scrollTop: 0, scrollHeight: 300, clientHeight: 400 }, 200)).toBe(0);
   });
 });
