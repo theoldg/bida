@@ -421,11 +421,7 @@ a { color: inherit; text-decoration: none }
 .installbanner b { display: block; font-size: 14px; font-weight: 600; color: var(--ink) }
 .installbanner .hint { display: block; margin: 2px 0 0 }
 .installbanner svg { flex: none; color: var(--muted) }
-/* The iOS join choice (app/join/page.tsx): the browser option carries its cost
-   in its own label, a line under the act rather than a paragraph away from it. */
-.btn-stack { flex-direction: column; gap: 2px }
-.btn-stack small { font-size: 11.5px; font-weight: 500; color: var(--muted); letter-spacing: 0;
-  line-height: 1.4 }
+/* The iOS join choice (app/join/page.tsx). */
 .choicebtns { display: flex; flex-direction: column; gap: 9px }
 /* One stored row, shown because the claim above it can be shown. Everything on
    this screen is already monospace, so the block earns its separateness with a

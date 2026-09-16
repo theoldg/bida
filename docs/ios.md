@@ -131,11 +131,8 @@ install nudge in a tab; the nudge stays as it is elsewhere.
 A full screen with two buttons, drawn before the claim gate:
 
 - **Install first** — `.btn-lg`, ink. Copies the link, opens `/install?copied`.
-- **Continue in the browser** — outlined, and its own label carries the cost:
-  this browser forgets the group after a week unused, **and opening the invite
-  link again brings it back**. Not "locked out" — nothing is lost that the link
-  in the chat can't restore, and scaring the casual user off the path that
-  suits them is the wrong trade.
+- **Continue in Safari** (or Chrome, or "the browser" when it can't tell) —
+  outlined, no subtext: the body above already says what the tab costs.
 
 The key is saved and the group pulled *behind* the screen, so its title can be
 the group's name — an invitation, not a wall. Nothing is published until a name

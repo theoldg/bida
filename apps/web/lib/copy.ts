@@ -375,17 +375,15 @@ export const copy = {
       groupName: "Your group",
     },
     /**
-     * An iOS tab's choice before joining (docs/ios.md). The browser option says
-     * what it costs and how to undo it: nothing is lost that the link can't
-     * bring back, so it warns without scaring the casual user off.
+     * An iOS tab's choice before joining (docs/ios.md). The body carries the
+     * cost, so the browser option is a plain act.
      */
     choice: {
       /** Until the group has arrived and can be named. */
       unnamed: "You’re invited",
       body: (browser: string | undefined) => `${upper(browser)} forgets groups after a week unused. bida on your home screen keeps them.`,
       install: "Install first",
-      browser: "Continue in the browser",
-      browserCost: "Forgets it in a week unused. Open this link again to get it back.",
+      browser: (browser: string | undefined) => `Continue in ${browser ?? "the browser"}`,
     },
     joining: {
       title: "Joining…",

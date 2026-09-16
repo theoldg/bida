@@ -184,9 +184,8 @@ function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }
       <Foot>
         <div className="choicebtns">
           <button className="btn btn-p btn-lg" onClick={installFirst}>{choice.install}</button>
-          <button className="btn btn-s btn-stack" onClick={() => void continueInTab(link.groupId)}>
-            {choice.browser}
-            <small>{choice.browserCost}</small>
+          <button className="btn btn-s" onClick={() => void continueInTab(link.groupId)}>
+            {choice.browser(browser)}
           </button>
         </div>
       </Foot>
