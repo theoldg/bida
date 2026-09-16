@@ -363,6 +363,16 @@ swapped for a `blob:` whose `start_url` is that same set and whose URLs are all
 absolute (a blob has no base to resolve a relative one against); and a browser
 that installs by itself — Android — left with the static manifest untouched.
 
+It also asks Chromium's own install machinery what it would take, over CDP's
+`Page.getAppManifest` — the same question Safari asks WebKit when the share
+sheet opens, and it is answered from the DOM as it stands rather than from what
+was in the head at load. Chromium is not WebKit and cannot say what iOS
+bookmarks, but it is a second implementation of the same parse and the only one
+that can be run here. A deliberately relative `start_url` follows, and must come
+back refused: every URL in a blob manifest has to be absolute, because a blob
+has no base to resolve against, and that is the one mistake this approach
+invites — without that control the green above would mean nothing.
+
 The app end (`asInstalledApp`): a launch on `/install#<id>.<secret>` hands the
 invite to `/join`; one carrying several saves them all and lands on the list;
 and a launch whose secrets are already on the phone does neither — the icon is

@@ -95,6 +95,35 @@ report(swapped.json?.id === `${base}/` && swapped.json?.scope === `${base}/`,
 report(swapped.json?.icons?.every((icon) => icon.src.startsWith(`${base}/`)),
   "with absolute icons — a blob manifest has no base to resolve them against");
 
+// And the same question Safari asks WebKit when the share sheet opens, asked
+// of the engine that is actually here: `Page.getAppManifest` is the browser's
+// own install machinery, and it answers from the DOM as it stands, not from
+// what was in the head at load. Chromium is not WebKit and cannot say what iOS
+// bookmarks — but it is a second implementation of the same parse, and it is
+// the only one that can be run.
+const cdp = await tab.newCDPSession(tabPage);
+const wouldInstall = await cdp.send("Page.getAppManifest");
+report(wouldInstall.url === swapped.href && wouldInstall.errors.length === 0,
+  "and the browser's own install machinery takes it, without complaint",
+  `${wouldInstall.url}${wouldInstall.errors.map((e) => `\n        ${e.message}`).join("")}`);
+report(JSON.parse(wouldInstall.data ?? "{}").start_url === `${base}/join${fragment}`,
+  "fragment and all — nothing in the parse strips it");
+
+// The green above is only worth something if this comes back red: every URL in
+// a blob manifest has to be absolute, because a blob has no base, and that is
+// the one mistake this whole approach invites.
+await tabPage.evaluate(() => {
+  const url = URL.createObjectURL(new Blob(
+    [JSON.stringify({ name: "bida", start_url: "/join#g1.shh" })],
+    { type: "application/manifest+json" },
+  ));
+  document.head.querySelector('link[rel="manifest"]').setAttribute("href", url);
+});
+const broken = await cdp.send("Page.getAppManifest");
+report(broken.errors.some((e) => e.message.includes("start_url")),
+  "where a relative start_url would be refused, so that green means something",
+  JSON.stringify(broken.errors.map((e) => e.message)));
+
 // ---- and the banner, for the groups already in the tab ------------------
 // A tab that holds groups is warned it may lose them, and that warning's
 // tutorial carries every one of them — the top of the list first. Its own

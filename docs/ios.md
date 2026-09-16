@@ -95,10 +95,34 @@ the icon is a door into the app, not into one group forever — and holding is
 the test rather than joining again, because `saveGroupKey` would undo a
 `forgetGroup`.
 
-**What the iPhone answers**: does the fragment survive into the launched icon;
+**What WebKit's own source settles** (`WebCore/loader/DocumentLoader.cpp`,
+`Modules/applicationmanifest/ApplicationManifestParser.cpp`), so it is not
+waiting on anyone:
+
+- The manifest is fetched **on demand, never at page load**. One caller,
+  `WebPage::getApplicationManifest`, and it walks `document->head()`'s live
+  children for the first `<link rel=manifest>` at the moment it is asked. A
+  swapped href is what it finds.
+- `start_url` is resolved against the *manifest* URL — hence absolute, since a
+  blob has no base — and then checked same-origin against the *document*, which
+  a blob start_url on our own origin passes. **Its fragment is not stripped**:
+  `parseId` and `parseScope` both call `removeFragmentIdentifier`, and
+  `parseStartURL` deliberately does not.
+- Nothing bars a `blob:` manifest. The only gate is CSP `manifest-src`, and
+  this app sends no CSP.
+- **The risk it exposes**: the loader is cached per document load — the *first*
+  ask wins, forever. A Safari that asked before the swap would keep the static
+  manifest. If the phone says no, that is the thing to fix, by doing the swap
+  in a `beforeInteractive` script instead of an effect.
+
+**What only the iPhone can answer**: MobileSafari is closed, so whether it asks
+at the moment of the tap, and what it does with `start_url` versus the page's
+own URL, is the experiment. Does the fragment survive into the launched icon;
 does it survive a reboot; and which half did it — with a single invite the two
-land on different URLs, so the app that opens says which. `pnpm homescreen` covers everything
-around that in a real browser ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
+land on different URLs, so the app that opens says which.
+
+`pnpm homescreen` covers everything around that step in the engine that is
+actually to hand ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must keep `start_url: "/"`, since it shares storage and
 needs none of this.
 
