@@ -174,10 +174,14 @@ export const copy = {
        */
       warn: "Otherwise this browser forgets your groups after a week unused.",
     },
-    /** The iOS tab's card atop the groups list, once it holds one (docs/ios.md). */
+    /**
+     * The iOS tab's card atop the groups list, once it holds one (docs/ios.md).
+     * Named browsers where `warn` says "this browser": the card is read at a
+     * glance, and the two names cover nearly every iOS reader.
+     */
     banner: {
-      title: "This browser will forget your groups",
-      body: "Add bida to your home screen to keep them.",
+      title: "Safari/Chrome will forget your groups",
+      body: "Add bida to your home screen",
     },
     /** `/install`: why, what to expect, how — in that order. */
     page: {
