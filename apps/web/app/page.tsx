@@ -116,6 +116,9 @@ export default function GroupsPage() {
  * rather than docking above them — on its own two grounds, as the FABs do.
  */
 function StartTiles() {
+  // TODO: make the paste button iOS only.
+  // TODO: validate the URL and think about how it should work with
+  // different hosting domains. (To account for self hosting etc)
   const router = useRouter();
 
   async function handlePaste() {
