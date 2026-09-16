@@ -421,7 +421,7 @@ a { color: inherit; text-decoration: none }
    block centred in the screen: a choice about what was just read, not a footer. */
 .pad.joinchoice { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
   padding-block: 24px }
-.joinchoice h2 { margin: 0 2px 18px; color: var(--ink); font-size: 16px; font-weight: 700;
+.joinchoice h2 { margin: 0 2px 18px; color: var(--ink); font-size: 24px; font-weight: 700;
   letter-spacing: -.02em; text-wrap: balance }
 .joinchoice .choicehint { text-align: center; text-wrap: balance }
 .joinchoice .choicebrowser { margin-top: 20px }
