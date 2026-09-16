@@ -237,7 +237,8 @@ people are connected, which is what the double-headed swap arrow said.
 `i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
-control exists to make cheap. Each side is labelled above the name, so "From" is
+control exists to make cheap — so there it is an inked square, a control, and on
+the detail screen a bare glyph on the card. Each side is labelled above the name, so "From" is
 read before the person it qualifies.
 
 Which way an entry runs is the one distinction with no colour left to spend on

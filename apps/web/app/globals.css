@@ -776,14 +776,16 @@ button.tside:active { background: var(--press) }
 @keyframes swapdip2 { 0% { opacity: 1; transform: translateY(0) }
   45%, 55% { opacity: 0; transform: translateY(7px) } 100% { opacity: 1; transform: translateY(0) } }
 @media (prefers-reduced-motion: reduce) { .tside .who.swap-a, .tside .who.swap-b { animation: none } }
-.tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted);
-  border-left: 1px solid var(--rule-soft); border-right: 1px solid var(--rule-soft) }
-/* The editable arrow is a control, not the divider the detail screen's is: a
-   square centred in the row, so it reads as something to press rather than as a
-   third column the size of the two people beside it. */
+/* On the detail screen the arrow is only a glyph between the two names, on the
+   card's own ground: ruled off into a column of its own, it read as a box. */
+.tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted) }
+/* The editable arrow is a control, not the glyph the detail screen's is: an
+   inked square centred in the row, so it reads as something to press rather
+   than as a third column the size of the two people beside it — on the card's
+   own grey it all but disappeared. */
 button.tswap { align-self: center; width: 36px; height: 36px; margin: 0 6px; border-radius: var(--r-s);
-  border: 1px solid var(--rule-soft); background: var(--card-2) }
-button.tswap:active { background: var(--press); color: var(--ink) }
+  background: var(--brand); color: var(--brand-ink) }
+button.tswap:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 
 /* ---- the tip jar (app/g/tip) ----
    One screen, one claim: a line, a figure, and what the figure comes to here.
