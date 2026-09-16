@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
@@ -9,7 +10,8 @@ import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
 import { useLive } from "../lib/db/live";
 import {
-  installOffer, iosBrowser, keepCarried, promptInstall, subscribeInstall, type InstallOffer,
+  headIsStale, installOffer, iosBrowser, keepCarried, promptInstall, reloadsForCarry, subscribeInstall,
+  type InstallOffer,
 } from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
@@ -36,9 +38,22 @@ export async function carryThenInstall(first: string): Promise<void> {
   location.assign(route.install(await heldInvites(first)));
 }
 
+/**
+ * And when what it would bring changed after this page loaded, reloads it on
+ * the first screen where that is harmless — Safari only reads the manifest at
+ * load, and the share sheet can be opened on any page (`headIsStale`).
+ */
 function KeepCarried() {
   const groups = useLive("carried", () => heldInvites(), []);
-  useEffect(() => { if (groups) keepCarried(groups); }, [groups]);
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!groups) return;
+    keepCarried(groups);
+    if (!headIsStale() || !reloadsForCarry(pathname)) return;
+    const typing = document.activeElement?.matches("input, textarea, [contenteditable]");
+    if (typing || document.visibilityState !== "visible") return;
+    location.replace(location.href);
+  }, [groups, pathname]);
   return null;
 }
 

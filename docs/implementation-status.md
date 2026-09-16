@@ -49,7 +49,9 @@ None of these is started, and the first is not code at all.
   added with. **Works on the owner's iPhone from `/install`** (2026-09-16).
   Built since, unverified on the phone: Share from any page (every page's head
   builds the manifest at load from `bida.carry`), and the names coming along
-  (the icon claims the member the tab was). **Next: install from a group's
+  (the icon claims the member the tab was). The owner's first run carried
+  two groups but only the name picked after the page loaded; a stale head now
+  reloads (2026-09-17). **Next: install from a group's
   page, not `/install`, and paste both `/diag`s** — it also settles whether iOS
   used the manifest, since no other page's URL carries anything.
 - **Two cuts to the entry form, proposed and not decided**: folding the

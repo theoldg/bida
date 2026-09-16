@@ -89,9 +89,12 @@ standalone come from the `apple-*` tags either way.
    an iOS that bookmarks the URL instead. Both write `bida.carry` first
    (`carryThenInstall`): the tutorial's head is built from it.
 
-A group joined or named on a page after it loaded is swapped into that page's
-link too, which only helps if Safari asks again at the share sheet; the next
-page load has it regardless.
+**A group joined or named after the page loaded** leaves its head stale, and
+Safari won't read a swapped link: the owner's icon arrived with two groups and
+one name. The link records what it was built with (`data-carry`); when that no
+longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
+nothing can be lost (`reloadsForCarry`: the list, a group, members, history, an
+entry, about), never mid-join or in a form. From cache it is a flash, once.
 
 **The icon's first launch** (`app/install/page.tsx`). A key this phone lacks is
 saved. A group the tab had named is claimed here, before its first sync — an
@@ -219,7 +222,8 @@ that opening, and is not stored.
   pasting again worked because that page load had brought the app up to date.
 - **Safari reads the manifest at page load**, not when the share sheet opens,
   whatever WebKit's source suggests. Changing the link later does nothing — so
-  the HTML carries none, and a script at the top of the head writes it.
+  the HTML carries none, a script at the top of the head writes it, and a page
+  whose carry changed since reloads.
 - **Next re-inserts the manifest link that `metadata.manifest` renders** after
   hydration, so taking it out doesn't work. Leave `manifest` out of the
   metadata and write the link yourself.

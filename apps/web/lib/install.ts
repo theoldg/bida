@@ -186,28 +186,25 @@ const CARRY = "bida.carry";
  * synchronous — localStorage, kept by `keepCarried`. Everywhere else, and in
  * a tab holding no groups, it is the static manifest.
  *
- * `looksIos` and `isStandalone` are restated here for the same reason.
+ * `data-carry` records what the head was built with, so a page can tell when
+ * it has gone stale (`headIsStale`). `looksIos` and `isStandalone` are
+ * restated here for the same reason.
  */
 export function manifestScript(base: WebManifest): string {
   return `(function(){var l=document.createElement("link");l.rel="manifest";l.href="${STATIC_MANIFEST}";`
     + `try{var n=navigator,ios=/iPad|iPhone|iPod/.test(n.userAgent)||(n.platform==="MacIntel"&&n.maxTouchPoints>1),`
     + `app=n.standalone===true||matchMedia("(display-mode: standalone)").matches,`
     + `c=ios&&!app&&localStorage.getItem("${CARRY}");`
+    + `if(ios&&!app)l.setAttribute("data-carry",c||"");`
     + `if(c)l.href=URL.createObjectURL(new Blob([JSON.stringify((${carriedManifest.toString()})(${JSON.stringify(base)},c,location.origin))],{type:"application/manifest+json"}))`
     + `}catch(e){}document.head.appendChild(l)})()`;
 }
 
-let base: Promise<WebManifest> | undefined;
-
 /**
- * Keep the iOS tab's copy of what an icon would carry, and this page's
- * manifest with it.
- *
- * localStorage is what the *next* page load builds its manifest from. The
- * swap on this page is for a group joined or named since it loaded — useless
- * if Safari really only reads at load, harmless if it doesn't. Only an iOS tab
- * writes it: the secrets are already on this origin in IndexedDB, but nowhere
- * else needs a second copy.
+ * Keep the iOS tab's copy of what an icon would carry: every group held, and
+ * who this phone is in each. localStorage is what the next page load builds
+ * its manifest from. Only an iOS tab writes it: the secrets are already on this
+ * origin in IndexedDB, but nowhere else needs a second copy.
  */
 export function keepCarried(groups: readonly CarriedGroup[]): void {
   if (installOffer() !== "manual") return;
@@ -220,18 +217,33 @@ export function keepCarried(groups: readonly CarriedGroup[]): void {
     return;
   }
   note("install.carry", `${groups.length} groups, ${groups.filter((g) => g.me).length} named`);
+}
 
-  const link = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-  if (!link) return;
-  const old = link.href.startsWith("blob:") ? link.href : undefined;
-  const swap = (href: string) => {
-    link.setAttribute("href", href);
-    if (old) URL.revokeObjectURL(old);
-  };
-  if (!carry) { swap(STATIC_MANIFEST); return; }
-  base ??= fetch(STATIC_MANIFEST).then((r) => r.json() as Promise<WebManifest>);
-  base.then((manifest) => swap(URL.createObjectURL(new Blob(
-    [JSON.stringify(carriedManifest(manifest, carry, location.origin))],
-    { type: "application/manifest+json" },
-  ))), () => { base = undefined; });
+/**
+ * Whether this page's manifest was built from a carry that has since changed —
+ * a group joined, or a name picked, after it loaded. Safari won't read a
+ * swapped link, so an icon added from this page would leave that change behind
+ * (the owner's phone arrived with two groups and one name). Only a reload fixes
+ * it; `reloadsForCarry` says when one is harmless.
+ */
+export function headIsStale(): boolean {
+  const link = document.head.querySelector('link[rel="manifest"]');
+  const built = link?.getAttribute("data-carry");
+  if (built == null) return false;
+  try {
+    return (localStorage.getItem(CARRY) ?? "") !== built;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Screens a reload can't cost anything on: nothing typed, no flow half way
+ * through. The join, claim and install screens are flows, and the forms warn
+ * on unload — a stale head there waits for the next screen that is on this list.
+ */
+const RELOADABLE = new Set(["/", "/g", "/g/members", "/g/history", "/g/entry", "/about"]);
+
+export function reloadsForCarry(pathname: string): boolean {
+  return RELOADABLE.has(pathname.replace(/\/$/, "") || "/");
 }

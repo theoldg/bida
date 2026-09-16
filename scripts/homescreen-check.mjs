@@ -164,8 +164,24 @@ report(broken.errors.some((e) => e.message.includes("start_url")),
 // phone, because the fork above only asks about a group this one never claimed.
 const held = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const heldPage = await held.newPage();
+/**
+ * A tab whose groups just changed reloads to rebuild its head — so a `goto`
+ * straight after is aborted by it. Wait until the head matches what is held,
+ * twice over, a navigation in between counting as not yet.
+ */
+const headSettled = async (page) => {
+  for (let calm = 0, i = 0; calm < 2 && i < 40; i++) {
+    await page.waitForTimeout(250);
+    const fresh = await page.evaluate(() => {
+      const built = document.head.querySelector('link[rel="manifest"]')?.getAttribute("data-carry");
+      return built != null && built === (localStorage.getItem("bida.carry") ?? "");
+    }).catch(() => false);
+    calm = fresh ? calm + 1 : 0;
+  }
+};
 const inviteTo = async (name, me, other) => {
   const id = await newGroup(heldPage, base, { name, me, members: [other] });
+  await headSettled(heldPage);
   await heldPage.goto(`${base}/g/members?id=${id}`);
   await heldPage.getByRole("button", { name: "Copy invite link" }).first().click();
   return new URL(await heldPage.evaluate(() => navigator.clipboard.readText())).hash.slice(1);
@@ -210,6 +226,31 @@ for (const path of ["/", `/g?id=${flatId}`, `/g/members?id=${flatId}`]) {
   report(start.startsWith(`${base}/install#`) && sameGroups(new URL(start).hash.slice(1), carried),
     `a page that is not the tutorial carries them too: ${path}`, `start_url: ${start}`);
 }
+
+// ---- a name picked after the page loaded --------------------------------
+// Safari never re-reads a manifest, so a head built before a group was joined
+// or named would put an icon on the home screen without it: the owner's phone
+// arrived with two groups and one name. There is no sync API here to finish a
+// real claim against, so the stale head is made by hand — as if it had been
+// built before the second name — and a client-side move to a screen that can
+// be reloaded is what must bring it up to date.
+await heldPage.goto(`${base}/g/members?id=${flatId}`);
+await blobManifest(heldPage);
+await heldPage.evaluate(() => {
+  window.__beforeTheName = true;
+  document.head.querySelector('link[rel="manifest"]').setAttribute("data-carry", "stale");
+});
+await heldPage.locator(".iconbtn[aria-label='Back']").first().click();
+const refreshed = await heldPage.waitForFunction(() => !window.__beforeTheName, null, { timeout: 8000 })
+  .then(() => true, () => false);
+const rebuilt = await blobManifest(heldPage);
+const rebuiltStart = rebuilt.json?.start_url ?? "";
+report(refreshed && rebuiltStart.startsWith(`${base}/install#`)
+  && sameGroups(new URL(rebuiltStart).hash.slice(1), carried),
+  "a page whose head predates a change reloads, and its manifest carries it", `start_url: ${rebuiltStart}`);
+await heldPage.evaluate(() => { window.__afterTheReload = true; });
+await heldPage.waitForTimeout(1500);
+report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
 
 // ---- Android is not touched ----------------------------------------------
 const android = await newPhone(browser);
