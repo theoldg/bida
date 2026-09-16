@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
@@ -42,10 +43,16 @@ function JoinScreen() {
   // Parsed only on the client (window isn't available during the static
   // export's build-time prerender) — undefined means "not parsed yet".
   const [link, setLink] = useState<ReturnType<typeof parseJoinLink> | undefined>(undefined);
+  // A fragment that is only a group id: the link lost its password, which is
+  // worth a sentence of its own rather than "bad link" (`copy.join.keyless`).
+  const [keyless, setKeyless] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
 
   useEffect(() => {
-    const read = () => setLink(parseJoinLink(window.location.hash));
+    const read = () => {
+      setLink(parseJoinLink(window.location.hash));
+      setKeyless(/^#?[A-Za-z0-9_-]+\.?$/.test(window.location.hash));
+    };
     read();
     // A second invite link opened while this screen is up is a hash change and
     // nothing else — no navigation, no remount — so read on mount alone left
@@ -88,6 +95,15 @@ function JoinScreen() {
   }, [link, group, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;
+
+  if (!link && keyless) {
+    return (
+      <Screen><Body>
+        <TopBar title={copy.join.title} back={route.groups()} />
+        <Scroll><KeylessLink /></Scroll>
+      </Body></Screen>
+    );
+  }
 
   if (!link || (keySaved && rejected && !group)) {
     return (

@@ -16,6 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
+import { KeylessLink } from "../../components/keyless-link";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -93,7 +94,7 @@ function GroupScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.group.notFound.title} back={route.groups()} />
-        <Empty title={copy.group.notFound.empty}>{copy.group.notFound.body}</Empty>
+        <Scroll><KeylessLink /></Scroll>
       </Body></Screen>
     );
   }

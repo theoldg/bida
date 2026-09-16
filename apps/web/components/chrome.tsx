@@ -9,6 +9,7 @@ import { retryLive, useStalled } from "../lib/db/live";
 import { useScrollMemory } from "../lib/scroll-memory";
 import { goUp } from "../lib/nav";
 import { keepsFocus } from "./bits";
+import { KeylessLink } from "./keyless-link";
 import { Icon, type IconName } from "./icons";
 
 /**
@@ -250,9 +251,9 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: Bac
 export function BadLink() {
   return (
     <Screen><Body>
-      <TopBar title={copy.group.badLink.title} back="/" />
-      <Empty title={copy.group.badLink.empty}>{copy.group.badLink.body}</Empty>
-    </Body></Screen>
+        <TopBar title={copy.group.badLink.title} back={"/"} />
+        <Scroll><KeylessLink /></Scroll>
+      </Body></Screen>
   );
 }
 

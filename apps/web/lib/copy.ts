@@ -320,6 +320,19 @@ export const copy = {
       title: "Bad link",
       body: "Ask whoever shared it to send it again.",
     },
+    /**
+     * A link to a group with no password in it — nearly always the address
+     * bar copied off a group screen, which names the group and nothing more
+     * (group-link.ts). Said wherever that lands: `/join` with a group id and no
+     * secret, and any `/g` screen for a group this phone doesn't hold. Saying
+     * "bad link" there sent the same address straight back.
+     */
+    keyless: {
+      empty: "This link is missing its password",
+      body: "A group’s address in the browser bar leaves out the part that unlocks it. Ask someone in the group to send the invite link from the app’s menu instead.",
+      /** The drawn top bar's title — any group, not one of yours. */
+      groupName: "Your group",
+    },
     joining: {
       title: "Joining…",
       body: "Finishes by itself once the other phone syncs.",
@@ -339,8 +352,6 @@ export const copy = {
     noGroup: "No group",
     notFound: {
       title: "Not found",
-      empty: "That group isn’t on this phone",
-      body: "Open the invite link again.",
     },
     /**
      * For a link that names nothing this phone has — a deep link into a group
@@ -349,8 +360,6 @@ export const copy = {
      */
     badLink: {
       title: "Bad link",
-      empty: "This link doesn’t open anything",
-      body: "Ask someone in the group to send you the invite link.",
     },
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline: you may not have everyone’s latest.",

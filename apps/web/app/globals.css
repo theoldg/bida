@@ -1110,6 +1110,29 @@ dialog.scrim::backdrop { background: transparent }
 .rowmenu-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
   padding: 12px 10px; border-radius: var(--r-s); font-size: 13.5px; font-weight: 600 }
 .rowmenu-item:active { background: var(--press) }
+
+/* A link with no password in it (components/keyless-link.tsx): a sentence,
+   then a drawing of where the working link is — the group's top bar with its
+   menu open and the invite row lit. The drawing reuses the menu's own classes,
+   pinned in place, on a plate that fades out below the rows it needs. */
+.keyless { display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding-block: 34px 28px }
+.keyless-badge { width: 46px; height: 46px; border-radius: var(--r-s); display: grid; place-items: center;
+  background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); margin-bottom: 16px }
+.keyless h2 { font-size: 16px; letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
+  text-wrap: balance }
+.keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted) }
+.keyless-fig { width: 100%; max-width: 310px; margin-top: 26px; padding: 10px 12px 18px;
+  background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m); text-align: left;
+  -webkit-mask-image: linear-gradient(#000 78%, transparent);
+  mask-image: linear-gradient(#000 78%, transparent) }
+.keyless-bar { display: flex; align-items: center; gap: 9px }
+.keyless-bar .iconbtn { width: 28px; height: 28px; background: var(--card) }
+.keyless-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; letter-spacing: -.02em; color: var(--ink) }
+.keyless-menu { position: static; animation: none; width: max-content; min-width: 190px;
+  margin: 6px 0 0 auto; pointer-events: none }
+.keyless-lit { background: var(--hl); box-shadow: inset 0 0 0 1px var(--hl-edge); color: var(--hl-ink) }
+.keyless-bar .iconbtn.keyless-lit { background: var(--hl); border-color: var(--hl-edge); color: var(--hl-ink) }
 @media (prefers-reduced-motion: reduce) { .rowmenu { animation: none } }
 
 /* The one act of the diagnostics screen, held at the top of the scroll while
