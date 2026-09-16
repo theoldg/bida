@@ -31,6 +31,27 @@ export function parseJoinLink(input: string): JoinLink | null {
   return { groupId, secret };
 }
 
+/**
+ * A join link read off the clipboard, or null for anything else.
+ *
+ * Stricter than `parseJoinLink`, which also takes a bare fragment: whatever
+ * happens to be on the clipboard is not a link someone chose to open, so only
+ * a whole `/join` URL counts. And only one from this app's own origin — a group
+ * lives in the database of the deployment that made it, so a link from another
+ * host (a self-hosted copy, dev against production) names a group this server
+ * has never seen, and joining it here could only ever sit on "Joining…".
+ */
+export function joinLinkFromPaste(text: string, origin: string): JoinLink | null {
+  let url: URL;
+  try {
+    url = new URL(text.trim());
+  } catch {
+    return null;
+  }
+  if (url.origin !== origin || url.pathname !== "/join") return null;
+  return parseJoinLink(url.hash);
+}
+
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -62,6 +83,8 @@ export const route = {
   diag: () => "/diag",
   /** What this is, who can read it, and where to complain. Off the groups list. */
   about: () => "/about",
+  /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
+  join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>
     `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "ledger" ? `&tab=${tab}` : ""}`,
   /**

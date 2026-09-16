@@ -137,7 +137,8 @@ export const copy = {
     },
     newGroup: "New group",
     quickSplit: "Quick split",
-    paste: "Paste",
+    /** Only on an iOS home-screen app, which can't be handed a tapped link. */
+    pasteLink: "Paste link",
     about: "About bida",
     whoAreYou: "who are you?",
     youOwe: "you owe",

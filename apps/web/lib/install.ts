@@ -82,6 +82,18 @@ export function installOffer(): InstallOffer {
   });
 }
 
+/**
+ * Running from the home screen on iOS: the one place a join link can't be
+ * opened by tapping it. iOS hands every tapped link to Safari, whose storage is
+ * not the home-screen app's, so the app never sees the invite — the groups list
+ * offers to paste one instead. Android opens links in scope inside the
+ * installed app, and a browser tab receives them directly.
+ */
+export function iosHomeScreenApp(): boolean {
+  if (typeof window === "undefined") return false;
+  return isStandalone() && looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
+}
+
 function isStandalone(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches
     // Safari's own flag, and the only signal iOS gives.

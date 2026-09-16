@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
@@ -15,7 +15,8 @@ import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
-import { route } from "../lib/group-link";
+import { formatJoinLink, joinLinkFromPaste, route } from "../lib/group-link";
+import { iosHomeScreenApp } from "../lib/install";
 import { useResumeLastGroup } from "../lib/launch";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
 
@@ -108,7 +109,8 @@ export default function GroupsPage() {
  * left is a bill split with people who are not a group, and who never become
  * one: it writes no op and leaves nothing behind
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
- * so it wears the scan FAB's outline instead of the ink.
+ * so it wears the scan FAB's outline instead of the ink. An iOS home-screen
+ * app gets a third, outlined too, on the far left: `PasteLinkTile`.
  *
  * Sticky (`.homepair`), not just last-in-flow: a group list long enough to
  * scroll would otherwise carry this off the bottom of the screen, the one
@@ -116,40 +118,10 @@ export default function GroupsPage() {
  * rather than docking above them — on its own two grounds, as the FABs do.
  */
 function StartTiles() {
-  // TODO: make the paste button iOS only.
-  // TODO: validate the URL and think about how it should work with
-  // different hosting domains. (To account for self hosting etc)
-  const router = useRouter();
-
-  async function handlePaste() {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text) return;
-
-      // Extract path or path + search from clipboard string if it contains a URL
-      const trimmed = text.trim();
-      let targetPath = trimmed;
-
-      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
-        const url = new URL(trimmed);
-        targetPath = url.pathname + url.search;
-      }
-
-      if (targetPath) {
-        router.push(targetPath);
-      }
-    } catch (err) {
-      console.error("Failed to read clipboard:", err);
-    }
-  }
-
   return (
     <div className="homepair">
       <div className="starttiles">
-        <button type="button" onClick={handlePaste} className="starttile start-s">
-          <Icon name="link" size={26} />
-          {copy.groups.paste}
-        </button>
+        <PasteLinkTile />
         <Link href={route.quick()} className="starttile start-s">
           <Icon name="cam" size={26} />
           {copy.groups.quickSplit}
@@ -160,6 +132,43 @@ function StartTiles() {
         </Link>
       </div>
     </div>
+  );
+}
+
+const never = () => () => {};
+
+/**
+ * The way into a group on an iOS home-screen app, which a tapped invite never
+ * reaches (`iosHomeScreenApp`). Everywhere else the link itself is the door,
+ * so this draws nothing. Outlined, like "Quick split": neither is the primary.
+ *
+ * Anything but one of this app's own join links lands on the join screen's
+ * "Bad link" rather than a message of its own — that screen already says the
+ * right thing. A refused read is the person dismissing iOS's paste prompt, and
+ * that is a no, not an error.
+ */
+function PasteLinkTile() {
+  const router = useRouter();
+  // Standalone or not is fixed for the life of the page; nothing to subscribe to.
+  const shown = useSyncExternalStore(never, iosHomeScreenApp, () => false);
+  if (!shown) return null;
+
+  async function paste() {
+    let text: string;
+    try {
+      text = await navigator.clipboard.readText();
+    } catch {
+      return;
+    }
+    const link = joinLinkFromPaste(text, window.location.origin);
+    router.push(link ? formatJoinLink(link, "") : route.join());
+  }
+
+  return (
+    <button type="button" onClick={() => void paste()} className="starttile start-s">
+      <Icon name="link" size={26} />
+      {copy.groups.pasteLink}
+    </button>
   );
 }
 

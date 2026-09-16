@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryParent, formParent, parseEntrySource, route } from "./group-link";
+import { entryParent, formParent, joinLinkFromPaste, parseEntrySource, route } from "./group-link";
 
 describe("where an entry goes back to", () => {
   it("is the group when the ledger opened it", () => {
@@ -49,5 +49,27 @@ describe("where saving the entry form goes", () => {
   it("holds via across the who-had-what detour", () => {
     expect(route.items("g1", "history")).toBe("/g/entry/items?id=g1&via=history");
     expect(route.items("g1")).toBe("/g/entry/items?id=g1");
+  });
+});
+
+describe("a join link pasted from the clipboard", () => {
+  const origin = "https://bida.app";
+
+  it("takes a whole link from this app, whitespace and all", () => {
+    expect(joinLinkFromPaste(" https://bida.app/join#g1.s3cr3t\n", origin))
+      .toEqual({ groupId: "g1", secret: "s3cr3t" });
+  });
+
+  it("refuses a link from another deployment — its group isn't on this server", () => {
+    expect(joinLinkFromPaste("https://bida.example.org/join#g1.s3cr3t", origin)).toBeNull();
+    expect(joinLinkFromPaste("http://bida.app/join#g1.s3cr3t", origin)).toBeNull();
+  });
+
+  it("refuses anything that isn't a join link", () => {
+    expect(joinLinkFromPaste("g1.s3cr3t", origin)).toBeNull();
+    expect(joinLinkFromPaste("https://bida.app/g?id=g1", origin)).toBeNull();
+    expect(joinLinkFromPaste("https://bida.app/join#nodot", origin)).toBeNull();
+    expect(joinLinkFromPaste("dinner was 42 euros", origin)).toBeNull();
+    expect(joinLinkFromPaste("", origin)).toBeNull();
   });
 });

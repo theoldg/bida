@@ -80,7 +80,8 @@ square marks a slot in the list they left — big enough to stack a word under
 the icon, capped so a square doesn’t become a 170px tile, and centred with the
 FAB pair's own gap between them — near enough to read as one pair, with the
 margin around it doing the separating. "New group" is the inked one and takes
-the right, where a thumb rests, with "Quick split" outlined beside it. The
+the right, where a thumb rests, with "Quick split" outlined beside it — and, on an iOS home-screen app only,
+"Paste link" outlined on the far left ([frontend.md](frontend.md#one-navigation)). The
 pair is sticky (`.homepair`), floating over the list once there are enough
 groups to scroll — ungrounded, as the FABs it echoes are, so two figures pass
 over the rows rather than a dock cutting the screen in two; they never go out
