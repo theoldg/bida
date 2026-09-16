@@ -94,10 +94,10 @@ second image. The worst a minted credential buys is having a picture read.
 
 The one thing a caller gets to say about the prompt, and it says it by picking
 one of two paragraphs the Worker holds. `X-Stas: 1` on the scan request swaps
-the refusal wording for the vicious version — a photo that isn't a receipt, or
-one too blurry to read, comes back insulted instead of gently teased. Both
-paragraphs are in `REFUSAL` (`apps/api/src/scan-body.ts`), both still have to
-say plainly what's wrong so the person knows what to re-shoot, and everything
+the refusal wording for the vicious version — send a photo that isn't a
+receipt, or one too blurry to read, and it comes back at *you*, not at the
+photo. Both paragraphs are in `REFUSAL` (`apps/api/src/scan-body.ts`), both
+still have to say plainly what's wrong so the person knows what to re-shoot, and everything
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
 pre-encoded per isolate like the other, so the second costs two short byte
@@ -106,7 +106,9 @@ arrays and no branch on the hot path.
 It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
 long-press on the wordmark — which is `localStorage` on that phone
 (`lib/scan/stas.ts`) and therefore per phone, not per group: nobody is
-signed up to be insulted by somebody else's setting. The report prints `stas:`
+signed up to be insulted by somebody else's taste. The one thing the mean
+paragraph is told to leave alone is what somebody was born as; everything else
+about them is fair game. The report prints `stas:`
 so a scan that came back savage is explicable from the thing people paste.
 
 ## Minimal Cloudflare quota: the Worker still never touches the bytes
@@ -176,7 +178,7 @@ It reads. It doesn't compute.
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
-| error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult (above) |
+| error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult aimed at the photographer (above) |
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
 reached by tapping the Items tab's button — "Assign who had what" on a bill

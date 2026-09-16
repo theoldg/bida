@@ -94,7 +94,14 @@ describe("the two tones", () => {
 
   it("carries the image untouched either way", async () => {
     expect(await wrapped("QUJD", "stas")).toBe(JSON.stringify(buildScanRequestBody("QUJD", "stas")));
-    expect(promptOf(await wrapped("QUJD", "stas"))).toContain("mean");
+  });
+
+  // The one sentence the two tones contradict each other on, and the whole
+  // point of the second: Staś mode is at the photographer's expense.
+  it("spares the photographer in one tone and not the other", async () => {
+    const spare = "never at the photographer's expense";
+    expect(promptOf(await wrapped("QUJD", "kind"))).toContain(spare);
+    expect(promptOf(await wrapped("QUJD", "stas"))).not.toContain(spare);
   });
 
   it("refuses a non-image in Staś mode too", async () => {

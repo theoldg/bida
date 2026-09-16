@@ -105,7 +105,7 @@ export const copy = {
      *  is the warning: what it changes is the tone of a refusal, and the
      *  refusals get personal. */
     stas: "Staś mode",
-    stasNote: "Scans that aren’t receipts get insulted.",
+    stasNote: "Send a bad photo, get insulted.",
     on: "On",
     off: "Off",
   },

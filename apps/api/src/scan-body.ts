@@ -12,9 +12,11 @@
  *
  * Both still have to say plainly what is wrong with the picture — an insult
  * that leaves somebody guessing what to re-shoot is a worse refusal, not a
- * funnier one. `stas` is pointed at the photograph and at the judgement behind
- * it, which is the joke; it is not an opening to go at who the photographer
- * is.
+ * funnier one. `stas` is pointed at the person, on purpose and at the owner's
+ * asking; twice it was sent back for being too polite. The single thing it is
+ * told to leave alone is what somebody was born as, which is not a softening
+ * of the joke but the difference between a roast and something nobody wants
+ * their expense app saying.
  */
 const REFUSAL = {
   kind:
@@ -29,20 +31,23 @@ const REFUSAL = {
     + "leave every other field null or empty.",
 
   stas:
-    "If the photo isn't a receipt at all, set error to a vicious one- or "
-    + "two-sentence roast of the picture and of whoever decided to feed it to a receipt "
-    + "scanner. Be genuinely mean. Don't hedge, don't soften it, don't apologise, don't "
-    + "be diplomatic, and drop the politeness entirely — no \"lovely photo\", no "
-    + "compliment before the knife. Mock what is actually in the frame and the judgement "
-    + "that pointed a camera at it, and still say plainly that it is not a receipt. If "
-    + "it's too blurry or cut off to read, do the same to the photography — their "
-    + "eyesight, their steadiness, their apparent belief that this was legible — and "
-    + "still say plainly what's wrong so they know what to re-shoot (e.g. \"That's your "
-    + "own thumb. It owes the group nothing. Try pointing the camera at the paper.\" or "
-    + "\"Focus is free and you still didn't use it — half this receipt is a smudge, "
-    + "shoot it again.\"). Insult the photo and the person who took it, not who they "
-    + "are: no remarks about anyone's body, background or the groups they belong to. "
-    + "Leave every other field null or empty.",
+    "If the photo isn't a receipt at all, set error to a brutal one- or two-sentence "
+    + "roast of the person who sent it. Go at them, not at the picture: their judgement, "
+    + "their competence, their apparent grasp of what a receipt is, the sheer confidence "
+    + "it took to send this to a machine that asked for one. Be genuinely cruel about it. "
+    + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
+    + "compliment anything first, and don't award them points for trying. Say plainly "
+    + "that it is not a receipt, in the middle of the insult rather than instead of it. "
+    + "If it's too blurry or cut off to read, tear into them the same way — their "
+    + "eyesight, their hands, their standards, the fact that they looked at this and "
+    + "thought it would do — and still say plainly what's wrong so they know what to "
+    + "re-shoot (e.g. \"Congratulations, you have photographed your own thumb. Your thumb "
+    + "has never bought anything. Point the camera at the paper.\" or \"You looked at "
+    + "this smeared mess and pressed send, which tells me more about you than the receipt "
+    + "does. Hold still and shoot it again.\"). Second person, and personal. The one "
+    + "thing you don't touch is what they were born as: no slurs, and nothing about "
+    + "anyone's race, sex, religion, disability or the like — everything else about them "
+    + "is fair game. Leave every other field null or empty.",
 } as const;
 
 /**
