@@ -66,7 +66,7 @@ into tab use, not to lock the casual one out.
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
 | F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |
 | H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
-| — | **A third "Open in bida" button on the join screen** | Dropped: the tutorial's copied variant serves the regular |
+| — | **A third "Open in bida" button on the join screen** | Dropped: the join screen's link box serves the regular |
 
 ### A, in detail — the experiment
 
@@ -109,13 +109,8 @@ tell. From the list it carries, in this order:
 3. **It starts empty** — the app can't see Safari's groups; copy a link and
    paste it there to continue.
 
-**The copied variant** (`/install?copied`) leads with *link copied — already
-have bida? open it and tap Paste link*, then keeps titled Why / It starts empty
-/ How sections, ending on "open bida and tap Paste link".
-That line is what serves the regular, who can't be told apart from a newcomer.
-The copy happens on the tap that navigates here — iOS only writes the clipboard
-inside a user gesture — and goes through `formatJoinLink`, never the address
-bar. Back is the only exit: the way forward is out of the browser.
+The same page whether it came from the banner or the join screen. Back is a
+plain back, and the only exit: the way forward is out of the browser.
 
 ### Home — the banner
 
@@ -135,7 +130,7 @@ link. The box is its own copy button and reads **Copied** once a write has gone
 through — tried on arrival too, though iOS only allows it inside a tap. The
 buttons follow it directly, the whole block centred in the screen:
 
-- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install?copied`.
+- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`.
 - **Continue in Safari** (or Chrome, or "the browser" when it can't tell) —
   outlined, no subtext: the body above already says what the tab costs.
 
@@ -144,8 +139,7 @@ the group's name — an invitation, not a wall. Nothing is published until a nam
 is picked, so choosing Add to home screen leaves an unclaimed copy in the tab that
 evicts harmlessly: one person, one claim. A tab that already holds this group,
 or already chose to continue for it, skips the screen (`asksBeforeJoin`:
-claimed in `meByGroup`, or listed in `continuedInTab`). A refused clipboard write
-sends Add to home screen to the plain `/install`, since "copied" would be false.
+claimed in `meByGroup`, or listed in `continuedInTab`).
 
 ## Open questions for the owner
 

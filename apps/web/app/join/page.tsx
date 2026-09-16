@@ -164,8 +164,7 @@ function JoinScreen() {
  * The screen tries the clipboard on arrival, but iOS writes it only inside a
  * gesture, so "Copied" shows only once a write has actually gone through —
  * the box's own tap, or "Add to home screen", which copies before it leaves
- * so `/install?copied` can end on Paste link. A refused write sends the plain
- * tutorial instead: the link is still in the chat it came from.
+ * for the same `/install` the banner opens.
  */
 function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }) {
   const router = useRouter();
@@ -181,7 +180,8 @@ function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }
   }, [text]);
 
   async function addToHomeScreen() {
-    router.push(route.install(await write()));
+    await write();
+    router.push(route.install());
   }
 
   return (

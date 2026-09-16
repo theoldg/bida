@@ -187,30 +187,16 @@ export const copy = {
       title: (browser: string | undefined) => `${upper(browser)} will forget your groups`,
       body: "Add bida to your home screen",
     },
-    /**
-     * `/install`. From the list: why, the recording, then what the app starts
-     * with. From a join (`?copied`): the same under titles, with Paste link.
-     */
+    /** `/install`: why, the recording, then what the app starts with. */
     page: {
       title: "Add to home screen",
-      copied: "Link copied.",
-      copiedBody: "Already have bida on your home screen? Open it and tap Paste link.",
-      why: {
-        title: "Why",
-        body: (browser: string | undefined) =>
-          `${upper(browser)} forgets your groups after a week unused. bida on your home screen keeps them, and works offline.`,
-      },
+      why: (browser: string | undefined) =>
+        `${upper(browser)} forgets your groups after a week unused. bida on your home screen keeps them, and works offline.`,
+      clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       empty: {
         title: "It starts empty",
         body: (browser: string | undefined) =>
           `The home-screen app can’t see ${lower(browser)}’s groups. Copy a link and paste it there to continue.`,
-        bodyCopied: (browser: string | undefined) =>
-          `The home-screen app can’t see ${lower(browser)}’s groups. Each one comes over by its link.`,
-      },
-      how: {
-        title: "How",
-        clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
-        thenPaste: "Then open bida from your home screen and tap Paste link.",
       },
     },
   },

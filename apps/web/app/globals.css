@@ -411,10 +411,6 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
-.installcopied { display: flex; gap: 9px; align-items: baseline; font-size: 13px; line-height: 1.55;
-  color: var(--ink-2) }
-.installcopied svg { flex: none; color: var(--ink); transform: translateY(2px) }
-.installcopied strong { color: var(--ink); font-weight: 600 }
 /* The iOS tab's banner atop the groups list: a card that is a link, title over
    one line, and the chevron that says it goes somewhere (components/install.tsx). */
 .installbanner { display: flex; align-items: center; justify-content: space-between; gap: 12px }
