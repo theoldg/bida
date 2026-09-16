@@ -56,9 +56,10 @@ export function iosBrowser(ua: string): "Safari" | "Chrome" | undefined {
 }
 
 /**
- * Whether `/join` asks "install first?" before the group opens. Only an iOS tab,
- * which forgets; and never for a group this phone already said who it is in, or
- * already chose to keep here — the choice is made once per group, not per tap.
+ * Whether `/join` asks "add to home screen?" before the group opens. Only an iOS
+ * tab, which forgets; never for a group this phone has said who it is in; and
+ * not again on the opening that just answered "continue". Unclaimed — never
+ * named, or forgotten since — asks every time the link is opened.
  */
 export function asksBeforeJoin(
   { offer, claimed, continued }: { offer: InstallOffer; claimed: boolean; continued: boolean },

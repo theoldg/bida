@@ -7,7 +7,6 @@ import { Icon } from "../../components/icons";
 import { useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
-import { continueInTab } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
@@ -57,6 +56,9 @@ function JoinScreen() {
   // worth a sentence of its own rather than "bad link" (`copy.join.keyless`).
   const [keyless, setKeyless] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  // "Continue in Safari", for this opening of this link only. Not kept: a
+  // group opened again unclaimed — never named, or forgotten — asks again.
+  const [continuedFor, setContinuedFor] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const read = () => {
@@ -112,7 +114,7 @@ function JoinScreen() {
     ? asksBeforeJoin({
       offer,
       claimed: device.meByGroup[link.groupId] !== undefined,
-      continued: device.continuedInTab?.includes(link.groupId) ?? false,
+      continued: continuedFor === link.groupId,
     })
     : undefined;
 
@@ -141,7 +143,7 @@ function JoinScreen() {
   }
 
   if (asks === undefined) return <Blank back={route.groups()} />;
-  if (asks) return <JoinChoice link={link} name={group?.name} />;
+  if (asks) return <JoinChoice link={link} name={group?.name} onContinue={() => setContinuedFor(link.groupId)} />;
 
   if (!keySaved || group) return <Blank back={route.groups()} />;
 
@@ -166,7 +168,9 @@ function JoinScreen() {
  * the box's own tap, or "Add to home screen", which copies before it leaves
  * for the same `/install` the banner opens.
  */
-function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }) {
+function JoinChoice({ link, name, onContinue }: {
+  link: JoinLink; name: string | undefined; onContinue: () => void;
+}) {
   const router = useRouter();
   const { choice } = copy.join;
   const browser = useBrowserName();
@@ -202,7 +206,7 @@ function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }
           </button>
           <div className="choicebtns">
             <button className="btn btn-p btn-lg" onClick={() => void addToHomeScreen()}>{choice.install}</button>
-            <button className="btn btn-s" onClick={() => void continueInTab(link.groupId)}>
+            <button className="btn btn-s" onClick={onContinue}>
               {choice.browser(browser)}
             </button>
           </div>

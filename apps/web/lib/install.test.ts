@@ -60,7 +60,7 @@ describe("asking before an iOS tab joins", () => {
     }
   });
 
-  it("asks once: not a group already claimed or already kept here", () => {
+  it("asks until claimed, unless this opening already chose to continue", () => {
     expect(asksBeforeJoin({ offer: "manual", claimed: true, continued: false })).toBe(false);
     expect(asksBeforeJoin({ offer: "manual", claimed: false, continued: true })).toBe(false);
   });

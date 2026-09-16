@@ -106,10 +106,3 @@ export async function setInstallNudgeCollapsed(collapsed: boolean): Promise<void
   if ((device.installNudgeCollapsed ?? false) === collapsed) return;
   await updateDevice({ installNudgeCollapsed: collapsed });
 }
-
-/** The iOS join choice, answered "stay in the browser" for this group. */
-export async function continueInTab(groupId: string): Promise<void> {
-  const device = await getDevice();
-  if (device.continuedInTab?.includes(groupId)) return;
-  await updateDevice({ continuedInTab: [...(device.continuedInTab ?? []), groupId] });
-}

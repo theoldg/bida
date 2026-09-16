@@ -61,11 +61,6 @@ export interface DeviceRecord {
    */
   installNudgeCollapsed?: boolean;
   /**
-   * Groups an iOS tab was told it will forget and joined here anyway, so their
-   * invite stops asking (docs/ios.md). Absent on older records: nobody chose.
-   */
-  continuedInTab?: string[];
-  /**
    * What this phone scans with when it is not in a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    *

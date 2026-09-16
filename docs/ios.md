@@ -137,9 +137,10 @@ buttons follow it directly, the whole block centred in the screen:
 The key is saved and the group pulled *behind* the screen, so its title can be
 the group's name — an invitation, not a wall. Nothing is published until a name
 is picked, so choosing Add to home screen leaves an unclaimed copy in the tab that
-evicts harmlessly: one person, one claim. A tab that already holds this group,
-or already chose to continue for it, skips the screen (`asksBeforeJoin`:
-claimed in `meByGroup`, or listed in `continuedInTab`).
+evicts harmlessly: one person, one claim. A group this phone has claimed skips
+the screen (`asksBeforeJoin`, `meByGroup`). An unclaimed one — never named, or
+forgotten since — asks on every opening of its link; Continue only answers for
+that opening, and is not stored.
 
 ## Open questions for the owner
 
