@@ -2,8 +2,7 @@
 
 *For: the next agent, before it starts. The other docs say what to build and
 how. This one says what it is like here — how the owner's instructions actually
-read, and what an agent tends to get wrong that no check will catch. The owner
-asked for it and reads it.*
+read, and what an agent tends to get wrong that no check will catch.*
 
 **House rules.** Under 100 lines, always. Every session touches it, even one
 line. **Nothing technical lives here** — a fact about the automation belongs in
