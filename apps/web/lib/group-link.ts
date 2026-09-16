@@ -31,25 +31,33 @@ export function parseJoinLink(input: string): JoinLink | null {
   return { groupId, secret };
 }
 
+/** What pasting found: a link to join, one for another server, or nothing. */
+export type PastedLink =
+  | { kind: "join"; link: JoinLink }
+  | { kind: "elsewhere"; host: string }
+  | { kind: "none" };
+
 /**
- * A join link read off the clipboard, or null for anything else.
+ * Read the clipboard's text as a join link.
  *
  * Stricter than `parseJoinLink`, which also takes a bare fragment: whatever
  * happens to be on the clipboard is not a link someone chose to open, so only
- * a whole `/join` URL counts. And only one from this app's own origin — a group
- * lives in the database of the deployment that made it, so a link from another
- * host (a self-hosted copy, dev against production) names a group this server
- * has never seen, and joining it here could only ever sit on "Joining…".
+ * a whole `/join` URL counts. One from another origin is told apart rather
+ * than refused as bad: a group lives in the database of the deployment that
+ * made it, so a link from elsewhere (the dev server, a self-hosted copy) is a
+ * good link this server has never heard of, and joining it here could only
+ * ever sit on "Joining…". Its host is what the person needs to hear.
  */
-export function joinLinkFromPaste(text: string, origin: string): JoinLink | null {
+export function readPastedLink(text: string, origin: string): PastedLink {
   let url: URL;
   try {
     url = new URL(text.trim());
   } catch {
-    return null;
+    return { kind: "none" };
   }
-  if (url.origin !== origin || url.pathname !== "/join") return null;
-  return parseJoinLink(url.hash);
+  const link = url.pathname === "/join" ? parseJoinLink(url.hash) : null;
+  if (!link) return { kind: "none" };
+  return url.origin === origin ? { kind: "join", link } : { kind: "elsewhere", host: url.host };
 }
 
 import type { EntryKind } from "./entry-kind";

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryParent, formParent, joinLinkFromPaste, parseEntrySource, route } from "./group-link";
+import { entryParent, formParent, readPastedLink, parseEntrySource, route } from "./group-link";
 
 describe("where an entry goes back to", () => {
   it("is the group when the ledger opened it", () => {
@@ -56,20 +56,21 @@ describe("a join link pasted from the clipboard", () => {
   const origin = "https://bida.app";
 
   it("takes a whole link from this app, whitespace and all", () => {
-    expect(joinLinkFromPaste(" https://bida.app/join#g1.s3cr3t\n", origin))
-      .toEqual({ groupId: "g1", secret: "s3cr3t" });
+    expect(readPastedLink(" https://bida.app/join#g1.s3cr3t\n", origin))
+      .toEqual({ kind: "join", link: { groupId: "g1", secret: "s3cr3t" } });
   });
 
-  it("refuses a link from another deployment — its group isn't on this server", () => {
-    expect(joinLinkFromPaste("https://bida.example.org/join#g1.s3cr3t", origin)).toBeNull();
-    expect(joinLinkFromPaste("http://bida.app/join#g1.s3cr3t", origin)).toBeNull();
+  it("names the server a link from another deployment belongs to", () => {
+    expect(readPastedLink("https://dev.bida.app/join#g1.s3cr3t", origin))
+      .toEqual({ kind: "elsewhere", host: "dev.bida.app" });
+    expect(readPastedLink("http://localhost:8787/join#g1.s3cr3t", origin))
+      .toEqual({ kind: "elsewhere", host: "localhost:8787" });
   });
 
-  it("refuses anything that isn't a join link", () => {
-    expect(joinLinkFromPaste("g1.s3cr3t", origin)).toBeNull();
-    expect(joinLinkFromPaste("https://bida.app/g?id=g1", origin)).toBeNull();
-    expect(joinLinkFromPaste("https://bida.app/join#nodot", origin)).toBeNull();
-    expect(joinLinkFromPaste("dinner was 42 euros", origin)).toBeNull();
-    expect(joinLinkFromPaste("", origin)).toBeNull();
+  it("finds nothing in what isn't a join link, from anywhere", () => {
+    for (const text of [
+      "g1.s3cr3t", "https://bida.app/g?id=g1", "https://bida.app/join#nodot",
+      "https://dev.bida.app/about", "dinner was 42 euros", "",
+    ]) expect(readPastedLink(text, origin)).toEqual({ kind: "none" });
   });
 });

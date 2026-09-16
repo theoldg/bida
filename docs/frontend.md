@@ -355,7 +355,8 @@ of in it: **New group** and **Quick split** as two centred `.starttile`
 squares — with **Paste link** a third on an iOS home-screen app, which iOS
 never hands a tapped invite (it opens in Safari, whose storage is not the
 app's), so the link has to come in by clipboard; only a `/join` URL from this
-origin is taken (`joinLinkFromPaste`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
+origin joins, and one from another deployment says which server it belongs to
+rather than "Bad link" (`readPastedLink`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;
 bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
 once a long one would otherwise scroll it out of reach), with nothing under them — **About bida**

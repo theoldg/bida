@@ -139,6 +139,11 @@ export const copy = {
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */
     pasteLink: "Paste link",
+    /** A good link for a group on another deployment, which this one can't open. */
+    elsewhere: {
+      title: "Link for another server",
+      body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
+    },
     about: "About bida",
     whoAreYou: "who are you?",
     youOwe: "you owe",

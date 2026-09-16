@@ -6,7 +6,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
-import { ConfirmDialog } from "../components/dialog";
+import { ConfirmDialog, Dialog } from "../components/dialog";
 import { InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { useLongPressMenu } from "../components/long-press";
@@ -15,7 +15,7 @@ import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
-import { formatJoinLink, joinLinkFromPaste, route } from "../lib/group-link";
+import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
 import { iosHomeScreenApp } from "../lib/install";
 import { useResumeLastGroup } from "../lib/launch";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
@@ -142,15 +142,17 @@ const never = () => () => {};
  * reaches (`iosHomeScreenApp`). Everywhere else the link itself is the door,
  * so this draws nothing. Outlined, like "Quick split": neither is the primary.
  *
- * Anything but one of this app's own join links lands on the join screen's
- * "Bad link" rather than a message of its own — that screen already says the
- * right thing. A refused read is the person dismissing iOS's paste prompt, and
- * that is a no, not an error.
+ * What was pasted decides where it goes (`readPastedLink`): a link of ours
+ * joins; one for another server says so, naming it, since "Bad link" would
+ * send the person back for the same link; anything else lands on the join
+ * screen's "Bad link", which already says the right thing. A refused read is
+ * the person dismissing iOS's paste prompt — a no, not an error.
  */
 function PasteLinkTile() {
   const router = useRouter();
   // Standalone or not is fixed for the life of the page; nothing to subscribe to.
   const shown = useSyncExternalStore(never, iosHomeScreenApp, () => false);
+  const [elsewhere, setElsewhere] = useState<string>();
   if (!shown) return null;
 
   async function paste() {
@@ -160,15 +162,26 @@ function PasteLinkTile() {
     } catch {
       return;
     }
-    const link = joinLinkFromPaste(text, window.location.origin);
-    router.push(link ? formatJoinLink(link, "") : route.join());
+    const pasted = readPastedLink(text, window.location.origin);
+    if (pasted.kind === "elsewhere") setElsewhere(pasted.host);
+    else router.push(pasted.kind === "join" ? formatJoinLink(pasted.link, "") : route.join());
   }
 
   return (
-    <button type="button" onClick={() => void paste()} className="starttile start-s">
-      <Icon name="link" size={26} />
-      {copy.groups.pasteLink}
-    </button>
+    <>
+      <button type="button" onClick={() => void paste()} className="starttile start-s">
+        <Icon name="link" size={26} />
+        {copy.groups.pasteLink}
+      </button>
+      {elsewhere ? (
+        <Dialog title={copy.groups.elsewhere.title} onClose={() => setElsewhere(undefined)}>
+          <div className="dbody"><p>{copy.groups.elsewhere.body(elsewhere)}</p></div>
+          <div className="drow">
+            <button className="btn btn-p" onClick={() => setElsewhere(undefined)}>{copy.act.close}</button>
+          </div>
+        </Dialog>
+      ) : null}
+    </>
   );
 }
 
