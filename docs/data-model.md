@@ -153,6 +153,10 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   the fallback for a currency the registry has no row for — every foreign entry
   written before the registry existed, and any rate a group removes
   ([ADR-0005](decisions/0005-money-and-currency.md)).
+- **A group's id is 12 base36 characters**, not a UUID: it rides in every
+  invite link, where its length is something people paste
+  ([ADR-0003](decisions/0003-link-only-access.md)). Groups made before that
+  keep their UUID, so an id's shape is never what code reads.
 - **An exchange rate is identified by its currency code**, the one entity whose
   id a person chooses rather than `newId()`. So its Dexie key is compound
   (`[groupId+id]`) — two trips both spending in MAD are two rows — and anything

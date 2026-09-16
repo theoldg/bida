@@ -1,6 +1,6 @@
 # 0003 — Link-only access, and a device's identity claim is an op
 
-**Status:** Accepted · 2026-08-27 · identity 2026-08-28
+**Status:** Accepted · 2026-08-27 · identity 2026-08-28 · shorter ids 2026-09-16
 
 **Context.** The owner chose Tricount's model: a group is a secret URL, you pick
 who you are, there is no sign-up. But every op carries `actor`, and the whole
@@ -24,6 +24,15 @@ started or stopped speaking for a member.
 - It lives in the **URL fragment**, never a path or query string, so it never
   reaches a server, an access log, or a `Referer`
   ([0004](0004-static-export-and-offline.md)).
+- **The id is 12 base36 characters** (`newGroupId()`), ~62 bits — the link is
+  the product's onboarding, so the id pays for its length in what people paste,
+  and a UUID spent 36 characters on what 12 do. Minted offline with nobody to
+  ask whether it is taken, so it is a birthday bet: a million groups collide
+  with probability ~1 in 10 million, and a collision costs the second group its
+  sync — never the first group's contents, which take the secret to read. The
+  same 62 bits keep the row unguessable, which is what stops a stranger
+  registering a group's id before it first pushes. Groups made before this
+  carry a UUID and keep it; nothing anywhere reads an id's shape.
 
 **Claiming or switching identity is an op like everything else.** `EntityKind`
 has `identity`; the entity id is the device's HLC node id and the patch is

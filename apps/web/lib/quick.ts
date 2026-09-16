@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { memberIdFor, newGroupSecret, newId, receiptExtras } from "@bida/core";
+import { memberIdFor, newGroupId, newGroupSecret, receiptExtras } from "@bida/core";
 import { copy } from "./copy";
 import { groupToken } from "./seal";
 import { getDevice, updateDevice } from "./db/device";
@@ -46,7 +46,7 @@ export interface ScanCredential {
 export async function scanCredential(): Promise<ScanCredential> {
   const device = await getDevice();
   if (device.scan) return device.scan;
-  const scan = { id: newId(), secret: newGroupSecret() };
+  const scan = { id: newGroupId(), secret: newGroupSecret() };
   await updateDevice({ scan });
   return scan;
 }

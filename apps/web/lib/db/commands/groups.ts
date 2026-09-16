@@ -1,5 +1,5 @@
 import {
-  colorSeedFor, healDrafts, memberIdFor, newGroupSecret, newId, restoreClaimDrafts,
+  colorSeedFor, healDrafts, memberIdFor, newGroupId, newGroupSecret, restoreClaimDrafts,
   type CurrencyCode, type Id,
 } from "@bida/core";
 import { db } from "../dexie";
@@ -28,7 +28,7 @@ export async function createGroup(
   input: NewGroupInput,
   now = Date.now(),
 ): Promise<{ groupId: Id; memberId: Id; secret: string }> {
-  const groupId = newId();
+  const groupId = newGroupId();
   const memberId = memberIdFor(groupId, input.myName);
   const secret = newGroupSecret();
 
