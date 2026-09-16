@@ -409,7 +409,7 @@ a { color: inherit; text-decoration: none }
    numbered because they are done in order, out of the app, from memory. */
 /* The recorded walkthrough on /install: phone-shaped, so it is held to a width
    that leaves the prose beside it readable rather than filling the column. */
-.installclip { display: block; width: 180px; height: auto; margin: 4px 0 12px;
+.installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
 .installcopied { display: flex; gap: 9px; align-items: baseline; font-size: 13px; line-height: 1.55;
   color: var(--ink-2) }

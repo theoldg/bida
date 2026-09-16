@@ -53,7 +53,7 @@ export default function InstallPage() {
                   moved between iOS versions, and a picture of it settles which
                   button is meant faster than prose can. */}
               <img className="installclip" src="/media/safari-add-to-home-screen.gif"
-                width={360} height={783} alt={page.how.clipAlt} />
+                width={440} height={956} alt={page.how.clipAlt} />
               <p>{copied ? page.how.thenPaste : page.how.then}</p>
             </section>
           </div>
