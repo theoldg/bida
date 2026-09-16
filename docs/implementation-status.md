@@ -46,13 +46,13 @@ None of these is started, and the first is not code at all.
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
   the home banner, the join choice, and both halves of the invite the icon is
-  added with. The first phone run opened the icon at `/`: Safari reads the
-  manifest at load, so `/install` now ships without one. **Next: install again
-  from `/install` and paste both `/diag`s** — the tab's and the icon's. Then,
-  decided with the owner (2026-09-16): make it work from Share on *any* page,
-  not only `/install` — every iOS tab page would build the manifest at load,
-  from a localStorage copy of the invites, shaped by whichever of manifest or
-  page URL this run shows iOS using.
+  added with. **Works on the owner's iPhone from `/install`** (2026-09-16),
+  once `/install` stopped shipping a manifest Safari reads at load. **Next:**
+  one install from a join's Add to home screen, whose `/diag` first load says
+  whether iOS used the manifest (`/join#`) or the page URL (`/install#`); then,
+  decided with the owner, Share from *any* page — every iOS tab page building
+  its manifest at load from a localStorage copy of the invites, shaped by that
+  answer.
 - **Two cuts to the entry form, proposed and not decided**: folding the
   "Multi-payer" link into the payer dialog, and taking "Items" out of the
   split's tab bar now that `/g/scan` is how a scan starts. Ask before building

@@ -1,10 +1,10 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-[the design](#the-design) is built, and so is [experiment A](#a-in-detail--the-experiment)
-— what it is waiting on is a real iPhone.** Its answer settles whether the
-paste path is still anybody's, and then the decision becomes an ADR and this
-doc shrinks to how it works.*
+[the design](#the-design) is built, and [experiment A](#a-in-detail--the-experiment)
+works on a real iPhone (2026-09-16)** — an icon added from `/install` opened
+with the tab's groups. Open: which half iOS used, and Share from any page, not
+only `/install`.*
 
 ## The problem
 
@@ -60,7 +60,7 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | Built, both halves — **unverified on a real iPhone**, and that answer decides whether Paste link is still anybody's path |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone** from `/install`; Paste link stays for groups joined after the install |
 | B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
 | C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
@@ -118,11 +118,12 @@ waiting on anyone:
   manifest's `start_url`. The first ask came at load, and the first ask wins
   for that document. Hence no manifest in `/install`'s HTML at all.
 
-**What only the iPhone can answer**: MobileSafari is closed, so whether it asks
-at the moment of the tap, and what it does with `start_url` versus the page's
-own URL, is the experiment. Does the fragment survive into the launched icon;
-does it survive a reboot; and which half did it — with a single invite the two
-land on different URLs, so the app that opens says which.
+**What the second phone run settled**: with no manifest in the HTML, the icon
+opened at `/install#<both invites>`, saved both keys and synced both groups.
+The fragment survives. **Still open: which half did it.** With two invites the
+manifest and the page URL are the same `/install#…`; an install from a join's
+**Add to home screen** (one invite) opens `/join#…` if iOS used the manifest,
+`/install#…` if it used the page URL. That answer shapes Share-from-any-page.
 
 **Reading the answer**: `/diag` in both places, and paste both. The tab's
 `install steps` say what was offered and when the manifest was swapped; the
