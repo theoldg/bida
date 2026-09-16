@@ -40,7 +40,10 @@ const slug = (heading) => heading
   .replace(/[`*~]/g, "")
   .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
   .trim().toLowerCase()
-  .replace(/[^\w\s-]/g, "")
+  // Unicode-aware, because GitHub is: it keeps the "ś" in "Staś mode" and
+  // slugs it `#staś-mode`. `\w` would drop it and this check would then
+  // reject a link that works.
+  .replace(/[^\p{L}\p{N}\s_-]/gu, "")
   .replace(/\s/g, "-");
 
 const anchorsOf = (file) => new Set(
