@@ -25,8 +25,13 @@
  */
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
+import { fingerprint, stampMatches, writeStamp } from "./lib/check-stamp.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..");
+
+// `pnpm check | head` closes stdout mid-run. That is the reader leaving, not a
+// failure of the gate — without this it dies on EPIPE and reports a fake red.
+process.stdout.on("error", () => {});
 
 const STAGES = [
   { name: "docs", run: ["node", "scripts/docs-check.mjs"], rerun: "pnpm run docs" },
@@ -47,6 +52,15 @@ const STAGES = [
     digest: /^\s*\S+ build:\s+(precache: .*)$/gm,
   },
 ];
+
+// Taken before anything runs, so what gets stamped is the tree that passed.
+const tree = fingerprint();
+const passed = process.argv.includes("--force") ? null : stampMatches(tree);
+if (passed) {
+  console.log(`check  this tree passed ${passed} and has not changed since — nothing to do`);
+  console.log("       (`pnpm check --force` runs it anyway)");
+  process.exit(0);
+}
 
 const started = Date.now();
 console.log(`check  ${STAGES.map((s) => s.name).join(" ")} — together\n`);
@@ -84,6 +98,7 @@ for (const stage of failed) {
 }
 
 if (!failed.length) {
+  writeStamp(tree);
   console.log(`\nall checks passed in ${elapsed}s`);
   process.exit(0);
 }

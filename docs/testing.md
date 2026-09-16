@@ -36,6 +36,13 @@ a fourth rule is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose.
 
+**A pass is stamped and not repeated.** The stamp is a hash of every file git
+tracks or would track, plus the env files it ignores and the build reads
+(`scripts/lib/check-stamp.mjs`), so `pnpm check` then `git push` runs the gate
+once — and committing in between does not invalidate it, because the contents
+are what is hashed and they did not move. Anything that did move re-runs it;
+`pnpm check --force` re-runs it regardless.
+
 **Its five stages run at once** (`scripts/check.mjs`), because none of them
 reads what another writes — so the gate costs the slowest one, the build, and
 not the sum. Each keeps its output instead of printing it: a pass is five lines

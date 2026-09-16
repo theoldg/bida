@@ -5,6 +5,11 @@
 # (.github/workflows/deploy.yml) only rebuilds and ships, so a build that fails
 # there fails on `main` with nothing to gate it.
 #
+# A pass is stamped against the tree it passed over, so the usual
+# `pnpm check` then `git push` pays for the gate once rather than twice
+# (scripts/lib/check-stamp.mjs) — which is what keeps `--no-verify` out of
+# anybody's fingers.
+#
 # Wired up automatically by the root postinstall script
 # (`git config core.hooksPath .githooks`), so `pnpm install` is all a fresh
 # clone needs.
