@@ -524,7 +524,7 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("forgetting a group only hides it on this phone — no op, membership and claim untouched", async () => {
+  it("forgetting a group only hides it on this phone — no op, membership untouched, claim dropped", async () => {
     const { groupId, theo, marie } = await trip();
     const before = await db().ops.count();
 
@@ -534,14 +534,36 @@ describe("commands", () => {
     expect((await db().members.get(theo))?.deletedAt).toBeFalsy();
     expect((await db().members.get(marie))?.deletedAt).toBeFalsy();
     expect((await db().groups.get(groupId))?.archivedAt).toBeFalsy();
-    expect(await getMe(groupId)).toBe(theo);
+    expect(await getMe(groupId)).toBeUndefined();
     expect((await getDevice()).leftGroups).toContain(groupId);
     await assertMaterialisedMatchesLog(groupId);
 
-    // Opening the invite link again surfaces the group back on the list.
+    // Opening the invite link again surfaces the group back on the list, and
+    // asks who is holding the phone rather than assuming.
     const secret = (await db().groupKeys.get(groupId))!.secret;
     await saveGroupKey(groupId, secret);
     expect((await getDevice()).leftGroups).not.toContain(groupId);
+    expect(await getMe(groupId)).toBeUndefined();
+
+    // Answering as somebody else is a switch on the log, filed under the
+    // member the phone last spoke for.
+    const node = (await getDevice()).nodeId;
+    await claimIdentity(groupId, marie);
+    expect(await getMe(groupId)).toBe(marie);
+    const ops = (await db().ops.where("entityId").equals(node).toArray())
+      .sort((a, b) => (a.hlc < b.hlc ? -1 : 1));
+    expect(ops.map((o) => [o.kind, o.patch["memberId"], o.actor])).toEqual([
+      ["create", theo, theo],
+      ["update", marie, theo],
+    ]);
+
+    // Answering as the same person again writes nothing.
+    await forgetGroup(groupId);
+    const count = await db().ops.count();
+    await claimIdentity(groupId, marie);
+    expect(await getMe(groupId)).toBe(marie);
+    expect(await db().ops.count()).toBe(count);
+    await assertMaterialisedMatchesLog(groupId);
   });
 
   /**

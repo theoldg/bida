@@ -94,8 +94,10 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   subject, and history has no sentence for it.
 - Forgetting a group (`device.leftGroups`) is purely local — no op, no
   tombstone, nobody else sees it — so it drops off *your* list without
-  touching membership or the group itself. Groups are never deleted. Opening
-  the invite link again clears the hide.
+  touching membership or the group itself. Groups are never deleted. It also
+  drops this phone's `meByGroup` entry, so opening the invite link again clears
+  the hide and asks who you are; answering writes an identity `update` over
+  the claim the log still holds.
 - The UI (not `removeMember` itself) refuses to remove someone else while
   `memberInvolved` (payers.ts) still finds them on a live entry of **either**
   kind — a payer or split participant on an expense, or a side of a transfer.

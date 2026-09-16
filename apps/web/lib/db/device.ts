@@ -75,11 +75,22 @@ export async function setLeftOnList(): Promise<void> {
   await updateDevice({ leftOnList: true });
 }
 
-/** Hide a group from this phone's groups list — forgetting it, device-local only. */
+/**
+ * Forget a group on this phone, device-local only: hide it from the groups
+ * list and drop which member this phone was in it, in one write. Opening the
+ * link again then asks "who are you" afresh rather than walking back in as
+ * whoever last held the phone.
+ */
 export async function hideGroup(groupId: string): Promise<void> {
   const device = await getDevice();
-  if (device.leftGroups?.includes(groupId)) return;
-  await updateDevice({ leftGroups: [...(device.leftGroups ?? []), groupId] });
+  const hidden = device.leftGroups?.includes(groupId) ?? false;
+  const claimed = groupId in device.meByGroup;
+  if (hidden && !claimed) return;
+  const { [groupId]: _forgotten, ...meByGroup } = device.meByGroup;
+  await updateDevice({
+    meByGroup,
+    leftGroups: hidden ? device.leftGroups : [...(device.leftGroups ?? []), groupId],
+  });
 }
 
 /** Undo `hideGroup` — opening the group's invite link again un-forgets it. */

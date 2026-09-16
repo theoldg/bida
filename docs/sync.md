@@ -160,7 +160,8 @@ went to the background waits for it to come back before its transaction opens
 frozen half way keeps its lock ([frontend.md](frontend.md#a-live-read-can-die)).
 
 **A forgotten group is skipped**, not synced in the background forever. It
-keeps its secret: opening the invite link again un-forgets it.
+keeps its secret, but not who this phone was in it: opening the invite link
+again un-forgets it and asks.
 
 **Every attempt is written down.** A success stamps `groupKeys.lastSyncedAt`
 and clears `failure`; a failure increments `failure.count` and keeps the HTTP

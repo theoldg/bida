@@ -102,11 +102,13 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
 }
 
 /**
- * Forget a group on this phone: hides it from this device's list. Purely
- * local — nothing is appended to the op log, so it's invisible to everyone
- * else in the group and there's nothing for history to show. Membership and
- * this device's claimed identity are untouched, so opening the invite link
- * again (`saveGroupKey`) un-forgets it with no fuss. Groups are never
+ * Forget a group on this phone: hides it from this device's list and drops
+ * which member this phone is in it. Purely local — nothing is appended to the
+ * op log, so it's invisible to everyone else in the group and there's nothing
+ * for history to show. Membership is untouched; opening the invite link again
+ * (`saveGroupKey`) un-forgets it and the claim gate asks who is holding the
+ * phone, since after a forget that may well be somebody else. The identity
+ * row on the log stays until that answer overwrites it. Groups are never
  * deleted, whether forgotten by everyone or not.
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
@@ -133,10 +135,16 @@ export async function claimIdentity(
   now = Date.now(),
 ): Promise<void> {
   const device = await getDevice();
-  const previous = device.meByGroup[groupId];
-  if (previous === memberId) return;
+  const current = device.meByGroup[groupId];
+  if (current === memberId) return;
+  // A phone that forgot the group has no `meByGroup` entry but still has its
+  // claim on the log, so that is what decides create-or-update and who the
+  // switch is filed under.
+  const previous = current
+    ?? (await db().identities.get([groupId, device.nodeId]))?.memberId;
 
   await setMe(groupId, memberId);
+  if (previous === memberId) return;
   await appendOps(
     groupId,
     // The member who was here a moment ago is who made this change. On a
