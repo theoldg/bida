@@ -97,49 +97,50 @@ home-screen app are unchanged. Wording is in `copy.install` and `copy.join.choic
 
 ### `/install` — the tutorial, shared
 
-A route of its own, in `/about`'s register: short prose, no cards. Every
+A route of its own, in `/about`'s register: short prose, no cards, kept to the
+few lines someone reads before they've decided this is worth their time. Every
 "this browser" on these screens names Safari or Chrome when `iosBrowser` can
 tell. It carries, in this order:
 
-1. untitled — no accounts, so the phone is what remembers your groups; Safari
-   clears them after a week unopened, the home screen keeps them.
+1. untitled — Safari may forget your groups after a week unopened; the invite
+   link always brings them back. Then, for whoever wants to keep everything
+   permanently, one bold line: add bida to your home screen.
 2. untitled — a recording of Safari's share sheet down to Add
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
-3. **Then paste your invite** — the home-screen app starts empty; tap Paste
-   link, and a link from a join is already copied.
-4. **Why so fiddly** — a web page kept on the home screen, not an App Store
-   app, and Apple doesn't make adding one easy.
+3. **It starts empty** — the home-screen app can't see the tab's data; open
+   group invites in the app to transfer them.
 
 The same page whether it came from the banner or the join screen. Back is a
 plain back, and the only exit: the way forward is out of the browser.
 
 ### Home — the banner
 
-A card at the top of the groups list, *Keep your groups on this phone*, with a
-**Show me how** into `/install`, **shown only once the tab holds a group**. An empty home is someone looking around: Quick split
-stores nothing and is the right way to try bida, and a visitor won't install
-an app sight unseen. Once a group is in the tab, "Safari will forget it"
-is true and worth saying at the top rather than the foot. It replaces the
-install nudge in a tab, and folds like it, on the same device flag: a warning
-someone who chose Safari can't put away is nagging.
+A card at the top of the groups list, *Keep your groups on this phone /
+Safari may forget them*, with **Add to home screen** into `/install`,
+**shown only once the tab holds a group**. An empty home is someone looking
+around: Quick split stores nothing and is the right way to try bida, and a
+visitor won't install an app sight unseen. Once a group is in the tab,
+"Safari may forget it" is true and worth saying at the top rather than the
+foot. It replaces the install nudge in a tab, and folds like it, on the same
+device flag: a warning someone who chose Safari can't put away is nagging.
 
 ### `/join` — the choice, before "who are you"
 
 A full screen, drawn before the claim gate, titled with the group, whole block
-centred. It is read by someone who has seen nothing of bida, and an install ask
-before any value reads as the app wanting something — so it gives the reason
-before the cost and says staying is fine. In order: *Keep Lisbon on this phone*;
-no accounts, so the phone remembers, Safari clears it after a week unopened, the
-home screen keeps it with nothing to download; for someone who already added
-bida, a box showing the link; the buttons; and *just checking once? Safari is
-fine — if it forgets, tap the invite again*. The box is its own copy button
-and reads **Copied** once a write has gone through — tried on arrival too,
-though iOS only allows it inside a tap.
+centred. It is read by someone who has seen nothing of bida, so it skips the
+paragraph and puts the reason under each button instead — an install ask
+with a wall of text up top reads as the app wanting something. In order:
+*Join Lisbon*; **Add to home screen** with *keep everything on this phone,
+forever, no download required* under it; **Continue in Safari** (or Chrome, or
+"the browser" when it can't tell) with *Safari may forget the group — the link
+re-opens it* under it; then, in a lower-contrast card, *Already on home
+screen?* and the link in a box that is its own copy button, reading
+**Copied** once a write has gone through — tried on arrival too, though iOS
+only allows it inside a tap.
 
 - **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`.
-- **Continue in Safari** (or Chrome, or "the browser" when it can't tell) —
-  outlined, no subtext: the body above already says what the tab costs.
+- **Continue in Safari** — outlined, staying in the tab.
 
 The key is saved and the group pulled *behind* the screen, so its title can be
 the group's name — an invitation, not a wall. Nothing is published until a name

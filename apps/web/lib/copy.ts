@@ -185,29 +185,22 @@ export const copy = {
      */
     banner: {
       title: "Keep your groups on this phone",
-      body: (browser: string | undefined) => `${upper(browser)} clears them if you don’t open bida for a week.`,
-      act: "Show me how",
+      body: (browser: string | undefined) => `${upper(browser)} may forget them.`,
+      act: "Add to home screen",
     },
-    /**
-     * `/install`: why, the recording, then how the group gets in. The why leads
-     * with "no accounts" because every other site remembers you by a login, so
-     * "Safari forgets" alone sounds invented.
-     */
+    /** `/install`: why, the recording, then how the group gets in. */
     page: {
       title: "Add to home screen",
       why: (browser: string | undefined) =>
-        `bida has no accounts, so your phone is what remembers your groups. ${upper(browser)} clears them if you don’t open bida for a week. On your home screen, they stay.`,
+        `${upper(browser)} may forget your groups if you don’t open bida for a week. Don’t worry — the invite link always brings them back.`,
+      keep: "However, if you’d like to keep all your data permanently,",
+      keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       /** Said for both ways in: a join has copied the link, the banner hasn't. */
       empty: {
-        title: "Then paste your invite",
+        title: "It starts empty",
         body: (browser: string | undefined) =>
-          `bida on your home screen can’t see what you opened in ${lower(browser)}, so it starts empty. Open it and tap Paste link. If you came from an invite, it’s already copied.`,
-      },
-      /** Owns the clunkiness without an apology: it is the platform, not the app. */
-      fiddly: {
-        title: "Why so fiddly",
-        body: "bida is a web page you keep on your home screen, not an App Store app. Apple doesn’t make adding one easy.",
+          `The home-screen app can’t see ${lower(browser)}’s data. Open group invites in the app to transfer them.`,
       },
     },
   },
@@ -373,24 +366,22 @@ export const copy = {
     },
     /**
      * An iOS tab's choice before joining (docs/ios.md). Read by someone who has
-     * seen nothing of the app yet, so it gives the reason (no accounts) before
-     * the cost, says nothing is downloaded, and says staying is fine: an
-     * install ask with none of that reads as the app wanting something.
+     * seen nothing of the app yet, so each button carries its own one-line
+     * reason rather than a paragraph up top: an install ask with none of that
+     * reads as the app wanting something.
      */
     choice: {
       /** Until the group has arrived and can be named. */
       unnamed: "You’re invited",
-      keep: (name: string | undefined) => `Keep ${name ?? "this group"} on this phone`,
-      why: (browser: string | undefined) =>
-        `bida has no accounts, so your phone is what remembers you’re in it. ${upper(browser)} clears that if you don’t open bida for a week. On your home screen it stays: no App Store, nothing to download.`,
-      /** Under the buttons: the casual user loses little, and a re-tap rejoins. */
-      fine: (browser: string | undefined) =>
-        `Just checking once? ${upper(browser)} is fine. If it forgets, tap the invite again.`,
-      already: "Already added bida? Copy this link and tap Paste link there.",
+      join: (name: string | undefined) => `Join ${name ?? "the group"}`,
+      install: "Add to home screen",
+      installHint: "Keep everything on this phone, forever. No download required.",
+      browser: (browser: string | undefined) => `Continue in ${browser ?? "the browser"}`,
+      browserHint: (browser: string | undefined) => `${upper(browser)} may forget the group. The link re-opens it.`,
+      alreadyTitle: "Already on home screen?",
+      already: "Use this link in the app:",
       copyLink: "Copy",
       copied: "Copied",
-      install: "Add to home screen",
-      browser: (browser: string | undefined) => `Continue in ${browser ?? "the browser"}`,
     },
     joining: {
       title: "Joining…",

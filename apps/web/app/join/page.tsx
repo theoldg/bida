@@ -193,22 +193,25 @@ function JoinChoice({ link, name, onContinue }: {
       <TopBar title={name ?? choice.unnamed} back={route.groups()} />
       <Scroll>
         <div className="pad joinchoice">
-          <h2>{choice.keep(name)}</h2>
-          <p>{choice.why(browser)}</p>
+          <h2>{choice.join(name)}</h2>
           <button className="btn btn-p btn-lg choiceinstall" onClick={() => void addToHomeScreen()}>{choice.install}</button>
-          <p className="hint choicefine">{choice.fine(browser)}</p>
+          <p className="hint choicehint">{choice.installHint}</p>
           <button className="btn btn-s choicebrowser" onClick={onContinue}>
             {choice.browser(browser)}
           </button>
-          <p className="hint choicealready">{choice.already}</p>
-          <button type="button" className={`linkbox${copied ? " on" : ""}`}
-            onClick={() => void write().then((ok) => ok && tick())}>
-            <span className="selectable">{text}</span>
-            <span className="linkboxstate">
-              <Icon name={copied ? "check" : "link"} size={13} />
-              {copied ? choice.copied : choice.copyLink}
-            </span>
-          </button>
+          <p className="hint choicehint">{choice.browserHint(browser)}</p>
+          <div className="card choicealready">
+            <div className="choicealreadytitle">{choice.alreadyTitle}</div>
+            <p className="hint">{choice.already}</p>
+            <button type="button" className={`linkbox${copied ? " on" : ""}`}
+              onClick={() => void write().then((ok) => ok && tick())}>
+              <span className="selectable">{text}</span>
+              <span className="linkboxstate">
+                <Icon name={copied ? "check" : "link"} size={13} />
+                {copied ? choice.copied : choice.copyLink}
+              </span>
+            </button>
+          </div>
         </div>
       </Scroll>
     </Body></Screen>

@@ -411,21 +411,19 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
-/* The iOS join choice (app/join/page.tsx): a heading and why; for someone who
-   already added bida, the link in a box that is its own copy button, one line
-   of it ending in what a tap did; then the buttons with a line under them
-   saying staying is fine. The whole block centred in the screen: a choice
-   about what was just read, not a footer. */
+/* The iOS join choice (app/join/page.tsx): a heading, each button with its own
+   one-line reason under it, then a lower-contrast card for someone who already
+   added bida, holding the link in a box that is its own copy button. The whole
+   block centred in the screen: a choice about what was just read, not a footer. */
 .pad.joinchoice { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
   padding-block: 24px }
-.joinchoice h2 { margin: 0 2px 8px; color: var(--ink); font-size: 16px; font-weight: 700;
+.joinchoice h2 { margin: 0 2px 18px; color: var(--ink); font-size: 16px; font-weight: 700;
   letter-spacing: -.02em; text-wrap: balance }
-.joinchoice > p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0 2px;
-  text-wrap: pretty }
-.joinchoice .choiceinstall { margin-top: 16px }
-.joinchoice .choicefine { margin-top: 24px; text-wrap: balance }
-.joinchoice .choicebrowser { margin-top: 8px }
-.joinchoice .choicealready { margin-top: 48px }
+.joinchoice .choicehint { text-wrap: balance }
+.joinchoice .choicebrowser { margin-top: 20px }
+.joinchoice .card.choicealready { margin-top: 40px }
+.choicealreadytitle { font-size: 13px; font-weight: 600; color: var(--ink) }
+.choicealready .hint { margin: 4px 0 0 }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;
   padding: 11px 12px; background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   font-family: var(--f-mono); font-size: 12px; color: var(--ink); text-align: left;

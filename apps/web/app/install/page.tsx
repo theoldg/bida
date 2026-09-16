@@ -22,7 +22,10 @@ export default function InstallPage() {
         <TopBar title={page.title} back />
         <Scroll>
           <div className="pad about">
-            <section className="aboutsect"><p>{page.why(browser)}</p></section>
+            <section className="aboutsect">
+              <p>{page.why(browser)}</p>
+              <p>{page.keep} <strong>{page.keepBold}</strong></p>
+            </section>
             <section className="aboutsect">
               {/* A recording of Safari, not numbered steps: the share sheet has
                   moved between iOS versions, and a picture of it settles which
@@ -33,10 +36,6 @@ export default function InstallPage() {
             <section className="aboutsect">
               <h4>{page.empty.title}</h4>
               <p>{page.empty.body(browser)}</p>
-            </section>
-            <section className="aboutsect">
-              <h4>{page.fiddly.title}</h4>
-              <p>{page.fiddly.body}</p>
             </section>
           </div>
         </Scroll>
