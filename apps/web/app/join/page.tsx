@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { useInstallOffer } from "../../components/install";
-import { FailedLink, KeylessLink } from "../../components/keyless-link";
+import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { continueInTab } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
@@ -133,10 +133,7 @@ function JoinScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
-        <Empty title={copy.join.badLink.title}>
-          {copy.join.badLink.body}
-          <FailedLink />
-        </Empty>
+        <Scroll><BadLinkNotice /></Scroll>
       </Body></Screen>
     );
   }

@@ -24,6 +24,23 @@ export function FailedLink() {
 }
 
 /**
+ * A link that opens nothing — unparseable, or refused by the server. Set like
+ * `KeylessLink` below, badge and all, so the two failures a link can have
+ * read as one kind of screen; only the drawing is keyless's own.
+ */
+export function BadLinkNotice() {
+  const { badLink } = copy.join;
+  return (
+    <div className="pad keyless">
+      <div className="keyless-badge"><Icon name="link" size={20} /></div>
+      <h2>{badLink.title}</h2>
+      <p>{badLink.body}</p>
+      <FailedLink />
+    </div>
+  );
+}
+
+/**
  * A link to a group with no password in it — nearly always a group screen's
  * address copied out of the browser's bar, which names the group and nothing
  * more (lib/group-link.ts). "Bad link" sent people straight back to the same
