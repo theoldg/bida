@@ -1,7 +1,8 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-proposal** — the problem is real and shipped; the fix below is not built. When
+designed, not built** — the problem is real and shipped; the fix below is
+agreed but unbuilt. When
 it is, the decision becomes an ADR and this doc shrinks to how it works.*
 
 ## The problem
@@ -61,14 +62,14 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If `/join#id.secret` installs *as itself*, the first launch of the icon is the join — no paste | **Best if it works. Experiment first** |
-| B | **`/join` in an iOS tab forks instead of joining** — see below | Build — the framing for everything else |
-| C | **Every tap on the fork copies the link**, so whichever app opens next is one Paste away | Build: the returning user's whole path, and new users' fallback if A fails |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If `/join#id.secret` installs *as itself*, the first launch of the icon is the join — no paste | **Best if it works. Experiment first** — its answer decides the tutorial's last step |
+| B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Decided |
+| C | **The tap that leads to installing copies the link**, so the app is one Paste away | Decided: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
 | F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |
 | H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
-| G | **Move the tab's claim into the app** | Falls out of A or C for free if the claim rides with the link (below) |
+| — | **A third "Open in bida" button on the join screen** | Dropped: the tutorial's copied variant serves the regular |
 
 ### A, in detail — the experiment
 
@@ -92,57 +93,65 @@ Consequences if it works: that icon opens that group on every cold launch.
 which is arguably right. A second group still comes in by Paste link. The
 secret sits in the home-screen bookmark — on the phone that already holds it.
 
-### Carrying the claim across
+## The design
 
-Whichever path moves the link into the app can carry *who you are* with it —
-`#id.secret.memberId`, set only on the hand-off URL, never on the shared invite.
-The app then claims on arrival and the tab never publishes a claim at all if
-the join screen asks to install *before* asking who you are (B). One person,
-one claim.
+Everything here is **iOS tab only** (`offerFrom` → `manual`). Android and the
+home-screen app are unchanged. Wording is drafted in `copy.ts` when built, not
+here.
 
-## Proposed flow: `/join` in an iOS tab asks before it joins
+### `/install` — the tutorial, shared
 
-Today the tab joins on arrival. That is wrong for both people it can't tell
-apart: a new user's first claim lands in storage that is about to be left
-behind, and a regular with the app gets a second copy of the group in a tab.
-So in an iOS tab only (Android and the home-screen app are unchanged), `/join`
-saves nothing and offers three rows, each a tap that **copies the link first**:
+A route of its own, in `/about`'s register: eyebrows over short prose, no cards.
+It carries three things, in this order:
 
-1. **Open in bida** — for the regular. "Copied. Open bida and tap Paste link."
-2. **Add bida to your home screen** — for the new user. The share-sheet steps,
-   drawn as the nudge draws them; with A, the icon then opens the group, and
-   without it the copy is waiting for Paste link.
-3. **Just look** — joins in the tab, with the week's warning.
+1. **Why** — this browser forgets your groups after a week unused; the
+   home-screen app doesn't.
+2. **It starts empty** — the app can't see this browser's storage; groups come
+   over by their link.
+3. **How** — the share glyph, then Add to Home Screen, then open bida.
 
-The order is the one open decision below. The tab may remember which row was
-taken last and lead with it — a hint that evicts with everything else, which
-costs only a return to the default.
+**The copied variant** (`/install?copied`) leads with *link copied — already
+have bida? open it and tap Paste link*, and adds Paste link as the last step.
+That line is what serves the regular, who can't be told apart from a newcomer.
+The copy happens on the tap that navigates here — iOS only writes the clipboard
+inside a user gesture — and goes through `formatJoinLink`, never the address
+bar. Back is the only exit: the way forward is out of the browser.
 
-The two journeys, then:
+### Home — the banner
 
-- **New:** invite → fork → Add to home screen → Share → Add → tap the icon →
-  the group (A) or Paste link (C) → who are you.
-- **Regular, second group:** invite → fork → Open in bida → switch to the app →
-  Paste link → Paste bubble → who are you. Still a paste — nothing on iOS
-  carries a link into a running web app — but it is *said* at the moment it is
-  needed, by the screen the person is already looking at, instead of being
-  something to know.
+A card at the top of the groups list, linking to `/install`, **shown only once
+the tab holds a group**. An empty home is someone looking around: Quick split
+stores nothing and is the right way to try bida, and a visitor won't install
+an app sight unseen. Once a group is in the tab, "this browser will forget it"
+is true and worth saying at the top rather than the foot. It replaces the
+install nudge in a tab; the nudge stays as it is elsewhere.
 
-In the app nothing changes: **Paste link** is already a start tile that stays
-in reach under a long list ([frontend.md](frontend.md#one-navigation)).
+### `/join` — the choice, before "who are you"
+
+A full screen with two buttons, drawn before the claim gate:
+
+- **Install first** — `.btn-lg`, ink. Copies the link, opens `/install?copied`.
+- **Continue in the browser** — outlined, and its own label carries the cost:
+  this browser forgets the group after a week unused, **and opening the invite
+  link again brings it back**. Not "locked out" — nothing is lost that the link
+  in the chat can't restore, and scaring the casual user off the path that
+  suits them is the wrong trade.
+
+The key is saved and the group pulled *behind* the screen, so its title can be
+the group's name — an invitation, not a wall. Nothing is published until a name
+is picked, so choosing Install first leaves an unclaimed copy in the tab that
+evicts harmlessly: one person, one claim. A tab that already holds this group,
+or already chose to continue for it, skips the screen.
 
 ## Open questions for the owner
 
-- Which row leads the fork: **Add to home screen** (most arrivals are new) or
-  **Open in bida** (a regular joins more groups than a newcomer)? And does
-  "Just look" exist at all?
-- With A, a regular who picks the wrong row installs a second icon. Acceptable,
-  or does the install row warn "already have bida? use the row above"?
-- Is an icon that always opens *one* group acceptable, or must the icon open
-  the groups list after the first launch (then A needs a "consumed" flag in the
-  app's storage)?
-- Does a tab that already holds groups get nagged harder than the foot-of-list
-  nudge — e.g. a banner once a group is a week old?
+- Does the home banner fold like the nudge, or stand until the phone installs?
+- Does **New group** in a tab get the same choice as `/join`? Its key exists
+  nowhere but that tab until the link is shared — worse than joining.
+- A tab holding several groups brings them over one paste at a time. Is
+  re-opening each invite from the chat enough?
+- Safari's "Add to Dock" web apps on a Mac have the same split storage and the
+  same week; `looksIos` excludes a real Mac. In scope?
 
 ## Gotchas
 
