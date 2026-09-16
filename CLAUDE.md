@@ -75,8 +75,8 @@ pnpm session && pnpm check
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
   runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
-  typecheck, tests and the static export build, ~45s. Nothing else gates a
-  push, so anything you want caught belongs in it.
+  typecheck, tests and the static export build — five stages at once, ~30s.
+  Nothing else gates a push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
   photographs it — [testing.md](docs/testing.md). A push to `dev` auto-deploys
   to the dev Worker; production moves when the owner fast-forwards `main` —

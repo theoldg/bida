@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check        # links · rules · typecheck · tests · export build — pre-push, ~45s
+pnpm check        # links · rules · typecheck · tests · export build — pre-push, ~30s
 pnpm verify       # every browser check against a real build, ~60s
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
@@ -35,6 +35,13 @@ in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for
 a fourth rule is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose.
+
+**Its five stages run at once** (`scripts/check.mjs`), because none of them
+reads what another writes — so the gate costs the slowest one, the build, and
+not the sum. Each keeps its output instead of printing it: a pass is five lines
+and a digest, a failure spills only the stages that failed and names the
+`pnpm run <stage>` that reproduces each alone. Nothing stops at the first
+failure, so one run tells you everything that is broken.
 
 The flip side: **the browser checks below gate nothing**, so one can go red and
 stay red. `pnpm entries` spent a commit asserting a string the copy had since
