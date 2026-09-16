@@ -1,19 +1,17 @@
 /**
- * "A new version is ready" — a waiting service worker, and the one gesture that
- * takes it.
+ * A new build, taken as soon as it is safe to.
  *
- * `public/sw.js` never calls `skipWaiting` itself, and that decision is the
- * whole reason this file exists. Activating mid-session deletes the cache the
- * open page is being served from, and that build is already gone from the
- * server, so the next chunk it lazily asks for is a 404. The new worker
- * therefore sits in `waiting` until every client of the origin has closed.
+ * `public/sw.js` activates itself the moment a new build is fully precached, and
+ * keeps the previous build's cache for the pages already running it. This file
+ * is the other half: a page that just had the ground change under it reloads
+ * onto the new build — at once if nobody has touched it yet, otherwise the next
+ * time it comes back to the foreground, so nothing half-typed vanishes.
  *
- * "Which on a phone is constantly" turned out to be false. One forgotten
- * browser tab on the same origin is a client, and it pins the old worker for as
- * long as it lives; the installed app is then stuck on an old build with
- * nothing on screen to say so, and no way to ask for the new one. So: notice
- * the waiting worker, say so, and let a tap discard this page. A reload is what
- * makes activating safe — and here it is the person asking for it.
+ * It used to be a tap. The worker waited for every client of the origin to
+ * close, and on iOS Safari that is close to never: tabs, and the browser, live
+ * through what a person thinks of as quitting, so people killed Safari over and
+ * over to get a deploy. The offer is still drawn in the installed app for a page
+ * that is being used when the update lands (`components/update.tsx`).
  */
 
 import { mark } from "./diag";
@@ -22,37 +20,20 @@ import { mark } from "./diag";
 export type UpdateState =
   /** Running the newest build we know of. */
   | "none"
-  /** A worker has installed and is waiting for this page to go. */
+  /** A new build took over; this page is still the old one until it reloads. */
   | "ready"
   /** The tap happened; the reload is on its way. */
   | "applying";
 
-let waiting: ServiceWorker | undefined;
+let stale = false;
 let applying = false;
 let started = false;
+/** Whether the person has done anything on this page a reload would interrupt. */
+let touched = false;
 const listeners = new Set<() => void>();
 
 function announce(): void {
   for (const listener of listeners) listener();
-}
-
-/**
- * A worker only counts once it is `installed` *and* something is already
- * controlling the page. Without the second test this fires on the very first
- * registration, which is not an update — it is the app arriving.
- */
-function offer(worker: ServiceWorker | null | undefined): void {
-  if (!worker || worker.state !== "installed") return;
-  if (!navigator.serviceWorker.controller) return;
-  if (waiting !== worker) mark("sw.waiting");
-  waiting = worker;
-  announce();
-}
-
-/** Follow a worker that is still installing to whatever it becomes. */
-function watch(worker: ServiceWorker | null): void {
-  if (!worker) return;
-  worker.addEventListener("statechange", () => offer(worker));
 }
 
 /**
@@ -63,37 +44,33 @@ export function registerServiceWorker(): void {
   if (started || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   started = true;
 
+  const touch = () => {
+    touched = true;
+    window.removeEventListener("pointerdown", touch, true);
+    window.removeEventListener("keydown", touch, true);
+  };
+  window.addEventListener("pointerdown", touch, true);
+  window.addEventListener("keydown", touch, true);
+
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     // On the timeline because an update is when a second copy of the app is
     // most likely to be left behind, holding the database (lib/db/live.ts).
-    mark("sw.controllerchange", applying ? "asked for" : "another copy's update");
-    // The activation `applyUpdate` asked for: reload, as it promised to.
-    if (applying) {
-      window.location.reload();
-      return;
-    }
-    // Somebody else's tap, heard by every client of the origin — and for one
-    // that didn't ask, it is the ground going: `activate` has just deleted the
-    // cache this page is running out of. Carrying on is what a person sees as
-    // a group screen turning into "No group" with no tabs on it
-    // (docs/frontend.md#gotchas), so this page goes too, gently.
-    reloadWhenSeen();
+    mark("sw.controllerchange", touched ? "reload on resume" : "reload now");
+    if (applying) return;
+    stale = true;
+    announce();
+    // The worker serves this page its own build for now (`previousFor` in
+    // sw.js), but only until the worker is next restarted without its record,
+    // or the next deploy — so it goes as soon as going costs nothing.
+    if (!touched && document.visibilityState === "visible") window.location.reload();
+    else reloadOnResume();
   });
 
   navigator.serviceWorker.register("/sw.js").then((registration) => {
-    // Three ways to arrive at the same worker, and all three are needed. It may
-    // already be waiting — installed during an earlier launch and sitting there
-    // ever since, which is the common case on the phone this was written for.
-    // It may be mid-install right now, having been started by this very
-    // navigation before our listener existed. Or it may not have appeared yet.
-    offer(registration.waiting);
-    watch(registration.installing);
-    registration.addEventListener("updatefound", () => watch(registration.installing));
-
-    // The browser revalidates `sw.js` on navigation, but an installed app is
-    // resumed far more often than it is launched: it navigates once and then
-    // lives in the background for days. Asking again each time it comes back to
-    // the front is what makes the check happen on a phone at all.
+    // The browser revalidates `sw.js` on navigation, but an installed app — and
+    // a Safari tab — is resumed far more often than it is launched. Asking again
+    // each time it comes back to the front is what makes the check happen on a
+    // phone at all.
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") void registration.update().catch(() => {});
     });
@@ -103,22 +80,20 @@ export function registerServiceWorker(): void {
 }
 
 /**
- * Reload a page left behind by somebody else's update — at the moment it is
- * looked at again, not the moment it is stranded.
- *
- * Hidden is precisely when a reload must not happen: `beforeunload` can't put
- * its question up, so the half-typed expense on `/g/entry/edit` would go
- * without being asked about. Coming back is both safe and the honest moment —
- * on a phone the stranded client is the app in the background, and a reload as
- * it is resumed is the launch it already looks like.
+ * Reload the next time this page is brought back, never while it is hidden:
+ * `beforeunload` can't put its question up then, so the half-typed expense on
+ * `/g/entry/edit` would go without being asked about. Coming back is both safe
+ * and the honest moment — on a phone it is the app being resumed, and a reload
+ * then is the launch it already looks like.
  */
-function reloadWhenSeen(): void {
-  if (document.visibilityState === "visible") {
-    window.location.reload();
-    return;
-  }
+function reloadOnResume(): void {
+  let hidden = document.visibilityState !== "visible";
   const seen = () => {
-    if (document.visibilityState !== "visible") return;
+    if (document.visibilityState !== "visible") {
+      hidden = true;
+      return;
+    }
+    if (!hidden) return;
     document.removeEventListener("visibilitychange", seen);
     window.location.reload();
   };
@@ -133,28 +108,13 @@ export function subscribeUpdate(listener: () => void): () => void {
 /** A string, not an object: `useSyncExternalStore` compares snapshots by identity. */
 export function updateState(): UpdateState {
   if (applying) return "applying";
-  return waiting ? "ready" : "none";
+  return stale ? "ready" : "none";
 }
 
-/**
- * Take the new build: tell the waiting worker to activate, and reload when it
- * has. The reload is the point — it is what leaves nothing behind that could
- * ask for a chunk from the cache `activate` is about to delete.
- */
+/** Take the new build now, rather than on the next resume. */
 export function applyUpdate(): void {
   if (applying) return;
   applying = true;
   announce();
-
-  const worker = waiting;
-  // Nothing waiting means it activated by itself between the offer and the tap.
-  // A reload is still the whole answer; it is only the message that is moot.
-  if (!worker) {
-    window.location.reload();
-    return;
-  }
-  worker.postMessage({ type: "skip-waiting" });
-  // `controllerchange` is the signal. This is the floor under it, for a worker
-  // that never answers — a second reload can't happen, the first unloads us.
-  window.setTimeout(() => window.location.reload(), 3000);
+  window.location.reload();
 }

@@ -314,7 +314,7 @@ the only launch worth recording. Timed spans around the four things that can
 make a screen wait: `db.open`, each live read by name, `rebuild`, and
 `sync.pushpull` (plus `heal`), and each write — `sync.commit`, `append`,
 `device.write` — since a write queued behind a lock is what every read then
-queues behind; `sw.waiting` and `sw.controllerchange` mark updates. One clock for all of them, because the question
+queues behind; `sw.controllerchange` marks an update. One clock for all of them, because the question
 is never "was this slow" but "what was it waiting for", and that is always an
 overlap.
 
@@ -467,26 +467,29 @@ after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
 `CACHE_VERSION` to bump — and the three things that make cache-first safe are
 [ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
 scripts/offline-check.mjs` after touching either file: it walks every screen
-with the network cut, then installs a deploy over a half-dead network and takes
-a good one on demand.
+with the network cut, then installs a deploy over a half-dead network, and a good one
+across three open pages.
 
-**Taking a new build is a tap, because it cannot be automatic.** A worker that
-activated on its own would delete the cache the open page is being served from,
-so `sw.js` only ever does it when asked: `lib/update.ts` registers the worker,
-watches for a successor reaching `installed`, and re-checks whenever the app
-comes back to the foreground — an installed app is resumed far more often than
-it is launched. `components/update.tsx` draws the offer at the foot of the
-groups list, **and only in the installed app**: a tab has the browser's own
-reload button, and closing it is what lets the waiting worker activate by
-itself. So the two self-referential cards never share the screen — the install
-nudge shows on exactly the phones the update nudge doesn't. The tap posts `{ type: "skip-waiting" }` and reloads on
-`controllerchange`, so nothing is left that could ask for the cache `activate`
-is about to drop. **That reload is served while the old cache still exists**, so
-every read in `sw.js` is scoped to `CACHE_NAME` (Gotcha below). Every *other*
-client of the origin hears that activation too, and is left running a build
-whose cache has just gone; each reloads itself the next time it is looked at
-(Gotcha below). The offer is not dismissible and remembers nothing: take it
-now, or find it there next launch.
+**A new build is taken as soon as it is safe, by itself.** `sw.js` calls
+`skipWaiting` the moment the whole build is precached, rather than waiting for
+the last client of the origin to close — on iOS Safari tabs and the browser
+outlive what a person thinks of as quitting, so waiting meant killing Safari
+over and over to get a deploy. `activate` keeps the **previous** build's cache
+and writes down which pages were open (in memory and in the `bida-legacy`
+cache, since the browser stops idle workers): those pages keep being served
+their own build, so their next tap can't mix an old router with a new payload.
+Everything older is deleted.
+
+On the page side, `lib/update.ts` hears `controllerchange` and reloads — at
+once if the page hasn't been touched since it loaded, otherwise the next time it
+comes back to the foreground, never while hidden (`beforeunload` can't ask about
+a half-typed expense then). It also re-checks `sw.js` on every resume: an
+installed app is resumed far more often than it is launched. In between,
+`components/update.tsx` offers a Reload at the foot of the groups list, **only in
+the installed app** — a tab has the browser's own, and the install nudge shows on
+exactly the phones this doesn't. So an update lands on the second look at the
+app, not after a relaunch. `offline-check` holds three pages open across a
+deploy: untouched, in use, and on a group.
 
 ## Every money field is `components/amount-input.tsx`
 
@@ -568,33 +571,27 @@ so the static export ships the full line and the browser narrows it.
 - `output: 'export'` disallows route handlers, `next/image` optimisation, ISR,
   middleware and dynamic params. Needing one is a change to ADR-0004.
 - **A waiting service worker waits on the whole origin, not on your app.** One
-  forgotten browser tab on the same domain is a client, and it pins the old
-  build for as long as it lives — closing and reopening the installed app, and
-  even clearing its storage, changes nothing, while an incognito window shows
-  the new build and makes it look like a deploy problem. It isn't: it is a
-  client that never went away, which is why the update is offered as a tap
-  (see [PWA](#pwa)) rather than waited for.
+  forgotten tab on the same domain pins the old build for as long as it lives,
+  and on iOS Safari even killing the browser rarely clears it — while an
+  incognito window shows the new build and makes it look like a deploy problem.
+  That is why the worker no longer waits (see [PWA](#pwa)).
 - **`caches.match` searches every cache in the origin, not yours.** And there
   is always another one to find: `controllerchange` fires *before* the new
-  worker's `activate` handler runs, so the reload the update offer asks for is
-  answered while the previous build's cache is still being deleted. Unscoped,
+  worker's `activate` handler runs, so a page reloading onto the new build is
+  answered while the previous build's cache is still there. Unscoped,
   the new worker served that reload an old shell — or, worse, an old `/g.txt`,
   whose client references name chunks this build doesn't have. The screen then
   drew with pieces of it missing (the bottom nav among them) and stayed that
   way until the app was launched again, because the router keeps the payload it
-  was handed. Every read goes through `lookup()`, which opens `CACHE_NAME`
-  first; `offline-check` plants a cache the precache never heard of and fails
+  was handed. Every read goes through `lookup()`, which opens `CACHE_NAME` — or,
+  for a page still running the previous build, that build's cache; `offline-check` plants a cache the precache never heard of and fails
   on anything but a 404.
-- **The client that didn't tap is the one that breaks.** `controllerchange`
-  reaches every client of the origin, and for the ones that didn't ask it is not
-  news — `activate` has just deleted the cache they are running out of. The next
-  tap there fetches the new build's `/g.txt`, Next refuses a payload from a build
-  it didn't boot with and hands the browser a plain navigation to the route,
-  dropping the query string — which is where the group id lives. The screen
-  lands on "No group": no ledger, no balances, no bottom nav to get back with.
-  So an unasked-for `controllerchange` reloads the page too, but when it is next
-  *visible* — never while hidden, where `beforeunload` cannot ask about a
-  half-typed expense. `offline-check` keeps a second client open across the tap.
+- **A page left on the old build breaks on its next tap.** It fetches the new
+  build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
+  navigates to the bare route, dropping the query string — where the group id
+  lives. The screen lands on "No group" with no bottom nav. So `sw.js` serves
+  such a page its own build's cache until it reloads (`previousFor`), and
+  `offline-check` taps through a group on one across a deploy.
 - **An installed Android app's status bar is the manifest's `theme_color`, and
   nothing can change it after install.** It is compiled into the app when the
   browser builds it, so it cannot be media-scoped and no meta tag reaches it —

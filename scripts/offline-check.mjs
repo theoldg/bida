@@ -130,113 +130,130 @@ const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.sta
 blocked.add(ASSET_TO_DROP);
 swRevision = "flakydeploy01";
 /** `update()` resolves before the install settles, so watch the worker itself. */
-const waiting = await page.evaluate(async () => {
+const settled = await page.evaluate(async () => {
   const reg = await navigator.serviceWorker.getRegistration();
   await reg.update().catch(() => {});
-  for (let i = 0; i < 60 && !reg.waiting; i++) {
-    if (reg.installing?.state === "redundant") return null;
-    await new Promise((ok) => setTimeout(ok, 500));
-  }
-  return reg.waiting?.state ?? null;
+  for (let i = 0; i < 60 && reg.installing; i++) await new Promise((ok) => setTimeout(ok, 500));
+  return !reg.installing;
 });
-report(waiting === null, "an incomplete precache fails the install", waiting && `a worker is ${waiting}`);
-report((await page.evaluate(() => caches.keys())).includes(cacheBefore), "the working cache survives it");
-// The damage would only show one launch later: a waiting worker activates when
-// the last page closes, and activating is what deletes the good cache.
+const afterFlaky = await page.evaluate(() => caches.keys());
+report(settled && !afterFlaky.includes("bida-shell-flakydeploy01"),
+  "an incomplete precache fails the install, and leaves nothing behind", afterFlaky.join(", "));
+report(afterFlaky.includes(cacheBefore), "the working cache survives it");
+// The worker activates the moment it installs, and activating is what deletes
+// the caches it doesn't need — so a hole here would show on the very next launch.
 await page.close();
 page = await ctx.newPage();
 await ctx.setOffline(true);
 await tap("still loads offline on the next launch", () => openGroupsList(page, base), ".rows a.row");
 
-// ---- a deploy the person is offered, and takes ---------------------------
-// The worker never activates on its own while a page is open (public/sw.js), so
-// a client that outlives the app — a forgotten tab on the same origin — pins
-// the old build indefinitely, which is how an installed phone gets stuck on a
-// build with nothing on screen to say so. `components/update.tsx` is the way
-// out, and only if the tap really activates the worker and lands on its cache.
-console.log("\nupdating on demand:");
+// ---- a deploy that arrives by itself ------------------------------------
+// The worker activates as soon as a new build is precached (public/sw.js): it
+// used to wait for every client of the origin to close, which on iOS Safari
+// meant killing the browser over and over to get a deploy. So three pages are
+// open across it. One untouched, which reloads straight onto the new build.
+// One being used, in the installed app, which must not vanish under the person
+// and is offered the reload instead. And one on a group, which stays on its own
+// build — served from that build's kept cache — until it is next resumed.
+console.log("\nupdating:");
 await ctx.setOffline(false);
 blocked.delete(ASSET_TO_DROP);
-swRevision = "gooddeploy01";
-// From here on the phone is the installed app, because that is the only place
-// the offer is drawn: a tab has a reload button already, and a standalone
-// window has neither that nor a worker that activates by itself.
+swRevision = null;
+const oldShell = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
+
+const mark = (p) => p.evaluate(() => { window.__beforeTheUpdate = true; });
+const touch = (p) => p.evaluate(() => window.dispatchEvent(new PointerEvent("pointerdown")));
+const reloaded = async (p) => {
+  try {
+    await p.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: 10000 });
+    return true;
+  } catch { return false; }
+};
+
+// The offer is drawn only in the installed app: a tab has a reload button already.
 await asInstalledApp(page);
 await openGroupsList(page, base);
-// A second client of the *old* worker, open across the tap: the case that made
-// waiting-forever possible. It must not hold the update up — and it must not be
-// left behind by it either, so this one sits on a group, where being left behind
-// shows.
+await mark(page);
+await touch(page);
+
 const straggler = await ctx.newPage();
 await straggler.goto(`${base}/g?id=${g}`);
 await straggler.waitForSelector(".bottomnav a");
-// Survives everything but a reload, which is the whole question below.
-await straggler.evaluate(() => { window.__beforeTheUpdate = true; });
-await page.bringToFront();
+await mark(straggler);
+await touch(straggler);
+// A file only the old build's cache holds: which build answers is then visible.
+await straggler.evaluate((name) =>
+  caches.open(name).then((c) => c.put("/legacy-probe.txt", new Response("OLD"))), oldShell);
+
+// Opened by URL, not by `openGroupsList`: its Back tap would count as a touch.
+const fresh = await ctx.newPage();
+await fresh.goto(`${base}/g?id=${g}`);
+await fresh.waitForSelector(".bottomnav a");
+await mark(fresh);
 
 const reload = page.getByRole("button", { name: "Reload" });
+await page.bringToFront();
+// Only now: the browser rechecks `sw.js` on every navigation, so a deploy served
+// any earlier would already be the build the three pages above booted on.
+swRevision = "gooddeploy01";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
-await tap("a waiting worker is offered on the groups list",
-  () => reload.waitFor({ state: "visible", timeout: 20000 }), ".card");
+await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: 20000 }), ".card");
+report(await reloaded(fresh), "an untouched page reloads onto it by itself");
+report(await page.evaluate(() => !!window.__beforeTheUpdate), "a page in use is not reloaded under the person");
 
-try {
-  await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
-  // The reload is a launch, so it lands in the group again; the list it came
-  // from is where the check reads the shell back off.
-  await openGroupsList(page, base);
-  await page.waitForSelector(".rows a.row", { timeout: 8000 });
-  report(true, "tapping it reloads onto the new build");
-} catch {
-  report(false, "tapping it reloads onto the new build", `at ${page.url().replace(base, "")}`);
-}
-
-const shells = (await page.evaluate(() => caches.keys())).filter((k) => k.startsWith("bida-shell-"));
-report(shells.includes(`bida-shell-${swRevision}`), "the new build's cache is the live one",
-  shells.join(", "));
-report(shells.length === 1, "and the old one is gone with it", shells.join(", "));
-report(await page.evaluate(() => !!navigator.serviceWorker.controller),
-  "the new worker controls the page");
-// Nothing is waiting any more, so there is nothing left to offer.
-report(await reload.count() === 0, "the offer is spent");
-// A worker may only read its own cache. `activate` runs *after* the reload the
-// tap asks for, so the previous build's cache is still there while that reload
-// is being served — and an unscoped `caches.match` searched it, handing the new
-// worker an old shell or an old `/g.txt` and drawing a screen with pieces of it
-// missing. A cache the precache has never heard of stands in for it: anything
-// but a 404 means this worker read a cache that isn't CACHE_NAME.
-const probe = await page.evaluate(async () => {
-  const cache = await caches.open("bida-shell-stale");
-  await cache.put("/stale-probe.txt", new Response("STALE"));
-  const status = await fetch("/stale-probe.txt").then((r) => r.status).catch(() => 0);
-  await caches.delete("bida-shell-stale");
-  return status;
-});
-report(probe === 404, "a stale cache is never read from", `/stale-probe.txt answered ${probe}`);
-
-// The client that did *not* tap Reload. `activate` has deleted the cache it is
-// running out of and the server has moved on, so its next tap fetches the new
-// build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
-// navigates to the bare route — dropping the `?id=` this app keeps the group in.
-// What a person saw was a group screen that became "No group", with the ledger
-// and balances tabs gone. So it reloads instead, when it is looked at again.
-await straggler.bringToFront();
-try {
-  await straggler.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: 10000 });
-  report(true, "the client that didn't tap reloads itself when it is looked at again");
-} catch {
-  report(false, "the client that didn't tap reloads itself when it is looked at again");
-}
+// Next refuses a payload from a build it didn't boot with and navigates to the
+// bare route, dropping the `?id=` — a group screen that became "No group". So
+// until it reloads, the old page is served its own build.
+const legacyAnswer = await straggler.evaluate(() =>
+  fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
+report(legacyAnswer === "OLD", "a page still on the old build is served from that build's cache", legacyAnswer);
 await straggler.locator("a[href*='tab=balances']").first().click().catch(() => {});
 try {
   await straggler.waitForSelector(".bottomnav a", { timeout: 8000 });
   const kept = new URL(straggler.url()).searchParams.get("id") === g;
   report(kept && await straggler.locator(".bottomnav a").count() === 2,
-    "and still knows which group it was on", straggler.url().replace(base, ""));
+    "and still knows which group it is on", straggler.url().replace(base, ""));
 } catch {
-  report(false, "and still knows which group it was on", straggler.url().replace(base, ""));
+  report(false, "and still knows which group it is on", straggler.url().replace(base, ""));
 }
+// Headless pages never go hidden, so the resume is played out by hand.
+await straggler.evaluate(() => {
+  for (const state of ["hidden", "visible"]) {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }
+});
+report(await reloaded(straggler), "and reloads onto the new build when it is resumed");
+
+try {
+  await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
+  await openGroupsList(page, base);
+  await page.waitForSelector(".rows a.row", { timeout: 8000 });
+  report(true, "tapping the offer reloads onto the new build");
+} catch {
+  report(false, "tapping the offer reloads onto the new build", `at ${page.url().replace(base, "")}`);
+}
+
+const shells = (await page.evaluate(() => caches.keys())).filter((k) => k.startsWith("bida-shell-"));
+report(shells.includes(`bida-shell-${swRevision}`), "the new build's cache is the live one", shells.join(", "));
+report(shells.length === 2 && shells.includes(oldShell),
+  "and the previous one is kept, for pages still running it", shells.join(", "));
+report(await page.evaluate(() => !!navigator.serviceWorker.controller), "the new worker controls the page");
+report(await reload.count() === 0, "the offer is spent");
+// A reloaded page is the new build's, and must never be answered from the old
+// cache: that is an old `/g.txt` naming chunks this build doesn't have.
+const probe = await page.evaluate(async () => {
+  const cache = await caches.open("bida-shell-stale");
+  await cache.put("/stale-probe.txt", new Response("STALE"));
+  const stale = await fetch("/stale-probe.txt").then((r) => r.status).catch(() => 0);
+  await caches.delete("bida-shell-stale");
+  const legacy = await fetch("/legacy-probe.txt").then((r) => r.status).catch(() => 0);
+  return `${stale}/${legacy}`;
+});
+report(probe === "404/404", "a page on the new build never reads another cache", `answered ${probe}`);
 await page.bringToFront();
 await straggler.close();
+await fresh.close();
 // And the point of all of it: the build it just took still works with no network.
 await ctx.setOffline(true);
 await tap("the new build loads offline too", () => openGroupsList(page, base), ".rows a.row");

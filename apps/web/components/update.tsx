@@ -13,18 +13,12 @@ export function useUpdateState(): UpdateState {
  * The offer to reload into a new build, at the foot of the groups list — the
  * app talking about itself, so it waits below whatever you came to read.
  *
- * **Only in the installed app.** A tab already has a reload button in the
- * browser's own chrome, and closing it is what lets the waiting worker
- * activate by itself; the standalone app has neither, which is the whole
- * reason this offer exists (lib/update.ts). Drawing it in a tab was the app
- * asking for a gesture the browser was already offering — and it put two
- * self-referential cards on the one screen that has to hold the groups list,
- * since `InstallNudge` shows on exactly the phones this now doesn't.
- *
- * It is a button rather than an automatic reload because the reload is the
- * price of activating safely (lib/update.ts), and a page that vanishes
- * mid-sentence to pay it is worse than an old build. Not dismissible: there is
- * nothing to remember — take it now or find it here next launch.
+ * A page reloads onto a new build by itself (lib/update.ts): at once if
+ * untouched, otherwise when it is next resumed. This is for the stretch in
+ * between, and **only in the installed app** — a tab has the browser's own
+ * reload button, and `InstallNudge` shows on exactly the phones this doesn't,
+ * so the two self-referential cards never share the one screen that has to hold
+ * the groups list. Not dismissible: there is nothing to remember.
  */
 export function UpdateNudge() {
   const state = useUpdateState();

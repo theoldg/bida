@@ -1,6 +1,6 @@
 # 0004 — A static export: the secret in the fragment, the whole thing precached
 
-**Status:** Accepted · 2026-08-27 · offline 2026-08-29 · updates 2026-09-06
+**Status:** Accepted · 2026-08-27 · offline 2026-08-29 · updates 2026-09-17
 
 **Context.** Next.js was a requirement, but the app is local-first: server
 rendering would fetch everything twice and break offline. That points at
@@ -35,21 +35,19 @@ cache-first** — so a launch and every tap after it paint without the network.
   what Tricount does and what people actually share. `output: 'export'` also
   forbids route handlers, `next/image` optimisation, ISR, middleware and dynamic
   params; nothing in the MVP wants them.
-- **No `skipWaiting` the worker decides on itself.** Cache-first makes a
-  mid-session activation unrecoverable rather than slow: activating deletes the
-  old cache, and the next chunk the running page asks for is gone from the
-  server too. So the new worker waits — but "for one launch", the price this
-  ADR first quoted, is not the real one. It waits for the *last client of the
-  origin*, and a forgotten browser tab is a client that outlives every launch;
-  an installed phone can sit on an old build indefinitely with nothing on
-  screen to say so. The waiting worker is therefore offered to the person
-  instead: `lib/update.ts` notices it, `components/update.tsx` says so at the
-  foot of the groups list, and a tap posts `skip-waiting` and reloads. The
-  reload is what makes activating safe, and asking is what makes it the
-  person's to spend.
+- **The worker activates itself as soon as a build is fully precached**, and
+  keeps the previous build's cache for the pages still running it. Cache-first
+  makes a bare mid-session activation unrecoverable — the old page's next chunk
+  or payload is gone from the server too — so the first answer was to wait for
+  the last client to close and offer a Reload tap. On iOS Safari that client
+  essentially never closes, and people killed the browser repeatedly to get a
+  deploy. Keeping one old cache (a few MB) is the price of taking updates
+  eagerly; the page reloads itself onto the new build as soon as that is
+  harmless ([frontend.md](../frontend.md#pwa)).
 - The precache is all-or-nothing — one retry for stragglers, then the install
   fails and the old worker keeps running. A partial cache would strand an
-  installed app on a build it can't paint. If the export outgrows what a phone
+  installed app on a build it can't paint, and a failed install deletes its own
+  half-filled cache so the next `activate` can't mistake it for the previous build. If the export outgrows what a phone
   should hold on first visit, split the manifest; don't go back to a hand list.
 - `scripts/offline-check.mjs` is the regression test — run it after touching
   `sw.js`.

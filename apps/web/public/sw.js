@@ -39,7 +39,7 @@ function routeWithQuery(url) {
  * The only cache this worker may read is its own, and `caches.match` is not
  * that: it searches *every* cache in the origin. There is always a moment when
  * that matters — `controllerchange` fires before this worker's `activate`
- * handler runs, so the page `applyUpdate` reloads is fetched while the previous
+ * handler runs, so a page reloaded onto this build is fetched while the previous
  * build's cache is still there to be matched, oldest first. Unscoped, the new
  * worker answered that reload out of the old cache: an old shell, or an old
  * `/g.txt`, whose client references name chunks this build doesn't have. The
@@ -47,12 +47,53 @@ function routeWithQuery(url) {
  * them — and stays that way until the app is launched again, because the router
  * holds the payload it was given. Scoped, a miss is a fetch for a file this
  * build still serves.
+ *
+ * The one exception is a page that booted on the previous build and is still
+ * open (`previousFor`): it is served out of *that* build's cache, which is the
+ * only place its chunks and payloads still exist.
  */
-function lookup(key) {
-  return caches.open(CACHE_NAME).then((cache) => cache.match(key, { ignoreSearch: true }));
+function lookup(key, cacheName = CACHE_NAME) {
+  return caches.open(cacheName).then((cache) => cache.match(key, { ignoreSearch: true }));
 }
 
-async function cacheFirst(cacheKey, request) {
+/**
+ * This worker activates by itself (see `install`), so pages that booted on the
+ * build before it are still on screen when it takes them over. Their next tap
+ * asks for that build's payload and lazily for that build's chunks — neither of
+ * which is in this cache, nor on the server any more — and a new build's
+ * payload handed to an old router is a group screen that turns into "No group".
+ * So `activate` writes down which pages those were and keeps their build's
+ * cache; until they reload (lib/update.ts sees to that) they are served from it.
+ *
+ * Kept in a cache as well as in memory because the browser stops an idle
+ * worker whenever it likes, and a page open across that must not lose its build.
+ */
+const LEGACY = "bida-legacy";
+let legacy;
+
+function legacyRecord() {
+  legacy ??= caches
+    .open(LEGACY)
+    .then((cache) => cache.match("/legacy"))
+    .then((res) => (res ? res.json() : null))
+    .then((rec) => (rec && rec.for === CACHE_NAME ? rec : { for: CACHE_NAME, cache: null, clients: [] }))
+    .catch(() => ({ for: CACHE_NAME, cache: null, clients: [] }));
+  return legacy;
+}
+
+/** The previous build's cache, if `clientId` is a page still running it. */
+async function previousFor(clientId) {
+  if (!clientId) return null;
+  const rec = await legacyRecord();
+  return rec.cache && rec.clients.includes(clientId) ? rec.cache : null;
+}
+
+async function cacheFirst(cacheKey, request, clientId) {
+  const previous = await previousFor(clientId);
+  if (previous) {
+    const old = await lookup(cacheKey, previous);
+    if (old) return old;
+  }
   const cached = await lookup(cacheKey);
   if (cached) return cached;
   const res = await fetch(request);
@@ -64,7 +105,7 @@ async function cacheFirst(cacheKey, request) {
 }
 
 /**
- * All-or-nothing, because `activate` deletes the previous cache: a precache
+ * All-or-nothing, because this worker activates the moment it installs: a precache
  * with holes replaces a complete one, and the installed app is then a build
  * that can't finish painting itself with no signal. Which is the likely case —
  * the update runs on whatever mobile data the phone had when it was last
@@ -88,28 +129,27 @@ self.addEventListener("install", (event) => {
       const cache = await caches.open(CACHE_NAME);
       const missing = await addAll(cache, await addAll(cache, ASSETS));
       if (missing.length) {
+        // Or the next `activate` takes this half-filled cache for the previous
+        // build, and keeps it in place of the one pages are really running.
+        await caches.delete(CACHE_NAME);
         throw new Error(`precache incomplete: ${missing.length} of ${ASSETS.length} missing`);
       }
+      await self.skipWaiting();
     })(),
   );
-  // Deliberately no `skipWaiting`. Serving the shell from cache is only safe if
-  // a running page can't have its build deleted out from under it: activating
-  // mid-session drops the old cache, and the next lazily-loaded chunk that page
-  // asks for is gone from the server too. So the new worker waits for the last
-  // client of the origin to close — and "on a phone that is constantly" is the
-  // one thing this file got wrong. One forgotten browser tab on the same origin
-  // is a client, and it pins the old build for as long as it lives. The waiting
-  // worker is offered to the person instead, by lib/update.ts and the `message`
-  // handler below.
+  // Activate as soon as the whole build is cached, rather than waiting for the
+  // last client of the origin to close. Waiting was how a phone stayed on an old
+  // build indefinitely: one forgotten tab pins it, and iOS Safari keeps tabs,
+  // and itself, alive across what a person thinks of as closing it. What made
+  // waiting necessary — a page open across activation losing its build — is
+  // answered by `previousFor` instead, and the page reloads onto the new build
+  // as soon as that is harmless (lib/update.ts).
 });
 
 /**
- * The one way this worker activates early, and it is never the worker's own
- * idea. `install` deliberately doesn't call `skipWaiting` — see above — because
- * the page whose cache it would delete is still on screen. This message says
- * that page has volunteered to go: `applyUpdate` in lib/update.ts sends it and
- * reloads on `controllerchange`, so by the time the old cache is gone there is
- * nothing left that needed it.
+ * `skip-waiting` is what builds before this one asked for from their update
+ * offer. This worker no longer waits, so it is only ever a no-op now — kept so
+ * that a page on such a build can still take a worker that is mid-install.
  */
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "skip-waiting") self.skipWaiting();
@@ -143,11 +183,29 @@ async function describeClients(source, port) {
   });
 }
 
+/**
+ * Pages this worker's predecessor controlled are now this worker's (no
+ * `clients.claim`: a first visit stays uncontrolled until its next launch, as
+ * before). Keep the one previous build's cache for the
+ * pages that booted on it (`previousFor`). Anything older goes: a page two
+ * builds behind has had a whole deploy's worth of chances to reload.
+ */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))),
-    ),
+    (async () => {
+      const keys = await caches.keys();
+      // `caches.keys()` is in creation order, so the newest other shell cache
+      // is the build these pages are running.
+      const previous = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
+      const open = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const rec = { for: CACHE_NAME, cache: previous, clients: open.map((c) => c.id) };
+      legacy = Promise.resolve(rec);
+      const store = await caches.open(LEGACY);
+      await store.put("/legacy", new Response(JSON.stringify(rec)));
+      await Promise.all(
+        keys.filter((k) => k !== CACHE_NAME && k !== previous && k !== LEGACY).map((k) => caches.delete(k)),
+      );
+    })(),
   );
 });
 
@@ -179,11 +237,11 @@ self.addEventListener("fetch", (event) => {
   // Everything an installed app needs is precached under a revision that
   // changes with the build, so it is all cache-first: a launch and every tap
   // after it paint without waiting on the network, online or off. A new deploy
-  // arrives when the new worker installs — the browser revalidates sw.js
-  // itself — not by making every screen pay a round trip on the chance there is
-  // one.
+  // arrives when the new worker installs — the browser revalidates sw.js on
+  // navigation, and lib/update.ts asks again on every resume — not by making
+  // every screen pay a round trip on the chance there is one.
   if (isPayload(url)) {
-    event.respondWith(cacheFirst(url.pathname, request));
+    event.respondWith(cacheFirst(url.pathname, request, event.clientId));
     return;
   }
 
@@ -198,5 +256,5 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Hashed, immutable build output, plus icons and the manifest.
-  event.respondWith(cacheFirst(request, request));
+  event.respondWith(cacheFirst(request, request, event.clientId));
 });
