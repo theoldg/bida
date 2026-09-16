@@ -34,6 +34,10 @@ export default function InstallPage() {
               <h4>{page.empty.title}</h4>
               <p>{page.empty.body(browser)}</p>
             </section>
+            <section className="aboutsect">
+              <h4>{page.fiddly.title}</h4>
+              <p>{page.fiddly.body}</p>
+            </section>
           </div>
         </Scroll>
       </Body>

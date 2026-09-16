@@ -198,6 +198,11 @@ export const copy = {
         body: (browser: string | undefined) =>
           `The home-screen app can’t see ${lower(browser)}’s groups. Copy a link and paste it there to continue.`,
       },
+      /** Owns the clunkiness without an apology: it is the platform, not the app. */
+      fiddly: {
+        title: "Why so fiddly",
+        body: "bida is a web app: no App Store, nothing to download. Apple just doesn’t make adding one to the home screen easy.",
+      },
     },
   },
 

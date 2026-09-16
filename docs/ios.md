@@ -108,6 +108,7 @@ tell. From the list it carries, in this order:
    of the precache).
 3. **It starts empty** — the app can't see Safari's groups; copy a link and
    paste it there to continue.
+4. **Why so fiddly** — bida is a web app, and Apple doesn't make adding one easy.
 
 The same page whether it came from the banner or the join screen. Back is a
 plain back, and the only exit: the way forward is out of the browser.
