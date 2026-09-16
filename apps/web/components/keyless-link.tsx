@@ -15,7 +15,12 @@ const onHashChange = (then: () => void) => {
  */
 export function FailedLink() {
   const link = useSyncExternalStore(onHashChange, failedLink, () => "");
-  return link ? <code className="failedlink">{link}</code> : null;
+  return link ? (
+    <div className="failedlink">
+      <span>{copy.join.linkUsed}</span>
+      <code>{link}</code>
+    </div>
+  ) : null;
 }
 
 /**
@@ -43,7 +48,6 @@ export function KeylessLink() {
           <div className="keyless-badge"><Icon name="link" size={20} /></div>
           <h2>{keyless.empty}</h2>
           <p>{keyless.body}</p>
-          <FailedLink />
 
           <div className="keyless-fig" aria-hidden="true">
             <div className="keyless-bar">
@@ -60,6 +64,7 @@ export function KeylessLink() {
               ))}
             </div>
           </div>
+          <FailedLink />
         </div>
   );
 }

@@ -320,6 +320,8 @@ export const copy = {
       title: "Bad link",
       body: "Ask whoever shared it to send it again.",
     },
+    /** Over the link a failed screen prints (`FailedLink`). */
+    linkUsed: "Link used",
     /**
      * A link to a group with no password in it — nearly always the address
      * bar copied off a group screen, which names the group and nothing more
