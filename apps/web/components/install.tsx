@@ -114,8 +114,7 @@ function Offer() {
  * An iOS tab's card atop the groups list rather than at its foot: once the tab
  * holds a group, "this browser will clear it" is true and worth reading first.
  * The caller draws it only then — an empty home is someone looking around, and
- * Quick split stores nothing to lose. The how lives on `/install`, which the
- * join choice shares.
+ * Quick split stores nothing to lose. The how lives on `/install`.
  *
  * **It folds, like the nudge**, on the same device flag (an iOS tab never draws
  * the nudge, so the two can't disagree): someone who has chosen to stay in the

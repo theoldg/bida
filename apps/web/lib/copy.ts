@@ -365,25 +365,6 @@ export const copy = {
       /** The drawn top bar's title — any group, not one of yours. */
       groupName: "Your group",
     },
-    /**
-     * An iOS tab's choice before joining (docs/ios.md). Read by someone who has
-     * seen nothing of the app yet, so each button carries its own one-line
-     * reason rather than a paragraph up top: an install ask with none of that
-     * reads as the app wanting something.
-     */
-    choice: {
-      /** Until the group has arrived and can be named. */
-      unnamed: "You’re invited",
-      join: (name: string | undefined) => `Join ${name ?? "the group"}`,
-      install: "Add to home screen",
-      installHint: "Keep everything on this phone, forever. No download required.",
-      browser: (browser: string | undefined) => `Continue in ${browser ?? "the browser"}`,
-      browserHint: (browser: string | undefined) => `${upper(browser)} may forget the group. The link always re-opens it.`,
-      alreadyTitle: "Already on home screen?",
-      already: "Use this link in the app:",
-      copyLink: "Copy",
-      copied: "Copied",
-    },
     joining: {
       title: "Joining…",
       body: "Finishes by itself once the other phone syncs.",
@@ -395,6 +376,14 @@ export const copy = {
     addPlaceholder: "Add your name",
     continueAs: (name: string) => `Continue as ${name}`,
     pickFirst: "Pick your name",
+    /** Under the list, in an iOS tab: a tapped link always opens the browser,
+     *  so someone with bida on the home screen has to hand it the link. */
+    inApp: {
+      title: "Have the app?",
+      body: (browser: string | undefined) => `Links open in ${lower(browser)}. Open the app and paste it.`,
+      copyLink: "Copy",
+      copied: "Copied",
+    },
   },
 
   // ------------------------------------------------------------- the group

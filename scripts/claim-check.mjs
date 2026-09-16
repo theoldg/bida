@@ -194,6 +194,9 @@ const g = new URL(page.url()).searchParams.get("id");
 await page.goto(`${base}/g/claim?id=${g}`);
 await page.waitForSelector(".rows button.row");
 report(await page.locator(".rmark svg").count() === 1, "re-opening it ticks whoever this phone is");
+// "Have the app?" is an iOS tab's (pnpm homescreen); this browser's taps
+// already reach wherever the app is.
+report(await page.getByText("Have the app?").count() === 0, "and offers no link to paste elsewhere");
 
 await field("Add your name").fill("Ola");
 await page.waitForTimeout(150);

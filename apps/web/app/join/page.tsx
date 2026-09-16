@@ -3,18 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
-import { Icon } from "../../components/icons";
-import { carryThenInstall, useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
-import { useDevice, useSyncHealth } from "../../lib/hooks";
+import { useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
-import { formatJoinLink, isKeylessFragment, parseJoinLink, route, type JoinLink } from "../../lib/group-link";
-import { tick } from "../../lib/haptics";
-import { asksBeforeJoin } from "../../lib/install";
+import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
 
 /**
  * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the
@@ -37,11 +33,6 @@ import { asksBeforeJoin } from "../../lib/install";
  * just opens the group. (It is not `/g/members` either way: that is a
  * management screen, and a new arrival dropped on it has "back" as its only
  * way onward.)
- *
- * An iOS tab stops first, to ask whether to install instead (`JoinChoice`,
- * docs/ios.md). The key is saved and the group pulled behind that question, so
- * it can name the group — and nothing is claimed until a name is picked, so a
- * tab left for the home-screen app holds only a copy that evicts harmlessly.
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -56,9 +47,6 @@ function JoinScreen() {
   // worth a sentence of its own rather than "bad link" (`copy.join.keyless`).
   const [keyless, setKeyless] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
-  // "Continue in Safari", for this opening of this link only. Not kept: a
-  // group opened again unclaimed — never named, or forgotten — asks again.
-  const [continuedFor, setContinuedFor] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const read = () => {
@@ -106,21 +94,9 @@ function JoinScreen() {
   // link whose secret is wrong is a wrong link, which is what it now says.
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
 
-  const offer = useInstallOffer();
-  const device = useDevice();
-  // undefined until the device record answers: drawing the group first and
-  // the question a frame later would be the wrong way round.
-  const asks = link && device
-    ? asksBeforeJoin({
-      offer,
-      claimed: device.meByGroup[link.groupId] !== undefined,
-      continued: continuedFor === link.groupId,
-    })
-    : undefined;
-
   useEffect(() => {
-    if (link && group && asks === false) router.replace(route.group(link.groupId));
-  }, [link, group, asks, router]);
+    if (link && group) router.replace(route.group(link.groupId));
+  }, [link, group, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;
 
@@ -142,9 +118,6 @@ function JoinScreen() {
     );
   }
 
-  if (asks === undefined) return <Blank back={route.groups()} />;
-  if (asks) return <JoinChoice link={link} name={group?.name} onContinue={() => setContinuedFor(link.groupId)} />;
-
   if (!keySaved || group) return <Blank back={route.groups()} />;
 
   return (
@@ -152,74 +125,6 @@ function JoinScreen() {
       <TopBar title={copy.join.title} back={route.groups()} />
       <Scroll>
         <Empty title={copy.join.joining.title}>{copy.join.joining.body}</Empty>
-      </Scroll>
-    </Body></Screen>
-  );
-}
-
-/**
- * The iOS tab's fork: add to the home screen, or join here. Titled with the
- * group once it has arrived — an invitation rather than a wall — and it says
- * staying is fine, because the casual user loses little by staying. The
- * regular can't be told apart from them: the link box is their path.
- *
- * The screen tries the clipboard on arrival, but iOS writes it only inside a
- * gesture, so "Copied" shows only once a write has actually gone through —
- * the box's own tap, or "Add to home screen", which copies before it leaves
- * for the same `/install` the banner opens.
- */
-function JoinChoice({ link, name, onContinue }: {
-  link: JoinLink; name: string | undefined; onContinue: () => void;
-}) {
-  const { choice } = copy.join;
-  const browser = useBrowserName();
-  const text = formatJoinLink(link);
-  const [copied, setCopied] = useState(false);
-
-  const write = () => navigator.clipboard.writeText(text).then(() => { setCopied(true); return true; }, () => false);
-
-  useEffect(() => {
-    navigator.clipboard.writeText(text).then(() => setCopied(true), () => {});
-  }, [text]);
-
-  async function addToHomeScreen() {
-    await write();
-    // Every group this tab holds, not just this one: the tab is what forgets,
-    // and bringing the rest over costs nothing but fragment (docs/ios.md).
-    // This group goes first — its key was saved behind this screen.
-    //
-    // `location.assign`, not the router: the tutorial is the page the share
-    // sheet is opened from, so its URL — fragment and all — is what iOS writes
-    // into the home-screen bookmark, and a soft navigation that loses the
-    // fragment loses the whole point of carrying it (docs/ios.md).
-    await carryThenInstall(link.groupId);
-  }
-
-  return (
-    <Screen><Body>
-      <TopBar title={name ?? choice.unnamed} back={route.groups()} />
-      <Scroll>
-        <div className="pad joinchoice">
-          <h2>{choice.join(name)}</h2>
-          <button className="btn btn-p btn-lg choiceinstall" onClick={() => void addToHomeScreen()}>{choice.install}</button>
-          <p className="hint choicehint">{choice.installHint}</p>
-          <button className="btn btn-s choicebrowser" onClick={onContinue}>
-            {choice.browser(browser)}
-          </button>
-          <p className="hint choicehint">{choice.browserHint(browser)}</p>
-          <div className="card choicealready">
-            <div className="choicealreadytitle">{choice.alreadyTitle}</div>
-            <p className="hint">{choice.already}</p>
-            <button type="button" className={`linkbox${copied ? " on" : ""}`}
-              onClick={() => void write().then((ok) => ok && tick())}>
-              <span className="selectable">{text}</span>
-              <span className="linkboxstate">
-                <Icon name={copied ? "check" : "link"} size={13} />
-                {copied ? choice.copied : choice.copyLink}
-              </span>
-            </button>
-          </div>
-        </div>
       </Scroll>
     </Body></Screen>
   );

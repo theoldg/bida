@@ -378,9 +378,10 @@ writes into the bookmark when someone taps Add to Home Screen
 that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
-The tab end: no page's HTML carrying a manifest; the join screen's fork, and
-the groups list's banner, each landing on a `/install` whose fragment is every
-group the tab holds and who it is in each, the one that screen is about first;
+The tab end: a join that is not stopped to ask about installing; no page's
+HTML carrying a manifest; the groups list's banner landing on a `/install` whose
+fragment is every group the tab holds and who it is in each, the top of the
+list first; the claim list's "Have the app?" card holding the group's link;
 every page's head — `/`, a group, its members, not only the tutorial — holding
 exactly one manifest, a `blob:` whose `start_url` is `/install#` those same
 groups and whose URLs are all absolute (a blob has no base to resolve a

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asksBeforeJoin, carriedManifest, iosBrowser, looksIos, manifestScript, offerFrom } from "./install";
+import { carriedManifest, iosBrowser, looksIos, manifestScript, offerFrom } from "./install";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15";
 const IPAD = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15";
@@ -49,20 +49,6 @@ describe("naming the iOS browser", () => {
     expect(iosBrowser(`${tail} EdgiOS/126.0 Version/17.0 Mobile/15E148 Safari/604.1`)).toBeUndefined();
     // An in-app web view (Instagram, Gmail) carries no Safari token.
     expect(iosBrowser(`${tail} Mobile/15E148 Instagram 339.0.3.12.106`)).toBeUndefined();
-  });
-});
-
-describe("asking before an iOS tab joins", () => {
-  it("asks only a tab that forgets", () => {
-    expect(asksBeforeJoin({ offer: "manual", claimed: false, continued: false })).toBe(true);
-    for (const offer of ["installed", "ready", "none"] as const) {
-      expect(asksBeforeJoin({ offer, claimed: false, continued: false })).toBe(false);
-    }
-  });
-
-  it("asks until claimed, unless this opening already chose to continue", () => {
-    expect(asksBeforeJoin({ offer: "manual", claimed: true, continued: false })).toBe(false);
-    expect(asksBeforeJoin({ offer: "manual", claimed: false, continued: true })).toBe(false);
   });
 });
 

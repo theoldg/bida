@@ -419,22 +419,11 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
-/* The iOS join choice (app/join/page.tsx): a heading, each button with its own
-   one-line reason under it, then a lower-contrast card for someone who already
-   added bida, holding the link in a box that is its own copy button. The whole
-   block centred in the screen: a choice about what was just read, not a footer. */
-/* Padding, not `justify-content: center` alone: a taller bottom than top
-   pulls the centred block above the screen's true middle, where it reads as
-   centred rather than as sitting a thumb's reach below it. */
-.pad.joinchoice { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
-  padding-top: 24px; padding-bottom: 96px }
-.joinchoice h2 { margin: 24px 2px 32px; color: var(--ink); font-size: 24px; font-weight: 700;
-  letter-spacing: -.02em; text-align: center; text-wrap: balance }
-.joinchoice .choicehint { text-align: center; text-wrap: balance }
-.joinchoice .choicebrowser { margin-top: 20px }
-.joinchoice .card.choicealready { margin-top: 40px }
-.choicealreadytitle { font-size: 13px; font-weight: 600; color: var(--ink) }
-.choicealready .hint { margin: 4px 0 0 }
+/* "Have the app?" under the claim list, iOS tab only (components/use-in-app.tsx):
+   a lower-contrast card holding the link in a box that is its own copy button. */
+.card.inapp { margin-top: 24px }
+.inapptitle { font-size: 13px; font-weight: 600; color: var(--ink); text-wrap: pretty }
+.inapp .hint { margin: 4px 0 0; text-wrap: pretty }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;
   padding: 11px 12px; background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   font-family: var(--f-mono); font-size: 12px; color: var(--ink); text-align: left;
@@ -445,7 +434,6 @@ a { color: inherit; text-decoration: none }
 .linkbox.on { border-color: var(--ink-2) }
 .linkbox.on .linkboxstate { color: var(--ink) }
 .linkbox:active { transform: scale(.99) }
-.choicebtns { display: flex; flex-direction: column; gap: 9px }
 /* One stored row, shown because the claim above it can be shown. Everything on
    this screen is already monospace, so the block earns its separateness with a
    card ground and a size step down rather than a typeface. An actual table,

@@ -45,7 +45,7 @@ None of these is started, and the first is not code at all.
 - **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
-  the home banner, the join choice, and both halves of the invite the icon is
+  the home banner, the claim screen's link to paste, and both halves of the invite the icon is
   added with. **Works on the owner's iPhone from `/install`** (2026-09-16).
   Built since, unverified on the phone: Share from any page (every page's head
   builds the manifest at load from `bida.carry`), and the names coming along

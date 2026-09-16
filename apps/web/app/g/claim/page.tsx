@@ -3,11 +3,13 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { useInstallOffer } from "../../../components/install";
+import { UseInApp } from "../../../components/use-in-app";
 import { WhoPicker } from "../../../components/who-picker";
 import { copy } from "../../../lib/copy";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
-import { route } from "../../../lib/group-link";
-import { useGroupData } from "../../../lib/hooks";
+import { formatJoinLink, route } from "../../../lib/group-link";
+import { useGroupData, useGroupSecret } from "../../../lib/hooks";
 
 /**
  * The last step of joining: which of these people are you?
@@ -31,6 +33,9 @@ function ClaimScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
+  const secret = useGroupSecret(groupId);
+  // An iOS tab only: anywhere else a tapped link already reaches the app.
+  const tab = useInstallOffer() === "manual";
   // Re-opening an invite you have already accepted preselects who you are, so
   // it is one tap rather than a puzzle about whether you'll be duplicated.
   const [picked, setPicked] = useState<string>();
@@ -64,6 +69,11 @@ function ClaimScreen() {
             onAdd={add}
             onContinue={proceed}
           />
+          {tab && secret && (
+            <div className="pad">
+              <UseInApp link={formatJoinLink({ groupId, secret })} />
+            </div>
+          )}
         </Scroll>
       </Body>
     </Screen>

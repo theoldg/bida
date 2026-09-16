@@ -95,20 +95,21 @@ await hostPage.getByRole("button", { name: "Copy invite link" }).first().click()
 const invite = await hostPage.evaluate(() => navigator.clipboard.readText());
 const fragment = new URL(invite).hash;
 
-// ---- the join screen's "Add to home screen" ------------------------------
+// ---- a tab that has just joined -----------------------------------------
 const tab = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const tabPage = await tab.newPage();
 await tabPage.goto(`${base}/join${fragment}`);
-const choice = tabPage.getByRole("button", { name: "Add to home screen" });
-// The screen draws blank until the device record answers whether this phone
-// has already said who it is here, so wait for the fork rather than race it.
-const asked = await choice.first().waitFor({ timeout: 8000 }).then(() => true, () => false);
-report(asked, "an iOS tab is asked before it joins");
+// No sync API stands behind this check, so the join waits here for ever — and
+// that is the point: an iOS tab is no longer stopped to be asked to install.
+await tabPage.getByText("Joining…").waitFor({ timeout: 8000 });
+report(await tabPage.getByRole("button", { name: "Add to home screen" }).count() === 0,
+  "an iOS tab joins without being asked to install first");
 
-await choice.first().click();
-await tabPage.waitForURL(/\/install/, { timeout: 8000 });
-report(new URL(tabPage.url()).hash === fragment,
-  "and the tutorial it lands on carries the invite in its own fragment");
+// The key is saved behind "Joining…"; the carry the tutorial's head is built
+// from follows it into localStorage.
+await tabPage.waitForFunction((hash) => localStorage.getItem("bida.carry") === hash, fragment.slice(1),
+  { timeout: 8000 }).catch(() => {});
+await tabPage.goto(`${base}/install${fragment}`);
 
 // On a real iPhone the icon opened at `/` though a swap had happened 41ms in:
 // Safari reads the manifest at load. So no page's HTML may carry one — the
@@ -161,7 +162,7 @@ report(broken.errors.some((e) => e.message.includes("start_url")),
 // ---- and the banner, for the groups already in the tab ------------------
 // A tab that holds groups is warned it may lose them, and that warning's
 // tutorial carries every one of them — the top of the list first. Its own
-// phone, because the fork above only asks about a group this one never claimed.
+// phone, with groups it has claimed.
 const held = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const heldPage = await held.newPage();
 /**
@@ -251,6 +252,15 @@ report(refreshed && rebuiltStart.startsWith(`${base}/install#`)
 await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
+
+// ---- which one is you, in a tab ------------------------------------------
+// Someone who already has the app can't be told apart from a tab, so the claim
+// list offers them the link to paste there, with its own copy button.
+await heldPage.goto(`${base}/g/claim?id=${flatId}`);
+const offered = await heldPage.getByText("Have the app?").waitFor({ timeout: 8000 }).then(() => true, () => false);
+const boxed = await heldPage.locator(".inapp .linkbox .selectable").textContent().catch(() => null);
+report(offered && boxed === `${base}/join#${flat}`,
+  "the claim list offers an iOS tab the group's link to paste into the app", boxed ?? "");
 
 // ---- Android is not touched ----------------------------------------------
 const android = await newPhone(browser);

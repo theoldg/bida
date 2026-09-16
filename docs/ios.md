@@ -60,13 +60,12 @@ into tab use, not to lock the casual one out.
 | | Idea | Verdict |
 |---|---|---|
 | A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone** (from `/install`; from any page and with names, built and awaiting the phone). Paste link stays for groups joined after the install |
-| B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
-| C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
+| B | **Ask before joining**, a full screen of Add to home screen / Continue in Safari | Built, then dropped (2026-09-17) once A carried every group from any page: the banner asks, and the question stood between a newcomer and the group |
+| C | **The claim screen offers the link** — [*Have the app?*](#gclaim--have-the-app) — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
 | F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |
 | H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
-| — | **A third "Open in bida" button on the join screen** | Dropped: the join screen's link box serves the regular |
 
 ### A, in detail
 
@@ -84,10 +83,10 @@ standalone come from the `apple-*` tags either way.
    tab holding groups, where it is a `blob:` whose `start_url` is the carry.
    IndexedDB can't answer in time, so it reads a copy in localStorage —
    `bida.carry`, kept by `CarryToHomeScreen` in the layout, iOS tab only.
-2. **The page URL, where it helps.** The banner and the join's **Add to home
-   screen** still land on `/install` with the same carry in the fragment, for
-   an iOS that bookmarks the URL instead. Both write `bida.carry` first
-   (`carryThenInstall`): the tutorial's head is built from it.
+2. **The page URL, where it helps.** The banner still lands on `/install`
+   with the same carry in the fragment, for an iOS that bookmarks the URL
+   instead. It writes `bida.carry` first (`carryThenInstall`): the tutorial's
+   head is built from it.
 
 **A group joined or named after the page loaded** leaves its head stale, and
 Safari won't read a swapped link: the owner's icon arrived with two groups and
@@ -138,7 +137,7 @@ the empty app's Paste link tile is where it goes.
 ## The design
 
 Everything here is **iOS tab only** (`offerFrom` → `manual`). Android and the
-home-screen app are unchanged. Wording is in `copy.install` and `copy.join.choice`.
+home-screen app are unchanged. Wording is in `copy.install` and `copy.claim.inApp`.
 
 ### `/install` — the tutorial, shared
 
@@ -159,7 +158,7 @@ That was true before the icon carried them and read as a warning at the moment
 someone was being asked to trust the thing; what a person still has to do for
 themselves the empty app's Paste link tile says, where it is actually needed.
 
-The same page whether it came from the banner or the join screen. Back is a
+Reached from the banner. Back is a
 plain back, and the only exit: the way forward is out of the browser.
 
 ### Home — the banner
@@ -174,38 +173,23 @@ visitor won't install an app sight unseen. Once a group is in the tab,
 foot. It replaces the install nudge in a tab, and folds like it, on the same
 device flag: a warning someone who chose Safari can't put away is nagging.
 
-### `/join` — the choice, before "who are you"
+### `/g/claim` — *Have the app?*
 
-A full screen, drawn before the claim gate, titled with the group, whole block
-centred. It is read by someone who has seen nothing of bida, so it skips the
-paragraph and puts the reason under each button instead — an install ask
-with a wall of text up top reads as the app wanting something. In order:
-*Join Lisbon*; **Add to home screen** with *keep everything on this phone,
-forever, no download required* under it; **Continue in Safari** (or Chrome, or
-"the browser" when it can't tell) with *Safari may forget the group — the link
-re-opens it* under it; then, in a lower-contrast card, *Already on home
-screen?* and the link in a box that is its own copy button, reading
-**Copied** once a write has gone through — tried on arrival too, though iOS
-only allows it inside a tap.
+`/join` asks nothing: an iOS tab joins and lands on "Which one is you?" like
+any other browser. Under the list, a lower-contrast card: *Have the app? Links
+open in Safari. Open the app and paste it.*, and the group's link in a box that
+is its own copy button, reading **Copied** once a write has gone through —
+tried on arrival too, though iOS only allows it inside a tap. No install ask
+here; that is the banner's, once the tab holds a group.
 
-- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`
-  with this group and the tab's others in its fragment
-  ([experiment A](#a-in-detail--the-experiment)), by `location.assign` — a
-  fragment is the one thing Next's router drops.
-- **Continue in Safari** — outlined, staying in the tab.
-
-The key is saved and the group pulled *behind* the screen, so its title can be
-the group's name — an invitation, not a wall. Nothing is published until a name
-is picked, so choosing Add to home screen leaves an unclaimed copy in the tab that
-evicts harmlessly: one person, one claim. A group this phone has claimed skips
-the screen (`asksBeforeJoin`, `meByGroup`). An unclaimed one — never named, or
-forgotten since — asks on every opening of its link; Continue only answers for
-that opening, and is not stored.
+It is for the regular, whom the tab cannot tell apart from a newcomer (H), so
+it shows to everyone in a tab. A regular who picks a name in the tab anyway
+has claimed twice.
 
 ## Open questions for the owner
 
-- Does **New group** in a tab get the same choice as `/join`? Its key exists
-  nowhere but that tab until the link is shared — worse than joining.
+- Does **New group** in a tab want an ask of its own? Its key exists nowhere
+  but that tab until the link is shared — worse than joining.
 - Safari's "Add to Dock" web apps on a Mac have the same split storage and the
   same week; `looksIos` excludes a real Mac. In scope?
 
