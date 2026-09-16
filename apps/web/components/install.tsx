@@ -7,7 +7,7 @@ import { copy } from "../lib/copy";
 import { setInstallNudgeCollapsed } from "../lib/db/device";
 import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
-import { installOffer, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
+import { installOffer, iosBrowser, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
@@ -75,7 +75,7 @@ export function InstallBanner() {
     <div className="pad" style={{ paddingBottom: 4 }}>
       <Link href={route.install()} className="card installbanner">
         <span>
-          <b>{copy.install.banner.title}</b>
+          <b>{copy.install.banner.title(iosBrowser(navigator.userAgent))}</b>
           <span className="hint">{copy.install.banner.body}</span>
         </span>
         <Icon name="chev" size={11} />

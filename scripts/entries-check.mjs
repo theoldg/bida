@@ -11,7 +11,7 @@
  * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts —
  * `pnpm entries` builds first if it has to. ADR-0010.
  */
-import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup }
+import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup, openGroupsList }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -231,6 +231,99 @@ await page.waitForTimeout(120);
 await saveAndList(3);
 report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
   "an expense can become an income");
+
+// ---- a touch hold, the way phones send one ------------------------------
+// iOS never fires `contextmenu` for a touch, so the row menu times the hold
+// itself (components/long-press.tsx) — and a right click proves nothing about
+// that. Chromium's emulated touch is the iOS case already: no contextmenu, and
+// a click as the finger lifts, which lands on the menu's veil. Android's own
+// contextmenu, which arrives mid-hold either side of our timer, is sent by hand.
+const cdp = await ctx.newCDPSession(page);
+const ledger = page.url();
+const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent",
+  { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
+
+/** Hold `row` for `ms`, drifting `drift` px; `contextmenuAt` plays Android. */
+async function hold(row, { ms = 700, drift = 0, contextmenuAt } = {}) {
+  const b = await row.boundingBox();
+  const x = b.x + b.width / 3, y = b.y + b.height / 2;
+  await touch("touchStart", x, y);
+  let waited = 0;
+  if (drift) {
+    await page.waitForTimeout(100);
+    await touch("touchMove", x, y + drift);
+    waited = 100;
+  }
+  if (contextmenuAt !== undefined) {
+    await page.waitForTimeout(contextmenuAt - waited);
+    await page.evaluate(([px, py]) => {
+      document.elementFromPoint(px, py)?.dispatchEvent(new MouseEvent("contextmenu",
+        { bubbles: true, cancelable: true, clientX: px, clientY: py }));
+    }, [x, y]);
+    waited = contextmenuAt;
+  }
+  await page.waitForTimeout(ms - waited);
+  await touch("touchEnd", x, y + drift);
+  await page.waitForTimeout(250);
+}
+const menus = () => page.locator(".rowmenu").count();
+const dinnerRow = () => page.locator("a.row").filter({ hasText: "Dinner" }).first();
+const closeMenu = async () => { await page.keyboard.press("Escape"); await page.waitForTimeout(100); };
+
+await hold(dinnerRow());
+report(await menus() === 1 && page.url() === ledger,
+  "a held row opens its menu, and the lifting finger's click neither closes it nor navigates");
+await closeMenu();
+
+await hold(dinnerRow(), { ms: 250 });
+report(await menus() === 0 && /\/g\/entry\?/.test(page.url()),
+  "a short touch is still a tap: no menu, and the row opens");
+await page.goto(ledger);
+await page.waitForSelector(".rows a.row");
+
+await hold(dinnerRow(), { drift: 30 });
+report(await menus() === 0 && page.url() === ledger,
+  "a finger that moves is a scroll: no menu when it has rested long enough");
+
+// Straight after a hold's menu closes, the next tap is a tap — the guard that
+// ate the lifting click must not eat this one.
+await hold(dinnerRow());
+await page.locator(".rowmenu-veil").tap();
+await page.waitForTimeout(50);
+await dinnerRow().tap();
+await page.waitForURL(/\/g\/entry\?/, { timeout: 3000 }).catch(() => {});
+report(/\/g\/entry\?/.test(page.url()), "a tap right after a hold's menu closes still opens the row");
+await page.goto(ledger);
+await page.waitForSelector(".rows a.row");
+
+// Android sends its own contextmenu for the same hold, before our timer or
+// after it. Either way: one menu, and it stays.
+await hold(dinnerRow(), { contextmenuAt: 300 });
+report(await menus() === 1 && page.url() === ledger,
+  "an Android contextmenu before the timer opens one menu, and it stays");
+await closeMenu();
+await hold(dinnerRow(), { contextmenuAt: 600, ms: 900 });
+report(await menus() === 1 && page.url() === ledger,
+  "an Android contextmenu after the timer is swallowed, not a second open or a close");
+await closeMenu();
+
+// Keyboard: Enter on the row a hold's menu handed focus back to still opens it.
+await hold(dinnerRow());
+await closeMenu();
+await dinnerRow().focus();
+await page.keyboard.press("Enter");
+await page.waitForURL(/\/g\/entry\?/, { timeout: 3000 }).catch(() => {});
+report(/\/g\/entry\?/.test(page.url()), "Enter on a row after its hold's menu closes still opens it");
+await page.goto(ledger);
+await page.waitForSelector(".rows a.row");
+
+// The same hold on the app's name is the door to /diag.
+await openGroupsList(page, base);
+await hold(page.locator(".brand"));
+await page.waitForURL(/\/diag/, { timeout: 3000 }).catch(() => {});
+report(/\/diag/.test(page.url()), "a hold on the app's name opens /diag");
+await page.goto(ledger);
+await page.waitForSelector(".rows a.row");
 
 // ---- and a transfer's row answers a long press, as an expense's does ---
 // It didn't: the delete menu was on the expense row only, so the one entry

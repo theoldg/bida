@@ -220,12 +220,12 @@ function RatesScreen() {
 function RateRow({ row, base, onOpen, onDelete }: {
   row: CurrencyInUse; base: string; onOpen: () => void; onDelete: () => void;
 }) {
-  const { onContextMenu, menu } = useLongPressMenu(row.rate
+  const { hold, menu } = useLongPressMenu(row.rate
     ? [{ label: copy.act.delete, icon: "trash", danger: true, onSelect: onDelete }]
     : []);
   return (
     <>
-      <button className="row" type="button" onClick={onOpen} onContextMenu={onContextMenu}>
+      <button className="row" type="button" onClick={onOpen} {...hold}>
         <div className="rmain">
           <div className="rtitle">{currencyLabel(row.currency)}</div>
           <div className="rmeta">

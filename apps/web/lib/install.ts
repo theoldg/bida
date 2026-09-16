@@ -45,6 +45,17 @@ export function looksIos(ua: string, platform: string, touchPoints: number): boo
 }
 
 /**
+ * The iOS browser's name, for copy that is read at a glance. Every other iOS
+ * browser (Firefox, Edge) marks itself, and an in-app web view drops the
+ * `Safari/` token — so only an unmarked `Safari/` is Safari.
+ */
+export function iosBrowser(ua: string): "Safari" | "Chrome" | undefined {
+  if (/CriOS\//.test(ua)) return "Chrome";
+  if (/Safari\//.test(ua) && !/FxiOS|EdgiOS|OPiOS|OPT\/|YaBrowser|DuckDuckGo|GSA\//.test(ua)) return "Safari";
+  return undefined;
+}
+
+/**
  * Whether `/join` asks "install first?" before the group opens. Only an iOS tab,
  * which forgets; and never for a group this phone already said who it is in, or
  * already chose to keep here — the choice is made once per group, not per tap.

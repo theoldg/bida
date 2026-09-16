@@ -9,7 +9,7 @@ import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components
 import { ConfirmDialog, Dialog } from "../components/dialog";
 import { InstallBanner, InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
-import { useLongPressMenu } from "../components/long-press";
+import { useHold, useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
 import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
@@ -29,6 +29,7 @@ export default function GroupsPage() {
   // is settled the list is "not answered yet" — the frame it already draws
   // while Dexie is thinking — rather than a list that flashes and is replaced.
   const resuming = useResumeLastGroup();
+  const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
   // only place that decides what it means to a list of "your groups".
@@ -47,7 +48,7 @@ export default function GroupsPage() {
             and it has no business in a menu a person reads. */}
         <TopBar
           title={
-            <span className="brand" onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); router.push(route.diag()); }}>
+            <span className="brand" {...diagHold}>
               {copy.app.name}
             </span>
           }
@@ -200,7 +201,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
   const [asking, setAsking] = useState(false);
   const invite = useInviteLink(group.id);
 
-  const { onContextMenu, menu } = useLongPressMenu([
+  const { hold, menu } = useLongPressMenu([
     ...(invite.copy
       ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
       : []),
@@ -215,7 +216,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
 
   return (
     <>
-      <Link href={route.group(group.id)} className="row grouprow" onContextMenu={onContextMenu}>
+      <Link href={route.group(group.id)} className="row grouprow" {...hold}>
         <Avatar name={group.name} />
         <div className="rmain">
           <div className="rtitle">{group.name}</div>

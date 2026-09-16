@@ -118,7 +118,7 @@ bar. Back is the only exit: the way forward is out of the browser.
 A card at the top of the groups list, linking to `/install`, **shown only once
 the tab holds a group**. An empty home is someone looking around: Quick split
 stores nothing and is the right way to try bida, and a visitor won't install
-an app sight unseen. Once a group is in the tab, "this browser will forget it"
+an app sight unseen. Once a group is in the tab, "Safari will forget it" (or Chrome, or "this browser" when it can't tell)
 is true and worth saying at the top rather than the foot. It replaces the
 install nudge in a tab; the nudge stays as it is elsewhere.
 

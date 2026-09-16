@@ -529,6 +529,12 @@ so the static export ships the full line and the browser narrows it.
 
 ## Gotchas
 
+- **iOS never sends `contextmenu` for a touch hold**, in any browser — only
+  Android and a right click do. `useHold` (`components/long-press.tsx`) times
+  the hold from pointer events and answers whichever comes first; the finger's
+  later `contextmenu` and lifting click are swallowed on `document`, because
+  they land on the menu's veil, which closes on either. A right click proves
+  nothing about it; `pnpm entries` holds with touch.
 - **A read that never answers is indistinguishable from a slow one.** Both are
   `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton

@@ -356,8 +356,8 @@ reads as an ordinary assignment.
 6. **The app is not a document: nothing selects, the browser never gets a long
    press, no zoom.** `user-select: none` on `body`, `.selectable` to opt back
    in; `NoLongPress` swallows the touch context menu, except on a row that
-   opts into the app's own small `RowMenu` instead — the same event a real
-   right-click sends (`components/long-press.tsx`, `components/row-menu.tsx`). A top bar
+   opts into the app's own small `RowMenu` instead, on a touch hold or a right
+   click (`useHold` in `components/long-press.tsx`, `components/row-menu.tsx`). A top bar
    whose actions outgrow it opens that same card from a button instead
    (`MenuButton`), so the app has one menu and not two.
    Inputs exempt from both. Zoom needs all

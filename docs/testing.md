@@ -256,7 +256,10 @@ rate re-valuing an entry already in the ledger
 ([ADR-0005](decisions/0005-money-and-currency.md)). And it presses Save twice
 from the keyboard, because one press was landing as two writes and a `click()`
 cannot reproduce that — it waits for a settled screen in between, which is
-exactly the window the second tap arrives in.
+exactly the window the second tap arrives in. It holds rows with real touch, too, since a right
+click is not what an iPhone sends: a hold opens one menu that its own lifting
+click and Android's `contextmenu` leave open, and a tap, a scroll, a tap just
+after and Enter all still navigate.
 
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping

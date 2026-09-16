@@ -258,7 +258,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const foreign = expense.currency !== base;
   const [asking, setAsking] = useState(false);
 
-  const { onContextMenu, menu } = useLongPressMenu([
+  const { hold, menu } = useLongPressMenu([
     { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ]);
 
@@ -270,7 +270,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, expense.id)}
-        className={`row entryrow ${mine ? "" : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${mine ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
           {/* Who paid, how many ways, in what mode — more than a phone's
@@ -323,7 +323,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   const myNet = myEffect(me, { kind: "transfer", settlement });
   const [asking, setAsking] = useState(false);
 
-  const { onContextMenu, menu } = useLongPressMenu([
+  const { hold, menu } = useLongPressMenu([
     { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ]);
 
@@ -335,7 +335,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   return (
     <>
       <Link href={route.entry(gid, settlement.id)}
-        className={`row entryrow ${myNet !== 0 ? "" : "notmine"}`} onContextMenu={onContextMenu}>
+        className={`row entryrow ${myNet !== 0 ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">
             {copy.group.paidTo(from?.name ?? copy.unknown, to?.name ?? copy.unknown)}

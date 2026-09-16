@@ -176,11 +176,11 @@ export const copy = {
     },
     /**
      * The iOS tab's card atop the groups list, once it holds one (docs/ios.md).
-     * Named browsers where `warn` says "this browser": the card is read at a
-     * glance, and the two names cover nearly every iOS reader.
+     * Names the browser when `iosBrowser` can tell, since a card is read at a
+     * glance; any other falls back to "This browser".
      */
     banner: {
-      title: "Safari/Chrome will forget your groups",
+      title: (browser: string | undefined) => `${browser ?? "This browser"} will forget your groups`,
       body: "Add bida to your home screen",
     },
     /** `/install`: why, what to expect, how — in that order. */
