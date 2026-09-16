@@ -707,10 +707,16 @@ a { color: inherit; text-decoration: none }
 .itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
   padding: 9px 16px 0 12px }
 .itemtable tr.part td { background: var(--hl-row) }
-/* The same band, but painted *over* the opaque background the sticky column
-   needs rather than mixed into it: `--hl` is translucent, so mixing it with the
-   card would land at 72% alpha and let the dots through. */
+/* The same band, once, and over something opaque. Two things have to be said
+   here rather than inherited. The image, because the sticky column needs a
+   background the dots cannot pass through and `--hl` is translucent — mixed into
+   the card it lands at 72% alpha and lets them through, so the band is laid
+   *over* the card instead. And the colour, because `tr.part td` above is the
+   more specific selector and would otherwise replace that opaque card with the
+   band itself — painting it twice down the name column and once across the
+   cells, which is two greys in one row. */
 .itemtable tr.part .itemlabel { padding-left: 15px; box-shadow: inset 3px 0 0 var(--hl-edge);
+  background-color: var(--card);
   background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
 /* The tip is the one figure on this screen you type rather than read, and it

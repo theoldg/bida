@@ -393,6 +393,12 @@ reads as an ordinary assignment.
   `<colgroup>` and takes `table-layout: fixed`. It also has to carry a
   `min-width`, or the columns are squashed below the size of what is inside
   them rather than overflowing the scroller.
+- **A sticky cell needs an opaque background, and a row-state selector will
+  steal it.** `tr.part td` is more specific than the `.itemlabel` that set the
+  card behind the frozen name column, so it replaced that base with the
+  translucent band — which then painted *twice* down the names and once across
+  the cells: one row, two greys. A cell that other cells scroll under has to
+  restate its background colour wherever a row state sets one.
 - **`width: 100%` inside a scroll container is the *visible* width**, not the
   scrollWidth — a block child's containing block is the scroller's content box.
   That is what lets prose share a scroller with a table wider than the screen:
