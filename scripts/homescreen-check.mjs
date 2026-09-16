@@ -28,6 +28,23 @@ const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebK
 
 const iphone = (opts) => newPhone(browser, { userAgent: IPHONE, ...opts });
 
+/**
+ * The group secrets this phone holds, read straight out of IndexedDB.
+ *
+ * The only assertion here that cannot be made from a screen: this check serves
+ * the static export with no sync API behind it, so a group whose key has just
+ * arrived has no ops to draw a row with.
+ */
+const secretsHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
+  const open = indexedDB.open("hajsik");
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const rows = open.result.transaction("groupKeys").objectStore("groupKeys").getAll();
+    rows.onsuccess = () => ok(rows.result.map((row) => `${row.groupId}.${row.secret}`));
+    rows.onerror = () => fail(rows.error);
+  };
+}));
+
 /** The manifest this page would hand iOS, and whether it is the static one. */
 const manifestOf = (page) => page.evaluate(async () => {
   const links = [...document.head.querySelectorAll('link[rel="manifest"]')];
@@ -78,16 +95,23 @@ report(swapped.json?.id === `${base}/` && swapped.json?.scope === `${base}/`,
 report(swapped.json?.icons?.every((icon) => icon.src.startsWith(`${base}/`)),
   "with absolute icons — a blob manifest has no base to resolve them against");
 
-// ---- and the banner, for a group already in the tab ----------------------
-// A tab that holds a group is warned it may lose it, and that warning's
-// tutorial carries the group at the top of the list. Its own phone, because
-// the fork above only asks about a group this one has never claimed.
+// ---- and the banner, for the groups already in the tab ------------------
+// A tab that holds groups is warned it may lose them, and that warning's
+// tutorial carries every one of them — the top of the list first. Its own
+// phone, because the fork above only asks about a group this one never claimed.
 const held = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const heldPage = await held.newPage();
-const ownId = await newGroup(heldPage, base, { name: "Flat", me: "Cem", members: ["Dita"] });
-await heldPage.goto(`${base}/g/members?id=${ownId}`);
-await heldPage.getByRole("button", { name: "Copy invite link" }).first().click();
-const ownFragment = new URL(await heldPage.evaluate(() => navigator.clipboard.readText())).hash;
+const inviteTo = async (name, me, other) => {
+  const id = await newGroup(heldPage, base, { name, me, members: [other] });
+  await heldPage.goto(`${base}/g/members?id=${id}`);
+  await heldPage.getByRole("button", { name: "Copy invite link" }).first().click();
+  return new URL(await heldPage.evaluate(() => navigator.clipboard.readText())).hash.slice(1);
+};
+// Newest last: the groups list is by last activity, so the second is the top
+// row, and the fragment must lead with it rather than with whatever Dexie
+// happens to return first.
+const flat = await inviteTo("Flat", "Cem", "Dita");
+const ski = await inviteTo("Ski", "Eve", "Fen");
 
 await openGroupsList(heldPage, base);
 const banner = heldPage.getByRole("button", { name: "Add to home screen" });
@@ -95,8 +119,14 @@ const warned = await banner.first().waitFor({ timeout: 8000 }).then(() => true, 
 report(warned, "the groups list warns an iOS tab it may forget its groups");
 await banner.first().click();
 await heldPage.waitForURL(/\/install/, { timeout: 8000 });
-report(new URL(heldPage.url()).hash === ownFragment,
-  "and its tutorial carries the group at the top of the list", heldPage.url());
+report(new URL(heldPage.url()).hash === `#${ski}~${flat}`,
+  "and its tutorial carries every group in the tab, the top of the list first",
+  heldPage.url());
+
+const both = await manifestOf(heldPage);
+report(both.json?.start_url === `${base}/install#${ski}~${flat}`,
+  "as does the manifest, which has no one group to start at",
+  `start_url: ${both.json?.start_url}`);
 
 // ---- Android is not touched ----------------------------------------------
 const android = await newPhone(browser);
@@ -134,6 +164,19 @@ report(!visited.some((url) => new URL(url).pathname === "/join"),
   "a second launch does not re-open a join for a group this phone holds", visited.join(" "));
 report(new URL(freshPage.url()).pathname !== "/install",
   "and does not sit on the tutorial", freshPage.url());
+
+// ---- a phone that brought several over -----------------------------------
+// There is no one group to open, so the keys go in where they are read and the
+// list is where it lands — filling as each group syncs.
+const many = await iphone();
+const manyPage = await many.newPage();
+await asInstalledApp(manyPage);
+await manyPage.goto(`${base}/install#${ski}~${flat}`);
+const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: 8000 })
+  .then(() => true, () => false);
+report(landed, "launching an icon added with several groups lands on the list", manyPage.url());
+report((await secretsHeld(manyPage)).sort().join(" ") === [ski, flat].sort().join(" "),
+  "holding every secret it was added with");
 
 await browser.close();
 close();

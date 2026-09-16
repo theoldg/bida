@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  entryParent, formParent, isKeylessFragment, parseJoinLink, readPastedLink, parseEntrySource, route,
+  entryParent, formParent, isKeylessFragment, parseInvites, parseJoinLink, readPastedLink,
+  parseEntrySource, route,
 } from "./group-link";
 
 describe("where an entry goes back to", () => {
@@ -113,15 +114,29 @@ describe("a link that lost its password", () => {
 });
 
 describe("the install tutorial's own link", () => {
+  const lisbon = { groupId: "g1", secret: "shh" };
+  const flat = { groupId: "g2", secret: "psst" };
+
   it("is bare when there is no invite to carry", () => {
     expect(route.install()).toBe("/install");
+    expect(route.install([])).toBe("/install");
   });
 
-  it("carries the invite in the fragment, which never reaches the server", () => {
-    // Same shape as a join link's: the page iOS bookmarks is this one, and
-    // `/install` hands it on at launch.
-    expect(route.install({ groupId: "g1", secret: "shh" })).toBe("/install#g1.shh");
-    expect(parseJoinLink(route.install({ groupId: "g1", secret: "shh" })))
-      .toEqual({ groupId: "g1", secret: "shh" });
+  it("carries the invites in the fragment, which never reaches the server", () => {
+    expect(route.install([lisbon])).toBe("/install#g1.shh");
+    expect(route.install([lisbon, flat])).toBe("/install#g1.shh~g2.psst");
+  });
+
+  it("reads back exactly what it wrote, in order", () => {
+    expect(parseInvites(route.install([lisbon, flat]))).toEqual([lisbon, flat]);
+    // The bare fragment too: what `/install` is handed on a launch.
+    expect(parseInvites("g1.shh")).toEqual([lisbon]);
+  });
+
+  it("drops what isn't an invite rather than failing on the whole fragment", () => {
+    // One bad entry must not cost the others: they are the only copy of those
+    // secrets on a freshly installed phone.
+    expect(parseInvites("#g1.shh~rubbish~g2.psst")).toEqual([lisbon, flat]);
+    expect(parseInvites("")).toEqual([]);
   });
 });

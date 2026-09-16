@@ -357,15 +357,19 @@ that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
 The tab end: the join screen's fork, and the groups list's banner, each landing
-on a `/install` whose fragment is the invite; the head left with exactly one
-manifest, swapped for a `blob:` whose `start_url` is that same invite and whose
-URLs are all absolute (a blob has no base to resolve a relative one against);
-and a browser that installs by itself — Android — left with the static manifest
-untouched.
+on a `/install` whose fragment is the invites — every group the tab holds, the
+one that screen is about first; the head left with exactly one manifest,
+swapped for a `blob:` whose `start_url` is that same set and whose URLs are all
+absolute (a blob has no base to resolve a relative one against); and a browser
+that installs by itself — Android — left with the static manifest untouched.
 
 The app end (`asInstalledApp`): a launch on `/install#<id>.<secret>` hands the
-invite to `/join`, and the next launch, with that secret now on the phone, does
-not — the icon is a door into the app, not into one group forever.
+invite to `/join`; one carrying several saves them all and lands on the list;
+and a launch whose secrets are already on the phone does neither — the icon is
+a door into the app, not into one group forever. That last pair is the one
+assertion read out of IndexedDB rather than off a screen: no sync API stands
+behind this check, so a group whose key just arrived has no ops to draw a row
+with.
 
 It needs no server beyond the static export: the join screen's own work is
 `pnpm claim`'s subject, and what this one asserts is which URL each end reaches.

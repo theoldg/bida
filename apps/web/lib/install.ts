@@ -10,7 +10,7 @@
  * "manual" offer exists.
  */
 
-import { formatJoinLink, type JoinLink } from "./group-link";
+import { formatInvites, formatJoinLink, type JoinLink } from "./group-link";
 
 /** What, if anything, this browser lets us offer. */
 export type InstallOffer =
@@ -149,9 +149,13 @@ interface WebManifest {
 }
 
 /**
- * The app's manifest with its `start_url` moved to an invite, so an icon added
- * from `/install` lands on the join instead of an empty app (docs/ios.md,
+ * The app's manifest with its `start_url` moved to the invites, so an icon
+ * added from `/install` lands on them instead of an empty app (docs/ios.md,
  * approach A).
+ *
+ * One invite starts at `/join`, which is the screen that says what is
+ * happening — it names the group and waits out a first sync. Several start
+ * back at `/install`, which is the only route that reads a fragment of them.
  *
  * Every URL comes out absolute. A runtime manifest can only be handed to the
  * page as a `blob:` URL, and relative members are resolved against the
@@ -160,26 +164,30 @@ interface WebManifest {
  * to `start_url`), so this stays the same app rather than a second one per
  * invite.
  */
-export function invitedManifest(base: WebManifest, link: JoinLink, origin: string): WebManifest {
+export function invitedManifest(
+  base: WebManifest, invites: readonly JoinLink[], origin: string,
+): WebManifest {
   return {
     ...base,
     id: new URL(base.id ?? base.start_url ?? "/", origin).href,
-    start_url: formatJoinLink(link, origin),
+    start_url: invites.length === 1
+      ? formatJoinLink(invites[0]!, origin)
+      : `${origin}/install#${formatInvites(invites)}`,
     scope: new URL(base.scope ?? "/", origin).href,
     icons: base.icons?.map((icon) => ({ ...icon, src: new URL(icon.src, origin).href })),
   };
 }
 
 /**
- * Make this page the one that carries an invite onto the home screen, for as
+ * Make this page the one that carries its invites onto the home screen, for as
  * long as it is on screen. Returns the undo.
  *
- * The page's own URL is half of it and costs nothing: `route.install(link)` put
- * the invite in the fragment, and a manifest iOS cannot read leaves it
+ * The page's own URL is half of it and costs nothing: `route.install(links)`
+ * put the invites in the fragment, and a manifest iOS cannot read leaves it
  * bookmarking the URL it is looking at. This is the other half — the app's
- * manifest, refetched and handed back as a `blob:` with `start_url` on the
- * invite, for a WebKit that reads the manifest link as it stands when the share
- * sheet opens.
+ * manifest, refetched and handed back as a `blob:` with `start_url` on those
+ * same invites, for a WebKit that reads the manifest link as it stands when
+ * the share sheet opens.
  *
  * The href is **swapped, not removed**: Next owns that element and puts back
  * one taken out from under it (leaving two manifests, the static one winning).
@@ -188,10 +196,11 @@ export function invitedManifest(base: WebManifest, link: JoinLink, origin: strin
  * manifest, which is what the fallback needs.
  *
  * Which of the two WebKit actually uses is the open question in docs/ios.md.
- * They land on different URLs — `/join#…` and `/install#…` — and both open the
- * same group, so the launched app is the answer.
+ * With a single invite they land on different URLs — `/join#…` and
+ * `/install#…` — and both open the same group, so the launched app is the
+ * answer.
  */
-export function offerInviteToHomeScreen(link: JoinLink): () => void {
+export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => void {
   const element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
   const original = element?.getAttribute("href");
   if (!element || !original) return () => {};
@@ -203,12 +212,12 @@ export function offerInviteToHomeScreen(link: JoinLink): () => void {
       const base = (await (await fetch(original)).json()) as WebManifest;
       if (undone) return;
       url = URL.createObjectURL(new Blob(
-        [JSON.stringify(invitedManifest(base, link, location.origin))],
+        [JSON.stringify(invitedManifest(base, invites, location.origin))],
         { type: "application/manifest+json" },
       ));
       element.setAttribute("href", url);
     } catch {
-      // The page URL is the other half, and it is already carrying the invite.
+      // The page URL is the other half, and it is already carrying the invites.
     }
   })();
 

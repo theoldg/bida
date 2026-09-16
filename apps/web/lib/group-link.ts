@@ -32,6 +32,24 @@ export function parseJoinLink(input: string): JoinLink | null {
 }
 
 /**
+ * Several invites in one fragment: `<id>.<secret>~<id>.<secret>`. `~` is
+ * URL-safe and cannot appear in either half, which is `[A-Za-z0-9_-]`.
+ *
+ * Only `/install` writes and reads this — it is what a home-screen icon is
+ * added with, so a phone that holds four groups brings four (docs/ios.md).
+ * A `/join` link stays one group: it is the thing people send each other.
+ */
+export function formatInvites(links: readonly JoinLink[]): string {
+  return links.map((link) => `${link.groupId}.${link.secret}`).join("~");
+}
+
+/** The invites in a fragment, in the order they were written. Bad ones drop out. */
+export function parseInvites(input: string): JoinLink[] {
+  const hash = input.includes("#") ? input.slice(input.indexOf("#") + 1) : input;
+  return hash.split("~").map(parseJoinLink).filter((link) => link !== null);
+}
+
+/**
  * A fragment that names a group and carries no password: `#<groupId>`, or the
  * same with its dot left dangling. That is a link cut short, and it is told
  * apart from a malformed one because it has its own fix — the invite link
@@ -117,12 +135,13 @@ export const route = {
   /**
    * Why and how to put bida on an iOS home screen (docs/ios.md).
    *
-   * An invite rides in the fragment when there is one to carry, because this
-   * is the page the share sheet is opened *from*: whatever iOS writes into the
-   * home-screen bookmark, it writes from here. The fragment never reaches the
-   * server, and the phone reading it already holds the secret.
+   * The invites this phone holds ride in the fragment, because this is the page
+   * the share sheet is opened *from*: whatever iOS writes into the home-screen
+   * bookmark, it writes from here. The fragment never reaches the server, and
+   * the phone reading it already holds every secret in it.
    */
-  install: (link?: JoinLink) => `/install${link ? `#${link.groupId}.${link.secret}` : ""}`,
+  install: (links: readonly JoinLink[] = []) =>
+    `/install${links.length ? `#${formatInvites(links)}` : ""}`,
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>

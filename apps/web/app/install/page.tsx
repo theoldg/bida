@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { useBrowserName, useInstallOffer } from "../../components/install";
+import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
+import { syncGroup } from "../../lib/db/sync";
 import { copy } from "../../lib/copy";
-import { formatJoinLink, parseJoinLink, route, type JoinLink } from "../../lib/group-link";
+import { formatJoinLink, parseInvites, route, type JoinLink } from "../../lib/group-link";
 import { offerInviteToHomeScreen } from "../../lib/install";
 
 /**
@@ -18,26 +20,27 @@ import { offerInviteToHomeScreen } from "../../lib/install";
  * out of the browser, so back is the only exit.
  *
  * It is also the page the share sheet is opened *from*, which is why it does
- * two things besides read. Arriving with an invite in its fragment, it points
- * the home-screen icon at that invite (`offerInviteToHomeScreen`), so the
- * installed app's first launch is the join rather than an empty list and a
- * paste. And launched *as* that icon, it is the other end of the same trick:
- * whichever URL iOS kept, this screen hands the invite on.
+ * two things besides read. Arriving with invites in its fragment — every group
+ * the tab holds, the one being joined first — it points the home-screen icon
+ * at them (`offerInviteToHomeScreen`), so the installed app's first launch is
+ * those groups rather than an empty list and a paste each. And launched *as*
+ * that icon, it is the other end of the same trick: whichever URL iOS kept,
+ * this screen hands the invites on.
  */
 export default function InstallPage() {
   // Parsed on the client only — there is no window during the export's
   // build-time prerender. `undefined` is "not read yet".
-  const [link, setLink] = useState<JoinLink | null | undefined>(undefined);
+  const [invites, setInvites] = useState<JoinLink[] | undefined>(undefined);
   const offer = useInstallOffer();
 
-  useEffect(() => setLink(parseJoinLink(window.location.hash)), []);
+  useEffect(() => setInvites(parseInvites(window.location.hash)), []);
 
-  useLaunchedFromHomeScreen(offer === "installed" ? link : undefined);
+  useLaunchedFromHomeScreen(offer === "installed" ? invites : undefined);
 
   useEffect(() => {
-    if (!link || offer !== "manual") return;
-    return offerInviteToHomeScreen(link);
-  }, [link, offer]);
+    if (!invites?.length || offer !== "manual") return;
+    return offerInviteToHomeScreen(invites);
+  }, [invites, offer]);
 
   // The tutorial is for a browser tab. In the home-screen app this screen is
   // only ever the doorway above, and it is about to leave.
@@ -47,30 +50,44 @@ export default function InstallPage() {
 }
 
 /**
- * The icon's first launch, when iOS kept `/install#<id>.<secret>` as the page
+ * The icon's first launch, when iOS kept `/install#<id>.<secret>…` as the page
  * to open (the fallback half of `offerInviteToHomeScreen`).
  *
- * A fragment whose group this phone already holds has done its work — the app
- * starts where the app starts, rather than the icon being permanently one
- * group's door. An unheld one is the join the tab left unfinished.
+ * Only the invites this phone does not already hold are acted on. One is the
+ * newcomer's case, and `/join` says it best — it names the group and waits out
+ * a first sync that hasn't landed. Several is the regular's: the keys go in
+ * here and the list fills as each group arrives, because there is no one group
+ * to open. None left means the fragment is spent — the app starts where the app
+ * starts, rather than the icon being one group's door forever.
  *
- * `location.replace`, not the router: Next's router drops the fragment when it
- * gives up and loads the page itself, which is the very first thing asked of
- * it on a freshly installed app (docs/ios.md#gotchas).
+ * Held, not un-forgotten: `saveGroupKey` would undo a `forgetGroup`, and an
+ * icon must not walk back into a group this phone said it was done with.
+ *
+ * `location.replace`, not the router, for the hand-off to `/join`: Next's
+ * router drops the fragment when it gives up and loads the page itself, which
+ * is the very first thing asked of it on a freshly installed app
+ * (docs/ios.md#gotchas).
  */
-function useLaunchedFromHomeScreen(link: JoinLink | null | undefined): void {
+function useLaunchedFromHomeScreen(invites: JoinLink[] | undefined): void {
   const router = useRouter();
   useEffect(() => {
-    if (link === undefined) return;
+    if (!invites) return;
     let cancelled = false;
     void (async () => {
-      const held = link ? await db().groupKeys.get(link.groupId) : undefined;
+      const held = new Set((await db().groupKeys.toArray()).map((key) => key.groupId));
+      const fresh = invites.filter((invite) => !held.has(invite.groupId));
       if (cancelled) return;
-      if (link && !held) location.replace(formatJoinLink(link));
-      else router.replace(route.groups());
+      if (fresh.length === 1) { location.replace(formatJoinLink(fresh[0]!)); return; }
+      for (const invite of fresh) {
+        await saveGroupKey(invite.groupId, invite.secret);
+        // Best-effort: `StartSync`'s loop retries every group anyway, and the
+        // list fills from the live query as each one lands.
+        syncGroup(invite.groupId).catch(() => {});
+      }
+      if (!cancelled) router.replace(route.groups());
     })();
     return () => { cancelled = true; };
-  }, [link, router]);
+  }, [invites, router]);
 }
 
 function Tutorial() {

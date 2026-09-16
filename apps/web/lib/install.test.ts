@@ -68,19 +68,25 @@ describe("asking before an iOS tab joins", () => {
 
 describe("the manifest an icon added from /install starts at", () => {
   const link = { groupId: "g1", secret: "shh" };
+  const second = { groupId: "g2", secret: "psst" };
   const base = {
     start_url: "/",
     scope: "/",
     icons: [{ src: "/icon-192.png", sizes: "192x192" }],
   };
 
-  it("starts the installed app at the invite", () => {
-    expect(invitedManifest(base, link, "https://bida.bid").start_url)
+  it("starts one invite at the join screen, which names the group", () => {
+    expect(invitedManifest(base, [link], "https://bida.bid").start_url)
       .toBe("https://bida.bid/join#g1.shh");
   });
 
+  it("starts several back at /install, the one route that reads a list of them", () => {
+    expect(invitedManifest(base, [link, second], "https://bida.bid").start_url)
+      .toBe("https://bida.bid/install#g1.shh~g2.psst");
+  });
+
   it("makes every URL absolute — a blob manifest has no base to resolve against", () => {
-    const m = invitedManifest(base, link, "https://bida.bid");
+    const m = invitedManifest(base, [link], "https://bida.bid");
     expect(m.scope).toBe("https://bida.bid/");
     expect(m.icons).toEqual([{ src: "https://bida.bid/icon-192.png", sizes: "192x192" }]);
     for (const url of [m.start_url!, m.scope!, ...m.icons!.map((i) => i.src)]) {
@@ -91,14 +97,14 @@ describe("the manifest an icon added from /install starts at", () => {
   it("stays the same app, however many invites it is built for", () => {
     // `id` defaults to `start_url`, so without pinning it each invite would
     // install as a separate app.
-    const one = invitedManifest(base, link, "https://bida.bid");
-    const two = invitedManifest(base, { groupId: "g2", secret: "psst" }, "https://bida.bid");
+    const one = invitedManifest(base, [link], "https://bida.bid");
+    const two = invitedManifest(base, [link, second], "https://bida.bid");
     expect(one.id).toBe("https://bida.bid/");
     expect(two.id).toBe(one.id);
   });
 
   it("carries everything it was not asked to change", () => {
-    expect(invitedManifest({ ...base, display: "standalone" } as never, link, "https://bida.bid"))
+    expect(invitedManifest({ ...base, display: "standalone" } as never, [link], "https://bida.bid"))
       .toMatchObject({ display: "standalone" });
   });
 });

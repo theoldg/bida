@@ -74,29 +74,37 @@ into tab use, not to lock the casual one out.
 into the bookmark, it writes from there — so that is where both halves live
 (`lib/install.ts`, `app/install/page.tsx`).
 
-1. **The page's own URL.** `route.install(link)` is `/install#<id>.<secret>`,
-   and every way in passes one: the join screen's **Add to home screen**, and
-   the groups list's banner, which carries the group at the top of the list.
-   With no readable manifest iOS bookmarks the URL it is looking at, fragment
-   included. Name, icon and standalone come from the `apple-*` tags either way.
+1. **The page's own URL.** `route.install(links)` is
+   `/install#<id>.<secret>~<id>.<secret>…`, and both ways in pass **every
+   invite the tab holds** (`heldInvites`) — the join screen's **Add to home
+   screen** leading with the group being joined, the groups list's banner with
+   the top of the list. The tab is what forgets, so a group left behind is a
+   paste to do later for no saving; `~` is URL-safe and cannot occur in either
+   half. With no readable manifest iOS bookmarks the URL it is looking at,
+   fragment included. Name, icon and standalone come from the `apple-*` tags
+   either way.
 2. **The manifest.** On an iOS tab the app's `<link rel="manifest">` has its
-   href swapped for a `blob:` manifest whose `start_url` is `/join#id.secret`,
-   for a WebKit that reads the link as it stands when the share sheet opens.
+   href swapped for a `blob:` manifest whose `start_url` is that same set, for
+   a WebKit that reads the link as it stands when the share sheet opens.
 
-Both ends are wired, so whichever URL survives, the icon's first launch joins:
-`/join#…` is the app's own route, and `/install#…` hands the invite to it. A
-fragment whose secret this phone already holds is spent — the app starts where
-the app starts, rather than the icon being one group's door forever.
+Both ends are wired, so whichever URL survives, the icon's first launch brings
+the groups in. One invite goes to `/join`, which names the group and waits out
+a first sync; several are saved where they are read and the list is where it
+lands, filling as each syncs. An invite this phone already holds is spent — so
+the icon is a door into the app, not into one group forever — and holding is
+the test rather than joining again, because `saveGroupKey` would undo a
+`forgetGroup`.
 
 **What the iPhone answers**: does the fragment survive into the launched icon;
-does it survive a reboot; and which half did it — the two land on different
-URLs, so the app that opens says which. `pnpm homescreen` covers everything
+does it survive a reboot; and which half did it — with a single invite the two
+land on different URLs, so the app that opens says which. `pnpm homescreen` covers everything
 around that in a real browser ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must keep `start_url: "/"`, since it shares storage and
 needs none of this.
 
-Consequences if it works: a second group still comes in by Paste link, and the
-secret sits in the home-screen bookmark — on the phone that already holds it.
+Consequences if it works: a group joined *after* the install still comes in by
+Paste link, and every secret the phone held at install time sits in the
+home-screen bookmark — on the phone that already holds them.
 If it doesn't, nothing is worse than before: the link is on the clipboard and
 the app starts empty, which is what the tutorial's last step already says.
 
@@ -128,8 +136,8 @@ plain back, and the only exit: the way forward is out of the browser.
 
 A card at the top of the groups list, *Keep your groups on this phone /
 Safari may forget them*, with **Add to home screen** into `/install` — carrying
-the invite of the group at the top of the list, which is the one the app would
-reopen by itself — **shown only once the tab holds a group**. An empty home is
+every group in the tab, the top of the list first — **shown only once the tab
+holds a group**. An empty home is
 someone looking around: Quick split stores nothing and is the right way to try bida, and a
 visitor won't install an app sight unseen. Once a group is in the tab,
 "Safari may forget it" is true and worth saying at the top rather than the
@@ -151,8 +159,9 @@ screen?* and the link in a box that is its own copy button, reading
 only allows it inside a tap.
 
 - **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`
-  with the invite in its fragment ([experiment A](#a-in-detail--the-experiment)),
-  by `location.assign` — a fragment is the one thing Next's router drops.
+  with this group and the tab's others in its fragment
+  ([experiment A](#a-in-detail--the-experiment)), by `location.assign` — a
+  fragment is the one thing Next's router drops.
 - **Continue in Safari** — outlined, staying in the tab.
 
 The key is saved and the group pulled *behind* the screen, so its title can be
@@ -167,8 +176,6 @@ that opening, and is not stored.
 
 - Does **New group** in a tab get the same choice as `/join`? Its key exists
   nowhere but that tab until the link is shared — worse than joining.
-- A tab holding several groups brings them over one paste at a time. Is
-  re-opening each invite from the chat enough?
 - Safari's "Add to Dock" web apps on a Mac have the same split storage and the
   same week; `looksIos` excludes a real Mac. In scope?
 

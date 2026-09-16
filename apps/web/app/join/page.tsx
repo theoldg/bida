@@ -6,7 +6,7 @@ import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../..
 import { Icon } from "../../components/icons";
 import { useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
-import { saveGroupKey } from "../../lib/db/commands";
+import { heldInvites, saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
@@ -184,11 +184,15 @@ function JoinChoice({ link, name, onContinue }: {
 
   async function addToHomeScreen() {
     await write();
+    // Every group this tab holds, not just this one: the tab is what forgets,
+    // and bringing the rest over costs nothing but fragment (docs/ios.md).
+    // This group goes first — its key was saved behind this screen.
+    //
     // `location.assign`, not the router: the tutorial is the page the share
     // sheet is opened from, so its URL — fragment and all — is what iOS writes
     // into the home-screen bookmark, and a soft navigation that loses the
     // fragment loses the whole point of carrying it (docs/ios.md).
-    location.assign(route.install(link));
+    location.assign(route.install(await heldInvites(link.groupId)));
   }
 
   return (

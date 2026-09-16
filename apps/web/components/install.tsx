@@ -3,9 +3,10 @@
 import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
+import { heldInvites } from "../lib/db/commands";
 import { setInstallNudgeCollapsed } from "../lib/db/device";
 import { route } from "../lib/group-link";
-import { useDevice, useGroupSecret } from "../lib/hooks";
+import { useDevice } from "../lib/hooks";
 import { installOffer, iosBrowser, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
@@ -76,17 +77,16 @@ function Offer() {
  * the nudge, so the two can't disagree): someone who has chosen to stay in the
  * browser has read it, and a warning they can't put away is nagging.
  *
- * `groupId` is the group whose invite rides along to `/install`, and so onto
- * the home screen: the top row of the list this card sits on, which is the
- * most recently active group and the one the app would reopen by itself
- * (lib/launch.ts). A tab holding several still brings the rest over one paste
- * at a time — carrying one is never worse than carrying none.
+ * Every group the tab holds rides along to `/install`, and so onto the home
+ * screen (docs/ios.md) — the tab is what forgets, so leaving any behind just
+ * leaves a paste to do later. `groupId` is only which one goes first: the top
+ * row of the list this card sits on, the most recently active and the one the
+ * app would reopen by itself (lib/launch.ts).
  */
 export function InstallBanner({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
   const browser = useBrowserName();
   const device = useDevice();
-  const secret = useGroupSecret(groupId);
   if (offer !== "manual" || !device) return null;
   const open = !device.installNudgeCollapsed;
   return (
@@ -101,10 +101,11 @@ export function InstallBanner({ groupId }: { groupId: string }) {
           <>
             <p className="hint" style={{ marginTop: 4, textWrap: "balance" }}>{copy.install.banner.body(browser)}</p>
             {/* `location.assign` rather than a `<Link>`: the fragment is the
-                invite, and the router drops it when it falls back to loading
+                invites, and the router drops it when it falls back to loading
                 the page itself (docs/ios.md#gotchas). */}
             <button type="button" className="btn btn-s" style={{ marginTop: 11 }}
-              onClick={() => location.assign(route.install(secret ? { groupId, secret } : undefined))}>
+              onClick={() => void heldInvites(groupId)
+                .then((invites) => location.assign(route.install(invites)))}>
               {copy.install.banner.act}
             </button>
           </>

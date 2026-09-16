@@ -13,7 +13,7 @@
  */
 
 export {
-  createGroup, saveGroupKey, forgetGroup, claimIdentity, publishExistingClaims,
+  createGroup, saveGroupKey, heldInvites, forgetGroup, claimIdentity, publishExistingClaims,
   addMember, renameMember, removeMember, healGroup, type NewGroupInput,
 } from "./groups";
 export { setRate, clearRate } from "./rates";

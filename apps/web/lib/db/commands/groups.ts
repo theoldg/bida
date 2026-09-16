@@ -6,6 +6,7 @@ import { db } from "../dexie";
 import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup } from "../device";
 import { requestPersistence } from "../../persist";
+import type { JoinLink } from "../../group-link";
 import { appendOps } from "./append";
 
 /**
@@ -99,6 +100,31 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
   // This phone now holds something that exists nowhere else until it syncs.
   // Not awaited: whether the browser agrees to keep it doesn't gate the join.
   void requestPersistence();
+}
+
+/**
+ * Every invite this phone holds, for the fragment a home-screen icon is added
+ * with (docs/ios.md).
+ *
+ * The secrets, not the groups they open: one just accepted has its key before
+ * its ops, and it is the very group the person is installing for. Forgotten
+ * groups are left out — the key outlives `forgetGroup`, because re-opening the
+ * link is how you come back, and an icon that walks back into a group this
+ * phone said it was done with is the one thing carrying them all could get
+ * wrong.
+ *
+ * `first` goes at the head: the group the screen that asked is about.
+ */
+export async function heldInvites(first?: Id): Promise<JoinLink[]> {
+  const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
+  const left = new Set(device.leftGroups ?? []);
+  const links = keys
+    .filter((key) => !left.has(key.groupId))
+    .map(({ groupId, secret }) => ({ groupId, secret }));
+  return [
+    ...links.filter((link) => link.groupId === first),
+    ...links.filter((link) => link.groupId !== first),
+  ];
 }
 
 /**
