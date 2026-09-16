@@ -5,6 +5,7 @@ import {
 import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, wrapImage } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
+import { devAsset } from "./dev-env";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
 /**
@@ -23,6 +24,8 @@ const app = new Hono<{
      *  see docs/receipt-scanning.md#what-the-scan-costs and SELFHOSTING.md. */
     TURNSTILE_SECRET_KEY?: string;
     SCAN_IP_SALT?: string;
+    /** `"dev"` on the dev Worker only (wrangler.toml) — see dev-env.ts. */
+    BIDA_ENV?: string;
   };
 }>();
 
@@ -231,6 +234,7 @@ app.get("/api/groups/:id/ops", async (c) => {
   return c.json({ ops, latestSeq: group.last_op_seq });
 });
 
-app.all("*", (c) => c.env.ASSETS.fetch(c.req.raw));
+app.all("*", (c) =>
+  c.env.BIDA_ENV === "dev" ? devAsset(c.env.ASSETS, c.req.raw) : c.env.ASSETS.fetch(c.req.raw));
 
 export default app;

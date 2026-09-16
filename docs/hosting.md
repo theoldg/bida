@@ -114,10 +114,16 @@ pnpm db:migrate                 # applies migrations to the remote DB
 
 ### Dev and production
 
-Two Workers, two D1 databases, one repo. The only differences are the name and
-the `database_id` — the [`[env.dev]` block in
+Two Workers, two D1 databases, one repo. The differences are the name, the
+`database_id` and a `BIDA_ENV = "dev"` var — the [`[env.dev]` block in
 `wrangler.toml`](../apps/api/wrangler.toml) restates them, and the web export
 is byte-identical, so what production gets is a build that already ran on dev.
+So dev can't be mistaken for production on a phone, the dev Worker dresses that
+same export on the way out ([`dev-env.ts`](../apps/api/src/dev-env.ts)): it
+serves the DEV-stamped icons `pnpm icons` writes to `public/dev/` at the
+ordinary icon URLs, and tags HTML `data-env="dev"`, which tints the top bar
+green. An already-installed dev app keeps its old home-screen icon until it is
+reinstalled.
 
 | | Branch | Worker | D1 | Holds |
 |---|---|---|---|---|

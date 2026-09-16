@@ -30,6 +30,13 @@ name = "hajsik-dev"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
+# Dev only: every asset passes through the Worker, which serves the DEV-stamped
+# icons and tags HTML so the top bar tints (src/dev-env.ts). Production serves
+# assets straight from the edge, as before.
+run_worker_first = true
+
+[env.dev.vars]
+BIDA_ENV = "dev"
 
 # Created by `wrangler d1 create hajsik-dev` on 2026-09-14. Disposable, unlike
 # the production database — this is the one a schema change gets tried on.

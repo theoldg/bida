@@ -12,7 +12,7 @@
  * Run `pnpm icons` after editing the logo. Chromium comes from the same place
  * the browser checks take it — never run `playwright install`.
  */
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ROOT, launch } from "./lib/harness.mjs";
 
@@ -41,19 +41,35 @@ const ICONS = [
 
 const GROUND = "#141517"; // the logo's own background, so the inset is invisible
 
+/**
+ * The dev Worker's copies, stamped so a home screen holding both apps can tell
+ * them apart. Ugly on purpose. They ship in every export, production's too, so
+ * the build stays byte-identical; only the dev Worker ever serves them, at the
+ * ordinary icon URLs (apps/api/src/dev-env.ts). The band sits inside the
+ * artwork's box, so the maskable crop keeps it.
+ */
+const STAMP = `<b style="position:absolute;left:-10%;right:-10%;top:50%;transform:translateY(-50%) rotate(-30deg);
+  background:#E0201B;color:#fff;font:900 22cqw/1.25 Arial Black,Arial,sans-serif;text-align:center;
+  letter-spacing:.06em;border-block:1.2cqw solid #fff">DEV</b>`;
+
+await mkdir(join(ROOT, "apps/web/public/dev"), { recursive: true });
 const browser = await launch();
 try {
   for (const { file, size, scale } of ICONS) {
-    const page = await browser.newPage({ viewport: { width: size, height: size } });
-    await page.setContent(
-      `<style>html,body{margin:0;width:${size}px;height:${size}px;background:${GROUND}}
-       div{width:${scale * 100}%;height:${scale * 100}%;margin:${(1 - scale) * 50}% auto}
-       svg{display:block;width:100%;height:100%}</style><div>${svg}</div>`,
-    );
-    const png = await page.screenshot({ omitBackground: false });
-    await writeFile(join(ROOT, "apps/web/public", file), png);
-    await page.close();
-    console.log(`${file}  ${size}×${size}`);
+    for (const dev of [false, true]) {
+      const page = await browser.newPage({ viewport: { width: size, height: size } });
+      await page.setContent(
+        `<style>html,body{margin:0;width:${size}px;height:${size}px;background:${GROUND};overflow:hidden}
+         div{width:${scale * 100}%;height:${scale * 100}%;margin:${(1 - scale) * 50}% auto;
+           position:relative;container-type:size;overflow:hidden}
+         svg{display:block;width:100%;height:100%}</style><div>${svg}${dev ? STAMP : ""}</div>`,
+      );
+      const png = await page.screenshot({ omitBackground: false });
+      const out = dev ? `dev/${file}` : file;
+      await writeFile(join(ROOT, "apps/web/public", out), png);
+      await page.close();
+      console.log(`${out}  ${size}×${size}`);
+    }
   }
 } finally {
   await browser.close();
