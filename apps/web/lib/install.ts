@@ -190,11 +190,11 @@ export function invitedManifest(
  * same invites, for a WebKit that reads the manifest link as it stands when
  * the share sheet opens.
  *
- * The href is **swapped, not removed**: Next owns that element and puts back
- * one taken out from under it (leaving two manifests, the static one winning).
- * Swapping loses nothing — a manifest that fails to fetch falls back to the
- * document URL, which is the fragment above — and it keeps the head to one
- * manifest, which is what the fallback needs.
+ * `/install`'s HTML carries no manifest (app/install/layout.tsx), so this
+ * normally *adds* the link rather than swapping one: Safari read the static
+ * manifest at load on a real iPhone, before any effect could change it. A
+ * Safari that asks at load now finds nothing and bookmarks the page URL, which
+ * is the fragment above. The link isn't Next's here, so removing it is safe.
  *
  * Which of the two WebKit actually uses is the open question in docs/ios.md.
  * With a single invite they land on different URLs — `/join#…` and
@@ -202,12 +202,17 @@ export function invitedManifest(
  * answer.
  */
 export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => void {
-  const element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-  const original = element?.getAttribute("href");
-  if (!element || !original) {
-    note("install.manifest", "no manifest link to swap");
-    return () => {};
+  // Normally absent: `/install` leaves the manifest out for exactly this page
+  // (`lateManifestScript`). One already there was put in before this effect
+  // ran, and Safari may already have read it.
+  let element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  const created = !element;
+  if (!element) {
+    element = document.createElement("link");
+    element.rel = "manifest";
   }
+  const original = element.getAttribute("href") ?? STATIC_MANIFEST;
+  const link = element;
 
   let url: string | undefined;
   let undone = false;
@@ -220,8 +225,9 @@ export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => voi
         [JSON.stringify(manifest)],
         { type: "application/manifest+json" },
       ));
-      element.setAttribute("href", url);
-      note("install.manifest", `swapped at ${Math.round(performance.now())}ms, start_url ${hideSecrets(manifest.start_url ?? "")}`);
+      link.setAttribute("href", url);
+      if (created) document.head.append(link);
+      note("install.manifest", `${created ? "added" : "swapped (static one was in the head)"} at ${Math.round(performance.now())}ms, start_url ${hideSecrets(manifest.start_url ?? "")}`);
     } catch (error) {
       note("install.manifest", `swap failed: ${String(error)}`);
       // The page URL is the other half, and it is already carrying the invites.
@@ -232,7 +238,19 @@ export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => voi
     undone = true;
     // Put the app's own manifest back before leaving: a `blob:` revoked out
     // from under another screen is a manifest that no longer loads at all.
-    element.setAttribute("href", original);
+    if (created) link.remove();
+    else link.setAttribute("href", original);
     if (url) URL.revokeObjectURL(url);
   };
 }
+
+const STATIC_MANIFEST = "/manifest.webmanifest";
+
+/**
+ * Runs inline on `/install`, whose HTML carries no manifest: puts the app's
+ * static one back everywhere but the page an iOS tab bookmarks invites from,
+ * which gets its own from `offerInviteToHomeScreen` instead. Inline, and
+ * `looksIos`/`isStandalone` restated, because the whole point is to beat
+ * anything that reads the head at load.
+ */
+export const lateManifestScript = `(function(){var n=navigator,ios=/iPad|iPhone|iPod/.test(n.userAgent)||(n.platform==="MacIntel"&&n.maxTouchPoints>1),app=n.standalone===true||matchMedia("(display-mode: standalone)").matches;if(ios&&!app&&/\\./.test(location.hash))return;var l=document.createElement("link");l.rel="manifest";l.href="${STATIC_MANIFEST}";document.head.appendChild(l)})()`;

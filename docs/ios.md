@@ -84,9 +84,11 @@ into the bookmark, it writes from there — so that is where both halves live
    half. With no readable manifest iOS bookmarks the URL it is looking at,
    fragment included. Name, icon and standalone come from the `apple-*` tags
    either way.
-2. **The manifest.** On an iOS tab the app's `<link rel="manifest">` has its
-   href swapped for a `blob:` manifest whose `start_url` is that same set, for
-   a WebKit that reads the link as it stands when the share sheet opens.
+2. **The manifest.** `/install`'s HTML carries none (`app/install/layout.tsx`).
+   An inline script puts the static one back everywhere except an iOS tab
+   holding invites, where an effect adds a `blob:` manifest whose `start_url`
+   is that same set. A Safari that asks at the share sheet finds that; one that
+   asked at load found nothing, and bookmarks the page URL.
 
 Both ends are wired, so whichever URL survives, the icon's first launch brings
 the groups in. One invite goes to `/join`, which names the group and waits out
@@ -111,10 +113,10 @@ waiting on anyone:
   `parseStartURL` deliberately does not.
 - Nothing bars a `blob:` manifest. The only gate is CSP `manifest-src`, and
   this app sends no CSP.
-- **The risk it exposes**: the loader is cached per document load — the *first*
-  ask wins, forever. A Safari that asked before the swap would keep the static
-  manifest. If the phone says no, that is the thing to fix, by doing the swap
-  in a `beforeInteractive` script instead of an effect.
+- **Wrong in practice, and the first phone run showed it** (2026-09-16):
+  the tab swapped at 41ms and the icon still opened at `/`, the static
+  manifest's `start_url`. The first ask came at load, and the first ask wins
+  for that document. Hence no manifest in `/install`'s HTML at all.
 
 **What only the iPhone can answer**: MobileSafari is closed, so whether it asks
 at the moment of the tap, and what it does with `start_url` versus the page's
@@ -224,7 +226,8 @@ that opening, and is not stored.
   uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
   pasting again worked because that page load had brought the app up to date.
 - **A `<link rel="manifest">` taken out of the head comes back.** Next owns
-  that element and re-inserts it after hydration, leaving two manifests with
-  the static one winning. Swap its href instead — a manifest that fails to
-  fetch falls back to the document URL anyway, which is the other half of
-  experiment A.
+  the one `metadata.manifest` renders and re-inserts it after hydration. To
+  keep a page's HTML free of one, set `manifest: null` in its segment's
+  metadata and add the link by script, as `/install` does.
+- **Safari reads the manifest at page load**, not when the share sheet opens,
+  whatever WebKit's source suggests. Changing the link later does nothing.

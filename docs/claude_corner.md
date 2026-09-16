@@ -74,3 +74,4 @@ file.*
   of them already had a home somewhere else, which is the "one fact, one home"
   rule proving itself on the session that wrote it down.
 - Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.
+- Two sessions in one checkout race each other's builds and blur whose diff is whose. Check `git status` for files you never touched before trusting a red build.

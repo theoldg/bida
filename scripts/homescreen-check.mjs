@@ -102,6 +102,13 @@ await tabPage.waitForURL(/\/install/, { timeout: 8000 });
 report(new URL(tabPage.url()).hash === fragment,
   "and the tutorial it lands on carries the invite in its own fragment");
 
+// On a real iPhone the icon opened at `/` though the swap below had happened
+// 41ms in: Safari reads the manifest at load. So the HTML must carry none for
+// it to read, and nothing may add the static one before the swap does.
+const html = await (await fetch(`${base}/install`)).text();
+report(!/<link[^>]*rel="manifest"/.test(html),
+  "the tutorial's HTML carries no manifest for Safari to read at load");
+
 // The page iOS bookmarks is this one, so its URL is half the trick; the other
 // half is the manifest, whose start_url wins where WebKit reads it.
 const swapped = await blobManifest(tabPage);
