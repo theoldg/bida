@@ -620,7 +620,7 @@ so the static export ships the full line and the browser narrows it.
   retracts, the visual viewport grows, the page reflows — and the `click` misses,
   because the button has moved out from under a thumb that hasn't lifted. It
   reads as a button needing two taps, and it took Create, the scan pair, Save,
-  Continue, the back arrow and every icon button beside a field. `keepsFocus`
+  Continue, the back arrow, the split tabs and every icon button beside a field. `keepsFocus`
   (`components/bits.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
   the field keeps focus and nothing moves. Spread it on anything pressable that
   shares a screen with a field. Tab and Enter are untouched — a keyboard never

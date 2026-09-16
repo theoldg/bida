@@ -496,7 +496,7 @@ function EditEntryScreen() {
              amount; the space it vacated is the amount's. */
           right={reachable.length > 1 ? (
             <button type="button" className="chip" aria-label={copy.form.kindTitle}
-              onClick={() => setAsk("kind")}>
+              onClick={() => setAsk("kind")} {...keepsFocus}>
               {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
             </button>
           ) : undefined}
@@ -528,7 +528,7 @@ function EditEntryScreen() {
                 disabled={receiptLocksAmount}
               />
               <button type="button" className="chip" aria-label={copy.form.currency}
-                onClick={() => setAsk("currency")}>
+                onClick={() => setAsk("currency")} {...keepsFocus}>
                 {draft.currency} <Icon name="chev" size={10} />
               </button>
 
@@ -548,9 +548,9 @@ function EditEntryScreen() {
                       {rateOk ? money(baseMinor, base) : copy.none}
                     </span>
                   </button>
-                  <button type="button" className={`amtnote${flashClass(refusedFields.rate)}`}
-                    onAnimationEnd={settled("rate")}
-                    onClick={() => setAskRate(draft.currency)}>
+                  <button type="button" data-refuse="rate" className={`amtnote${flashClass(refusedFields.rate)}`}
+                    onAnimationEnd={settled("rate")} {...keepsFocus}
+                    onClick={() => setAskRate(draft.currency)} {...keepsFocus}>
                     {copy.rates.setRate()}
                   </button>
                 </>
@@ -588,7 +588,7 @@ function EditEntryScreen() {
 
             {transfer ? null : coPayers.length > 1 ? (
               <Card style={{ padding: "10px 12px" }}>
-                <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <Link href={route.payers(groupId)} {...keepsFocus} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {plural(coPayers.length, copy.noun.person)}
@@ -610,14 +610,14 @@ function EditEntryScreen() {
                     is the row up to the quieter door beside it, so that much
                     lights on a press. */}
                 <button type="button" id="paidby" className="pick"
-                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
+                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")} {...keepsFocus}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
                   <Icon name="chev" size={13} className="pchev" />
                 </button>
                 {/* A second, quieter door onto the same field, on the same row:
                     one payer is the common case and costs one row. */}
-                <button type="button" className="pick-sub"
+                <button type="button" className="pick-sub" {...keepsFocus}
                   onClick={() => {
                     // The same refusal, asked for by a door rather than by
                     // Save: the payers screen divides the amount between
@@ -682,7 +682,7 @@ function EditEntryScreen() {
               </p>
             ) : null}
             <button type="button" className="btn btn-p btn-lg" onClick={save}
-              disabled={saving || refusing} {...keepsFocus}>
+              disabled={saving || refusing || seeking} {...keepsFocus}>
               {saving ? <span className="spinner" /> : null}{copy.act.save}
             </button>
           </div>

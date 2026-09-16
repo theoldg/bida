@@ -505,7 +505,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
           <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
           <div className="whostrip">
             {people.map((m) => (
-              <button key={m.id} onClick={() => toggleInvolved(m.id)}
+              <button key={m.id} onClick={() => toggleInvolved(m.id)} {...keepsFocus}
                 aria-pressed={involved.has(m.id)}
                 aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
                 className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
@@ -575,20 +575,20 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                             on a line the receipt printed a count for — also
                             splits the bill into the rows to assign. */}
                         {folded ? (
-                          <button className="itemfold" onClick={() => showPortions(line.start)}
+                          <button className="itemfold" onClick={() => showPortions(line.start)} {...keepsFocus}
                             title={copy.items.showPortions(line.count)}
                             aria-label={copy.items.openItem(item.label, line.count)}
                             aria-expanded={false}>
                             ×{line.count}<Icon name="split" size={12} />
                           </button>
                         ) : into !== null ? (
-                          <button className="itemfold" onClick={() => unfold(line.start)}
+                          <button className="itemfold" onClick={() => unfold(line.start)} {...keepsFocus}
                             title={copy.items.splitInto(into)}
                             aria-label={copy.items.splitItem(item.label, into)}>
                             ×{into}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
-                          <button className="itemfold on" onClick={() => showAsOneLine(part.start)}
+                          <button className="itemfold on" onClick={() => showAsOneLine(part.start)} {...keepsFocus}
                             title={copy.items.mergeBack}
                             aria-label={copy.items.mergeItem(item.label, part.of)}
                             aria-expanded={true}>
@@ -611,7 +611,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                       return (
                         <td key={m.id}>
                           <button className={`itemcell${held ? " point-hold" : aimed ? pointClass : ""}`}
-                            onAnimationEnd={() => setPoint(null)}
+                            onAnimationEnd={() => setPoint(null)} {...keepsFocus}
                             onClick={() => (run?.detailed
                               ? openForEditing(line.start, line.count, m.id)
                               : folded
@@ -655,7 +655,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                           means one thing on this screen. */}
                       {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
                         <button className={`itemfold${openDiscounts ? " on" : ""}`}
-                          onClick={() => setOpenDiscounts(!openDiscounts)}
+                          onClick={() => setOpenDiscounts(!openDiscounts)} {...keepsFocus}
                           title={openDiscounts
                             ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
                           aria-label={openDiscounts

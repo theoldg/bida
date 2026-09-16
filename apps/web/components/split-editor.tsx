@@ -9,6 +9,7 @@ import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
+import { keepsFocus } from "./bits";
 import { copy } from "../lib/copy";
 import { bare, money, plural, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
@@ -216,12 +217,12 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             const on = !showReceipt && !legacy && spec.mode === mode;
             return (
               <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
-                onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
+                onClick={() => onTabChange(mode)} {...keepsFocus}>{copy.split.mode[mode]}</button>
             );
           })}
           {receipt ? (
             <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
-              onClick={() => onTabChange("receipt")}>
+              onClick={() => onTabChange("receipt")} {...keepsFocus}>
               {copy.split.receipt}
             </button>
           ) : null}
@@ -246,13 +247,13 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             const fieldId = `sp-${m.id}`;
             const end = spec.mode === "shares" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
+                <button type="button" onClick={() => setWeight(m.id, -1)} {...keepsFocus} aria-label={copy.split.fewerParts(m.name)}
                   style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
                 <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
                   color: on ? "var(--ink)" : "var(--muted)" }}>
                   {spec.weights[m.id] ?? 0}
                 </span>
-                <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
+                <button type="button" onClick={() => setWeight(m.id, 1)} {...keepsFocus} aria-label={copy.split.moreParts(m.name)}
                   style={{ fontSize: 18 }}>+</button>
               </span>
             ) : spec.mode === "exact" ? (
@@ -260,7 +261,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 {/* Offered on a row with nothing in it too: somebody who has
                     typed no amount yet is exactly who you hand the rest to. */}
                 {check && !check.ok ? (
-                  <button type="button" className="chip" onClick={() => giveRest(m.id)}
+                  <button type="button" className="chip" onClick={() => giveRest(m.id)} {...keepsFocus}
                     aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
                 ) : null}
                 {/* Never disabled. Every row can be typed into, whoever any
@@ -311,7 +312,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 {typing ? (
                   <label htmlFor={fieldId} style={lead}>{name}</label>
                 ) : (
-                  <button type="button" onClick={() => toggle(m.id)}
+                  <button type="button" onClick={() => toggle(m.id)} {...keepsFocus}
                     aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
                     style={lead}>
                     {name}

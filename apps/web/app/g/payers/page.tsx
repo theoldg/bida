@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "../../../components/amount-input";
+import { keepsFocus } from "../../../components/bits";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
@@ -113,7 +114,7 @@ function PayersScreen() {
       <Body>
         <TopBar title={copy.payers.title[voice]}
           sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
-          right={<button className="action" onClick={() => router.back()} disabled={!check.ok}>
+          right={<button className="action" onClick={() => router.back()} disabled={!check.ok} {...keepsFocus}>
             {copy.act.done}
           </button>} />
 
@@ -145,7 +146,7 @@ function PayersScreen() {
                         hasn't typed an amount yet is exactly who you hand the
                         shortfall to. */}
                     {!check.ok ? (
-                      <button onClick={() => giveRest(m.id)} className="chip"
+                      <button onClick={() => giveRest(m.id)} className="chip" {...keepsFocus}
                         aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
                     ) : null}
                     <MinorAmountInput id={fieldId} className="bignum splitin"
