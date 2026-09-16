@@ -164,10 +164,18 @@ reached by tapping the Items tab's button — "Assign who had what" on a bill
 nobody has been given a line of, "Edit who-had-what" once somebody has —
 building the grid that becomes a `receipt` split — its own mode, which is why
 no screen has to ask a second field whether a split came off a bill
-([ADR-0016](decisions/0016-receipts.md)). The screen is three bands rather than
-a scrolling page: who was there in one sideways-scrolling line above, running
-per-person totals stacked below, and the grid between them owning the vertical
-scroll so its row of initials freezes while a long bill passes under it.
+([ADR-0016](decisions/0016-receipts.md)). The screen is **one scroller**: who
+was there, the grid and the running per-person totals pass through it together,
+and what is held back is what you are working against — the row of initials
+across the top and the column of names down the left, so neither a column nor a
+row can go anonymous on a bill that outruns the screen in both directions. The
+chips are set once before anything is assigned and the totals are read at the
+end, so freezing either costs the grid height it needs more: at eight people on
+a 360×640 phone they held 351 of 640 pixels and left the grid 230 — three and a
+half lines of a twelve-line bill. Only Done stays put, being the way out.
+Column widths are declared in a `<colgroup>` under `table-layout: fixed`, never
+measured from the cells: content-derived widths moved every dot on the screen
+each time a run was opened.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. Done is never held grey: pressed on a bill

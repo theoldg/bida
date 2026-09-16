@@ -16,6 +16,10 @@
   --debit:#A94B3D;  --debit-bg:#F4E9E6;
   --brand:#16171A; --brand-ink:#FBFBFA;
   --hl:rgba(22,23,26,.055); --hl-edge:#7B7F86; --hl-ink:#16171A;
+  /* The band across a run of portions. Derived once here rather than written out
+     at each use: `var()` inside a custom property resolves against the `--hl`
+     that won on `:root`, so this follows the theme without a dark copy. */
+  --hl-row:color-mix(in srgb, var(--hl) 30%, transparent);
   /* Laid over whatever a control already sits on, so one value covers a row on
      paper and a highlighted row alike. */
   --press:rgba(22,23,26,.09);
@@ -575,17 +579,31 @@ a { color: inherit; text-decoration: none }
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
-/* Three bands: who was there, the grid, the running totals. The grid is the
-   screen's scroll region rather than a block inside a scrolling page, which is
-   what makes the sticky header below actually stick — `position: sticky`
-   resolves against the nearest scroll container, and a wrapper that only scrolls
-   sideways gives it nothing to stick to. */
-.itemhead { flex: none; padding: 10px 16px 12px }
-/* One line that scrolls sideways, not a block that grows downwards: the people
-   are a fixed, short list, and the grid under them is what needs the height. */
-.whostrip { display: flex; gap: 6px; overflow-x: auto; -webkit-overflow-scrolling: touch }
-.whostrip .itemchip { flex: none }
-.itemtablewrap { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
+/* One scroller, not three bands. Who was there, the grid and the running totals
+   all live in here and scroll as one: at eight people the two bands that are not
+   the grid used to freeze 351px of a 640px phone, leaving 230px — three and a
+   half lines of a twelve-line bill — for the only part of the screen anybody
+   touches. What genuinely has to stay put is what you work against — the row of
+   initials and the column of names — and each earns that on its own below.
+   It scrolls both ways on purpose: `position: sticky` resolves against the
+   nearest scroll container, so splitting the axes across two nested scrollers —
+   the outer one down, an inner one sideways — would leave the header nothing to
+   stick to. Which makes `.itemwide` below the price of keeping them together. */
+.itemscroll { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
+/* The blocks in the scroller that are prose rather than grid — the chips, the
+   caption under the rows nobody ordered, the totals. They belong to the screen,
+   not to a column, so they must not travel sideways with the table or widen the
+   scroll it has already earned. `width: 100%` inside a scroll container is the
+   *visible* width — a block child's containing block is the scroller's content
+   box, not its scrollWidth — so this is one screenful however wide the table is,
+   and `left: 0` holds it there while the columns pass under the table's own. */
+.itemwide { position: sticky; left: 0; width: 100%; box-sizing: border-box }
+.itemhead { padding: 10px 16px 12px }
+/* Wrapped, not a line that scrolls sideways: height is cheap now that this band
+   scrolls away, and a second sideways scroller stacked on the grid's was one too
+   many. Eight people wrap to three rows you read at a glance instead of five
+   chips and a hidden three. */
+.whostrip { display: flex; flex-wrap: wrap; gap: 6px }
 /* Pays `--kb` like `.foot` does: the tip is typed a row above this band, and
    the keyboard overlays the shell rather than shortening it, so without it the
    button this screen ends on sits under the keyboard. */
@@ -597,9 +615,12 @@ a { color: inherit; text-decoration: none }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
 /* A column, not a sideways strip: a total you have to scroll to find is a total
-   you don't read, and stacked rows put every figure on one right edge. Capped,
-   because the grid above it is the screen. */
-.totalstrip { display: flex; flex-direction: column; max-height: 26dvh; overflow-y: auto }
+   you don't read, and stacked rows put every figure on one right edge. It sits
+   under the grid inside the one scroller, so it is uncapped and never scrolls
+   inside itself — the 26dvh cap it used to wear was 166 frozen pixels showing
+   six of eight people, which is the worst of both. */
+.itemtotals { padding: 10px 16px 14px }
+.totalstrip { display: flex; flex-direction: column }
 .tot { display: flex; align-items: center; gap: 8px; padding: 5px 0;
   border-bottom: 1px solid var(--rule-soft) }
 .tot:last-child { border-bottom: 0 }
@@ -609,23 +630,58 @@ a { color: inherit; text-decoration: none }
   font-weight: 600 }
 
 /* `separate`, not `collapse`: a collapsed border belongs to the table, so it
-   scrolls away from under a sticky header cell instead of travelling with it. */
-.itemtable { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 12.5px }
-.itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 7px 8px; text-align: center }
+   scrolls away from under a sticky header cell instead of travelling with it.
+
+   `fixed`, because widths that are computed from content are widths that move:
+   under `auto` the browser measures every cell and works backwards, so opening
+   one run — which adds "· 1/2" to an amount, swaps the ×N button and indents
+   the row — re-measured the whole table and shifted the name column 3px with
+   every dot on the screen following it. Here the widths are declared once in the
+   `<colgroup>` and no row can touch them. The columns still scroll sideways;
+   they just scroll a width they agreed on in advance.
+
+   `--cols` is set on the element: the table has to overflow the scroller rather
+   than squash its columns to fit it, and only the render knows how many there
+   are. It was squashing them — at 390px wide the person columns came out 35px,
+   narrower than the 40px cell inside them, which overflowed its own `<td>`. */
+.itemtable { border-collapse: separate; border-spacing: 0; font-size: 12.5px;
+  table-layout: fixed; width: 100%;
+  --label-w: 152px; --who-w: 44px;
+  min-width: calc(var(--label-w) + var(--cols, 0) * var(--who-w)) }
+/* Both columns declare a width, so a table with room to spare widens all of
+   them in proportion rather than spending every spare pixel on the names — two
+   people and an auto label column put the dots against the right edge, half a
+   screen from the line they belong to. Below the floor `min-width` sets, these
+   are the widths; above it they are the ratio. Either way they are a function of
+   how many people are at the table and nothing else, which is the point. */
+.itemtable .collabel { width: var(--label-w) }
+.itemtable .colwho { width: var(--who-w) }
+.itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 6px 3px; text-align: center }
 .itemtable tr:last-child td { border-bottom: 0 }
-.itemtable th { padding-top: 9px; padding-bottom: 9px; background: var(--card-2) }
+.itemtable th { background: var(--card-2) }
 /* Freezes the initials row: on a twenty-line bill the columns are otherwise
    anonymous by the time you've scrolled to the last item. */
-.itemtable thead th { position: sticky; top: 0; z-index: 1; border-bottom-color: var(--rule) }
+.itemtable thead th { position: sticky; top: 0; z-index: 2; border-bottom-color: var(--rule) }
+/* And freezes the names, for the same reason in the other direction: eight
+   people do not fit across a phone at any width worth having, so this table is
+   read sideways — and a row whose name has scrolled off is a row of anonymous
+   dots. The corner cell is in both sticky rows at once and has to outrank each
+   of them, or the column scrolls over the initials it is headed by. */
+.itemtable thead th:first-child { left: 0; z-index: 3 }
 /* An avatar is a grid, so it is block-level and the cell's `text-align` does
    nothing to it: it sat against the column's left edge, a whole cell-padding
    away from the dots under it. Centred the same way `.itemcell` is below, so
    the column — initials, dots, and the faint ones on the rows nobody ordered —
    is one axis all the way down. */
 .itemtable th .avatar { margin-inline: auto }
-/* Beats `.itemtable td { text-align: center }`, which this column never wanted. */
-.itemtable .itemlabel { text-align: left; min-width: 152px }
-.itemrow { display: flex; align-items: center; justify-content: space-between; gap: 10px }
+/* Beats `.itemtable td { text-align: center }`, which this column never wanted.
+   Sticky against the left edge with the initials above it, and opaque: the dots
+   pass underneath, so a cell that let them through would read as a name with
+   somebody else's answer written across it. `--card` is the shell's own
+   background — the table has none of its own to inherit. */
+.itemtable .itemlabel { text-align: left; position: sticky; left: 0; z-index: 1;
+  background: var(--card); padding-left: 12px; padding-right: 8px }
+.itemrow { display: flex; align-items: center; justify-content: space-between; gap: 8px }
 .itemtext { min-width: 0; overflow-wrap: anywhere }
 .itemname { display: block; font-weight: 500 }
 .itemqty { font-weight: 400; color: var(--muted) }
@@ -633,8 +689,8 @@ a { color: inherit; text-decoration: none }
 /* Unfold / merge: the one control here that changes the shape of the bill, so
    it sits in its own right-hand column rather than inline after a label of
    unpredictable length. */
-.itemfold { display: inline-flex; align-items: center; gap: 3px; flex: none; min-height: 25px;
-  padding: 3px 7px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
+.itemfold { display: inline-flex; align-items: center; gap: 2px; flex: none; min-height: 25px;
+  padding: 3px 5px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card);
   font-family: var(--f-mono); font-size: 11px; font-weight: 500; color: var(--ink-2) }
 .itemfold svg { color: var(--muted) }
 .itemfold.on { border-color: var(--ink-2); background: var(--card-3); color: var(--ink) }
@@ -642,14 +698,20 @@ a { color: inherit; text-decoration: none }
 /* A highlighter band across the portions of one printed line, capped by a rule
    down its left edge: they read as one dish shared out, not as two lines the
    receipt happened to print. */
-/* The caption under the rows nobody ordered: the table's own last line rather
-   than a block below it, so it scrolls with the rows it is about and can't be
-   read as a fourth charge. Left-aligned across the whole width — it is a
-   sentence, not a figure in the initials columns. */
-.itemtable tr.itemnote td { text-align: left; font-size: 11px; line-height: 1.35;
-  color: var(--muted); padding-top: 8px; padding-bottom: 9px }
-.itemtable tr.part td { background: color-mix(in srgb, var(--hl) 30%, transparent) }
-.itemtable tr.part .itemlabel { padding-left: 13px; box-shadow: inset 3px 0 0 var(--hl-edge) }
+/* The caption under the rows nobody ordered. It used to be the table's own last
+   row, to scroll with the rows it is about; now that the whole screen scrolls
+   together it can sit under the table and still do that — and as a block rather
+   than a cell it reads even less like a fourth charge. Out of the table because
+   a sentence in a `colSpan` cell wraps at the table's width, not the screen's,
+   so half of it would have been off to the right. */
+.itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
+  padding: 9px 16px 0 12px }
+.itemtable tr.part td { background: var(--hl-row) }
+/* The same band, but painted *over* the opaque background the sticky column
+   needs rather than mixed into it: `--hl` is translucent, so mixing it with the
+   card would land at 72% alpha and let the dots through. */
+.itemtable tr.part .itemlabel { padding-left: 15px; box-shadow: inset 3px 0 0 var(--hl-edge);
+  background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
 /* The tip is the one figure on this screen you type rather than read, and it
    wore the same borderless mono as the printed amounts above it — so it read
@@ -663,11 +725,13 @@ a { color: inherit; text-decoration: none }
 .itemamountin::placeholder { color: var(--muted) }
 .tipedit { color: var(--muted); flex: none }
 .tiphint { font-size: 10px; color: var(--muted); display: block; margin-top: 2px }
-/* `margin-inline: auto` because the cell is a block of its own width inside a
-   column the table may have made wider: left-aligned, it put the dots a few
-   pixels off the centre line the header's initials sit on. */
-.itemcell { width: 40px; height: 34px; display: grid; place-items: center;
-  margin-inline: auto }
+/* Fills its `<td>` rather than sitting in it as a 40px island: the column went
+   from 56px to 44px, and a cell that takes the whole of it is the larger tap
+   target of the two — the full column width by the row's own height. It also
+   retires a `margin-inline: auto` that was there to centre the island in a
+   column the table had made wider, which under `table-layout: fixed` above it
+   no longer can. `place-items` centres the dot on the header's initials. */
+.itemcell { width: 100%; height: 34px; display: grid; place-items: center }
 .itemcell .dot { width: 10px; height: 10px }
 /* The rows nobody ordered wear the same cell, minus the button: their faint dot
    was a bare span centred by the cell's `text-align`, while every dot above it

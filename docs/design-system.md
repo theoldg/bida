@@ -385,6 +385,21 @@ reads as an ordinary assignment.
   fix arriving early and end the refusal by hand (`refusal.onFlashEnd()` with
   no event). It has cost a locked Save on the who-had-what grid and a locked
   add row before it (`lib/refusal.ts`).
+- **`table-layout: auto` makes every column a function of every cell.** The
+  browser measures the content and works backwards, so a table that grows a
+  suffix, swaps a button or indents one row re-measures the lot: opening a run
+  on the who-had-what grid moved the name column 3px and every dot after it.
+  A table whose shape changes under the reader declares its widths in a
+  `<colgroup>` and takes `table-layout: fixed`. It also has to carry a
+  `min-width`, or the columns are squashed below the size of what is inside
+  them rather than overflowing the scroller.
+- **`width: 100%` inside a scroll container is the *visible* width**, not the
+  scrollWidth — a block child's containing block is the scroller's content box.
+  That is what lets prose share a scroller with a table wider than the screen:
+  `width: 100%` plus `position: sticky; left: 0` is one screenful, pinned,
+  costing the horizontal scroll nothing. A sentence in a `colSpan` cell gets no
+  such thing, and wraps at the table's width with half of itself off to the
+  right.
 - **One global stylesheet means a bare class name lands everywhere it is
   spelled.** `.billline.tip` was compounded and still took the tip jar's `.tip`
   — a centred flex column with 22px of gap — so every discount and tax line in

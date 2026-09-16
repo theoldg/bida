@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { parseMinor, type ExtraKind } from "@bida/core";
 import { AmountInput } from "./amount-input";
 import { keepsFocus } from "./bits";
@@ -471,30 +471,39 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       <Body>
         <TopBar title={title} back={{ ask: mayLeave }} />
 
-        {/* Three bands, not one scrolling page: who was there stays put at the
-            top, the running totals at the foot, and the grid in between owns
-            the scroll — which is what lets its initials row freeze while a long
-            bill scrolls under it. A twenty-line receipt is the case this screen
-            exists for, and the column you're tapping in has to keep its name. */}
-        <div className="itemhead">
-          <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
-          <div className="whostrip">
-            {people.map((m) => (
-              <button key={m.id} onClick={() => toggleInvolved(m.id)} {...keepsFocus}
-                aria-pressed={involved.has(m.id)}
-                aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
-                className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
-                <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
-                  {labels.get(m.id)}
-                </span>
-                {m.name}
-              </button>
-            ))}
+        {/* One scroller: who was there, the grid and the running totals pass
+            through it together. Eight people used to freeze more than half a
+            small phone on two bands nobody is touching — the chips are set once,
+            before anything is assigned, and the totals are read at the end.
+            A twenty-line receipt is the case this screen exists for, and it
+            outruns the screen both ways, so what is held back is what you work
+            against: the row of initials and the column of names (globals.css). */}
+        <div className="itemscroll" ref={wrap}>
+          <div className="itemhead itemwide">
+            <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
+            <div className="whostrip">
+              {people.map((m) => (
+                <button key={m.id} onClick={() => toggleInvolved(m.id)} {...keepsFocus}
+                  aria-pressed={involved.has(m.id)}
+                  aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
+                  className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
+                  <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>
+                    {labels.get(m.id)}
+                  </span>
+                  {m.name}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="itemtablewrap" ref={wrap}>
-          <table className="itemtable">
+          <table className="itemtable"
+            style={{ "--cols": involvedMembers.length } as CSSProperties}>
+            {/* Where the widths are decided, once — see `table-layout: fixed`
+                in globals.css. Nothing in a row can move them after this. */}
+            <colgroup>
+              <col className="collabel" />
+              {involvedMembers.map((m) => <col key={m.id} className="colwho" />)}
+            </colgroup>
             <thead>
               <tr>
                 <th />
@@ -688,38 +697,43 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                 </td>
                 {involvedMembers.map((m) => <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>)}
               </tr>
-              {/* Why the rows above have no cells to tap. Under them rather
-                  than in the footer: the footer's line is what to do next,
-                  and this is what the grid is already doing. */}
-              {extraKinds.length > 0 ? (
-                <tr className="itemnote">
-                  <td colSpan={1 + involvedMembers.length}>{copy.items.extraNote(extraKinds)}</td>
-                </tr>
-              ) : null}
             </tbody>
           </table>
-        </div>
 
-        {/* What the grid adds up to, kept in sight while it's being tapped
-            rather than at the bottom of a scroll — one name per line, so the
-            figures share a right edge and none of them is off-screen. */}
-        <div className="itemfoot">
-          {note}
+          {/* Why the rows above have no cells to tap. Directly under them rather
+              than in the footer: the footer's line is what to do next, and this
+              is what the grid is already doing. A block under the table rather
+              than its last row — a sentence in a cell wraps at the table's
+              width, which is wider than the screen. */}
+          {extraKinds.length > 0 ? (
+            <div className="itemnote itemwide">{copy.items.extraNote(extraKinds)}</div>
+          ) : null}
+
+          {/* What the grid adds up to — one name per line, so the figures share
+              a right edge. At the end of the scroll rather than held above the
+              button: eight of them capped at 26dvh was a list that scrolled
+              inside a band that had frozen the grid down to three rows to hold
+              it, and still showed only six. */}
           {involvedMembers.length > 0 ? (
-            <div className="totalstrip">
-              {involvedMembers.map((m) => (
-                <div key={m.id} className="tot" aria-label={copy.items.share(m.name)}>
-                  <span className="who">{m.name}</span>
-                  <span className="amt">{format(weights[m.id] ?? 0)}</span>
-                </div>
-              ))}
+            <div className="itemtotals itemwide">
+              <div className="totalstrip">
+                {involvedMembers.map((m) => (
+                  <div key={m.id} className="tot" aria-label={copy.items.share(m.name)}>
+                    <span className="who">{m.name}</span>
+                    <span className="amt">{format(weights[m.id] ?? 0)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : null}
-          {/* The same button the entry form ends on, under the totals it
-              agrees with. It can't scroll with the content the way that one
-              does — the grid owns this screen's scroll, sideways as well as
-              down — so it stays in the band, which pays `--kb` for the tip
-              being typed a row above it. */}
+        </div>
+
+        <div className="itemfoot">
+          {note}
+          {/* The same button the entry form ends on. The one thing on this
+              screen that still doesn't scroll: it is the way out, and a way out
+              you have to scroll a twenty-line bill to reach is one you lose.
+              Its band pays `--kb` for the tip being typed above it. */}
           <button type="button" className="btn btn-p btn-lg itemsave"
             onClick={finish} disabled={refusal.live || seeking} {...keepsFocus}>
             {copy.act.done}

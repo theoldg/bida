@@ -788,7 +788,15 @@ export const copy = {
     tipLabel: (currency: string) => `Tip and service, in ${currency}`,
     /** The one affordance a person misses: the tip is a field, not a printed line. */
     tipHint: "tap to edit",
-    portion: (index: number, of: number) => `${index} of ${of}`,
+    /**
+     * Which portion of a split line this row is, on the amount line beside the
+     * figure. Written short because that line is the narrowest thing on the
+     * screen — the name column is fixed, and on the first portion of an open
+     * run it shares its width with the ×N — and "4.50 · 1 of 2" wrapped there,
+     * leaving one portion of a pair taller than the other. `hadPortion` below
+     * is what a screen reader gets, and it still says it in full.
+     */
+    portion: (index: number, of: number) => `${index}/${of}`,
     /**
      * ×N says one thing on this screen: show the portions, or show them as the
      * line they came from. Only the very first press also *splits* the bill —
