@@ -5,6 +5,7 @@ import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
 import { downscaleToBase64Jpeg } from "./downscale";
 import { parseScanResponse } from "./response";
+import { stasMode } from "./stas";
 import { TurnstileBlockedError, turnstileToken } from "./turnstile";
 
 export { TurnstileBlockedError } from "./turnstile";
@@ -106,6 +107,9 @@ export async function scanReceipt(
         "Content-Type": "text/plain",
         Authorization: `Bearer ${token}`,
         ...(turnstile ? { "X-Turnstile-Token": turnstile } : {}),
+        // One bit, and it picks between two prompts the Worker holds — never
+        // a word of one. The envelope stays the Worker's (./stas.ts).
+        ...(stasMode() ? { "X-Stas": "1" } : {}),
       },
       body: imageBase64,
     });

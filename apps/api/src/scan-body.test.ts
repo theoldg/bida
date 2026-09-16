@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { buildScanRequestBody, MAX_IMAGE_BYTES, NotAnImageError, wrapImage } from "./scan-body";
+import {
+  buildScanRequestBody, MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage,
+} from "./scan-body";
 
 /**
  * What this endpoint promises is *negative*: whatever a caller sends, the
@@ -17,8 +19,13 @@ const stream = (body: string): ReadableStream<Uint8Array> =>
     },
   });
 
-const wrapped = async (body: string): Promise<string> =>
-  new Response(wrapImage(stream(body))).text();
+const wrapped = async (body: string, tone?: ScanTone): Promise<string> =>
+  new Response(wrapImage(stream(body), undefined, tone)).text();
+
+/** The one instruction in the envelope, whichever tone asked for it. */
+const promptOf = (body: string): string =>
+  ((JSON.parse(body) as { contents: { parts: { text?: string }[] }[] })
+    .contents[0]!.parts[1]!.text) ?? "";
 
 describe("the envelope", () => {
   it("is the builder's own body, with the image where the image goes", async () => {
@@ -70,5 +77,45 @@ describe("what it refuses", () => {
 
   it("but not an image right up to the cap", async () => {
     await expect(wrapped("Q".repeat(MAX_IMAGE_BYTES))).resolves.toContain("inlineData");
+  });
+});
+
+/**
+ * Staś mode moves one paragraph of the prompt and must move nothing else: a
+ * mean refusal is a joke, a differently-read receipt is a wrong bill. The
+ * tone also arrives as a *header*, so what is tested here is that it picks
+ * between two envelopes we hold rather than putting any of it in a caller's
+ * hands — the promise the rest of this file is about.
+ */
+describe("the two tones", () => {
+  it("is the kind one when nobody asks", async () => {
+    expect(await wrapped("QUJD")).toBe(await wrapped("QUJD", "kind"));
+  });
+
+  it("carries the image untouched either way", async () => {
+    expect(await wrapped("QUJD", "stas")).toBe(JSON.stringify(buildScanRequestBody("QUJD", "stas")));
+    expect(promptOf(await wrapped("QUJD", "stas"))).toContain("mean");
+  });
+
+  it("refuses a non-image in Staś mode too", async () => {
+    await expect(wrapped('QUJD","x":"', "stas")).rejects.toThrow(NotAnImageError);
+  });
+
+  it("changes only how a photo is refused — never how a bill is read", async () => {
+    const [kind, stas] = [promptOf(await wrapped("QUJD")), promptOf(await wrapped("QUJD", "stas"))];
+    // Everything before the refusal paragraph is the reading instructions, and
+    // everything after it is the cropped-receipt rule: both are word for word
+    // the same, or the two tones would be two different readers.
+    const marker = "If the photo isn't a receipt at all,";
+    expect(kind.slice(0, kind.indexOf(marker))).toBe(stas.slice(0, stas.indexOf(marker)));
+    const tail = "The same applies if the receipt is cropped,";
+    expect(kind.slice(kind.indexOf(tail))).toBe(stas.slice(stas.indexOf(tail)));
+    expect(kind).not.toBe(stas);
+  });
+
+  it("still tells the photographer what is wrong, meanly or not", async () => {
+    for (const tone of ["kind", "stas"] as const) {
+      expect(promptOf(await wrapped("QUJD", tone))).toContain("what to re-shoot");
+    }
   });
 });

@@ -90,6 +90,25 @@ is a speed bump, not a gate. What keeps our key off the open internet is that
 there is no request a caller can compose: not a prompt, not a schema, not a
 second image. The worst a minted credential buys is having a picture read.
 
+### Staś mode
+
+The one thing a caller gets to say about the prompt, and it says it by picking
+one of two paragraphs the Worker holds. `X-Stas: 1` on the scan request swaps
+the refusal wording for the vicious version — a photo that isn't a receipt, or
+one too blurry to read, comes back insulted instead of gently teased. Both
+paragraphs are in `REFUSAL` (`apps/api/src/scan-body.ts`), both still have to
+say plainly what's wrong so the person knows what to re-shoot, and everything
+else in the prompt is word for word the same, so a mean scan can't also be a
+wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
+pre-encoded per isolate like the other, so the second costs two short byte
+arrays and no branch on the hot path.
+
+It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
+long-press on the wordmark — which is `localStorage` on that phone
+(`lib/scan/stas.ts`) and therefore per phone, not per group: nobody is
+signed up to be insulted by somebody else's setting. The report prints `stas:`
+so a scan that came back savage is explicable from the thing people paste.
+
 ## Minimal Cloudflare quota: the Worker still never touches the bytes
 
 The free plan gives **10 ms CPU per request** and 100k requests/day. Requests
@@ -157,7 +176,7 @@ It reads. It doesn't compute.
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
-| error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set |
+| error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult (above) |
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
 reached by tapping the Items tab's button — "Assign who had what" on a bill
@@ -474,8 +493,8 @@ question is whether the photo is stored at all, and the answer is still no
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
-`apps/api/src/scan-body.ts` (prompt, structured output schema, and the
-base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
+`apps/api/src/scan-body.ts` (prompt, its two refusal tones, structured output
+schema, and the base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
 `response.ts`, `scanReceipt()` · `components/receipt-scan.tsx`, the hook all three scanning screens
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
 the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and

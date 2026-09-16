@@ -101,6 +101,13 @@ export const copy = {
     reading: "Reading…",
     copyAll: "Copy the report",
     copied: "Copied",
+    /** The one switch on this screen — see lib/scan/stas.ts. The line under it
+     *  is the warning: what it changes is the tone of a refusal, and the
+     *  refusals get personal. */
+    stas: "Staś mode",
+    stasNote: "Scans that aren’t receipts get insulted.",
+    on: "On",
+    off: "Off",
   },
 
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */

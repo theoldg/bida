@@ -3,7 +3,7 @@ import {
   isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
-import { MAX_IMAGE_BYTES, NotAnImageError, wrapImage } from "./scan-body";
+import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { devAsset } from "./dev-env";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
@@ -154,6 +154,12 @@ app.post("/api/groups/:id/scan", async (c) => {
   const image = c.req.raw.body;
   if (!image) return c.json({ error: "no image" }, 400);
 
+  // Staś mode: the phone asks for the meaner of the two refusal paragraphs
+  // (`scan-body.ts`). A header, because it is the one thing about the prompt a
+  // caller gets to move — and it moves by picking an envelope we hold, not by
+  // sending a word of one, so the promise above is untouched.
+  const tone: ScanTone = c.req.header("x-stas") === "1" ? "stas" : "kind";
+
   // A body that isn't base64 is only found mid-stream, by which time the
   // request to Gemini is open. Refusing truncates it, so what upstream gets is
   // an unterminated JSON string and never the caller's bytes — but it is not
@@ -167,7 +173,7 @@ app.post("/api/groups/:id/scan", async (c) => {
     upstream = await fetch(GEMINI_URL, {
       method: "POST",
       headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: wrapImage(image, (err) => { refusal.err = err; }),
+      body: wrapImage(image, (err) => { refusal.err = err; }, tone),
       // @ts-expect-error -- required by Workers to stream a request body through
       duplex: "half",
     });

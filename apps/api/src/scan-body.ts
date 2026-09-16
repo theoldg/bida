@@ -1,4 +1,51 @@
 /**
+ * The two answers to a photo that is not a usable receipt, and the only part of
+ * the prompt that has a second version.
+ *
+ * `kind` is the app's voice: a photo somebody took of their thumb gets a joke
+ * about the thumb, never about them. `stas` is Staś mode — switched on by hand
+ * on `/diag`, off for everybody else, and there because a group chat that
+ * passes a phone round wants the other reply. It changes the wording of
+ * `error` and nothing else: the reading of an actual receipt is the same
+ * prompt, the same schema and the same arithmetic either way, so a mean scan
+ * cannot be a wrong one.
+ *
+ * Both still have to say plainly what is wrong with the picture — an insult
+ * that leaves somebody guessing what to re-shoot is a worse refusal, not a
+ * funnier one. `stas` is pointed at the photograph and at the judgement behind
+ * it, which is the joke; it is not an opening to go at who the photographer
+ * is.
+ */
+const REFUSAL = {
+  kind:
+    "If the photo isn't a receipt at "
+    + "all, set error to one short pun or joke about the picture's actual subject, "
+    + "still saying plainly it's not a receipt. If it's too blurry or cut off to read, "
+    + "set error to one short, slightly "
+    + "humorous sentence saying so — light and self-deprecating, never at the "
+    + "photographer's expense, and it still has to say plainly what's wrong so they know "
+    + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
+    + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
+    + "leave every other field null or empty.",
+
+  stas:
+    "If the photo isn't a receipt at all, set error to a vicious one- or "
+    + "two-sentence roast of the picture and of whoever decided to feed it to a receipt "
+    + "scanner. Be genuinely mean. Don't hedge, don't soften it, don't apologise, don't "
+    + "be diplomatic, and drop the politeness entirely — no \"lovely photo\", no "
+    + "compliment before the knife. Mock what is actually in the frame and the judgement "
+    + "that pointed a camera at it, and still say plainly that it is not a receipt. If "
+    + "it's too blurry or cut off to read, do the same to the photography — their "
+    + "eyesight, their steadiness, their apparent belief that this was legible — and "
+    + "still say plainly what's wrong so they know what to re-shoot (e.g. \"That's your "
+    + "own thumb. It owes the group nothing. Try pointing the camera at the paper.\" or "
+    + "\"Focus is free and you still didn't use it — half this receipt is a smudge, "
+    + "shoot it again.\"). Insult the photo and the person who took it, not who they "
+    + "are: no remarks about anyone's body, background or the groups they belong to. "
+    + "Leave every other field null or empty.",
+} as const;
+
+/**
  * The Gemini request body, composed **here** and not on the phone.
  *
  * The client sends one thing — the base64 JPEG — and this file wraps it in the
@@ -12,8 +59,14 @@
  * gap by adjusting a line — and a bill that has been made to add up is the one
  * error `checkScan` cannot see. Instructions about the page are safe; the
  * invariant it is checked against is not.
+ *
+ * `tone` picks which of the two refusal paragraphs below goes in — the only
+ * thing about this prompt a caller can move, and it moves by choosing one of
+ * two constants, never by writing a word of either (`REFUSAL`).
  */
-export function buildScanRequestBody(imageBase64: string): unknown {
+export type ScanTone = keyof typeof REFUSAL;
+
+export function buildScanRequestBody(imageBase64: string, tone: ScanTone = "kind"): unknown {
   return {
     contents: [{
       parts: [
@@ -73,15 +126,9 @@ export function buildScanRequestBody(imageBase64: string): unknown {
             + "deduction, so leave it out of the list and put it in discounts instead. "
             + "Use null for anything illegible or absent, "
             + "and an empty list if there are no line items. Don't compute or guess any amount "
-            + "that isn't printed — only reformat the separators. If the photo isn't a receipt at "
-            + "all, set error to one short pun or joke about the picture's actual subject, "
-            + "still saying plainly it's not a receipt. If it's too blurry or cut off to read, "
-            + "set error to one short, slightly "
-            + "humorous sentence saying so — light and self-deprecating, never at the "
-            + "photographer's expense, and it still has to say plainly what's wrong so they know "
-            + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
-            + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
-            + "leave every other field null or empty. The same applies if the receipt is cropped, "
+            + "that isn't printed — only reformat the separators. "
+            + REFUSAL[tone]
+            + " The same applies if the receipt is cropped, "
             + "folded, or photographed at an angle that hides part of the line-item list, or if the "
             + "total is visible but any line above it is cut off or unreadable — don't guess at "
             + "missing lines or report a partial list as if it were complete; set error asking for "
@@ -136,17 +183,26 @@ export function buildScanRequestBody(imageBase64: string): unknown {
 }
 
 /**
- * The envelope, split in two around where the photo goes.
+ * The envelope, split in two around where the photo goes — one pair per tone.
  *
  * Built by calling the builder above with a sentinel and cutting the JSON at
  * it, so there is still exactly one description of the request in this file
  * and no second copy of the prompt to drift. Done once per isolate: a scan
- * pays for a stream copy of two short byte arrays and nothing else.
+ * pays for a stream copy of two short byte arrays and nothing else, and the
+ * second tone costs one more pair of them, not a second code path.
  */
 const SENTINEL = "__RECEIPT_IMAGE__";
-const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL)).split(SENTINEL);
-const PREFIX = new TextEncoder().encode(prefix);
-const SUFFIX = new TextEncoder().encode(suffix!);
+
+function halves(tone: ScanTone): { prefix: Uint8Array; suffix: Uint8Array } {
+  const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL, tone)).split(SENTINEL);
+  const encoder = new TextEncoder();
+  return { prefix: encoder.encode(prefix), suffix: encoder.encode(suffix!) };
+}
+
+const ENVELOPE: Record<ScanTone, { prefix: Uint8Array; suffix: Uint8Array }> = {
+  kind: halves("kind"),
+  stas: halves("stas"),
+};
 
 /**
  * The largest base64 body we will wrap. The phone downscales to a ~200 KB
@@ -186,7 +242,11 @@ export function wrapImage(
   /** Told before the stream errors, because a refusal surfaces at `fetch` as
    *  whatever the runtime wraps it in, and the caller deserves the real one. */
   onRefuse?: (err: NotAnImageError) => void,
+  /** Which pre-encoded envelope to wrap it in. A caller picks one of two, and
+   *  that is the whole of what a caller can say about the prompt. */
+  tone: ScanTone = "kind",
 ): ReadableStream<Uint8Array> {
+  const { prefix, suffix } = ENVELOPE[tone];
   const reader = image.getReader();
   const refuse = (why: string): never => {
     const err = new NotAnImageError(why);
@@ -199,12 +259,12 @@ export function wrapImage(
     async pull(controller) {
       if (!opened) {
         opened = true;
-        controller.enqueue(PREFIX);
+        controller.enqueue(prefix);
         return;
       }
       const { done, value } = await reader.read();
       if (done) {
-        controller.enqueue(SUFFIX);
+        controller.enqueue(suffix);
         controller.close();
         return;
       }

@@ -6,6 +6,7 @@ import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
 import { format, lastSession, loadedAt, timeline } from "../../lib/diag";
 import { route } from "../../lib/group-link";
+import { setStasMode, stasMode } from "../../lib/scan/stas";
 
 /**
  * What this phone has been doing, as text you can send.
@@ -21,6 +22,11 @@ import { route } from "../../lib/group-link";
 export default function DiagPage() {
   const [report, setReport] = useState<string>();
   const [copied, setCopied] = useState(false);
+  // Read after mount, not during render: the app is a static export, so the
+  // first render happens where there is no localStorage to ask.
+  const [stas, setStas] = useState(false);
+
+  useEffect(() => { setStas(stasMode()); }, []);
 
   useEffect(() => {
     let alive = true;
@@ -64,6 +70,22 @@ export default function DiagPage() {
               }}>
               {copied ? copy.diag.copied : copy.diag.copyAll}
             </button>
+            {/* The one setting on the one screen that is not for a person
+                using the app — which is exactly why it lives here: it changes
+                how a scan talks to whoever took the photo, so it should cost
+                somebody a long-press on the wordmark to find
+                (lib/scan/stas.ts). */}
+            <div className="diag-stas">
+              <div>
+                <div className="diag-stas-name">{copy.diag.stas}</div>
+                <div className="diag-stas-note">{copy.diag.stasNote}</div>
+              </div>
+              <button type="button" className={`btn ${stas ? "btn-p" : "btn-s"}`}
+                aria-pressed={stas}
+                onClick={() => { setStasMode(!stas); setStas(!stas); }}>
+                {stas ? copy.diag.on : copy.diag.off}
+              </button>
+            </div>
           </div>
           {/* One <pre>, not a laid-out table: it is read on a phone, pasted
               into a message and diffed against the next one. */}
@@ -200,6 +222,7 @@ async function collect(): Promise<string> {
     "no answer",
   ));
 
+  say("stas", stasMode() ? "on" : "off");
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
   // The screen the app is actually being painted on, beside the one it was laid
   // out for. They are the same number on a phone that is behaving; when they

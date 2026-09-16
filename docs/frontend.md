@@ -344,6 +344,12 @@ reads. The previous session is kept in `localStorage` (not a table — this has
 to work on the launch where IndexedDB is the broken thing), because the launch
 that hung is the launch you killed the app to escape.
 
+It also carries the app's one hidden setting, **Staś mode** — the switch that
+makes a scan insult a photo that isn't a receipt
+([receipt-scanning.md](receipt-scanning.md#staś-mode)). It is here rather than
+on a settings screen because finding it should cost a long-press, and because
+the report prints its state beside everything else this phone is doing.
+
 **`/diag` must never wait on the database.** It is opened *because* the
 database is not answering. Everything that can block is raced against a 2s
 patience window and the timeline, which needs no database at all, prints either
