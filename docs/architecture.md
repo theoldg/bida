@@ -80,9 +80,6 @@ entire offline story.
   folding thousands server-side. Another reason the server stays stupid.
 - **D1 has no cross-replica `AUTOINCREMENT` you should rely on.** Sequence
   assignment happens in a single write per group.
-- iOS Safari evicts IndexedDB after seven days for sites not installed to the
-  home screen, taking any unpushed op and the `groupKeys` secrets with it —
-  and there is no account to log back in with. `lib/persist.ts` asks for
-  storage to be exempted, on every start (the answer changes once the app is
-  installed) and only once the phone holds a group; prompt install as well;
-  never treat the local DB as the only copy of a pushable op.
+- iOS evicts a tab's IndexedDB after seven days unused, taking the `groupKeys`
+  secrets and any unpushed op — never treat the local DB as the only copy of a
+  pushable op. Why iOS is its own problem, and the proposal: [ios.md](ios.md).
