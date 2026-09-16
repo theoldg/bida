@@ -407,12 +407,10 @@ a { color: inherit; text-decoration: none }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
 /* `/install` borrows that register (app/install/page.tsx). Its steps are
    numbered because they are done in order, out of the app, from memory. */
-.installsteps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 8px;
-  font-size: 13px; line-height: 1.55; color: var(--ink-2) }
-.installsteps li { counter-increment: step; display: flex; gap: 10px }
-.installsteps li::before { content: counter(step); font-family: var(--f-mono); color: var(--muted);
-  flex: none; width: 1ch }
-.installsteps strong { color: var(--ink); font-weight: 600 }
+/* The recorded walkthrough on /install: phone-shaped, so it is held to a width
+   that leaves the prose beside it readable rather than filling the column. */
+.installclip { display: block; width: 180px; height: auto; margin: 4px 0 12px;
+  border: 1px solid var(--rule); border-radius: var(--radius-l) }
 .installcopied { display: flex; gap: 9px; align-items: baseline; font-size: 13px; line-height: 1.55;
   color: var(--ink-2) }
 .installcopied svg { flex: none; color: var(--ink); transform: translateY(2px) }

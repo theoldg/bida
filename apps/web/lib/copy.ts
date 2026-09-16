@@ -198,10 +198,9 @@ export const copy = {
       },
       how: {
         title: "How",
-        tap: "Tap", inBar: "in the browser bar.",
-        add: "Scroll down and tap", addLabel: "Add to Home Screen",
-        open: "Open bida from your home screen.",
-        paste: "Tap Paste link.",
+        clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
+        then: "Then open bida from your home screen.",
+        thenPaste: "Then open bida from your home screen and tap Paste link.",
       },
     },
   },

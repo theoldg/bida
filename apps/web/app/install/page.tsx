@@ -23,8 +23,6 @@ const arrivedCopied = () => new URLSearchParams(location.search).has("copied");
 export default function InstallPage() {
   const copied = useSyncExternalStore(never, arrivedCopied, () => false);
   const { page } = copy.install;
-  const share = <Icon name="share" size={15}
-    style={{ display: "inline", verticalAlign: "-2px", color: "var(--ink)" }} />;
 
   return (
     <Screen>
@@ -51,12 +49,12 @@ export default function InstallPage() {
 
             <section className="aboutsect">
               <h4>{page.how.title}</h4>
-              <ol className="installsteps">
-                <li><span>{page.how.tap} {share} {page.how.inBar}</span></li>
-                <li><span>{page.how.add} <strong>{page.how.addLabel}</strong>.</span></li>
-                <li>{page.how.open}</li>
-                {copied ? <li>{page.how.paste}</li> : null}
-              </ol>
+              {/* A recording of Safari, not numbered steps: the share sheet has
+                  moved between iOS versions, and a picture of it settles which
+                  button is meant faster than prose can. */}
+              <img className="installclip" src="/media/safari-add-to-home-screen.gif"
+                width={360} height={783} alt={page.how.clipAlt} />
+              <p>{copied ? page.how.thenPaste : page.how.then}</p>
             </section>
           </div>
         </Scroll>

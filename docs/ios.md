@@ -104,10 +104,12 @@ It carries three things, in this order:
    home-screen app doesn't.
 2. **It starts empty** — the app can't see this browser's storage; groups come
    over by their link.
-3. **How** — the share glyph, then Add to Home Screen, then open bida.
+3. **How** — a recording of Safari's share sheet down to Add
+   (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
+   of the precache), then one line: open bida.
 
 **The copied variant** (`/install?copied`) leads with *link copied — already
-have bida? open it and tap Paste link*, and adds Paste link as the last step.
+have bida? open it and tap Paste link*, and that last line adds Paste link.
 That line is what serves the regular, who can't be told apart from a newcomer.
 The copy happens on the tap that navigates here — iOS only writes the clipboard
 inside a user gesture — and goes through `formatJoinLink`, never the address

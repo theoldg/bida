@@ -40,7 +40,9 @@ function routeFor(file) {
 
 // Source maps are dead weight on a phone, and the service worker can't precache
 // itself. Everything else in the export is something a screen needs to paint.
-const skip = (f) => f.endsWith(".map") || f === "/sw.js";
+// `/media/` is the install walkthrough: a megabyte only a browser tab ever shows,
+// since the installed app never reaches /install.
+const skip = (f) => f.endsWith(".map") || f === "/sw.js" || f.startsWith("/media/");
 
 const files = (await walk(OUT)).filter((f) => !skip(f));
 const assets = files.map((f) => (f.endsWith(".html") ? routeFor(f) : f)).sort();
