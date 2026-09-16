@@ -82,4 +82,4 @@ entire offline story.
   assignment happens in a single write per group.
 - iOS evicts a tab's IndexedDB after seven days unused, taking the `groupKeys`
   secrets and any unpushed op — never treat the local DB as the only copy of a
-  pushable op. Why iOS is its own problem, and the proposal: [ios.md](ios.md).
+  pushable op. Why iOS is its own problem, and what the app does about it: [ios.md](ios.md).

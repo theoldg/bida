@@ -13,7 +13,7 @@ tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | [data-model.md](data-model.md) | Touching entities, money, splits, or the D1 schema |
 | [sync.md](sync.md) | Touching the op log, offline behaviour, or history |
 | [frontend.md](frontend.md) | Writing UI, routing, or PWA code |
-| [ios.md](ios.md) | Touching joining, installing or storage on iPhone — a proposal |
+| [ios.md](ios.md) | Touching joining, installing or storage on iPhone |
 | [receipt-scanning.md](receipt-scanning.md) | Touching the receipt scan or its Gemini call |
 | [design-system.md](design-system.md) | Writing anything a person will look at |
 | [hosting.md](hosting.md) | Deploying, or worrying about cost |

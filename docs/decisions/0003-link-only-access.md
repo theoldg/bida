@@ -41,6 +41,10 @@ was always possible. The claim makes an existing signal legible.
 - **Losing the link loses the group** — now literally: nobody, us included, can
   read a group without its secret. Mitigated by the local IndexedDB copy and a
   "copy invite link" affordance, not by us storing anything for you.
+- **On iPhone that local copy is weak.** A Safari tab evicts it after a week
+  unused, and nothing without an account can carry it into the home-screen
+  app, so onboarding there is a link *and* a choice about where to keep it
+  ([ios.md](../ios.md)).
 - **Attribution is soft** — anyone in the group can act as anyone. Correct trade
   for friends splitting a holiday; wrong for a product with strangers in it.
 - A claim cannot be retracted; clearing site data no longer erases the record.

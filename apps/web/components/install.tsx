@@ -28,8 +28,8 @@ export function useBrowserName(): string | undefined {
  *
  * **It folds, it does not dismiss.** The offer stands until the phone installs,
  * at which point `offer` becomes "installed" and the card stops rendering by
- * itself — persisting storage is worth a standing ask, and on iOS the card is
- * carrying a warning as well as a pitch (`copy.install.manual.warn`). But
+ * itself — persisting storage is worth a standing ask. (An iOS tab never gets
+ * this card: there is no prompt to capture, and `InstallBanner` warns instead.) But
  * having read it once you should be able to put it away, so the title doubles
  * as a disclosure and the state is remembered per device.
  */
@@ -96,8 +96,7 @@ export function InstallBanner() {
  * The iOS path in one line, for the about screen's "Works offline" — `/install`
  * is the full version. iOS gives no install API at all, so the honest
  * thing is to point at the button that does it rather than draw one that
- * can't, and to say what skipping it costs: the warning is the only reason
- * the card is worth a standing place on the list.
+ * can't, and to say what skipping it costs.
  *
  * It rides with the manual branch and nowhere else, because the seven days are
  * WebKit's. Chrome fires `beforeinstallprompt` and evicts on quota pressure,

@@ -60,8 +60,8 @@ into tab use, not to lock the casual one out.
 | | Idea | Verdict |
 |---|---|---|
 | A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If `/join#id.secret` installs *as itself*, the first launch of the icon is the join — no paste | **Best if it works. Experiment first** — its answer decides the tutorial's last step |
-| B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Decided |
-| C | **The tap that leads to installing copies the link**, so the app is one Paste away | Decided: the regular's whole path, and the newcomer's if A fails |
+| B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
+| C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
 | F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |

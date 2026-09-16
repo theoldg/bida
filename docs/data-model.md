@@ -274,7 +274,7 @@ would want different columns anyway.
 | `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
 | `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
-| `device` | key | who "you" are, theme, HLC state, install-nudge dismissal |
+| `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
 
 **One version declares all of it.** The chain of seven that got here has been
