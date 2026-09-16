@@ -75,7 +75,7 @@ export default function GroupsPage() {
             {/* An install offer goes first, and only once there is a group to
               lose: an iOS tab's warning, or Chrome's own install prompt
               (components/install.tsx). The two never draw together. */}
-            {groups && groups.length > 0 ? <InstallBanner /> : null}
+            {groups && groups.length > 0 ? <InstallBanner groupId={groups[0]!.group.id} /> : null}
             {groups && groups.length > 0 ? <InstallNudge /> : null}
 
             {groups && groups.length === 0 ? (

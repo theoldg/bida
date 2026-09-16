@@ -111,3 +111,17 @@ describe("a link that lost its password", () => {
     }
   });
 });
+
+describe("the install tutorial's own link", () => {
+  it("is bare when there is no invite to carry", () => {
+    expect(route.install()).toBe("/install");
+  });
+
+  it("carries the invite in the fragment, which never reaches the server", () => {
+    // Same shape as a join link's: the page iOS bookmarks is this one, and
+    // `/install` hands it on at launch.
+    expect(route.install({ groupId: "g1", secret: "shh" })).toBe("/install#g1.shh");
+    expect(parseJoinLink(route.install({ groupId: "g1", secret: "shh" })))
+      .toEqual({ groupId: "g1", secret: "shh" });
+  });
+});

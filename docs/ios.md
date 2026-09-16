@@ -1,9 +1,9 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-[the design](#the-design) is built; experiment A is not run.** Its answer
-settles `/install`'s last step, and then the decision becomes an ADR and this
-doc shrinks to how it works.*
+[the design](#the-design) is built, and so is [experiment A](#a-in-detail--the-experiment)
+— what it is waiting on is a real iPhone.** Its answer settles `/install`'s last
+step, and then the decision becomes an ADR and this doc shrinks to how it works.*
 
 ## The problem
 
@@ -59,7 +59,7 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If `/join#id.secret` installs *as itself*, the first launch of the icon is the join — no paste | **Best if it works. Experiment first** — its answer decides the tutorial's last step |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | Built, both halves — **unverified on a real iPhone**, and that answer decides the tutorial's last step |
 | B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
 | C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
@@ -70,25 +70,35 @@ into tab use, not to lock the casual one out.
 
 ### A, in detail — the experiment
 
-Two ways to make the icon start at the invite, to try on a real iPhone:
+`/install` is the page the share sheet is opened from — whatever iOS writes
+into the bookmark, it writes from there — so that is where both halves live
+(`lib/install.ts`, `app/install/page.tsx`).
 
-1. **`/join` without the static manifest link.** iOS then uses the page URL.
-   Name and icon come from `apple-touch-icon` and `apple-mobile-web-app-title`,
-   standalone from `apple-mobile-web-app-capable`. Cheapest to try.
-2. **A manifest written at runtime** — `/join` swaps `<link rel="manifest">` for
-   a `blob:` URL whose `start_url` is `/join#id.secret`. Keeps one manifest's
-   worth of metadata; WebKit may not read a swapped manifest at all.
+1. **The page's own URL.** `route.install(link)` is `/install#<id>.<secret>`,
+   and every way in passes one: the join screen's **Add to home screen**, and
+   the groups list's banner, which carries the group at the top of the list.
+   With no readable manifest iOS bookmarks the URL it is looking at, fragment
+   included. Name, icon and standalone come from the `apple-*` tags either way.
+2. **The manifest.** On an iOS tab the app's `<link rel="manifest">` has its
+   href swapped for a `blob:` manifest whose `start_url` is `/join#id.secret`,
+   for a WebKit that reads the link as it stands when the share sheet opens.
 
-Questions the experiment answers: does the fragment survive into the launched
-icon; does it survive a reboot; what does Android do with the same page (it
-must keep `start_url: "/"` there, since it shares storage and needs none of
-this).
+Both ends are wired, so whichever URL survives, the icon's first launch joins:
+`/join#…` is the app's own route, and `/install#…` hands the invite to it. A
+fragment whose secret this phone already holds is spent — the app starts where
+the app starts, rather than the icon being one group's door forever.
 
-Consequences if it works: that icon opens that group on every cold launch.
-`/join` already opens a held group without asking anything
-([frontend.md](frontend.md#routing)), so this reads as "the icon opens my group",
-which is arguably right. A second group still comes in by Paste link. The
+**What the iPhone answers**: does the fragment survive into the launched icon;
+does it survive a reboot; and which half did it — the two land on different
+URLs, so the app that opens says which. `pnpm homescreen` covers everything
+around that in a real browser ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
+Android included: it must keep `start_url: "/"`, since it shares storage and
+needs none of this.
+
+Consequences if it works: a second group still comes in by Paste link, and the
 secret sits in the home-screen bookmark — on the phone that already holds it.
+If it doesn't, nothing is worse than before: the link is on the clipboard and
+the app starts empty, which is what the tutorial's last step already says.
 
 ## The design
 
@@ -117,9 +127,10 @@ plain back, and the only exit: the way forward is out of the browser.
 ### Home — the banner
 
 A card at the top of the groups list, *Keep your groups on this phone /
-Safari may forget them*, with **Add to home screen** into `/install`,
-**shown only once the tab holds a group**. An empty home is someone looking
-around: Quick split stores nothing and is the right way to try bida, and a
+Safari may forget them*, with **Add to home screen** into `/install` — carrying
+the invite of the group at the top of the list, which is the one the app would
+reopen by itself — **shown only once the tab holds a group**. An empty home is
+someone looking around: Quick split stores nothing and is the right way to try bida, and a
 visitor won't install an app sight unseen. Once a group is in the tab,
 "Safari may forget it" is true and worth saying at the top rather than the
 foot. It replaces the install nudge in a tab, and folds like it, on the same
@@ -139,7 +150,9 @@ screen?* and the link in a box that is its own copy button, reading
 **Copied** once a write has gone through — tried on arrival too, though iOS
 only allows it inside a tap.
 
-- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`.
+- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`
+  with the invite in its fragment ([experiment A](#a-in-detail--the-experiment)),
+  by `location.assign` — a fragment is the one thing Next's router drops.
 - **Continue in Safari** — outlined, staying in the tab.
 
 The key is saved and the group pulled *behind* the screen, so its title can be
@@ -170,3 +183,8 @@ that opening, and is not stored.
   isn't the one on screen, which is easy on a freshly installed app — it
   uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
   pasting again worked because that page load had brought the app up to date.
+- **A `<link rel="manifest">` taken out of the head comes back.** Next owns
+  that element and re-inserts it after hydration, leaving two manifests with
+  the static one winning. Swap its href instead — a manifest that fails to
+  fetch falls back to the document URL anyway, which is the other half of
+  experiment A.

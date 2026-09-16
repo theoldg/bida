@@ -171,7 +171,6 @@ function JoinScreen() {
 function JoinChoice({ link, name, onContinue }: {
   link: JoinLink; name: string | undefined; onContinue: () => void;
 }) {
-  const router = useRouter();
   const { choice } = copy.join;
   const browser = useBrowserName();
   const text = formatJoinLink(link);
@@ -185,7 +184,11 @@ function JoinChoice({ link, name, onContinue }: {
 
   async function addToHomeScreen() {
     await write();
-    router.push(route.install());
+    // `location.assign`, not the router: the tutorial is the page the share
+    // sheet is opened from, so its URL — fragment and all — is what iOS writes
+    // into the home-screen bookmark, and a soft navigation that loses the
+    // fragment loses the whole point of carrying it (docs/ios.md).
+    location.assign(route.install(link));
   }
 
   return (

@@ -10,6 +10,8 @@
  * "manual" offer exists.
  */
 
+import { formatJoinLink, type JoinLink } from "./group-link";
+
 /** What, if anything, this browser lets us offer. */
 export type InstallOffer =
   /** Already running from the home screen. */
@@ -136,4 +138,85 @@ export async function promptInstall(): Promise<boolean> {
   await event.prompt();
   const { outcome } = await event.userChoice;
   return outcome === "accepted";
+}
+
+/** The few manifest members this app rewrites; everything else is carried over. */
+interface WebManifest {
+  id?: string;
+  start_url?: string;
+  scope?: string;
+  icons?: { src: string }[];
+}
+
+/**
+ * The app's manifest with its `start_url` moved to an invite, so an icon added
+ * from `/install` lands on the join instead of an empty app (docs/ios.md,
+ * approach A).
+ *
+ * Every URL comes out absolute. A runtime manifest can only be handed to the
+ * page as a `blob:` URL, and relative members are resolved against the
+ * manifest's own URL — which for a blob is opaque, so `/icon-192.png` doesn't
+ * resolve at all. `id` is pinned to what the original resolved to (it defaults
+ * to `start_url`), so this stays the same app rather than a second one per
+ * invite.
+ */
+export function invitedManifest(base: WebManifest, link: JoinLink, origin: string): WebManifest {
+  return {
+    ...base,
+    id: new URL(base.id ?? base.start_url ?? "/", origin).href,
+    start_url: formatJoinLink(link, origin),
+    scope: new URL(base.scope ?? "/", origin).href,
+    icons: base.icons?.map((icon) => ({ ...icon, src: new URL(icon.src, origin).href })),
+  };
+}
+
+/**
+ * Make this page the one that carries an invite onto the home screen, for as
+ * long as it is on screen. Returns the undo.
+ *
+ * The page's own URL is half of it and costs nothing: `route.install(link)` put
+ * the invite in the fragment, and a manifest iOS cannot read leaves it
+ * bookmarking the URL it is looking at. This is the other half — the app's
+ * manifest, refetched and handed back as a `blob:` with `start_url` on the
+ * invite, for a WebKit that reads the manifest link as it stands when the share
+ * sheet opens.
+ *
+ * The href is **swapped, not removed**: Next owns that element and puts back
+ * one taken out from under it (leaving two manifests, the static one winning).
+ * Swapping loses nothing — a manifest that fails to fetch falls back to the
+ * document URL, which is the fragment above — and it keeps the head to one
+ * manifest, which is what the fallback needs.
+ *
+ * Which of the two WebKit actually uses is the open question in docs/ios.md.
+ * They land on different URLs — `/join#…` and `/install#…` — and both open the
+ * same group, so the launched app is the answer.
+ */
+export function offerInviteToHomeScreen(link: JoinLink): () => void {
+  const element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  const original = element?.getAttribute("href");
+  if (!element || !original) return () => {};
+
+  let url: string | undefined;
+  let undone = false;
+  void (async () => {
+    try {
+      const base = (await (await fetch(original)).json()) as WebManifest;
+      if (undone) return;
+      url = URL.createObjectURL(new Blob(
+        [JSON.stringify(invitedManifest(base, link, location.origin))],
+        { type: "application/manifest+json" },
+      ));
+      element.setAttribute("href", url);
+    } catch {
+      // The page URL is the other half, and it is already carrying the invite.
+    }
+  })();
+
+  return () => {
+    undone = true;
+    // Put the app's own manifest back before leaving: a `blob:` revoked out
+    // from under another screen is a manifest that no longer loads at all.
+    element.setAttribute("href", original);
+    if (url) URL.revokeObjectURL(url);
+  };
 }

@@ -114,8 +114,15 @@ export const route = {
   diag: () => "/diag",
   /** What this is, who can read it, and where to complain. Off the groups list. */
   about: () => "/about",
-  /** Why and how to put bida on an iOS home screen (docs/ios.md). */
-  install: () => "/install",
+  /**
+   * Why and how to put bida on an iOS home screen (docs/ios.md).
+   *
+   * An invite rides in the fragment when there is one to carry, because this
+   * is the page the share sheet is opened *from*: whatever iOS writes into the
+   * home-screen bookmark, it writes from here. The fragment never reaches the
+   * server, and the phone reading it already holds the secret.
+   */
+  install: (link?: JoinLink) => `/install${link ? `#${link.groupId}.${link.secret}` : ""}`,
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>

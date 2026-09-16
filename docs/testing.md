@@ -10,6 +10,7 @@ pnpm claim        # a name still being typed, and the button that acts on it
 pnpm keyboard     # the act a list of names is typed for, against an open keyboard
 pnpm offline      # just every screen with the network cut
 pnpm stall        # what a screen does when reading this phone's database stops working
+pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the four pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
@@ -346,3 +347,25 @@ lock a frozen copy keeps. A screen already read must show its remembered
 answer rather than skeleton rows (it fails with that taken out), the notice
 must still stand and then leave once the lock goes, and `/diag` must list the
 other copy.
+
+## `pnpm homescreen` — the invite that rides onto the home screen
+
+One step of this cannot be checked anywhere but an iPhone: which URL WebKit
+writes into the bookmark when someone taps Add to Home Screen
+([ios.md](ios.md#a-in-detail--the-experiment)). Everything on either side of
+that step can be, and all of it looks fine in jsdom — so the check wears an
+iPhone's user agent and drives both ends.
+
+The tab end: the join screen's fork, and the groups list's banner, each landing
+on a `/install` whose fragment is the invite; the head left with exactly one
+manifest, swapped for a `blob:` whose `start_url` is that same invite and whose
+URLs are all absolute (a blob has no base to resolve a relative one against);
+and a browser that installs by itself — Android — left with the static manifest
+untouched.
+
+The app end (`asInstalledApp`): a launch on `/install#<id>.<secret>` hands the
+invite to `/join`, and the next launch, with that secret now on the phone, does
+not — the icon is a door into the app, not into one group forever.
+
+It needs no server beyond the static export: the join screen's own work is
+`pnpm claim`'s subject, and what this one asserts is which URL each end reaches.

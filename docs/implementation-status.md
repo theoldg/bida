@@ -44,11 +44,11 @@ None of these is started, and the first is not code at all.
   hang**, which say which copy holds it and whether the fix belongs there.
 - **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
   tab that forgets after a week and shares nothing with the home-screen app, so
-  a regular joins twice and claims twice. [ios.md](ios.md)'s design is built —
-  `/install`, the home banner, the join choice — and unverified on a real
-  iPhone. **Next: the on-device experiment** (does the icon keep the invite
-  fragment?), whose answer sets the tutorial's last step, then the owner's
-  answers to its open questions.
+  a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
+  the home banner, the join choice, and both halves of the invite the icon is
+  added with — and unverified on a real iPhone. **Next: an install on the
+  owner's phone** — does the icon keep the invite fragment? Its answer sets the
+  tutorial's last step, then the owner's answers to the doc's open questions.
 - **Two cuts to the entry form, proposed and not decided**: folding the
   "Multi-payer" link into the payer dialog, and taking "Items" out of the
   split's tab bar now that `/g/scan` is how a scan starts. Ask before building
