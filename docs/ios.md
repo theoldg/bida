@@ -128,19 +128,24 @@ install nudge in a tab; the nudge stays as it is elsewhere.
 
 ### `/join` — the choice, before "who are you"
 
-A full screen with two buttons, drawn before the claim gate:
+A full screen, drawn before the claim gate, titled with the group: *Safari
+forgets your groups after a week unused* in bold, what the home screen keeps,
+then *already on your home screen? paste the link there* over a box showing the
+link. The box is its own copy button and reads **Copied** once a write has gone
+through — tried on arrival too, though iOS only allows it inside a tap. The
+buttons follow it directly, the whole block centred in the screen:
 
-- **Install first** — `.btn-lg`, ink. Copies the link, opens `/install?copied`.
+- **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install?copied`.
 - **Continue in Safari** (or Chrome, or "the browser" when it can't tell) —
   outlined, no subtext: the body above already says what the tab costs.
 
 The key is saved and the group pulled *behind* the screen, so its title can be
 the group's name — an invitation, not a wall. Nothing is published until a name
-is picked, so choosing Install first leaves an unclaimed copy in the tab that
+is picked, so choosing Add to home screen leaves an unclaimed copy in the tab that
 evicts harmlessly: one person, one claim. A tab that already holds this group,
 or already chose to continue for it, skips the screen (`asksBeforeJoin`:
 claimed in `meByGroup`, or listed in `continuedInTab`). A refused clipboard write
-sends Install first to the plain `/install`, since "copied" would be false.
+sends Add to home screen to the plain `/install`, since "copied" would be false.
 
 ## Open questions for the owner
 

@@ -13,7 +13,7 @@ const arrivedCopied = () => new URLSearchParams(location.search).has("copied");
 /**
  * Putting bida on an iOS home screen, and what that does and doesn't bring
  * along (docs/ios.md). Reached from the groups list's banner, and — as
- * `?copied` — from a join's "Install first", which has just put the invite on
+ * `?copied` — from a join's "Add to home screen", which has just put the invite on
  * the clipboard. That arrival leads with the line for someone who already
  * installed: they can't be told apart from a newcomer, and their whole path is
  * one paste.

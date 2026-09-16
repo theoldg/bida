@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Icon } from "../../components/icons";
 import { useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
@@ -13,6 +14,7 @@ import { syncGroup } from "../../lib/db/sync";
 import { useDevice, useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
 import { formatJoinLink, isKeylessFragment, parseJoinLink, route, type JoinLink } from "../../lib/group-link";
+import { tick } from "../../lib/haptics";
 import { asksBeforeJoin } from "../../lib/install";
 
 /**
@@ -154,41 +156,58 @@ function JoinScreen() {
 }
 
 /**
- * The iOS tab's fork: install first, or join here. An invitation rather than a
- * wall — titled with the group once it has arrived — because the casual user
- * loses little by staying, and the regular can't be told apart from them.
+ * The iOS tab's fork: add to the home screen, or join here. Titled with the
+ * group once it has arrived — an invitation rather than a wall — because the
+ * casual user loses little by staying, and the regular can't be told apart
+ * from them: the link box is their whole path.
  *
- * "Install first" copies the link inside the tap (iOS writes the clipboard
- * only in a gesture), so `/install?copied` can end on Paste link. A refused
- * write sends the plain tutorial instead: it would be a lie to say "copied",
- * and the link is still in the chat it came from.
+ * The screen tries the clipboard on arrival, but iOS writes it only inside a
+ * gesture, so "Copied" shows only once a write has actually gone through —
+ * the box's own tap, or "Add to home screen", which copies before it leaves
+ * so `/install?copied` can end on Paste link. A refused write sends the plain
+ * tutorial instead: the link is still in the chat it came from.
  */
 function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }) {
   const router = useRouter();
   const { choice } = copy.join;
   const browser = useBrowserName();
+  const text = formatJoinLink(link);
+  const [copied, setCopied] = useState(false);
 
-  function installFirst() {
-    navigator.clipboard.writeText(formatJoinLink(link)).then(
-      () => router.push(route.install(true)),
-      () => router.push(route.install()),
-    );
+  const write = () => navigator.clipboard.writeText(text).then(() => { setCopied(true); return true; }, () => false);
+
+  useEffect(() => {
+    navigator.clipboard.writeText(text).then(() => setCopied(true), () => {});
+  }, [text]);
+
+  async function addToHomeScreen() {
+    router.push(route.install(await write()));
   }
 
   return (
     <Screen><Body>
-      <TopBar title={copy.join.title} back={route.groups()} />
+      <TopBar title={name ?? choice.unnamed} back={route.groups()} />
       <Scroll>
-        <Empty title={name ?? choice.unnamed}>{choice.body(browser)}</Empty>
-      </Scroll>
-      <Foot>
-        <div className="choicebtns">
-          <button className="btn btn-p btn-lg" onClick={installFirst}>{choice.install}</button>
-          <button className="btn btn-s" onClick={() => void continueInTab(link.groupId)}>
-            {choice.browser(browser)}
+        <div className="pad joinchoice">
+          <p><b>{choice.warn(browser)}</b></p>
+          <p>{choice.keeps}</p>
+          <p className="hint">{choice.already}</p>
+          <button type="button" className={`linkbox${copied ? " on" : ""}`}
+            onClick={() => void write().then((ok) => ok && tick())}>
+            <span className="selectable">{text}</span>
+            <span className="linkboxstate">
+              <Icon name={copied ? "check" : "link"} size={13} />
+              {copied ? choice.copied : choice.copyLink}
+            </span>
           </button>
+          <div className="choicebtns">
+            <button className="btn btn-p btn-lg" onClick={() => void addToHomeScreen()}>{choice.install}</button>
+            <button className="btn btn-s" onClick={() => void continueInTab(link.groupId)}>
+              {choice.browser(browser)}
+            </button>
+          </div>
         </div>
-      </Foot>
+      </Scroll>
     </Body></Screen>
   );
 }
