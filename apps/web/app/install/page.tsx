@@ -111,10 +111,6 @@ function Tutorial() {
               <img className="installclip" src="/media/safari-add-to-home-screen.gif"
                 width={440} height={956} alt={page.clipAlt} />
             </section>
-            <section className="aboutsect center">
-              <h4>{page.empty.title}</h4>
-              <p>{page.empty.body(browser)}</p>
-            </section>
           </div>
         </Scroll>
       </Body>

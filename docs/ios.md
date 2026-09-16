@@ -2,8 +2,9 @@
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
 [the design](#the-design) is built, and so is [experiment A](#a-in-detail--the-experiment)
-— what it is waiting on is a real iPhone.** Its answer settles `/install`'s last
-step, and then the decision becomes an ADR and this doc shrinks to how it works.*
+— what it is waiting on is a real iPhone.** Its answer settles whether the
+paste path is still anybody's, and then the decision becomes an ADR and this
+doc shrinks to how it works.*
 
 ## The problem
 
@@ -59,7 +60,7 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | Built, both halves — **unverified on a real iPhone**, and that answer decides the tutorial's last step |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | Built, both halves — **unverified on a real iPhone**, and that answer decides whether Paste link is still anybody's path |
 | B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
 | C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
@@ -129,8 +130,8 @@ needs none of this.
 Consequences if it works: a group joined *after* the install still comes in by
 Paste link, and every secret the phone held at install time sits in the
 home-screen bookmark — on the phone that already holds them.
-If it doesn't, nothing is worse than before: the link is on the clipboard and
-the app starts empty, which is what the tutorial's last step already says.
+If it doesn't, nothing is worse than before: the link is on the clipboard, and
+the empty app's Paste link tile is where it goes.
 
 ## The design
 
@@ -150,8 +151,11 @@ tell. It carries, in this order:
 2. untitled — a recording of Safari's share sheet down to Add
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
-3. **It starts empty** — the home-screen app can't see the tab's data; open
-   group invites in the app to transfer them.
+
+It said, third, that the app starts empty and invites have to be opened in it.
+That was true before the icon carried them and read as a warning at the moment
+someone was being asked to trust the thing; what a person still has to do for
+themselves the empty app's Paste link tile says, where it is actually needed.
 
 The same page whether it came from the banner or the join screen. Back is a
 plain back, and the only exit: the way forward is out of the browser.

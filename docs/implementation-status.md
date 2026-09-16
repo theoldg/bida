@@ -47,8 +47,9 @@ None of these is started, and the first is not code at all.
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
   the home banner, the join choice, and both halves of the invite the icon is
   added with — and unverified on a real iPhone. **Next: an install on the
-  owner's phone** — does the icon keep the invite fragment? Its answer sets the
-  tutorial's last step, then the owner's answers to the doc's open questions.
+  owner's phone** — does the icon keep the invite fragment? Its answer says
+  whether Paste link is still anybody's path, then the owner's answers to the
+  doc's open questions.
 - **Two cuts to the entry form, proposed and not decided**: folding the
   "Multi-payer" link into the payer dialog, and taking "Items" out of the
   split's tab bar now that `/g/scan` is how a scan starts. Ask before building

@@ -196,12 +196,6 @@ export const copy = {
       keep: "However, if you’d like to keep all your data permanently,",
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
-      /** Said for both ways in: a join has copied the link, the banner hasn't. */
-      empty: {
-        title: "It starts empty",
-        body: (browser: string | undefined) =>
-          `The home-screen app can’t see ${lower(browser)}’s data. Open group invites in the app to transfer them.`,
-      },
     },
   },
 
@@ -377,7 +371,7 @@ export const copy = {
       install: "Add to home screen",
       installHint: "Keep everything on this phone, forever. No download required.",
       browser: (browser: string | undefined) => `Continue in ${browser ?? "the browser"}`,
-      browserHint: (browser: string | undefined) => `${upper(browser)} may forget the group. The link re-opens it.`,
+      browserHint: (browser: string | undefined) => `${upper(browser)} may forget the group. The link always re-opens it.`,
       alreadyTitle: "Already on home screen?",
       already: "Use this link in the app:",
       copyLink: "Copy",
