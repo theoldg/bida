@@ -46,10 +46,13 @@ None of these is started, and the first is not code at all.
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
   the home banner, the join choice, and both halves of the invite the icon is
-  added with — and unverified on a real iPhone. **Next: an install on the
-  owner's phone** — does the icon keep the invite fragment? Its answer says
-  whether Paste link is still anybody's path, then the owner's answers to the
-  doc's open questions.
+  added with. The first phone run opened the icon at `/`: Safari reads the
+  manifest at load, so `/install` now ships without one. **Next: install again
+  from `/install` and paste both `/diag`s** — the tab's and the icon's. Then,
+  decided with the owner (2026-09-16): make it work from Share on *any* page,
+  not only `/install` — every iOS tab page would build the manifest at load,
+  from a localStorage copy of the invites, shaped by whichever of manifest or
+  page URL this run shows iOS using.
 - **Two cuts to the entry form, proposed and not decided**: folding the
   "Multi-payer" link into the payer dialog, and taking "Items" out of the
   split's tab bar now that `/g/scan` is how a scan starts. Ask before building
