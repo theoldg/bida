@@ -10,6 +10,7 @@
  * "manual" offer exists.
  */
 
+import { hideSecrets, note } from "./diag";
 import { formatInvites, formatJoinLink, type JoinLink } from "./group-link";
 
 /** What, if anything, this browser lets us offer. */
@@ -203,7 +204,10 @@ export function invitedManifest(
 export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => void {
   const element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
   const original = element?.getAttribute("href");
-  if (!element || !original) return () => {};
+  if (!element || !original) {
+    note("install.manifest", "no manifest link to swap");
+    return () => {};
+  }
 
   let url: string | undefined;
   let undone = false;
@@ -211,12 +215,15 @@ export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => voi
     try {
       const base = (await (await fetch(original)).json()) as WebManifest;
       if (undone) return;
+      const manifest = invitedManifest(base, invites, location.origin);
       url = URL.createObjectURL(new Blob(
-        [JSON.stringify(invitedManifest(base, invites, location.origin))],
+        [JSON.stringify(manifest)],
         { type: "application/manifest+json" },
       ));
       element.setAttribute("href", url);
-    } catch {
+      note("install.manifest", `swapped at ${Math.round(performance.now())}ms, start_url ${hideSecrets(manifest.start_url ?? "")}`);
+    } catch (error) {
+      note("install.manifest", `swap failed: ${String(error)}`);
       // The page URL is the other half, and it is already carrying the invites.
     }
   })();

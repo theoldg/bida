@@ -6,6 +6,7 @@ import { Blank, Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { useBrowserName, useInstallOffer } from "../../components/install";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
+import { hideSecrets, note } from "../../lib/diag";
 import { syncGroup } from "../../lib/db/sync";
 import { copy } from "../../lib/copy";
 import { formatJoinLink, parseInvites, route, type JoinLink } from "../../lib/group-link";
@@ -39,6 +40,7 @@ export default function InstallPage() {
 
   useEffect(() => {
     if (!invites?.length || offer !== "manual") return;
+    note("install.tab", `${invites.length} invites on ${hideSecrets(location.href)}`);
     return offerInviteToHomeScreen(invites);
   }, [invites, offer]);
 
@@ -77,6 +79,8 @@ function useLaunchedFromHomeScreen(invites: JoinLink[] | undefined): void {
       const held = new Set((await db().groupKeys.toArray()).map((key) => key.groupId));
       const fresh = invites.filter((invite) => !held.has(invite.groupId));
       if (cancelled) return;
+      note("install.app", `${invites.length} invites, ${held.size} keys held, ${fresh.length} fresh → `
+        + (fresh.length === 1 ? "join" : fresh.length ? "save all" : "groups list"));
       if (fresh.length === 1) { location.replace(formatJoinLink(fresh[0]!)); return; }
       for (const invite of fresh) {
         await saveGroupKey(invite.groupId, invite.secret);

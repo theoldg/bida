@@ -122,6 +122,11 @@ own URL, is the experiment. Does the fragment survive into the launched icon;
 does it survive a reboot; and which half did it — with a single invite the two
 land on different URLs, so the app that opens says which.
 
+**Reading the answer**: `/diag` in both places, and paste both. The tab's
+`install steps` say what was offered and when the manifest was swapped; the
+app's `first load` is the URL the icon opened, and `install.app` what it did
+with it ([frontend.md](frontend.md#the-flight-recorder-and-diag)).
+
 `pnpm homescreen` covers everything around that step in the engine that is
 actually to hand ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must keep `start_url: "/"`, since it shares storage and

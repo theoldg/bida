@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { forget, format, mark, started, timeline } from "./diag";
+import { forget, format, hideSecrets, mark, started, timeline } from "./diag";
 
 /**
  * The recorder has one job — say what the app was waiting for — and two ways
@@ -64,5 +64,16 @@ describe("the flight recorder", () => {
     const rows = timeline();
     expect(rows.length).toBeLessThanOrEqual(400);
     expect(rows.at(-1)?.info).toBe("449");
+  });
+});
+
+describe("hideSecrets", () => {
+  it("masks every secret in a fragment and keeps the ids", () => {
+    expect(hideSecrets("https://x.app/install#abc.s3cr-t_1~def.other"))
+      .toBe("https://x.app/install#abc.…~def.…");
+  });
+
+  it("leaves a dotted host and path alone", () => {
+    expect(hideSecrets("https://bida.app/g?id=a.b")).toBe("https://bida.app/g?id=a.b");
   });
 });

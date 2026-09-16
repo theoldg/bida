@@ -187,3 +187,67 @@ export function format(rows: readonly DiagEvent[] = timeline()): string {
     })
     .join("\n");
 }
+
+/* ---- the home-screen hand-off ----------------------------------------- */
+
+/**
+ * A URL with every group secret in its fragment masked: `#id.secret~id.secret`
+ * becomes `#id.…~id.…`. The report is pasted into chats, and a secret there is
+ * the group handed over; the ids and the shape are what the question needs.
+ */
+export function hideSecrets(url: string): string {
+  const hash = url.indexOf("#");
+  return hash < 0 ? url : url.slice(0, hash) + url.slice(hash).replace(/\.[A-Za-z0-9_-]+/g, ".…");
+}
+
+const ARRIVALS = "bida.diag.arrivals";
+const FIRST = "bida.diag.first";
+const NOTES = "bida.diag.notes";
+
+/** One page load: where it landed, how, and whether as the home-screen app. */
+export interface Arrival { at: number; url: string; nav: string; app: boolean }
+
+/**
+ * Every page load's URL, written by an inline script before Next has run.
+ *
+ * It exists for one question iOS won't answer anywhere else: which URL did the
+ * home-screen icon open (docs/ios.md, experiment A)? By the time anyone opens
+ * /diag the app has moved on — `/install` hands off to `/join` or `/`, the
+ * router rewrites the address — so the URL has to be caught at the door. The
+ * very first load in a storage is kept apart and never overwritten, because on
+ * iOS the home-screen app's storage is its own and its first load *is* the
+ * icon's first launch. Same mask as `hideSecrets`, inlined: this runs before
+ * any bundle does.
+ */
+export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
+
+/** A timeline mark that also outlives the session — for steps that happen once. */
+export function note(what: string, info?: string): void {
+  mark(what, info);
+  try {
+    const held = JSON.parse(localStorage.getItem(NOTES) ?? "[]") as { at: number; what: string; info?: string }[];
+    held.push({ at: Date.now(), what, info });
+    localStorage.setItem(NOTES, JSON.stringify(held.slice(-30)));
+  } catch {
+    // No localStorage costs the note's second life, not the mark.
+  }
+}
+
+/** The arrivals and notes above, as the report's lines. */
+export function handoff(): string {
+  const read = <T>(key: string, otherwise: T): T => {
+    try { return (JSON.parse(localStorage.getItem(key) ?? "null") as T | null) ?? otherwise; }
+    catch { return otherwise; }
+  };
+  const when = (at: number) => new Date(at).toISOString().slice(5, 19).replace("T", " ");
+  const arrival = (a: Arrival) => `${when(a.at)}  ${a.app ? "APP" : "tab"} ${a.nav.padEnd(12)} ${a.url}`;
+  const first = read<Arrival | undefined>(FIRST, undefined);
+  const notes = read<{ at: number; what: string; info?: string }[]>(NOTES, []);
+  return [
+    `first load:   ${first ? arrival(first) : "none recorded"}`,
+    "", "loads, newest last:",
+    ...read<Arrival[]>(ARRIVALS, []).map(arrival),
+    "", "install steps, newest last:",
+    ...(notes.length ? notes.map((n) => `${when(n.at)}  ${n.what}${n.info ? `  ${n.info}` : ""}`) : ["none"]),
+  ].join("\n");
+}

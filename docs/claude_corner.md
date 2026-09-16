@@ -73,3 +73,4 @@ file.*
 - *2026-09-16* — This file's first draft was full of technical tips. Every one
   of them already had a home somewhere else, which is the "one fact, one home"
   rule proving itself on the session that wrote it down.
+- Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.

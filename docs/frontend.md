@@ -338,6 +338,13 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the tabs are gone" (see [Gotchas](#gotchas)).
 
+A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail--the-experiment)),
+whose every step is off the screen by the time anyone looks. An inline script
+in the layout writes each load's URL to localStorage before Next runs, and keeps
+the storage's first load apart forever — on iOS the icon's storage is its own,
+so that line is the URL the icon opened. `/install` and the manifest swap add
+`note`s beside them. Secrets are masked (`hideSecrets`); ids are not.
+
 Read it at **`/diag`** — long-press the app's name on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
 reads. The previous session is kept in `localStorage` (not a table — this has

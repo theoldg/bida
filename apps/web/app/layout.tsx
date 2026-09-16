@@ -10,6 +10,7 @@ import { RegisterServiceWorker } from "../components/register-sw";
 import { StartSync } from "../components/start-sync";
 import { ThemeScript } from "../components/theme";
 import { copy } from "../lib/copy";
+import { arrivalScript } from "../lib/diag";
 
 // One face for the whole app — headings, prose and figures alike; hierarchy is
 // carried by weight and tracking instead. Self-hosted at build time by
@@ -71,6 +72,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={mono.variable} suppressHydrationWarning>
       <body>
         <ThemeScript />
+        {/* The URL this load arrived at, before the router can change it (lib/diag.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: arrivalScript }} />
         <IconSprite />
         <MeasureViewport />
         <NoLongPress />

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
-import { format, lastSession, loadedAt, timeline } from "../../lib/diag";
+import { format, handoff, lastSession, loadedAt, timeline } from "../../lib/diag";
 import { route } from "../../lib/group-link";
 import { setStasMode, stasMode } from "../../lib/scan/stas";
 
@@ -186,13 +186,13 @@ async function collect(): Promise<string> {
 
   const counts = await within(
     (async () => {
-      const [ops, pending, groups, members, expenses, settlements, rates, identities] =
+      const [ops, pending, groups, members, expenses, settlements, rates, identities, keys] =
         await Promise.all([
           d.ops.count(), d.ops.where("pending").equals(1).count(), d.groups.count(),
           d.members.count(), d.expenses.count(), d.settlements.count(),
-          d.rates.count(), d.identities.count(),
+          d.rates.count(), d.identities.count(), d.groupKeys.count(),
         ]);
-      return { ops, pending, groups, members, expenses, settlements, rates, identities };
+      return { ops, pending, groups, members, expenses, settlements, rates, identities, keys };
     })(),
     undefined,
   );
@@ -201,7 +201,7 @@ async function collect(): Promise<string> {
     say("ops", `${counts.ops} (${counts.pending} unsynced)`);
     say("rows", `${counts.groups} groups, ${counts.members} members, `
       + `${counts.expenses} expenses, ${counts.settlements} transfers, `
-      + `${counts.rates} rates, ${counts.identities} identities`);
+      + `${counts.rates} rates, ${counts.identities} identities, ${counts.keys} group keys`);
   } else {
     // Not a failure to report — a finding, and the loudest line in the file.
     say("ops", `NO ANSWER in ${PATIENCE_MS}ms — the database is not reading`);
@@ -245,6 +245,9 @@ async function collect(): Promise<string> {
       + `(${before.events.length} events) ----\n\n${format(before.events)}\n\n`
     : "";
 
-  return `${lines.join("\n")}\n\n${past}`
+  // Which URL the home-screen icon opened, and what /install made of it — the
+  // iOS hand-off, whose every step is gone from the screen by the time anyone
+  // looks (docs/ios.md, experiment A). Secrets masked.
+  return `${lines.join("\n")}\n\n---- home screen ----\n\n${handoff()}\n\n${past}`
     + `---- this session (${rows.length} events) ----\n\n${format(rows)}\n`;
 }
