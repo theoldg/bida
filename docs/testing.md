@@ -253,6 +253,11 @@ Two differences that are the whole reason it is a second script:
   `lib/scroll-memory.ts`) is gone the moment a check navigates with `goto`
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
+- **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
+  in the head — the manifest the tutorial swaps in — needs
+  `{ state: "attached" }`, or the wait times out and the check reports the app
+  broken. Waiting on the swap at all is the point: an effect lands after
+  `waitForURL` returns, so a manifest read off the landing is a coin toss.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.

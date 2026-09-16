@@ -58,6 +58,26 @@ const manifestOf = (page) => page.evaluate(async () => {
   };
 });
 
+/**
+ * Wait for the swap before reading it. The tutorial builds its blob manifest in
+ * an effect, which lands some ticks after the navigation `waitForURL` returns —
+ * so a read taken straight off the landing sees the static manifest and says
+ * `start_url: undefined`. That is a race, not a regression, and it is what put
+ * this check red on a run the app was fine on.
+ *
+ * `state: "attached"` because a `<link>` in the head is never *visible*, which
+ * is what `waitForSelector` waits for by default — without it every one of
+ * these times out and the check goes red on a green app, which is the same
+ * flake wearing the other hat.
+ *
+ * A swap that never comes resolves empty rather than throwing: the assertion
+ * below it is the one that should say so, and a rejection here would take the
+ * whole check out with a stack trace instead.
+ */
+const blobManifest = (page) =>
+  page.waitForSelector('link[rel="manifest"][href^="blob:"]', { state: "attached", timeout: 8000 })
+    .then(() => manifestOf(page), () => ({ count: 0, href: null, json: null }));
+
 // ---- a group, and the link that invites someone to it --------------------
 const host = await newPhone(browser, { permissions: ["clipboard-read", "clipboard-write"] });
 const hostPage = await host.newPage();
@@ -84,8 +104,7 @@ report(new URL(tabPage.url()).hash === fragment,
 
 // The page iOS bookmarks is this one, so its URL is half the trick; the other
 // half is the manifest, whose start_url wins where WebKit reads it.
-await tabPage.waitForTimeout(400);
-const swapped = await manifestOf(tabPage);
+const swapped = await blobManifest(tabPage);
 report(swapped.href?.startsWith("blob:") && swapped.count === 1,
   "the tutorial points the app's one manifest at a runtime one", `href: ${swapped.href}`);
 report(swapped.json?.start_url === `${base}/join${fragment}`,
@@ -152,7 +171,7 @@ report(new URL(heldPage.url()).hash === `#${ski}~${flat}`,
   "and its tutorial carries every group in the tab, the top of the list first",
   heldPage.url());
 
-const both = await manifestOf(heldPage);
+const both = await blobManifest(heldPage);
 report(both.json?.start_url === `${base}/install#${ski}~${flat}`,
   "as does the manifest, which has no one group to start at",
   `start_url: ${both.json?.start_url}`);
