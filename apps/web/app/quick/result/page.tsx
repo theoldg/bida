@@ -114,7 +114,7 @@ export default function QuickResultPage() {
               {copied ? copy.quick.copied : copy.quick.copy}
             </button>
           </div>
-          <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, var(--safe-bottom))" }}>
+          <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {/* The way out, in the secondary register: the act this screen
                 exists for is the one above it. */}
             <button type="button" className="btn btn-s" onClick={() => setAsking(true)}>

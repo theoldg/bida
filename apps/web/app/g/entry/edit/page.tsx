@@ -747,7 +747,7 @@ function EditEntryScreen() {
               stays pressable when the entry isn't ready, because `save`
               answers with the refusal flash on whichever field is missing,
               which is more use than a dead button saying nothing. */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, var(--safe-bottom))" }}>
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? (
               <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>
                 {copy.form.saveFailed(failed)}

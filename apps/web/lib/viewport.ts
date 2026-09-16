@@ -103,38 +103,3 @@ export function isTyping(el: Element | null): boolean {
   if (el instanceof HTMLInputElement) return !NO_KEYBOARD.has(el.type);
   return el instanceof HTMLElement && el.isContentEditable;
 }
-
-/** One look at the screen against the layout viewport, in CSS pixels. */
-export interface ScreenReading {
-  /** `navigator.standalone`: true only in an iOS home-screen app. */
-  standalone: boolean;
-  /** `screen.width` and `screen.height`, which iOS reports in portrait whatever
-      way the phone is held. */
-  screen: { width: number; height: number };
-  /** `innerWidth` and `innerHeight`. */
-  inner: { width: number; height: number };
-}
-
-/**
- * How far an iOS home-screen app's web view stops short of the bottom of the
- * screen.
- *
- * With `black-translucent`, iOS 26 draws the page from the very top of the
- * screen but still takes the status bar off its height (WebKit bug 301108),
- * so the view ends a status bar short of the bottom edge. Nothing on the page
- * can paint that strip — no height, position or `vh` unit reaches it — but it
- * is also where the home indicator sits, so `env(safe-area-inset-bottom)`,
- * which still reads 34, pads the bottom bar clear of an indicator that is no
- * longer over the page: the two stack into a band twice as tall as it should
- * be. Only a home-screen app has no browser chrome to explain a view shorter
- * than the screen, which is why nothing else is asked.
- */
-export function shortfallOf(r: ScreenReading): number {
-  if (!r.standalone) return 0;
-  const landscape = r.inner.width > r.inner.height;
-  const tall = landscape
-    ? Math.min(r.screen.width, r.screen.height)
-    : Math.max(r.screen.width, r.screen.height);
-  const short = Math.round(tall - r.inner.height);
-  return short > NOISE ? short : 0;
-}

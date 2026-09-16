@@ -33,10 +33,11 @@ export const metadata: Metadata = {
     icon: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
     apple: [{ url: "/icon-192.png", sizes: "192x192" }],
   },
-  // "black-translucent" draws the app under the status bar instead of
-  // beside it — iOS ignores the manifest's display mode entirely for
-  // home-screen web apps, so this is the only lever for the same effect there.
-  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "black-translucent" },
+  // "default", so iOS lays the app out below the status bar rather than under
+  // it. "black-translucent" drew from the top of the screen but still took the
+  // bar off the height (iOS 26, WebKit bug 301108), stranding a strip nothing
+  // can paint at the bottom, and iOS blurs the top bar it draws over.
+  appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

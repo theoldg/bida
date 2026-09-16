@@ -419,9 +419,10 @@ also copies that file to `public/logo.svg` for the top-bar mark to point at —
 run it when the logo changes rather than editing any of the four; the maskable
 one insets the artwork to 72% on its own ground so a circular launcher crop
 can't clip it. iOS ignores
-manifest `display` entirely — `appleWebApp.statusBarStyle:
-"black-translucent"` is the equivalent lever, which is why `viewport-fit: cover`
-and `env(safe-area-inset-top)` padding on `.topbar` matter.
+manifest `display` entirely; `appleWebApp.statusBarStyle` is its lever, and it
+is `"default"` so the page starts below the status bar (Gotcha below).
+`viewport-fit: cover` stays for the home indicator and a landscape notch, which
+is why the `env(safe-area-inset-*)` padding matters.
 
 Installing is also what makes the browser grant `navigator.storage.persist()`
 (`lib/persist.ts`, called from `saveGroupKey` and on every start once the phone
@@ -529,13 +530,10 @@ so the static export ships the full line and the browser narrows it.
 
 ## Gotchas
 
-- **An iOS 26 home-screen app is a status bar short at the bottom.** With
-  `black-translucent` it is drawn from the top of the screen but laid out a
-  status bar shorter (WebKit bug 301108), and no CSS or JS reaches the strip
-  left under it. That strip is where the home indicator is, so
-  `data-short-view` (`shortfallOf`) zeroes `--safe-bottom` rather than pad for
-  it twice — use that variable, never `env(safe-area-inset-bottom)`. The blur
-  over the top bar there is the system's too; nothing on the page draws it.
+- **Never `black-translucent` on iOS 26.** The home-screen app is drawn from
+  the top of the screen but laid out a status bar shorter (WebKit bug 301108):
+  a strip at the bottom no CSS or JS reaches, and a system blur over the top
+  bar. `"default"` puts the page below the bar and avoids both.
 - **iOS never sends `contextmenu` for a touch hold**, in any browser — only
   Android and a right click do. `useHold` (`components/long-press.tsx`) times
   the hold from pointer events and answers whichever comes first; the finger's

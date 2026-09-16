@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gapOf, reachOf, shortfallOf } from "./viewport";
+import { gapOf, reachOf } from "./viewport";
 
 /** A phone with nothing covering it: the two viewports agree. */
 const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false };
@@ -60,25 +60,5 @@ describe("reachOf", () => {
   // comfortably above it must stay where it is — not be re-hung at the bottom.
   it("never scrolls down to a field it is already past", () => {
     expect(reachOf({ ...FIELD, stop: 840 })).toBe(0);
-  });
-});
-
-describe("how far a home-screen app stops short of the screen", () => {
-  const APP = { standalone: true, screen: { width: 390, height: 844 }, inner: { width: 390, height: 844 } };
-
-  it("is nothing when the view fills the screen", () => {
-    expect(shortfallOf(APP)).toBe(0);
-  });
-
-  it("is the status bar iOS 26 takes off a black-translucent app", () => {
-    expect(shortfallOf({ ...APP, inner: { width: 390, height: 797 } })).toBe(47);
-  });
-
-  it("is never asked of a tab, whose toolbars explain any difference", () => {
-    expect(shortfallOf({ ...APP, standalone: false, inner: { width: 390, height: 664 } })).toBe(0);
-  });
-
-  it("reads the short side of a portrait-reporting screen in landscape", () => {
-    expect(shortfallOf({ ...APP, inner: { width: 844, height: 390 } })).toBe(0);
   });
 });
