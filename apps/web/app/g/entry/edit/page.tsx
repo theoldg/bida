@@ -30,7 +30,7 @@ import { glide } from "../../../../lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
-import { goUp } from "../../../../lib/nav";
+import { goUp, goBack } from "../../../../lib/nav";
 import {
   blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, saveDraft,
   seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
@@ -470,7 +470,7 @@ function EditEntryScreen() {
   function discard() {
     if (!groupId) return;
     clearDraft(groupId);
-    router.back();
+    goBack(() => router.back());
   }
 
   // An arrow, not a hoisted `function`: a declaration is created before the

@@ -19,7 +19,7 @@
  */
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
-type NavigationLike = {
+type NavigationLike = EventTarget & {
   entries: () => { url: string | null; key: string }[];
   currentEntry: { index: number } | null;
   traverseTo?: (key: string) => { committed: Promise<unknown>; finished: Promise<unknown> };
@@ -81,15 +81,64 @@ export function goUp(href: string, replace: (href: string) => void): void {
       // groups list, and off the start of the history, where a traversal that
       // lands nowhere is silently dropped and the press does nothing. A key
       // cannot be off by one, and a browser that won't take it says so.
+      //
+      // Nor is a traversal's promise proof that it happened. WebKit folds a
+      // traverseTo into one still pending for the same key, and a pending one
+      // it dropped without rejecting never settles — so every later press
+      // joined it and did nothing at all. A traversal that really starts fires
+      // `navigate` (cross-document ones too), so one that hasn't soon is taken
+      // for dropped and the arrow takes the parent's place instead.
+      let settled = false;
+      const fallBack = () => { if (!settled) { settled = true; replace(href); } };
+      const started = () => { settled = true; };
+      nav.addEventListener("navigate", started, { once: true });
+      markOwnTraversal();
       const { committed, finished } = nav.traverseTo(target.key);
       finished.catch(() => {});
-      committed.catch(() => replace(href));
+      committed.catch(fallBack);
+      setTimeout(() => { nav.removeEventListener("navigate", started); fallBack(); }, DROPPED_MS);
       return;
     }
     if (steps !== null) {
+      markOwnTraversal();
       window.history.go(steps);
       return;
     }
   }
   replace(href);
+}
+
+/** Long past the `navigate` a started traversal fires, short enough to go unfelt. */
+const DROPPED_MS = 600;
+
+/**
+ * A plain back, as the app's own: the arrow on a screen reached only from
+ * below, Done, Discard. Anything in the app that goes back goes through here or
+ * `goUp`, never `router.back()` directly — see `takeOwnTraversal`.
+ */
+export function goBack(back: () => void): void {
+  markOwnTraversal();
+  back();
+}
+
+/**
+ * The app's own traversal, told apart from the device's back button.
+ *
+ * `NavigateEvent.userInitiated` is meant to say which is which, and in Chrome
+ * it does. WebKit sets it whenever a tap is being handled — so in Safari the
+ * app's back *inside a tap* reads as a device press, and the press guard asked
+ * "discard?" of the Done that was keeping the edits, or of the Discard that had
+ * just answered it. So the app says so itself, just before it traverses.
+ */
+let ownUntil = 0;
+
+function markOwnTraversal(): void {
+  ownUntil = Date.now() + 1000;
+}
+
+/** Was this traversal the app's? Consumed by the one `navigate` it explains. */
+export function takeOwnTraversal(): boolean {
+  const ours = Date.now() < ownUntil;
+  ownUntil = 0;
+  return ours;
 }

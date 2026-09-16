@@ -35,7 +35,7 @@
  * which is no worse than what this replaced.
  */
 import { useEffect, useRef } from "react";
-import { sameScreen } from "./nav";
+import { sameScreen, takeOwnTraversal } from "./nav";
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigateEventLike = Event & {
@@ -91,6 +91,8 @@ function onNavigate(event: Event): void {
   const e = event as NavigateEventLike;
   // The screen on show, and only it: a screen that declares no back action
   // (the groups list, or one whose arrow is a plain back) keeps the browser's.
+  // The app's own traversal first, whatever the event claims (`nav.ts`).
+  if (e.navigationType === "traverse" && takeOwnTraversal()) return;
   const back = screens[screens.length - 1]?.current;
   if (!back || !isBackPress(e, navigation()?.currentEntry?.index)) return;
   // Asked and answered no: cancel, and let the dialog be the whole of it.

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { sameScreen, stepsBackTo } from "./nav";
+import { describe, expect, it, vi } from "vitest";
+import { goBack, goUp, sameScreen, stepsBackTo, takeOwnTraversal } from "./nav";
 
 const GROUPS = "http://app.invalid/";
 const GROUP = "http://app.invalid/g?id=g1";
@@ -66,5 +66,64 @@ describe("sameScreen", () => {
   it("counts an entry's source, because that is where back goes", () => {
     expect(sameScreen("https://h.app/g/entry?id=g1&e=x1&via=history",
       "/g/entry?id=g1&e=x1")).toBe(false);
+  });
+});
+
+describe("goUp", () => {
+  /** A Navigation API that can be told to drop a traversal the way WebKit does. */
+  function fakeNavigation(urls: string[], here: number, drop: boolean) {
+    const target = new EventTarget();
+    const traversed: string[] = [];
+    const nav = Object.assign(target, {
+      entries: () => urls.map((url, i) => ({ url, key: `k${i}` })),
+      currentEntry: { index: here },
+      traverseTo: (key: string) => {
+        traversed.push(key);
+        if (!drop) target.dispatchEvent(new Event("navigate"));
+        const pending = new Promise(() => {});
+        return { committed: pending, finished: pending };
+      },
+    });
+    return { nav, traversed };
+  }
+
+  function withWindow(nav: unknown, run: () => void) {
+    const g = globalThis as { window?: unknown };
+    g.window = { navigation: nav, history: { go: () => {} } };
+    try { run(); } finally { delete g.window; }
+  }
+
+  it("unwinds to a parent behind it, and marks the traversal as the app's", () => {
+    vi.useFakeTimers();
+    const { nav, traversed } = fakeNavigation(["/", "/g?id=a", "/g/entry?id=a&e=1"], 2, false);
+    const replaced: string[] = [];
+    withWindow(nav, () => goUp("/", (to) => replaced.push(to)));
+    expect(traversed).toEqual(["k0"]);
+    expect(takeOwnTraversal()).toBe(true);
+    expect(takeOwnTraversal()).toBe(false);
+    vi.advanceTimersByTime(1000);
+    expect(replaced).toEqual([]);
+    vi.useRealTimers();
+  });
+
+  it("takes the parent's place when a traversal never starts", () => {
+    vi.useFakeTimers();
+    const { nav } = fakeNavigation(["/", "/g?id=a"], 1, true);
+    const replaced: string[] = [];
+    withWindow(nav, () => goUp("/", (to) => replaced.push(to)));
+    expect(replaced).toEqual([]);
+    vi.advanceTimersByTime(1000);
+    expect(replaced).toEqual(["/"]);
+    vi.useRealTimers();
+  });
+});
+
+describe("goBack", () => {
+  it("marks the traversal as the app's, once", () => {
+    let went = false;
+    goBack(() => { went = true; });
+    expect(went).toBe(true);
+    expect(takeOwnTraversal()).toBe(true);
+    expect(takeOwnTraversal()).toBe(false);
   });
 });

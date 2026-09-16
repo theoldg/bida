@@ -682,6 +682,12 @@ so the static export ships the full line and the browser narrows it.
   it. A count is only ever as right as the browser's idea of where you are.
   Deferring to a macrotask is not enough on its own, though it is still needed
   — a traversal started while the cancellation unwinds is refused outright.
+- **Safari's Navigation API is not Chrome's.** `userInitiated` is true for any
+  navigation begun while a tap is handled, so the app's own `router.back()`
+  looked like the device button and the leave guard asked "discard?" of Done
+  (hence `goBack`, enforced by `rules-check`). And `traverseTo` joins one still
+  pending for the same key, so a traversal WebKit dropped without rejecting
+  swallowed every later press: `goUp` replaces when no `navigate` follows.
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
 - **An input's `size` attribute is not a character count**, it is characters

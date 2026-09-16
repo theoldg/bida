@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { goBack } from "../../../../lib/nav";
 import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { WhoHadWhat } from "../../../../components/who-had-what";
 import { copy } from "../../../../lib/copy";
@@ -60,7 +61,7 @@ function ItemsScreen() {
       format={(minor) => money(minor, draft.currency)}
       // Both ways off this screen are the way back onto the form, which is
       // where it was opened from: only what has been written down differs.
-      onDone={() => router.back()}
-      onBack={() => router.back()} />
+      onDone={() => goBack(() => router.back())}
+      onBack={() => goBack(() => router.back())} />
   );
 }

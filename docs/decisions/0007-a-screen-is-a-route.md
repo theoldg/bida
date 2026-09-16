@@ -60,7 +60,8 @@ expenses you'd looked at rather than climbing out.
   form the arrow asked before throwing a typed draft away while the button just
   threw it away. So a *user*-initiated backward traversal is put to the screen
   before the browser answers it (`lib/back-button.ts`). The app's own traversals
-  are left alone — taking those over would call the arrow in a loop — and so is
+  — which go through `goBack` or `goUp` and mark themselves, because Safari
+  calls any traversal begun inside a tap user-initiated — are left alone — taking those over would call the arrow in a loop — and so is
   a browser that won't be cancelled, which is the degradation, not a second
   behaviour.
 - **Ask before cancelling; cancel only to climb.** The two kinds of arrow need

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { goBack } from "../../../lib/nav";
 import { useRef, useState } from "react";
 import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "../../../components/amount-input";
@@ -98,7 +99,7 @@ function PayersScreen() {
   function discard() {
     const was = opened.current;
     if (was) saveDraft(gid, { ...current, payers: was.payers, paidBy: was.paidBy });
-    router.back();
+    goBack(() => router.back());
   }
 
   /** Hand the unallocated remainder to one person — the usual last step. */
@@ -114,7 +115,7 @@ function PayersScreen() {
       <Body>
         <TopBar title={copy.payers.title[voice]}
           sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
-          right={<button className="action" onClick={() => router.back()} disabled={!check.ok} {...keepsFocus}>
+          right={<button className="action" onClick={() => goBack(() => router.back())} disabled={!check.ok} {...keepsFocus}>
             {copy.act.done}
           </button>} />
 

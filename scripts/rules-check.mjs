@@ -101,6 +101,19 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
+// ADR-0007: the app goes back through `goBack` or `goUp` (lib/nav.ts), which
+// mark the traversal as the app's own. Safari reports any back taken inside a
+// tap as the device's button, so a bare one is answered by the press guard —
+// Done on payers asked to discard what it was keeping.
+for (const file of sources(join(ROOT, "apps/web"))) {
+  if (file.endsWith(join("lib", "nav.ts"))) continue;
+  const src = code(readFileSync(file, "utf8")).replace(/goBack\(\(\)\s*=>\s*router\.back\(\)\)/g, "");
+  if (/\brouter\.back\s*\(|\bhistory\.(back|go)\s*\(|\bnavigation\.(back|traverseTo)\s*\(/.test(src)) {
+    fail(file, "goes back directly — use `goBack`/`goUp` from lib/nav.ts, or Safari "
+      + "mistakes it for the device's back button (ADR-0007)");
+  }
+}
+
 // ADR-0008, and the owner said it three times: asking is components/dialog.tsx.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
@@ -161,5 +174,5 @@ for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "every live read watched, no browser dialogs, no stray copy");
+    + "every live read watched, back goes through nav, no browser dialogs, no stray copy");
 process.exit(problems.length ? 1 : 0);

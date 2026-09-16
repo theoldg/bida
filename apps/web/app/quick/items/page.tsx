@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { goBack } from "../../../lib/nav";
 import { useEffect } from "react";
 import { Blank } from "../../../components/chrome";
 import { WhoHadWhat } from "../../../components/who-had-what";
@@ -40,6 +41,6 @@ export default function QuickItemsPage() {
       save={(next) => saveDraft(cred.id, next)}
       format={(minor) => bare(minor, draft.currency)}
       onDone={() => router.push(route.quickResult())}
-      onBack={() => router.back()} />
+      onBack={() => goBack(() => router.back())} />
   );
 }
