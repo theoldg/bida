@@ -101,35 +101,41 @@ A route of its own, in `/about`'s register: short prose, no cards. Every
 "this browser" on these screens names Safari or Chrome when `iosBrowser` can
 tell. It carries, in this order:
 
-1. untitled — Safari forgets your groups after a week unused; the
-   home-screen app doesn't.
+1. untitled — no accounts, so the phone is what remembers your groups; Safari
+   clears them after a week unopened, the home screen keeps them.
 2. untitled — a recording of Safari's share sheet down to Add
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
-3. **It starts empty** — the app can't see Safari's groups; copy a link and
-   paste it there to continue.
-4. **Why so fiddly** — bida is a web app, and Apple doesn't make adding one easy.
+3. **Then paste your invite** — the home-screen app starts empty; tap Paste
+   link, and a link from a join is already copied.
+4. **Why so fiddly** — a web page kept on the home screen, not an App Store
+   app, and Apple doesn't make adding one easy.
 
 The same page whether it came from the banner or the join screen. Back is a
 plain back, and the only exit: the way forward is out of the browser.
 
 ### Home — the banner
 
-A card at the top of the groups list, linking to `/install`, **shown only once
-the tab holds a group**. An empty home is someone looking around: Quick split
+A card at the top of the groups list, *Keep your groups on this phone*, with a
+**Show me how** into `/install`, **shown only once the tab holds a group**. An empty home is someone looking around: Quick split
 stores nothing and is the right way to try bida, and a visitor won't install
 an app sight unseen. Once a group is in the tab, "Safari will forget it"
 is true and worth saying at the top rather than the foot. It replaces the
-install nudge in a tab; the nudge stays as it is elsewhere.
+install nudge in a tab, and folds like it, on the same device flag: a warning
+someone who chose Safari can't put away is nagging.
 
 ### `/join` — the choice, before "who are you"
 
-A full screen, drawn before the claim gate, titled with the group: *Safari
-forgets your groups after a week* in bold, what the home screen keeps,
-then *already on your home screen? paste the link there* over a box showing the
-link. The box is its own copy button and reads **Copied** once a write has gone
-through — tried on arrival too, though iOS only allows it inside a tap. The
-buttons follow it directly, the whole block centred in the screen:
+A full screen, drawn before the claim gate, titled with the group, whole block
+centred. It is read by someone who has seen nothing of bida, and an install ask
+before any value reads as the app wanting something — so it gives the reason
+before the cost and says staying is fine. In order: *Keep Lisbon on this phone*;
+no accounts, so the phone remembers, Safari clears it after a week unopened, the
+home screen keeps it with nothing to download; for someone who already added
+bida, a box showing the link; the buttons; and *just checking once? Safari is
+fine — if it forgets, tap the invite again*. The box is its own copy button
+and reads **Copied** once a write has gone through — tried on arrival too,
+though iOS only allows it inside a tap.
 
 - **Add to home screen** — `.btn-lg`, ink. Copies the link, opens `/install`.
 - **Continue in Safari** (or Chrome, or "the browser" when it can't tell) —
@@ -145,8 +151,6 @@ that opening, and is not stored.
 
 ## Open questions for the owner
 
-- The home banner stands until the phone installs (built that way). Should it
-  fold like the nudge?
 - Does **New group** in a tab get the same choice as `/join`? Its key exists
   nowhere but that tab until the link is shared — worse than joining.
 - A tab holding several groups brings them over one paste at a time. Is

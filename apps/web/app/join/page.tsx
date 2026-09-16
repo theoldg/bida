@@ -159,9 +159,9 @@ function JoinScreen() {
 
 /**
  * The iOS tab's fork: add to the home screen, or join here. Titled with the
- * group once it has arrived — an invitation rather than a wall — because the
- * casual user loses little by staying, and the regular can't be told apart
- * from them: the link box is their whole path.
+ * group once it has arrived — an invitation rather than a wall — and it says
+ * staying is fine, because the casual user loses little by staying. The
+ * regular can't be told apart from them: the link box is their path.
  *
  * The screen tries the clipboard on arrival, but iOS writes it only inside a
  * gesture, so "Copied" shows only once a write has actually gone through —
@@ -193,9 +193,9 @@ function JoinChoice({ link, name, onContinue }: {
       <TopBar title={name ?? choice.unnamed} back={route.groups()} />
       <Scroll>
         <div className="pad joinchoice">
-          <p><b>{choice.warn(browser)}</b></p>
-          <p>{choice.keeps}</p>
-          <p className="hint">{choice.already}</p>
+          <h2>{choice.keep(name)}</h2>
+          <p>{choice.why(browser)}</p>
+          <p className="hint choicealready">{choice.already}</p>
           <button type="button" className={`linkbox${copied ? " on" : ""}`}
             onClick={() => void write().then((ok) => ok && tick())}>
             <span className="selectable">{text}</span>
@@ -210,6 +210,7 @@ function JoinChoice({ link, name, onContinue }: {
               {choice.browser(browser)}
             </button>
           </div>
+          <p className="hint choicefine">{choice.fine(browser)}</p>
         </div>
       </Scroll>
     </Body></Screen>

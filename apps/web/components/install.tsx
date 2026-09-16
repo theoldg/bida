@@ -68,26 +68,39 @@ function Offer() {
 }
 
 /**
- * An iOS tab's warning, atop the groups list rather than at its foot: once the
- * tab holds a group, "this browser will forget it" is true and is the first
- * thing worth reading. The caller draws it only then — an empty home is
- * someone looking around, and Quick split stores nothing to lose. It doesn't
- * fold: it stands until the phone installs, and the tab is then a tab nobody
- * opens. The how lives on `/install`, which the join choice shares.
+ * An iOS tab's card atop the groups list rather than at its foot: once the tab
+ * holds a group, "this browser will clear it" is true and worth reading first.
+ * The caller draws it only then — an empty home is someone looking around, and
+ * Quick split stores nothing to lose. The how lives on `/install`, which the
+ * join choice shares.
+ *
+ * **It folds, like the nudge**, on the same device flag (an iOS tab never draws
+ * the nudge, so the two can't disagree): someone who has chosen to stay in the
+ * browser has read it, and a warning they can't put away is nagging.
  */
 export function InstallBanner() {
   const offer = useInstallOffer();
   const browser = useBrowserName();
-  if (offer !== "manual") return null;
+  const device = useDevice();
+  if (offer !== "manual" || !device) return null;
+  const open = !device.installNudgeCollapsed;
   return (
     <div className="pad" style={{ paddingBottom: 4 }}>
-      <Link href={route.install()} className="card installbanner">
-        <span>
-          <b>{copy.install.banner.title(browser)}</b>
-          <span className="hint">{copy.install.banner.body}</span>
-        </span>
-        <Icon name="chev" size={11} />
-      </Link>
+      <div className="card">
+        <button type="button" className="nudgehead" aria-expanded={open}
+          onClick={() => void setInstallNudgeCollapsed(open)}>
+          {copy.install.banner.title}
+          <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
+        </button>
+        {open ? (
+          <>
+            <p className="hint" style={{ marginTop: 4 }}>{copy.install.banner.body(browser)}</p>
+            <Link href={route.install()} className="btn btn-s" style={{ marginTop: 11 }}>
+              {copy.install.banner.act}
+            </Link>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

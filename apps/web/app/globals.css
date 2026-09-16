@@ -411,25 +411,20 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
-/* The iOS tab's banner atop the groups list: a card that is a link, title over
-   one line, and the chevron that says it goes somewhere (components/install.tsx). */
-.installbanner { display: flex; align-items: center; justify-content: space-between; gap: 12px }
-.installbanner b { display: block; font-size: 14px; font-weight: 600; color: var(--ink) }
-.installbanner .hint { display: block; margin: 2px 0 0 }
-.installbanner svg { flex: none; color: var(--muted) }
-/* The iOS join choice (app/join/page.tsx): the warning, then the link in a box
-   that is its own copy button — one line of it, ending in what a tap did. The
-   buttons sit with it, the whole block centred in the screen: a choice about
-   what was just read, not a footer. */
+/* The iOS join choice (app/join/page.tsx): a heading and why; for someone who
+   already added bida, the link in a box that is its own copy button, one line
+   of it ending in what a tap did; then the buttons with a line under them
+   saying staying is fine. The whole block centred in the screen: a choice
+   about what was just read, not a footer. */
 .pad.joinchoice { min-height: 100%; display: flex; flex-direction: column; justify-content: center;
   padding-block: 24px }
-.joinchoice .choicebtns { margin-top: 28px }
-/* Balanced, not `pretty`: each of these is two lines at most, and balancing
-   is what keeps a lone word off the second. */
-.joinchoice > p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0 2px 4px;
-  text-wrap: balance }
-.joinchoice > p b { color: var(--ink); font-size: 15px; font-weight: 700; letter-spacing: -.02em }
-.joinchoice .hint { margin-top: 18px }
+.joinchoice h2 { margin: 0 2px 8px; color: var(--ink); font-size: 16px; font-weight: 700;
+  letter-spacing: -.02em; text-wrap: balance }
+.joinchoice > p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0 2px;
+  text-wrap: pretty }
+.joinchoice .choicebtns { margin-top: 24px }
+.joinchoice .choicefine { margin-top: 10px; text-align: center; text-wrap: balance }
+.joinchoice .choicealready { margin-top: 18px }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;
   padding: 11px 12px; background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
   font-family: var(--f-mono); font-size: 12px; color: var(--ink); text-align: left;

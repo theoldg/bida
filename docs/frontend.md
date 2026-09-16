@@ -438,8 +438,9 @@ persisting storage is worth the standing ask, and installing is what ends it:
 the offer becomes `installed` and the nudge disappears on its own. The title is
 its disclosure, and `installNudgeCollapsed` on the device record remembers the
 fold. On the `manual` branch (an iOS tab) the nudge gives way to `InstallBanner` at
-the top of the list, linking to `/install`: the seven days are WebKit's, every
-iOS browser is one, and a warning that true belongs first ([ios.md](ios.md)).
+the top of the list, folding on the same flag and linking to `/install`: the
+seven days are WebKit's, every iOS browser is one, and a warning that true
+belongs first ([ios.md](ios.md)).
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —
