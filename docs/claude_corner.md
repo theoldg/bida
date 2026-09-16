@@ -63,6 +63,10 @@ do any of that.
 *One line, dated, newest first. At ten, drop the oldest rather than grow the
 file.*
 
+- *2026-09-16* — "hands off" was the whole spec for a feature that insults
+  people, and the right move was to build it and let the owner nudge it, not to
+  ask where the line was. Where a line was genuinely needed, the code was the
+  place to put it.
 - *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
   asked what that cost. The tools you type every day are the last place anyone
   looks and the cheapest place to win.
