@@ -13,6 +13,13 @@ export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
 }
 
+const never = () => () => {};
+
+/** The iOS browser's name for copy, or undefined when it can't tell (and in the static export). */
+export function useBrowserName(): string | undefined {
+  return useSyncExternalStore(never, () => iosBrowser(navigator.userAgent), () => undefined);
+}
+
 /**
  * The nudge on the groups list. It sits quietly at the foot of the list — the
  * app is only worth a home-screen slot once there is something in it, and a
@@ -70,12 +77,13 @@ function Offer() {
  */
 export function InstallBanner() {
   const offer = useInstallOffer();
+  const browser = useBrowserName();
   if (offer !== "manual") return null;
   return (
     <div className="pad" style={{ paddingBottom: 4 }}>
       <Link href={route.install()} className="card installbanner">
         <span>
-          <b>{copy.install.banner.title(iosBrowser(navigator.userAgent))}</b>
+          <b>{copy.install.banner.title(browser)}</b>
           <span className="hint">{copy.install.banner.body}</span>
         </span>
         <Icon name="chev" size={11} />
@@ -96,6 +104,7 @@ export function InstallBanner() {
  * not on a timer, so the same sentence under the "ready" button would be false.
  */
 export function ManualSteps() {
+  const browser = useBrowserName();
   return (
     <>
       <p className="hint" style={{ marginTop: 9 }}>
@@ -106,7 +115,7 @@ export function ManualSteps() {
         {copy.install.manual.then} <b style={{ fontWeight: 600 }}>{copy.install.manual.label}</b>.
       </p>
       {/* The one colour this design spends on trouble (globals.css `.failure`). */}
-      <p className="failure">{copy.install.manual.warn}</p>
+      <p className="failure">{copy.install.manual.warn(browser)}</p>
     </>
   );
 }

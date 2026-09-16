@@ -43,6 +43,10 @@ const extraSubject: Record<ExtraKind, string> = {
   discount: "discount", tax: "tax", tip: "tip",
 };
 
+/** The iOS browser by name when `iosBrowser` can tell, at a sentence's start or inside it. */
+const upper = (browser: string | undefined) => browser ?? "This browser";
+const lower = (browser: string | undefined) => browser ?? "this browser";
+
 export const copy = {
   app: {
     name: "bida",
@@ -168,11 +172,11 @@ export const copy = {
        * (docs/architecture.md). "Forgotten" is the same word the app uses for
        * doing it on purpose.
        *
-       * "This browser" rather than Safari: every iOS browser is WebKit and
-       * evicts on the same timer, and `looksIos` matches all of them — naming
-       * Safari to someone reading this in Chrome aims the warning past them.
+       * Names the browser only when `iosBrowser` can tell: every iOS browser is
+       * WebKit and evicts on the same timer, so naming Safari to someone reading
+       * this in Firefox would aim the warning past them.
        */
-      warn: "Otherwise this browser forgets your groups after a week unused.",
+      warn: (browser: string | undefined) => `Otherwise ${lower(browser)} forgets your groups after a week unused.`,
     },
     /**
      * The iOS tab's card atop the groups list, once it holds one (docs/ios.md).
@@ -180,26 +184,32 @@ export const copy = {
      * glance; any other falls back to "This browser".
      */
     banner: {
-      title: (browser: string | undefined) => `${browser ?? "This browser"} will forget your groups`,
+      title: (browser: string | undefined) => `${upper(browser)} will forget your groups`,
       body: "Add bida to your home screen",
     },
-    /** `/install`: why, what to expect, how — in that order. */
+    /**
+     * `/install`. From the list: why, the recording, then what the app starts
+     * with. From a join (`?copied`): the same under titles, with Paste link.
+     */
     page: {
       title: "Add to home screen",
       copied: "Link copied.",
       copiedBody: "Already have bida on your home screen? Open it and tap Paste link.",
       why: {
         title: "Why",
-        body: "This browser forgets your groups after a week unused. bida on your home screen keeps them, and works offline.",
+        body: (browser: string | undefined) =>
+          `${upper(browser)} forgets your groups after a week unused. bida on your home screen keeps them, and works offline.`,
       },
       empty: {
         title: "It starts empty",
-        body: "The home-screen app can’t see this browser’s groups. Each one comes over by its link.",
+        body: (browser: string | undefined) =>
+          `The home-screen app can’t see ${lower(browser)}’s groups. Copy a link and paste it there to continue.`,
+        bodyCopied: (browser: string | undefined) =>
+          `The home-screen app can’t see ${lower(browser)}’s groups. Each one comes over by its link.`,
       },
       how: {
         title: "How",
         clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
-        then: "Then open bida from your home screen.",
         thenPaste: "Then open bida from your home screen and tap Paste link.",
       },
     },
@@ -372,7 +382,7 @@ export const copy = {
     choice: {
       /** Until the group has arrived and can be named. */
       unnamed: "You’re invited",
-      body: "This browser forgets groups after a week unused. bida on your home screen keeps them.",
+      body: (browser: string | undefined) => `${upper(browser)} forgets groups after a week unused. bida on your home screen keeps them.`,
       install: "Install first",
       browser: "Continue in the browser",
       browserCost: "Forgets it in a week unused. Open this link again to get it back.",

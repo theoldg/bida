@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
-import { useInstallOffer } from "../../components/install";
+import { useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { continueInTab } from "../../lib/db/device";
@@ -166,6 +166,7 @@ function JoinScreen() {
 function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }) {
   const router = useRouter();
   const { choice } = copy.join;
+  const browser = useBrowserName();
 
   function installFirst() {
     navigator.clipboard.writeText(formatJoinLink(link)).then(
@@ -178,7 +179,7 @@ function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }
     <Screen><Body>
       <TopBar title={copy.join.title} back={route.groups()} />
       <Scroll>
-        <Empty title={name ?? choice.unnamed}>{choice.body}</Empty>
+        <Empty title={name ?? choice.unnamed}>{choice.body(browser)}</Empty>
       </Scroll>
       <Foot>
         <div className="choicebtns">

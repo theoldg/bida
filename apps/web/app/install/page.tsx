@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
+import { useBrowserName } from "../../components/install";
 import { copy } from "../../lib/copy";
 import { route } from "../../lib/group-link";
 
@@ -22,7 +23,16 @@ const arrivedCopied = () => new URLSearchParams(location.search).has("copied");
  */
 export default function InstallPage() {
   const copied = useSyncExternalStore(never, arrivedCopied, () => false);
+  const browser = useBrowserName();
   const { page } = copy.install;
+
+  /* A recording of Safari, not numbered steps: the share sheet has moved
+     between iOS versions, and a picture of it settles which button is meant
+     faster than prose can. */
+  const clip = (
+    <img className="installclip" src="/media/safari-add-to-home-screen.gif"
+      width={440} height={956} alt={page.how.clipAlt} />
+  );
 
   return (
     <Screen>
@@ -30,33 +40,35 @@ export default function InstallPage() {
         {/* From a join, back is that invite and its choice; from the list, the list. */}
         <TopBar title={page.title} back={copied ? true : route.groups()} />
         <Scroll>
-          <div className="pad about">
-            {copied ? (
+          {copied ? (
+            <div className="pad about">
               <p className="installcopied">
                 <Icon name="check" size={14} /><span><strong>{page.copied}</strong> {page.copiedBody}</span>
               </p>
-            ) : null}
-
-            <section className="aboutsect">
-              <h4>{page.why.title}</h4>
-              <p>{page.why.body}</p>
-            </section>
-
-            <section className="aboutsect">
-              <h4>{page.empty.title}</h4>
-              <p>{page.empty.body}</p>
-            </section>
-
-            <section className="aboutsect">
-              <h4>{page.how.title}</h4>
-              {/* A recording of Safari, not numbered steps: the share sheet has
-                  moved between iOS versions, and a picture of it settles which
-                  button is meant faster than prose can. */}
-              <img className="installclip" src="/media/safari-add-to-home-screen.gif"
-                width={440} height={956} alt={page.how.clipAlt} />
-              <p>{copied ? page.how.thenPaste : page.how.then}</p>
-            </section>
-          </div>
+              <section className="aboutsect">
+                <h4>{page.why.title}</h4>
+                <p>{page.why.body(browser)}</p>
+              </section>
+              <section className="aboutsect">
+                <h4>{page.empty.title}</h4>
+                <p>{page.empty.bodyCopied(browser)}</p>
+              </section>
+              <section className="aboutsect">
+                <h4>{page.how.title}</h4>
+                {clip}
+                <p>{page.how.thenPaste}</p>
+              </section>
+            </div>
+          ) : (
+            <div className="pad about">
+              <section className="aboutsect"><p>{page.why.body(browser)}</p></section>
+              <section className="aboutsect">{clip}</section>
+              <section className="aboutsect">
+                <h4>{page.empty.title}</h4>
+                <p>{page.empty.body(browser)}</p>
+              </section>
+            </div>
+          )}
         </Scroll>
       </Body>
     </Screen>

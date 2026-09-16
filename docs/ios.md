@@ -97,19 +97,21 @@ home-screen app are unchanged. Wording is in `copy.install` and `copy.join.choic
 
 ### `/install` — the tutorial, shared
 
-A route of its own, in `/about`'s register: eyebrows over short prose, no cards.
-It carries three things, in this order:
+A route of its own, in `/about`'s register: short prose, no cards. Every
+"this browser" on these screens names Safari or Chrome when `iosBrowser` can
+tell. From the list it carries, in this order:
 
-1. **Why** — this browser forgets your groups after a week unused; the
+1. untitled — Safari forgets your groups after a week unused; the
    home-screen app doesn't.
-2. **It starts empty** — the app can't see this browser's storage; groups come
-   over by their link.
-3. **How** — a recording of Safari's share sheet down to Add
+2. untitled — a recording of Safari's share sheet down to Add
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
-   of the precache), then one line: open bida.
+   of the precache).
+3. **It starts empty** — the app can't see Safari's groups; copy a link and
+   paste it there to continue.
 
 **The copied variant** (`/install?copied`) leads with *link copied — already
-have bida? open it and tap Paste link*, and that last line adds Paste link.
+have bida? open it and tap Paste link*, then keeps titled Why / It starts empty
+/ How sections, ending on "open bida and tap Paste link".
 That line is what serves the regular, who can't be told apart from a newcomer.
 The copy happens on the tap that navigates here — iOS only writes the clipboard
 inside a user gesture — and goes through `formatJoinLink`, never the address
@@ -120,7 +122,7 @@ bar. Back is the only exit: the way forward is out of the browser.
 A card at the top of the groups list, linking to `/install`, **shown only once
 the tab holds a group**. An empty home is someone looking around: Quick split
 stores nothing and is the right way to try bida, and a visitor won't install
-an app sight unseen. Once a group is in the tab, "Safari will forget it" (or Chrome, or "this browser" when it can't tell)
+an app sight unseen. Once a group is in the tab, "Safari will forget it"
 is true and worth saying at the top rather than the foot. It replaces the
 install nudge in a tab; the nudge stays as it is elsewhere.
 
