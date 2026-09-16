@@ -172,8 +172,10 @@ function PasteLinkTile() {
     }
     const pasted = readPastedLink(text, window.location.origin);
     if (pasted.kind === "elsewhere") return setElsewhere(pasted.host);
-    const to = pasted.kind === "join" ? formatJoinLink(pasted.link, "")
-      : pasted.kind === "keyless" ? route.group(pasted.groupId) : route.join();
+    // A document load, not `router.push`: the router can drop the fragment,
+    // which is the password (docs/ios.md#gotchas).
+    if (pasted.kind === "join") return location.assign(formatJoinLink(pasted.link, ""));
+    const to = pasted.kind === "keyless" ? route.group(pasted.groupId) : route.join();
     notePasted(text, to);
     router.push(to);
   }

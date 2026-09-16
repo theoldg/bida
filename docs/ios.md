@@ -160,3 +160,8 @@ that opening, and is not stored.
   ([lib/install.ts](../apps/web/lib/install.ts)).
 - `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
   a tap — a paste is always two taps.
+- A pasted join link is opened with `location.assign`, not `router.push`. When
+  Next's router gives up and loads the page itself — say the build it fetched
+  isn't the one on screen, which is easy on a freshly installed app — it
+  uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
+  pasting again worked because that page load had brought the app up to date.
