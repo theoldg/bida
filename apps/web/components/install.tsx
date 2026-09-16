@@ -94,7 +94,7 @@ export function InstallBanner() {
         </button>
         {open ? (
           <>
-            <p className="hint" style={{ marginTop: 4 }}>{copy.install.banner.body(browser)}</p>
+            <p className="hint" style={{ marginTop: 4, textWrap: "balance" }}>{copy.install.banner.body(browser)}</p>
             <Link href={route.install()} className="btn btn-s" style={{ marginTop: 11 }}>
               {copy.install.banner.act}
             </Link>
