@@ -367,7 +367,7 @@ export const copy = {
     choice: {
       /** Until the group has arrived and can be named. */
       unnamed: "You’re invited",
-      warn: (browser: string | undefined) => `${upper(browser)} forgets your groups after a week unused`,
+      warn: (browser: string | undefined) => `${upper(browser)} forgets your groups after a week`,
       keeps: "bida on your home screen keeps them, and works offline.",
       already: "Already on your home screen? Paste the link there.",
       copyLink: "Copy",
