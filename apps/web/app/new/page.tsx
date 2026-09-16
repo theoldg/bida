@@ -241,7 +241,7 @@ export default function NewGroupPage() {
               name being typed never sits on it. Never grey: a blank name or
               an empty list points at itself instead of holding the button
               dead with no reason on screen (design-system.md). */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, var(--safe-bottom))" }}>
             {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <button type="button" className="btn btn-p btn-lg" onClick={next}
               disabled={busy || refusing} {...keepsFocus}>

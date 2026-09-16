@@ -529,6 +529,13 @@ so the static export ships the full line and the browser narrows it.
 
 ## Gotchas
 
+- **An iOS 26 home-screen app is a status bar short at the bottom.** With
+  `black-translucent` it is drawn from the top of the screen but laid out a
+  status bar shorter (WebKit bug 301108), and no CSS or JS reaches the strip
+  left under it. That strip is where the home indicator is, so
+  `data-short-view` (`shortfallOf`) zeroes `--safe-bottom` rather than pad for
+  it twice — use that variable, never `env(safe-area-inset-bottom)`. The blur
+  over the top bar there is the system's too; nothing on the page draws it.
 - **iOS never sends `contextmenu` for a touch hold**, in any browser — only
   Android and a right click do. `useHold` (`components/long-press.tsx`) times
   the hold from pointer events and answers whichever comes first; the finger's

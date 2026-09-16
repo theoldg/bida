@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
-import { gapOf, isTyping, reachOf } from "../lib/viewport";
+import { gapOf, isTyping, reachOf, shortfallOf } from "../lib/viewport";
 
 /**
  * Bring a field into view, and whatever it says has to come up with it.
@@ -71,6 +71,13 @@ export function MeasureViewport() {
       // Whether there is a keyboard at all is this component's to know; how
       // much air to leave above one is the stylesheet's (`--kb-gap`).
       root.toggleAttribute("data-kb", kb > 0);
+      // An iOS home-screen app laid out shorter than its screen ends above
+      // the home indicator, so the bottom bar stops padding for it (globals.css).
+      root.toggleAttribute("data-short-view", shortfallOf({
+        standalone: (navigator as { standalone?: boolean }).standalone === true,
+        screen: { width: screen.width, height: screen.height },
+        inner: { width: window.innerWidth, height: window.innerHeight },
+      }) > 0);
       // A gap with nobody typing is the app being painted on a screen shorter
       // than the one it was laid out for: the last strip of every screen — the
       // bottom nav, the about line — is below the fold, in a shell that cannot
@@ -134,6 +141,7 @@ export function MeasureViewport() {
       document.removeEventListener("focusout", measure);
       root.style.removeProperty("--kb");
       root.removeAttribute("data-kb");
+      root.removeAttribute("data-short-view");
     };
   }, []);
   return null;

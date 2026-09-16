@@ -150,7 +150,7 @@ export default function QuickPage() {
           </div>
 
           {/* The act the screen ends on, under the people it needs first. */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, var(--safe-bottom))" }}>
             {/* Always tappable, like the entry form's Save: a press that
                 can't go through refuses instead of doing nothing, whether the
                 add row has a name still unfiled or the list has fewer than
