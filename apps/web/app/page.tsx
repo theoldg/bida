@@ -16,6 +16,7 @@ import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
+import { notePasted } from "../lib/failed-link";
 import { iosHomeScreenApp } from "../lib/install";
 import { useResumeLastGroup } from "../lib/launch";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
@@ -144,8 +145,10 @@ const never = () => () => {};
  *
  * What was pasted decides where it goes (`readPastedLink`): a link of ours
  * joins; one for another server says so, naming it, since "Bad link" would
- * send the person back for the same link; anything else lands on the join
- * screen's "Bad link", which already says the right thing. A refused read is
+ * send the person back for the same link; one with no password opens the
+ * group's screen, which is the group if this phone holds it and "missing its
+ * password" if not; anything else lands on the join screen's "Bad link". Those
+ * two show what was pasted (`lib/failed-link.ts`). A refused read is
  * the person dismissing iOS's paste prompt — a no, not an error.
  */
 function PasteLinkTile() {
@@ -163,8 +166,11 @@ function PasteLinkTile() {
       return;
     }
     const pasted = readPastedLink(text, window.location.origin);
-    if (pasted.kind === "elsewhere") setElsewhere(pasted.host);
-    else router.push(pasted.kind === "join" ? formatJoinLink(pasted.link, "") : route.join());
+    if (pasted.kind === "elsewhere") return setElsewhere(pasted.host);
+    const to = pasted.kind === "join" ? formatJoinLink(pasted.link, "")
+      : pasted.kind === "keyless" ? route.group(pasted.groupId) : route.join();
+    notePasted(text, to);
+    router.push(to);
   }
 
   return (

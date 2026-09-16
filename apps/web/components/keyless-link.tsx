@@ -1,5 +1,22 @@
+import { useSyncExternalStore } from "react";
 import { Icon, type IconName } from "./icons";
 import { copy } from "../lib/copy";
+import { failedLink } from "../lib/failed-link";
+
+const onHashChange = (then: () => void) => {
+  addEventListener("hashchange", then);
+  return () => removeEventListener("hashchange", then);
+};
+
+/**
+ * The link a failed screen is about, set in type small enough that a long one
+ * wraps rather than widens the page (`lib/failed-link.ts`). Hash changes are
+ * what a second link opened on `/join` looks like, so it follows those.
+ */
+export function FailedLink() {
+  const link = useSyncExternalStore(onHashChange, failedLink, () => "");
+  return link ? <code className="failedlink">{link}</code> : null;
+}
 
 /**
  * A link to a group with no password in it — nearly always a group screen's
@@ -26,6 +43,7 @@ export function KeylessLink() {
           <div className="keyless-badge"><Icon name="link" size={20} /></div>
           <h2>{keyless.empty}</h2>
           <p>{keyless.body}</p>
+          <FailedLink />
 
           <div className="keyless-fig" aria-hidden="true">
             <div className="keyless-bar">

@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
-import { KeylessLink } from "../../components/keyless-link";
+import { FailedLink, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { syncGroup } from "../../lib/db/sync";
@@ -109,7 +109,10 @@ function JoinScreen() {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
-        <Empty title={copy.join.badLink.title}>{copy.join.badLink.body}</Empty>
+        <Empty title={copy.join.badLink.title}>
+          {copy.join.badLink.body}
+          <FailedLink />
+        </Empty>
       </Body></Screen>
     );
   }

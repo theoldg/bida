@@ -69,9 +69,17 @@ describe("a join link pasted from the clipboard", () => {
       .toEqual({ kind: "elsewhere", host: "localhost:8787" });
   });
 
+  it("tells a link with no password apart, from any server", () => {
+    for (const text of [
+      "https://bida.app/g?id=g1", "http://localhost:3000/g/entry?id=g1&e=x1",
+      "https://dev.bida.app/join#g1", "https://bida.app/join#g1.",
+    ]) expect(readPastedLink(text, origin)).toEqual({ kind: "keyless", groupId: "g1" });
+  });
+
   it("finds nothing in what isn't a join link, from anywhere", () => {
     for (const text of [
-      "g1.s3cr3t", "https://bida.app/g?id=g1", "https://bida.app/join#nodot",
+      "g1.s3cr3t", "https://bida.app/g", "https://bida.app/g?id=g%201", "https://bida.app/gx?id=g1",
+      "https://bida.app/join#", "https://bida.app/join#g1)",
       "https://dev.bida.app/about", "dinner was 42 euros", "",
     ]) expect(readPastedLink(text, origin)).toEqual({ kind: "none" });
   });

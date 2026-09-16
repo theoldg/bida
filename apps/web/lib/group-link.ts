@@ -41,10 +41,14 @@ export function isKeylessFragment(hash: string): boolean {
   return /^#?[A-Za-z0-9_-]+\.?$/.test(hash);
 }
 
-/** What pasting found: a link to join, one for another server, or nothing. */
+/**
+ * What pasting found: a link to join, one for another server, one that names a
+ * group but carries no password, or nothing.
+ */
 export type PastedLink =
   | { kind: "join"; link: JoinLink }
   | { kind: "elsewhere"; host: string }
+  | { kind: "keyless"; groupId: string }
   | { kind: "none" };
 
 /**
@@ -57,6 +61,10 @@ export type PastedLink =
  * made it, so a link from elsewhere (the dev server, a self-hosted copy) is a
  * good link this server has never heard of, and joining it here could only
  * ever sit on "Joining…". Its host is what the person needs to hear.
+ *
+ * A link with no password — a group screen's address, or a `/join` cut short —
+ * is `keyless` whichever server it names: it opens nothing anywhere, and the
+ * fix is the same invite link either way, so the server is not the news.
  */
 export function readPastedLink(text: string, origin: string): PastedLink {
   let url: URL;
@@ -66,7 +74,12 @@ export function readPastedLink(text: string, origin: string): PastedLink {
     return { kind: "none" };
   }
   const link = url.pathname === "/join" ? parseJoinLink(url.hash) : null;
-  if (!link) return { kind: "none" };
+  if (!link) {
+    const groupId = url.pathname === "/join" && isKeylessFragment(url.hash)
+      ? url.hash.replace(/^#|\.$/g, "")
+      : /^\/g(\/|$)/.test(url.pathname) ? url.searchParams.get("id") : null;
+    return groupId && /^[A-Za-z0-9_-]+$/.test(groupId) ? { kind: "keyless", groupId } : { kind: "none" };
+  }
   return url.origin === origin ? { kind: "join", link } : { kind: "elsewhere", host: url.host };
 }
 
