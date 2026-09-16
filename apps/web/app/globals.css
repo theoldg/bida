@@ -423,7 +423,7 @@ a { color: inherit; text-decoration: none }
 .joinchoice > p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0 2px;
   text-wrap: pretty }
 .joinchoice .choiceinstall { margin-top: 16px }
-.joinchoice .choicefine { margin-top: 24px; text-align: center; text-wrap: balance }
+.joinchoice .choicefine { margin-top: 24px; text-wrap: balance }
 .joinchoice .choicebrowser { margin-top: 8px }
 .joinchoice .choicealready { margin-top: 48px }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;
