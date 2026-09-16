@@ -20,6 +20,7 @@ tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | [testing.md](testing.md) | Writing tests or reviewing screens |
 | [drive.md](drive.md) | Reproducing a bug or stressing a screen without a phone |
 | [decisions/](decisions/README.md) | About to reverse an architectural choice |
+| [claude_corner.md](claude_corner.md) | **Every session, briefly.** Agents' notes: how the owner asks, where the automation bites, the vibe |
 
 Most docs end with a **Gotchas** section. Add to it every time something bites
 you, so nobody pays for it twice.

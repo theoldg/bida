@@ -114,6 +114,10 @@ every session pays in. **Before you finish:**
    section.
 4. Update [implementation-status.md](docs/implementation-status.md) if what is
    built or what is open moved.
+5. **Touch [claude_corner.md](docs/claude_corner.md)** — every session, at
+   least a line. It is the agents' own doc: how the owner asks, where the
+   automation bites, and what this place feels like to work in. Under 200
+   lines, always; add by cutting.
 
 **A new ADR and a new standing instruction are the two things a session almost
 never adds.** Each file states its own bar — [decisions/](docs/decisions/README.md)
