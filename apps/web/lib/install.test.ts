@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { asksBeforeJoin, invitedManifest, iosBrowser, looksIos, offerFrom } from "./install";
+import { asksBeforeJoin, carriedManifest, iosBrowser, looksIos, manifestScript, offerFrom } from "./install";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15";
 const IPAD = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15";
@@ -66,27 +66,21 @@ describe("asking before an iOS tab joins", () => {
   });
 });
 
-describe("the manifest an icon added from /install starts at", () => {
-  const link = { groupId: "g1", secret: "shh" };
-  const second = { groupId: "g2", secret: "psst" };
+describe("the manifest an icon added from an iOS tab starts at", () => {
   const base = {
     start_url: "/",
     scope: "/",
     icons: [{ src: "/icon-192.png", sizes: "192x192" }],
   };
+  const carry = "g1.shh.m1~g2.psst";
 
-  it("starts one invite at the join screen, which names the group", () => {
-    expect(invitedManifest(base, [link], "https://bida.bid").start_url)
-      .toBe("https://bida.bid/join#g1.shh");
-  });
-
-  it("starts several back at /install, the one route that reads a list of them", () => {
-    expect(invitedManifest(base, [link, second], "https://bida.bid").start_url)
-      .toBe("https://bida.bid/install#g1.shh~g2.psst");
+  it("starts at /install, the one route that reads the groups it carries", () => {
+    expect(carriedManifest(base, carry, "https://bida.bid").start_url)
+      .toBe("https://bida.bid/install#g1.shh.m1~g2.psst");
   });
 
   it("makes every URL absolute — a blob manifest has no base to resolve against", () => {
-    const m = invitedManifest(base, [link], "https://bida.bid");
+    const m = carriedManifest(base, carry, "https://bida.bid");
     expect(m.scope).toBe("https://bida.bid/");
     expect(m.icons).toEqual([{ src: "https://bida.bid/icon-192.png", sizes: "192x192" }]);
     for (const url of [m.start_url!, m.scope!, ...m.icons!.map((i) => i.src)]) {
@@ -94,17 +88,24 @@ describe("the manifest an icon added from /install starts at", () => {
     }
   });
 
-  it("stays the same app, however many invites it is built for", () => {
-    // `id` defaults to `start_url`, so without pinning it each invite would
-    // install as a separate app.
-    const one = invitedManifest(base, [link], "https://bida.bid");
-    const two = invitedManifest(base, [link, second], "https://bida.bid");
-    expect(one.id).toBe("https://bida.bid/");
-    expect(two.id).toBe(one.id);
+  it("stays the same app, whatever it carries", () => {
+    // `id` defaults to `start_url`, so without pinning it each set of groups
+    // would install as a separate app.
+    expect(carriedManifest(base, "g1.shh", "https://bida.bid").id).toBe("https://bida.bid/");
+    expect(carriedManifest(base, carry, "https://bida.bid").id).toBe("https://bida.bid/");
   });
 
   it("carries everything it was not asked to change", () => {
-    expect(invitedManifest({ ...base, display: "standalone" } as never, [link], "https://bida.bid"))
+    expect(carriedManifest({ ...base, display: "standalone" } as never, carry, "https://bida.bid"))
       .toMatchObject({ display: "standalone" });
+  });
+
+  it("still works pasted into the inline script, where nothing else exists", () => {
+    // `manifestScript` embeds the function's source: a helper or an import in
+    // it would be a ReferenceError on every page of an iOS tab.
+    const pasted = manifestScript(base).match(/JSON\.stringify\(\((function[\s\S]*?)\)\(\{/)?.[1];
+    expect(pasted).toBeDefined();
+    const alone = new Function(`return (${pasted!})`)() as typeof carriedManifest;
+    expect(alone(base, carry, "https://bida.bid")).toEqual(carriedManifest(base, carry, "https://bida.bid"));
   });
 });

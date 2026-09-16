@@ -10,8 +10,8 @@
  * "manual" offer exists.
  */
 
-import { hideSecrets, note } from "./diag";
-import { formatInvites, formatJoinLink, type JoinLink } from "./group-link";
+import { note } from "./diag";
+import { formatInvites, type CarriedGroup } from "./group-link";
 
 /** What, if anything, this browser lets us offer. */
 export type InstallOffer =
@@ -142,7 +142,7 @@ export async function promptInstall(): Promise<boolean> {
 }
 
 /** The few manifest members this app rewrites; everything else is carried over. */
-interface WebManifest {
+export interface WebManifest {
   id?: string;
   start_url?: string;
   scope?: string;
@@ -150,107 +150,88 @@ interface WebManifest {
 }
 
 /**
- * The app's manifest with its `start_url` moved to the invites, so an icon
- * added from `/install` lands on them instead of an empty app (docs/ios.md,
- * approach A).
+ * The manifest a home-screen icon is added with from an iOS tab: the app's
+ * own, starting at `/install#<carry>` — every group the tab holds, and who it
+ * is in each — so the icon's first launch brings them in (docs/ios.md).
  *
- * One invite starts at `/join`, which is the screen that says what is
- * happening — it names the group and waits out a first sync. Several start
- * back at `/install`, which is the only route that reads a fragment of them.
+ * Every URL comes out absolute. It is handed to the page as a `blob:`, and
+ * relative members resolve against the manifest's own URL, which for a blob is
+ * opaque. `id` is pinned to what the original resolved to (it defaults to
+ * `start_url`), so this stays one app whatever it carries.
  *
- * Every URL comes out absolute. A runtime manifest can only be handed to the
- * page as a `blob:` URL, and relative members are resolved against the
- * manifest's own URL — which for a blob is opaque, so `/icon-192.png` doesn't
- * resolve at all. `id` is pinned to what the original resolved to (it defaults
- * to `start_url`), so this stays the same app rather than a second one per
- * invite.
+ * **Self-contained on purpose** — no imports, no helpers, no spread: its
+ * source is pasted into `manifestScript`, which runs before any bundle does.
  */
-export function invitedManifest(
-  base: WebManifest, invites: readonly JoinLink[], origin: string,
-): WebManifest {
-  return {
-    ...base,
-    id: new URL(base.id ?? base.start_url ?? "/", origin).href,
-    start_url: invites.length === 1
-      ? formatJoinLink(invites[0]!, origin)
-      : `${origin}/install#${formatInvites(invites)}`,
-    scope: new URL(base.scope ?? "/", origin).href,
-    icons: base.icons?.map((icon) => ({ ...icon, src: new URL(icon.src, origin).href })),
-  };
-}
-
-/**
- * Make this page the one that carries its invites onto the home screen, for as
- * long as it is on screen. Returns the undo.
- *
- * The page's own URL is half of it and costs nothing: `route.install(links)`
- * put the invites in the fragment, and a manifest iOS cannot read leaves it
- * bookmarking the URL it is looking at. This is the other half — the app's
- * manifest, refetched and handed back as a `blob:` with `start_url` on those
- * same invites, for a WebKit that reads the manifest link as it stands when
- * the share sheet opens.
- *
- * `/install`'s HTML carries no manifest (app/install/layout.tsx), so this
- * normally *adds* the link rather than swapping one: Safari read the static
- * manifest at load on a real iPhone, before any effect could change it. A
- * Safari that asks at load now finds nothing and bookmarks the page URL, which
- * is the fragment above. The link isn't Next's here, so removing it is safe.
- *
- * Which of the two WebKit actually uses is the open question in docs/ios.md.
- * With a single invite they land on different URLs — `/join#…` and
- * `/install#…` — and both open the same group, so the launched app is the
- * answer.
- */
-export function offerInviteToHomeScreen(invites: readonly JoinLink[]): () => void {
-  // Normally absent: `/install` leaves the manifest out for exactly this page
-  // (`lateManifestScript`). One already there was put in before this effect
-  // ran, and Safari may already have read it.
-  let element = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-  const created = !element;
-  if (!element) {
-    element = document.createElement("link");
-    element.rel = "manifest";
-  }
-  const original = element.getAttribute("href") ?? STATIC_MANIFEST;
-  const link = element;
-
-  let url: string | undefined;
-  let undone = false;
-  void (async () => {
-    try {
-      const base = (await (await fetch(original)).json()) as WebManifest;
-      if (undone) return;
-      const manifest = invitedManifest(base, invites, location.origin);
-      url = URL.createObjectURL(new Blob(
-        [JSON.stringify(manifest)],
-        { type: "application/manifest+json" },
-      ));
-      link.setAttribute("href", url);
-      if (created) document.head.append(link);
-      note("install.manifest", `${created ? "added" : "swapped (static one was in the head)"} at ${Math.round(performance.now())}ms, start_url ${hideSecrets(manifest.start_url ?? "")}`);
-    } catch (error) {
-      note("install.manifest", `swap failed: ${String(error)}`);
-      // The page URL is the other half, and it is already carrying the invites.
-    }
-  })();
-
-  return () => {
-    undone = true;
-    // Put the app's own manifest back before leaving: a `blob:` revoked out
-    // from under another screen is a manifest that no longer loads at all.
-    if (created) link.remove();
-    else link.setAttribute("href", original);
-    if (url) URL.revokeObjectURL(url);
-  };
+export function carriedManifest(base: WebManifest, carry: string, origin: string): WebManifest {
+  return Object.assign({}, base, {
+    id: new URL(base.id || base.start_url || "/", origin).href,
+    start_url: origin + "/install#" + carry,
+    scope: new URL(base.scope || "/", origin).href,
+    icons: (base.icons || []).map((icon) => Object.assign({}, icon, { src: new URL(icon.src, origin).href })),
+  });
 }
 
 const STATIC_MANIFEST = "/manifest.webmanifest";
+/** The tab's copy of `formatInvites(heldInvites())`, readable before IndexedDB is. */
+const CARRY = "bida.carry";
 
 /**
- * Runs inline on `/install`, whose HTML carries no manifest: puts the app's
- * static one back everywhere but the page an iOS tab bookmarks invites from,
- * which gets its own from `offerInviteToHomeScreen` instead. Inline, and
- * `looksIos`/`isStandalone` restated, because the whole point is to beat
- * anything that reads the head at load.
+ * The app's manifest link, written by an inline script at the top of every
+ * page's head — the HTML itself carries none.
+ *
+ * On a real iPhone Safari took the manifest the page *loaded* with: a link
+ * swapped 41ms in was ignored and the icon opened at `/`. So in an iOS tab the
+ * link has to be right before anything reads the head, on whatever page the
+ * share sheet is opened from, and the groups have to come from something
+ * synchronous — localStorage, kept by `keepCarried`. Everywhere else, and in
+ * a tab holding no groups, it is the static manifest.
+ *
+ * `looksIos` and `isStandalone` are restated here for the same reason.
  */
-export const lateManifestScript = `(function(){var n=navigator,ios=/iPad|iPhone|iPod/.test(n.userAgent)||(n.platform==="MacIntel"&&n.maxTouchPoints>1),app=n.standalone===true||matchMedia("(display-mode: standalone)").matches;if(ios&&!app&&/\\./.test(location.hash))return;var l=document.createElement("link");l.rel="manifest";l.href="${STATIC_MANIFEST}";document.head.appendChild(l)})()`;
+export function manifestScript(base: WebManifest): string {
+  return `(function(){var l=document.createElement("link");l.rel="manifest";l.href="${STATIC_MANIFEST}";`
+    + `try{var n=navigator,ios=/iPad|iPhone|iPod/.test(n.userAgent)||(n.platform==="MacIntel"&&n.maxTouchPoints>1),`
+    + `app=n.standalone===true||matchMedia("(display-mode: standalone)").matches,`
+    + `c=ios&&!app&&localStorage.getItem("${CARRY}");`
+    + `if(c)l.href=URL.createObjectURL(new Blob([JSON.stringify((${carriedManifest.toString()})(${JSON.stringify(base)},c,location.origin))],{type:"application/manifest+json"}))`
+    + `}catch(e){}document.head.appendChild(l)})()`;
+}
+
+let base: Promise<WebManifest> | undefined;
+
+/**
+ * Keep the iOS tab's copy of what an icon would carry, and this page's
+ * manifest with it.
+ *
+ * localStorage is what the *next* page load builds its manifest from. The
+ * swap on this page is for a group joined or named since it loaded — useless
+ * if Safari really only reads at load, harmless if it doesn't. Only an iOS tab
+ * writes it: the secrets are already on this origin in IndexedDB, but nowhere
+ * else needs a second copy.
+ */
+export function keepCarried(groups: readonly CarriedGroup[]): void {
+  if (installOffer() !== "manual") return;
+  const carry = formatInvites(groups);
+  try {
+    if ((localStorage.getItem(CARRY) ?? "") === carry) return;
+    if (carry) localStorage.setItem(CARRY, carry);
+    else localStorage.removeItem(CARRY);
+  } catch {
+    return;
+  }
+  note("install.carry", `${groups.length} groups, ${groups.filter((g) => g.me).length} named`);
+
+  const link = document.head.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  if (!link) return;
+  const old = link.href.startsWith("blob:") ? link.href : undefined;
+  const swap = (href: string) => {
+    link.setAttribute("href", href);
+    if (old) URL.revokeObjectURL(old);
+  };
+  if (!carry) { swap(STATIC_MANIFEST); return; }
+  base ??= fetch(STATIC_MANIFEST).then((r) => r.json() as Promise<WebManifest>);
+  base.then((manifest) => swap(URL.createObjectURL(new Blob(
+    [JSON.stringify(carriedManifest(manifest, carry, location.origin))],
+    { type: "application/manifest+json" },
+  ))), () => { base = undefined; });
+}

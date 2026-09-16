@@ -139,4 +139,13 @@ describe("the install tutorial's own link", () => {
     expect(parseInvites("#g1.shh~rubbish~g2.psst")).toEqual([lisbon, flat]);
     expect(parseInvites("")).toEqual([]);
   });
+
+  it("carries which member this phone is, and only /install reads it", () => {
+    const named = { groupId: "g1", secret: "shh", me: "m-1" };
+    expect(route.install([named, { groupId: "g2", secret: "psst" }])).toBe("/install#g1.shh.m-1~g2.psst");
+    expect(parseInvites("#g1.shh.m-1~g2.psst")).toEqual([named, { groupId: "g2", secret: "psst" }]);
+    expect(parseInvites("#g1.shh.m-1.extra")).toEqual([]);
+    // A join link is sent to other people: it never names who someone is.
+    expect(parseJoinLink("/join#g1.shh.m-1")).toBeNull();
+  });
 });

@@ -1,10 +1,9 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-[the design](#the-design) is built, and [experiment A](#a-in-detail--the-experiment)
-works on a real iPhone (2026-09-16)** — an icon added from `/install` opened
-with the tab's groups. Open: which half iOS used, and Share from any page, not
-only `/install`.*
+[the design](#the-design) is built, and [A](#a-in-detail) works on a real
+iPhone from `/install` (2026-09-16).** Built since and waiting on the phone:
+Share from any page, and the names coming along.*
 
 ## The problem
 
@@ -60,7 +59,7 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone** from `/install`; Paste link stays for groups joined after the install |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone** (from `/install`; from any page and with names, built and awaiting the phone). Paste link stays for groups joined after the install |
 | B | **Ask before joining, and explain installing on one shared screen** — [the design below](#the-design) | Built |
 | C | **The join choice copies the link** — its box, and Add to home screen on the way to `/install` — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
@@ -69,75 +68,67 @@ into tab use, not to lock the casual one out.
 | H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
 | — | **A third "Open in bida" button on the join screen** | Dropped: the join screen's link box serves the regular |
 
-### A, in detail — the experiment
+### A, in detail
 
-`/install` is the page the share sheet is opened from — whatever iOS writes
-into the bookmark, it writes from there — so that is where both halves live
-(`lib/install.ts`, `app/install/page.tsx`).
+**What an icon carries**: every group the tab holds and who the tab is in each
+(`heldInvites`), as `/install#<id>.<secret>[.<member>]~…`. Forgotten groups
+are left out. The tab is what forgets, so a group left behind is a paste to do
+later for nothing; `~` and `.` cannot occur in any part. Name, icon and
+standalone come from the `apple-*` tags either way.
 
-1. **The page's own URL.** `route.install(links)` is
-   `/install#<id>.<secret>~<id>.<secret>…`, and both ways in pass **every
-   invite the tab holds** (`heldInvites`) — the join screen's **Add to home
-   screen** leading with the group being joined, the groups list's banner with
-   the top of the list. The tab is what forgets, so a group left behind is a
-   paste to do later for no saving; `~` is URL-safe and cannot occur in either
-   half. With no readable manifest iOS bookmarks the URL it is looking at,
-   fragment included. Name, icon and standalone come from the `apple-*` tags
-   either way.
-2. **The manifest.** `/install`'s HTML carries none (`app/install/layout.tsx`).
-   An inline script puts the static one back everywhere except an iOS tab
-   holding invites, where an effect adds a `blob:` manifest whose `start_url`
-   is that same set. A Safari that asks at the share sheet finds that; one that
-   asked at load found nothing, and bookmarks the page URL.
+**How, from any page** (`lib/install.ts`). Safari takes the manifest a page
+*loaded* with, so it has to be right before anything reads the head:
 
-Both ends are wired, so whichever URL survives, the icon's first launch brings
-the groups in. One invite goes to `/join`, which names the group and waits out
-a first sync; several are saved where they are read and the list is where it
-lands, filling as each syncs. An invite this phone already holds is spent — so
-the icon is a door into the app, not into one group forever — and holding is
-the test rather than joining again, because `saveGroupKey` would undo a
-`forgetGroup`.
+1. **No page's HTML has a manifest.** `manifestScript`, inline and first in
+   `app/layout.tsx`'s head, writes the link: the static one, except in an iOS
+   tab holding groups, where it is a `blob:` whose `start_url` is the carry.
+   IndexedDB can't answer in time, so it reads a copy in localStorage —
+   `bida.carry`, kept by `CarryToHomeScreen` in the layout, iOS tab only.
+2. **The page URL, where it helps.** The banner and the join's **Add to home
+   screen** still land on `/install` with the same carry in the fragment, for
+   an iOS that bookmarks the URL instead. Both write `bida.carry` first
+   (`carryThenInstall`): the tutorial's head is built from it.
 
-**What WebKit's own source settles** (`WebCore/loader/DocumentLoader.cpp`,
-`Modules/applicationmanifest/ApplicationManifestParser.cpp`), so it is not
-waiting on anyone:
+A group joined or named on a page after it loaded is swapped into that page's
+link too, which only helps if Safari asks again at the share sheet; the next
+page load has it regardless.
 
-- The manifest is fetched **on demand, never at page load**. One caller,
-  `WebPage::getApplicationManifest`, and it walks `document->head()`'s live
-  children for the first `<link rel=manifest>` at the moment it is asked. A
-  swapped href is what it finds.
-- `start_url` is resolved against the *manifest* URL — hence absolute, since a
-  blob has no base — and then checked same-origin against the *document*, which
-  a blob start_url on our own origin passes. **Its fragment is not stripped**:
-  `parseId` and `parseScope` both call `removeFragmentIdentifier`, and
-  `parseStartURL` deliberately does not.
-- Nothing bars a `blob:` manifest. The only gate is CSP `manifest-src`, and
-  this app sends no CSP.
-- **Wrong in practice, and the first phone run showed it** (2026-09-16):
-  the tab swapped at 41ms and the icon still opened at `/`, the static
-  manifest's `start_url`. The first ask came at load, and the first ask wins
-  for that document. Hence no manifest in `/install`'s HTML at all.
+**The icon's first launch** (`app/install/page.tsx`). A key this phone lacks is
+saved. A group the tab had named is claimed here, before its first sync — an
+identity op of this app's own, since it is a device of its own, which history
+reads as "Ana started editing from a new device". Nobody is asked who they are.
+One group nobody has named is the newcomer, and goes to `/join`, which names
+the group and waits out a first sync; everything else lands on the list. What
+the phone already holds is spent, so the icon is a door into the app rather
+than into one group forever, and nothing un-forgets: `saveGroupKey` would undo
+a `forgetGroup`.
 
-**What the second phone run settled**: with no manifest in the HTML, the icon
-opened at `/install#<both invites>`, saved both keys and synced both groups.
-The fragment survives. **Still open: which half did it.** With two invites the
-manifest and the page URL are the same `/install#…`; an install from a join's
-**Add to home screen** (one invite) opens `/join#…` if iOS used the manifest,
-`/install#…` if it used the page URL. That answer shapes Share-from-any-page.
+**What the phone runs settled** (2026-09-16), against what WebKit's source
+suggests (`WebPage::getApplicationManifest` walks the head when asked):
 
-**Reading the answer**: `/diag` in both places, and paste both. The tab's
-`install steps` say what was offered and when the manifest was swapped; the
-app's `first load` is the URL the icon opened, and `install.app` what it did
-with it ([frontend.md](frontend.md#the-flight-recorder-and-diag)).
+- A link swapped 41ms after load was ignored — the icon opened at `/`, the
+  static `start_url`. Safari reads at load.
+- With nothing in the HTML and the blob added at 45ms, the icon opened at
+  `/install#<both groups>` and synced both. The fragment survives. Which of
+  manifest and page URL did it is still not known; a launch from a page other
+  than `/install` settles it, since only the manifest carries anything there.
+- `start_url` must be absolute (a blob has no base), and `id` is pinned so it
+  stays one app. Nothing bars a `blob:` manifest; the only gate would be CSP
+  `manifest-src`, and this app sends none.
+
+**Reading a run**: `/diag` in the tab and in the app. Each load line says which
+manifest its head got (`static`, `carry:<n>`); the app's `first load` is the URL
+the icon opened, and `install.app` what it did with it
+([frontend.md](frontend.md#the-flight-recorder-and-diag)).
 
 `pnpm homescreen` covers everything around that step in the engine that is
 actually to hand ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
-Android included: it must keep `start_url: "/"`, since it shares storage and
-needs none of this.
+Android included: it must get the static `start_url: "/"`, since it shares
+storage and needs none of this.
 
-Consequences if it works: a group joined *after* the install still comes in by
-Paste link, and every secret the phone held at install time sits in the
-home-screen bookmark — on the phone that already holds them.
+Consequences: a group joined *after* the install still comes in by Paste link.
+Every secret the tab holds sits in its localStorage as well as IndexedDB, and
+in the home-screen bookmark — all on the phone that already holds them.
 If it doesn't, nothing is worse than before: the link is on the clipboard, and
 the empty app's Paste link tile is where it goes.
 
@@ -226,9 +217,9 @@ that opening, and is not stored.
   isn't the one on screen, which is easy on a freshly installed app — it
   uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
   pasting again worked because that page load had brought the app up to date.
-- **A `<link rel="manifest">` taken out of the head comes back.** Next owns
-  the one `metadata.manifest` renders and re-inserts it after hydration. To
-  keep a page's HTML free of one, set `manifest: null` in its segment's
-  metadata and add the link by script, as `/install` does.
 - **Safari reads the manifest at page load**, not when the share sheet opens,
-  whatever WebKit's source suggests. Changing the link later does nothing.
+  whatever WebKit's source suggests. Changing the link later does nothing — so
+  the HTML carries none, and a script at the top of the head writes it.
+- **Next re-inserts the manifest link that `metadata.manifest` renders** after
+  hydration, so taking it out doesn't work. Leave `manifest` out of the
+  metadata and write the link yourself.

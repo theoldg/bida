@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { useBrowserName, useInstallOffer } from "../../components/install";
-import { saveGroupKey } from "../../lib/db/commands";
+import { claimIdentity, saveGroupKey } from "../../lib/db/commands";
+import { getDevice } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
-import { hideSecrets, note } from "../../lib/diag";
+import { note } from "../../lib/diag";
 import { syncGroup } from "../../lib/db/sync";
 import { copy } from "../../lib/copy";
-import { formatJoinLink, parseInvites, route, type JoinLink } from "../../lib/group-link";
-import { offerInviteToHomeScreen } from "../../lib/install";
+import { formatJoinLink, parseInvites, route, type CarriedGroup } from "../../lib/group-link";
 
 /**
  * Putting bida on an iOS home screen, and what that does and doesn't bring
@@ -20,29 +20,20 @@ import { offerInviteToHomeScreen } from "../../lib/install";
  * Prose in `/about`'s register. There is no button onward: the way forward is
  * out of the browser, so back is the only exit.
  *
- * It is also the page the share sheet is opened *from*, which is why it does
- * two things besides read. Arriving with invites in its fragment — every group
- * the tab holds, the one being joined first — it points the home-screen icon
- * at them (`offerInviteToHomeScreen`), so the installed app's first launch is
- * those groups rather than an empty list and a paste each. And launched *as*
- * that icon, it is the other end of the same trick: whichever URL iOS kept,
- * this screen hands the invites on.
+ * In a tab it is only a page like any other: every page's manifest already
+ * carries the tab's groups (`manifestScript`), and its fragment carries them
+ * again for an iOS that bookmarks the URL instead. Launched *as* the icon,
+ * this is where they land — `start_url` is always `/install#…`.
  */
 export default function InstallPage() {
   // Parsed on the client only — there is no window during the export's
   // build-time prerender. `undefined` is "not read yet".
-  const [invites, setInvites] = useState<JoinLink[] | undefined>(undefined);
+  const [invites, setInvites] = useState<CarriedGroup[] | undefined>(undefined);
   const offer = useInstallOffer();
 
   useEffect(() => setInvites(parseInvites(window.location.hash)), []);
 
   useLaunchedFromHomeScreen(offer === "installed" ? invites : undefined);
-
-  useEffect(() => {
-    if (!invites?.length || offer !== "manual") return;
-    note("install.tab", `${invites.length} invites on ${hideSecrets(location.href)}`);
-    return offerInviteToHomeScreen(invites);
-  }, [invites, offer]);
 
   // The tutorial is for a browser tab. In the home-screen app this screen is
   // only ever the doorway above, and it is about to leave.
@@ -52,17 +43,21 @@ export default function InstallPage() {
 }
 
 /**
- * The icon's first launch, when iOS kept `/install#<id>.<secret>…` as the page
- * to open (the fallback half of `offerInviteToHomeScreen`).
+ * The icon's first launch: the groups the tab held, and who it was in each.
  *
- * Only the invites this phone does not already hold are acted on. One is the
- * newcomer's case, and `/join` says it best — it names the group and waits out
- * a first sync that hasn't landed. Several is the regular's: the keys go in
- * here and the list fills as each group arrives, because there is no one group
- * to open. None left means the fragment is spent — the app starts where the app
- * starts, rather than the icon being one group's door forever.
+ * A group this phone does not hold yet has its key saved. One the tab had
+ * named has that member claimed here too, so nobody is asked "who are you?"
+ * again — as a claim of this app's own, since it is a device of its own
+ * (history: "Ana started editing from a new device"). Claimed before the group
+ * has synced: the claim is an op like any other and goes up with the next push.
  *
- * Held, not un-forgotten: `saveGroupKey` would undo a `forgetGroup`, and an
+ * One group, not named, is the newcomer who tapped Add to home screen before
+ * picking a name, and `/join` says it best — it names the group and waits out
+ * a first sync. Anything else lands on the list, filling as each group syncs.
+ * Nothing new means the fragment is spent: the icon is a door into the app,
+ * not into one group forever.
+ *
+ * Nothing here un-forgets: `saveGroupKey` would undo a `forgetGroup`, and an
  * icon must not walk back into a group this phone said it was done with.
  *
  * `location.replace`, not the router, for the hand-off to `/join`: Next's
@@ -70,24 +65,29 @@ export default function InstallPage() {
  * is the very first thing asked of it on a freshly installed app
  * (docs/ios.md#gotchas).
  */
-function useLaunchedFromHomeScreen(invites: JoinLink[] | undefined): void {
+function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
   const router = useRouter();
   useEffect(() => {
     if (!invites) return;
     let cancelled = false;
     void (async () => {
-      const held = new Set((await db().groupKeys.toArray()).map((key) => key.groupId));
+      const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
+      const held = new Set(keys.map((key) => key.groupId));
+      const left = new Set(device.leftGroups ?? []);
       const fresh = invites.filter((invite) => !held.has(invite.groupId));
+      const naming = invites.filter((invite) => invite.me && !left.has(invite.groupId)
+        && !(invite.groupId in device.meByGroup));
       if (cancelled) return;
-      note("install.app", `${invites.length} invites, ${held.size} keys held, ${fresh.length} fresh → `
-        + (fresh.length === 1 ? "join" : fresh.length ? "save all" : "groups list"));
-      if (fresh.length === 1) { location.replace(formatJoinLink(fresh[0]!)); return; }
-      for (const invite of fresh) {
-        await saveGroupKey(invite.groupId, invite.secret);
-        // Best-effort: `StartSync`'s loop retries every group anyway, and the
-        // list fills from the live query as each one lands.
-        syncGroup(invite.groupId).catch(() => {});
-      }
+      const newcomer = fresh.length === 1 && !fresh[0]!.me && naming.length === 0;
+      note("install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
+        + `${held.size} keys held, ${fresh.length} fresh, ${naming.length} to claim → `
+        + (newcomer ? "join" : fresh.length || naming.length ? "save" : "groups list"));
+      if (newcomer) { location.replace(formatJoinLink(fresh[0]!)); return; }
+      for (const invite of fresh) await saveGroupKey(invite.groupId, invite.secret);
+      for (const invite of naming) await claimIdentity(invite.groupId, invite.me!);
+      // Best-effort: `StartSync`'s loop retries every group anyway, and the
+      // list fills from the live query as each one lands.
+      for (const invite of [...fresh, ...naming]) syncGroup(invite.groupId).catch(() => {});
       if (!cancelled) router.replace(route.groups());
     })();
     return () => { cancelled = true; };

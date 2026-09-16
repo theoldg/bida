@@ -257,10 +257,10 @@ Two differences that are the whole reason it is a second script:
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
 - **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
-  in the head — the manifest the tutorial swaps in — needs
+  in the head — the manifest the head's script writes — needs
   `{ state: "attached" }`, or the wait times out and the check reports the app
-  broken. Waiting on the swap at all is the point: an effect lands after
-  `waitForURL` returns, so a manifest read off the landing is a coin toss.
+  broken. Wait at all: `waitForURL` can return before the new page has parsed
+  its head, so a manifest read off the landing is a coin toss.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.
@@ -374,16 +374,18 @@ other copy.
 
 One step of this cannot be checked anywhere but an iPhone: which URL WebKit
 writes into the bookmark when someone taps Add to Home Screen
-([ios.md](ios.md#a-in-detail--the-experiment)). Everything on either side of
+([ios.md](ios.md#a-in-detail)). Everything on either side of
 that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
-The tab end: the join screen's fork, and the groups list's banner, each landing
-on a `/install` whose fragment is the invites — every group the tab holds, the
-one that screen is about first; the head left with exactly one manifest,
-swapped for a `blob:` whose `start_url` is that same set and whose URLs are all
-absolute (a blob has no base to resolve a relative one against); and a browser
-that installs by itself — Android — left with the static manifest untouched.
+The tab end: no page's HTML carrying a manifest; the join screen's fork, and
+the groups list's banner, each landing on a `/install` whose fragment is every
+group the tab holds and who it is in each, the one that screen is about first;
+every page's head — `/`, a group, its members, not only the tutorial — holding
+exactly one manifest, a `blob:` whose `start_url` is `/install#` those same
+groups and whose URLs are all absolute (a blob has no base to resolve a
+relative one against); and a browser that installs by itself — Android — given
+the one static manifest.
 
 It also asks Chromium's own install machinery what it would take, over CDP's
 `Page.getAppManifest` — the same question Safari asks WebKit when the share
@@ -395,13 +397,13 @@ back refused: every URL in a blob manifest has to be absolute, because a blob
 has no base to resolve against, and that is the one mistake this approach
 invites — without that control the green above would mean nothing.
 
-The app end (`asInstalledApp`): a launch on `/install#<id>.<secret>` hands the
-invite to `/join`; one carrying several saves them all and lands on the list;
-and a launch whose secrets are already on the phone does neither — the icon is
-a door into the app, not into one group forever. That last pair is the one
-assertion read out of IndexedDB rather than off a screen: no sync API stands
-behind this check, so a group whose key just arrived has no ops to draw a row
-with.
+The app end (`asInstalledApp`): a launch on one invite nobody has named hands
+it to `/join`; a launch whose secrets are already on the phone doesn't — the
+icon is a door into the app, not into one group forever; one carrying several
+saves them all, lands on the list and has claimed the member the tab was in
+each; and one named group skips `/join` and is claimed too. The keys and names
+are read out of IndexedDB rather than off a screen: no sync API stands behind
+this check, so a group whose key just arrived has no ops to draw a row with.
 
 It needs no server beyond the static export: the join screen's own work is
 `pnpm claim`'s subject, and what this one asserts is which URL each end reaches.

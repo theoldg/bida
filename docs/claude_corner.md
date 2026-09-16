@@ -75,3 +75,4 @@ file.*
   rule proving itself on the session that wrote it down.
 - Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.
 - Two sessions in one checkout race each other's builds and blur whose diff is whose. Check `git status` for files you never touched before trusting a red build.
+- "Later" can mean the next message. Leave the follow-up written where the next session will find it anyway.

@@ -205,7 +205,11 @@ const FIRST = "bida.diag.first";
 const NOTES = "bida.diag.notes";
 
 /** One page load: where it landed, how, and whether as the home-screen app. */
-export interface Arrival { at: number; url: string; nav: string; app: boolean }
+export interface Arrival {
+  at: number; url: string; nav: string; app: boolean;
+  /** The manifest the head was given (`manifestScript`): `static`, `carry:<groups>`, or `none`. */
+  mf?: string;
+}
 
 /**
  * Every page load's URL, written by an inline script before Next has run.
@@ -219,7 +223,7 @@ export interface Arrival { at: number; url: string; nav: string; app: boolean }
  * icon's first launch. Same mask as `hideSecrets`, inlined: this runs before
  * any bundle does.
  */
-export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
+export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},m=document.querySelector("link[rel=manifest]"),c=localStorage.getItem("bida.carry");e.mf=!m?"none":m.href.indexOf("blob:")===0?"carry:"+(c?c.split("~").length:"?"):"static";a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
 
 /** A timeline mark that also outlives the session — for steps that happen once. */
 export function note(what: string, info?: string): void {
@@ -240,7 +244,8 @@ export function handoff(): string {
     catch { return otherwise; }
   };
   const when = (at: number) => new Date(at).toISOString().slice(5, 19).replace("T", " ");
-  const arrival = (a: Arrival) => `${when(a.at)}  ${a.app ? "APP" : "tab"} ${a.nav.padEnd(12)} ${a.url}`;
+  const arrival = (a: Arrival) =>
+    `${when(a.at)}  ${a.app ? "APP" : "tab"} ${a.nav.padEnd(12)} ${(a.mf ?? "").padEnd(8)} ${a.url}`;
   const first = read<Arrival | undefined>(FIRST, undefined);
   const notes = read<{ at: number; what: string; info?: string }[]>(NOTES, []);
   return [

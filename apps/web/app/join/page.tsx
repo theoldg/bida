@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
-import { useBrowserName, useInstallOffer } from "../../components/install";
+import { carryThenInstall, useBrowserName, useInstallOffer } from "../../components/install";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
-import { heldInvites, saveGroupKey } from "../../lib/db/commands";
+import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
@@ -192,7 +192,7 @@ function JoinChoice({ link, name, onContinue }: {
     // sheet is opened from, so its URL — fragment and all — is what iOS writes
     // into the home-screen bookmark, and a soft navigation that loses the
     // fragment loses the whole point of carrying it (docs/ios.md).
-    location.assign(route.install(await heldInvites(link.groupId)));
+    await carryThenInstall(link.groupId);
   }
 
   return (

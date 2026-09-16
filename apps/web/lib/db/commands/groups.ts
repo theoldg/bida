@@ -6,7 +6,7 @@ import { db } from "../dexie";
 import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup } from "../device";
 import { requestPersistence } from "../../persist";
-import type { JoinLink } from "../../group-link";
+import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
 
 /**
@@ -103,8 +103,8 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
 }
 
 /**
- * Every invite this phone holds, for the fragment a home-screen icon is added
- * with (docs/ios.md).
+ * Every group this phone holds, and who it is in each, for a home-screen icon
+ * to bring along (docs/ios.md).
  *
  * The secrets, not the groups they open: one just accepted has its key before
  * its ops, and it is the very group the person is installing for. Forgotten
@@ -113,14 +113,18 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
  * phone said it was done with is the one thing carrying them all could get
  * wrong.
  *
- * `first` goes at the head: the group the screen that asked is about.
+ * `first` goes at the head: the group the screen that asked is about. Reads
+ * only — no `getDevice`, which creates the row — so a live query can run it.
  */
-export async function heldInvites(first?: Id): Promise<JoinLink[]> {
-  const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
-  const left = new Set(device.leftGroups ?? []);
+export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
+  const [keys, device] = await Promise.all([db().groupKeys.toArray(), db().device.get("device")]);
+  const left = new Set(device?.leftGroups ?? []);
   const links = keys
     .filter((key) => !left.has(key.groupId))
-    .map(({ groupId, secret }) => ({ groupId, secret }));
+    .map(({ groupId, secret }): CarriedGroup => {
+      const me = device?.meByGroup[groupId];
+      return me ? { groupId, secret, me } : { groupId, secret };
+    });
   return [
     ...links.filter((link) => link.groupId === first),
     ...links.filter((link) => link.groupId !== first),

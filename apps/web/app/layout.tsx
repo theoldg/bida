@@ -11,6 +11,10 @@ import { StartSync } from "../components/start-sync";
 import { ThemeScript } from "../components/theme";
 import { copy } from "../lib/copy";
 import { arrivalScript } from "../lib/diag";
+import { manifestScript, type WebManifest } from "../lib/install";
+import { CarryToHomeScreen } from "../components/install";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // One face for the whole app — headings, prose and figures alike; hierarchy is
 // carried by weight and tracking instead. Self-hosted at build time by
@@ -26,7 +30,8 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: copy.app.name,
   description: copy.app.description,
-  manifest: "/manifest.webmanifest",
+  // No `manifest`: `manifestScript` writes the link, first thing in the head,
+  // because an iOS tab needs a different one there before Safari reads it.
   // Without this every cold load asks for /favicon.ico and takes a 404 for
   // it — a wasted request on the one visit that can least afford one. The
   // PWA icons are already on disk; point at them rather than adding a file.
@@ -60,6 +65,11 @@ export const viewport: Viewport = {
   themeColor: "#0E0F11",
 };
 
+/** Read at build: the static export renders this layout once per page. */
+const manifest = JSON.parse(
+  readFileSync(join(process.cwd(), "public/manifest.webmanifest"), "utf8"),
+) as WebManifest;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // `suppressHydrationWarning` is here for one attribute and one only:
@@ -70,6 +80,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // white. It suppresses this element's own attributes, not its subtree, so
     // a real mismatch inside the app still reports itself.
     <html lang="en" className={mono.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: manifestScript(manifest) }} />
+      </head>
       <body>
         <ThemeScript />
         {/* The URL this load arrived at, before the router can change it (lib/diag.ts). */}
@@ -80,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NoPinchZoom />
         <RegisterServiceWorker />
         <StartSync />
+        <CarryToHomeScreen />
         {/* Every screen, including the two that carry no QueryBoundary. */}
         <ReadErrorBoundary>{children}</ReadErrorBoundary>
       </body>

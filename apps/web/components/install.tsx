@@ -1,16 +1,45 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
 import { setInstallNudgeCollapsed } from "../lib/db/device";
 import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
-import { installOffer, iosBrowser, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
+import { useLive } from "../lib/db/live";
+import {
+  installOffer, iosBrowser, keepCarried, promptInstall, subscribeInstall, type InstallOffer,
+} from "../lib/install";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
+}
+
+/**
+ * In an iOS tab, keeps what a home-screen icon added from *any* page would
+ * bring: every group held, and who this phone is in each (`keepCarried`,
+ * docs/ios.md). Mounted once, in the layout.
+ */
+export function CarryToHomeScreen() {
+  return useInstallOffer() === "manual" ? <KeepCarried /> : null;
+}
+
+/**
+ * Off to `/install` with every group in its fragment, `first` leading — after
+ * writing what the tutorial's head will build its manifest from, since the
+ * live copy may not have caught up with a key saved a moment ago. Written in
+ * `KeepCarried`'s own order, or the two would take turns rewriting it.
+ */
+export async function carryThenInstall(first: string): Promise<void> {
+  keepCarried(await heldInvites());
+  location.assign(route.install(await heldInvites(first)));
+}
+
+function KeepCarried() {
+  const groups = useLive("carried", () => heldInvites(), []);
+  useEffect(() => { if (groups) keepCarried(groups); }, [groups]);
+  return null;
 }
 
 const never = () => () => {};
@@ -104,8 +133,7 @@ export function InstallBanner({ groupId }: { groupId: string }) {
                 invites, and the router drops it when it falls back to loading
                 the page itself (docs/ios.md#gotchas). */}
             <button type="button" className="btn btn-s" style={{ marginTop: 11 }}
-              onClick={() => void heldInvites(groupId)
-                .then((invites) => location.assign(route.install(invites)))}>
+              onClick={() => void carryThenInstall(groupId)}>
               {copy.install.banner.act}
             </button>
           </>

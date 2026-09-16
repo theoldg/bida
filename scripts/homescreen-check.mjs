@@ -45,6 +45,17 @@ const secretsHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
   };
 }));
 
+/** Who this phone is in each group — the device record's `meByGroup`. */
+const namesHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
+  const open = indexedDB.open("hajsik");
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const row = open.result.transaction("device").objectStore("device").get("device");
+    row.onsuccess = () => ok(row.result?.meByGroup ?? {});
+    row.onerror = () => fail(row.error);
+  };
+}));
+
 /** The manifest this page would hand iOS, and whether it is the static one. */
 const manifestOf = (page) => page.evaluate(async () => {
   const links = [...document.head.querySelectorAll('link[rel="manifest"]')];
@@ -59,11 +70,8 @@ const manifestOf = (page) => page.evaluate(async () => {
 });
 
 /**
- * Wait for the swap before reading it. The tutorial builds its blob manifest in
- * an effect, which lands some ticks after the navigation `waitForURL` returns —
- * so a read taken straight off the landing sees the static manifest and says
- * `start_url: undefined`. That is a race, not a regression, and it is what put
- * this check red on a run the app was fine on.
+ * Wait for the blob manifest before reading it. The head's script writes it at
+ * load, but `waitForURL` can return before that page has parsed its head.
  *
  * `state: "attached"` because a `<link>` in the head is never *visible*, which
  * is what `waitForSelector` waits for by default — without it every one of
@@ -102,20 +110,20 @@ await tabPage.waitForURL(/\/install/, { timeout: 8000 });
 report(new URL(tabPage.url()).hash === fragment,
   "and the tutorial it lands on carries the invite in its own fragment");
 
-// On a real iPhone the icon opened at `/` though the swap below had happened
-// 41ms in: Safari reads the manifest at load. So the HTML must carry none for
-// it to read, and nothing may add the static one before the swap does.
-const html = await (await fetch(`${base}/install`)).text();
-report(!/<link[^>]*rel="manifest"/.test(html),
-  "the tutorial's HTML carries no manifest for Safari to read at load");
+// On a real iPhone the icon opened at `/` though a swap had happened 41ms in:
+// Safari reads the manifest at load. So no page's HTML may carry one — the
+// head's own script writes it, before anything can read it.
+const pages = await Promise.all(["/", "/install", "/g"].map((path) => fetch(`${base}${path}`).then((r) => r.text())));
+report(pages.every((html) => !/<link[^>]*rel="manifest"/.test(html)),
+  "no page's HTML carries a manifest for Safari to read at load");
 
 // The page iOS bookmarks is this one, so its URL is half the trick; the other
 // half is the manifest, whose start_url wins where WebKit reads it.
 const swapped = await blobManifest(tabPage);
 report(swapped.href?.startsWith("blob:") && swapped.count === 1,
-  "the tutorial points the app's one manifest at a runtime one", `href: ${swapped.href}`);
-report(swapped.json?.start_url === `${base}/join${fragment}`,
-  "whose start_url is the invite", `start_url: ${swapped.json?.start_url}`);
+  "the tutorial's head holds one manifest, built at load", `href: ${swapped.href}`);
+report(swapped.json?.start_url === `${base}/install${fragment}`,
+  "whose start_url carries the invite to /install", `start_url: ${swapped.json?.start_url}`);
 report(swapped.json?.id === `${base}/` && swapped.json?.scope === `${base}/`,
   "still describing this app, at this scope");
 report(swapped.json?.icons?.every((icon) => icon.src.startsWith(`${base}/`)),
@@ -132,7 +140,7 @@ const wouldInstall = await cdp.send("Page.getAppManifest");
 report(wouldInstall.url === swapped.href && wouldInstall.errors.length === 0,
   "and the browser's own install machinery takes it, without complaint",
   `${wouldInstall.url}${wouldInstall.errors.map((e) => `\n        ${e.message}`).join("")}`);
-report(JSON.parse(wouldInstall.data ?? "{}").start_url === `${base}/join${fragment}`,
+report(JSON.parse(wouldInstall.data ?? "{}").start_url === `${base}/install${fragment}`,
   "fragment and all — nothing in the parse strips it");
 
 // The green above is only worth something if this comes back red: every URL in
@@ -174,25 +182,46 @@ const warned = await banner.first().waitFor({ timeout: 8000 }).then(() => true, 
 report(warned, "the groups list warns an iOS tab it may forget its groups");
 await banner.first().click();
 await heldPage.waitForURL(/\/install/, { timeout: 8000 });
-report(new URL(heldPage.url()).hash === `#${ski}~${flat}`,
-  "and its tutorial carries every group in the tab, the top of the list first",
+// Each group with the member this tab claimed in it, so the icon's app
+// doesn't ask who you are again.
+const me = await namesHeld(heldPage);
+const named = (hash) => `${hash}.${me[hash.split(".")[0]]}`;
+const carried = `${named(ski)}~${named(flat)}`;
+report(Object.keys(me).length === 2 && new URL(heldPage.url()).hash === `#${carried}`,
+  "and its tutorial carries every group in the tab and who you are in it, the top of the list first",
   heldPage.url());
 
 const both = await blobManifest(heldPage);
-report(both.json?.start_url === `${base}/install#${ski}~${flat}`,
-  "as does the manifest, which has no one group to start at",
-  `start_url: ${both.json?.start_url}`);
+// In any order: nothing about the manifest has a top of the list to follow.
+const sameGroups = (a, b) => a.split("~").sort().join("~") === b.split("~").sort().join("~");
+report((both.json?.start_url ?? "").startsWith(`${base}/install#`)
+  && sameGroups(new URL(both.json.start_url).hash.slice(1), carried),
+  "as does the manifest", `start_url: ${both.json?.start_url}`);
+
+// ---- Share from any page -------------------------------------------------
+// Not only the tutorial: whatever page the share sheet opens on, its head was
+// built with every group the tab holds. The order is Dexie's here, not the
+// list's — there is no screen to put first.
+const flatId = flat.split(".")[0];
+for (const path of ["/", `/g?id=${flatId}`, `/g/members?id=${flatId}`]) {
+  await heldPage.goto(`${base}${path}`);
+  const onPage = await blobManifest(heldPage);
+  const start = onPage.json?.start_url ?? "";
+  report(start.startsWith(`${base}/install#`) && sameGroups(new URL(start).hash.slice(1), carried),
+    `a page that is not the tutorial carries them too: ${path}`, `start_url: ${start}`);
+}
 
 // ---- Android is not touched ----------------------------------------------
 const android = await newPhone(browser);
 const androidPage = await android.newPage();
 await androidPage.goto(`${base}/install${fragment}`);
 await androidPage.waitForTimeout(400);
-report((await manifestOf(androidPage)).href === "/manifest.webmanifest",
-  "a browser that installs by itself keeps the one manifest, starting at /");
+const androidManifest = await manifestOf(androidPage);
+report(androidManifest.href === "/manifest.webmanifest" && androidManifest.count === 1,
+  "a browser that installs by itself gets the one static manifest, starting at /");
 
 // ---- the icon's first launch ---------------------------------------------
-// iOS kept `/install#…` (the fallback half): this launch is the join the tab
+// An invite nobody has picked a name in yet: this launch is the join the tab
 // never finished, and it must hand the invite on without anyone pasting. Where
 // the join goes from there is the join screen's own business (`pnpm claim`).
 const fresh = await iphone();
@@ -226,12 +255,30 @@ report(new URL(freshPage.url()).pathname !== "/install",
 const many = await iphone();
 const manyPage = await many.newPage();
 await asInstalledApp(manyPage);
-await manyPage.goto(`${base}/install#${ski}~${flat}`);
+await manyPage.goto(`${base}/install#${carried}`);
 const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: 8000 })
   .then(() => true, () => false);
 report(landed, "launching an icon added with several groups lands on the list", manyPage.url());
 report((await secretsHeld(manyPage)).sort().join(" ") === [ski, flat].sort().join(" "),
   "holding every secret it was added with");
+const claimed = await namesHeld(manyPage);
+report(Object.keys(me).every((id) => claimed[id] === me[id]),
+  "and already somebody in each — nobody is asked who they are again",
+  JSON.stringify(claimed));
+
+// ---- one named group -----------------------------------------------------
+// The regular with a single group: named, so not the newcomer `/join` is for.
+const one = await iphone();
+const onePage = await one.newPage();
+await asInstalledApp(onePage);
+const oneVisited = [];
+onePage.on("framenavigated", (frame) => { if (!frame.parentFrame()) oneVisited.push(frame.url()); });
+await onePage.goto(`${base}/install#${named(flat)}`);
+await onePage.waitForURL((url) => url.pathname === "/" || url.pathname === "/g", { timeout: 8000 })
+  .catch(() => {});
+report(!oneVisited.some((url) => new URL(url).pathname === "/join")
+  && (await namesHeld(onePage))[flatId] === me[flatId],
+  "one named group skips the join screen and is already claimed", oneVisited.join(" "));
 
 await browser.close();
 close();
