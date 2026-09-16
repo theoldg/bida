@@ -625,6 +625,10 @@ so the static export ships the full line and the browser narrows it.
   the field keeps focus and nothing moves. Spread it on anything pressable that
   shares a screen with a field. Tab and Enter are untouched — a keyboard never
   moves the layout out from under itself.
+- **`scrollTo({ behavior: "smooth" })` is not smooth everywhere.** It glided
+  on iOS and jumped on Android, and has no end event to wait on either, so a
+  scroll the app has to wait for is driven by hand, frame by frame (`glide`,
+  `lib/seek.ts`). Reduced motion still puts it in place at once.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
   scrolls sideways — `overflow-x: auto` makes it the nearest scroll container in
   *both* axes — `position: sticky; top: 0` is inert while the page scrolls past

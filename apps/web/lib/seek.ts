@@ -5,23 +5,81 @@
  * form, which both learned the same two things: a bloom spent while the rows
  * are still moving is a bloom nobody saw, and whatever was refused may have
  * been fixed by the time the scroll lands.
+ *
+ * The scroll is driven here, frame by frame, rather than handed to
+ * `scrollTo({ behavior: "smooth" })`. iOS glided with that and Android jumped,
+ * and a smooth scroll has no end event every browser here agrees on either —
+ * owning the animation settles both: it moves the same everywhere, and it
+ * knows exactly when it has arrived.
  */
+
+/** The shortest and longest a glide takes; distance decides in between. */
+const MIN_MS = 240;
+const MAX_MS = 480;
+
+/** How long a glide over `distance` pixels takes. */
+export function glideMs(distance: number): number {
+  return Math.round(Math.min(MAX_MS, Math.max(MIN_MS, Math.abs(distance) * 0.6)));
+}
+
+/** Slow out, slow in: the same shape a native smooth scroll has on iOS. */
+export function ease(t: number): number {
+  const c = Math.min(1, Math.max(0, t));
+  return c < .5 ? 4 * c * c * c : 1 - Math.pow(-2 * c + 2, 3) / 2;
+}
 
 /**
- * How long a scroll is waited on before the flash runs anyway. A smooth scroll
- * has no end event every browser here agrees on, and a person who has taken the
- * list over mid-travel is owed an answer more than a tidy one.
+ * How far a scroller may sit from where a glide put it before that counts as
+ * somebody else moving it: `scrollTop` rounds to device pixels on its own.
  */
-const SETTLED_MS = 800;
+const SLACK = 2;
 
-/** The scroller has arrived — or has been given long enough to. */
-export function whenStill(box: Element, target: number, done: () => void) {
-  const giveUp = Date.now() + SETTLED_MS;
-  const look = () => {
-    if (Math.abs(box.scrollTop - target) <= 1 || Date.now() > giveUp) { done(); return; }
-    requestAnimationFrame(look);
+/**
+ * Scroll `box` to `target`, then call `done` — once, on a later frame, never
+ * in the tick it was asked. A finger or a wheel on the list mid-way ends the
+ * glide where it stands and answers straight away: whoever took the list over
+ * is owed the refusal more than a tidy arrival. Returns a cancel that stops the
+ * glide without answering, for a caller that is going away.
+ *
+ * With reduced motion asked for, the list is put in place at once and the
+ * answer still comes on the next frame (`calmly`).
+ */
+export function glide(box: HTMLElement, target: number, done: () => void): () => void {
+  const from = box.scrollTop;
+  const distance = target - from;
+  const still = calmly() || distance === 0;
+  const duration = glideMs(distance);
+  const start = Date.now();
+  let last = from;
+  let over = false;
+  let frame = 0;
+
+  const finish = (answer: boolean) => {
+    if (over) return;
+    over = true;
+    cancelAnimationFrame(frame);
+    box.removeEventListener("touchstart", takeOver);
+    box.removeEventListener("wheel", takeOver);
+    if (answer) done();
   };
-  requestAnimationFrame(look);
+  function takeOver() { finish(true); }
+
+  const step = () => {
+    if (over) return;
+    // Moved by somebody else since the last frame — a drag the listeners
+    // didn't see, the keyboard's own scroll: that is a take-over too.
+    if (Math.abs(box.scrollTop - last) > SLACK) { finish(true); return; }
+    const t = still ? 1 : (Date.now() - start) / duration;
+    box.scrollTop = t >= 1 ? target : from + distance * ease(t);
+    last = box.scrollTop;
+    if (t >= 1) { finish(true); return; }
+    frame = requestAnimationFrame(step);
+  };
+
+  box.addEventListener("touchstart", takeOver, { passive: true });
+  box.addEventListener("wheel", takeOver, { passive: true });
+  frame = requestAnimationFrame(step);
+  return () => finish(false);
 }
 
 /**

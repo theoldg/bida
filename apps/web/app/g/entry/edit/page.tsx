@@ -26,7 +26,7 @@ import { copy } from "../../../../lib/copy";
 import { checkEntry, needsRate } from "../../../../lib/entry-check";
 import { flashClass, NOT_REFUSED, refused, staleFlashes, stillMissing, type Refusal } from "../../../../lib/refusal";
 import { nearestOutOfView, scrollTarget } from "../../../../lib/reveal";
-import { calmly, whenStill } from "../../../../lib/seek";
+import { glide } from "../../../../lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
@@ -382,7 +382,7 @@ function EditEntryScreen() {
    * then does it bloom, off a fresh reading of what is still missing.
    */
   const refuseInView = (fields: Partial<Record<Refusable, boolean>>) => {
-    const box = document.querySelector(".scroll");
+    const box = document.querySelector<HTMLElement>(".scroll");
     const seen = REFUSABLE.flatMap((f) => {
       const el = fields[f] ? box?.querySelector(`[data-refuse="${f}"]`) : null;
       if (!el) return [];
@@ -402,8 +402,7 @@ function EditEntryScreen() {
     const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { refuse(fields); return; }
     setSeeking(true);
-    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
-    whenStill(box, target, () => {
+    glide(box, target, () => {
       setSeeking(false);
       refuse(stillMissing(fields, missingNow.current));
     });

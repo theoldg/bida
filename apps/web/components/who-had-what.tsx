@@ -10,7 +10,7 @@ import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
 import { nearestOutOfView, revealWhole, scrollTarget } from "../lib/reveal";
-import { calmly, whenStill } from "../lib/seek";
+import { glide } from "../lib/seek";
 import { bare, distinctInitials } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
@@ -269,7 +269,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
         setPending(null);
       }, Math.max(0, HOLD_MS - (Date.now() - since)));
     };
-    const stop = () => clearTimeout(timer);
+    let cancelGlide: (() => void) | undefined;
+    const stop = () => { clearTimeout(timer); cancelGlide?.(); };
     if (!box || !head || !tail) { aim(); return stop; }
     const sticky = box.querySelector("thead th");
     const view = box.getBoundingClientRect();
@@ -279,8 +280,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     );
     const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { aim(); return stop; }
-    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
-    whenStill(box, target, aim);
+    cancelGlide = glide(box, target, aim);
     return stop;
   }, [pending]);
 
@@ -403,8 +403,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     const target = scrollTarget(box, reach);
     if (target === box.scrollTop) { refusal.refuse(); return; }
     setSeeking(true);
-    box.scrollTo({ top: target, behavior: calmly() ? "auto" : "smooth" });
-    whenStill(box, target, () => {
+    glide(box, target, () => {
       setSeeking(false);
       // Fixed while the list was still travelling: there is nothing left to
       // point at, and a refusal with nothing blooming never ends itself.
