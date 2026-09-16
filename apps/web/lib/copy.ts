@@ -192,7 +192,7 @@ export const copy = {
     page: {
       title: "Add to home screen",
       why: (browser: string | undefined) =>
-        `${upper(browser)} may forget your groups if you don’t open bida for a week. Don’t worry — the invite link always brings them back.`,
+        `${upper(browser)} may forget your groups if you don’t open bida for a week. Don’t worry, the invite link always brings them back.`,
       keep: "However, if you’d like to keep all your data permanently,",
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",

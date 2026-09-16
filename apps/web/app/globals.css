@@ -405,6 +405,10 @@ a { color: inherit; text-decoration: none }
 .aboutsect p { font-size: 13px; line-height: 1.55; color: var(--ink-2) }
 .aboutsect p + p { margin-top: 9px }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
+/* `/install`'s closing note (app/install/page.tsx): centred rather than run on
+   from the left margin, so it reads as the one thing to remember on the way
+   out rather than a fourth bullet in the list above it. */
+.aboutsect.center { text-align: center }
 /* `/install` borrows that register (app/install/page.tsx). Its steps are
    numbered because they are done in order, out of the app, from memory. */
 /* The recorded walkthrough on /install: phone-shaped, so it is held to a width
@@ -419,7 +423,7 @@ a { color: inherit; text-decoration: none }
   padding-block: 24px }
 .joinchoice h2 { margin: 0 2px 18px; color: var(--ink); font-size: 16px; font-weight: 700;
   letter-spacing: -.02em; text-wrap: balance }
-.joinchoice .choicehint { text-wrap: balance }
+.joinchoice .choicehint { text-align: center; text-wrap: balance }
 .joinchoice .choicebrowser { margin-top: 20px }
 .joinchoice .card.choicealready { margin-top: 40px }
 .choicealreadytitle { font-size: 13px; font-weight: 600; color: var(--ink) }

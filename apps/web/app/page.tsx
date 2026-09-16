@@ -72,9 +72,11 @@ export default function GroupsPage() {
               two used to look the same, and the blank was the one you saw. */}
             {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-            {/* An iOS tab's warning goes first, and only once there is a group
-              for the browser to forget (components/install.tsx). */}
+            {/* An install offer goes first, and only once there is a group to
+              lose: an iOS tab's warning, or Chrome's own install prompt
+              (components/install.tsx). The two never draw together. */}
             {groups && groups.length > 0 ? <InstallBanner /> : null}
+            {groups && groups.length > 0 ? <InstallNudge /> : null}
 
             {groups && groups.length === 0 ? (
               <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
@@ -84,14 +86,10 @@ export default function GroupsPage() {
               {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
             </div>
 
-            {/* The two cards the app spends on itself at the foot, mutually
-              exclusive by construction: the update offer draws only in the
-              installed app, the install offer only outside it. At most one of
-              them is ever under the list. */}
+            {/* The update offer, at the foot: it draws only in the installed
+              app, so it never appears alongside the install cards above,
+              which draw only outside it. */}
             <UpdateNudge />
-
-            {/* Once there is something to come back to, and never before it. */}
-            {groups && groups.length > 0 ? <InstallNudge /> : null}
 
             {/* The act this screen exists for, at the bottom of it: under the
               list however short the list is, and where a thumb already rests

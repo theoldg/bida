@@ -21,17 +21,16 @@ export function useBrowserName(): string | undefined {
 }
 
 /**
- * The nudge on the groups list. It sits quietly at the foot of the list — the
- * app is only worth a home-screen slot once there is something in it, and a
- * bar across the top of the first screen would be the app talking about itself
- * before it has told you a single number.
+ * The nudge on the groups list — Chrome's own install prompt, offered the same
+ * way `InstallBanner` warns on iOS: atop the list, once there is a group in it,
+ * with an outlined button rather than an inked one. The two never draw
+ * together, `offer` is one or the other.
  *
  * **It folds, it does not dismiss.** The offer stands until the phone installs,
  * at which point `offer` becomes "installed" and the card stops rendering by
- * itself — persisting storage is worth a standing ask. (An iOS tab never gets
- * this card: there is no prompt to capture, and `InstallBanner` warns instead.) But
- * having read it once you should be able to put it away, so the title doubles
- * as a disclosure and the state is remembered per device.
+ * itself — persisting storage is worth a standing ask. But having read it once
+ * you should be able to put it away, so the title doubles as a disclosure and
+ * the state is remembered per device.
  */
 export function InstallNudge() {
   const offer = useInstallOffer();
@@ -43,7 +42,7 @@ export function InstallNudge() {
   const open = !device.installNudgeCollapsed;
 
   return (
-    <div className="pad" style={{ paddingTop: 18 }}>
+    <div className="pad" style={{ paddingBottom: 4 }}>
       <div className="card">
         <button type="button" className="nudgehead" aria-expanded={open}
           onClick={() => void setInstallNudgeCollapsed(open)}>
@@ -60,7 +59,7 @@ function Offer() {
   return (
     <>
       <p className="hint" style={{ marginTop: 4 }}>{copy.install.body}</p>
-      <button className="btn btn-p" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
+      <button className="btn btn-s" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
         {copy.act.add}
       </button>
     </>
