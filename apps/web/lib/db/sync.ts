@@ -153,6 +153,15 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   const { response: { assigned, latestSeq }, pulled } = sealed;
   sent(`${pending.length} up, ${pulled.length} down`);
 
+  // The answer can land after the app has gone to the background — the
+  // network after a resume is slow, and people leave. A readwrite transaction
+  // started then is one the phone can freeze half way through, and a frozen
+  // transaction keeps its lock: every read on this origin queues behind it,
+  // this copy's own included once it comes back. So the write waits to be
+  // seen. Nothing is lost by waiting — the response is held here, and a run
+  // killed while parked is simply pulled again (docs/frontend.md).
+  await whenVisible();
+  const committed = started("sync.commit");
   await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
     for (const op of pending) {
       const seq = assigned[op.id];
@@ -185,6 +194,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       lastSyncedAt: Date.now(),
       failure: undefined,
     });
+  }).then(() => committed(), (err: unknown) => {
+    committed("failed");
+    throw err;
   });
 
   // A pulled op can slot in earlier than ops already folded locally — refold
@@ -207,6 +219,27 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   return { pushed: pending.length, pulled: pulled.length };
 }
 
+/**
+ * Resolves once the page is on screen — at once if it already is, or if there
+ * is no page (the tests). Marks the wait, because a parked commit is a line
+ * the /diag timeline should show rather than a gap in it.
+ */
+function whenVisible(): Promise<void> {
+  if (typeof document === "undefined" || document.visibilityState !== "hidden") {
+    return Promise.resolve();
+  }
+  const parked = started("sync.parked");
+  return new Promise((resolve) => {
+    const seen = () => {
+      if (document.visibilityState === "hidden") return;
+      document.removeEventListener("visibilitychange", seen);
+      parked();
+      resolve();
+    };
+    document.addEventListener("visibilitychange", seen);
+  });
+}
+
 let running: Promise<void> | undefined;
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let backoffTimer: ReturnType<typeof setTimeout> | undefined;
@@ -225,6 +258,13 @@ const BACKOFF_MAX_MS = 60000;
  * the backoff never grew past its first step.
  */
 export function syncAll(): Promise<void> {
+  // Not while hidden, for the reason `whenVisible` gives. The debounce after a
+  // write, `online` and the backoff can all fire in the background; coming
+  // back to the front runs a sync anyway (`startSyncLoop`), so skipping here
+  // only moves the attempt to the moment it is safe.
+  if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+    return running ?? Promise.resolve();
+  }
   running ??= runSyncAll().finally(() => { running = undefined; });
   return running;
 }

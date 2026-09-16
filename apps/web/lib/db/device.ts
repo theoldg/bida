@@ -1,4 +1,5 @@
 import { newNodeId } from "@bida/core";
+import { started } from "../diag";
 import { db, type DeviceRecord } from "./dexie";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
@@ -22,7 +23,14 @@ export async function getDevice(): Promise<DeviceRecord> {
 
 export async function updateDevice(patch: Partial<DeviceRecord>): Promise<void> {
   const current = await getDevice();
-  await db().device.put({ ...current, ...patch, key: "device" });
+  // Named by the fields it sets: navigating writes this row (the last group
+  // opened, the list left on), and a write on every tap is worth seeing.
+  const done = started("device.write", Object.keys(patch).join(","));
+  try {
+    await db().device.put({ ...current, ...patch, key: "device" });
+  } finally {
+    done();
+  }
 }
 
 /** Which member this device is, in a given group. Undefined until claimed. */

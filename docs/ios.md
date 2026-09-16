@@ -62,11 +62,12 @@ into tab use, not to lock the casual one out.
 | | Idea | Verdict |
 |---|---|---|
 | A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If `/join#id.secret` installs *as itself*, the first launch of the icon is the join — no paste | **Best if it works. Experiment first** |
-| B | **Install-first landing.** On an iOS tab, `/join` says install before joining, with a quiet "Just look" that joins in the tab and says what that costs | Build — the framing for everything else |
-| C | **Copy on the way out.** The install screen's instruction tap puts the link on the clipboard, so the icon's empty first launch shows one big Paste button | Fallback if A fails |
+| B | **`/join` in an iOS tab forks instead of joining** — see below | Build — the framing for everything else |
+| C | **Every tap on the fork copies the link**, so whichever app opens next is one Paste away | Build: the returning user's whole path, and new users' fallback if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
-| F | **Shortcuts / URL schemes / QR** | Rejected: none of them open a web app; the camera opens Safari too |
+| F | **Shortcuts / URL schemes / QR / share target** | Rejected: none of them open a web app, the camera opens Safari too, and iOS has no Web Share Target |
+| H | **Detecting the installed app from the tab** | Impossible: no shared storage or cookies, and no `getInstalledRelatedApps` on iOS. The tab must serve both people |
 | G | **Move the tab's claim into the app** | Falls out of A or C for free if the claim rides with the link (below) |
 
 ### A, in detail — the experiment
@@ -99,21 +100,44 @@ The app then claims on arrival and the tab never publishes a claim at all if
 the join screen asks to install *before* asking who you are (B). One person,
 one claim.
 
-## Proposed onboarding
+## Proposed flow: `/join` in an iOS tab asks before it joins
 
-1. Tap invite → Safari, `/join`, iOS tab detected.
-2. Screen: *install first*, the three taps drawn as the nudge draws them, and
-   below it "Just look for now", which joins in the tab and warns.
-3. Share → Add to Home Screen (the icon now carries the link — A — or the link
-   is on the clipboard — C).
-4. Tap the icon → the group (A) or one Paste (C) → who are you → done.
+Today the tab joins on arrival. That is wrong for both people it can't tell
+apart: a new user's first claim lands in storage that is about to be left
+behind, and a regular with the app gets a second copy of the group in a tab.
+So in an iOS tab only (Android and the home-screen app are unchanged), `/join`
+saves nothing and offers three rows, each a tap that **copies the link first**:
 
-That is one screen fewer than today, no second claim, and no reading.
+1. **Open in bida** — for the regular. "Copied. Open bida and tap Paste link."
+2. **Add bida to your home screen** — for the new user. The share-sheet steps,
+   drawn as the nudge draws them; with A, the icon then opens the group, and
+   without it the copy is waiting for Paste link.
+3. **Just look** — joins in the tab, with the week's warning.
+
+The order is the one open decision below. The tab may remember which row was
+taken last and lead with it — a hint that evicts with everything else, which
+costs only a return to the default.
+
+The two journeys, then:
+
+- **New:** invite → fork → Add to home screen → Share → Add → tap the icon →
+  the group (A) or Paste link (C) → who are you.
+- **Regular, second group:** invite → fork → Open in bida → switch to the app →
+  Paste link → Paste bubble → who are you. Still a paste — nothing on iOS
+  carries a link into a running web app — but it is *said* at the moment it is
+  needed, by the screen the person is already looking at, instead of being
+  something to know.
+
+In the app nothing changes: **Paste link** is already a start tile that stays
+in reach under a long list ([frontend.md](frontend.md#one-navigation)).
 
 ## Open questions for the owner
 
-- Does "Just look" exist at all, or is the casual user sent the install screen
-  with a smaller escape?
+- Which row leads the fork: **Add to home screen** (most arrivals are new) or
+  **Open in bida** (a regular joins more groups than a newcomer)? And does
+  "Just look" exist at all?
+- With A, a regular who picks the wrong row installs a second icon. Acceptable,
+  or does the install row warn "already have bida? use the row above"?
 - Is an icon that always opens *one* group acceptable, or must the icon open
   the groups list after the first launch (then A needs a "consumed" flag in the
   app's storage)?

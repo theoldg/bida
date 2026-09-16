@@ -2,6 +2,7 @@ import {
   createHlcState, hlcSend, newId,
   type EntityKind, type Id, type Op, type OpDraft,
 } from "@bida/core";
+import { started } from "../../diag";
 import { db, type StoredOp } from "../dexie";
 import { getDevice } from "../device";
 import { materialise } from "../fold";
@@ -25,6 +26,9 @@ export async function appendOps(
   now = Date.now(),
 ): Promise<Op[]> {
   const d = db();
+  // Every write the person makes, timed: a save that sits behind somebody
+  // else's lock is a line on /diag rather than a button that did nothing.
+  const done = started("append", `${drafts.length} ops`);
   return d.transaction(
     "rw",
     [d.ops, d.device, d.groups, d.members, d.expenses, d.settlements, d.attachments, d.identities,
@@ -68,7 +72,11 @@ export async function appendOps(
       return written;
     },
   ).then((written) => {
+    done();
     scheduleSync();
     return written;
+  }, (err: unknown) => {
+    done("failed");
+    throw err;
   });
 }
