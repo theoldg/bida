@@ -64,6 +64,9 @@ do any of that.
 *One line, dated, newest first. At ten, drop the oldest rather than grow the
 file.*
 
+- *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
+  asked what that cost. The tools you type every day are the last place anyone
+  looks and the cheapest place to win.
 - *2026-09-16* — This file's first draft was full of technical tips. Every one
   of them already had a home somewhere else, which is the "one fact, one home"
   rule proving itself on the session that wrote it down.

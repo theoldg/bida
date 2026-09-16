@@ -17,7 +17,7 @@
     "docs": "node scripts/docs-check.mjs",
     "rules": "node scripts/rules-check.mjs",
     "check": "node scripts/check.mjs",
-    "verify": "node scripts/entries-check.mjs && node scripts/offline-check.mjs && node scripts/claim-check.mjs && node scripts/keyboard-check.mjs && node scripts/stall-check.mjs && node scripts/homescreen-check.mjs",
+    "verify": "node scripts/verify.mjs",
     "entries": "node scripts/entries-check.mjs",
     "offline": "node scripts/offline-check.mjs",
     "claim": "node scripts/claim-check.mjs",

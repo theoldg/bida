@@ -4,7 +4,7 @@
 
 ```bash
 pnpm check        # links · rules · typecheck · tests · export build — pre-push, ~30s
-pnpm verify       # every browser check against a real build, ~60s
+pnpm verify       # every browser check against a real build, together, ~50s
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
 pnpm keyboard     # the act a list of names is typed for, against an open keyboard
@@ -21,7 +21,10 @@ pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
 and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale — so none of them needs a build step in front of it, and none
-of them wastes 25 seconds when nothing has changed.
+of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
+build once and then runs all six together (`scripts/verify.mjs`): they share
+nothing to collide over, each serving the export on its own port 0, and the
+build is the one thing six of them starting at once would have raced on.
 
 `pnpm check` is the gate — nothing else stands between an edit and production,
 so the two things that gate nothing else are in it. The build, because `next
