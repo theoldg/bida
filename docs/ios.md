@@ -124,7 +124,7 @@ install nudge in a tab; the nudge stays as it is elsewhere.
 ### `/join` — the choice, before "who are you"
 
 A full screen, drawn before the claim gate, titled with the group: *Safari
-forgets your groups after a week unused* in bold, what the home screen keeps,
+forgets your groups after a week* in bold, what the home screen keeps,
 then *already on your home screen? paste the link there* over a box showing the
 link. The box is its own copy button and reads **Copied** once a write has gone
 through — tried on arrival too, though iOS only allows it inside a tap. The
