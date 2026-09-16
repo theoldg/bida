@@ -7,7 +7,7 @@ import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog, Dialog } from "../components/dialog";
-import { InstallNudge } from "../components/install";
+import { InstallBanner, InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
@@ -71,6 +71,10 @@ export default function GroupsPage() {
               two used to look the same, and the blank was the one you saw. */}
             {groups === undefined ? <SkeletonRows count={4} /> : null}
 
+            {/* An iOS tab's warning goes first, and only once there is a group
+              for the browser to forget (components/install.tsx). */}
+            {groups && groups.length > 0 ? <InstallBanner /> : null}
+
             {groups && groups.length === 0 ? (
               <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
             ) : null}
@@ -79,7 +83,7 @@ export default function GroupsPage() {
               {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
             </div>
 
-            {/* The two cards the app spends on itself, and they are mutually
+            {/* The two cards the app spends on itself at the foot, mutually
               exclusive by construction: the update offer draws only in the
               installed app, the install offer only outside it. At most one of
               them is ever under the list. */}

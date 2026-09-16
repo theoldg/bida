@@ -174,6 +174,32 @@ export const copy = {
        */
       warn: "Otherwise this browser forgets your groups after a week unused.",
     },
+    /** The iOS tab's card atop the groups list, once it holds one (docs/ios.md). */
+    banner: {
+      title: "This browser will forget your groups",
+      body: "Add bida to your home screen to keep them.",
+    },
+    /** `/install`: why, what to expect, how — in that order. */
+    page: {
+      title: "Add to home screen",
+      copied: "Link copied.",
+      copiedBody: "Already have bida on your home screen? Open it and tap Paste link.",
+      why: {
+        title: "Why",
+        body: "This browser forgets your groups after a week unused. bida on your home screen keeps them, and works offline.",
+      },
+      empty: {
+        title: "It starts empty",
+        body: "The home-screen app can’t see this browser’s groups. Each one comes over by its link.",
+      },
+      how: {
+        title: "How",
+        tap: "Tap", inBar: "in the browser bar.",
+        add: "Scroll down and tap", addLabel: "Add to Home Screen",
+        open: "Open bida from your home screen.",
+        paste: "Tap Paste link.",
+      },
+    },
   },
 
   /** The waiting service worker (lib/update.ts). */
@@ -334,6 +360,19 @@ export const copy = {
       body: "A group’s address in the browser bar leaves out the part that unlocks it. Ask someone in the group to send the invite link from the app’s menu instead.",
       /** The drawn top bar's title — any group, not one of yours. */
       groupName: "Your group",
+    },
+    /**
+     * An iOS tab's choice before joining (docs/ios.md). The browser option says
+     * what it costs and how to undo it: nothing is lost that the link can't
+     * bring back, so it warns without scaring the casual user off.
+     */
+    choice: {
+      /** Until the group has arrived and can be named. */
+      unnamed: "You’re invited",
+      body: "This browser forgets groups after a week unused. bida on your home screen keeps them.",
+      install: "Install first",
+      browser: "Continue in the browser",
+      browserCost: "Forgets it in a week unused. Open this link again to get it back.",
     },
     joining: {
       title: "Joining…",

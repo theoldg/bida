@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksIos, offerFrom } from "./install";
+import { asksBeforeJoin, looksIos, offerFrom } from "./install";
 
 const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15";
 const IPAD = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15";
@@ -34,5 +34,19 @@ describe("spotting iOS", () => {
   it("leaves a real Mac and an Android phone alone", () => {
     expect(looksIos(IPAD, "MacIntel", 0)).toBe(false);
     expect(looksIos(ANDROID, "Linux armv8l", 5)).toBe(false);
+  });
+});
+
+describe("asking before an iOS tab joins", () => {
+  it("asks only a tab that forgets", () => {
+    expect(asksBeforeJoin({ offer: "manual", claimed: false, continued: false })).toBe(true);
+    for (const offer of ["installed", "ready", "none"] as const) {
+      expect(asksBeforeJoin({ offer, claimed: false, continued: false })).toBe(false);
+    }
+  });
+
+  it("asks once: not a group already claimed or already kept here", () => {
+    expect(asksBeforeJoin({ offer: "manual", claimed: true, continued: false })).toBe(false);
+    expect(asksBeforeJoin({ offer: "manual", claimed: false, continued: true })).toBe(false);
   });
 });

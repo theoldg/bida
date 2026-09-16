@@ -44,6 +44,17 @@ export function looksIos(ua: string, platform: string, touchPoints: number): boo
   return /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && touchPoints > 1);
 }
 
+/**
+ * Whether `/join` asks "install first?" before the group opens. Only an iOS tab,
+ * which forgets; and never for a group this phone already said who it is in, or
+ * already chose to keep here — the choice is made once per group, not per tap.
+ */
+export function asksBeforeJoin(
+  { offer, claimed, continued }: { offer: InstallOffer; claimed: boolean; continued: boolean },
+): boolean {
+  return offer === "manual" && !claimed && !continued;
+}
+
 let captured: InstallPromptEvent | undefined;
 let installed = false;
 const listeners = new Set<() => void>();

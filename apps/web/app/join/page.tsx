@@ -2,15 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { useInstallOffer } from "../../components/install";
 import { FailedLink, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
+import { continueInTab } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
-import { useSyncHealth } from "../../lib/hooks";
+import { useDevice, useSyncHealth } from "../../lib/hooks";
 import { copy } from "../../lib/copy";
-import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
+import { formatJoinLink, isKeylessFragment, parseJoinLink, route, type JoinLink } from "../../lib/group-link";
+import { asksBeforeJoin } from "../../lib/install";
 
 /**
  * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the
@@ -33,6 +36,11 @@ import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
  * just opens the group. (It is not `/g/members` either way: that is a
  * management screen, and a new arrival dropped on it has "back" as its only
  * way onward.)
+ *
+ * An iOS tab stops first, to ask whether to install instead (`JoinChoice`,
+ * docs/ios.md). The key is saved and the group pulled behind that question, so
+ * it can name the group — and nothing is claimed until a name is picked, so a
+ * tab left for the home-screen app holds only a copy that evicts harmlessly.
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -94,9 +102,21 @@ function JoinScreen() {
   // link whose secret is wrong is a wrong link, which is what it now says.
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
 
+  const offer = useInstallOffer();
+  const device = useDevice();
+  // undefined until the device record answers: drawing the group first and
+  // the question a frame later would be the wrong way round.
+  const asks = link && device
+    ? asksBeforeJoin({
+      offer,
+      claimed: device.meByGroup[link.groupId] !== undefined,
+      continued: device.continuedInTab?.includes(link.groupId) ?? false,
+    })
+    : undefined;
+
   useEffect(() => {
-    if (link && group) router.replace(route.group(link.groupId));
-  }, [link, group, router]);
+    if (link && group && asks === false) router.replace(route.group(link.groupId));
+  }, [link, group, asks, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;
 
@@ -121,6 +141,9 @@ function JoinScreen() {
     );
   }
 
+  if (asks === undefined) return <Blank back={route.groups()} />;
+  if (asks) return <JoinChoice link={link} name={group?.name} />;
+
   if (!keySaved || group) return <Blank back={route.groups()} />;
 
   return (
@@ -129,6 +152,46 @@ function JoinScreen() {
       <Scroll>
         <Empty title={copy.join.joining.title}>{copy.join.joining.body}</Empty>
       </Scroll>
+    </Body></Screen>
+  );
+}
+
+/**
+ * The iOS tab's fork: install first, or join here. An invitation rather than a
+ * wall — titled with the group once it has arrived — because the casual user
+ * loses little by staying, and the regular can't be told apart from them.
+ *
+ * "Install first" copies the link inside the tap (iOS writes the clipboard
+ * only in a gesture), so `/install?copied` can end on Paste link. A refused
+ * write sends the plain tutorial instead: it would be a lie to say "copied",
+ * and the link is still in the chat it came from.
+ */
+function JoinChoice({ link, name }: { link: JoinLink; name: string | undefined }) {
+  const router = useRouter();
+  const { choice } = copy.join;
+
+  function installFirst() {
+    navigator.clipboard.writeText(formatJoinLink(link)).then(
+      () => router.push(route.install(true)),
+      () => router.push(route.install()),
+    );
+  }
+
+  return (
+    <Screen><Body>
+      <TopBar title={copy.join.title} back={route.groups()} />
+      <Scroll>
+        <Empty title={name ?? choice.unnamed}>{choice.body}</Empty>
+      </Scroll>
+      <Foot>
+        <div className="choicebtns">
+          <button className="btn btn-p btn-lg" onClick={installFirst}>{choice.install}</button>
+          <button className="btn btn-s btn-stack" onClick={() => void continueInTab(link.groupId)}>
+            {choice.browser}
+            <small>{choice.browserCost}</small>
+          </button>
+        </div>
+      </Foot>
     </Body></Screen>
   );
 }

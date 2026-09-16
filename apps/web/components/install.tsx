@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { setInstallNudgeCollapsed } from "../lib/db/device";
+import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
 import { installOffer, promptInstall, subscribeInstall, type InstallOffer } from "../lib/install";
 
@@ -27,7 +29,7 @@ export function useInstallOffer(): InstallOffer {
 export function InstallNudge() {
   const offer = useInstallOffer();
   const device = useDevice();
-  if (offer !== "ready" && offer !== "manual") return null;
+  if (offer !== "ready") return null;
   // undefined is "Dexie hasn't answered yet", and drawing the card open before
   // it does would snap it shut a frame later on a phone that folded it.
   if (!device) return null;
@@ -41,28 +43,50 @@ export function InstallNudge() {
           {copy.install.title}
           <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
         </button>
-        {open ? <Offer offer={offer} /> : null}
+        {open ? <Offer /> : null}
       </div>
     </div>
   );
 }
 
-function Offer({ offer }: { offer: "ready" | "manual" }) {
+function Offer() {
   return (
     <>
       <p className="hint" style={{ marginTop: 4 }}>{copy.install.body}</p>
-      {offer === "ready" ? (
-        <button className="btn btn-p" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
-          {copy.act.add}
-        </button>
-      ) : <ManualSteps />}
+      <button className="btn btn-p" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
+        {copy.act.add}
+      </button>
     </>
   );
 }
 
 /**
- * The iOS path, in both places that offer it — the nudge here and the about
- * screen's "Works offline". iOS gives no install API at all, so the honest
+ * An iOS tab's warning, atop the groups list rather than at its foot: once the
+ * tab holds a group, "this browser will forget it" is true and is the first
+ * thing worth reading. The caller draws it only then — an empty home is
+ * someone looking around, and Quick split stores nothing to lose. It doesn't
+ * fold: it stands until the phone installs, and the tab is then a tab nobody
+ * opens. The how lives on `/install`, which the join choice shares.
+ */
+export function InstallBanner() {
+  const offer = useInstallOffer();
+  if (offer !== "manual") return null;
+  return (
+    <div className="pad" style={{ paddingBottom: 4 }}>
+      <Link href={route.install()} className="card installbanner">
+        <span>
+          <b>{copy.install.banner.title}</b>
+          <span className="hint">{copy.install.banner.body}</span>
+        </span>
+        <Icon name="chev" size={11} />
+      </Link>
+    </div>
+  );
+}
+
+/**
+ * The iOS path in one line, for the about screen's "Works offline" — `/install`
+ * is the full version. iOS gives no install API at all, so the honest
  * thing is to point at the button that does it rather than draw one that
  * can't, and to say what skipping it costs: the warning is the only reason
  * the card is worth a standing place on the list.

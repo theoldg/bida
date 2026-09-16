@@ -1,9 +1,9 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-designed, not built** — the problem is real and shipped; the fix below is
-agreed but unbuilt. When
-it is, the decision becomes an ADR and this doc shrinks to how it works.*
+[the design](#the-design) is built; experiment A is not run.** Its answer
+settles `/install`'s last step, and then the decision becomes an ADR and this
+doc shrinks to how it works.*
 
 ## The problem
 
@@ -28,19 +28,16 @@ that holds, and every iOS browser is WebKit, so none of it is Safari's alone:
 So a person who means to stay in a group has to end up in the home-screen app,
 and every invite starts them in the wrong place.
 
-## What is built today
+## What was built before the design
 
-- The install nudge on the groups list, with the iOS-only warning that the tab
-  forgets after a week ([frontend.md](frontend.md#pwa)).
+- `persist()` requested on every start once a group is held.
 - **Paste link**, a third start tile shown only in an iOS home-screen app,
   because that is the only way a link gets in there.
-- `persist()` requested on every start once a group is held.
 
-The permanent-join path is therefore: tap invite → Safari joins the group →
-read the nudge → Share → More → Add to Home Screen → find the icon → Paste link
-→ Paste bubble → pick who you are **again** (the tab's claim is in the other
-storage). Two identity claims from one person, and the first sits in the
-history forever.
+Without the design, the permanent-join path was: tap invite → Safari joins →
+read the nudge → Share → Add to Home Screen → open the icon → Paste link → pick
+who you are **again**. Two claims from one person, the first in the history
+forever.
 
 ## What eviction actually costs a tab user
 
@@ -96,8 +93,7 @@ secret sits in the home-screen bookmark — on the phone that already holds it.
 ## The design
 
 Everything here is **iOS tab only** (`offerFrom` → `manual`). Android and the
-home-screen app are unchanged. Wording is drafted in `copy.ts` when built, not
-here.
+home-screen app are unchanged. Wording is in `copy.install` and `copy.join.choice`.
 
 ### `/install` — the tutorial, shared
 
@@ -141,11 +137,14 @@ The key is saved and the group pulled *behind* the screen, so its title can be
 the group's name — an invitation, not a wall. Nothing is published until a name
 is picked, so choosing Install first leaves an unclaimed copy in the tab that
 evicts harmlessly: one person, one claim. A tab that already holds this group,
-or already chose to continue for it, skips the screen.
+or already chose to continue for it, skips the screen (`asksBeforeJoin`:
+claimed in `meByGroup`, or listed in `continuedInTab`). A refused clipboard write
+sends Install first to the plain `/install`, since "copied" would be false.
 
 ## Open questions for the owner
 
-- Does the home banner fold like the nudge, or stand until the phone installs?
+- The home banner stands until the phone installs (built that way). Should it
+  fold like the nudge?
 - Does **New group** in a tab get the same choice as `/join`? Its key exists
   nowhere but that tab until the link is shared — worse than joining.
 - A tab holding several groups brings them over one paste at a time. Is

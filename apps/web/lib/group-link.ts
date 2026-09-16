@@ -114,6 +114,11 @@ export const route = {
   diag: () => "/diag",
   /** What this is, who can read it, and where to complain. Off the groups list. */
   about: () => "/about",
+  /**
+   * Why and how to put bida on an iOS home screen (docs/ios.md). `copied` is
+   * the arrival from a join, whose link is already on the clipboard.
+   */
+  install: (copied?: boolean) => (copied ? "/install?copied" : "/install"),
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>
