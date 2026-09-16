@@ -195,6 +195,11 @@ function JoinChoice({ link, name, onContinue }: {
         <div className="pad joinchoice">
           <h2>{choice.keep(name)}</h2>
           <p>{choice.why(browser)}</p>
+          <button className="btn btn-p btn-lg choiceinstall" onClick={() => void addToHomeScreen()}>{choice.install}</button>
+          <p className="hint choicefine">{choice.fine(browser)}</p>
+          <button className="btn btn-s choicebrowser" onClick={onContinue}>
+            {choice.browser(browser)}
+          </button>
           <p className="hint choicealready">{choice.already}</p>
           <button type="button" className={`linkbox${copied ? " on" : ""}`}
             onClick={() => void write().then((ok) => ok && tick())}>
@@ -204,13 +209,6 @@ function JoinChoice({ link, name, onContinue }: {
               {copied ? choice.copied : choice.copyLink}
             </span>
           </button>
-          <div className="choicebtns">
-            <button className="btn btn-p btn-lg" onClick={() => void addToHomeScreen()}>{choice.install}</button>
-            <button className="btn btn-s" onClick={onContinue}>
-              {choice.browser(browser)}
-            </button>
-          </div>
-          <p className="hint choicefine">{choice.fine(browser)}</p>
         </div>
       </Scroll>
     </Body></Screen>
