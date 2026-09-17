@@ -19,11 +19,14 @@ import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { iosHomeScreenApp } from "../lib/install";
 import { useResumeLastGroup } from "../lib/launch";
-import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
+import { useArrivingGroups, useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
   const summaries = useGroupSummaries();
+  // Keys held whose groups haven't landed yet — the freshly installed icon,
+  // which saved its carried invites a moment ago (lib/hooks.ts).
+  const arriving = useArrivingGroups();
   // Launching the app reopens the group you were last in (lib/launch.ts), so
   // this screen may be on its way out before it has drawn anything. Until that
   // is settled the list is "not answered yet" — the frame it already draws
@@ -78,8 +81,15 @@ export default function GroupsPage() {
             {groups && groups.length > 0 ? <InstallBanner groupId={groups[0]!.group.id} /> : null}
             {groups && groups.length > 0 ? <InstallNudge /> : null}
 
-            {groups && groups.length === 0 ? (
-              <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+            {/* An empty list is only empty once nothing is on its way: an icon
+              added to keep someone's groups must not greet them with "No
+              groups yet" while those groups are still coming down. */}
+            {groups && groups.length === 0 && arriving !== undefined ? (
+              arriving > 0 ? (
+                <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
+              ) : (
+                <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+              )
             ) : null}
 
             <div className="rows">

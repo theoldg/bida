@@ -305,6 +305,33 @@ export interface GroupSummary {
   me: string | undefined;
 }
 
+/**
+ * How many groups this phone holds a key to but has never seen — saved and
+ * waiting on a first sync.
+ *
+ * The home-screen icon is added carrying its invites (docs/ios.md), so its
+ * first launch saves the keys and lands on a list whose rows only exist once
+ * the server has answered. Until this, that gap was the empty state: somebody
+ * who had just installed bida to *keep* their groups was told there were none.
+ *
+ * `leftGroups` is the reason this counts keys against groups rather than
+ * trusting either — forgetting a group keeps its key, so a phone that had
+ * forgotten everything would have waited forever.
+ */
+export function useArrivingGroups(): number | undefined {
+  return useLive("arrivingGroups", async () => {
+    const d = db();
+    const [keys, device, groups] = await Promise.all([
+      d.groupKeys.toArray(),
+      d.device.get("device"),
+      d.groups.toArray(),
+    ]);
+    const left = new Set(device?.leftGroups ?? []);
+    const arrived = new Set(groups.map((g) => g.id));
+    return keys.filter((k) => !left.has(k.groupId) && !arrived.has(k.groupId)).length;
+  }, []);
+}
+
 /** The groups list, with each group's net for whoever is holding the phone. */
 export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLive("groupSummaries", async () => {

@@ -332,6 +332,16 @@ report(Object.keys(me).every((id) => claimed[id] === me[id]),
   "and already somebody in each — nobody is asked who they are again",
   JSON.stringify(claimed));
 
+// No sync API stands behind this check, so these groups never arrive — which
+// is the slow phone's first launch held still. What it must not say is that
+// there are none: somebody who installed bida to *keep* their groups, told on
+// the icon's first open that it has no groups yet, has been shown the app
+// losing them.
+report(await manyPage.getByText("Getting your groups").waitFor({ timeout: 8000 })
+  .then(() => true, () => false)
+  && await manyPage.getByText("No groups yet").count() === 0,
+  "and waits for them rather than calling itself empty");
+
 // ---- one named group -----------------------------------------------------
 // The regular with a single group: named, so not the newcomer `/join` is for.
 const one = await iphone();

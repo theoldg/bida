@@ -146,6 +146,16 @@ export const copy = {
       title: "No groups yet",
       body: "A trip, a flat, a dinner: anything several people pay for.",
     },
+    /**
+     * Keys this phone holds whose groups have not arrived from the server yet
+     * — a freshly installed icon carrying its invites, most of all. Not the
+     * empty state: "No groups yet" on the first launch of an icon someone just
+     * added to keep their groups is the app saying it lost them.
+     */
+    arriving: {
+      title: "Getting your groups",
+      body: "Finishes by itself once they sync.",
+    },
     newGroup: "New group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */

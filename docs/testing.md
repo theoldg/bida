@@ -404,7 +404,9 @@ icon is a door into the app, not into one group forever; one carrying several
 saves them all, lands on the list and has claimed the member the tab was in
 each; and one named group skips `/join` and is claimed too. The keys and names
 are read out of IndexedDB rather than off a screen: no sync API stands behind
-this check, so a group whose key just arrived has no ops to draw a row with.
+this check, so a group whose key just arrived has no ops to draw a row with —
+which is also the slow phone's first launch held still, where the list must
+say it is fetching them rather than that there are none.
 
 It needs no server beyond the static export: the join screen's own work is
 `pnpm claim`'s subject, and what this one asserts is which URL each end reaches.
