@@ -462,6 +462,10 @@ a { color: inherit; text-decoration: none }
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
+/* The build's number, under everything (app/about/page.tsx). Sized and coloured
+   below the quietest claim on the screen: it is a footnote for the two occasions
+   it matters, not a fifth thing to read. */
+.aboutver { font-size: 11px; letter-spacing: .04em; color: var(--muted) }
 
 /* The last row of a list of people *is* the field that adds the next one, and
    it is built like the rows above it — name on the left, one control on the

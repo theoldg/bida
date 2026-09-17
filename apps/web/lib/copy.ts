@@ -257,6 +257,9 @@ export const copy = {
    */
   about: {
     title: "About bida",
+    /** Under everything else. The number beside it is the build's, not copy's
+     *  (lib/version.ts): what a person reads here is the word. */
+    version: "Version",
     noAccounts: {
       title: "No account",
       body: "A group is a secret link. Whoever has it can edit, and every edit is recorded in the group’s history.",

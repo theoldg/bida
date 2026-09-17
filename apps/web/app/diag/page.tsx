@@ -7,6 +7,7 @@ import { db } from "../../lib/db/dexie";
 import { format, handoff, loadedAt, otherPages, timeline } from "../../lib/diag";
 import { route } from "../../lib/group-link";
 import { setStasMode, stasMode } from "../../lib/scan/stas";
+import { VERSION } from "../../lib/version";
 
 /**
  * What this phone has been doing, as text you can send.
@@ -205,6 +206,9 @@ async function collect(): Promise<string> {
   const lines: string[] = [];
   const say = (k: string, v: string | number) => lines.push(`${`${k}:`.padEnd(14)}${v}`);
 
+  // First, because every line under it describes a phone and none of them say
+  // which build it was running (lib/version.ts).
+  say("version", VERSION);
   say("recorded", new Date(loadedAt()).toISOString());
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);

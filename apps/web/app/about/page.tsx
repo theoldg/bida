@@ -4,6 +4,7 @@ import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
 import { copy } from "../../lib/copy";
 import { route } from "../../lib/group-link";
+import { VERSION } from "../../lib/version";
 
 /**
  * Who can edit, whether it works on a train, where to complain, and — last,
@@ -60,6 +61,13 @@ export default function AboutPage() {
             }>
               <><strong>{privacy.scanTitle}</strong> {privacy.scan}</>
             </Section>
+
+            {/* Last and quietest, under the claims rather than beside the
+                source link: nobody opens this screen for the number, but it is
+                the first thing worth knowing about a phone that is behaving
+                oddly, and it is what a person can read back over a message
+                (lib/version.ts). */}
+            <p className="aboutver">{copy.about.version} {VERSION}</p>
           </div>
         </Scroll>
       </Body>
