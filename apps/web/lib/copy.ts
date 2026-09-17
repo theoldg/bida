@@ -192,7 +192,7 @@ export const copy = {
       after: {
         ask: "Still seeing this after adding bida?",
         answer: (browser: string | undefined) =>
-          `That’s normal, ${lower(browser)} can’t tell. Also worth knowing: the app and ${lower(browser)} each keep their separate groups. Apple’s rules, not ours.`,
+          `That’s normal, ${lower(browser)} can’t tell. Also worth knowing: the app took your groups with it, once. From now on, the app and ${lower(browser)} each keep their own. Apple’s rules, not ours.`,
       },
     },
   },

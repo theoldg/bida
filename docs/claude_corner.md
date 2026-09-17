@@ -86,3 +86,4 @@ file.*
 - A stash the owner made mid-task isn't lost work — `git stash list` before redoing anything.
 - Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
 - A screenshot of copy plus "replace with the button from X" means reuse X's component, not a lookalike.
+- Asked to "propose, write it here first", give options in chat and edit nothing. The owner often answers with a blend of two; ship that exact text.
