@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — "dont drive it." A green `pnpm check` was already the whole
+  contract; the browser run I reached for next was minutes of the owner's time
+  nobody asked for. Stop at done.
 - *2026-09-17* — "change the ios bar from black-translucent" — it already was.
   The symptom was real, the named cause wasn't, and "nothing to be done" was
   wrong. Keep looking once the premise fails.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — The interrupt carried the real brief: "block it" said what to
   build, "avoid false positives" said where the risk lived. The afterthought is
   where the effort goes.
-- *2026-09-17* — Thirteen postcards where the rule said ten. A limit nobody
-  counts is a wish, and whoever needs the room is never who took it — so a
-  doc's own numbers go in `pnpm check`.

@@ -166,6 +166,8 @@ export const copy = {
       body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
     },
     about: "About bida",
+    /** The kebab in the bar: the phone's own switch and the about screen. */
+    menu: "Menu",
     whoAreYou: "who are you?",
     youOwe: "you owe",
     youreOwed: "you’re owed",

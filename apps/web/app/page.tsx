@@ -11,7 +11,7 @@ import { InstallBanner, InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { usePasteLink } from "../components/paste-link";
 import { useHold, useLongPressMenu } from "../components/long-press";
-import { ThemeToggle } from "../components/theme-toggle";
+import { HomeMenu } from "../components/home-menu";
 import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
@@ -41,33 +41,24 @@ export default function GroupsPage() {
   return (
     <Screen>
       <Body>
-        {/* The app says its own name once, on the screen you land on — and
-            carries the one switch that belongs to the phone rather than to any
-            group (ADR-0007). The name is the whole bar: a sub-line under it
-            described the screen you could already see. */}
+        {/* The app says its own name once, on the screen you land on. The
+            name is the whole bar: a sub-line under it described the screen you
+            could already see. */}
         {/* The name is also the door to /diag, on a long press. Hidden
             rather than listed: a diagnostics screen is for the two minutes
             after something went wrong on a phone with no devtools attached,
             and it has no business in a menu a person reads. */}
+        {/* One kebab, not two glyphs: the theme switch and the only door to
+            the screen the app spends on itself (app/about) are both words in
+            a menu now — a sun and an ⓘ were two guesses. It is the one
+            control that belongs to the phone, not to a group (ADR-0007). */}
         <TopBar
           title={
             <span className="brand" {...diagHold}>
               {copy.app.name}
             </span>
           }
-          right={
-            <>
-              {/* The only door to the screen the app spends on itself: what
-                  this is, what the server can see, and where to complain
-                  (app/about). Icon-only in the bar rather than a line under
-                  the list — it is read once, and at the foot it stood between
-                  a thumb and the two things this screen is for. */}
-              <Link href={route.about()} className="iconbtn" aria-label={copy.groups.about}>
-                <Icon name="info" size={17} />
-              </Link>
-              <ThemeToggle />
-            </>
-          } />
+          right={<HomeMenu />} />
 
         <Scroll>
           <div className="homescroll">

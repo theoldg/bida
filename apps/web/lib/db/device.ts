@@ -8,8 +8,8 @@ const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
   hlcPhysical: 0,
   hlcCounter: 0,
   meByGroup: {},
-  // Until the toggle on the groups list is tapped, the phone's own setting
-  // decides — see components/theme-toggle.tsx.
+  // Until the menu on the groups list is used, the phone's own setting
+  // decides — see components/home-menu.tsx.
   theme: "system",
 };
 

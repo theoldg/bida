@@ -15,8 +15,8 @@ corners. Colour is a scarce resource spent only on money —
 underneath: ruled rows, a red column and a green column.
 
 **The app names itself once**, on the groups list: *bida* — lower-case always
-— with "About bida" and the light/dark toggle as icons opposite, and nothing
-under it; a sub-line would caption the list you are already looking at. Every
+— with one kebab opposite holding the light/dark switch and "About bida"
+as words, and nothing under it; a sub-line would caption the list you are already looking at. Every
 other top bar says the thing you opened, so a second name would be branding
 where a title should be. **The mark is not in the app**: `design/brand/logo.svg`
 is the home-screen icon `pnpm icons` rasterises, and in the bar it sat beside a

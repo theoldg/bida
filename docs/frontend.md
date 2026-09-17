@@ -444,8 +444,9 @@ group's screen, and an empty clipboard goes to `/paste` (`readPastedLink`,
 `usePasteLink`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;
 bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
-once a long one would otherwise scroll it out of reach), with nothing under them — **About bida**
-is an icon in the top bar, left of the theme toggle. `Tabs` was deleted
+once a long one would otherwise scroll it out of reach), with nothing under them — the
+light/dark switch and **About bida** are the two items in the top bar's kebab
+(`HomeMenu`), the same card the group screen's opens. `Tabs` was deleted
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
