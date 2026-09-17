@@ -32,7 +32,10 @@ const NAMED_BROWSER =
  * own, and covers a host that puts `Safari/` back.
  */
 const IN_APP: [RegExp, string][] = [
-  [/FBAN\/MessengerFor|Messenger(?:Lite)?\//, "Messenger"],
+  // `Orca` is Messenger's own name for itself on Android, and it rides in the
+  // same `FB_IAB` token Facebook's webview uses — so it has to be read before
+  // the Facebook line below, or Messenger tells people it is Facebook.
+  [/FBAN\/MessengerFor|FB_IAB\/Orca|Messenger(?:Lite)?\//, "Messenger"],
   [/Instagram/, "Instagram"],
   [/FBAN|FBAV|FB_IAB|FBIOS/, "Facebook"],
   [/LinkedInApp/, "LinkedIn"],

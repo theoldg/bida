@@ -86,6 +86,9 @@ describe("naming the app, for the screen that asks them to leave", () => {
     expect(embeddedApp(`${IOS} Mobile/15E148 Instagram 339.0`)).toBe("Instagram");
     expect(embeddedApp(`${IOS} Mobile/15E148 [FBAN/MessengerForiOS;FBAV/441.0]`)).toBe("Messenger");
     expect(embeddedApp(`${IOS} Mobile/15E148 [FBAN/FBIOS;FBDV/iPhone14,3]`)).toBe("Facebook");
+    // Messenger on Android rides in Facebook's own token, under a codename.
+    expect(embeddedApp(`${DROID} Chrome/126.0.0.0 Mobile Safari/537.36 [FB_IAB/Orca-Android;FBAV/441.0]`))
+      .toBe("Messenger");
   });
 
   it("names nothing for a bare webview, or for a real browser", () => {

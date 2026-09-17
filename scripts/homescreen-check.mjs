@@ -372,7 +372,12 @@ const refused = await webviewPage.getByText("Open bida in your browser")
 report(refused && await webviewPage.getByText("Joining…").count() === 0,
   "an in-app browser is turned round rather than joined in");
 report(await webviewPage.getByText("Instagram").count() > 0,
-  "named, so the menu it says to use is one the person can find");
+  "named, so the person knows which app has them");
+// The whole value of the screen is that this line names a button rather than
+// "a menu": the ellipsis on iOS, the kebab on Android, and the item under each.
+report(await webviewPage.getByText("Open in Safari").count() > 0
+  && await webviewPage.getByText("⋯", { exact: false }).count() > 0,
+  "and told which button to press, and what it says underneath");
 report(await webviewPage.locator(".escapelink .linkbox .selectable").textContent()
   .catch(() => null) === `${base}/join${fragment}`,
   "and handed the link it arrived with, to paste into a real browser");

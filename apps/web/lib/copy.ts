@@ -219,8 +219,21 @@ export const copy = {
   embedded: {
     title: "Open bida in your browser",
     why: (app: string | undefined) =>
-      `${app ?? "This app"} opens links in its own browser, which can’t keep a group: whatever you do here is lost when it closes.`,
-    how: "Use this screen’s menu to open it in your browser, or copy the link and paste it there.",
+      `${app ?? "This app"} opens links in a browser of its own. Nothing you do here is kept.`,
+    /**
+     * Written twice rather than assembled, because both halves differ: the
+     * menu is an ellipsis on iOS and a kebab on Android, and the item under it
+     * names Safari on one and says "external browser" on the other. Naming the
+     * button is the whole value of the line — "use the menu" left someone
+     * hunting through a browser they did not choose to be in. Where it sits is
+     * left out: Instagram puts it at the top and Facebook at the bottom.
+     */
+    how: {
+      ios: "Tap the ⋯ menu, then “Open in Safari”.",
+      android: "Tap the ⋮ menu, then “Open in external browser”.",
+    },
+    /** Wordings drift between versions of these apps, so the link is the floor. */
+    orPaste: "Can’t find it? Copy this link and paste it into your browser.",
   },
 
   /** The waiting service worker (lib/update.ts). */

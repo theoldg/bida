@@ -10,13 +10,12 @@ import { isStandalone, looksIos } from "../lib/install";
 
 const never = () => () => {};
 
+const onIos = () =>
+  looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
+
 function embedded(): boolean {
   if (typeof window === "undefined") return false;
-  return looksEmbedded({
-    ua: navigator.userAgent,
-    ios: looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints),
-    standalone: isStandalone(),
-  });
+  return looksEmbedded({ ua: navigator.userAgent, ios: onIos(), standalone: isStandalone() });
 }
 
 /**
@@ -48,9 +47,16 @@ export function EmbeddedGate({ children }: { children: ReactNode }) {
  * Set like `BadLinkNotice` — badge, heading, prose — because it is the same
  * kind of screen: the app cannot do the thing, and this is the fix. The bar
  * carries the name and no arrow: there is nowhere back to.
+ *
+ * The badge is the menu the line below it says to tap, turned on its side for
+ * iOS: one symbol, and it always matches the glyph in the sentence rather than
+ * sending someone after a button shaped the other way. The instruction is the
+ * one line here set in ink — the rest is why, and the link under it is what
+ * to do when an app has moved the item or renamed it.
  */
 function Escape() {
   const { embedded: page } = copy;
+  const ios = onIos();
   const app = embeddedApp(navigator.userAgent);
   return (
     <Screen>
@@ -58,11 +64,14 @@ function Escape() {
         <TopBar title={<span className="brand">{copy.app.name}</span>} />
         <Scroll>
           <div className="pad keyless">
-            <div className="keyless-badge"><Icon name="more" size={20} /></div>
+            <div className="keyless-badge">
+              <Icon name="more" size={20} className={ios ? "lying" : undefined} />
+            </div>
             <h2>{page.title}</h2>
             <p>{page.why(app)}</p>
-            <p>{page.how}</p>
+            <p className="escapehow">{ios ? page.how.ios : page.how.android}</p>
             <div className="escapelink"><CopyLink link={window.location.href} /></div>
+            <p className="escapepaste">{page.orPaste}</p>
           </div>
         </Scroll>
       </Body>

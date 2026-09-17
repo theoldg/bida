@@ -203,7 +203,12 @@ behind it too (`lib/embedded.ts`, `components/embedded.tsx`). There is nothing
 else to offer — a webview has no Add to Home Screen, and no page can send
 itself to a real browser (no scheme, no universal link; Android's `intent://`
 is the only one of its kind and is Android's alone). So the screen names the
-app where its agent says so, says to use its menu, and hands over the link.
+app where its agent says so, **names the button** — tap ⋯, then *Open in
+Safari*; ⋮, then *Open in external browser* — and hands over the link under
+it for when an app has moved that item or renamed it. The badge above the line
+is that same menu, turned on its side for iOS, so it is never the wrong shape.
+Both sentences are written out in `copy.embedded`: the glyph and the item
+differ by platform, so there is nothing in them to assemble.
 
 **Detection is built to be wrong in one direction.** Refusing a real browser
 costs somebody the app; letting a webview through costs one confusing join. So

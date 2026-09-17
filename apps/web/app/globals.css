@@ -1237,14 +1237,26 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); margin-bottom: 16px }
 .keyless h2 { font-size: 16px; letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
   text-wrap: balance }
-.keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted) }
+/* Centred prose strands its last word without help — these are the screens
+   that carry the most of it, and every one of them is read at the moment
+   something has gone wrong. `balance` is for a line or two, `pretty` for a
+   paragraph; both are ignored where they aren't supported. */
+.keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted);
+  text-wrap: pretty }
 /* `/paste`'s one act, under its sentence rather than in a foot: the screen is
    that sentence and this button, nothing to pin it below. */
 .keyless .pasteagain { margin-top: 22px; min-width: 12em }
 /* The way out of an in-app browser (components/embedded.tsx): the same copy
    box the claim screen pins, held to the prose's measure so it doesn't run the
    full width of a centred column. */
-.escapelink { width: 100%; max-width: 30em; margin-top: 24px }
+.escapelink { width: 100%; max-width: 30em; margin-top: 18px }
+/* The one line on that screen a person has to act on, so it is the one set in
+   ink while the why above and the fallback below stay muted. */
+.keyless p.escapehow { margin-top: 14px; color: var(--ink); font-weight: 600; text-wrap: balance }
+.keyless p.escapepaste { margin-top: 10px; font-size: 12px; text-wrap: balance }
+/* The kebab, on its side: iOS draws this menu as an ellipsis, and the badge
+   has to be the button the sentence under it names. */
+.lying { transform: rotate(90deg) }
 
 /* The link a failed screen is about: wraps anywhere, since a link has no spaces. */
 .failedlink { width: 100%; max-width: 30em; margin: 26px auto 0; text-align: left }
