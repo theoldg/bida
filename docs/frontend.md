@@ -750,7 +750,10 @@ so the static export ships the full line and the browser narrows it.
   (`components/bits.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
   the field keeps focus and nothing moves. Spread it on anything pressable that
   shares a screen with a field. Tab and Enter are untouched — a keyboard never
-  moves the layout out from under itself.
+  moves the layout out from under itself. **It holds off only while `data-kb`
+  says there is a keyboard**: Android's back button closes the keyboard and
+  leaves the caret in the field, and holding that focus through the next press
+  had Chrome open the keyboard again over the answer the tap had just given.
 - **`scrollTo({ behavior: "smooth" })` is not smooth everywhere.** It glided
   on iOS and jumped on Android, and has no end event to wait on either, so a
   scroll the app has to wait for is driven by hand, frame by frame (`glide`,

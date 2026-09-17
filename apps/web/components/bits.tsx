@@ -98,7 +98,19 @@ export function signClass(minor: number): string {
  * Only the pointer is held off. Tab and Enter still focus and fire the button
  * as they always did — a keyboard never moves the layout out from under
  * itself.
+ *
+ * **And only while there is a keyboard to hold off.** Android's back button
+ * closes the keyboard without taking the caret out of the field, which leaves
+ * a screen where the field is still focused and nothing is covering anything:
+ * holding that focus through the next press told Chrome the person had tapped
+ * with a text field focused, so it opened the keyboard again — the tap landed,
+ * and the keyboard came back up over the answer. There is nothing to protect
+ * in that state — no keyboard to retract, so no reflow to race — so the press
+ * is left alone and the field is allowed to blur. `data-kb` is the one place
+ * that knows (components/viewport.tsx).
  */
 export const keepsFocus = {
-  onMouseDown: (e: React.MouseEvent) => e.preventDefault(),
+  onMouseDown: (e: React.MouseEvent) => {
+    if (document.documentElement.hasAttribute("data-kb")) e.preventDefault();
+  },
 } as const;
