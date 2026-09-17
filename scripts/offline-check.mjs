@@ -150,11 +150,16 @@ await tap("still loads offline on the next launch", () => openGroupsList(page, b
 // ---- a deploy that arrives by itself ------------------------------------
 // The worker activates as soon as a new build is precached (public/sw.js): it
 // used to wait for every client of the origin to close, which on iOS Safari
-// meant killing the browser over and over to get a deploy. So three pages are
-// open across it. One untouched, which reloads straight onto the new build.
-// One being used, in the installed app, which must not vanish under the person
-// and is offered the reload instead. And one on a group, which stays on its own
-// build — served from that build's kept cache — until it is next resumed.
+// meant killing the browser over and over to get a deploy. So four pages are
+// open across it, and **the front door is the only screen a reload happens on**
+// (lib/update.ts):
+//
+// - one untouched on the groups list, which takes the build at once;
+// - one being used, in the installed app, which must not vanish under the
+//   person and is offered the reload instead;
+// - one untouched on a group, which stays put — untouched is not enough;
+// - one on a group that is resumed, which stays on its own build (served from
+//   that build's kept cache) until it reaches the list.
 console.log("\nupdating:");
 await ctx.setOffline(false);
 blocked.delete(ASSET_TO_DROP);
@@ -163,6 +168,13 @@ const oldShell = (await page.evaluate(() => caches.keys())).find((k) => k.starts
 
 const mark = (p) => p.evaluate(() => { window.__beforeTheUpdate = true; });
 const touch = (p) => p.evaluate(() => window.dispatchEvent(new PointerEvent("pointerdown")));
+// Headless pages never go hidden, so a resume is played out by hand.
+const resume = (p) => p.evaluate(() => {
+  for (const state of ["hidden", "visible"]) {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
+    document.dispatchEvent(new Event("visibilitychange"));
+  }
+});
 const reloaded = async (p) => {
   try {
     await p.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: 10000 });
@@ -175,6 +187,14 @@ await asInstalledApp(page);
 await openGroupsList(page, base);
 await mark(page);
 await touch(page);
+
+// Untouched and at the front door: the one page an update takes by itself.
+// Opened before the two below, which clear `leftOnList` and would send this one
+// straight into a group (lib/launch.ts) — the assertion under it says so.
+const doorstep = await ctx.newPage();
+await doorstep.goto(`${base}/`);
+await doorstep.waitForSelector(".rows a.row");
+await mark(doorstep);
 
 const straggler = await ctx.newPage();
 await straggler.goto(`${base}/g?id=${g}`);
@@ -198,8 +218,11 @@ await page.bringToFront();
 swRevision = "gooddeploy01";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: 20000 }), ".card");
-report(await reloaded(fresh), "an untouched page reloads onto it by itself");
+report(new URL(doorstep.url()).pathname === "/" && await reloaded(doorstep),
+  "an untouched page on the groups list reloads onto it by itself", doorstep.url().replace(base, ""));
 report(await page.evaluate(() => !!window.__beforeTheUpdate), "a page in use is not reloaded under the person");
+report(await fresh.evaluate(() => !!window.__beforeTheUpdate),
+  "a page on a group is not reloaded, untouched or not");
 
 // Next refuses a payload from a build it didn't boot with and navigates to the
 // bare route, dropping the `?id=` — a group screen that became "No group". So
@@ -216,14 +239,19 @@ try {
 } catch {
   report(false, "and still knows which group it is on", straggler.url().replace(base, ""));
 }
-// Headless pages never go hidden, so the resume is played out by hand.
-await straggler.evaluate(() => {
-  for (const state of ["hidden", "visible"]) {
-    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => state });
-    document.dispatchEvent(new Event("visibilitychange"));
-  }
-});
-report(await reloaded(straggler), "and reloads onto the new build when it is resumed");
+await resume(straggler);
+report(await straggler.evaluate(() => !!window.__beforeTheUpdate),
+  "and a resume on a group is not the moment either");
+
+// The front door is. Walked to in-app — a `goto` would be a document load, and
+// would take the new build by itself and prove nothing.
+for (let i = 0; i < 2 && new URL(straggler.url()).pathname !== "/"; i++) {
+  await straggler.locator(".topbar a.iconbtn").first().click().catch(() => {});
+  await straggler.waitForTimeout(400);
+}
+await resume(straggler);
+report(await reloaded(straggler), "and reloads onto the new build once it reaches the list",
+  straggler.url().replace(base, ""));
 
 try {
   await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
@@ -251,6 +279,58 @@ const probe = await page.evaluate(async () => {
   return `${stale}/${legacy}`;
 });
 report(probe === "404/404", "a page on the new build never reads another cache", `answered ${probe}`);
+
+// ---- and a second deploy over the page that never reloaded ---------------
+// `fresh` has sat on a group through one deploy and is still on the build it
+// booted with. The worker used to keep one cache — whichever was newest after
+// this one — and hand it to every page open at the time, which is right exactly
+// once: here it would delete this page's own cache and point it at a build it
+// had never run. Chunk names are hashed and would simply miss, but `/g` and
+// `/g.txt` are not, so it was served a stranger's payload — which is what the
+// probe below catches, the two revisions here being one build. In the field
+// that payload names chunks the page cannot fetch, and the screen never
+// finishes drawing. Holding out for the front door (lib/update.ts) is only
+// affordable because this no longer happens.
+console.log("\ndeploying again, over a page that never reloaded:");
+swRevision = "gooddeploy02";
+await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
+
+// The new build's cache appears at `install`, and `activate` — which is what
+// decides who keeps what — runs after it and deletes on its own schedule. So
+// wait for the list to hold the new build *and stop changing*: sampling on the
+// cache's arrival alone passed against the worker this replaced, because the
+// deletion it would have made had not happened yet.
+// Asked of `fresh`, not of `page`: `page` is untouched on the groups list, so
+// it takes this build the moment it lands, and an evaluate on a page that is
+// navigating throws.
+const after = await (async () => {
+  let last = "";
+  for (let i = 0; i < 24; i++) {
+    const now = (await fresh.evaluate(() => caches.keys()))
+      .filter((k) => k.startsWith("bida-shell-")).sort().join(",");
+    if (now === last && now.includes(`bida-shell-${swRevision}`)) break;
+    last = now;
+    await fresh.waitForTimeout(500);
+  }
+  return last ? last.split(",") : [];
+})();
+report(after.includes(oldShell), "the cache of the page two builds back is kept", after.join(", "));
+// One per build somebody is on — this one, the one the three reloaded pages
+// took, and `fresh`'s — and no more. Eviction itself is the `shells.length === 2`
+// above: nothing accumulates for a build nothing is left running.
+report(after.length === 3, "one cache per build a window is on, and no more", after.join(", "));
+const stillOld = await fresh.evaluate(() =>
+  fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
+report(stillOld === "OLD", "that page is still served its own build", stillOld);
+await fresh.locator("a[href*='tab=balances']").first().click().catch(() => {});
+try {
+  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  report(new URL(fresh.url()).searchParams.get("id") === g && await fresh.locator(".bottomnav a").count() === 2,
+    "and can still draw a screen it taps to", fresh.url().replace(base, ""));
+} catch {
+  report(false, "and can still draw a screen it taps to", fresh.url().replace(base, ""));
+}
+
 await page.bringToFront();
 await straggler.close();
 await fresh.close();

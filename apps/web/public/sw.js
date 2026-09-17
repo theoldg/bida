@@ -57,35 +57,53 @@ function lookup(key, cacheName = CACHE_NAME) {
 }
 
 /**
- * This worker activates by itself (see `install`), so pages that booted on the
- * build before it are still on screen when it takes them over. Their next tap
+ * This worker activates by itself (see `install`), so pages that booted on an
+ * earlier build are still on screen when it takes them over. Their next tap
  * asks for that build's payload and lazily for that build's chunks — neither of
  * which is in this cache, nor on the server any more — and a new build's
  * payload handed to an old router is a group screen that turns into "No group".
- * So `activate` writes down which pages those were and keeps their build's
- * cache; until they reload (lib/update.ts sees to that) they are served from it.
+ * So `activate` writes down which build each open page is running, and keeps
+ * every cache still spoken for; until they reload (lib/update.ts sees to that)
+ * they are served from their own.
+ *
+ * **Which build each page is on, not just "the previous one".** This used to
+ * keep one cache — the newest other — and hand it to every page open at the
+ * time. That is right exactly once. At the deploy after, the page that was
+ * running the build before last had its cache deleted under it and was pointed
+ * at a build it had never run: chunk names are content-hashed and simply miss,
+ * but `/g` and `/g.txt` are not, so it was served a stranger's payload. Two
+ * deploys with one page left open was a screen that could not finish drawing.
+ * Carrying the record forward instead costs at most one kept cache per window
+ * left open, and a window that closes takes its cache with it at the next
+ * activate.
  *
  * Kept in a cache as well as in memory because the browser stops an idle
  * worker whenever it likes, and a page open across that must not lose its build.
  */
 const LEGACY = "bida-legacy";
+/** `{ builds: { [clientId]: cacheName } }` — every open page not on this build. */
 let legacy;
 
-function legacyRecord() {
-  legacy ??= caches
+function readRecord() {
+  return caches
     .open(LEGACY)
     .then((cache) => cache.match("/legacy"))
     .then((res) => (res ? res.json() : null))
-    .then((rec) => (rec && rec.for === CACHE_NAME ? rec : { for: CACHE_NAME, cache: null, clients: [] }))
-    .catch(() => ({ for: CACHE_NAME, cache: null, clients: [] }));
+    .then((rec) => (rec && rec.builds ? rec : { builds: {} }))
+    .catch(() => ({ builds: {} }));
+}
+
+function legacyRecord() {
+  legacy ??= readRecord();
   return legacy;
 }
 
-/** The previous build's cache, if `clientId` is a page still running it. */
+/** The cache of the build `clientId` is running, when that is not this one. */
 async function previousFor(clientId) {
   if (!clientId) return null;
-  const rec = await legacyRecord();
-  return rec.cache && rec.clients.includes(clientId) ? rec.cache : null;
+  const { builds } = await legacyRecord();
+  const cache = builds[clientId];
+  return cache && cache !== CACHE_NAME ? cache : null;
 }
 
 async function cacheFirst(cacheKey, request, clientId) {
@@ -186,25 +204,38 @@ async function describeClients(source, port) {
 /**
  * Pages this worker's predecessor controlled are now this worker's (no
  * `clients.claim`: a first visit stays uncontrolled until its next launch, as
- * before). Keep the one previous build's cache for the
- * pages that booted on it (`previousFor`). Anything older goes: a page two
- * builds behind has had a whole deploy's worth of chances to reload.
+ * before). Note which build each open page is running and keep those caches;
+ * everything nothing is running goes.
+ *
+ * A page this worker has met before keeps the build it was already known by,
+ * however many deploys ago that was — carrying the record forward is the whole
+ * point of it. Only a page being met for the first time is assumed to be on
+ * the build that came immediately before, which is the best guess there is.
  */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
+      const [keys, open, before] = await Promise.all([
+        caches.keys(),
+        self.clients.matchAll({ type: "window", includeUncontrolled: true }),
+        readRecord(),
+      ]);
       // `caches.keys()` is in creation order, so the newest other shell cache
-      // is the build these pages are running.
-      const previous = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
-      const open = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      const rec = { for: CACHE_NAME, cache: previous, clients: open.map((c) => c.id) };
+      // is the build a page we have not seen before is most likely running.
+      const newest = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
+      const builds = {};
+      for (const client of open) {
+        const cache = before.builds[client.id] ?? newest;
+        // A cache that is no longer here is one nothing can be served from;
+        // leaving it out lets `cacheFirst` fall through to this build.
+        if (cache && cache !== CACHE_NAME && keys.includes(cache)) builds[client.id] = cache;
+      }
+      const rec = { builds };
       legacy = Promise.resolve(rec);
       const store = await caches.open(LEGACY);
       await store.put("/legacy", new Response(JSON.stringify(rec)));
-      await Promise.all(
-        keys.filter((k) => k !== CACHE_NAME && k !== previous && k !== LEGACY).map((k) => caches.delete(k)),
-      );
+      const keep = new Set([CACHE_NAME, LEGACY, ...Object.values(builds)]);
+      await Promise.all(keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)));
     })(),
   );
 });
