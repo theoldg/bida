@@ -69,12 +69,15 @@ function ClaimScreen() {
             onAdd={add}
             onContinue={proceed}
           />
-          {tab && secret && (
-            <div className="pad">
-              <UseInApp link={formatJoinLink({ groupId, secret })} />
-            </div>
-          )}
         </Scroll>
+        {/* Under the scroll, not at the list's end: a group of twenty people
+            would push it out of sight, and it is for someone who shouldn't be
+            picking a name here at all. */}
+        {tab && secret && (
+          <div className="inappdock">
+            <UseInApp link={formatJoinLink({ groupId, secret })} />
+          </div>
+        )}
       </Body>
     </Screen>
   );

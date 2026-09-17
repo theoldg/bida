@@ -413,9 +413,12 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
-/* "Have the app?" under the claim list, iOS tab only (components/use-in-app.tsx):
-   a lower-contrast card holding the link in a box that is its own copy button. */
-.card.inapp { margin-top: 24px }
+/* "Have the app?" pinned under the claim list, iOS tab only (components/use-in-app.tsx):
+   a lower-contrast card holding the link in a box that is its own copy button.
+   Out of the way while a name is typed: the keyboard leaves room for the field
+   or the card, and the field is what is being used. */
+.inappdock { flex: none; padding: 10px 16px max(12px, env(safe-area-inset-bottom)) }
+:root[data-kb] .inappdock { display: none }
 .inapptitle { font-size: 13px; font-weight: 600; color: var(--ink); text-wrap: pretty }
 .inapp .hint { margin: 4px 0 0; text-wrap: pretty }
 .linkbox { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px;

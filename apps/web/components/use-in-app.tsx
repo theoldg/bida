@@ -7,7 +7,7 @@ import { copy } from "../lib/copy";
 import { tick } from "../lib/haptics";
 
 /**
- * "Have the app?" — under the claim list in an iOS tab, for someone who
+ * "Have the app?" — pinned under the claim list in an iOS tab, for someone who
  * already has bida on the home screen: a tapped invite always opens the
  * browser, whose storage the app can't see, so the link has to be pasted
  * there (docs/ios.md). No install ask: that is the groups list's banner.

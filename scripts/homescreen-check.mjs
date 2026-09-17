@@ -253,11 +253,16 @@ await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
 
-// ---- the ledger's foot ----------------------------------------------------
+// ---- the ledger's banner --------------------------------------------------
+// Folded on every visit, so it is the title that shows, and the button behind it.
 await heldPage.goto(`${base}/g?id=${flatId}`);
-report(await heldPage.getByRole("button", { name: "Add bida to home screen" }).first()
-  .waitFor({ timeout: 8000 }).then(() => true, () => false),
-  "a group's ledger asks an iOS tab too, at its foot");
+const fold = heldPage.getByRole("button", { name: "Keep your groups on this phone" });
+const folded = await fold.waitFor({ timeout: 8000 }).then(() => true, () => false)
+  && await heldPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0;
+if (folded) await fold.click();
+report(folded && await heldPage.getByRole("button", { name: "Add bida to home screen" })
+  .waitFor({ timeout: 2000 }).then(() => true, () => false),
+  "a group's ledger asks an iOS tab too, folded");
 
 // ---- which one is you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim
@@ -265,8 +270,12 @@ report(await heldPage.getByRole("button", { name: "Add bida to home screen" }).f
 await heldPage.goto(`${base}/g/claim?id=${flatId}`);
 const offered = await heldPage.getByText("Have the app?").waitFor({ timeout: 8000 }).then(() => true, () => false);
 const boxed = await heldPage.locator(".inapp .linkbox .selectable").textContent().catch(() => null);
-report(offered && boxed === `${base}/join#${flat}`,
-  "the claim list offers an iOS tab the group's link to paste into the app", boxed ?? "");
+// Pinned under the scroll: a long list of people must not carry it off screen.
+const pinned = await heldPage.locator(".inappdock .inapp").evaluate((card) =>
+  card.getBoundingClientRect().bottom <= window.innerHeight
+  && !card.closest(".scroll")).catch(() => false);
+report(offered && boxed === `${base}/join#${flat}` && pinned,
+  "the claim list offers an iOS tab the group's link to paste into the app, pinned in view", boxed ?? "");
 
 // ---- Android is not touched ----------------------------------------------
 const android = await newPhone(browser);

@@ -371,7 +371,7 @@ export const copy = {
      *  so someone with bida on the home screen has to hand it the link. */
     inApp: {
       title: "Have the app?",
-      body: (browser: string | undefined) => `Links open in ${lower(browser)}. Open the app and paste it.`,
+      body: (browser: string | undefined) => `Links always open in ${lower(browser)}. Paste this there instead.`,
       copyLink: "Copy",
       copied: "Copied",
     },

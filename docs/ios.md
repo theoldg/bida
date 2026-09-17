@@ -187,8 +187,9 @@ preferred first — `/install` says the how.
 ### `/g/claim` — *Have the app?*
 
 `/join` asks nothing: an iOS tab joins and lands on "Which one is you?" like
-any other browser. Under the list, a lower-contrast card: *Have the app? Links
-open in Safari. Open the app and paste it.*, and the group's link in a box that
+any other browser. Pinned under the list, so a long one can't push it out of
+sight, and hidden while a name is typed: a lower-contrast card, *Have the app?
+Links always open in Safari. Paste this there instead.*, and the group's link in a box that
 is its own copy button, reading **Copied** once a write has gone through —
 tried on arrival too, though iOS only allows it inside a tap. No install ask
 here; that is the banner's, once the tab holds a group.
