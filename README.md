@@ -4,7 +4,7 @@
 
 <h1 align="center">bida</h1>
 
-<p align="center">No-nonsense expense splitter.</p>
+<p align="center">Lightweight, full-featured and free Splitwise/Tricount alternative.</p>
 
 <p align="center">
   <a href="https://bida.bid"><b>bida.bid</b></a>
@@ -14,7 +14,6 @@
   <a href="docs/README.md">Docs</a>
 </p>
 
-This is a personal project, almost entirely vibe-coded with Claude Code.
 
 <table>
 <tr>
@@ -25,37 +24,50 @@ This is a personal project, almost entirely vibe-coded with Claude Code.
 </tr>
 </table>
 
-## How it works
+## Features
 
-**No accounts.** A group is a secret link, and that link is also the key that
-opens it. What reaches the server is sealed: it can count how many groups
-exist and how many edits each has had, and that's it.
+The usual stuff, plus:
 
-**No signal needed.** Every change is an appended op in IndexedDB, never an
-edit in place, so two phones writing up the same dinner underground merge
-cleanly when they surface.
+- **No accounts.** A group is a secret link. Anyone with the link can edit.
 
-**No tracking.** Data is encrypted end-to-end, the server can't read it.
-Receipt photos go to Google's Gemini API.
+- **Online, or installable PWA.** Click the link and you're in.
+You can also add bida to your Android or iOS device, no app store required.
 
-## Vibe-coded... but tested
+- **Works offline.** Append-only data model prevents merge conflicts.
 
-I crafted bida with care. Core logic is extensively unit-tested. I tried to break the UI for hours; Claude also tried, via a custom-built text-based driver.
+- **End-to-end encrypted.** Decryption happens locally via the URL hash. The server only ever sees scrambled ciphertext.
+
+- **Receipt parsing and itemized splitting.** Extracts line items from receipt photos.
+Grid-like UI for assigning who-had-what.
+
+- **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or copy a text version.
+  
+- **Auditable edit history.** If you don't trust your friends.
+  
+- **Dark mode.** Of course.
+  
+
+## Vibe-coded... carefully
+
+This is a personal project, almost entirely written with Claude Code.
+
+However, it's not a one-prompt type of thing, I put some love into this.
+Core logic is well tested, and the UI/UX have been polished and debugged with care.
+Have a look at [CLAUDE.md](CLAUDE.md) to see the development setup,
+or [docs/claude_corner.md](docs/claude_corner.md) to see what Claude thinks.
 
 ## Stack
 
-Next.js static export · hand-rolled components · Tailwind · Dexie/IndexedDB ·
+Next.js static export · Tailwind · Dexie/IndexedDB ·
 Cloudflare Worker + D1.
 
-## Hosting cost
-
-The core functionality is hosted for free on Cloudflare. The fancy LLM-powered
+The core functionality is hosted for free on Cloudflare. The LLM-powered
 receipt scanning is very cheap and funded by a tip jar.
 
-## Running your own
+## Self-hosting
 
-Relatively easy to self-host. You'll need a Gemini API token, and some
-understanding of Cloudflare. [SELFHOSTING.md](SELFHOSTING.md).
+If you want even more privacy, or you'd like to hook up your own Gemini API key for
+unlimited scans, bida is relatively easy to [self-host](SELFHOSTING.md).
 
 ## Licence
 
