@@ -175,7 +175,7 @@ function PasteLinkTile() {
 }
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
-  const { group, memberCount, entryCount, netMinor, lastActivity, me } = summary;
+  const { group, memberCount, entryCount, netMinor, lastActivity } = summary;
   const [asking, setAsking] = useState(false);
   const invite = useInviteLink(group.id);
 
@@ -183,9 +183,10 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
     ...(invite.copy
       ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
       : []),
-    ...(me === undefined
-      ? []
-      : [{ label: copy.members.forget, icon: "trash" as const, onSelect: () => setAsking(true) }]),
+    // Not gated on a claim: a group this phone never said who it was in is
+    // the one it most wants off the list, and forgetting is local only
+    // (`forgetGroup`).
+    { label: copy.members.forget, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ]);
 
   async function forget() {
@@ -228,7 +229,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       <InviteFallback invite={invite} />
 
       {asking ? (
-        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
+        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget} danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
           <p>{copy.members.forgetBody}</p>
         </ConfirmDialog>

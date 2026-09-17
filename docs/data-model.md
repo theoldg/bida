@@ -94,7 +94,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   subject, and history has no sentence for it.
 - Forgetting a group (`device.leftGroups`) is purely local — no op, no
   tombstone, nobody else sees it — so it drops off *your* list without
-  touching membership or the group itself. Groups are never deleted. It also
+  touching membership or the group itself, and **needs no claim**: a group this
+  phone never said who it was in is the one it most wants off the list, and
+  there is nothing an unclaimed phone lacks to do it. Groups are never deleted. It also
   drops this phone's `meByGroup` entry, so opening the invite link again clears
   the hide and asks who you are; answering writes an identity `update` over
   the claim the log still holds.

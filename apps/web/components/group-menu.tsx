@@ -19,13 +19,12 @@ import { MenuButton, type SheetAction } from "./row-menu";
  * (`RowMenu`), so the app has one menu, not two.
  *
  * Forgetting is here too, and it is the only place inside a group that offers
- * it; the groups list offers the same pair from outside (app/page.tsx).
+ * it; the groups list offers the same pair from outside (app/page.tsx). It
+ * does not wait for a claim: a group this phone never said who it was in is
+ * the one it most wants off the list, and forgetting is purely local
+ * (`forgetGroup`), so there is nothing an unclaimed phone lacks to do it.
  */
-export function GroupMenu({ groupId, claimed }: {
-  groupId: string;
-  /** Whether this phone has said who it is — forgetting waits for that. */
-  claimed: boolean;
-}) {
+export function GroupMenu({ groupId }: { groupId: string }) {
   const router = useRouter();
   const invite = useInviteLink(groupId);
   const [asking, setAsking] = useState(false);
@@ -35,9 +34,7 @@ export function GroupMenu({ groupId, claimed }: {
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
     { label: copy.rates.title, icon: "fx", onSelect: () => router.push(route.rates(groupId)) },
     { label: copy.group.history, icon: "clock", onSelect: () => router.push(route.history(groupId)) },
-    ...(claimed
-      ? [{ label: copy.members.forget, icon: "trash" as const, danger: true, onSelect: () => setAsking(true) }]
-      : []),
+    { label: copy.members.forget, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ];
 
   async function forget() {
@@ -56,7 +53,7 @@ export function GroupMenu({ groupId, claimed }: {
       <InviteFallback invite={invite} />
 
       {asking ? (
-        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget}
+        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget} danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
           <p>{copy.members.forgetBody}</p>
         </ConfirmDialog>

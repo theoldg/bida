@@ -126,7 +126,7 @@ function GroupScreen() {
           /* One button, not the four icons this bar used to carry: the group's
              own actions are a menu (components/group-menu.tsx), which leaves
              the bar to the group's name. */
-          right={<GroupMenu groupId={group.id} claimed={data.me !== undefined} />}
+          right={<GroupMenu groupId={group.id} />}
         />
 
         {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}
