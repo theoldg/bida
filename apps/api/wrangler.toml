@@ -8,6 +8,15 @@ compatibility_date = "2026-08-27"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
+# Assets still come straight from the edge; these two paths do not. `/api/*` is
+# the sync API, which reached the Worker by falling past the assets until this
+# list existed — **a list names everything the Worker handles, so leaving the
+# API out of it 404s the whole API**. `/*.txt` is the RSC payloads: a payload
+# URL navigated to as a page is a screenful of flight data, and the Worker
+# redirects it to its route (src/payload.ts). Nothing else in the export ends in
+# `.txt`, so that second rule costs one invocation per mis-navigation and none
+# per asset.
+run_worker_first = ["/api/*", "/*.txt"]
 
 # Created by `wrangler d1 create hajsik` — database_id filled in once that's
 # run with a real Cloudflare token. See docs/hosting.md#deploying.

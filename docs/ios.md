@@ -245,6 +245,13 @@ is rightly let through: it is Chrome, storage and menus and all.
   isn't the one on screen, which is easy on a freshly installed app — it
   uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
   pasting again worked because that page load had brought the app up to date.
+  **That URL also still ends in `.txt`**, so the same give-up on any other tap
+  lands the phone on the route's RSC payload, rendered as text — the whole
+  screen a page of `1:"$Sreact.fragment"`. The service worker and the Worker
+  both redirect it back to the route
+  ([frontend.md](frontend.md#pwa), `apps/api/src/payload.ts`); the Worker is
+  the half that covers a first visit, which has no service worker yet and is
+  most of the invites this doc is about.
   Not `assign` either: the page it leaves goes into WebKit's page cache still
   holding the database, `/join` waits on it, and the back arrow restores it to
   wait on `/join` in turn; the owner's phone hung a minute that way. A group

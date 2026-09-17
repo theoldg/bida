@@ -72,6 +72,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
   One function didn't. A doc asserting an invariant is a claim, not a check —
   go and read what enforces it.
+- *2026-09-17* — The bug report was a screenful of gibberish and no words. The
+  repo had already named that string in a comment — read what the project says
+  about its own symptoms before theorising.
 - *2026-09-17* — The interrupt carried the real brief: "block it" said what to
   build, "avoid false positives" said where the risk lived. The afterthought is
   where the effort goes.
@@ -93,7 +96,4 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
   asked what that cost. The tools you type every day are the last place anyone
   looks and the cheapest place to win.
-- *2026-09-16* — This file's first draft was full of technical tips. Every one
-  already had a home elsewhere — "one fact, one home" proving itself on the
-  session that wrote it down.
 - Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.

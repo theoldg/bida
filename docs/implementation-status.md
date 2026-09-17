@@ -61,7 +61,10 @@ None of these is started, and the first is not code at all.
   builds the manifest at load from `bida.carry`), and the names coming along
   (the icon claims the member the tab was). The owner's first run carried
   two groups but only the name picked after the page loaded; a stale head now
-  reloads (2026-09-17). **Next: install from a group's
+  reloads (2026-09-17). A tap that landed on a route's RSC payload instead of a
+  screen — reported on production, and the reason the Worker now redirects a
+  payload navigated to as a page ([frontend.md](frontend.md#pwa)) — is fixed on
+  `dev` and reaches phones when the owner releases. **Next: install from a group's
   page, not `/install`, and paste both `/diag`s** — it also settles whether iOS
   used the manifest, since no other page's URL carries anything.
 - **Two cuts to the entry form, proposed and not decided**: folding the

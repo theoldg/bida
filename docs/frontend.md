@@ -488,6 +488,19 @@ registered from `components/register-sw.tsx`. **It does not cache `/api/*`** —
 Dexie is the offline data layer, and a second cache over the same data gives
 you two disagreeing sources of truth.
 
+**A payload URL asked for as a *page* is answered with the page.** When the
+router's fetch of `/g/claim.txt?id=…` fails, or answers for a build this page
+isn't running, Next hands that URL to the browser as a plain navigation — and
+served literally it is a screenful of `1:"$Sreact.fragment"` where a screen
+should be. `sw.js` redirects those back to the route, carrying the `?id=` and
+dropping `_rsc`. So does the Worker (`apps/api/src/payload.ts`), because a
+service worker only sees a page it controls and this one does not claim a first
+visit: the iPhone that has just tapped an invite is on its first load, has no
+worker yet, and is on its way to `/g/claim`
+([ios.md](ios.md), [hosting.md](hosting.md#deploying)). The two hold one rule —
+nothing else in the export ends in `.txt` — so a real `.txt` asset would need a
+carve-out in both.
+
 Everything precached is served cache-first, so a launch and every tap after it
 paint without waiting on the network. The list and the cache name are stamped in
 after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no

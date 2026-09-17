@@ -223,6 +223,10 @@ self.addEventListener("fetch", (event) => {
    * screenful of `1:"$Sreact.fragment"` — which is what saving an expense
    * offline used to show. A document request for a payload is always a mistake:
    * answer it with the route's own shell.
+   *
+   * This worker only ever sees a page it controls, and it claims no first
+   * visit — so the Worker holds the same rule for the phones with no worker
+   * yet (`apps/api/src/payload.ts`). Change one and change the other.
    */
   if (request.mode === "navigate" && isPayload(url)) {
     event.respondWith(

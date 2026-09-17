@@ -100,6 +100,15 @@ is a real multi-page site, one HTML file per route), and a `[[d1_databases]]`
 entry with `binding = "DB"`, `database_name = "hajsik"`, its `database_id`, and
 `migrations_dir = "migrations"`.
 
+Assets are served from the edge without waking the Worker, except for the two
+paths `run_worker_first` names: `/api/*`, the sync API, and `/*.txt`, the RSC
+payloads — one navigated to as a page is redirected to its route rather than
+served as flight data
+([frontend.md](frontend.md#pwa), `apps/api/src/payload.ts`). That list is
+exhaustive, not additive (Gotcha below). The dev Worker sets
+`run_worker_first = true` for its own reason — the DEV tint — and gets both
+rules along with it.
+
 **One-time, per Cloudflare account** (a fresh instance on someone else's
 account is [SELFHOSTING.md](../SELFHOSTING.md)):
 
@@ -262,6 +271,13 @@ Recognise these if you ever propose one:
 - **Wrangler environments inherit nothing.** `[env.dev]` restates `[assets]`
   and the D1 binding in full; a block left out is simply absent from that
   Worker, with no warning at deploy time.
+- **`run_worker_first` as a list names everything the Worker handles.** Unset,
+  anything without a matching asset falls through to the Worker; the moment it
+  is a list, everything unnamed is the asset worker's, and with
+  `not_found_handling = "404-page"` that means the 404 page. Adding `/*.txt`
+  without `/api/*` beside it 404s the entire sync API — and neither `wrangler
+  deploy` nor a build says a word. `wrangler dev` and one `curl /api/health`
+  does.
 - **`wrangler deploy --dry-run` succeeds with a bogus `database_id`** — it does
   not validate the id against the account. Only a real deploy (or `wrangler d1
   list`) catches a wrong one.

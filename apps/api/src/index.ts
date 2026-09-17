@@ -6,6 +6,7 @@ import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { devAsset } from "./dev-env";
+import { pageForPayload } from "./payload";
 import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
 
 /**
@@ -240,7 +241,14 @@ app.get("/api/groups/:id/ops", async (c) => {
   return c.json({ ops, latestSeq: group.last_op_seq });
 });
 
-app.all("*", (c) =>
-  c.env.BIDA_ENV === "dev" ? devAsset(c.env.ASSETS, c.req.raw) : c.env.ASSETS.fetch(c.req.raw));
+app.all("*", (c) => {
+  // Before the asset: a phone that has been handed an RSC payload URL as a
+  // page gets the page instead of a screenful of `1:"$Sreact.fragment"`.
+  // See payload.ts — it is the service worker's rule, for the phones that
+  // have no service worker yet.
+  const page = pageForPayload(c.req.raw);
+  if (page) return c.redirect(page, 302);
+  return c.env.BIDA_ENV === "dev" ? devAsset(c.env.ASSETS, c.req.raw) : c.env.ASSETS.fetch(c.req.raw);
+});
 
 export default app;
