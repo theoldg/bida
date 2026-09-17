@@ -190,7 +190,11 @@ function LedgerTab({ data }: { data: GroupData }) {
   let lastDay = "";
 
   return (
-    <>
+    <Scroll>
+      {/* Both inside the scroll, not fixed above it: on a phone they are two
+          cards' worth of a screen that is for the rows under them, and the
+          ledger you opened to read was starting a third of the way down. They
+          say what they say on arrival and then get out of the way. */}
       {/* An iOS tab only — the banner decides (docs/ios.md). */}
       <LedgerInstallBanner groupId={gid} />
       {me ? (
@@ -212,28 +216,26 @@ function LedgerTab({ data }: { data: GroupData }) {
         </div>
       ) : null}
 
-      <Scroll>
-        {entries.length === 0 ? (
-          <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
-        ) : null}
+      {entries.length === 0 ? (
+        <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
+      ) : null}
 
-        <div className="rows">
-          {entries.map((entry) => {
-            const day = dayLabel(entry.at);
-            const label = day === lastDay ? null : (lastDay = day);
-            return (
-              <div key={entry.row === "expense" ? entry.expense.id : entry.settlement.id}>
-                {label ? <div className="daylabel">{label}</div> : null}
-                {entry.row === "expense"
-                  ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
-                  : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />}
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ height: 88 }} />
-      </Scroll>
-    </>
+      <div className="rows">
+        {entries.map((entry) => {
+          const day = dayLabel(entry.at);
+          const label = day === lastDay ? null : (lastDay = day);
+          return (
+            <div key={entry.row === "expense" ? entry.expense.id : entry.settlement.id}>
+              {label ? <div className="daylabel">{label}</div> : null}
+              {entry.row === "expense"
+                ? <ExpenseRow expense={entry.expense} gid={gid} base={base} me={me} memberById={memberById} />
+                : <SettlementRow settlement={entry.settlement} gid={gid} base={base} me={me} memberById={memberById} />}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ height: 88 }} />
+    </Scroll>
   );
 }
 

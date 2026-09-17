@@ -180,6 +180,10 @@ forward is out of the browser.
 
 ### The banner — the groups list and the ledger
 
+Both banners scroll with what is under them; neither is pinned. On the ledger
+that matters most — it and your balance sat above the scroller, and the rows
+the screen is for started a third of the way down.
+
 A card at the top of the groups list, *Keep your groups on this phone /
 Safari may forget them*, with **Add bida to home screen** into `/install` — carrying
 every group in the tab, the top of the list first — **shown only once the tab
