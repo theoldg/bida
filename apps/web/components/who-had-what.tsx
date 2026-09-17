@@ -217,6 +217,30 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   /**
+   * The line itself, tapped: everybody had it, or nobody did.
+   *
+   * The two answers a whole row of the bill usually wants — a bottle of wine
+   * the table shared, a dish that turns out to be someone else's entirely —
+   * and one tap rather than one per column. It overwrites whatever was there:
+   * a control that means "all of them" cannot also mean "all of them, except
+   * what you already said", and a second tap puts it back to nobody.
+   *
+   * A folded run takes it whole, portions and all, like `toggleRun` does —
+   * including a run somebody is split across, which `toggleRun` refuses. That
+   * refusal is about a *cell*, where the tap could mean either portion; the
+   * line says all of them, which is not ambiguous.
+   */
+  function toggleEveryone(start: number, count: number) {
+    const ids = involvedMembers.map((m) => m.id);
+    if (ids.length === 0) return;
+    setTouched(true);
+    const everyone = assignments.slice(start, start + count)
+      .every((row) => ids.every((id) => row.has(id)));
+    setAssignments(assignments.map((row, i) =>
+      i < start || i >= start + count ? row : new Set(everyone ? [] : ids)));
+  }
+
+  /**
    * A folded run where nobody is split across its portions edits like the one
    * line it is drawn as: the tap lands on all of them at once, and the run
    * stays as trivial as it was.
@@ -535,9 +559,17 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                       <div className="itemrow">
                         {/* A line nobody has been given blooms with the
                             refusal — name and amount, which is how you find
-                            it again in twenty rows of bill. */}
-                        <span className={`itemtext${lineMissing[li] ? refusal.flash : ""}`}
-                          onAnimationEnd={refusal.onFlashEnd}>
+                            it again in twenty rows of bill.
+
+                            It is also the button for "everybody had this" and
+                            "nobody did" (`toggleEveryone`): the name is the
+                            one target on the row that isn't a person's
+                            column, so it is where the answer about the whole
+                            row belongs. */}
+                        <button type="button" className={`itemtext${lineMissing[li] ? refusal.flash : ""}`}
+                          onAnimationEnd={refusal.onFlashEnd} {...keepsFocus}
+                          onClick={() => toggleEveryone(line.start, folded ? line.count : 1)}
+                          aria-label={copy.items.everyone(shown.label)}>
                           <span className="itemname">
                             {shown.label}
                             {/* The printed count, but only where the button
@@ -553,7 +585,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                             {shown.amount}
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
-                        </span>
+                        </button>
                         {/* One button, one meaning: show the portions, or show
                             them as one line. Only the first press of all —
                             on a line the receipt printed a count for — also

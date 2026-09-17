@@ -199,7 +199,15 @@ measured from the cells: content-derived widths moved every dot on the screen
 each time a run was opened.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
-split evenly to untick your way out of. Done is never held grey: pressed on a bill
+split evenly to untick your way out of. **A tap on the line itself — the name
+and amount — is everybody, or nobody**: the two answers a whole row of a bill
+usually wants (a shared bottle; a dish that turns out to be one person's), in
+one tap rather than one per column. It overwrites whatever was there, because a
+control meaning "all of them" cannot also mean "all of them, except what you
+already said", and a second tap puts it back to nobody. It takes a folded run
+whole, portions and all — including one somebody is split across, which a
+*cell* refuses, since the ambiguity there is which portion the tap meant and a
+line has none. Done is never held grey: pressed on a bill
 with a line nobody has been given, it refuses — every unassigned line's name and
 amount bloom, the grid scrolling to the nearest of them first unless one is
 already wholly in view, the button is spent for that travel and the flash, and only then

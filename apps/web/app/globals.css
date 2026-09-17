@@ -694,7 +694,12 @@ a { color: inherit; text-decoration: none }
 .itemtable .itemlabel { text-align: left; position: sticky; left: 0; z-index: 1;
   background: var(--card); padding-left: 12px; padding-right: 8px }
 .itemrow { display: flex; align-items: center; justify-content: space-between; gap: 8px }
-.itemtext { min-width: 0; overflow-wrap: anywhere }
+/* The name and amount are one button: a tap on the line is "everybody had
+   this" / "nobody did" (components/who-had-what.tsx). It takes the row's whole
+   left column so the target is the line, not the glyphs on it. */
+.itemtext { min-width: 0; flex: 1; overflow-wrap: anywhere; border-radius: var(--r-s);
+  margin: -3px -4px; padding: 3px 4px }
+.itemtext:active { background-image: linear-gradient(var(--press), var(--press)) }
 .itemname { display: block; font-weight: 500 }
 .itemqty { font-weight: 400; color: var(--muted) }
 .itemamount { display: block; font-family: var(--f-mono); font-size: 11px; color: var(--muted); margin-top: 1px }

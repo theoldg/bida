@@ -873,6 +873,8 @@ export const copy = {
       `${name} had some of the ${n} ${label}. Open the line to see which`,
     hadPortion: (name: string, label: string, index: number, of: number) =>
       `${name} had ${label}, portion ${index} of ${of}`,
+    /** The line itself, which is the everybody/nobody switch for its row. */
+    everyone: (label: string) => `${label}: everyone, or no one`,
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
     /**
