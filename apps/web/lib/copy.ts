@@ -793,7 +793,7 @@ export const copy = {
     hadAll: (name: string, label: string, n: number) => `${name} had all ${n} ${label}`,
     /** A cell that cannot be tapped like the others: the tap opens the line. */
     hadSome: (name: string, label: string, n: number) =>
-      `${name} had some of the ${n} ${label} — open the line to see which`,
+      `${name} had some of the ${n} ${label}. Open the line to see which`,
     hadPortion: (name: string, label: string, index: number, of: number) =>
       `${name} had ${label}, portion ${index} of ${of}`,
     share: (name: string) => `${name}’s share`,

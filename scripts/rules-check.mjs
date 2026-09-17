@@ -170,9 +170,23 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
+// The owner, 2026-09-17: "keep em dashes out of the copy permanently. they
+// stink of llm." Comments may keep theirs; a person never reads those. A
+// literal that is only the dash is `copy.none`, a blank figure, not prose.
+{
+  const src = readFileSync(COPY_FILE, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "))
+    .replace(/\/\/.*$/gm, "");
+  src.split("\n").forEach((line, i) => {
+    if (line.replace(/(["'`])—\1/g, "").includes("—")) {
+      fail(COPY_FILE, `line ${i + 1}: an em dash in copy — use a full stop, comma or colon (owner, 2026-09-17)`);
+    }
+  });
+}
+
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "every live read watched, back goes through nav, no browser dialogs, no stray copy");
+    + "every live read watched, back goes through nav, no browser dialogs, no stray copy, no em dash in copy");
 process.exit(problems.length ? 1 : 0);

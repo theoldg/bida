@@ -369,7 +369,9 @@ Screens import `copy` and hold no literal a person can read — `aria-label`,
 `placeholder` and `title` included; `pnpm run rules` fails a build that types
 one back in ([ADR-0033](decisions/0033-every-word-in-one-file.md)). Say it once
 and say it short: the screen already shows the amount, the name and the button,
-so the sentence beside them carries only what they can't.
+so the sentence beside them carries only what they can't. No em dashes in copy,
+ever (the owner: they read as machine-written); `copy.none`'s lone dash, a
+blank figure, is the one exception, and `rules` enforces both halves.
 
 A string whose wording depends on which way the entry runs is `Voiced<T>` —
 `{ expense, income }`, keyed by the entry's kind. Money going out is *paid* and
