@@ -19,6 +19,9 @@
  *     rows that were no longer there.
  *  3. **Another copy holds the lock.** Every read waits, and keeps waiting —
  *     see section 3.
+ *
+ * And section 4 is the other side of that third one: what this copy does so
+ * that it is never the copy holding it.
  */
 import { ensureBuild, launch, newPhone, newGroup, openGroupsList, reporter, serveExport } from "./lib/harness.mjs";
 
@@ -172,6 +175,89 @@ const { report, finish } = reporter();
   const listed = /copies:\s+2\b/.test(copies) && copies.includes("OTHER");
   report(listed, "/diag lists the other copy",
     listed ? undefined : copies.split("\n").find((l) => l.startsWith("copies:")) ?? "no copies line");
+  await ctx.close();
+}
+
+// ---- 4. and this copy never becomes the one holding it -----------------
+// The other half of section 3, and the half that was missing: a lock nobody
+// takes in the background is a lock nobody waits on. `updateDevice` is the
+// app's smallest write and takes the one store — `device` — that every list
+// and group screen reads, so a page frozen inside it hangs every other copy
+// while the op log it is not holding reads perfectly well. That is what the
+// owner's Brave report showed, down to the `copies:` line naming a hidden
+// `/join` beside the list. So the write waits for the front.
+//
+// Headless Chromium reports every page as visible however the tabs are
+// arranged, so `visibilityState` is overridden here rather than a second tab
+// brought forward. It is a stub of the one thing the app reads — that property
+// and the event beside it — and the navigation it lies to is a real one.
+{
+  const ctx = await newPhone(browser);
+  const page = await ctx.newPage();
+  await page.addInitScript(() => {
+    window.__hidden = false;
+    Object.defineProperty(document, "visibilityState", { get: () => (window.__hidden ? "hidden" : "visible") });
+    window.__setHidden = (hidden) => {
+      window.__hidden = hidden;
+      document.dispatchEvent(new Event("visibilitychange"));
+    };
+  });
+  const groupId = await newGroup(page, base, { name: "Marrakech", me: "Theo", members: ["Marie"] });
+  await openGroupsList(page, base);
+  await page.waitForSelector(".grouprow");
+
+  /** The device row, read straight out of IndexedDB rather than through the app. */
+  const deviceRow = () => page.evaluate(() => new Promise((resolve) => {
+    const req = window.indexedDB.open("hajsik");
+    req.onsuccess = () => {
+      const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
+      get.onsuccess = () => resolve(get.result ?? null);
+    };
+  }));
+
+  // Being on the list is itself written down (`leftOnList`), so this is the
+  // state a background navigation has to leave exactly as it is.
+  const before = await deviceRow();
+
+  await page.evaluate(() => window.__setHidden(true));
+  // Opening a group writes `lastOpenedGroupId`. In the background it must not.
+  await page.locator(".grouprow").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForTimeout(2000);
+  const during = await deviceRow();
+  const held = during?.lastOpenedGroupId === before?.lastOpenedGroupId
+    && during?.leftOnList === before?.leftOnList;
+  report(held, "a background page opens no write on the store every screen reads",
+    held ? undefined : `device row moved while hidden: ${JSON.stringify(during)}`);
+
+  await page.evaluate(() => window.__setHidden(false));
+  const landed = await page.waitForFunction(
+    (id) => new Promise((resolve) => {
+      const req = window.indexedDB.open("hajsik");
+      req.onsuccess = () => {
+        const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
+        get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
+      };
+    }),
+    groupId,
+    { timeout: 8000 },
+  ).then(() => true, () => false);
+  report(landed, "and writes it the moment the page is seen again",
+    landed ? undefined : "the parked write never landed");
+
+  // The wait is a line on the timeline rather than a gap in it, and the report
+  // names which stores answer — the line that turns "the database is held"
+  // into the one write holding it.
+  await page.goto(`${base}/diag`);
+  await page.waitForSelector(".diag");
+  await page.waitForTimeout(3000);
+  const shown = (await page.locator(".diag").textContent()) ?? "";
+  report(shown.includes("parked  device.write"), "/diag shows the write parked, not missing",
+    shown.includes("parked") ? undefined : "no parked span in any kept page");
+  const named = /stores:\s+all \d+ answer/.test(shown);
+  report(named, "/diag names the stores that answer, which is how a lock is narrowed",
+    named ? undefined : shown.split("\n").find((l) => l.startsWith("stores:")) ?? "no stores line");
+
   await ctx.close();
 }
 

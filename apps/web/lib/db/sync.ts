@@ -4,6 +4,7 @@ import { groupCrypto } from "../seal";
 import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";
+import { whenVisible } from "./visible";
 
 /**
  * The sync engine (docs/sync.md). A single-flight push+pull per group over
@@ -154,13 +155,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   sent(`${pending.length} up, ${pulled.length} down`);
 
   // The answer can land after the app has gone to the background — the
-  // network after a resume is slow, and people leave. A readwrite transaction
-  // started then is one the phone can freeze half way through, and a frozen
-  // transaction keeps its lock: every read on this origin queues behind it,
-  // this copy's own included once it comes back. So the write waits to be
-  // seen. Nothing is lost by waiting — the response is held here, and a run
-  // killed while parked is simply pulled again (docs/frontend.md).
-  await whenVisible();
+  // network after a resume is slow, and people leave. Nothing is lost by
+  // waiting for the front: the response is held here, and a run killed while
+  // parked is simply pulled again. See ./visible.ts for why it waits.
+  await whenVisible("sync.commit");
   const committed = started("sync.commit");
   await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
     for (const op of pending) {
@@ -217,27 +215,6 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   }
 
   return { pushed: pending.length, pulled: pulled.length };
-}
-
-/**
- * Resolves once the page is on screen — at once if it already is, or if there
- * is no page (the tests). Marks the wait, because a parked commit is a line
- * the /diag timeline should show rather than a gap in it.
- */
-function whenVisible(): Promise<void> {
-  if (typeof document === "undefined" || document.visibilityState !== "hidden") {
-    return Promise.resolve();
-  }
-  const parked = started("sync.parked");
-  return new Promise((resolve) => {
-    const seen = () => {
-      if (document.visibilityState === "hidden") return;
-      document.removeEventListener("visibilitychange", seen);
-      parked();
-      resolve();
-    };
-    document.addEventListener("visibilitychange", seen);
-  });
 }
 
 let running: Promise<void> | undefined;

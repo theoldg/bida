@@ -290,17 +290,32 @@ own, because `indexedDB.open` has no timeout and Dexie's handler only logs.
 **A read can also be alive and queued.** An IndexedDB lock belongs to the
 origin, not to the page: a readwrite transaction that another copy of the app
 (a forgotten tab, a window left behind by an update) was frozen half way
-through holds it, and every read everywhere waits — the owner's `/diag`
-showed every read hanging at once and all of them clearing in the same
-millisecond a minute later. No page can break another's lock, so three
-things limit it. This copy never opens a write while hidden
-([sync.md](sync.md)), so it cannot be the one frozen holding it. `useLive`
-remembers each read's last answer by name and deps for the life of the page,
-so a screen opened during the wait shows that instead of skeleton rows — while
-still counting as waiting, so the notice stands. And the last probe, and the
-notice's button, open a fresh connection (`db.reopen`), the one lever a page
-has on a stuck backend of its own. `/diag`'s `copies:` line names every copy
-the service worker can see, and whether it is hidden.
+through holds it, and every read of those stores waits, in every copy — the
+owner's `/diag` showed reads hanging at once and clearing in the same
+millisecond a minute later.
+
+**The lock is per store, and that is the whole diagnosis.** Which reads hang
+names the transaction holding it, because no two writes here take the same
+scope: `device` alone is `updateDevice`, `ops`+`groupKeys`+`device` is the sync
+commit, every entity table is `rebuild`, and all of it at once is `appendOps`.
+A Brave hang read as "the database is held" was one `updateDevice`: the groups
+list sat on skeleton rows while the op log beside it counted fine, because
+every list and group screen reads `device` and nothing else was locked.
+`/diag`'s `stores:` line says which answer, so the next one is a line rather
+than a cross-reading.
+
+No page can break another's lock, so three things limit it. **This copy opens
+no write while hidden** — `whenVisible` in `lib/db/visible.ts`, which the sync
+commit already used and `updateDevice` did not, so it cannot be the copy frozen
+holding one. What must *not* wait is a write holding something that exists
+nowhere else: `saveGroupKey` stores an invite's secret, and a tab killed while
+parked would lose the group. `useLive` remembers each read's last answer by
+name and deps for the life of the page, so a screen opened during the wait
+shows that instead of skeleton rows — while still counting as waiting, so the
+notice stands. And the last probe, and the notice's button, open a fresh
+connection (`db.reopen`), the one lever a page has on a stuck backend of its
+own. `/diag`'s `copies:` line names every copy the service worker can see, and
+whether it is hidden.
 
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
 reports a failed read by throwing during render, and the app had no boundary at

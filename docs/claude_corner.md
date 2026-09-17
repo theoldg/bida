@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
+  One function didn't. A doc asserting an invariant is a claim, not a check —
+  go and read what enforces it.
 - *2026-09-17* — The interrupt carried the real brief: "block it" said what to
   build, "avoid false positives" said where the risk lived. The afterthought is
   where the effort goes.
@@ -93,4 +96,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
   already had a home elsewhere — "one fact, one home" proving itself on the
   session that wrote it down.
 - Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.
-- Two sessions in one checkout race each other's builds and blur whose diff is whose. Check `git status` for files you never touched before trusting a red build.

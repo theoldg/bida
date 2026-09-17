@@ -156,8 +156,9 @@ waiting to read them. A run that attempted nothing must never conclude "no
 failures" and reset a backoff the failing run had grown. **Nothing writes while
 the app is hidden:** no run starts, and a response that lands after the app
 went to the background waits for it to come back before its transaction opens
-(`sync.parked` on `/diag`) — a phone freezes a hidden app, and a transaction
-frozen half way keeps its lock ([frontend.md](frontend.md#a-live-read-can-die)).
+(`parked` on `/diag`) — a phone freezes a hidden app, and a transaction frozen
+half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
+([frontend.md](frontend.md#a-live-read-can-die)).
 
 **A forgotten group is skipped**, not synced in the background forever. It
 keeps its secret, but not who this phone was in it: opening the invite link

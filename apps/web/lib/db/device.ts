@@ -1,6 +1,7 @@
 import { newNodeId } from "@bida/core";
 import { started } from "../diag";
 import { db, type DeviceRecord } from "./dexie";
+import { whenVisible } from "./visible";
 
 const DEFAULTS: Omit<DeviceRecord, "nodeId"> = {
   key: "device",
@@ -22,11 +23,20 @@ export async function getDevice(): Promise<DeviceRecord> {
 }
 
 export async function updateDevice(patch: Partial<DeviceRecord>): Promise<void> {
-  const current = await getDevice();
   // Named by the fields it sets: navigating writes this row (the last group
   // opened, the list left on), and a write on every tap is worth seeing.
   const done = started("device.write", Object.keys(patch).join(","));
   try {
+    // Never from a background page (./visible.ts). This is the smallest write
+    // in the app and it was the one that hung it: `device` is the only store
+    // it takes, and every list and group screen reads that store, so a copy
+    // frozen inside this one put leaves every other copy on skeleton rows
+    // while the op log it is not holding reads perfectly well.
+    await whenVisible("device.write");
+    // Read inside the gate, not before it, so the fields this patch does not
+    // name come from the record as it is now — a put built before a long park
+    // would put back whatever another screen wrote during it.
+    const current = await getDevice();
     await db().device.put({ ...current, ...patch, key: "device" });
   } finally {
     done();

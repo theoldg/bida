@@ -147,6 +147,31 @@ function screenLine(): string {
 }
 
 /**
+ * Which stores answer a read, one at a time.
+ *
+ * A lock is per store, and that is the whole diagnosis: the reads that hang
+ * name the transaction holding it. The owner's Brave report had every count on
+ * the `rows:` line answering while the groups list sat on skeleton rows, and
+ * the one store none of those counts touches is `device` — which narrowed it
+ * from "something holds the database" to `updateDevice`, the only write in the
+ * app that takes `device` and nothing else. That took cross-reading three
+ * files; this is the line that says it.
+ *
+ * Probed in parallel and separately, so one wedged store cannot hide the rest
+ * — a single transaction over all of them would have reported "no answer" and
+ * lost the shape.
+ */
+async function stores(): Promise<string> {
+  const d = db();
+  const held = (await Promise.all(d.tables.map(async (table) =>
+    (await within(table.count().then(() => true), false)) ? undefined : table.name,
+  ))).filter((name): name is string => name !== undefined);
+  return held.length === 0
+    ? `all ${d.tables.length} answer`
+    : `${held.join(", ")} NOT READING — held by a write somewhere on this origin`;
+}
+
+/**
  * Every copy of the app open on this origin, as the service worker sees them.
  * More than one, with another hidden or frozen, is the likeliest reason for
  * reads that all hang at once and all clear together.
@@ -183,6 +208,11 @@ async function collect(): Promise<string> {
   say("recorded", new Date(loadedAt()).toISOString());
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);
+
+  // Started before the counts and read after them: both wait out the same
+  // patience window, and one after the other doubles how long a report takes
+  // on the phone that needs it most — the one where nothing is answering.
+  const storeLine = stores();
 
   const counts = await within(
     (async () => {
@@ -232,6 +262,7 @@ async function collect(): Promise<string> {
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
+  say("stores", await storeLine);
   say("copies", await within(copies(), "no answer from the worker"));
 
   const rows = timeline();

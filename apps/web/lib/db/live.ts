@@ -223,9 +223,14 @@ export function useLive<T>(
   // Every read, timed and named. This is the line the whole recorder is for:
   // a screen showing a skeleton is a read that has not come back, and its
   // duration next to `rebuild`, `sync.pushpull` and `db.open` on one clock is
-  // what says which of them it was waiting for. `n > 0` means the watchdog had
-  // already given up on it once.
-  const label = `${name}${n > 0 ? ` retry#${n}` : ""}`;
+  // what says which of them it was waiting for.
+  //
+  // Both counters are in the name, because a second span under the same name
+  // is otherwise unreadable: `n` is the watchdog giving up on this read,
+  // `epoch` is every read starting over (`bump`), and Dexie re-running a
+  // querier of its own accord is neither. A report showed a read restart with
+  // no watchdog mark before it and no way to tell which of the three it was.
+  const label = `${name}${n > 0 ? ` retry#${n}` : ""}${epoch > 0 ? ` epoch#${epoch}` : ""}`;
   const timedQuerier = useMemo(() => async () => {
     const done = started("live", label);
     try {
