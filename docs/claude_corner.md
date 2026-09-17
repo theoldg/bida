@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — One screenshot, one screen — but the flush-left prose was one
+  class three screens share. Ask what else wears it before fixing where the
+  photo was taken.
 - *2026-09-18* — Our own doc said Google refused browsers. One curl disproved
   it and a whole feature fell out. A doc's fact about somebody else's server
   ages; probe it before designing around it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — A rejected tool call is not a waiver. The interrupt was about
   which page I was looking for, not about the setup I had just skipped to be
   agreeable. Ask which part they meant.
-- *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
-  One function didn't. A doc asserting an invariant is a claim, not a check —
-  go and read what enforces it.

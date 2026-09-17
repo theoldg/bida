@@ -420,8 +420,11 @@ a { color: inherit; text-decoration: none }
    out of four paragraphs read once, top to bottom. `/advanced` borrows it
    because it is asking for trust rather than offering switches, and that is a
    thing said in paragraphs. */
+/* Centred, not flush left: the measure is narrower than the 560px shell, so
+   on anything wider than a phone the column hugged the left edge and left a
+   finger of empty card down the right of every paragraph. */
 .about { display: flex; flex-direction: column; gap: 22px;
-  max-width: 34em; padding-top: 6px; padding-bottom: 34px }
+  max-width: 34em; margin-inline: auto; padding-top: 6px; padding-bottom: 34px }
 .aboutsect h4 { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px }
 /* Plain wrapping, not `text-wrap: pretty`: Safari evens a paragraph's lines by

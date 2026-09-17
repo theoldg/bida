@@ -24,7 +24,7 @@ three-letter name that did not need illustrating. If it ever comes back it
 comes back as that file in an `<img>`, never redrawn in `--brand` to make it
 theme-aware — that was tried, and a tracing of a logo is a worse logo.
 
-The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em), each claim under a
+The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em, centred in the shell — `/advanced` and `/install` wear it too), each claim under a
 monospace eyebrow in `--ink-2` — the `.daylabel` register, which is how this app
 already writes a heading that is not a title. No cards there; a box per
 paragraph makes a settings list out of something read once, top to bottom. One
