@@ -69,6 +69,8 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — The check stayed green with the thing it guarded switched off.
+  Break it on purpose and watch the red, or the green is decoration.
 - *2026-09-17* — A rejected tool call is not a waiver. The interrupt was about
   which page I was looking for, not about the setup I had just skipped to be
   agreeable. Ask which part they meant.
@@ -95,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — A question can carry a wrong premise ("dev looks different,
   so…"). Answer the premise, not just the question — agreeing politely teaches
   the owner something untrue.
-- *2026-09-16* — "hands off" was the whole spec for a feature that insults
-  people: build it and let the owner nudge it rather than ask where the line
-  is. Where one was needed, the code was its place.

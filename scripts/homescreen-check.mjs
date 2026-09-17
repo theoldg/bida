@@ -243,23 +243,64 @@ for (const path of ["/", `/g?id=${flatId}`, `/g/members?id=${flatId}`]) {
 // real claim against, so the stale head is made by hand — as if it had been
 // built before the second name — and a client-side move to a screen that can
 // be reloaded is what must bring it up to date.
-await heldPage.goto(`${base}/g/members?id=${flatId}`);
-await blobManifest(heldPage);
-await heldPage.evaluate(() => {
-  window.__beforeTheName = true;
+//
+// A row tap on the list, not the back arrow: the arrow *traverses* (lib/nav.ts)
+// and a traversal to an entry from an earlier document is a fresh load, which
+// rebuilds the head by itself — leaving this green whether the reload ran or
+// not. Counting document requests is the other half of saying so.
+/** Stamp the head as built before a change, and mark the page that did it. */
+const stampStale = (page) => page.evaluate(() => {
+  window.__samePage = true;
   document.head.querySelector('link[rel="manifest"]').setAttribute("data-carry", "stale");
 });
-await heldPage.locator(".iconbtn[aria-label='Back']").first().click();
-const refreshed = await heldPage.waitForFunction(() => !window.__beforeTheName, null, { timeout: 8000 })
+/** Every document this page asks for from here on: the reload is one of them. */
+const countLoads = (page) => {
+  const loads = [];
+  page.on("request", (r) => { if (r.isNavigationRequest()) loads.push(r.url()); });
+  return loads;
+};
+
+await openGroupsList(heldPage, base);
+await blobManifest(heldPage);
+const heldLoads = countLoads(heldPage);
+await stampStale(heldPage);
+await heldPage.getByText("Flat").first().click();
+await heldPage.waitForURL((url) => url.pathname === "/g", { timeout: 8000 }).catch(() => {});
+const refreshed = await heldPage.waitForFunction(() => !window.__samePage, null, { timeout: 8000 })
   .then(() => true, () => false);
 const rebuilt = await blobManifest(heldPage);
 const rebuiltStart = rebuilt.json?.start_url ?? "";
-report(refreshed && rebuiltStart.startsWith(`${base}/install#`)
+report(refreshed && heldLoads.length === 1 && rebuiltStart.startsWith(`${base}/install#`)
   && sameGroups(new URL(rebuiltStart).hash.slice(1), carried),
-  "a page whose head predates a change reloads, and its manifest carries it", `start_url: ${rebuiltStart}`);
+  "a page whose head predates a change reloads, and its manifest carries it",
+  `${heldLoads.length} loads, start_url: ${rebuiltStart}`);
 await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
+
+// ---- but never before the shell is cached --------------------------------
+// The same reload on the visit where it costs the most: a newcomer's first,
+// whose document load was `/join` with an empty carry, and whose worker is
+// still fetching 2.4 MB of shell. Served from the network, it races the
+// precache for one phone connection — and nothing on screen is waiting on it,
+// so it waits for the next reloadable screen instead (`shellIsWarm` in
+// lib/update.ts). A context with no worker at all is that minute held still.
+const cold = await iphone({ serviceWorkers: "block" });
+const coldPage = await cold.newPage();
+await newGroup(coldPage, base, { name: "Cold", me: "Gil", members: ["Hana"] });
+await openGroupsList(coldPage, base);
+await blobManifest(coldPage);
+const coldLoads = countLoads(coldPage);
+await stampStale(coldPage);
+await coldPage.getByText("Cold").first().click();
+// The screen it lands on *is* one a reload is allowed on — without this the
+// assertion would pass on a page that simply never went anywhere.
+const onLedger = await coldPage.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
+  .then(() => true, () => false);
+await coldPage.waitForTimeout(1500);
+report(onLedger && coldLoads.length === 0 && await coldPage.evaluate(() => !!window.__samePage),
+  "a first visit, with no shell cached yet, leaves the stale head to the screen after",
+  `${coldLoads.length} loads`);
 
 // ---- the ledger's banner --------------------------------------------------
 // Folded on every visit, so it is the title that shows, and the button behind it.

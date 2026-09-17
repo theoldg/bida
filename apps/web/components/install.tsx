@@ -9,6 +9,7 @@ import { setInstallNudgeCollapsed } from "../lib/db/device";
 import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
 import { useLive } from "../lib/db/live";
+import { shellIsWarm } from "../lib/update";
 import {
   headIsStale, installOffer, iosBrowser, keepCarried, promptInstall, reloadsForCarry, subscribeInstall,
   type InstallOffer,
@@ -42,6 +43,17 @@ export async function carryThenInstall(first?: string): Promise<void> {
  * And when what it would bring changed after this page loaded, reloads it on
  * the first screen where that is harmless — Safari only reads the manifest at
  * load, and the share sheet can be opened on any page (`headIsStale`).
+ *
+ * Harmless includes cheap. The reload's only job is to have the head right for
+ * a share sheet nobody has opened yet, so nothing on screen is waiting on it —
+ * and the visit it fires on most reliably is the newcomer's first, where their
+ * document load was `/join` with an empty carry and everything since has been
+ * the router. That is also the one minute the shell is being fetched over the
+ * phone's connection, so the reload would go to the network and race the
+ * precache for it. Deferring costs nothing: this effect runs again on every
+ * pathname change, and the next reloadable screen does it once the shell is
+ * warm. If the worker never lands at all, never reloading is the better
+ * trade — a stale head costs a paste later, a blank first minute costs the app.
  */
 function KeepCarried() {
   const groups = useLive("carried", () => heldInvites(), []);
@@ -49,7 +61,7 @@ function KeepCarried() {
   useEffect(() => {
     if (!groups) return;
     keepCarried(groups);
-    if (!headIsStale() || !reloadsForCarry(pathname)) return;
+    if (!headIsStale() || !reloadsForCarry(pathname) || !shellIsWarm()) return;
     const typing = document.activeElement?.matches("input, textarea, [contenteditable]");
     if (typing || document.visibilityState !== "visible") return;
     location.replace(location.href);

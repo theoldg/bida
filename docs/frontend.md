@@ -526,7 +526,12 @@ On the page side, `lib/update.ts` hears `controllerchange` and reloads — at
 once if the page hasn't been touched since it loaded, otherwise the next time it
 comes back to the foreground, never while hidden (`beforeunload` can't ask about
 a half-typed expense then). It also re-checks `sw.js` on every resume: an
-installed app is resumed far more often than it is launched. In between,
+installed app is resumed far more often than it is launched. And it records
+when `navigator.serviceWorker.ready` resolves (`shellIsWarm`) — the only flag
+that says the precache is done, since a worker that never claims a first visit
+leaves `controller` null for the whole of that page's life. One caller: the iOS
+carry reload, worth doing out of the cache and not worth doing off the network
+([ios.md](ios.md#a-in-detail)). In between,
 `components/update.tsx` offers a Reload at the foot of the groups list, **only in
 the installed app** — a tab has the browser's own, and the install nudge shows on
 exactly the phones this doesn't. So an update lands on the second look at the

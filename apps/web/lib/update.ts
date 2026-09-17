@@ -28,6 +28,8 @@ export type UpdateState =
 let stale = false;
 let applying = false;
 let started = false;
+/** Whether a worker for this scope has reached "activated" — see `shellIsWarm`. */
+let warm = false;
 /** Whether the person has done anything on this page a reload would interrupt. */
 let touched = false;
 const listeners = new Set<() => void>();
@@ -43,6 +45,11 @@ function announce(): void {
 export function registerServiceWorker(): void {
   if (started || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   started = true;
+
+  // Resolves the moment a worker for this scope is active — which on a first
+  // visit is the moment its precache finishes. Nothing waits on it; it only
+  // records that the shell is cached now (`shellIsWarm`).
+  navigator.serviceWorker.ready.then(() => { warm = true; }).catch(() => {});
 
   const touch = () => {
     touched = true;
@@ -98,6 +105,23 @@ function reloadOnResume(): void {
     window.location.reload();
   };
   document.addEventListener("visibilitychange", seen);
+}
+
+/**
+ * Whether a reload would be served out of the precache rather than off the
+ * network. False for the first visit's first minute, while the worker is still
+ * fetching the ~2.4 MB shell: a reload then competes with those fetches over
+ * one phone connection, which is the difference between a flash and a blank
+ * screen in somebody's first minute. Only `KeepCarried` asks
+ * (components/install.tsx), and only about a reload nothing on screen needs.
+ *
+ * `navigator.serviceWorker.controller` would be the obvious flag and is the
+ * wrong one: `public/sw.js` deliberately never calls `clients.claim()`, so the
+ * page that installs the worker stays uncontrolled for the whole of its life
+ * and would never see one.
+ */
+export function shellIsWarm(): boolean {
+  return warm;
 }
 
 export function subscribeUpdate(listener: () => void): () => void {

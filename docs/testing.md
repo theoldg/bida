@@ -415,6 +415,15 @@ back refused: every URL in a blob manifest has to be absolute, because a blob
 has no base to resolve against, and that is the one mistake this approach
 invites — without that control the green above would mean nothing.
 
+**A head that predates a change** is checked as a pair, because the reload that
+mends it is gated on the shell being precached ([ios.md](ios.md#a-in-detail)):
+a warm phone's stale head is mended by a row tap on the list, and a phone with
+no service worker at all — a first visit, mid-precache — keeps its stale head
+through the same tap. Both count document requests, and the move is a row tap
+rather than the back arrow on purpose: the arrow *traverses* (`lib/nav.ts`),
+and a cross-document traversal rebuilds the head by itself, which left the
+first of these green with the reload switched off.
+
 The app end (`asInstalledApp`): a launch on one invite nobody has named hands
 it to `/join`; a launch whose secrets are already on the phone doesn't — the
 icon is a door into the app, not into one group forever; one carrying several

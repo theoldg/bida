@@ -61,7 +61,8 @@ None of these is started, and the first is not code at all.
   builds the manifest at load from `bida.carry`), and the names coming along
   (the icon claims the member the tab was). The owner's first run carried
   two groups but only the name picked after the page loaded; a stale head now
-  reloads (2026-09-17). A tap that landed on a route's RSC payload instead of a
+  reloads, though never before the shell is precached — on a first visit that
+  reload came off the network and raced the precache (2026-09-17). A tap that landed on a route's RSC payload instead of a
   screen — reported on production, and the reason the Worker now redirects a
   payload navigated to as a page ([frontend.md](frontend.md#pwa)) — is fixed on
   `dev` and reaches phones when the owner releases. **Next: install from a group's

@@ -94,7 +94,12 @@ Safari won't read a swapped link: the owner's icon arrived with two groups and
 one name. The link records what it was built with (`data-carry`); when that no
 longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
 nothing can be lost (`reloadsForCarry`: the list, a group, members, history, an
-entry, about), never mid-join or in a form. From cache it is a flash, once.
+entry, about), never mid-join or in a form, and never before the app shell is
+precached (`shellIsWarm`, [frontend.md](frontend.md#pwa)). From cache it is a
+flash, once. Before that it is a network load racing the worker's own fetches,
+in the newcomer's first minute — whose document load was `/join` with an empty
+carry, so it is exactly who this fires for. Nothing on screen wants it, so it
+waits for the next reloadable screen.
 
 **The icon's first launch** (`app/install/page.tsx`). A key this phone lacks is
 saved. A group the tab had named is claimed here, before its first sync — an
@@ -259,7 +264,7 @@ is rightly let through: it is Chrome, storage and menus and all.
 - **Safari reads the manifest at page load**, not when the share sheet opens,
   whatever WebKit's source suggests. Changing the link later does nothing — so
   the HTML carries none, a script at the top of the head writes it, and a page
-  whose carry changed since reloads.
+  whose carry changed since reloads — once the shell is cached, not before.
 - **Next re-inserts the manifest link that `metadata.manifest` renders** after
   hydration, so taking it out doesn't work. Leave `manifest` out of the
   metadata and write the link yourself.
