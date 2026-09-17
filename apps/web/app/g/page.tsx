@@ -16,7 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
-import { InstallBanner } from "../../components/install";
+import { LedgerInstallBanner } from "../../components/install";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -191,6 +191,8 @@ function LedgerTab({ data }: { data: GroupData }) {
 
   return (
     <>
+      {/* An iOS tab only — the banner decides (docs/ios.md). */}
+      <LedgerInstallBanner groupId={gid} />
       {me ? (
         <div className="mysummary pad">
           {/* The tint is neutral on purpose: the eyebrow and the figure are
@@ -211,8 +213,6 @@ function LedgerTab({ data }: { data: GroupData }) {
       ) : null}
 
       <Scroll>
-        {/* An iOS tab only — the banner decides (docs/ios.md). */}
-        <InstallBanner groupId={gid} folded />
         {entries.length === 0 ? (
           <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
         ) : null}

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
@@ -113,9 +113,6 @@ function Offer() {
 /**
  * An iOS tab's card atop the groups list rather than at its foot: once the tab
  * holds a group, "this browser will clear it" is true and worth reading first.
- * Also atop each group's ledger, for whoever only ever arrives by a group's
- * link and never sees the list — `folded` there until the phone has chosen,
- * since the entries are what that screen is for.
  * The caller draws it only then — an empty home is someone looking around, and
  * Quick split stores nothing to lose. The how lives on `/install`.
  *
@@ -129,17 +126,33 @@ function Offer() {
  * row of the list this card sits on, the most recently active and the one the
  * app would reopen by itself (lib/launch.ts).
  */
-export function InstallBanner({ groupId, folded = false }: { groupId: string; folded?: boolean }) {
+export function InstallBanner({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
-  const browser = useBrowserName();
   const device = useDevice();
   if (offer !== "manual" || !device) return null;
-  const open = !(device.installNudgeCollapsed ?? folded);
+  const open = !device.installNudgeCollapsed;
+  return <BannerCard groupId={groupId} open={open} onToggle={() => void setInstallNudgeCollapsed(open)} />;
+}
+
+/**
+ * The same card atop a group's ledger, above your balance, for whoever only
+ * ever arrives by a group's link and never sees the list. Folded on every
+ * visit and remembering nothing: the entries are what that screen is for, so
+ * it offers itself as one line each time rather than taking the list's fold.
+ */
+export function LedgerInstallBanner({ groupId }: { groupId: string }) {
+  const offer = useInstallOffer();
+  const [open, setOpen] = useState(false);
+  if (offer !== "manual") return null;
+  return <BannerCard groupId={groupId} open={open} onToggle={() => setOpen(!open)} />;
+}
+
+function BannerCard({ groupId, open, onToggle }: { groupId: string; open: boolean; onToggle: () => void }) {
+  const browser = useBrowserName();
   return (
     <div className="pad" style={{ paddingBottom: 4 }}>
       <div className="card">
-        <button type="button" className="nudgehead" aria-expanded={open}
-          onClick={() => void setInstallNudgeCollapsed(open)}>
+        <button type="button" className="nudgehead" aria-expanded={open} onClick={onToggle}>
           {copy.install.banner.title}
           <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
         </button>

@@ -174,9 +174,9 @@ visitor won't install an app sight unseen. Once a group is in the tab,
 foot. It replaces the install nudge in a tab, and folds like it, on the same
 device flag: a warning someone who chose Safari can't put away is nagging.
 
-The same card sits atop each group's ledger, this group first in the carry,
-folded until the phone has folded or opened either — the entries are that
-screen's job. Folding either folds both.
+The same card sits atop each group's ledger, above your balance, this group
+first in the carry — folded on every visit and remembering nothing, since the
+entries are that screen's job. Its fold is its own; the list's is the device's.
 
 `/about`'s *Works offline* carries just the card's button, with no group
 preferred first — `/install` says the how.
