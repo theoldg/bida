@@ -69,9 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-17* — "change the ios bar from black-translucent" — it already was
-  default. The ask named a symptom; read what the code says before changing
-  what they named.
+- *2026-09-17* — "change the ios bar from black-translucent" — it already was.
+  The symptom was real, the named cause wasn't, and "nothing to be done" was
+  wrong. Keep looking once the premise fails.
 - *2026-09-17* — The fix the whole internet repeats was wrong for this bug, and
   the owner's throwaway repro found the right one. Weigh the report above the
   received answer.

@@ -270,6 +270,19 @@ a { color: inherit; text-decoration: none }
    bottom nav or its about line looks like — would put the shell's last strip
    below the fold with nothing that can scroll to it. Right browsers report the
    two the same, so the cap costs them nothing. */
+/* The strip iOS paints behind the status bar in a home-screen app is the page's
+   own backdrop — body's background, not `theme-color`, which reaches Android and
+   not this. At phone width the shell fills the screen, so that strip is the only
+   place body is ever seen, and paper under a card-coloured bar drew a seam
+   exactly where iOS 26 lays its status-bar scrim: the gradient had an edge to
+   reveal, and the dev build's green bar made a band of it. Matched, the scrim
+   has one surface to dim and reads as a vignette. Above 560px the gutters beside
+   the shell are the paper the card floats on, and keep it. */
+@media (max-width: 560px) {
+  body { background: var(--card) }
+  [data-env="dev"] body { background: var(--dev-bar) }
+}
+
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
   position: relative; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow-s) }

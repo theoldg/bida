@@ -486,7 +486,11 @@ run it when the logo changes rather than editing any of the four; the maskable
 one insets the artwork to 72% on its own ground so a circular launcher crop
 can't clip it. iOS ignores
 manifest `display` entirely; `appleWebApp.statusBarStyle` is its lever, and it
-is `"default"` so the page starts below the status bar (Gotcha below).
+is `"default"` so the page starts below the status bar (Gotcha below). The strip
+that leaves above the page is painted from **body's background**, so at phone
+width body wears the shell's own `--card` (the dev build, its green bar): iOS 26
+lays a scrim under the status bar, and a seam there is an edge for it to reveal
+(Gotcha below).
 `viewport-fit: cover` stays for the home indicator and a landscape notch, which
 is why the `env(safe-area-inset-*)` padding matters.
 
@@ -630,6 +634,15 @@ so the static export ships the full line and the browser narrows it.
   the top of the screen but laid out a status bar shorter (WebKit bug 301108):
   a strip at the bottom no CSS or JS reaches, and a system blur over the top
   bar. `"default"` puts the page below the bar and avoids both.
+- **iOS 26 dims the top of the page under the status bar, and nothing turns it
+  off.** A scrim for the clock's sake, drawn over the first strip of content
+  whatever `statusBarStyle` says — `black-translucent` only gives it more to
+  cover. What *is* ours is what it falls on: the strip above the page is body's
+  background, so where that differs from the bar under it the scrim has an edge
+  to reveal and reads as a band rather than a vignette. Matching the two at
+  phone width is the whole fix (`.app`, globals.css). The gradient stays; the
+  seam is what was visible, and the dev build's green bar is what made it
+  obvious.
 - **Two navigations asked for in one tick are folded into the last one.** A
   screen that wants to both give its history entry away and push another on top
   cannot: `router.replace` then `router.push` leaves only the push, whatever it
