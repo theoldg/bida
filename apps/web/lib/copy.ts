@@ -323,7 +323,7 @@ export const copy = {
       checking: "Checking…",
       remove: "Remove key",
       /** Under the locked field: the one line that says the paste worked. */
-      accepted: "Accepted. This phone scans with your key.",
+      accepted: "This phone scans with your key.",
       /**
        * The two refusals, which ask for different things. `refused` is the
        * key; `blocked` is this browser, and it is the one worth catching at
