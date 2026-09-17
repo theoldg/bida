@@ -58,6 +58,29 @@ export function gapOf(v: ViewportReading): ViewportGap {
   return v.typing ? { kb: covered, unexplained: 0 } : { kb: 0, unexplained: covered };
 }
 
+/**
+ * What a press on a control beside a field has to do about the caret
+ * (`keepsFocus`, components/bits.tsx). Three cases, and the middle one is the
+ * whole reason this is a function rather than a boolean:
+ *
+ * - **hold** — a keyboard is up, so the press must not blur the field: the
+ *   blur retracts it, the page reflows, and the `click` misses the button.
+ * - **blur** — no keyboard, but a field still has the caret. That is what the
+ *   OS back button leaves behind on Android: it closes the keyboard without
+ *   taking the focus, and a press that holds that focus tells the browser
+ *   someone tapped with a text field focused, which opens the keyboard again.
+ *   So the field is put down, by hand rather than by trusting the press to do
+ *   it — whether a `mousedown` moves focus at all depends on the browser and
+ *   on whether what was pressed can take it.
+ * - **free** — nothing has the caret, so there is nothing to protect or undo.
+ */
+export type CaretAction = "hold" | "blur" | "free";
+
+export function caretOnPress(keyboardUp: boolean, typing: boolean): CaretAction {
+  if (!typing) return "free";
+  return keyboardUp ? "hold" : "blur";
+}
+
 /** One look at a field being scrolled to, and the line it has to clear. */
 export interface ReachReading {
   /** The field's bottom edge. */

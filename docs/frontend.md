@@ -753,7 +753,10 @@ so the static export ships the full line and the browser narrows it.
   moves the layout out from under itself. **It holds off only while `data-kb`
   says there is a keyboard**: Android's back button closes the keyboard and
   leaves the caret in the field, and holding that focus through the next press
-  had Chrome open the keyboard again over the answer the tap had just given.
+  had Chrome open the keyboard again over the answer the tap had just given. In
+  that state it blurs the field itself rather than trusting the press to move
+  focus — which browser and target both get a say in. The three cases are
+  `caretOnPress` (`lib/viewport.ts`), which is where the test is.
 - **`scrollTo({ behavior: "smooth" })` is not smooth everywhere.** It glided
   on iOS and jumped on Android, and has no end event to wait on either, so a
   scroll the app has to wait for is driven by hand, frame by frame (`glide`,

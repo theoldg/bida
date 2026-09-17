@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gapOf, reachOf } from "./viewport";
+import { caretOnPress, gapOf, reachOf } from "./viewport";
 
 /** A phone with nothing covering it: the two viewports agree. */
 const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false };
@@ -60,5 +60,23 @@ describe("reachOf", () => {
   // comfortably above it must stay where it is — not be re-hung at the bottom.
   it("never scrolls down to a field it is already past", () => {
     expect(reachOf({ ...FIELD, stop: 840 })).toBe(0);
+  });
+});
+
+describe("caretOnPress", () => {
+  it("holds the caret while the keyboard is up, so the press doesn't close it", () => {
+    expect(caretOnPress(true, true)).toBe("hold");
+  });
+
+  // Android's back button: the keyboard is gone, the caret is not. Holding it
+  // is what had Chrome open the keyboard again on the next press.
+  it("puts the field down when a keyboard has gone but the caret stayed", () => {
+    expect(caretOnPress(false, true)).toBe("blur");
+  });
+
+  it("does nothing when nothing has the caret", () => {
+    expect(caretOnPress(false, false)).toBe("free");
+    // A keyboard with nothing focused isn't one: `gapOf` never reports it.
+    expect(caretOnPress(true, false)).toBe("free");
   });
 });

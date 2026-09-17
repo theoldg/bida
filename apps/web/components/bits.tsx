@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { initials } from "../lib/format";
+import { caretOnPress, isTyping } from "../lib/viewport";
 
 /**
  * Initials in a square — for a *group*, in the list of them, where a row has no
@@ -104,13 +105,20 @@ export function signClass(minor: number): string {
  * a screen where the field is still focused and nothing is covering anything:
  * holding that focus through the next press told Chrome the person had tapped
  * with a text field focused, so it opened the keyboard again — the tap landed,
- * and the keyboard came back up over the answer. There is nothing to protect
- * in that state — no keyboard to retract, so no reflow to race — so the press
- * is left alone and the field is allowed to blur. `data-kb` is the one place
- * that knows (components/viewport.tsx).
+ * and the keyboard came back up over the answer. So in that state the field is
+ * put down instead, by hand: `blur()` rather than letting the press do it,
+ * because whether a `mousedown` moves focus at all depends on the browser and
+ * on whether what was pressed can take focus. `caretOnPress` is the three
+ * cases; `data-kb` is the one place that knows whether a keyboard is up
+ * (components/viewport.tsx).
  */
 export const keepsFocus = {
   onMouseDown: (e: React.MouseEvent) => {
-    if (document.documentElement.hasAttribute("data-kb")) e.preventDefault();
+    const focused = document.activeElement;
+    switch (caretOnPress(document.documentElement.hasAttribute("data-kb"), isTyping(focused))) {
+      case "hold": e.preventDefault(); break;
+      case "blur": if (focused instanceof HTMLElement) focused.blur(); break;
+      case "free": break;
+    }
   },
 } as const;
