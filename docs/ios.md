@@ -151,7 +151,7 @@ tell. It carries, in this order:
    permanently, one bold line: add bida to your home screen.
 2. a quiet line folded on every visit (no card), *Still seeing this after adding bida?*,
    above the clip, where the one who already added it finds it first: the
-   tab can't see the app, which took the groups once and keeps its own after.
+   tab can't see the app, and the two keep separate group lists from then on.
 3. untitled — a recording of Safari's share sheet, which stops on the Add
    sheet: it never shows the tap on **Add**, or the icon arriving
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
