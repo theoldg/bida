@@ -7,7 +7,7 @@ export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "list" | "scale" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more" | "info"
-  | "mail" | "dollar" | "cog";
+  | "mail" | "dollar" | "sliders";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
@@ -26,9 +26,13 @@ export function IconSprite() {
           <path d="M2 3l20 18M5 12.5a11 11 0 014.2-2.6M19 12.5a11 11 0 00-4.6-2.7M8.5 16a6 6 0 016.2-.5" />
           <circle cx="12" cy="19.5" r=".9" fill="currentColor" stroke="none" />
         </symbol>
-        <symbol id="i-cog" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
-          <circle cx="12" cy="12" r="3.2" />
-          <path d="M12 2.6l1.5 2.3 2.7-.5.6 2.7 2.5 1.1-1.3 2.4 1.3 2.4-2.5 1.1-.6 2.7-2.7-.5L12 21.4l-1.5-2.3-2.7.5-.6-2.7-2.5-1.1 1.3-2.4-1.3-2.4 2.5-1.1.6-2.7 2.7.5z" />
+        {/* Settings, as two rails with a knob each. A cog was drawn here first
+            and a cog is a dozen teeth around a hole: at 15px in a menu row it
+            closed up into a blob. Two lines and two circles survive the size. */}
+        <symbol id="i-sliders" viewBox="0 0 24 24" {...S} strokeWidth="1.9">
+          <path d="M3.5 8.5h10.3M18.2 8.5h2.3M3.5 15.5h4.3M12.2 15.5h8.3" />
+          <circle cx="16" cy="8.5" r="2.2" />
+          <circle cx="10" cy="15.5" r="2.2" />
         </symbol>
         <symbol id="i-check" viewBox="0 0 24 24" {...S} strokeWidth="2.4"><path d="M4 12.5l5.5 5.5L20 7" /></symbol>
         <symbol id="i-clock" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
