@@ -135,10 +135,10 @@ function AlreadyAdded({ browser }: { browser: string | undefined }) {
   const [open, setOpen] = useState(false);
   const { after } = copy.install.page;
   return (
-    <div className="card installfold">
+    <div className="installfold">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
-        {after.ask}
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
+        {after.ask}
       </button>
       {open ? <p>{after.answer(browser)}</p> : null}
     </div>

@@ -141,7 +141,7 @@ home-screen app are unchanged. Wording is in `copy.install` and `copy.claim.inAp
 
 ### `/install` — the tutorial, shared
 
-A route of its own, in `/about`'s register: short prose, one folded card, kept to the
+A route of its own, in `/about`'s register: short prose, one folded line, kept to the
 few lines someone reads before they've decided this is worth their time. Every
 "this browser" on these screens names Safari or Chrome when `iosBrowser` can
 tell. It carries, in this order:
@@ -149,7 +149,7 @@ tell. It carries, in this order:
 1. untitled — Safari may forget your groups after a week unopened; the invite
    link always brings them back. Then, for whoever wants to keep everything
    permanently, one bold line: add bida to your home screen.
-2. a card folded on every visit, *Still seeing this after adding bida?*,
+2. a quiet line folded on every visit (no card), *Still seeing this after adding bida?*,
    above the clip, where the one who already added it finds it first: the
    tab can't see the app, which took the groups once and keeps its own after.
 3. untitled — a recording of Safari's share sheet, which stops on the Add
