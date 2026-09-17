@@ -110,6 +110,30 @@ export const copy = {
     off: "Off",
   },
 
+  /**
+   * The group as a spreadsheet. The subtitle names the two apps somebody is
+   * actually leaving for, because "CSV" answers a question nobody asked and
+   * those two words are what tell you whether this button is the one you want.
+   */
+  export: {
+    title: "Export data",
+    /**
+     * Why you are looking at text instead of holding a file — but only where
+     * that is true. This is an ordinary route, so it can be opened by a
+     * browser that would have taken the file happily, and telling that person
+     * their browser can't save one is just wrong (`fileHandoff`).
+     */
+    body: "This browser can’t save a file. Copy the text below into a"
+      + " spreadsheet, or into Splitwise or Tricount.",
+    /** The same screen, reached by a browser that could have saved it. */
+    bodyPlain: "Copy the text below into a spreadsheet, or into Splitwise or Tricount.",
+    copyAll: "Copy the spreadsheet",
+    copied: "Copied",
+    building: "Reading…",
+    /** A group with no entries yet: a file of nothing but column headings. */
+    nothing: "Nothing to export yet.",
+  },
+
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */
   unknown: "?",
   none: "—",
@@ -467,6 +491,8 @@ export const copy = {
     history: "History",
     people: "People",
     copyLink: "Copy invite link",
+    /** In the menu, above Forget group: the way out with your numbers. */
+    export: "Export data",
     /** The top bar's one button: everything the group can be asked for. */
     menu: "Group menu",
     /** The clipboard can refuse — an insecure context, a denied permission —

@@ -18,7 +18,9 @@ not an account). Three kinds of entry — **expenses**, **incomes** and
 for) ([ADR-0010](decisions/0010-what-an-entry-is.md)). Split modes: evenly,
 as parts, as amounts — remainders distributed deterministically and quietly.
 Balances, derived, never stored. Settle-up, which records a transfer. Invite by
-link.
+link. **A way out**: one CSV in Splitwise's export shape, which is what Tricount
+imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — a
+ledger you cannot take elsewhere is a ledger somebody else owns.
 
 **The three additions.**
 
@@ -64,7 +66,6 @@ Leave the seam. Build none of it.
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
 | Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add an R2 bucket and the upload behind `uploadState` ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)) |
-| CSV export | A pure function over the fold; no schema change, no new screen |
 | Categories | `categoryId` is on the entry, diffed by the command layer and reported by history. What's missing is a picker, and a decision about what the categories are |
 
 ## Principles

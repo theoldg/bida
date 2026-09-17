@@ -8,9 +8,8 @@ log of what sessions built.** Update it in the same commit as the code.*
 ## Where it stands
 
 **The app is built, deployed and in use.** Nothing is queued: what is not built
-was cut rather than postponed — receipt photo storage, CSV export and categories
-are seams in [product.md](product.md#deliberately-not-in-the-mvp), not work in
-progress.
+was cut rather than postponed — receipt photo storage and categories are seams
+in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 |                 |                                                                                                                                                                                                                                                                                                                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,6 +19,7 @@ progress.
 | **Scanning**    | The Worker composes the request, so the shared Gemini key cannot be handed someone's prompt, and the scan has a budget — three buckets, a global daily cap, and Turnstile in front of every call ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). Staś mode, off and hidden on `/diag`, swaps the refusal wording for the vicious one ([receipt-scanning.md](receipt-scanning.md#staś-mode)) |
 | **Versioned**   | `major.semi.minor` in the root `package.json`, in the corner of the `/about` top bar and the first line of `/diag`. Every push to `dev` deploys, so every push bumps the minor and `pnpm check` insists on it; the major is the owner's alone ([hosting.md](hosting.md#versions))                                                                                                                             |
 | **The tip jar** | A FAB on the balances tab opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp))                                                                                                                                                                                                                                 |
+| **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). Whether the share sheet takes a file inside an iOS home-screen app is the one part still waiting on a real phone ([ios.md](ios.md)) |
 
 ## What is open
 

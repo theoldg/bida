@@ -3,7 +3,9 @@
 *For: anyone touching joining, installing or storage on iPhone. **Status:
 [the design](#the-design) is built, and [A](#a-in-detail) works on a real
 iPhone from `/install` (2026-09-16).** Built since and waiting on the phone:
-Share from any page, the names coming along, and the in-app browser refused.*
+Share from any page, the names coming along, the in-app browser refused, and
+whether `canShare({files})` is true inside the home-screen app — which is
+whether the export can hand over a file there at all ([5](#the-problem)).*
 
 ## The problem
 
@@ -32,6 +34,16 @@ that holds, and every iOS browser is WebKit, so none of it is Safari's alone:
    goes back on at the app's next update — so the app refuses to run in one
    ([below](#the-in-app-browser--refused)). Android's WebView is the same dead
    end, which is the one part of this doc that is not iOS's alone.
+5. **A home-screen app cannot download a file.** As of iOS 18.4 an
+   `<a download>` or a `Content-Disposition: attachment` does not fail — it
+   replaces the app with a full-screen "Open in …" that has **no way back**, so
+   a phone that tried it loses the app rather than gaining a file. The share
+   sheet is the way out instead (`navigator.share` with a file, which Safari
+   has taken since 15, and whose sheet holds Save to Files), so the export
+   gates the download on `iosHomeScreenApp` rather than trying it first —
+   dropping to it after a failed share is how somebody ends up stranded
+   ([frontend.md](frontend.md#getting-a-group-off-the-phone)). A tab is fine:
+   Safari has a real download manager.
 
 So a person who means to stay in a group has to end up in the home-screen app,
 and every invite starts them in the wrong place.

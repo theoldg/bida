@@ -91,13 +91,17 @@ await tap("tap a suggested transfer", () => page.locator("a.card").first().click
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
 // The one switch that isn't in a group: light/dark, on the groups list.
-// `button.iconbtn` and not `.iconbtn` first: "About bida" moved into the same
-// bar and took that position, so the check quietly started tapping a link to
-// /about and reporting the theme toggle broken. The toggle is the only
-// *button* up there; the position was never the thing that identified it.
+// Reached by its words, not its position — twice now the bar has been
+// rearranged under this check: "About bida" took the first slot and it
+// quietly tapped a link to /about, and then both glyphs became rows in a
+// kebab and it tapped the kebab itself. What identifies the toggle is what it
+// says (`copy.groups.theme`), so that is what the check asks for.
 await tap("theme toggle", async () => {
   await openGroupsList(page, base);
   await page.locator(".topbar button.iconbtn").first().click();
+  // `menuitem`, not `button`: the rows carry an explicit role, which replaces
+  // the implicit one the element would have had (components/row-menu.tsx).
+  await page.getByRole("menuitem", { name: /Switch to (light|dark) mode/ }).click();
 }, "html[data-theme]");
 
 await tap("new entry form", () => page.goto(`${base}/g/entry/edit?id=${g}`), "input.amount");

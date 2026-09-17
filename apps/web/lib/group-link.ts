@@ -226,6 +226,14 @@ export const route = {
   tipEntry: (groupId: string, title: string) =>
     `${route.addEntry(groupId, "expense", "balances")}&title=${encodeURIComponent(title)}`,
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
+  /**
+   * The export as text, reached only when neither the share sheet nor a
+   * download is available (`lib/export.ts`). A screen rather than a dialog
+   * because it holds a whole ledger and is opened in order to copy it, and it
+   * rebuilds the CSV itself: a route cannot carry a file, and a readout that
+   * empties on reload is the drawer state ADR-0007 got rid of.
+   */
+  exportCsv: (groupId: string) => `/g/export?id=${encodeURIComponent(groupId)}`,
   /** The group's exchange-rate registry: one rate per currency it spends in. */
   rates: (groupId: string) => `/g/rates?id=${encodeURIComponent(groupId)}`,
   /** The last step of joining: pick which member you are, then go in. */

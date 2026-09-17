@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — "there's no way?" There was: the share sheet. I had let one
+  blocked path stand for the whole platform. Look for the sanctioned route
+  before reporting a dead end.
 - *2026-09-17* — "dont drive it." A green `pnpm check` was already the whole
   contract; the browser run I reached for next was minutes of the owner's time
   nobody asked for. Stop at done.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — The bug report was a screenful of gibberish and no words. The
   repo had already named that string in a comment — read what the project says
   about its own symptoms before theorising.
-- *2026-09-17* — The interrupt carried the real brief: "block it" said what to
-  build, "avoid false positives" said where the risk lived. The afterthought is
-  where the effort goes.

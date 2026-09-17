@@ -230,6 +230,44 @@ smallest debtor first, into the smallest creditor who can absorb the whole
 debt, so owing a little means one transfer and only a debt too big for any
 single creditor is split.
 
+## The group as a spreadsheet
+
+`core/export.ts` writes **Splitwise's export shape** and no other:
+`Date,Description,Category,Cost,Currency` then one column per member,
+`YYYY-MM-DD` dates, plain decimals, CRLF, no BOM. Tricount has no import of
+its own format — it has "import from Splitwise" — so these columns are what
+get a group into Tricount, Splitwise, Sesterce, Spliit and a spreadsheet, and
+Tricount's own `Paid by X`/`Paid for X` shape would reach nothing this does
+not. `Payment`, `General` and `Total balance` are spelled exactly so because
+an importer matches them literally; they are protocol tokens, not copy, which
+is why they are in core and not `copy.ts` ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+
+**A member's cell is `paid − owed` for that row.** Every row therefore nets to
+zero and the column totals are the balances — the `Total balance` foot is
+`computeBalances().byMember`, to the cent, because the rows come from
+`resolvePayers` and `resolveSplit` under the same tiebreak seeds. It is one
+arithmetic with two readouts, not two opinions.
+
+Three facts have nowhere to go in the shape, and each is resolved the same
+way — by saying what is true rather than inventing a column:
+
+- **Currency.** One `Currency` per row and one set of member columns, so
+  there is no way to say a row is in MAD while the balance below it is in
+  euros. The caller hands over a state already repriced at the registry and
+  the column is constant — which is also the only way the foot agrees with
+  the Balances tab ([ADR-0005](decisions/0005-money-and-currency.md)).
+- **Income.** No such concept there, so `Cost` is negative and the member
+  cells carry the flipped sign `computeBalances` applies. An importer that
+  refuses a negative refuses the row, which beats silently booking a cost.
+- **An entry nothing can apportion.** Kept, with every member cell zero.
+  Dropping it would lose money somebody typed; apportioning the payers alone
+  would break both the row's zero and the foot. It is already named on the
+  balances tab, out of the same `problems`.
+
+A **removed** member still named on a live entry gets a column, under their
+plain name: without it nothing sums to zero, and "Bruno (removed)" would
+import as a fourth person.
+
 ## D1 schema
 
 The server stores **sealed** ops and nothing else it could read

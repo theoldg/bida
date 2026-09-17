@@ -31,6 +31,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on. In an iOS tab, a card under it holds the link to paste into the home-screen app (`UseInApp`, [ios.md](ios.md#gclaim--have-the-app)) |
 | `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): the drawing of what a scan becomes, who is splitting, and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
 | `/about` | The source link first, then who can edit, whether it works offline, where to complain, and what the server can see. The one screen the app spends on itself, off the quiet line at the foot of the groups list. No pitch: whoever is here already has the app. One client island in an otherwise static page — the whole of "Works offline" (`AboutOffline`, the same `lib/install.ts` state as the nudge on the groups list), because the sentence itself changes once the phone already did it, not just the offer under it. Privacy *shows* one stored row rather than asserting anything, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) and changes in the same commit as that does. The receipt-scan exception is repeated here, but the copy that has to be read is `copy.scan.terms`, on the scan screen itself. The build's version sits in the top bar's far corner as `v0.1.3`, out of the prose entirely, since this is the screen somebody is told to look at ([hosting.md](hosting.md#versions)) |
+| `/g/export?id=` | The group as a spreadsheet, in text, for a browser that cannot hand over a file — `/diag`'s layout, because it is the same act. Reached only from the last rung of `lib/export.ts`; it rebuilds the CSV itself rather than being handed it, since a route cannot carry a file and a readout that empties on reload is the drawer state [ADR-0007](decisions/0007-a-screen-is-a-route.md) removed. Being an ordinary route it can also just be opened, so the sentence over the text asks `fileHandoff()` rather than asserting that this browser can't save one ([below](#getting-a-group-off-the-phone)) |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). Everything else is the waiting screen, and it is in the static export: the wordmark and *Joining…* from first byte, since an invite link is the only way onto this route. Only the body — *finishes by itself once the other phone syncs* — waits for the key, being a promise about a link nothing has read yet. It used to prerender a bare bar and a back arrow, which is what a stranger saw until the bundle landed |
 | `/paste` | **Paste link** with nothing on the clipboard: *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
@@ -350,6 +351,42 @@ screen.
 
 `pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
+
+## Getting a group off the phone
+
+**Export data**, above Forget group in the group menu, hands over one CSV in
+Splitwise's export shape — the only format anything else imports, Tricount
+included, whose import *is* "import from Splitwise". The file is
+`core/export.ts`; `lib/export.ts` is the part with a platform in it.
+
+There is no format question and no JSON. The choice was a dialog for a while
+in the planning and it earned nothing: "CSV or JSON" names two file types
+rather than two things a person wants, and a data dump is what `/diag`
+already is for. `application/json` is also not a shareable file type, so the
+export a person actually wants is the one the share sheet will carry.
+
+**Three rungs, and only *unavailability* descends** (`handoffPlan`, taking its
+facts as arguments so the table can be stated and tested):
+
+| | | When |
+|---|---|---|
+| 1 | `navigator.share` with a file | Wherever `canShare` takes one. The only way out of an iOS home-screen app, and the nicest anywhere: the sheet holds Save to Files, Mail and every messaging app, and it comes back to bida |
+| 2 | `<a download>` | Everywhere except an iOS home-screen app — there a download is not unsupported but *hostile*, replacing the app with a full-screen "Open in …" that has no way back ([ios.md](ios.md#the-problem)). An iOS tab is fine |
+| 3 | `/g/export` | Neither of the above exists |
+
+A cancelled share sheet is **not** a failed one: it throws `AbortError`, means
+"no thanks", and answering it with a fallback screen is the app insisting.
+Only a share that never opened descends, because it leaves the phone exactly
+where an absent sheet would have.
+
+**Nothing says "Saved."** No rung can know: the share sheet doesn't report
+which destination was picked and a download has no completion event. A
+confirmation would be a guess on every platform, so the only outcome with
+anything to add is the one that has a screen.
+
+This narrows the "copying, not `navigator.share`" rule in `useInviteLink` —
+that was about a *link*, where the clipboard is the destination and the sheet
+is a detour. A file has no clipboard.
 
 ## The flight recorder, and `/diag`
 

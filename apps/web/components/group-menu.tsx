@@ -4,8 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
+import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
-import { useInviteLink } from "../lib/hooks";
+import { useInviteLink, type GroupData } from "../lib/hooks";
 import { ConfirmDialog } from "./dialog";
 import { InviteFallback } from "./invite";
 import { MenuButton, type SheetAction } from "./row-menu";
@@ -23,17 +24,38 @@ import { MenuButton, type SheetAction } from "./row-menu";
  * does not wait for a claim: a group this phone never said who it was in is
  * the one it most wants off the list, and forgetting is purely local
  * (`forgetGroup`), so there is nothing an unclaimed phone lacks to do it.
+ *
+ * `data` comes from the screen rather than a hook of this component's own:
+ * exporting needs the whole ledger, `/g` is already holding it, and a second
+ * `useGroupData` here would be a second live subscription to the rows on
+ * screen.
  */
-export function GroupMenu({ groupId }: { groupId: string }) {
+export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData }) {
   const router = useRouter();
   const invite = useInviteLink(groupId);
   const [asking, setAsking] = useState(false);
+
+  /**
+   * Export: build the file, then hand it over by whatever this browser has.
+   *
+   * Nothing is said on success, because nothing here can honestly say what
+   * happened — the share sheet doesn't report which destination was picked and
+   * a download has no completion event. A browser with neither is the only
+   * outcome that has anything to add, and it gets a screen.
+   */
+  async function exportData() {
+    if (!data.group) return;
+    const csv = groupCsv(data);
+    const handoff = await handOffCsv(exportFilename(data.group.name, Date.now()), csv);
+    if (handoff === "unavailable") router.push(route.exportCsv(groupId));
+  }
 
   const actions: SheetAction[] = [
     ...(invite.copy ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }] : []),
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
     { label: copy.rates.title, icon: "fx", onSelect: () => router.push(route.rates(groupId)) },
     { label: copy.group.history, icon: "clock", onSelect: () => router.push(route.history(groupId)) },
+    { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
     { label: copy.members.forget, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ];
 
