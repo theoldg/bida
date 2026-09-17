@@ -13,6 +13,7 @@ import { copy } from "../lib/copy";
 import { arrivalScript } from "../lib/diag";
 import { manifestScript, type WebManifest } from "../lib/install";
 import { CarryToHomeScreen } from "../components/install";
+import { EmbeddedGate } from "../components/embedded";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -91,11 +92,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MeasureViewport />
         <NoLongPress />
         <NoPinchZoom />
-        <RegisterServiceWorker />
-        <StartSync />
-        <CarryToHomeScreen />
-        {/* Every screen, including the two that carry no QueryBoundary. */}
-        <ReadErrorBoundary>{children}</ReadErrorBoundary>
+        {/* An in-app browser gets the way out of it and nothing else — the
+            worker, the sync loop and the carry included, since none of them
+            has anywhere to keep what it does (components/embedded.tsx). */}
+        <EmbeddedGate>
+          <RegisterServiceWorker />
+          <StartSync />
+          <CarryToHomeScreen />
+          {/* Every screen, including the two that carry no QueryBoundary. */}
+          <ReadErrorBoundary>{children}</ReadErrorBoundary>
+        </EmbeddedGate>
       </body>
     </html>
   );

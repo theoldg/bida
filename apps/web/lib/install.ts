@@ -108,7 +108,9 @@ export function iosHomeScreenApp(): boolean {
   return isStandalone() && looksIos(navigator.userAgent, navigator.platform, navigator.maxTouchPoints);
 }
 
-function isStandalone(): boolean {
+/** Running as an installed app rather than in a browser page, on any platform. */
+export function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
   return window.matchMedia("(display-mode: standalone)").matches
     // Safari's own flag, and the only signal iOS gives.
     || (navigator as Navigator & { standalone?: boolean }).standalone === true;

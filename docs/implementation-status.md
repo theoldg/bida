@@ -49,7 +49,10 @@ None of these is started, and the first is not code at all.
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
   the home banner, the claim screen's link to paste, and both halves of the invite the icon is
-  added with. **Works on the owner's iPhone from `/install`** (2026-09-16).
+  added with. An in-app browser is a third storage and is refused outright
+  ([ios.md](ios.md#the-in-app-browser--refused)); **unverified on the phone**,
+  and the case to watch is a false positive, not a miss.
+  **Works on the owner's iPhone from `/install`** (2026-09-16).
   Built since, unverified on the phone: Share from any page (every page's head
   builds the manifest at load from `bida.carry`), and the names coming along
   (the icon claims the member the tab was). The owner's first run carried

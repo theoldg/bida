@@ -356,6 +356,51 @@ report(!oneVisited.some((url) => new URL(url).pathname === "/join")
   && (await namesHeld(onePage))[flatId] === me[flatId],
   "one named group skips the join screen and is already claimed", oneVisited.join(" "));
 
+// ---- the in-app browser --------------------------------------------------
+// Instagram and Messenger open a tapped link in a webview of their own: a
+// storage nothing can get back to, with no Add to Home Screen in it, where
+// joining only buys a second claim later (lib/embedded.ts). So the app refuses
+// to run there — and the refusal has to be worth more than it costs, which is
+// the second half of this section.
+const IN_APP_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15"
+  + " (KHTML, like Gecko) Mobile/15E148 Instagram 339.0.3.12.106";
+const webview = await newPhone(browser, { userAgent: IN_APP_UA, permissions: ["clipboard-read", "clipboard-write"] });
+const webviewPage = await webview.newPage();
+await webviewPage.goto(`${base}/join${fragment}`);
+const refused = await webviewPage.getByText("Open bida in your browser")
+  .waitFor({ timeout: 8000 }).then(() => true, () => false);
+report(refused && await webviewPage.getByText("Joining…").count() === 0,
+  "an in-app browser is turned round rather than joined in");
+report(await webviewPage.getByText("Instagram").count() > 0,
+  "named, so the menu it says to use is one the person can find");
+report(await webviewPage.locator(".escapelink .linkbox .selectable").textContent()
+  .catch(() => null) === `${base}/join${fragment}`,
+  "and handed the link it arrived with, to paste into a real browser");
+// Blocked means blocked: the key must not be saved behind the screen, or the
+// webview holds a group it can never give back.
+report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
+  "nothing is written to a storage nobody can get back to");
+
+// The cost of being wrong. A false positive locks somebody out of the app
+// altogether, so the browsers that look most like a webview are the ones to
+// prove: the home-screen app, whose agent drops `Safari/` exactly as a webview
+// does, and Brave and DuckDuckGo, whose agents are Safari's but for a token.
+const NEAR_MISSES = [
+  ["the home-screen app", `${IPHONE.replace(" Version/17.5", "").replace(" Safari/604.1", "")}`, true],
+  ["Brave", `${IPHONE} Brave/1.67`, false],
+  ["DuckDuckGo", IPHONE.replace(" Safari/604.1", " DuckDuckGo/7 Safari/604.1"), false],
+];
+for (const [name, ua, installed] of NEAR_MISSES) {
+  const near = await iphone({ userAgent: ua });
+  const nearPage = await near.newPage();
+  if (installed) await asInstalledApp(nearPage);
+  await nearPage.goto(`${base}/`);
+  await nearPage.waitForTimeout(600);
+  report(await nearPage.getByText("Open bida in your browser").count() === 0,
+    `${name} is not mistaken for one`);
+  await near.close();
+}
+
 await browser.close();
 close();
 finish();

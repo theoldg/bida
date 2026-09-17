@@ -207,6 +207,22 @@ export const copy = {
     },
   },
 
+  /**
+   * The way out of an in-app browser, which is the whole app in one
+   * (`components/embedded.tsx`). Two sentences and a link: what this place is,
+   * and the two ways out of it — the app's own menu, or the link in a browser.
+   *
+   * It names the app where its webview says so, because "use the menu at the
+   * top" is a different menu in each, and a person who is told which app they
+   * are in stops looking for a bida setting they did the wrong thing to.
+   */
+  embedded: {
+    title: "Open bida in your browser",
+    why: (app: string | undefined) =>
+      `${app ?? "This app"} opens links in its own browser, which can’t keep a group: whatever you do here is lost when it closes.`,
+    how: "Use this screen’s menu to open it in your browser, or copy the link and paste it there.",
+  },
+
   /** The waiting service worker (lib/update.ts). */
   update: {
     title: "A new version is ready",

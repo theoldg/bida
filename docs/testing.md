@@ -408,5 +408,11 @@ this check, so a group whose key just arrived has no ops to draw a row with —
 which is also the slow phone's first launch held still, where the list must
 say it is fetching them rather than that there are none.
 
+**The in-app browser**, last: a webview is turned round rather than joined in,
+named, handed the link it arrived with, and writes nothing. Then the half that
+matters more — the home-screen app, Brave and DuckDuckGo, whose agents are the
+ones a webview's most resembles, each proved *not* refused
+([ios.md](ios.md#the-in-app-browser--refused)).
+
 It needs no server beyond the static export: the join screen's own work is
 `pnpm claim`'s subject, and what this one asserts is which URL each end reaches.
