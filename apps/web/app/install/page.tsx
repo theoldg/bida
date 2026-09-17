@@ -124,9 +124,19 @@ function Tutorial() {
               <AlreadyAdded browser={browser} />
             </section>
             <section className="aboutsect">
-              {/* A recording of Safari, not numbered steps: the share sheet has
-                  moved between iOS versions, and a picture of it settles which
-                  button is meant faster than prose can. */}
+              {/* The three taps in words, then the recording of them. The clip
+                  alone settles which button is meant faster than prose can —
+                  the share sheet has moved between iOS versions — but it is
+                  silent to a screen reader and slow to a glance, so the steps
+                  lead and it confirms them. */}
+              <ol className="installsteps">
+                {page.steps.map((step) => (
+                  <li key={step.text}>
+                    <Icon name={step.icon} size={15} className="stepicon" />
+                    <span>{step.text}</span>
+                  </li>
+                ))}
+              </ol>
               <img className="installclip" src="/media/safari-add-to-home-screen.gif"
                 width={440} height={956} alt={page.clipAlt} />
             </section>

@@ -166,10 +166,14 @@ tell. It carries, in this order:
 2. a quiet line folded on every visit (no card), *Still seeing this after adding bida?*,
    above the clip, where the one who already added it finds it first: the
    tab can't see the app, and the two keep separate group lists from then on.
-3. untitled — a recording of Safari's share sheet, which stops on the Add
-   sheet: it never shows the tap on **Add**, or the icon arriving
-   (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
-   of the precache).
+3. untitled — the three taps in words (`copy.install.page.steps`: Share, Add
+   to Home Screen, Add), each with the glyph iOS draws on that button, then a
+   recording of Safari's share sheet, which stops on the Add sheet: it never
+   shows the tap on **Add**, or the icon arriving (`public/media/`, from
+   `docs/media/safari-add-to-home-screen.mp4`; left out of the precache). The
+   clip settles which button is meant faster than prose can — the sheet has
+   moved between iOS versions — but it is silent to a screen reader and slow
+   to a glance, so the steps lead and it confirms them.
 
 Reached from the banner. Back is a plain back, and the only exit: the way
 forward is out of the browser.

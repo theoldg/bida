@@ -195,6 +195,20 @@ export const copy = {
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       /**
+       * The same walk the recording shows, in words above it. The clip settles
+       * which button is meant faster than prose can, but it cannot be read in
+       * a glance, cannot be searched, and says nothing at all to a screen
+       * reader — so the steps lead and the clip confirms them.
+       *
+       * Three, because that is how many taps it is. The icons are the ones iOS
+       * draws on those buttons, so the words and the phone agree.
+       */
+      steps: [
+        { icon: "share", text: "Tap the Share button in the toolbar." },
+        { icon: "plus", text: "Scroll down the sheet and tap Add to Home Screen." },
+        { icon: "check", text: "Tap Add. bida is on your home screen." },
+      ],
+      /**
        * Under the recording, for whoever installed and still meets the banner:
        * a tab cannot see the home-screen app, and the two keep their storage
        * apart (docs/ios.md). The owner's wording.
