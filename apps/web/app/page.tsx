@@ -6,17 +6,17 @@ import { useState, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
-import { ConfirmDialog, Dialog } from "../components/dialog";
+import { ConfirmDialog } from "../components/dialog";
 import { InstallBanner, InstallNudge } from "../components/install";
 import { InviteFallback } from "../components/invite";
+import { usePasteLink } from "../components/paste-link";
 import { useHold, useLongPressMenu } from "../components/long-press";
 import { ThemeToggle } from "../components/theme-toggle";
 import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
 import { forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
-import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
-import { notePasted } from "../lib/failed-link";
+import { route } from "../lib/group-link";
 import { iosHomeScreenApp } from "../lib/install";
 import { useResumeLastGroup } from "../lib/launch";
 import { useGroupSummaries, useInviteLink, type GroupSummary } from "../lib/hooks";
@@ -145,38 +145,13 @@ const never = () => () => {};
  * The way into a group on an iOS home-screen app, which a tapped invite never
  * reaches (`iosHomeScreenApp`). Everywhere else the link itself is the door,
  * so this draws nothing. Outlined, like "Quick split": neither is the primary.
- *
- * What was pasted decides where it goes (`readPastedLink`): a link of ours
- * joins; one for another server says so, naming it, since "Bad link" would
- * send the person back for the same link; one with no password opens the
- * group's screen, which is the group if this phone holds it and "missing its
- * password" if not; anything else lands on the join screen's "Bad link". Those
- * two show what was pasted (`lib/failed-link.ts`). A refused read is
- * the person dismissing iOS's paste prompt — a no, not an error.
+ * What pasting does is `usePasteLink`'s.
  */
 function PasteLinkTile() {
-  const router = useRouter();
   // Standalone or not is fixed for the life of the page; nothing to subscribe to.
   const shown = useSyncExternalStore(never, iosHomeScreenApp, () => false);
-  const [elsewhere, setElsewhere] = useState<string>();
+  const { paste, dialog } = usePasteLink();
   if (!shown) return null;
-
-  async function paste() {
-    let text: string;
-    try {
-      text = await navigator.clipboard.readText();
-    } catch {
-      return;
-    }
-    const pasted = readPastedLink(text, window.location.origin);
-    if (pasted.kind === "elsewhere") return setElsewhere(pasted.host);
-    // A document load, not `router.push`: the router can drop the fragment,
-    // which is the password (docs/ios.md#gotchas).
-    if (pasted.kind === "join") return location.assign(formatJoinLink(pasted.link, ""));
-    const to = pasted.kind === "keyless" ? route.group(pasted.groupId) : route.join();
-    notePasted(text, to);
-    router.push(to);
-  }
 
   return (
     <>
@@ -184,14 +159,7 @@ function PasteLinkTile() {
         <Icon name="link" size={26} />
         {copy.groups.pasteLink}
       </button>
-      {elsewhere ? (
-        <Dialog title={copy.groups.elsewhere.title} onClose={() => setElsewhere(undefined)}>
-          <div className="dbody"><p>{copy.groups.elsewhere.body(elsewhere)}</p></div>
-          <div className="drow">
-            <button className="btn btn-p" onClick={() => setElsewhere(undefined)}>{copy.act.close}</button>
-          </div>
-        </Dialog>
-      ) : null}
+      {dialog}
     </>
   );
 }

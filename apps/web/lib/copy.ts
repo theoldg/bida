@@ -362,6 +362,14 @@ export const copy = {
     },
   },
 
+  /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
+  paste: {
+    title: "Paste link",
+    empty: "Nothing to paste",
+    body: "Copy the invite link from the chat it came in, then come back and paste it.",
+    still: "Still nothing. Copy the link first.",
+  },
+
   claim: {
     title: "Which one is you?",
     addPlaceholder: "Add your name",

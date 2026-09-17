@@ -76,13 +76,14 @@ export function isKeylessFragment(hash: string): boolean {
 
 /**
  * What pasting found: a link to join, one for another server, one that names a
- * group but carries no password, or nothing.
+ * group but carries no password, something that is no link, or nothing at all.
  */
 export type PastedLink =
   | { kind: "join"; link: JoinLink }
   | { kind: "elsewhere"; host: string }
   | { kind: "keyless"; groupId: string }
-  | { kind: "none" };
+  | { kind: "none" }
+  | { kind: "empty" };
 
 /**
  * Read the clipboard's text as a join link.
@@ -100,6 +101,8 @@ export type PastedLink =
  * fix is the same invite link either way, so the server is not the news.
  */
 export function readPastedLink(text: string, origin: string): PastedLink {
+  // An empty clipboard, or one holding a picture: iOS reads that as "".
+  if (!text.trim()) return { kind: "empty" };
   let url: URL;
   try {
     url = new URL(text.trim());
@@ -157,6 +160,8 @@ export const route = {
    */
   install: (links: readonly CarriedGroup[] = []) =>
     `/install${links.length ? `#${formatInvites(links)}` : ""}`,
+  /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
+  paste: () => "/paste",
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>

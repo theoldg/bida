@@ -63,6 +63,11 @@ describe("a join link pasted from the clipboard", () => {
       .toEqual({ kind: "join", link: { groupId: "g1", secret: "s3cr3t" } });
   });
 
+  it("tells an empty clipboard apart from one holding something else", () => {
+    for (const text of ["", "  \n"]) expect(readPastedLink(text, origin)).toEqual({ kind: "empty" });
+    expect(readPastedLink("hello", origin)).toEqual({ kind: "none" });
+  });
+
   it("names the server a link from another deployment belongs to", () => {
     expect(readPastedLink("https://dev.bida.app/join#g1.s3cr3t", origin))
       .toEqual({ kind: "elsewhere", host: "dev.bida.app" });
@@ -81,7 +86,7 @@ describe("a join link pasted from the clipboard", () => {
     for (const text of [
       "g1.s3cr3t", "https://bida.app/g", "https://bida.app/g?id=g%201", "https://bida.app/gx?id=g1",
       "https://bida.app/join#", "https://bida.app/join#g1)",
-      "https://dev.bida.app/about", "dinner was 42 euros", "",
+      "https://dev.bida.app/about", "dinner was 42 euros",
     ]) expect(readPastedLink(text, origin)).toEqual({ kind: "none" });
   });
 });

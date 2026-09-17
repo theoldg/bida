@@ -1231,6 +1231,9 @@ dialog.scrim::backdrop { background: transparent }
 .keyless h2 { font-size: 16px; letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
   text-wrap: balance }
 .keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted) }
+/* `/paste`'s one act, under its sentence rather than in a foot: the screen is
+   that sentence and this button, nothing to pin it below. */
+.keyless .pasteagain { margin-top: 22px; min-width: 12em }
 /* The link a failed screen is about: wraps anywhere, since a link has no spaces. */
 .failedlink { width: 100%; max-width: 30em; margin: 26px auto 0; text-align: left }
 .failedlink span { display: block; margin-bottom: 5px; font-size: 11px; color: var(--muted) }

@@ -33,7 +33,8 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/about` | The source link first, then who can edit, whether it works offline, where to complain, and what the server can see. The one screen the app spends on itself, off the quiet line at the foot of the groups list. No pitch: whoever is here already has the app. One client island in an otherwise static page — the whole of "Works offline" (`AboutOffline`, the same `lib/install.ts` state as the nudge on the groups list), because the sentence itself changes once the phone already did it, not just the offer under it. Privacy *shows* one stored row rather than asserting anything, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) and changes in the same commit as that does. The receipt-scan exception is repeated here, but the copy that has to be read is `copy.scan.terms`, on the scan screen itself |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then opens the group. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). |
-| `/install` | iOS only: why the home-screen app, and how. Also where the icon first opens, taking in the groups and names it carries. Off the iOS tab's banner, atop the groups list or at the foot of a group's ledger |
+| `/paste` | **Paste link** with nothing on the clipboard: *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
+| `/install` | iOS only: why the home-screen app, and how. Also where the icon first opens, taking in the groups and names it carries. Off the iOS tab's banner, atop the groups list or a group's ledger |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
 (`lib/hooks.ts`), which sends a phone that hasn't answered "who are you" to
@@ -389,8 +390,9 @@ squares — with **Paste link** a third on an iOS home-screen app, which iOS
 never hands a tapped invite (it opens in Safari, whose storage is not the
 app's), so the link has to come in by clipboard; only a `/join` URL from this
 origin joins, and one from another deployment says which server it belongs to
-rather than "Bad link", and one with no password, from anywhere, opens that
-group's screen (`readPastedLink`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
+rather than "Bad link", one with no password, from anywhere, opens that
+group's screen, and an empty clipboard goes to `/paste` (`readPastedLink`,
+`usePasteLink`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;
 bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
 once a long one would otherwise scroll it out of reach), with nothing under them — **About bida**
