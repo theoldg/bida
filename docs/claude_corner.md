@@ -63,6 +63,9 @@ do any of that.
 *One line, dated, newest first. At ten, drop the oldest rather than grow the
 file.*
 
+- *2026-09-17* — "It's a title, and the first thing a new joiner reads" named
+  the screen: the same question is asked on `/new` too, from the bar. The
+  reason attached to an ask is what says which of two copies to touch.
 - *2026-09-17* — Audit the artifact, not the doc describing it. The prose said
   the clip ran "down to Add"; the clip stops one tap short. Only the file is
   what the user meets, and the two drift apart with nothing to catch it.
@@ -87,4 +90,3 @@ file.*
 - Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
 - A screenshot of copy plus "replace with the button from X" means reuse X's component, not a lookalike.
 - Asked to "propose, write it here first", give options in chat and edit nothing. The owner often answers with a blend of two; ship that exact text.
-- "Less prominent, but it should still fold" arrives as two messages. The second is a constraint on the first — keep the behaviour, strip only the chrome.

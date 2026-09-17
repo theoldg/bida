@@ -183,8 +183,10 @@ identical. Two states cover the gap, and neither is a spinner:
 
 **One face: JetBrains Mono**, 400–700, loaded once by `next/font` and
 self-hosted. `--f-display` and `--f-body` are aliases of `--f-mono`, kept so the
-CSS still speaks in roles. Hierarchy is weight and tracking only: headings 700
-at `-.03em`, body 400/500 at 14px, labels and eyebrows uppercase at `.12em`.
+CSS still speaks in roles. Hierarchy is weight and tracking, with size the last
+step: headings 700 at `-.03em` — and a screen whose own title carries it rather
+than the bar (`.question`) sets that title above the bar's 17px, centred — body
+400/500 at 14px, labels and eyebrows uppercase at `.12em`.
 
 Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
 align down a column even though everything is already monospaced. Body sets

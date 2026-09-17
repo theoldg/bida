@@ -240,8 +240,9 @@ confers nothing without the secret.
   below. `pnpm claim` holds all of it ([testing.md](testing.md)).
 - **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one — including a group of one,
-  (on `/g/claim` the bar says "Join {group}" and the question heads the body;
-  `/new` still asks it in the bar),
+  (on `/g/claim` the bar says "Join {group}" and the question is the body's
+  title — `.question`, centred and a size above the bar, because it is the
+  first thing a new joiner reads; `/new` still asks it in the bar),
   because the answer is written into every op and a screen that sometimes skips
   the question is a screen you cannot learn. Picking is never a write — the
   button is, whether it claims an identity (ADR-0003) or creates the group with

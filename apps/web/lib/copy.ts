@@ -372,7 +372,7 @@ export const copy = {
 
   claim: {
     title: "Which one are you?",
-    /** `/g/claim`'s bar names the group; the question is the body's first line. */
+    /** `/g/claim`'s bar names the group; the question is the body's title. */
     join: (group: string) => `Join ${group}`,
     addPlaceholder: "Add your name",
     continueAs: (name: string) => `Continue as ${name}`,
