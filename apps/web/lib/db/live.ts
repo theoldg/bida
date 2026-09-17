@@ -43,6 +43,34 @@ import { db } from "./dexie";
  * subscription joins the same queue, so the last probe opens a fresh
  * connection instead, and every read remembers its last answer so that a
  * screen opened during the wait shows that rather than skeleton rows.
+ *
+ * ## A hidden page reads nothing
+ *
+ * The mirror of `whenVisible` (./visible.ts), and the other half of the same
+ * rule: **no copy of the app touches IndexedDB while it is hidden.** That file
+ * states it for writes. Reads need it just as much, and are harder to see,
+ * because nothing in this app asks for them — Dexie does.
+ *
+ * Every write broadcasts itself to every other copy on the origin (dexie.js,
+ * `BroadcastChannel('x-storagemutated-1')` -> `propagateLocally` ->
+ * `signalSubscribersNow`), and each one re-runs the queriers that observed the
+ * tables that changed. So a *backgrounded* copy opens a readonly transaction
+ * across half the schema every time the copy in front of you saves anything.
+ *
+ * On Android that is the whole bug, and it is not a race: a tab and the
+ * installed app cannot both be in the foreground, so one of them is always
+ * freezable, and the one in front pokes it on every write. Freeze it mid-read
+ * and its readonly locks are held forever; the next `appendOps` — readwrite on
+ * nine stores — queues behind them and never returns.
+ *
+ * Hence the gate in `timedQuerier`: while hidden, a read answers from
+ * `remembered` and opens no transaction at all. Dexie then sees a querier that
+ * observed nothing and stops signalling it, which is the point — coming back
+ * to the front bumps `epoch` and every read starts again for real.
+ *
+ * The watchdog below is held shut with it. A hidden page has nobody waiting on
+ * it, and left running it would `reopen()` the connection — a write of sorts —
+ * from exactly the page that must not be doing anything.
  */
 
 /** How long a read may return nothing before we assume it never will. */
@@ -63,9 +91,20 @@ interface Health {
   blocked: boolean;
   /** How many mounted reads have given up. Drives the notice — see `useStalled`. */
   stalls: number;
+  /**
+   * Whether this page is in the background, where it reads nothing — see the
+   * header. Mirrored into the store rather than read off `document` in render
+   * so that the watchdog re-evaluates when it changes.
+   */
+  hidden: boolean;
 }
 
-const health: Health = { epoch: 0, blocked: false, stalls: 0 };
+/** Live, because a querier runs long after the render that built it. */
+function isHidden(): boolean {
+  return typeof document !== "undefined" && document.visibilityState === "hidden";
+}
+
+const health: Health = { epoch: 0, blocked: false, stalls: 0, hidden: isHidden() };
 const listeners = new Set<() => void>();
 
 function announce(): void {
@@ -168,7 +207,12 @@ function arm(): void {
   // of skeleton.
   document.addEventListener("visibilitychange", () => {
     mark(`app.${document.visibilityState}`);
-    if (document.visibilityState === "visible") bump();
+    health.hidden = isHidden();
+    // Going to the back only announces: the reads stop by themselves, in the
+    // querier. Coming to the front is what starts them again, and `bump`
+    // announces for both.
+    if (!health.hidden) bump();
+    else announce();
   });
 }
 
@@ -211,6 +255,7 @@ export function useLive<T>(
 
   const epoch = useSyncExternalStore(subscribe, () => health.epoch, () => 0);
   const blocked = useSyncExternalStore(subscribe, () => health.blocked, () => false);
+  const hidden = useSyncExternalStore(subscribe, () => health.hidden, () => false);
 
   // The caller's deps as one comparable value, so `probe` below can tell "the
   // same read is still not answering" from "this is a different read now".
@@ -231,7 +276,15 @@ export function useLive<T>(
   // querier of its own accord is neither. A report showed a read restart with
   // no watchdog mark before it and no way to tell which of the three it was.
   const label = `${name}${n > 0 ? ` retry#${n}` : ""}${epoch > 0 ? ` epoch#${epoch}` : ""}`;
-  const timedQuerier = useMemo(() => async () => {
+  const memo = `${name} ${key}`;
+  const timedQuerier = useMemo(() => async (): Promise<T | undefined> => {
+    // A hidden page opens no transaction — see "A hidden page reads nothing".
+    // Checked here rather than in render because Dexie runs this whenever
+    // another copy of the app writes, which is exactly when we are hidden.
+    if (isHidden()) {
+      mark("live.skipped", label);
+      return remembered.get(memo) as T | undefined;
+    }
     const done = started("live", label);
     try {
       const result = await querier();
@@ -244,17 +297,18 @@ export function useLive<T>(
     // `querier` is a fresh closure every render and is deliberately not a
     // dependency — `useLiveQuery` re-subscribes on `deps`, and so does this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, epoch, n, label]);
+  }, [key, epoch, n, label, memo]);
 
   const value = useLiveQuery(timedQuerier, [key, epoch, n]);
   // `waiting` is about the live answer only: a remembered one on screen is
   // still a read that hasn't come back, and the watchdog and the notice say so.
   const waiting = value === undefined;
-  const memo = `${name} ${key}`;
   if (!waiting) remembered.set(memo, value);
 
   useEffect(() => {
-    if (!waiting || n >= PROBES) return;
+    // Not while hidden: nobody is waiting on this screen, and the last probe
+    // reopens the connection, which a background page must not do.
+    if (!waiting || hidden || n >= PROBES) return;
     const timer = setTimeout(() => {
       mark("live.retry", `${name} after ${PROBE_MS}ms with nothing`);
       // The last probe is the new connection; see `reopen`.
@@ -262,12 +316,12 @@ export function useLive<T>(
       setProbe({ key, n: n + 1 });
     }, PROBE_MS);
     return () => clearTimeout(timer);
-  }, [waiting, key, n, name]);
+  }, [waiting, hidden, key, n, name]);
 
   // Out of probes, or blocked, which no number of probes can clear. The last
   // subscription is left running either way: if it does eventually answer,
   // `waiting` goes false and the notice takes itself down.
-  const stalled = waiting && (blocked || n >= PROBES);
+  const stalled = waiting && !hidden && (blocked || n >= PROBES);
   useEffect(() => {
     if (!stalled) return;
     mark("live.stalled", name);
@@ -301,6 +355,7 @@ export function retryLive(): void {
  */
 export const testing = {
   health,
+  isHidden,
   arm,
   reopen,
   remembered,
@@ -310,6 +365,7 @@ export const testing = {
     health.epoch = 0;
     health.blocked = false;
     health.stalls = 0;
+    health.hidden = isHidden();
     listeners.clear();
     remembered.clear();
     lastReopen = -Infinity;

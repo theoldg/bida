@@ -175,3 +175,83 @@ describe("the health record behind useLive", () => {
     expect(testing.health.stalls).toBe(0);
   });
 });
+
+/**
+ * The second Dexie behaviour this file pins, and the reason a hidden page must
+ * read nothing (lib/db/live.ts, "A hidden page reads nothing").
+ *
+ * A write signals every querier that observed the tables it touched — in this
+ * realm directly, and in every other copy of the app on the origin over
+ * `BroadcastChannel('x-storagemutated-1')`. That is how the copy in front of
+ * you makes a *backgrounded* copy open a transaction, which is the one thing a
+ * freezable page must never be doing.
+ *
+ * If a Dexie upgrade ever stops re-running queriers on a remote write, the
+ * gate in `timedQuerier` is no longer load-bearing and these say so.
+ */
+describe("what a write does to a querier that is not on screen", () => {
+  it("re-runs one that read the table, which is the poke we must not answer", async () => {
+    const local = new Dexie("live-poke");
+    local.version(1).stores({ rows: "id" });
+    await local.open();
+
+    let runs = 0;
+    const sub = liveQuery(async () => {
+      runs += 1;
+      return local.table("rows").toArray();
+    }).subscribe(() => {}, () => {});
+
+    await settle();
+    expect(runs).toBe(1);
+
+    // Someone else's write. The querier runs again, opening a transaction —
+    // on a frozen page that is where the readonly lock is stranded.
+    await local.table("rows").put({ id: "a" });
+    await settle();
+    expect(runs).toBe(2);
+
+    sub.unsubscribe();
+    local.close();
+  });
+
+  it("leaves one that touched no table alone, which is what the gate buys", async () => {
+    const local = new Dexie("live-gate");
+    local.version(1).stores({ rows: "id" });
+    await local.open();
+
+    // What `timedQuerier` becomes while hidden: an answer from `remembered`,
+    // with no transaction behind it.
+    let runs = 0;
+    const sub = liveQuery(async () => {
+      runs += 1;
+      return ["remembered"];
+    }).subscribe(() => {}, () => {});
+
+    await settle();
+    expect(runs).toBe(1);
+
+    await local.table("rows").put({ id: "a" });
+    await settle();
+    // Observed nothing, so signalled about nothing. Coming back to the front
+    // bumps `epoch`, and that is what starts the real read again.
+    expect(runs).toBe(1);
+
+    sub.unsubscribe();
+    local.close();
+  });
+});
+
+describe("the hidden gate", () => {
+  beforeEach(() => testing.reset());
+
+  it("reads the live visibility, not the one the render closed over", () => {
+    expect(testing.isHidden()).toBe(false); // no document in node
+  });
+
+  it("holds the watchdog shut, so a background page never reopens", () => {
+    // `stalled` is `waiting && !hidden && …`; the health record is what the
+    // hook reads it from, and it starts from the document.
+    expect(testing.health.hidden).toBe(false);
+    expect(testing.health.stalls).toBe(0);
+  });
+});

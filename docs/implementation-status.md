@@ -45,10 +45,15 @@ None of these is started, and the first is not code at all.
   hidden `/join`; it now waits for the front like the sync commit
   (`lib/db/visible.ts`), and `/diag` has a `stores:` line so the next lock is
   named rather than cross-read
-  ([frontend.md](frontend.md#a-live-read-can-die)). **Next: whether it happens
-  again**, and one loose end the Brave report left — its reads restarted with
-  no `live.retry` before them, so either the watchdog did not fire or Dexie
-  re-ran the querier itself; the labels now say which.
+  ([frontend.md](frontend.md#a-live-read-can-die)). The Brave report's loose end
+  — reads restarting with no `live.retry` before them — was **Dexie re-running
+  the querier itself**, and it named the third case: a write broadcasts to every
+  copy on the origin, so the copy in front pokes a *backgrounded* one into
+  opening a readonly transaction on every save. A tab beside an installed
+  Android app hangs reliably on that, which is how it was reported
+  (2026-09-17). A hidden page now reads nothing either, not just writes nothing.
+  **Next: whether it happens again** — this is the first of the three fixes with
+  a repro behind it rather than a single report.
 - **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,

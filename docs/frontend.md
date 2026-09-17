@@ -306,12 +306,32 @@ every list and group screen reads `device` and nothing else was locked.
 `/diag`'s `stores:` line says which answer, so the next one is a line rather
 than a cross-reading.
 
-No page can break another's lock, so three things limit it. **This copy opens
-no write while hidden** — `whenVisible` in `lib/db/visible.ts`, which the sync
-commit already used and `updateDevice` did not, so it cannot be the copy frozen
-holding one. What must *not* wait is a write holding something that exists
-nowhere else: `saveGroupKey` stores an invite's secret, and a tab killed while
-parked would lose the group. `useLive` remembers each read's last answer by
+No page can break another's lock, so three things limit it. **A hidden copy
+touches the database at all** — neither half, because either one frozen
+mid-transaction strands a lock the whole origin then queues behind.
+
+*Writes* wait for the front: `whenVisible` in `lib/db/visible.ts`, which the
+sync commit already used and `updateDevice` did not. What must *not* wait is a
+write holding something that exists nowhere else: `saveGroupKey` stores an
+invite's secret, and a tab killed while parked would lose the group.
+
+*Reads* answer from memory: the gate in `useLive`'s querier. This half is the
+one nothing in the app asks for, because **Dexie asks for it**. Every write
+broadcasts itself to every other copy on the origin
+(`BroadcastChannel('x-storagemutated-1')` → `propagateLocally` →
+`signalSubscribersNow`) and each re-runs the queriers that read the tables that
+moved — so the copy in front of you makes a *backgrounded* copy open a readonly
+transaction across half the schema every time you save. On Android that is not
+a race but a certainty: a tab and the installed app cannot both be in the
+foreground, so one is always freezable and the other pokes it on every write,
+and the next `appendOps` queues behind readonly locks nobody will ever release.
+A hidden querier therefore returns its `remembered` answer and opens nothing;
+Dexie sees a querier that observed no table, stops signalling it, and coming
+back to the front bumps `epoch` and starts every read again for real. The
+watchdog is held shut with it — a background page has nobody waiting on it, and
+its last probe would `reopen()` the connection.
+
+`useLive` remembers each read's last answer by
 name and deps for the life of the page, so a screen opened during the wait
 shows that instead of skeleton rows — while still counting as waiting, so the
 notice stands. And the last probe, and the notice's button, open a fresh

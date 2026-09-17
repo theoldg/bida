@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — The fix the whole internet repeats was wrong for this bug, and
+  the owner's throwaway repro found the right one. Weigh the report above the
+  received answer.
 - *2026-09-17* — "Eleven authorities, seven pieces of state" counted a symptom
   and read as a verdict; three were real. Check your own premise before the
   owner has to.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — "It's a title, and the first thing a new joiner reads" named
   the screen: the same question is asked on `/new` too. The reason attached to
   an ask says which of two copies to touch.
-- *2026-09-17* — Audit the artifact, not the doc describing it. The prose said
-  the clip ran "down to Add"; it stops a tap short. The file is what the user
-  meets, and the two drift apart unwatched.
