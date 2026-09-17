@@ -257,8 +257,9 @@ export const copy = {
    */
   about: {
     title: "About bida",
-    /** Under everything else. The number beside it is the build's, not copy's
-     *  (lib/version.ts): what a person reads here is the word. */
+    /** Beside the source link, atop the screen. The number after it is the
+     *  build's, not copy's (lib/version.ts): what a person reads here is the
+     *  word. */
     version: "Version",
     noAccounts: {
       title: "No account",

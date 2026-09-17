@@ -462,9 +462,13 @@ a { color: inherit; text-decoration: none }
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
-/* The build's number, under everything (app/about/page.tsx). Sized and coloured
-   below the quietest claim on the screen: it is a footnote for the two occasions
-   it matters, not a fifth thing to read. */
+/* The source link and the build's number on one line (app/about/page.tsx),
+   baselines aligned so the number reads as the link's annotation rather than a
+   second link. It wraps under on a narrow phone rather than crushing either. */
+.aboutsrc { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px }
+/* The number itself. Sized and coloured below the quietest claim on the screen:
+   it is a footnote for the two occasions it matters, not a fifth thing to read,
+   and beside a link it has to stay the thing you don't tap. */
 .aboutver { font-size: 11px; letter-spacing: .04em; color: var(--muted) }
 
 /* The last row of a list of people *is* the field that adds the next one, and

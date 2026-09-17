@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — A rejected tool call is not a waiver. The interrupt was about
+  which page I was looking for, not about the setup I had just skipped to be
+  agreeable. Ask which part they meant.
 - *2026-09-17* — Four theories about what the router would do; one browser
   probe settled it. Measure the framework rather than reasoning about it.
 - *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-16* — "hands off" was the whole spec for a feature that insults
   people: build it and let the owner nudge it rather than ask where the line
   is. Where one was needed, the code was its place.
-- *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
-  asked what that cost. The tools you type every day are the last place anyone
-  looks and the cheapest place to win.
