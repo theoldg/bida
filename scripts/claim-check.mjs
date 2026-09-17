@@ -233,6 +233,35 @@ await page.goto(`${base}/join#${new URL(link).hash.slice(1)}`);
 const reopened = await arrived();
 report(reopened, "re-opening the invite link opens the group, not the question");
 
+// ---- and what the link leaves under the group --------------------------
+// A link is tapped in another app, so the browser it opens carries one history
+// entry: a group that took that entry for itself had nothing underneath, and
+// the device's back button left for the chat rather than climbing this app.
+// `/join` gives the entry to the list and pushes the group onto it
+// (apps/web/lib/launch.ts).
+await page.waitForSelector(".bottomnav a");
+// The entry directly under this one, not the whole stack: a page that has
+// walked around first brings its own, where a tapped link brings none.
+report(await page.evaluate(() => {
+  const list = navigation.entries();
+  const here = navigation.currentEntry.index;
+  return here > 0 && new URL(list[here].url).pathname === "/g"
+    && new URL(list[here - 1].url).pathname === "/";
+}), "and leaves the groups list under it, for the device's back button to climb to");
+
+// The same press from the app's own arrow, which is the bug this pair was
+// written for: the document loaded on `/join`, so the list had never drawn,
+// and its first arrival was read as a launch — the app walked straight back
+// into the group it had just been asked to leave.
+await page.locator(".iconbtn[aria-label='Back']").first().click();
+await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+await page.waitForTimeout(600);
+report(new URL(page.url()).pathname === "/",
+  "backing out of a group joined by link stays on the list");
+
+// Back in, so what follows is about launching rather than about that press.
+await page.goto(`${base}/g?id=${g}`);
+
 // And launching the app puts you back where you were, rather than on a list
 // with one thing on it (apps/web/lib/launch.ts). Which group that is, `/g`
 // records in an effect once it has drawn — so the launch waits for the write,

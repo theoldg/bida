@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resumeGroupId } from "./launch";
+import { resumeGroupId, startedOnList } from "./launch";
 
 const GROUP = { id: "g1" };
 
@@ -39,5 +39,26 @@ describe("resumeGroupId", () => {
 
   it("never opens a group other than the one remembered", () => {
     expect(resumeGroupId({ lastOpenedGroupId: "g1" }, { id: "g2" })).toBeUndefined();
+  });
+});
+
+describe("startedOnList", () => {
+  it("is the list when that is the address the document loaded at", () => {
+    expect(startedOnList("https://bida.app/")).toBe(true);
+    expect(startedOnList("https://bida.app/index.html")).toBe(true);
+  });
+
+  it("is not, for a copy of the app that started on a link", () => {
+    // The bug this exists for: the document loads on `/join`, the group opens
+    // without the list ever being drawn, and the first press of Back was read
+    // as a launch — so the app walked straight back into the group.
+    expect(startedOnList("https://bida.app/join#g1.secret")).toBe(false);
+    expect(startedOnList("https://bida.app/g?id=g1")).toBe(false);
+    expect(startedOnList("https://bida.app/install#g1.secret")).toBe(false);
+  });
+
+  it("takes an address it cannot read for the list, as before", () => {
+    expect(startedOnList(undefined)).toBe(true);
+    expect(startedOnList("")).toBe(true);
   });
 });

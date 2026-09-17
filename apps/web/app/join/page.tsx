@@ -9,6 +9,7 @@ import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
 import { useSyncHealth } from "../../lib/hooks";
+import { handOverToGroup } from "../../lib/launch";
 import { copy } from "../../lib/copy";
 import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
 
@@ -25,7 +26,14 @@ import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
  * (from this attempt or a later background retry), it moves on by itself —
  * nobody has to be told to reopen the link.
  *
- * Where it moves on *to* is the group itself. A first arrival still ends on
+ * Where it moves on *to* is the group itself, by way of the groups list: this
+ * screen's own history entry goes to the list, and the group is pushed on top
+ * of it (`handOverToGroup`). A link tapped in a chat opens a browser on a
+ * history one entry deep, so a group that took that entry for itself had
+ * nothing underneath — and the device's back button left for the chat rather
+ * than climbing the app, which is what it does everywhere else.
+ *
+ * A first arrival still ends on
  * "which one are you?", but it is `useClaimGate` that sends it there — one
  * place decides whether this phone has said who it is, and this screen is not
  * a second one. Re-opening a link you have already accepted used to reopen
@@ -95,7 +103,9 @@ function JoinScreen() {
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
 
   useEffect(() => {
-    if (link && group) router.replace(route.group(link.groupId));
+    if (!link || !group) return;
+    handOverToGroup(link.groupId);
+    router.replace(route.groups());
   }, [link, group, router]);
 
   if (link === undefined) return <Blank back={route.groups()} />;

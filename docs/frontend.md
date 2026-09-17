@@ -32,7 +32,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): the drawing of what a scan becomes, who is splitting, and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
 | `/about` | The source link first, then who can edit, whether it works offline, where to complain, and what the server can see. The one screen the app spends on itself, off the quiet line at the foot of the groups list. No pitch: whoever is here already has the app. One client island in an otherwise static page — the whole of "Works offline" (`AboutOffline`, the same `lib/install.ts` state as the nudge on the groups list), because the sentence itself changes once the phone already did it, not just the offer under it. Privacy *shows* one stored row rather than asserting anything, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) and changes in the same commit as that does. The receipt-scan exception is repeated here, but the copy that has to be read is `copy.scan.terms`, on the scan screen itself. The build's version is the last line on it, quiet under the four claims, since this is the screen somebody is told to look at ([hosting.md](hosting.md#versions)) |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
-| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then opens the group. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). |
+| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). |
 | `/paste` | **Paste link** with nothing on the clipboard: *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
 | `/install` | iOS only: why the home-screen app, and how. Also where the icon first opens, taking in the groups and names it carries. Off the iOS tab's banner, atop the groups list or a group's ledger |
 
@@ -98,8 +98,10 @@ confers nothing without the secret.
   everyone is in one group at a time, and the list was a screen passed through
   on the way to it. A *launch* and not every arrival: the back arrow out of a
   group must not be turned around, so the resume happens once per running copy
-  of the app (a module flag) and only on a fresh `navigate` — never on a reload
-  or a back/forward traversal. A group forgotten, archived or gone stays on the
+  of the app (a module flag), only on a fresh `navigate` — never on a reload or
+  a back/forward traversal — and only where the document itself loaded on `/`
+  (`startedOnList`): one that loaded on a link has spent its launch on the link,
+  and the first press of Back onto the list is a press, not a launch. A group forgotten, archived or gone stays on the
   list, and so does one you backed out of: `/` records itself as this phone's
   place (`leftOnList`, cleared by the next `setLastOpenedGroup`), so a launch
   reopens whichever of list and group was last. `resumeGroupId` is that
@@ -591,6 +593,11 @@ so the static export ships the full line and the browser narrows it.
   the top of the screen but laid out a status bar shorter (WebKit bug 301108):
   a strip at the bottom no CSS or JS reaches, and a system blur over the top
   bar. `"default"` puts the page below the bar and avoids both.
+- **Two navigations asked for in one tick are folded into the last one.** A
+  screen that wants to both give its history entry away and push another on top
+  cannot: `router.replace` then `router.push` leaves only the push, whatever it
+  is deferred by. It takes two screens, one commit each — which is why `/join`
+  replaces itself with the list and the list does the pushing.
 - **iOS never sends `contextmenu` for a touch hold**, in any browser — only
   Android and a right click do. `useHold` (`components/long-press.tsx`) times
   the hold from pointer events and answers whichever comes first; the finger's

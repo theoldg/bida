@@ -69,6 +69,8 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — Four theories about what the router would do; one browser
+  probe settled it. Measure the framework rather than reasoning about it.
 - *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
   One function didn't. A doc asserting an invariant is a claim, not a check —
   go and read what enforces it.
@@ -96,4 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
   asked what that cost. The tools you type every day are the last place anyone
   looks and the cheapest place to win.
-- Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.

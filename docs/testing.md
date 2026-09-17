@@ -320,10 +320,15 @@ or come back early, because typing ended the flash.
 
 It ends on the other half of that question: a phone that has answered it is
 never asked again. The invite link is copied out of People and opened a second
-time — it must land in the group, not back on the picker — and the app is
-launched, which reopens the group last open, while backing out of that group
-must leave the list alone — and must be remembered, so the launch after it
-lands on the list until the group is opened again (`apps/web/lib/launch.ts`).
+time — it must land in the group, not back on the picker, with the groups list
+left in the history entry under it, so the device's back button climbs the app
+rather than leaving for wherever the link was tapped. Backing out of *that*
+group is the press this pair was written for: a document that loaded on `/join`
+never drew the list, and its first arrival there was read as a launch, so the
+app walked straight back into the group. Then the app is launched, which
+reopens the group last open, while backing out of that one must leave the list
+alone — and must be remembered, so the launch after it lands on the list until
+the group is opened again (`apps/web/lib/launch.ts`).
 
 ## `pnpm keyboard` — the act under the add row, against an open keyboard
 
