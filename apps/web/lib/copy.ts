@@ -192,7 +192,7 @@ export const copy = {
       after: {
         ask: "Still seeing this after adding bida?",
         answer: (browser: string | undefined) =>
-          `That’s normal, ${lower(browser)} can’t tell. Also, the group lists here and there are separate. Apple’s rules, not ours.`,
+          `That’s normal, ${lower(browser)} can’t tell. Also, from now on, the group lists here and there are separate. Apple’s rules, not ours.`,
       },
     },
   },
