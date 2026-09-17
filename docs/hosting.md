@@ -125,8 +125,8 @@ pnpm db:migrate                 # applies migrations to the remote DB
 
 **`major.semi.minor`, in the root `package.json`, and that is the only copy** —
 the workspace packages are private and carry none. The web build inlines it
-(`next.config.mjs`), `/about` shows it beside the source link and `/diag` prints it as
-its first line, so a pasted report says which build it came from. `pnpm bump`, which
+(`next.config.mjs`), `/about` stamps it in its top bar's corner and `/diag` prints it
+as its first line, so a pasted report says which build it came from. `pnpm bump`, which
 moves it to one past what `dev` is serving and is a no-op if it already is.
 
 | Place | Who moves it | When |

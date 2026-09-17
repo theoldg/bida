@@ -257,10 +257,10 @@ export const copy = {
    */
   about: {
     title: "About bida",
-    /** Beside the source link, atop the screen. The number after it is the
-     *  build's, not copy's (lib/version.ts): what a person reads here is the
-     *  word. */
-    version: "Version",
+    /** The prefix on the number in the bar's corner, which is the build's and
+     *  not copy's (lib/version.ts). It sticks to the digits — `v0.1.3` — so it
+     *  is a mark rather than a label, and the corner stays quiet. */
+    version: "v",
     noAccounts: {
       title: "No account",
       body: "A group is a secret link. Whoever has it can edit, and every edit is recorded in the group’s history.",

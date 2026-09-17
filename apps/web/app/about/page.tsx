@@ -11,9 +11,10 @@ import { VERSION } from "../../lib/version";
  * since it is the longest and the one fewest people are here for — who can
  * read what you typed. Four claims, no pitch: this screen is reached from the
  * foot of the groups list, so whoever is on it already has the app and does
- * not need it described back to them. The source link and the build's number
- * sit above all four, since they are the two things here somebody might come
- * looking for on their own.
+ * not need it described back to them. The source link sits above all four,
+ * since it is the one thing here somebody might come looking for on its own,
+ * and the build's number sits in the bar's far corner, out of the reading
+ * altogether.
  *
  * The page itself is prose and links, so it stays a server component. One
  * client island sits in it — the whole of "Works offline" (`AboutOffline`) —
@@ -24,21 +25,18 @@ export default function AboutPage() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.about.title} back={route.groups()} />
+        {/* The number rides in the bar's corner rather than in the prose:
+            nobody opens this screen to read it, but it is the first thing
+            worth knowing about a phone behaving oddly, and a corner is where
+            an app's version is looked for (lib/version.ts). */}
+        <TopBar title={copy.about.title} back={route.groups()}
+          right={<span className="topbarver">{copy.about.version}{VERSION}</span>} />
         <Scroll>
           <div className="pad about">
-            {/* The build's number rides beside the source link rather than
-                sitting under the claims: both are things somebody arrives at
-                this screen already looking for, and neither is read on the
-                way past. Quiet enough that the link still leads
-                (lib/version.ts). */}
-            <div className="aboutsrc">
-              <a className="aboutlink" href={feedback.sourceUrl}
-                target="_blank" rel="noreferrer noopener">
-                <Icon name="link" size={14} />{feedback.source}
-              </a>
-              <span className="aboutver">{copy.about.version} {VERSION}</span>
-            </div>
+            <a className="aboutlink" href={feedback.sourceUrl}
+              target="_blank" rel="noreferrer noopener">
+              <Icon name="link" size={14} />{feedback.source}
+            </a>
 
             <Section title={copy.about.noAccounts.title}>{copy.about.noAccounts.body}</Section>
 

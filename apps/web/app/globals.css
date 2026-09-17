@@ -323,6 +323,12 @@ a { color: inherit; text-decoration: none }
    thumb reaching across the phone. Bigger circle, bigger glyph. */
 .topbar .iconbtn { width: 37px; height: 37px }
 .spacer { margin-left: auto }
+/* The build's number in the bar's far corner, `/about` only (app/about/page.tsx).
+   Set like the bar's own subtitle — mono, muted, a step down — so it reads as a
+   stamp on the screen rather than a control beside the title. */
+.topbarver { font-family: var(--f-mono); font-size: 11px; letter-spacing: .02em;
+  color: var(--muted) }
+
 
 /* ---- rows: the ledger itself ---- */
 .rows { display: flex; flex-direction: column }
@@ -462,15 +468,6 @@ a { color: inherit; text-decoration: none }
   text-decoration-color: var(--rule) }
 .aboutlink:active { opacity: .6 }
 .aboutlink svg { color: var(--muted); flex: none }
-/* The source link and the build's number on one line (app/about/page.tsx),
-   baselines aligned so the number reads as the link's annotation rather than a
-   second link. It wraps under on a narrow phone rather than crushing either. */
-.aboutsrc { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px }
-/* The number itself. Sized and coloured below the quietest claim on the screen:
-   it is a footnote for the two occasions it matters, not a fifth thing to read,
-   and beside a link it has to stay the thing you don't tap. */
-.aboutver { font-size: 11px; letter-spacing: .04em; color: var(--muted) }
-
 /* The last row of a list of people *is* the field that adds the next one, and
    it is built like the rows above it — name on the left, one control on the
    right — because that is what it becomes once its plus is pressed
