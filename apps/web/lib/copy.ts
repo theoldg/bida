@@ -200,13 +200,13 @@ export const copy = {
        * a glance, cannot be searched, and says nothing at all to a screen
        * reader — so the steps lead and the clip confirms them.
        *
-       * Three, because that is how many taps it is. The icons are the ones iOS
-       * draws on those buttons, so the words and the phone agree.
+       * Two, naming the two buttons and nothing else: the taps between them —
+       * scrolling the sheet, the Add that ends it — are what the clip is for,
+       * and a step per tap turned two buttons to find into a procedure.
        */
       steps: [
-        { icon: "share", text: "Tap the Share button in the toolbar." },
-        { icon: "plus", text: "Scroll down the sheet and tap Add to Home Screen." },
-        { icon: "check", text: "Tap Add. bida is on your home screen." },
+        { icon: "share", text: "Tap the Share button" },
+        { icon: "plus", text: "Select Add to home screen" },
       ],
       /**
        * Under the recording, for whoever installed and still meets the banner:

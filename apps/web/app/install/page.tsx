@@ -124,11 +124,11 @@ function Tutorial() {
               <AlreadyAdded browser={browser} />
             </section>
             <section className="aboutsect">
-              {/* The three taps in words, then the recording of them. The clip
-                  alone settles which button is meant faster than prose can —
-                  the share sheet has moved between iOS versions — but it is
-                  silent to a screen reader and slow to a glance, so the steps
-                  lead and it confirms them. */}
+              {/* The two buttons in words, then the recording of the walk. The
+                  clip alone settles which button is meant faster than prose
+                  can — the share sheet has moved between iOS versions — but it
+                  is silent to a screen reader and slow to a glance, so the
+                  steps lead and it confirms them. */}
               <ol className="installsteps">
                 {page.steps.map((step) => (
                   <li key={step.text}>
