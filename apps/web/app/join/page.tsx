@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
+import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
 import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
 import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
@@ -32,6 +32,18 @@ import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
  * history one entry deep, so a group that took that entry for itself had
  * nothing underneath — and the device's back button left for the chat rather
  * than climbing the app, which is what it does everywhere else.
+ *
+ * **There is no state where this screen is up and the person is not joining**,
+ * so it says so from the prerendered HTML: the wordmark and "Joining…", before
+ * a byte of the bundle has arrived. What used to be there was `Blank` — a back
+ * arrow over an empty screen, held from first byte until the hash was parsed,
+ * which is the first thing bida ever showed somebody their friend invited. The
+ * three branches that override it — a bad link, a keyless one, a secret the
+ * server refuses — are the only ones that need JS to decide, and they are rare.
+ *
+ * The *body* waits for the key, though: "finishes by itself once the other
+ * phone syncs" is a promise about this particular link, and before the fragment
+ * is parsed and saved there is no link to promise it of.
  *
  * A first arrival still ends on
  * "which one are you?", but it is `useClaimGate` that sends it there — one
@@ -108,9 +120,9 @@ function JoinScreen() {
     router.replace(route.groups());
   }, [link, group, router]);
 
-  if (link === undefined) return <Blank back={route.groups()} />;
-
-  if (!link && keyless) {
+  // `null` is a fragment that has been read and is no link; `undefined` is one
+  // that has not been read yet, and falls through to the joining screen below.
+  if (link === null && keyless) {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
@@ -119,7 +131,7 @@ function JoinScreen() {
     );
   }
 
-  if (!link || (keySaved && rejected && !group)) {
+  if (link === null || (keySaved && rejected && !group)) {
     return (
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
@@ -128,13 +140,17 @@ function JoinScreen() {
     );
   }
 
-  if (!keySaved || group) return <Blank back={route.groups()} />;
-
+  // The app's own name, not "Join a group": this is where a stranger meets
+  // bida, and the screen under it already says what is happening. `group`
+  // means the group has landed and `handOverToGroup` is a frame away — a
+  // promise about waiting would be untrue by the time it was read.
   return (
     <Screen><Body>
-      <TopBar title={copy.join.title} back={route.groups()} />
+      <TopBar title={<span className="brand">{copy.app.name}</span>} back={route.groups()} />
       <Scroll>
-        <Empty title={copy.join.joining.title}>{copy.join.joining.body}</Empty>
+        <Empty title={copy.join.joining.title}>
+          {keySaved && !group ? copy.join.joining.body : null}
+        </Empty>
       </Scroll>
     </Body></Screen>
   );

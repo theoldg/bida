@@ -29,6 +29,14 @@ const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebK
 const iphone = (opts) => newPhone(browser, { userAgent: IPHONE, ...opts });
 
 /**
+ * The join screen once the secret is written. Its *title* is in the prerendered
+ * HTML now — `/join` is only ever reached by an invite, so it says "Joining…"
+ * before a byte of the bundle has run — so the title proves nothing. The body
+ * is a promise about this particular link and waits for the key.
+ */
+const joined = (page) => page.getByText("Finishes by itself once the other phone syncs.");
+
+/**
  * The group secrets this phone holds, read straight out of IndexedDB.
  *
  * The only assertion here that cannot be made from a screen: this check serves
@@ -101,11 +109,11 @@ const tabPage = await tab.newPage();
 await tabPage.goto(`${base}/join${fragment}`);
 // No sync API stands behind this check, so the join waits here for ever — and
 // that is the point: an iOS tab is no longer stopped to be asked to install.
-await tabPage.getByText("Joining…").waitFor({ timeout: 8000 });
+await joined(tabPage).waitFor({ timeout: 8000 });
 report(await tabPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0,
   "an iOS tab joins without being asked to install first");
 
-// The key is saved behind "Joining…"; the carry the tutorial's head is built
+// The key is saved behind that line; the carry the tutorial's head is built
 // from follows it into localStorage.
 await tabPage.waitForFunction((hash) => localStorage.getItem("bida.carry") === hash, fragment.slice(1),
   { timeout: 8000 }).catch(() => {});
@@ -299,9 +307,9 @@ const handed = await freshPage.waitForURL(
 ).then(() => true, () => false);
 report(handed, "launching the icon opens the invite it was added for", freshPage.url());
 // The secret is written by the join screen, not by the launch — wait for the
-// screen that only draws once it has been ("Joining…", since no other phone is
+// line that only draws once it has been (and stays, since no other phone is
 // pushing to this server), or the launch below has nothing to have held.
-await freshPage.getByText("Joining…").waitFor({ timeout: 8000 });
+await joined(freshPage).waitFor({ timeout: 8000 });
 
 // ---- and every launch after ----------------------------------------------
 // The fragment has done its work — the key is on this phone now — so the app
@@ -369,7 +377,7 @@ const webviewPage = await webview.newPage();
 await webviewPage.goto(`${base}/join${fragment}`);
 const refused = await webviewPage.getByText("Open bida in your browser")
   .waitFor({ timeout: 8000 }).then(() => true, () => false);
-report(refused && await webviewPage.getByText("Joining…").count() === 0,
+report(refused && await joined(webviewPage).count() === 0,
   "an in-app browser is turned round rather than joined in");
 report(await webviewPage.getByText("Instagram").count() > 0,
   "named, so the person knows which app has them");
