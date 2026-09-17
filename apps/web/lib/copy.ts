@@ -184,6 +184,16 @@ export const copy = {
       keep: "However, if you’d like to keep all your data permanently,",
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
+      /**
+       * Under the recording, for whoever installed and still meets the banner:
+       * a tab cannot see the home-screen app, and the two keep their storage
+       * apart (docs/ios.md). The owner's wording.
+       */
+      after: {
+        ask: "Still seeing this after adding bida?",
+        answer: (browser: string | undefined) =>
+          `That’s normal, ${lower(browser)} can’t tell. Also worth knowing: the app and ${lower(browser)} each keep their separate groups. Apple’s rules, not ours.`,
+      },
     },
   },
 

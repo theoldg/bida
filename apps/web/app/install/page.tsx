@@ -115,6 +115,10 @@ function Tutorial() {
               <img className="installclip" src="/media/safari-add-to-home-screen.gif"
                 width={440} height={956} alt={page.clipAlt} />
             </section>
+            <section className="aboutsect">
+              <p><em>{page.after.ask}</em></p>
+              <p>{page.after.answer(browser)}</p>
+            </section>
           </div>
         </Scroll>
       </Body>

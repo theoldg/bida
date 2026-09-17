@@ -153,6 +153,8 @@ tell. It carries, in this order:
    sheet: it never shows the tap on **Add**, or the icon arriving
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
+3. untitled — *Still seeing this after adding bida?* It's normal: the tab
+   can't see the app, and the two keep separate groups.
 
 It said, third, that the app starts empty and invites have to be opened in it.
 That was true before the icon carried them and read as a warning at the moment
