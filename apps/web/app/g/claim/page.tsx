@@ -58,9 +58,10 @@ function ClaimScreen() {
   return (
     <Screen>
       <Body>
-        <TopBar title={copy.claim.title} sub={group.name} back={route.groups()} />
+        <TopBar title={copy.claim.join(group.name)} back={route.groups()} />
 
         <Scroll>
+          <h2 className="question">{copy.claim.title}</h2>
           <WhoPicker
             people={data.members.map((m) => ({ id: m.id, name: m.name }))}
             picked={picked ?? data.me}

@@ -783,6 +783,8 @@ a { color: inherit; text-decoration: none }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
+/* A screen's question when the bar is spent naming where you are (`/g/claim`). */
+.question { font-size: 15px; font-weight: 600; letter-spacing: -.02em; padding: 6px 16px 10px }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }

@@ -20,7 +20,7 @@ a clarifying question you could have answered by looking at the screen is a
 turn wasted.
 
 Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report; your
-job is to translate it into pixels, not to ask for a redlined mock.
+job is to translate it into pixels, not to ask for a redlined mock. "Redesign slightly" means exactly what it then lists — no more.
 
 Permission is usually pre-granted — *"propose a ux and go for it without
 approval, we'll iterate later."* They would rather correct a built thing than
