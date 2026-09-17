@@ -63,6 +63,10 @@ do any of that.
 *One line, dated, newest first. At ten, drop the oldest rather than grow the
 file.*
 
+- *2026-09-17* — A question can carry a wrong premise ("dev looks different,
+  so…"). Answer the premise, not just the question: the doc has usually
+  settled it already, and agreeing politely teaches the owner something
+  untrue.
 - *2026-09-16* — "hands off" was the whole spec for a feature that insults
   people, and the right move was to build it and let the owner nudge it, not to
   ask where the line was. Where a line was genuinely needed, the code was the
@@ -78,4 +82,3 @@ file.*
 - "Later" can mean the next message. Leave the follow-up written where the next session will find it anyway.
 - A stash the owner made mid-task isn't lost work — `git stash list` before redoing anything.
 - Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
-- "Investigate, don't edit yet" is a hold, not a no: finish the diagnosis with the exact fix, so "fix it" is one step.
