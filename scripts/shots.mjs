@@ -137,6 +137,7 @@ const routes = (g) => [
   ["history", `/g/history?id=${g}`],
   ["rates", `/g/rates?id=${g}`],
   ["tip", `/g/tip?id=${g}`],
+  ["export", `/g/export?id=${g}`],
   ["entry-expense", `/g/entry/edit?id=${g}`],
   ["entry-transfer", `/g/entry/edit?id=${g}&kind=transfer`],
   // A quick split has no group in it at all (ADR-0035) — the id is ignored.
