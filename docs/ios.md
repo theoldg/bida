@@ -93,15 +93,18 @@ standalone come from the `apple-*` tags either way.
 Safari won't read a swapped link: the owner's icon arrived with two groups and
 one name. The link records what it was built with (`data-carry`); when that no
 longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
-nothing can be lost (`reloadsForCarry`: the list, a group, members, history, an
-entry, about), never mid-join or in a form, and never before the app shell is
-precached (`shellIsWarm`, [frontend.md](frontend.md#pwa)). From cache it is a
+nothing can be lost (`reloadCostsNothing`: the list, a group, members, history,
+an entry, about), never mid-join or in a form, and never before the app shell is
+precached (`shellIsWarm`, [frontend.md](frontend.md#pwa)). Wider than the
+update's own reload, which holds out for the groups list: this one fires for a
+newcomer who never passes it. From cache it is a
 flash, once. Before that it is a network load racing the worker's own fetches,
 in the newcomer's first minute — whose document load was `/join` with an empty
 carry, so it is exactly who this fires for. Nothing on screen wants it, so it
 waits for the next reloadable screen.
 
-**The icon's first launch** (`app/install/page.tsx`). A key this phone lacks is
+**Every launch of the icon** (`app/install/page.tsx`) — `start_url` is this
+route for the life of the bookmark, not just the first time. A key this phone lacks is
 saved. A group the tab had named is claimed here, before its first sync — an
 identity op of this app's own, since it is a device of its own, which history
 reads as "Ana started editing from a new device". Nobody is asked who they are.
@@ -109,7 +112,11 @@ One group nobody has named is the newcomer, and goes to `/join`, which names
 the group and waits out a first sync; everything else lands on the list. What
 the phone already holds is spent, so the icon is a door into the app rather
 than into one group forever, and nothing un-forgets: `saveGroupKey` would undo
-a `forgetGroup`.
+a `forgetGroup`. A launch the fragment has nothing left to give is an ordinary
+one, so it says `launchedOnto` and the list reopens the group you were last in
+as it would for any other start (`lib/launch.ts`): the document never loads on
+the list here, so nothing about the address could tell, and without it this
+install — the one this page exists to produce — was alone in never resuming.
 
 **What the phone runs settled** (2026-09-16), against what WebKit's source
 suggests (`WebPage::getApplicationManifest` walks the head when asked):

@@ -17,7 +17,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 | Route | Purpose |
 |---|---|
-| `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
+| `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=[&tab=]` | The group: ledger / balances tabs — back from balances is the ledger, not the groups list, since the two tabs are one screen. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
@@ -516,26 +516,34 @@ across three open pages.
 `skipWaiting` the moment the whole build is precached, rather than waiting for
 the last client of the origin to close — on iOS Safari tabs and the browser
 outlive what a person thinks of as quitting, so waiting meant killing Safari
-over and over to get a deploy. `activate` keeps the **previous** build's cache
-and writes down which pages were open (in memory and in the `bida-legacy`
-cache, since the browser stops idle workers): those pages keep being served
-their own build, so their next tap can't mix an old router with a new payload.
-Everything older is deleted.
+over and over to get a deploy. `activate` writes down **which build each open
+window is running** (in memory and in the `bida-legacy` cache, since the browser
+stops idle workers) and keeps every cache still spoken for: those pages go on
+being served their own build, so their next tap can't mix an old router with a
+new payload. A cache nothing is on is deleted, so the cost is one kept shell per
+window somebody left open, and a window that closes takes its cache with it.
+It used to keep the newest other cache alone and hand it to everyone open,
+which is right exactly once: at the deploy after, a page a build further back
+had its own cache deleted and was served a stranger's `/g.txt`.
 
-On the page side, `lib/update.ts` hears `controllerchange` and reloads — at
-once if the page hasn't been touched since it loaded, otherwise the next time it
-comes back to the foreground, never while hidden (`beforeunload` can't ask about
-a half-typed expense then). It also re-checks `sw.js` on every resume: an
-installed app is resumed far more often than it is launched. And it records
-when `navigator.serviceWorker.ready` resolves (`shellIsWarm`) — the only flag
-that says the precache is done, since a worker that never claims a first visit
-leaves `controller` null for the whole of that page's life. One caller: the iOS
-carry reload, worth doing out of the cache and not worth doing off the network
-([ios.md](ios.md#a-in-detail)). In between,
+**The app reloads itself on the groups list and nowhere else.** `lib/update.ts`
+hears `controllerchange` and waits for the front door — at once if the page is
+there already and nobody has touched it, otherwise the first time the app is
+resumed onto it, never while hidden. A reload in the installed app is a
+relaunch, splash and all, and one on a ledger reads as a crash; on the two forms
+it also put the browser's own "leave site?" in front of somebody who had done
+nothing but reopen the app, and their draft is in memory
+(`lib/draft.ts`). `reloadCostsNothing` is the one list of screens that hold
+nothing only this page has, and the iOS carry reload — which cannot wait for a
+list a newcomer never passes — is its other caller ([ios.md](ios.md#a-in-detail)).
+`lib/update.ts` also re-checks `sw.js` on every resume (an installed app is
+resumed far more often than it is launched) and records when
+`navigator.serviceWorker.ready` resolves (`shellIsWarm`) — the only flag that
+says the precache is done, since a worker that never claims a first visit leaves
+`controller` null for the whole of that page's life. In between,
 `components/update.tsx` offers a Reload at the foot of the groups list, **only in
 the installed app** — a tab has the browser's own, and the install nudge shows on
-exactly the phones this doesn't. So an update lands on the second look at the
-app, not after a relaunch. `offline-check` holds three pages open across a
+exactly the phones this doesn't. `offline-check` holds three pages open across a
 deploy: untouched, in use, and on a group.
 
 ## Every money field is `components/amount-input.tsx`

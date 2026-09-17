@@ -214,7 +214,7 @@ export function keepCarried(groups: readonly CarriedGroup[]): void {
  * a group joined, or a name picked, after it loaded. Safari won't read a
  * swapped link, so an icon added from this page would leave that change behind
  * (the owner's phone arrived with two groups and one name). Only a reload fixes
- * it; `reloadsForCarry` says when one is harmless.
+ * it; `reloadCostsNothing` (lib/update.ts) says where one is harmless.
  */
 export function headIsStale(): boolean {
   const link = document.head.querySelector('link[rel="manifest"]');
@@ -225,15 +225,4 @@ export function headIsStale(): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * Screens a reload can't cost anything on: nothing typed, no flow half way
- * through. The join, claim and install screens are flows, and the forms warn
- * on unload — a stale head there waits for the next screen that is on this list.
- */
-const RELOADABLE = new Set(["/", "/g", "/g/members", "/g/history", "/g/entry", "/about"]);
-
-export function reloadsForCarry(pathname: string): boolean {
-  return RELOADABLE.has(pathname.replace(/\/$/, "") || "/");
 }
