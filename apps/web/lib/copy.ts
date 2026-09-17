@@ -167,25 +167,6 @@ export const copy = {
     title: "Keep bida on your home screen",
     body: "Own icon, no browser bar, works offline.",
     /**
-     * iOS has no install API, so name the button that does it — in one line,
-     * which is what "in the browser bar" cost and the share glyph says anyway.
-     */
-    manual: {
-      tap: "Tap", then: "then", label: "Add to home screen",
-      /**
-       * What declining costs, which on iOS is the whole reason to ask: WebKit
-       * refuses `persist()` outside a home-screen app, so seven unopened days
-       * evict the group secrets and there is no account to get them back with
-       * (docs/architecture.md). "Forgotten" is the same word the app uses for
-       * doing it on purpose.
-       *
-       * Names the browser only when `iosBrowser` can tell: every iOS browser is
-       * WebKit and evicts on the same timer, so naming Safari to someone reading
-       * this in Firefox would aim the warning past them.
-       */
-      warn: (browser: string | undefined) => `Otherwise ${lower(browser)} forgets your groups after a week unused.`,
-    },
-    /**
      * The iOS tab's card atop the groups list, once it holds one (docs/ios.md).
      * A title that says what you get rather than what goes wrong: it stands
      * until the phone installs, and a standing alarm reads as nagging.

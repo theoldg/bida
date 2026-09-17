@@ -451,7 +451,7 @@ persisting storage is worth the standing ask, and installing is what ends it:
 the offer becomes `installed` and the nudge disappears on its own. The title is
 its disclosure, and `installNudgeCollapsed` on the device record remembers the
 fold. On the `manual` branch (an iOS tab) the nudge gives way to `InstallBanner` at
-the top of the list — and at the foot of each group's ledger — folding on the same flag and linking to `/install`: the
+the top of the list — and atop each group's ledger, folded by default — folding on the same flag and linking to `/install`: the
 seven days are WebKit's, every iOS browser is one, and a warning that true
 belongs first ([ios.md](ios.md)).
 

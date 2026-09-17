@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "./icons";
-import { ManualSteps, useInstallOffer } from "./install";
+import { InstallButton, useInstallOffer } from "./install";
 import { copy } from "../lib/copy";
 import { promptInstall } from "../lib/install";
 
@@ -12,7 +12,7 @@ import { promptInstall } from "../lib/install";
  *
  * It is the one client thing on an otherwise static screen, and it renders
  * whichever of the four truths applies: the plain offer, a button where
- * Chrome gave us a prompt, the share-sheet sentence on iOS where no API
+ * Chrome gave us a prompt, the button into `/install` on iOS where no API
  * exists, and the sentence rewritten where the app is already on the home
  * screen. On a desktop browser that neither installs nor tells us, only the
  * plain offer shows.
@@ -32,7 +32,7 @@ export function AboutOffline() {
           </button>
         </div>
       ) : null}
-      {offer === "manual" ? <ManualSteps /> : null}
+      {offer === "manual" ? <InstallButton /> : null}
     </section>
   );
 }

@@ -33,7 +33,7 @@ export function CarryToHomeScreen() {
  * live copy may not have caught up with a key saved a moment ago. Written in
  * `KeepCarried`'s own order, or the two would take turns rewriting it.
  */
-export async function carryThenInstall(first: string): Promise<void> {
+export async function carryThenInstall(first?: string): Promise<void> {
   keepCarried(await heldInvites());
   location.assign(route.install(await heldInvites(first)));
 }
@@ -113,8 +113,9 @@ function Offer() {
 /**
  * An iOS tab's card atop the groups list rather than at its foot: once the tab
  * holds a group, "this browser will clear it" is true and worth reading first.
- * Also at the foot of each group's ledger, for whoever only ever arrives by a
- * group's link and never sees the list.
+ * Also atop each group's ledger, for whoever only ever arrives by a group's
+ * link and never sees the list — `folded` there until the phone has chosen,
+ * since the entries are what that screen is for.
  * The caller draws it only then — an empty home is someone looking around, and
  * Quick split stores nothing to lose. The how lives on `/install`.
  *
@@ -128,12 +129,12 @@ function Offer() {
  * row of the list this card sits on, the most recently active and the one the
  * app would reopen by itself (lib/launch.ts).
  */
-export function InstallBanner({ groupId }: { groupId: string }) {
+export function InstallBanner({ groupId, folded = false }: { groupId: string; folded?: boolean }) {
   const offer = useInstallOffer();
   const browser = useBrowserName();
   const device = useDevice();
   if (offer !== "manual" || !device) return null;
-  const open = !device.installNudgeCollapsed;
+  const open = !(device.installNudgeCollapsed ?? folded);
   return (
     <div className="pad" style={{ paddingBottom: 4 }}>
       <div className="card">
@@ -145,13 +146,7 @@ export function InstallBanner({ groupId }: { groupId: string }) {
         {open ? (
           <>
             <p className="hint" style={{ marginTop: 4, textWrap: "balance" }}>{copy.install.banner.body(browser)}</p>
-            {/* `location.assign` rather than a `<Link>`: the fragment is the
-                invites, and the router drops it when it falls back to loading
-                the page itself (docs/ios.md#gotchas). */}
-            <button type="button" className="btn btn-s" style={{ marginTop: 11 }}
-              onClick={() => void carryThenInstall(groupId)}>
-              {copy.install.banner.act}
-            </button>
+            <InstallButton first={groupId} />
           </>
         ) : null}
       </div>
@@ -160,28 +155,20 @@ export function InstallBanner({ groupId }: { groupId: string }) {
 }
 
 /**
- * The iOS path in one line, for the about screen's "Works offline" — `/install`
- * is the full version. iOS gives no install API at all, so the honest
- * thing is to point at the button that does it rather than draw one that
- * can't, and to say what skipping it costs.
+ * The banner's button on its own, for the about screen's "Works offline" in an
+ * iOS tab: `/install` is where the how lives, so the one line that sat there
+ * restating it gave way to the door. `first` is the group to lead the carry,
+ * when there is one to prefer.
  *
- * It rides with the manual branch and nowhere else, because the seven days are
- * WebKit's. Chrome fires `beforeinstallprompt` and evicts on quota pressure,
- * not on a timer, so the same sentence under the "ready" button would be false.
+ * `location.assign` rather than a `<Link>`: the fragment is the invites, and
+ * the router drops it when it falls back to loading the page itself
+ * (docs/ios.md#gotchas).
  */
-export function ManualSteps() {
-  const browser = useBrowserName();
+export function InstallButton({ first }: { first?: string }) {
   return (
-    <>
-      <p className="hint" style={{ marginTop: 9 }}>
-        {/* Tailwind's reset makes every svg a block; inline is what puts it
-            in the middle of the sentence rather than on a line of its own. */}
-        {copy.install.manual.tap} <Icon name="share" size={15}
-          style={{ display: "inline", verticalAlign: "-2px", color: "var(--ink-2)" }} />,{" "}
-        {copy.install.manual.then} <b style={{ fontWeight: 600 }}>{copy.install.manual.label}</b>.
-      </p>
-      {/* The one colour this design spends on trouble (globals.css `.failure`). */}
-      <p className="failure">{copy.install.manual.warn(browser)}</p>
-    </>
+    <button type="button" className="btn btn-s" style={{ marginTop: 11 }}
+      onClick={() => void carryThenInstall(first)}>
+      {copy.install.banner.act}
+    </button>
   );
 }

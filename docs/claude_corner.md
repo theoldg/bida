@@ -85,3 +85,4 @@ file.*
 - "Later" can mean the next message. Leave the follow-up written where the next session will find it anyway.
 - A stash the owner made mid-task isn't lost work — `git stash list` before redoing anything.
 - Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
+- A screenshot of copy plus "replace with the button from X" means reuse X's component, not a lookalike.

@@ -211,6 +211,8 @@ function LedgerTab({ data }: { data: GroupData }) {
       ) : null}
 
       <Scroll>
+        {/* An iOS tab only — the banner decides (docs/ios.md). */}
+        <InstallBanner groupId={gid} folded />
         {entries.length === 0 ? (
           <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
         ) : null}
@@ -229,8 +231,6 @@ function LedgerTab({ data }: { data: GroupData }) {
             );
           })}
         </div>
-        {/* An iOS tab only — the banner decides (docs/ios.md). */}
-        <div style={{ marginTop: 16 }}><InstallBanner groupId={gid} /></div>
         <div style={{ height: 88 }} />
       </Scroll>
     </>
