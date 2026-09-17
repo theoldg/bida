@@ -3,7 +3,7 @@
 *For: anyone touching `packages/core`, or reviewing a screen without a phone.*
 
 ```bash
-pnpm check        # links · rules · typecheck · tests · export build — pre-push, ~30s
+pnpm check        # links · rules · version · typecheck · tests · export build — pre-push, ~30s
 pnpm verify       # every browser check against a real build, together, ~50s
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
@@ -16,6 +16,7 @@ pnpm readme-shots # the four pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
 pnpm run docs     # links resolve, ADRs indexed, claude_corner within size, ~30ms
 pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
+pnpm bump         # the number this deploy will show — [hosting.md](hosting.md#versions)
 ```
 
 **The browser checks build for themselves.** `ensureBuild()` compares `apps/web`
@@ -27,7 +28,7 @@ nothing to collide over, each serving the export on its own port 0, and the
 build is the one thing six of them starting at once would have raced on.
 
 `pnpm check` is the gate — nothing else stands between an edit and production,
-so the two things that gate nothing else are in it. The build, because `next
+so the three things that gate nothing else are in it. The build, because `next
 build` catches what `tsc` cannot (a prerender touching `window`, a
 client-boundary mistake, a `precache.mjs` that throws) and the deploy workflow
 only rebuilds and ships, so a build that fails there fails on `main`. And
@@ -37,7 +38,10 @@ from being reversed by someone who never read it: it fails on an import or a
 in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for
 a fourth rule is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
-on purpose.
+on purpose. And the version, because a push to `dev` deploys and a deploy has to
+show a new number: the stage fails a tree that differs from what `dev` is serving
+and still calls itself the same thing ([hosting.md](hosting.md#versions)). CI
+cannot check that one — it clones shallow, with no `dev` to compare against.
 
 **A pass is stamped and not repeated.** The stamp is a hash of every file git
 tracks or would track, plus the env files it ignores and the build reads
@@ -46,9 +50,9 @@ once — and committing in between does not invalidate it, because the contents
 are what is hashed and they did not move. Anything that did move re-runs it;
 `pnpm check --force` re-runs it regardless.
 
-**Its five stages run at once** (`scripts/check.mjs`), because none of them
+**Its six stages run at once** (`scripts/check.mjs`), because none of them
 reads what another writes — so the gate costs the slowest one, the build, and
-not the sum. Each keeps its output instead of printing it: a pass is five lines
+not the sum. Each keeps its output instead of printing it: a pass is six lines
 and a digest, a failure spills only the stages that failed and names the
 `pnpm run <stage>` that reproduces each alone. Nothing stops at the first
 failure, so one run tells you everything that is broken.

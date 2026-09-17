@@ -112,6 +112,29 @@ pnpm db:migrate                 # applies migrations to the remote DB
 `pnpm db:migrate:local` does the same to `wrangler dev`'s local SQLite, and
 `pnpm db:migrate:dev` to the dev Worker's own remote database.
 
+### Versions
+
+**`major.semi.minor`, in the root `package.json`, and that is the only copy** —
+the workspace packages are private and carry none. The web build inlines it
+(`next.config.mjs`), `/about` shows it at the foot and `/diag` prints it as its
+first line, so a pasted report says which build it came from. `pnpm bump`, which
+moves it to one past what `dev` is serving and is a no-op if it already is.
+
+| Place | Who moves it | When |
+|---|---|---|
+| **minor** | Whoever pushes | Every push to `dev`, because every push deploys. `pnpm bump` |
+| **semi** | Whoever is working, on their own judgement | The app is meaningfully a different thing than it was: a screen that wasn't there, a rule that changed. `pnpm bump semi`, and say so in the summary |
+| **major** | **The owner, in words, in a session** | Never on anybody else's judgement. `pnpm bump major` refuses |
+
+Nobody has to remember the first row: `pnpm check` fails a tree that differs
+from what `dev` is serving and still calls itself the same number
+([testing.md](testing.md)). It is the last place that can catch it, since CI
+clones shallow and has no `dev` to compare against.
+
+A release moves no number. `main` only ever fast-forwards `dev`, so production
+shows whatever number the commit it lands on was built with, and the dev Worker
+has already served that exact build.
+
 ### Dev and production
 
 Two Workers, two D1 databases, one repo. The differences are the name, the

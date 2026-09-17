@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * `pnpm check` — the gate. Doc links, the rules the docs state, typecheck,
- * tests and the static export build, all at once (scripts/lib/together.mjs).
+ * `pnpm check` — the gate. Doc links, the rules the docs state, the version
+ * against what dev is serving, typecheck, tests and the static export build,
+ * all at once (scripts/lib/together.mjs).
  *
  * It is the only thing standing between an edit and production
  * (docs/testing.md), and it is also the command a session runs most: once by
@@ -20,6 +21,11 @@ import { fingerprint, stampMatches, writeStamp } from "./lib/check-stamp.mjs";
 const STAGES = [
   { name: "docs", run: ["node", "scripts/docs-check.mjs"], rerun: "pnpm run docs" },
   { name: "rules", run: ["node", "scripts/rules-check.mjs"], rerun: "pnpm run rules" },
+  // Not a CI-shaped stage like the rest: nothing on `main` would ever fail over
+  // it. It is here because this is the last place that can catch it — CI clones
+  // shallow and has no `dev` to compare against, and the number has to be in the
+  // commit being pushed, not added after (scripts/version.mjs).
+  { name: "version", run: ["node", "scripts/version.mjs", "--check"], rerun: "pnpm bump" },
   { name: "typecheck", run: ["pnpm", "-r", "--if-present", "typecheck"], rerun: "pnpm run typecheck" },
   {
     name: "test",

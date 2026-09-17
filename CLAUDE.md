@@ -38,7 +38,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`) and `shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
+| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`) and `shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `version`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
 
 ## Stack
 
@@ -72,11 +72,14 @@ pnpm session && pnpm check
 
 - **Commits.** `scope: imperative summary` (`core`, `web`, `api`, `docs`),
   one concern each. Retry a failed push four times with backoff (2/4/8/16s).
+  **A push deploys, so it carries a version**: `pnpm bump` before pushing, which
+  the gate insists on. The middle number is your call and the first one is the
+  owner's alone — [hosting.md](docs/hosting.md#versions).
 - **Automation.** The `pre-push` hook (`.githooks/`) — see
   [Non-negotiables](#non-negotiables) for why it needs `pnpm session` first —
-  runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`,
-  typecheck, tests and the static export build — five stages at once, ~30s.
-  Nothing else gates a push, so anything you want caught belongs in it.
+  runs `pnpm check`: doc links, the invariants in `scripts/rules-check.mjs`, the
+  version, typecheck, tests and the static export build — six stages at once,
+  ~30s. Nothing else gates a push, so anything you want caught belongs in it.
   `pnpm verify` drives the built app in a real browser and `pnpm shots`
   photographs it — [testing.md](docs/testing.md). A push to `dev` auto-deploys
   to the dev Worker; production moves when the owner fast-forwards `main` —

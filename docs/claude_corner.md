@@ -27,10 +27,11 @@ one word at a time: offer a version with the reason, then ship theirs verbatim.
 
 Permission is usually pre-granted — *"propose a ux and go for it without
 approval, we'll iterate later."* They would rather correct a built thing than
-approve a plan. Ship early enough that there is something to nudge, because the
-nudging is how this app actually gets designed: whole runs of the log are one
-word, one centring, one line-break at a time. That is not churn, it is the
-method.
+approve a plan. A call they do keep is named in the same breath as the ones they
+hand over, and its honest home is the tool: make it refuse. Ship early enough
+that there is something to nudge, because the nudging is how this app actually
+gets designed: whole runs of the log are one word, one centring, one line-break
+at a time. That is not churn, it is the method.
 
 Corrections come as compression. Thirty-two ADRs became eleven because the docs
 had inflated. The instinct that gets praised here is deleting.
