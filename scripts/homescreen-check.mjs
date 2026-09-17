@@ -264,7 +264,7 @@ report(folded && await heldPage.getByRole("button", { name: "Add bida to home sc
   .waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger asks an iOS tab too, folded");
 
-// ---- which one is you, in a tab ------------------------------------------
+// ---- which one are you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim
 // list offers them the link to paste there, with its own copy button.
 await heldPage.goto(`${base}/g/claim?id=${flatId}`);

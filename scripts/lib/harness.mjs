@@ -273,7 +273,7 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
   }
   await onForm?.();
   await page.getByRole("button", { name: "Create" }).click();
-  // Which one is you, asked of every group including a group of one.
+  // Which one are you, asked of every group including a group of one.
   await page.locator("button.row").filter({ hasText: me }).first().click();
   await page.getByRole("button", { name: `Continue as ${me}` }).click();
   await page.waitForURL(/\/g\?id=/);

@@ -26,7 +26,7 @@ import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
  * nobody has to be told to reopen the link.
  *
  * Where it moves on *to* is the group itself. A first arrival still ends on
- * "which one is you?", but it is `useClaimGate` that sends it there — one
+ * "which one are you?", but it is `useClaimGate` that sends it there — one
  * place decides whether this phone has said who it is, and this screen is not
  * a second one. Re-opening a link you have already accepted used to reopen
  * that question, which reads as being asked to join a group you are in; now it

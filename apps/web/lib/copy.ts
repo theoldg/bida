@@ -371,7 +371,7 @@ export const copy = {
   },
 
   claim: {
-    title: "Which one is you?",
+    title: "Which one are you?",
     /** `/g/claim`'s bar names the group; the question is the body's first line. */
     join: (group: string) => `Join ${group}`,
     addPlaceholder: "Add your name",
@@ -465,7 +465,7 @@ export const copy = {
         rather than a tap on a row that also removes and invites. The list's
         check mark already answers *which*; this only has to offer the change. */
     whoChange: "Change who you are",
-    whoTitle: "Which one is you?",
+    whoTitle: "Which one are you?",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "They aren’t involved in any entry.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,

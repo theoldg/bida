@@ -113,13 +113,13 @@ await page.waitForTimeout(150);
 await openKeyboard();
 await clears("/new — and with a name still in the row", "button.btn-lg");
 
-// ---- which one is you ---------------------------------------------------
+// ---- which one are you ---------------------------------------------------
 await field().fill("");
 await closeKeyboard();
 await page.getByRole("button", { name: "Create" }).click();
 await page.waitForTimeout(250);
 await openKeyboard();
-await clears("which one is you — Continue is above the keys", ".pad .btn");
+await clears("which one are you — Continue is above the keys", ".pad .btn");
 
 // ---- the quick split ----------------------------------------------------
 await page.goto(`${base}/quick`);

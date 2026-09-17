@@ -15,7 +15,7 @@ export interface Who {
 }
 
 /**
- * "Which one is you?" — the last step of both ways into a group.
+ * "Which one are you?" — the last step of both ways into a group.
  *
  * Joining ends here because a link hands a device a group full of strangers and
  * no idea which one it speaks for. Creating ends here for the opposite reason:

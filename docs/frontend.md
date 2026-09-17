@@ -238,7 +238,7 @@ confers nothing without the secret.
   focus, and this one never lets go — clear of the keyboard, and far enough
   clear that the act the list ends on comes up with it, per the `--kb` Gotcha
   below. `pnpm claim` holds all of it ([testing.md](testing.md)).
-- **"Which one is you?" is one screen, `components/who-picker.tsx`**, ending
+- **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
   both ways into a group: joining, and creating one — including a group of one,
   (on `/g/claim` the bar says "Join {group}" and the question heads the body;
   `/new` still asks it in the bar),

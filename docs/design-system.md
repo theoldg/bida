@@ -64,7 +64,7 @@ fights the phone keyboard, which overlays the shell rather than shortening it.
 Where the screen has no scroll of its own to ride — the who-had-what grid owns
 its, sideways as well as down — the button sits in the fixed foot, and that
 band pays `--kb` in its place. The entry form, the new-group form, the
-who-had-what grid and "Which one is you?" all end this way. `/g/scan` is the
+who-had-what grid and "Which one are you?" all end this way. `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
 sit centred as one block instead.

@@ -186,7 +186,7 @@ preferred first — `/install` says the how.
 
 ### `/g/claim` — *Have the app?*
 
-`/join` asks nothing: an iOS tab joins and lands on "Which one is you?" like
+`/join` asks nothing: an iOS tab joins and lands on "Which one are you?" like
 any other browser. Pinned under the list, so a long one can't push it out of
 sight, and hidden while a name is typed: a lower-contrast card, *Have the app?
 Links always open in Safari. Paste this there instead.*, and the group's link in a box that
