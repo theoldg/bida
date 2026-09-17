@@ -151,6 +151,12 @@ export const route = {
   /** What this is, who can read it, and where to complain. Off the groups list. */
   about: () => "/about",
   /**
+   * Settings that are nobody's default: a Gemini key of your own, and nothing
+   * else yet. Listed in the groups list's kebab rather than hidden like
+   * `/diag` — it is a screen a person may go looking for, not a readout.
+   */
+  advanced: () => "/advanced",
+  /**
    * Why and how to put bida on an iOS home screen (docs/ios.md).
    *
    * The invites this phone holds ride in the fragment, because this is the page

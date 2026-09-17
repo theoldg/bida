@@ -190,7 +190,12 @@ export const copy = {
       body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
     },
     about: "About bida",
-    /** The kebab in the bar: the phone's own switch and the about screen. */
+    /** Last in the kebab, and named for what is behind it rather than for who
+        it is for: a screen of settings most people never need, holding one
+        thing today. */
+    advanced: "Advanced",
+    /** The kebab in the bar: the phone's own switches and the two screens the
+        app spends on itself. */
     menu: "Menu",
     whoAreYou: "who are you?",
     youOwe: "you owe",
@@ -295,6 +300,47 @@ export const copy = {
    * which is why the sample below is a real `SealedOp` and not a drawing. If
    * either ever stops being true, this changes in the same commit.
    */
+  /**
+   * The screen for things most people never open, and the first of them.
+   *
+   * Every sentence here is about *where the photo goes*, because that is the
+   * whole of what changes: the reading, the form it fills and the arithmetic
+   * after it are the same either way. The words are plain about the two costs
+   * — Google bills the key, and the key sits on this phone — since a screen
+   * that asks for a credential and is coy about where it lands has earned
+   * nothing.
+   */
+  advanced: {
+    title: "Advanced",
+    key: {
+      title: "Bring your own key",
+      /** Two facts and no pitch: what it changes, and what it costs. */
+      lede: "Scanning normally goes through this app’s server, on a key shared by everybody, with a daily cap. Paste a Google Gemini API key and this phone calls Google directly instead: no cap, nothing counted here, and Google bills your key.",
+      where: "Get one free at Google AI Studio.",
+      whereUrl: "https://aistudio.google.com/apikey",
+      placeholder: "AIza…",
+      paste: "Paste",
+      save: "Use this key",
+      /** Between the tap and Google's answer. It is a real request, so it is
+          not instant and must not look like a frozen button. */
+      checking: "Checking…",
+      remove: "Remove key",
+      /** Once one is set. The masked key is the heading; this is under it. */
+      inUse: "Scans from this phone use your key and skip the shared cap.",
+      /** Where it lives, said rather than implied. */
+      stored: "Stored on this phone only, in the clear, like your group links. Removing it here is the whole of removing it.",
+      /**
+       * The two refusals, and they ask for different things. `refused` is the
+       * key; `blocked` is this browser, which is the one failure worth finding
+       * at the moment of pasting — a brought key means this phone calls Google
+       * itself, and a shield or a content blocker makes that impossible here
+       * however good the key is.
+       */
+      refused: "Google wouldn’t accept that key.",
+      blocked: "This browser couldn’t reach Google at all. A content blocker, a shield or the network is in the way. Allow generativelanguage.googleapis.com and try again.",
+    },
+  },
+
   about: {
     title: "About bida",
     /** The prefix on the number in the bar's corner, which is the build's and
@@ -316,6 +362,10 @@ export const copy = {
       title: "Privacy",
       scanTitle: "Receipt scanning is not private.",
       scan: "Receipt photos are sent to the Google Gemini API, where they may be read by humans or used to train models. For a day afterwards, the server remembers that this group scanned something: not the photo, just the count the cap needs.",
+      /** The one way the sentence above stops being true of this phone. Said
+          here and not only on `/advanced`, because this is the screen somebody
+          reads when they mind (docs/receipt-scanning.md#a-key-of-your-own). */
+      scanOwnKey: "Bring your own Gemini key under Advanced and the photo goes straight from your phone to Google: it never passes through this server, and nothing here counts it.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
@@ -851,6 +901,16 @@ export const copy = {
     unverified: {
       browser: "Couldn’t check this browser: scanning needs challenges.cloudflare.com.",
       server: "This browser check was refused: scanning is misconfigured here. Type this one in.",
+    },
+    /**
+     * The two ways a key somebody brought themselves stops working. Neither is
+     * about the photograph, and neither is fixed by trying again — so both name
+     * the screen the key lives on, which is the only place anything can be done
+     * about it.
+     */
+    key: {
+      refused: "Google refused your key. Check it under Advanced.",
+      spent: "Your key is out of quota for now. Try later, or remove it under Advanced to use the shared one.",
     },
   },
 

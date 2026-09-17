@@ -61,6 +61,10 @@ export function HomeMenu() {
       onSelect: flip,
     },
     { label: copy.groups.about, icon: "info", onSelect: () => router.push(route.about()) },
+    // Last, and after "About bida" on purpose: the screen behind it is for the
+    // person who already knows they want something off the default, and a menu
+    // reads top-down.
+    { label: copy.groups.advanced, icon: "cog", onSelect: () => router.push(route.advanced()) },
   ];
 
   return <MenuButton icon="more" label={copy.groups.menu} actions={actions} />;

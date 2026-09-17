@@ -66,7 +66,10 @@ export default function AboutPage() {
                 <p>{privacy.shape}</p>
               </>
             }>
-              <><strong>{privacy.scanTitle}</strong> {privacy.scan}</>
+              <>
+                <strong>{privacy.scanTitle}</strong> {privacy.scan}
+                {" "}{privacy.scanOwnKey}
+              </>
             </Section>
           </div>
         </Scroll>

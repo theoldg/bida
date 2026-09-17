@@ -62,26 +62,72 @@ Gemini Flash, free tier, one key shared by everyone
 phone: parse → normalizeScan() → write an EntryDraft, and stop
 ```
 
+With a key of your own ([below](#a-key-of-your-own)) the middle two lines are
+gone: the phone builds the envelope and POSTs it to Gemini itself, with no
+Turnstile token, no bearer and no budget. Everything above and below them is
+identical.
+
 The scan ends at [`lib/draft.ts`](../apps/web/lib/draft.ts). That's the whole
 integration: a draft is *"not a fact about the world yet"*, which is exactly
 what a machine's reading of a crumpled receipt is. You review the form, and
 saving appends the op the way it always did — one `actor`, one human, no new op
 kinds, no schema change, nothing on the log that nobody looked at.
 
-## Why the key sits on the Worker
+## Why the shared key sits on the Worker
 
-The owner wanted the call to leave from the phone. Only Anthropic ships a
-browser-callable API; `generativelanguage.googleapis.com` fails CORS preflight,
-so a device-direct call to Gemini isn't available. Free tier means no card, no
-per-user signup, and hosting stays £0 — the price is a shared key behind our own
-endpoint, and **Trust** below is what that costs.
+Free tier means no card, no per-user signup, and hosting stays £0 — the price
+is one key everybody shares, which cannot be shipped to a phone, so it lives on
+the Worker and **Trust** below is what that costs.
 
-## The Worker owns the envelope
+Not because the browser can't call Google: it can.
+`generativelanguage.googleapis.com` answers a preflight from any origin and
+allows `x-goog-api-key`, which this doc denied until somebody checked
+(2026-09-18). That is what makes the section below possible — and it changes
+nothing about *our* key, which is shared and therefore never leaves the server.
 
-The client sends **the photo and nothing else** — the base64 JPEG as the whole
-body, `text/plain`. The prompt and the response schema are Worker-side
-constants (`apps/api/src/scan-body.ts`), so the only thing a caller decides is
-which image Gemini reads.
+## A key of your own
+
+**Advanced → Bring your own key** (`/advanced`, off the groups list's kebab).
+Paste a Gemini API key and this phone stops using the shared one: it builds the
+envelope itself and calls Google directly, so the scan never touches the
+Worker at all.
+
+What that drops is everything guarding a key that is no longer in play — the
+bearer token, Turnstile, and all three budget buckets. What it does not touch
+is the reading: the same envelope, the same model, the same `checkScan`
+afterwards (`web/lib/scan/index.ts` holds both paths and is the only file that
+knows which is which). A brought key buys a different payer, not a different
+answer.
+
+Three consequences worth stating plainly, because the screen states them:
+
+- **Google bills that key**, and the caps in [What the scan costs](#what-the-scan-costs)
+  do not apply to it.
+- **The server has no record of the scan.** Not the photo, not the count — this
+  is the one thing on `/about`'s privacy section that a person can switch off.
+- **The key is on that phone**, in the device record like the group secrets
+  beside it (`web/lib/db/dexie.ts`), device-local and never an op.
+
+**Saving checks the key** against Google's free `models` list before storing
+it, which answers two questions at once: whether the key works, and whether
+this browser can reach Google at all. The second has no other moment to be
+found in — a content blocker or a shield defeats the whole feature, however
+good the key is, and finding that out with the key in hand beats finding it out
+over a receipt. A key Google refuses is not stored.
+
+**There is no fallback through the Worker**, on purpose. Sending the key to us
+when the direct call fails would make the promise this screen makes ("your key
+never leaves this phone") true only most of the time, and a caveat is what the
+feature exists to not have. A blocked browser is told so and keeps the shared
+path.
+
+## The envelope, and who owns it
+
+On the shared path the client sends **the photo and nothing else** — the base64
+JPEG as the whole body, `text/plain`. The prompt and the response schema live
+in `packages/core/src/scan-body.ts`, because both ends build the same body now;
+the Worker streams the photo into its copy (`apps/api/src/scan-body.ts`), so on
+that path the only thing a caller decides is which image Gemini reads.
 
 That is deliberate, and it is what the endpoint is *for*. A scan credential
 costs one unauthenticated request to mint — `ensureGroup` registers any id on
@@ -93,10 +139,10 @@ second image. The worst a minted credential buys is having a picture read.
 ### Staś mode
 
 The one thing a caller gets to say about the prompt, and it says it by picking
-one of two paragraphs the Worker holds. `X-Stas: 1` on the scan request swaps
+one of two paragraphs core holds. `X-Stas: 1` on the scan request swaps
 the refusal wording for the vicious version — send a photo that isn't a
 receipt, or one too blurry to read, and it comes back at *you*, not at the
-photo. Both paragraphs are in `REFUSAL` (`apps/api/src/scan-body.ts`), both
+photo. Both paragraphs are in `REFUSAL` (`packages/core/src/scan-body.ts`), both
 still have to say plainly what's wrong so the person knows what to re-shoot, and everything
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
@@ -106,7 +152,9 @@ arrays and no branch on the hot path.
 It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
 long-press on the wordmark — which is `localStorage` on that phone
 (`lib/scan/stas.ts`) and therefore per phone, not per group: nobody is
-signed up to be insulted by somebody else's taste. The one thing the mean
+signed up to be insulted by somebody else's taste. A phone on its own key picks
+the same two paragraphs with an argument instead of a header, there being no
+Worker in between. The one thing the mean
 paragraph is told to leave alone is what somebody was born as; everything else
 about them is fair game. The report prints `stas:`
 so a scan that came back savage is explicable from the thing people paste.

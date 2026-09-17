@@ -116,3 +116,16 @@ export async function setInstallNudgeCollapsed(collapsed: boolean): Promise<void
   if ((device.installNudgeCollapsed ?? false) === collapsed) return;
   await updateDevice({ installNudgeCollapsed: collapsed });
 }
+
+/**
+ * Point this phone's scans at a key its owner brought, or back at the shared
+ * one. Device-local and never an op — see `DeviceRecord.geminiKey`.
+ *
+ * Trimmed on the way in, because a key arrives by paste and a clipboard is
+ * where a trailing newline lives. Removing is `undefined` rather than an empty
+ * string: absent is what every phone that never pasted one already reads as.
+ */
+export async function setGeminiKey(key: string | undefined): Promise<void> {
+  const trimmed = key?.trim();
+  await updateDevice({ geminiKey: trimmed ? trimmed : undefined });
+}

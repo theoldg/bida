@@ -72,6 +72,23 @@ export interface DeviceRecord {
    */
   scan?: { id: string; secret: string };
   /**
+   * A Gemini API key this phone brought itself, pasted on `/advanced`.
+   *
+   * While it is set, a scan never touches our Worker: the phone builds the
+   * envelope and calls Google directly, so no shared budget is spent, no
+   * Turnstile token is minted, and our server has no record that anything was
+   * scanned (docs/receipt-scanning.md#a-key-of-your-own). Absent on records
+   * written before this existed, and on every phone that never pasted one,
+   * which reads as "use the shared key" — what the app has always done.
+   *
+   * Device-local like everything else in this record, and deliberately so: it
+   * is one person's credential and their bill, not the group's, so it is never
+   * an op and never leaves this phone. It sits in IndexedDB in the clear,
+   * beside the group secrets, which is what `/advanced` says out loud rather
+   * than implying a vault.
+   */
+  geminiKey?: string;
+  /**
    * Scans this phone has spent in the last day, per caller — its own copy of
    * `SCAN_LIMITS.caller`, so a scan already over budget is refused before a
    * request is made rather than after (lib/scan/budget.ts). Advice: the Worker

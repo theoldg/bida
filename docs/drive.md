@@ -127,6 +127,10 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
   app shell, so the next `goto` fails with an HTTP error that looks like a bug
   in the app. Restart the daemon after any build. A `git push` counts: pre-push
   runs `pnpm check`.
+- **A reload does not pick up a rebuild.** The phone has the service worker,
+  which is cache-first: the CSS and JS it already precached are what it keeps
+  serving, so a fix you just built shows up as the bug you just fixed. Restart
+  the session — `forget` is not enough, the caches are the context's.
 - **The daemon holds a browser and a Worker**, and `stop` takes both with it:
   `serveWorker` spawns `wrangler` detached and signals the process group, so the
   `workerd` underneath it goes too. It used to survive, and enough survivors

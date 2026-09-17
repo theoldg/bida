@@ -9,7 +9,7 @@ import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft"
 import { readBill, scanCurrency } from "@bida/core";
 import {
   normalizeScan, scanReceipt,
-  ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
+  ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
@@ -25,6 +25,9 @@ export type { ScanState } from "../lib/scan/live";
 export function scanErrorText(err: unknown): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
   if (err instanceof TurnstileBlockedError) return copy.scan.unverified[err.side];
+  // Before the budget refusals, and it can never be confused with one: a phone
+  // on its own key never reaches a bucket of ours (lib/scan/key.ts).
+  if (err instanceof ScanKeyError) return copy.scan.key[err.why];
   if (err instanceof ScanLimitError) {
     return err.scope === "global" ? copy.scan.limit.global : copy.scan.limit.you;
   }

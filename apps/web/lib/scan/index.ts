@@ -1,9 +1,11 @@
 import {
-  checkScan, scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
+  buildScanRequestBody, checkScan, GEMINI_URL,
+  scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
 } from "@bida/core";
 import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
 import { downscaleToBase64Jpeg } from "./downscale";
+import { ownKey } from "./key";
 import { parseScanResponse } from "./response";
 import { stasMode } from "./stas";
 import { TurnstileBlockedError, turnstileToken } from "./turnstile";
@@ -50,6 +52,20 @@ export class ScanLimitError extends Error {
   }
 }
 
+/**
+ * The key this phone brought is not usable — the one refusal the shared path
+ * can never produce, since on that path there is no key of the person's to be
+ * wrong. `refused` is Google saying no to the key itself; `spent` is the key
+ * working and being out of quota, which is theirs to wait out and nothing to
+ * do with our budget. Both point at `/advanced`, where the key can be replaced
+ * or removed to fall back to the shared one.
+ */
+export class ScanKeyError extends Error {
+  constructor(readonly why: "refused" | "spent") {
+    super(why);
+  }
+}
+
 /** Which of our own buckets refused this, if it was ours at all. */
 async function refusalScope(res: Response): Promise<ScanLimitScope | "turnstile" | null> {
   const body = await res.json().catch(() => null) as { scope?: unknown } | null;
@@ -63,24 +79,100 @@ async function refusalScope(res: Response): Promise<ScanLimitScope | "turnstile"
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
  * retry doubles both our requests and the shared daily Gemini quota; the scan
  * buttons stay enabled and the person decides. See docs/receipt-scanning.md.
+ *
+ * **Two ways out of the phone, and only one of them is ours.** With a key of
+ * their own (`/advanced`) the person calls Google directly and this function
+ * is the only place that knows it — the two paths meet again at the answer,
+ * which is read, checked and returned identically either way. What differs is
+ * everything guarding a key that isn't in play: the bearer, the Turnstile
+ * token and all three budgets belong to the shared path alone.
  */
 export async function scanReceipt(
   photo: File | Blob,
   groupId: string,
   /** The group's link secret, or this phone's scan credential. Derived from,
-   *  never sent: the bearer is the token beside the key (ADR-0036). */
+   *  never sent: the bearer is the token beside the key (ADR-0036). Unused on
+   *  a scan that goes straight to Google, which authenticates nothing of ours. */
   secret: string,
   /** The draft's currency — what a receipt that doesn't name its own is counted in. */
   currency: string,
 ): Promise<ScanResult> {
   // Asked before the downscale, which is the expensive part: there is no point
-  // resizing a photo we cannot send.
+  // resizing a photo we cannot send. True of both paths — neither has anything
+  // to say to a phone with no network.
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     throw new ScanOfflineError("offline");
   }
-  // Asked before the downscale too, and for the same reason: this phone
-  // already knows the answer, so there is nothing to resize and nothing to
-  // send. The Worker asks again — this copy is advice (./budget.ts).
+
+  const own = await ownKey();
+  const answer = own
+    ? await scanOnOwnKey(photo, own)
+    : await scanOnSharedKey(photo, groupId, secret);
+
+  const result = parseScanResponse(answer);
+  if (result.error) throw new ScanRejectedError(result.error);
+  // Checked here rather than at the call site so there is one door: everything
+  // downstream of this function may assume the bill it holds adds up — and
+  // whose key paid for it makes no difference to that.
+  const problem = checkScan(result, scanCurrency(result, currency));
+  if (problem) throw new ScanUnreliableError(problem);
+  return result;
+}
+
+/**
+ * The scan nobody pays us for: phone → Google, with the key this phone holds.
+ *
+ * The envelope is core's, the same one the Worker streams
+ * (`buildScanRequestBody`), so a brought key buys a different payer and not a
+ * different reading. Nothing here is authenticated by us, budgeted by us, or
+ * visible to us — which is the whole of the feature, and the reason there is
+ * no fallback through the Worker when it fails: a key that has gone somewhere
+ * else once is a key that went somewhere else.
+ */
+async function scanOnOwnKey(photo: File | Blob, key: string): Promise<unknown> {
+  const imageBase64 = await downscaleToBase64Jpeg(photo);
+  let res: Response;
+  try {
+    res = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      // Staś mode still picks between the two refusals core holds — here it is
+      // simply an argument, with no header and no Worker in between.
+      body: JSON.stringify(buildScanRequestBody(imageBase64, stasMode() ? "stas" : "kind")),
+    });
+  } catch (err) {
+    // Same reading as the shared path: fetch rejects only when the request
+    // reached no server. A browser extension refusing googleapis.com lands
+    // here too, which is why `/advanced` makes this call once at the moment
+    // the key is pasted, where it can be said plainly (./key.ts).
+    throw new ScanOfflineError(err instanceof Error ? err.message : "offline");
+  }
+  // Google's own statuses, and there is no cap of ours mixed in with them to
+  // tell apart — the one simplification this path gets for free.
+  if (res.status === 400 || res.status === 401 || res.status === 403) {
+    throw new ScanKeyError("refused");
+  }
+  if (res.status === 429) throw new ScanKeyError("spent");
+  if (res.status === 503) throw new ScanUnavailableError("busy");
+  if (!res.ok) {
+    throw new Error(`scan failed: ${res.status} ${await res.text().catch(() => "")}`);
+  }
+  return res.json();
+}
+
+/**
+ * The scan on the key the deployment holds: through our Worker, which owns the
+ * envelope, counts what it costs and will not send anything for a browser it
+ * could not verify.
+ */
+async function scanOnSharedKey(
+  photo: File | Blob,
+  groupId: string,
+  secret: string,
+): Promise<unknown> {
+  // Asked before the downscale, for the same reason as the offline check: this
+  // phone already knows the answer, so there is nothing to resize and nothing
+  // to send. The Worker asks again — this copy is advice (./budget.ts).
   if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
 
   // Started together, not one after the other: resizing the photo is CPU and
@@ -134,11 +226,5 @@ export async function scanReceipt(
   if (!res.ok) {
     throw new Error(`scan failed: ${res.status} ${await res.text().catch(() => "")}`);
   }
-  const result = parseScanResponse(await res.json());
-  if (result.error) throw new ScanRejectedError(result.error);
-  // Checked here rather than at the call site so there is one door: everything
-  // downstream of this function may assume the bill it holds adds up.
-  const problem = checkScan(result, scanCurrency(result, currency));
-  if (problem) throw new ScanUnreliableError(problem);
-  return result;
+  return res.json();
 }

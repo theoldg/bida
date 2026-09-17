@@ -6,6 +6,7 @@ import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
 import { format, handoff, loadedAt, otherPages, timeline } from "../../lib/diag";
 import { route } from "../../lib/group-link";
+import { ownKey } from "../../lib/scan/key";
 import { setStasMode, stasMode } from "../../lib/scan/stas";
 import { VERSION } from "../../lib/version";
 
@@ -257,6 +258,14 @@ async function collect(): Promise<string> {
   ));
 
   say("stas", stasMode() ? "on" : "off");
+  // Which key this phone scans with — never the key itself, which is a
+  // credential and this report is pasted into chat threads. The line exists
+  // because it decides where a failed scan even went: ours, or Google
+  // directly (lib/scan/key.ts).
+  say("scan key", await within(
+    (async () => (await ownKey()) ? "own" : "shared")(),
+    "no answer",
+  ));
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
   // The screen the app is actually being painted on, beside the one it was laid
   // out for. They are the same number on a phone that is behaving; when they
