@@ -253,7 +253,11 @@ confers nothing without the secret.
   ticked as it arrives, because a name typed into the list you are picking
   yourself out of is the pick. The tick is a check mark **and** `aria-pressed`:
   a shape is not a sentence, and without it the only thing naming the pick was
-  the button at the foot of the screen.
+  the button at the foot of the screen. That button sits **under the list, and
+  sticks** (`.whodock`): under the last name while the list fits, so it reads
+  as the next step after the tap that lit it up, and stopped at the foot of the
+  scroller once it doesn't — a group of twenty scrolls under it, and on
+  `/g/claim` it stops above the "Have the app?" dock rather than over it.
 - History wording is assembled once, in `lib/history-copy.ts` (`describe`),
   from `copy.history`. One revision usually moved several fields — an entry is
   saved whole — and then it returns no sentence about any one of them, but a

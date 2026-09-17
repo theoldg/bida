@@ -40,8 +40,10 @@ export interface Who {
  * The button sits under the list rather than in a `Foot`, because it is the
  * next thing you do after tapping your name and not a fixture of the screen:
  * pinned to the bottom of a short list it read as unrelated to the tap that
- * had just lit it up. It is the act the screen exists for, so it is the same
- * `.btn-lg` register as Create and Save (docs/design-system.md).
+ * had just lit it up. A list too long for the screen is the other case, and
+ * `.whodock` is sticky for it — the button stops at the foot of the scroller
+ * and the names scroll under it. It is the act the screen exists for, so it is
+ * the same `.btn-lg` register as Create and Save (docs/design-system.md).
  */
 export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue }: {
   people: readonly Who[];
@@ -109,7 +111,15 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           }} />
       </div>
 
-      <div className="pad">
+      {/* Under the list, and sticky once the list is longer than the screen:
+          it is the next thing you do after tapping your name, so on a short
+          list it sits right under the tap that lit it up — pinned to the
+          bottom there, it read as unrelated to it. On a group of twenty it
+          would be off the bottom instead, so it stops at the foot of the
+          scroller and the names pass underneath. Opaque, or they'd show
+          through it. `bottom: 0` is the scroller's own foot, which on
+          `/g/claim` is above the "Have the app?" dock, never over it. */}
+      <div className="pad whodock">
         <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}
           {...keepsFocus}>
           {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}

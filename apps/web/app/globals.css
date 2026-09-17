@@ -436,6 +436,11 @@ a { color: inherit; text-decoration: none }
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
   border: 1px solid var(--rule); border-radius: var(--radius-l) }
+/* The pick button under the name list (components/who-picker.tsx): in flow
+   under the last name while the list fits, stuck to the foot of the scroller
+   once it doesn't. Opaque — the names pass behind it — in the shell's own
+   background, which the table has none of to inherit. */
+.whodock { position: sticky; bottom: 0; z-index: 1; background: var(--card) }
 /* "Have the app?" pinned under the claim list, iOS tab only (components/use-in-app.tsx):
    a lower-contrast card holding the link in a box that is its own copy button.
    Out of the way while a name is typed: the keyboard leaves room for the field
