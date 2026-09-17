@@ -76,6 +76,26 @@ None of these is started, and the first is not code at all.
   `dev` and reaches phones when the owner releases. **Next: install from a group's
   page, not `/install`, and paste both `/diag`s** — it also settles whether iOS
   used the manifest, since no other page's URL carries anything.
+- **Importing a Splitwise CSV**, into a new group only, from the groups list's
+  menu. The shape is what `core/export.ts` writes, read backwards
+  ([data-model.md](data-model.md#the-group-as-a-spreadsheet)), and the one part
+  that is not a mirror is that **a member's column is `paid − owed`, which does
+  not invert**: `(+20, −10, −10)` at a cost of 30 is "A paid 30, split three
+  ways" and half a dozen other entries equally. So it is a stated rule, not a
+  recovery. One positive column — every file Splitwise itself writes — is
+  lossless: that member paid the whole cost, and the split is `exact` with
+  `owed = paid − delta`. Several positive columns are the payers, at
+  `paidᵢ = deltaᵢ × cost / Σ positive`, which can never send an `owed` negative
+  and reproduces every balance to the cent while the payer figures are a guess.
+  The foot row `Total balance` is the checksum: fold, `computeBalances`, refuse
+  on a mismatch. Settled with it: the category folds into the title because we
+  have none, a transfer is the `Payment` token plus a few keywords and nothing
+  cleverer, an income arrives as the negative `Cost` our own writer already
+  emits, and the CSV package lives in `apps/web` so `packages/core` stays
+  dependency-free and takes rows. **Open: single-currency files only.** A mixed
+  one needs a rate per currency that the file cannot supply, and its foot sums
+  across currencies, so the checksum is gone exactly where the import is least
+  sure — v1 refuses it and names the codes it found.
 
 ## What a cold session needs to know
 

@@ -16,9 +16,9 @@ isn't checkable; the size is.
 
 Lower-case, unpunctuated, short. "the llm can handle that, don't build useless
 stuff." "don't highlight cent splits, that's the wrong vibe." Read the fragment
-as the whole instruction — it usually is one. Brevity here is not vagueness, and
-a clarifying question you could have answered by looking at the screen is a
-turn wasted.
+as the whole instruction — it usually is one. Brevity is not vagueness; a
+question you could have answered by looking at the screen wastes a turn, and one
+they would rather park gets "write this up somewhere" instead of an answer.
 
 Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report; your
 job is to translate it into pixels, not to ask for a redlined mock. "Redesign
