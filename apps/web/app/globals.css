@@ -489,31 +489,29 @@ a { color: inherit; text-decoration: none }
 .aboutrow th { color: var(--muted); border-bottom: 1px solid var(--rule-soft) }
 .aboutrow td { color: var(--ink); overflow-wrap: anywhere }
 .aboutrow + p { margin-top: 13px }
-/* Bringing your own Gemini key (app/advanced/page.tsx). Everything here hangs
-   off `.aboutsect` above; these are only the parts a paragraph has no shape
-   for. */
-/* The key in use, masked. Mono and card-bound like the sealed row on /about,
-   and for the same reason: it is a stored value being shown, not a sentence. */
-.keyshown { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px;
-  padding: 8px 11px; background: var(--card-2); border: 1px solid var(--rule-soft);
-  border-radius: var(--r-s); font-family: var(--f-mono); font-size: 12.5px; color: var(--ink) }
-.keyshown svg { color: var(--muted); flex: none }
-/* The field and its Paste, on one row: a key is long and a phone is narrow, so
-   the button that fills it belongs beside it rather than under. */
-.keyfield { margin-top: 13px }
-.keyfield input { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
-/* `.btn` is full-width and declared below this, so both of these say `.btn`
-   themselves rather than losing to it on source order and leaving the field
-   they sit beside with no room to type in. */
-.btn.keypaste { width: auto; flex: none; padding: 6px 11px; font-size: 11.5px }
-/* Why it was not accepted. In the debit colour because it is a refusal, and
-   under the field rather than over the button, since it is about what was
-   typed. */
-.keyno { font-size: 12.5px; line-height: 1.5; color: var(--debit); margin: 9px 2px 0 }
-/* The act, given its own line: neither saving a key nor removing one is
-   something to do by brushing past it. */
-.keyact { margin-top: 13px }
-.keyact .btn { width: auto; padding: 10px 16px }
+/* Bringing your own Gemini key (app/advanced/page.tsx). The screen borrows
+   /about's prose column and the ledger's add-a-name row, so what is here is
+   only what neither of those already says. */
+/* A settings section is titled, not labelled: `/about`'s eyebrow is a mono
+   caption over a paragraph you are already reading, and this is the name of
+   the one thing the screen does. */
+.advanced .aboutsect h4 { font-family: inherit; font-size: 16px; font-weight: 650;
+  letter-spacing: -.02em; text-transform: none; color: var(--ink); margin-bottom: 9px }
+/* The key's own row. `.addrow.editing` draws the box; this puts the key in the
+   typeface a key belongs in and gives the row air under the link above it. */
+/* `.addrow.editing` sets its own margins further down, so this outweighs it by
+   a class rather than by `!important`: the row is the width of the column here,
+   not an inset row in a list. */
+.advanced .addrow.keyrow { margin: 16px 0 0; width: 100% }
+.keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
+/* Locked: the field stays exactly where it was and stops being a field. Muted
+   ground rather than the box's paper, so the row reads as filled in rather
+   than waiting. */
+.keyrow.locked { background: var(--card-2); border-color: var(--rule-soft) }
+.keyrow.locked .keyinput { color: var(--ink-2); -webkit-text-fill-color: var(--ink-2); opacity: 1 }
+/* The one line under the row: accepted, checking, or refused. `.failure`
+   colours the last of the three; this is only the placement they share. */
+.keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
 /* The two ways out of the app, stacked rather than side by side: an address is
    long, a phone is narrow, and a row of two would wrap into a worse version of

@@ -303,41 +303,35 @@ export const copy = {
   /**
    * The screen for things most people never open, and the first of them.
    *
-   * Every sentence here is about *where the photo goes*, because that is the
-   * whole of what changes: the reading, the form it fills and the arithmetic
-   * after it are the same either way. The words are plain about the two costs
-   * — Google bills the key, and the key sits on this phone — since a screen
-   * that asks for a credential and is coy about where it lands has earned
-   * nothing.
+   * Short on purpose. The first draft explained the budget, the billing and
+   * where the key is stored, and three paragraphs asking somebody to paste a
+   * credential read as a disclaimer rather than an offer. What is left is the
+   * two facts that decide it: the phone calls Google itself, and Google bills
+   * the key.
    */
   advanced: {
     title: "Advanced",
     key: {
       title: "Bring your own key",
-      /** Two facts and no pitch: what it changes, and what it costs. */
-      lede: "Scanning normally goes through this app’s server, on a key shared by everybody, with a daily cap. Paste a Google Gemini API key and this phone calls Google directly instead: no cap, nothing counted here, and Google bills your key.",
+      lede: "Scans normally go through this app’s server, on a key shared by everybody, with a daily cap. Paste your own Gemini key and this phone calls Google directly instead: no cap, and nothing counted here.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
-      placeholder: "AIza…",
-      paste: "Paste",
-      save: "Use this key",
-      /** Between the tap and Google's answer. It is a real request, so it is
-          not instant and must not look like a frozen button. */
+      placeholder: "Paste a Gemini API key",
+      /** The plus files the key, the way the plus on a name files a name. */
+      use: "Use this key",
+      /** Between the press and Google's answer. */
       checking: "Checking…",
       remove: "Remove key",
-      /** Once one is set. The masked key is the heading; this is under it. */
-      inUse: "Scans from this phone use your key and skip the shared cap.",
-      /** Where it lives, said rather than implied. */
-      stored: "Stored on this phone only, in the clear, like your group links. Removing it here is the whole of removing it.",
+      /** Under the locked field: the one line that says the paste worked. */
+      accepted: "Accepted. This phone scans with your key.",
       /**
-       * The two refusals, and they ask for different things. `refused` is the
-       * key; `blocked` is this browser, which is the one failure worth finding
-       * at the moment of pasting — a brought key means this phone calls Google
-       * itself, and a shield or a content blocker makes that impossible here
-       * however good the key is.
+       * The two refusals, which ask for different things. `refused` is the
+       * key; `blocked` is this browser, and it is the one worth catching at
+       * the moment of pasting, since a scan on a brought key is a call this
+       * browser makes itself.
        */
       refused: "Google wouldn’t accept that key.",
-      blocked: "This browser couldn’t reach Google at all. A content blocker, a shield or the network is in the way. Allow generativelanguage.googleapis.com and try again.",
+      blocked: "This browser couldn’t reach Google. Something is blocking generativelanguage.googleapis.com.",
     },
   },
 
