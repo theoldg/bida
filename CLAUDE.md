@@ -116,8 +116,10 @@ every session pays in. **Before you finish:**
    built or what is open moved.
 5. **Touch [claude_corner.md](docs/claude_corner.md)** — every session, at
    least a line. The agents' own doc: how the owner asks, and what an agent
-   gets wrong that no check catches. Vibes only, nothing technical, under 100
-   lines.
+   gets wrong that no check catches. Vibes only, nothing technical. Its three
+   limits — 100 lines, ten postcards, 200 characters each — are checked, so
+   adding means evicting: fold what the evicted postcard taught into the prose
+   above if it has gone general, otherwise let it go.
 
 **A new ADR and a new standing instruction are the two things a session almost
 never adds.** Each file states its own bar — [decisions/](docs/decisions/README.md)

@@ -4,12 +4,13 @@
 how. This one says what it is like here — how the owner's instructions actually
 read, and what an agent tends to get wrong that no check will catch.*
 
-**House rules.** Under 100 lines, always. Every session touches it, even one
-line. **Nothing technical lives here** — a fact about the automation belongs in
-the Gotchas of the doc that owns it, and a rule belongs in
-[CLAUDE.md](../CLAUDE.md#doc-upkeep) or
-[standing-instructions](standing-instructions.md). This file is for the part
-that isn't checkable. Add by cutting.
+**House rules.** 100 lines, ten postcards, 200 characters each. Every session
+touches it, even one line — so every session also makes the room it takes, in
+the same edit; `pnpm check` fails on all three numbers. **Nothing technical
+lives here** — a fact about the automation belongs in the Gotchas of the doc
+that owns it, and a rule belongs in [CLAUDE.md](../CLAUDE.md#doc-upkeep) or
+[standing-instructions](standing-instructions.md). The prose is the part that
+isn't checkable; the size is.
 
 ## How the owner asks
 
@@ -20,7 +21,9 @@ a clarifying question you could have answered by looking at the screen is a
 turn wasted.
 
 Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report; your
-job is to translate it into pixels, not to ask for a redlined mock. "Redesign slightly" means exactly what it then lists — no more.
+job is to translate it into pixels, not to ask for a redlined mock. "Redesign
+slightly" means exactly what it then lists — no more. Copy gets settled by ear,
+one word at a time: offer a version with the reason, then ship theirs verbatim.
 
 Permission is usually pre-granted — *"propose a ux and go for it without
 approval, we'll iterate later."* They would rather correct a built thing than
@@ -60,33 +63,32 @@ do any of that.
 
 ## Postcards
 
-*One line, dated, newest first. At ten, drop the oldest rather than grow the
-file.*
+*One line, dated, newest first. Ten is the ceiling, so the eleventh evicts the
+oldest in the same edit — and before it goes, ask what it taught: if the lesson
+has gone general, fold it into a paragraph above by editing a sentence rather
+than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — Thirteen postcards where the rule said ten. A limit nobody
+  counts is a wish, and whoever needs the room is never who took it — so a
+  doc's own numbers go in `pnpm check`.
 - *2026-09-17* — "It's a title, and the first thing a new joiner reads" named
-  the screen: the same question is asked on `/new` too, from the bar. The
-  reason attached to an ask is what says which of two copies to touch.
+  the screen: the same question is asked on `/new` too. The reason attached to
+  an ask says which of two copies to touch.
 - *2026-09-17* — Audit the artifact, not the doc describing it. The prose said
-  the clip ran "down to Add"; the clip stops one tap short. Only the file is
-  what the user meets, and the two drift apart with nothing to catch it.
+  the clip ran "down to Add"; it stops a tap short. The file is what the user
+  meets, and the two drift apart unwatched.
 - *2026-09-17* — A question can carry a wrong premise ("dev looks different,
-  so…"). Answer the premise, not just the question: the doc has usually
-  settled it already, and agreeing politely teaches the owner something
-  untrue.
+  so…"). Answer the premise, not just the question — agreeing politely teaches
+  the owner something untrue.
 - *2026-09-16* — "hands off" was the whole spec for a feature that insults
-  people, and the right move was to build it and let the owner nudge it, not to
-  ask where the line was. Where a line was genuinely needed, the code was the
-  place to put it.
+  people: build it and let the owner nudge it rather than ask where the line
+  is. Where one was needed, the code was its place.
 - *2026-09-16* — The gate was five commands joined by `&&` and nobody had ever
   asked what that cost. The tools you type every day are the last place anyone
   looks and the cheapest place to win.
 - *2026-09-16* — This file's first draft was full of technical tips. Every one
-  of them already had a home somewhere else, which is the "one fact, one home"
-  rule proving itself on the session that wrote it down.
+  already had a home elsewhere — "one fact, one home" proving itself on the
+  session that wrote it down.
 - Asked to debug a phone-only failure, build the readout first: the owner pastes /diag, and a guess can't be pasted back.
 - Two sessions in one checkout race each other's builds and blur whose diff is whose. Check `git status` for files you never touched before trusting a red build.
 - "Later" can mean the next message. Leave the follow-up written where the next session will find it anyway.
-- A stash the owner made mid-task isn't lost work — `git stash list` before redoing anything.
-- Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
-- A screenshot of copy plus "replace with the button from X" means reuse X's component, not a lookalike.
-- Asked to "propose, write it here first", give options in chat and edit nothing. The owner often answers with a blend of two; ship that exact text.

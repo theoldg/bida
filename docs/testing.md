@@ -14,7 +14,7 @@ pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the four pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
-pnpm run docs     # every relative link resolves, every ADR is indexed, ~30ms
+pnpm run docs     # links resolve, ADRs indexed, claude_corner within size, ~30ms
 pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
 ```
 

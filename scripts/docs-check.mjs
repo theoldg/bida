@@ -11,13 +11,15 @@
  * Checked: every relative markdown link resolves to a file; every `#anchor`
  * into a markdown file matches a heading there, by GitHub's slug rules since
  * that is where these get clicked; the ADR index names every ADR on disk and
- * nothing else, so a folded-away decision can't leave a row behind; and no doc
+ * nothing else, so a folded-away decision can't leave a row behind; no doc
  * states a test count, which is a number that is wrong by the next commit and
- * tells a reader nothing they wanted to know.
+ * tells a reader nothing they wanted to know; and claude_corner.md keeps to the
+ * three numbers its own house rules name.
  *
- * Whether a doc has grown too long, or whether it should have gained an ADR or
- * a standing instruction at all, is a judgement — CLAUDE.md and the head of
- * each of those two files carry the bar. Deliberately not counted here.
+ * Whether any other doc has grown too long, or whether it should have gained an
+ * ADR or a standing instruction at all, is a judgement — CLAUDE.md and the head
+ * of each of those two files carry the bar. Deliberately not counted here. The
+ * corner is the exception because it fixed its own limits in writing.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, relative, resolve, normalize } from "node:path";
@@ -97,10 +99,52 @@ for (const file of markdownFiles(ROOT)) {
   }
 }
 
+/**
+ * Claude's corner is the one doc every session is asked to add to, and it grew
+ * to thirteen postcards under a rule saying ten — nobody decided that, it is
+ * just what "add a line" does when the eviction is somebody else's problem.
+ * So the numbers it states about itself are enforced here, and the file says
+ * they are. Room is made by cutting, in the same edit as the addition.
+ */
+const CORNER = { lines: 100, postcards: 10, chars: 200 };
+const cornerFile = join(ROOT, "docs", "claude_corner.md");
+const corner = readFileSync(cornerFile, "utf8").replace(/\n$/, "");
+const cornerLines = corner.split("\n").length;
+if (cornerLines > CORNER.lines) {
+  problems.push(
+    `docs/claude_corner.md\n        ${cornerLines} lines, over ${CORNER.lines} — cut before you add`,
+  );
+}
+const postcardSection = corner.split(/^## Postcards$/m)[1];
+if (postcardSection === undefined) {
+  problems.push(`docs/claude_corner.md\n        no "## Postcards" section to check`);
+} else {
+  const postcards = postcardSection
+    .split(/^## /m)[0]
+    .split(/\n(?=- )/)
+    .filter((entry) => entry.startsWith("- "))
+    // One postcard, however it happens to be wrapped.
+    .map((entry) => entry.trim().replace(/\s+/g, " "));
+  if (postcards.length > CORNER.postcards) {
+    problems.push(
+      `docs/claude_corner.md\n        ${postcards.length} postcards, over ${CORNER.postcards}` +
+        ` — evict the oldest, and fold what it taught into the prose above if it has become general`,
+    );
+  }
+  for (const card of postcards) {
+    if (card.length > CORNER.chars) {
+      problems.push(
+        `docs/claude_corner.md\n        postcard is ${card.length} characters, over ${CORNER.chars}` +
+          `: ${card.slice(0, 48)}…`,
+      );
+    }
+  }
+}
+
 for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(
   problems.length
     ? `\n${problems.length} problem(s)`
-    : `docs: every link resolves, every ADR indexed, no counts to go stale`,
+    : `docs: every link resolves, every ADR indexed, no counts to go stale, the corner within its limits`,
 );
 process.exit(problems.length ? 1 : 0);
