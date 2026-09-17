@@ -63,6 +63,9 @@ do any of that.
 *One line, dated, newest first. At ten, drop the oldest rather than grow the
 file.*
 
+- *2026-09-17* — Audit the artifact, not the doc describing it. The prose said
+  the clip ran "down to Add"; the clip stops one tap short. Only the file is
+  what the user meets, and the two drift apart with nothing to catch it.
 - *2026-09-17* — A question can carry a wrong premise ("dev looks different,
   so…"). Answer the premise, not just the question: the doc has usually
   settled it already, and agreeing politely teaches the owner something

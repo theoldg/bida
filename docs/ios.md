@@ -149,7 +149,8 @@ tell. It carries, in this order:
 1. untitled — Safari may forget your groups after a week unopened; the invite
    link always brings them back. Then, for whoever wants to keep everything
    permanently, one bold line: add bida to your home screen.
-2. untitled — a recording of Safari's share sheet down to Add
+2. untitled — a recording of Safari's share sheet, which stops on the Add
+   sheet: it never shows the tap on **Add**, or the icon arriving
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
 
@@ -200,6 +201,10 @@ has claimed twice.
 
 - `looksIos` has to catch iPadOS, which calls itself a Mac
   ([lib/install.ts](../apps/web/lib/install.ts)).
+- The Add sheet's **Open as Web App** toggle is what makes an icon a web app
+  rather than a bookmark. Off, it opens Safari — shared storage, no `persist()`,
+  and the install bought nothing. It defaults on, and nothing can read it:
+  `isStandalone()` stays false, so the banner rightly keeps warning.
 - `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
   a tap — a paste is always two taps.
 - A pasted join link is opened with `location.assign`, not `router.push`. When
