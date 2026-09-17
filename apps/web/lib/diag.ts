@@ -17,7 +17,7 @@
  *
  * Read it on /diag — long-press the wordmark on the groups list.
  *
- * **The previous session is kept too**, in `localStorage`. The launch that
+ * **The last few pages' timelines are kept too**, in `localStorage`. The launch that
  * went wrong is over by the time anybody thinks to look at a log, and killing
  * the app to get out of it is exactly what a person does. localStorage rather
  * than a table, deliberately: this recorder has to work on the launch where
@@ -114,21 +114,35 @@ export function loadedAt(): number {
 
 /* ---- surviving the relaunch ------------------------------------------- */
 
-const KEEP = "bida.diag.last";
+const KEEP = "bida.diag.pages";
+/**
+ * How many page logs to keep, this one included. One was not enough: a paste
+ * loads `/join` as a second page, and each wrote over the other's log, so the
+ * page that hung was the one no report could show.
+ */
+const PAGES = 5;
+
+/** One page's timeline, as kept: when it loaded, where, and what it recorded. */
+export interface KeptPage { at: number; url: string; events: DiagEvent[] }
+
+const readKept = (): KeptPage[] => {
+  try {
+    return (JSON.parse(localStorage.getItem(KEEP) ?? "[]") as KeptPage[]).filter((p) => Array.isArray(p.events));
+  } catch {
+    return [];
+  }
+};
 
 /**
- * The timeline from before this page loaded, if there is one. Read once, at
- * module load, so that saving over it later can't take it away.
+ * Every other page's kept timeline, oldest first. Read when asked, not at
+ * load: a page opened after this one, and left, is often the one that matters.
  */
-let previous: { at: number; events: DiagEvent[] } | undefined;
-
-/** What the last session recorded, or undefined. */
-export function lastSession(): { at: number; events: DiagEvent[] } | undefined {
-  return previous;
+export function otherPages(): KeptPage[] {
+  return readKept().filter((page) => page.at !== startedAt).sort((a, b) => a.at - b.at);
 }
 
 /**
- * Keep this session's timeline for the next one to read.
+ * Keep this page's timeline for the next one to read, in its own slot.
  *
  * On `pagehide` and on going hidden, which between them cover the ways a phone
  * leaves an app: backgrounded, swiped away, reloaded, killed. Neither is
@@ -138,24 +152,26 @@ export function lastSession(): { at: number; events: DiagEvent[] } | undefined {
 function save(): void {
   try {
     // `timeline()`, not `events`: a read still hanging when the app is
-    // backgrounded or killed is precisely what the next session needs to see.
-    localStorage.setItem(KEEP, JSON.stringify({ at: startedAt, events: timeline() }));
+    // backgrounded or killed is precisely what the next page needs to see.
+    const mine: KeptPage = { at: startedAt, url: hideSecrets(location.pathname + location.search + location.hash), events: timeline() };
+    const kept = [...readKept().filter((page) => page.at !== startedAt), mine]
+      .sort((a, b) => a.at - b.at).slice(-PAGES);
+    localStorage.setItem(KEEP, JSON.stringify(kept));
   } catch {
-    // A full or disabled localStorage costs the previous session, nothing else.
+    // A full or disabled localStorage costs the kept logs, nothing else.
   }
 }
 
 let watching = false;
 
-/** Start keeping the timeline across launches. Idempotent; called by `arm()`. */
+/** Start keeping the timeline across pages. Idempotent; called by `arm()`. */
 export function keep(): void {
   if (watching || typeof window === "undefined") return;
   watching = true;
   try {
-    const held = localStorage.getItem(KEEP);
-    if (held) previous = JSON.parse(held) as { at: number; events: DiagEvent[] };
+    localStorage.removeItem("bida.diag.last");
   } catch {
-    previous = undefined;
+    // Only a leftover from when one log was kept.
   }
   addEventListener("pagehide", save);
   document.addEventListener("visibilitychange", () => {
@@ -168,7 +184,6 @@ export function forget(): void {
   events.length = 0;
   seq = 0;
   running.clear();
-  previous = undefined;
 }
 
 /**

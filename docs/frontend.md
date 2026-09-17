@@ -348,9 +348,10 @@ head got. `/install` and `keepCarried` add `note`s beside them. Secrets are mask
 
 Read it at **`/diag`** — long-press the app's name on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person
-reads. The previous session is kept in `localStorage` (not a table — this has
-to work on the launch where IndexedDB is the broken thing), because the launch
-that hung is the launch you killed the app to escape.
+reads. The last five pages' timelines are kept in `localStorage`, each under
+its address (not a table — this has to work on the launch where IndexedDB is
+the broken thing), because the launch that hung is the launch you killed the
+app to escape, and a paste's `/join` is a page of its own beside the list.
 
 It also carries the app's one hidden setting, **Staś mode** — the switch that
 makes a scan insult whoever sent it a photo that isn't a receipt

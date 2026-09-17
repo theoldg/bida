@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { copy } from "../../lib/copy";
 import { db } from "../../lib/db/dexie";
-import { format, handoff, lastSession, loadedAt, timeline } from "../../lib/diag";
+import { format, handoff, loadedAt, otherPages, timeline } from "../../lib/diag";
 import { route } from "../../lib/group-link";
 import { setStasMode, stasMode } from "../../lib/scan/stas";
 
@@ -235,19 +235,17 @@ async function collect(): Promise<string> {
   say("copies", await within(copies(), "no answer from the worker"));
 
   const rows = timeline();
-  const before = lastSession();
-
-  // The previous session first, because it is usually the interesting one: the
-  // launch that hung is the launch you killed the app to get out of, so by the
-  // time this screen is open it is already history.
-  const past = before
-    ? `---- previous session, ${new Date(before.at).toISOString()} `
-      + `(${before.events.length} events) ----\n\n${format(before.events)}\n\n`
-    : "";
+  // The other pages first, because one of them is usually the interesting
+  // one: the launch that hung is the launch you killed the app to get out of,
+  // and a paste that loads `/join` is a second page beside this one. Each is
+  // headed by the address it was on, secrets masked.
+  const past = otherPages().map((page) =>
+    `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
+    + `${format(page.events)}\n\n`).join("");
 
   // Which URL the home-screen icon opened, and what /install made of it — the
   // iOS hand-off, whose every step is gone from the screen by the time anyone
   // looks (docs/ios.md, experiment A). Secrets masked.
   return `${lines.join("\n")}\n\n---- home screen ----\n\n${handoff()}\n\n${past}`
-    + `---- this session (${rows.length} events) ----\n\n${format(rows)}\n`;
+    + `---- this page (${rows.length} events) ----\n\n${format(rows)}\n`;
 }
