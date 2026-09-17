@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — I ended a diagnosis with a two-way menu, and "go for it"
+  answered neither half. When both paths are cheap, take them both and say so
+  rather than asking which.
 - *2026-09-17* — "there's no way?" There was: the share sheet. I had let one
   blocked path stand for the whole platform. Look for the sanctioned route
   before reporting a dead end.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — frontend.md said "this copy never opens a write while hidden".
   One function didn't. A doc asserting an invariant is a claim, not a check —
   go and read what enforces it.
-- *2026-09-17* — The bug report was a screenful of gibberish and no words. The
-  repo had already named that string in a comment — read what the project says
-  about its own symptoms before theorising.

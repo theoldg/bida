@@ -271,7 +271,13 @@ is rightly let through: it is Chrome, storage and menus and all.
   and the install bought nothing. It defaults on, and nothing can read it:
   `isStandalone()` stays false, so the banner rightly keeps warning.
 - `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
-  a tap — a paste is always two taps.
+  a tap — a paste is always two taps. **And the read that drew the bubble is
+  the one that comes back empty**: access is granted for the pasteboard's
+  change count, and the granting read can still be served from the pre-grant
+  snapshot, so it answers `""` and the next one — now silent — has the text.
+  A resume is the same shape, the pasteboard not being back yet. So an empty
+  read is re-read before it is believed ([lib/paste.ts](../apps/web/lib/paste.ts));
+  believing one is what put *Nothing to paste* in front of a copied invite.
 - A pasted join link is opened with `location.replace`, not `router.push`. When
   Next's router gives up and loads the page itself — say the build it fetched
   isn't the one on screen, which is easy on a freshly installed app — it

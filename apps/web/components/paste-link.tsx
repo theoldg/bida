@@ -7,6 +7,7 @@ import { copy } from "../lib/copy";
 import { db } from "../lib/db/dexie";
 import { notePasted } from "../lib/failed-link";
 import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
+import { readClipboardText } from "../lib/paste";
 
 /**
  * Reading the clipboard as an invite, for the Paste link tile and for
@@ -24,18 +25,18 @@ import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
  *
  * `onEmpty` is for `/paste` itself, where going to `/paste` again would
  * change nothing on screen.
+ *
+ * What the clipboard *says* takes more than one read: `lib/paste.ts`.
  */
 export function usePasteLink(onEmpty?: () => void): { paste: () => Promise<void>; dialog: ReactNode } {
   const router = useRouter();
   const [elsewhere, setElsewhere] = useState<string>();
 
   async function paste() {
-    let text: string;
-    try {
-      text = await navigator.clipboard.readText();
-    } catch {
-      return;
-    }
+    // `undefined` is a refused read — the person dismissing iOS's paste
+    // prompt: a no, not an error, and nothing to show for it.
+    const text = await readClipboardText();
+    if (text === undefined) return;
     const pasted = readPastedLink(text, window.location.origin);
     if (pasted.kind === "elsewhere") return setElsewhere(pasted.host);
     if (pasted.kind === "join") {

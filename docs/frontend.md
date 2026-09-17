@@ -34,7 +34,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/export?id=` | The group as a spreadsheet, in text, for a browser that cannot hand over a file — `/diag`'s layout, because it is the same act. Reached only from the last rung of `lib/export.ts`; it rebuilds the CSV itself rather than being handed it, since a route cannot carry a file and a readout that empties on reload is the drawer state [ADR-0007](decisions/0007-a-screen-is-a-route.md) removed. Being an ordinary route it can also just be opened, so the sentence over the text asks `fileHandoff()` rather than asserting that this browser can't save one ([below](#getting-a-group-off-the-phone)) |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). Everything else is the waiting screen, and it is in the static export: the wordmark and *Joining…* from first byte, since an invite link is the only way onto this route. Only the body — *finishes by itself once the other phone syncs* — waits for the key, being a promise about a link nothing has read yet. It used to prerender a bare bar and a back arrow, which is what a stranger saw until the bundle landed |
-| `/paste` | **Paste link** with nothing on the clipboard: *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
+| `/paste` | **Paste link** with nothing on the clipboard — three empty reads, not one (`lib/paste.ts`): *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
 | `/install` | iOS only: why the home-screen app, and how. Also where the icon first opens, taking in the groups and names it carries. Off the iOS tab's banner, atop the groups list or a group's ledger |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
@@ -477,8 +477,10 @@ never hands a tapped invite (it opens in Safari, whose storage is not the
 app's), so the link has to come in by clipboard; only a `/join` URL from this
 origin joins, and one from another deployment says which server it belongs to
 rather than "Bad link", one with no password, from anywhere, opens that
-group's screen, and an empty clipboard goes to `/paste` (`readPastedLink`,
-`usePasteLink`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
+group's screen, and an empty clipboard goes to `/paste` — but only after the read has
+been asked twice more, since on iOS the first answer is empty even when the
+clipboard is not ([ios.md](ios.md#gotchas)) (`readPastedLink`, `usePasteLink`,
+`lib/paste.ts`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;
 bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
 once a long one would otherwise scroll it out of reach), with nothing under them — the
