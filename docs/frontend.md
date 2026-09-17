@@ -604,6 +604,7 @@ so the static export ships the full line and the browser narrows it.
   the meta tag values nothing else uses, reinstall, and read the screen —
   splash is `background_color`, status bar is `theme_color`.
 - **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
+- **Anything floating above the dock rises with `--nav-foot`**, never a fixed `bottom`. The dock's foot is the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed 78px FAB looked right everywhere but sat flush on the tabs of the iOS PWA.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,

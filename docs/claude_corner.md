@@ -78,3 +78,4 @@ file.*
 - "Later" can mean the next message. Leave the follow-up written where the next session will find it anyway.
 - A stash the owner made mid-task isn't lost work — `git stash list` before redoing anything.
 - Copy gets settled by ear, one word at a time ("paste it", not "paste this link"). Offer one version with the reason, then take theirs verbatim.
+- "Investigate, don't edit yet" is a hold, not a no: finish the diagnosis with the exact fix, so "fix it" is one step.

@@ -931,13 +931,16 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* The dock's padding lives on the tabs, not on the dock: a press tints the
    element it is on, and padding held by the parent would leave the tint a
    short band floating inside the dock instead of the full height you touched. */
+/* The dock's foot grows with the home indicator, so anything floating above
+   the dock rises by the same `--nav-foot` rather than a fixed height. */
+:root { --nav-foot: max(11px, env(safe-area-inset-bottom)) }
 .nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px;
-  padding: 7px 0 max(11px, env(safe-area-inset-bottom));
+  padding: 7px 0 var(--nav-foot);
   color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase }
 .nav.on { color: var(--ink); font-weight: 700 }
 /* A solid ink block, not a floating pill: the one thing on the screen that is
    pure figure-ground inversion, which is signal enough without a shadow. */
-.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: 78px; width: 50px; height: 50px;
+.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: calc(var(--nav-foot) + 67px); width: 50px; height: 50px;
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
 /* Beside the "+", at its size, and outlined rather than inverted: the same
