@@ -176,7 +176,7 @@ export const copy = {
       body: (browser: string | undefined) => `${upper(browser)} may forget them.`,
       act: "Add bida to home screen",
     },
-    /** `/install`: why, the recording, then how the group gets in. */
+    /** `/install`: why, the folded after-note, then the recording. */
     page: {
       title: "Add to home screen",
       why: (browser: string | undefined) =>

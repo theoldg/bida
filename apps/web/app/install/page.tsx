@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Blank, Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { useBrowserName, useInstallOffer } from "../../components/install";
+import { Icon } from "../../components/icons";
 import { claimIdentity, saveGroupKey } from "../../lib/db/commands";
 import { getDevice } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
@@ -109,19 +110,37 @@ function Tutorial() {
               <p>{page.keep} <strong>{page.keepBold}</strong></p>
             </section>
             <section className="aboutsect">
+              <AlreadyAdded browser={browser} />
+            </section>
+            <section className="aboutsect">
               {/* A recording of Safari, not numbered steps: the share sheet has
                   moved between iOS versions, and a picture of it settles which
                   button is meant faster than prose can. */}
               <img className="installclip" src="/media/safari-add-to-home-screen.gif"
                 width={440} height={956} alt={page.clipAlt} />
             </section>
-            <section className="aboutsect">
-              <p><em>{page.after.ask}</em></p>
-              <p>{page.after.answer(browser)}</p>
-            </section>
           </div>
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/**
+ * For whoever added bida and still meets the banner, so it sits above the
+ * recording rather than under it; folded on every visit, since most readers
+ * haven't added it yet and the clip is what they came for.
+ */
+function AlreadyAdded({ browser }: { browser: string | undefined }) {
+  const [open, setOpen] = useState(false);
+  const { after } = copy.install.page;
+  return (
+    <div className="card">
+      <button type="button" className="nudgehead" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {after.ask}
+        <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
+      </button>
+      {open ? <p style={{ marginTop: 4 }}>{after.answer(browser)}</p> : null}
+    </div>
   );
 }

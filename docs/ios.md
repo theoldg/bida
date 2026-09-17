@@ -141,7 +141,7 @@ home-screen app are unchanged. Wording is in `copy.install` and `copy.claim.inAp
 
 ### `/install` — the tutorial, shared
 
-A route of its own, in `/about`'s register: short prose, no cards, kept to the
+A route of its own, in `/about`'s register: short prose, one folded card, kept to the
 few lines someone reads before they've decided this is worth their time. Every
 "this browser" on these screens names Safari or Chrome when `iosBrowser` can
 tell. It carries, in this order:
@@ -149,15 +149,15 @@ tell. It carries, in this order:
 1. untitled — Safari may forget your groups after a week unopened; the invite
    link always brings them back. Then, for whoever wants to keep everything
    permanently, one bold line: add bida to your home screen.
-2. untitled — a recording of Safari's share sheet, which stops on the Add
+2. a card folded on every visit, *Still seeing this after adding bida?*,
+   above the clip, where the one who already added it finds it first: the
+   tab can't see the app, which took the groups once and keeps its own after.
+3. untitled — a recording of Safari's share sheet, which stops on the Add
    sheet: it never shows the tap on **Add**, or the icon arriving
    (`public/media/`, from `docs/media/safari-add-to-home-screen.mp4`; left out
    of the precache).
-3. untitled — *Still seeing this after adding bida?* It's normal: the tab
-   can't see the app, which took the groups with it once and keeps its own
-   from then on.
 
-It said, third, that the app starts empty and invites have to be opened in it.
+It once said that the app starts empty and invites have to be opened in it.
 That was true before the icon carried them and read as a warning at the moment
 someone was being asked to trust the thing; what a person still has to do for
 themselves the empty app's Paste link tile says, where it is actually needed.
