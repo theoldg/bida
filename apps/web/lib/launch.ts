@@ -22,32 +22,51 @@ import { route } from "./group-link";
  * group does, and a launch reopens whichever of the two was last.
  *
  * A *launch*, and not every arrival at `/`: the list is still where the back
- * arrow goes, and going back must not be turned around. Three things say which
- * is which — a module flag, so the resume happens once per running copy of the
- * app and never again on an in-app return; the browser's navigation type, so a
- * reload of the list you deliberately opened stays put; and the address the
- * document itself loaded at, so only a copy of the app that *started* on the
- * list is one that may leave it (`startedOnList`).
+ * arrow goes, and going back must not be turned around. That question has one
+ * answer and one home — `arrival`, below.
  */
-let resumed = false;
 
 /**
- * A group the app is on its way into, left here by the screen that was.
+ * What brought the app to the groups list, and so what the list owes it.
  *
- * `/join` has two halves to do and can only do one: give its own history entry
- * back to the groups list, so the group it opens has the list underneath it
- * rather than the chat the invite was tapped in — and open the group. Asked
- * for in one tick the router folds the two into the last one, so `/join` takes
- * the entry back and leaves the group here. The list picks it up on its way
- * through — it draws the frame it draws for a launch, and *pushes*. What the
- * two halves buy is a back button that climbs into the app rather than out of
- * it, and a device that has just joined is the one place the app had none.
+ * One value, because this was three flags reaching the same `useResumeLastGroup`
+ * by different routes, and every screen that learned to send somebody to the
+ * list added a fourth way to be wrong about it. The answers, in the order the
+ * hook spends them:
+ *
+ * - **A group handed over** by `/join` (`handOverToGroup`). That screen has two
+ *   halves to do and can only do one: give its own history entry back to the
+ *   list, so the group it opens has the list underneath it rather than the chat
+ *   the invite was tapped in — and open the group. Asked for in one tick the
+ *   router folds the two into the last one, so `/join` takes the entry back and
+ *   leaves the group here. The list picks it up on its way through and
+ *   *pushes*, which is what makes the back button climb into the app rather
+ *   than out of it.
+ * - **A launch** the list was told about (`launchedOnto`). `/install` is the
+ *   one caller: the iOS icon's `start_url` is `/install#<carry>`, so the
+ *   document never loads on the list and `startedOnList` rightly says this copy
+ *   of the app did not start there. Without a word from `/install` every launch
+ *   of that icon — the install the whole of docs/ios.md exists to produce —
+ *   landed on the list with the group you were last in unopened, while the same
+ *   phone's Android install reopened it.
+ * - **Nothing**, and the browser is asked instead (`isLaunch`).
+ *
+ * Spent on the first decision either way: whichever way that goes, the app has
+ * now been launched, and coming back to the list later is a person's choice
+ * rather than a door to be shut again.
  */
-let handOver: string | undefined;
+let arrival: { kind: "group"; groupId: string } | { kind: "launch" } | undefined;
+/** Set once the hook has spent `arrival`, so an in-app return is never a launch. */
+let resumed = false;
 
-/** Open this group from the groups list, one screen under it. See `handOver`. */
+/** Open this group from the groups list, one screen under it. See `arrival`. */
 export function handOverToGroup(groupId: string): void {
-  handOver = groupId;
+  arrival = { kind: "group", groupId };
+}
+
+/** The arrival at the groups list this is about to cause is a launch. See `arrival`. */
+export function launchedOnto(): void {
+  arrival = { kind: "launch" };
 }
 
 /**
@@ -80,23 +99,21 @@ export function resumeGroupId(
 export function useResumeLastGroup(): boolean {
   const router = useRouter();
   // Read rather than spent in the initialiser, which React may run twice.
-  const [passing] = useState(() => handOver);
-  const [deciding, setDeciding] = useState(() => passing !== undefined || isLaunch());
+  const [came] = useState(() => arrival);
+  const [deciding, setDeciding] = useState(() => came !== undefined || isLaunch());
 
   useEffect(() => {
     if (!deciding) return;
-    // Claimed on the first decision, not on the redirect: whichever way this
-    // goes, the app has now been launched, and coming back to the list later
-    // is a person's choice rather than a door to be shut again.
+    // Spent on the first decision, not on the redirect (`arrival`).
+    arrival = undefined;
     resumed = true;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     // A group handed over rather than remembered: pushed, so this list stays
-    // underneath it, and spent on the way out (`handOver`). The same two-second
-    // backstop below covers a push that never lands.
-    if (passing) {
-      handOver = undefined;
-      router.push(route.group(passing));
+    // underneath it. The same two-second backstop below covers a push that
+    // never lands.
+    if (came?.kind === "group") {
+      router.push(route.group(came.groupId));
       timer = setTimeout(() => setDeciding(false), 2000);
       return () => clearTimeout(timer);
     }
@@ -116,7 +133,7 @@ export function useResumeLastGroup(): boolean {
       timer = setTimeout(() => setDeciding(false), 2000);
     })();
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [deciding, passing, router]);
+  }, [deciding, came, router]);
 
   // Settled on the list — a launch that found nowhere to go, an in-app return,
   // a reload — and so the list is this device's place until a group takes it
@@ -158,17 +175,27 @@ export function startedOnList(url: string | undefined): boolean {
 }
 
 /**
- * Is this arrival the app being started?
+ * Is this arrival the app being started, as the browser tells it?
  *
  * `navigate` covers the home-screen icon, a bookmark and a typed URL; a reload
  * and a back/forward traversal are excluded, because both mean this list is
- * the screen already being looked at. During the static export's build-time
- * prerender there is no window, and the answer is no — the first client render
- * then matches the server's, which is the same skeleton either way.
+ * the screen already being looked at.
+ *
+ * Pure, and exported for its test: reading the timing entry is the caller's.
+ */
+export function isLaunchFrom(navType: string | undefined, url: string | undefined): boolean {
+  if (navType !== undefined && navType !== "navigate") return false;
+  return startedOnList(url);
+}
+
+/**
+ * The same question, of the browser this is running in. During the static
+ * export's build-time prerender there is no window, and the answer is no — the
+ * first client render then matches the server's, which is the same skeleton
+ * either way.
  */
 function isLaunch(): boolean {
   if (resumed || typeof window === "undefined") return false;
   const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-  if (nav && nav.type !== "navigate") return false;
-  return startedOnList(nav?.name);
+  return isLaunchFrom(nav?.type, nav?.name);
 }

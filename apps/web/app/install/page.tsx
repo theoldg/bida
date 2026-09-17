@@ -9,6 +9,7 @@ import { claimIdentity, saveGroupKey } from "../../lib/db/commands";
 import { getDevice } from "../../lib/db/device";
 import { db } from "../../lib/db/dexie";
 import { note } from "../../lib/diag";
+import { launchedOnto } from "../../lib/launch";
 import { syncGroup } from "../../lib/db/sync";
 import { copy } from "../../lib/copy";
 import { formatJoinLink, parseInvites, route, type CarriedGroup } from "../../lib/group-link";
@@ -58,6 +59,14 @@ export default function InstallPage() {
  * Nothing new means the fragment is spent: the icon is a door into the app,
  * not into one group forever.
  *
+ * And a door is a launch, which is `lib/launch.ts`'s to answer, not this
+ * screen's — so it says `launchedOnto` and lets the list decide. The icon's
+ * `start_url` is this route, so the document never loads on the list and
+ * nothing else could tell: every launch after the first landed on the list with
+ * the group you were last in unopened, on the one install docs/ios.md is for.
+ * Only when the carry brought nothing, though — an icon that has just saved a
+ * key or claimed a name has something to show on the list itself.
+ *
  * Nothing here un-forgets: `saveGroupKey` would undo a `forgetGroup`, and an
  * icon must not walk back into a group this phone said it was done with.
  *
@@ -89,7 +98,9 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
       // Best-effort: `StartSync`'s loop retries every group anyway, and the
       // list fills from the live query as each one lands.
       for (const invite of [...fresh, ...naming]) syncGroup(invite.groupId).catch(() => {});
-      if (!cancelled) router.replace(route.groups());
+      if (cancelled) return;
+      if (!fresh.length && !naming.length) launchedOnto();
+      router.replace(route.groups());
     })();
     return () => { cancelled = true; };
   }, [invites, router]);

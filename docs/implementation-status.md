@@ -59,7 +59,10 @@ None of these is started, and the first is not code at all.
   **Works on the owner's iPhone from `/install`** (2026-09-16).
   Built since, unverified on the phone: Share from any page (every page's head
   builds the manifest at load from `bida.carry`), and the names coming along
-  (the icon claims the member the tab was). The owner's first run carried
+  (the icon claims the member the tab was), and a launch of the icon reopening
+  the group you were last in, which it alone never did — `start_url` is
+  `/install`, so nothing about the address said it was a launch (2026-09-17).
+  The owner's first run carried
   two groups but only the name picked after the page loaded; a stale head now
   reloads, though never before the shell is precached — on a first visit that
   reload came off the network and raced the precache (2026-09-17). A tap that landed on a route's RSC payload instead of a

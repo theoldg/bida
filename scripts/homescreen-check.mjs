@@ -364,6 +364,29 @@ report(!visited.some((url) => new URL(url).pathname === "/join"),
 report(new URL(freshPage.url()).pathname !== "/install",
   "and does not sit on the tutorial", freshPage.url());
 
+// ---- and a launch is a launch --------------------------------------------
+// `start_url` is `/install` for the life of the bookmark, so the document never
+// loads on the list and nothing about the address says this was a start:
+// `/install` has to say so itself (`launchedOnto`, lib/launch.ts). Without it
+// this install alone — the one docs/ios.md exists to produce — landed on the
+// list every time with the group you were last in unopened.
+//
+// The group is made here rather than carried: nothing syncs behind this check,
+// so a group the fragment brought never arrives and there is nowhere to be put
+// back into. A group made on the phone is a row like any other.
+const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members: ["Bo"] });
+// Which group this phone was last in is written by an effect on the ledger, so
+// relaunching the moment the URL changes races it — and the launch then finds
+// nowhere to go, which is a pass for the wrong reason half the time.
+await freshPage.waitForSelector(".bottomnav a");
+await freshPage.waitForTimeout(400);
+await freshPage.goto(`${base}/install${fragment}`);
+const reopened = await freshPage.waitForURL(
+  (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: 8000 },
+).then(() => true, () => false);
+report(reopened, "and reopens the group this phone was last in, as any other launch does",
+  freshPage.url());
+
 // ---- a phone that brought several over -----------------------------------
 // There is no one group to open, so the keys go in where they are read and the
 // list is where it lands — filling as each group syncs.

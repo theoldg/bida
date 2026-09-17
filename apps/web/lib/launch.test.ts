@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resumeGroupId, startedOnList } from "./launch";
+import { isLaunchFrom, resumeGroupId, startedOnList } from "./launch";
 
 const GROUP = { id: "g1" };
 
@@ -60,5 +60,30 @@ describe("startedOnList", () => {
   it("takes an address it cannot read for the list, as before", () => {
     expect(startedOnList(undefined)).toBe(true);
     expect(startedOnList("")).toBe(true);
+  });
+});
+
+describe("isLaunchFrom", () => {
+  it("is a launch when the document loaded on the list", () => {
+    expect(isLaunchFrom("navigate", "https://bida.app/")).toBe(true);
+  });
+
+  it("is not a reload of the list somebody deliberately opened", () => {
+    expect(isLaunchFrom("reload", "https://bida.app/")).toBe(false);
+  });
+
+  it("is not a back or forward press", () => {
+    expect(isLaunchFrom("back_forward", "https://bida.app/")).toBe(false);
+  });
+
+  it("is not a copy of the app that started on a link", () => {
+    expect(isLaunchFrom("navigate", "https://bida.app/join#g1.secret")).toBe(false);
+    // The iOS icon's own `start_url`. `/install` says so itself instead, with
+    // `launchedOnto` — nothing about the address could tell.
+    expect(isLaunchFrom("navigate", "https://bida.app/install#g1.secret")).toBe(false);
+  });
+
+  it("takes a browser that gives no timing entry for a launch, as before", () => {
+    expect(isLaunchFrom(undefined, undefined)).toBe(true);
   });
 });

@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-17* — "Eleven authorities, seven pieces of state" counted a symptom
+  and read as a verdict; three were real. Check your own premise before the
+  owner has to.
 - *2026-09-17* — The check stayed green with the thing it guarded switched off.
   Break it on purpose and watch the red, or the green is decoration.
 - *2026-09-17* — A rejected tool call is not a waiver. The interrupt was about
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — Audit the artifact, not the doc describing it. The prose said
   the clip ran "down to Add"; it stops a tap short. The file is what the user
   meets, and the two drift apart unwatched.
-- *2026-09-17* — A question can carry a wrong premise ("dev looks different,
-  so…"). Answer the premise, not just the question — agreeing politely teaches
-  the owner something untrue.
