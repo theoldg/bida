@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { Dialog } from "./dialog";
 import { copy } from "../lib/copy";
+import { db } from "../lib/db/dexie";
 import { notePasted } from "../lib/failed-link";
 import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
 
@@ -13,7 +14,7 @@ import { formatJoinLink, readPastedLink, route } from "../lib/group-link";
  * same button to try again once you have copied something.
  *
  * What was pasted decides where it goes (`readPastedLink`): a link of ours
- * joins; one for another server says so, naming it, since "Bad link" would
+ * joins, or opens the group if this phone already holds it; one for another server says so, naming it, since "Bad link" would
  * send the person back for the same link; one with no password opens the
  * group's screen, which is the group if this phone holds it and "missing its
  * password" if not; nothing at all is `/paste`, since "Bad link" blamed a link
@@ -37,9 +38,16 @@ export function usePasteLink(onEmpty?: () => void): { paste: () => Promise<void>
     }
     const pasted = readPastedLink(text, window.location.origin);
     if (pasted.kind === "elsewhere") return setElsewhere(pasted.host);
-    // A document load, not `router.push`: the router can drop the fragment,
-    // which is the password (docs/ios.md#gotchas).
-    if (pasted.kind === "join") return location.assign(formatJoinLink(pasted.link, ""));
+    if (pasted.kind === "join") {
+      // A group this phone already holds has no password left to save, so it
+      // needs no page load: two copies of the app, one frozen in the page
+      // cache, held the database from each other for a minute (docs/ios.md).
+      if (await db().groupKeys.get(pasted.link.groupId)) return router.push(route.group(pasted.link.groupId));
+      // A document load, not `router.push`: the router can drop the fragment,
+      // which is the password. `replace`, so the page left behind isn't kept
+      // to hold the database while `/join` writes to it (docs/ios.md#gotchas).
+      return location.replace(formatJoinLink(pasted.link, ""));
+    }
     if (pasted.kind === "empty") return onEmpty ? onEmpty() : router.push(route.paste());
     const to = pasted.kind === "keyless" ? route.group(pasted.groupId) : route.join();
     notePasted(text, to);

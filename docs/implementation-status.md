@@ -38,7 +38,10 @@ None of these is started, and the first is not code at all.
   showed every read queued behind a sync commit that could not start, clearing
   all at once a minute later — a lock held outside the page, most likely by
   another copy of the app frozen mid-transaction; it happens after the app sits
-  inactive, perhaps more after an update. What a page can do is built
+  inactive, perhaps more after an update. One case is found (2026-09-17): a
+  pasted link loaded `/join` beside the list, WebKit's page cache froze each
+  holding the database from the other, and back went between them for a
+  minute. Paste now replaces the page, and /diag keeps five pages' logs. What a page can do is built
   ([frontend.md](frontend.md#a-live-read-can-die)). **Next: the owner's
   `chrome://indexeddb-internals` and `/diag` `copies:` line from the next
   hang**, which say which copy holds it and whether the fix belongs there.

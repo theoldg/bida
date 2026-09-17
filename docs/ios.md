@@ -215,11 +215,15 @@ has claimed twice.
   `isStandalone()` stays false, so the banner rightly keeps warning.
 - `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
   a tap — a paste is always two taps.
-- A pasted join link is opened with `location.assign`, not `router.push`. When
+- A pasted join link is opened with `location.replace`, not `router.push`. When
   Next's router gives up and loads the page itself — say the build it fetched
   isn't the one on screen, which is easy on a freshly installed app — it
   uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
   pasting again worked because that page load had brought the app up to date.
+  Not `assign` either: the page it leaves goes into WebKit's page cache still
+  holding the database, `/join` waits on it, and the back arrow restores it to
+  wait on `/join` in turn; the owner's phone hung a minute that way. A group
+  already held skips the page load altogether.
 - **Safari reads the manifest at page load**, not when the share sheet opens,
   whatever WebKit's source suggests. Changing the link later does nothing — so
   the HTML carries none, a script at the top of the head writes it, and a page
