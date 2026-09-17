@@ -113,6 +113,8 @@ function Offer() {
 /**
  * An iOS tab's card atop the groups list rather than at its foot: once the tab
  * holds a group, "this browser will clear it" is true and worth reading first.
+ * Also at the foot of each group's ledger, for whoever only ever arrives by a
+ * group's link and never sees the list.
  * The caller draws it only then — an empty home is someone looking around, and
  * Quick split stores nothing to lose. The how lives on `/install`.
  *

@@ -16,6 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
+import { InstallBanner } from "../../components/install";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -228,6 +229,8 @@ function LedgerTab({ data }: { data: GroupData }) {
             );
           })}
         </div>
+        {/* An iOS tab only — the banner decides (docs/ios.md). */}
+        <div style={{ marginTop: 16 }}><InstallBanner groupId={gid} /></div>
         <div style={{ height: 88 }} />
       </Scroll>
     </>

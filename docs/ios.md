@@ -161,10 +161,10 @@ themselves the empty app's Paste link tile says, where it is actually needed.
 Reached from the banner. Back is a
 plain back, and the only exit: the way forward is out of the browser.
 
-### Home — the banner
+### The banner — the groups list and the ledger
 
 A card at the top of the groups list, *Keep your groups on this phone /
-Safari may forget them*, with **Add to home screen** into `/install` — carrying
+Safari may forget them*, with **Add bida to home screen** into `/install` — carrying
 every group in the tab, the top of the list first — **shown only once the tab
 holds a group**. An empty home is
 someone looking around: Quick split stores nothing and is the right way to try bida, and a
@@ -172,6 +172,9 @@ visitor won't install an app sight unseen. Once a group is in the tab,
 "Safari may forget it" is true and worth saying at the top rather than the
 foot. It replaces the install nudge in a tab, and folds like it, on the same
 device flag: a warning someone who chose Safari can't put away is nagging.
+
+The same card sits at the foot of each group's ledger, below the last entry,
+this group first in the carry. Folding either folds both.
 
 ### `/g/claim` — *Have the app?*
 

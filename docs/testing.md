@@ -379,7 +379,7 @@ that step can be, and all of it looks fine in jsdom — so the check wears an
 iPhone's user agent and drives both ends.
 
 The tab end: a join that is not stopped to ask about installing; no page's
-HTML carrying a manifest; the groups list's banner landing on a `/install` whose
+HTML carrying a manifest; the banner — on the groups list, and at a ledger's foot — the first landing on a `/install` whose
 fragment is every group the tab holds and who it is in each, the top of the
 list first; the claim list's "Have the app?" card holding the group's link;
 every page's head — `/`, a group, its members, not only the tutorial — holding

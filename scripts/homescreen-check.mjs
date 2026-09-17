@@ -102,7 +102,7 @@ await tabPage.goto(`${base}/join${fragment}`);
 // No sync API stands behind this check, so the join waits here for ever — and
 // that is the point: an iOS tab is no longer stopped to be asked to install.
 await tabPage.getByText("Joining…").waitFor({ timeout: 8000 });
-report(await tabPage.getByRole("button", { name: "Add to home screen" }).count() === 0,
+report(await tabPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0,
   "an iOS tab joins without being asked to install first");
 
 // The key is saved behind "Joining…"; the carry the tutorial's head is built
@@ -194,7 +194,7 @@ const flat = await inviteTo("Flat", "Cem", "Dita");
 const ski = await inviteTo("Ski", "Eve", "Fen");
 
 await openGroupsList(heldPage, base);
-const banner = heldPage.getByRole("button", { name: "Add to home screen" });
+const banner = heldPage.getByRole("button", { name: "Add bida to home screen" });
 const warned = await banner.first().waitFor({ timeout: 8000 }).then(() => true, () => false);
 report(warned, "the groups list warns an iOS tab it may forget its groups");
 await banner.first().click();
@@ -252,6 +252,12 @@ report(refreshed && rebuiltStart.startsWith(`${base}/install#`)
 await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
+
+// ---- the ledger's foot ----------------------------------------------------
+await heldPage.goto(`${base}/g?id=${flatId}`);
+report(await heldPage.getByRole("button", { name: "Add bida to home screen" }).first()
+  .waitFor({ timeout: 8000 }).then(() => true, () => false),
+  "a group's ledger asks an iOS tab too, at its foot");
 
 // ---- which one is you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim

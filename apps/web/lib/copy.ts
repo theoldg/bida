@@ -193,7 +193,7 @@ export const copy = {
     banner: {
       title: "Keep your groups on this phone",
       body: (browser: string | undefined) => `${upper(browser)} may forget them.`,
-      act: "Add to home screen",
+      act: "Add bida to home screen",
     },
     /** `/install`: why, the recording, then how the group gets in. */
     page: {
