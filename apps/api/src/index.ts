@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import {
-  isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
+  GEMINI_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
@@ -32,10 +32,6 @@ const app = new Hono<{
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
-// Model id is a Worker-side constant, not client-supplied — see
-// docs/receipt-scanning.md#why-the-key-sits-on-the-worker.
-const GEMINI_MODEL = "gemini-3.1-flash-lite";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
  * Today's rate for one currency pair, for the group's rate registry.

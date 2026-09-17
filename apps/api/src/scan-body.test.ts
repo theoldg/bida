@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildScanRequestBody, MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage,
-} from "./scan-body";
+import { buildScanRequestBody } from "@bida/core";
+import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
 
 /**
  * What this endpoint promises is *negative*: whatever a caller sends, the
