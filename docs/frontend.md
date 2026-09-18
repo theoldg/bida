@@ -558,12 +558,14 @@ registered from `components/register-sw.tsx`. **It does not cache `/api/*`** —
 Dexie is the offline data layer, and a second cache over the same data gives
 you two disagreeing sources of truth.
 
-**A payload URL asked for as a *page* is answered with the page.** When the
-router's fetch of `/g/claim.txt?id=…` fails, or answers for a build this page
-isn't running, Next hands that URL to the browser as a plain navigation — and
-served literally it is a screenful of `1:"$Sreact.fragment"` where a screen
-should be. `sw.js` redirects those back to the route, carrying the `?id=` and
-dropping `_rsc`. So does the Worker (`apps/api/src/payload.ts`), because a
+**A payload URL asked for as a *page* is redirected to the page.** When the
+router's fetch of `/g/claim.txt?id=…` fails, Next hands that URL to the browser
+as a plain navigation — and served literally it is a screenful of
+`1:"$Sreact.fragment"` where a screen should be. `sw.js` redirects those back to
+the route, carrying the `?id=` and dropping `_rsc`. A redirect and not the
+route's shell served in its place, which is what it did: the address the app
+then runs at is the address it was asked for, and `/g.txt` is not a route — back
+arrows are paths (`lib/nav.ts`), and so is `reloadCostsNothing`. So does the Worker (`apps/api/src/payload.ts`), because a
 service worker only sees a page it controls and this one does not claim a first
 visit: the iPhone that has just tapped an invite is on its first load, has no
 worker yet, and is on its way to `/g/claim`
@@ -593,6 +595,19 @@ window somebody left open, and a window that closes takes its cache with it.
 It used to keep the newest other cache alone and hand it to everyone open,
 which is right exactly once: at the deploy after, a page a build further back
 had its own cache deleted and was served a stranger's `/g.txt`.
+
+Every window open when `activate` runs is written down, because none of them can
+be on this build — which build they *are* on is the guess, and `null` is the
+honest answer when nothing can answer for one: a cache evicted under it, or a
+first build with nothing before it. Such a window is then **refused a payload**
+rather than handed this build's. Next answers a build id that is not its own by
+navigating to the *response's* URL, and a response out of a cache carries its
+cache key, which for a payload is a bare path — one file answers every `?id=`.
+So the group went missing on the way, and the bare `/g` that loaded could only
+say the link was missing its password. Refused, the router falls back to the URL
+*it* asked for, and the redirect above turns that back into the route; the cost
+is that the window's next tap is a full load rather than a routed one (Gotcha
+below).
 
 **The app reloads itself on the groups list and nowhere else.** `lib/update.ts`
 hears `controllerchange` and waits for the front door — at once if the page is
@@ -670,6 +685,12 @@ so the static export ships the full line and the browser narrows it.
 
 ## Gotchas
 
+- **A cached response's URL is its cache key, not the one that was asked for.**
+  Which is invisible until something reads it back: Next reads `res.url` off
+  every payload whose build id isn't its own and navigates there, so a payload
+  served from the precache — keyed by path, since the query on one is only ever
+  app state — sent a phone to a `/g` screen with no group on it. Whatever must
+  survive such a hand-off has to ride on the request, not the response.
 - **Never `black-translucent` on iOS 26.** The home-screen app is drawn from
   the top of the screen but laid out a status bar shorter (WebKit bug 301108):
   a strip at the bottom no CSS or JS reaches, and a system blur over the top

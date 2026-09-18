@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — My first fix was right about the cause and wrong about the
+  cure; one run of the browser check said so. Prove the remedy too, not only
+  the diagnosis.
 - *2026-09-18* — I defended a sentinel with odds ("midnight, once in 86
   million") and the owner asked the obvious next question. Where one line makes
   it impossible, probability was never the answer.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — "dont drive it." A green `pnpm check` was already the whole
   contract; the browser run I reached for next was minutes of the owner's time
   nobody asked for. Stop at done.
-- *2026-09-17* — "change the ios bar from black-translucent" — it already was.
-  The symptom was real, the named cause wasn't, and "nothing to be done" was
-  wrong. Keep looking once the premise fails.

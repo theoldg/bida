@@ -22,9 +22,16 @@ function isPayload(url) {
   return url.pathname.endsWith(".txt");
 }
 
-/** `/g.txt` is the payload for `/g`. Nothing else in the export ends in .txt. */
+/**
+ * `/g.txt` is the payload for `/g`. Nothing else in the export ends in .txt.
+ *
+ * The root's is `/index.txt`, which is not `/index`: that route does not exist,
+ * and a redirect to it is a 404 where the groups list should be. The Worker
+ * holds the same rule for phones with no worker yet (`apps/api/src/payload.ts`).
+ */
 function routeOf(url) {
-  return url.pathname.slice(0, -".txt".length) || "/";
+  const path = url.pathname.slice(0, -".txt".length);
+  return path === "/index" ? "/" : path || "/";
 }
 
 /** The same route, still carrying the state the payload URL was asked for. */
@@ -98,12 +105,53 @@ function legacyRecord() {
   return legacy;
 }
 
-/** The cache of the build `clientId` is running, when that is not this one. */
+/**
+ * Which build `clientId` is running, as a cache to answer it from:
+ *
+ * - a cache name — an earlier build, still here to be served from;
+ * - `null` — an earlier build whose cache has gone;
+ * - `undefined` — this build, or a page we have never met.
+ *
+ * The middle one is not the same as the last, and reading it as such is what
+ * `payloadFor` is about.
+ */
 async function previousFor(clientId) {
-  if (!clientId) return null;
+  if (!clientId) return undefined;
   const { builds } = await legacyRecord();
   const cache = builds[clientId];
-  return cache && cache !== CACHE_NAME ? cache : null;
+  if (cache === undefined || cache === CACHE_NAME) return undefined;
+  return cache;
+}
+
+/**
+ * A payload, for a page that may not be on this build.
+ *
+ * Next reads the build id out of every payload it is handed, and when it is not
+ * its own it stops routing and hard-navigates — to **`res.url`**, to take the
+ * new build. For anything out of a cache that URL is the cache key, and
+ * payloads are keyed by path (the query on one is only ever app state, so one
+ * file answers every `?id=`). So the group the screen was of is gone before the
+ * browser sees it: what loads is a bare `/g/...`, every screen under `/g` reads
+ * its group out of the query, and all any of them can say is that the link is
+ * missing its password. That is the report this was found in — a tap during a
+ * deploy, on a phone that had done nothing wrong.
+ *
+ * A page on an earlier build is served that build's payload, as before. What is
+ * new is the case where that cache has gone: rather than fall through and hand
+ * it this build's, **fail**. Of the three ways the router gives up, its `catch`
+ * is the only one that falls back to the URL *it asked for* rather than the one
+ * it was answered from (`fetch-server-response.js`) — so the query survives,
+ * and the navigate branch below turns that `.txt` back into the route. A
+ * redirect here cannot do the same job: `fetch` follows it, and what it lands on
+ * is another cache key with no query on it either.
+ */
+async function payloadFor(url, request, clientId) {
+  const previous = await previousFor(clientId);
+  if (previous !== undefined) {
+    const own = previous && (await lookup(url.pathname, previous));
+    return own || Response.error();
+  }
+  return cacheFirst(url.pathname, request, clientId);
 }
 
 async function cacheFirst(cacheKey, request, clientId) {
@@ -224,17 +272,23 @@ self.addEventListener("activate", (event) => {
       // is the build a page we have not seen before is most likely running.
       const newest = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
       const builds = {};
+      // Every window open *now* booted before this worker did, so none of them
+      // is on this build — that much is certain, where which build they are on
+      // is a guess. So all of them are written down, and `null` is the honest
+      // answer where the guess has nothing to point at: a cache that has gone,
+      // or a first build with nothing before it. Dropping those let `cacheFirst`
+      // fall through and hand the page this build's payload, which is the one
+      // answer worse than none (`payloadFor`). A page loaded after this runs is
+      // not here, is on this build, and is served normally.
       for (const client of open) {
         const cache = before.builds[client.id] ?? newest;
-        // A cache that is no longer here is one nothing can be served from;
-        // leaving it out lets `cacheFirst` fall through to this build.
-        if (cache && cache !== CACHE_NAME && keys.includes(cache)) builds[client.id] = cache;
+        builds[client.id] = cache && cache !== CACHE_NAME && keys.includes(cache) ? cache : null;
       }
       const rec = { builds };
       legacy = Promise.resolve(rec);
       const store = await caches.open(LEGACY);
       await store.put("/legacy", new Response(JSON.stringify(rec)));
-      const keep = new Set([CACHE_NAME, LEGACY, ...Object.values(builds)]);
+      const keep = new Set([CACHE_NAME, LEGACY, ...Object.values(builds).filter(Boolean)]);
       await Promise.all(keys.filter((k) => !keep.has(k)).map((k) => caches.delete(k)));
     })(),
   );
@@ -249,23 +303,27 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return; // never the API — Dexie owns offline data
 
   /**
-   * Offline, Next's router gives up on a failed payload fetch and hands the
-   * *payload* URL to the browser as a navigation. Served literally that is a
-   * screenful of `1:"$Sreact.fragment"` — which is what saving an expense
-   * offline used to show. A document request for a payload is always a mistake:
-   * answer it with the route's own shell.
+   * Offline — or on a payload this worker refused (`payloadFor`) — Next's router
+   * gives up and hands the *payload* URL to the browser as a navigation. Served
+   * literally that is a screenful of `1:"$Sreact.fragment"`, which is what
+   * saving an expense offline used to show. A document request for a payload is
+   * always a mistake: send it to the route.
+   *
+   * A redirect rather than the route's shell served in its place, which is what
+   * this did: the address the app then runs at is the address it was asked for,
+   * and `/g.txt` is not a route. Every screen's back arrow is a path
+   * (lib/nav.ts), `reloadCostsNothing` is a list of them (lib/update.ts), and
+   * both read the one the app is standing on.
    *
    * This worker only ever sees a page it controls, and it claims no first
    * visit — so the Worker holds the same rule for the phones with no worker
    * yet (`apps/api/src/payload.ts`). Change one and change the other.
    */
   if (request.mode === "navigate" && isPayload(url)) {
-    event.respondWith(
-      // The query is not decoration: `?id=` is which group the screen is of,
-      // so the fallback carries it across rather than landing on a bare route
-      // that can only say "No group". `_rsc` is the router's own and goes.
-      lookup(routeOf(url)).then((cached) => cached ?? Response.redirect(routeWithQuery(url), 302)),
-    );
+    // The query is not decoration: `?id=` is which group the screen is of, so
+    // it carries across rather than landing on a bare route that can only say
+    // the link has no password. `_rsc` is the router's own and goes.
+    event.respondWith(Response.redirect(routeWithQuery(url), 302));
     return;
   }
 
@@ -276,7 +334,7 @@ self.addEventListener("fetch", (event) => {
   // navigation, and lib/update.ts asks again on every resume — not by making
   // every screen pay a round trip on the chance there is one.
   if (isPayload(url)) {
-    event.respondWith(cacheFirst(url.pathname, request, event.clientId));
+    event.respondWith(payloadFor(url, request, event.clientId));
     return;
   }
 

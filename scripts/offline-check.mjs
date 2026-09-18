@@ -335,6 +335,57 @@ try {
   report(false, "and can still draw a screen it taps to", fresh.url().replace(base, ""));
 }
 
+// ---- and when that page's own build is gone from the cache ---------------
+// The report this came from: "a link is missing its password" while walking
+// through the app. Storage pressure, a lost record, a cache the browser evicted
+// — however it goes, a page can be left running a build nothing can serve. It
+// used to be handed *this* build's payload, and Next answers a build id that is
+// not its own by hard-navigating to the response's URL, which for anything out
+// of a cache is the cache key, and payloads are keyed by path. So the `?id=`
+// naming the group was gone before the browser saw it, and the bare `/g` that
+// loaded could only say the link had no password.
+//
+// The symptom needs two real builds, and the deploys here are one `out/` under
+// two revisions — the build id never changes, so Next never does that
+// navigation. What is asserted is the two halves of the cause: such a page is
+// refused a payload rather than handed this build's, and the navigation the
+// router falls back to lands on the route with its `?id=` intact (`payloadFor`
+// in public/sw.js). `lib/sw.test.ts` covers the decision itself.
+console.log("\nand with that page's build evicted under it:");
+await fresh.evaluate((name) => caches.delete(name), oldShell);
+const refused = await fresh.evaluate((id) =>
+  fetch(`/g.txt?id=${id}&_rsc=probe`).then((r) => `answered ${r.status}`).catch(() => "refused"), g);
+report(refused === "refused", "a payload it cannot be served is refused, not answered from this build", refused);
+
+// And none of it must be felt: the app still navigates as it did.
+await fresh.locator(".bottomnav a").first().click().catch(() => {});
+try {
+  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  const kept = new URL(fresh.url()).searchParams.get("id") === g;
+  report(kept && await fresh.locator(".keyless").count() === 0,
+    "and a tap still lands on the group, not on \"missing its password\"", fresh.url().replace(base, ""));
+} catch {
+  report(false, "and a tap still lands on the group, not on \"missing its password\"",
+    fresh.url().replace(base, ""));
+}
+
+// The other half, and the last thing standing between the refusal above and a
+// person: the router hands the payload URL it asked for to the browser as a
+// navigation, and what must load is the route — at the route's own address,
+// since every back arrow in the app is a path (lib/nav.ts) and `/g.txt` is not
+// one. Driven directly, because a navigation is the one request `fetch` cannot
+// make.
+await fresh.goto(`${base}/g.txt?id=${g}&_rsc=probe`);
+try {
+  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  report(fresh.url() === `${base}/g?id=${g}` && await fresh.locator(".keyless").count() === 0,
+    "and a navigation to a payload lands on the group, at its own address",
+    fresh.url().replace(base, ""));
+} catch {
+  report(false, "and a navigation to a payload lands on the group, at its own address",
+    fresh.url().replace(base, ""));
+}
+
 await page.bringToFront();
 await straggler.close();
 await fresh.close();

@@ -73,7 +73,9 @@ None of these is started, and the first is not code at all.
   reload came off the network and raced the precache (2026-09-17). A tap that landed on a route's RSC payload instead of a
   screen — reported on production, and the reason the Worker now redirects a
   payload navigated to as a page ([frontend.md](frontend.md#pwa)) — is fixed on
-  `dev` and reaches phones when the owner releases. **Next: install from a group's
+  `dev` and reaches phones when the owner releases; so is the one behind it, a
+  tap during a deploy that dropped the group from the address and left the
+  screen saying the link had no password (2026-09-18). **Next: install from a group's
   page, not `/install`, and paste both `/diag`s** — it also settles whether iOS
   used the manifest, since no other page's URL carries anything.
 - **Importing a Splitwise CSV**, into a new group only, from the groups list's
