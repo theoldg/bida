@@ -187,7 +187,11 @@ midnight-the-moment from midnight-the-empty-field.
 Two rules follow, both in `apps/web/lib/format.ts`: `whenLabel` prints the day
 alone rather than a `00:00` nobody read off a receipt, and `byWhen` puts such
 an entry at the **head** of its day rather than the foot — the time is missing,
-not early. Inside the day the `createdAt` tiebreak still decides.
+not early. Several of them in one day order by `createdAt`, newest addition
+first: nothing on them can say what happened when, and when they were added is
+the only fact there is. The merge of the two tables into the list a person
+reads is `ledgerRows` (`apps/web/lib/ledger.ts`), which asks the entry itself
+rather than copying what places it in time.
 
 It is written like every other uncommon field: absent on an ordinary entry, and
 so absent on every entry written before it existed. Those keep the `00:00` they
