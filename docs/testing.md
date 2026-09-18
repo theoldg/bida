@@ -407,9 +407,16 @@ The seed's arithmetic is core's own (`demo.test.ts`: the balances clear to zero
 under `settle`, every amount is a positive integer minor unit, any permutation
 folds identically). What this check asks is what the seed cannot: that
 `/demo` lands on a populated ledger rather than a claim gate or an empty
-state, that the balances do not cancel, that the mark is at its head, that
-**Copy invite link** refuses out loud, and that clearing takes the group off the
-phone while the address brings the same one back, entry for entry.
+state, that the balances do not cancel, that the mark is at its head, that the
+dinner opens onto the bill it was itemised from, that **Copy invite link**
+refuses out loud, and that clearing takes the group off the phone while the
+address brings the same one back, entry for entry.
+
+It also sits on the ledger for fourteen seconds and asks for the stall notice,
+which costs the check its slowest assertion and is worth it: a group with no
+key row is the demo's defining property, and a read that answered `undefined`
+for it accused the app of being stuck long after the screen had drawn
+([frontend.md](frontend.md#a-live-read-can-die)).
 
 The assertion worth having is the quiet one: `groupKeys` stays empty
 ([sync.md](sync.md#the-demo-group-has-no-key)). A key row there is the single

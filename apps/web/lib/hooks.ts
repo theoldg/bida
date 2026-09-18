@@ -73,12 +73,22 @@ export function useDevice(): DeviceRecord | undefined {
   return live ?? fallback;
 }
 
-/** The invite secret for a group, if this device holds it (creator or a device that joined). */
+/**
+ * The invite secret for a group, if this device holds it (creator or a device
+ * that joined).
+ *
+ * `null`, not `undefined`, for a group with no key row: to `useLive` an
+ * `undefined` result is a read that has not answered yet, so a group that
+ * genuinely holds no secret was a read that never answered — two probes, and
+ * then "Still reading this phone's data…" standing over a ledger that had
+ * drawn twelve seconds earlier. The demo group is that case permanently
+ * (core/demo.ts), and a phone whose key was dropped is it transiently.
+ */
 export function useGroupSecret(groupId: string | undefined): string | undefined {
   return useLive("groupSecret", async () => {
-    if (!groupId) return undefined;
-    return (await db().groupKeys.get(groupId))?.secret;
-  }, [groupId]);
+    if (!groupId) return null;
+    return (await db().groupKeys.get(groupId))?.secret ?? null;
+  }, [groupId]) ?? undefined;
 }
 
 /**

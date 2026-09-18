@@ -352,6 +352,14 @@ reports a failed read by throwing during render, and the app had no boundary at
 all, so every error `liveQuery` did *not* swallow took the tree to a white
 screen.
 
+**A querier must never resolve `undefined`.** That is the one value `useLive`
+cannot read, because it is how `useLiveQuery` says "no answer yet": a read that
+legitimately has nothing to report has to say `null`. `useGroupSecret` returned
+the key row's secret straight, so a group with no key row — which the demo is,
+permanently — was a read that never answered, and "Still reading this phone's
+data…" stood over a ledger that had drawn twelve seconds earlier.
+`pnpm demo` waits out the watchdog to hold that one.
+
 `pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
 

@@ -60,6 +60,21 @@ report(await page.getByText("Marrakech").count() > 0, "and it is the Marrakech t
 report(await page.getByText("Demo group").count() === 1,
   "with the mark at its head, which does not fold away");
 
+// ---- a bill, not a quarter each -----------------------------------------
+// The dinner keeps the receipt it was split from (ADR-0016), which only shows
+// up by opening it: the row says the same thing either way.
+await page.locator(".rows .row").filter({ hasText: "Dinner at Nomad" }).first().click();
+await page.waitForSelector(".billgroup");
+report(await page.getByText("By items").count() > 0,
+  "the dinner is split by the bill, not a quarter each");
+// Each person's row opens onto their own lines — the grid kept on the entry.
+await page.locator(".billgroup .kv").filter({ hasText: "Ada" }).first().click();
+await page.waitForSelector(".billline");
+report(await page.getByText("Pastilla").count() > 0,
+  "and Ada's row opens onto what Ada ordered");
+await page.goBack();
+await page.waitForSelector(".rows .row");
+
 // ---- the hinge: no key, so no path to the server ------------------------
 report((await keysHeld(page)).length === 0,
   "the phone holds no key for it, so `runSyncAll` can never see it",
@@ -93,6 +108,7 @@ report(await page.getByText("Marrakech").count() === 0,
 
 // Deterministic seed, so the address is also the reset: reopening builds the
 // same group again rather than a second one beside it.
+const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
 await page.waitForSelector(".rows .row");
@@ -100,6 +116,15 @@ report(new URL(page.url()).searchParams.get("id") === "demodemodemo"
   && await page.locator(".rows .row").count() === rows,
   "and the address brings the same group back, entry for entry");
 report((await keysHeld(page)).length === 0, "still with no key to its name");
+
+// ---- and it does not accuse itself of being stuck ----------------------
+// A group with no key row is what the demo *is*, and `useGroupSecret` reading
+// that as "the read never answered" put "Still reading this phone's data…"
+// over a ledger that had drawn twelve seconds earlier — the one bug on this
+// screen that takes longer than a glance to show up, so the check waits.
+await page.waitForTimeout(Math.max(0, 14_000 - (Date.now() - reopenedAt)));
+report(await page.getByText("Still reading this phone").count() === 0,
+  "and no read gives up on it: no stall notice, a watchdog later");
 
 await browser.close();
 close();
