@@ -64,6 +64,15 @@ export default function AboutPage() {
                 <SealedRow />
                 <p>{privacy.key}</p>
                 <p>{privacy.shape}</p>
+                {/* Last, under the promises it is the other half of: a server
+                    that cannot read a group can still be asked to stop
+                    holding one. A link and not a button, because what is
+                    behind it is a screen of warnings and not an act. */}
+                <div className="aboutlinks">
+                  <a className="aboutlink" href={route.deleteMyData()}>
+                    <Icon name="trash" size={14} />{copy.deleteData.fromAbout}
+                  </a>
+                </div>
               </>
             }>
               <>

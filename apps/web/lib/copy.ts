@@ -405,6 +405,85 @@ export const copy = {
     },
   },
 
+  // --------------------------------------------------- deleting a group
+
+  /**
+   * `/delete-my-data`: the hosted service's answer to "take my data off your
+   * server", and the only screen in the app that destroys anything
+   * (docs/frontend.md#deleting-a-group).
+   *
+   * It is written to be read slowly, which is the opposite of everything else
+   * here. Two reasons: the act is irreversible and there is no backup to
+   * restore from, and it is not personal, so somebody deleting "their" data is
+   * deleting a trip four other people are still using. Every warning below
+   * says one of those two things, and the screen makes you type the group's
+   * name because reading them is optional and typing is not.
+   */
+  deleteData: {
+    title: "Delete a group",
+    /** On `/about`, under Privacy: the one place this screen is linked from. */
+    fromAbout: "Delete a group from the server",
+    lede: "This erases a whole group from this server: every expense, every person in it, and the entire history of who changed what.",
+    /** The three things people get wrong about what this button is for. */
+    warnings: [
+      "It deletes the group for everybody, not just for you. Nobody else in it is asked, and nobody else is told.",
+      "It cannot be undone. There is no backup and no copy on the server afterwards, so not even I can bring the group back.",
+      "Other phones keep what they already downloaded until somebody deletes it there too. They stop syncing, and the invite link stops working for good.",
+    ],
+    /** Offered before the field, because most people here want one of these. */
+    gentler: {
+      title: "Probably what you want instead",
+      export: "To keep your numbers, open the group and choose Export data.",
+      forget: "To take a group off this phone only, open the group and choose Forget group. The rest of the group is untouched.",
+    },
+    ask: {
+      title: "Which group?",
+      body: "Paste the group’s invite link. Holding that link is the only thing that proves a group is yours to delete, so the app asks for it rather than for a group name.",
+      placeholder: "https://bida.bid/join#…",
+      paste: "Paste link",
+      act: "Find this group",
+    },
+    /** One sentence per way the link can fail to name a group to delete. */
+    problems: {
+      bad: "That is not an invite link. Open the group on a phone that has it, choose Copy invite link, and paste that.",
+      elsewhere: (host: string) => `That link belongs to ${host}, not to this server. Open it there.`,
+      missing: "This server has never heard of that group. Nothing of it is here to delete.",
+      deleted: "That group has already been deleted.",
+      refused: "The server refused that link: its password does not match the group.",
+      unreadable: "That link opened nothing this app can read.",
+      offline: "Couldn’t reach the server. Check your connection and try again.",
+    },
+    /** The group, opened and folded, so the person can see what they are about
+     *  to lose before they are allowed to lose it. */
+    found: {
+      title: "This is what will be deleted",
+      /** Labels, so the card reads as a description of a group rather than as
+       *  three figures somebody has to interpret. */
+      rows: { people: "People", entries: "Entries", edits: "Edits", started: "Started" },
+      /** The friction. A button alone is one tap from a group that was somebody’s trip. */
+      confirm: (name: string) => `Type ${name} below to confirm.`,
+      placeholder: "Group name",
+      mismatch: "That is not this group’s name.",
+      act: "Delete this group",
+      other: "Delete a different group",
+    },
+    /** The last stop, with the group named in the title so the dialog cannot
+     *  be answered without reading which group it is about. */
+    sure: {
+      title: (name: string) => `Delete ${name}?`,
+      body: "This is the point of no return. The server’s copy goes now, for everyone in the group, and cannot be restored.",
+      act: "Delete for everyone",
+    },
+    failed: "The deletion didn’t go through, and nothing was deleted. Try again.",
+    done: {
+      title: "Deleted",
+      body: (name: string) => `${name} is gone from the server, and off this phone.`,
+      /** Said last because it is the one thing the button could not do. */
+      rest: "If anybody else still has this group on their phone, it stays there until they delete it too. Their app will stop syncing now.",
+      back: "Back to my groups",
+    },
+  },
+
   // ------------------------------------------------------------- tip jar
 
   /**
@@ -506,6 +585,17 @@ export const copy = {
     joining: {
       title: "Joining…",
       body: "Finishes by itself once the other phone syncs.",
+    },
+    /**
+     * The group is not there any more: somebody deleted it for everybody
+     * (app/delete-my-data/page.tsx). Said on `/join`, where an old invite link
+     * would otherwise sit on "Joining…" forever, and on `/g`, where a phone
+     * that was in the group finds its copy gone. One sentence for both: the
+     * news is the same and neither has anything to do next.
+     */
+    deleted: {
+      title: "This group was deleted",
+      body: "Somebody in the group deleted it from the server, for everyone. Nothing of it is left.",
     },
   },
 

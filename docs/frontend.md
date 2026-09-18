@@ -32,6 +32,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): the drawing of what a scan becomes, who is splitting, and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
 | `/about` | The source link first, then who can edit, whether it works offline, where to complain, and what the server can see. The one screen the app spends on itself, off the quiet line at the foot of the groups list. No pitch: whoever is here already has the app. One client island in an otherwise static page — the whole of "Works offline" (`AboutOffline`, the same `lib/install.ts` state as the nudge on the groups list), because the sentence itself changes once the phone already did it, not just the offer under it. Privacy *shows* one stored row rather than asserting anything, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) and changes in the same commit as that does. The receipt-scan exception is repeated here, but the copy that has to be read is `copy.scan.terms`, on the scan screen itself. The build's version sits in the top bar's far corner as `v0.1.3`, out of the prose entirely, since this is the screen somebody is told to look at ([hosting.md](hosting.md#versions)) |
 | `/g/export?id=` | The group as a spreadsheet, in text, for a browser that cannot hand over a file — `/diag`'s layout, because it is the same act. Reached only from the last rung of `lib/export.ts`; it rebuilds the CSV itself rather than being handed it, since a route cannot carry a file and a readout that empties on reload is the drawer state [ADR-0007](decisions/0007-a-screen-is-a-route.md) removed. Being an ordinary route it can also just be opened, so the sentence over the text asks `fileHandoff()` rather than asserting that this browser can't save one ([below](#getting-a-group-off-the-phone)) |
+| `/delete-my-data` | Deleting a whole group from the server, for everybody in it ([below](#deleting-a-group)). Linked only from `/about`'s privacy section, and typeable: it is the address somebody reaches for when they want a service to forget them |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
 | `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). Everything else is the waiting screen, and it is in the static export: the wordmark and *Joining…* from first byte, since an invite link is the only way onto this route. Only the body — *finishes by itself once the other phone syncs* — waits for the key, being a promise about a link nothing has read yet. It used to prerender a bare bar and a back arrow, which is what a stranger saw until the bundle landed |
 | `/paste` | **Paste link** with nothing on the clipboard — three empty reads, not one (`lib/paste.ts`): *Nothing to paste*, in "Bad link"'s layout, with the button to paste again, since copying the invite and coming back lands here. Pasting nothing twice says so under it |
@@ -351,6 +352,33 @@ screen.
 
 `pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
 Dexie behaviour itself, so an upgrade that fixes it tells us.
+
+## Deleting a group
+
+`/delete-my-data` is the app's answer to "take my data off your server", and the
+only screen that destroys anything. It takes an **invite link**, not a group id
+or a row on the list: holding the link is the whole of authority
+([ADR-0003](decisions/0003-link-only-access.md)), so it is also the authority to
+end the group, and asking for it means the screen works from a phone that was
+never in that group.
+
+The link is used to pull the whole log and open it, so what stands on screen
+before the button is the real group, named, counted and dated rather than an id
+nobody can read (`lib/db/erase.ts`). Then three frictions, in a codebase whose
+every other screen removes them: finding the link, typing the group's name, and
+a dialog that names the group again. What is deleted is the server's copy, for
+everybody, plus this phone's.
+
+**The other phones learn from the 410.** Their next sync erases the group there
+too and drops it off their list, wherever the app happened to be standing; the
+group screen and `/join` say it was deleted, and `/g/claim` sends them back to
+the list ([sync.md](sync.md#deleting-a-group)). "Deleted for everybody" would
+otherwise mean "deleted for whoever pressed it", with four phones still holding
+the ledger and syncing against nothing.
+
+**Not linked from any group.** A screen whose job is deleting other people's
+data has no business one tap from a ledger, and the two gentler things people
+usually want — Export data, Forget group — are offered on it by name.
 
 ## Getting a group off the phone
 
