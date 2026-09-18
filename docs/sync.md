@@ -274,7 +274,9 @@ audit trail exists to answer.
   group" while `StartSync`'s background loop was already retrying successfully.
   It now watches `groups` with `useLiveQuery` and moves on the moment the group
   lands, from any attempt. The secret is saved up front either way.
-- **`acceptOps` reserves seq numbers with `UPDATE ... RETURNING`**, not inside
-  an explicit transaction, so two concurrent pushes to the same group could in
-  theory race. Deliberately not hardened: a few phones, human-paced. If it ever
-  bites, wrap reserve-and-insert in a D1 transaction.
+- **A seq number must never exist before its row does.** `acceptOps` reserves
+  and inserts in one `db.batch`, which D1 runs as a transaction, because a phone
+  that pulls in between is told `latestSeq` covers rows it cannot read yet —
+  and it writes that number down as its cursor. The ops stay on the server and
+  are lost to that phone for good. Two statements looked fine at this app's
+  scale for exactly as long as nobody worked out what the losing phone does next.

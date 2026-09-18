@@ -4,13 +4,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
 
 /**
- * Deleting a group, against real SQLite running the real migrations.
+ * The store, against real SQLite running the real migrations.
  *
- * The thing that can be wrong here is not the SQL but what survives it: a
- * delete that leaves a row `ensureGroup` will hand back as a live group is a
- * deletion the next phone to sync undoes (docs/sync.md#deleting-a-group), and
- * nothing in the app would say so. So the test that matters is the push after
- * the delete.
+ * Two things can be wrong here, and neither is the SQL. A delete that leaves a
+ * row `ensureGroup` will hand back as a live group is a deletion the next phone
+ * to sync undoes (docs/sync.md#deleting-a-group), and nothing in the app would
+ * say so — so the test that matters is the push after the delete. And a seq
+ * number reserved before its row exists is an op a pulling phone is told about
+ * and can never read, so `batch` below is a transaction like D1's: the point of
+ * the accept tests is what another caller sees *during* one.
  */
 
 type Row = Record<string, unknown>;
@@ -28,8 +30,21 @@ function fakeD1(): D1Database {
   });
   return {
     prepare,
-    batch: async (stmts: { run: () => Promise<void> }[]) => {
-      for (const s of stmts) await s.run();
+    // D1 runs a batch in one transaction and rolls the whole thing back if any
+    // statement fails. `acceptOps` reserves and inserts in a single batch on
+    // exactly that promise, so a fake that ran the statements loose would pass
+    // a store that cannot hold its invariant.
+    batch: async (stmts: { all: () => Promise<{ results: Row[] }> }[]) => {
+      sqlite.exec("BEGIN");
+      try {
+        const out = [];
+        for (const s of stmts) out.push(await s.all());
+        sqlite.exec("COMMIT");
+        return out;
+      } catch (err) {
+        sqlite.exec("ROLLBACK");
+        throw err;
+      }
     },
   } as unknown as D1Database;
 }
@@ -78,5 +93,42 @@ describe("deleteGroup", () => {
   it("leaves a live group alone", async () => {
     const group = await getGroup(db, "g1");
     expect(isDeleted(group!)).toBe(false);
+  });
+});
+
+describe("acceptOps", () => {
+  it("leaves no reserved sequence number without a row behind it", async () => {
+    await acceptOps(db, "g1", [sealed("op3"), sealed("op4")], NOW);
+    const group = await getGroup(db, "g1");
+    const ops = await opsSince(db, "g1", 0);
+    // The invariant the pulling phone spends: `latestSeq` names a row it can
+    // already read, so a cursor parked on it has skipped nothing.
+    expect(group!.last_op_seq).toBe(4);
+    expect(ops.map((op) => op.seq)).toEqual([1, 2, 3, 4]);
+  });
+
+  it("numbers ops in the order they were pushed", async () => {
+    const { assigned, latestSeq } = await acceptOps(
+      db, "g1", [sealed("op3"), sealed("op4"), sealed("op5")], NOW,
+    );
+    expect(assigned).toEqual({ op3: 3, op4: 4, op5: 5 });
+    expect(latestSeq).toBe(5);
+  });
+
+  it("takes the counter back down with a batch that fails", async () => {
+    // Two rows for one id: the second insert hits `ops.id` and the whole batch
+    // rolls back. What must not survive is the reserve — a counter left ahead
+    // of the log is the cursor bug with no op to show for it.
+    await expect(acceptOps(db, "g1", [sealed("op3"), sealed("op3")], NOW)).rejects.toThrow();
+    const group = await getGroup(db, "g1");
+    expect(group!.last_op_seq).toBe(2);
+    expect(await opsSince(db, "g1", 0)).toHaveLength(2);
+  });
+
+  it("hands a re-pushed op the seq it already had", async () => {
+    const again = await acceptOps(db, "g1", [sealed("op2"), sealed("op3")], NOW);
+    expect(again.assigned).toEqual({ op2: 2, op3: 3 });
+    const group = await getGroup(db, "g1");
+    expect(group!.last_op_seq).toBe(3);
   });
 });

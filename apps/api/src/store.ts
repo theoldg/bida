@@ -99,9 +99,18 @@ export async function opsSince(
  * seals the same op under a fresh IV, so the two ciphertexts differ — the id is
  * what says they are one op, and the first one stored is the one that stays.
  *
- * Not fully race-proof against two concurrent pushes to the *same* group
- * racing the seq counter — acceptable at this app's scale (a handful of
- * phones, human-paced writes); see docs/sync.md#gotchas.
+ * Reserving the sequence numbers and writing the rows is **one** `db.batch`,
+ * which D1 runs as a single transaction. That is what holds the invariant the
+ * pulling phone depends on: every seq up to `last_op_seq` is a row it can
+ * already read. Two statements could not hold it — a phone syncing between the
+ * reserve and the insert was answered with a `latestSeq` covering rows that
+ * were not there yet, wrote it down as its cursor, and never asked for that
+ * range again. The ops were not lost on the server; they were lost to that
+ * phone, silently and for good.
+ *
+ * Two pushes racing the same op id now collide on `ops.id` and take the whole
+ * batch down rather than half-writing it. The push fails, the phone retries,
+ * and the retry finds the row already there — which is the idempotent path.
  */
 export async function acceptOps(
   db: D1Database,
@@ -131,23 +140,30 @@ export async function acceptOps(
     return { assigned, latestSeq: group?.last_op_seq ?? 0 };
   }
 
-  const reserved = await db
-    .prepare("UPDATE groups SET last_op_seq = last_op_seq + ? WHERE id = ? RETURNING last_op_seq")
-    .bind(fresh.length, groupId)
-    .first<{ last_op_seq: number }>();
-  const latestSeq = reserved?.last_op_seq ?? fresh.length;
-  const firstSeq = latestSeq - fresh.length + 1;
+  // The reserve first, then one insert per op reading the counter back out of
+  // the row it just moved: `last_op_seq - (n - 1 - i)` is op `i`'s number. The
+  // subquery is what lets the insert be bound before the reserve has run, and
+  // so lets both live in the one batch.
+  const statements = [
+    db
+      .prepare("UPDATE groups SET last_op_seq = last_op_seq + ? WHERE id = ? RETURNING last_op_seq")
+      .bind(fresh.length, groupId),
+    ...fresh.map((op, i) =>
+      db
+        .prepare(
+          "INSERT INTO ops (seq, id, group_id, sealed, received_at)"
+          + " VALUES ((SELECT last_op_seq FROM groups WHERE id = ?) - ?, ?, ?, ?, ?)",
+        )
+        .bind(groupId, fresh.length - 1 - i, op.id, groupId, op.sealed, now)),
+  ];
+  const results = await db.batch<{ last_op_seq: number }>(statements);
+  const latestSeq = results[0]?.results?.[0]?.last_op_seq;
+  if (latestSeq === undefined) {
+    throw new Error(`acceptOps: no sequence number came back for group ${groupId}`);
+  }
 
-  const inserts = fresh.map((op, i) => {
-    const seq = firstSeq + i;
-    assigned[op.id] = seq;
-    return db
-      .prepare(
-        "INSERT INTO ops (seq, id, group_id, sealed, received_at) VALUES (?, ?, ?, ?, ?)",
-      )
-      .bind(seq, op.id, groupId, op.sealed, now);
-  });
-  await db.batch(inserts);
+  const firstSeq = latestSeq - fresh.length + 1;
+  fresh.forEach((op, i) => { assigned[op.id] = firstSeq + i; });
 
   return { assigned, latestSeq };
 }
