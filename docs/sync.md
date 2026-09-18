@@ -165,9 +165,13 @@ phone refused a `413` retries the identical body forever and the server cannot
 make an old build chunk differently. That is the same reasoning that keeps D1
 batching on the server's side of the door (the gotcha below).
 
-**They bound one request, not a campaign.** A flood of well-formed pushes is
-still unanswered, and wants a counter per caller
-([implementation-status.md](implementation-status.md#what-is-open)).
+**They bound one request, not a campaign**, and that is where it stops. A
+counter per caller is the obvious next move and the owner has declined it
+(2026-09-18): counting callers means keeping a row about each one, which is
+the one thing a server that cannot read a group should not start doing, and
+the ceilings above already sit far enough over honest traffic that a flood
+hits Cloudflare's own limits first. A `429` from the platform costs a quiet
+day; a table of who pushed what costs the promise.
 
 ### Deleting a group
 

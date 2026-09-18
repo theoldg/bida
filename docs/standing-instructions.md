@@ -112,7 +112,14 @@ to remove more from this list than you add.
   Its users are strangers, so weigh abuse and liability as real rather than
   theoretical: a free-tier ceiling is a threat surface
   ([hosting.md](hosting.md)), and a gap is a reason to fix it, not to rely on
-  nobody looking.
+  nobody looking. **The defence may not be more data about people.** A counter
+  keyed to a caller is a row about that caller, and the owner would rather wear
+  the abuse than start keeping one (*2026-09-18*, declining exactly that on
+  `POST /ops` — [sync.md](sync.md#the-push-has-a-ceiling)). Ceilings, refusals
+  and the platform's own limits are the tools; a ledger of who did what is not.
+  The scan's buckets are the exception that proves it: that endpoint spends real
+  money per call, and even there the key is an HMAC that expires in a day
+  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
 
 ## Interface
 

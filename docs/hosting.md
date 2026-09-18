@@ -26,10 +26,11 @@ this page is a threat surface and not only a capacity estimate. The numbers
 above are what a *few hundred honest requests* need; what matters now is what
 one unfriendly caller can spend of them. Two endpoints take a body without
 costing money and are therefore the ones to reason about: the scan, which has a
-budget, and the push, which has ceilings on one request and no counter across
-many ([sync.md](sync.md#the-push-has-a-ceiling)). The public repo also makes
-both shapes readable, which is a reason to fix a gap rather than to keep it
-quiet.
+budget, and the push, which has ceilings on one request and, by decision rather
+than by oversight, no counter across many
+([sync.md](sync.md#the-push-has-a-ceiling)). The public repo also makes both
+shapes readable, so read the reasoning there before proposing the counter
+again.
 
 ## How full can it get
 
@@ -278,10 +279,12 @@ Recognise these if you ever propose one:
 - Polling every few seconds instead of on focus/reconnect (100k req/day).
 - Durable Objects for real-time — cheap, but not free-tier-free.
 - Raising `SCAN_LIMITS.global` without doing the arithmetic: it is the only
-  number that bounds the Gemini bill, at roughly $0.0005 a scan
-  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). Set a hard
-  project quota in Google AI Studio just above it, too — a belt under the
-  braces, for the day our own counter has a bug.
+  number that bounds the Gemini bill, at roughly $0.001 a scan
+  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). A hard
+  project quota under it was offered and declined — the owner watches the
+  spend with billing alerts of their own (2026-09-18), so the counter is the
+  brake and they are the watch on it. Don't re-propose the quota; do keep the
+  arithmetic honest.
 
 ## Gotchas
 
@@ -289,7 +292,8 @@ Recognise these if you ever propose one:
   runs; capping for real needs a billing-export → Pub/Sub → function that
   disables the billing account. `SCAN_LIMITS.global` is the only hard brake we
   have, and it is the better one — it fails as a refusal with a sentence
-  rather than as a dead key.
+  rather than as a dead key. The owner runs alerts on the account beside it
+  and takes the residual risk knowingly (2026-09-18).
 - **A key that validates is not a key that works.** `checkGeminiKey`
   (`web/lib/scan/key.ts`) asks Google's free `models` list, which answers 200
   for a key with no credit and no permission — exactly what a funded-looking

@@ -27,25 +27,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-None of these is started, and the first is not code at all.
+One thing, and it is a watch rather than a task.
 
-- **A hard quota on the Cloud project**, just above `SCAN_LIMITS.global` — the
-  belt under our own counter's braces. Only the owner can set it, in the
-  console, and a Cloud *budget* is not it: budgets alert, they do not stop
-  ([hosting.md](hosting.md#gotchas)).
-- **The hosted service has no liability line.** `/about` says what the server
-  sees, names the scan as the exception, and now prints `/delete-my-data`'s address, unlinked; this
-  is the rest of it, and it is the most overdue item here: the repo is public
-  **and the app is being advertised to users online**, so the people keeping
-  ledgers in it are strangers rather than friends who would ask
-  ([hosting.md](hosting.md)).
-- **`POST /ops` has no counter.** One push is now bounded — 16 MB, 5 000 ops,
-  256 KB per op, all `413` ([sync.md](sync.md#the-push-has-a-ceiling)) — so no
-  single call can spend the day's D1 writes or a visible slice of the 500 MB.
-  What is left is the harder half: it still registers any unseen group id, and
-  nothing counts pushes across requests, so a flood of well-formed ones is
-  unanswered. A bucket per caller like the scan's (`scan-limits.ts`) is the
-  cheap version; giving credential-minting its own door is the real one.
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found
   are fixed and none has recurred since (2026-09-18): a pasted link loading
@@ -55,6 +38,13 @@ None of these is started, and the first is not code at all.
   writes nor reads (`lib/db/visible.ts`), and `/diag` has a `stores:` line so a
   next lock is named rather than cross-read
   ([frontend.md](frontend.md#a-live-read-can-die)). **Open only as a watch.**
+
+**Two former items here are closed as decisions, not as work** (2026-09-18), so
+a session that rediscovers either is rediscovering a call the owner has already
+made: **no per-caller counter on `POST /ops`**, because counting callers means
+storing a row about each of them ([sync.md](sync.md#the-push-has-a-ceiling)),
+and **no hard quota on the Cloud project**, because the owner watches the spend
+with alerts of their own ([hosting.md](hosting.md#cost-tripwires)).
 
 ## What a cold session needs to know
 
