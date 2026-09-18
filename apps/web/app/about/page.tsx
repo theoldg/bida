@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AboutDelete } from "../../components/about-delete";
 import { AboutOffline } from "../../components/about-offline";
 import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
 import { Icon } from "../../components/icons";
@@ -7,18 +8,20 @@ import { route } from "../../lib/group-link";
 import { VERSION } from "../../lib/version";
 
 /**
- * Who can edit, whether it works on a train, where to complain, and — last,
- * since it is the longest and the one fewest people are here for — who can
- * read what you typed. Four claims, no pitch: this screen is reached from the
- * foot of the groups list, so whoever is on it already has the app and does
- * not need it described back to them. The source link sits above all four,
- * since it is the one thing here somebody might come looking for on its own,
- * and the build's number sits in the bar's far corner, out of the reading
- * altogether.
+ * Who can edit, whether it works on a train, where to complain, who can read
+ * what you typed, and — last, being the one line here nobody is meant to act
+ * on lightly — where to ask for a group to be erased. Five claims, no pitch:
+ * this screen is reached from the foot of the groups list, so whoever is on it
+ * already has the app and does not need it described back to them. The source
+ * link sits above all five, since it is the one thing here somebody might come
+ * looking for on its own, and the build's number sits in the bar's far corner,
+ * out of the reading altogether.
  *
- * The page itself is prose and links, so it stays a server component. One
- * client island sits in it — the whole of "Works offline" (`AboutOffline`) —
- * because what that claim says depends on whether the phone already did it.
+ * The page itself is prose and links, so it stays a server component. The two
+ * sections whose sentences aren't fixed at build time draw themselves —
+ * "Works offline" (`AboutOffline`), which depends on whether the phone already
+ * did it, and "Delete your data" (`AboutDelete`), which names the host it is
+ * being read from.
  */
 export default function AboutPage() {
   const { feedback, privacy } = copy.about;
@@ -64,15 +67,6 @@ export default function AboutPage() {
                 <SealedRow />
                 <p>{privacy.key}</p>
                 <p>{privacy.shape}</p>
-                {/* Last, under the promises it is the other half of: a server
-                    that cannot read a group can still be asked to stop
-                    holding one. A link and not a button, because what is
-                    behind it is a screen of warnings and not an act. */}
-                <div className="aboutlinks">
-                  <a className="aboutlink" href={route.deleteMyData()}>
-                    <Icon name="trash" size={14} />{copy.deleteData.fromAbout}
-                  </a>
-                </div>
               </>
             }>
               <>
@@ -80,6 +74,12 @@ export default function AboutPage() {
                 {" "}{privacy.scanOwnKey}{" "}<em>{privacy.scanOwnKeyWarning}</em>
               </>
             </Section>
+
+            {/* Last, under the promises it is the other half of: a server that
+                cannot read a group can still be asked to stop holding one.
+                Written out and not linked, so getting there is deliberate
+                (lib/copy.ts, deleteData.fromAbout). */}
+            <AboutDelete />
           </div>
         </Scroll>
       </Body>
@@ -113,8 +113,9 @@ function SealedRow() {
 
 /**
  * One claim: its heading, its paragraph, and whatever hangs under that —
- * links, or the sealed-row table. `AboutOffline` draws its own version of the
- * same markup, because its paragraph isn't fixed at build time. A card apiece
+ * links, or the sealed-row table. `AboutOffline` and `AboutDelete` draw their
+ * own version of the same markup, their paragraphs not being fixed at build
+ * time. A card apiece
  * would have made a settings list out of something read top to bottom, once.
  */
 function Section({ title, children, under }: {

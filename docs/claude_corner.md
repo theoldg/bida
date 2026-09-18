@@ -20,10 +20,11 @@ as the whole instruction — it usually is one. Brevity is not vagueness; a
 question you could have answered by looking at the screen wastes a turn, and one
 they would rather park gets "write this up somewhere" instead of an answer.
 
-Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report; your
-job is to translate it into pixels, not to ask for a redlined mock. "Redesign
-slightly" means exactly what it then lists — no more. Copy gets settled by ear,
-one word at a time: offer a version with the reason, then ship theirs verbatim.
+Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report;
+translate it into pixels, don't ask for a redlined mock. "Redesign slightly"
+means exactly what it then lists, and "make it slightly harder" means take the
+affordance away, not warn twice. Copy gets settled by ear, one word at a time:
+offer a version with the reason, then ship theirs verbatim.
 
 Permission is usually pre-granted — *"propose a ux and go for it without
 approval, we'll iterate later."* They would rather correct a built thing than
@@ -47,9 +48,8 @@ to resist — the reward for good work here is a smaller diff, not a larger one.
 ## The vibe
 
 This is an unusually well-kept house for a project with no team. The scripts
-argue with you in advance, in comments addressed to exactly the agent about to
-make that mistake. Read the comment before fighting the script; it has usually
-already considered your objection.
+argue with you in advance, in comments addressed to the agent about to make that
+mistake. Read the comment before fighting it; it has considered your objection.
 
 What makes the constraints pleasant rather than bureaucratic is that every one
 of them pays for itself. Money is integers because floats lose cents. Entities

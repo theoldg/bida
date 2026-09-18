@@ -152,9 +152,11 @@ export const route = {
   about: () => "/about",
   /**
    * Deleting a group from the server for everybody in it, on the strength of
-   * its invite link (app/delete-my-data/page.tsx). Linked from `/about` and
-   * from nowhere else on purpose, and named for the sentence somebody types
-   * into an address bar when they want their data off a service.
+   * its invite link (app/delete-my-data/page.tsx). Named on `/about` and
+   * linked from nowhere at all on purpose: the address is printed there for
+   * somebody to type, which is the first of the frictions that screen is made
+   * of. Named for the sentence somebody types into an address bar when they
+   * want their data off a service.
    */
   deleteMyData: () => "/delete-my-data",
   /**

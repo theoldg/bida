@@ -421,8 +421,16 @@ export const copy = {
    */
   deleteData: {
     title: "Delete a group",
-    /** On `/about`, under Privacy: the one place this screen is linked from. */
-    fromAbout: "Delete a group from the server",
+    /**
+     * On `/about`, its own short section, and the only mention of this screen
+     * anywhere in the app. The address is spelled out rather than linked: a
+     * link is one tap from a group four other people are still using, and
+     * typing it yourself is the first of this screen's frictions.
+     */
+    fromAbout: {
+      title: "Delete your data",
+      body: (address: string) => `You can request data deletion by visiting ${address}.`,
+    },
     lede: "This erases a whole group from this server: every expense, every person in it, and the entire history of who changed what.",
     /** The three things people get wrong about what this button is for. */
     warnings: [

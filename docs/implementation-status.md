@@ -31,7 +31,7 @@ None of these is started, and the first is not code at all.
   console, and a Cloud *budget* is not it: budgets alert, they do not stop
   ([hosting.md](hosting.md#gotchas)).
 - **The hosted service has no liability line.** `/about` says what the server
-  sees, names the scan as the exception, and now links `/delete-my-data`; this
+  sees, names the scan as the exception, and now prints `/delete-my-data`'s address, unlinked; this
   is the rest of it, and the repo being public makes it due.
 - **`POST /ops` has no budget.** It registers any unseen group id and writes
   unbounded ops into a D1 that gets no further resets — the only door in the app
