@@ -67,6 +67,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — "Try to remove that banner" sounded cosmetic; watching the
+  screen for twelve seconds found a read that never answered. Reproduce the
+  annoyance, then prove the cure.
 - *2026-09-18* — Told my CSV parser was unsafe, I argued for keeping it and
   wrote the test anyway. The test found a real NaN, one layer up. Take the
   worry seriously even when its target is wrong.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — The install split looked like "iOS is worse, so more UI". It
   wasn't: Android's one offer sat on a screen launch.ts routes around. Check the
   stated reason is the operating one.
-- *2026-09-18* — My first fix was right about the cause and wrong about the
-  cure; one run of the browser check said so. Prove the remedy too, not only
-  the diagnosis.

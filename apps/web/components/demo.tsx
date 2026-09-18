@@ -17,8 +17,9 @@ import { Icon } from "./icons";
  * **It does not fold and it does not dismiss.** Every screen in the demo works
  * — the entry form saves, the balances settle, the export writes a file — so
  * "this is not yours" is not news that can be delivered once and cleared. A
- * toast would be exactly that. It stays put instead, and the way out is on it
- * in words: clearing is one item down in the group menu.
+ * toast would be exactly that. It stays put instead, and says the one fact
+ * looking around cannot: nothing here syncs. The way out is the group menu,
+ * where Clear the demo sits.
  *
  * Renders nothing for every other group, so the ledger can mount it unasked.
  */
