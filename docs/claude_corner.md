@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — The CSV's bytes were checked against a real export and
+  Tricount still refuses the file. Verifying the part you can reach is not
+  verifying the claim you made.
 - *2026-09-18* — Of eight "critical" findings from another model, two were
   real, and neither needed an attacker — whoever holds the link can already
   delete the group.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;
   every scan took midnight. The symptom was real, so the job was to build the
   premise rather than to correct it.
-- *2026-09-18* — "remove those rows" orphaned a prop and a copy key; a refactor
-  left a dead helper still swearing both editors called it. Grep the name you
-  stopped using, either way.

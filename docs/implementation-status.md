@@ -20,7 +20,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Versioned**   | `major.semi.minor` in the root `package.json`, in the corner of the `/about` top bar and the first line of `/diag`. Every push to `dev` deploys, so every push bumps the minor and `pnpm check` insists on it; the major is the owner's alone ([hosting.md](hosting.md#versions))                                                                                                                             |
 | **The tip jar** | A FAB on the balances tab opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp))                                                                                                                                                                                                                                 |
 | **Deletable**   | `/delete-my-data` takes an invite link, shows the group it opens, and deletes it from D1 for everybody in it, leaving a tombstone no phone can push past ([frontend.md](frontend.md#deleting-a-group), [sync.md](sync.md#deleting-a-group)). |
-| **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). The bytes were wrong until 2026-09-18 — CRLF where a real export is LF, and no blank lines — and Tricount refused every file whole; the shape is now pinned against an export it accepts ([data-model.md](data-model.md#the-group-as-a-spreadsheet)), **unverified against Tricount itself**. Whether the share sheet takes a file inside an iOS home-screen app is the other part still waiting on a real phone ([ios.md](ios.md)) |
+| **Installable** | An iPhone joins in the home-screen app rather than a Safari tab that forgets after a week: `/install`, the card on the groups list and on each ledger, the claim screen's link to paste, and an invite whose two halves ride the icon. Android is offered in the same two places, and an in-app browser — a third storage — is refused outright ([ios.md](ios.md)). Works on the owner's iPhone, install and join both (2026-09-18) |
+| **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). The bytes are pinned against a real export's shape, and the share sheet hands the file over from an iOS home-screen app. **Tricount still refuses the file** — see the open list |
 
 ## What is open
 
@@ -38,52 +39,26 @@ None of these is started, and the first is not code at all.
   with no ceiling on it ([sync.md](sync.md)). Giving credential-minting its own
   door is the shape of the fix.
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
-  page by another copy of the app frozen mid-transaction, after the app sits
-  inactive. Two cases are found and both are fixed. WebKit (2026-09-17): a
-  pasted link loaded `/join` beside the list and each page's cache froze holding
-  the database from the other, so paste now replaces the page. Brave
-  (2026-09-17): `updateDevice` — the app's smallest write, and the only one
-  taking `device` alone, which every list and group screen reads — ran from a
-  hidden `/join`; it now waits for the front like the sync commit
-  (`lib/db/visible.ts`), and `/diag` has a `stores:` line so the next lock is
-  named rather than cross-read
-  ([frontend.md](frontend.md#a-live-read-can-die)). The Brave report's loose end
-  — reads restarting with no `live.retry` before them — was **Dexie re-running
-  the querier itself**, and it named the third case: a write broadcasts to every
-  copy on the origin, so the copy in front pokes a *backgrounded* one into
-  opening a readonly transaction on every save. A tab beside an installed
-  Android app hangs reliably on that, which is how it was reported
-  (2026-09-17). A hidden page now reads nothing either, not just writes nothing.
-  **Next: whether it happens again** — this is the first of the three fixes with
-  a repro behind it rather than a single report.
-- **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
-  tab that forgets after a week and shares nothing with the home-screen app, so
-  a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
-  the card on the list and on each ledger, the claim screen's link to paste, and
-  both halves of the invite the icon is added with. That card is now
-  [one shell with two bodies](ios.md#the-card--the-groups-list-and-the-ledger)
-  and Android is drawn in the same two places: its only offer had sat on the
-  groups list, which `lib/launch.ts` routes around, while Chrome's own infobar
-  stayed suppressed (2026-09-18). An in-app browser is a third storage and is refused outright
-  ([ios.md](ios.md#the-in-app-browser--refused)); **unverified on the phone**,
-  and the case to watch is a false positive, not a miss.
-  **Works on the owner's iPhone from `/install`** (2026-09-16).
-  Built since, unverified on the phone: Share from any page (every page's head
-  builds the manifest at load from `bida.carry`), and the names coming along
-  (the icon claims the member the tab was), and a launch of the icon reopening
-  the group you were last in, which it alone never did — `start_url` is
-  `/install`, so nothing about the address said it was a launch (2026-09-17).
-  The owner's first run carried
-  two groups but only the name picked after the page loaded; a stale head now
-  reloads, though never before the shell is precached — on a first visit that
-  reload came off the network and raced the precache (2026-09-17). A tap that landed on a route's RSC payload instead of a
-  screen — reported on production, and the reason the Worker now redirects a
-  payload navigated to as a page ([frontend.md](frontend.md#pwa)) — is fixed on
-  `dev` and reaches phones when the owner releases; so is the one behind it, a
-  tap during a deploy that dropped the group from the address and left the
-  screen saying the link had no password (2026-09-18). **Next: install from a group's
-  page, not `/install`, and paste both `/diag`s** — it also settles whether iOS
-  used the manifest, since no other page's URL carries anything.
+  page by another copy of the app frozen mid-transaction. All three cases found
+  are fixed and none has recurred since (2026-09-18): a pasted link loading
+  `/join` beside the list, so paste now replaces the page; `updateDevice`
+  running from a hidden `/join`; and a write broadcasting to a backgrounded copy,
+  which opened a readonly transaction on every save. A hidden page now neither
+  writes nor reads (`lib/db/visible.ts`), and `/diag` has a `stores:` line so a
+  next lock is named rather than cross-read
+  ([frontend.md](frontend.md#a-live-read-can-die)). **Open only as a watch.**
+- **Tricount refuses the exported CSV.** The bytes were fixed on 2026-09-18 —
+  LF, the blank line under the header, the blank line above the foot, the foot
+  dated with spaces where the category and cost would be — and each of those is
+  confirmed against what real Splitwise exports carry and what importers built
+  on them skip. Tricount still refuses the file whole, so the fault is not the
+  shape ([data-model.md](data-model.md#the-group-as-a-spreadsheet)).
+  **Next: the refused file itself and whatever Tricount said about it** — until
+  one of those is in hand every further byte is a guess, and this one has been
+  guessed at once already. The suspects worth carrying into that look are the
+  three rows a Splitwise reader cannot represent: an income's negative `Cost`,
+  a transfer, and an expense with more than one payer, which is more than one
+  positive column and which every importer read so far skips outright.
 - **Importing a Splitwise CSV**, into a new group only, from the groups list's
   menu. The shape is what `core/export.ts` writes, read backwards
   ([data-model.md](data-model.md#the-group-as-a-spreadsheet)), and the one part
