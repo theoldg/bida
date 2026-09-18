@@ -342,9 +342,13 @@ Two fields the model doesn't get the last word on:
   dropped and the draft keeps the currency it had. Dropped, not repaired:
   clipping "USDT" to "USD" banks a number in a currency nobody named.
 - **The date** becomes local midnight of the printed day, built from the
-  `YYYY-MM-DD` parts. The app reads instants back in local time everywhere, so
+  `YYYY-MM-DD` parts — unless the printed day is *today*, which takes the
+  moment of the scan instead, since that is roughly when you paid. Local
+  midnight, not UTC: the app reads instants back in local time everywhere, so
   a UTC-midnight stamp files a receipt under the previous day west of
-  Greenwich.
+  Greenwich. `normalizeScan` takes that clock as an argument, like everything
+  else in core. What the surviving midnight *means* — a day without a time —
+  is [data-model.md](data-model.md#a-day-without-a-time).
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.

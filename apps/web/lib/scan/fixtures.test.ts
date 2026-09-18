@@ -72,7 +72,7 @@ describe("the canned receipts", () => {
     // to `parseMinor` on save, and a fixture that throws there would fail as
     // a broken app rather than as a broken fixture.
     if (fixture.exercises === "ok") {
-      const patch = normalizeScan(result);
+      const patch = normalizeScan(result, Date.now());
       expect(() => parseMinor(patch.amountText!, currency)).not.toThrow();
     }
   });

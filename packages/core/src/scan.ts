@@ -68,10 +68,19 @@ export interface ScanPatch {
   /** Ready for parseMinor() with the chosen currency. */
   amountText?: string;
   currency?: string;
+  /** The moment of the scan for a receipt printed today; local midnight for any other day. */
   occurredAt?: number;
 }
 
-export function normalizeScan(result: ScanResult): ScanPatch {
+/**
+ * `now` is the moment of the scan. A receipt printed today was paid at some
+ * point before it, so it takes `now` as its stamp — close enough, and a real
+ * time of day. A receipt from any other day takes local midnight, which is
+ * how this app writes down a day whose time nobody knows: the ledger neither
+ * prints it nor pretends the purchase happened at 00:00
+ * (`isDateOnly`, apps/web/lib/format.ts).
+ */
+export function normalizeScan(result: ScanResult, now: number): ScanPatch {
   const patch: ScanPatch = {};
   if (result.title) patch.description = result.title;
   if (result.total) patch.amountText = result.total;
@@ -84,10 +93,16 @@ export function normalizeScan(result: ScanResult): ScanPatch {
     const [y, m, d] = result.date.split("-").map(Number);
     if (y && m && d) {
       const local = new Date(y, m - 1, d).getTime();
-      if (!Number.isNaN(local)) patch.occurredAt = local;
+      if (!Number.isNaN(local)) patch.occurredAt = local === startOfLocalDay(now) ? now : local;
     }
   }
   return patch;
+}
+
+function startOfLocalDay(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
 }
 
 /**

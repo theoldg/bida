@@ -117,7 +117,7 @@ export function useReceiptScan(
     try {
       await before.current?.();
       const result = await scanReceipt(file, groupId, secret, current.currency);
-      const patch = normalizeScan(result);
+      const patch = normalizeScan(result, Date.now());
       // Read as a bill rather than off the raw result: a deduction printed as
       // a negative line belongs in the discount, not in the grid as something
       // to tick (`readBill`).

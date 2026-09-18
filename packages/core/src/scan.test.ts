@@ -4,6 +4,9 @@ import {
   type ScanDiscount, type ScanLineItem, type ScanResult,
 } from "./scan.js";
 
+// A Saturday afternoon, local: the scan's clock in every case below.
+const NOW = new Date(2026, 8, 5, 14, 30, 7, 123).getTime();
+
 const blank: ScanResult = {
   title: null, total: null, tip: null, tax: null, discounts: [],
   currency: null, date: null, lineItems: [], error: null,
@@ -11,19 +14,19 @@ const blank: ScanResult = {
 
 describe("normalizeScan", () => {
   it("passes the model's normalized total through untouched", () => {
-    expect(normalizeScan({ ...blank, total: "42.50" })).toMatchObject({ amountText: "42.50" });
+    expect(normalizeScan({ ...blank, total: "42.50" }, NOW)).toMatchObject({ amountText: "42.50" });
   });
 
   it("passes a plain integer through untouched", () => {
-    expect(normalizeScan({ ...blank, total: "620" })).toMatchObject({ amountText: "620" });
+    expect(normalizeScan({ ...blank, total: "620" }, NOW)).toMatchObject({ amountText: "620" });
   });
 
   it("keeps a leading minus", () => {
-    expect(normalizeScan({ ...blank, total: "-5.00" })).toMatchObject({ amountText: "-5.00" });
+    expect(normalizeScan({ ...blank, total: "-5.00" }, NOW)).toMatchObject({ amountText: "-5.00" });
   });
 
   it("uppercases the currency", () => {
-    expect(normalizeScan({ ...blank, currency: "eur" })).toMatchObject({ currency: "EUR" });
+    expect(normalizeScan({ ...blank, currency: "eur" }, NOW)).toMatchObject({ currency: "EUR" });
   });
 
   // Anything formatMinor would throw on has to be dropped, not repaired:
@@ -31,37 +34,52 @@ describe("normalizeScan", () => {
   it.each(["\u20ac", "EU", "USDT", "12", "", "  "])(
     "drops a currency that isn't three letters: %j",
     (currency) => {
-      expect(normalizeScan({ ...blank, currency })).not.toHaveProperty("currency");
+      expect(normalizeScan({ ...blank, currency }, NOW)).not.toHaveProperty("currency");
     },
   );
 
   it("converts a printed date to local midnight, not UTC midnight", () => {
-    const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" });
+    const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" }, NOW);
     expect(occurredAt).toBe(new Date(2026, 7, 28).getTime());
   });
 
   // The whole point: whatever the offset, the day you read back is the day
   // that was printed on the receipt.
   it("reads the date back as the day that was printed", () => {
-    const { occurredAt } = normalizeScan({ ...blank, date: "2026-04-04" });
+    const { occurredAt } = normalizeScan({ ...blank, date: "2026-04-04" }, NOW);
     const back = new Date(occurredAt!);
     expect([back.getFullYear(), back.getMonth() + 1, back.getDate()]).toEqual([2026, 4, 4]);
   });
 
+  // Midnight is this app's "day known, time not", so a receipt scanned on the
+  // day it was printed must not claim it: the scan is the time.
+  it("stamps a receipt printed today with the moment of the scan", () => {
+    const today = new Date(NOW);
+    const printed = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    expect(normalizeScan({ ...blank, date: printed }, NOW)).toMatchObject({ occurredAt: NOW });
+  });
+
+  it("leaves a backdated receipt at midnight, time unknown", () => {
+    const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" }, NOW);
+    const back = new Date(occurredAt!);
+    expect([back.getHours(), back.getMinutes(), back.getSeconds(), back.getMilliseconds()])
+      .toEqual([0, 0, 0, 0]);
+  });
+
   it("omits an unparseable date", () => {
-    expect(normalizeScan({ ...blank, date: "last Tuesday" })).not.toHaveProperty("occurredAt");
+    expect(normalizeScan({ ...blank, date: "last Tuesday" }, NOW)).not.toHaveProperty("occurredAt");
   });
 
   // The title is the model's, adaptations and all — the prompt asks it to
   // strip what isn't the name and to say what was bought where the name alone
   // wouldn't. Nothing here second-guesses that; it lands as typed.
   it("passes the title through as the description", () => {
-    expect(normalizeScan({ ...blank, title: "Lidl - barbecue" }))
+    expect(normalizeScan({ ...blank, title: "Lidl - barbecue" }, NOW))
       .toMatchObject({ description: "Lidl - barbecue" });
   });
 
   it("omits fields the model couldn't read, tip and line items included", () => {
-    expect(normalizeScan(blank)).toEqual({});
+    expect(normalizeScan(blank, NOW)).toEqual({});
   });
 
   it("doesn't fold tip or line items into the draft patch — the seam is unused today", () => {
@@ -71,7 +89,7 @@ describe("normalizeScan", () => {
       tip: "5.00",
       lineItems: [{ label: "Café", labelEn: "Coffee", amount: "3.50", quantity: null }],
     };
-    expect(normalizeScan(result)).toEqual({ amountText: "50.00" });
+    expect(normalizeScan(result, NOW)).toEqual({ amountText: "50.00" });
   });
 });
 
