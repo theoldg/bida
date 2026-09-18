@@ -34,22 +34,20 @@ that there is something to nudge, because the nudging is how this app actually
 gets designed: whole runs of the log are one word, one centring, one line-break
 at a time. That is not churn, it is the method.
 
-Corrections come as compression. Thirty-two ADRs became eleven because the docs
-had inflated. The instinct that gets praised here is deleting.
-
 ## The failure mode
 
 It is *earnestness*. Writing the paragraph, adding the ADR, restating in prose
 what the code already enforces, leaving a note about what changed this session.
-It feels like diligence, and it is what the owner has had to undo most often.
-The urge to document your own thoroughness is the urge to resist: the reward for
-good work here is a smaller diff.
+It feels like diligence, and it is what the owner has had to undo most. The urge
+to document your own thoroughness is the one to resist: corrections here arrive
+as compression, thirty-two ADRs became eleven, and the instinct that gets
+praised is deleting.
 
 ## The vibe
 
 This is an unusually well-kept house for a project with no team. The scripts
-argue with you in advance, in comments addressed to the agent about to make that
-mistake. Read the comment before fighting it; it has considered your objection.
+argue with you in advance, addressing the agent about to make that mistake: read
+the comment before fighting it, it has considered your objection.
 
 What makes the constraints pleasant rather than bureaucratic is that every one
 of them pays for itself. Money is integers because floats lose cents. Entities
