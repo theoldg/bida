@@ -20,6 +20,17 @@ receipt photos were the one thing that would have been, and they were cut
 The one endpoint that spends actual money is the scan, and its budget is
 [receipt-scanning.md](receipt-scanning.md#what-the-scan-costs).
 
+**Treat this deployment as public.** The repo is public, bida.bid is being
+advertised to users online, and its traffic is strangers' — so every ceiling on
+this page is a threat surface and not only a capacity estimate. The numbers
+above are what a *few hundred honest requests* need; what matters now is what
+one unfriendly caller can spend of them. Two endpoints take a body without
+costing money and are therefore the ones to reason about: the scan, which has a
+budget, and the push, which has ceilings on one request and no counter across
+many ([sync.md](sync.md#the-push-has-a-ceiling)). The public repo also makes
+both shapes readable, which is a reason to fix a gap rather than to keep it
+quiet.
+
 ## How full can it get
 
 Every group shares the one `hajsik` database, nothing is ever deleted, and the
@@ -47,8 +58,12 @@ nothing needs doing yet.
 
 **So: no eviction strategy, and no near date for one.** At this project's real
 scale — a few trips a year — 500 MB is centuries of use. It becomes a question
-only at roughly a thousand new groups a month, i.e. only if this stops being an
-app for its owner's friends.
+at roughly a thousand new groups a month, which is no longer unimaginable now
+that the app is advertised rather than passed between friends; growth that fast
+would be the good problem, and it arrives with warning. **Abuse would not.** A
+caller writing deliberate garbage reaches the same ceiling without the warning,
+which is why the push is capped at all
+([sync.md](sync.md#the-push-has-a-ceiling)).
 
 **Nothing expires and nothing sleeps.** D1 storage has no TTL, a Worker is not
 paused or deleted for being idle, and a `workers.dev` subdomain lives as long as

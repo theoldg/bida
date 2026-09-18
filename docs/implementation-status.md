@@ -33,7 +33,10 @@ None of these is started, and the first is not code at all.
   ([hosting.md](hosting.md#gotchas)).
 - **The hosted service has no liability line.** `/about` says what the server
   sees, names the scan as the exception, and now prints `/delete-my-data`'s address, unlinked; this
-  is the rest of it, and the repo being public makes it due.
+  is the rest of it, and it is the most overdue item here: the repo is public
+  **and the app is being advertised to users online**, so the people keeping
+  ledgers in it are strangers rather than friends who would ask
+  ([hosting.md](hosting.md)).
 - **`POST /ops` has no counter.** One push is now bounded — 16 MB, 5 000 ops,
   256 KB per op, all `413` ([sync.md](sync.md#the-push-has-a-ceiling)) — so no
   single call can spend the day's D1 writes or a visible slice of the 500 MB.

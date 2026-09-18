@@ -103,6 +103,13 @@ to remove more from this list than you add.
   ([hosting.md](hosting.md#a-schema-change-from-here-on)) — and must not break the *log format*
   other clients read.
 
+- **The app is public and being advertised.** *2026-09-18* — "the project
+  should now be considered public and is being advertised to users online".
+  Its users are strangers, so weigh abuse and liability as real rather than
+  theoretical: a free-tier ceiling is a threat surface
+  ([hosting.md](hosting.md)), and a gap is a reason to fix it, not to rely on
+  nobody looking.
+
 ## Interface
 
 - **Cut the fat. Text has to earn its place.** *2026-08-28, restated 2026-09-03*
