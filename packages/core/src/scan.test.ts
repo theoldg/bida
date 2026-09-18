@@ -59,6 +59,13 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, date: printed }, NOW)).toMatchObject({ occurredAt: NOW });
   });
 
+  // The one reading that could collide with the midnight sentinel: the scan
+  // itself lands on it.
+  it("keeps a time on a receipt scanned in the millisecond of midnight", () => {
+    const at = new Date(2026, 8, 5).getTime();
+    expect(normalizeScan({ ...blank, date: "2026-09-05" }, at)).toMatchObject({ occurredAt: at + 1 });
+  });
+
   it("leaves a backdated receipt at midnight, time unknown", () => {
     const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" }, NOW);
     const back = new Date(occurredAt!);

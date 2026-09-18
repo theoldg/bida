@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { resolveSplit, splitParticipants, type SplitSpec } from "@bida/core";
+import { describe, expect, it, vi } from "vitest";
+import { isDateOnly, resolveSplit, splitParticipants, type SplitSpec } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
   openSplitTab, receiptWeights, splitSeed, tabAfterScan, withSplit,
@@ -157,6 +157,23 @@ describe("a blank draft", () => {
   it("never defaults a transfer's note — only settle up's prefill does that", () => {
     const d = blankDraft("transfer", A, "EUR", MEMBERS);
     expect(d.description).toBe("");
+  });
+
+  // Every typed entry — expense, income, transfer, quick — starts here, so
+  // this is the one place a clock reading becomes a stamp on the phone. At
+  // midnight exactly it must still read as a moment: local midnight is what a
+  // backdated receipt means by "no time known" (core/when.ts).
+  it("carries a time even when it is started on the stroke of midnight", () => {
+    const midnight = new Date(2026, 3, 4).getTime();
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(midnight);
+      const d = blankDraft("expense", A, "EUR", MEMBERS);
+      expect(isDateOnly(d.occurredAt)).toBe(false);
+      expect(d.occurredAt).toBe(midnight + 1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

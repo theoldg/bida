@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, newId, parseMinor, receiptExtras,
+  convertSplitMode, newId, parseMinor, receiptExtras, timedStamp,
   type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
@@ -500,7 +500,9 @@ export function blankDraft(
     // common one, and the only pair that can be guessed without asking.
     fromMember: me,
     toMember: members.find((id) => id !== me) ?? me,
-    occurredAt: Date.now(),
+    // Through `timedStamp`, not the bare clock: an entry started in the
+    // millisecond of midnight would otherwise read as a day with no time.
+    occurredAt: timedStamp(Date.now()),
     categoryId: null,
   };
 }

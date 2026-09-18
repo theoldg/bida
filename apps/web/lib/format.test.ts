@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
   bare, byWhen, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
-  initials, isDateOnly, rateText, splitFooter, usd, whenLabel,
+  initials, rateText, splitFooter, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -193,16 +193,6 @@ describe("countText", () => {
 
   it("has nothing to say about nothing", () => {
     expect(countText({ n: 0, d: 3 })).toBe(null);
-  });
-});
-
-describe("isDateOnly", () => {
-  it("is true at local midnight and false a millisecond either side", () => {
-    const midnight = new Date(2026, 3, 4).getTime();
-    expect(isDateOnly(midnight)).toBe(true);
-    expect(isDateOnly(midnight + 1)).toBe(false);
-    expect(isDateOnly(midnight - 1)).toBe(false);
-    expect(isDateOnly(new Date(2026, 3, 4, 18, 22).getTime())).toBe(false);
   });
 });
 

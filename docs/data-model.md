@@ -180,16 +180,20 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 `occurredAt` is one number for two facts. An entry somebody typed happened at a
 moment and carries it; a backdated receipt only ever said which **day**, so it
 lands on local midnight — this app's way of writing down that the time is
-unknown. `isDateOnly` (`apps/web/lib/format.ts`) is the whole test, and two
-rules follow: the entry screen prints the day alone rather than a `00:00`
-nobody claimed, and `byWhen` orders such an entry as its day's *last* moment,
-so it heads its day rather than sitting under everything as the earliest thing
-that happened. Inside the day the `createdAt` tiebreak still decides.
+unknown. `isDateOnly` (`core/when.ts`) is the whole test, and two rules follow:
+the entry screen prints the day alone rather than a `00:00` nobody claimed, and
+`byWhen` orders such an entry as its day's *last* moment, so it heads its day
+rather than sitting under everything as the earliest thing that happened.
+Inside the day the `createdAt` tiebreak still decides.
 
-Nothing guards the sentinel and nothing needs to: `withDate` keeps whatever
-time an entry had when its day is edited, and `Date.now()` hits midnight to the
-millisecond about once in 86 million — that row keeps its `00:00` to itself,
-like every other timeless one.
+**Every stamp read off a clock goes through `timedStamp`**, which moves a
+reading that lands exactly on midnight one millisecond on. There are two such
+readings in the app — `blankDraft`, which seeds every typed entry, and the
+today branch of `normalizeScan` — and without it each would produce, about
+once in 86 million, an entry that had a time and was then drawn and sorted as
+if it never did. Nothing else needs guarding: `withDate` keeps whatever time an
+entry had when its day is edited, so a stamp without one stays without one, and
+one with one keeps it.
 
 ## Splits — the only tricky arithmetic
 

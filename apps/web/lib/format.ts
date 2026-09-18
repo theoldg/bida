@@ -1,5 +1,5 @@
 import {
-  formatMinor, formatRate,
+  formatMinor, formatRate, isDateOnly, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
 } from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
@@ -229,15 +229,9 @@ export function distinctInitials(members: readonly { id: string; name: string }[
 
 const DAY = 86_400_000;
 
-function startOfDay(ts: number): number {
-  const d = new Date(ts);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
 /** "Today" / "Yesterday" / "Sat 5 April" — the ledger's day rule. */
 export function dayLabel(ts: number, now = Date.now()): string {
-  const days = Math.round((startOfDay(now) - startOfDay(ts)) / DAY);
+  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(ts)) / DAY);
   if (days === 0) return copy.time.today;
   if (days === 1) return copy.time.yesterday;
   const d = new Date(ts);
@@ -262,21 +256,6 @@ export function ago(ts: number, now = Date.now()): string {
 
 export function clockTime(ts: number): string {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
-}
-
-/**
- * Whether a stamp carries a day but no time of day — exactly local midnight.
- *
- * That is not a convention invented here so much as the only thing a printed
- * date can become: a backdated receipt says which day, never which hour
- * (`normalizeScan`), and `withDate` keeps whatever time an entry already had
- * when its day is edited, so a stamp that starts without one stays without
- * one. Entries typed by hand take `Date.now()`, which lands on midnight to
- * the millisecond about once in 86 million — and that one row simply keeps
- * its 00:00 to itself, which is what every other timeless row does anyway.
- */
-export function isDateOnly(ts: number): boolean {
-  return ts === startOfDay(ts);
 }
 
 /** "Today · 18:22", or the day alone when no time was ever known. */
