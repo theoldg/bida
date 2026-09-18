@@ -10,7 +10,7 @@
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 import type { ReceiptDiscount } from "./types.js";
-import { startOfLocalDay } from "./when.js";
+import { sameLocalDay } from "./when.js";
 
 /** One printed line: what it's called, translated, and what it cost. */
 export interface ScanLineItem {
@@ -96,7 +96,7 @@ export function normalizeScan(result: ScanResult, now: number): ScanPatch {
     if (y && m && d) {
       const local = new Date(y, m - 1, d).getTime();
       if (!Number.isNaN(local)) {
-        const printedToday = local === startOfLocalDay(now);
+        const printedToday = sameLocalDay(local, now);
         patch.occurredAt = printedToday ? now : local;
         patch.dateOnly = !printedToday;
       }

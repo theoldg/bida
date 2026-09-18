@@ -206,6 +206,8 @@ export interface SettlementInput {
   currency: CurrencyCode;
   rateToBase: Rate;
   occurredAt: number;
+  /** True when `occurredAt` carries a day and no time — see `ExpenseInput`. */
+  dateOnly?: boolean | null;
   note?: string | null;
 }
 
@@ -236,7 +238,7 @@ export async function recordSettlement(
           baseAmountMinor: toBase(seed, base),
           occurredAt: input.occurredAt,
           createdAt: now,
-          ...only({ note: input.note }),
+          ...only({ dateOnly: input.dateOnly ? true : null, note: input.note }),
         },
       },
     ],
@@ -272,6 +274,7 @@ export async function editSettlement(
     rateToBase,
     baseAmountMinor: toBase({ ...merged, rateToBase }, base),
     occurredAt: merged.occurredAt,
+    dateOnly: merged.dateOnly ? true : null,
     note: merged.note,
   });
 

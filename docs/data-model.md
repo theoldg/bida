@@ -177,12 +177,20 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 
 ### A day without a time
 
-An entry somebody typed happened at a moment, and `occurredAt` carries it. A
-backdated receipt only ever printed a **day** — so its stamp is local midnight
-of that day, and **`dateOnly` on the entry says that the time is not
-information**. The flag is the fact; midnight is just where the stamp had to
-land. Nothing reads a meaning back out of the number, because nothing can tell
+An entry's clock is never typed — the form has a date and no time — so
+`occurredAt` only ever holds the reading taken when the entry was **recorded**.
+Left on that day it means something. On any other day it is a leftover, and
+**`dateOnly` says so**: the time is not information. The flag is the fact, and
+nothing reads a meaning back out of the number, because nothing can tell
 midnight-the-moment from midnight-the-empty-field.
+
+Two writers set it, and neither is about receipts. The date field marks an
+entry date-only when the chosen day is not the one it is being recorded on
+(`retimed`, `lib/draft.ts`) — coming back to that day restores the reading
+rather than the 00:00 a backdated stamp was parked at. And `normalizeScan`
+marks a receipt printed on any day but today, whose stamp is then local
+midnight of the printed day. A backdated receipt is the common case, not a case
+of its own. Transfers carry the field for the same reason expenses do.
 
 Two rules follow, both in `apps/web/lib/format.ts`: `whenLabel` prints the day
 alone rather than a `00:00` nobody read off a receipt, and `byWhen` puts such
@@ -194,7 +202,7 @@ reads is `ledgerRows` (`apps/web/lib/ledger.ts`), which asks the entry itself
 rather than copying what places it in time.
 
 It is written like every other uncommon field: absent on an ordinary entry, and
-so absent on every entry written before it existed. Those keep the `00:00` they
+so absent on every entry written before it existed. Those keep the time they
 have always shown — there is nothing on them to say otherwise, and guessing
 from the stamp is the thing this field exists to stop.
 

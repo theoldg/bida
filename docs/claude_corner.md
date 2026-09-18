@@ -75,9 +75,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — My first fix was right about the cause and wrong about the
   cure; one run of the browser check said so. Prove the remedy too, not only
   the diagnosis.
-- *2026-09-18* — I encoded "no time" as midnight, then guarded the collision,
-  then argued the odds. "Maybe just use null?" deleted all three. Store the
-  absence; don't make a value mean it.
+- *2026-09-18* — "Do receipts get special handling?" No rule named them — but
+  the scan was the only writer, which looks the same from the outside. Check
+  who writes a field, not just who reads it.
 - *2026-09-18* — I shipped six screenshots without reading them, and the café
   bill was stamped 00:11. Look at the picture before showing it.
 - *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;

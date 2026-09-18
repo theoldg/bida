@@ -32,7 +32,8 @@ import { formParent, parseEntrySource, route } from "../../../../lib/group-link"
 import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
 import { goUp, goBack } from "../../../../lib/nav";
 import {
-  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, saveDraft,
+  blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, retimed,
+  saveDraft,
   seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
 } from "../../../../lib/draft";
 
@@ -233,6 +234,7 @@ function EditEntryScreen() {
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
           dateOnly: e.dateOnly === true,
+          recordedAt: e.createdAt ?? e.occurredAt,
           categoryId: e.categoryId ?? null,
           receiptItems: e.receiptItems ?? null,
           receiptTip: e.receiptTip ?? null,
@@ -258,6 +260,8 @@ function EditEntryScreen() {
         fromMember: s.fromMember,
         toMember: s.toMember,
         occurredAt: s.occurredAt,
+        dateOnly: s.dateOnly === true,
+        recordedAt: s.createdAt ?? s.occurredAt,
       }, seedKey);
       return;
     }
@@ -504,6 +508,7 @@ function EditEntryScreen() {
           currency: draft.currency,
           rateToBase: rate,
           occurredAt: draft.occurredAt,
+          dateOnly: draft.dateOnly ? true : null,
           note: draft.description.trim() || null,
         };
         if (draft.entryId) await editSettlement(groupId, actor, draft.entryId, input);
@@ -714,7 +719,7 @@ function EditEntryScreen() {
             <div className="field">
               <label htmlFor="when">{copy.form.when}</label>
               <input id="when" type="date" value={dateInputValue(draft.occurredAt)}
-                onChange={(e) => patch({ occurredAt: withDate(draft.occurredAt, e.target.value) })} />
+                onChange={(e) => patch(retimed(draft, withDate(draft.occurredAt, e.target.value)))} />
             </div>
 
             {transfer ? null : (

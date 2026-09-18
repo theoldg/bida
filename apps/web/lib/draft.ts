@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, newId, parseMinor, receiptExtras,
+  convertSplitMode, newId, parseMinor, receiptExtras, sameLocalDay,
   type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
@@ -103,8 +103,14 @@ export interface EntryDraft {
   fromMember: string;
   toMember: string;
   occurredAt: number;
-  /** True when `occurredAt` is a day and nothing more — set by a backdated scan. */
+  /** True when `occurredAt` is a day and nothing more. See `retimed`. */
   dateOnly: boolean;
+  /**
+   * The clock reading this stamp's time of day came from — when the draft was
+   * started, or when a scan of a receipt printed today read one. It is what
+   * `retimed` measures a chosen day against; it is never saved.
+   */
+  recordedAt: number;
   categoryId: string | null;
   /**
    * The parsed bill, mirroring the same-named fields on `Expense` — kept here
@@ -396,6 +402,26 @@ function emit(): void {
   for (const l of listeners) l();
 }
 
+/**
+ * A day chosen on the form, and what that does to the entry's time.
+ *
+ * An entry's clock is never typed — the form has a date and no time — so it
+ * only ever holds the reading taken when the entry was recorded. Left on that
+ * day it means something. Moved to another one it is a leftover, and printing
+ * it claims an hour nobody knew: so the entry becomes `dateOnly`, exactly as a
+ * backdated receipt does. That the receipt is the common case is not a rule of
+ * its own; this is the rule, and the scan is one of its two writers.
+ *
+ * Coming back to the recording day restores the reading rather than the 00:00
+ * a backdated stamp was parked at — but only for a stamp that had no time to
+ * begin with, because re-picking the day an entry is already on must not move
+ * it by the seconds between starting the form and saving it.
+ */
+export function retimed(draft: EntryDraft, occurredAt: number): Pick<EntryDraft, "occurredAt" | "dateOnly"> {
+  if (!sameLocalDay(occurredAt, draft.recordedAt)) return { occurredAt, dateOnly: true };
+  return { occurredAt: draft.dateOnly ? draft.recordedAt : occurredAt, dateOnly: false };
+}
+
 export function saveDraft(groupId: string, draft: EntryDraft): void {
   drafts.set(groupId, draft);
   emit();
@@ -482,6 +508,7 @@ export function blankDraft(
   me: string,
   currency: string,
   members: string[],
+  started = Date.now(),
 ): EntryDraft {
   return {
     kind,
@@ -502,9 +529,9 @@ export function blankDraft(
     // common one, and the only pair that can be guessed without asking.
     fromMember: me,
     toMember: members.find((id) => id !== me) ?? me,
-    occurredAt: Date.now(),
-    // A typed entry is being typed now, so it has a time. Only a backdated
-    // scan clears this (`normalizeScan`).
+    occurredAt: started,
+    recordedAt: started,
+    // Whatever is being typed is being typed now, so it has a time.
     dateOnly: false,
     categoryId: null,
   };

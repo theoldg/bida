@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolveSplit, splitParticipants, type SplitSpec } from "@bida/core";
+import { withDate } from "./format";
+import { resolveSplit, splitParticipants, startOfLocalDay, type SplitSpec } from "@bida/core";
 import {
   activeSplit, activeSplitTab, blankDraft, draftReceiptSplit, legacyPercent, newEntryKey,
-  openSplitTab, receiptWeights, splitSeed, tabAfterScan, withSplit,
+  openSplitTab, receiptWeights, retimed, splitSeed, tabAfterScan, withSplit,
   type EntryDraft, type SplitTab,
 } from "./draft";
 
@@ -173,6 +174,46 @@ describe("a blank draft", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+/**
+ * An entry's clock is the one read when it was recorded — the form has a date
+ * and no time — so the day it is moved to decides whether that reading still
+ * means anything. A backdated receipt is one instance of this, not a rule of
+ * its own.
+ */
+describe("choosing a day", () => {
+  const started = new Date(2026, 3, 4, 8, 39, 12, 345).getTime();
+  const draft = (over: Partial<EntryDraft> = {}): EntryDraft =>
+    ({ ...blankDraft("expense", A, "EUR", MEMBERS, started), ...over });
+
+  it("drops the time when the day is not the one it was recorded on", () => {
+    const moved = retimed(draft(), withDate(started, "2026-04-02"));
+    expect(moved.dateOnly).toBe(true);
+    expect(startOfLocalDay(moved.occurredAt)).toBe(new Date(2026, 3, 2).getTime());
+  });
+
+  it("gives the reading back when the day comes back", () => {
+    const moved = retimed(draft(), withDate(started, "2026-04-02"));
+    const back = retimed(draft(moved), withDate(moved.occurredAt, "2026-04-04"));
+    expect(back).toEqual({ occurredAt: started, dateOnly: false });
+  });
+
+  // A backdated receipt corrected to today must not show the 00:00 its stamp
+  // was parked at: the scan's own reading is the time it has.
+  it("stamps a corrected backdated receipt with the reading, not its midnight", () => {
+    const receipt = draft({ occurredAt: new Date(2026, 3, 2).getTime(), dateOnly: true });
+    expect(retimed(receipt, withDate(receipt.occurredAt, "2026-04-04")))
+      .toEqual({ occurredAt: started, dateOnly: false });
+  });
+
+  // Re-picking the day an entry is already on is not an edit, and must not
+  // move the stamp by the seconds between opening the form and saving it.
+  it("leaves a stamp alone when the day it is on is picked again", () => {
+    const d = draft({ occurredAt: new Date(2026, 3, 4, 20, 15).getTime() });
+    expect(retimed(d, withDate(d.occurredAt, "2026-04-04")))
+      .toEqual({ occurredAt: d.occurredAt, dateOnly: false });
   });
 });
 

@@ -144,7 +144,14 @@ export function useReceiptScan(
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
         ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
         ...(patch.occurredAt !== undefined
-          ? { occurredAt: patch.occurredAt, dateOnly: patch.dateOnly === true }
+          ? {
+            occurredAt: patch.occurredAt,
+            dateOnly: patch.dateOnly === true,
+            // A receipt printed today is stamped with the moment it was read,
+            // and that reading is what a later date change measures against. A
+            // backdated one brought no clock, so the draft keeps the one it had.
+            recordedAt: patch.dateOnly ? latest.recordedAt : patch.occurredAt,
+          }
           : {}),
         receiptItems: receiptItems.length > 0 ? receiptItems : null,
         receiptTip: bill.extras.tip,

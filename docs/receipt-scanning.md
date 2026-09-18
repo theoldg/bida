@@ -349,7 +349,8 @@ Two fields the model doesn't get the last word on:
   Greenwich. `normalizeScan` takes that clock as an argument, like everything
   else in core, and returns `dateOnly` beside the stamp: the printed day is all
   a backdated receipt knows, and the entry carries that as a fact rather than
-  leaving midnight to be read as an hour
+  leaving midnight to be read as an hour. The rule is not the scan's — an entry
+  dated by hand onto another day loses its time the same way
   ([data-model.md](data-model.md#a-day-without-a-time)).
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),

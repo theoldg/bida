@@ -7,6 +7,11 @@
  * question a ledger groups and sorts by: which day.
  */
 
+/** Whether two stamps fall on the same local day. */
+export function sameLocalDay(a: number, b: number): boolean {
+  return startOfLocalDay(a) === startOfLocalDay(b);
+}
+
 /** Local midnight of the day a stamp falls in. */
 export function startOfLocalDay(ts: number): number {
   const d = new Date(ts);

@@ -208,6 +208,8 @@ export interface Settlement {
   rateToBase: Rate;
   baseAmountMinor: number;
   occurredAt: number;
+  /** A day and no time of day. Same rule and same reason as `Expense.dateOnly`. */
+  dateOnly?: boolean | null;
   /** When this settlement was recorded, wall-clock. Same tiebreak role as `Expense.createdAt`. */
   createdAt?: number;
   note?: string | null;

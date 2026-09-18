@@ -869,7 +869,7 @@ describe("commands", () => {
     const [update] = await updates();
     expect(update?.patch).toEqual({
       fromMember: marie, toMember: sam, amountMinor: 2500, currency: "EUR",
-      rateToBase: "1", baseAmountMinor: 2500, occurredAt: 2, note: null,
+      rateToBase: "1", baseAmountMinor: 2500, occurredAt: 2, dateOnly: null, note: null,
     });
 
     const stored = await db().settlements.get(id);
