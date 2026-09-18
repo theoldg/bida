@@ -128,9 +128,11 @@ and all it gets.
 // ← { "assigned": { "<opId>": 413 }, "ops": [ /* seq > 412, unseen */ ],
 //     "latestSeq": 419 }
 ```
-A push carries however much the phone has queued, so the accept cuts it into
-chunks no clause of which outgrows D1's hundred bound parameters — see the
-gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
+A push carries up to fifty queued ops, and a phone with more sends rounds until
+its queue is empty — what got through stays through, rather than a fortnight's
+backlog riding on one request. The accept cuts the batch up again on its own
+side, so no clause outgrows D1's hundred bound parameters even when the phone
+sending it is too old to know that — see the gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
 safe on a flaky connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
 and the id is what says they are one op. **There is no create-group endpoint**:
 a group's first push registers it, storing `sha256(token)` from that request,

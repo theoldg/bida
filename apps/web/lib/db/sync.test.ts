@@ -37,6 +37,45 @@ describe("syncGroup", () => {
   beforeEach(wipe);
   afterEach(() => vi.unstubAllGlobals());
 
+  it("sends a long queue in rounds, not as one request", async () => {
+    const { groupId } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    const me = (await db().members.where("groupId").equals(groupId).toArray())[0]!;
+    // A fortnight offline: more ops queued than one push is allowed to carry.
+    for (let i = 0; i < 120; i++) {
+      await addExpense(groupId, me.id, {
+        description: `tagine ${i}`, amountMinor: 1200, currency: "EUR",
+        payers: { mode: "single", payerId: me.id },
+        split: { mode: "equal", members: [me.id] },
+      });
+    }
+    const queued = await db().ops.where("groupId").equals(groupId).toArray();
+    expect(queued.length).toBeGreaterThan(100);
+
+    const rounds: { ops: number; since: number }[] = [];
+    let seq = 0;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[]; since: number };
+      rounds.push({ ops: body.ops.length, since: body.since });
+      const assigned = Object.fromEntries(body.ops.map((op) => [op.id, ++seq]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: seq }));
+    }));
+
+    const outcome = await syncGroup(groupId);
+
+    expect(outcome?.pushed).toBe(queued.length);
+    expect(rounds.length).toBe(Math.ceil(queued.length / 50));
+    expect(Math.max(...rounds.map((r) => r.ops))).toBeLessThanOrEqual(50);
+    // Each round carries the cursor the one before it earned, so the second
+    // request is not answered with everything the first already stored.
+    expect(rounds[1]!.since).toBe(rounds[0]!.ops);
+    // And the whole queue is through: nothing was dropped between rounds.
+    const left = await db().ops.where("groupId").equals(groupId)
+      .and((op) => op.pending === 1).toArray();
+    expect(left).toHaveLength(0);
+  });
+
   it("does nothing when this device holds no secret for the group", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);

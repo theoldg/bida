@@ -155,6 +155,24 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
 const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 
 /**
+ * How many queued ops one push carries.
+ *
+ * Not what keeps the request legal — the server cuts a large push up itself,
+ * because it cannot make an old phone do it. This is what keeps the request
+ * *small*. A phone coming back from a fortnight offline has hundreds of ops
+ * waiting, and sending them as one body means the whole fortnight rides on a
+ * single request surviving a tunnel's worth of signal; in rounds, what got
+ * through stays through.
+ */
+const PUSH_CHUNK = 50;
+
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/**
  * Push this device's unsynced ops for one group and pull whatever the server
  * has that this device hasn't seen. A no-op (returns `undefined`) if this
  * device doesn't hold that group's secret.
@@ -182,76 +200,91 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   const key = await d.groupKeys.get(groupId);
   if (!key) return undefined;
 
-  const pending = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
-  let sealed: { response: PushPullResponse; pulled: Op[] };
-  // The one step here that waits on a network rather than on this phone.
-  const sent = started("sync.pushpull");
-  try {
-    sealed = await pushPullGroup(groupId, key.secret, key.lastSeq, pending);
-  } catch (err) {
-    sent("failed");
-    // 410: somebody deleted this group (docs/sync.md#deleting-a-group). There
-    // is nothing to retry and nothing to sync with ever again, so this phone's
-    // copy goes too. That is what "deleted for everybody" has to mean, and a
-    // group left sitting on the list syncing against a tombstone would be the
-    // one place the app disagreed with itself.
-    if (err instanceof SyncHttpError && err.status === 410) {
-      await eraseGroupLocally(groupId);
-      return undefined;
-    }
-    await recordFailure(groupId, err);
-    throw err;
-  }
-  const { response: { assigned, latestSeq }, pulled } = sealed;
-  sent(`${pending.length} up, ${pulled.length} down`);
+  const queued = await d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).toArray();
+  // One round with nothing to push is the plain pull — the case where this
+  // phone has written nothing since it last synced, which is most of them.
+  const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
+  let since = key.lastSeq;
+  let pushed = 0;
+  let pulledCount = 0;
 
-  // The answer can land after the app has gone to the background — the
-  // network after a resume is slow, and people leave. Nothing is lost by
-  // waiting for the front: the response is held here, and a run killed while
-  // parked is simply pulled again. See ./visible.ts for why it waits.
-  await whenVisible("sync.commit");
-  const committed = started("sync.commit");
-  await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
-    for (const op of pending) {
-      const seq = assigned[op.id];
-      if (seq !== undefined) await d.ops.update(op.id, { seq, pending: 0 });
+  for (const pending of rounds) {
+    let sealed: { response: PushPullResponse; pulled: Op[] };
+    // The one step here that waits on a network rather than on this phone.
+    const sent = started("sync.pushpull");
+    try {
+      sealed = await pushPullGroup(groupId, key.secret, since, pending);
+    } catch (err) {
+      sent("failed");
+      // 410: somebody deleted this group (docs/sync.md#deleting-a-group). There
+      // is nothing to retry and nothing to sync with ever again, so this phone's
+      // copy goes too. That is what "deleted for everybody" has to mean, and a
+      // group left sitting on the list syncing against a tombstone would be the
+      // one place the app disagreed with itself.
+      if (err instanceof SyncHttpError && err.status === 410) {
+        await eraseGroupLocally(groupId);
+        return undefined;
+      }
+      await recordFailure(groupId, err);
+      throw err;
     }
-    if (pulled.length > 0) {
-      await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
-      // Adopt every stamp we've just stored, so this device's next op sorts
-      // after the ops it has seen. Without this the clock only ever moved on
-      // send: reading a peer's expense and correcting it stamped the
-      // correction *before* the create when that peer's phone ran fast, and
-      // the fold discarded it — the amount changed, then snapped back. In the
-      // same transaction as the ops themselves, for the same reason appendOps
-      // advances it in its own: a tab that dies here must not leave the clock
-      // trailing an op the log already holds.
-      const device = await getDevice();
-      const now = Date.now();
-      let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
-      for (const op of pulled) clock = hlcReceive(clock, op.hlc, now);
-      await d.device.put({
-        ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
+    const { response: { assigned, latestSeq }, pulled } = sealed;
+    sent(`${pending.length} up, ${pulled.length} down`);
+
+    // The answer can land after the app has gone to the background — the
+    // network after a resume is slow, and people leave. Nothing is lost by
+    // waiting for the front: the response is held here, and a run killed while
+    // parked is simply pulled again. See ./visible.ts for why it waits.
+    await whenVisible("sync.commit");
+    const committed = started("sync.commit");
+    await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
+      for (const op of pending) {
+        const seq = assigned[op.id];
+        if (seq !== undefined) await d.ops.update(op.id, { seq, pending: 0 });
+      }
+      if (pulled.length > 0) {
+        await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
+        // Adopt every stamp we've just stored, so this device's next op sorts
+        // after the ops it has seen. Without this the clock only ever moved on
+        // send: reading a peer's expense and correcting it stamped the
+        // correction *before* the create when that peer's phone ran fast, and
+        // the fold discarded it — the amount changed, then snapped back. In the
+        // same transaction as the ops themselves, for the same reason appendOps
+        // advances it in its own: a tab that dies here must not leave the clock
+        // trailing an op the log already holds.
+        const device = await getDevice();
+        const now = Date.now();
+        let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
+        for (const op of pulled) clock = hlcReceive(clock, op.hlc, now);
+        await d.device.put({
+          ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
+        });
+      }
+      const current = await d.groupKeys.get(groupId);
+      await d.groupKeys.put({
+        ...current,
+        groupId,
+        secret: key.secret,
+        lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
+        lastSyncedAt: Date.now(),
+        failure: undefined,
       });
-    }
-    const current = await d.groupKeys.get(groupId);
-    await d.groupKeys.put({
-      ...current,
-      groupId,
-      secret: key.secret,
-      lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
-      lastSyncedAt: Date.now(),
-      failure: undefined,
+    }).then(() => committed(), (err: unknown) => {
+      committed("failed");
+      throw err;
     });
-  }).then(() => committed(), (err: unknown) => {
-    committed("failed");
-    throw err;
-  });
+
+    since = Math.max(latestSeq, since);
+    pushed += pending.length;
+    pulledCount += pulled.length;
+  }
 
   // A pulled op can slot in earlier than ops already folded locally — refold
   // the whole group rather than risk applying out of HLC order. See
-  // docs/sync.md#gotchas.
-  if (pulled.length > 0) {
+  // docs/sync.md#gotchas. Once for the run, not once per round: it folds the
+  // whole log, and a phone emptying a fortnight's queue would otherwise do
+  // that on every fiftieth op.
+  if (pulledCount > 0) {
     await rebuild(groupId);
     // A merge is the only thing that can produce an illegal state — every
     // local write is refused before it lands — so this is where healing
@@ -265,7 +298,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     await healGroup(groupId).then((n) => healed(`${n} ops`), () => healed("failed"));
   }
 
-  return { pushed: pending.length, pulled: pulled.length };
+  return { pushed, pulled: pulledCount };
 }
 
 let running: Promise<void> | undefined;
