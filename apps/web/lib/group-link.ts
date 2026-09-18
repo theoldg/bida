@@ -192,8 +192,6 @@ export const route = {
    * because somebody sent you there.
    */
   demo: () => "/demo",
-  /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
-  paste: () => "/paste",
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
   group: (groupId: string, tab?: "ledger" | "balances") =>

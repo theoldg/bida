@@ -19,7 +19,7 @@ describe("reloadCostsNothing", () => {
   });
 
   it("is not a flow, which a reload drops back a step", () => {
-    for (const path of ["/join", "/g/claim", "/install", "/paste", "/quick", "/quick/items", "/quick/result"]) {
+    for (const path of ["/join", "/g/claim", "/install", "/quick", "/quick/items", "/quick/result"]) {
       expect(reloadCostsNothing(path)).toBe(false);
     }
   });

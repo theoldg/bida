@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — *Nothing to paste* was a screen whose only offer was the read
+  that had just failed. Where the platform can withhold, hand the person a box
+  and let them do it themselves.
 - *2026-09-18* — Asked what was left before launch, I found the scan's day
   cap: 13000 in the doc, 4300 in the code. A number that moves leaves its old
   self behind — grep the digits.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — I called a migration unapplied with certainty; the status doc
   said so, the database disagreed. A doc's fact about a live system ages, ours
   included — query it before asserting it.
-- *2026-09-18* — Asked about API keys, I said AI was deferred. Receipt scanning
-  was already built, deployed and documented. Read the repo before describing
-  the project to its owner.

@@ -723,12 +723,17 @@ export const copy = {
     },
   },
 
-  /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
+  /**
+   * Paste link read nothing, so the box asks for the link by hand
+   * (components/paste-link.tsx). The body says what to do and not what went
+   * wrong: iOS can withhold the pasteboard from a read while the link really
+   * is on it, so "Nothing to paste" would often be a lie.
+   */
   paste: {
-    title: "Paste link",
-    empty: "Nothing to paste",
-    body: "Copy the invite link from the chat it came in, then come back and paste it.",
-    still: "Still nothing. Copy the link first.",
+    title: "Paste the link here",
+    body: "Touch and hold the box, then tap Paste. Nothing came through on its own.",
+    placeholder: "Invite link",
+    open: "Open",
   },
 
   /**

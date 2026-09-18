@@ -1327,7 +1327,6 @@ dialog.scrim::backdrop { background: transparent }
   text-wrap: pretty }
 /* `/paste`'s one act, under its sentence rather than in a foot: the screen is
    that sentence and this button, nothing to pin it below. */
-.keyless .pasteagain { margin-top: 22px; min-width: 12em }
 /* The way out of an in-app browser (components/embedded.tsx): the same copy
    box the claim screen pins, held to the prose's measure so it doesn't run the
    full width of a centred column. */
