@@ -3,6 +3,7 @@ import { computeBalances } from "./balance.js";
 import { DEMO_GROUP_ID, DEMO_ME, DEMO_NAMES, demoOps, isDemo, type DemoCast } from "./demo.js";
 import { foldOps } from "./fold.js";
 import { createHlcState, hlcSend, type HlcState } from "./hlc.js";
+import { parseMinor, sumMinor } from "./money.js";
 import type { Op } from "./ops.js";
 import { applyTransfers, settleUp } from "./settle.js";
 import { alive } from "./types.js";
@@ -80,6 +81,26 @@ describe("demoOps", () => {
     expect(Object.values(state.settlements)).toHaveLength(1);
     const narrow = state.expenses["demo-sunglasses"]?.split;
     expect(narrow?.mode === "equal" && narrow.members).toHaveLength(2);
+  });
+
+  it("itemises the dinner, and the bill adds up to it", () => {
+    const dinner = foldOps(stamp()).expenses["demo-dinner"]!;
+    const split = dinner.split;
+    expect(split.mode).toBe("receipt");
+    // The weights are the bill read per person, so they come to the total. Any
+    // other sum would still *split* — weights are a ratio — while quietly
+    // pricing the lines at something nobody ordered.
+    expect(sumMinor(Object.values(split.mode === "receipt" ? split.weights : {})))
+      .toBe(dinner.amountMinor);
+    // A line per printed line, and a row of names for each: the grid the entry
+    // screen reopens (ADR-0016) is only a grid while those two agree.
+    expect(dinner.receiptAssignments).toHaveLength(dinner.receiptItems!.length);
+    expect(sumMinor(dinner.receiptItems!.map((i) => parseMinor(i.amount, "EUR"))))
+      .toBe(dinner.amountMinor);
+    // Everyone at the table is on it, and nobody is on it who was not.
+    for (const row of dinner.receiptAssignments!) {
+      for (const id of row) expect(dinner.receiptInvolved).toContain(id);
+    }
   });
 
   it("is money: positive integer minor units, everywhere", () => {

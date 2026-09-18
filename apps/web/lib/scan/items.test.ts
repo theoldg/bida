@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { parseMinor, type BillExtras } from "@bida/core";
+import {
+  demoOps, foldOps, parseMinor, receiptExtras, DEMO_GROUP_ID, type BillExtras,
+} from "@bida/core";
 import {
   billCharges, foldedLine, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
@@ -484,5 +486,39 @@ describe("bill extras", () => {
     );
     expect(weights["a"]).toBe(200);
     expect(weights["b"]).toBe(200);
+  });
+});
+
+/**
+ * The demo's dinner carries a bill and the weights read off it (core/demo.ts),
+ * and core cannot check the second against the first: `receiptBreakdown` is
+ * the web's, and it is what the entry screen reopens the grid with. If the two
+ * ever part, the demo shows one itemisation and charges another.
+ */
+describe("the demo's itemised dinner", () => {
+  it("is priced by this file, to the cent", () => {
+    const dinner = foldOps(demoOps({
+      ids: { Teo: "m-teo", Marie: "m-marie", Sam: "m-sam", Ada: "m-ada" },
+      colorSeeds: { Teo: 1, Marie: 2, Sam: 3, Ada: 4 },
+      deviceNodeId: "node0001",
+    }, Date.UTC(2026, 8, 18)).map((draft, i) => ({
+      ...draft,
+      id: `op-${i}`,
+      groupId: DEMO_GROUP_ID,
+      hlc: `2026-09-18T00:00:00.000Z-${String(i).padStart(4, "0")}-node0001`,
+      actor: "m-teo",
+      note: draft.note ?? null,
+      createdAt: 0,
+      seq: null,
+    }))).expenses["demo-dinner"]!;
+
+    expect(weightsFromItems(
+      dinner.receiptItems!,
+      (dinner.receiptAssignments ?? []).map((row) => new Set(row)),
+      receiptExtras(dinner),
+      new Set(dinner.receiptInvolved ?? []),
+      dinner.currency,
+      dinner.id,
+    )).toEqual(dinner.split.mode === "receipt" ? dinner.split.weights : null);
   });
 });

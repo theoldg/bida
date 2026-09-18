@@ -41,8 +41,9 @@ op and keeps nothing — the one thing here that is not a ledger
 ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 
 **A group somebody already used.** The demo, at `bida.bid/demo` and nowhere
-else: a real group of real ops — Marrakech, four people, six kinds of entry,
-one edited and one deleted — created through `appendOps` and folded by
+else: a real group of real ops — Marrakech, four people, six kinds of entry, one
+split off the bill it was itemised from, one edited and one deleted — created
+through `appendOps` and folded by
 `foldOps` like any other, so the ledger, balances, settle-up, history, rates
 and export all work because none of them knows it is a demo. It is the mirror
 of quick split: that is *do a real thing with no group*, this is *look around a

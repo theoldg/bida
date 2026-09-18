@@ -1,4 +1,4 @@
-import { convertMinor } from "./money.js";
+import { convertMinor, minorToDecimalString } from "./money.js";
 import type { OpDraft } from "./invariants.js";
 import type { Id, SplitSpec } from "./types.js";
 
@@ -83,6 +83,38 @@ const ENTRY = {
 } as const;
 
 /**
+ * The bill behind the dinner: what the table ordered, and who ordered it.
+ *
+ * Kept as minor units and divided here, so the printed lines, the grid and the
+ * split weights are three readings of one table rather than three lists that
+ * have to be kept agreeing. Every line divides evenly among the people on it,
+ * which is what lets core price the bill at all — the largest-remainder
+ * tiebreak that decides a leftover cent lives in the web's
+ * `receiptBreakdown`, and a demo that needed it would be quoting a figure core
+ * cannot check. `scan/items.test.ts` holds the two readings to each other.
+ */
+const DEMO_BILL: readonly {
+  label: string; minor: number; quantity?: number; who: readonly DemoName[];
+}[] = [
+  { label: "Tagine d’agneau", minor: 2_400, quantity: 2, who: ["Teo", "Marie"] },
+  { label: "Couscous royal", minor: 1_900, who: ["Sam"] },
+  { label: "Pastilla", minor: 1_700, who: ["Ada"] },
+  { label: "Vin gris", minor: 2_400, who: DEMO_NAMES },
+  { label: "Thé à la menthe", minor: 800, quantity: 4, who: DEMO_NAMES },
+];
+
+/** What each person's own lines come to: the dinner's split, itemised. */
+function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
+  const weights: Record<Id, number> = {};
+  for (const line of DEMO_BILL) {
+    for (const name of line.who) {
+      weights[ids[name]] = (weights[ids[name]] ?? 0) + line.minor / line.who.length;
+    }
+  }
+  return weights;
+}
+
+/**
  * The whole trip, as one batch of drafts.
  *
  * Deterministic in `cast` and `now`: the same arguments write a byte-identical
@@ -90,9 +122,9 @@ const ENTRY = {
  * twice. Pure, and the clock is an argument (CLAUDE.md).
  *
  * The contents are chosen so every screen has something to say: a plain
- * expense, one with two payers, one in MAD priced by a group rate, one that
- * leaves two people out, an income, a transfer, one entry edited in two fields
- * and one deleted. The balances deliberately do not cancel, so settle-up
+ * expense, one with two payers and its bill itemised, one in MAD priced by a
+ * group rate, one that leaves two people out, an income, a transfer, one entry
+ * edited in two fields and one deleted. The balances deliberately do not cancel, so settle-up
  * proposes transfers rather than "all square".
  */
 export function demoOps(cast: DemoCast, now: number): OpDraft[] {
@@ -167,6 +199,11 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       },
     },
     // Two payers on one dinner: `paidBy` is the larger of them (core/payers.ts).
+    // It is also the itemised one — the bill is kept on the entry, so the
+    // split is what each of them ordered rather than a quarter each, and the
+    // entry screen can open anybody's row onto their own lines (ADR-0016).
+    // Every line divides evenly, so the weights below are the only reading
+    // `receiptBreakdown` has of this grid and no rounding tiebreak is in play.
     {
       entity: "expense",
       entityId: ENTRY.dinner,
@@ -179,7 +216,14 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         ...inEur(9_200),
         paidBy: ids.Teo,
         payers: { [ids.Teo]: 6_000, [ids.Sam]: 3_200 },
-        split: equal(all),
+        split: { mode: "receipt", weights: billWeights(ids) },
+        receiptItems: DEMO_BILL.map(({ label, minor, quantity }) => ({
+          label,
+          amount: minorToDecimalString(minor, DEMO_CURRENCY),
+          ...(quantity ? { quantity } : {}),
+        })),
+        receiptInvolved: all,
+        receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
       },
     },
     // The one in dirhams, priced by the registry above: the ledger shows the
