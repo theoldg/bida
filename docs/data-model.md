@@ -281,10 +281,11 @@ blank line above the foot, and a trailing one. The foot is
 the whole file over. That leaves nowhere to state the total spend, so the file
 doesn't. A newline inside a description folds to a space: quoting it is legal
 but a reader splitting on LF first sees a record break, and two would look like
-the blank line that ends the file. Every one of those is pinned by a test, and
-every one of them matches what real exports carry — but **Tricount still
-refuses the file**, so getting them right is necessary and was not sufficient
-([implementation-status.md](implementation-status.md#what-is-open)).
+the blank line that ends the file. Every one of those is pinned by a test,
+because **Tricount refuses the whole file over any of them** while its row
+counter happily reaches the end — the blank lines especially, which read as
+cosmetic and are not: the same file with them stripped is rejected
+(2026-09-18).
 
 **A member's cell is `paid − owed` for that row.** Every row therefore nets to
 zero and the column totals are the balances — the `Total balance` foot is

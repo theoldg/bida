@@ -21,7 +21,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **The tip jar** | A FAB on the balances tab opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp))                                                                                                                                                                                                                                 |
 | **Deletable**   | `/delete-my-data` takes an invite link, shows the group it opens, and deletes it from D1 for everybody in it, leaving a tombstone no phone can push past ([frontend.md](frontend.md#deleting-a-group), [sync.md](sync.md#deleting-a-group)). |
 | **Installable** | An iPhone joins in the home-screen app rather than a Safari tab that forgets after a week: `/install`, the card on the groups list and on each ledger, the claim screen's link to paste, and an invite whose two halves ride the icon. Android is offered in the same two places, and an in-app browser — a third storage — is refused outright ([ios.md](ios.md)). Works on the owner's iPhone, install and join both (2026-09-18) |
-| **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). The bytes are pinned against a real export's shape, and the share sheet hands the file over from an iOS home-screen app. **Tricount still refuses the file** — see the open list |
+| **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). **Tricount imports it** (2026-09-18), and the share sheet hands the file over from an iOS home-screen app |
 
 ## What is open
 
@@ -47,18 +47,6 @@ None of these is started, and the first is not code at all.
   writes nor reads (`lib/db/visible.ts`), and `/diag` has a `stores:` line so a
   next lock is named rather than cross-read
   ([frontend.md](frontend.md#a-live-read-can-die)). **Open only as a watch.**
-- **Tricount refuses the exported CSV.** The bytes were fixed on 2026-09-18 —
-  LF, the blank line under the header, the blank line above the foot, the foot
-  dated with spaces where the category and cost would be — and each of those is
-  confirmed against what real Splitwise exports carry and what importers built
-  on them skip. Tricount still refuses the file whole, so the fault is not the
-  shape ([data-model.md](data-model.md#the-group-as-a-spreadsheet)).
-  **Next: the refused file itself and whatever Tricount said about it** — until
-  one of those is in hand every further byte is a guess, and this one has been
-  guessed at once already. The suspects worth carrying into that look are the
-  three rows a Splitwise reader cannot represent: an income's negative `Cost`,
-  a transfer, and an expense with more than one payer, which is more than one
-  positive column and which every importer read so far skips outright.
 - **Importing a Splitwise CSV**, into a new group only, from the groups list's
   menu. The shape is what `core/export.ts` writes, read backwards
   ([data-model.md](data-model.md#the-group-as-a-spreadsheet)), and the one part

@@ -69,9 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-18* — The CSV's bytes were checked against a real export and
-  Tricount still refuses the file. Verifying the part you can reach is not
-  verifying the claim you made.
+- *2026-09-18* — I built two ladders of test files to chase a rejection that
+  had already been fixed. Ask which build made the artifact before debugging
+  the artifact.
 - *2026-09-18* — Of eight "critical" findings from another model, two were
   real, and neither needed an attacker — whoever holds the link can already
   delete the group.
