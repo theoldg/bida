@@ -11,6 +11,7 @@ import { handOffReceiptTotal } from "../../../../lib/scan/items";
 import { Card, Chip, keepsFocus } from "../../../../components/bits";
 import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
 import { useReceiptScan } from "../../../../components/receipt-scan";
+import { useScanAs } from "../../../../lib/quick";
 import { SplitEditor } from "../../../../components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
@@ -29,7 +30,7 @@ import { nearestOutOfView, scrollTarget } from "../../../../lib/reveal";
 import { glide } from "../../../../lib/seek";
 import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
 import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
-import { useClaimGate, useGroupData, useGroupSecret } from "../../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../../lib/hooks";
 import { goUp, goBack } from "../../../../lib/nav";
 import {
   blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, retimed,
@@ -85,8 +86,7 @@ function EditEntryScreen() {
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
-  const secret = useGroupSecret(groupId);
-  const scan = useReceiptScan(groupId, secret);
+  const scan = useReceiptScan(groupId, useScanAs(groupId));
   const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer" | "kind">(null);
   /** Which currency's rate is being set, if any. See `pickCurrency`. */
   const [askRate, setAskRate] = useState<string | null>(null);

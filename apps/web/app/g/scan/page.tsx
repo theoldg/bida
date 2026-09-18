@@ -8,7 +8,8 @@ import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } 
 import { copy } from "../../../lib/copy";
 import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "../../../lib/draft";
 import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData, useGroupSecret } from "../../../lib/hooks";
+import { useClaimGate, useGroupData } from "../../../lib/hooks";
+import { useScanAs } from "../../../lib/quick";
 
 /**
  * The scan, before there is a form.
@@ -33,12 +34,12 @@ function ScanScreen() {
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
-  const secret = useGroupSecret(groupId);
+  const scanAs = useScanAs(groupId);
 
   // `replace`, not push: this screen has done its job the moment the draft is
   // filled, and leaving it on the stack would put a second scan behind the
   // form's back arrow rather than the ledger.
-  const scan = useReceiptScan(groupId, secret, () => {
+  const scan = useReceiptScan(groupId, scanAs, () => {
     if (groupId) router.replace(route.addEntry(groupId));
   });
 

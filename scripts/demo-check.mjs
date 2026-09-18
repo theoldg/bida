@@ -18,6 +18,7 @@
  * address able to bring it back.
  */
 import { ensureBuild, serveExport, launch, newPhone, reporter } from "./lib/harness.mjs";
+import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -73,6 +74,38 @@ await page.waitForSelector(".billline");
 report(await page.getByText("Pastilla").count() > 0,
   "and Ada's row opens onto what Ada ordered");
 await page.goBack();
+await page.waitForSelector(".rows .row");
+
+// ---- the camera works here too, and says nothing about this group -------
+// The demo holds no key, and `/api/groups/:id/scan` authenticates a bearer
+// against a row in D1 — so scanning here goes out under this phone's own scan
+// credential, the one a quick split uses (`useScanAs`). The demo's id must
+// not appear in any request: a row under it is the thing that must never
+// exist (docs/sync.md#the-demo-group-has-no-key).
+const apiCalls = [];
+page.on("request", (req) => {
+  const url = new URL(req.url());
+  if (url.pathname.startsWith("/api/")) apiCalls.push(url.pathname);
+});
+await stubScan(page, "cafe-clock");
+await page.goto(`${base}/g/scan?id=${groupId}`);
+await page.waitForFunction(() => {
+  const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Upload"));
+  return btn && !btn.disabled;
+}, null, { timeout: 8000 }).catch(() => {});
+report(!await page.getByRole("button", { name: "Upload" }).isDisabled(),
+  "the scan is offered in the demo, not greyed out for want of a key");
+await page.locator('input[type=file]').last()
+  .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+await page.waitForURL(/\/g\/entry\/edit/, { timeout: 20000 });
+await page.waitForSelector('input[aria-label="What"]');
+const what = await page.locator('input[aria-label="What"]').inputValue();
+const amount = await page.locator('input[aria-label^="Amount"]').inputValue();
+report(what === "Caf\u00e9 Clock" && amount === "76.50" && await page.getByText("9 items").count() > 0,
+  "and the bill it read comes back as an expense form, filled in", `${what} ${amount}`);
+report(apiCalls.some((path) => path.endsWith("/scan")) && !apiCalls.some((path) => path.includes(groupId)),
+  "with the demo's id in none of it", apiCalls.join(" "));
+await page.goto(`${base}/g?id=${groupId}`);
 await page.waitForSelector(".rows .row");
 
 // ---- the hinge: no key, so no path to the server ------------------------

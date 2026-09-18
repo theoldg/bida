@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { memberIdFor, newGroupId, newGroupSecret, receiptExtras } from "@bida/core";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { isDemo, memberIdFor, newGroupId, newGroupSecret, receiptExtras } from "@bida/core";
 import { copy } from "./copy";
 import { groupToken } from "./seal";
 import { getDevice, updateDevice } from "./db/device";
+import { useGroupSecret } from "./hooks";
 import { receiptBill, type EntryDraft } from "./draft";
 import { bare, countText } from "./format";
 import { receiptTotalMinor, type MemberLine } from "./scan/items";
@@ -28,7 +29,9 @@ export interface QuickPerson {
 }
 
 /**
- * What this phone scans with when it is not in a group.
+ * What this phone scans with when it is not in a group — or is in one the
+ * server has never heard of, which is the demo
+ * ([sync.md](../../../docs/sync.md#the-demo-group-has-no-key)).
  *
  * `/api/groups/:id/scan` authenticates a bearer token against a row in D1 and
  * refuses an id it has never seen, because the alternative is an open proxy
@@ -42,6 +45,16 @@ export interface ScanCredential {
   secret: string;
 }
 
+/**
+ * A credential with whatever has to happen before the first photo is sent —
+ * introducing it to the server, where the server has not met it. What every
+ * scan in the app is sent under, group or no group.
+ */
+export interface ScanAs extends ScanCredential {
+  /** Run once the photo is in hand and before anything is sent. Never throws. */
+  prepare?: () => Promise<void>;
+}
+
 /** Read this phone's scan credential, minting one the first time. */
 export async function scanCredential(): Promise<ScanCredential> {
   const device = await getDevice();
@@ -51,14 +64,20 @@ export async function scanCredential(): Promise<ScanCredential> {
   return scan;
 }
 
-/** The credential, once Dexie has answered. Undefined for the first frame. */
-export function useScanCredential(): ScanCredential | undefined {
+/**
+ * The credential, once Dexie has answered. Undefined for the first frame.
+ *
+ * `when` is false on a screen that will not need one: reading it mints it, and
+ * a phone that never scans off its own credential should not be carrying one.
+ */
+export function useScanCredential(when = true): ScanCredential | undefined {
   const [cred, setCred] = useState<ScanCredential>();
   useEffect(() => {
+    if (!when) return;
     let live = true;
     void scanCredential().then((c) => { if (live) setCred(c); });
     return () => { live = false; };
-  }, []);
+  }, [when]);
   return cred;
 }
 
@@ -90,6 +109,32 @@ export async function registerScanCredential(cred: ScanCredential): Promise<void
       body: JSON.stringify({ ops: [], since: 0 }),
     });
   } catch { /* the scan is about to say so, in words about the network */ }
+}
+
+/**
+ * What a scan started inside a group is sent under.
+ *
+ * Usually the group itself: the id the server registered on its first push,
+ * and the secret its bearer is derived from. **The demo is the exception** —
+ * it holds no key and never will, and its id must never reach the server at
+ * all, so it scans the way a quick split does, on this phone's own credential.
+ * The bill comes back into the demo's own draft; what crosses the network is a
+ * photo under an id that belongs to nobody's group
+ * ([sync.md](../../../docs/sync.md#the-demo-group-has-no-key)).
+ *
+ * Undefined until there is something to scan with, which is what leaves the
+ * camera disabled rather than failing at the shutter.
+ */
+export function useScanAs(groupId: string | undefined): ScanAs | undefined {
+  const demo = isDemo(groupId);
+  const secret = useGroupSecret(demo ? undefined : groupId);
+  const cred = useScanCredential(demo);
+  return useMemo(() => {
+    if (demo) {
+      return cred && { ...cred, prepare: () => registerScanCredential(cred) };
+    }
+    return groupId && secret ? { id: groupId, secret } : undefined;
+  }, [demo, cred, groupId, secret]);
 }
 
 // ------------------------------------------------------------- who is here

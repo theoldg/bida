@@ -13,6 +13,7 @@ import {
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import type { ScanAs } from "../lib/quick";
 import { warmTurnstile } from "../lib/scan/turnstile";
 
 export type { ScanState } from "../lib/scan/live";
@@ -76,16 +77,15 @@ export interface ReceiptScan {
  * decided the same way — see `tabAtStart` below.
  */
 export function useReceiptScan(
+  /** The draft this fills, and the screen the scan's state belongs to. */
   groupId: string | undefined,
-  secret: string | undefined,
-  onScanned?: () => void,
   /**
-   * Run once the photo is in hand and before anything is sent — a quick split
-   * introduces its scan credential to the server here, since there is no group
-   * whose first sync already did it (ADR-0035). It must not throw: a phone that
-   * cannot reach us cannot scan either, and the scan says that far better.
+   * What the scan is sent under, which is not always the group it is for: a
+   * quick split has no group, and the demo has no key (`useScanAs`). Undefined
+   * while it is still being read, which is what disables the camera.
    */
-  prepare?: () => Promise<void>,
+  scanAs: ScanAs | undefined,
+  onScanned?: () => void,
 ): ReceiptScan {
   const cameraInput = useRef<HTMLInputElement>(null);
   const libraryInput = useRef<HTMLInputElement>(null);
@@ -101,13 +101,13 @@ export function useReceiptScan(
   const scanned = useRef(onScanned);
   scanned.current = onScanned;
   // Read at the start of the round trip, and held for the same reason.
-  const before = useRef(prepare);
-  before.current = prepare;
+  const before = useRef(scanAs);
+  before.current = scanAs;
 
   const onPhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file || !groupId || !secret) return;
+    if (!file || !groupId || !before.current) return;
     const current = getDraft(groupId);
     if (!current) return;
     // Which tab the scan was started from, so the arrival can tell "still
@@ -115,8 +115,9 @@ export function useReceiptScan(
     const tabAtStart = activeSplitTab(current);
     beginScan(groupId);
     try {
-      await before.current?.();
-      const result = await scanReceipt(file, groupId, secret, current.currency);
+      const sender = before.current;
+      await sender.prepare?.();
+      const result = await scanReceipt(file, sender.id, sender.secret, current.currency);
       const patch = normalizeScan(result, Date.now());
       // Read as a bill rather than off the raw result: a deduction printed as
       // a negative line belongs in the discount, not in the grid as something
@@ -169,11 +170,11 @@ export function useReceiptScan(
     } catch (err) {
       failScan(groupId, scanErrorText(err));
     }
-  }, [groupId, secret]);
+  }, [groupId]);
 
   return {
     live,
-    disabled: !secret,
+    disabled: !scanAs,
     openCamera: () => cameraInput.current?.click(),
     openLibrary: () => libraryInput.current?.click(),
     inputs: (

@@ -433,7 +433,7 @@ budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
 
 | bucket | limit | what it is |
 |---|---|---|
-| **caller** | 10/hour, 30/day | the `:id` a scan is billed to — a group, shared by everyone in it, or one phone's quick-split credential |
+| **caller** | 10/hour, 30/day | the `:id` a scan is billed to — a group, shared by everyone in it, or one phone's own credential, which is what a quick split and the demo group both scan under |
 | **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
 | **global** | 2200/hour, 13000/day | the bill — sized to spend the Cloud credit over two months, against real use of tens of scans a day |
 

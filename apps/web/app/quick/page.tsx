@@ -88,7 +88,9 @@ export default function QuickPage() {
     seedDraft(cred.id, blankDraft("expense", "", currency, []), "quick");
   }, [cred, currency]);
 
-  const scan = useReceiptScan(cred?.id, cred?.secret, () => {
+  const scan = useReceiptScan(cred?.id, cred && {
+    ...cred, prepare: () => registerScanCredential(cred),
+  }, () => {
     if (!cred) return;
     // A bill with no lines on it cannot be divided by what people had, and
     // this flow has nothing else to be — so it says so here rather than
@@ -96,7 +98,7 @@ export default function QuickPage() {
     if ((getDraft(cred.id)?.receiptItems?.length ?? 0) === 0) { setNoLines(true); return; }
     setNoLines(false);
     router.push(route.quickItems());
-  }, () => (cred ? registerScanCredential(cred) : Promise.resolve()));
+  });
 
   const typed = people.length > 0 || typing !== null || (draft?.receiptItems?.length ?? 0) > 0;
 
