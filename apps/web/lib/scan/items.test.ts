@@ -490,27 +490,27 @@ describe("bill extras", () => {
 });
 
 /**
- * The demo's dinner carries a bill and the weights read off it (core/demo.ts),
+ * The demo's cantina tab carries a bill and the weights read off it (core/demo.ts),
  * and core cannot check the second against the first: `receiptBreakdown` is
  * the web's, and it is what the entry screen reopens the grid with. If the two
  * ever part, the demo shows one itemisation and charges another.
  */
-describe("the demo's itemised dinner", () => {
+describe("the demo's itemised cantina tab", () => {
   it("is priced by this file, to the cent", () => {
     const dinner = foldOps(demoOps({
-      ids: { Teo: "m-teo", Marie: "m-marie", Sam: "m-sam", Ada: "m-ada" },
-      colorSeeds: { Teo: 1, Marie: 2, Sam: 3, Ada: 4 },
+      ids: { Luke: "m-luke", Han: "m-han", Chewie: "m-chewie", Ben: "m-ben" },
+      colorSeeds: { Luke: 1, Han: 2, Chewie: 3, Ben: 4 },
       deviceNodeId: "node0001",
     }, Date.UTC(2026, 8, 18)).map((draft, i) => ({
       ...draft,
       id: `op-${i}`,
       groupId: DEMO_GROUP_ID,
       hlc: `2026-09-18T00:00:00.000Z-${String(i).padStart(4, "0")}-node0001`,
-      actor: "m-teo",
+      actor: "m-luke",
       note: draft.note ?? null,
       createdAt: 0,
       seq: null,
-    }))).expenses["demo-dinner"]!;
+    }))).expenses["demo-cantina"]!;
 
     expect(weightsFromItems(
       dinner.receiptItems!,

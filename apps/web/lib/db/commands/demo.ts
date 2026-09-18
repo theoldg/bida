@@ -1,6 +1,5 @@
 import {
-  colorSeedFor, demoOps, memberIdFor, DEMO_GROUP_ID, DEMO_ME, DEMO_NAMES,
-  type DemoCast, type DemoName, type Id,
+  demoCast, demoOps, demoStamp, memberIdFor, DEMO_GROUP_ID, DEMO_ME, type Id,
 } from "@bida/core";
 import { db } from "../dexie";
 import { getDevice, setMe, unhideGroup, updateDevice } from "../device";
@@ -25,17 +24,6 @@ import { eraseGroupLocally } from "./groups";
  * quiet breakage starts writing tourists into the log.
  */
 
-/** The cast, keyed by name, with the ids the rest of the app would mint. */
-function cast(deviceNodeId: Id): DemoCast {
-  const ids = {} as Record<DemoName, Id>;
-  const colorSeeds = {} as Record<DemoName, number>;
-  for (const name of DEMO_NAMES) {
-    ids[name] = memberIdFor(DEMO_GROUP_ID, name);
-    colorSeeds[name] = colorSeedFor(DEMO_GROUP_ID, name);
-  }
-  return { ids, colorSeeds, deviceNodeId };
-}
-
 /**
  * Create the demo, or reopen the one that is already here.
  *
@@ -43,15 +31,35 @@ function cast(deviceNodeId: Id): DemoCast {
  * one group instead of stacking copies. The whole trip goes in one `appendOps`
  * batch, as `createGroup` does, so the log reads as one arrival rather than a
  * dozen — which is also what the history screen shows.
+ *
+ * With one exception, and it is the reason `demoStamp` exists: **a build whose
+ * seed has changed throws the old demo away and lays down the new one.** The
+ * demo is this version's pitch rather than a group somebody keeps, so
+ * idempotence across releases is the wrong kind — it left every phone that had
+ * ever opened `/demo` showing the story we stopped telling, with no way back
+ * short of Clear the demo. The stamp is a fingerprint of the seed itself, so
+ * nothing has to be remembered to bump.
  */
 export async function openDemo(now = Date.now()): Promise<Id> {
-  const device = await getDevice();
   const me = memberIdFor(DEMO_GROUP_ID, DEMO_ME);
+  const stamp = demoStamp();
 
+  if ((await getDevice()).demoSeed !== stamp && await db().groups.get(DEMO_GROUP_ID)) {
+    // Erase rather than fold the new ops over the old: the seed's entity ids
+    // move between versions, so anything the last story had and this one does
+    // not would survive as a stray row nobody wrote.
+    await clearDemo();
+  }
   if (!(await db().groups.get(DEMO_GROUP_ID))) {
-    await appendOps(DEMO_GROUP_ID, me, demoOps(cast(device.nodeId), now), now);
+    const device = await getDevice();
+    await appendOps(DEMO_GROUP_ID, me, demoOps(demoCast(device.nodeId), now), now);
+    await updateDevice({ demoSeed: stamp });
   }
 
+  // Read the device after the writes above, not before: clearing the demo
+  // patches this same record, and a copy taken earlier would put its
+  // `deletedGroups` back.
+  const device = await getDevice();
   // Say who this phone is before the ledger asks: an unclaimed group sends you
   // to the claim gate, and being one of the four is what the demo is for.
   await setMe(DEMO_GROUP_ID, me);

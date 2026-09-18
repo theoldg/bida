@@ -27,6 +27,33 @@ const ctx = await newPhone(browser);
 const page = await ctx.newPage();
 const { report, finish } = reporter(page);
 
+/** One store, read whole, straight out of IndexedDB. */
+const readStore = (page, store) => page.evaluate((name) => new Promise((ok, fail) => {
+  const open = indexedDB.open("hajsik");
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const rows = open.result.transaction(name).objectStore(name).getAll();
+    rows.onsuccess = () => ok(rows.result);
+    rows.onerror = () => fail(rows.error);
+  };
+}), store);
+
+/** Say this phone was given some older build's demo, without shipping one. */
+const stampAs = (page, seed) => page.evaluate((demoSeed) => new Promise((ok, fail) => {
+  const open = indexedDB.open("hajsik");
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const store = open.result.transaction("device", "readwrite").objectStore("device");
+    const got = store.get("device");
+    got.onsuccess = () => {
+      const put = store.put({ ...got.result, demoSeed });
+      put.onsuccess = () => ok();
+      put.onerror = () => fail(put.error);
+    };
+    got.onerror = () => fail(got.error);
+  };
+}), seed);
+
 /** Every group this phone holds a secret for, straight out of IndexedDB. */
 const keysHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
   const open = indexedDB.open("hajsik");
@@ -57,22 +84,22 @@ report(!page.url().includes("/g/claim"), "and is not stopped at the claim gate")
 await page.waitForSelector(".rows .row");
 const rows = await page.locator(".rows .row").count();
 report(rows >= 6, `the ledger is populated, not an empty state (${rows} rows)`);
-report(await page.getByText("Marrakech").count() > 0, "and it is the Marrakech trip");
+report(await page.getByText("Passage to Alderaan").count() > 0, "and it is the cantina group");
 report(await page.getByText("Demo group").count() === 1,
   "with the mark at its head, which does not fold away");
 
 // ---- a bill, not a quarter each -----------------------------------------
 // The dinner keeps the receipt it was split from (ADR-0016), which only shows
 // up by opening it: the row says the same thing either way.
-await page.locator(".rows .row").filter({ hasText: "Dinner at Nomad" }).first().click();
+await page.locator(".rows .row").filter({ hasText: "Chalmun’s cantina" }).first().click();
 await page.waitForSelector(".billgroup");
 report(await page.getByText("By items").count() > 0,
-  "the dinner is split by the bill, not a quarter each");
+  "the tab is split by the bill, not a quarter each");
 // Each person's row opens onto their own lines — the grid kept on the entry.
-await page.locator(".billgroup .kv").filter({ hasText: "Ada" }).first().click();
+await page.locator(".billgroup .kv").filter({ hasText: "Ben" }).first().click();
 await page.waitForSelector(".billline");
-report(await page.getByText("Pastilla").count() > 0,
-  "and Ada's row opens onto what Ada ordered");
+report(await page.getByText("Blue milk").count() > 0,
+  "and Ben's row opens onto what Ben ordered");
 await page.goBack();
 await page.waitForSelector(".rows .row");
 
@@ -136,7 +163,7 @@ await menuItem("Clear the demo").click();
 await page.getByRole("button", { name: "Clear the demo" }).click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
 await page.waitForTimeout(400);
-report(await page.getByText("Marrakech").count() === 0,
+report(await page.getByText("Passage to Alderaan").count() === 0,
   "clearing takes it off the phone, not merely off the list");
 
 // Deterministic seed, so the address is also the reset: reopening builds the
@@ -158,6 +185,33 @@ report((await keysHeld(page)).length === 0, "still with no key to its name");
 await page.waitForTimeout(Math.max(0, 14_000 - (Date.now() - reopenedAt)));
 report(await page.getByText("Still reading this phone").count() === 0,
   "and no read gives up on it: no stall notice, a watchdog later");
+
+// ---- a new build lays its demo down over the old one -------------------
+// The demo is this version's pitch, not a group somebody keeps, and `/demo`
+// being idempotent by id meant a phone that had opened it once kept whatever
+// story it was given forever. `demoStamp` is the hinge: say this phone holds
+// an older build's seed, and the address has to throw that group away and
+// write this one (lib/db/commands/demo.ts).
+const before = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
+await stampAs(page, "some-older-build");
+await page.goto(`${base}/demo`);
+await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForSelector(".rows .row");
+const after = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
+const kept = new Set(before.map((op) => op.id));
+report(after.length === before.length && !after.some((op) => kept.has(op.id)),
+  "a phone holding an older seed is re-seeded, not handed the group it had",
+  `${before.length} ops before, ${after.length} after`);
+report(await page.locator(".rows .row").count() === rows && (await keysHeld(page)).length === 0,
+  "and what it lands on is the same populated ledger, still with no key");
+// ...and only once: the stamp it just stored makes the next visit ordinary.
+const third = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
+await page.goto(`${base}/demo`);
+await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForSelector(".rows .row");
+const fourth = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
+report(fourth.map((op) => op.id).sort().join() === third.map((op) => op.id).sort().join(),
+  "while a visit on the seed it already holds rewrites nothing");
 
 await browser.close();
 close();

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { computeBalances } from "./balance.js";
-import { DEMO_GROUP_ID, DEMO_ME, DEMO_NAMES, demoOps, isDemo, type DemoCast } from "./demo.js";
+import {
+  DEMO_GROUP_ID, DEMO_ME, DEMO_NAMES, demoOps, demoStamp, isDemo, type DemoCast,
+} from "./demo.js";
 import { foldOps } from "./fold.js";
 import { createHlcState, hlcSend, type HlcState } from "./hlc.js";
 import { parseMinor, sumMinor } from "./money.js";
@@ -18,8 +20,8 @@ const NOW = Date.UTC(2026, 8, 18, 12, 0, 0);
 
 /** What the web mints and core is handed. Fixed, so the log is deterministic. */
 const CAST: DemoCast = {
-  ids: { Teo: "m-teo", Marie: "m-marie", Sam: "m-sam", Ada: "m-ada" },
-  colorSeeds: { Teo: 10, Marie: 100, Sam: 200, Ada: 300 },
+  ids: { Luke: "m-luke", Han: "m-han", Chewie: "m-chewie", Ben: "m-ben" },
+  colorSeeds: { Luke: 10, Han: 100, Chewie: 200, Ben: 300 },
   deviceNodeId: "node0001",
 };
 
@@ -56,8 +58,8 @@ describe("isDemo", () => {
 describe("demoOps", () => {
   it("folds to the trip it describes", () => {
     const state = foldOps(stamp());
-    expect(state.group?.name).toBe("Marrakech");
-    expect(state.group?.baseCurrency).toBe("EUR");
+    expect(state.group?.name).toBe("Passage to Alderaan");
+    expect(state.group?.baseCurrency).toBe("CRD");
     expect(alive(state.members).map((m) => m.name).sort())
       .toEqual([...DEMO_NAMES].sort());
     // This phone is one of them, or the ledger's personal lens is blank.
@@ -70,21 +72,21 @@ describe("demoOps", () => {
     expect(entries.filter((e) => !e.deletedAt)).toHaveLength(5);
     // One deleted and one edited, so history is not all creates.
     expect(entries.filter((e) => e.deletedAt)).toHaveLength(1);
-    expect(state.expenses["demo-riad"]?.description).toBe("Riad Jnane, four nights");
+    expect(state.expenses["demo-passage"]?.description).toBe("Passage to Alderaan, no questions");
     // The rest of the spread: two payers, a foreign currency priced by the
     // group's own registry, an income, a transfer, and one entry that leaves
     // people out.
-    expect(Object.keys(state.expenses["demo-dinner"]?.payers ?? {})).toHaveLength(2);
-    expect(state.expenses["demo-cafe"]?.currency).toBe("MAD");
-    expect(state.rates["MAD"]?.rate).toBe("0.0921");
+    expect(Object.keys(state.expenses["demo-cantina"]?.payers ?? {})).toHaveLength(2);
+    expect(state.expenses["demo-docking"]?.currency).toBe("WUP");
+    expect(state.rates["WUP"]?.rate).toBe("0.0625");
     expect(entries.some((e) => e.kind === "income")).toBe(true);
     expect(Object.values(state.settlements)).toHaveLength(1);
-    const narrow = state.expenses["demo-sunglasses"]?.split;
+    const narrow = state.expenses["demo-dejarik"]?.split;
     expect(narrow?.mode === "equal" && narrow.members).toHaveLength(2);
   });
 
-  it("itemises the dinner, and the bill adds up to it", () => {
-    const dinner = foldOps(stamp()).expenses["demo-dinner"]!;
+  it("itemises the cantina tab, and the bill adds up to it", () => {
+    const dinner = foldOps(stamp()).expenses["demo-cantina"]!;
     const split = dinner.split;
     expect(split.mode).toBe("receipt");
     // The weights are the bill read per person, so they come to the total. Any
@@ -95,7 +97,7 @@ describe("demoOps", () => {
     // A line per printed line, and a row of names for each: the grid the entry
     // screen reopens (ADR-0016) is only a grid while those two agree.
     expect(dinner.receiptAssignments).toHaveLength(dinner.receiptItems!.length);
-    expect(sumMinor(dinner.receiptItems!.map((i) => parseMinor(i.amount, "EUR"))))
+    expect(sumMinor(dinner.receiptItems!.map((i) => parseMinor(i.amount, "CRD"))))
       .toBe(dinner.amountMinor);
     // Everyone at the table is on it, and nobody is on it who was not.
     for (const row of dinner.receiptAssignments!) {
@@ -151,7 +153,34 @@ describe("demoOps", () => {
     // ...and dated from `now`, so it never reads stale.
     const later = foldOps(stamp(NOW + 30 * 86_400_000));
     const first = foldOps(stamp());
-    expect(later.expenses["demo-riad"]?.occurredAt)
-      .toBeGreaterThan(first.expenses["demo-riad"]!.occurredAt!);
+    expect(later.expenses["demo-passage"]?.occurredAt)
+      .toBeGreaterThan(first.expenses["demo-passage"]!.occurredAt!);
+  });
+});
+
+/**
+ * The stamp is what makes an app update a re-seed (lib/db/commands/demo.ts).
+ * It has one job in each direction: hold still while only the calendar moves,
+ * and move the moment the story does.
+ */
+describe("demoStamp", () => {
+  it("is the same string every time it is asked", () => {
+    expect(demoStamp()).toBe(demoStamp());
+    expect(demoStamp()).toMatch(/^[0-9a-z]+$/);
+  });
+
+  it("does not move with the clock, or the phone's timezone", () => {
+    // Stamping is `demoOps` with its dates zeroed, so a demo opened tomorrow —
+    // or in another timezone, which shifts every local midnight in it — is
+    // still the same story and must not throw the group away.
+    const tz = process.env.TZ;
+    try {
+      process.env.TZ = "UTC";
+      const utc = demoStamp();
+      process.env.TZ = "Pacific/Kiritimati";
+      expect(demoStamp()).toBe(utc);
+    } finally {
+      process.env.TZ = tz;
+    }
   });
 });

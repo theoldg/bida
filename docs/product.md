@@ -41,8 +41,9 @@ op and keeps nothing — the one thing here that is not a ledger
 ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 
 **A group somebody already used.** The demo, at `bida.bid/demo` and nowhere
-else: a real group of real ops — Marrakech, four people, six kinds of entry, one
-split off the bill it was itemised from, one edited and one deleted — created
+else: a real group of real ops — four travellers haggling over
+passage off Tatooine, six kinds of entry, one split off the bill it was
+itemised from, one edited and one deleted — created
 through `appendOps` and folded by
 `foldOps` like any other, so the ledger, balances, settle-up, history, rates
 and export all work because none of them knows it is a demo. It is the mirror
@@ -51,7 +52,9 @@ group somebody already used*. The one thing it cannot do is be shared, and it
 is the same fact that keeps it off the server: it is created without a key, so
 there is no invite link and no path to sync
 ([sync.md](sync.md#the-demo-group-has-no-key)). **Nothing in the app links to
-it** — the URL is the whole door ([frontend.md](frontend.md#routing)).
+it** — the URL is the whole door ([frontend.md](frontend.md#routing)) — and it
+is a pitch rather than a group somebody keeps, so a build that tells a
+different story lays it down over the old one.
 
 **The tip jar.** One screen (`/g/tip`, off a FAB on the balances tab), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two

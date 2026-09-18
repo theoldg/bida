@@ -408,9 +408,16 @@ under `settle`, every amount is a positive integer minor unit, any permutation
 folds identically). What this check asks is what the seed cannot: that
 `/demo` lands on a populated ledger rather than a claim gate or an empty
 state, that the balances do not cancel, that the mark is at its head, that the
-dinner opens onto the bill it was itemised from, that **Copy invite link**
+cantina tab opens onto the bill it was itemised from, that **Copy invite link**
 refuses out loud, and that clearing takes the group off the phone while the
 address brings the same one back, entry for entry.
+
+It then says this phone holds an older build's seed — a `demoSeed` of its own
+invention, written straight into the device record — and reopens the address,
+which has to erase what is there and write the new story rather than hand back
+the old one ([frontend.md](frontend.md#routing)). The visit after that must
+rewrite nothing: a re-seed on every open would throw away a demo somebody was
+still reading.
 
 It also photographs a receipt there, with the network watched: the demo scans
 under this phone's own credential, and its own id must appear in no request at

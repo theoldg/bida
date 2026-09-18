@@ -104,6 +104,15 @@ export interface DeviceRecord {
    * which reads as "no scans yet".
    */
   scanLog?: { id: string; at: number }[];
+  /**
+   * The fingerprint of the demo seed this phone was given, `demoStamp()` at
+   * the time it was laid down. The demo is a pitch and not a group somebody
+   * keeps, so a build whose seed reads differently replaces it rather than
+   * reopening the story we stopped telling (lib/db/commands/demo.ts). Absent
+   * on records written before this existed, which is what makes the first
+   * `/demo` after this shipped a re-seed — the point of it.
+   */
+  demoSeed?: string;
 }
 
 /**

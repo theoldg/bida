@@ -1,5 +1,6 @@
 import { convertMinor, minorToDecimalString } from "./money.js";
 import type { OpDraft } from "./invariants.js";
+import { colorSeedFor, memberIdFor } from "./names.js";
 import type { Id, SplitSpec } from "./types.js";
 
 /**
@@ -14,10 +15,11 @@ import type { Id, SplitSpec } from "./types.js";
  * `syncGroupOnce` returns early. There is no flag to flip and no path to
  * disable (docs/sync.md#the-demo-group-has-no-key).
  *
- * The cast is Marrakech with Teo, Marie, Sam and Ada — the same trip
- * `scripts/shots.mjs` seeds through the UI and the same one
- * `fixtures.test-helper.ts` pins, so the project has one fixture story rather
- * than three. Dates are offsets from `now`, so it never reads stale.
+ * The cast is four travellers haggling over passage off Tatooine: Luke, Han,
+ * Chewie and Ben, an hour in the Mos Eisley cantina and the charter they
+ * argued out at the back booth. A story rather than a trip, because the demo
+ * is the pitch and a stranger reads a story faster than a spreadsheet. Dates
+ * are offsets from `now`, so it never reads stale.
  */
 
 /**
@@ -37,22 +39,24 @@ export function isDemo(groupId: string | undefined): boolean {
   return groupId === DEMO_GROUP_ID;
 }
 
-/** The four people on the trip. The device is Teo, or the personal lens is blank. */
-export const DEMO_NAMES = ["Teo", "Marie", "Sam", "Ada"] as const;
+/** The four at the booth. The device is Luke, or the personal lens is blank. */
+export const DEMO_NAMES = ["Luke", "Han", "Chewie", "Ben"] as const;
 export type DemoName = (typeof DEMO_NAMES)[number];
 
 /** The member the device speaks for: the demo is a group you are already in. */
-export const DEMO_ME: DemoName = "Teo";
+export const DEMO_ME: DemoName = "Luke";
 
-export const DEMO_CURRENCY = "EUR";
-/** The trip's other currency, and the one rate the registry carries. */
-export const DEMO_FOREIGN = "MAD";
-export const DEMO_RATE = "0.0921";
+/** Credits, and the local coin the spaceport actually takes. */
+export const DEMO_CURRENCY = "CRD";
+export const DEMO_FOREIGN = "WUP";
+/** Sixteen wupiupi to the credit, as the moneychanger by the door has it. */
+export const DEMO_RATE = "0.0625";
 
 /**
- * What the caller mints and core cannot: member ids and avatar hues come from
- * `memberIdFor`/`colorSeedFor`, which are the app's, and the node id is the
- * device's own. Core stays pure and is handed all three.
+ * What the caller cannot be assumed to have: the device's own HLC node id.
+ * The member ids and avatar hues are `memberIdFor`/`colorSeedFor` of the
+ * constant group id, so this module can mint them itself — which is what lets
+ * `demoStamp` fingerprint the seed without a caller.
  */
 export interface DemoCast {
   /** Member id per name, from `memberIdFor(DEMO_GROUP_ID, name)`. */
@@ -61,6 +65,17 @@ export interface DemoCast {
   colorSeeds: Record<DemoName, number>;
   /** The device's HLC node id, so the identity claim is this phone's own. */
   deviceNodeId: Id;
+}
+
+/** The cast every phone derives identically, given the device's node id. */
+export function demoCast(deviceNodeId: Id): DemoCast {
+  const ids = {} as Record<DemoName, Id>;
+  const colorSeeds = {} as Record<DemoName, number>;
+  for (const name of DEMO_NAMES) {
+    ids[name] = memberIdFor(DEMO_GROUP_ID, name);
+    colorSeeds[name] = colorSeedFor(DEMO_GROUP_ID, name);
+  }
+  return { ids, colorSeeds, deviceNodeId };
 }
 
 const DAY = 86_400_000;
@@ -73,17 +88,17 @@ function dayBefore(now: number, daysAgo: number): number {
 
 /** Entity ids are fixed, so re-seeding writes the same group rather than a second one. */
 const ENTRY = {
-  riad: "demo-riad",
-  dinner: "demo-dinner",
-  cafe: "demo-cafe",
-  sunglasses: "demo-sunglasses",
-  deposit: "demo-deposit",
-  taxi: "demo-taxi",
-  payback: "demo-payback",
+  passage: "demo-passage",
+  cantina: "demo-cantina",
+  docking: "demo-docking",
+  dejarik: "demo-dejarik",
+  speeder: "demo-speeder",
+  greedo: "demo-greedo",
+  advance: "demo-advance",
 } as const;
 
 /**
- * The bill behind the dinner: what the table ordered, and who ordered it.
+ * The bill behind the cantina tab: what the booth ordered, and who ordered it.
  *
  * Kept as minor units and divided here, so the printed lines, the grid and the
  * split weights are three readings of one table rather than three lists that
@@ -96,14 +111,14 @@ const ENTRY = {
 const DEMO_BILL: readonly {
   label: string; minor: number; quantity?: number; who: readonly DemoName[];
 }[] = [
-  { label: "Tagine d’agneau", minor: 2_400, quantity: 2, who: ["Teo", "Marie"] },
-  { label: "Couscous royal", minor: 1_900, who: ["Sam"] },
-  { label: "Pastilla", minor: 1_700, who: ["Ada"] },
-  { label: "Vin gris", minor: 2_400, who: DEMO_NAMES },
-  { label: "Thé à la menthe", minor: 800, quantity: 4, who: DEMO_NAMES },
+  { label: "Jawa juice", minor: 2_400, quantity: 2, who: ["Luke", "Han"] },
+  { label: "Blue milk", minor: 900, who: ["Ben"] },
+  { label: "Tall glass of ardees", minor: 1_600, who: ["Chewie"] },
+  { label: "For the Modal Nodes", minor: 2_000, who: DEMO_NAMES },
+  { label: "Back booth, the quiet one", minor: 1_200, who: DEMO_NAMES },
 ];
 
-/** What each person's own lines come to: the dinner's split, itemised. */
+/** What each person's own lines come to: the tab's split, itemised. */
 function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
   const weights: Record<Id, number> = {};
   for (const line of DEMO_BILL) {
@@ -115,30 +130,30 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
 }
 
 /**
- * The whole trip, as one batch of drafts.
+ * The whole evening, as one batch of drafts.
  *
  * Deterministic in `cast` and `now`: the same arguments write a byte-identical
  * log, which is what makes *reset* and *clear, then reopen* the same call
  * twice. Pure, and the clock is an argument (CLAUDE.md).
  *
  * The contents are chosen so every screen has something to say: a plain
- * expense, one with two payers and its bill itemised, one in MAD priced by a
- * group rate, one that leaves two people out, an income, a transfer, one entry
- * edited in two fields and one deleted. The balances deliberately do not cancel, so settle-up
- * proposes transfers rather than "all square".
+ * expense, one with two payers and its bill itemised, one in local coin priced
+ * by a group rate, one that leaves two people out, an income, a transfer, one
+ * entry edited in two fields and one deleted. The balances deliberately do not
+ * cancel, so settle-up proposes transfers rather than "all square".
  */
 export function demoOps(cast: DemoCast, now: number): OpDraft[] {
   const { ids } = cast;
   const all = DEMO_NAMES.map((name) => ids[name]);
   const equal = (members: readonly Id[]): SplitSpec => ({ mode: "equal", members: [...members] });
-  /** An amount in the trip's own currency, as the registry prices it today. */
-  const inMad = (minor: number) => ({
+  /** An amount in spaceport coin, as the registry prices it today. */
+  const inWup = (minor: number) => ({
     amountMinor: minor,
     currency: DEMO_FOREIGN,
     rateToBase: DEMO_RATE,
     baseAmountMinor: convertMinor(minor, DEMO_FOREIGN, DEMO_CURRENCY, DEMO_RATE),
   });
-  const inEur = (minor: number) => ({
+  const inCredits = (minor: number) => ({
     amountMinor: minor,
     currency: DEMO_CURRENCY,
     rateToBase: "1",
@@ -151,7 +166,7 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       entityId: DEMO_GROUP_ID,
       kind: "create",
       patch: {
-        name: "Marrakech",
+        name: "Passage to Alderaan",
         baseCurrency: DEMO_CURRENCY,
         createdAt: dayBefore(now, 9),
         archivedAt: null,
@@ -163,7 +178,7 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       kind: "create",
       patch: { name, colorSeed: cast.colorSeeds[name], deletedAt: null },
     })),
-    // This phone is Teo. Without it the ledger's personal lens has nothing to
+    // This phone is Luke. Without it the ledger's personal lens has nothing to
     // be personal about, and the claim gate would stop the demo at the door.
     {
       entity: "identity",
@@ -171,9 +186,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       kind: "create",
       patch: { memberId: ids[DEMO_ME], claimedAt: dayBefore(now, 9) },
     },
-    // The group's rate registry: what a dirham is worth, for everybody, now.
-    // One row, so /g/rates has something to show and correcting it moves every
-    // MAD entry in the ledger (ADR-0005).
+    // The group's rate registry: what spaceport coin is worth, for everybody,
+    // now. One row, so /g/rates has something to show and correcting it moves
+    // every WUP entry in the ledger (ADR-0005).
     {
       entity: "rate",
       entityId: DEMO_FOREIGN,
@@ -183,22 +198,24 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       },
     },
 
-    // A plain expense, somebody else paid: the row the personal lens colours red.
+    // The charter, somebody else fronted: the row the personal lens colours
+    // red, and the one that leaves the crew out — Han and Chewie are being
+    // paid, not splitting it.
     {
       entity: "expense",
-      entityId: ENTRY.riad,
+      entityId: ENTRY.passage,
       kind: "create",
       patch: {
-        description: "Riad Jnane",
+        description: "Passage to Alderaan",
         occurredAt: dayBefore(now, 8),
         dateOnly: true,
         createdAt: dayBefore(now, 8),
-        ...inEur(58_000),
-        paidBy: ids.Marie,
-        split: equal(all),
+        ...inCredits(1_500_000),
+        paidBy: ids.Ben,
+        split: equal([ids.Ben, ids.Luke]),
       },
     },
-    // Two payers on one dinner: `paidBy` is the larger of them (core/payers.ts).
+    // Two payers on one tab: `paidBy` is the larger of them (core/payers.ts).
     // It is also the itemised one — the bill is kept on the entry, so the
     // split is what each of them ordered rather than a quarter each, and the
     // entry screen can open anybody's row onto their own lines (ADR-0016).
@@ -206,16 +223,16 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
     // `receiptBreakdown` has of this grid and no rounding tiebreak is in play.
     {
       entity: "expense",
-      entityId: ENTRY.dinner,
+      entityId: ENTRY.cantina,
       kind: "create",
       patch: {
-        description: "Dinner at Nomad",
+        description: "Chalmun’s cantina",
         occurredAt: dayBefore(now, 7),
         dateOnly: true,
         createdAt: dayBefore(now, 7),
-        ...inEur(9_200),
-        paidBy: ids.Teo,
-        payers: { [ids.Teo]: 6_000, [ids.Sam]: 3_200 },
+        ...inCredits(8_100),
+        paidBy: ids.Luke,
+        payers: { [ids.Luke]: 5_000, [ids.Han]: 3_100 },
         split: { mode: "receipt", weights: billWeights(ids) },
         receiptItems: DEMO_BILL.map(({ label, minor, quantity }) => ({
           label,
@@ -226,67 +243,67 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
       },
     },
-    // The one in dirhams, priced by the registry above: the ledger shows the
-    // conversion and /g/rates shows where the number came from.
+    // The one in spaceport coin, priced by the registry above: the ledger
+    // shows the conversion and /g/rates shows where the number came from.
     {
       entity: "expense",
-      entityId: ENTRY.cafe,
+      entityId: ENTRY.docking,
       kind: "create",
       patch: {
-        description: "Café Clock",
+        description: "Docking bay 94",
         occurredAt: dayBefore(now, 6),
         dateOnly: true,
         createdAt: dayBefore(now, 6),
-        ...inMad(62_000),
-        paidBy: ids.Sam,
+        ...inWup(96_000),
+        paidBy: ids.Han,
         split: equal(all),
       },
     },
     // One that leaves two people out: the faded row, nothing to do with you.
     {
       entity: "expense",
-      entityId: ENTRY.sunglasses,
+      entityId: ENTRY.dejarik,
       kind: "create",
       patch: {
-        description: "Marie’s sunglasses",
+        description: "Dejarik stake",
         occurredAt: dayBefore(now, 5),
         dateOnly: true,
         createdAt: dayBefore(now, 5),
-        ...inEur(4_500),
-        paidBy: ids.Marie,
-        split: equal([ids.Marie, ids.Ada]),
+        ...inCredits(3_000),
+        paidBy: ids.Han,
+        split: equal([ids.Han, ids.Chewie]),
       },
     },
     // An income: same shape as an expense, and the sign is applied once, in
     // `computeBalances` and nowhere else (ADR-0010).
     {
       entity: "expense",
-      entityId: ENTRY.deposit,
+      entityId: ENTRY.speeder,
       kind: "create",
       patch: {
         kind: "income",
-        description: "Riad deposit back",
+        description: "Sold the landspeeder",
         occurredAt: dayBefore(now, 3),
         dateOnly: true,
         createdAt: dayBefore(now, 3),
-        ...inEur(15_000),
-        paidBy: ids.Marie,
+        ...inCredits(200_000),
+        paidBy: ids.Luke,
         split: equal(all),
       },
     },
     // A transfer: it moves a debt, it does not create one.
     {
       entity: "settlement",
-      entityId: ENTRY.payback,
+      entityId: ENTRY.advance,
       kind: "create",
       patch: {
-        fromMember: ids.Sam,
-        toMember: ids.Teo,
-        ...inEur(4_000),
+        fromMember: ids.Luke,
+        toMember: ids.Han,
+        ...inCredits(200_000),
         occurredAt: dayBefore(now, 2),
         dateOnly: true,
         createdAt: dayBefore(now, 2),
-        note: "Airport taxi",
+        note: "Two thousand now, at the booth",
         deletedAt: null,
       },
     },
@@ -294,44 +311,72 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
     // One entry written and then taken back, so history is not all creates.
     {
       entity: "expense",
-      entityId: ENTRY.taxi,
+      entityId: ENTRY.greedo,
       kind: "create",
       patch: {
-        description: "Grand taxi from RAK",
+        description: "Greedo’s finder’s fee",
         occurredAt: dayBefore(now, 8),
         dateOnly: true,
         createdAt: dayBefore(now, 8),
-        ...inMad(30_000),
-        paidBy: ids.Ada,
+        ...inWup(30_000),
+        paidBy: ids.Han,
         split: equal(all),
       },
     },
     {
       entity: "expense",
-      entityId: ENTRY.taxi,
+      entityId: ENTRY.greedo,
       kind: "delete",
       // Empty, like every other delete: the fold stamps `deletedAt` from the
       // op's own clock and ignores what a delete patch carries.
       patch: {},
-      note: "Ada was paid back in cash",
+      note: "Han settled that one at the table",
     },
     // ...and one corrected in two fields, so the diff shows a sentence with a
     // line under it rather than a single number. An entry is written whole
     // (docs/sync.md), which is why the patch carries what did not change too.
     {
       entity: "expense",
-      entityId: ENTRY.riad,
+      entityId: ENTRY.passage,
       kind: "update",
       patch: {
-        description: "Riad Jnane, four nights",
+        description: "Passage to Alderaan, no questions",
         occurredAt: dayBefore(now, 8),
         dateOnly: true,
         createdAt: dayBefore(now, 8),
-        ...inEur(61_000),
-        paidBy: ids.Marie,
-        split: equal(all),
+        ...inCredits(1_700_000),
+        paidBy: ids.Ben,
+        split: equal([ids.Ben, ids.Luke]),
       },
-      note: "The fourth night was on the same bill",
     },
   ];
+}
+
+/**
+ * A fingerprint of the seed this build carries.
+ *
+ * The demo is a pitch, not a group somebody keeps, so when a release changes
+ * the story the phone that already has the old one must be given the new one —
+ * and `openDemo` is idempotent by design, so on its own it would hand back the
+ * group it seeded months ago forever. The caller compares this string with the
+ * one it stored and re-seeds when they differ, which makes *the seed changing*
+ * the trigger rather than a constant somebody has to remember to bump.
+ *
+ * Dates are zeroed before hashing, so the stamp answers "is this the same
+ * story" and not "is it the same evening" — otherwise every midnight, and
+ * every flight across a timezone, would read as a new seed.
+ */
+export function demoStamp(): string {
+  const dated = /^(occurredAt|createdAt|claimedAt|asOf)$/;
+  const json = JSON.stringify(
+    demoOps(demoCast("stamp"), 0),
+    (key, value) => (dated.test(key) ? 0 : value),
+  );
+  // FNV-1a, in base 36. A fingerprint, not a digest: nothing here is secret,
+  // and the only question asked of it is whether two builds agree.
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < json.length; i++) {
+    hash = Math.imul(hash ^ json.charCodeAt(i), 0x01000193) >>> 0;
+  }
+  return hash.toString(36);
 }
