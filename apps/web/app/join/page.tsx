@@ -8,7 +8,7 @@ import { saveGroupKey } from "../../lib/db/commands";
 import { db } from "../../lib/db/dexie";
 import { useLive } from "../../lib/db/live";
 import { syncGroup } from "../../lib/db/sync";
-import { useSyncHealth } from "../../lib/hooks";
+import { useDevice, useSyncHealth } from "../../lib/hooks";
 import { handOverToGroup } from "../../lib/launch";
 import { copy } from "../../lib/copy";
 import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
@@ -113,6 +113,10 @@ function JoinScreen() {
   // registered under a different secret, so every retry is another 403. A
   // link whose secret is wrong is a wrong link, which is what it now says.
   const { rejected } = useSyncHealth(link ? link.groupId : undefined);
+  // An invite link to a group that was deleted. The key is saved and a sync is
+  // attempted as usual; the 410 that comes back erases the group here too and
+  // writes the id down, which is what this reads (lib/db/commands/groups.ts).
+  const gone = useDevice()?.deletedGroups?.includes(link?.groupId ?? "") ?? false;
 
   useEffect(() => {
     if (!link || !group) return;
@@ -127,6 +131,20 @@ function JoinScreen() {
       <Screen><Body>
         <TopBar title={copy.join.title} back={route.groups()} />
         <Scroll><KeylessLink /></Scroll>
+      </Body></Screen>
+    );
+  }
+
+  // A link to a group somebody deleted. It is not a bad link and waiting will
+  // not mend it, so the screen says what happened rather than what to retry
+  // (app/delete-my-data/page.tsx).
+  if (gone && !group) {
+    return (
+      <Screen><Body>
+        <TopBar title={copy.join.title} back={route.groups()} />
+        <Scroll>
+          <Empty title={copy.join.deleted.title}>{copy.join.deleted.body}</Empty>
+        </Scroll>
       </Body></Screen>
     );
   }

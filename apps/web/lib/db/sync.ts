@@ -1,6 +1,7 @@
 import { createHlcState, hlcReceive, openOp, sealOp, type Op, type SealedOp } from "@bida/core";
 import { started } from "../diag";
 import { groupCrypto } from "../seal";
+import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
 import { db, type StoredOp } from "./dexie";
 import { rebuild } from "./fold";
@@ -84,6 +85,47 @@ async function pushPullGroup(
   return { response, pulled };
 }
 
+/**
+ * Everything the server holds for one group, opened and handed back without a
+ * byte of it being stored. What `/delete-my-data` shows before it deletes.
+ *
+ * It lives here, beside `pushPullGroup`, because this file is the boundary the
+ * plaintext stops at: a second place deriving the key and opening ops is how
+ * that guarantee stops being one thing you can check. Read-only, and it may be
+ * a group this phone has never held.
+ *
+ * Rejects with `SyncHttpError` — 404 is a group this server never had, 410 one
+ * that was deleted, 403 a link whose secret is wrong.
+ */
+export async function pullWholeGroup(groupId: string, secret: string): Promise<Op[]> {
+  const crypto = await groupCrypto(groupId, secret);
+  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/ops?since=0`, {
+    headers: { Authorization: `Bearer ${crypto.token}` },
+  });
+  if (!res.ok) throw new SyncHttpError(res.status, await res.text().catch(() => ""));
+  const body = (await res.json()) as { ops: SealedOp[] };
+  return Promise.all(body.ops.map((op) => openOp(crypto, op)));
+}
+
+/**
+ * Delete a group from the server: every op, and the id along with them
+ * (`DELETE /api/groups/:id`, docs/sync.md#deleting-a-group).
+ *
+ * The one request this app makes that destroys something, and it is
+ * authenticated like every other one: by the token derived from the link
+ * secret, which is the whole of authority here (ADR-0003). It does nothing
+ * about this phone's own copy. That is `eraseGroupLocally`, and the screen
+ * that asks for both is `/delete-my-data`.
+ */
+export async function deleteGroupOnServer(groupId: string, secret: string): Promise<void> {
+  const crypto = await groupCrypto(groupId, secret);
+  const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${crypto.token}` },
+  });
+  if (!res.ok) throw new SyncHttpError(res.status, await res.text().catch(() => ""));
+}
+
 export interface SyncOutcome {
   pushed: number;
   pulled: number;
@@ -148,6 +190,15 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     sealed = await pushPullGroup(groupId, key.secret, key.lastSeq, pending);
   } catch (err) {
     sent("failed");
+    // 410: somebody deleted this group (docs/sync.md#deleting-a-group). There
+    // is nothing to retry and nothing to sync with ever again, so this phone's
+    // copy goes too. That is what "deleted for everybody" has to mean, and a
+    // group left sitting on the list syncing against a tombstone would be the
+    // one place the app disagreed with itself.
+    if (err instanceof SyncHttpError && err.status === 410) {
+      await eraseGroupLocally(groupId);
+      return undefined;
+    }
     await recordFailure(groupId, err);
     throw err;
   }

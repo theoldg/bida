@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { useInstallOffer } from "../../../components/install";
 import { UseInApp } from "../../../components/use-in-app";
@@ -9,7 +9,7 @@ import { WhoPicker } from "../../../components/who-picker";
 import { copy } from "../../../lib/copy";
 import { addMember, claimIdentity } from "../../../lib/db/commands";
 import { formatJoinLink, route } from "../../../lib/group-link";
-import { useGroupData, useGroupSecret } from "../../../lib/hooks";
+import { useDevice, useGroupData, useGroupSecret } from "../../../lib/hooks";
 
 /**
  * The last step of joining: which of these people are you?
@@ -39,6 +39,15 @@ function ClaimScreen() {
   // Re-opening an invite you have already accepted preselects who you are, so
   // it is one tap rather than a puzzle about whether you'll be duplicated.
   const [picked, setPicked] = useState<string>();
+
+  // A group deleted while this phone was standing here (lib/db/sync.ts). There
+  // is no question left to answer and no group to answer it about, so the
+  // phone is put back on its list rather than asked who it is in nothing. The
+  // group screen is where the news is told: this one is a detour on the way in.
+  const deleted = useDevice()?.deletedGroups?.includes(groupId ?? "") ?? false;
+  useEffect(() => {
+    if (deleted) router.replace(route.groups());
+  }, [deleted, router]);
 
   if (!groupId || !data.group) return <Blank back={route.groups()} />;
   const group = data.group;

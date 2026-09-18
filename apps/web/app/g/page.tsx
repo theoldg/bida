@@ -27,7 +27,7 @@ import { dayLabel, money, plural } from "../../lib/format";
 import { entryOf, ledgerRows } from "../../lib/ledger";
 import { route } from "../../lib/group-link";
 import { expenseMeta, transferMeta } from "../../lib/row-meta";
-import { useClaimGate, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
+import { useClaimGate, useDevice, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
 import type { GroupData } from "../../lib/hooks";
 
 type Tab = "ledger" | "balances";
@@ -43,6 +43,8 @@ function GroupScreen() {
   const data = useGroupData(groupId);
   const online = useOnline();
   const sync = useSyncHealth(groupId);
+  // Ids only, and only ever a handful: what this phone knows was deleted.
+  const deleted = useDevice()?.deletedGroups;
   // Opening a group is the moment you want to know whether it is current, so
   // ask the server then rather than waiting for the loop's next 60s tick. A
   // dead server records its first failure here; the engine's own backoff
@@ -91,8 +93,19 @@ function GroupScreen() {
       </Screen>
     );
   }
+  // A group deleted from the server takes this phone's copy with it, wherever
+  // the app happened to be standing (lib/db/sync.ts). So the screen that was
+  // showing it says so, rather than the "bad link" a missing group otherwise
+  // means, and the groups list behind it no longer has the group on it.
   if (!data.group) {
-    return <BadLink />;
+    return deleted?.includes(groupId)
+      ? (
+        <Screen><Body>
+          <TopBar title=" " back={route.groups()} />
+          <Scroll><Empty title={copy.join.deleted.title}>{copy.join.deleted.body}</Empty></Scroll>
+        </Body></Screen>
+      )
+      : <BadLink />;
   }
 
   const { group } = data;

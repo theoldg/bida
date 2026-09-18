@@ -4,7 +4,7 @@ import {
 } from "@bida/core";
 import { db } from "../dexie";
 import { groupState } from "../fold";
-import { getDevice, getMe, hideGroup, setMe, unhideGroup } from "../device";
+import { getDevice, getMe, hideGroup, setMe, unhideGroup, updateDevice } from "../device";
 import { requestPersistence } from "../../persist";
 import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
@@ -143,6 +143,49 @@ export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
   await hideGroup(groupId);
+}
+
+/**
+ * Take one group off this phone for good: its ops, every table folded from
+ * them, the link secret, and what the device record remembers of it. The id is
+ * written to `deletedGroups` so the screens can say what happened rather than
+ * showing a group that has silently stopped existing.
+ *
+ * The other half of `forgetGroup`, and nothing like it. This runs when the
+ * group has been deleted from the server (`/delete-my-data`, or a 410 met by
+ * the sync engine on any phone that still held it), which is the one event in
+ * this app that is not an op and cannot be undone. Nothing is appended and
+ * nothing is left to fold: there is no group to record it in.
+ */
+export async function eraseGroupLocally(groupId: Id): Promise<void> {
+  const d = db();
+  await d.transaction("rw", [
+    d.ops, d.groups, d.members, d.expenses, d.settlements,
+    d.attachments, d.identities, d.rates, d.groupKeys,
+  ], async () => {
+    await Promise.all([
+      d.ops.where("groupId").equals(groupId).delete(),
+      d.members.where("groupId").equals(groupId).delete(),
+      d.expenses.where("groupId").equals(groupId).delete(),
+      d.settlements.where("groupId").equals(groupId).delete(),
+      d.attachments.where("groupId").equals(groupId).delete(),
+      d.identities.where("groupId").equals(groupId).delete(),
+      d.rates.where("groupId").equals(groupId).delete(),
+      d.groups.delete(groupId),
+      d.groupKeys.delete(groupId),
+    ]);
+  });
+
+  // The device record has one writer (../device.ts), so it is patched after
+  // the transaction rather than inside it.
+  const device = await getDevice();
+  const { [groupId]: _gone, ...meByGroup } = device.meByGroup;
+  await updateDevice({
+    meByGroup,
+    leftGroups: (device.leftGroups ?? []).filter((id) => id !== groupId),
+    deletedGroups: [...new Set([...(device.deletedGroups ?? []), groupId])],
+    ...(device.lastOpenedGroupId === groupId ? { lastOpenedGroupId: undefined } : {}),
+  });
 }
 
 // -------------------------------------------------------------- identity

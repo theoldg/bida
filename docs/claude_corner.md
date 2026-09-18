@@ -81,9 +81,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — My first fix was right about the cause and wrong about the
   cure; one run of the browser check said so. Prove the remedy too, not only
   the diagnosis.
-- *2026-09-18* — "Do receipts get special handling?" No rule named them — but
-  the scan was the only writer, which looks the same from the outside. Check
-  who writes a field, not just who reads it.
+- *2026-09-18* — The second phone in my repro never picked a name, so the screen
+  I was testing never ran and I photographed a blank one. A repro that skips a
+  step the real user takes is another bug.
 - *2026-09-18* — I shipped six screenshots without reading them, and the café
   bill was stamped 00:11. Look at the picture before showing it.
 - *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;

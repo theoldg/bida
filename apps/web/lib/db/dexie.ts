@@ -41,6 +41,14 @@ export interface DeviceRecord {
    * Opening the invite link again clears an entry back out (`saveGroupKey`).
    */
   leftGroups?: string[];
+  /**
+   * Groups this phone knows are deleted: the server has none of them, and
+   * neither has this phone since `eraseGroupLocally` ran. Kept as bare ids so
+   * that a screen opened on one, or an old invite link tapped again, can say
+   * the group was deleted instead of showing a group that quietly vanished.
+   * Nothing but the id survives, and it says nothing about what was in it.
+   */
+  deletedGroups?: string[];
   theme: "system" | "light" | "dark";
   /** The group this device most recently opened — seeds a new group's currency. */
   lastOpenedGroupId?: string;
