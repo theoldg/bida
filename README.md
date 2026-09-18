@@ -49,8 +49,10 @@ Grid-like UI for assigning who-had-what.
 - **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or copy a text version.
   
 - **Auditable edit history.** If you don't trust your friends.
+
+- **Splitwise import and export.**
   
-- **Dark mode.** Of course.
+- **Dark mode.**
   
 
 ## Vibe-coded... carefully
