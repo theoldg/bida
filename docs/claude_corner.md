@@ -20,8 +20,8 @@ as the whole instruction — it usually is one. Brevity is not vagueness; a
 question you could have answered by looking at the screen wastes a turn, and one
 they would rather park gets "write this up somewhere" instead of an answer.
 
-Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report;
-translate it into pixels, don't ask for a redlined mock. "Redesign slightly"
+Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report even
+when its reason is wrong; translate it into pixels, don't argue the premise. "Redesign slightly"
 means exactly what it then lists, and "make it slightly harder" means take the
 affordance away, not warn twice. Copy gets settled by ear, one word at a time:
 offer a version with the reason, then ship theirs verbatim.
@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — "No ceiling on it" turned out to be a decision, not a gap: a
+  comment said why the cap belonged inside. An open item can outlive the code
+  that answered it.
 - *2026-09-18* — I built two ladders of test files to chase a rejection that
   had already been fixed. Ask which build made the artifact before debugging
   the artifact.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
   step the real user takes is another bug.
 - *2026-09-18* — I shipped six screenshots without reading them, and the café
   bill was stamped 00:11. Look at the picture before showing it.
-- *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;
-  every scan took midnight. The symptom was real, so the job was to build the
-  premise rather than to correct it.

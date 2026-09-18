@@ -5,6 +5,7 @@ import {
 import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
+import { declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
 import { pageForPayload } from "./payload";
 import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
@@ -205,6 +206,12 @@ app.post("/api/groups/:id/ops", async (c) => {
   if (isDeleted(group)) return c.json(GONE, 410);
   if (group.token_hash !== tokenHash) return c.json({ error: "wrong token" }, 403);
 
+  // Before the body is read, because it is the one refusal that costs nothing.
+  // The caps are abuse ceilings, not protocol limits — see push-limits.ts for
+  // why they sit this far above anything an honest phone can send.
+  const oversized = declaredTooLarge(c.req.header("content-length") ?? null);
+  if (oversized) return c.json({ error: oversized.error }, oversized.status);
+
   let body: { ops?: unknown; since?: unknown };
   try {
     body = await c.req.json();
@@ -228,6 +235,11 @@ app.post("/api/groups/:id/ops", async (c) => {
     if (err instanceof SealError) return c.json({ error: err.message }, 400);
     throw err;
   }
+
+  // The caps that hold whichever way the header did: a `content-length` is the
+  // caller's claim, and this is the count.
+  const tooLarge = pushTooLarge(incoming);
+  if (tooLarge) return c.json({ error: tooLarge.error }, tooLarge.status);
 
   const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, now);
   const pushedIds = new Set(incoming.map((op) => op.id));

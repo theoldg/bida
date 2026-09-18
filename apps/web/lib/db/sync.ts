@@ -189,9 +189,10 @@ const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 /**
  * How many queued ops one push carries.
  *
- * Not what keeps the request legal — the server cuts a large push up itself,
- * because it cannot make an old phone do it. This is what keeps the request
- * *small*. A phone coming back from a fortnight offline has hundreds of ops
+ * Not what keeps the request legal — the server cuts a large push up for D1
+ * itself, because it cannot make an old phone do it, and its `413` ceilings sit
+ * a hundredfold above this (`apps/api/src/push-limits.ts`). This is what keeps
+ * the request *small*. A phone coming back from a fortnight offline has hundreds of ops
  * waiting, and sending them as one body means the whole fortnight rides on a
  * single request surviving a tunnel's worth of signal; in rounds, what got
  * through stays through.

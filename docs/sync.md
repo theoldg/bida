@@ -142,6 +142,33 @@ pullable.
 
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
 
+### The push has a ceiling
+
+**This is the one door that registers its own credential.** There is no
+create-group endpoint, so a first push stores whatever token hash it arrives
+with — meaning the bearer gates a stranger out of *someone else's* group and
+nothing else. Anyone can mint group ids, and the log they write into is finished
+data that gets no further resets
+([standing-instructions](standing-instructions.md#product)).
+
+So a push is capped three ways (`apps/api/src/push-limits.ts`): **16 MB of
+body**, **5 000 ops**, and **256 KB of ciphertext per op**. The body is refused
+on `content-length` before it is read, and the other two after the envelope
+parses, because a declared length is only the caller's claim. All three answer
+`413`.
+
+Every number sits deliberately far above honest traffic — the largest op anyone
+can produce is an expense repeating a scanned bill's item array, about 30 KiB
+sealed, and the client pushes fifty at a time. They are **abuse ceilings, not
+protocol limits**: a tight one is worse than the flood it prevents, because a
+phone refused a `413` retries the identical body forever and the server cannot
+make an old build chunk differently. That is the same reasoning that keeps D1
+batching on the server's side of the door (the gotcha below).
+
+**They bound one request, not a campaign.** A flood of well-formed pushes is
+still unanswered, and wants a counter per caller
+([implementation-status.md](implementation-status.md#what-is-open)).
+
 ### Deleting a group
 
 **`DELETE /api/groups/:id`** — every op of that group, and the group with them.

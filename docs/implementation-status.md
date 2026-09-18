@@ -34,10 +34,13 @@ None of these is started, and the first is not code at all.
 - **The hosted service has no liability line.** `/about` says what the server
   sees, names the scan as the exception, and now prints `/delete-my-data`'s address, unlinked; this
   is the rest of it, and the repo being public makes it due.
-- **`POST /ops` has no budget.** It registers any unseen group id and writes
-  unbounded ops into a D1 that gets no further resets — the only door in the app
-  with no ceiling on it ([sync.md](sync.md)). Giving credential-minting its own
-  door is the shape of the fix.
+- **`POST /ops` has no counter.** One push is now bounded — 16 MB, 5 000 ops,
+  256 KB per op, all `413` ([sync.md](sync.md#the-push-has-a-ceiling)) — so no
+  single call can spend the day's D1 writes or a visible slice of the 500 MB.
+  What is left is the harder half: it still registers any unseen group id, and
+  nothing counts pushes across requests, so a flood of well-formed ones is
+  unanswered. A bucket per caller like the scan's (`scan-limits.ts`) is the
+  cheap version; giving credential-minting its own door is the real one.
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found
   are fixed and none has recurred since (2026-09-18): a pasted link loading
