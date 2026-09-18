@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — Asked what was left before launch, I found the scan's day
+  cap: 13000 in the doc, 4300 in the code. A number that moves leaves its old
+  self behind — grep the digits.
 - *2026-09-18* — "It doesn't reset when I update" was my own rule: /demo was
   idempotent by id. Idempotence that spans releases is a cache with no handle.
 - *2026-09-18* — "Try to remove that banner" sounded cosmetic; watching the
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — Asked about API keys, I said AI was deferred. Receipt scanning
   was already built, deployed and documented. Read the repo before describing
   the project to its owner.
-- *2026-09-18* — I answered "does Splitwise emit CRLF?" from a fixture in a git
-  repo, which normalised it. The owner's real export settled it in a line. A
-  file in a repo is a copy; get the artifact.
