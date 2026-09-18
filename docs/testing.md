@@ -216,6 +216,11 @@ Two differences that are the whole reason it is a second script:
 
 ### Gotchas
 
+- **A shot wears the harness's locale and clock.** Left at Playwright's
+  defaults, every entry carried whatever hour the container was at — a
+  restaurant bill stamped 00:11, a different silly hour every run. The context
+  sets `locale`, `timezoneId` and a resumed `clock.install`, so the trip is
+  always photographed at dinner time.
 - **`pnpm` skips postinstall scripts by default, which breaks vitest and
   `wrangler dev`.** The root `package.json` carries
   `"pnpm": { "onlyBuiltDependencies": ["esbuild", "workerd"] }`; anything that

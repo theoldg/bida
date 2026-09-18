@@ -159,7 +159,24 @@ async function main() {
   const { base, close } = await serveWorker({ state: join(ROOT, ".drive/readme-d1") });
   const browser = await launch();
   try {
-    const context = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: "light" });
+    /**
+     * A European phone, at dinner time.
+     *
+     * Both are costume, and the clock was wrong before anyone looked: left at
+     * Playwright's default, the café bill was stamped 00:11 — the hour the
+     * container happened to be at, which is a different silly hour every run.
+     * The app is right to follow the phone's clock (`lib/format.ts`); the
+     * phone in the photograph is the thing to set.
+     */
+    const context = await newPhone(browser, {
+      deviceScaleFactor: 2, colorScheme: "light",
+      locale: "en-GB", timezoneId: "Europe/Paris",
+    });
+    // Resumed immediately: a frozen clock would stop the scan's bar dead, and
+    // an HLC only ever takes the larger of its own physical time and this one
+    // (`core/src/hlc.ts`), so starting it in the past costs nothing.
+    await context.clock.install({ time: new Date("2026-09-12T20:34:00+02:00") });
+    await context.clock.resume();
     const page = await context.newPage();
     const groupId = await seed(page, base);
     const shot = async (name) => {

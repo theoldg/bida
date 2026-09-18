@@ -69,8 +69,8 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-18* — "two rows of 3", then six screens named in order: the ask was
-  already the layout. Shoot the list as given rather than curating a nicer six.
+- *2026-09-18* — I shipped six screenshots without reading them, and the café
+  bill was stamped 00:11. Look at the picture before showing it.
 - *2026-09-18* — "remove those rows" also orphaned a prop and a copy key. A
   deletion is finished when what it stranded is gone too: grep the name you
   just stopped using.
