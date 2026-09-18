@@ -205,17 +205,29 @@ export const copy = {
   },
 
   install: {
+    /**
+     * Chrome's card: an **offer**, because on Android the tab and the installed
+     * app are one storage and installing loses you nothing by being declined.
+     * Its own button says just "Add" (`act.add`) — it opens the OS sheet where
+     * it stands, so the card above it is the sentence.
+     */
     title: "Keep bida on your home screen",
     body: "Own icon, no browser bar, works offline.",
     /**
-     * The iOS tab's card atop the groups list, once it holds one (docs/ios.md).
-     * A title that says what you get rather than what goes wrong: it stands
-     * until the phone installs, and a standing alarm reads as nagging.
+     * The long form, for the two buttons that leave the screen they are on:
+     * `/install` on iOS, and `/about`'s, which has no card over it to lean on.
+     */
+    act: "Add bida to home screen",
+    /**
+     * The iOS tab's card, once it holds a group (docs/ios.md). The same shape
+     * and the same places as Chrome's, and a **warning** rather than an offer —
+     * this browser really does clear the groups it is holding. Still a title
+     * that says what you get rather than what goes wrong: it stands until the
+     * phone installs, and a standing alarm reads as nagging.
      */
     banner: {
       title: "Keep your groups on this phone",
       body: (browser: string | undefined) => `${upper(browser)} may forget them.`,
-      act: "Add bida to home screen",
     },
     /** `/install`: why, the folded after-note, then the recording. */
     page: {

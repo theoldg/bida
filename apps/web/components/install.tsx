@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
@@ -82,44 +82,44 @@ export function useBrowserName(): string | undefined {
 }
 
 /**
- * The nudge on the groups list — Chrome's own install prompt, offered the same
- * way `InstallBanner` warns on iOS: atop the list, once there is a group in it,
- * with an outlined button rather than an inked one. The two never draw
- * together, `offer` is one or the other.
- *
- * **It folds, it does not dismiss.** The offer stands until the phone installs,
- * at which point `offer` becomes "installed" and the card stops rendering by
- * itself — persisting storage is worth a standing ask. But having read it once
- * you should be able to put it away, so the title doubles as a disclosure and
- * the state is remembered per device.
+ * The card both offers are drawn in, so the two cannot drift apart in shape:
+ * the title doubles as the disclosure, and the body is whatever the platform
+ * is owed. **They fold, they do not dismiss** — the offer stands until the
+ * phone installs, at which point `offer` stops being "ready" or "manual" and
+ * the card stops rendering by itself. But having read it once you should be
+ * able to put it away.
  */
-export function InstallNudge() {
-  const offer = useInstallOffer();
-  const device = useDevice();
-  if (offer !== "ready") return null;
-  // undefined is "Dexie hasn't answered yet", and drawing the card open before
-  // it does would snap it shut a frame later on a phone that folded it.
-  if (!device) return null;
-  const open = !device.installNudgeCollapsed;
-
+function FoldedOffer(
+  { title, open, onToggle, children }:
+  { title: string; open: boolean; onToggle: () => void; children: ReactNode },
+) {
   return (
     <div className="pad" style={{ paddingBottom: 4 }}>
       <div className="card">
-        <button type="button" className="nudgehead" aria-expanded={open}
-          onClick={() => void setInstallNudgeCollapsed(open)}>
-          {copy.install.title}
+        <button type="button" className="nudgehead" aria-expanded={open} onClick={onToggle}>
+          {title}
           <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
         </button>
-        {open ? <Offer /> : null}
+        {open ? children : null}
       </div>
     </div>
   );
 }
 
-function Offer() {
+/**
+ * Chrome's own install prompt, one tap. **An offer, not a warning**: Android's
+ * tab and its installed app are one origin and one IndexedDB, so installing
+ * buys an icon, the browser bar gone and a reliable `persist()` — never a
+ * group back. That is the whole difference between this card and the iOS
+ * banner below, and it is in the words, not in where either one sits.
+ */
+function NudgeBody() {
   return (
     <>
       <p className="hint" style={{ marginTop: 4 }}>{copy.install.body}</p>
+      {/* "Add" rather than the banner's "Add bida to home screen": this one
+        opens the OS install sheet where it stands, and the banner's navigates
+        to a tutorial. Two acts, two labels. */}
       <button className="btn btn-s" style={{ marginTop: 11 }} onClick={() => void promptInstall()}>
         {copy.act.add}
       </button>
@@ -128,60 +128,82 @@ function Offer() {
 }
 
 /**
- * An iOS tab's card atop the groups list rather than at its foot: once the tab
- * holds a group, "this browser will clear it" is true and worth reading first.
- * The caller draws it only then — an empty home is someone looking around, and
- * Quick split stores nothing to lose. The how lives on `/install`.
- *
- * **It folds, like the nudge**, on the same device flag (an iOS tab never draws
- * the nudge, so the two can't disagree): someone who has chosen to stay in the
- * browser has read it, and a warning they can't put away is nagging.
- *
- * Every group the tab holds rides along to `/install`, and so onto the home
- * screen (docs/ios.md) — the tab is what forgets, so leaving any behind just
- * leaves a paste to do later. `groupId` is only which one goes first: the top
- * row of the list this card sits on, the most recently active and the one the
- * app would reopen by itself (lib/launch.ts).
+ * The iOS tab's warning: this browser will clear the groups it is holding, and
+ * the home screen is the only exemption (docs/ios.md). Every group the tab
+ * holds rides along to `/install`, and so onto the home screen — the tab is
+ * what forgets, so leaving any behind just leaves a paste to do later.
+ * `groupId` is only which one goes first.
  */
-export function InstallBanner({ groupId }: { groupId: string }) {
+function BannerBody({ groupId }: { groupId: string }) {
+  const browser = useBrowserName();
+  return (
+    <>
+      <p className="hint" style={{ marginTop: 4, textWrap: "balance" }}>{copy.install.banner.body(browser)}</p>
+      <InstallButton first={groupId} />
+    </>
+  );
+}
+
+/**
+ * The offer atop the groups list, whichever this browser is owed — Chrome's
+ * prompt or the iOS tab's warning, never both (`offer` is one or the other).
+ * Drawn only once the list holds a group: an empty home is someone looking
+ * around, Quick split stores nothing to lose, and nobody installs an app
+ * sight unseen.
+ *
+ * The fold is the device's and outlives the visit, because this is the screen
+ * you can leave by scrolling past it. The ledger's copy of the same card takes
+ * the opposite trade — see `LedgerInstall`.
+ */
+export function InstallOfferCard({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
   const device = useDevice();
-  if (offer !== "manual" || !device) return null;
+  if (offer !== "ready" && offer !== "manual") return null;
+  // undefined is "Dexie hasn't answered yet", and drawing the card open before
+  // it does would snap it shut a frame later on a phone that folded it.
+  if (!device) return null;
   const open = !device.installNudgeCollapsed;
-  return <BannerCard groupId={groupId} open={open} onToggle={() => void setInstallNudgeCollapsed(open)} />;
+  const toggle = () => void setInstallNudgeCollapsed(open);
+  return offer === "manual"
+    ? <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>
+        <BannerBody groupId={groupId} />
+      </FoldedOffer>
+    : <FoldedOffer title={copy.install.title} open={open} onToggle={toggle}>
+        <NudgeBody />
+      </FoldedOffer>;
 }
 
 /**
  * The same card atop a group's ledger, above your balance, for whoever only
- * ever arrives by a group's link and never sees the list. Folded on every
- * visit and remembering nothing: the entries are what that screen is for, so
- * it offers itself as one line each time rather than taking the list's fold.
+ * ever arrives by a group's link and never lingers on the list — which is
+ * nearly everyone: a launch reopens the group you were last in and a join
+ * pushes it over the list, so `lib/launch.ts` is built to route around the one
+ * screen the card above sits on. Both platforms, because both are reached the
+ * same way; the iOS one says more because it has more to say.
+ *
+ * Folded on every visit and remembering nothing: the entries are what that
+ * screen is for, so it offers itself as one line each time rather than taking
+ * the list's fold. That line goes the moment the phone installs.
  */
-export function LedgerInstallBanner({ groupId }: { groupId: string }) {
+export function LedgerInstall({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
   const [open, setOpen] = useState(false);
-  if (offer !== "manual") return null;
-  return <BannerCard groupId={groupId} open={open} onToggle={() => setOpen(!open)} />;
-}
-
-function BannerCard({ groupId, open, onToggle }: { groupId: string; open: boolean; onToggle: () => void }) {
-  const browser = useBrowserName();
-  return (
-    <div className="pad" style={{ paddingBottom: 4 }}>
-      <div className="card">
-        <button type="button" className="nudgehead" aria-expanded={open} onClick={onToggle}>
-          {copy.install.banner.title}
-          <Icon name="chev" size={11} className={`kvchev${open ? " on" : ""}`} />
-        </button>
-        {open ? (
-          <>
-            <p className="hint" style={{ marginTop: 4, textWrap: "balance" }}>{copy.install.banner.body(browser)}</p>
-            <InstallButton first={groupId} />
-          </>
-        ) : null}
-      </div>
-    </div>
-  );
+  const toggle = () => setOpen(!open);
+  if (offer === "manual") {
+    return (
+      <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>
+        <BannerBody groupId={groupId} />
+      </FoldedOffer>
+    );
+  }
+  if (offer === "ready") {
+    return (
+      <FoldedOffer title={copy.install.title} open={open} onToggle={toggle}>
+        <NudgeBody />
+      </FoldedOffer>
+    );
+  }
+  return null;
 }
 
 /**
@@ -198,7 +220,7 @@ export function InstallButton({ first }: { first?: string }) {
   return (
     <button type="button" className="btn btn-s" style={{ marginTop: 11 }}
       onClick={() => void carryThenInstall(first)}>
-      {copy.install.banner.act}
+      {copy.install.act}
     </button>
   );
 }

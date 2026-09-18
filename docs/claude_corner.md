@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — The install split looked like "iOS is worse, so more UI". It
+  wasn't: Android's one offer sat on a screen launch.ts routes around. Check the
+  stated reason is the operating one.
 - *2026-09-18* — My first fix was right about the cause and wrong about the
   cure; one run of the browser check said so. Prove the remedy too, not only
   the diagnosis.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — "there's no way?" There was: the share sheet. I had let one
   blocked path stand for the whole platform. Look for the sanctioned route
   before reporting a dead end.
-- *2026-09-17* — "dont drive it." A green `pnpm check` was already the whole
-  contract; the browser run I reached for next was minutes of the owner's time
-  nobody asked for. Stop at done.

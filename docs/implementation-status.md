@@ -57,8 +57,12 @@ None of these is started, and the first is not code at all.
 - **Joining on iPhone ends in the wrong storage.** An invite opens a Safari
   tab that forgets after a week and shares nothing with the home-screen app, so
   a regular joins twice and claims twice. [ios.md](ios.md) is built — `/install`,
-  the home banner, the claim screen's link to paste, and both halves of the invite the icon is
-  added with. An in-app browser is a third storage and is refused outright
+  the card on the list and on each ledger, the claim screen's link to paste, and
+  both halves of the invite the icon is added with. That card is now
+  [one shell with two bodies](ios.md#the-card--the-groups-list-and-the-ledger)
+  and Android is drawn in the same two places: its only offer had sat on the
+  groups list, which `lib/launch.ts` routes around, while Chrome's own infobar
+  stayed suppressed (2026-09-18). An in-app browser is a third storage and is refused outright
   ([ios.md](ios.md#the-in-app-browser--refused)); **unverified on the phone**,
   and the case to watch is a false positive, not a miss.
   **Works on the owner's iPhone from `/install`** (2026-09-16).

@@ -7,7 +7,7 @@ import { Avatar, signClass } from "../components/bits";
 import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog } from "../components/dialog";
-import { InstallBanner, InstallNudge } from "../components/install";
+import { InstallOfferCard } from "../components/install";
 import { InviteFallback } from "../components/invite";
 import { usePasteLink } from "../components/paste-link";
 import { useHold, useLongPressMenu } from "../components/long-press";
@@ -68,9 +68,11 @@ export default function GroupsPage() {
 
             {/* An install offer goes first, and only once there is a group to
               lose: an iOS tab's warning, or Chrome's own install prompt
-              (components/install.tsx). The two never draw together. */}
-            {groups && groups.length > 0 ? <InstallBanner groupId={groups[0]!.group.id} /> : null}
-            {groups && groups.length > 0 ? <InstallNudge /> : null}
+              (components/install.tsx). One card, one of two bodies. The group
+              it names is only which one leads the iOS carry — the top row,
+              the most recently active and the one the app would reopen by
+              itself (lib/launch.ts). */}
+            {groups && groups.length > 0 ? <InstallOfferCard groupId={groups[0]!.group.id} /> : null}
 
             {/* An empty list is only empty once nothing is on its way: an icon
               added to keep someone's groups must not greet them with "No

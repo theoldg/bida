@@ -326,7 +326,7 @@ const pinned = await heldPage.locator(".inappdock .inapp").evaluate((card) =>
 report(offered && boxed === `${base}/join#${flat}` && pinned,
   "the claim list offers an iOS tab the group's link to paste into the app, pinned in view", boxed ?? "");
 
-// ---- Android is not touched ----------------------------------------------
+// ---- Android carries nothing -----------------------------------------------
 const android = await newPhone(browser);
 const androidPage = await android.newPage();
 await androidPage.goto(`${base}/install${fragment}`);
@@ -334,6 +334,35 @@ await androidPage.waitForTimeout(400);
 const androidManifest = await manifestOf(androidPage);
 report(androidManifest.href === "/manifest.webmanifest" && androidManifest.count === 1,
   "a browser that installs by itself gets the one static manifest, starting at /");
+
+// ---- ...but it is asked in the same two places ----------------------------
+// The carry is iOS's alone; *where the offer is drawn* is not. Chrome only
+// fires `beforeinstallprompt` on its own engagement heuristics, so the page is
+// handed one — all the app keeps of it is that there is a prompt to spend.
+// Fired until it lands: the listener goes on at module load, so before the
+// bundle has run there is nothing there to catch it.
+const androidOffer = (page) => page.getByRole("button", { name: "Keep bida on your home screen" });
+async function offerInstall(page) {
+  for (let attempt = 0; attempt < 24; attempt++) {
+    await page.evaluate(() => window.dispatchEvent(new Event("beforeinstallprompt")));
+    if (await androidOffer(page).count()) return true;
+    await page.waitForTimeout(250);
+  }
+  return false;
+}
+
+const androidGroup = await newGroup(androidPage, base, { name: "Porto", me: "Gil", members: ["Hana"] });
+await openGroupsList(androidPage, base);
+report(await offerInstall(androidPage), "the groups list offers Chrome's own install prompt");
+
+// And the ledger, where a launch and a join both actually land (lib/launch.ts):
+// folded to its title, like the iOS banner above and for the same reason.
+await androidPage.goto(`${base}/g?id=${androidGroup}`);
+const androidAdd = androidPage.getByRole("button", { name: "Add", exact: true });
+const androidFolded = await offerInstall(androidPage) && await androidAdd.count() === 0;
+if (androidFolded) await androidOffer(androidPage).click();
+report(androidFolded && await androidAdd.waitFor({ timeout: 2000 }).then(() => true, () => false),
+  "a group's ledger offers Android the same card, folded");
 
 // ---- the icon's first launch ---------------------------------------------
 // An invite nobody has picked a name in yet: this launch is the join the tab

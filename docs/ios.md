@@ -162,8 +162,10 @@ the empty app's Paste link tile is where it goes.
 ## The design
 
 Everything here is **iOS tab only** (`offerFrom` → `manual`) except the
-last, which is every platform. Android and the home-screen app are otherwise
-unchanged. Wording is in `copy.install`, `copy.claim.inApp` and `copy.embedded`.
+in-app browser, which is every platform, and *where* the install card is drawn,
+which Android shares — see [the card](#the-card--the-groups-list-and-the-ledger).
+The home-screen app is otherwise unchanged. Wording is in `copy.install`,
+`copy.claim.inApp` and `copy.embedded`.
 
 ### `/install` — the tutorial, shared
 
@@ -190,28 +192,51 @@ tell. It carries, in this order:
 Reached from the banner. Back is a plain back, and the only exit: the way
 forward is out of the browser.
 
-### The banner — the groups list and the ledger
+### The card — the groups list and the ledger
 
-Both banners scroll with what is under them; neither is pinned. On the ledger
-that matters most — it and your balance sat above the scroller, and the rows
-the screen is for started a third of the way down.
+**One card, two bodies, the same two places on both platforms.** The shell is
+`FoldedOffer` (`components/install.tsx`) and `offer` picks the body, so the two
+platforms cannot drift apart in shape again — the difference between them is in
+the words and nowhere else:
 
-A card at the top of the groups list, *Keep your groups on this phone /
-Safari may forget them*, with **Add bida to home screen** into `/install` — carrying
-every group in the tab, the top of the list first — **shown only once the tab
-holds a group**. An empty home is
-someone looking around: Quick split stores nothing and is the right way to try bida, and a
-visitor won't install an app sight unseen. Once a group is in the tab,
-"Safari may forget it" is true and worth saying at the top rather than the
-foot. It replaces the install nudge in a tab, and folds like it, on the same
-device flag: a warning someone who chose Safari can't put away is nagging.
+- **iOS is a warning.** *Keep your groups on this phone / Safari may forget
+  them*, with **Add bida to home screen** into `/install`, carrying every group
+  in the tab.
+- **Android is an offer.** *Keep bida on your home screen / Own icon, no browser
+  bar, works offline*, with **Add**, which spends Chrome's captured prompt where
+  it stands. There the tab and the installed app are one origin and one
+  IndexedDB, so installing buys ergonomics and a reliable `persist()` — never a
+  group back, and declining costs nothing.
 
-The same card sits atop each group's ledger, above your balance, this group
-first in the carry — folded on every visit and remembering nothing, since the
-entries are that screen's job. Its fold is its own; the list's is the device's.
+Both scroll with what is under them; neither is pinned. On the ledger that
+matters most — it and your balance sat above the scroller, and the rows the
+screen is for started a third of the way down.
 
-`/about`'s *Works offline* carries just the card's button, with no group
-preferred first — `/install` says the how.
+**The groups list**, shown only once the tab holds a group. An empty home is
+someone looking around: Quick split stores nothing and is the right way to try
+bida, and a visitor won't install an app sight unseen. Once a group is in the
+tab, "Safari may forget it" is true and worth saying at the top rather than the
+foot. The fold is the device's and outlives the visit: a warning someone who
+chose Safari can't put away is nagging.
+
+**Each group's ledger**, above your balance, this group first in the carry —
+folded on every visit and remembering nothing, since the entries are that
+screen's job. Its fold is its own; the list's is the device's.
+
+Android is on the ledger for the same reason iOS is, and it is not about
+eviction: `lib/launch.ts` reopens the group you were last in, and `/join`
+pushes the group over the list, so the list is a screen most people never
+linger on. Chrome's own mini-infobar is suppressed (`preventDefault`, so we can
+draw the button ourselves), so without the ledger card the regular Android
+user — joined by a link, launching straight into their group — was offered the
+install nowhere at all. It goes the moment the phone installs, since `offer`
+stops being `ready`.
+
+`/about`'s *Works offline* carries the same button on both, with no group
+preferred first — `/install` says the how on iOS, and on Android the tap is the
+install. It used to be a text link with a share glyph for Chrome and an inked
+button for iOS: one section asking twice in two voices, with iOS's idiom drawn
+on the platform that has no share sheet in it.
 
 ### `/g/claim` — *Have the app?*
 

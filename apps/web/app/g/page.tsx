@@ -16,7 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
-import { LedgerInstallBanner } from "../../components/install";
+import { LedgerInstall } from "../../components/install";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
 import { copy } from "../../lib/copy";
@@ -184,8 +184,11 @@ function LedgerTab({ data }: { data: GroupData }) {
           cards' worth of a screen that is for the rows under them, and the
           ledger you opened to read was starting a third of the way down. They
           say what they say on arrival and then get out of the way. */}
-      {/* An iOS tab only — the banner decides (docs/ios.md). */}
-      <LedgerInstallBanner groupId={gid} />
+      {/* Either platform's install offer, folded to one line — the card
+          decides which, and whether there is one at all (docs/ios.md). Here
+          because this is the screen a launch and a join both land on, so the
+          list's copy of it is one most people never scroll past. */}
+      <LedgerInstall groupId={gid} />
       {me ? (
         <div className="mysummary pad">
           {/* The tint is neutral on purpose: the eyebrow and the figure are
