@@ -327,7 +327,8 @@ owner authorises, so a change here is a new numbered migration beside
 ```sql
 CREATE TABLE groups (
   id TEXT PRIMARY KEY, token_hash TEXT NOT NULL,    -- sha256 of the derived token
-  created_at INTEGER NOT NULL, last_op_seq INTEGER NOT NULL DEFAULT 0);
+  created_at INTEGER NOT NULL, last_op_seq INTEGER NOT NULL DEFAULT 0,
+  deleted_at INTEGER);                              -- 0003: the tombstone, see sync.md
 
 CREATE TABLE ops (
   seq INTEGER NOT NULL,          -- per-group, assigned by the server
@@ -361,7 +362,7 @@ would want different columns anyway.
 | `groups`, `members`, `expenses`, `settlements`, `attachments` | `id` | materialised, rebuildable from `ops` |
 | `rates` | `[groupId+id]` | the group's exchange registry, `id` being the currency code |
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
-| `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded |
+| `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
 
 **One version declares all of it.** The chain of seven that got here has been

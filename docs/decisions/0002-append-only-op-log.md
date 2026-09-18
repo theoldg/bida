@@ -66,8 +66,15 @@ so every op already written folds exactly as it did.
 - **Entry ops repeat every field**, so the log grows faster than it did. Ops are
   never collected, so this wants measuring on a real group rather than arguing
   about — [invariants.md](../invariants.md#open-questions).
-- Ops are never deleted. At our scale that's irrelevant; if it ever isn't, the
-  answer is snapshotting, and that's a new ADR.
+- Ops are never deleted, with **one exception: a whole group, on request**
+  (2026-09-18). "Take my data off your server" cannot be answered by appending
+  one more row, so `DELETE /api/groups/:id` drops every op of that group and
+  leaves a tombstone, and the phones that meet its 410 drop their copies too
+  ([sync.md](../sync.md#deleting-a-group)). It is all of a group or none of it:
+  there is deliberately no way to delete one entry from the log, because the
+  fold and the history are the same thing and half a log is neither. At our
+  scale ops accumulating is otherwise irrelevant; if it ever isn't, the answer
+  is snapshotting, and that's a new ADR.
 - One in-place update silently breaks offline, sync and history at once.
 
 ## Rejected

@@ -7,7 +7,7 @@ import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./sc
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { devAsset } from "./dev-env";
 import { pageForPayload } from "./payload";
-import { acceptOps, ensureGroup, getGroup, opsSince } from "./store";
+import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
 
 /**
  * The one Worker that hosts both the static app and the op-log sync API (see
@@ -32,6 +32,14 @@ const app = new Hono<{
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
+/**
+ * 410 for a group that was deleted on request (`/delete-my-data`), and it is
+ * asked *before* the token, unlike every other refusal here: the tombstone
+ * keeps no token to compare, and a 403 would send somebody looking for a fresh
+ * invite link to a group that no longer exists. `scope` is what lets a phone
+ * say "this group was deleted" rather than "sync is failing".
+ */
+const GONE = { error: "this group was deleted", scope: "deleted" } as const;
 
 /**
  * Today's rate for one currency pair, for the group's rate registry.
@@ -118,6 +126,7 @@ app.post("/api/groups/:id/scan", async (c) => {
 
   const group = await getGroup(c.env.DB, groupId);
   if (!group) return c.json({ error: "unknown group" }, 404);
+  if (isDeleted(group)) return c.json(GONE, 410);
   if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
 
   const ip = c.req.header("cf-connecting-ip") ?? "";
@@ -190,6 +199,10 @@ app.post("/api/groups/:id/ops", async (c) => {
   const now = Date.now();
   const tokenHash = await sha256Hex(token);
   const group = await ensureGroup(c.env.DB, groupId, tokenHash, now);
+  // The tombstone is what makes a deletion stick: this is the push that would
+  // otherwise re-register the id and upload the group again from a phone that
+  // still holds the link (store.ts).
+  if (isDeleted(group)) return c.json(GONE, 410);
   if (group.token_hash !== tokenHash) return c.json({ error: "wrong token" }, 403);
 
   let body: { ops?: unknown; since?: unknown };
@@ -230,11 +243,39 @@ app.get("/api/groups/:id/ops", async (c) => {
 
   const group = await getGroup(c.env.DB, groupId);
   if (!group) return c.json({ error: "unknown group" }, 404);
+  if (isDeleted(group)) return c.json(GONE, 410);
   if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
 
   const since = Number(c.req.query("since") ?? "0") || 0;
   const ops = await opsSince(c.env.DB, groupId, since);
   return c.json({ ops, latestSeq: group.last_op_seq });
+});
+
+/**
+ * Delete a group: every sealed op, and the group down to a tombstone.
+ *
+ * Reached only from `/delete-my-data` (docs/frontend.md#deleting-a-group),
+ * which is the app's answer to "the hosted service has no way to ask for a
+ * group to be deleted". There is nothing to ask *us* for: the link is the
+ * authority here as everywhere else, so the phone holding it does it itself,
+ * with the same derived bearer it syncs with.
+ *
+ * Nothing about this is soft. The ops are gone from D1 when this returns, the
+ * id can never be written to again, and no other copy of the log exists on this
+ * server. What the screen warns about is exactly that.
+ */
+app.delete("/api/groups/:id", async (c) => {
+  const groupId = c.req.param("id");
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
+
+  const group = await getGroup(c.env.DB, groupId);
+  if (!group) return c.json({ error: "unknown group" }, 404);
+  if (isDeleted(group)) return c.json(GONE, 410);
+  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+
+  await deleteGroup(c.env.DB, groupId, Date.now());
+  return c.json({ deleted: true });
 });
 
 app.all("*", (c) => {

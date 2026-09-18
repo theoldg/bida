@@ -12,6 +12,13 @@ interface GroupRow {
   token_hash: string;
   created_at: number;
   last_op_seq: number;
+  /**
+   * Set when the group was deleted on request (`DELETE /api/groups/:id`, from
+   * `/delete-my-data`). The row stays so the id cannot be registered again:
+   * without it, the next phone still holding the link would push its local log
+   * back and the deletion would undo itself. `0003_group_tombstone.sql`.
+   */
+  deleted_at: number | null;
 }
 
 interface OpRow {
@@ -29,6 +36,34 @@ export async function getGroup(db: D1Database, groupId: string): Promise<GroupRo
   return db.prepare("SELECT * FROM groups WHERE id = ?").bind(groupId).first<GroupRow>();
 }
 
+/** A row that is a tombstone rather than a group: nothing may be read or written. */
+export function isDeleted(group: GroupRow): boolean {
+  return group.deleted_at !== null && group.deleted_at !== undefined;
+}
+
+/**
+ * Delete one group: every op, and the group itself down to a tombstone.
+ *
+ * The only destructive path in the API, and the only one in the app that is not
+ * an appended op (ADR-0002) — because "delete my data" cannot be answered with
+ * an entry in a log the server still holds. It is authorised the way everything
+ * else is, by the token derived from the link secret: whoever holds the link is
+ * the group, so whoever holds the link can end it (ADR-0003).
+ *
+ * `last_op_seq` is deliberately left where it was. Nothing may be written to
+ * this id again, and a counter that went backwards would be the one thing that
+ * could hand a future op the sequence number of a deleted one.
+ */
+export async function deleteGroup(
+  db: D1Database, groupId: string, now: number,
+): Promise<void> {
+  await db.batch([
+    db.prepare("DELETE FROM ops WHERE group_id = ?").bind(groupId),
+    db.prepare("UPDATE groups SET token_hash = ?, deleted_at = ? WHERE id = ?")
+      .bind("", now, groupId),
+  ]);
+}
+
 /** First push for a group registers it — see docs/sync.md's "two endpoints". */
 export async function ensureGroup(
   db: D1Database,
@@ -42,7 +77,9 @@ export async function ensureGroup(
     .prepare("INSERT INTO groups (id, token_hash, created_at, last_op_seq) VALUES (?, ?, ?, 0)")
     .bind(groupId, tokenHash, now)
     .run();
-  return { id: groupId, token_hash: tokenHash, created_at: now, last_op_seq: 0 };
+  return {
+    id: groupId, token_hash: tokenHash, created_at: now, last_op_seq: 0, deleted_at: null,
+  };
 }
 
 export async function opsSince(

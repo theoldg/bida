@@ -138,6 +138,32 @@ pullable.
 
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
 
+### Deleting a group
+
+**`DELETE /api/groups/:id`** — every op of that group, and the group with them.
+The one destructive endpoint, authenticated like the other two: whoever holds
+the link is the group, so whoever holds the link can end it
+([ADR-0003](decisions/0003-link-only-access.md)). It is asked for from
+`/delete-my-data` ([frontend.md](frontend.md#deleting-a-group)) and from nowhere
+else.
+
+**What is left is a tombstone**, not an absent row: `groups.deleted_at` set, the
+token hash blanked, the ops gone (`0003_group_tombstone.sql`). Deleting the row
+outright would last until the next phone that still held the link pushed its
+local log back, which registers the id afresh — the deletion would undo itself,
+silently, and the screen promising otherwise would be lying. So the id is spent
+for good, and `last_op_seq` stays where it was so nothing can ever be handed a
+deleted op's sequence number.
+
+**Every endpoint answers 410 for it**, before the token is checked, since there
+is no longer a token to check against. A phone meeting that 410 erases its own
+copy of the group (`eraseGroupLocally`) and writes the id to
+`device.deletedGroups`, which is what the group screen and `/join` read to say
+the group was deleted rather than showing a group that quietly vanished. That is
+the only thing in this app that removes data instead of appending an op saying
+it was removed — [ADR-0002](decisions/0002-append-only-op-log.md) names it as
+its one exception.
+
 ## The sync engine
 
 `apps/web/lib/db/sync.ts`, which is also **the boundary the plaintext stops

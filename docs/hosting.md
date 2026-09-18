@@ -218,6 +218,11 @@ database (`d1_migrations` records it as done) while quietly disagreeing with
 what is actually there, which is worse than either. Reach for `ALTER TABLE`,
 or a new table beside the old one.
 
+**`0003_group_tombstone.sql` is pending on both environments** (2026-09-18): it
+adds `groups.deleted_at`, and until it is applied `/delete-my-data` fails on
+that Worker. The older Worker survives it, being a column it never reads, so it
+can be applied before or after the deploy that needs it.
+
 **Applying it is not part of the deploy.** `deploy.yml` builds and deploys and
 never runs migrations, so `pnpm db:migrate` has to be run by hand — with a
 token the owner pastes — in the same window as the push that needs it. Migrate
