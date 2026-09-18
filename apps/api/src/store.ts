@@ -93,6 +93,28 @@ export async function opsSince(
 }
 
 /**
+ * D1 binds at most 100 parameters to one statement, so nothing here may build
+ * a clause out of the caller's array without cutting it first. A phone coming
+ * back from a fortnight offline pushes its whole queue in one request, and the
+ * `IN (...)` below used to grow with it: past ~99 ops every push that phone
+ * made failed, it retried the same oversized batch forever, and the app said
+ * only that sync was failing.
+ *
+ * The cut is here rather than at the door because the server cannot make old
+ * phones chunk. Refusing a large push with a 413 would wedge exactly the
+ * clients that cannot do anything about it, which is the same bug wearing a
+ * status code.
+ */
+const IDS_PER_QUERY = 90;
+const OPS_PER_BATCH = 100;
+
+function chunk<T>(items: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+/**
  * Accept a batch of sealed ops. Idempotent on `SealedOp.id`: an op already in
  * the log keeps its original seq instead of being reassigned or duplicated,
  * which is what makes retrying a push after a dropped response safe. A retry
@@ -124,13 +146,15 @@ export async function acceptOps(
     return { assigned, latestSeq: group?.last_op_seq ?? 0 };
   }
 
-  const ids = ops.map((op) => op.id);
-  const placeholders = ids.map(() => "?").join(",");
-  const { results: existingRows } = await db
-    .prepare(`SELECT id, seq FROM ops WHERE group_id = ? AND id IN (${placeholders})`)
-    .bind(groupId, ...ids)
-    .all<{ id: string; seq: number }>();
-  const existingSeqById = new Map(existingRows.map((r) => [r.id, r.seq]));
+  const existingSeqById = new Map<string, number>();
+  for (const ids of chunk(ops.map((op) => op.id), IDS_PER_QUERY)) {
+    const placeholders = ids.map(() => "?").join(",");
+    const { results } = await db
+      .prepare(`SELECT id, seq FROM ops WHERE group_id = ? AND id IN (${placeholders})`)
+      .bind(groupId, ...ids)
+      .all<{ id: string; seq: number }>();
+    for (const row of results) existingSeqById.set(row.id, row.seq);
+  }
 
   const fresh = ops.filter((op) => !existingSeqById.has(op.id));
   for (const [id, seq] of existingSeqById) assigned[id] = seq;
@@ -140,30 +164,37 @@ export async function acceptOps(
     return { assigned, latestSeq: group?.last_op_seq ?? 0 };
   }
 
-  // The reserve first, then one insert per op reading the counter back out of
-  // the row it just moved: `last_op_seq - (n - 1 - i)` is op `i`'s number. The
-  // subquery is what lets the insert be bound before the reserve has run, and
-  // so lets both live in the one batch.
-  const statements = [
-    db
-      .prepare("UPDATE groups SET last_op_seq = last_op_seq + ? WHERE id = ? RETURNING last_op_seq")
-      .bind(fresh.length, groupId),
-    ...fresh.map((op, i) =>
+  // One transaction per chunk rather than one for the push: each still reserves
+  // and writes together, which is the whole invariant, and a run of them leaves
+  // the log exactly as a run of smaller pushes would.
+  let latestSeq = 0;
+  for (const batch of chunk(fresh, OPS_PER_BATCH)) {
+    // The reserve first, then one insert per op reading the counter back out of
+    // the row it just moved: `last_op_seq - (n - 1 - i)` is op `i`'s number. The
+    // subquery is what lets the insert be bound before the reserve has run, and
+    // so lets both live in the one batch.
+    const statements = [
       db
         .prepare(
-          "INSERT INTO ops (seq, id, group_id, sealed, received_at)"
-          + " VALUES ((SELECT last_op_seq FROM groups WHERE id = ?) - ?, ?, ?, ?, ?)",
+          "UPDATE groups SET last_op_seq = last_op_seq + ? WHERE id = ? RETURNING last_op_seq",
         )
-        .bind(groupId, fresh.length - 1 - i, op.id, groupId, op.sealed, now)),
-  ];
-  const results = await db.batch<{ last_op_seq: number }>(statements);
-  const latestSeq = results[0]?.results?.[0]?.last_op_seq;
-  if (latestSeq === undefined) {
-    throw new Error(`acceptOps: no sequence number came back for group ${groupId}`);
+        .bind(batch.length, groupId),
+      ...batch.map((op, i) =>
+        db
+          .prepare(
+            "INSERT INTO ops (seq, id, group_id, sealed, received_at)"
+            + " VALUES ((SELECT last_op_seq FROM groups WHERE id = ?) - ?, ?, ?, ?, ?)",
+          )
+          .bind(groupId, batch.length - 1 - i, op.id, groupId, op.sealed, now)),
+    ];
+    const results = await db.batch<{ last_op_seq: number }>(statements);
+    latestSeq = results[0]?.results?.[0]?.last_op_seq ?? 0;
+    if (latestSeq === 0) {
+      throw new Error(`acceptOps: no sequence number came back for group ${groupId}`);
+    }
+    const firstSeq = latestSeq - batch.length + 1;
+    batch.forEach((op, i) => { assigned[op.id] = firstSeq + i; });
   }
-
-  const firstSeq = latestSeq - fresh.length + 1;
-  fresh.forEach((op, i) => { assigned[op.id] = firstSeq + i; });
 
   return { assigned, latestSeq };
 }

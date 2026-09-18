@@ -128,8 +128,10 @@ and all it gets.
 // ← { "assigned": { "<opId>": 413 }, "ops": [ /* seq > 412, unseen */ ],
 //     "latestSeq": 419 }
 ```
-Accepting is idempotent on `Op.id`, which is what makes retry safe on a flaky
-connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
+A push carries however much the phone has queued, so the accept cuts it into
+chunks no clause of which outgrows D1's hundred bound parameters — see the
+gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
+safe on a flaky connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
 and the id is what says they are one op. **There is no create-group endpoint**:
 a group's first push registers it, storing `sha256(token)` from that request,
 and every later request is checked against it. A `GET` on a never-pushed group
@@ -274,6 +276,11 @@ audit trail exists to answer.
   group" while `StartSync`'s background loop was already retrying successfully.
   It now watches `groups` with `useLiveQuery` and moves on the moment the group
   lands, from any attempt. The secret is saved up front either way.
+- **D1 binds a hundred parameters to a statement, not a thousand.** Nothing may
+  build a clause out of an array that came in over the wire: `acceptOps` cuts
+  the queue up before it asks which ops it already has. The version that didn't
+  worked for a year and then met a phone with a fortnight of expenses on it,
+  which pushed, failed, and retried the identical oversized batch forever.
 - **A seq number must never exist before its row does.** `acceptOps` reserves
   and inserts in one `db.batch`, which D1 runs as a transaction, because a phone
   that pulls in between is told `latestSeq` covers rows it cannot read yet —

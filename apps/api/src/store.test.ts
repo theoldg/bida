@@ -22,11 +22,22 @@ function fakeD1(): D1Database {
   for (const file of ["0001_init.sql", "0003_group_tombstone.sql"]) {
     sqlite.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), "utf8"));
   }
+  // SQLite here would bind thousands; D1 stops at a hundred. Without this the
+  // fake is more forgiving than production in the one way that matters — a
+  // clause built out of the caller's array passes every test and then fails on
+  // the phone with the biggest queue.
+  const D1_MAX_BOUND_PARAMS = 100;
+  const bound = (args: unknown[]) => {
+    if (args.length > D1_MAX_BOUND_PARAMS) {
+      throw new Error(`too many SQL variables: ${args.length} > ${D1_MAX_BOUND_PARAMS}`);
+    }
+    return args as never[];
+  };
   const prepare = (sql: string, args: unknown[] = []) => ({
     bind: (...next: unknown[]) => prepare(sql, next),
-    first: async () => (sqlite.prepare(sql).get(...args as never[]) ?? null) as Row | null,
-    all: async () => ({ results: sqlite.prepare(sql).all(...args as never[]) as Row[] }),
-    run: async () => { sqlite.prepare(sql).run(...args as never[]); },
+    first: async () => (sqlite.prepare(sql).get(...bound(args)) ?? null) as Row | null,
+    all: async () => ({ results: sqlite.prepare(sql).all(...bound(args)) as Row[] }),
+    run: async () => { sqlite.prepare(sql).run(...bound(args)); },
   });
   return {
     prepare,
@@ -130,5 +141,28 @@ describe("acceptOps", () => {
     expect(again.assigned).toEqual({ op2: 2, op3: 3 });
     const group = await getGroup(db, "g1");
     expect(group!.last_op_seq).toBe(3);
+  });
+});
+
+describe("a push bigger than one query can carry", () => {
+  const many = Array.from({ length: 150 }, (_, i) => sealed(`bulk${i}`));
+
+  it("takes all of it, numbered without a gap", async () => {
+    const { assigned, latestSeq } = await acceptOps(db, "g1", many, NOW);
+    expect(Object.keys(assigned)).toHaveLength(150);
+    expect(assigned["bulk0"]).toBe(3);
+    expect(assigned["bulk149"]).toBe(152);
+    expect(latestSeq).toBe(152);
+    const ops = await opsSince(db, "g1", 2);
+    expect(ops.map((op) => op.seq)).toEqual(Array.from({ length: 150 }, (_, i) => i + 3));
+  });
+
+  it("stays idempotent across the cut", async () => {
+    await acceptOps(db, "g1", many, NOW);
+    const again = await acceptOps(db, "g1", many, NOW);
+    expect(again.assigned["bulk0"]).toBe(3);
+    expect(again.assigned["bulk149"]).toBe(152);
+    expect(again.latestSeq).toBe(152);
+    expect(await opsSince(db, "g1", 0)).toHaveLength(152);
   });
 });
