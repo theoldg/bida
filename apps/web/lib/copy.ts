@@ -725,13 +725,12 @@ export const copy = {
 
   /**
    * Paste link read nothing, so the box asks for the link by hand
-   * (components/paste-link.tsx). The body says what to do and not what went
-   * wrong: iOS can withhold the pasteboard from a read while the link really
-   * is on it, so "Nothing to paste" would often be a lie.
+   * (components/paste-link.tsx). The title is the whole of it: a field and the
+   * word Paste say what to do, and "Nothing to paste" would often be a lie —
+   * iOS can withhold the pasteboard from a read with the link on it.
    */
   paste: {
     title: "Paste the link here",
-    body: "Touch and hold the box, then tap Paste. Nothing came through on its own.",
     placeholder: "Invite link",
     open: "Open",
   },

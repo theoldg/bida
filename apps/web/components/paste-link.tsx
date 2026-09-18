@@ -69,7 +69,7 @@ export function usePasteLink(): { paste: () => Promise<void>; dialog: ReactNode 
       </div>
     </Dialog>
   ) : box ? (
-    <PromptDialog title={copy.paste.title} hint={copy.paste.body} confirm={copy.paste.open}
+    <PromptDialog title={copy.paste.title} confirm={copy.paste.open}
       placeholder={copy.paste.placeholder} autoCapitalize="none"
       onClose={() => setBox(false)}
       onSubmit={async (typed) => { setBox(false); await open(typed); }} />
