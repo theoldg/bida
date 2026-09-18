@@ -89,9 +89,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;
   every scan took midnight. The symptom was real, so the job was to build the
   premise rather than to correct it.
-- *2026-09-18* — "remove those rows" also orphaned a prop and a copy key. A
-  deletion is finished when what it stranded is gone too: grep the name you
-  just stopped using.
+- *2026-09-18* — "remove those rows" orphaned a prop and a copy key; a refactor
+  left a dead helper still swearing both editors called it. Grep the name you
+  stopped using, either way.
 - *2026-09-18* — One screenshot, one screen — but the flush-left prose was one
   class three screens share. Ask what else wears it before fixing where the
   photo was taken.

@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { only, sameValue, setDerived } from "./patch";
+import { only, sameValue } from "./patch";
 
 /**
  * The merge rule, asked directly. Every case here was previously reachable
  * only by saving an entry and reading the op it appended, which is how the two
- * entry editors came to disagree about it: one wrote a derived base amount
- * whenever its inputs were touched, the other only when the figure moved, and
- * the difference is a peer's offline edit surviving or not.
+ * entry editors came to disagree about it in the first place.
  */
 
 describe("only", () => {
@@ -40,23 +38,5 @@ describe("sameValue", () => {
     // change a person can see — which is why the expense editor canonicalises
     // the split before it gets here rather than asking this to be cleverer.
     expect(sameValue(["a", "b"], ["b", "a"])).toBe(false);
-  });
-});
-
-describe("setDerived", () => {
-  it("writes a recomputed field only when the figure actually moved", () => {
-    const patch: Record<string, unknown> = { rateToBase: "0.0921" };
-    setDerived(patch, "baseAmountMinor", 4605, 4605);
-    expect(patch).toEqual({ rateToBase: "0.0921" });
-    setDerived(patch, "baseAmountMinor", 4600, 4605);
-    expect(patch).toEqual({ rateToBase: "0.0921", baseAmountMinor: 4600 });
-  });
-
-  it("takes back a field the diff wrote, once the recomputation says it didn't move", () => {
-    // The rate is a typed field, so the diff puts it in the patch; the
-    // registry then answers with the number that was already there.
-    const patch: Record<string, unknown> = { rateToBase: "0.09210" };
-    setDerived(patch, "rateToBase", "0.0921", "0.0921");
-    expect("rateToBase" in patch).toBe(false);
   });
 });

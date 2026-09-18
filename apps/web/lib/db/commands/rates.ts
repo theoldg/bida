@@ -4,7 +4,6 @@ import {
 } from "@bida/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
-import { setDerived } from "./patch";
 
 /**
  * What the group says a currency is worth — and, from that, what an entry
@@ -68,41 +67,6 @@ export function toBase(
   return input.currency === base
     ? input.amountMinor
     : convertMinor(input.amountMinor, input.currency, base, input.rateToBase);
-}
-
-/** What an entry is written at: the three typed fields and the figure they make. */
-export interface Valued {
-  amountMinor: number;
-  currency: CurrencyCode;
-  rateToBase: Rate;
-  baseAmountMinor: number;
-}
-
-/**
- * Re-derive an entry's rate and base figure after an edit, and write each only
- * if it moved.
- *
- * Both entry editors call this, and that is the point: the amount, the
- * currency and the rate each move the base figure, but *touching* them is not
- * moving it — a rate corrected to one that rounds to the same number leaves
- * the figure where it was, and writing it back anyway would clobber whatever
- * another device did to it offline (`patch.ts`). Written out at each editor,
- * the two copies disagreed about exactly that.
- */
-export async function revalue(
-  groupId: Id,
-  patch: Record<string, unknown>,
-  existing: Valued,
-  merged: { amountMinor: number; currency: CurrencyCode; rateToBase: Rate },
-): Promise<void> {
-  if (patch["amountMinor"] === undefined
-    && patch["currency"] === undefined
-    && patch["rateToBase"] === undefined) return;
-  const { base, rates } = await valuationOf(groupId);
-  const rateToBase = rateToWrite(merged.currency, merged.rateToBase, base, rates);
-  setDerived(patch, "rateToBase", rateToBase, existing.rateToBase);
-  setDerived(patch, "baseAmountMinor", toBase({ ...merged, rateToBase }, base),
-    existing.baseAmountMinor);
 }
 
 /**

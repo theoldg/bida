@@ -20,9 +20,7 @@
  *
  * The rule lives here, once, because it was written out twice before: the
  * expense editor and the transfer editor each rolled their own copy, and the
- * copies drifted. One guarded the derived base amount; the other wrote it on
- * every edit, so correcting a rate to one that rounds to the same figure
- * clobbered a peer's offline change to it.
+ * copies drifted.
  */
 
 /**
@@ -109,18 +107,3 @@ export function sameValue(a: unknown, b: unknown): boolean {
   return stableJson(a) === stableJson(b);
 }
 
-/**
- * The same rule for a field nobody typed. A derived field — a base amount, a
- * normalised payer map — is recomputed from what did change, so it has to be
- * re-tested against the stored value rather than written because its inputs
- * were touched: recomputing is not moving.
- */
-export function setDerived(
-  patch: Record<string, unknown>,
-  key: string,
-  value: unknown,
-  existing: unknown,
-): void {
-  if (sameValue(value, existing)) delete patch[key];
-  else patch[key] = value;
-}
