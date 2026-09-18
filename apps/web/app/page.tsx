@@ -1,5 +1,6 @@
 "use client";
 
+import { isDemo } from "@bida/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
@@ -8,13 +9,14 @@ import { Icon } from "../components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "../components/chrome";
 import { ConfirmDialog } from "../components/dialog";
 import { InstallOfferCard } from "../components/install";
+import { DemoNoLink } from "../components/demo";
 import { InviteFallback } from "../components/invite";
 import { usePasteLink } from "../components/paste-link";
 import { useHold, useLongPressMenu } from "../components/long-press";
 import { HomeMenu } from "../components/home-menu";
 import { UpdateNudge } from "../components/update";
 import { copy } from "../lib/copy";
-import { forgetGroup } from "../lib/db/commands";
+import { clearDemo, forgetGroup } from "../lib/db/commands";
 import { ago, money, plural } from "../lib/format";
 import { route } from "../lib/group-link";
 import { iosHomeScreenApp } from "../lib/install";
@@ -179,19 +181,29 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity } = summary;
   const [asking, setAsking] = useState(false);
   const invite = useInviteLink(group.id);
+  // The demo sits on this list like any other group once it has been opened —
+  // it *is* one. Only the two things it cannot do differ: it has no invite
+  // link to copy, and forgetting it would hide a group with no link to bring
+  // it back, so the same row clears it instead (lib/db/commands/demo.ts).
+  const demo = isDemo(group.id);
+  const [noLink, setNoLink] = useState(false);
 
   const { hold, menu } = useLongPressMenu([
-    ...(invite.copy
-      ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
-      : []),
+    ...(demo
+      ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: () => setNoLink(true) }]
+      : invite.copy
+        ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
+        : []),
     // Not gated on a claim: a group this phone never said who it was in is
     // the one it most wants off the list, and forgetting is local only
     // (`forgetGroup`).
-    { label: copy.members.forget, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+    { label: demo ? copy.demo.clear : copy.members.forget, icon: "trash", danger: true,
+      onSelect: () => setAsking(true) },
   ]);
 
   async function forget() {
-    await forgetGroup(group.id);
+    if (demo) await clearDemo();
+    else await forgetGroup(group.id);
   }
 
   return (
@@ -229,10 +241,15 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
 
       <InviteFallback invite={invite} />
 
+      {noLink ? <DemoNoLink onClose={() => setNoLink(false)} /> : null}
+
       {asking ? (
-        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget} danger={true}
+        <ConfirmDialog
+          title={demo ? copy.demo.clear : copy.members.forget}
+          confirm={demo ? copy.demo.clear : copy.members.forget}
+          danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{copy.members.forgetBody}</p>
+          <p>{demo ? copy.demo.clearBody : copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </>

@@ -11,6 +11,7 @@
  * - `rates.ts` — the registry, and what it makes an entry worth (ADR-0005)
  * - `entries.ts` — expenses, incomes and transfers
  * - `import.ts` — a Splitwise CSV as a new group, in one batch
+ * - `demo.ts` — the one group that is never given a key, and so never syncs
  */
 
 export {
@@ -18,6 +19,7 @@ export {
   addMember, renameMember, removeMember, healGroup, type NewGroupInput,
 } from "./groups";
 export { importGroup, type ImportGroupInput } from "./import";
+export { openDemo, clearDemo } from "./demo";
 export { setRate, clearRate } from "./rates";
 export {
   addExpense, editExpense, deleteExpense, type ExpenseInput,

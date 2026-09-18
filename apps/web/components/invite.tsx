@@ -1,5 +1,8 @@
 "use client";
 
+import { isDemo } from "@bida/core";
+import { useState } from "react";
+import { DemoNoLink } from "./demo";
 import { Dialog } from "./dialog";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
@@ -13,14 +16,22 @@ import { useInviteLink } from "../lib/hooks";
  */
 export function InviteButton({ groupId }: { groupId: string | undefined }) {
   const invite = useInviteLink(groupId);
-  if (!invite.copy) return null;
+  // The demo is the one group whose link is genuinely absent rather than not
+  // loaded yet: it has no key, which is the whole of why it never syncs. So
+  // the button stays and says so, because a missing button on the one screen
+  // that hands the group over reads as the app having lost it.
+  const [noLink, setNoLink] = useState(false);
+  const demo = isDemo(groupId);
+  if (!demo && !invite.copy) return null;
   return (
     <>
-      <button className="iconbtn" aria-label={copy.group.copyLink} onClick={invite.copy}>
+      <button className="iconbtn" aria-label={copy.group.copyLink}
+        onClick={demo ? () => setNoLink(true) : invite.copy}>
         <Icon name={invite.copied ? "check" : "link"} size={18}
           style={invite.copied ? { color: "var(--brand)" } : undefined} />
       </button>
 
+      {noLink ? <DemoNoLink onClose={() => setNoLink(false)} /> : null}
       <InviteFallback invite={invite} />
     </>
   );

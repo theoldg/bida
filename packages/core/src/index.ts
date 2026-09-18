@@ -18,3 +18,4 @@ export * from "./scan-body.js";
 export * from "./names.js";
 export * from "./seal.js";
 export * from "./when.js";
+export * from "./demo.js";

@@ -182,6 +182,16 @@ export const route = {
    * deciding which row is which entry, which the file carries no ids to decide.
    */
   import: () => "/import",
+  /**
+   * The demo group: a real group, made of real ops, that never syncs
+   * (app/demo/page.tsx). Creates it or reopens the one already here, then
+   * redirects into its ledger.
+   *
+   * **Linked from nowhere in the app on purpose** — not the empty groups list,
+   * not `/about`, not the README. The URL is the whole door: you get there
+   * because somebody sent you there.
+   */
+  demo: () => "/demo",
   /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
   paste: () => "/paste",
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */

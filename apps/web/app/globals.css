@@ -1790,6 +1790,14 @@ button.amtnote:active { background: var(--hl-edge) }
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
+/* ---- the demo's mark (components/demo.tsx) ----
+   The one card in the app that never folds and never dismisses: every screen
+   in the demo works, so "this is not yours" has to stay put. Set apart from
+   the install offer it sits above by a left rule rather than a colour, because
+   colour in this app is spent on money and nothing else (ADR-0023). */
+.demomark { border-left: 2px solid var(--muted); border-radius: var(--r-s) }
+.demomarkhead { display: flex; align-items: center; gap: 6px; color: var(--ink) }
+
 /* ---- skeletons ----
    A screen waiting on IndexedDB used to render its top bar over nothing: the
    frame appeared, the page sat empty, then a ledger dropped in. These hold the

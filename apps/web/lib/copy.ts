@@ -720,6 +720,26 @@ export const copy = {
     still: "Still nothing. Copy the link first.",
   },
 
+  /**
+   * The demo group (app/demo/page.tsx). Reached only by its address, so the
+   * words have to do the whole job of saying what you have walked into: a real
+   * group, somebody else's trip, nothing here leaving the phone.
+   */
+  demo: {
+    opening: "Opening the demo",
+    /** The card at the head of its ledger. It stays put; it is not a toast. */
+    title: "Demo group",
+    body: "A trip somebody already took. Nothing here syncs, and you can clear it any time.",
+    /** In the group menu, where Forget group sits for every other group. */
+    clear: "Clear the demo",
+    clearBody: "This takes the demo off this phone. Opening the address again brings it back, exactly as it is now.",
+    /** The one genuinely broken thing: no key, so no invite link to hand over. */
+    noLink: {
+      title: "No invite link",
+      body: "The demo is only ever on the phone it was opened on, so there is nothing to invite anybody to. Make a group of your own to share one.",
+    },
+  },
+
   claim: {
     title: "Which one are you?",
     /** `/g/claim`'s bar names the group; the question is the body's title. */

@@ -16,6 +16,7 @@ import {
 import { ConfirmDialog } from "../../components/dialog";
 import { FitLine } from "../../components/fit-line";
 import { GroupMenu } from "../../components/group-menu";
+import { DemoCard } from "../../components/demo";
 import { LedgerInstall } from "../../components/install";
 import { Icon } from "../../components/icons";
 import { useLongPressMenu } from "../../components/long-press";
@@ -201,6 +202,10 @@ function LedgerTab({ data }: { data: GroupData }) {
           decides which, and whether there is one at all (docs/ios.md). Here
           because this is the screen a launch and a join both land on, so the
           list's copy of it is one most people never scroll past. */}
+      {/* Above the install offer, because it outranks it: what group you are
+          standing in comes before what to do with this browser. It draws
+          nothing for every other group. */}
+      <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
       {me ? (
         <div className="mysummary pad">

@@ -11,6 +11,7 @@ pnpm keyboard     # the act a list of names is typed for, against an open keyboa
 pnpm offline      # just every screen with the network cut
 pnpm stall        # what a screen does when reading this phone's database stops working
 pnpm homescreen   # the invite an iOS icon is added with, both ends of it
+pnpm demo         # /demo lands on a populated ledger, and holds no key
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
@@ -399,6 +400,21 @@ gate taken out (`lib/db/visible.ts`). Headless Chromium calls every page
 visible however the tabs are arranged, so `visibilityState` is overridden in
 the page rather than a second tab brought forward; the navigation it lies to is
 a real one.
+
+## `pnpm demo` — the demo group, and the key it must not have
+
+The seed's arithmetic is core's own (`demo.test.ts`: the balances clear to zero
+under `settle`, every amount is a positive integer minor unit, any permutation
+folds identically). What this check asks is what the seed cannot: that
+`/demo` lands on a populated ledger rather than a claim gate or an empty
+state, that the balances do not cancel, that the mark is at its head, that
+**Copy invite link** refuses out loud, and that clearing takes the group off the
+phone while the address brings the same one back, entry for entry.
+
+The assertion worth having is the quiet one: `groupKeys` stays empty
+([sync.md](sync.md#the-demo-group-has-no-key)). A key row there is the single
+change that would start pushing tourists into a D1 that gets no further resets,
+and nothing else would notice, because the demo would carry on looking perfect.
 
 ## `pnpm homescreen` — the invite that rides onto the home screen
 

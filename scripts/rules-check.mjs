@@ -101,6 +101,35 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
+/**
+ * docs/sync.md#the-demo-group-has-no-key: the demo group is a real group that
+ * cannot reach the server, and the whole of that mechanism is one absence —
+ * it is never given a `groupKeys` row. `runSyncAll` iterates that table and
+ * `syncGroupOnce` returns early without a row, so one `groupKeys.put` for the
+ * demo id turns every tourist into a writer of a D1 that gets no further
+ * resets. Nothing would notice: the demo would simply start working harder.
+ *
+ * So exactly one file may *create* a key row, and it refuses the demo id.
+ * `lib/db/sync.ts` writes the table too and is allowed: both of its writes
+ * update a row it has just read, so neither can bring one into being. Both
+ * halves are checked, because either alone is reversible by a line.
+ */
+{
+  const KEY_WRITER = join(ROOT, "apps/web/lib/db/commands/groups.ts");
+  const KEY_UPDATER = join(ROOT, "apps/web/lib/db/sync.ts");
+  for (const file of sources(join(ROOT, "apps/web"))) {
+    if (file === KEY_WRITER || file === KEY_UPDATER) continue;
+    if (/\bgroupKeys\.put\b/.test(code(readFileSync(file, "utf8")))) {
+      fail(file, "writes a `groupKeys` row — key rows are written by `saveGroupKey` alone, "
+        + "which is what keeps the demo group unable to sync (docs/sync.md#the-demo-group-has-no-key)");
+    }
+  }
+  if (!/\bisDemo\b/.test(code(readFileSync(KEY_WRITER, "utf8")))) {
+    fail(KEY_WRITER, "`saveGroupKey` no longer refuses the demo id — a key row is the one "
+      + "thing that would let the demo reach the server (docs/sync.md#the-demo-group-has-no-key)");
+  }
+}
+
 // ADR-0007: the app goes back through `goBack` or `goUp` (lib/nav.ts), which
 // mark the traversal as the app's own. Safari reports any back taken inside a
 // tap as the device's button, so a bare one is answered by the press guard —
@@ -188,5 +217,6 @@ for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "every live read watched, back goes through nav, no browser dialogs, no stray copy, no em dash in copy");
+    + "every live read watched, the demo holds no key, back goes through nav, no browser dialogs, "
+    + "no stray copy, no em dash in copy");
 process.exit(problems.length ? 1 : 0);

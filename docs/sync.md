@@ -223,6 +223,29 @@ went to the background waits for it to come back before its transaction opens
 half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
 ([frontend.md](frontend.md#a-live-read-can-die)).
 
+### The demo group has no key
+
+**`runSyncAll` drives off `groupKeys.toArray()`, and `syncGroupOnce` returns
+early when there is no key row.** So a group created without `saveGroupKey` is
+*structurally* incapable of reaching the server: there is no flag to flip and
+no path to disable. That absence is the whole of the demo group
+([product.md](product.md#the-mvp)) — it is otherwise an ordinary group of
+ordinary ops, and nothing downstream of the fold knows the difference.
+
+This is load-bearing, not tidiness. `POST /ops` registers any unseen group id
+and has no budget, the D1 log gets no further resets
+([implementation-status.md](implementation-status.md#what-is-open)), and a
+syncing demo would be a one-tap door into it for every tourist. So
+**`saveGroupKey` is the only thing that may create a key row and it refuses the
+demo id**, which `scripts/rules-check.mjs` holds — the one invariant here whose
+quiet breakage would look like nothing at all, because the demo would simply
+start working harder. `lib/db/sync.ts` writes the table too and only ever
+updates a row it has just read.
+
+The cost is paid in one place and paid out loud: no key means no invite link,
+so **Copy invite link refuses** rather than disappearing
+([frontend.md](frontend.md#routing)).
+
 **A forgotten group is skipped**, not synced in the background forever. It
 keeps its secret, but not who this phone was in it: opening the invite link
 again un-forgets it and asks.

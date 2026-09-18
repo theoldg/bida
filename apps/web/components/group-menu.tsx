@@ -1,12 +1,14 @@
 "use client";
 
+import { isDemo } from "@bida/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { copy } from "../lib/copy";
-import { forgetGroup } from "../lib/db/commands";
+import { clearDemo, forgetGroup } from "../lib/db/commands";
 import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
 import { useInviteLink, type GroupData } from "../lib/hooks";
+import { DemoNoLink } from "./demo";
 import { ConfirmDialog } from "./dialog";
 import { InviteFallback } from "./invite";
 import { MenuButton, type SheetAction } from "./row-menu";
@@ -34,6 +36,11 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   const router = useRouter();
   const invite = useInviteLink(groupId);
   const [asking, setAsking] = useState(false);
+  // The demo has no key and therefore no invite link, so Copy invite link
+  // stays on the menu and refuses out loud instead of quietly going missing
+  // (components/demo.tsx).
+  const demo = isDemo(groupId);
+  const [noLink, setNoLink] = useState(false);
 
   /**
    * Export: build the file, then hand it over by whatever this browser has.
@@ -51,16 +58,24 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   }
 
   const actions: SheetAction[] = [
-    ...(invite.copy ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }] : []),
+    ...(demo
+      ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: () => setNoLink(true) }]
+      : invite.copy
+        ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
+        : []),
     { label: copy.group.people, icon: "users", onSelect: () => router.push(route.members(groupId)) },
     { label: copy.rates.title, icon: "fx", onSelect: () => router.push(route.rates(groupId)) },
     { label: copy.group.history, icon: "clock", onSelect: () => router.push(route.history(groupId)) },
     { label: copy.group.export, icon: "share", onSelect: () => void exportData() },
-    { label: copy.members.forget, icon: "trash", danger: true, onSelect: () => setAsking(true) },
+    // Clearing the demo takes its place: forgetting only hides, and a hidden
+    // demo with no link to reopen it is a group that is gone and still on disk.
+    { label: demo ? copy.demo.clear : copy.members.forget, icon: "trash", danger: true,
+      onSelect: () => setAsking(true) },
   ];
 
   async function forget() {
-    await forgetGroup(groupId);
+    if (demo) await clearDemo();
+    else await forgetGroup(groupId);
     // Unlike the groups list, this screen *is* the group: once it's forgotten
     // there is nothing here to come back to, so leave and don't leave it
     // behind in the history either.
@@ -74,10 +89,15 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
 
       <InviteFallback invite={invite} />
 
+      {noLink ? <DemoNoLink onClose={() => setNoLink(false)} /> : null}
+
       {asking ? (
-        <ConfirmDialog title={copy.members.forget} confirm={copy.members.forget} danger={true}
+        <ConfirmDialog
+          title={demo ? copy.demo.clear : copy.members.forget}
+          confirm={demo ? copy.demo.clear : copy.members.forget}
+          danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{copy.members.forgetBody}</p>
+          <p>{demo ? copy.demo.clearBody : copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </>

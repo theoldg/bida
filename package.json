@@ -1,6 +1,6 @@
 {
   "name": "bida",
-  "version": "0.1.50",
+  "version": "0.1.51",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -26,6 +26,7 @@
     "keyboard": "node scripts/keyboard-check.mjs",
     "stall": "node scripts/stall-check.mjs",
     "homescreen": "node scripts/homescreen-check.mjs",
+    "demo": "node scripts/demo-check.mjs",
     "shots": "node scripts/shots.mjs",
     "readme-shots": "node scripts/readme-shots.mjs",
     "icons": "node scripts/icons.mjs",

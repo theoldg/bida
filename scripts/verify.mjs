@@ -19,7 +19,7 @@ import { ensureBuild } from "./lib/harness.mjs";
 import { runTogether } from "./lib/together.mjs";
 
 /** Every `*-check.mjs`, by the `pnpm <name>` that runs it alone. */
-const CHECKS = ["entries", "offline", "claim", "keyboard", "stall", "homescreen"];
+const CHECKS = ["entries", "offline", "claim", "keyboard", "stall", "homescreen", "demo"];
 
 ensureBuild();
 

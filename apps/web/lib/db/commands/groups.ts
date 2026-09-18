@@ -1,5 +1,5 @@
 import {
-  colorSeedFor, healDrafts, memberIdFor, newGroupId, newGroupSecret, restoreClaimDrafts,
+  colorSeedFor, healDrafts, isDemo, memberIdFor, newGroupId, newGroupSecret, restoreClaimDrafts,
   type CurrencyCode, type Id,
 } from "@bida/core";
 import { db } from "../dexie";
@@ -88,6 +88,13 @@ export async function createGroup(
  * never travels through an op, only through the link fragment. ADR-0003.
  */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
+  // The demo group is the one group that must never hold a key. A key row is
+  // what `runSyncAll` iterates and what `syncGroupOnce` returns early without,
+  // so writing one here is the single line that would start pushing a
+  // tourist's demo into a D1 that gets no further resets
+  // (docs/sync.md#the-demo-group-has-no-key). `scripts/rules-check.mjs` keeps
+  // this the only writer of that table, so this refusal covers all of them.
+  if (isDemo(groupId)) throw new Error("the demo group is never given a key");
   const existing = await db().groupKeys.get(groupId);
   // A fresh link is the only cure for a 403, so opening one clears the failure
   // rather than leaving the old warning up over a key that now works.
