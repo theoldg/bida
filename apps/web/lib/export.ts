@@ -33,8 +33,11 @@ export function groupCsv(data: GroupData): string {
     settlements: Object.fromEntries(data.settlements.map((s) => [s.id, s])),
   };
   // The local day, which is the only honest one: an expense added at 23:00
-  // must not export as tomorrow. Same function the date field shows.
-  return groupToCsv(state, { formatDay: dateInputValue });
+  // must not export as tomorrow. Same function the date field shows. The clock
+  // is read here rather than taken as an argument because it only dates the
+  // foot — nothing on a screen depends on it, and both callers would pass
+  // `Date.now()`.
+  return groupToCsv(state, { formatDay: dateInputValue, exportedAt: Date.now() });
 }
 
 /** `bida-marrakech-2026-09-17.csv` — the group and the day it left. */

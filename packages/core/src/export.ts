@@ -52,6 +52,12 @@ export interface CsvOptions {
    * already shows, so passing it keeps one home for the fact.
    */
   formatDay: (ts: number) => string;
+  /**
+   * When the file is being written. The foot's `Date` cell, which a real
+   * Splitwise export fills with the export day rather than leaving empty —
+   * a clock, so core takes it as an argument.
+   */
+  exportedAt: number;
 }
 
 /** One member column: who it is, and whether they are still in the group. */
@@ -126,7 +132,7 @@ interface Row {
  * Chronological, unlike every screen in the app: a ledger read top-down is
  * what a spreadsheet is for, and an importer does not care either way.
  */
-export function groupToCsv(state: GroupState, { formatDay }: CsvOptions): string {
+export function groupToCsv(state: GroupState, { formatDay, exportedAt }: CsvOptions): string {
   const group = state.group;
   if (!group) throw new Error("groupToCsv: no group in this state");
   const currency = group.baseCurrency;
@@ -140,12 +146,14 @@ export function groupToCsv(state: GroupState, { formatDay }: CsvOptions): string
   const money = (minor: number) => minorToDecimalString(minor, currency);
   const lines: string[] = [
     row(["Date", "Description", "Category", "Cost", "Currency", ...columns.map((c) => c.name)]),
+    // A blank line under the header and another above the foot, because a real
+    // Splitwise export has both and this file is only worth what an importer
+    // makes of it.
+    "",
   ];
 
   const totals: Record<Id, number> = {};
-  let totalCostMinor = 0;
   for (const r of rows) {
-    totalCostMinor += r.costMinor;
     for (const c of columns) {
       const delta = r.deltas[c.id] ?? 0;
       totals[c.id] = (totals[c.id] ?? 0) + delta;
@@ -156,19 +164,23 @@ export function groupToCsv(state: GroupState, { formatDay }: CsvOptions): string
     ]));
   }
 
-  // The foot, which is a summary and not an expense. Importers know to skip
-  // the row spelled `Total balance`; a spreadsheet does not, which is worth
-  // knowing before you sum the Cost column.
+  // The foot, which is a summary and not an expense — cell for cell as a real
+  // export writes it: the export day in `Date`, the words in `Description`,
+  // and a space where the category and the cost would be. Every one of those
+  // is load-bearing. An importer reads `Date` as a date and aborts the whole
+  // file on the word `Total balance`, which is why the total spend the column
+  // used to carry is gone: there is nowhere left to put it.
+  lines.push("");
   lines.push(row([
-    TOTAL_BALANCE, "", "", money(totalCostMinor), currency,
+    formatDay(exportedAt), TOTAL_BALANCE, " ", " ", currency,
     ...columns.map((c) => money(totals[c.id] ?? 0)),
   ]));
 
-  // CRLF, as the CSV spec has it and as Splitwise emits it. No BOM: Excel
-  // wants one to read accented names, and an importer matching `Date`
-  // literally chokes on the one that precedes it — and the import is what
-  // this file is for.
-  return lines.map((line) => `${line}\r\n`).join("");
+  // LF, and a trailing blank line, which is what Splitwise actually emits —
+  // verified against an export Tricount accepts, where the CRLF this once
+  // claimed was the reason it accepted nothing we wrote. No BOM either, and
+  // that one the export agrees with: it opens on `Date`.
+  return `${lines.map((line) => `${line}\n`).join("")}\n`;
 }
 
 function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
@@ -232,12 +244,19 @@ function row(cells: string[]): string {
 
 /**
  * A cell, escaped the way RFC 4180 has it: wrapped in quotes when it holds a
- * comma, a quote or a newline, with inner quotes doubled.
+ * comma or a quote, with inner quotes doubled.
  *
- * Descriptions are free text somebody typed on a phone, so all three turn up —
+ * Descriptions are free text somebody typed on a phone, so both turn up —
  * `Dinner, wine and "the good cheese"` is one cell, and a file that let it be
  * three is a file that imports as garbage.
+ *
+ * A newline is the exception: it folds into a space instead of being quoted.
+ * RFC 4180 allows one inside a quoted cell, but the records are LF-terminated,
+ * so a reader that splits on LF before it parses quotes sees a record break —
+ * and two in a row look like the blank line that ends the file. The words
+ * survive, which is all the line break was carrying.
  */
 function cell(value: string): string {
-  return /["\r\n,]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  const flat = value.replace(/[\r\n]+/g, " ");
+  return /[",]/.test(flat) ? `"${flat.replace(/"/g, '""')}"` : flat;
 }

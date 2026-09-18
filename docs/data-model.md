@@ -266,13 +266,24 @@ single creditor is split.
 
 `core/export.ts` writes **Splitwise's export shape** and no other:
 `Date,Description,Category,Cost,Currency` then one column per member,
-`YYYY-MM-DD` dates, plain decimals, CRLF, no BOM. Tricount has no import of
+`YYYY-MM-DD` dates, plain decimals. Tricount has no import of
 its own format — it has "import from Splitwise" — so these columns are what
 get a group into Tricount, Splitwise, Sesterce, Spliit and a spreadsheet, and
 Tricount's own `Paid by X`/`Paid for X` shape would reach nothing this does
 not. `Payment`, `General` and `Total balance` are spelled exactly so because
 an importer matches them literally; they are protocol tokens, not copy, which
 is why they are in core and not `copy.ts` ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+
+**The bytes are the shape too, and Tricount reads nothing that gets them
+wrong**: LF, no BOM, a blank line under the header, a blank line above the
+foot, and a trailing one. The foot is `<export day>,Total balance, , ,<currency>`
+then the balances — the words go in `Description`, never in `Date`, which an
+importer parses as a date and aborts the whole file over. That leaves nowhere
+to state the total spend, so the file doesn't. A newline inside a description
+folds to a space: quoting it is legal but a reader splitting on LF first sees a
+record break, and two would look like the blank line that ends the file. Every
+one of those is pinned by a test, because the version that guessed CRLF was
+rejected in full while the row counter happily counted to the end.
 
 **A member's cell is `paid − owed` for that row.** Every row therefore nets to
 zero and the column totals are the balances — the `Total balance` foot is

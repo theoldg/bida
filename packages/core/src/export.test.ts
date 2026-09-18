@@ -3,17 +3,22 @@ import { computeBalances } from "./balance.js";
 import { exportColumns, groupToCsv } from "./export.js";
 import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
 import { foldOps } from "./fold.js";
-import { minorToDecimalString } from "./money.js";
 import { emptyGroupState, type GroupState } from "./types.js";
 
-/** The one option the builder needs, fixed to UTC so the rows are pinned. */
+/** The options the builder needs, fixed to UTC so the rows are pinned. */
 const utcDay = (ts: number) => new Date(ts).toISOString().slice(0, 10);
-const csvOf = (state: GroupState) => groupToCsv(state, { formatDay: utcDay });
+const EXPORTED_AT = Date.UTC(2026, 8, 18);
+const csvOf = (state: GroupState) =>
+  groupToCsv(state, { formatDay: utcDay, exportedAt: EXPORTED_AT });
 
-/** The file as records and cells, with the quoting undone. */
+/**
+ * The file as records and cells, with the quoting undone — and without the two
+ * blank lines the shape carries, which every assertion below would otherwise
+ * have to count around. `theShapeOfTheFile` is where those are checked.
+ */
 function parse(csv: string): string[][] {
-  expect(csv.endsWith("\r\n")).toBe(true);
-  return csv.trimEnd().split("\r\n").map((line) => {
+  expect(csv.endsWith("\n\n")).toBe(true);
+  return csv.trimEnd().split("\n").filter((line) => line !== "").map((line) => {
     const cells: string[] = [];
     let cell = "";
     let quoted = false;
@@ -50,7 +55,7 @@ function footMinor(csv: string, currency = "EUR"): Record<string, number> {
   const rows = parse(csv);
   const header = rows[0]!;
   const foot = rows[rows.length - 1]!;
-  expect(foot[0]).toBe("Total balance");
+  expect(foot[1]).toBe("Total balance");
   const out: Record<string, number> = {};
   for (let i = 5; i < header.length; i++) {
     out[header[i]!] = Math.round(Number(foot[i]) * 10 ** (currency === "TND" ? 3 : currency === "JPY" ? 0 : 2));
@@ -94,9 +99,12 @@ describe("the Marrakech trip, as a spreadsheet", () => {
     expect(footMinor(csv)).toEqual(computeBalances(state).byMember);
   });
 
-  it("totals the cost column to what the trip cost", () => {
-    const foot = rows[rows.length - 1]!;
-    expect(foot[3]).toBe(minorToDecimalString(computeBalances(state).totalSpendMinor, "EUR"));
+  it("dates the foot the day the file left, and leaves its cost cell blank", () => {
+    // Cell for cell what a real export writes — the total spend has nowhere to
+    // go, because the `Date` column is the one an importer parses strictly.
+    expect(rows[rows.length - 1]!.slice(0, 5)).toEqual([
+      "2026-09-18", "Total balance", " ", " ", "EUR",
+    ]);
   });
 
   it("gives the payer their whole outlay and the sharers their share", () => {
@@ -253,12 +261,15 @@ describe("what a person typed into a description", () => {
       amountMinor: 100, currency: "EUR", rateToBase: "1", baseAmountMinor: 100,
       paidBy: ADA, split: { mode: "equal", members: [ADA] },
     }, ADA);
-    const line = csvOf(foldOps(b.ops)).split("\r\n")[1]!;
+    // Line 1 is the blank under the header, so the entry is line 2.
+    const line = csvOf(foldOps(b.ops)).split("\n")[2]!;
     expect(line).toBe('2026-01-02,"Dinner, ""Nomad""",General,1.00,EUR,0.00');
   });
 
-  it("keeps a newline inside one cell", () => {
-    expect(described("Taxi\nfrom the airport")[1]![1]).toBe("Taxi\nfrom the airport");
+  it("folds a newline into a space, so it can never read as a record break", () => {
+    expect(described("Taxi\nfrom the airport")[1]![1]).toBe("Taxi from the airport");
+    // Two of them would otherwise look like the blank line that ends the file.
+    expect(described("Taxi\n\nfrom the airport")[1]![1]).toBe("Taxi from the airport");
   });
 
   it("leaves an unnamed entry's cell empty rather than inventing a word", () => {
@@ -334,6 +345,34 @@ describe("an expense nothing can apportion", () => {
   });
 });
 
+/**
+ * The bytes, pinned — because getting these wrong is what stopped Tricount
+ * reading a single file we wrote, and no assertion about cells would have
+ * caught it. Checked against a real Splitwise export Tricount accepts.
+ */
+describe("the bytes an importer actually reads", () => {
+  const csv = csvOf(foldOps(marrakechOps()));
+
+  it("ends its lines with LF, never CRLF", () => {
+    expect(csv).not.toContain("\r");
+  });
+
+  it("opens on the header, with no byte-order mark in front of it", () => {
+    expect(csv.startsWith("Date,")).toBe(true);
+  });
+
+  it("leaves a blank line under the header, above the foot, and at the end", () => {
+    const lines = csv.split("\n");
+    expect(lines[1]).toBe("");
+    expect(lines[lines.length - 4]).toBe("");
+    expect(csv.endsWith("\n\n")).toBe(true);
+    // Those two and no others — splitting on LF leaves a further pair of empty
+    // strings for the trailing blank line. A blank line among the records would
+    // end the import early for a reader that treats one as the end of the file.
+    expect(lines.filter((l) => l === "")).toHaveLength(4);
+  });
+});
+
 describe("the edges of the shape", () => {
   it("refuses a state with no group rather than guessing a currency", () => {
     expect(() => csvOf(emptyGroupState())).toThrow(/no group/);
@@ -345,7 +384,7 @@ describe("the edges of the shape", () => {
     b.push("member", ADA, "create", { name: ADA, colorSeed: 1 }, THEO);
     const rows = parse(csvOf(foldOps(b.ops)));
     expect(rows).toHaveLength(2);
-    expect(rows[1]).toEqual(["Total balance", "", "", "0.00", "EUR", "0.00"]);
+    expect(rows[1]).toEqual(["2026-09-18", "Total balance", " ", " ", "EUR", "0.00"]);
   });
 
   it("orders columns by name, not by the order the fold happened to hand over", () => {
