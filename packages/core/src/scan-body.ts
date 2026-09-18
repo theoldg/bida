@@ -6,7 +6,7 @@
  */
 
 /** The model both paths call. Ours to move, never a caller's. */
-export const GEMINI_MODEL = "gemini-2.5-flash-lite";
+export const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 /**
  * Two hosts for one model, because the two paths pay for it differently.

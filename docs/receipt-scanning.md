@@ -438,21 +438,24 @@ budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
 | **global** | 2200/hour, 13000/day | the bill — sized to spend the Cloud credit over two months, against real use of tens of scans a day |
 
 **Measured, not estimated** (2026-09-18, one real call through this envelope):
-a scan is ~2,590 input tokens — ~1,530 of prompt and schema, the rest the image
-— and a few hundred out. At `gemini-2.5-flash-lite`'s $0.10/$0.40 per million
-that is **about $4 per 10,000 scans**, and the day cap above is what spends the
+a scan is ~2,740 input tokens — ~1,530 of prompt and schema, the rest the image
+— and a few hundred out. At `gemini-3.1-flash-lite`'s $0.25/$1.50 per million
+that is **about $11 per 10,000 scans**, and the day cap above is what spends the
 Cloud credit over roughly two months rather than anything derived from a price.
 
-**Newer is dearer, not cheaper.** The Flash-Lite line has gone up every
-generation: 2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50, 3.5 at $0.30/$2.50 — so
-the cheapest is the oldest, at about a third of 3.1, and it answered faster.
-What that buys is untested on real receipts; the reading is the thing to
-compare before moving `GEMINI_MODEL` again.
+**Cheaper was tried and cost too much.** The Flash-Lite line gets dearer each
+generation — 2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50, 3.5 at $0.30/$2.50 — so
+2.5 ran the shared scan for a few hours at roughly a third of the price, and
+was sent back: too dumb on real receipts (2026-09-18). On the one feature whose
+whole job is reading numbers off paper, a wrong total costs more than the
+model does. **The price is not the thing to optimise here**, which is the
+reason to read this paragraph before moving `GEMINI_MODEL` down again.
 
-The tip jar's **$5 ≈ 10,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is now
-deliberately conservative rather than exact — $5 buys more like 13,000. A
-donation ask that understates what it buys is the safe direction for it to be
-wrong in, and the day cap no longer derives from it.
+The tip jar's **$5 ≈ 4,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is the
+measured figure rounded down — $5 buys more like 4,400. It understates on
+purpose: a donation ask is the one screen that must not overstate what the
+money buys. It moves with the model, and the day cap no longer derives from
+it.
 
 **Only the global cap bounds what the owner pays.** A credential costs one
 unauthenticated request to mint, by design, so the caller bucket is politeness:
@@ -580,7 +583,7 @@ and the answer is still no
 `apps/web/lib/scan/budget.ts` and `turnstile.ts`, their two halves on the phone
 · `apps/api`'s `POST
 /api/groups/:id/scan`, the same bearer-token check as sync, passing through to
-`GEMINI_MODEL = "gemini-2.5-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
+`GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
 `apps/api/src/scan-body.ts` (prompt, its two refusal tones, structured output

@@ -430,7 +430,7 @@ export const copy = {
      * the day cap is set from (`SCAN_LIMITS`, core/scan.ts) — if the price
      * moves, both move.
      */
-    rate: "$5 ≈ 10,000 receipt scans",
+    rate: "$5 ≈ 4,000 receipt scans",
     /**
      * The same $5, cut the way this group cuts everything else — and the
      * offer, said before the button that takes it. Splitting is the thing
