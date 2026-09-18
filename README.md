@@ -17,10 +17,14 @@
 
 <table>
 <tr>
-<td width="25%"><img src="docs/media/ledger.png" alt=""></td>
-<td width="25%"><img src="docs/media/balances.png" alt=""></td>
-<td width="25%"><img src="docs/media/split.png" alt=""></td>
-<td width="25%"><img src="docs/media/scan.png" alt=""></td>
+<td width="33%"><img src="docs/media/ledger.png" alt=""></td>
+<td width="33%"><img src="docs/media/balances.png" alt=""></td>
+<td width="33%"><img src="docs/media/expense.png" alt=""></td>
+</tr>
+<tr>
+<td width="33%"><img src="docs/media/scan.png" alt=""></td>
+<td width="33%"><img src="docs/media/items.png" alt=""></td>
+<td width="33%"><img src="docs/media/summary.png" alt=""></td>
 </tr>
 </table>
 

@@ -12,7 +12,7 @@ pnpm offline      # just every screen with the network cut
 pnpm stall        # what a screen does when reading this phone's database stops working
 pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm shots        # PNGs into shots/ (gitignored)
-pnpm readme-shots # the four pictures in README.md, into docs/media/ (committed)
+pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
 pnpm run docs     # links resolve, ADRs indexed, claude_corner within size, ~30ms
 pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
@@ -186,14 +186,22 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
 Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `playwright-core` is a root devDependency. Never run `playwright install`.
 
-## `pnpm readme-shots` — the four pictures in the README
+## `pnpm readme-shots` — the six pictures in the README
 
 `scripts/readme-shots.mjs` walks the same UI with the opposite brief. `shots`
 leans on states worth catching — a split that doesn't add up, a payer who
 overpaid, a server that can't be reached; a stranger deciding whether to open
 the app should see none of those, so this one seeds a trip that adds up in
-prices a person might actually pay, and photographs the ledger, balances, a
-split that balances, and the scan screen.
+prices a person might actually pay, and photographs two rows of three: the app
+a Tricount user already expects (ledger, balances, adding an expense) over the
+part they came for (a scan mid-read, the who-had-what grid, and the saved
+expense read back line by line).
+
+The scan's bar is a CSS animation on a wall clock, so `waitForTimeout` would
+photograph a different fraction on every machine: the request is routed into a
+hole and the animation is paused at a fixed progress instead (`freezeScanBar`).
+The two after it need a scan that *answers*, which is `stubScan` and the same
+canned bill `pnpm drive` uses.
 
 Two differences that are the whole reason it is a second script:
 
@@ -204,7 +212,7 @@ Two differences that are the whole reason it is a second script:
   timeout.
 - **Its output is committed.** `shots/` is gitignored, so a README cannot point
   at it; `docs/media/` is not. Re-run and commit what moves when one of the
-  four screens changes.
+  six screens changes.
 
 ### Gotchas
 

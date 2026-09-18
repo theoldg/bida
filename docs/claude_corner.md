@@ -69,6 +69,8 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — "two rows of 3", then six screens named in order: the ask was
+  already the layout. Shoot the list as given rather than curating a nicer six.
 - *2026-09-18* — "remove those rows" also orphaned a prop and a copy key. A
   deletion is finished when what it stranded is gone too: grep the name you
   just stopped using.
@@ -96,5 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — "Eleven authorities, seven pieces of state" counted a symptom
   and read as a verdict; three were real. Check your own premise before the
   owner has to.
-- *2026-09-17* — The check stayed green with the thing it guarded switched off.
-  Break it on purpose and watch the red, or the green is decoration.
