@@ -59,6 +59,10 @@ to remove more from this list than you add.
   Write where a decision stands, never the sequence of sessions that reached it,
   and prefer editing a line to adding one —
   [CLAUDE.md](../CLAUDE.md#doc-upkeep).
+- **Argue with an incorrect premise.** *2026-09-18* — "i do want you to argue
+  with incorrect premises, very much so". Say the premise is wrong and why,
+  then still fix the symptom it was reported about: a wrong reason does not
+  make the report wrong.
 
 ## Product
 
