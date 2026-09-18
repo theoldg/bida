@@ -175,6 +175,13 @@ export const route = {
    */
   install: (links: readonly CarriedGroup[] = []) =>
     `/install${links.length ? `#${formatInvites(links)}` : ""}`,
+  /**
+   * A Splitwise (or bida) CSV as a new group (app/import/page.tsx). Off the
+   * groups list rather than out of a group's own menu: what it makes *is* a
+   * group, and merging a file into a group that already has entries would mean
+   * deciding which row is which entry, which the file carries no ids to decide.
+   */
+  import: () => "/import",
   /** Paste link found nothing on the clipboard (app/paste/page.tsx). */
   paste: () => "/paste",
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */

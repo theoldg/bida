@@ -50,11 +50,19 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   /** Whoever is already selected — a group re-opened from its invite link
       preselects the name this phone last claimed. */
   picked?: string;
-  addPlaceholder: string;
+  /** Only with `onAdd`: there is no row to place it over otherwise. */
+  addPlaceholder?: string;
   onPick: (id: string) => void;
-  /** Adds the name and answers to what it added, which is then the selection:
-      you typed your own name, so making it one more tap asks twice. */
-  onAdd: (name: string) => Who | Promise<Who>;
+  /**
+   * Adds the name and answers to what it added, which is then the selection:
+   * you typed your own name, so making it one more tap asks twice.
+   *
+   * Left out where the list is not ours to add to. An import's list is the
+   * columns of somebody else's file (`app/import/page.tsx`), and a name with
+   * no column in it has no balance to be, so that screen asks which of these
+   * you are and offers no way to be a fourth.
+   */
+  onAdd?: (name: string) => Who | Promise<Who>;
   onContinue: (id: string) => void | Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
@@ -103,12 +111,14 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
             list you are picking yourself out of, so asking again would be
             asking twice. A name the list already holds cannot be filed — it is
             a row a tap away, and that tap is the same answer. */}
-        <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
-          onAdd={async (name) => {
-            const who = await onAdd(name);
-            setAdded(who);
-            onPick(who.id);
-          }} />
+        {onAdd ? (
+          <AddName placeholder={addPlaceholder ?? ""} taken={people.map((p) => p.name)} handle={adder}
+            onAdd={async (name) => {
+              const who = await onAdd(name);
+              setAdded(who);
+              onPick(who.id);
+            }} />
+        ) : null}
       </div>
 
       {/* Under the list, and sticky once the list is longer than the screen:

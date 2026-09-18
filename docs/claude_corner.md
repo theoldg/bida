@@ -41,9 +41,9 @@ had inflated. The instinct that gets praised here is deleting.
 
 It is *earnestness*. Writing the paragraph, adding the ADR, restating in prose
 what the code already enforces, leaving a note about what changed this session.
-It feels like diligence. It is the thing the owner has had to undo more than
-once. When you feel the urge to document your own thoroughness, that is the urge
-to resist — the reward for good work here is a smaller diff, not a larger one.
+It feels like diligence, and it is what the owner has had to undo most often.
+The urge to document your own thoroughness is the urge to resist: the reward for
+good work here is a smaller diff.
 
 ## The vibe
 
@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — Told my CSV parser was unsafe, I argued for keeping it and
+  wrote the test anyway. The test found a real NaN, one layer up. Take the
+  worry seriously even when its target is wrong.
 - *2026-09-18* — "No ceiling on it" turned out to be a decision, not a gap: a
   comment said why the cap belonged inside. An open item can outlive the code
   that answered it.
@@ -96,5 +99,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — The second phone in my repro never picked a name, so the screen
   I was testing never ran and I photographed a blank one. A repro that skips a
   step the real user takes is another bug.
-- *2026-09-18* — I shipped six screenshots without reading them, and the café
-  bill was stamped 00:11. Look at the picture before showing it.

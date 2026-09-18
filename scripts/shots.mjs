@@ -126,10 +126,33 @@ async function addTransfer(page, base, groupId, { amount, from, to }) {
 /** Each side of a transfer opens our own picker now, not a <select> (ADR-0008). */
 const pickSide = (page, label, name) => pick(page, `[aria-label="${label}"]`, name);
 
+/**
+ * A Splitwise export, as `/import` reads one: three people, an uneven expense,
+ * an income, a co-sponsored row, a transfer, and a row carrying no money. The
+ * refused twin differs by one cell, so the shot shows what a person sees when
+ * they have a date their spreadsheet wrote its own way.
+ */
+const CSV = [
+  "Date,Description,Category,Cost,Currency,Ada,Sam,Theo",
+  "",
+  "2026-04-03,Riad,Lodging,300.00,EUR,200.00,-100.00,-100.00",
+  "2026-04-04,Dinner,Dining out,60.00,EUR,-20.00,-20.00,40.00",
+  "2026-04-05,Deposit back,General,-30.00,EUR,10.00,10.00,-20.00",
+  "2026-04-06,Boat,General,100.00,EUR,20.00,30.00,-50.00",
+  "2026-04-07,Cash at the airport,Payment,25.00,EUR,25.00,0.00,-25.00",
+  "2026-04-08,Unapportionable,General,10.00,EUR,0.00,0.00,0.00",
+  "",
+  "2026-09-18,Total balance, , ,EUR,235.00,-80.00,-155.00",
+  "",
+].join("\n");
+
+const BAD_CSV = CSV.replace("2026-04-04,Dinner", "04/04/2026,Dinner");
+
 const routes = (g) => [
   ["groups", "/"],
   ["about", "/about"],
   ["new", "/new"],
+  ["import", "/import"],
   ["group-ledger", `/g?id=${g}`],
   ["group-balances", `/g?id=${g}&tab=balances`],
   ["members", `/g/members?id=${g}`],
@@ -290,6 +313,35 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-result.png`) });
       process.stdout.write(`${theme}/quick-result `);
 
+      // The import, past its first screen (which is in `routes` above): the
+      // plan a file is read into before anything is written, the same screen
+      // refused, and the question it ends on. Pasted rather than picked
+      // because the two are the same read, and a file picker is the OS's.
+      await page.goto(`${base}/import`);
+      await page.locator("textarea.csvbox").fill(CSV);
+      await page.getByRole("button", { name: "Read it" }).click();
+      await page.waitForSelector(".rows .row");
+      // Pasting has no filename to take a name off, so the field is typed into
+      // — which is also what the shot should show, since it is the one thing
+      // the shape cannot state.
+      await page.locator("#i-name").fill("Marrakech");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-import-plan.png`) });
+      process.stdout.write(`${theme}/import-plan `);
+
+      await page.getByRole("button", { name: "Create the group" }).click();
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: join(SHOTS, `${theme}-import-who.png`) });
+      process.stdout.write(`${theme}/import-who `);
+
+      await page.goto(`${base}/import`);
+      await page.locator("textarea.csvbox").fill(BAD_CSV);
+      await page.getByRole("button", { name: "Read it" }).click();
+      await page.waitForSelector("p.failure");
+      await page.waitForTimeout(200);
+      await page.screenshot({ path: join(SHOTS, `${theme}-import-refused.png`) });
+      process.stdout.write(`${theme}/import-refused `);
+
       // Adding someone is the last row of the list, mid-name — boxed, because
       // that name is not on the list until its plus is pressed.
       await page.goto(`${base}/g/members?id=${groupId}`);
@@ -328,6 +380,23 @@ async function main() {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-delete-entry.png`) });
       process.stdout.write(`${theme}/delete-entry `);
+
+      // The two doors to the import, on a phone that holds no groups at all:
+      // the line under the empty list, and the row in the kebab. Its own
+      // context, because the one above has a trip in it.
+      const fresh = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: theme });
+      const blank = await fresh.newPage();
+      await blank.goto(`${base}/`);
+      await blank.waitForSelector(".empty");
+      await blank.waitForTimeout(200);
+      await blank.screenshot({ path: join(SHOTS, `${theme}-groups-empty.png`) });
+      process.stdout.write(`${theme}/groups-empty `);
+      await blank.getByRole("button", { name: "Menu" }).click();
+      await blank.waitForTimeout(250);
+      await blank.screenshot({ path: join(SHOTS, `${theme}-groups-menu.png`) });
+      process.stdout.write(`${theme}/groups-menu `);
+      await fresh.close();
+
       await context.close();
     }
     console.log(`\nshots written to ${SHOTS}`);

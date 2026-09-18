@@ -313,6 +313,45 @@ A **removed** member still named on a live entry gets a column, under their
 plain name: without it nothing sums to zero, and "Bruno (removed)" would
 import as a fourth person.
 
+### Reading one back
+
+`core/import.ts` is the mirror: rows in, a **plan** out, nothing written. The
+foot is the checksum — fold the plan, `computeBalances`, refuse on any drift —
+and a refusal is whole-file, by code and line, because a ledger missing one
+entry balances to something nobody can account for.
+
+Two things in the shape do not invert, so each is a **stated rule** rather than
+a recovery:
+
+- **A member's cell is `paid − owed`.** `(+20, −10, −10)` at a cost of 30 is "A
+  paid 30, split three ways" and half a dozen other entries equally. One
+  positive column — every file Splitwise itself writes — is lossless: that
+  member paid the cost, and the split is `exact` at `owed = paid − delta`.
+  Several are read as several payers at `paidᵢ = deltaᵢ × cost / Σ positive`,
+  which reproduces every balance to the cent while the payer figures are a
+  guess. Both branches need `Σ positive ≤ cost`, which the file does not
+  guarantee and which is therefore checked once: no real export can break it,
+  since `Σ max(0, paidᵢ − shareᵢ) ≤ Σ paidᵢ = cost`.
+- **A transfer is the `Payment` token plus the confirming shape** — exactly two
+  non-zero cells, equal and opposite, sized to the cost. Nothing reads the
+  description, so "payment for dinner" stays an expense.
+
+`Category` comes back verbatim into `categoryId`, which is free text and not an
+id into a table we do not have, so reading is the exact inverse of writing;
+`General` and `Payment` are protocol tokens and land as nothing. A row with
+every member cell zero is dropped — it is what the writer emits for an entry
+nothing can apportion, and it adds zero to every column total, so the checksum
+survives it. That is the only row that is ever dropped: **a row is skipped only
+when it carries no money**, and anything else unreadable refuses the file.
+
+Reading is **liberal where writing is strict**: CRLF, a lone CR, a BOM, a
+case-folded header, blank lines anywhere and short rows are all accepted, since
+a file arriving here has been through somebody else's export, a mail client and
+possibly Excel. What is refused rather than guessed: a date that is not
+`YYYY-MM-DD` (`01/02` is two days on two continents), more than one currency
+(no rate can be supplied and the foot sums across them), and a cell finer than
+its currency.
+
 ## D1 schema
 
 The server stores **sealed** ops and nothing else it could read

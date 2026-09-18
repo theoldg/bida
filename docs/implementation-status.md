@@ -22,6 +22,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Deletable**   | `/delete-my-data` takes an invite link, shows the group it opens, and deletes it from D1 for everybody in it, leaving a tombstone no phone can push past ([frontend.md](frontend.md#deleting-a-group), [sync.md](sync.md#deleting-a-group)). |
 | **Installable** | An iPhone joins in the home-screen app rather than a Safari tab that forgets after a week: `/install`, the card on the groups list and on each ledger, the claim screen's link to paste, and an invite whose two halves ride the icon. Android is offered in the same two places, and an in-app browser — a third storage — is refused outright ([ios.md](ios.md)). Works on the owner's iPhone, install and join both (2026-09-18) |
 | **Exportable**  | **Export data** in the group menu hands over one CSV in Splitwise's export shape, which is what Tricount imports too ([data-model.md](data-model.md#the-group-as-a-spreadsheet)) — share sheet, then download, then `/g/export` as text ([frontend.md](frontend.md#getting-a-group-off-the-phone)). **Tricount imports it** (2026-09-18), and the share sheet hands the file over from an iOS home-screen app |
+| **Importable**  | **Import a group**, in the groups list's kebab and under an empty list, reads a Splitwise (or bida) export back into a **new** group: `core/import.ts` returns a plan, `apps/web/lib/import/csv.ts` is the RFC 4180 reader, `lib/db/commands/import.ts` writes it as one batch ([frontend.md](frontend.md#bringing-a-group-onto-the-phone), [data-model.md](data-model.md#reading-one-back)). The foot row is the checksum and a refusal names the line; single-currency files only |
 
 ## What is open
 
@@ -53,26 +54,6 @@ None of these is started, and the first is not code at all.
   writes nor reads (`lib/db/visible.ts`), and `/diag` has a `stores:` line so a
   next lock is named rather than cross-read
   ([frontend.md](frontend.md#a-live-read-can-die)). **Open only as a watch.**
-- **Importing a Splitwise CSV**, into a new group only, from the groups list's
-  menu. The shape is what `core/export.ts` writes, read backwards
-  ([data-model.md](data-model.md#the-group-as-a-spreadsheet)), and the one part
-  that is not a mirror is that **a member's column is `paid − owed`, which does
-  not invert**: `(+20, −10, −10)` at a cost of 30 is "A paid 30, split three
-  ways" and half a dozen other entries equally. So it is a stated rule, not a
-  recovery. One positive column — every file Splitwise itself writes — is
-  lossless: that member paid the whole cost, and the split is `exact` with
-  `owed = paid − delta`. Several positive columns are the payers, at
-  `paidᵢ = deltaᵢ × cost / Σ positive`, which can never send an `owed` negative
-  and reproduces every balance to the cent while the payer figures are a guess.
-  The foot row `Total balance` is the checksum: fold, `computeBalances`, refuse
-  on a mismatch. Settled with it: the category folds into the title because we
-  have none, a transfer is the `Payment` token plus a few keywords and nothing
-  cleverer, an income arrives as the negative `Cost` our own writer already
-  emits, and the CSV package lives in `apps/web` so `packages/core` stays
-  dependency-free and takes rows. **Open: single-currency files only.** A mixed
-  one needs a rate per currency that the file cannot supply, and its foot sums
-  across currencies, so the checksum is gone exactly where the import is least
-  sure — v1 refuses it and names the codes it found.
 
 ## What a cold session needs to know
 

@@ -60,6 +60,12 @@ export function HomeMenu() {
       icon: dark ? "sun" : "moon",
       onSelect: flip,
     },
+    // Above About and Advanced: it is an act, and those two are readouts.
+    {
+      label: copy.groups.importGroup,
+      icon: "merge",
+      onSelect: () => router.push(route.import()),
+    },
     { label: copy.groups.about, icon: "info", onSelect: () => router.push(route.about()) },
     // Last, and after "About bida" on purpose: the screen behind it is for the
     // person who already knows they want something off the default, and a menu

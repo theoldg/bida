@@ -1,4 +1,4 @@
-import type { ExtraKind, ScanProblem, SplitSpec } from "@bida/core";
+import type { ExtraKind, ImportRefusalCode, ScanProblem, SplitSpec } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -23,6 +23,15 @@ import type { EntryKind } from "./entry-kind";
 export interface Noun {
   one: string;
   many: string;
+}
+
+/**
+ * What a refused import interpolates: the line a spreadsheet would show, and
+ * the one fact that code carries (`ImportError` in core/import.ts).
+ */
+export interface RefusalFact {
+  line?: number;
+  detail?: string;
 }
 
 /**
@@ -134,6 +143,90 @@ export const copy = {
     nothing: "Nothing to export yet.",
   },
 
+  /**
+   * The other direction (`app/import/page.tsx`): somebody else's spreadsheet
+   * as a group of ours.
+   *
+   * Written for a person who is leaving Splitwise, which is the only reason
+   * this screen is ever opened — so it names that app, says what it will make,
+   * and says up front that nothing already on the phone changes. The rest of
+   * the screen is a readout of the file before a single op is written, because
+   * the one question a person has here is "is it going to get my trip right",
+   * and the only honest answer is to show them the count.
+   *
+   * **The refusals are the most-read words in this block.** A file that is
+   * refused is refused whole, which is only bearable if the sentence says
+   * which line and what to change — so every one of them names the fix, in the
+   * file, where the fix has to happen. `ImportRefusalCode` in
+   * `core/import.ts` is the list; `detail` is the fact each sentence needs.
+   */
+  importData: {
+    title: "Import a group",
+    /** What this makes, and what it leaves alone. */
+    lede: "A file exported from Splitwise (or from bida) becomes a new group, with everybody in it and every entry on its day.",
+    safe: "Nothing you already have changes.",
+    pick: "Choose a file",
+    /** The second way in, for a phone whose browser has no file picker worth
+        using and for a file that arrived in a chat: the text itself. */
+    orPaste: "Or paste the file’s text:",
+    pastePlaceholder: "Date,Description,Category,Cost,Currency,…",
+    read: "Read it",
+    reading: "Reading…",
+    /** Picked something that is plainly not a ledger (`looksLikeCsv`). */
+    notFile: "That isn’t a spreadsheet file. In Splitwise, open the group, then Export as spreadsheet.",
+    tooBig: "That file is far too big to be a group’s ledger.",
+
+    /** The plan, before anything is written. */
+    found: "What’s in the file",
+    currency: "Currency",
+    people: "People",
+    entries: "Entries",
+    transfers: "Transfers",
+    /**
+     * Rows that say a thing cost money and nothing about who — which is what
+     * bida's own export writes for an expense it could not apportion. Named
+     * rather than silently skipped: they are the one thing the import loses,
+     * and a count that doesn't match the spreadsheet is worth a sentence.
+     */
+    dropped: (rows: string) => `${rows} left out, carrying no money`,
+    /** Over the picker at the end — the same question joining a group asks. */
+    who: "Which one are you?",
+    act: "Create the group",
+    failed: (why: string) => `Couldn’t import that file: ${why}`,
+
+    /**
+     * One sentence per `ImportRefusalCode`. `line` is 1-based, the way a
+     * spreadsheet counts, and `detail` is whatever that code carries.
+     */
+    refused: {
+      empty: () => "There is nothing in that file.",
+      header: () => "That file doesn’t start with a Splitwise export’s columns: Date, Description, Category, Cost, Currency, and then one column per person.",
+      "no-members": () => "That file has no columns for people, so there are no balances in it.",
+      "duplicate-member": (f) => `Two columns are both called “${f.detail}”, so there is no telling which balance is whose. Rename one in the file.`,
+      "blank-member": () => "One of the people columns has no name at the top of it. Name it in the file.",
+      "bad-member-name": (f) => `A column is called “${f.detail}”, which bida can’t use as a name. Rename it in the file.`,
+      "extra-cells": (f) => `Line ${f.line} has more cells than the file has columns (${f.detail}).`,
+      "mixed-currency": (f) => `That file mixes ${f.detail}. bida can import one currency at a time, so split it or convert it first.`,
+      "unknown-currency": (f) => (f.detail
+        ? `“${f.detail}” isn’t a currency bida knows.`
+        : "No row in that file says which currency it is in."),
+      "no-foot": () => "That file has no “Total balance” row, so there is nothing to check the import against.",
+      "bad-date": (f) => `Line ${f.line} has “${f.detail}” where a date should be. bida reads dates written as YYYY-MM-DD.`,
+      "bad-amount": (f) => `Line ${f.line} has “${f.detail}” where an amount should be.`,
+      "too-precise": (f) => `Line ${f.line} has an amount finer than its currency goes (${f.detail}).`,
+      "row-not-zero": (f) => `Line ${f.line} doesn’t add up: the people’s columns should come to zero, and they come to ${f.detail}.`,
+      overpaid: (f) => `Line ${f.line} says more was paid than the thing cost (${f.detail}).`,
+      "no-entries": () => "There is nothing to import: no row in that file carries any money.",
+      /**
+       * The check that makes the whole feature trustworthy, so the sentence
+       * says the file was left alone rather than apologising: bida read the
+       * rows, added them up, and got something other than the file's own
+       * total.
+       */
+      checksum: (f) => `The balances bida read don’t match the file’s own “Total balance” row (${f.detail}). Nothing was imported.`,
+    } as Record<ImportRefusalCode, (fact: RefusalFact) => string>,
+  },
+
   /** Stand-ins for a value the app hasn't got: a name, a figure, a field. */
   unknown: "?",
   none: "—",
@@ -150,6 +243,8 @@ export const copy = {
     person: { one: "person", many: "people" } as Noun,
     photo: { one: "photo", many: "photos" } as Noun,
     revision: { one: "revision", many: "revisions" } as Noun,
+    /** A line of somebody else's spreadsheet — only the import counts these. */
+    row: { one: "row", many: "rows" } as Noun,
     way: { one: "way", many: "ways" } as Noun,
   },
 
@@ -169,6 +264,13 @@ export const copy = {
     empty: {
       title: "No groups yet",
       body: "A trip, a flat, a dinner: anything several people pay for.",
+      /**
+       * Under the empty state, and nowhere else: somebody with a ledger in
+       * Splitwise is standing on exactly this screen, and the row in the kebab
+       * is not where they will look for it. Once there is a group on the list,
+       * the kebab is enough.
+       */
+      fromSplitwise: "Coming from Splitwise?",
     },
     /**
      * Keys this phone holds whose groups have not arrived from the server yet
@@ -181,6 +283,9 @@ export const copy = {
       body: "Finishes by itself once they sync.",
     },
     newGroup: "New group",
+    /** The kebab's row, one above Advanced. What it makes is a group, which is
+        why it is on this screen and not in a group's own menu. */
+    importGroup: "Import a group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */
     pasteLink: "Paste link",

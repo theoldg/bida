@@ -81,7 +81,15 @@ export default function GroupsPage() {
               arriving > 0 ? (
                 <Empty title={copy.groups.arriving.title}>{copy.groups.arriving.body}</Empty>
               ) : (
-                <Empty title={copy.groups.empty.title}>{copy.groups.empty.body}</Empty>
+                <Empty title={copy.groups.empty.title}>
+                  {copy.groups.empty.body}
+                  {/* The one place the import is offered rather than listed:
+                      whoever is leaving Splitwise lands here, and the row in
+                      the kebab is not where they would look for it. */}
+                  <Link href={route.import()} className="emptylink">
+                    {copy.groups.empty.fromSplitwise}
+                  </Link>
+                </Empty>
               )
             ) : null}
 
