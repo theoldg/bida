@@ -1819,14 +1819,6 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
-/* The import, offered under an empty list and not only listed in the kebab:
-   whoever is leaving Splitwise lands on that screen (app/page.tsx). */
-/* Block, not inline: the body above it is a bare text node, and an
-   inline-block ran straight on from the full stop. Underlined, because in this
-   palette a link's colour is nearly the ink's (docs/design-system.md). */
-.emptylink { display: block; margin-top: 14px; color: var(--ink); font-weight: 600;
-  text-decoration: underline; text-underline-offset: 3px }
-
 /* ---- import ----
    A file pasted as text. Tall enough to show that something landed in it and
    no taller, since nobody reads a CSV here; monospaced, because the one thing

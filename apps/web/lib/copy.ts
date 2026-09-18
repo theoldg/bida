@@ -264,13 +264,6 @@ export const copy = {
     empty: {
       title: "No groups yet",
       body: "A trip, a flat, a dinner: anything several people pay for.",
-      /**
-       * Under the empty state, and nowhere else: somebody with a ledger in
-       * Splitwise is standing on exactly this screen, and the row in the kebab
-       * is not where they will look for it. Once there is a group on the list,
-       * the kebab is enough.
-       */
-      fromSplitwise: "Coming from Splitwise?",
     },
     /**
      * Keys this phone holds whose groups have not arrived from the server yet
@@ -283,8 +276,10 @@ export const copy = {
       body: "Finishes by itself once they sync.",
     },
     newGroup: "New group",
-    /** The kebab's row, one above Advanced. What it makes is a group, which is
-        why it is on this screen and not in a group's own menu. */
+    /** The kebab's row, above About. What it makes is a group, which is why it
+        is on this screen and not in a group's own menu, and the menu is the
+        whole of it: an empty list carried a line offering it, and a screen
+        whose one act is "new group" does not need a second pitch on it. */
     importGroup: "Import a group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */

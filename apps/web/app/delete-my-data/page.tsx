@@ -208,8 +208,11 @@ function Found({ found, name, setName, onAsk, onOther }: {
           have to be worked out at exactly the wrong moment. */}
       <p><strong>{preview.name}</strong></p>
       <div className="card">
+        {/* Counted, not listed: what this screen is for is recognising the
+            group and feeling its size, and a flatshare of twelve wrapped the
+            row into four lines of names. */}
         <div className="kv"><span className="k">{c.rows.people}</span>
-          <span className="v">{preview.members.join(", ")}</span></div>
+          <span className="v">{preview.members.length}</span></div>
         <div className="kv"><span className="k">{c.rows.entries}</span>
           <span className="v">{preview.entries}</span></div>
         <div className="kv"><span className="k">{c.rows.edits}</span>

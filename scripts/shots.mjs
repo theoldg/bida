@@ -381,9 +381,9 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-delete-entry.png`) });
       process.stdout.write(`${theme}/delete-entry `);
 
-      // The two doors to the import, on a phone that holds no groups at all:
-      // the line under the empty list, and the row in the kebab. Its own
-      // context, because the one above has a trip in it.
+      // The kebab that holds the import, and the empty list behind it: a
+      // phone that holds no groups at all, in a context of its own, because
+      // the one above has a trip in it.
       const fresh = await newPhone(browser, { deviceScaleFactor: 2, colorScheme: theme });
       const blank = await fresh.newPage();
       await blank.goto(`${base}/`);

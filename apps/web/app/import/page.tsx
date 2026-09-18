@@ -15,7 +15,10 @@ import { groupNameFrom, looksLikeCsv, parseCsv, tooBig } from "../../lib/import/
 import { useRefusal } from "../../lib/refusal";
 
 /**
- * Somebody else's spreadsheet as a group of ours.
+ * Somebody else's spreadsheet as a group of ours. Reached from the groups
+ * list's kebab and from nowhere else: what it makes is a group, so it belongs
+ * where groups are made, and a screen whose one act is already "new group"
+ * does not need a second pitch printed on it.
  *
  * **Three steps, and the file is read on the first.** Pick or paste, then look
  * at what was found, then say which of those people you are. Reading is free
@@ -195,7 +198,10 @@ export default function ImportPage() {
                     four numbers to be checked against a spreadsheet, and a
                     sentence makes them be read rather than compared. */}
                 <div className="rows">
-                  <Fact label={words.people} value={plan.members.join(", ")} />
+                  {/* A count, not the names: the row is labelled, the names
+                      are on the next screen, and a group of twelve wrapped
+                      into four lines of comma-separated text. */}
+                  <Fact label={words.people} value={String(plan.members.length)} />
                   <Fact label={words.currency} value={currencyLabel(plan.currency)} />
                   <Fact label={words.entries} value={String(plan.entries.length)} />
                   {plan.transfers.length > 0
