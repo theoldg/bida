@@ -45,8 +45,8 @@ describe("syncGroup", () => {
     // A fortnight offline: more ops queued than one push is allowed to carry.
     for (let i = 0; i < 120; i++) {
       await addExpense(groupId, me.id, {
-        description: `tagine ${i}`, amountMinor: 1200, currency: "EUR",
-        payers: { mode: "single", payerId: me.id },
+        description: `tagine ${i}`, occurredAt: 1, amountMinor: 1200, currency: "EUR",
+        rateToBase: "1", paidBy: me.id,
         split: { mode: "equal", members: [me.id] },
       });
     }
@@ -74,6 +74,46 @@ describe("syncGroup", () => {
     const left = await db().ops.where("groupId").equals(groupId)
       .and((op) => op.pending === 1).toArray();
     expect(left).toHaveLength(0);
+  });
+
+  it("lands the rest of a pull that carries an op it cannot open", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+
+    const peer = (seq: number, description: string) => ({
+      id: `op-${seq}`, groupId, entity: "expense" as const, entityId: `e-${seq}`,
+      kind: "create" as const,
+      patch: {
+        description, occurredAt: 1, amountMinor: 1000, currency: "EUR", rateToBase: "1",
+        baseAmountMinor: 1000, paidBy: theo, split: { mode: "equal", members: [theo] },
+      },
+      hlc: formatHlc(createHlcState("peer", Date.now(), seq)),
+      actor: theo, note: null, createdAt: Date.now(), seq,
+    });
+    const sealed = await serverOps(groupId, [peer(1, "Riad"), peer(3, "Tagine")]);
+    // Between them, a row this build has no way to read — the shape the seal's
+    // version byte takes the day it moves.
+    const ops = [sealed[0]!, { id: "op-2", groupId, sealed: "AAAAAAAA", seq: 2 }, sealed[1]!];
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops, latestSeq: 3 })),
+    ));
+
+    const outcome = await syncGroup(groupId);
+
+    expect(outcome?.pulled).toBe(2);
+    const stored = await db().ops.where("groupId").equals(groupId).toArray();
+    expect(stored.map((op) => op.id)).toEqual(expect.arrayContaining(["op-1", "op-3"]));
+    expect(stored.find((op) => op.id === "op-2")).toBeUndefined();
+    // Skipped, so the cursor moved past it — and written down, because the one
+    // way back to it is winding `lastSeq` to `fromSeq - 1`.
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.lastSeq).toBe(3);
+    expect(key?.unreadable?.count).toBe(1);
+    expect(key?.unreadable?.fromSeq).toBe(2);
+    // And the group is usable: both readable expenses folded.
+    expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(2);
   });
 
   it("does nothing when this device holds no secret for the group", async () => {

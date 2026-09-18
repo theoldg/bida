@@ -243,6 +243,21 @@ async function collect(): Promise<string> {
   }
   say("db", `v${d.verno}, ${d.isOpen() ? "open" : "CLOSED"}`);
 
+  // Ops the server had and this build could not open. Skipped rather than
+  // failed on (lib/db/sync.ts), so without this line the app would show a
+  // ledger with holes in it and say nothing at all.
+  const unread = await within(
+    (async () => (await d.groupKeys.toArray())
+      .flatMap((key) => (key.unreadable ? [{ groupId: key.groupId, ...key.unreadable }] : [])))(),
+    [],
+  );
+  if (unread.length > 0) {
+    for (const row of unread) {
+      say("unreadable", `${row.count} op(s) in ${row.groupId} from seq ${row.fromSeq} — `
+        + "this build cannot open them; update the app");
+    }
+  }
+
   // Whether this origin is evictable is the difference between "the browser
   // closed our connection" being a wild guess and a likely story.
   say("storage", await within(

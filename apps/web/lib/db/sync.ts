@@ -1,9 +1,11 @@
-import { createHlcState, hlcReceive, openOp, sealOp, type Op, type SealedOp } from "@bida/core";
+import {
+  SealError, createHlcState, hlcReceive, openOp, sealOp, type Op, type SealedOp,
+} from "@bida/core";
 import { started } from "../diag";
 import { groupCrypto } from "../seal";
 import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
-import { db, type StoredOp } from "./dexie";
+import { db, type StoredOp, type Unreadable } from "./dexie";
 import { rebuild } from "./fold";
 import { whenVisible } from "./visible";
 
@@ -52,7 +54,7 @@ async function pushPullGroup(
   secret: string,
   since: number,
   pending: readonly StoredOp[],
-): Promise<{ response: PushPullResponse; pulled: Op[] }> {
+): Promise<{ response: PushPullResponse; pulled: Op[]; unreadable: number[] }> {
   const crypto = await groupCrypto(groupId, secret);
   const ops = await Promise.all(pending.map((op) => sealOp(crypto, {
     id: op.id,
@@ -77,12 +79,26 @@ async function pushPullGroup(
     throw new SyncHttpError(res.status, await res.text().catch(() => ""));
   }
   const response = (await res.json()) as PushPullResponse;
-  // Opened before anything is stored, so a body this device cannot read fails
-  // the whole run rather than half-applying it. `openOp` throws `SealError`,
-  // which can only mean a bug or a tampered row — a *wrong key* never gets
-  // this far, because the token derived beside it would have been a 403.
-  const pulled = await Promise.all(response.ops.map((op) => openOp(crypto, op)));
-  return { response, pulled };
+  // Opened before anything is stored, so a half-applied pull is not a state
+  // this can reach. A *wrong key* never gets here — the token derived beside it
+  // would have been a 403 — so a `SealError` means one row this build cannot
+  // read, and the whole pull used to fail on it, for good: the same row came
+  // back on every retry, and the app could only say sync was failing.
+  //
+  // The likeliest way to mint one is the version byte in `core/seal.ts`. Ship
+  // a second seal format and every phone that hasn't updated meets an op it
+  // must refuse; the ones it *can* read are no reason to hold hostage.
+  const pulled: Op[] = [];
+  const unreadable: number[] = [];
+  for (const op of response.ops) {
+    try {
+      pulled.push(await openOp(crypto, op));
+    } catch (err) {
+      if (!(err instanceof SealError)) throw err;
+      unreadable.push(op.seq ?? 0);
+    }
+  }
+  return { response, pulled, unreadable };
 }
 
 /**
@@ -151,6 +167,22 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
   });
 }
 
+/**
+ * Fold what this round had to skip into what earlier rounds did. The count
+ * accumulates and `fromSeq` only ever goes down, because the earliest skipped
+ * op is what a later, cleverer build would have to wind the cursor back to.
+ * A round that skipped nothing leaves the record alone rather than clearing
+ * it: the ops it could not read are still unread.
+ */
+function skipped(before: Unreadable | undefined, seqs: readonly number[]): Unreadable | undefined {
+  if (seqs.length === 0) return before;
+  return {
+    count: (before?.count ?? 0) + seqs.length,
+    fromSeq: Math.min(before?.fromSeq ?? Infinity, ...seqs),
+    at: Date.now(),
+  };
+}
+
 /** One run per group at a time — see `syncGroup`. */
 const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 
@@ -209,7 +241,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   let pulledCount = 0;
 
   for (const pending of rounds) {
-    let sealed: { response: PushPullResponse; pulled: Op[] };
+    let sealed: { response: PushPullResponse; pulled: Op[]; unreadable: number[] };
     // The one step here that waits on a network rather than on this phone.
     const sent = started("sync.pushpull");
     try {
@@ -228,8 +260,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       await recordFailure(groupId, err);
       throw err;
     }
-    const { response: { assigned, latestSeq }, pulled } = sealed;
-    sent(`${pending.length} up, ${pulled.length} down`);
+    const { response: { assigned, latestSeq }, pulled, unreadable } = sealed;
+    sent(`${pending.length} up, ${pulled.length} down`
+      + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 
     // The answer can land after the app has gone to the background — the
     // network after a resume is slow, and people leave. Nothing is lost by
@@ -268,6 +301,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
         lastSyncedAt: Date.now(),
         failure: undefined,
+        unreadable: skipped(current?.unreadable, unreadable),
       });
     }).then(() => committed(), (err: unknown) => {
       committed("failed");

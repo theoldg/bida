@@ -119,6 +119,20 @@ export interface SyncFailure {
 }
 
 /**
+ * What a pull had to skip, because skipping quietly is how ops go missing.
+ *
+ * `fromSeq` is the earliest one, and it is the field that matters: the cursor
+ * has moved past it, so winding `lastSeq` back to `fromSeq - 1` is how a later
+ * version of the app — one that can read whatever this one couldn't — gets a
+ * second look at it. The ops are still on the server; nothing collects them.
+ */
+export interface Unreadable {
+  count: number;
+  fromSeq: number;
+  at: number;
+}
+
+/**
  * The group secret from the invite link. Device-local and deliberately in a
  * table of its own: it must never be foldable from an op, or it would sync to
  * the server, which is the one place it must never be. ADR-0003.
@@ -135,6 +149,11 @@ export interface GroupKey {
    * they need no schema version — Dexie only declares the fields it indexes.
    */
   failure?: SyncFailure;
+  /**
+   * Ops the server handed over that this device could not open, skipped so the
+   * rest of the pull could land. Not indexed, like the two above.
+   */
+  unreadable?: Unreadable;
 }
 
 /**
