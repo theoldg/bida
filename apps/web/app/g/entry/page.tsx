@@ -210,20 +210,22 @@ function ExpenseDetail({ expense, kind, group, data }: {
           {copy.entry.splitMode(copy.entryKind.split[kind],
             copy.split.mode[expense.split.mode].toLowerCase())}
         </Eyebrow>
-        {data.members.map((m) => {
-          const inIt = participants.includes(m.id);
+        {/* Only the people in the split. A row per outsider saying they owe
+            nothing is the longest part of a two-person expense in a big group,
+            and it says what their absence already says. */}
+        {data.members.filter((m) => participants.includes(m.id)).map((m) => {
           // Parts are somebody's own number and worth printing; a receipt's
           // weights are the bill's arithmetic and are shown as the bill
           // instead, line by line, under the row (`MemberBill`).
-          const detail = expense.split.mode === "shares" && inIt
+          const detail = expense.split.mode === "shares"
             ? ` · ${plural(expense.split.weights[m.id] ?? 0, copy.noun.part)}`
-            : expense.split.mode === "percent" && inIt
+            : expense.split.mode === "percent"
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
-          const k = `${m.name}${inIt ? detail : ` · ${copy.entry.notInvolved}`}`;
-          const v = inIt ? money(shares[m.id] ?? 0, group.baseCurrency) : copy.none;
-          const lines = inIt ? bill?.[m.id] : undefined;
-          if (!lines?.length) return <KV key={m.id} dim={!inIt} k={k} v={v} />;
+          const k = `${m.name}${detail}`;
+          const v = money(shares[m.id] ?? 0, group.baseCurrency);
+          const lines = bill?.[m.id];
+          if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
           return <MemberBill key={m.id} name={k} total={v} lines={lines}
             format={(minor) => money(minor, expense.currency)} />;
         })}

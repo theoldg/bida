@@ -656,7 +656,6 @@ export const copy = {
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
-    notInvolved: "not involved",
     payerCount: (label: string, people: string) => `${label} · ${people}`,
     /** "Split · evenly" · "Shared with · by items". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,

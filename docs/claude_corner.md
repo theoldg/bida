@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — "remove those rows" also orphaned a prop and a copy key. A
+  deletion is finished when what it stranded is gone too: grep the name you
+  just stopped using.
 - *2026-09-18* — One screenshot, one screen — but the flush-left prose was one
   class three screens share. Ask what else wears it before fixing where the
   photo was taken.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
   owner has to.
 - *2026-09-17* — The check stayed green with the thing it guarded switched off.
   Break it on purpose and watch the red, or the green is decoration.
-- *2026-09-17* — A rejected tool call is not a waiver. The interrupt was about
-  which page I was looking for, not about the setup I had just skipped to be
-  agreeable. Ask which part they meant.

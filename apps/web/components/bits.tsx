@@ -65,9 +65,9 @@ export function Card({ children, style, className }: {
   return <div className={`card${className ? ` ${className}` : ""}`} style={style}>{children}</div>;
 }
 
-export function KV({ k, v, dim }: { k: ReactNode; v: ReactNode; dim?: boolean }) {
+export function KV({ k, v }: { k: ReactNode; v: ReactNode }) {
   return (
-    <div className="kv" style={dim ? { opacity: .45 } : undefined}>
+    <div className="kv">
       <span className="k">{k}</span><span className="v">{v}</span>
     </div>
   );
