@@ -9,11 +9,12 @@ import { VERSION } from "../../lib/version";
 
 /**
  * Who can edit, whether it works on a train, where to complain, who can read
- * what you typed, and — last, being the one line here nobody is meant to act
- * on lightly — where to ask for a group to be erased. Five claims, no pitch:
+ * what you typed, what is and isn't promised, and — last, being the one line
+ * here nobody is meant to act on lightly — where to ask for a group to be
+ * erased. Six claims, no pitch:
  * this screen is reached from the foot of the groups list, so whoever is on it
  * already has the app and does not need it described back to them. The source
- * link sits above all five, since it is the one thing here somebody might come
+ * link sits above them all, since it is the one thing here somebody might come
  * looking for on its own, and the build's number sits in the bar's far corner,
  * out of the reading altogether.
  *
@@ -24,7 +25,7 @@ import { VERSION } from "../../lib/version";
  * being read from.
  */
 export default function AboutPage() {
-  const { feedback, privacy } = copy.about;
+  const { feedback, privacy, guarantees } = copy.about;
   return (
     <Screen>
       <Body>
@@ -74,6 +75,11 @@ export default function AboutPage() {
                 {" "}{privacy.scanOwnKey}{" "}<em>{privacy.scanOwnKeyWarning}</em>
               </>
             </Section>
+
+            {/* After the sealed row, because the sentence that matters here
+                — a lost link is a group nobody can recover — is a consequence
+                of it rather than a disclaimer that happens to sit nearby. */}
+            <Section title={guarantees.title}>{guarantees.body}</Section>
 
             {/* Last, under the promises it is the other half of: a server that
                 cannot read a group can still be asked to stop holding one.

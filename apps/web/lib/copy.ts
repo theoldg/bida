@@ -496,6 +496,22 @@ export const copy = {
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
       shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
     },
+    /**
+     * The hosted service's one disclaimer, and the counterweight to the four
+     * claims above it: they are all promises, and this is the sentence saying
+     * who is behind them. MIT covers the code; nothing covered bida.bid, whose
+     * users are strangers rather than friends who would ask (hosting.md).
+     *
+     * It reads after Privacy on purpose. "I can't restore lost links" is a
+     * consequence of the sealed row a paragraph above, not an excuse — read
+     * before it, it would sound like one. The reassurance leads the warning
+     * because the database really is not going anywhere: the risk here is a
+     * side project's attention, not Cloudflare's storage.
+     */
+    guarantees: {
+      title: "No guarantees",
+      body: "I built bida in my spare time. Your groups are stored in a real database, but as a one-person project, I can’t guarantee it’ll last forever, and I can’t restore lost links. Please back up anything important and use at your own risk.",
+    },
     feedback: {
       title: "Feedback",
       body: "I made this alone. Tell me what you think! Bug reports, feature requests, words of encouragement, words of discouragement.",
