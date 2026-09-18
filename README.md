@@ -57,8 +57,9 @@ This is a personal project, almost entirely written with Claude Code.
 
 However, it's not a one-prompt type of thing, I put some love into this.
 Core logic is well tested, and the UI/UX have been polished and debugged with care.
-Have a look at [CLAUDE.md](CLAUDE.md) to see the development setup,
-or [docs/claude_corner.md](docs/claude_corner.md) to see what Claude thinks.
+Have a look at [CLAUDE.md](CLAUDE.md) to see the development setup, or at
+[docs/claude_corner.md](docs/claude_corner.md) to see what the AI thinks about
+its own work — a famously impartial source.
 
 ## Stack
 
