@@ -366,12 +366,20 @@ export const copy = {
     },
     privacy: {
       title: "Privacy",
-      scanTitle: "Receipt scanning is not private.",
-      scan: "Receipt photos are sent to the Google Gemini API, where they may be read by humans or used to train models. For a day afterwards, the server remembers that this group scanned something: not the photo, just the count the cap needs.",
+      scanTitle: "Receipt scanning leaves your phone.",
+      scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something: not the photo, just the count, for rate limiting purposes.",
       /** The one way the sentence above stops being true of this phone. Said
           here and not only on `/advanced`, because this is the screen somebody
           reads when they mind (docs/receipt-scanning.md#a-key-of-your-own). */
       scanOwnKey: "Bring your own Gemini key under Advanced and the photo goes straight from your phone to Google: it never passes through this server, and nothing here counts it.",
+      /**
+       * The inversion the shared path created. Ours is Vertex, which does not
+       * train on what it reads; a key somebody makes for themselves is an AI
+       * Studio one, whose free tier does. So the screen that offers more
+       * privacy has to name the one way it buys less. Italicised at the render
+       * site (`app/about/page.tsx`), which is where markup lives.
+       */
+      scanOwnKeyWarning: "Warning: a free-tier key lets Google train on your images.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
@@ -864,10 +872,11 @@ export const copy = {
     /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
-    /** A consequence the screen can't show. It stays. Names the API rather
-        than its tier: the tip jar says scanning is the one thing here that
-        costs money to run, and "free" contradicts it. */
-    terms: "Google Gemini API: photo may train their models.",
+    /** A consequence the screen can't show. It stays. Says only what is true
+        of both paths: this line cannot tell whether the reader brought a key,
+        and ours is read by a Vertex that does not train on it while a free
+        brought one is not. The difference is `/about`'s to draw. */
+    terms: "The photo is sent to Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**

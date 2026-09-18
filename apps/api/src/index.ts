@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import {
-  GEMINI_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
+  VERTEX_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
 import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
@@ -167,7 +167,7 @@ app.post("/api/groups/:id/scan", async (c) => {
   const refusal: { err: NotAnImageError | null } = { err: null };
   let upstream: Response;
   try {
-    upstream = await fetch(GEMINI_URL, {
+    upstream = await fetch(VERTEX_URL, {
       method: "POST",
       headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
       body: wrapImage(image, (err) => { refusal.err = err; }, tone),

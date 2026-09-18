@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — Asked about API keys, I said AI was deferred. Receipt scanning
+  was already built, deployed and documented. Read the repo before describing
+  the project to its owner.
 - *2026-09-18* — I answered "does Splitwise emit CRLF?" from a fixture in a git
   repo, which normalised it. The owner's real export settled it in a line. A
   file in a repo is a copy; get the artifact.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — Our own doc said Google refused browsers. One curl disproved
   it and a whole feature fell out. A doc's fact about somebody else's server
   ages; probe it before designing around it.
-- *2026-09-18* — I ended a diagnosis with a two-way menu, and "go for it"
-  answered neither half. When both paths are cheap, take them both and say so
-  rather than asking which.

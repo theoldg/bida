@@ -311,7 +311,7 @@ export const SCAN_LIMITS = {
   /** One address, HMAC'd server-side. Loose enough for a table of friends on one restaurant wifi. */
   client: { hour: 20, day: 50 },
   /** The bill. The only bucket nothing can be minted around; the hourly sub-cap keeps a burst from eating the day. */
-  global: { hour: 250, day: 1500 },
+  global: { hour: 2200, day: 13000 },
 } as const;
 
 /** Which bucket a refusal came out of. The phone prints a different sentence for each. */

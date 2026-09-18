@@ -68,7 +68,7 @@ export default function AboutPage() {
             }>
               <>
                 <strong>{privacy.scanTitle}</strong> {privacy.scan}
-                {" "}{privacy.scanOwnKey}
+                {" "}{privacy.scanOwnKey}{" "}<em>{privacy.scanOwnKeyWarning}</em>
               </>
             </Section>
           </div>

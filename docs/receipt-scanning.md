@@ -57,7 +57,7 @@ phone: capture or pick from library → downscale → base64 (+ a Turnstile toke
 worker: verify the browser, count the budget, book the scan,
         then wrap the image in our prompt + schema and add the API key
   ↓
-Gemini Flash, free tier, one key shared by everyone
+Gemini Flash-Lite on Vertex AI, one key shared by everyone
   ↑ response streamed straight back, untouched
 phone: parse → normalizeScan() → write an EntryDraft, and stop
 ```
@@ -75,9 +75,16 @@ kinds, no schema change, nothing on the log that nobody looked at.
 
 ## Why the shared key sits on the Worker
 
-Free tier means no card, no per-user signup, and hosting stays £0 — the price
-is one key everybody shares, which cannot be shipped to a phone, so it lives on
-the Worker and **Trust** below is what that costs.
+One key everybody shares means no per-user signup, and it cannot be shipped to
+a phone, so it lives on the Worker and **Trust** below is what that costs.
+
+It is an **Agent Platform key, and it goes to Vertex** (`VERTEX_URL`), not to
+the AI Studio API a brought key uses (`AI_STUDIO_URL`). That is not a
+preference: the two have separate billing, and Google's Cloud credit can only
+be spent on the Vertex side — the AI Studio API has its own prepay balance and
+refuses with *"prepayment credits are depleted"* however much is in the Cloud
+account. Vertex also requires `role` on a `contents` entry, which AI Studio
+defaults silently; core states it so one envelope satisfies both.
 
 Not because the browser can't call Google: it can.
 `generativelanguage.googleapis.com` answers a preflight from any origin and
@@ -428,12 +435,24 @@ budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
 |---|---|---|
 | **caller** | 10/hour, 30/day | the `:id` a scan is billed to — a group, shared by everyone in it, or one phone's quick-split credential |
 | **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
-| **global** | 250/hour, 1500/day | the bill — roughly a dollar a day at the ceiling, against real use of tens of scans a day |
+| **global** | 2200/hour, 13000/day | the bill — sized to spend the Cloud credit over two months, against real use of tens of scans a day |
 
-At the model's price this is **about $5 per 10,000 scans** — where the day cap
-comes from, and the one figure the tip jar puts on screen. It lives in
-`TIP_USD_MINOR` (`web/lib/tip.ts`) as well, because that screen divides it by
-the group; if the price moves, both move.
+**Measured, not estimated** (2026-09-18, one real call through this envelope):
+a scan is ~2,590 input tokens — ~1,530 of prompt and schema, the rest the image
+— and a few hundred out. At `gemini-2.5-flash-lite`'s $0.10/$0.40 per million
+that is **about $4 per 10,000 scans**, and the day cap above is what spends the
+Cloud credit over roughly two months rather than anything derived from a price.
+
+**Newer is dearer, not cheaper.** The Flash-Lite line has gone up every
+generation: 2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50, 3.5 at $0.30/$2.50 — so
+the cheapest is the oldest, at about a third of 3.1, and it answered faster.
+What that buys is untested on real receipts; the reading is the thing to
+compare before moving `GEMINI_MODEL` again.
+
+The tip jar's **$5 ≈ 10,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is now
+deliberately conservative rather than exact — $5 buys more like 13,000. A
+donation ask that understates what it buys is the safe direction for it to be
+wrong in, and the day cap no longer derives from it.
 
 **Only the global cap bounds what the owner pays.** A credential costs one
 unauthenticated request to mint, by design, so the caller bucket is politeness:
@@ -533,19 +552,25 @@ Deliberate, for a group of friends under fifty people:
   spends it, and a secret costs one request to mint. What that buys is confined
   twice over: the Worker owns the envelope, so nobody can put their own prompt
   on our key, and the budget above caps what having images read can cost.
-- **Free tier trains on the input.** Google uses free-tier prompts to improve
-  its products and human reviewers may see them. These are receipts: a place,
-  a date, a card's last four. The scan button carries one plain line saying so,
-  and since op bodies are sealed
-  ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) this is **the
-  one thing in the app that leaves a phone readable** — `/about` names it as the
-  exception rather than burying it in a clause.
-- **Free-tier terms can change overnight.** If they do, scanning 404s and the
-  button hides. The app is unaffected.
+- **The photo still leaves the phone readable.** Op bodies are sealed
+  ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)), so a receipt
+  on its way to Google is **the one thing in the app that doesn't** — a place,
+  a date, a card's last four. `/about` names it as the exception rather than
+  burying it in a clause. What it is no longer is training data: Vertex does
+  not train on what it reads, which is the shared path's one privacy gain from
+  moving off AI Studio.
+- **A brought key is the exception to that exception.** `/advanced` takes an AI
+  Studio key, and the free tier of that API *is* used to improve Google's
+  products. So the path that keeps the photo away from our server is the one
+  where Google may train on it, and `/about` says so in as many words. The
+  inversion is worth re-reading before editing either sentence.
+- **Terms can change overnight.** If they do, scanning 404s and the button
+  hides. The app is unaffected.
 
-**What is still unfixed** is the training problem, and only a paid tier or
-per-user keys answers it — the budget above answers the spend. The other open
-question is whether the photo is stored at all, and the answer is still no
+**The training problem is fixed** for the shared path, which is what moving to
+Vertex bought; it survives only on a brought free-tier key, where the person
+chose the payer. The other open question is whether the photo is stored at all,
+and the answer is still no
 ([product.md](product.md#deliberately-not-in-the-mvp)).
 
 ## What it's made of
@@ -555,7 +580,7 @@ question is whether the photo is stored at all, and the answer is still no
 `apps/web/lib/scan/budget.ts` and `turnstile.ts`, their two halves on the phone
 · `apps/api`'s `POST
 /api/groups/:id/scan`, the same bearer-token check as sync, passing through to
-`GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `apps/api/src/index.ts`;
+`GEMINI_MODEL = "gemini-2.5-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
 `apps/api/src/scan-body.ts` (prompt, its two refusal tones, structured output

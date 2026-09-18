@@ -1,5 +1,5 @@
 import {
-  buildScanRequestBody, checkScan, GEMINI_URL,
+  AI_STUDIO_URL, buildScanRequestBody, checkScan,
   scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
 } from "@bida/core";
 import { groupToken } from "../seal";
@@ -133,7 +133,7 @@ async function scanOnOwnKey(photo: File | Blob, key: string): Promise<unknown> {
   const imageBase64 = await downscaleToBase64Jpeg(photo);
   let res: Response;
   try {
-    res = await fetch(GEMINI_URL, {
+    res = await fetch(AI_STUDIO_URL, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
       // Staś mode still picks between the two refusals core holds — here it is

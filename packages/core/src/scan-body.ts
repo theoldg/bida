@@ -6,10 +6,24 @@
  */
 
 /** The model both paths call. Ours to move, never a caller's. */
-export const GEMINI_MODEL = "gemini-3.1-flash-lite";
+export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 
-/** Where a scan goes, shared key or brought one. */
-export const GEMINI_URL =
+/**
+ * Two hosts for one model, because the two paths pay for it differently.
+ *
+ * `VERTEX_URL` is ours: the shared key is an Agent Platform key, billed to the
+ * Cloud project, which is the only place Google's Cloud credit can be spent —
+ * the AI Studio API has its own prepay balance and cannot reach it. `AI_STUDIO_URL`
+ * is where a brought key goes, because that is the kind of key a person can
+ * make for themselves (docs/receipt-scanning.md#a-key-of-your-own).
+ *
+ * The envelope below is the same for both, and `scan-body.test.ts` holds it to
+ * that: a brought key still buys a different payer, not a different reading.
+ */
+export const VERTEX_URL =
+  `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
+
+export const AI_STUDIO_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
@@ -95,7 +109,11 @@ export type ScanTone = keyof typeof REFUSAL;
 
 export function buildScanRequestBody(imageBase64: string, tone: ScanTone = "kind"): unknown {
   return {
+    // `role` is a silent default on AI Studio and required by Vertex, which
+    // refuses the body without it ("Please use a valid role: user, model").
+    // Stated once here so one envelope satisfies both hosts.
     contents: [{
+      role: "user",
       parts: [
         { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
         {

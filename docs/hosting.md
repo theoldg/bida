@@ -85,6 +85,18 @@ pnpm --filter @bida/api exec wrangler secret put SCAN_IP_SALT        # any long 
 pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
 ```
 
+`GEMINI_API_KEY` is an **Agent Platform key from the Cloud project**, not an AI
+Studio one: the shared path calls Vertex, and only the Vertex side can spend
+Google Cloud credit ([receipt-scanning.md](receipt-scanning.md#why-the-shared-key-sits-on-the-worker)).
+The two are not interchangeable and fail in opposite directions — an AI Studio
+key on Vertex is `PERMISSION_DENIED`, ours on AI Studio is *blocked*.
+
+**Set it on an environment only once that environment is running code that
+calls Vertex.** The secret and the URL ship separately — the secret by hand,
+the URL by deploy — so writing the new key to a Worker still serving the old
+build breaks scanning there until the build catches up. Dev first, production
+when `main` moves.
+
 The last two are the scan budget
 ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) and both are
 optional — without them the endpoint is the old unlimited one. **Set
@@ -258,6 +270,17 @@ Recognise these if you ever propose one:
 
 ## Gotchas
 
+- **A Google Cloud budget does not stop spend.** It emails while the meter
+  runs; capping for real needs a billing-export → Pub/Sub → function that
+  disables the billing account. `SCAN_LIMITS.global` is the only hard brake we
+  have, and it is the better one — it fails as a refusal with a sentence
+  rather than as a dead key.
+- **A key that validates is not a key that works.** `checkGeminiKey`
+  (`web/lib/scan/key.ts`) asks Google's free `models` list, which answers 200
+  for a key with no credit and no permission — exactly what a funded-looking
+  key with an empty prepay balance does before refusing every scan. The list
+  proves the key is a key and that this browser can reach Google, and nothing
+  about whether a scan will be paid for.
 - **A Turnstile widget's secret is readable back**, at `GET
   /accounts/:id/challenges/widgets/:sitekey` — it is in the response beside the
   domains. So a second Worker reuses the widget without rotating anything, and
