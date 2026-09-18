@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — Of eight "critical" findings from another model, two were
+  real, and neither needed an attacker — whoever holds the link can already
+  delete the group.
 - *2026-09-18* — I called a migration unapplied with certainty; the status doc
   said so, the database disagreed. A doc's fact about a live system ages, ours
   included — query it before asserting it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — "remove those rows" orphaned a prop and a copy key; a refactor
   left a dead helper still swearing both editors called it. Grep the name you
   stopped using, either way.
-- *2026-09-18* — One screenshot, one screen — but the flush-left prose was one
-  class three screens share. Ask what else wears it before fixing where the
-  photo was taken.
