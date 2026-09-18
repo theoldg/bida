@@ -45,7 +45,11 @@ const csvOf = (ops: Op[]) =>
 /** The balances a plan produces, by the same arithmetic the foot check uses. */
 function balancesOf(plan: ImportPlan): Record<string, number> {
   const out: Record<string, number> = {};
-  const move = (name: string, minor: number) => { out[name] = (out[name] ?? 0) + minor; };
+  // `Object.hasOwn` for the reason `at` in import.ts exists: a member called
+  // "constructor" otherwise reads back a function off the prototype.
+  const move = (name: string, minor: number) => {
+    out[name] = (Object.hasOwn(out, name) ? out[name]! : 0) + minor;
+  };
   for (const name of plan.members) out[name] = 0;
   for (const e of plan.entries) {
     const sign = e.kind === "income" ? -1 : 1;
@@ -605,5 +609,30 @@ describe("export then import, over a group with everything in it", () => {
     expect(plan.entries).toHaveLength(4);
     expect(plan.transfers).toHaveLength(1);
     expect(balancesOf(plan)).toEqual(computeBalances(foldOps(b.ops)).byMember);
+  });
+});
+
+/**
+ * The header names every map in the module is keyed by, and they come out of
+ * somebody else's file. Only one such string is dangerous, and it is refused
+ * by name rather than worked around.
+ */
+describe("a member column named something a plain object cannot hold", () => {
+  it("is refused, instead of vanishing into a prototype", () => {
+    expect(refusal([
+      ["Date", "Description", "Category", "Cost", "Currency", "__proto__", "theo"],
+      ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+      ["2026-09-18", "Total balance", " ", " ", "EUR", "-15.00", "15.00"],
+    ])).toBe("bad-member-name");
+  });
+
+  it("leaves the names near it alone, which are only strings", () => {
+    const plan = read([
+      ["Date", "Description", "Category", "Cost", "Currency", "constructor", "prototype"],
+      ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
+      ["2026-09-18", "Total balance", " ", " ", "EUR", "-15.00", "15.00"],
+    ]);
+    expect(plan.members).toEqual(["constructor", "prototype"]);
+    expect(balancesOf(plan)).toEqual(plan.stated);
   });
 });

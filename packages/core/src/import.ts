@@ -74,6 +74,8 @@ export type ImportRefusalCode =
   | "duplicate-member"
   /** A member column with no name in it. */
   | "blank-member"
+  /** A member column named something JavaScript cannot hold as a plain key. */
+  | "bad-member-name"
   /** A row with more cells than the header has columns. */
   | "extra-cells"
   /** More than one `Currency` in the file. v1 has no rate to price them against. */
@@ -186,12 +188,30 @@ interface Line {
 
 /** A cell as a comparison: BOM gone, trimmed, case folded. */
 function token(cell: string | undefined): string {
-  return (cell ?? "").replace(/^﻿/, "").trim().toLocaleLowerCase();
+  return (cell ?? "").replace(/^\uFEFF/, "").trim().toLocaleLowerCase();
 }
 
 /** A cell as a value: BOM gone, trimmed, case as typed. */
 function text(cell: string | undefined): string {
-  return (cell ?? "").replace(/^﻿/, "").trim();
+  return (cell ?? "").replace(/^\uFEFF/, "").trim();
+}
+
+/**
+ * A figure out of a map keyed by a member's name, or nothing.
+ *
+ * Every read in this module goes through this rather than `map[name] ?? 0`,
+ * because the names are strings out of somebody else's file and a plain object
+ * inherits a dozen of them: `map["constructor"]` hands back a *function*, `??`
+ * never fires, and the arithmetic downstream quietly becomes NaN. `Object.hasOwn`
+ * is the whole fix, and it holds whatever prototype the map came with — which
+ * matters, because some of these maps are built by `resolveSplit`.
+ *
+ * The write side has no such guard available: assigning `__proto__` on a plain
+ * object sets the prototype and stores nothing, so that one name is refused at
+ * the header instead (`readHeader`).
+ */
+function at(map: Record<string, number>, key: string): number {
+  return Object.hasOwn(map, key) ? map[key]! : 0;
 }
 
 /**
@@ -289,6 +309,19 @@ function readHeader({ line, cells }: Line): string[] {
   if (names.some((n) => n === "")) {
     throw new ImportError("blank-member", "One of the people columns has no name in its header.",
       line);
+  }
+  // Every map in this module is keyed by the name in the header, which is a
+  // string out of a file somebody else wrote. `__proto__` is the one such
+  // string a plain object cannot hold: assigning it sets the prototype and
+  // stores nothing, so that member's figures would silently vanish and the
+  // refusal would arrive as a baffling checksum mismatch three steps later.
+  // Refusing it by name is one line; the alternative is null-prototype maps
+  // all the way down through `resolveSplit`, which is money code this has no
+  // business reaching into.
+  const reserved = names.find((n) => n === "__proto__");
+  if (reserved !== undefined) {
+    throw new ImportError("bad-member-name",
+      `A column called “${reserved}” is not a person bida can put in a group.`, line, reserved);
   }
   // Two identical headers is a file we cannot import: the columns are
   // indistinguishable, so their balances would merge into one person.
@@ -417,7 +450,7 @@ function readRow(
   const paid = payersOf(members, net_, amountMinor, row.line, description);
   const owed: Record<string, number> = {};
   members.forEach((name, i) => {
-    const share = (paid[name] ?? 0) - (net_[i] ?? 0);
+    const share = at(paid, name) - (net_[i] ?? 0);
     // A member who owes nothing is left out rather than carried at zero: it is
     // what a person would have entered, and `resolveSplit` reads an `exact`
     // split off exactly this map.
@@ -537,7 +570,7 @@ function isRealDay(day: string): boolean {
 function checkFoot(plan: ImportPlan): void {
   const computed: Record<string, number> = {};
   const move = (name: string, minor: number) => {
-    computed[name] = (computed[name] ?? 0) + minor;
+    computed[name] = at(computed, name) + minor;
   };
   for (const name of plan.members) computed[name] = 0;
 
@@ -552,9 +585,9 @@ function checkFoot(plan: ImportPlan): void {
   }
 
   const drift = plan.members
-    .filter((name) => (computed[name] ?? 0) !== (plan.stated[name] ?? 0))
-    .map((name) => `${name}: ${minorToDecimalString(computed[name] ?? 0, plan.currency)}`
-      + ` vs ${minorToDecimalString(plan.stated[name] ?? 0, plan.currency)}`);
+    .filter((name) => at(computed, name) !== at(plan.stated, name))
+    .map((name) => `${name}: ${minorToDecimalString(at(computed, name), plan.currency)}`
+      + ` vs ${minorToDecimalString(at(plan.stated, name), plan.currency)}`);
   if (drift.length > 0) {
     throw new ImportError("checksum",
       "The balances this would produce do not match the file's own “Total balance” row, "
