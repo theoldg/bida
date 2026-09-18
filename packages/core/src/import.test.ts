@@ -431,7 +431,7 @@ describe("currencies that are not two decimals", () => {
       ["2026-04-03", "Ramen", "General", "30.50", "JPY", "-15.25", "15.25"],
       ["2026-09-18", "Total balance", " ", " ", "JPY", "-15", "15"],
     ];
-    expect(refusal(rows)).toBe("bad-amount");
+    expect(refusal(rows)).toBe("too-precise");
   });
 });
 
@@ -474,7 +474,7 @@ describe("what it refuses, and why each one would have needed a guess", () => {
     }
     expect(code).toBe("mixed-currency");
     // Named, so the person knows which file to go and fix.
-    expect(detail).toBe("EUR,MAD");
+    expect(detail).toBe("EUR, MAD");
   });
 
   it("a currency cell that is not three letters", () => {

@@ -88,6 +88,8 @@ export type ImportRefusalCode =
   | "bad-date"
   /** A `Cost` or member cell that is not a number. */
   | "bad-amount"
+  /** A cell with more decimal places than the currency has. */
+  | "too-precise"
   /** A row whose member cells do not sum to zero — the shape's own invariant. */
   | "row-not-zero"
   /** `Σ positive > cost`: more was net-paid than the thing cost. */
@@ -97,6 +99,14 @@ export type ImportRefusalCode =
   /** The plan's balances disagree with the file's own foot. */
   | "checksum";
 
+/**
+ * Why a file was refused, as a code and the facts behind it.
+ *
+ * `message` is terse and for a developer: the sentence a person reads is
+ * `copy.importData.refused[code]`, because copy.ts owns every word on a screen
+ * and a refusal is the most-read words this module has (ADR-0033). `line` and
+ * `detail` are what those sentences interpolate.
+ */
 export class ImportError extends Error {
   readonly code: ImportRefusalCode;
   /** 1-based, as a spreadsheet counts them — blank lines included. */
@@ -231,7 +241,7 @@ export function readCsvGroup(
     if (cells.every((c) => text(c) === "")) return;
     lines.push({ line: i + 1, cells: [...cells] });
   });
-  if (lines.length === 0) throw new ImportError("empty", "This file has no rows in it.");
+  if (lines.length === 0) throw new ImportError("empty", "no rows");
 
   const head = lines[0]!;
   const members = readHeader(head);
@@ -243,8 +253,8 @@ export function readCsvGroup(
     // with nowhere to go, and quietly ignoring it is how a column gets misread.
     if (row.cells.length > width) {
       throw new ImportError("extra-cells",
-        `Line ${row.line} has ${row.cells.length} cells but the header has ${width}.`,
-        row.line);
+        `line ${row.line}: ${row.cells.length} cells, header has ${width}`,
+        row.line, `${row.cells.length}/${width}`);
     }
     while (row.cells.length < width) row.cells.push("");
   }
@@ -257,8 +267,7 @@ export function readCsvGroup(
   // the checksum as an expense.
   const footIndex = body.findIndex((row) => token(row.cells[1]) === TOTAL_BALANCE);
   if (footIndex === -1) {
-    throw new ImportError("no-foot",
-      "This file has no “Total balance” row, so there is nothing to check the import against.");
+    throw new ImportError("no-foot", "no Total balance row");
   }
   const foot = body[footIndex]!;
   const stated: Record<string, number> = {};
@@ -279,7 +288,7 @@ export function readCsvGroup(
   });
 
   if (entries.length === 0 && transfers.length === 0) {
-    throw new ImportError("no-entries", "There is nothing in this file to import.");
+    throw new ImportError("no-entries", "nothing to import");
   }
 
   checkFoot({ currency, members, entries, transfers, dropped, stated });
@@ -295,20 +304,16 @@ function readHeader({ line, cells }: Line): string[] {
 
   const shape = HEADER.every((want, i) => token(trimmed[i]) === want);
   if (!shape) {
-    throw new ImportError("header",
-      "This does not look like a Splitwise export: the first five columns should be "
-      + "Date, Description, Category, Cost, Currency.", line,
+    throw new ImportError("header", "first five columns are not the shape", line,
       trimmed.slice(0, HEADER.length).join(", "));
   }
 
   const names = trimmed.slice(HEADER.length).map((c) => text(c));
   if (names.length === 0) {
-    throw new ImportError("no-members", "This file has no people in it — only the five columns.",
-      line);
+    throw new ImportError("no-members", "no member columns", line);
   }
   if (names.some((n) => n === "")) {
-    throw new ImportError("blank-member", "One of the people columns has no name in its header.",
-      line);
+    throw new ImportError("blank-member", "a member column has no name", line);
   }
   // Every map in this module is keyed by the name in the header, which is a
   // string out of a file somebody else wrote. `__proto__` is the one such
@@ -320,8 +325,7 @@ function readHeader({ line, cells }: Line): string[] {
   // business reaching into.
   const reserved = names.find((n) => n === "__proto__");
   if (reserved !== undefined) {
-    throw new ImportError("bad-member-name",
-      `A column called “${reserved}” is not a person bida can put in a group.`, line, reserved);
+    throw new ImportError("bad-member-name", `member column named ${reserved}`, line, reserved);
   }
   // Two identical headers is a file we cannot import: the columns are
   // indistinguishable, so their balances would merge into one person.
@@ -332,8 +336,7 @@ function readHeader({ line, cells }: Line): string[] {
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) {
       throw new ImportError("duplicate-member",
-        `Two columns are both called “${name}”, so there is no telling which balance is whose.`,
-        line, name);
+        `two columns named ${name}`, line, name);
     }
     seen.add(key);
   }
@@ -347,21 +350,20 @@ function readCurrency(body: readonly Line[]): CurrencyCode {
     const code = text(row.cells[HEADER.length - 1]).toLocaleUpperCase();
     if (code === "") continue;
     if (!isCurrencyCode(code)) {
-      throw new ImportError("unknown-currency",
-        `Line ${row.line} has “${code}” where a three-letter currency should be.`, row.line, code);
+      throw new ImportError("unknown-currency", `line ${row.line}: ${code} is not a currency`,
+        row.line, code);
     }
     found.add(code);
   }
   const codes = [...found].sort();
   if (codes.length === 0) {
-    throw new ImportError("unknown-currency", "No row in this file says what currency it is in.");
+    throw new ImportError("unknown-currency", "no row states a currency");
   }
   if (codes.length > 1) {
     // The foot sums across currencies, so the checksum is gone exactly where
     // the import would be least sure. Refusing beats importing unchecked.
-    throw new ImportError("mixed-currency",
-      `This file mixes ${codes.join(" and ")}. bida can only import one currency at a time.`,
-      undefined, codes.join(","));
+    throw new ImportError("mixed-currency", `mixes ${codes.join(",")}`, undefined,
+      codes.join(", "));
   }
   return codes[0]!;
 }
@@ -374,8 +376,8 @@ function amount(row: Line, index: number, currency: CurrencyCode, exp: number): 
   try {
     minor = parseMinor(raw, currency);
   } catch {
-    throw new ImportError("bad-amount",
-      `Line ${row.line} has “${raw}” where an amount should be.`, row.line, raw);
+    throw new ImportError("bad-amount", `line ${row.line}: ${raw} is not an amount`,
+      row.line, raw);
   }
   // `parseMinor` rounds excess precision away, which is right for a keyboard
   // and wrong for a file: a cell with more decimals than the currency has is
@@ -383,9 +385,8 @@ function amount(row: Line, index: number, currency: CurrencyCode, exp: number): 
   // money to hide that is not ours to do.
   const frac = raw.replace(/\s/g, "").replace(",", ".").split(".")[1] ?? "";
   if (frac.length > exp) {
-    throw new ImportError("bad-amount",
-      `Line ${row.line} has “${raw}”, which is more decimal places than ${currency} has.`,
-      row.line, raw);
+    throw new ImportError("too-precise", `line ${row.line}: ${raw} is finer than ${currency}`,
+      row.line, `${raw} — ${currency}`);
   }
   return minor;
 }
@@ -409,9 +410,8 @@ function readRow(
   const deltas = members.map((_, i) => amount(row, HEADER.length + i, currency, exp));
   const net = deltas.reduce((a, b) => a + b, 0);
   if (net !== 0) {
-    throw new ImportError("row-not-zero",
-      `Line ${row.line} does not balance: its people's figures add up to `
-      + `${minorToDecimalString(net, currency)} instead of nothing.`, row.line);
+    throw new ImportError("row-not-zero", `line ${row.line}: members sum to ${net}`,
+      row.line, minorToDecimalString(net, currency));
   }
   // Every cell zero: the row says a thing cost money and nothing about who,
   // which is what our own writer emits for an expense it could not apportion.
@@ -423,8 +423,7 @@ function readRow(
     // `01/02/2026` is two different days on two continents. There is no
     // reading of it that is true, so the file is refused rather than guessed at.
     throw new ImportError("bad-date",
-      `Line ${row.line} has “${day}” where a date should be. bida reads YYYY-MM-DD.`,
-      row.line, day);
+      `line ${row.line}: ${day} is not YYYY-MM-DD`, row.line, day);
   }
   const occurredAt = dayToTimestamp(day);
 
@@ -442,9 +441,9 @@ function readRow(
   const positive = net_.reduce((a, d) => a + Math.max(0, d), 0);
   if (positive > amountMinor) {
     throw new ImportError("overpaid",
-      `Line ${row.line} says ${minorToDecimalString(positive, currency)} was paid towards `
-      + `something that cost ${minorToDecimalString(amountMinor, currency)}, which no split explains.`,
-      row.line);
+      `line ${row.line}: ${positive} paid towards a cost of ${amountMinor}`, row.line,
+      `${minorToDecimalString(positive, currency)} towards `
+      + minorToDecimalString(amountMinor, currency));
   }
 
   const paid = payersOf(members, net_, amountMinor, row.line, description);
@@ -589,9 +588,8 @@ function checkFoot(plan: ImportPlan): void {
     .map((name) => `${name}: ${minorToDecimalString(at(computed, name), plan.currency)}`
       + ` vs ${minorToDecimalString(at(plan.stated, name), plan.currency)}`);
   if (drift.length > 0) {
-    throw new ImportError("checksum",
-      "The balances this would produce do not match the file's own “Total balance” row, "
-      + "so something in it is being read wrong.", undefined, drift.join("; "));
+    throw new ImportError("checksum", "balances disagree with the foot", undefined,
+      drift.join("; "));
   }
 }
 
