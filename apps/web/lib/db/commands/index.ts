@@ -10,12 +10,14 @@
  * - `groups.ts` — a group, who this phone is in it, and who else is
  * - `rates.ts` — the registry, and what it makes an entry worth (ADR-0005)
  * - `entries.ts` — expenses, incomes and transfers
+ * - `import.ts` — a Splitwise CSV as a new group, in one batch
  */
 
 export {
   createGroup, saveGroupKey, heldInvites, forgetGroup, claimIdentity, publishExistingClaims,
   addMember, renameMember, removeMember, healGroup, type NewGroupInput,
 } from "./groups";
+export { importGroup, type ImportGroupInput } from "./import";
 export { setRate, clearRate } from "./rates";
 export {
   addExpense, editExpense, deleteExpense, type ExpenseInput,

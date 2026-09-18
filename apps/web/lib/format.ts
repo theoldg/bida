@@ -320,6 +320,21 @@ export function dateInputValue(ts: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+/**
+ * The inverse of `dateInputValue`: local midnight of a `YYYY-MM-DD` day.
+ *
+ * What an imported row's `occurredAt` becomes, and the same convention a
+ * backdated scan already uses — `occurredAt` holds a day and no time of day
+ * worth showing, and the stamp is local midnight of it
+ * (docs/data-model.md). `Date.parse` is deliberately not used: it reads a
+ * bare date as UTC, which lands the day before for anyone west of Greenwich.
+ */
+export function dayStart(day: string): number {
+  const [y, m, d] = day.split("-").map(Number);
+  if (!y || !m || !d) return Number.NaN;
+  return new Date(y, m - 1, d).getTime();
+}
+
 /** Keep the time of day when the user only changes the date. */
 export function withDate(ts: number, value: string): number {
   const [y, m, d] = value.split("-").map(Number);
