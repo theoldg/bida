@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  bare, countText, distinctInitials, graphemes, groupDigits, initials, rateText, splitFooter, usd,
+  bare, byWhen, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  initials, isDateOnly, rateText, splitFooter, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -192,5 +193,72 @@ describe("countText", () => {
 
   it("has nothing to say about nothing", () => {
     expect(countText({ n: 0, d: 3 })).toBe(null);
+  });
+});
+
+describe("isDateOnly", () => {
+  it("is true at local midnight and false a millisecond either side", () => {
+    const midnight = new Date(2026, 3, 4).getTime();
+    expect(isDateOnly(midnight)).toBe(true);
+    expect(isDateOnly(midnight + 1)).toBe(false);
+    expect(isDateOnly(midnight - 1)).toBe(false);
+    expect(isDateOnly(new Date(2026, 3, 4, 18, 22).getTime())).toBe(false);
+  });
+});
+
+describe("whenLabel", () => {
+  const now = new Date(2026, 3, 4, 12, 0).getTime();
+
+  it("prints the time when there is one", () => {
+    const at = new Date(2026, 3, 4, 18, 22).getTime();
+    expect(whenLabel(at, now)).toBe(`${dayLabel(at, now)} \u00b7 ${clockTime(at)}`);
+  });
+
+  // The bug this exists for: a backdated receipt claiming it was paid at 00:00.
+  it("prints the day alone when no time was ever known", () => {
+    const at = new Date(2026, 3, 2).getTime();
+    expect(whenLabel(at, now)).toBe(dayLabel(at, now));
+    expect(whenLabel(at, now)).not.toContain("\u00b7");
+  });
+});
+
+describe("byWhen", () => {
+  const day = (d: number, h = 0, min = 0) => new Date(2026, 3, d, h, min).getTime();
+  const ids = (rows: { id: string }[]) => rows.map((r) => r.id);
+
+  it("puts the newest day first", () => {
+    const rows = [
+      { id: "old", occurredAt: day(2, 9) },
+      { id: "new", occurredAt: day(4, 9) },
+    ];
+    expect(ids([...rows].sort(byWhen))).toEqual(["new", "old"]);
+  });
+
+  it("heads a day with the entries that have no time, latest-added first", () => {
+    const rows = [
+      { id: "evening", occurredAt: day(4, 21), createdAt: day(4, 21) },
+      { id: "receipt-a", occurredAt: day(4), createdAt: day(5, 10) },
+      { id: "morning", occurredAt: day(4, 8), createdAt: day(4, 8) },
+      { id: "receipt-b", occurredAt: day(4), createdAt: day(5, 11) },
+    ];
+    expect(ids([...rows].sort(byWhen)))
+      .toEqual(["receipt-b", "receipt-a", "evening", "morning"]);
+  });
+
+  it("keeps a timeless entry inside its own day", () => {
+    const rows = [
+      { id: "next-day", occurredAt: day(5, 1) },
+      { id: "timeless", occurredAt: day(4) },
+      { id: "prev-day", occurredAt: day(3, 23) },
+    ];
+    expect(ids([...rows].sort(byWhen))).toEqual(["next-day", "timeless", "prev-day"]);
+  });
+
+  it("falls back to occurredAt when createdAt was never written", () => {
+    const rows = [
+      { id: "a", occurredAt: day(4, 9) },
+      { id: "b", occurredAt: day(4, 9), createdAt: day(4, 10) },
+    ];
+    expect(ids([...rows].sort(byWhen))).toEqual(["b", "a"]);
   });
 });

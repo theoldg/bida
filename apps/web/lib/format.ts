@@ -264,6 +264,51 @@ export function clockTime(ts: number): string {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
 }
 
+/**
+ * Whether a stamp carries a day but no time of day — exactly local midnight.
+ *
+ * That is not a convention invented here so much as the only thing a printed
+ * date can become: a backdated receipt says which day, never which hour
+ * (`normalizeScan`), and `withDate` keeps whatever time an entry already had
+ * when its day is edited, so a stamp that starts without one stays without
+ * one. Entries typed by hand take `Date.now()`, which lands on midnight to
+ * the millisecond about once in 86 million — and that one row simply keeps
+ * its 00:00 to itself, which is what every other timeless row does anyway.
+ */
+export function isDateOnly(ts: number): boolean {
+  return ts === startOfDay(ts);
+}
+
+/** "Today · 18:22", or the day alone when no time was ever known. */
+export function whenLabel(ts: number, now = Date.now()): string {
+  return isDateOnly(ts) ? dayLabel(ts, now) : `${dayLabel(ts, now)} · ${clockTime(ts)}`;
+}
+
+/**
+ * The ledger's order: newest first by the user-facing date, then by actual
+ * entry order — two entries backdated to the same day, or added within the
+ * same minute, still need a stable order rather than whatever IndexedDB
+ * handed back. `createdAt` is absent on rows written before it existed, so
+ * those fall back to `occurredAt` for the tiebreak (a wash, but never
+ * crashes).
+ *
+ * A date-only stamp sorts as its day's *last* moment rather than its first:
+ * midnight there means "sometime that day", and a row we cannot place within
+ * the day belongs at the head of it, above the rows we can — not buried under
+ * them as the earliest thing that happened.
+ */
+export function byWhen(
+  a: { occurredAt: number; createdAt?: number | null },
+  b: { occurredAt: number; createdAt?: number | null },
+): number {
+  return (whenOrder(b.occurredAt) - whenOrder(a.occurredAt))
+    || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
+}
+
+function whenOrder(ts: number): number {
+  return isDateOnly(ts) ? ts + DAY - 1 : ts;
+}
+
 /** "FRI 4 APRIL · 18:22" — the history timeline's stamp. */
 export function stamp(ts: number): string {
   const d = new Date(ts);

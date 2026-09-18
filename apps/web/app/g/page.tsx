@@ -23,7 +23,7 @@ import { copy } from "../../lib/copy";
 import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
 import { setLastOpenedGroup } from "../../lib/db/device";
 import { syncGroup } from "../../lib/db/sync";
-import { dayLabel, money, plural } from "../../lib/format";
+import { byWhen, dayLabel, money, plural } from "../../lib/format";
 import { route } from "../../lib/group-link";
 import { expenseMeta, transferMeta } from "../../lib/row-meta";
 import { useClaimGate, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
@@ -167,8 +167,8 @@ function GroupScreen() {
  * lives on the expense itself (`kindOf`).
  */
 type Entry =
-  | { row: "expense"; at: number; createdAt: number; expense: Expense }
-  | { row: "settlement"; at: number; createdAt: number; settlement: Settlement };
+  | { row: "expense"; occurredAt: number; createdAt: number; expense: Expense }
+  | { row: "settlement"; occurredAt: number; createdAt: number; settlement: Settlement };
 
 function LedgerTab({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
@@ -183,9 +183,9 @@ function LedgerTab({ data }: { data: GroupData }) {
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   const entries: Entry[] = [
-    ...expenses.map((e): Entry => ({ row: "expense", at: e.occurredAt, createdAt: e.createdAt ?? e.occurredAt, expense: e })),
-    ...settlements.map((s): Entry => ({ row: "settlement", at: s.occurredAt, createdAt: s.createdAt ?? s.occurredAt, settlement: s })),
-  ].sort((a, b) => (b.at - a.at) || (b.createdAt - a.createdAt));
+    ...expenses.map((e): Entry => ({ row: "expense", occurredAt: e.occurredAt, createdAt: e.createdAt ?? e.occurredAt, expense: e })),
+    ...settlements.map((s): Entry => ({ row: "settlement", occurredAt: s.occurredAt, createdAt: s.createdAt ?? s.occurredAt, settlement: s })),
+  ].sort(byWhen);
 
   let lastDay = "";
 
@@ -222,7 +222,7 @@ function LedgerTab({ data }: { data: GroupData }) {
 
       <div className="rows">
         {entries.map((entry) => {
-          const day = dayLabel(entry.at);
+          const day = dayLabel(entry.occurredAt);
           const label = day === lastDay ? null : (lastDay = day);
           return (
             <div key={entry.row === "expense" ? entry.expense.id : entry.settlement.id}>

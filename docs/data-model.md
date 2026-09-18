@@ -60,6 +60,7 @@ Expense {
                       // so the common case never carries the field
   createdAt?,         // set once at creation; list-order tiebreak for
                       // same-day expenses, since occurredAt is user-editable
+                      // (see "A day without a time" below)
   amountMinor,        // in `currency`
   currency,           // ISO 4217, may differ from group base
   rateToBase,         // decimal string, "1" when same currency — what was
@@ -173,6 +174,22 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   device stamped. Claims are ops
   ([ADR-0003](decisions/0003-link-only-access.md)); the device's own
   pointer stays in `device.meByGroup`, unsynced — changing it appends the op.
+
+### A day without a time
+
+`occurredAt` is one number for two facts. An entry somebody typed happened at a
+moment and carries it; a backdated receipt only ever said which **day**, so it
+lands on local midnight — this app's way of writing down that the time is
+unknown. `isDateOnly` (`apps/web/lib/format.ts`) is the whole test, and two
+rules follow: the entry screen prints the day alone rather than a `00:00`
+nobody claimed, and `byWhen` orders such an entry as its day's *last* moment,
+so it heads its day rather than sitting under everything as the earliest thing
+that happened. Inside the day the `createdAt` tiebreak still decides.
+
+Nothing guards the sentinel and nothing needs to: `withDate` keeps whatever
+time an entry had when its day is edited, and `Date.now()` hits midnight to the
+millisecond about once in 86 million — that row keeps its `00:00` to itself,
+like every other timeless one.
 
 ## Splits — the only tricky arithmetic
 

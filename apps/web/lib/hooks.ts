@@ -13,6 +13,7 @@ import { db, type DeviceRecord } from "./db/dexie";
 import { useLive } from "./db/live";
 import { getDevice } from "./db/device";
 import { copy } from "./copy";
+import { byWhen } from "./format";
 import { tick } from "./haptics";
 import { formatJoinLink, route } from "./group-link";
 
@@ -59,17 +60,6 @@ function stateOf(
     settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
     rates: Object.fromEntries(rates.map((r) => [r.id, r])),
   });
-}
-
-/**
- * Newest first by the user-facing date, then by actual entry order — two
- * expenses backdated to the same day, or added within the same minute, still
- * need a stable, deterministic order rather than whatever IndexedDB handed
- * back. `createdAt` is absent on expenses written before it existed, so those
- * fall back to `occurredAt` for the tiebreak (a wash, but never crashes).
- */
-function byWhenThenCreated(a: Expense | Settlement, b: Expense | Settlement): number {
-  return (b.occurredAt - a.occurredAt) || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
 }
 
 export function useDevice(): DeviceRecord | undefined {
@@ -220,8 +210,8 @@ export function useGroupData(groupId: string | undefined): GroupData {
     const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
     const state = stateOf(
       rows.group, members,
-      living(rows.expenses).sort(byWhenThenCreated),
-      living(rows.settlements).sort(byWhenThenCreated),
+      living(rows.expenses).sort(byWhen),
+      living(rows.settlements).sort(byWhen),
       living(rows.rates),
     );
     // Back out of the repriced state, in the order they went in — `stateOf`
@@ -229,9 +219,9 @@ export function useGroupData(groupId: string | undefined): GroupData {
     // none of them can be left looking at a stale conversion.
     const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
       rows.map((row) => keyed[row.id] ?? row);
-    const expenses = bySortOrder(living(rows.expenses).sort(byWhenThenCreated), state.expenses);
+    const expenses = bySortOrder(living(rows.expenses).sort(byWhen), state.expenses);
     const settlements = bySortOrder(
-      living(rows.settlements).sort(byWhenThenCreated), state.settlements);
+      living(rows.settlements).sort(byWhen), state.settlements);
 
     const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));

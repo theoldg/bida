@@ -17,7 +17,7 @@ import { db } from "../../../lib/db/dexie";
 import { useLive } from "../../../lib/db/live";
 import { kindOf, type EntryKind } from "../../../lib/entry-kind";
 import { copy } from "../../../lib/copy";
-import { clockTime, dayLabel, money, plural, rateText } from "../../../lib/format";
+import { money, plural, rateText, whenLabel } from "../../../lib/format";
 import { receiptBreakdown } from "../../../lib/scan/items";
 import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
@@ -87,7 +87,7 @@ function EntryScreen() {
       <Body>
         <TopBar
           title={expense ? (expense.description || copy.group.untitled) : copy.group.transfer}
-          sub={`${dayLabel(entry.occurredAt)} · ${clockTime(entry.occurredAt)}`}
+          sub={whenLabel(entry.occurredAt)}
           back={parent}
           right={<>
             <Link className="iconbtn" href={route.history(groupId, entry.id, via)} aria-label={copy.entry.history}>

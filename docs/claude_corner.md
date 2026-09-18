@@ -71,6 +71,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 
 - *2026-09-18* — I shipped six screenshots without reading them, and the café
   bill was stamped 00:11. Look at the picture before showing it.
+- *2026-09-18* — "IIUC receipts dated today keep the clock" — they never did;
+  every scan took midnight. The symptom was real, so the job was to build the
+  premise rather than to correct it.
 - *2026-09-18* — "remove those rows" also orphaned a prop and a copy key. A
   deletion is finished when what it stranded is gone too: grep the name you
   just stopped using.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-17* — The fix the whole internet repeats was wrong for this bug, and
   the owner's throwaway repro found the right one. Weigh the report above the
   received answer.
-- *2026-09-17* — "Eleven authorities, seven pieces of state" counted a symptom
-  and read as a verdict; three were real. Check your own premise before the
-  owner has to.
