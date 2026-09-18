@@ -177,23 +177,22 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
 
 ### A day without a time
 
-`occurredAt` is one number for two facts. An entry somebody typed happened at a
-moment and carries it; a backdated receipt only ever said which **day**, so it
-lands on local midnight — this app's way of writing down that the time is
-unknown. `isDateOnly` (`core/when.ts`) is the whole test, and two rules follow:
-the entry screen prints the day alone rather than a `00:00` nobody claimed, and
-`byWhen` orders such an entry as its day's *last* moment, so it heads its day
-rather than sitting under everything as the earliest thing that happened.
-Inside the day the `createdAt` tiebreak still decides.
+An entry somebody typed happened at a moment, and `occurredAt` carries it. A
+backdated receipt only ever printed a **day** — so its stamp is local midnight
+of that day, and **`dateOnly` on the entry says that the time is not
+information**. The flag is the fact; midnight is just where the stamp had to
+land. Nothing reads a meaning back out of the number, because nothing can tell
+midnight-the-moment from midnight-the-empty-field.
 
-**Every stamp read off a clock goes through `timedStamp`**, which moves a
-reading that lands exactly on midnight one millisecond on. There are two such
-readings in the app — `blankDraft`, which seeds every typed entry, and the
-today branch of `normalizeScan` — and without it each would produce, about
-once in 86 million, an entry that had a time and was then drawn and sorted as
-if it never did. Nothing else needs guarding: `withDate` keeps whatever time an
-entry had when its day is edited, so a stamp without one stays without one, and
-one with one keeps it.
+Two rules follow, both in `apps/web/lib/format.ts`: `whenLabel` prints the day
+alone rather than a `00:00` nobody read off a receipt, and `byWhen` puts such
+an entry at the **head** of its day rather than the foot — the time is missing,
+not early. Inside the day the `createdAt` tiebreak still decides.
+
+It is written like every other uncommon field: absent on an ordinary entry, and
+so absent on every entry written before it existed. Those keep the `00:00` they
+have always shown — there is nothing on them to say otherwise, and guessing
+from the stamp is the thing this field exists to stop.
 
 ## Splits — the only tricky arithmetic
 

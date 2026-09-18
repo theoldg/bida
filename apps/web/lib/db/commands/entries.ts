@@ -22,6 +22,8 @@ export interface ExpenseInput {
   kind?: ExpenseKind | null;
   description: string;
   occurredAt: number;
+  /** True when `occurredAt` carries a day and no time — a backdated scan. */
+  dateOnly?: boolean | null;
   /** In `currency`, minor units. */
   amountMinor: number;
   currency: CurrencyCode;
@@ -104,6 +106,7 @@ export async function addExpense(
           // Absent on an ordinary expense — see `only`. No `deletedAt` either:
           // the id is fresh, so a create is never a tombstone.
           ...only({
+            dateOnly: input.dateOnly ? true : null,
             categoryId: input.categoryId,
             payers: payer.payers,
             attachmentIds: input.attachmentIds,
@@ -158,6 +161,7 @@ export async function editExpense(
     kind: merged.kind === "income" ? "income" : null,
     description: merged.description,
     occurredAt: merged.occurredAt,
+    dateOnly: merged.dateOnly ? true : null,
     amountMinor: merged.amountMinor,
     currency: merged.currency,
     rateToBase,

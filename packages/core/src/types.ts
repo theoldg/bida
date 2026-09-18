@@ -89,6 +89,17 @@ export interface Expense {
   categoryId?: string | null;
   occurredAt: number;
   /**
+   * `occurredAt` holds a day, and no time of day worth showing: a receipt
+   * prints the date it was paid and not the hour, so a backdated scan has
+   * nothing to put there. The stamp is local midnight of that day, and this
+   * says so, rather than leaving 00:00 to be read as a time somebody meant.
+   *
+   * Absent — not `false` — on everything else, which is every entry a person
+   * typed and every one written before this existed. See
+   * docs/data-model.md#a-day-without-a-time.
+   */
+  dateOnly?: boolean | null;
+  /**
    * When this expense was first added, wall-clock, set once and never
    * touched by later edits. `occurredAt` is the (editable) date of the
    * purchase; this is for breaking ties between same-day expenses in list

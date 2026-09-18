@@ -199,16 +199,22 @@ describe("countText", () => {
 describe("whenLabel", () => {
   const now = new Date(2026, 3, 4, 12, 0).getTime();
 
-  it("prints the time when there is one", () => {
+  it("prints the time when the entry has one", () => {
     const at = new Date(2026, 3, 4, 18, 22).getTime();
-    expect(whenLabel(at, now)).toBe(`${dayLabel(at, now)} \u00b7 ${clockTime(at)}`);
+    expect(whenLabel({ occurredAt: at }, now)).toBe(`${dayLabel(at, now)} \u00b7 ${clockTime(at)}`);
   });
 
   // The bug this exists for: a backdated receipt claiming it was paid at 00:00.
-  it("prints the day alone when no time was ever known", () => {
+  it("prints the day alone for an entry whose stamp is a day", () => {
     const at = new Date(2026, 3, 2).getTime();
-    expect(whenLabel(at, now)).toBe(dayLabel(at, now));
-    expect(whenLabel(at, now)).not.toContain("\u00b7");
+    expect(whenLabel({ occurredAt: at, dateOnly: true }, now)).toBe(dayLabel(at, now));
+    expect(whenLabel({ occurredAt: at, dateOnly: true }, now)).not.toContain("\u00b7");
+  });
+
+  // Midnight is a time like any other; the entry says whether it means one.
+  it("prints midnight for an entry that was actually stamped at midnight", () => {
+    const at = new Date(2026, 3, 4).getTime();
+    expect(whenLabel({ occurredAt: at }, now)).toContain(clockTime(at));
   });
 });
 
@@ -227,9 +233,9 @@ describe("byWhen", () => {
   it("heads a day with the entries that have no time, latest-added first", () => {
     const rows = [
       { id: "evening", occurredAt: day(4, 21), createdAt: day(4, 21) },
-      { id: "receipt-a", occurredAt: day(4), createdAt: day(5, 10) },
+      { id: "receipt-a", occurredAt: day(4), dateOnly: true, createdAt: day(5, 10) },
       { id: "morning", occurredAt: day(4, 8), createdAt: day(4, 8) },
-      { id: "receipt-b", occurredAt: day(4), createdAt: day(5, 11) },
+      { id: "receipt-b", occurredAt: day(4), dateOnly: true, createdAt: day(5, 11) },
     ];
     expect(ids([...rows].sort(byWhen)))
       .toEqual(["receipt-b", "receipt-a", "evening", "morning"]);
@@ -238,10 +244,21 @@ describe("byWhen", () => {
   it("keeps a timeless entry inside its own day", () => {
     const rows = [
       { id: "next-day", occurredAt: day(5, 1) },
-      { id: "timeless", occurredAt: day(4) },
+      { id: "timeless", occurredAt: day(4), dateOnly: true },
       { id: "prev-day", occurredAt: day(3, 23) },
     ];
     expect(ids([...rows].sort(byWhen))).toEqual(["next-day", "timeless", "prev-day"]);
+  });
+
+  // The old sentinel's one bad case, now simply not a case: an entry stamped
+  // at midnight that means it sorts as the earliest moment of its day.
+  it("sorts a real midnight entry as the earliest of its day", () => {
+    const rows = [
+      { id: "midnight", occurredAt: day(4), createdAt: day(4) },
+      { id: "noon", occurredAt: day(4, 12), createdAt: day(4, 12) },
+      { id: "timeless", occurredAt: day(4), dateOnly: true, createdAt: day(4) },
+    ];
+    expect(ids([...rows].sort(byWhen))).toEqual(["timeless", "noon", "midnight"]);
   });
 
   it("falls back to occurredAt when createdAt was never written", () => {

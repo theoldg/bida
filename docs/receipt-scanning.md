@@ -347,9 +347,10 @@ Two fields the model doesn't get the last word on:
   midnight, not UTC: the app reads instants back in local time everywhere, so
   a UTC-midnight stamp files a receipt under the previous day west of
   Greenwich. `normalizeScan` takes that clock as an argument, like everything
-  else in core, and stamps today's receipt through `timedStamp` so a scan at
-  midnight still reads as a moment. What the surviving midnight *means* — a day
-  without a time — is [data-model.md](data-model.md#a-day-without-a-time).
+  else in core, and returns `dateOnly` beside the stamp: the printed day is all
+  a backdated receipt knows, and the entry carries that as a fact rather than
+  leaving midnight to be read as an hour
+  ([data-model.md](data-model.md#a-day-without-a-time)).
 
 **Never the model's job:** arithmetic, the FX rate (frozen manually, ADR-0005),
 who paid, or how it splits. It reads what's printed and leaves the ledger alone.

@@ -143,7 +143,9 @@ export function useReceiptScan(
           : {}),
         ...(patch.amountText !== undefined ? { amountText: patch.amountText } : {}),
         ...(patch.currency !== undefined ? { currency: patch.currency } : {}),
-        ...(patch.occurredAt !== undefined ? { occurredAt: patch.occurredAt } : {}),
+        ...(patch.occurredAt !== undefined
+          ? { occurredAt: patch.occurredAt, dateOnly: patch.dateOnly === true }
+          : {}),
         receiptItems: receiptItems.length > 0 ? receiptItems : null,
         receiptTip: bill.extras.tip,
         receiptTax: bill.extras.tax,

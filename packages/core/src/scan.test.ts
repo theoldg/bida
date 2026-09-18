@@ -56,21 +56,24 @@ describe("normalizeScan", () => {
   it("stamps a receipt printed today with the moment of the scan", () => {
     const today = new Date(NOW);
     const printed = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    expect(normalizeScan({ ...blank, date: printed }, NOW)).toMatchObject({ occurredAt: NOW });
+    expect(normalizeScan({ ...blank, date: printed }, NOW))
+      .toMatchObject({ occurredAt: NOW, dateOnly: false });
   });
 
-  // The one reading that could collide with the midnight sentinel: the scan
-  // itself lands on it.
-  it("keeps a time on a receipt scanned in the millisecond of midnight", () => {
+  // Midnight carries no meaning of its own now: a scan that happens to land on
+  // it is a moment like any other, and the patch says so.
+  it("keeps a receipt scanned in the millisecond of midnight as a moment", () => {
     const at = new Date(2026, 8, 5).getTime();
-    expect(normalizeScan({ ...blank, date: "2026-09-05" }, at)).toMatchObject({ occurredAt: at + 1 });
+    expect(normalizeScan({ ...blank, date: "2026-09-05" }, at))
+      .toMatchObject({ occurredAt: at, dateOnly: false });
   });
 
-  it("leaves a backdated receipt at midnight, time unknown", () => {
-    const { occurredAt } = normalizeScan({ ...blank, date: "2026-08-28" }, NOW);
+  it("marks a backdated receipt as a day with no time, at midnight", () => {
+    const { occurredAt, dateOnly } = normalizeScan({ ...blank, date: "2026-08-28" }, NOW);
     const back = new Date(occurredAt!);
     expect([back.getHours(), back.getMinutes(), back.getSeconds(), back.getMilliseconds()])
       .toEqual([0, 0, 0, 0]);
+    expect(dateOnly).toBe(true);
   });
 
   it("omits an unparseable date", () => {

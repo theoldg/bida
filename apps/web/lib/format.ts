@@ -1,5 +1,5 @@
 import {
-  formatMinor, formatRate, isDateOnly, startOfLocalDay,
+  formatMinor, formatRate, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
 } from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
@@ -258,34 +258,43 @@ export function clockTime(ts: number): string {
   return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
 }
 
-/** "Today · 18:22", or the day alone when no time was ever known. */
-export function whenLabel(ts: number, now = Date.now()): string {
-  return isDateOnly(ts) ? dayLabel(ts, now) : `${dayLabel(ts, now)} · ${clockTime(ts)}`;
+/**
+ * "Today · 18:22" — or the day alone for an entry whose stamp is a day and
+ * nothing more (`dateOnly`), where a clock would be printing 00:00 as though
+ * somebody had read it off a receipt.
+ */
+export function whenLabel(entry: Whenever, now = Date.now()): string {
+  return entry.dateOnly
+    ? dayLabel(entry.occurredAt, now)
+    : `${dayLabel(entry.occurredAt, now)} · ${clockTime(entry.occurredAt)}`;
+}
+
+/** Anything the ledger places in time: an expense, a transfer, a row built from one. */
+export interface Whenever {
+  occurredAt: number;
+  dateOnly?: boolean | null;
+  createdAt?: number | null;
 }
 
 /**
- * The ledger's order: newest first by the user-facing date, then by actual
- * entry order — two entries backdated to the same day, or added within the
- * same minute, still need a stable order rather than whatever IndexedDB
- * handed back. `createdAt` is absent on rows written before it existed, so
- * those fall back to `occurredAt` for the tiebreak (a wash, but never
- * crashes).
+ * The ledger's order: newest day first, and inside a day the entries we
+ * cannot place in it — the ones whose stamp is a day and nothing more — then
+ * the rest by their time, latest first.
  *
- * A date-only stamp sorts as its day's *last* moment rather than its first:
- * midnight there means "sometime that day", and a row we cannot place within
- * the day belongs at the head of it, above the rows we can — not buried under
- * them as the earliest thing that happened.
+ * A `dateOnly` entry heads its day rather than sinking to the bottom of it,
+ * which is where its midnight stamp would otherwise put it: the time is
+ * missing, not early. Last comes the `createdAt` tiebreak, for two entries
+ * backdated to the same day or added within the same minute — they still need
+ * a stable order rather than whatever IndexedDB handed back. `createdAt` is
+ * absent on rows written before it existed, so those fall back to `occurredAt`
+ * (a wash, but never crashes).
  */
-export function byWhen(
-  a: { occurredAt: number; createdAt?: number | null },
-  b: { occurredAt: number; createdAt?: number | null },
-): number {
-  return (whenOrder(b.occurredAt) - whenOrder(a.occurredAt))
-    || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
-}
-
-function whenOrder(ts: number): number {
-  return isDateOnly(ts) ? ts + DAY - 1 : ts;
+export function byWhen(a: Whenever, b: Whenever): number {
+  const day = startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt);
+  if (day !== 0) return day;
+  if (!a.dateOnly !== !b.dateOnly) return a.dateOnly ? -1 : 1;
+  const time = a.dateOnly ? 0 : b.occurredAt - a.occurredAt;
+  return time || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
 }
 
 /** "FRI 4 APRIL · 18:22" — the history timeline's stamp. */

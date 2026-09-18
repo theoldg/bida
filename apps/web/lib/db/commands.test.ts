@@ -208,6 +208,30 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
+  // A backdated receipt prints a day and no hour, and the entry says that
+  // itself rather than leaving its midnight stamp to be read as a time
+  // (`dateOnly`, core/types.ts).
+  it("keeps a day without a time as a fact on the entry, through an edit", async () => {
+    const { groupId, theo, marie } = await trip();
+    const id = await addExpense(groupId, theo, {
+      description: "Lidl",
+      occurredAt: new Date(2026, 3, 2).getTime(),
+      dateOnly: true,
+      amountMinor: 3200,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    expect((await db().expenses.get(id))!.dateOnly).toBe(true);
+
+    // The whole-entity write carries it through an edit that never went near
+    // the date — otherwise a rename would hand the row back its 00:00.
+    await editExpense(groupId, theo, id, { description: "Lidl, barbecue" });
+    expect((await db().expenses.get(id))!.dateOnly).toBe(true);
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
   // The one create that must keep writing `deletedAt: null`: a rate is keyed by
   // its currency, so setting one the group cleared lands on the tombstoned row.
   it("revives a cleared rate, which is why that create still writes its null", async () => {
@@ -264,7 +288,7 @@ describe("commands", () => {
     // Whole, so the stored entry is always a version somebody looked at.
     expect(Object.keys(update.patch).sort()).toEqual([
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
-      "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
+      "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
       "receiptAssignments", "receiptDiscounts", "receiptInvolved", "receiptItems",
       "receiptTax", "receiptTip",
       "split",

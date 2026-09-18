@@ -87,7 +87,7 @@ function EntryScreen() {
       <Body>
         <TopBar
           title={expense ? (expense.description || copy.group.untitled) : copy.group.transfer}
-          sub={whenLabel(entry.occurredAt)}
+          sub={whenLabel(entry)}
           back={parent}
           right={<>
             <Link className="iconbtn" href={route.history(groupId, entry.id, via)} aria-label={copy.entry.history}>

@@ -232,6 +232,7 @@ function EditEntryScreen() {
           fromMember: me,
           toMember: data.members.find((m) => m.id !== me)?.id ?? me,
           occurredAt: e.occurredAt,
+          dateOnly: e.dateOnly === true,
           categoryId: e.categoryId ?? null,
           receiptItems: e.receiptItems ?? null,
           receiptTip: e.receiptTip ?? null,
@@ -512,6 +513,9 @@ function EditEntryScreen() {
           kind,
           description: draft.description.trim(),
           occurredAt: draft.occurredAt,
+          // Written only when it is true (`only`/`wholeEntity`): a typed entry
+          // is the absence of this field, like every entry before it existed.
+          dateOnly: draft.dateOnly ? true : null,
           amountMinor,
           currency: draft.currency,
           rateToBase: rate,

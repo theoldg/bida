@@ -10,7 +10,7 @@
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 import type { ReceiptDiscount } from "./types.js";
-import { startOfLocalDay, timedStamp } from "./when.js";
+import { startOfLocalDay } from "./when.js";
 
 /** One printed line: what it's called, translated, and what it cost. */
 export interface ScanLineItem {
@@ -71,15 +71,16 @@ export interface ScanPatch {
   currency?: string;
   /** The moment of the scan for a receipt printed today; local midnight for any other day. */
   occurredAt?: number;
+  /** True when `occurredAt` is a day and nothing more — a receipt prints no hour. */
+  dateOnly?: boolean;
 }
 
 /**
  * `now` is the moment of the scan. A receipt printed today was paid at some
  * point before it, so it takes `now` as its stamp — close enough, and a real
- * time of day. A receipt from any other day takes local midnight, which is
- * how this app writes down a day whose time nobody knows: the ledger neither
- * prints it nor pretends the purchase happened at 00:00
- * (`isDateOnly`, apps/web/lib/format.ts).
+ * time of day. A receipt from any other day takes local midnight of the day
+ * it prints, and says `dateOnly`: the hour is not on the receipt, and the
+ * ledger neither prints one nor pretends the purchase happened at 00:00.
  */
 export function normalizeScan(result: ScanResult, now: number): ScanPatch {
   const patch: ScanPatch = {};
@@ -95,7 +96,9 @@ export function normalizeScan(result: ScanResult, now: number): ScanPatch {
     if (y && m && d) {
       const local = new Date(y, m - 1, d).getTime();
       if (!Number.isNaN(local)) {
-        patch.occurredAt = local === startOfLocalDay(now) ? timedStamp(now) : local;
+        const printedToday = local === startOfLocalDay(now);
+        patch.occurredAt = printedToday ? now : local;
+        patch.dateOnly = !printedToday;
       }
     }
   }

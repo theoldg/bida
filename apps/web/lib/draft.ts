@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import {
-  convertSplitMode, newId, parseMinor, receiptExtras, timedStamp,
+  convertSplitMode, newId, parseMinor, receiptExtras,
   type ArithmeticMode, type ArithmeticSplit, type ReceiptDiscount, type ReceiptItem, type SplitMode, type SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
@@ -103,6 +103,8 @@ export interface EntryDraft {
   fromMember: string;
   toMember: string;
   occurredAt: number;
+  /** True when `occurredAt` is a day and nothing more — set by a backdated scan. */
+  dateOnly: boolean;
   categoryId: string | null;
   /**
    * The parsed bill, mirroring the same-named fields on `Expense` — kept here
@@ -500,9 +502,10 @@ export function blankDraft(
     // common one, and the only pair that can be guessed without asking.
     fromMember: me,
     toMember: members.find((id) => id !== me) ?? me,
-    // Through `timedStamp`, not the bare clock: an entry started in the
-    // millisecond of midnight would otherwise read as a day with no time.
-    occurredAt: timedStamp(Date.now()),
+    occurredAt: Date.now(),
+    // A typed entry is being typed now, so it has a time. Only a backdated
+    // scan clears this (`normalizeScan`).
+    dateOnly: false,
     categoryId: null,
   };
 }
