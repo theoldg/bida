@@ -201,7 +201,7 @@ export const copy = {
     youOwe: "you owe",
     youreOwed: "you’re owed",
     settled: "settled",
-    theme: { toLight: "Switch to light mode", toDark: "Switch to dark mode" },
+    theme: { toLight: "Light mode", toDark: "Dark mode" },
   },
 
   install: {
