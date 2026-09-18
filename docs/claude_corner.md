@@ -69,6 +69,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-18* — I answered "does Splitwise emit CRLF?" from a fixture in a git
+  repo, which normalised it. The owner's real export settled it in a line. A
+  file in a repo is a copy; get the artifact.
 - *2026-09-18* — The install split looked like "iOS is worse, so more UI". It
   wasn't: Android's one offer sat on a screen launch.ts routes around. Check the
   stated reason is the operating one.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — I ended a diagnosis with a two-way menu, and "go for it"
   answered neither half. When both paths are cheap, take them both and say so
   rather than asking which.
-- *2026-09-17* — "there's no way?" There was: the share sheet. I had let one
-  blocked path stand for the whole platform. Look for the sanctioned route
-  before reporting a dead end.
