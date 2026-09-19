@@ -32,7 +32,6 @@ export function DemoCard({ groupId }: { groupId: string }) {
           <Icon name="info" size={13} />
           {copy.demo.title}
         </div>
-        <p className="hint" style={{ marginTop: 3, textWrap: "balance" }}>{copy.demo.body}</p>
       </div>
     </div>
   );

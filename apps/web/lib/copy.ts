@@ -745,8 +745,7 @@ export const copy = {
   demo: {
     opening: "Opening the demo",
     /** The card at the head of its ledger. It stays put; it is not a toast. */
-    title: "Demo group",
-    body: "Not synced",
+    title: "Demo group: not synced",
     /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
     clearBody: "This takes the demo off this phone. Opening the address again brings it back, exactly as it is now.",
