@@ -141,11 +141,14 @@ export function useReceiptScan(
       const sender = before.current;
       await sender.prepare?.();
       const result = await send(sender, current.currency);
-      const patch = normalizeScan(result, Date.now());
+      // One currency for both readings below: what this bill is counted in,
+      // which is also what a total worked out from the lines is written in.
+      const currency = scanCurrency(result, current.currency);
+      const patch = normalizeScan(result, currency, Date.now());
       // Read as a bill rather than off the raw result: a deduction printed as
       // a negative line belongs in the discount, not in the grid as something
-      // to tick (`readBill`).
-      const bill = readBill(result, scanCurrency(result, current.currency));
+      // to tick, and a line priced per unit is multiplied out (`readBill`).
+      const bill = readBill(result, currency);
       const receiptItems = bill.items.map((li) => (
         { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
       ));

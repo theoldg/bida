@@ -11,15 +11,69 @@
     "date": null,
     "error": null,
     "lineItems": [
-      { "label": "Salade marocaine", "labelEn": "Moroccan salad", "amount": "9.00", "quantity": 2 },
-      { "label": "Chicken tagine", "labelEn": null, "amount": "14.50", "quantity": null },
-      { "label": "Lamb couscous", "labelEn": null, "amount": "16.00", "quantity": null },
-      { "label": "Mint tea", "labelEn": null, "amount": "6.00", "quantity": 3 },
-      { "label": "Msemen", "labelEn": "Flatbread", "amount": "4.50", "quantity": 2 },
-      { "label": "Olives", "labelEn": null, "amount": "2.00", "quantity": null },
-      { "label": "Bottled water", "labelEn": null, "amount": "3.00", "quantity": 2 },
-      { "label": "Orange juice", "labelEn": null, "amount": "7.00", "quantity": 2 },
-      { "label": "Chocolate pastilla", "labelEn": null, "amount": "8.50", "quantity": null }
+      {
+        "label": "Salade marocaine",
+        "labelEn": "Moroccan salad",
+        "amount": "9.00",
+        "unitAmount": null,
+        "quantity": 2
+      },
+      {
+        "label": "Chicken tagine",
+        "labelEn": null,
+        "amount": "14.50",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Lamb couscous",
+        "labelEn": null,
+        "amount": "16.00",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Mint tea",
+        "labelEn": null,
+        "amount": "6.00",
+        "unitAmount": null,
+        "quantity": 3
+      },
+      {
+        "label": "Msemen",
+        "labelEn": "Flatbread",
+        "amount": "4.50",
+        "unitAmount": null,
+        "quantity": 2
+      },
+      {
+        "label": "Olives",
+        "labelEn": null,
+        "amount": "2.00",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Bottled water",
+        "labelEn": null,
+        "amount": "3.00",
+        "unitAmount": null,
+        "quantity": 2
+      },
+      {
+        "label": "Orange juice",
+        "labelEn": null,
+        "amount": "7.00",
+        "unitAmount": null,
+        "quantity": 2
+      },
+      {
+        "label": "Chocolate pastilla",
+        "labelEn": null,
+        "amount": "8.50",
+        "unitAmount": null,
+        "quantity": null
+      }
     ]
   }
 }

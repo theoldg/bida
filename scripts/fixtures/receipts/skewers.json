@@ -1,0 +1,45 @@
+{
+  "note": "a bill somebody typed: prices per unit, no merchant, no total — the ordinary typed case",
+  "exercises": "ok",
+  "medium": "text",
+  "scan": {
+    "title": null,
+    "total": null,
+    "tip": "10",
+    "tax": null,
+    "discounts": [],
+    "currency": null,
+    "date": null,
+    "error": null,
+    "lineItems": [
+      {
+        "label": "szaszłyk kurczak",
+        "labelEn": "chicken skewer",
+        "amount": null,
+        "unitAmount": "13",
+        "quantity": 3
+      },
+      {
+        "label": "szaszłyk wołowina",
+        "labelEn": "beef skewer",
+        "amount": null,
+        "unitAmount": "15",
+        "quantity": 10
+      },
+      {
+        "label": "szaszłyk kaczka",
+        "labelEn": "duck skewer",
+        "amount": null,
+        "unitAmount": "17",
+        "quantity": 2
+      },
+      {
+        "label": "cola duża",
+        "labelEn": "large cola",
+        "amount": "10",
+        "unitAmount": null,
+        "quantity": null
+      }
+    ]
+  }
+}

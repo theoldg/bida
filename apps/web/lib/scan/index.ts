@@ -151,7 +151,9 @@ async function readBill(
 
   const result = parseScanResponse(answer);
   if (result.error) throw new ScanRejectedError(result.error);
-  const problem = checkScan(result, scanCurrency(result, currency));
+  // The medium goes with it: a photograph with no total is a cropped
+  // photograph, and a typed bill with no total is Tuesday (`checkScan`).
+  const problem = checkScan(result, scanCurrency(result, currency), medium);
   if (problem) throw new ScanUnreliableError(problem);
   return result;
 }

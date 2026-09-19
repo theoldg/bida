@@ -11,9 +11,27 @@
     "date": null,
     "error": null,
     "lineItems": [
-      { "label": "Mechoui", "labelEn": "Roast lamb", "amount": "12.00", "quantity": null },
-      { "label": "d'agneau", "labelEn": null, "amount": "12.00", "quantity": null },
-      { "label": "Thé", "labelEn": "Tea", "amount": "7.00", "quantity": null }
+      {
+        "label": "Mechoui",
+        "labelEn": "Roast lamb",
+        "amount": "12.00",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "d'agneau",
+        "labelEn": null,
+        "amount": "12.00",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Thé",
+        "labelEn": "Tea",
+        "amount": "7.00",
+        "unitAmount": null,
+        "quantity": null
+      }
     ]
   }
 }

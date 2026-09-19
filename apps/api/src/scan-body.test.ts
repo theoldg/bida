@@ -191,31 +191,93 @@ describe("the two media", () => {
   });
 
   /**
-   * The invariant the whole split is for: what a bill is read *by* is one
-   * shared constant, so all four envelopes read one identically. It comes in
-   * two blocks with the layout advice between them — that paragraph is the one
-   * thing a medium may genuinely disagree about — and each is sliced between two
-   * sentences neither medium nor tone may move.
+   * The two prompts are two documents now, so there is no shared block left to
+   * compare byte for byte. What replaces that check is the thing the block was
+   * protecting: one answer shape, and the conventions a reading of either
+   * medium must not disagree about. A photograph and a typed bill may differ on
+   * how to read a page; they may not differ on what a discount's sign means.
    */
-  it("reads a bill by rules no tone and no medium can move", async () => {
-    const between = (prompt: string, open: string, close: string) => {
-      const from = prompt.indexOf(open);
-      const to = prompt.indexOf(close);
-      expect(from).toBeGreaterThan(-1);
-      expect(to).toBeGreaterThan(from);
-      return prompt.slice(from, to + close.length);
-    };
-    const rules = (prompt: string) => [
-      between(prompt, "Return a title for the expense", "never a product you work out yourself."),
-      between(prompt, "No line item's amount is negative", "only reformat the separators."),
+  it("asks both media for every field the schema requires", async () => {
+    // `labelEn` is the one the photo prompt describes rather than names ("an
+    // English translation of that label"), so it is left off the list: what is
+    // being checked is that neither prompt has quietly stopped asking for a
+    // field the schema still requires an answer for.
+    const fields = [
+      "title", "total", "tip", "tax", "discounts", "currency", "date",
+      "label", "amount", "unitAmount", "quantity", "error",
     ];
-    const prompts = await Promise.all((["kind", "stas"] as const).flatMap((tone) =>
-      (["photo", "text"] as const).map((medium) => wrapped("QUJD", tone, medium))));
-    const [first, ...rest] = prompts.map((body) => rules(promptOf(body)));
-    expect(first![0]).toContain("Keep the whole title under 40 characters");
-    for (const other of rest) expect(other).toEqual(first);
-    // And all four really are four: identical rules, four different prompts.
-    expect(new Set(prompts).size).toBe(4);
+    for (const medium of ["photo", "text"] as const) {
+      const prompt = promptOf(await wrapped("QUJD", "kind", medium));
+      for (const field of fields) {
+        expect(prompt, `the ${medium} prompt names ${field}`).toContain(field);
+      }
+    }
+  });
+
+  it("holds both media to the same conventions about the answer", async () => {
+    for (const medium of ["photo", "text"] as const) {
+      const prompt = promptOf(await wrapped("QUJD", "kind", medium));
+      // Plain decimal, whatever the bill's own separators.
+      expect(prompt).toContain("1234.50");
+      // A deduction is a magnitude; a sign read the wrong way round is a surcharge.
+      expect(prompt).toContain("WITHOUT a minus sign");
+      // Tax only where it sits on top, or the bill is charged for twice.
+      expect(prompt).toContain("charged for twice");
+      // A title is a name, not a shout.
+      expect(prompt).toContain("all capitals");
+      expect(prompt).toContain("40 characters");
+    }
+  });
+
+  /**
+   * Tone may move the refusal and nothing else. It is the reason Staś mode can
+   * be as mean as the owner likes: a mean scan still cannot be a wrong one.
+   */
+  it.each([
+    ["photo", "If the photo isn't a receipt at"],
+    ["text", "If the text is not a bill at all"],
+  ])("reads a %s by rules no tone can move", async (medium, marker) => {
+    const [kind, stas] = await Promise.all((["kind", "stas"] as const)
+      .map(async (tone) => promptOf(await wrapped("QUJD", tone, medium as ScanMedium))));
+    expect(kind!.indexOf(marker)).toBeGreaterThan(-1);
+    expect(kind!.slice(0, kind!.indexOf(marker))).toBe(stas!.slice(0, stas!.indexOf(marker)));
+    expect(kind).not.toBe(stas);
+  });
+
+  /**
+   * The rule the whole redesign turned on. A till prints the extension, so a
+   * photograph's amount is never worked out; somebody typing writes the price
+   * of one, and the extension exists nowhere — asked for it anyway, the model
+   * either invents a figure or has no legal answer at all (`lineMinor`).
+   */
+  it("asks a photograph for the line total and a typed bill for either figure", async () => {
+    const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
+    expect(photo).toContain("never a product you work out yourself");
+    expect(photo).toContain("Leave unitAmount null on every line");
+
+    const text = promptOf(await wrapped("QUJD", "kind", "text"));
+    expect(text).toContain("Do not multiply and do not divide");
+    expect(text).toContain("put that price in unitAmount and leave amount null");
+    expect(text).not.toContain("never a product you work out yourself");
+  });
+
+  /** A typed bill usually has no total, and that is not a fault to be refused. */
+  it("tells a typed bill's reader that a missing total is ordinary", async () => {
+    for (const tone of ["kind", "stas"] as const) {
+      const prompt = promptOf(await wrapped("QUJD", tone, "text"));
+      expect(prompt).toContain("never add the bill up yourself");
+      expect(prompt).toContain("never a reason to refuse a bill");
+      // And the refusal paragraph says it a second time, where it would bite.
+      expect(prompt.slice(prompt.indexOf("If the text is not a bill at all")))
+        .toContain("A bill with no total is none of these cases");
+    }
+  });
+
+  /** Almost never a title: a description of the list is not a name. */
+  it("asks a typed bill for a title only where one is named", async () => {
+    const text = promptOf(await wrapped("QUJD", "kind", "text"));
+    expect(text).toContain("Otherwise return null, which will usually be the answer");
+    expect(text).not.toContain("add two or three English words for what was bought");
   });
 
   it("never asks a typed bill to be re-shot", async () => {
@@ -223,7 +285,7 @@ describe("the two media", () => {
       // Only the refusal is looked at: the lead paragraph says "not
       // photographed", which is the point of it.
       const prompt = promptOf(await wrapped("QUJD", tone, "text"));
-      const refusal = prompt.slice(prompt.indexOf("If the text isn't a bill"));
+      const refusal = prompt.slice(prompt.indexOf("If the text is not a bill at all"));
       expect(refusal).not.toContain("re-shoot");
       expect(refusal).not.toContain("blurry");
       expect(refusal).not.toContain("photo");

@@ -1132,13 +1132,18 @@ export const copy = {
       openLong: "Type it in",
       title: "Type the bill in",
       /**
-       * What to put in the box. It asks for the bill's own lines because that
-       * is what the Items tab is for — a total alone leaves nothing to assign —
+       * What to put in the box. It asks for the things bought because that is
+       * what the Items tab is for — a total alone leaves nothing to assign —
        * and it says "paste" first, since a bill in a chat message or an emailed
        * receipt is the usual reason to be here at all.
+       *
+       * It no longer asks for one line each or for a total, because the reading
+       * wants neither: prices each or per line both work, and a bill with no
+       * total is the ordinary case rather than a refused one. This sentence was
+       * the last place the app still taught people to tidy a bill up for it.
        */
-      lede: "Paste or type the bill: one line each, with its price, and the total. Tip, tax and discounts too if it has them.",
-      placeholder: "Tagine 18.00\nCouscous 14.50\nMint tea 6.30\nTotal 38.80",
+      lede: "Paste or type the bill however it’s written. Prices each or per line; a total only if you have one.",
+      placeholder: "3 chicken skewers at 13, 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",
       /** Only near the cap: a counter nobody is close to is fat. */
@@ -1174,8 +1179,13 @@ export const copy = {
         mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
       },
       text: {
-        "no-total": "I can’t find the total in that.",
+        // Not "I can't find the total": a typed bill needn't have one. This
+        // fires where there is nothing to price at all, or where a total is
+        // there and won't parse.
+        "no-total": "I can’t work out what that comes to.",
         "unreadable-line": "I can’t read an amount for every line in that.",
+        // And this one's advice is now true — leaving the total out really does
+        // leave the lines to speak for themselves (`checkScan`).
         mismatch: "The lines don’t add up to the total. Check the figures, or leave the total out.",
       },
     } satisfies Record<ScanMedium, Record<ScanProblem, string>>,

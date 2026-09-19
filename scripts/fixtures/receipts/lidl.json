@@ -11,13 +11,55 @@
     "date": "2026-07-18",
     "error": null,
     "lineItems": [
-      { "label": "Grillfleisch gemischt", "labelEn": "Mixed barbecue meat", "amount": "12.99", "quantity": null },
-      { "label": "Bratwurst 6er", "labelEn": "Bratwurst, pack of 6", "amount": "6.98", "quantity": 2 },
-      { "label": "Grillkohle 3kg", "labelEn": "Charcoal 3kg", "amount": "4.99", "quantity": null },
-      { "label": "Baguette", "labelEn": null, "amount": "3.87", "quantity": 3 },
-      { "label": "Krautsalat", "labelEn": "Coleslaw", "amount": "1.99", "quantity": null },
-      { "label": "Senf", "labelEn": "Mustard", "amount": "0.99", "quantity": null },
-      { "label": "Alufolie", "labelEn": "Aluminium foil", "amount": "2.19", "quantity": null }
+      {
+        "label": "Grillfleisch gemischt",
+        "labelEn": "Mixed barbecue meat",
+        "amount": "12.99",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Bratwurst 6er",
+        "labelEn": "Bratwurst, pack of 6",
+        "amount": "6.98",
+        "unitAmount": null,
+        "quantity": 2
+      },
+      {
+        "label": "Grillkohle 3kg",
+        "labelEn": "Charcoal 3kg",
+        "amount": "4.99",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Baguette",
+        "labelEn": null,
+        "amount": "3.87",
+        "unitAmount": null,
+        "quantity": 3
+      },
+      {
+        "label": "Krautsalat",
+        "labelEn": "Coleslaw",
+        "amount": "1.99",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Senf",
+        "labelEn": "Mustard",
+        "amount": "0.99",
+        "unitAmount": null,
+        "quantity": null
+      },
+      {
+        "label": "Alufolie",
+        "labelEn": "Aluminium foil",
+        "amount": "2.19",
+        "unitAmount": null,
+        "quantity": null
+      }
     ]
   }
 }

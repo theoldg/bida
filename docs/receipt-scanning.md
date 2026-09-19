@@ -135,8 +135,8 @@ path.
 ## Typing a bill in
 
 **The scan control's third door**, on every screen that reads a bill. A box, the
-bill's own lines pasted or typed into it, and the same filled draft comes back.
-It is for the bill nobody photographed — a receipt that arrived as a chat message
+bill pasted or typed into it however it is written, and the same filled draft
+comes back. It is for the bill nobody photographed — a receipt that arrived as a chat message
 or an email, one already thrown away, one a camera has just failed on twice.
 
 It is **in** the box and not beside it (2026-09-19, owner's call). A reading is a
@@ -160,8 +160,37 @@ over a bill that had just arrived.
 Everything after the bytes is shared with a photograph: the same endpoint, the
 same bearer, the same Turnstile token, the same three budget buckets, the same
 `checkScan`, the same rules about what a reading may overwrite. A typed bill
-asks the same model the same question, so it costs what a photo costs and is
-counted the same (`parseBillText`, `web/lib/scan/index.ts`).
+costs what a photo costs and is counted the same (`parseBillText`,
+`web/lib/scan/index.ts`).
+
+**What it is not is the same question.** A till roll and a WhatsApp message are
+different documents, and for a while the typed one was read by the photograph's
+rules — shared prompt, one amount per line, every figure already multiplied out,
+a total required. That combination cannot read the ordinary case. "3 chicken at
+13, 10 beef at 15" gives a per-unit price and a count, and a reader forbidden to
+multiply has no legal answer for the line; the bill states no total, and one was
+demanded. Three things follow from fixing it:
+
+- **Its own prompt** (`scan-body.ts`), about a third shorter than the
+  photograph's, with no columns, no printer and no merchant in it. The two are
+  held together by the schema and by the conventions neither may disagree about
+  — plain decimal, deductions positive, tax only on top, no title in capitals —
+  rather than by shared paragraphs (`apps/api/src/scan-body.test.ts`).
+- **A line states its price either way.** `amount` is what the whole line came
+  to; `unitAmount` is the price of one, beside a `quantity`. The model fills
+  whichever the bill gives and never both, and `lineMinor` does the
+  multiplication in integer minor units, where it is tested — asking a model for
+  a figure the page does not hold is what makes it invent one.
+- **A missing total is ordinary**, not a refusal. See
+  [What a reading is checked against](#what-a-reading-is-checked-against).
+
+**And almost never a title.** A photographed receipt leads with a merchant's
+name; a typed one leads with the food. Asked to name the expense anyway, a model
+hands back a description of the list — "Skewers", "Barbecue" — which is not a
+name, is worse than the empty field the person is about to type in, and arrives
+on the draft as though it had been read off the bill. So the typed prompt asks
+for a title only where the text plainly names where the money went, and null is
+the expected answer.
 
 **It rides the envelope as base64, in an `inlineData` part with
 `mimeType: "text/plain"`** — which the Worker chooses, never the caller. That is
@@ -170,6 +199,11 @@ Escaping arbitrary text into a JSON string as it streamed would mean a second,
 subtler check on the hot path; base64 reuses the one that is already proved, so
 what a typed bill changes is what the model *reads* and never what the request
 *is*.
+
+**The lede asks for none of this.** "Paste or type the bill however it's
+written. Prices each or per line; a total only if you have one" — because the
+sentence that asked for one line each and a total was the last place the app
+still taught people to tidy a bill up for it (`copy.scan.typeIn`).
 
 **The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
 what the downscaled photo costs in tokens — so typing is never the dearer way to
@@ -318,18 +352,21 @@ Nothing changes in `sw.js` — it already ignores non-GET and cross-origin, and
 
 ## What the model decides, and what it must not
 
-It reads. It doesn't compute.
+It reads. It doesn't compute — the one multiplication in the whole reading is
+`lineMinor`'s, here, on figures the bill stated. The table below is the
+photograph's reading; a typed bill answers the same schema by its own prompt,
+and differs in the three places [Typing a bill in](#typing-a-bill-in) names.
 
 | It returns | Type |
 |---|---|
 | title | string → `description` — the merchant's name, minus the parts that aren't the name ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what was bought where the name alone wouldn't say ("Lidl - barbecue"). Nothing added when the merchant already says it, when the lines are too mixed, or when none are printed: a bare name beats a wrong guess. Cased as a name is written, never in the capitals a till prints ("BAR ZAHRA" → "Bar Zahra"), keeping the casing a brand owns ("IKEA", "H&M") |
-| total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code |
+| total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code. Only ever a figure the bill itself states: null where it states none, and never added up ([what a reading is checked against](#what-a-reading-is-checked-against)) |
 | tip | a separate tip/service-charge line, same normalized notation, or null |
 | tax | tax charged *on top of* the lines, same notation, or null — VAT already inside the printed prices, which most European receipts break out near the foot, is not this and would be counted twice |
 | discounts | every deduction the receipt prints, one entry each — `{ label, labelEn, amount }`, the amount written **without** a minus sign — a loyalty deduction, a voucher, a two-for-one credit, whether it printed against one item or against the whole bill; empty when it takes nothing off |
 | currency | ISO 4217 if legible, else null |
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
-| lineItems | `{ label, labelEn, amount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), amount in the same normalized notation as `total` and equal to the figure in the receipt's own amount column — the line's extended total, never a unit price — and a count only when the receipt actually prints one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 |
+| lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and **exactly one of the two figures**, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints and so always the photograph's answer; `unitAmount` is the price of one, which is how somebody typing writes it ("3 chicken at 13 each"), and `lineMinor` multiplies it by the count |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult aimed at the photographer (above) |
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
@@ -504,13 +541,30 @@ prints it verbatim.
 absolute arithmetic bar, and `scanReceipt` throws `ScanUnreliableError` at the
 first thing it finds: a total it can't read (`no-total`), a line or an extra it
 can't read (`unreadable-line`), or lines plus tip plus tax less the discounts
-missing the printed total by any amount, a non-positive total included
-(`mismatch`). No tolerance: a bill the app can't reconcile prices the
-who-had-what grid against a total the receipt never printed, silently. Refusing
-costs one more photo — which is what `copy.scan.problem.mismatch` asks for, in
-the words that actually help: flatter, square-on (see Gotchas). A deduction
-counted twice — once as a negative line and once in `discount` — lands here
-too, which is the safe way for that particular misreading to fail.
+missing the total by any amount, a non-positive total included (`mismatch`). No
+tolerance: a bill the app can't reconcile prices the who-had-what grid against a
+total the receipt never printed, silently. Refusing costs one more photo — which
+is what `copy.scan.problem.mismatch` asks for, in the words that actually help:
+flatter, square-on (see Gotchas). A deduction counted twice — once as a negative
+line and once in `discount` — lands here too, which is the safe way for that
+particular misreading to fail.
+
+### What a reading is checked against
+
+The bar above needs a total that is **evidence**, and only one medium always
+has one. A till roll prints one, so a photograph with none is a cropped
+photograph and is refused as it always was. A typed bill usually has none — the
+person who had already added it up did not need us — and demanding one refused
+almost every bill anybody types.
+
+So `checkScan` takes the medium, and reconciles only against a figure the bill
+itself stated. Where a typed bill states none, its lines *are* the bill:
+`billTotalMinor` sums them with the extras, `normalizeScan` puts that in the
+amount field, and the sum is not then checked against itself. That is not a
+weaker check but an honest one. The alternative on offer — asking the model for
+a total when the page has none — is worse than no check at all: a model told the
+lines must equal the total closes the gap by adjusting a line, and a bill that
+has been *made* to add up is the one error this function cannot see.
 
 Two conditions of the *phone* are told apart from that, because neither has
 anything to do with the photo and the generic message sent people back to

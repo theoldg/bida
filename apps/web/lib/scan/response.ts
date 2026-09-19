@@ -18,7 +18,15 @@ export function parseScanResponse(json: unknown): ScanResult {
     discounts: (parsed.discounts ?? []).map((d) => ({ ...d, labelEn: d.labelEn ?? null })),
     currency: parsed.currency ?? null,
     date: parsed.date ?? null,
-    lineItems: (parsed.lineItems ?? []).map((li) => ({ ...li, quantity: li.quantity ?? null })),
+    // `amount` and `unitAmount` are a pair of maybes now — a bill states one or
+    // the other — so neither may arrive as undefined and be read as "absent"
+    // by something that only checked for null (`lineMinor`).
+    lineItems: (parsed.lineItems ?? []).map((li) => ({
+      ...li,
+      amount: li.amount ?? null,
+      unitAmount: li.unitAmount ?? null,
+      quantity: li.quantity ?? null,
+    })),
     error: parsed.error ?? null,
   };
 }

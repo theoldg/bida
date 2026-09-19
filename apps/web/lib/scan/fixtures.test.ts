@@ -1,7 +1,10 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { checkScan, normalizeScan, parseMinor, scanCurrency, type ScanProblem, type ScanResult } from "@bida/core";
+import {
+  checkScan, normalizeScan, parseMinor, scanCurrency,
+  type ScanMedium, type ScanProblem, type ScanResult,
+} from "@bida/core";
 import { parseScanResponse } from "./response";
 
 /**
@@ -20,6 +23,8 @@ const DIR = fileURLToPath(new URL("../../../../scripts/fixtures/receipts/", impo
 interface Fixture {
   note: string;
   exercises: "ok" | "rejected" | "busy" | ScanProblem;
+  /** A photograph unless it says otherwise — what `checkScan` is held to differs. */
+  medium?: ScanMedium;
   status?: number;
   scan: ScanResult | null;
 }
@@ -36,6 +41,14 @@ describe("the canned receipts", () => {
     expect(fixtures.length).toBeGreaterThan(0);
     // The one the smoke test is for: a bill with lines to assign, at least one
     // of them printed with a count, so the grid's unfold has something to open.
+    // And one typed bill, which is the other half of what the set is for: a
+    // reading with no total and prices given per unit passes through the same
+    // code and must still come out priced (`lineMinor`, `billTotalMinor`).
+    const typed = fixtures.filter(([, f]) => f.medium === "text");
+    expect(typed.length).toBeGreaterThan(0);
+    expect(typed.some(([, f]) => f.scan?.lineItems.some((i) => i.unitAmount !== null))).toBe(true);
+    expect(typed.some(([, f]) => f.scan?.total === null)).toBe(true);
+
     const [, cafe] = fixtures.find(([name]) => name === "cafe-clock")!;
     expect(cafe.scan!.lineItems.length).toBeGreaterThan(3);
     expect(cafe.scan!.lineItems.some((i) => (i.quantity ?? 0) >= 2)).toBe(true);
@@ -66,13 +79,14 @@ describe("the canned receipts", () => {
     expect(result.error).toBeNull();
 
     const currency = scanCurrency(result, "EUR");
-    expect(checkScan(result, currency)).toBe(fixture.exercises === "ok" ? null : fixture.exercises);
+    expect(checkScan(result, currency, fixture.medium))
+      .toBe(fixture.exercises === "ok" ? null : fixture.exercises);
 
     // A readable bill has to reach the form: `amountText` is handed straight
     // to `parseMinor` on save, and a fixture that throws there would fail as
     // a broken app rather than as a broken fixture.
     if (fixture.exercises === "ok") {
-      const patch = normalizeScan(result, Date.now());
+      const patch = normalizeScan(result, currency, Date.now());
       expect(() => parseMinor(patch.amountText!, currency)).not.toThrow();
     }
   });

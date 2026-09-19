@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — A typed bill failed every read, on the photograph's prompt:
+  its two safest rules — never multiply, always a total — are the two that make
+  typed words unreadable. Ask whose page it is.
 - *2026-09-19* — The dialog reopened holding what it had just read. Its own
   answer had moved the panel to its other shape, so React unmounted it and
   mounted a fresh one. Position in the tree is state.
@@ -95,5 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — Asked what was left before launch, I found the scan's day
   cap: 13000 in the doc, 4300 in the code. A number that moves leaves its old
   self behind — grep the digits.
-- *2026-09-18* — "It doesn't reset when I update" was my own rule: /demo was
-  idempotent by id. Idempotence that spans releases is a cache with no handle.
