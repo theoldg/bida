@@ -7,20 +7,20 @@ import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
 } from "@bida/core";
-import { Card, Eyebrow, KV } from "../../../components/bits";
-import { MemberBill } from "../../../components/member-bill";
-import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ConfirmDialog } from "../../../components/dialog";
-import { Icon } from "../../../components/icons";
-import { deleteExpense, deleteSettlement } from "../../../lib/db/commands";
-import { db } from "../../../lib/db/dexie";
-import { useLive } from "../../../lib/db/live";
-import { kindOf, type EntryKind } from "../../../lib/entry-kind";
-import { copy } from "../../../lib/copy";
-import { money, plural, rateText, whenLabel } from "../../../lib/format";
-import { receiptBreakdown } from "../../../lib/scan/items";
-import { entryParent, parseEntrySource, route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData, type GroupData } from "../../../lib/hooks";
+import { Card, Eyebrow, KV } from "@/components/bits";
+import { MemberBill } from "@/components/member-bill";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ConfirmDialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
+import { db } from "@/lib/db/dexie";
+import { useLive } from "@/lib/db/live";
+import { kindOf, type EntryKind } from "@/lib/entry-kind";
+import { copy } from "@/lib/copy";
+import { money, plural, rateText, whenLabel } from "@/lib/format";
+import { receiptBreakdown } from "@/lib/scan/items";
+import { entryParent, parseEntrySource, route } from "@/lib/group-link";
+import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
  * One entry, whichever of the three it is. The id in the query string is

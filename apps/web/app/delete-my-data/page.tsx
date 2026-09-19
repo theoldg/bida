@@ -1,15 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
-import { ConfirmDialog } from "../../components/dialog";
-import { Icon } from "../../components/icons";
-import { copy } from "../../lib/copy";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ConfirmDialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { copy } from "@/lib/copy";
 import { deleteGroupEverywhere, previewGroup, type GroupPreview, type PreviewProblem }
-  from "../../lib/db/erase";
-import { stamp } from "../../lib/format";
-import { readPastedLink, route, type JoinLink } from "../../lib/group-link";
-import { readClipboardText } from "../../lib/paste";
+  from "@/lib/db/erase";
+import { stamp } from "@/lib/format";
+import { readPastedLink, route, type JoinLink } from "@/lib/group-link";
+import { readClipboardText } from "@/lib/paste";
 
 /**
  * `/delete-my-data` — the hosted service's way to ask for a group to be

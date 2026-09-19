@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { AboutDelete } from "../../components/about-delete";
-import { AboutOffline } from "../../components/about-offline";
-import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
-import { Icon } from "../../components/icons";
-import { copy } from "../../lib/copy";
-import { route } from "../../lib/group-link";
-import { VERSION } from "../../lib/version";
+import { AboutDelete } from "@/components/about-delete";
+import { AboutOffline } from "@/components/about-offline";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Icon } from "@/components/icons";
+import { copy } from "@/lib/copy";
+import { route } from "@/lib/group-link";
+import { VERSION } from "@/lib/version";
 
 /**
  * Who can edit, whether it works on a train, where to complain, who can read

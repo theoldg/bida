@@ -2,14 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { useInstallOffer } from "../../../components/install";
-import { UseInApp } from "../../../components/use-in-app";
-import { WhoPicker } from "../../../components/who-picker";
-import { copy } from "../../../lib/copy";
-import { addMember, claimIdentity } from "../../../lib/db/commands";
-import { formatJoinLink, route } from "../../../lib/group-link";
-import { useDevice, useGroupData, useGroupSecret } from "../../../lib/hooks";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { useInstallOffer } from "@/components/install";
+import { UseInApp } from "@/components/use-in-app";
+import { WhoPicker } from "@/components/who-picker";
+import { copy } from "@/lib/copy";
+import { addMember, claimIdentity } from "@/lib/db/commands";
+import { formatJoinLink, route } from "@/lib/group-link";
+import { useDevice, useGroupData, useGroupSecret } from "@/lib/hooks";
 
 /**
  * The last step of joining: which of these people are you?

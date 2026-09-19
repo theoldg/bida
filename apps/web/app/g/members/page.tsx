@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@bida/core";
-import { GhostRow } from "../../../components/bits";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ChoiceDialog, ConfirmDialog, Dialog } from "../../../components/dialog";
-import { Icon } from "../../../components/icons";
-import { InviteButton } from "../../../components/invite";
-import { AddName } from "../../../components/name-adder";
-import { copy } from "../../../lib/copy";
-import { addMember, claimIdentity, removeMember } from "../../../lib/db/commands";
-import { money, plural } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
+import { GhostRow } from "@/components/bits";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ChoiceDialog, ConfirmDialog, Dialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { InviteButton } from "@/components/invite";
+import { AddName } from "@/components/name-adder";
+import { copy } from "@/lib/copy";
+import { addMember, claimIdentity, removeMember } from "@/lib/db/commands";
+import { money, plural } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * People: who is in the group, and which of them this phone is.

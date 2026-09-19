@@ -4,19 +4,19 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
-import { GhostRow } from "../../../components/bits";
-import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "../../../components/dialog";
-import { useLongPressMenu } from "../../../components/long-press";
-import { RateDialog } from "../../../components/rate-dialog";
-import { clearRate, setRate } from "../../../lib/db/commands";
-import { copy } from "../../../lib/copy";
+import { GhostRow } from "@/components/bits";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "@/components/dialog";
+import { useLongPressMenu } from "@/components/long-press";
+import { RateDialog } from "@/components/rate-dialog";
+import { clearRate, setRate } from "@/lib/db/commands";
+import { copy } from "@/lib/copy";
 import {
   COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
-} from "../../../lib/currencies";
-import { money, plural, rateText } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
+} from "@/lib/currencies";
+import { money, plural, rateText } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * The group's exchange-rate registry: one rate per currency it spends in.

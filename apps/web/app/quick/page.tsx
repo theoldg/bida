@@ -2,24 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Eyebrow, keepsFocus } from "../../components/bits";
-import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
-import { ConfirmDialog } from "../../components/dialog";
-import { Icon } from "../../components/icons";
-import { AddName } from "../../components/name-adder";
-import { ScanPair, useReceiptScan } from "../../components/receipt-scan";
-import { ScanDiagram } from "../../components/scan-diagram";
-import { copy } from "../../lib/copy";
-import { db } from "../../lib/db/dexie";
-import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "../../lib/draft";
-import { route } from "../../lib/group-link";
-import { useDevice } from "../../lib/hooks";
-import { goUp } from "../../lib/nav";
-import { useRefusal } from "../../lib/refusal";
+import { Eyebrow, keepsFocus } from "@/components/bits";
+import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ConfirmDialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { AddName } from "@/components/name-adder";
+import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
+import { ScanDiagram } from "@/components/scan-diagram";
+import { copy } from "@/lib/copy";
+import { db } from "@/lib/db/dexie";
+import { blankDraft, clearDraft, getDraft, seedDraft, useDraft } from "@/lib/draft";
+import { route } from "@/lib/group-link";
+import { useDevice } from "@/lib/hooks";
+import { goUp } from "@/lib/nav";
+import { useRefusal } from "@/lib/refusal";
 import {
   addQuickPerson, clearQuickPeople, registerScanCredential, removeQuickPerson,
   useQuickPeople, useScanCredential,
-} from "../../lib/quick";
+} from "@/lib/quick";
 
 /**
  * A bill split with people who are not a group (ADR-0035): who is splitting,

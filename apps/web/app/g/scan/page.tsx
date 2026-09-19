@@ -2,14 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { ScanPair, useReceiptScan } from "../../../components/receipt-scan";
-import { ScanDiagram } from "../../../components/scan-diagram";
-import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { copy } from "../../../lib/copy";
-import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "../../../lib/draft";
-import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
-import { useScanAs } from "../../../lib/quick";
+import { ScanPair, useReceiptScan } from "@/components/receipt-scan";
+import { ScanDiagram } from "@/components/scan-diagram";
+import { BadLink, Blank, Body, Failure, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { copy } from "@/lib/copy";
+import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "@/lib/draft";
+import { route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { useScanAs } from "@/lib/quick";
 
 /**
  * The scan, before there is a form.

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { Icon } from "../../../components/icons";
-import { copy } from "../../../lib/copy";
-import { usd } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { tipShareMinor } from "../../../lib/tip";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Icon } from "@/components/icons";
+import { copy } from "@/lib/copy";
+import { usd } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { tipShareMinor } from "@/lib/tip";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * The tip jar: what a scan costs, and the two things you can do about it.

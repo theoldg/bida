@@ -1,15 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { goBack } from "../../../lib/nav";
+import { goBack } from "@/lib/nav";
 import { useEffect } from "react";
-import { Blank } from "../../../components/chrome";
-import { WhoHadWhat } from "../../../components/who-had-what";
-import { copy } from "../../../lib/copy";
-import { saveDraft, useDraft } from "../../../lib/draft";
-import { bare } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { useQuickPeople, useScanCredential } from "../../../lib/quick";
+import { Blank } from "@/components/chrome";
+import { WhoHadWhat } from "@/components/who-had-what";
+import { copy } from "@/lib/copy";
+import { saveDraft, useDraft } from "@/lib/draft";
+import { bare } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { useQuickPeople, useScanCredential } from "@/lib/quick";
 
 /**
  * Who had what, on a bill that belongs to no group (ADR-0035). The same grid

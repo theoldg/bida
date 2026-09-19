@@ -1,8 +1,8 @@
 "use client";
 
-import { Body, Screen, Scroll, TopBar } from "../components/chrome";
-import { BadLinkNotice } from "../components/keyless-link";
-import { route } from "../lib/group-link";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { BadLinkNotice } from "@/components/keyless-link";
+import { route } from "@/lib/group-link";
 
 /**
  * A URL that is no route at all.

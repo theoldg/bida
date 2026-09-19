@@ -2,14 +2,14 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { goBack } from "../../../../lib/nav";
-import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
-import { WhoHadWhat } from "../../../../components/who-had-what";
-import { copy } from "../../../../lib/copy";
-import { money } from "../../../../lib/format";
-import { parseEntrySource, route } from "../../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../../lib/hooks";
-import { saveDraft, useDraft } from "../../../../lib/draft";
+import { goBack } from "@/lib/nav";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "@/components/chrome";
+import { WhoHadWhat } from "@/components/who-had-what";
+import { copy } from "@/lib/copy";
+import { money } from "@/lib/format";
+import { parseEntrySource, route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { saveDraft, useDraft } from "@/lib/draft";
 
 /**
  * Who had what, filled from a receipt scan and reopenable later via "Edit

@@ -2,17 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, Screen, Scroll, TopBar } from "../../components/chrome";
-import { useBrowserName, useInstallOffer } from "../../components/install";
-import { Icon } from "../../components/icons";
-import { claimIdentity, saveGroupKey } from "../../lib/db/commands";
-import { getDevice } from "../../lib/db/device";
-import { db } from "../../lib/db/dexie";
-import { note } from "../../lib/diag";
-import { launchedOnto } from "../../lib/launch";
-import { syncGroup } from "../../lib/db/sync";
-import { copy } from "../../lib/copy";
-import { formatJoinLink, parseInvites, route, type CarriedGroup } from "../../lib/group-link";
+import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { useBrowserName, useInstallOffer } from "@/components/install";
+import { Icon } from "@/components/icons";
+import { claimIdentity, saveGroupKey } from "@/lib/db/commands";
+import { getDevice } from "@/lib/db/device";
+import { db } from "@/lib/db/dexie";
+import { note } from "@/lib/diag";
+import { launchedOnto } from "@/lib/launch";
+import { syncGroup } from "@/lib/db/sync";
+import { copy } from "@/lib/copy";
+import { formatJoinLink, parseInvites, route, type CarriedGroup } from "@/lib/group-link";
 
 /**
  * Putting bida on an iOS home screen, and what that does and doesn't bring

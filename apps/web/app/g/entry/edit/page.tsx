@@ -7,36 +7,36 @@ import {
   isCurrencyCode, minorToDecimalString, receiptExtras,
   type RateSource,
 } from "@bida/core";
-import { handOffReceiptTotal } from "../../../../lib/scan/items";
-import { Card, Chip, keepsFocus } from "../../../../components/bits";
-import { AmountInput, clipAmountToCurrency } from "../../../../components/amount-input";
-import { useReceiptScan } from "../../../../components/receipt-scan";
-import { useScanAs } from "../../../../lib/quick";
-import { SplitEditor } from "../../../../components/split-editor";
-import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../../../components/chrome";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../../../components/dialog";
-import { RateDialog } from "../../../../components/rate-dialog";
-import { Icon } from "../../../../components/icons";
-import { TransferSides } from "../../../../components/transfer-sides";
-import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../../../lib/currencies";
+import { handOffReceiptTotal } from "@/lib/scan/items";
+import { Card, Chip, keepsFocus } from "@/components/bits";
+import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
+import { useReceiptScan } from "@/components/receipt-scan";
+import { useScanAs } from "@/lib/quick";
+import { SplitEditor } from "@/components/split-editor";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
+import { RateDialog } from "@/components/rate-dialog";
+import { Icon } from "@/components/icons";
+import { TransferSides } from "@/components/transfer-sides";
+import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import {
   addExpense, editExpense, editSettlement, recordSettlement, setRate,
-} from "../../../../lib/db/commands";
-import { ENTRY_KINDS, kindOf, type EntryKind } from "../../../../lib/entry-kind";
-import { copy } from "../../../../lib/copy";
-import { checkEntry, needsRate } from "../../../../lib/entry-check";
-import { flashClass, NOT_REFUSED, refused, staleFlashes, stillMissing, type Refusal } from "../../../../lib/refusal";
-import { nearestOutOfView, scrollTarget } from "../../../../lib/reveal";
-import { glide } from "../../../../lib/seek";
-import { dateInputValue, errorText, money, plural, withDate } from "../../../../lib/format";
-import { formParent, parseEntrySource, route } from "../../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../../lib/hooks";
-import { goUp, goBack } from "../../../../lib/nav";
+} from "@/lib/db/commands";
+import { ENTRY_KINDS, kindOf, type EntryKind } from "@/lib/entry-kind";
+import { copy } from "@/lib/copy";
+import { checkEntry, needsRate } from "@/lib/entry-check";
+import { flashClass, NOT_REFUSED, refused, staleFlashes, stillMissing, type Refusal } from "@/lib/refusal";
+import { nearestOutOfView, scrollTarget } from "@/lib/reveal";
+import { glide } from "@/lib/seek";
+import { dateInputValue, errorText, money, plural, withDate } from "@/lib/format";
+import { formParent, parseEntrySource, route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { goUp, goBack } from "@/lib/nav";
 import {
   blankDraft, clearDraft, draftSeedKey, getDraft, isDraftDirty, newEntryKey, openSplitTab, retimed,
   saveDraft,
   seedDraft, splitSeed, useDraft, withSplit, type EntryDraft, type SplitTab,
-} from "../../../../lib/draft";
+} from "@/lib/draft";
 
 /**
  * One form for all three kinds of entry.

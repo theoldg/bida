@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { activityFeed, entityHistory, type Revision } from "@bida/core";
-import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { Icon } from "../../../components/icons";
-import { db } from "../../../lib/db/dexie";
-import { useLive } from "../../../lib/db/live";
-import { opsForGroup } from "../../../lib/db/fold";
-import { copy } from "../../../lib/copy";
-import { plural, stamp } from "../../../lib/format";
-import { describe } from "../../../lib/history-copy";
-import { parseEntrySource, route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
+import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Icon } from "@/components/icons";
+import { db } from "@/lib/db/dexie";
+import { useLive } from "@/lib/db/live";
+import { opsForGroup } from "@/lib/db/fold";
+import { copy } from "@/lib/copy";
+import { plural, stamp } from "@/lib/format";
+import { describe } from "@/lib/history-copy";
+import { parseEntrySource, route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
  *  which is why the button can say exactly how many it is. */

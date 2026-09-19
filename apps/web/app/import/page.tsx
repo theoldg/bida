@@ -3,16 +3,16 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ImportError, plannedCount, readCsvGroup, type ImportPlan } from "@bida/core";
-import { keepsFocus } from "../../components/bits";
-import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
-import { WhoPicker } from "../../components/who-picker";
-import { copy } from "../../lib/copy";
-import { currencyLabel } from "../../lib/currencies";
-import { importGroup } from "../../lib/db/commands";
-import { dayStart, errorText, plural } from "../../lib/format";
-import { route } from "../../lib/group-link";
-import { groupNameFrom, looksLikeCsv, parseCsv, tooBig } from "../../lib/import/csv";
-import { useRefusal } from "../../lib/refusal";
+import { keepsFocus } from "@/components/bits";
+import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
+import { WhoPicker } from "@/components/who-picker";
+import { copy } from "@/lib/copy";
+import { currencyLabel } from "@/lib/currencies";
+import { importGroup } from "@/lib/db/commands";
+import { dayStart, errorText, plural } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { groupNameFrom, looksLikeCsv, parseCsv, tooBig } from "@/lib/import/csv";
+import { useRefusal } from "@/lib/refusal";
 
 /**
  * Somebody else's spreadsheet as a group of ours. Reached from the groups

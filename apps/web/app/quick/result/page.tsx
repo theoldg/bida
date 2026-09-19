@@ -2,19 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Card } from "../../../components/bits";
-import { Blank, Body, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ConfirmDialog, Dialog } from "../../../components/dialog";
-import { Icon } from "../../../components/icons";
-import { MemberBill } from "../../../components/member-bill";
-import { copy } from "../../../lib/copy";
-import { clearDraft, useDraft } from "../../../lib/draft";
-import { bare } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { goUp } from "../../../lib/nav";
+import { Card } from "@/components/bits";
+import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ConfirmDialog, Dialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { MemberBill } from "@/components/member-bill";
+import { copy } from "@/lib/copy";
+import { clearDraft, useDraft } from "@/lib/draft";
+import { bare } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { goUp } from "@/lib/nav";
 import {
   clearQuickPeople, quickShares, quickSummaryText, useQuickPeople, useScanCredential,
-} from "../../../lib/quick";
+} from "@/lib/quick";
 
 /**
  * What the bill came to, per person — the end of a quick split (ADR-0035).

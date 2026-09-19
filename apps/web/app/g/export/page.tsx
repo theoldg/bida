@@ -2,11 +2,11 @@
 
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { copy } from "../../../lib/copy";
-import { fileHandoff, groupCsv, type HandoffPlan } from "../../../lib/export";
-import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { copy } from "@/lib/copy";
+import { fileHandoff, groupCsv, type HandoffPlan } from "@/lib/export";
+import { route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * The export as text, for a browser that cannot hand over a file.

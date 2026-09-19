@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { Body, Screen, Scroll, SkeletonRows, TopBar } from "../../components/chrome";
-import { copy } from "../../lib/copy";
-import { openDemo } from "../../lib/db/commands";
-import { route } from "../../lib/group-link";
+import { Body, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
+import { copy } from "@/lib/copy";
+import { openDemo } from "@/lib/db/commands";
+import { route } from "@/lib/group-link";
 
 /**
  * `bida.bid/demo` — the whole door into the demo group.

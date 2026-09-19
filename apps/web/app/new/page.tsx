@@ -3,21 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { isCurrencyCode } from "@bida/core";
-import { Eyebrow, keepsFocus } from "../../components/bits";
-import { Body, Failure, Screen, Scroll, TopBar } from "../../components/chrome";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "../../components/dialog";
-import { Icon } from "../../components/icons";
-import { AddName } from "../../components/name-adder";
-import { WhoPicker } from "../../components/who-picker";
-import { copy } from "../../lib/copy";
-import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "../../lib/currencies";
-import { createGroup } from "../../lib/db/commands";
-import { db } from "../../lib/db/dexie";
-import { errorText } from "../../lib/format";
-import { route } from "../../lib/group-link";
-import { useDevice } from "../../lib/hooks";
-import { goUp } from "../../lib/nav";
-import { flashClass, NOT_REFUSED, refused, type Refusal } from "../../lib/refusal";
+import { Eyebrow, keepsFocus } from "@/components/bits";
+import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { AddName } from "@/components/name-adder";
+import { WhoPicker } from "@/components/who-picker";
+import { copy } from "@/lib/copy";
+import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
+import { createGroup } from "@/lib/db/commands";
+import { db } from "@/lib/db/dexie";
+import { errorText } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { useDevice } from "@/lib/hooks";
+import { goUp } from "@/lib/nav";
+import { flashClass, NOT_REFUSED, refused, type Refusal } from "@/lib/refusal";
 
 /**
  * The whole group, on one screen and then one question.

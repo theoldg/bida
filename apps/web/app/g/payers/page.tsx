@@ -1,19 +1,19 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { goBack } from "../../../lib/nav";
+import { goBack } from "@/lib/nav";
 import { useEffect, useRef, useState } from "react";
 import { primaryPayer, validatePayers } from "@bida/core";
-import { MinorAmountInput } from "../../../components/amount-input";
-import { keepsFocus } from "../../../components/bits";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
-import { ConfirmDialog } from "../../../components/dialog";
-import { Icon } from "../../../components/icons";
-import { copy } from "../../../lib/copy";
-import { bare, money, payerProblemText } from "../../../lib/format";
-import { route } from "../../../lib/group-link";
-import { useClaimGate, useGroupData } from "../../../lib/hooks";
-import { draftAmountMinor, saveDraft, useDraft } from "../../../lib/draft";
+import { MinorAmountInput } from "@/components/amount-input";
+import { keepsFocus } from "@/components/bits";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { ConfirmDialog } from "@/components/dialog";
+import { Icon } from "@/components/icons";
+import { copy } from "@/lib/copy";
+import { bare, money, payerProblemText } from "@/lib/format";
+import { route } from "@/lib/group-link";
+import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
 
 /**
  * Who put the money in. The mirror of the split editor's "as amounts" tab,

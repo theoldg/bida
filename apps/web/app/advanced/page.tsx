@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { keepsFocus } from "../../components/bits";
-import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
-import { Icon } from "../../components/icons";
-import { copy } from "../../lib/copy";
-import { setGeminiKey } from "../../lib/db/device";
-import { route } from "../../lib/group-link";
-import { useDevice } from "../../lib/hooks";
-import { checkGeminiKey, maskKey, type KeyRefusal } from "../../lib/scan/key";
+import { keepsFocus } from "@/components/bits";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Icon } from "@/components/icons";
+import { copy } from "@/lib/copy";
+import { setGeminiKey } from "@/lib/db/device";
+import { route } from "@/lib/group-link";
+import { useDevice } from "@/lib/hooks";
+import { checkGeminiKey, maskKey, type KeyRefusal } from "@/lib/scan/key";
 
 /**
  * Settings nobody needs by default, and the first of them: a Gemini key of

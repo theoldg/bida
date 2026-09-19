@@ -2,16 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "../../components/chrome";
-import { BadLinkNotice, KeylessLink } from "../../components/keyless-link";
-import { saveGroupKey } from "../../lib/db/commands";
-import { db } from "../../lib/db/dexie";
-import { useLive } from "../../lib/db/live";
-import { syncGroup } from "../../lib/db/sync";
-import { useDevice, useSyncHealth } from "../../lib/hooks";
-import { handOverToGroup } from "../../lib/launch";
-import { copy } from "../../lib/copy";
-import { isKeylessFragment, parseJoinLink, route } from "../../lib/group-link";
+import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { BadLinkNotice, KeylessLink } from "@/components/keyless-link";
+import { saveGroupKey } from "@/lib/db/commands";
+import { db } from "@/lib/db/dexie";
+import { useLive } from "@/lib/db/live";
+import { syncGroup } from "@/lib/db/sync";
+import { useDevice, useSyncHealth } from "@/lib/hooks";
+import { handOverToGroup } from "@/lib/launch";
+import { copy } from "@/lib/copy";
+import { isKeylessFragment, parseJoinLink, route } from "@/lib/group-link";
 
 /**
  * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the

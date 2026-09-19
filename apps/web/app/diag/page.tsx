@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Body, Screen, Scroll, TopBar } from "../../components/chrome";
-import { copy } from "../../lib/copy";
-import { db } from "../../lib/db/dexie";
-import { format, handoff, loadedAt, otherPages, timeline } from "../../lib/diag";
-import { route } from "../../lib/group-link";
-import { ownKey } from "../../lib/scan/key";
-import { setStasMode, stasMode } from "../../lib/scan/stas";
-import { VERSION } from "../../lib/version";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { copy } from "@/lib/copy";
+import { db } from "@/lib/db/dexie";
+import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
+import { route } from "@/lib/group-link";
+import { ownKey } from "@/lib/scan/key";
+import { setStasMode, stasMode } from "@/lib/scan/stas";
+import { VERSION } from "@/lib/version";
 
 /**
  * What this phone has been doing, as text you can send.

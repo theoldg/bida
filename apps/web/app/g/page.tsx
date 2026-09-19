@@ -7,29 +7,29 @@ import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@bida/core";
-import { kindOf, myEffect } from "../../lib/entry-kind";
-import { Card, Eyebrow, signClass } from "../../components/bits";
+import { kindOf, myEffect } from "@/lib/entry-kind";
+import { Card, Eyebrow, signClass } from "@/components/bits";
 import {
   BadLink, Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
   SupportFab, TopBar,
-} from "../../components/chrome";
-import { ConfirmDialog } from "../../components/dialog";
-import { FitLine } from "../../components/fit-line";
-import { GroupMenu } from "../../components/group-menu";
-import { DemoCard } from "../../components/demo";
-import { LedgerInstall } from "../../components/install";
-import { Icon } from "../../components/icons";
-import { useLongPressMenu } from "../../components/long-press";
-import { copy } from "../../lib/copy";
-import { deleteExpense, deleteSettlement } from "../../lib/db/commands";
-import { setLastOpenedGroup } from "../../lib/db/device";
-import { syncGroup } from "../../lib/db/sync";
-import { dayLabel, money, plural } from "../../lib/format";
-import { entryOf, ledgerRows } from "../../lib/ledger";
-import { route } from "../../lib/group-link";
-import { expenseMeta, transferMeta } from "../../lib/row-meta";
-import { useClaimGate, useDevice, useGroupData, useOnline, useSyncHealth } from "../../lib/hooks";
-import type { GroupData } from "../../lib/hooks";
+} from "@/components/chrome";
+import { ConfirmDialog } from "@/components/dialog";
+import { FitLine } from "@/components/fit-line";
+import { GroupMenu } from "@/components/group-menu";
+import { DemoCard } from "@/components/demo";
+import { LedgerInstall } from "@/components/install";
+import { Icon } from "@/components/icons";
+import { useLongPressMenu } from "@/components/long-press";
+import { copy } from "@/lib/copy";
+import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
+import { setLastOpenedGroup } from "@/lib/db/device";
+import { syncGroup } from "@/lib/db/sync";
+import { dayLabel, money, plural } from "@/lib/format";
+import { entryOf, ledgerRows } from "@/lib/ledger";
+import { route } from "@/lib/group-link";
+import { expenseMeta, transferMeta } from "@/lib/row-meta";
+import { useClaimGate, useDevice, useGroupData, useOnline, useSyncHealth } from "@/lib/hooks";
+import type { GroupData } from "@/lib/hooks";
 
 type Tab = "ledger" | "balances";
 
