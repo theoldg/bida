@@ -4,42 +4,26 @@ import type { Id } from "./types.js";
  * Reduce a set of balances to the fewest payments that clear everyone.
  *
  * The minimum is `n − p`, where `p` is the largest number of disjoint zero-sum
- * pieces the group cuts into: money never crosses between two such pieces, and
- * inside a piece that cannot be cut further every payment clears at most one
- * person, so `size − 1` is both floor and ceiling. Finding the cut is the whole
- * problem, and it is NP-hard — it contains subset-sum. So `partition` does it
- * in three moves, each of which is what makes the next affordable:
+ * pieces the group cuts into. Finding that cut is NP-hard — it contains
+ * subset-sum — so `partition` leans on three cuts that make it affordable:
  *
- * 1. **Cancel exact opposites.** If someone is owed exactly what another owes,
- *    some best answer pairs them off. (Take any best cut: if `x` and `−x` sit
- *    in different pieces, swapping them out into a piece of their own leaves
- *    the rest of both still summing to zero — same count. If they sit in the
- *    same piece, splitting them out gains one.) Every pair removed is two
- *    people the search never sees, and it is the common case: one person's
- *    share of one dinner.
- * 2. **Search over amounts, not people.** Two members owing the same amount are
- *    interchangeable, so the state is *how many* people hold each amount, not
- *    which. A group where everyone owes the same collapses from millions of
- *    subsets to a handful of states, and that is the shape real groups have —
- *    an evenly split trip.
- * 3. **Stop at the first zero.** When enumerating a candidate piece, a running
- *    total that reaches zero is a piece already; extending it can only merge
- *    two pieces into one, which never wins. That prunes most of the tree.
+ * 1. **Cancel exact opposites** first. Two people the search never sees, and
+ *    it is the common case: one person's share of one dinner.
+ * 2. **Search over amounts, not people.** Two members owing the same are
+ *    interchangeable, so the state is *how many* hold each amount. An evenly
+ *    split trip collapses from millions of subsets to a handful of states.
+ * 3. **Stop at the first zero.** Extending a piece that already sums to zero
+ *    can only merge two pieces into one, which never wins.
  *
- * Together these settle an evenly-split group of 100 in under a millisecond,
- * where the subset DP this replaced could not pass 18 people at any price. What
- * survives all three is a group of ~18+ whose balances are all different, which
- * is also the shape with the least to gain — usually nothing cancels and the
- * answer is one piece. There `partition` spends a fixed work budget, falls back
- * to peeling off what zero-sum triples and quadruples it can find, and settles
- * the rest as one piece: still `≤ n−1` transfers, no longer provably fewest.
- * So the UI says "simplest way to settle" and not "optimal".
+ * What survives all three is a group of ~18+ with no two balances alike, which
+ * is also the shape with the least to gain. There `partition` spends a fixed
+ * budget, then `peel`s off what triples and quadruples it can find and settles
+ * the rest as one piece: still `≤ n−1`, no longer provably fewest. So the UI
+ * says "simplest way to settle" and not "optimal".
  *
  * `fill` then decides who pays whom, which the count alone leaves open:
  * smallest debtor first, into the smallest creditor who can absorb the whole
- * debt. Owing a little means one transfer; only a debt too big for any single
- * creditor is split. Every piece costs `size − 1` however it is filled, so this
- * is free.
+ * debt. Every piece costs `size − 1` however it is filled, so this is free.
  */
 
 export interface Transfer {
@@ -53,11 +37,8 @@ interface Party {
   amount: number;
 }
 
-/**
- * Steps of search before `partition` gives up on being exact. Reached only by a
- * group of ~18 or more with no two balances alike; everything below that
- * finishes far inside it, and the ceiling costs about 2ms.
- */
+/** Steps of search before `partition` gives up on being exact. The ceiling
+ *  costs about 2ms; only a group of ~18+ with no two balances alike reaches it. */
 const SEARCH_BUDGET = 50_000;
 
 class OutOfBudget extends Error {}

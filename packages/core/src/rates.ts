@@ -4,21 +4,16 @@ import { alive, type ExchangeRate, type GroupState, type Id } from "./types.js";
 /**
  * The group's exchange-rate registry, applied.
  *
- * A rate is not a fact about one entry, it is a fact about the group: one
- * number per currency, agreed by everybody, corrected in one place. So an
- * entry in a foreign currency is **valued on read** at whatever the registry
- * says today — fix a rate somebody fat-fingered and every entry in that
- * currency follows, which is the whole reason the registry exists
- * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
+ * A rate is a fact about the group, not about one entry: one number per
+ * currency, corrected in one place. So a foreign entry is **valued on read** at
+ * whatever the registry says today — fix a fat-fingered rate and every entry in
+ * that currency follows
+ * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)). The
+ * `rateToBase` on the entry is the fallback for the one case the registry
+ * cannot answer: a currency with no row at all.
  *
- * The rate a device typed at save is still written onto the entry, and it is
- * still what the log records. It is no longer what the entry is worth — it is
- * the fallback for the one case the registry cannot answer: a currency with no
- * row, which is every foreign entry in a group written before the registry
- * existed. Those keep converting at exactly the number they always did.
- *
- * Nothing here throws. A rate is a string somebody typed on another phone; a
- * bad one must cost that currency its repricing, not the whole ledger its
+ * **Nothing here throws.** A rate is a string somebody typed on another phone;
+ * a bad one costs that currency its repricing, not the whole ledger its
  * balances.
  */
 
@@ -71,11 +66,9 @@ export function repriceEntry<T extends RateBearing>(
 /**
  * A whole group valued at its current rates: every expense and every transfer.
  *
- * This is what every reader of a `GroupState` wants — balances, the ledger,
- * settle-up, one entry's detail screen — so it runs once where the state is
- * assembled rather than being threaded through each of them. Miss it in one
- * place and that screen quietly reports a different number from the rest of
- * the app, which is the failure this whole feature is about.
+ * Run once where the state is assembled, never threaded through each reader —
+ * a screen that misses it quietly reports a different number from the rest of
+ * the app.
  */
 export function atCurrentRates(state: GroupState): GroupState {
   const base = state.group?.baseCurrency;
@@ -106,13 +99,12 @@ export interface CurrencyInUse {
 }
 
 /**
- * Every currency the registry has to answer for: the ones entries are actually
- * written in, plus the ones somebody added ahead of spending in them. The
- * group's own base currency is never one of them — it is what the others are
- * measured in.
+ * Every currency the registry has to answer for: the ones entries are written
+ * in, plus the ones somebody added ahead of spending in them. Never the base
+ * currency — it is what the others are measured in.
  *
  * Sorted by how much of the ledger rides on it, so the currency the trip is
- * actually being spent in is the first row.
+ * being spent in is the first row.
  */
 export function currenciesInUse(state: GroupState): CurrencyInUse[] {
   const base = state.group?.baseCurrency;

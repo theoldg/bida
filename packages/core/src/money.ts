@@ -18,10 +18,9 @@ const EXPONENT_OVERRIDES: Record<string, number> = {
 };
 
 /**
- * True for the three ASCII letters `Intl.NumberFormat` accepts as a currency —
- * the one thing `formatMinor` needs and cannot be talked out of. Anything else
- * ("€", "EU", "USDT") makes it throw, so every code that reaches the model,
- * the picker or a draft is checked against this first.
+ * The three ASCII letters `Intl.NumberFormat` accepts as a currency. Anything
+ * else ("€", "EU", "USDT") makes it throw, so check any code reaching the
+ * model, the picker or a draft against this first.
  */
 export function isCurrencyCode(code: string): boolean {
   return /^[A-Z]{3}$/.test(code);
@@ -127,11 +126,9 @@ export function isValidRate(rate: string): boolean {
 }
 
 /**
- * Whatever a keyboard produced, as the text `isValidRate` reads. "," is the
- * decimal separator to half of Europe, and the rate was the one money field
- * that refused it — every other one goes through the amount input, which has
- * normalised it from the start. Nothing is clipped: how many decimals a rate
- * carries is its own business (ADR-0005).
+ * Whatever a keyboard produced, as the text `isValidRate` reads — "," is the
+ * decimal separator to half of Europe. Nothing is clipped: how many decimals a
+ * rate carries is its own business (ADR-0005).
  */
 export function sanitizeRate(raw: string): string {
   const text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
@@ -180,14 +177,10 @@ export function sumMinor(values: Iterable<number>): number {
 }
 
 /**
- * How many significant digits a rate the app produced carries.
- *
- * Not a precision limit on money — `convertMinor` reads the whole string —
- * but on the two places the app writes a rate instead of a person: what comes
- * back from the feed, and the reciprocal of what somebody typed the other way
- * round. Twelve is chosen so a rate typed as its inverse survives the round
- * trip: "4.5" stores as 1/4.5 to twelve digits, and inverting that back at
- * `RATE_SHOWN_DIGITS` reads "4.5" again rather than "4.500000001".
+ * Significant digits in a rate the *app* wrote — the feed's, and the reciprocal
+ * of one typed the other way round. Not a limit on money; `convertMinor` reads
+ * the whole string. Twelve so a rate typed as its inverse survives the round
+ * trip: "4.5" inverted and shown at `RATE_SHOWN_DIGITS` reads "4.5" again.
  */
 export const RATE_DIGITS = 12;
 
@@ -216,14 +209,10 @@ function trimRate(text: string): string {
 }
 
 /**
- * A rate from a JSON number, as the exact decimal string `Rate` is.
- *
- * The feed publishes rates as JSON numbers, which are floats — this is the
- * one door they come in through, and it closes behind them: everything
- * downstream is the string. `toPrecision` does the rounding (the float is
- * already the only value we have; no arithmetic is done on it here) and the
- * two helpers above undo the two shapes it can produce that `isValidRate`
- * rejects — an exponent, and trailing zeros.
+ * A rate from a JSON number, as the exact decimal string `Rate` is. The feed
+ * publishes floats and this is the one door they come in through; everything
+ * downstream is the string. The two helpers above undo the shapes
+ * `toPrecision` can produce that `isValidRate` rejects.
  */
 export function rateFromNumber(value: number, significantDigits = RATE_DIGITS): Rate {
   if (!Number.isFinite(value) || value <= 0) {
@@ -260,13 +249,12 @@ function toSignificant(whole: string, frac: string, significantDigits: number): 
 
 /**
  * The same rate read the other way round: "1 PLN = 0.234 EUR" becomes
- * "1 EUR = 4.27350 PLN".
+ * "1 EUR = 4.27350 PLN". Runs on every keystroke in whichever field of the
+ * dialog isn't being typed in.
  *
- * The registry stores one direction and the dialog offers both, so this runs
- * on every keystroke in the field somebody isn't typing in. Exact bigint long
- * division to `significantDigits`, never `1 / Number(rate)`: a reciprocal that
- * a person then saves *becomes* the rate every balance is computed from, so it
- * is money arithmetic and gets money arithmetic's treatment.
+ * Exact bigint long division, never `1 / Number(rate)`: a reciprocal somebody
+ * saves *becomes* the rate every balance is computed from, so it is money
+ * arithmetic and gets money arithmetic's treatment.
  */
 export function invertRate(rate: Rate, significantDigits = RATE_DIGITS): Rate {
   const { num, scale } = parseRate(rate);

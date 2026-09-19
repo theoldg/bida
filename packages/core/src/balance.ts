@@ -30,8 +30,8 @@ export interface BalanceReport {
   incomeShareMinor: Record<Id, number>;
   /**
    * Per member: what transfers did to their balance — sent minus received.
-   * `byMember` has always counted it; without it named here a summary built
-   * from `paidMinor` and `owedMinor` cannot reach the figure beside it.
+   * Named separately because a summary built from `paidMinor` and `owedMinor`
+   * alone cannot reach the figure `byMember` shows beside it.
    */
   settledMinor: Record<Id, number>;
   /** Entries we could not apportion. Rendered as a warning, never swallowed. */
@@ -85,9 +85,9 @@ export function computeBalances(state: GroupState): BalanceReport {
     if (income) totalIncomeMinor += e.baseAmountMinor;
     else totalSpendMinor += e.baseAmountMinor;
 
-    // Credit every payer. With no co-sponsors this is one entry for `paidBy`
-    // carrying the whole amount, exactly as before payers existed. On an
-    // income the same map names who *received* it, and it runs the other way.
+    // Credit every payer. With no co-sponsors that is one entry for `paidBy`
+    // carrying the whole amount. On an income the same map names who
+    // *received* it, and it runs the other way.
     for (const [id, amount] of Object.entries(resolvePayers(e))) {
       touch(id);
       if (income) {

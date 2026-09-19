@@ -67,12 +67,9 @@ export function hlcSend(state: HlcState, now: number): { state: HlcState; hlc: H
 /**
  * Advance the local clock on receiving a remote stamp.
  *
- * Every stamp is adopted, however far ahead it reads. This used to refuse one
- * more than an hour in the future, which protected ordering by throwing away
- * somebody's expense: there is no time limit on an update, and a late or
- * far-future op is still an op. Adopting it is what makes the guarantee — a
- * device that has seen a stamp stamps after it — so the refusal bought
- * nothing the adoption doesn't already give.
+ * **Adopt every stamp, however far ahead it reads.** Refusing a far-future one
+ * protects ordering by throwing away somebody's expense, and buys nothing:
+ * adopting is itself the guarantee that a device stamps after what it has seen.
  */
 export function hlcReceive(state: HlcState, remote: Hlc, now: number): HlcState {
   const r = parseHlc(remote);

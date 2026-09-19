@@ -46,14 +46,11 @@ export const IMMUTABLE_FIELDS = new Set(["id", "groupId"]);
 
 /**
  * Fields a patch may set once and never change: the first value the log carries
- * for one of these wins, whatever arrives later.
+ * wins, whatever arrives later.
  *
- * `createdAt` is when an entry was first added — it breaks ties between
- * same-day entries in list order, and every later edit must leave it alone. It
- * was documented as write-once and protected by nothing, which was harmless
- * only while a patch carried just the fields somebody changed. An entry's
- * content is now written whole (docs/sync.md), so every edit carries a
- * `createdAt`, and the rule has to be held here rather than hoped for.
+ * `createdAt` breaks ties between same-day entries in list order, so an edit
+ * must leave it alone. The rule is held here and not merely documented: an
+ * entry's content is written whole (docs/sync.md), so every edit carries one.
  */
 export const WRITE_ONCE_FIELDS = new Set(["createdAt"]);
 

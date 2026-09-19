@@ -26,18 +26,13 @@ type Bag = Record<string, unknown>;
 
 /**
  * Apply a patch, honouring the two kinds of field a patch may not simply set.
+ * `IMMUTABLE_FIELDS` are never taken; `WRITE_ONCE_FIELDS` only when the entity
+ * has not got one yet — a stale device re-sending the entity it holds carries a
+ * `createdAt` too, and list order breaks ties on that.
  *
- * `IMMUTABLE_FIELDS` are never taken. `WRITE_ONCE_FIELDS` are taken only when
- * the entity has not got one yet — which is what makes `createdAt` mean what it
- * says now that an entry's content is written whole: a stale device re-sending
- * the entity it holds carries a `createdAt` too, and without this the field an
- * entry's list order breaks ties on would be reassigned by whoever edited last.
- *
- * Exported because history folds the same log and must fold it the same way; a
- * second copy of these rules is a second answer to what the log means.
- *
- * It is also where an op written in an older shape is brought up to date, for
- * the same reason: one answer, read by the fold and the history alike.
+ * Also where an op in an older shape is brought up to date. Exported because
+ * history folds the same log and **must** fold it the same way: a second copy
+ * of these rules is a second answer to what the log means.
  */
 export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(patch)) {

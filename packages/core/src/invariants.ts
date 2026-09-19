@@ -9,34 +9,17 @@ import {
 /**
  * The invariants a merge can break, and the repair that folds each one away.
  *
- * ## Why this file exists
+ * The op log guarantees convergence, not validity: an invariant spanning two
+ * entities is checked in the UI against one device's snapshot, which is a wish
+ * and not a guard ([docs/invariants.md](../../../docs/invariants.md)). So
+ * `repair` is required and the refusal `wouldViolate` is optional — you cannot
+ * register a refusal without saying how the state it fails to prevent heals.
  *
- * The op log guarantees convergence — every device folds to the same state. It
- * does not guarantee validity: that the agreed state is one the app considers
- * legal. The two come apart wherever an invariant spans more than one entity,
- * because those get checked in the UI, at write time, against a single device's
- * snapshot. A precondition that quantifies over entities you did not write is
- * not a guard, it is a wish ([docs/invariants.md](../../../docs/invariants.md)).
- *
- * Every defect of this class found so far was a **guard whose healer was never
- * written**: the check looked like enforcement, so nobody asked what happened
- * when it lost. `repair` is therefore required, and `wouldViolate` — the UI's
- * refusal — is optional and derived from the same declaration. You cannot
- * register a refusal here without saying how the state it fails to prevent gets
- * repaired, which is the one thing that would have caught both bugs.
- *
- * ## What a healer must be
- *
- * 1. **Detection is a pure function on state**, named for the *state* — whichever
- *    race produced it gets the same repair.
- * 2. **The repair is ordinary ops.** No new op kind, nothing the fold must learn.
- * 3. **Idempotent**: the healed state fails its own detector, so a second run,
- *    screen or device writes nothing.
- * 4. **Deterministic**, so two phones noticing at once write the same repair.
- * 5. **History names the cause, not the actor** — money moved with nobody asking.
- *
- * `invariants.test.ts` holds every one of those to each entry in the registry,
- * and refuses to let a new entry be added without a fixture that violates it.
+ * A healer must be: a pure detector named for the *state* (not the race that
+ * produced it); ordinary ops, nothing the fold must learn; idempotent, so a
+ * second device writes nothing; deterministic, so two writing at once agree;
+ * and its history note names the cause, not an actor. `invariants.test.ts`
+ * holds every entry to all five and demands a fixture that violates it.
  */
 
 /** An op with everything the appender stamps — id, hlc, actor, clock — left off. */
@@ -49,11 +32,9 @@ export interface OpDraft {
 }
 
 /**
- * One invariant, its detector and its repair.
- *
- * `V` is whatever the detector names — a member, a rate row — and is the only
- * thing `repair` is handed, so a repair cannot quietly consult state the
- * detector never looked at.
+ * One invariant, its detector and its repair. `V` is whatever the detector
+ * names — a member, a rate row — and all `repair` is handed, so a repair
+ * cannot quietly consult state the detector never looked at.
  */
 interface Invariant<V> {
   /** Stable identifier. Appears in test failures and in the healer's history note. */
@@ -62,31 +43,24 @@ interface Invariant<V> {
   readonly holds: string;
   /** Everything currently violating it. Pure, total, deterministic. */
   detect(state: GroupState): V[];
-  /**
-   * Ops that fold the violation away. Required — an invariant with no repair is
-   * the exact shape of every defect this file exists to prevent.
-   */
+  /** Ops that fold the violation away. Required; see the note at the top. */
   repair(violations: readonly V[]): OpDraft[];
   /**
-   * Would appending this draft break the invariant, as far as *this* device can
-   * see? The UI's courtesy refusal, and never a correctness mechanism: it reads
-   * one replica's snapshot and cannot constrain the union of two.
+   * Would appending this draft break the invariant, as far as *this* device
+   * can see? A courtesy refusal, never correctness: one replica's snapshot
+   * cannot constrain the union of two.
    */
   wouldViolate?(state: GroupState, draft: OpDraft): boolean;
 }
 
-/**
- * A declared invariant: its optional guard filled in, its violation type intact.
- * Naming one directly — a test, a screen that needs its detector — keeps `V`.
- */
+/** A declared invariant: guard filled in, violation type intact. */
 interface Declared<V> extends Invariant<V> {
   wouldViolate(state: GroupState, draft: OpDraft): boolean;
 }
 
 /**
- * The same thing with `V` erased, which is what lets one array hold all of
- * them. Assignable from any `Declared<V>`: the registry only ever hands a
- * detector's own output back to its own repair.
+ * `V` erased, so one array can hold all of them. Safe because the registry
+ * only ever hands a detector's own output back to its own repair.
  */
 export type RegisteredInvariant = Declared<unknown>;
 
@@ -94,21 +68,16 @@ export type RegisteredInvariant = Declared<unknown>;
 function defineInvariant<V>(spec: Invariant<V>): Declared<V> {
   return {
     ...spec,
-    // A guard is optional; its absence means "nothing to refuse", never
-    // "refuse by default" — a refusal that isn't declared here is one the UI
-    // must not invent.
+    // No guard means "nothing to refuse", never "refuse by default".
     wouldViolate: (state, draft) => spec.wouldViolate?.(state, draft) ?? false,
   };
 }
 
 /**
- * A live entry names only live members.
- *
- * Removal is refused while anybody is named on a live entry, so reaching this
- * takes two phones — one removes Bruno, the other, offline, writes a transfer
- * to him — and it appears where they merge. The tombstone is the half the log
- * has since contradicted: an entry is money somebody typed, a removal is only
- * the claim that nobody was naming them. So the tombstone gives way.
+ * A live entry names only live members. Reaching this takes two phones — one
+ * removes Bruno, the other, offline, writes a transfer to him. The tombstone
+ * gives way: an entry is money somebody typed, a removal is only the claim
+ * that nobody was naming them.
  */
 export const liveEntriesNameLiveMembers = defineInvariant<Member>({
   name: "liveEntriesNameLiveMembers",
@@ -137,16 +106,13 @@ export const liveEntriesNameLiveMembers = defineInvariant<Member>({
 });
 
 /**
- * A currency a live entry is written in has a live rate.
+ * A currency a live entry is written in has a live rate — the mirror of the
+ * member case, failing the same way. The repair is the lift `setRate` already
+ * writes (rates.ts); a rate op's entity id is the currency code, so it lands
+ * on the tombstoned row.
  *
- * The mirror of the member case, and it fails the same way: clearing a rate is
- * refused while entries still spend in it, which needs both facts on one phone.
- * The repair is the lift `setRate` already writes (rates.ts) — a rate op's
- * entity id is the currency code, so it lands on the tombstoned row.
- *
- * A currency with **no row at all** is a different state and is deliberately
- * not detected: the group has never said what it is worth, there is no number
- * to restore, and `needsRate` and the rate dialog already own it.
+ * A currency with **no row at all** is deliberately not detected: there is no
+ * number to restore, and `needsRate` and the rate dialog already own it.
  */
 export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
   name: "liveEntriesHaveLiveRates",
@@ -176,11 +142,10 @@ export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
 });
 
 /**
- * Every invariant the app repairs, in the order they run.
- *
- * Order is not significant today and must not become so: healers that fight —
- * one tombstoning what another lifts — are an op loop that syncs. `healGroup`
- * runs to a fixed point and the property test proves each entry reaches one.
+ * Every invariant the app repairs. Order is not significant and must not become
+ * so: healers that fight — one tombstoning what another lifts — are an op loop
+ * that syncs. `healGroup` runs to a fixed point; the property test proves one
+ * exists for each entry.
  */
 export const INVARIANTS: readonly RegisteredInvariant[] = [
   liveEntriesNameLiveMembers,
@@ -201,12 +166,10 @@ export function healDrafts(state: GroupState): OpDraft[] {
 }
 
 /**
- * Would this draft break something, on the evidence this device holds?
- *
- * The single source for every refusal in the UI. A screen that asks its own
- * version of this question is the bug in [docs/invariants.md](../../../docs/invariants.md):
- * the guard and the healer drift, and the guard is the half that looks like
- * enforcement.
+ * Would this draft break something, on the evidence this device holds? The
+ * single source for every refusal in the UI — a screen asking its own version
+ * lets the guard and the healer drift
+ * ([docs/invariants.md](../../../docs/invariants.md)).
  */
 export function wouldViolate(state: GroupState, draft: OpDraft): RegisteredInvariant | undefined {
   return INVARIANTS.find((i) => i.wouldViolate(state, draft));
@@ -215,16 +178,12 @@ export function wouldViolate(state: GroupState, draft: OpDraft): RegisteredInvar
 /**
  * The op that puts this device's own member back, when a merge removed them.
  *
- * Not in `INVARIANTS`, and it cannot be: a registered detector sees only
- * `GroupState`, and the premise here is device-local — *which* member this
- * phone is. Registered, every device would resurrect every claimed member, and
- * a removal would be unrefusable by anyone. Kept device-local, the person being
- * removed is the only one who puts themselves back, and **forgetting the group
- * is the exit that ends it**: a forgotten group is skipped by the sync loop, so
- * the phone stops arguing (docs/invariants.md).
- *
- * A removal the other side goes on refusing was never a removal — it is two
- * people disagreeing, and a shared ledger is not where that gets settled.
+ * Cannot be in `INVARIANTS`: a registered detector sees only `GroupState`, and
+ * the premise here is device-local — *which* member this phone is. Registered,
+ * every device would resurrect every claimed member and no removal would ever
+ * stick. Device-local, only the person removed argues back, and **forgetting
+ * the group ends it**: a forgotten group is skipped by the sync loop
+ * (docs/invariants.md).
  */
 export function restoreClaimDrafts(state: GroupState, memberId: Id): OpDraft[] {
   const member = state.members[memberId];

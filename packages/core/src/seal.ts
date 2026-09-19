@@ -7,21 +7,18 @@ import type { Id } from "./types.js";
  * The link secret never leaves the phone. Two independent values are derived
  * from it, and the server only ever meets the first:
  *
- * - a **token**, sent as the bearer. The server stores `sha256(token)` exactly
- *   as it used to store `sha256(secret)`, so auth is unchanged in shape — but a
- *   database leak now hands out a hash of something that decrypts nothing.
+ * - a **token**, sent as the bearer. The server stores `sha256(token)`, so a
+ *   database leak hands out a hash of something that decrypts nothing.
  * - a **content key**, AES-GCM-256, which every op body is sealed under.
  *
- * What the server stores per op is an id, a group id, a sequence number and a
- * ciphertext. Everything that carries meaning — the patch, who the actor was,
- * which entity it touched, the note, the stamp — is inside the seal. It cannot
- * read a group, and neither can anyone who takes the database.
+ * The server stores an id, a group id, a sequence number and a ciphertext.
+ * Everything carrying meaning — the patch, the actor, the entity, the note,
+ * the stamp — is inside the seal.
  *
- * The derivation is one HKDF-SHA256 over the secret with two `info` strings, so
- * the token tells you nothing about the key. It is not a password KDF and does
- * not need to be: a secret is ~83 random bits (`newGroupSecret`), not something
- * a person typed. That margin is what buys the single pass — shorten the secret
- * and this choice has to be made again.
+ * One HKDF-SHA256 over the secret with two `info` strings, so the token tells
+ * you nothing about the key. Not a password KDF and it does not need to be: a
+ * secret is ~83 random bits (`newGroupSecret`), not something a person typed.
+ * **Shorten the secret and this choice has to be made again.**
  */
 
 /** The slice of WebCrypto we need, so core stays free of DOM lib types. */
@@ -60,11 +57,9 @@ export interface GroupCrypto {
 
 /**
  * An op as it crosses the wire and sits in D1: an envelope the server can route
- * and a body it cannot read.
- *
- * `id` stays in the clear because it is the idempotency key — the server has to
- * compare it to dedupe a retried push — and it is a random UUID, which says
- * nothing about what it carries. `groupId` likewise: it is the address.
+ * and a body it cannot read. `id` stays in the clear as the idempotency key a
+ * retried push dedupes on — a random UUID says nothing about what it carries —
+ * and `groupId` is the address.
  */
 export interface SealedOp {
   id: Id;
@@ -102,10 +97,9 @@ async function hkdf(secret: string, groupId: string, info: string): Promise<Arra
 }
 
 /**
- * The token and the content key for one group's link secret.
- *
- * Deterministic: every device holding the link derives the same pair, which is
- * the whole of how a group agrees on a key with no key exchange.
+ * The token and the content key for one group's link secret. Deterministic:
+ * every device holding the link derives the same pair, which is the whole of
+ * how a group agrees on a key with no key exchange.
  */
 export async function deriveGroupCrypto(secret: string, groupId: string): Promise<GroupCrypto> {
   const [auth, content] = await Promise.all([
@@ -151,14 +145,9 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
 }
 
 /**
- * Open a sealed op, or throw `SealError`.
- *
- * Throwing is the only honest answer: a body that will not open under this
- * group's key is not an op we may skip past, because skipping it would advance
- * the sync cursor and lose it for good.
- *
- * The envelope is re-validated even though it arrives typed, because where it
- * arrives from is the network.
+ * Open a sealed op, or throw `SealError`. **Never skip a body that will not
+ * open** — skipping advances the sync cursor and loses the op for good. The
+ * envelope is re-validated despite arriving typed: it arrives from the network.
  */
 export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> {
   const sealed = validateSealedOp(input);

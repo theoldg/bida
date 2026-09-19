@@ -1,16 +1,13 @@
 import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
 
 /**
- * Splitting is the only genuinely tricky arithmetic in the app, and the one
- * place where being subtly wrong costs people real money.
- *
- * Two properties matter more than anything else:
+ * Splitting. Two properties carry everything here:
  *   1. Shares sum to the total EXACTLY. Not approximately.
  *   2. The result is byte-identical on every device, so two phones folding the
  *      same ops never disagree about a balance.
  *
- * Property 2 is why remainders go by largest fractional part with a seeded,
- * pure-function tiebreak, and never by iteration order of an object.
+ * (2) is why remainders go by largest fractional part with a seeded, pure
+ * tiebreak, and never by the iteration order of an object.
  */
 
 interface SplitResult {
@@ -24,12 +21,10 @@ interface SplitResult {
 }
 
 /**
- * Why a split doesn't add up, for a UI that has to say so in the group's own
- * currency. Core deliberately doesn't format money into these strings: it
- * knows minor units and nothing about the currency they're in, and a sentence
- * built here would read "230 minor units unallocated" on a screen where every
- * other figure says "€2.30". The number is the field; the sentence is the
- * caller's.
+ * Why a split doesn't add up. Core names the problem and never formats it: it
+ * knows minor units and not the currency, so a sentence built here would read
+ * "230 minor units unallocated" beside figures saying "€2.30". The number is
+ * the field; the sentence is the caller's.
  */
 export type SplitProblem = "empty" | "under" | "over" | "percent";
 
@@ -49,15 +44,10 @@ export class SplitError extends Error {}
 
 interface SplitOptions {
   /**
-   * Rotates who absorbs the leftover minor units.
-   *
-   * Without it, ties break by ascending member id and the same person
-   * subsidises every single split in the group — over a two-week trip that is
-   * a real, if small, systematic unfairness. Pass the expense id and the
-   * burden moves around, while staying perfectly deterministic across devices.
-   *
-   * This is deliberately invisible: nothing in the UI announces who took the
-   * cent. It's a fairness fix, not a feature.
+   * Rotates who absorbs the leftover minor units. Without it ties break by
+   * ascending member id and the same person subsidises every split in the
+   * group. Pass the expense id: the burden moves around and stays
+   * deterministic across devices. Deliberately invisible in the UI.
    */
   tiebreakSeed?: string;
 }
@@ -91,14 +81,10 @@ function sortedKeys<T>(map: Record<Id, T>): Record<Id, T> {
 
 /**
  * The same split written one way: members sorted and deduplicated, weight maps
- * keyed in sorted order.
- *
- * Two specs that mean the same thing then serialise the same, which is the
- * only way anything downstream can tell "nobody moved" from "somebody re-picked
- * the same people". Toggling a member out and straight back in reorders the
- * array, and that used to be written as an edit — the log then said "changed
- * who's involved" with the identical names on both lines, because the names
- * are what a person is shown and the order is not.
+ * keyed in sorted order. Two specs meaning the same thing then serialise the
+ * same, which is the only way anything downstream tells "nobody moved" from
+ * "somebody re-picked the same people" — toggling a member out and back in
+ * reorders the array, and order is not what a person is shown.
  */
 export function canonicalSplit(spec: SplitSpec): SplitSpec {
   switch (spec.mode) {
@@ -313,9 +299,8 @@ export function convertSplitMode(
 ): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
-  // Nobody included is a state the editor lets you sit in — zero everyone's
-  // parts and the tabs must still switch. `exact` and `percent` reach it
-  // through `resolveSplit`, which refuses an empty split rather than invent
+  // Nobody included is a state the editor lets you sit in, and the tabs must
+  // still switch. `resolveSplit` refuses an empty split rather than invent
   // one, so the empty spec is built here instead of thrown over.
   if (participants.length === 0) {
     switch (mode) {
@@ -363,18 +348,14 @@ export function convertSplitMode(
 }
 
 /**
- * Bring an expense read off the op log up to the shape the app works in.
+ * Rewrite an op-log expense that carries a receipt as `shares` plus a
+ * `splitTab: "receipt"` flag into the `receipt` mode the app works in.
  *
- * A receipt split used to be written as `shares` beside a `splitTab: "receipt"`
- * flag, and everything that wanted to know what it was looking at had to read
- * both. That is over: a receipt is its own `SplitMode`, and this is the only
- * code left that knows the old shape. It runs where ops become state
- * (`applyPatch`), so every reader — the fold, the history — sees one shape and
- * nobody asks a second field. ADR-0016.
- *
- * An entry written before the flag existed has no tab to read, so a `shares`
- * split beside a scanned bill is one, which is what the flag was derived from
- * anyway. Mutates in place: it is folding, and the bag is the fold's own.
+ * The only code that knows that older shape, and it runs where ops become
+ * state (`applyPatch`) — so the fold, the history and every other reader see
+ * one shape and nobody asks a second field. With no flag at all, a `shares`
+ * split beside a scanned bill is a receipt. Mutates in place: the bag being
+ * folded is the fold's own. ADR-0016.
  */
 export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
   const spec = entity["split"] as SplitSpec | undefined;

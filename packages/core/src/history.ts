@@ -7,14 +7,11 @@ import type { Id } from "./types.js";
  * Version history falls straight out of the op log — no extra storage, and it
  * cannot drift from the data, because it IS the data. See ADR-0002.
  *
- * **A revision is a diff of two folds, not a reading of the stored patch.**
- * `running` below is the entity folded up to and including each op, by the same
- * `applyPatch` the real fold uses, and a change is a field that moved between
- * the fold before and the fold after. That is what lets an entry's content be
- * written whole: the op says "here is the whole expense" and the revision still
- * reads "changed the amount", because only the amount moved. It is also the
- * more honest account — it shows what the revision changed in the merged
- * timeline rather than what one device believed it was changing.
+ * **A revision is a diff of two folds, never a reading of the stored patch.**
+ * `running` is the entity folded up to and including each op, by the same
+ * `applyPatch` the real fold uses; a change is a field that moved across it.
+ * That is what lets an entry's content be written whole — the op says "here is
+ * the whole expense" and the revision still reads "changed the amount".
  */
 
 interface FieldChange {
@@ -35,15 +32,11 @@ export interface Revision {
   entity: Op["entity"];
   changes: FieldChange[];
   /**
-   * The whole entity as the fold held it either side of this op — every field,
-   * not only the ones that moved.
-   *
-   * `changes` says what the revision did; these say what it did it *to*, which
-   * is what lets a sentence name a field the op never moved: the currency a
-   * payer's contribution is in, whether this entry is an income, who the other
-   * payer was. Without them a co-payer added to an expense read as "edited this
-   * entry" — the one name needed to say more was on the entity, not in the
-   * change.
+   * The whole entity either side of this op — every field, not only the ones
+   * that moved. `changes` says what the revision did; these say what it did it
+   * *to*, which is what lets a sentence name a field the op never moved: the
+   * currency a contribution is in, whether this is an income, who the other
+   * payer was.
    */
   before: Readonly<Record<string, unknown>>;
   after: Readonly<Record<string, unknown>>;
@@ -54,9 +47,9 @@ export interface Revision {
 function equalish(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   // An absent field and an explicit `null` are the same value — not set. A
-  // create op leaves an unset field off entirely, so an edit that sends `null`
-  // for it is not a change anybody made, and saying so put "changed the
-  // category" in the log over edits that never touched one.
+  // create leaves an unset field off entirely, so an edit sending `null` for it
+  // is not a change anybody made; calling it one puts "changed the category" in
+  // the log over edits that never touched one.
   if ((a ?? null) === null || (b ?? null) === null) return (a ?? null) === (b ?? null);
   if (typeof a !== "object" || typeof b !== "object") return false;
   return JSON.stringify(a) === JSON.stringify(b);

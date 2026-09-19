@@ -6,29 +6,19 @@ export type Id = string;
 export type SplitMode = "equal" | "exact" | "shares" | "percent" | "receipt";
 
 /**
- * Every mode a person can *type*: the four that are somebody's arithmetic.
- *
- * `receipt` is the one that isn't — its weights are read off a scanned bill,
- * never entered — so it is the one mode nothing converts into
- * (`convertSplitMode`) and no editor tab writes.
+ * The modes a person can *type*. `receipt` is excluded: its weights are read
+ * off a scanned bill, so nothing converts into it and no editor tab writes it.
  */
 export type ArithmeticMode = Exclude<SplitMode, "receipt">;
 
 /**
- * Which way an entry moves money through the group.
+ * Which way an entry moves money. `income` (a returned deposit, a prize) is
+ * structurally identical to an expense — same payers, same split, same
+ * positive `amountMinor` — and the sign is applied once, in `computeBalances`.
+ * Absent means `expense`. ADR-0010.
  *
- * - `expense` — somebody paid out, and it is shared between the people it was
- *   spent on. The default, and what an entry written before this field existed
- *   is: absent means `expense`, forever.
- * - `income` — somebody took money *in* on the group's behalf (a deposit
- *   returned, a prize, a sold ticket) and it is shared between the people it
- *   belongs to. Structurally identical to an expense — same payers, same
- *   split, same positive `amountMinor` — and the sign is applied once, in
- *   `computeBalances`. That is the whole of the difference. ADR-0010.
- *
- * The third kind of entry a person can add, a **transfer**, is not on this
- * union: it is a `Settlement`, a different entity with no split at all. The
- * app-level vocabulary that does name all three is `apps/web/lib/entry-kind.ts`.
+ * A **transfer** is not on this union: it is a `Settlement`, with no split at
+ * all. The vocabulary naming all three is `apps/web/lib/entry-kind.ts`.
  */
 export type ExpenseKind = "expense" | "income";
 
@@ -41,18 +31,13 @@ export type SplitSpec =
   /** Basis points (10000 = 100%) so percentages stay integers. */
   | { mode: "percent"; bps: Record<Id, number> }
   /**
-   * What a scanned bill says each person had, as weights: every line's
-   * amount divided among whoever was ticked for it, plus their share of the
-   * tip ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
+   * What a scanned bill says each person had, as weights: every line's amount
+   * divided among whoever was ticked for it, plus their share of the tip
+   * ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
    *
-   * Weighted division is the same arithmetic `shares` does, and that is the
-   * whole of what they have in common: one is a bill read out, the other is
-   * parts somebody chose. They were the same mode once, distinguished by a
-   * second field, and every screen that had to ask that second field what a
-   * `shares` split *really* was got it wrong somewhere — the entry read "as
-   * parts", the history said "Teo ×3943 parts", leaving Receipt for As parts
-   * arrived with the bill's weights already typed in. A receipt is its own
-   * mode, and nothing has to ask.
+   * Same arithmetic as `shares`, and a separate mode anyway: a bill read out
+   * is not parts somebody chose, and every screen that had to ask which one a
+   * `shares` split really was got it wrong somewhere.
    */
   | { mode: "receipt"; weights: Record<Id, number> };
 
@@ -79,32 +64,22 @@ export interface Member {
 export interface Expense {
   id: Id;
   groupId: Id;
-  /**
-   * Which way this entry runs. Absent means `expense` — every op written
-   * before incomes existed, and every ordinary expense since, so the common
-   * case never carries the field. See `ExpenseKind`.
-   */
+  /** Which way this entry runs. Absent means `expense`. See `ExpenseKind`. */
   kind?: ExpenseKind | null;
   description: string;
   categoryId?: string | null;
   occurredAt: number;
   /**
-   * `occurredAt` holds a day, and no time of day worth showing: a receipt
-   * prints the date it was paid and not the hour, so a backdated scan has
-   * nothing to put there. The stamp is local midnight of that day, and this
-   * says so, rather than leaving 00:00 to be read as a time somebody meant.
-   *
-   * Absent — not `false` — on everything else, which is every entry a person
-   * typed and every one written before this existed. See
+   * `occurredAt` is local midnight of a day with no time of day worth showing
+   * — a scanned receipt prints a date, not an hour. Saying so beats leaving
+   * 00:00 to be read as a time somebody meant. Absent, not `false`, otherwise.
    * docs/data-model.md#a-day-without-a-time.
    */
   dateOnly?: boolean | null;
   /**
-   * When this expense was first added, wall-clock, set once and never
-   * touched by later edits. `occurredAt` is the (editable) date of the
-   * purchase; this is for breaking ties between same-day expenses in list
-   * order. Optional so expenses written before this field existed still fold
-   * and display fine — the list sort falls back to `occurredAt` for those.
+   * When this expense was added, wall-clock, set once and never touched by an
+   * edit. Breaks ties between same-day expenses in list order; `occurredAt` is
+   * the editable purchase date. Absent sorts on `occurredAt` alone.
    */
   createdAt?: number;
   /** Amount in `currency`. */
@@ -116,8 +91,7 @@ export interface Expense {
   baseAmountMinor: number;
   /**
    * The single payer, or — when `payers` is set — its largest contributor.
-   * Always present: every op ever written carries it, and a list row needs one
-   * name and one avatar. See payers.ts and ADR-0010.
+   * Always present: a list row needs one name and one avatar. payers.ts, ADR-0010.
    */
   paidBy: Id;
   /**
@@ -128,15 +102,14 @@ export interface Expense {
   payers?: Record<Id, number> | null;
   split: SplitSpec;
   /**
-   * Receipt photos on this expense. Absent — not `[]` — when there are none,
-   * which today is every expense: nothing appends an `attachment` op yet.
+   * Receipt photos. Absent, not `[]`, when there are none — which today is
+   * every expense: nothing appends an `attachment` op yet.
    */
   attachmentIds?: Id[];
   /**
-   * The last receipt scan's line items, kept on the expense (not just a local
-   * draft) so "who had what" can be reopened later — another device, another
-   * session — instead of the parsed bill being thrown away once `split` is
-   * computed from it. Absent on an expense with no scan. ADR-0016.
+   * The last scan's line items, kept on the expense rather than in a local
+   * draft so "who had what" reopens on another device or another session.
+   * Absent when there was no scan. ADR-0016.
    */
   receiptItems?: ReceiptItem[] | null;
   /** A separate tip/service line from the same scan, printed as-is. */
@@ -150,62 +123,54 @@ export interface Expense {
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
   receiptAssignments?: Id[][] | null;
   /**
-   * The bill as text, when that is how it was read — what somebody typed into
-   * "Type it in" rather than photographed (`BILL_TEXT_MAX` caps it). Kept for
-   * the same reason `receiptItems` is: the dialog reopens holding it, on this
-   * phone or another, so correcting a misread bill is editing what was typed
-   * rather than typing it again. Absent on a photographed bill and on one with
-   * no scan at all.
+   * The bill as typed into "Type it in" rather than photographed
+   * (`BILL_TEXT_MAX` caps it). Kept for the same reason `receiptItems` is: the
+   * dialog reopens holding it, so correcting a misread bill is an edit and not
+   * a retype. Absent on a photographed bill and on one with no scan.
    */
   receiptText?: string | null;
   deletedAt?: number | null;
 }
 
 /**
- * One line of a scanned bill, as kept on the expense. ADR-0016.
- *
- * `amount` is the line's printed total, already multiplied out — `quantity` is
- * what the receipt printed next to it ("2x", a qty column) and is never used
- * as a multiplier, only shown.
- */
-/**
  * One deduction as kept on the expense: what the bill called it, and the
- * positive magnitude it took off. ADR-0016.
- *
- * Nobody ordered it, so it carries no assignment — it comes off everybody in
- * proportion to what they did order (`receiptBreakdown`).
+ * positive magnitude it took off. Nobody ordered it, so it carries no
+ * assignment — it comes off everybody in proportion to what they did order
+ * (`receiptBreakdown`). ADR-0016.
  */
 export interface ReceiptDiscount {
   label: string;
   amount: string;
 }
 
+/**
+ * One line of a scanned bill. `amount` is the printed line total, already
+ * multiplied out; `quantity` is what the receipt printed beside it ("2x"),
+ * shown and never used as a multiplier. ADR-0016.
+ */
 export interface ReceiptItem {
   label: string;
   amount: string;
   /** The count printed on the receipt, or null when none was. Display only. */
   quantity?: number | null;
   /**
-   * Set when this line is one portion of a printed line that was unfolded on
-   * the who-had-what grid — two people shared one of the two salads, the
-   * third had the other — and how many portions it was unfolded into.
-   * Consecutive lines carrying the same label and the same count are one such
-   * unfold, which is what lets it be merged back. ADR-0016.
+   * How many portions a printed line was unfolded into on the who-had-what
+   * grid — two people shared one of the two salads, the third had the other.
+   * Consecutive lines with the same label and count are one unfold, which is
+   * what lets them be merged back. ADR-0016.
    */
   portionOf?: number | null;
 }
 
 /**
  * A **transfer**: money handed from one person to another, in the real world.
+ * Separate from `Expense` so it never inflates what the trip cost — it moves a
+ * debt, it does not create one, and the app calls all of them transfers rather
+ * than reimbursements
+ * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)).
  *
- * Kept separate from `Expense` so it never inflates what the trip cost — it
- * moves a debt, it does not create one. Paying somebody back is the reason
- * most transfers exist, but not the only one, which is why the app calls all
- * of them transfers and reserves "reimbursement" for none of them
- * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)). The type
- * keeps its old name because the op log, the D1 `entity` column and every op
- * ever written say `settlement`; renaming it would be a migration bought with
- * nothing.
+ * Named `Settlement` because the op log and the D1 `entity` column say
+ * `settlement`; renaming it buys a migration and nothing else.
  */
 export interface Settlement {
   id: Id;
@@ -226,12 +191,9 @@ export interface Settlement {
 }
 
 /**
- * Which member a device says it is, in one group.
- *
- * `id` is the device's HLC node id — the same string that already ends every
- * op that device stamped. Claiming an identity is therefore a *shared* fact,
- * not a private one: it is what lets everybody read `Op.actor` honestly. See
- * ADR-0003.
+ * Which member a device says it is, in one group. `id` is the device's HLC
+ * node id, the string already ending every op it stamped — so a claim is a
+ * *shared* fact, and that is what lets everybody read `Op.actor`. ADR-0003.
  */
 export interface Identity {
   /** The device's HLC node id. */
@@ -242,25 +204,16 @@ export interface Identity {
   claimedAt: number;
 }
 
-/**
- * Where a rate in the registry came from, which is the only thing the app can
- * honestly say about a number it is converting money with.
- */
+/** Where a rate came from — the only provenance the app can honestly show. */
 export type RateSource = "fetched" | "typed";
 
 /**
- * One line of the group's exchange-rate registry: what a currency is worth,
- * for everybody in the group, right now.
+ * One line of the group's exchange-rate registry. Entries are valued at it on
+ * read, not at the rate in force when they were typed (ADR-0005) — so fixing
+ * one rate follows through every entry in that currency.
  *
- * The registry is **the** answer to "what is 500 MAD in euros" — entries are
- * valued at it on read, not at whatever rate happened to be in force the day
- * somebody typed them (ADR-0005). That is what makes it worth correcting: fix
- * the rate once and every MAD entry in the ledger follows.
- *
- * `id` is the currency code, so there is exactly one row per currency and two
- * phones editing the same one merge by HLC like any other entity rather than
- * making a second row. A row for the group's own base currency is meaningless
- * and is never written.
+ * `id` is the currency code, so two phones editing the same currency merge by
+ * HLC instead of making a second row. Never written for the base currency.
  */
 export interface ExchangeRate {
   /** The currency this values. Doubles as the entity id — one row per currency. */

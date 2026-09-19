@@ -32,13 +32,10 @@ const BASE36_LIMIT = 252;
 
 /**
  * `length` characters of base36, each worth its full log2(36) ≈ 5.17 bits.
- *
- * Lowercase letters and digits only, so the result is safe in a URL fragment,
- * a path and a query string alike, and survives being read down a phone line.
- * Bytes at or above `BASE36_LIMIT` are drawn again rather than folded with
- * `%`, which would have made the first four characters of the alphabet likelier
- * than the rest — a small bias, but the entropy figures below are quoted at
- * people and should be true.
+ * Lowercase and digits only: safe in a URL fragment, a path and a query string
+ * alike, and readable down a phone line. **Redraw bytes at or above
+ * `BASE36_LIMIT`, never `%`** — folding biases the first four characters, and
+ * the entropy figures below are quoted at people, so they had better be true.
  */
 function randomBase36(length: number): string {
   const c = getCrypto();
@@ -63,17 +60,13 @@ export function newNodeId(): string {
 /**
  * A group's id: 12 base36 characters, ~62 bits.
  *
- * Every link the app hands out carries it — `/join#<groupId>.<secret>`, and
- * `/install` carries one per group this phone holds — so its length is
- * something people see and paste. A UUID spent 36 characters on what 12 do.
- *
- * It is minted on the phone, offline, with nobody to ask whether it is taken,
- * so the length is a birthday bet: a million groups collide with probability
- * ~1 in 10 million. A collision is not a leak — the loser cannot read the
- * winner's group, because reading takes the secret — it costs the second group
- * its sync, since the server keys a row by this id and refuses a push carrying
- * a different token. 62 bits also keeps the id unguessable, which matters
- * because `POST /ops` registers any unseen id (ADR-0003).
+ * Every link carries it — `/join#<groupId>.<secret>` — so its length is
+ * something people see and paste. Minted on the phone, offline, with nobody to
+ * ask whether it is taken, so the length is a birthday bet: a million groups
+ * collide with probability ~1 in 10 million. A collision is not a leak, since
+ * reading takes the secret; it costs the second group its sync. 62 bits also
+ * keeps the id unguessable, which matters because `POST /ops` registers any
+ * unseen id (ADR-0003).
  */
 export function newGroupId(): string {
   return randomBase36(12);

@@ -6,31 +6,24 @@ import type { Id, SplitSpec } from "./types.js";
 /**
  * The demo group: a real group, made of real ops, that never syncs.
  *
- * Nothing downstream knows it is a demo. These are ordinary drafts, appended
- * by `appendOps` like any other command and folded by `foldOps` like any other
- * log, so the ledger, the balances, settle-up, the history diffs, the rate
- * registry and the export all work for the ordinary reason: none of them is
- * asked. What makes it a demo is what the *caller* leaves out — no
- * `saveGroupKey`, so no key row, so `runSyncAll` never sees it and
- * `syncGroupOnce` returns early. There is no flag to flip and no path to
- * disable (docs/sync.md#the-demo-group-has-no-key).
+ * **Nothing downstream knows it is a demo.** These are ordinary drafts,
+ * appended and folded like any other log, so every screen works for the
+ * ordinary reason. What makes it a demo is what the *caller* leaves out — no
+ * `saveGroupKey`, so no key row, so `runSyncAll` never sees it. There is no
+ * flag to flip (docs/sync.md#the-demo-group-has-no-key).
  *
- * The cast is four travellers haggling over passage off Tatooine: Luke, Han,
- * Chewie and Ben, an hour in the Mos Eisley cantina and the charter they
- * argued out at the back booth. A story rather than a trip, because the demo
- * is the pitch and a stranger reads a story faster than a spreadsheet. Dates
- * are offsets from `now`, so it never reads stale.
+ * The cast is four travellers haggling over passage off Tatooine. A story
+ * rather than a trip: the demo is the pitch, and a stranger reads a story
+ * faster than a spreadsheet. Dates are offsets from `now`, so it never
+ * reads stale.
  */
 
 /**
  * The demo's group id. A constant, so `/demo` is idempotent for free: opening
- * it twice reopens the one group instead of stacking copies.
- *
- * Shaped like `newGroupId()`'s 12 base36 characters so it is one kind of thing
- * everywhere ids are stored and compared, and readable on purpose — it is
- * never a secret, because a group with no key is a group the server cannot be
- * told about. Two phones minting it at once is meaningless for the same
- * reason: nothing syncs, so there is nothing to collide over.
+ * it twice reopens the one group instead of stacking copies. Shaped like
+ * `newGroupId()`'s 12 base36 characters so ids are one kind of thing
+ * everywhere, and readable on purpose — a group with no key is one the server
+ * cannot be told about, so there is nothing to keep secret or to collide over.
  */
 export const DEMO_GROUP_ID = "demodemodemo";
 
@@ -99,14 +92,13 @@ const ENTRY = {
 
 /**
  * The bill behind the cantina tab: what the booth ordered, and who ordered it.
+ * One table, read three ways — printed lines, grid, split weights — rather
+ * than three lists that have to be kept agreeing.
  *
- * Kept as minor units and divided here, so the printed lines, the grid and the
- * split weights are three readings of one table rather than three lists that
- * have to be kept agreeing. Every line divides evenly among the people on it,
- * which is what lets core price the bill at all — the largest-remainder
- * tiebreak that decides a leftover cent lives in the web's
- * `receiptBreakdown`, and a demo that needed it would be quoting a figure core
- * cannot check. `scan/items.test.ts` holds the two readings to each other.
+ * **Every line must divide evenly** among the people on it: the
+ * largest-remainder tiebreak for a leftover cent lives in the web's
+ * `receiptBreakdown`, so a line that needed it would quote a figure core
+ * cannot check. `scan/items.test.ts` holds the readings to each other.
  */
 const DEMO_BILL: readonly {
   label: string; minor: number; quantity?: number; who: readonly DemoName[];
@@ -130,11 +122,8 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
 }
 
 /**
- * The whole evening, as one batch of drafts.
- *
- * Deterministic in `cast` and `now`: the same arguments write a byte-identical
- * log, which is what makes *reset* and *clear, then reopen* the same call
- * twice. Pure, and the clock is an argument (CLAUDE.md).
+ * The whole evening, as one batch of drafts. Deterministic in `cast` and `now`,
+ * which is what makes *reset* and *clear, then reopen* the same call twice.
  *
  * The contents are chosen so every screen has something to say: a plain
  * expense, one with two payers and its bill itemised, one in local coin priced
@@ -353,18 +342,15 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
 }
 
 /**
- * A fingerprint of the seed this build carries.
- *
- * The demo is a pitch, not a group somebody keeps, so when a release changes
- * the story the phone that already has the old one must be given the new one —
- * and `openDemo` is idempotent by design, so on its own it would hand back the
- * group it seeded months ago forever. The caller compares this string with the
- * one it stored and re-seeds when they differ, which makes *the seed changing*
- * the trigger rather than a constant somebody has to remember to bump.
+ * A fingerprint of the seed this build carries. `openDemo` is idempotent, so on
+ * its own it would hand back the group it seeded months ago forever; the caller
+ * compares this with the string it stored and re-seeds when they differ. That
+ * makes *the seed changing* the trigger, rather than a constant somebody has to
+ * remember to bump.
  *
  * Dates are zeroed before hashing, so the stamp answers "is this the same
- * story" and not "is it the same evening" — otherwise every midnight, and
- * every flight across a timezone, would read as a new seed.
+ * story" and not "is it the same evening" — otherwise every midnight, and every
+ * flight across a timezone, would read as a new seed.
  */
 export function demoStamp(): string {
   const dated = /^(occurredAt|createdAt|claimedAt|asOf)$/;
