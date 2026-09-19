@@ -37,7 +37,12 @@ One thing, and it is a watch rather than a task.
   which opened a readonly transaction on every save. A hidden page now neither
   writes nor reads (`lib/db/visible.ts`), and `/diag` has a `stores:` line so a
   next lock is named rather than cross-read
-  ([frontend.md](frontend.md#a-live-read-can-die)). **Open only as a watch.**
+  ([frontend.md](frontend.md#a-live-read-can-die)). A fourth, found by reading
+  the log rather than reported (2026-09-19) and **not fixed**: the 410 branch of
+  `syncGroup` erases the group across nine stores before reaching the gate the
+  success path waits on, and a 410 lands off the same slow network the gate
+  exists for. Nothing checks the writes — `rules-check` enforces `useLive` and
+  `goBack`, not `whenVisible`. **Open only as a watch.**
 
 **Two former items here are closed as decisions, not as work** (2026-09-18), so
 a session that rediscovers either is rediscovering a call the owner has already
