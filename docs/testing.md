@@ -12,6 +12,7 @@ pnpm offline      # just every screen with the network cut
 pnpm stall        # what a screen does when reading this phone's database stops working
 pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm demo         # /demo lands on a populated ledger, and holds no key
+pnpm nav          # where the back arrow goes, and what it leaves on the stack
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
@@ -24,7 +25,7 @@ pnpm bump         # the number this deploy will show — [hosting.md](hosting.md
 and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale — so none of them needs a build step in front of it, and none
 of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
-build once and then runs all six together (`scripts/verify.mjs`): they share
+build once and then runs them all together (`scripts/verify.mjs`): they share
 nothing to collide over, each serving the export on its own port 0, and the
 build is the one thing six of them starting at once would have raced on.
 
@@ -534,3 +535,38 @@ ones a webview's most resembles, each proved *not* refused
 
 It needs no server beyond the static export: the join screen's own work is
 `pnpm claim`'s subject, and what this one asserts is which URL each end reaches.
+
+## `pnpm nav` — where the back arrow goes, and what it leaves behind
+
+The arrow's destination is the half the other checks already stumble over on
+their way somewhere else. The half nothing watched is **the shape of the
+history behind it** — whether the screens you left are still there — and that is
+what the device's back button reads on the next press, so the two came apart
+silently: the same arrow on the same screen traversed to its parent when the
+parent was on the stack and *replaced* it when it wasn't, keeping the screens it
+left forward in the first case and erasing them in the second. Every assertion
+here reads `navigation.entries()` rather than `location`
+([ADR-0007](decisions/0007-a-screen-is-a-route.md), `lib/nav.ts`).
+
+Six shapes, each the one a thumb makes: the walk in from the list, where every
+door into a group is pushed from `/` so the list stays underneath the ledger;
+the two tabs, which replace rather than deepen, and the arrow on balances that
+swaps the ledger back in; an entry opened off the ledger, and the Save that
+returns to it; the tip jar, whose form has to unwind past the tip screen as
+well as itself; a cold load with nothing behind it, where the arrow puts the
+parent in this screen's place — the degradation, and the ordinary case of it;
+and the press guard on a half-typed form, cancelled outright with the dialog as
+the whole of the answer.
+
+**A device back press is `page.goBack()`**, which Chromium reports
+`userInitiated` and `cancelable` — the pair the guard reads. A keyboard
+shortcut is not: headless Chromium binds none, and `Alt+ArrowLeft` fires no
+`navigate` event at all, which makes a guard check written with it pass by
+never pressing anything.
+
+The waits are on the history itself: `window.__shape()` goes in through the
+context, so the wait for a shape and the reading of it are one function and
+cannot drift, and every assertion is a condition rather than a pause. The one
+exception is the guard's second half, where the assertion is that the screen
+did *not* move — a cancelled press has nothing to announce, so that one takes a
+`settle` ([above](#scriptslibharnessmjs--what-the-browser-checks-share)).
