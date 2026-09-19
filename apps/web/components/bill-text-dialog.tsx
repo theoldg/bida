@@ -5,34 +5,39 @@ import { BILL_TEXT_MAX } from "@bida/core";
 import { Dialog } from "./dialog";
 import { Failure } from "./chrome";
 import { keepsFocus } from "./bits";
-import { ScanBusy, type ReceiptScan } from "./receipt-scan";
+import { ScanBusy } from "./scan-bar";
 import { copy } from "../lib/copy";
 import { billTextLeft, cleanBillText } from "../lib/scan/text";
+import type { LiveScan } from "../lib/scan/live";
 
 /**
- * Type the bill in — the Items tab's other way to get one, for a receipt
- * nobody photographed, one a camera has already failed on, or one that arrived
- * as text in the first place (docs/receipt-scanning.md#typing-a-bill-in).
+ * Type the bill in — the scan control's third door, for a receipt nobody
+ * photographed, one a camera has already failed on, or one that arrived as text
+ * in the first place (docs/receipt-scanning.md#typing-a-bill-in).
  *
  * What it sends goes through the same reading as a photograph and comes back as
  * the same filled draft, so there is nothing here about bills, lines or totals:
  * the box, the cap, and the two things the photo path says elsewhere.
  *
- * **It takes its state from the scan, not from itself.** `scan.live` is the one
- * `LiveScan` the tab behind it is also watching, which is what lets the bar be a
- * clock on the reading rather than on this dialog: close it mid-read and the
+ * **It takes its state from the reading, not from itself.** `live` is the one
+ * `LiveScan` the screen behind it is also watching, which is what lets the bar be
+ * a clock on the reading rather than on this dialog: close it mid-read and the
  * draft still fills, open it again and the bar is where the reading actually is.
- * A refusal keeps the dialog standing with the text intact, because unlike a
- * bad photograph a bad bill is fixed where it was typed.
+ * A refusal keeps the dialog standing with the text intact, because unlike a bad
+ * photograph a bad bill is fixed where it was typed.
+ *
+ * It is rendered by `useReceiptScan` and never by a screen, for the reason given
+ * there: a dialog whose own answer moves the panel around it is a dialog that
+ * gets unmounted mid-sentence.
  */
-export function BillTextDialog({ scan, initial = "", onClose }: {
-  scan: ReceiptScan;
+export function BillTextDialog({ live, initial = "", onRead, onClose }: {
+  live: LiveScan | undefined;
   /** What was typed last time, off the draft. Editing beats retyping. */
   initial?: string;
+  onRead: (text: string) => Promise<void>;
   onClose: () => void;
 }) {
   const [value, setValue] = useState(initial);
-  const live = scan.live;
   const reading = live?.state === "scanning";
   // Only this dialog's own reading closes it. A photograph started before it
   // was opened is still a reading, and watching it end is no reason to take the
@@ -53,16 +58,15 @@ export function BillTextDialog({ scan, initial = "", onClose }: {
     e.preventDefault();
     if (reading || text.length === 0) return;
     mine.current = true;
-    await scan.readText(text);
+    await onRead(text);
   }
 
   return (
     <Dialog title={copy.scan.typeIn.title} onClose={onClose}>
       <form onSubmit={(e) => void go(e)}>
         <div className="dbody"><p>{copy.scan.typeIn.lede}</p></div>
-        {/* `enterKeyHint` is deliberately not "done": the newlines are the
-            bill's lines, so Enter has to be Enter and the button is the way
-            out. */}
+        {/* `enterKeyHint` is deliberately not set: the newlines are the bill's
+            lines, so Enter has to be Enter and the button is the way out. */}
         <textarea className="dtext" data-autofocus="" value={value}
           aria-label={copy.scan.typeIn.field} placeholder={copy.scan.typeIn.placeholder}
           maxLength={BILL_TEXT_MAX} rows={8} autoCapitalize="none" spellCheck={false}
@@ -72,7 +76,7 @@ export function BillTextDialog({ scan, initial = "", onClose }: {
             {left <= 0 ? copy.scan.typeIn.full : copy.scan.typeIn.left(left)}
           </div>
         ) : null}
-        {/* The reading's own refusal, said where the fix is. The tab behind is
+        {/* The reading's own refusal, said where the fix is. The screen behind is
             showing the same sentence; this one is the copy somebody can act on
             without closing anything. */}
         {live?.state === "error"

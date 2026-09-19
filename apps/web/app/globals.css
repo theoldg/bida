@@ -1077,19 +1077,24 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45; transition-duration: 0s }
 
-/* ---- a button cut in two ----
-   One act, two doors. Whether the bill is photographed now or picked from the
-   library is a detail of the same job, and two buttons side by side is the
-   vocabulary for two jobs — which is how the scan pair read, and why the two
+/* ---- a button cut in three ----
+   One act, three doors. Whether the bill is photographed now, picked from the
+   library or typed is a detail of the same job, and buttons side by side is the
+   vocabulary for separate jobs — which is how the scan pair read, and why the two
    screens that scan drifted into two different sets of words for it. So: one
-   bordered box with a hairline between the halves. The box owns the border and
-   the halves give theirs up, the same rule `.splitbox` follows.
+   bordered box with hairlines between the doors. The box owns the border and
+   the doors give theirs up, the same rule `.splitbox` follows.
+   Each door is `flex: 1`, so they share the width and the labels are what has
+   to fit. The third one is what set the sizes here: at the chip register it says
+   "Type it in", and everywhere else it is one word, because a third of a 360px
+   phone holds ten characters or a glyph and not both (`copy.scan.typeIn`).
    Deliberately not `.seg`: that is the mode switch sitting directly above this
    on the Items tab, and a track with a selected pill underneath it would
    read as "which of these am I in" rather than "do this". */
 .btn-pair { display: flex; border: 1px solid var(--rule); border-radius: var(--r-s);
   background: var(--card-2); overflow: hidden }
-.btn-pair .btn { width: auto; flex: 1; border-radius: 0 }
+.btn-pair .btn { width: auto; flex: 1; border-radius: 0; min-width: 0; gap: 6px;
+  padding-left: 6px; padding-right: 6px; white-space: nowrap }
 .btn-pair .btn + .btn { border-left: 1px solid var(--rule) }
 /* The primary register, for the screen whose one act this is. The divider is
    paper over ink: a `--rule` hairline across an ink block is invisible. */
@@ -1101,15 +1106,13 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
    at the size of the chips it stands among, so it shrinks to a footnote
    without becoming a second kind of thing. */
 .btn-pair.pair-xs { display: inline-flex }
-.btn-pair.pair-xs .btn { font-size: 10.5px; font-weight: 500; padding: 4.5px 9px; gap: 5px;
-  color: var(--ink-2) }
-/* ---- the ways a bill gets in ----
-   The photo pair, and beside it the door that types one. Stacked on the Items
-   tab, where each is the width of the tab and the ink block leads; in a row at
-   chip scale, where all three are footnotes standing among the assigned bill's
-   own figures and a stack would be a column of chips. */
-.scanways { display: flex; flex-direction: column; gap: 8px }
-.scanways.row { flex-direction: row; flex-wrap: wrap; align-items: center }
+/* Content-sized, not equal thirds: the box is `inline-flex` here, so it takes
+   the width its three chips need rather than handing each of them a third of a
+   width nobody set. Equal thirds squeezed the glyph out of the longest one —
+   and the longest one is the point, since this is the register with room for
+   "Type it in" in full. */
+.btn-pair.pair-xs .btn { flex: 0 0 auto; font-size: 10.5px; font-weight: 500;
+  padding: 4.5px 7px; gap: 4px; color: var(--ink-2) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }

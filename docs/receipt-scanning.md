@@ -12,10 +12,9 @@ bill you reach for once the expense exists; and `/quick`, where there is no
 group at all ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 All three call `useReceiptScan` and wear
 `ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
-control can drift — one act, two doors, one button cut in two
-([design-system.md](design-system.md#palette-roles)). The Items tab stands a
-third door beside that pair, which is [typing the bill
-in](#typing-a-bill-in).
+control can drift — one act, three doors, one button cut in three
+([design-system.md](design-system.md#palette-roles)): photograph it now, pick
+the photograph you already took, or [type it in](#typing-a-bill-in).
 
 `/g/scan` and `/quick` both have to promise something they can't show, since a
 scan's result is on another screen, so they draw it — one drawing,
@@ -135,11 +134,28 @@ path.
 
 ## Typing a bill in
 
-**Type it in**, beside the scan pair on the Items tab and nowhere else. A box,
-the bill's own lines pasted or typed into it, and the same filled draft comes
-back. It is for the bill nobody photographed — a receipt that arrived as a chat
-message or an email, one already thrown away, one a camera has just failed on
-twice.
+**The scan control's third door**, on every screen that reads a bill. A box, the
+bill's own lines pasted or typed into it, and the same filled draft comes back.
+It is for the bill nobody photographed — a receipt that arrived as a chat message
+or an email, one already thrown away, one a camera has just failed on twice.
+
+It is **in** the box and not beside it (2026-09-19, owner's call). A reading is a
+reading whichever medium it starts from, and a door standing outside would have
+said typing was a different act — which is exactly what it is not. What that
+costs is room: three doors share the width of a phone, so the glyphs went down a
+couple of points and the door says **"Type"** at the two full-width registers,
+where a third of 360 pixels holds ten characters or a pencil and not both. At the
+chip register — a bill already read, the control standing among its figures —
+the box is sized by its contents and it says "Type it in" in full, the way the
+camera's door already says "Scan" in one place and "Rescan" in another
+(`copy.scan.typeIn`).
+
+The box itself is rendered by `useReceiptScan`, never by a screen, and rides
+`scan.inputs` beside the two hidden file inputs. The hook sits at the screen's
+root, where nothing a reading does can move it; owned by the control, it was
+unmounted by its own answer — the Items tab draws one shape when there is no bill
+and another when there is, so the box reopened holding what had just been read,
+over a bill that had just arrived.
 
 Everything after the bytes is shared with a photograph: the same endpoint, the
 same bearer, the same Turnstile token, the same three budget buckets, the same
@@ -171,8 +187,8 @@ the bill actually on the draft. Nothing else shows it: the bill's own lines and
 each person's copy of them are the reading, and printing the raw text under them
 would be the same thing twice.
 
-**The dialog is the panel's sibling, not its child, and takes its state from the
-scan.** `scan.live` is the one `LiveScan` the tab behind is also watching, which
+**The dialog takes its state from the reading, not from itself.**
+`scan.live` is the one `LiveScan` the screen behind is also watching, which
 is what makes the bar a clock on the reading: close the box mid-read and the
 draft still fills; open it again and the bar is where the reading actually is. A
 refusal leaves the box standing with the text intact, because unlike a bad

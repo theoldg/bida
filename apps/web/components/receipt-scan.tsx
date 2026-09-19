@@ -13,6 +13,8 @@ import {
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import { BillTextDialog } from "./bill-text-dialog";
+import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
 import { warmTurnstile } from "../lib/scan/turnstile";
 
@@ -47,13 +49,14 @@ export interface ReceiptScan {
   disabled: boolean;
   openCamera: () => void;
   openLibrary: () => void;
+  /** Open the third door: the box a bill is typed or pasted into. */
+  openTyping: () => void;
   /**
-   * The third way in: a bill typed or pasted instead of photographed. The
-   * caller has capped and cleaned it (`lib/scan/text.ts`); this sends it and
-   * fills the draft exactly as a photograph would.
+   * The apparatus the three doors need and nothing renders itself: the two
+   * hidden file inputs the photo halves click, and the dialog the third opens.
+   * **Render once per screen**, outside whatever the reading's own answer might
+   * rearrange — see the note on the dialog below.
    */
-  readText: (text: string) => Promise<void>;
-  /** The two hidden file inputs the halves above click. Render once per screen. */
   inputs: React.ReactNode;
 }
 
@@ -215,12 +218,26 @@ export function useReceiptScan(
     );
   }, [read]);
 
+  /**
+   * Whether the typing box is open, held **here** rather than in the control
+   * that opens it.
+   *
+   * The control comes and goes under it: the Items tab draws one shape when
+   * there is no bill and another when there is, and a typed bill's own answer is
+   * what moves it from the first to the second. With the box's state in the
+   * control, it changed position in the tree the moment its own reading landed
+   * — React unmounted it and mounted a fresh one, which reopened holding what
+   * had just been read, over a bill that had just arrived. The hook sits at the
+   * screen's root, where nothing a reading does can move it.
+   */
+  const [typing, setTyping] = useState(false);
+
   return {
     live,
     disabled: !scanAs,
     openCamera: () => cameraInput.current?.click(),
     openLibrary: () => libraryInput.current?.click(),
-    readText,
+    openTyping: () => setTyping(true),
     inputs: (
       <>
         <input ref={cameraInput} type="file" accept="image/*" capture="environment"
@@ -229,110 +246,38 @@ export function useReceiptScan(
         <input ref={libraryInput} type="file" accept="image/*"
           style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.library} />
+        {typing ? (
+          <BillTextDialog live={live} onRead={readText}
+            // Read at open, not held: the box shows what the draft carries now,
+            // which a photograph in between will have cleared.
+            initial={(groupId ? getDraft(groupId)?.receiptText : null) ?? ""}
+            onClose={() => setTyping(false)} />
+        ) : null}
       </>
     ),
   };
 }
 
 /**
- * The wash sweeping across the control while the model reads.
+ * The control every scanning screen wears: one button cut in three.
  *
- * A scan is about three seconds of network, challenge and model — long enough
- * that a spinner alone says only "no idea" — so the control fills at the pace
- * a scan usually takes, and `onFull` hands over to the spinner if this one is
- * slower. The bar promises the *usual* scan and not this one, which is why it is
- * `aria-hidden`: what a screen reader is owed is the "Reading…" beside it.
+ * Getting this bill into the form is one act, and the doors are the ways in —
+ * photograph it now, pick the photograph you already took, or type it. So it is
+ * one bordered box with hairlines between them (`.btn-pair`), not buttons
+ * standing side by side, which is the vocabulary for separate jobs and is how
+ * the pair read before: equal weight on the form, primary-above-secondary on
+ * `/g/scan`, and two different words for the camera on the two screens.
  *
- * Three details it cannot do without. The duration is inline because it is a
- * different number every sweep and the class holds only the shape. The
- * *negative* delay is what makes the bar a clock on the scan rather than on
- * itself: a bar mounting onto a scan already a second old starts a second in,
- * so leaving the Items tab and coming back resumes the sweep instead of
- * promising the whole wait again. And the animation's end is the one event the
- * box must not hear — `.btn-pair` listens on the way up for the refusal flash
- * (`onFlashEnd`), and an unstopped `animationend` reads there as a flash that
- * has settled.
- */
-function ScanBar({ startedAt, seconds, onFull }: {
-  startedAt: number;
-  seconds: number;
-  onFull: () => void;
-}) {
-  // Read once, at mount: the offset is where this sweep starts, not something
-  // that moves under it while it runs.
-  const [elapsed] = useState(() => (Date.now() - startedAt) / 1000);
-  return (
-    <span className="scanbar" aria-hidden="true"
-      style={{ animationDuration: `${seconds}s`, animationDelay: `${-elapsed}s` }}
-      onAnimationEnd={(e) => { e.stopPropagation(); onFull(); }} />
-  );
-}
-
-/**
- * "Reading…", with the bar sweeping across it — the one thing every surface
- * that starts a reading shows while one is in flight.
+ * It was two doors until typing arrived, and the third joined them in the box
+ * rather than beside it (2026-09-19, owner's call): a reading is a reading
+ * whichever medium it starts from, and a door standing outside the box would
+ * have said typing was a different act — which is exactly what it is not, since
+ * everything after the bytes is shared (`useReceiptScan`).
  *
- * Shared rather than copied because it is a clock on the *scan*, not on
- * whatever is drawing it: the pair on the Items tab and the dialog that types a
- * bill in are both looking at one `LiveScan`, and two implementations would be
- * two estimates of one wait. `box` is the class the caller's own register wants
- * around it, because the strip is the same and where it sits is not.
- */
-export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
-  live: LiveScan;
-  box: string;
-  /** The register's own class for the strip inside — `btn btn-lg` on `/g/scan`. */
-  button?: string;
-  onFlashEnd?: (e: React.AnimationEvent) => void;
-}) {
-  /**
-   * The sweep has run out and the scan is still going, so the spinner takes
-   * over. Reset the moment the scan ends — the next one is a fresh sweep of
-   * its own, and an answer that beat it never shows a spinner at all.
-   *
-   * Two ways to be past it, because this control can mount onto a scan
-   * already in flight: the sweep finished under us (`setFull`), or it had
-   * already finished before we were rendered at all — a bar that would start
-   * beyond its own end and never fire `animationend`.
-   */
-  const [full, setFull] = useState(false);
-  const overrun = Date.now() - live.startedAt >= live.seconds * 1000;
-  const spinning = full || overrun;
-  // One element, so the box keeps the height it had and nothing under it moves
-  // while the model reads. Disabled through the same `.btn:disabled` every
-  // other spent button in the app uses.
-  return (
-    <div className={`${box} pair-busy`} onAnimationEnd={onFlashEnd}>
-      {spinning ? null : (
-        <ScanBar startedAt={live.startedAt} seconds={live.seconds}
-          onFull={() => setFull(true)} />
-      )}
-      <button type="button" className={button} disabled aria-live="polite">
-        {spinning ? <span className="spinner" aria-hidden="true" /> : null}
-        {copy.scan.reading}
-      </button>
-    </div>
-  );
-}
-
-/**
- * The control both scanning screens wear: one button cut in two.
- *
- * Photographing the bill and picking a photo of it are the same act with two
- * doors, and this says so — one bordered box, one hairline down the middle
- * (`.btn-pair`). It replaced two buttons standing side by side, which is the
- * shape for two *different* jobs and read as one: equal weight on the form,
- * primary-above-secondary on `/g/scan`, and two different words for the
- * camera on the two screens.
- *
- * While a scan is in flight the halves are gone and the box holds one strip
+ * While a reading is in flight the doors are gone and the box holds one strip
  * saying "Reading…", because there was only ever one act in it — which is
  * also what retired `ScanSource`, a type whose whole job was knowing which of
  * two buttons should spin.
- *
- * On the Items tab a third door stands beside the pair (`onType`) — the same
- * reading, of a bill somebody types instead of photographing. It is a sibling
- * and not a third segment, for the reason given where it is drawn.
  *
  * Three registers of the same control, so where it sits changes its size and
  * almost nothing else: `lg` where the screen exists for it, `s` on the Items
@@ -346,7 +291,7 @@ export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
  * neither half is the one that was wrong.
  */
 export function ScanPair({
-  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse, onType,
+  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
@@ -363,12 +308,6 @@ export function ScanPair({
    * refused, and neither door opens.
    */
   refuse?: () => boolean;
-  /**
-   * Offer the third way in as well — a bill typed or pasted rather than
-   * photographed. Only the Items tab passes it: `/g/scan` and `/quick` are the
-   * camera's own screens, and a form is what typing needs to land on.
-   */
-  onType?: () => void;
 }) {
   const { live } = scan;
   const disabled = scan.disabled || held;
@@ -380,7 +319,9 @@ export function ScanPair({
   // the moment that tab is picked. Keyed on `busy` as well as mount: a scan
   // spends the token, and the button coming back is the next scan's cue.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
-  const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
+  // Three doors share the width now, so the glyphs give back a couple of points
+  // and the padding between them narrows. The box keeps the height it had.
+  const icon = register === "xs" ? 12 : 14;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   // Inverted at both sizes that act: on `/g/scan` it is the screen's one act,
   // and on the Items tab it is the only thing to do on an empty tab. Only
@@ -396,7 +337,7 @@ export function ScanPair({
     return <ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />;
   }
 
-  const photo = (
+  return (
     <div className={box} onAnimationEnd={onFlashEnd}>
       <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}
         {...keepsFocus}>
@@ -408,30 +349,14 @@ export function ScanPair({
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
-    </div>
-  );
-  if (!onType) return photo;
-
-  // Beside the pair rather than inside it. The two halves above are one act
-  // with two doors — a camera now, or a camera earlier — and the hairline
-  // between them says exactly that; a third segment in the same box would say
-  // that typing is a way of taking a photograph. It is the answer to not having
-  // taken one, so it stands on its own, and on paper under an ink block because
-  // photographing is still the shorter road.
-  const door = (
-    <button type="button" className={register === "xs" ? "btn" : "btn btn-s"}
-      disabled={disabled} onClick={() => { if (!refuse?.()) onType(); }} {...keepsFocus}>
-      <Icon name="edit" size={icon} />
-      {copy.scan.typeIn.open}
-    </button>
-  );
-  return (
-    <div className={register === "xs" ? "scanways row" : "scanways"}>
-      {photo}
-      {/* At chip scale the door borrows the pair's own box so it reads as one
-          more chip among them rather than a different kind of thing — a box of
-          one door, which is what `.btn-pair` dresses. */}
-      {register === "xs" ? <div className="btn-pair pair-xs">{door}</div> : door}
+      {/* The third door, and the reason this is no longer a pair: the box is the
+          act, and typing the bill is a way into it rather than a thing beside
+          it. The pencil, because what is behind this one is a field. */}
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}
+        {...keepsFocus}>
+        <Icon name="edit" size={icon} />
+        {register === "xs" ? copy.scan.typeIn.openLong : copy.scan.typeIn.open}
+      </button>
     </div>
   );
 }

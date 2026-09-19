@@ -740,7 +740,6 @@ function EditEntryScreen() {
                 onTabChange={changeTab}
                 receipt={canScan ? {
                   items: draft.receiptItems ?? null,
-                  text: draft.receiptText ?? null,
                   scan,
                   missing: receiptMissing,
                   flash: flashClass(refusedFields.receipt),

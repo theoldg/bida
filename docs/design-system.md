@@ -95,11 +95,11 @@ that carries a word: "+" and a camera are guessable, an ask is not. Wider than
 it is tall, so the shape says it is a different kind of thing before the word
 is read.
 
-**One act with two doors is one button cut in two.** Scanning a bill starts at
-the camera or at the library, and which of those is a detail of the same job:
-`.btn-pair` is one bordered box with a hairline between two halves, the box
-owning the border as in `.splitbox`. Two buttons side by side is the shape for
-two *different* jobs, and `.seg` is the app's mode switch — under the split
+**One act with three doors is one button cut in three.** Reading a bill starts at
+the camera, at the library or at a box you type it into, and which of those is a
+detail of the same job: `.btn-pair` is one bordered box with hairlines between
+the doors, the box owning the border as in `.splitbox`. Buttons side by side is
+the shape for *different* jobs, and `.seg` is the app's mode switch — under the split
 editor's tabs it would read "which of these am I in". Mid-scan the divider goes
 and the box holds one strip, "Reading…", with the press wash sweeping across it
 over the three seconds a scan usually takes — the one wait in the app whose
@@ -109,9 +109,11 @@ if the model is slower than usual; an answer that beats it never shows one.
 Three registers, so where it sits changes its size and almost nothing else:
 an ink block where the screen exists for it (`/g/scan`) and on the Items tab,
 where it is likewise the only thing to do, and chip scale — on paper, so it
-doesn't outweigh what it replaces — to replace a bill already assigned. The halves name the doors ("Scan",
-"Upload"); the screen around them
-has already named the job — and on `/g/scan` and `/quick` it draws what it
+doesn't outweigh what it replaces — to replace a bill already assigned. Each door
+names itself ("Scan", "Upload", "Type"); the screen around them
+has already named the job. Where the doors share a width the words are what has
+to fit, so the chip register — content-sized, being `inline-flex` — is the one
+that says "Type it in" in full, the same way it says "Rescan" for "Scan" — and on `/g/scan` and `/quick` it draws what it
 promises, since that result lands on another screen: a bill of four lines and a
 total, the arrow, and the expense that comes back split by that bill between
 three of the people splitting it. One drawing on both screens

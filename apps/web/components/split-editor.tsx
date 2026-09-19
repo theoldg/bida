@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   resolveSplit, splitParticipants, validateSplit,
   type ArithmeticSplit, type Member, type SplitSpec,
@@ -9,7 +8,6 @@ import {
 import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
-import { BillTextDialog } from "./bill-text-dialog";
 import { Icon } from "./icons";
 import { keepsFocus } from "./bits";
 import { copy } from "../lib/copy";
@@ -50,12 +48,6 @@ const MODES = ["equal", "shares", "exact"] as const;
 
 interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
-  /**
-   * The bill as text, when that is how it arrived — so "Type it in" reopens
-   * holding what was typed rather than a blank box over a bill it can't explain
-   * (`EntryDraft.receiptText`). Null on a photographed bill.
-   */
-  text: string | null;
   /** The scan, whole: its state, its clock and its two doors — `useReceiptScan`. */
   scan: ReceiptScan;
   /**
@@ -353,43 +345,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
  * superseding ADR-0016's new-expense-only restriction). A fresh reading replaces
  * the old items/tip and resets the who-had-what grid, same as the first one.
  *
- * The control's third door, and the only place in the app that offers it, is
- * typing the bill instead of photographing it — which is a dialog rather than a
- * screen, because what it fills is the draft this form is already editing.
+ * The control's third door types the bill instead of photographing it, and what
+ * it opens is rendered by `useReceiptScan` rather than by this tab — the reading
+ * it starts is what moves this panel from one shape to the other, so a dialog
+ * living inside either would be unmounted by its own answer.
  */
-function ReceiptPanel(props: ReceiptTabProps & {
-  members: Member[];
-  me: string | undefined;
-  currency: string;
-  shares: Record<string, number>;
-  included: Set<string>;
-}) {
-  // This tab's own dialog, opened by the door beside the scan pair. It is state
-  // and not a route: typing a bill in fills the draft the form is already
-  // editing, so there is nowhere to go and nothing to come back from.
-  //
-  // **It is a sibling of the panel and not inside it.** The panel has two shapes
-  // — a bill, or the control that gets one — and the reading this dialog starts
-  // is exactly what moves it from the second to the first. Rendered within
-  // either shape, the dialog changed position in the tree the moment its own
-  // answer landed, and React unmounted it and mounted a fresh one: a box that
-  // reopened holding what had just been read, over a bill that had just arrived.
-  const [typing, setTyping] = useState(false);
-  return (
-    <>
-      <ReceiptBody {...props} onType={() => setTyping(true)} />
-      {typing ? (
-        <BillTextDialog scan={props.scan} initial={props.text ?? ""}
-          onClose={() => setTyping(false)} />
-      ) : null}
-    </>
-  );
-}
-
-/** The panel's two shapes: a bill that has arrived, or the control that gets one. */
-function ReceiptBody({
+function ReceiptPanel({
   items, scan, flash, onFlashEnd, editItemsHref,
-  members, me, currency, shares, included, onType,
+  members, me, currency, shares, included,
 }: ReceiptTabProps & {
   members: Member[];
   me: string | undefined;
@@ -397,8 +360,6 @@ function ReceiptBody({
   /** Each involved member's share of the receipt, in the group's base currency. */
   shares: Record<string, number>;
   included: Set<string>;
-  /** Open the dialog, which is the panel's sibling — see `ReceiptPanel`. */
-  onType: () => void;
 }) {
   if (items && items.length > 0) {
     const involved = members.filter((m) => included.has(m.id));
@@ -434,7 +395,7 @@ function ReceiptBody({
         <div>
           {/* Nothing to refuse here: with a bill on screen the outstanding
               step is the door above, not another photograph. */}
-          <ScanPair scan={scan} register="xs" onType={onType} />
+          <ScanPair scan={scan} register="xs" />
           {scan.live?.state === "error" ? (
             <Failure>{scan.live.error ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
           ) : null}
@@ -449,8 +410,7 @@ function ReceiptBody({
           under them says: a photograph is what fills this tab. With no bill
           yet, this is the control a refused Save fills. */}
       <div data-refuse="receipt">
-        <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd}
-          onType={onType} />
+        <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
       </div>
       {scan.live?.state === "error" ? (
         /* No "try again" beside the message: the control is right above it,

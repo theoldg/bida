@@ -1121,7 +1121,15 @@ export const copy = {
      * other way.
      */
     typeIn: {
-      open: "Type it in",
+      /**
+       * Two labels for one door, the way the camera's has two (`snap`,
+       * `rescan`): three doors share the width of a phone, and "Type it in" in
+       * a third of 360 pixels leaves nothing for the glyph beside it. The chip
+       * register is sized by its own content and standing among a bill's
+       * figures, so there it says the whole thing.
+       */
+      open: "Type",
+      openLong: "Type it in",
       title: "Type the bill in",
       /**
        * What to put in the box. It asks for the bill's own lines because that
@@ -1144,7 +1152,9 @@ export const copy = {
         of both paths: this line cannot tell whether the reader brought a key,
         and ours is read by a Vertex that does not train on it while a free
         brought one is not. The difference is `/about`'s to draw. */
-    terms: "The photo is sent to Google",
+    /** Under the control, so it names what the control sends — a photograph of
+        the bill or the text of it, whichever door was used. */
+    terms: "The bill is sent to Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**
