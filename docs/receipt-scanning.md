@@ -894,3 +894,9 @@ and the draft it fills are all the app's own.
   (`/g/entry/items`'s "Done") beats it. Recompute inline instead — and where one
   tab derives what another tab merely reads, closing it needs an explicit
   handoff, or leaving Receipt zeroes the amount.
+- **A refusal on `/g/scan` used to outlive the screen that showed it.** The
+  ordinary "+" seeds under the exact same key (so a *successful* scan there is
+  picked up by the form) and so inherited the same `lib/scan/live.ts` entry —
+  leave a failed scan any way but a landing and the next screen opened a
+  refusal nobody caused on it, under a scan button that never rang. `/g/scan`
+  now clears its own error, and only its error, on the way out.

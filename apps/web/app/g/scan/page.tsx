@@ -10,6 +10,7 @@ import { blankDraft, draftSeedKey, newEntryKey, seedDraft } from "@/lib/draft";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 import { useScanAs } from "@/lib/quick";
+import { clearScan, getLiveScan } from "@/lib/scan/live";
 
 /**
  * The scan, before there is a form.
@@ -61,6 +62,20 @@ function ScanScreen() {
       "expense", me, data.group.baseCurrency, data.members.map((m) => m.id),
     ), NEW_EXPENSE);
   }, [groupId, data.loading, data.group, data.me, data.members]);
+
+  /**
+   * This screen exists to show a refusal, once. Leaving it any way other than
+   * a scan landing (`onScanned` above, which already clears the error itself)
+   * means the person has read it and moved on — most often to the ordinary
+   * "+", which seeds under this same key precisely so a *successful* scan is
+   * picked up there, and so inherits this store entry too. Without this, the
+   * form that opens next carries a refusal nobody caused on it, under a scan
+   * button that never rang. A scan still in flight is untouched — it belongs
+   * to the draft, not to this screen (`lib/scan/live.ts`).
+   */
+  useEffect(() => () => {
+    if (groupId && getLiveScan(groupId)?.state === "error") clearScan(groupId);
+  }, [groupId]);
 
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;

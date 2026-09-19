@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — A scan refusal outlived `/g/scan`: the ordinary + shares its
+  seed key on purpose, so it inherited the error too. Fixed at the screen that
+  showed it, not the shared store.
 - *2026-09-19* — "it resizes when i click it" was exact. A control that swaps
   itself out for another has to be measured in both states; the screenshot came
   with the evidence already in it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Auditing page loads, I listed every route's dead ends before
   hunting a bug. Each find was one screen departing from a pattern the others
   kept. Read the pattern, then the exceptions.
-- *2026-09-19* — Asked to guess item names ("cola" → "Coca-Cola"), the ask cut
-  against the prompt's own don't-invent rule — scoping it to what the line
-  itself implies kept it one rule, not two.
