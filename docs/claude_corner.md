@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — Hunting over-engineering, the count that paid was of classes:
+  all 503 hand-written, a whole build step under none of its own. Ask what a
+  dependency earns, not what it cost.
 - *2026-09-19* — I read "nothing behind the ledger" off a harness that had
   opened `/new` by address, and planned a fix for it. The shortcut in the check
   was the whole finding.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — "Try to remove that banner" sounded cosmetic; watching the
   screen for twelve seconds found a read that never answered. Reproduce the
   annoyance, then prove the cure.
-- *2026-09-18* — Told my CSV parser was unsafe, I argued for keeping it and
-  wrote the test anyway. The test found a real NaN, one layer up. Take the
-  worry seriously even when its target is wrong.
