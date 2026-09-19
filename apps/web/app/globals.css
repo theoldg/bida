@@ -1342,7 +1342,10 @@ dialog.scrim::backdrop { background: transparent }
    list squeezed into a card. */
 .rowmenu-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
   padding: 12px 10px; border-radius: var(--r-s); font-size: 13.5px; font-weight: 600 }
-.rowmenu-item:active { background: var(--press) }
+/* `.rowmenu-hot` is the same wash under a finger that slid onto the item from
+   the hold that opened the card without lifting (components/long-press.tsx) —
+   that touch belongs to the row, so `:active` never reaches here. */
+.rowmenu-item:active, .rowmenu-item.rowmenu-hot { background: var(--press) }
 
 /* A link with no password in it (components/keyless-link.tsx): a sentence,
    then a drawing of where the working link is — the group's top bar with its

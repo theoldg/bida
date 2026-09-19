@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — "Only on the second try" was one gesture, not a race: every
+  tap I invented worked. The one that failed is the one the phone teaches —
+  sliding onto the menu without lifting.
 - *2026-09-19* — A scan refusal outlived `/g/scan`: the ordinary + shares its
   seed key on purpose, so it inherited the error too. Fixed at the screen that
   showed it, not the shared store.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Asked for long-running bugs, the log named them by repetition:
   one hang fixed four times. The fifth case sat where the lesson had a name and
   no check behind it.
-- *2026-09-19* — Auditing page loads, I listed every route's dead ends before
-  hunting a bug. Each find was one screen departing from a pattern the others
-  kept. Read the pattern, then the exceptions.

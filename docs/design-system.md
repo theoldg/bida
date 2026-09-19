@@ -361,7 +361,9 @@ reads as an ordinary assignment.
    press, no zoom.** `user-select: none` on `body`, `.selectable` to opt back
    in; `NoLongPress` swallows the touch context menu, except on a row that
    opts into the app's own small `RowMenu` instead, on a touch hold or a right
-   click (`useHold` in `components/long-press.tsx`, `components/row-menu.tsx`). A top bar
+   click (`useHold` in `components/long-press.tsx`, `components/row-menu.tsx`).
+   The hold's own finger may slide onto an item and let go rather than lift
+   and tap again, as it may in the menus the phone draws itself. A top bar
    whose actions outgrow it opens that same card from a button instead
    (`MenuButton`), so the app has one menu and not two.
    Inputs exempt from both. Zoom needs all

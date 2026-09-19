@@ -243,8 +243,13 @@ const ledger = page.url();
 const touch = (type, x, y) => cdp.send("Input.dispatchTouchEvent",
   { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
 
-/** Hold `row` for `ms`, drifting `drift` px; `contextmenuAt` plays Android. */
-async function hold(row, { ms = 700, drift = 0, contextmenuAt } = {}) {
+/**
+ * Hold `row` for `ms`, drifting `drift` px; `contextmenuAt` plays Android.
+ * `slideTo` keeps the finger down and walks it to a point once the menu is up,
+ * which is how a phone's own long-press menus are used — and what the browser
+ * would otherwise take for a scroll.
+ */
+async function hold(row, { ms = 700, drift = 0, contextmenuAt, slideTo } = {}) {
   const b = await row.boundingBox();
   const x = b.x + b.width / 3, y = b.y + b.height / 2;
   await touch("touchStart", x, y);
@@ -267,7 +272,19 @@ async function hold(row, { ms = 700, drift = 0, contextmenuAt } = {}) {
   // on a machine that is starving the page can be over before the timer it is
   // meant to outlast has run, and a held row draws no menu.
   await settle(page, ms - waited);
-  await touch("touchEnd", x, y + drift);
+  let endX = x, endY = y + drift;
+  if (slideTo) {
+    const to = await slideTo();
+    // In steps, as a thumb moves: one jump is a gesture the browser has no
+    // trouble reading, and the scroller decides on the first millimetre.
+    for (let i = 1; i <= 6; i++) {
+      await touch("touchMove", x + (to.x - x) * i / 6, y + (to.y - y) * i / 6);
+      await settle(page, 25);
+    }
+    endX = to.x;
+    endY = to.y;
+  }
+  await touch("touchEnd", endX, endY);
   // Node's, deliberately: a short touch is a tap, and the tap navigates — this
   // is the window that navigation lands in.
   await page.waitForTimeout(250);
@@ -290,6 +307,32 @@ await page.waitForSelector(".rows a.row");
 await hold(dinnerRow(), { drift: 30 });
 report(await menus() === 0 && page.url() === ledger,
   "a finger that moves is a scroll: no menu when it has rested long enough");
+
+// The finger that opened the menu can choose from it without lifting first —
+// an iPhone's own menus work that way, so a thumb slides onto the item it
+// wants. It used to do nothing at all: past the pan slop the scroller took the
+// touch, `pointercancel` came instead of a lift, and no click was ever
+// dispatched, so the card sat there until you let go and tapped it again.
+await hold(dinnerRow(), {
+  slideTo: async () => {
+    const b = await page.getByRole("menuitem", { name: "Delete" }).boundingBox();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  },
+});
+await settle(page, 120);
+report(await menus() === 0 && await page.locator("dialog[open]").count() === 1
+  && page.url() === ledger,
+  "a finger that slides from the held row onto a menu item chooses it");
+await page.getByRole("button", { name: "Cancel" }).click();
+await settle(page, 150);
+
+// The same slide onto the veil is not a choice, and a finger that never left
+// the row it held has chosen nothing either — the card is only a few px clear
+// of it, so a resting finger's drift must not land on "Delete".
+await hold(dinnerRow(), { drift: 6, ms: 700 });
+report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
+  "a held finger that only drifts chooses nothing, and the menu stays");
+await closeMenu();
 
 // Straight after a hold's menu closes, the next tap is a tap — the guard that
 // ate the lifting click must not eat this one.

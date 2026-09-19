@@ -816,6 +816,18 @@ so the static export ships the full line and the browser narrows it.
   later `contextmenu` and lifting click are swallowed on `document`, because
   they land on the menu's veil, which closes on either. A right click proves
   nothing about it; `pnpm entries` holds with touch.
+- **A finger that opened a menu and then moves is not scrolling**, and the
+  browser has already decided it is: pans are allowed everywhere
+  (`touch-action: pan-x pan-y` on `html, body`), so sliding off the held row
+  hands the touch to the scroller, which fires `pointercancel` and **dispatches
+  no click at all**. That slide is the thumb reaching for the card the hold
+  just opened — the way an iPhone's own long-press menus are used — so it
+  looked like the menu only answered every other try: nothing happened, the
+  card stayed, and the tap after it worked. `heldFinger` refuses the scroll
+  (`touchmove`, non-passive, for as long as the finger is down), washes the
+  item under it, and clicks that item on the lift. It must have travelled
+  `SLOP_PX` first, because the card is only a few px clear of the row and a
+  resting finger's drift is not a choice.
 - **A read that never answers is indistinguishable from a slow one.** Both are
   `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton
