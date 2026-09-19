@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — Asked to reject an ambiguous typed bill ("chicken 2 5 7"), the
+  fix was one more clause in the refusal paragraph already there, not a new
+  path.
 - *2026-09-19* — "it resizes when i click it" was exact. A control that swaps
   itself out for another has to be measured in both states; the screenshot came
   with the evidence already in it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Auditing page loads, I listed every route's dead ends before
   hunting a bug. Each find was one screen departing from a pattern the others
   kept. Read the pattern, then the exceptions.
-- *2026-09-19* — The sentence I was told to replace wasn't in my checkout: the
-  work sat a branch ahead. `pnpm session` first isn't ceremony, it is how you
-  find the thing you were sent for.

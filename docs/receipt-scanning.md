@@ -183,6 +183,12 @@ demanded. Three things follow from fixing it:
   a figure the page does not hold is what makes it invent one.
 - **A missing total is ordinary**, not a refusal. See
   [What a reading is checked against](#what-a-reading-is-checked-against).
+- **A line with more numbers than the words explain is a refusal, not a
+  guess.** "chicken 2 5 7" gives no word to say which figure is a count and
+  which is a price, so the prompt asks the model to name the ambiguous line in
+  `error` rather than pick an arrangement — the same refusal path as a bill
+  with no prices at all, not a per-line null that `checkScan` would have to
+  catch downstream.
 
 **And almost never a title.** A photographed receipt leads with a merchant's
 name; a typed one leads with the food. Asked to name the expense anyway, a model

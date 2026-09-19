@@ -313,9 +313,13 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
     + "has to say plainly what is missing so they know what to add (e.g. \"Lovely words, "
     + "but I can't buy anything with them — that's not a bill.\" or \"All the dishes and "
     + "none of the prices: I'm good, but not that good.\"). Don't guess at the rest of a "
-    + "fragment. A bill with no total is none of these cases: read it and leave total "
-    + "null. Where error is set, leave every other field null or empty; otherwise leave "
-    + "error null.",
+    + "fragment. The same goes for a line with more numbers than the words explain — "
+    + "\"chicken 2 5 7\" gives no word or symbol to say which figure is a count and which "
+    + "is a price: don't pick an arrangement, set error the same short, light way, naming "
+    + "the line so they know what to add (e.g. \"'chicken 2 5 7' — three numbers and I "
+    + "can't tell which one's the price.\"). A bill with no total is none of these cases: "
+    + "read it and leave total null. Where error is set, leave every other field null or "
+    + "empty; otherwise leave error null.",
 
   stas:
     "If the text is not a bill at all, set error to a brutal one- or two-sentence roast "
@@ -330,7 +334,11 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
     + "fact that they sat there keying this in and never once wondered where the prices "
     + "had gone — and still say plainly what is missing so they know what to add (e.g. "
     + "\"You have typed me a shopping list and called it a bill. The paper had numbers on "
-    + "it. Those were the important part.\"). Second person, and personal. The one thing "
+    + "it. Those were the important part.\"). The same goes for a line with more numbers "
+    + "than the words explain — \"chicken 2 5 7\" — tear into them for throwing digits at "
+    + "a machine and expecting it to guess which one's the price, and still name the line "
+    + "so they know what to add (e.g. \"'chicken 2 5 7' — three numbers, zero clues, and "
+    + "you expected me to pick one?\"). Second person, and personal. The one thing "
     + "you don't touch is what they were born as: no slurs, and nothing about anyone's "
     + "race, sex, religion, disability or the like — everything else about them is fair "
     + "game. A bill with no total is none of these cases: read it, leave total null, and "
