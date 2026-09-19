@@ -525,6 +525,38 @@ await page.waitForTimeout(80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
 
+// ---- a screen whose draft is gone hands back -------------------------
+// The entry draft lives in memory only (lib/draft.ts), so every way of
+// arriving at one of its later steps without passing through the form — a
+// reload, a back-forward restore, a link kept from yesterday, an installed app
+// killed between two taps — arrives with no draft at all. These screens used
+// to render their empty frame and wait for one that is never coming: a title,
+// a back arrow, and nothing under it, forever. There is nothing to ask a
+// person here, so they are put back on the ledger they started from.
+for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"]]) {
+  await page.goto(`${base}${path}?id=${g}`);
+  const back = await page.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
+    .then(() => true, () => false);
+  report(back, `${name} opened without a draft goes back to the ledger`,
+    back ? undefined : `left on ${new URL(page.url()).pathname} with nothing to fill it`);
+}
+
+// ---- and a link naming a group this phone hasn't got says so ----------
+// `pnpm rules` holds every screen under `/g` to rendering a `BadLink`; this is
+// the half of it a grep cannot see — that an unknown id reaches that branch
+// rather than the blank frame it shares the file with, which is a title, a
+// back arrow and nothing under it for as long as anybody waits. What it says
+// there is the keyless sentence, not "bad link": a `/g` address without its
+// fragment is what a group id on its own nearly always is, and telling
+// somebody their link is bad sent the same address straight back (lib/copy.ts).
+for (const path of ["/g/payers", "/g/entry/items", "/g/entry/edit", "/g/claim"]) {
+  await page.goto(`${base}${path}?id=nosuchgroup`);
+  const said = await page.getByText("This link is missing its password")
+    .waitFor({ timeout: 8000 }).then(() => true, () => false);
+  report(said, `${path} says so when the link names a group this phone hasn't got`,
+    said ? undefined : "a blank that never fills");
+}
+
 await browser.close();
 close();
 finish();

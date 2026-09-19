@@ -28,6 +28,13 @@ build once and then runs all six together (`scripts/verify.mjs`): they share
 nothing to collide over, each serving the export on its own port 0, and the
 build is the one thing six of them starting at once would have raced on.
 
+**What they do share is the machine**, and seven headless browsers on a loaded
+one is how a check times out at a wait it makes in a tenth of the time alone. A
+suite whose failing check moves between runs — offline, then homescreen, then
+claim — is saying that, not that three checks are broken: run the named one on
+its own, and believe that answer. A check that fails alone is a real failure,
+every time.
+
 `pnpm check` is the gate — nothing else stands between an edit and production,
 so the three things that gate nothing else are in it. The build, because `next
 build` catches what `tsc` cannot (a prerender touching `window`, a
@@ -307,6 +314,14 @@ exactly the window the second tap arrives in. It holds rows with real touch, too
 click is not what an iPhone sends: a hold opens one menu that its own lifting
 click and Android's `contextmenu` leave open, and a tap, a scroll, a tap just
 after and Enter all still navigate.
+
+It also opens the two screens that carry the in-memory draft with no draft to
+carry — which is what a reload, a restored tab or a kept link is — and holds
+them to going back to the ledger rather than waiting for one that is never
+coming, and opens all four of the form's screens on a group this phone hasn't
+got. `pnpm rules` already fails a `/g` page that renders no `BadLink`; a grep
+cannot see whether an unknown id *reaches* that branch or the blank frame
+beside it ([frontend.md](frontend.md#routing)).
 
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping
