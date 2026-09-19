@@ -35,8 +35,20 @@ export function RowMenu({ anchor, actions, onClose }: {
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
   // First, so the recorder is listening before the effects below add the
-  // listeners it exists to explain (lib/menu-trace.ts).
-  useEffect(traceMenu, []);
+  // listeners it exists to explain (lib/menu-trace.ts). Every way out notes
+  // itself, so a card that went away on its own — a re-render from under it,
+  // rather than a press — is the trace with no reason at the end of it.
+  useEffect(() => traceMenu(actions.length), []);
+
+  // An action list that grows while the card is open moves every item below
+  // the new one, and the card was measured and placed before it did. The one
+  // that does this is the groups list, whose invite link resolves late.
+  const drew = useRef(actions.length);
+  useEffect(() => {
+    if (drew.current === actions.length) return;
+    note(`items ${drew.current}->${actions.length}`);
+    drew.current = actions.length;
+  });
 
   // Positioned after the first paint, once the card's real size is known —
   // a guessed size would either clip at the screen edge or leave a gap.
@@ -85,19 +97,20 @@ export function RowMenu({ anchor, actions, onClose }: {
   }, [pos]);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") { note("esc"); onClose(); } }
+    const onScroll = () => { note("scroll"); onClose(); };
     document.addEventListener("keydown", onKey);
-    document.addEventListener("scroll", onClose, true);
+    document.addEventListener("scroll", onScroll, true);
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.removeEventListener("scroll", onClose, true);
+      document.removeEventListener("scroll", onScroll, true);
     };
   }, [onClose]);
 
   return (
     <>
-      <div className="rowmenu-veil" onClick={onClose}
-        onContextMenu={(e) => { e.preventDefault(); onClose(); }} />
+      <div className="rowmenu-veil" onClick={() => { note("veil"); onClose(); }}
+        onContextMenu={(e) => { e.preventDefault(); note("veil-menu"); onClose(); }} />
       <div className="rowmenu" ref={ref} role="menu"
         style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? "visible" : "hidden" }}>
         {actions.map((a) => (

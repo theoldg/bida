@@ -76,10 +76,10 @@ function onAny(e: Event): void {
  * Record until the card goes away. Returns the stop, so a component can hand
  * it straight back from an effect.
  */
-export function traceMenu(): () => void {
+export function traceMenu(items: number): () => void {
   steps = [];
   from = performance.now();
-  note(`open guards=${guards}`);
+  note(`open guards=${guards} items=${items}`);
   // Passive: this only watches. Capture, so it sees an event the guard is
   // about to stop — `stopPropagation` does not reach another listener on the
   // same target, which is what makes a swallowed click visible here at all.

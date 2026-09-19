@@ -517,14 +517,21 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the tabs are gone" (see [Gotchas](#gotchas)).
 
-A **`menu.trace`** line is written each time a row menu closes: every press,
-lift, cancel and click the phone sent while the card was open, where each one
-landed, and what the hold's guard did with it (`lib/menu-trace.ts`). It is
-there because "the menu answered on the second press" is a report no machine
-here reproduces — it wants an iPhone — and because every explanation for it is
-a different line in that one sequence. A click that never came, one swallowed,
-one landing on the veil and a `pointercancel` where a lift should be are told
-apart by reading it.
+A **`row menus`** block sits in the head, not down in the timeline where its
+lines are written: one per menu that has closed, from every page kept, holding
+every press, lift, cancel and click the phone sent while the card was open,
+where each landed, what the hold's guard did with it, and which way the card
+went out (`lib/menu-trace.ts`). It is in the head because this report is
+hundreds of lines and is read by being pasted somewhere, so the block somebody
+is asked for has to survive the paste being cut short — the first one was at
+the foot and was never seen.
+
+It is there at all because "the menu answered on the second press" is a report
+no machine here reproduces — it wants an iPhone — and every explanation for it
+is a different line in that one sequence: a click that never came, one
+swallowed, one landing on the veil, a `pointercancel` where a lift should be,
+a card that grew an item after it was placed, or one that went away with no
+press behind it at all.
 
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script

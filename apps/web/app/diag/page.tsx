@@ -315,6 +315,16 @@ async function collect(): Promise<string> {
   say("copies", await copiesLine);
 
   const rows = timeline();
+
+  // Up here, not down in the timeline where they were written: this report is
+  // hundreds of lines and gets pasted into a chat, so the one block somebody
+  // is asked for has to survive being cut short. Every page's, because the
+  // press that went wrong was two pages ago as often as not.
+  const menus = [...otherPages().flatMap((page) => page.events), ...rows]
+    .filter((e) => e.what === "menu.trace")
+    .slice(-6)
+    .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.info ?? ""}`);
+  if (menus.length) lines.push("", "row menus, newest last:", ...menus);
   // The other pages first, because one of them is usually the interesting
   // one: the launch that hung is the launch you killed the app to get out of,
   // and a paste that loads `/join` is a second page beside this one. Each is
