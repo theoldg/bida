@@ -1,4 +1,81 @@
-@import "tailwindcss";
+/* ============================================================
+   RESET — the browser defaults these screens were written against.
+   Tailwind's preflight did this, from a dependency whose utilities the app
+   never used once. What is here is preflight's rules for the elements the app
+   actually renders, and nothing for the ones it doesn't: rendering a <small>,
+   a <summary> or an <optgroup> means reading its defaults first.
+   ============================================================ */
+*, ::before, ::after, ::backdrop {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* A width and no colour, so `border: 1px solid` below is complete on its own
+     and an element nobody gave a border never draws one. */
+  border: 0 solid;
+}
+
+html {
+  /* iOS grows text in landscape otherwise, which moves the fixed bottom bar. */
+  -webkit-text-size-adjust: 100%;
+  /* A tap is answered by `--press` on the control itself, never by the
+     platform's grey wash over whatever box it took for the link. */
+  -webkit-tap-highlight-color: transparent;
+  /* For the two <pre>s, /diag and /g/export, which are read on a phone. */
+  tab-size: 4;
+}
+
+/* A heading is structure. Its size is its class's business, like everything. */
+h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit }
+
+/* Every ledger row is an <a>. Not one of them is blue and underlined. */
+a { color: inherit; -webkit-text-decoration: inherit; text-decoration: inherit }
+
+b, strong { font-weight: bolder }
+
+code, kbd, pre, samp { font-family: var(--f-mono); font-size: 1em }
+
+ol, ul, menu { list-style: none }
+
+hr { height: 0; color: inherit; border-top-width: 1px }
+
+table { text-indent: 0; border-color: inherit; border-collapse: collapse }
+
+/* Inline by default, which hangs an icon off a text baseline with the
+   line-height's slack under it. Every icon here is a box placed in a grid. */
+img, svg { display: block; vertical-align: middle }
+img { max-width: 100%; height: auto }
+
+/* A control inherits the page's face, colour and ground instead of the
+   platform's. What each one then looks like is its own class. */
+button, input, select, textarea {
+  font: inherit;
+  font-feature-settings: inherit;
+  font-variation-settings: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  opacity: 1;
+  background-color: transparent;
+  border-radius: 0;
+}
+button, input:where([type="button"], [type="submit"]) { appearance: button }
+
+/* Firefox dims a placeholder on its own account. The fields meant to be faint
+   say so themselves (`.amount`), and the rest take `--muted`. */
+::placeholder { opacity: 1; color: color-mix(in oklab, currentcolor 50%, transparent) }
+
+textarea { resize: vertical }
+
+/* The one <input type="date">: Safari pads the spun fields and aligns them to
+   its own taste, which is a row that will not sit level with the form. */
+::-webkit-datetime-edit { display: inline-flex }
+::-webkit-datetime-edit-fields-wrapper { padding: 0 }
+::-webkit-datetime-edit,
+::-webkit-datetime-edit-year-field,
+::-webkit-datetime-edit-month-field,
+::-webkit-datetime-edit-day-field { padding-block: 0 }
+::-webkit-date-and-time-value { min-height: 1lh; text-align: inherit }
+::-webkit-calendar-picker-indicator { line-height: 1 }
+
 
 /* ============================================================
    TOKENS — terminal neutrals, one monospace face, and exactly two
@@ -92,40 +169,6 @@
   --draw-bg:#22252A; --draw-rule:#4A4E55; --draw-ink:#C3C7CD; --draw-paper:#2E3238;
   --shadow-s:0 0 0 1px rgba(255,255,255,.08);
   --dev-bar:#15291C;
-}
-
-/* `inline` means the utilities compile to var() references, so every
-   bg-card / text-ink follows the theme swap above with no dark: variants. */
-@theme inline {
-  --color-paper: var(--paper);
-  --color-paper-2: var(--paper-2);
-  --color-card: var(--card);
-  --color-card-2: var(--card-2);
-  --color-card-3: var(--card-3);
-  --color-ink: var(--ink);
-  --color-ink-2: var(--ink-2);
-  --color-muted: var(--muted);
-  --color-rule: var(--rule);
-  --color-rule-soft: var(--rule-soft);
-  --color-credit: var(--credit);
-  --color-credit-bg: var(--credit-bg);
-  --color-debit: var(--debit);
-  --color-debit-bg: var(--debit-bg);
-  --color-brand: var(--brand);
-  --color-brand-ink: var(--brand-ink);
-  --color-hl: var(--hl);
-  --color-hl-edge: var(--hl-edge);
-  --color-hl-ink: var(--hl-ink);
-
-  --font-display: var(--f-display);
-  --font-body: var(--f-body);
-  --font-mono: var(--f-mono);
-
-  --radius-s: var(--r-s);
-  --radius-m: var(--r-m);
-  --radius-l: var(--r-l);
-
-  --shadow-s: var(--shadow-s);
 }
 
 /* The document itself never scrolls: `.app` is exactly one viewport tall and
@@ -466,7 +509,7 @@ a { color: inherit; text-decoration: none }
 /* The recorded walkthrough on /install: phone-shaped, so it is held to a width
    that leaves the prose beside it readable rather than filling the column. */
 .installclip { display: block; width: 220px; height: auto; margin: 4px auto 12px;
-  border: 1px solid var(--rule); border-radius: var(--radius-l) }
+  border: 1px solid var(--rule); border-radius: var(--r-l) }
 /* The pick button under the name list (components/who-picker.tsx): in flow
    under the last name while the list fits, stuck to the foot of the scroller
    once it doesn't. Opaque — the names pass behind it — in the shell's own

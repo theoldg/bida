@@ -2,9 +2,11 @@
 
 *For: anyone writing UI, routing, or PWA code.*
 
-Next.js App Router with `output: 'export'`, TypeScript, Tailwind, Dexie.
-Components are hand-rolled — no shadcn, no Radix
-([ADR-0008](decisions/0008-hand-rolled-interface.md)). **The whole app is
+Next.js App Router with `output: 'export'`, TypeScript, Dexie. Components are
+hand-rolled — no shadcn, no Radix
+([ADR-0008](decisions/0008-hand-rolled-interface.md)) — and so is the CSS: every
+class in `globals.css`, over a reset at the head of it, with no framework under
+them ([design-system.md](design-system.md)). **The whole app is
 client-side**: no SSR, no server actions, no Next route handlers. The Worker's
 API is reached with `fetch`.
 

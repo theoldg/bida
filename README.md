@@ -65,7 +65,7 @@ its own work.
 
 ## Stack
 
-Next.js static export · Tailwind · Dexie/IndexedDB ·
+Next.js static export · hand-written CSS · Dexie/IndexedDB ·
 Cloudflare Worker + D1.
 
 The core functionality is hosted for free on Cloudflare. The LLM-powered

@@ -380,7 +380,14 @@ reads as an ordinary assignment.
   only double-tap; `preventDefault` on `gesturestart` is what holds the scale.
 - No shadcn/ui dependency exists, and no component library's variable names sit
   between the tokens and the app.
-  [ADR-0008](decisions/0008-hand-rolled-interface.md).
+  [ADR-0008](decisions/0008-hand-rolled-interface.md). No CSS framework either:
+  the reset at the head of `globals.css` is every browser default the screens
+  were written against, so an element nothing renders yet — `<small>`,
+  `<summary>`, `<optgroup>` — arrives with its own defaults intact.
+- **`color-mix` is used unguarded** and nothing generates a fallback for it any
+  more, which puts the floor at Safari 16.2 and Chrome 111. Four values want it
+  (`--hl-row`, `.mine`, `.btn-pair`, the dialog scrim); a browser below that
+  draws each one flat, and the scrim opaque.
 - **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
   way up, so anything else that animates inside it — the scan's own sweep —
   has to stop the event, or a flash that never ran reads as one that settled.

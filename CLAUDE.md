@@ -42,7 +42,7 @@ Obey them; adding one is rare and has a bar at the head of that file.
 
 ## Stack
 
-Next.js (`output: 'export'`) + Tailwind + hand-rolled components
+Next.js (`output: 'export'`) + hand-written CSS + hand-rolled components
 ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)), served with a
 Hono API by one Cloudflare Worker. Data is an append-only op log in IndexedDB
 (Dexie), synced to D1 **sealed** — the server cannot read a group
