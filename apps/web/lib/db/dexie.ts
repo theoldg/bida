@@ -33,20 +33,17 @@ export interface DeviceRecord {
   /** groupId -> the member this device belongs to. */
   meByGroup: Record<string, string>;
   /**
-   * Groups this device has forgotten. Hidden from the groups list on this
-   * phone even though the shared data (and this device's `groupKeys` secret,
-   * if it still has one) is untouched — forgetting is a per-device "not on my
-   * list any more", not a claim about what happened to the group itself, and
-   * it's never logged. Absent on records written before this existed.
+   * Groups this device has forgotten: hidden from this phone's list, shared
+   * data and `groupKeys` secret untouched. Forgetting is a per-device "not on
+   * my list any more", never a claim about the group, so it is never logged.
    * Opening the invite link again clears an entry back out (`saveGroupKey`).
    */
   leftGroups?: string[];
   /**
-   * Groups this phone knows are deleted: the server has none of them, and
-   * neither has this phone since `eraseGroupLocally` ran. Kept as bare ids so
-   * that a screen opened on one, or an old invite link tapped again, can say
-   * the group was deleted instead of showing a group that quietly vanished.
-   * Nothing but the id survives, and it says nothing about what was in it.
+   * Groups this phone knows are deleted: gone from the server, and gone here
+   * since `eraseGroupLocally` ran. Bare ids, so a screen opened on one — or an
+   * old invite link tapped again — can say the group was deleted rather than
+   * let it quietly vanish. The id says nothing about what was in it.
    */
   deletedGroups?: string[];
   theme: "system" | "light" | "dark";
@@ -55,62 +52,52 @@ export interface DeviceRecord {
   /**
    * True while the groups list is the last screen this device was on, so a
    * launch leaves it there instead of reopening `lastOpenedGroupId` — backing
-   * out of a group is how you say you are done with it. Absent on records
-   * written before this existed, which reads as "in the group", the behaviour
-   * those records already had. See lib/launch.ts.
+   * out of a group is how you say you are done with it. Absent reads as "in
+   * the group". See lib/launch.ts.
    */
   leftOnList?: boolean;
   /**
-   * True while the install offer on the groups list is folded shut. It is a
-   * collapse and not a dismissal: the card never leaves, because persisting
-   * storage is worth a standing ask and installing is the only thing that
-   * should end it (components/install.tsx). Absent on records written before
-   * this existed, which reads as open — the behaviour those records had.
+   * True while the install offer on the groups list is folded shut. A collapse
+   * and **not** a dismissal: the card never leaves, because persisting storage
+   * is worth a standing ask and only installing should end it
+   * (components/install.tsx). Absent reads as open.
    */
   installNudgeCollapsed?: boolean;
   /**
    * What this phone scans with when it is not in a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    *
-   * An id and a secret shaped exactly like a group's, because that is what the
-   * scan endpoint authenticates, and deliberately **not** in `groupKeys`,
-   * which is the table the sync engine walks. One per phone, minted on first
-   * need and never rotated; whether the *server* has seen it is not recorded
-   * here, since introducing it is part of every scan. See lib/quick.ts.
+   * An id and a secret shaped like a group's, because that is what the scan
+   * endpoint authenticates, and deliberately **not** in `groupKeys` — that is
+   * the table the sync engine walks. One per phone, minted on first need and
+   * never rotated. See lib/quick.ts.
    */
   scan?: { id: string; secret: string };
   /**
-   * A Gemini API key this phone brought itself, pasted on `/advanced`.
+   * A Gemini API key this phone brought itself, pasted on `/advanced`. While it
+   * is set, a scan never touches our Worker: the phone calls Google directly,
+   * so no shared budget is spent, no Turnstile token is minted, and our server
+   * has no record of it (docs/receipt-scanning.md#a-key-of-your-own). Absent
+   * reads as "use the shared key".
    *
-   * While it is set, a scan never touches our Worker: the phone builds the
-   * envelope and calls Google directly, so no shared budget is spent, no
-   * Turnstile token is minted, and our server has no record that anything was
-   * scanned (docs/receipt-scanning.md#a-key-of-your-own). Absent on records
-   * written before this existed, and on every phone that never pasted one,
-   * which reads as "use the shared key" — what the app has always done.
-   *
-   * Device-local like everything else in this record, and deliberately so: it
-   * is one person's credential and their bill, not the group's, so it is never
-   * an op and never leaves this phone. It sits in IndexedDB in the clear,
+   * **Never an op.** It is one person's credential and their bill, not the
+   * group's, so it never leaves this phone. It sits in IndexedDB in the clear
    * beside the group secrets, which is what `/advanced` says out loud rather
    * than implying a vault.
    */
   geminiKey?: string;
   /**
    * Scans this phone has spent in the last day, per caller — its own copy of
-   * `SCAN_LIMITS.caller`, so a scan already over budget is refused before a
-   * request is made rather than after (lib/scan/budget.ts). Advice: the Worker
-   * counts again and decides. Absent on records written before this existed,
-   * which reads as "no scans yet".
+   * `SCAN_LIMITS.caller`, so one already over budget is refused before a
+   * request is made (lib/scan/budget.ts). Advice only: the Worker counts again
+   * and decides.
    */
   scanLog?: { id: string; at: number }[];
   /**
-   * The fingerprint of the demo seed this phone was given, `demoStamp()` at
-   * the time it was laid down. The demo is a pitch and not a group somebody
-   * keeps, so a build whose seed reads differently replaces it rather than
-   * reopening the story we stopped telling (lib/db/commands/demo.ts). Absent
-   * on records written before this existed, which is what makes the first
-   * `/demo` after this shipped a re-seed — the point of it.
+   * The fingerprint of the demo seed this phone was given, `demoStamp()` at the
+   * time it was laid down. A build whose seed reads differently replaces the
+   * demo rather than reopening a story we stopped telling
+   * (lib/db/commands/demo.ts). Absent re-seeds.
    */
   demoSeed?: string;
 }
@@ -129,11 +116,9 @@ interface SyncFailure {
 
 /**
  * What a pull had to skip, because skipping quietly is how ops go missing.
- *
- * `fromSeq` is the earliest one, and it is the field that matters: the cursor
- * has moved past it, so winding `lastSeq` back to `fromSeq - 1` is how a later
- * version of the app — one that can read whatever this one couldn't — gets a
- * second look at it. The ops are still on the server; nothing collects them.
+ * `fromSeq` is the earliest: the cursor has moved past it, so winding `lastSeq`
+ * back to `fromSeq - 1` is how a later build — one that can read what this one
+ * couldn't — gets a second look. The ops are still on the server.
  */
 export interface Unreadable {
   count: number;
@@ -166,11 +151,10 @@ interface GroupKey {
 }
 
 /**
- * The IndexedDB database is still named `hajsik`, from before the app was
- * called bida. It stays that way: the name is the address every phone's groups
- * are already stored at, and renaming it opens an empty database next to the
- * real one — every existing install would launch with no groups and no way to
- * ask for them back. A brand is not worth that.
+ * **Never rename the database.** `hajsik` is the address every phone's groups
+ * are already stored at; a new name opens an empty database beside the real
+ * one, and every existing install launches with no groups and no way to ask
+ * for them back.
  */
 class BidaDb extends Dexie {
   ops!: Table<StoredOp, string>;
@@ -183,32 +167,21 @@ class BidaDb extends Dexie {
   groupKeys!: Table<GroupKey, string>;
   /**
    * Materialised from `identity` ops: one row per device, per group. Keyed by
-   * `[groupId+id]` because `id` is the device's HLC node id, which is the same
-   * string in every group this phone is in — keyed by that alone, a device in
-   * two groups had one row and re-folding either group clobbered the other's
-   * claim.
+   * `[groupId+id]`, **never `id` alone** — that is the device's HLC node id,
+   * the same string in every group this phone is in, so a device in two groups
+   * would share one row and re-folding either would clobber the other's claim.
    */
   identities!: Table<Identity, [string, string]>;
   /**
-   * The groups' exchange-rate registries. Rows are keyed by something a person
-   * chose rather than by a random id — an `ExchangeRate` is identified by its
-   * currency code — so its primary key is `[groupId+id]`: two trips both
-   * spending in MAD are two rows, not one that they fight over.
+   * The groups' exchange-rate registries. An `ExchangeRate` is identified by
+   * its currency code rather than a random id, so the primary key is
+   * `[groupId+id]`: two trips both spending in MAD are two rows.
    */
   rates!: Table<ExchangeRate, [string, string]>;
 
   constructor() {
     super("hajsik"); // deliberately not "bida" — see above
-    /**
-     * One version, where there used to be seven.
-     *
-     * The chain that got here described upgrades every phone has long since
-     * run — a device-local identity log and its replacement by `identity` ops,
-     * the rate registry, two re-keyings of `identities`, and the receipt-split
-     * rewrite — and none of it could still fire. Declaring the schema once is
-     * what this file is for; the history of how it got that shape is the git
-     * log's job.
-     */
+    /** The schema, declared once. How it got this shape is the git log's job. */
     this.version(8).stores({
       ops: "id, groupId, entityId, hlc, pending, [groupId+hlc]",
       groups: "id, archivedAt",
@@ -221,15 +194,11 @@ class BidaDb extends Dexie {
       identities: "[groupId+id], groupId",
       rates: "[groupId+id], groupId",
     }).upgrade(async (tx) => {
-      // The one thing the collapse *does* do, and it runs once per phone.
-      //
-      // Encryption (ADR-0036) changed what the server stores, so its copy of
-      // every group was wiped the day it landed. The ops are still here — this
-      // table is the truth and the server is a relay — so the phone re-offers
-      // its whole log, sealed this time, and asks for the group back from
-      // sequence zero. Without it a group would look healthy and be an island:
-      // nothing left to push, and a cursor pointing past the end of a log that
-      // starts again at 1.
+      // Runs once per phone. Encryption (ADR-0036) wiped the server's copy of
+      // every group, so the phone re-offers its whole log sealed and asks for
+      // the group back from sequence zero. Without it a group looks healthy and
+      // is an island: nothing left to push, and a cursor pointing past the end
+      // of a log that starts again at 1.
       await tx.table("ops").toCollection().modify({ pending: 1, seq: null });
       await tx.table("groupKeys").toCollection().modify({ lastSeq: 0 });
     });
@@ -245,9 +214,9 @@ let instance: BidaDb | undefined;
 export function db(): BidaDb {
   if (!instance) {
     instance = new BidaDb();
-    // How long the first read waits before it has even started. `indexedDB.open`
-    // has no timeout and can take seconds on a phone that has just woken up —
-    // one of the three things a skeleton on screen could mean (lib/diag.ts).
+    // `indexedDB.open` has no timeout and can take seconds on a phone that has
+    // just woken up — one of the three things a skeleton could mean
+    // (lib/diag.ts).
     const opened = started("db.open");
     instance.on("ready", () => opened(`v${instance?.verno ?? "?"}`), false);
   }

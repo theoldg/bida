@@ -1,25 +1,20 @@
 import type { Expense, Settlement } from "@bida/core";
 
 /**
- * The three things a person can add to a group, and every word the app uses
- * about them. One file, because the ledger row, the form's kind chip,
- * the detail screen and the history feed all have to call them the same
- * things — and because two of the three are the same entity underneath, so
- * the vocabulary is the only place the distinction is visible at all.
+ * The three things a person can add to a group. One file, because two of the
+ * three are the same entity underneath — this vocabulary is the only place the
+ * distinction is visible at all.
  *
  * - **Expense** — money went out, shared between the people it was spent on.
  * - **Income** — money came in, shared between the people it belongs to. An
  *   `Expense` with `kind: "income"`; the sign lives in `computeBalances`.
  * - **Transfer** — money moved from one person to another and the group is no
- *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, not a
- *   separate idea, so "reimbursement" is not a kind: it survives only as the
- *   title settle-up prefills into the form (`copy.form.reimbursement`).
+ *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, so
+ *   "reimbursement" is not a kind: it survives only as the title settle-up
+ *   prefills into the form (`copy.form.reimbursement`).
  *
- * What they are *called* — the kind chip and its picker, the verb in "Marie
- * paid", the headings over the payer and the split — is `copy.entryKind`
- * (lib/copy.ts), like every other word the app says.
- *
- * ADR-0010.
+ * What they are *called* is `copy.entryKind` (lib/copy.ts), like every other
+ * word the app says. ADR-0010.
  */
 export type EntryKind = "expense" | "income" | "transfer";
 
@@ -34,8 +29,7 @@ export function kindOf(expense: Expense): "expense" | "income" {
  * How one entry moves *your* balance: what you put in for it minus what you
  * owe for it, signed, in base minor units. The ledger's whole job
  * ([standing-instructions](../../../docs/standing-instructions.md#product)),
- * and it is the same subtraction for all three kinds — which is why it lives
- * here rather than three times over.
+ * and the same subtraction for all three kinds — hence one home, not three.
  */
 export function myEffect(
   me: string | undefined,

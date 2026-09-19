@@ -2,18 +2,16 @@
  * Finding the thing a refusal is pointing at, when it is off the screen.
  *
  * A refusal points rather than explains (docs/design-system.md), which works
- * only while what blooms is in view. A twenty-line bill is the case the
- * who-had-what grid exists for, and the lines nobody has been given can all be
- * scrolled past — a Done pressed there flashes red where nobody is looking,
- * which is a press that did nothing as far as the person can tell.
+ * only while what blooms is in view — on a twenty-line bill, a Done pressed
+ * with the offending lines scrolled past flashes red where nobody is looking.
  *
- * So the scroller is asked first: is *any* of them wholly on screen? If one is,
- * the flash goes ahead where it stands — moving a list under somebody who can
- * already see the answer is worse than not moving it. If none is, the nearest
- * is brought in whole and the flash waits for the scroll to land.
+ * So: is *any* of them wholly on screen? If one is, the flash goes ahead where
+ * it stands — moving a list under somebody who can already see the answer is
+ * worse than not moving it. If none is, the nearest is brought in whole and
+ * the flash waits for the scroll to land.
  *
- * The geometry is here and the scrolling is not: what this decides is worth a
- * test, and none of it needs a DOM.
+ * Geometry here, scrolling elsewhere: this is worth a test and none of it
+ * needs a DOM.
  */
 
 /** One candidate, measured against the same viewport as the band. */
@@ -35,20 +33,17 @@ const SLACK = 1;
 
 /**
  * What to add to the scroller's `scrollTop` to reach the nearest row that is
- * out of view, or `null` when one of them is in view already and nothing needs
- * to move. Negative scrolls up.
- *
- * Nearest is the least scrolling, so a row just above the fold wins over one
- * twelve lines below it, and each row is reached by the smallest move that
- * shows it whole.
+ * out of view, or `null` when one is in view already. Negative scrolls up.
+ * Nearest means least scrolling, so a row just above the fold wins over one
+ * twelve lines below it.
  */
 export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): number | null {
   let best: number | null = null;
   for (const row of rows) {
     const showing = Math.min(row.bottom, band.bottom) - Math.max(row.top, band.top);
-    // In view means *all* of it: a name with its amount cut off by the fold is
-    // a line you have to go looking for anyway, so the flash goes where it can
-    // be read whole. A row taller than the band is in view once it fills it.
+    // In view means *all* of it — a name with its amount cut off by the fold
+    // is a line you go looking for anyway. A row taller than the band counts
+    // once it fills it.
     if (showing >= Math.min(row.bottom - row.top, band.bottom - band.top) - SLACK) return null;
     // Which way it lies is read off its top edge rather than off a gap: a row
     // half under the sticky header is above the fold, not below it.
@@ -75,10 +70,8 @@ export function scrollTarget(
  * What to add to `scrollTop` to show all of one box — a run of portions just
  * opened, whose first and last row are one thing now.
  *
- * **The top wins when it cannot all fit.** A run of six portions in a band that
- * holds four has to start somewhere, and starting at its head is the only
- * choice that reads: the label and the first portion are what says which line
- * opened, and the rest is plainly below.
+ * **The top wins when it cannot all fit.** The label and the first portion are
+ * what say which line opened; the rest is plainly below.
  */
 export function revealWhole(box: RowBox, band: ViewBand): number {
   const tooTall = box.bottom - box.top > band.bottom - band.top + SLACK;

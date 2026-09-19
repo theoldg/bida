@@ -44,10 +44,10 @@ export interface CarriedGroup extends JoinLink {
  * Several groups in one fragment: `<id>.<secret>[.<member>]~…`. `~` and `.`
  * are URL-safe and cannot appear in any part, which is `[A-Za-z0-9_-]`.
  *
- * Only `/install` reads this — it is what a home-screen icon is added with, so
- * a phone that holds four groups brings four. A `/join` link stays one group
- * and never a member: it is the thing people send each other, and
- * `parseJoinLink` refuses a third part.
+ * Only `/install` reads this, so a phone holding four groups brings four onto
+ * the home screen. **A `/join` link stays one group and never a member** — it
+ * is the thing people send each other, and `parseJoinLink` refuses a third
+ * part.
  */
 export function formatInvites(links: readonly CarriedGroup[]): string {
   return links.map((link) => `${link.groupId}.${link.secret}${link.me ? `.${link.me}` : ""}`).join("~");
@@ -88,17 +88,15 @@ type PastedLink =
 /**
  * Read the clipboard's text as a join link.
  *
- * Stricter than `parseJoinLink`, which also takes a bare fragment: whatever
- * happens to be on the clipboard is not a link someone chose to open, so only
- * a whole `/join` URL counts. One from another origin is told apart rather
- * than refused as bad: a group lives in the database of the deployment that
- * made it, so a link from elsewhere (the dev server, a self-hosted copy) is a
- * good link this server has never heard of, and joining it here could only
- * ever sit on "Joining…". Its host is what the person needs to hear.
+ * Stricter than `parseJoinLink`, which also takes a bare fragment: what is on
+ * the clipboard is not a link someone chose to open, so only a whole `/join`
+ * URL counts. One from another origin is told apart rather than refused — a
+ * group lives in the database of the deployment that made it, so a link from
+ * the dev server or a self-hosted copy is a good link this server has never
+ * heard of, and its host is what the person needs to hear.
  *
- * A link with no password — a group screen's address, or a `/join` cut short —
- * is `keyless` whichever server it names: it opens nothing anywhere, and the
- * fix is the same invite link either way, so the server is not the news.
+ * A link with no password is `keyless` whichever server it names: it opens
+ * nothing anywhere, so the server is not the news.
  */
 export function readPastedLink(text: string, origin: string): PastedLink {
   // An empty clipboard, or one holding a picture: iOS reads that as "".
@@ -125,16 +123,14 @@ import type { EntryKind } from "./entry-kind";
  * Where an entry was opened from, when that wasn't the ledger.
  *
  * Four screens link *sideways* into an entry rather than down into it: the
- * history feed, the two "can't remove this yet" dialogs, which list what is
- * still naming a person or a currency, and the balances tab, whose settle-up
- * rows open a pre-filled transfer. Going up to the group from there threw away
- * the list you were working through, so the link says which screen it was on
- * and the entry unwinds to that instead (`entryParent`, ADR-0007).
+ * history feed, the two "can't remove this yet" dialogs, and the balances tab,
+ * whose settle-up rows open a pre-filled transfer. The link says which screen
+ * it was on, so the entry unwinds to that rather than throwing away the list
+ * you were working through (`entryParent`, ADR-0007).
  *
- * It rides in the URL rather than in memory because a screen is a route: a
- * reload, or the app being killed in the background, must not change where back
- * goes. `via` and not `from` — `/g/entry/edit` already spends `from` on a
- * member id.
+ * **In the URL, never in memory**: a reload, or the app being killed in the
+ * background, must not change where back goes. `via` and not `from` —
+ * `/g/entry/edit` already spends `from` on a member id.
  */
 type EntrySource = "history" | "members" | "rates" | "balances";
 
@@ -152,11 +148,10 @@ export const route = {
   about: () => "/about",
   /**
    * Deleting a group from the server for everybody in it, on the strength of
-   * its invite link (app/delete-my-data/page.tsx). Named on `/about` and
-   * linked from nowhere at all on purpose: the address is printed there for
-   * somebody to type, which is the first of the frictions that screen is made
-   * of. Named for the sentence somebody types into an address bar when they
-   * want their data off a service.
+   * its invite link (app/delete-my-data/page.tsx). **Linked from nowhere**:
+   * `/about` prints the address for somebody to type, which is the first of
+   * the frictions that screen is made of. Named for the sentence somebody
+   * types into an address bar when they want their data off a service.
    */
   deleteMyData: () => "/delete-my-data",
   /**
@@ -166,20 +161,19 @@ export const route = {
    */
   advanced: () => "/advanced",
   /**
-   * Why and how to put bida on an iOS home screen (docs/ios.md).
-   *
-   * The invites this phone holds ride in the fragment, because this is the page
-   * the share sheet is opened *from*: whatever iOS writes into the home-screen
-   * bookmark, it writes from here. The fragment never reaches the server, and
-   * the phone reading it already holds every secret in it.
+   * Why and how to put bida on an iOS home screen (docs/ios.md). The invites
+   * this phone holds ride in the fragment, because this is the page the share
+   * sheet is opened *from* — whatever iOS writes into the bookmark, it writes
+   * from here. The fragment never reaches the server, and the phone reading it
+   * already holds every secret in it.
    */
   install: (links: readonly CarriedGroup[] = []) =>
     `/install${links.length ? `#${formatInvites(links)}` : ""}`,
   /**
    * A Splitwise (or bida) CSV as a new group (app/import/page.tsx). Off the
-   * groups list rather than out of a group's own menu: what it makes *is* a
-   * group, and merging a file into a group that already has entries would mean
-   * deciding which row is which entry, which the file carries no ids to decide.
+   * groups list and not a group's own menu: what it makes *is* a group, and
+   * merging into one that already has entries would mean deciding which row is
+   * which entry, which the file carries no ids to decide.
    */
   import: () => "/import",
   /**
@@ -220,7 +214,7 @@ export const route = {
    * Scan first, decide after: a screen holding nothing but the two scan
    * buttons, which hands the filled draft to the form. Reached from the
    * ledger, beside the "+" — photographing a bill is how an expense most
-   * often starts, and it used to be four taps inside the form.
+   * often starts.
    */
   scan: (groupId: string) => `/g/scan?id=${encodeURIComponent(groupId)}`,
   /**
@@ -258,10 +252,10 @@ export const route = {
   members: (groupId: string) => `/g/members?id=${encodeURIComponent(groupId)}`,
   /**
    * The export as text, reached only when neither the share sheet nor a
-   * download is available (`lib/export.ts`). A screen rather than a dialog
-   * because it holds a whole ledger and is opened in order to copy it, and it
-   * rebuilds the CSV itself: a route cannot carry a file, and a readout that
-   * empties on reload is the drawer state ADR-0007 got rid of.
+   * download is available (`lib/export.ts`). A screen and not a dialog: it
+   * holds a whole ledger. It rebuilds the CSV itself, because a route cannot
+   * carry a file and a readout that empties on reload is the drawer state
+   * ADR-0007 got rid of.
    */
   exportCsv: (groupId: string) => `/g/export?id=${encodeURIComponent(groupId)}`,
   /** The group's exchange-rate registry: one rate per currency it spends in. */
@@ -295,15 +289,12 @@ export function entryParent(groupId: string, via: EntrySource | undefined): stri
 }
 
 /**
- * Where saving on the entry form lands: the screen the form was opened from.
- *
- * A save used to drop you on the ledger whatever you had been doing — settling
- * up sent you to the ledger rather than back to the balances you were
- * clearing, and correcting an entry you had reached from the history feed or a
- * "can't remove this yet" list lost that list, which is the very thing `via`
- * exists to keep (ADR-0007). Editing an existing entry returns to that entry,
- * carrying its own `via` so its back arrow still climbs to whoever linked in;
- * a new one returns to the screen that asked for it.
+ * Where saving on the entry form lands: the screen the form was opened from,
+ * never just the ledger — settling up belongs back on the balances you were
+ * clearing, and an entry reached from a list belongs back in that list
+ * (ADR-0007). Editing an existing entry returns to that entry, carrying its
+ * own `via` so its back arrow still climbs to whoever linked in; a new one
+ * returns to the screen that asked for it.
  */
 export function formParent(
   groupId: string, entryId: string | undefined, via: EntrySource | undefined,

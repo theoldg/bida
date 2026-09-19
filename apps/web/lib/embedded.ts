@@ -2,13 +2,11 @@
  * The in-app browser: the webview Instagram, Messenger and the rest open a
  * tapped link in, instead of handing it to the phone's browser.
  *
- * It is a dead end for this app rather than a slower road to the same place.
- * Its storage is its own and nothing can reach back into it; there is no Add
- * to Home Screen in it; and a group joined there is claimed a *second* time
- * the moment the person opens the same link properly — the duplicate claim
- * [docs/ios.md](../../../docs/ios.md) exists to prevent, arrived at by the
- * commonest route there is. So the app refuses to run in one and says how to
- * get out (`components/embedded.tsx`).
+ * A dead end rather than a slower road to the same place. Its storage is its
+ * own, there is no Add to Home Screen in it, and a group joined there is
+ * claimed a *second* time when the person opens the link properly — the
+ * duplicate claim [docs/ios.md](../../../docs/ios.md) exists to prevent. So
+ * the app refuses to run in one (`components/embedded.tsx`).
  *
  * **The bar is proof, not suspicion.** A false positive locks somebody out of
  * a real browser, which is far worse than letting a webview through, so a
@@ -16,20 +14,19 @@
  */
 
 /**
- * Browsers that say who they are. Checked first and alone: every one of these
- * is a real browser with a real share sheet, and several are WebKit builds
- * whose user agent is otherwise Safari's to the character (Brave, DuckDuckGo).
- * A webview that spoofed one of these would get in — which is the direction to
- * be wrong in.
+ * Browsers that say who they are. Checked first and alone: several are WebKit
+ * builds whose user agent is otherwise Safari's to the character (Brave,
+ * DuckDuckGo). A webview spoofing one would get in — the direction to be
+ * wrong in.
  */
 const NAMED_BROWSER =
   /(?:CriOS|FxiOS|EdgiOS|OPiOS|OPT|OPR|Edg|Firefox|SamsungBrowser|YaBrowser|Vivaldi|Brave|DuckDuckGo|UCBrowser|HuaweiBrowser|MiuiBrowser|QQBrowser)\//;
 
 /**
- * Apps whose webview names itself, which is what lets the screen say "Instagram"
- * rather than "this app". Not the detection's backbone — the two structural
- * signals below catch these and everything else — but a token is proof on its
- * own, and covers a host that puts `Safari/` back.
+ * Apps whose webview names itself, which lets the screen say "Instagram"
+ * rather than "this app". Not the backbone — the two structural signals below
+ * catch these and everything else — but a token is proof on its own, and
+ * covers a host that puts `Safari/` back.
  */
 const IN_APP: [RegExp, string][] = [
   // `Orca` is Messenger's own name for itself on Android, and it rides in the
