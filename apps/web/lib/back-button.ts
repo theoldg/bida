@@ -53,7 +53,7 @@ function navigation(): NavigationLike | undefined {
 }
 
 /** What a screen's back arrow is, and so what the device's button must do. */
-export interface ScreenBack {
+interface ScreenBack {
   /** Where the arrow climbs to, if it climbs. Absent: it is a plain back. */
   up?: string;
   /**

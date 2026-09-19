@@ -41,7 +41,7 @@ function context(): CanvasRenderingContext2D | null {
 }
 
 /** How this element draws text, as the canvas `font` shorthand wants it. */
-export interface TextStyle {
+interface TextStyle {
   font: string;
   letterSpacing: string;
 }

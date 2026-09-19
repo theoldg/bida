@@ -142,7 +142,7 @@ export async function deleteGroupOnServer(groupId: string, secret: string): Prom
   if (!res.ok) throw new SyncHttpError(res.status, await res.text().catch(() => ""));
 }
 
-export interface SyncOutcome {
+interface SyncOutcome {
   pushed: number;
   pulled: number;
 }

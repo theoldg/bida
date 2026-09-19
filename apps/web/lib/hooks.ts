@@ -400,7 +400,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
  * ledger. So the sync engine writes down how each attempt went and this reads
  * it back.
  */
-export interface SyncHealth {
+interface SyncHealth {
   /** Failing for long enough to be worth saying out loud — see FAILURES_BEFORE_WARNING. */
   failing: boolean;
   /** The server refused this device's secret. Retrying cannot fix it; a fresh link can. */

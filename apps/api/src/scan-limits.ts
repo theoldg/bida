@@ -46,7 +46,7 @@ export function overLimit(counts: ScanCounts): ScanLimitScope | null {
   return null;
 }
 
-export interface ScanCounts {
+interface ScanCounts {
   caller: { hour: number; day: number };
   client: { hour: number; day: number };
   global: { hour: number; day: number };

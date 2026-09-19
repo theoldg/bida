@@ -43,7 +43,7 @@ const PAYMENT = "Payment";
 const GENERAL = "General";
 const TOTAL_BALANCE = "Total balance";
 
-export interface CsvOptions {
+interface CsvOptions {
   /**
    * A timestamp as `YYYY-MM-DD`. Taken as an argument for the reason core
    * takes its clock as one: the honest answer is the *local* day — an expense
@@ -61,7 +61,7 @@ export interface CsvOptions {
 }
 
 /** One member column: who it is, and whether they are still in the group. */
-export interface ExportColumn {
+interface ExportColumn {
   id: Id;
   name: string;
   /** Removed, but still named by a live entry — so still carrying a balance. */

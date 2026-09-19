@@ -17,14 +17,14 @@
  */
 
 /** One candidate, measured against the same viewport as the band. */
-export interface RowBox { top: number; bottom: number }
+interface RowBox { top: number; bottom: number }
 
 /**
  * The strip of the scroller a row can actually be seen in: its box, less
  * anything drawn over it. The grid's header is sticky, so a row scrolled flush
  * to the top of the scroller is underneath it.
  */
-export interface ViewBand { top: number; bottom: number }
+interface ViewBand { top: number; bottom: number }
 
 /**
  * Sub-pixel slack. A row is measured in fractions of a pixel and the band it

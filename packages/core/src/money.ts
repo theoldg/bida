@@ -83,7 +83,7 @@ export function minorToDecimalString(minor: number, currency: CurrencyCode): str
   return `${neg ? "-" : ""}${whole}${fracStr}`;
 }
 
-export interface FormatOptions {
+interface FormatOptions {
   /** BCP-47 locale. Defaults to the runtime's. */
   locale?: string;
   /** Show the currency symbol/code. Default true. */

@@ -78,7 +78,7 @@ export function isKeylessFragment(hash: string): boolean {
  * What pasting found: a link to join, one for another server, one that names a
  * group but carries no password, something that is no link, or nothing at all.
  */
-export type PastedLink =
+type PastedLink =
   | { kind: "join"; link: JoinLink }
   | { kind: "elsewhere"; host: string }
   | { kind: "keyless"; groupId: string }
@@ -136,7 +136,7 @@ import type { EntryKind } from "./entry-kind";
  * goes. `via` and not `from` — `/g/entry/edit` already spends `from` on a
  * member id.
  */
-export type EntrySource = "history" | "members" | "rates" | "balances";
+type EntrySource = "history" | "members" | "rates" | "balances";
 
 /**
  * Internal routes. The app is a static export, so every screen is a real page

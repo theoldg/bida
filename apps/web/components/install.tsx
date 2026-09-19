@@ -34,7 +34,7 @@ export function CarryToHomeScreen() {
  * live copy may not have caught up with a key saved a moment ago. Written in
  * `KeepCarried`'s own order, or the two would take turns rewriting it.
  */
-export async function carryThenInstall(first?: string): Promise<void> {
+async function carryThenInstall(first?: string): Promise<void> {
   keepCarried(await heldInvites());
   location.assign(route.install(await heldInvites(first)));
 }

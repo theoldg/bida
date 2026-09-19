@@ -26,7 +26,7 @@ const positions = new Map<string, number>();
  * mounts: each one belongs to a single screen, and the two tabs are different
  * components, so a tab switch is a fresh mount with a key of its own.
  */
-export function scrollKey(): string {
+function scrollKey(): string {
   return `${location.pathname}${location.search}`;
 }
 

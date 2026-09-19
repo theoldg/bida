@@ -95,7 +95,7 @@ export function parseCsv(text: string): string[][] {
  * is refused with a sentence instead of freezing the app on the way to the
  * same answer.
  */
-export const MAX_CSV_BYTES = 8 * 1024 * 1024;
+const MAX_CSV_BYTES = 8 * 1024 * 1024;
 
 /** Too big to be a ledger — see `MAX_CSV_BYTES`. */
 export function tooBig(bytes: number): boolean {

@@ -76,7 +76,7 @@ export function bare(minor: number, currency: CurrencyCode): string {
  * unallocated" is not a thing to show anyone. The screen supplies its own
  * wording around the figure.
  */
-export function shortfallText(
+function shortfallText(
   check: { problem?: string; diffMinor?: number; message?: string },
   currency: CurrencyCode,
   words: { under: string; over: string },
@@ -270,7 +270,7 @@ export function whenLabel(entry: Whenever, now = Date.now()): string {
 }
 
 /** Anything the ledger places in time: an expense, a transfer, a row built from one. */
-export interface Whenever {
+interface Whenever {
   occurredAt: number;
   dateOnly?: boolean | null;
   createdAt?: number | null;

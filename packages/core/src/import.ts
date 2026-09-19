@@ -123,7 +123,7 @@ export class ImportError extends Error {
   }
 }
 
-export interface ImportOptions {
+interface ImportOptions {
   /**
    * `YYYY-MM-DD` to a timestamp. Local midnight of that day is the honest
    * answer and only the app knows the timezone — the same reason `export.ts`
@@ -173,7 +173,7 @@ export interface PlannedTransfer {
 }
 
 /** A row that carried no money and was therefore dropped, checksum intact. */
-export interface DroppedRow {
+interface DroppedRow {
   line: number;
   description: string;
 }

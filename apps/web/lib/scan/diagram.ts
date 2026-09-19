@@ -16,7 +16,7 @@ import { copy } from "../copy";
 const SHOWN: CurrencyCode = "EUR";
 
 /** One person's row on the drawn expense. */
-export interface DrawnShare { name: string; amount: string }
+interface DrawnShare { name: string; amount: string }
 
 /**
  * Who the drawing splits its bill between: three of this group's members,

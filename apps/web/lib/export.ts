@@ -53,7 +53,7 @@ export function exportFilename(groupName: string, now: number): string {
  * closing the share sheet, and answering that with a fallback screen is the
  * app insisting. Only `unavailable` means nothing was handed over.
  */
-export type Handoff = "shared" | "downloaded" | "cancelled" | "unavailable";
+type Handoff = "shared" | "downloaded" | "cancelled" | "unavailable";
 
 /** How this browser can be asked to take a file. */
 export type HandoffPlan = "share" | "download" | "text";

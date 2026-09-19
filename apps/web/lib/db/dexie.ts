@@ -120,7 +120,7 @@ export interface DeviceRecord {
  * `count` exists so the UI can tell a blip from an outage: one failure is a
  * dropped packet, two is worth saying out loud.
  */
-export interface SyncFailure {
+interface SyncFailure {
   count: number;
   at: number;
   /** HTTP status, when the request got that far. 403 never heals on its own. */
@@ -146,7 +146,7 @@ export interface Unreadable {
  * table of its own: it must never be foldable from an op, or it would sync to
  * the server, which is the one place it must never be. ADR-0003.
  */
-export interface GroupKey {
+interface GroupKey {
   groupId: string;
   secret: string;
   /** Highest server seq pulled. The sync cursor. */
@@ -172,7 +172,7 @@ export interface GroupKey {
  * real one — every existing install would launch with no groups and no way to
  * ask for them back. A brand is not worth that.
  */
-export class BidaDb extends Dexie {
+class BidaDb extends Dexie {
   ops!: Table<StoredOp, string>;
   groups!: Table<Group, string>;
   members!: Table<Member, string>;

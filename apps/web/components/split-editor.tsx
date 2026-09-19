@@ -48,7 +48,7 @@ import type { SplitTab } from "../lib/draft";
 /** The three arithmetic tabs, in the owner's order. "Items" is the fourth. */
 const MODES = ["equal", "shares", "exact"] as const;
 
-export interface ReceiptTabProps {
+interface ReceiptTabProps {
   items: { label: string; amount: string }[] | null;
   /**
    * The bill as text, when that is how it arrived — so "Type it in" reopens

@@ -10,7 +10,7 @@ import { db, type StoredOp } from "./dexie";
  */
 type Row = { id: string; groupId: string };
 
-export function tableFor(kind: EntityKind): Table<Row, string> {
+function tableFor(kind: EntityKind): Table<Row, string> {
   const d = db();
   const t =
     kind === "group" ? d.groups

@@ -38,7 +38,7 @@ export interface GroupPreview {
 /** Why a link cannot be previewed. Each one is a different sentence on screen. */
 export type PreviewProblem = "missing" | "deleted" | "refused" | "offline" | "unreadable";
 
-export type PreviewResult =
+type PreviewResult =
   | { ok: true; preview: GroupPreview }
   | { ok: false; problem: PreviewProblem };
 

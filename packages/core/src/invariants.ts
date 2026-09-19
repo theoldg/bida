@@ -55,7 +55,7 @@ export interface OpDraft {
  * thing `repair` is handed, so a repair cannot quietly consult state the
  * detector never looked at.
  */
-export interface Invariant<V> {
+interface Invariant<V> {
   /** Stable identifier. Appears in test failures and in the healer's history note. */
   readonly name: string;
   /** The state this describes, in the words of the table in docs/invariants.md. */
@@ -79,7 +79,7 @@ export interface Invariant<V> {
  * A declared invariant: its optional guard filled in, its violation type intact.
  * Naming one directly — a test, a screen that needs its detector — keeps `V`.
  */
-export interface Declared<V> extends Invariant<V> {
+interface Declared<V> extends Invariant<V> {
   wouldViolate(state: GroupState, draft: OpDraft): boolean;
 }
 
@@ -91,7 +91,7 @@ export interface Declared<V> extends Invariant<V> {
 export type RegisteredInvariant = Declared<unknown>;
 
 /** Type-check an invariant against its own violation type, and fill in its guard. */
-export function defineInvariant<V>(spec: Invariant<V>): Declared<V> {
+function defineInvariant<V>(spec: Invariant<V>): Declared<V> {
   return {
     ...spec,
     // A guard is optional; its absence means "nothing to refuse", never

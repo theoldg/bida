@@ -20,7 +20,7 @@ import { dayLabel, money, plural, rateText } from "./format";
  * is an income, the currency its figures are in, who the other payer was.
  */
 
-export interface Described {
+interface Described {
   what: string;
   diff?: { was?: string; now: string };
   /**
@@ -35,7 +35,7 @@ export interface Described {
 }
 
 /** One field on its own line: what it is called, and what it moved between. */
-export interface Detail {
+interface Detail {
   label: string;
   was?: string;
   now?: string;

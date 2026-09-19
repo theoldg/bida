@@ -21,7 +21,7 @@
  */
 
 /** One look at the two viewports, and who has the caret. */
-export interface ViewportReading {
+interface ViewportReading {
   /** The layout viewport — the height `100dvh` is laid out against. */
   inner: number;
   /** The visible viewport: what is on screen right now. */
@@ -35,7 +35,7 @@ export interface ViewportReading {
 }
 
 /** What the difference between the two viewports means. */
-export interface ViewportGap {
+interface ViewportGap {
   /** What the keyboard covers, in pixels. Zero unless something is focused. */
   kb: number;
   /** The same gap with nothing focused, which no keyboard explains. */
@@ -74,7 +74,7 @@ export function gapOf(v: ViewportReading): ViewportGap {
  *   on whether what was pressed can take it.
  * - **free** — nothing has the caret, so there is nothing to protect or undo.
  */
-export type CaretAction = "hold" | "blur" | "free";
+type CaretAction = "hold" | "blur" | "free";
 
 export function caretOnPress(keyboardUp: boolean, typing: boolean): CaretAction {
   if (!typing) return "free";
@@ -82,7 +82,7 @@ export function caretOnPress(keyboardUp: boolean, typing: boolean): CaretAction 
 }
 
 /** One look at a field being scrolled to, and the line it has to clear. */
-export interface ReachReading {
+interface ReachReading {
   /** The field's bottom edge. */
   bottom: number;
   /** What has to stay visible *under* it — its `scroll-margin-bottom`, which is

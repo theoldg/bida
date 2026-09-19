@@ -16,7 +16,7 @@ export interface MemberLine {
 }
 
 /** A count that can be a share of one: `n/d`, always in lowest terms. */
-export interface Count { n: number; d: number }
+interface Count { n: number; d: number }
 
 /** What a bill's line has to say for itself here. `ReceiptItem` satisfies it. */
 interface BillLine { amount: string; label?: string; quantity?: number | null; portionOf?: number | null }
@@ -239,7 +239,7 @@ export function handOffReceiptTotal(
  */
 
 /** Where a row sits in an unfolded group: its start, its place, the size. */
-export interface Portion { start: number; index: number; of: number }
+interface Portion { start: number; index: number; of: number }
 
 /**
  * One entry per item: null for an ordinary printed line, else the portion it
@@ -333,10 +333,10 @@ export function foldedLine(
 }
 
 /** What one person's cell shows on a folded run. No mark at all means none. */
-export type RunMark = "some" | "all";
+type RunMark = "some" | "all";
 
 /** How a run of portions has been handed out, as its one folded row shows it. */
-export interface RunAssignment {
+interface RunAssignment {
   /**
    * Somebody has some of the portions and not the others, so the run cannot be
    * edited while it is folded: a tap on one cell could mean either portion.

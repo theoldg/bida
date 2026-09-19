@@ -22,7 +22,7 @@ import { payerProblemText } from "./format";
  * Nothing here writes. The form patches the draft; this only ever reads one.
  */
 
-export interface EntryCheck {
+interface EntryCheck {
   /** What the entry is worth in its *own* currency, minor units. */
   amountMinor: number;
   /** The entry in the group's base currency. 0 when it cannot be converted. */
@@ -76,7 +76,7 @@ export interface EntryCheck {
 }
 
 /** `convertMinor`, or null when the product doesn't fit in a safe integer. */
-export function tryConvertMinor(
+function tryConvertMinor(
   minor: number, from: string, to: string, rate: Rate,
 ): number | null {
   try {

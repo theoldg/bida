@@ -13,7 +13,7 @@ import { isCurrencyCode, isValidRate, type Rate } from "@bida/core";
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 
-export interface FetchedRate {
+interface FetchedRate {
   rate: Rate;
   /** The feed's own date, "YYYY-MM-DD", or null when it didn't say. */
   asOf: string | null;
@@ -23,7 +23,7 @@ export interface FetchedRate {
 export class RateOfflineError extends Error {}
 
 /** The endpoint answered, but with no rate for this pair. */
-export class RateUnavailableError extends Error {}
+class RateUnavailableError extends Error {}
 
 export async function fetchRate(from: string, to: string): Promise<FetchedRate> {
   if (!isCurrencyCode(from) || !isCurrencyCode(to)) {

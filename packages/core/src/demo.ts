@@ -41,16 +41,16 @@ export function isDemo(groupId: string | undefined): boolean {
 
 /** The four at the booth. The device is Luke, or the personal lens is blank. */
 export const DEMO_NAMES = ["Luke", "Han", "Chewie", "Ben"] as const;
-export type DemoName = (typeof DEMO_NAMES)[number];
+type DemoName = (typeof DEMO_NAMES)[number];
 
 /** The member the device speaks for: the demo is a group you are already in. */
 export const DEMO_ME: DemoName = "Luke";
 
 /** Credits, and the local coin the spaceport actually takes. */
-export const DEMO_CURRENCY = "CRD";
-export const DEMO_FOREIGN = "WUP";
+const DEMO_CURRENCY = "CRD";
+const DEMO_FOREIGN = "WUP";
 /** Sixteen wupiupi to the credit, as the moneychanger by the door has it. */
-export const DEMO_RATE = "0.0625";
+const DEMO_RATE = "0.0625";
 
 /**
  * What the caller cannot be assumed to have: the device's own HLC node id.

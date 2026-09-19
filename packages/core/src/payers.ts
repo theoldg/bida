@@ -29,10 +29,10 @@ import type { Expense, Id, Settlement } from "./types.js";
  */
 
 /** memberId -> amount in the expense's OWN currency. Sums to `amountMinor`. */
-export type PayerSpec = Record<Id, number>;
+type PayerSpec = Record<Id, number>;
 
 /** The payer fields of an expense — everything these functions need, no more. */
-export interface PayerBearing {
+interface PayerBearing {
   id: Id;
   amountMinor: number;
   baseAmountMinor: number;
@@ -64,7 +64,7 @@ export function primaryPayer(spec: PayerSpec, fallback: Id): Id {
 }
 
 /** Same shape, same reasoning as `SplitProblem` — see split.ts. */
-export type PayerProblem = "empty" | "under" | "over" | "invalid";
+type PayerProblem = "empty" | "under" | "over" | "invalid";
 
 export interface PayerValidation {
   ok: boolean;
@@ -180,7 +180,7 @@ export function settlementInvolves(settlement: Settlement, memberId: Id): boolea
 }
 
 /** Both entry tables of a group, which is what every caller of the two below holds. */
-export interface EntryTables {
+interface EntryTables {
   expenses: readonly Expense[];
   settlements: readonly Settlement[];
 }

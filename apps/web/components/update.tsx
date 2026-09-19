@@ -5,7 +5,7 @@ import { copy } from "../lib/copy";
 import { applyUpdate, subscribeUpdate, updateState, type UpdateState } from "../lib/update";
 import { useInstallOffer } from "./install";
 
-export function useUpdateState(): UpdateState {
+function useUpdateState(): UpdateState {
   return useSyncExternalStore(subscribeUpdate, updateState, () => "none" as const);
 }
 

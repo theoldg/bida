@@ -25,7 +25,7 @@
  */
 
 /** One thing that happened, or took a while. */
-export interface DiagEvent {
+interface DiagEvent {
   /** Milliseconds since this page started. One clock for every line. */
   at: number;
   /** A dotted name: `live.start`, `sync.push`, `rebuild`. */
@@ -123,7 +123,7 @@ const KEEP = "bida.diag.pages";
 const PAGES = 5;
 
 /** One page's timeline, as kept: when it loaded, where, and what it recorded. */
-export interface KeptPage { at: number; url: string; events: DiagEvent[] }
+interface KeptPage { at: number; url: string; events: DiagEvent[] }
 
 const readKept = (): KeptPage[] => {
   try {
@@ -220,7 +220,7 @@ const FIRST = "bida.diag.first";
 const NOTES = "bida.diag.notes";
 
 /** One page load: where it landed, how, and whether as the home-screen app. */
-export interface Arrival {
+interface Arrival {
   at: number; url: string; nav: string; app: boolean;
   /** The manifest the head was given (`manifestScript`): `static`, `carry:<groups>`, or `none`. */
   mf?: string;

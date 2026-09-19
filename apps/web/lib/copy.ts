@@ -31,7 +31,7 @@ export interface Noun {
  * What a refused import interpolates: the line a spreadsheet would show, and
  * the one fact that code carries (`ImportError` in core/import.ts).
  */
-export interface RefusalFact {
+interface RefusalFact {
   line?: number;
   detail?: string;
 }
@@ -43,7 +43,7 @@ export interface RefusalFact {
  * side of its own, so it is not asked for here.
  */
 export type Voice = "expense" | "income";
-export type Voiced<T> = Record<Voice, T>;
+type Voiced<T> = Record<Voice, T>;
 
 /**
  * How each of the bill's own charges is named inside a sentence, as against

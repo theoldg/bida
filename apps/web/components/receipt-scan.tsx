@@ -23,7 +23,7 @@ export type { ScanState } from "../lib/scan/live";
  * everything else is the phone's condition or the app's own arithmetic, and
  * the app says those in its voice.
  */
-export function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | null {
+function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
   if (err instanceof TurnstileBlockedError) return copy.scan.unverified[err.side];
   // Before the budget refusals, and it can never be confused with one: a phone

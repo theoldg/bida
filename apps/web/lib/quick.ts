@@ -40,7 +40,7 @@ export interface QuickPerson {
  * caller is the unit anything we ever throttle would want to count, and the
  * alternative writes a fresh row for every bill anybody photographs.
  */
-export interface ScanCredential {
+interface ScanCredential {
   id: string;
   secret: string;
 }
@@ -56,7 +56,7 @@ export interface ScanAs extends ScanCredential {
 }
 
 /** Read this phone's scan credential, minting one the first time. */
-export async function scanCredential(): Promise<ScanCredential> {
+async function scanCredential(): Promise<ScanCredential> {
   const device = await getDevice();
   if (device.scan) return device.scan;
   const scan = { id: newGroupId(), secret: newGroupSecret() };
@@ -162,10 +162,6 @@ export function useQuickPeople(): readonly QuickPerson[] {
   );
 }
 
-export function quickPeople(): readonly QuickPerson[] {
-  return people;
-}
-
 /** File a name. Ids are `memberIdFor`, so one name is one person here too. */
 export function addQuickPerson(credId: string, name: string): void {
   const person = { id: memberIdFor(credId, name), name };
@@ -187,7 +183,7 @@ export function clearQuickPeople(): void {
 // ------------------------------------------------------------- the answer
 
 /** One person's share of the bill, and the lines it is made of. */
-export interface QuickShare {
+interface QuickShare {
   name: string;
   minor: number;
   lines: MemberLine[];

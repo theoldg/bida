@@ -150,11 +150,11 @@ export interface BillExtras {
 }
 
 /** The extras in the order a printed bill rules them off under the items. */
-export const EXTRAS = ["discount", "tax", "tip"] as const;
+const EXTRAS = ["discount", "tax", "tip"] as const;
 export type ExtraKind = (typeof EXTRAS)[number];
 
 /** A bill the app can work with: positive lines, and the extras beside them. */
-export interface Bill {
+interface Bill {
   items: ScanLineItem[];
   extras: BillExtras;
 }

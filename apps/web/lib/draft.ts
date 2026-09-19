@@ -24,7 +24,7 @@ import { clearScan } from "./scan/live";
 export type SplitTab = Exclude<SplitMode, "percent">;
 
 /** Every tab but Receipt, which derives its split from the bill instead. */
-export type ArithmeticTab = Exclude<SplitTab, "receipt">;
+type ArithmeticTab = Exclude<SplitTab, "receipt">;
 
 /**
  * One split per tab, each of them the tab's own.
@@ -328,7 +328,7 @@ export function activeSplit(draft: EntryDraft): SplitSpec {
  * tab is ever handed, so the handoff runs one way: the arithmetic tabs feed
  * each other, and a scan feeds none of them (ADR-0016).
  */
-export function arithmeticSplit(draft: EntryDraft): SplitSpec {
+function arithmeticSplit(draft: EntryDraft): SplitSpec {
   const legacy = legacyPercent(draft);
   if (legacy) return legacy;
   const tab = activeSplitTab(draft);

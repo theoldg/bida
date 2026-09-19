@@ -46,7 +46,7 @@ export const MAX_OPS_PER_PUSH = 5_000;
 export const MAX_SEALED_BYTES = 256_000;
 
 /** A refused push: the body to return and the status to return it with. */
-export interface PushRefusal {
+interface PushRefusal {
   error: string;
   status: 413;
 }

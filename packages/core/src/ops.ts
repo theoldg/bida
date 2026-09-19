@@ -57,7 +57,7 @@ export const IMMUTABLE_FIELDS = new Set(["id", "groupId"]);
  */
 export const WRITE_ONCE_FIELDS = new Set(["createdAt"]);
 
-export class OpValidationError extends Error {}
+class OpValidationError extends Error {}
 
 function str(v: unknown, field: string): string {
   if (typeof v !== "string" || v.length === 0) {

@@ -17,7 +17,7 @@ import type { Id } from "./types.js";
  * timeline rather than what one device believed it was changing.
  */
 
-export interface FieldChange {
+interface FieldChange {
   field: string;
   before: unknown;
   after: unknown;

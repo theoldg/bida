@@ -35,7 +35,7 @@ export function rateFor(
 }
 
 /** The fields repricing reads and writes — an expense and a transfer share them. */
-export interface RateBearing {
+interface RateBearing {
   amountMinor: number;
   currency: CurrencyCode;
   rateToBase: Rate;

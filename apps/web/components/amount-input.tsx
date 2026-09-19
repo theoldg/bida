@@ -91,7 +91,7 @@ type BaseProps = Omit<
   "value" | "onChange" | "type" | "inputMode"
 >;
 
-export interface GroupedInputProps extends BaseProps {
+interface GroupedInputProps extends BaseProps {
   /** Canonical text: digits and at most one ".". Never grouped. */
   value: string;
   onChange: (canonical: string) => void;
@@ -202,7 +202,7 @@ export function settleAmount(text: string, currency: CurrencyCode): string {
   try { return minorToDecimalString(parseMinor(text, currency), currency); } catch { return text; }
 }
 
-export interface AmountInputProps extends Omit<GroupedInputProps, "sanitize"> {
+interface AmountInputProps extends Omit<GroupedInputProps, "sanitize"> {
   currency: CurrencyCode;
 }
 
@@ -232,7 +232,7 @@ function minorOf(text: string, currency: CurrencyCode): number {
   try { return parseMinor(text, currency); } catch { return 0; }
 }
 
-export interface MinorAmountInputProps extends Omit<AmountInputProps, "value" | "onChange"> {
+interface MinorAmountInputProps extends Omit<AmountInputProps, "value" | "onChange"> {
   valueMinor: number;
   onChangeMinor: (minor: number) => void;
 }

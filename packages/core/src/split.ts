@@ -13,7 +13,7 @@ import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js"
  * pure-function tiebreak, and never by iteration order of an object.
  */
 
-export interface SplitResult {
+interface SplitResult {
   /** memberId -> minor units, in the expense's base currency. Sums to the total. */
   shares: Record<Id, number>;
   /**
@@ -47,7 +47,7 @@ export interface SplitValidation {
 
 export class SplitError extends Error {}
 
-export interface SplitOptions {
+interface SplitOptions {
   /**
    * Rotates who absorbs the leftover minor units.
    *
