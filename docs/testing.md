@@ -217,6 +217,12 @@ Two differences that are the whole reason it is a second script:
 
 ### Gotchas
 
+- **A browser check that asks for a sentence will be rearranged under.** Copy
+  is settled by ear here, one word at a time, so a selector naming the words is
+  a selector with an expiry date: `pnpm offline` reached the theme toggle by
+  "Switch to dark mode" and went red the day the label shortened to "Dark
+  mode", and stayed red because nothing runs it on a push. Name what a control
+  *is* — its icon, its class, its role — and leave the wording to `copy.ts`.
 - **A shot wears the harness's locale and clock.** Left at Playwright's
   defaults, every entry carried whatever hour the container was at — a
   restaurant bill stamped 00:11, a different silly hour every run. The context
