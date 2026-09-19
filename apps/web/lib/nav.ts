@@ -1,10 +1,10 @@
 /**
  * Going up, not going back.
  *
- * Every screen's back arrow names its parent (`route.group(...)`, not
- * "whatever was before"), but a plain `<Link>` *pushes*, so the browser's own
- * back — the Android button, the edge swipe — replayed where you had been
- * instead: group → expense → back to group → device back → that expense again.
+ * Every screen's back arrow names its parent (`route.group(...)`, not "whatever
+ * was before"), but a plain `<Link>` *pushes*, so the browser's own back — the
+ * Android button, the edge swipe — replayed where you had been instead: group →
+ * expense → back to group → device back → that expense again.
  *
  * So an up-link doesn't navigate, it *unwinds*: if the parent screen is already
  * behind us in the session's history, we go back to it, however many entries
@@ -16,13 +16,24 @@
  * can't say what its entries are. Where it's missing (iOS before 18.4) an
  * up-link replaces the current entry instead: never the wrong screen, just a
  * back button that can need one extra press.
+ *
+ * **It reads the entries and then goes back over them.** Naming one by key and
+ * asking `traverseTo` for it is the same move on paper, and was two wall-clock
+ * guesses in the hand: WebKit folds a `traverseTo` into one still pending for
+ * the same key and never settles one it dropped, so the arrow needed a timeout
+ * to tell a late traversal from a lost one, and that timeout fired on a slow
+ * phone while the traversal was merely late — replacing the entry underneath a
+ * traversal that then landed, and leaving the parent on the stack twice. A
+ * count has no such failure: it is read and spent in the same tick, outside any
+ * event, and the one place where the browser's idea of "here" is not this
+ * screen — inside a back press this app cancelled — never counts at all
+ * ([back-button.ts](./back-button.ts)).
  */
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigationLike = EventTarget & {
-  entries: () => { url: string | null; key: string }[];
+  entries: () => { url: string | null }[];
   currentEntry: { index: number } | null;
-  traverseTo?: (key: string) => { committed: Promise<unknown>; finished: Promise<unknown> };
 };
 
 function navigation(): NavigationLike | undefined {
@@ -70,35 +81,7 @@ export function goUp(href: string, replace: (href: string) => void): void {
   const nav = navigation();
   const here = nav?.currentEntry?.index;
   if (nav && here !== undefined && here >= 0) {
-    const entries = nav.entries();
-    const steps = stepsBackTo(entries.map((e) => e.url), here, href);
-    const target = steps === null ? undefined : entries[here + steps];
-    if (target && nav.traverseTo) {
-      // Name the entry; don't count back to it. A count is measured against
-      // the browser's idea of where we are, and that is not always this
-      // screen: inside a cancelled back press it is the entry the press was
-      // heading for, so `history.go(-1)` moved two — off the ledger to the
-      // groups list, and off the start of the history, where a traversal that
-      // lands nowhere is silently dropped and the press does nothing. A key
-      // cannot be off by one, and a browser that won't take it says so.
-      //
-      // Nor is a traversal's promise proof that it happened. WebKit folds a
-      // traverseTo into one still pending for the same key, and a pending one
-      // it dropped without rejecting never settles — so every later press
-      // joined it and did nothing at all. A traversal that really starts fires
-      // `navigate` (cross-document ones too), so one that hasn't soon is taken
-      // for dropped and the arrow takes the parent's place instead.
-      let settled = false;
-      const fallBack = () => { if (!settled) { settled = true; replace(href); } };
-      const started = () => { settled = true; };
-      nav.addEventListener("navigate", started, { once: true });
-      markOwnTraversal();
-      const { committed, finished } = nav.traverseTo(target.key);
-      finished.catch(() => {});
-      committed.catch(fallBack);
-      setTimeout(() => { nav.removeEventListener("navigate", started); fallBack(); }, DROPPED_MS);
-      return;
-    }
+    const steps = stepsBackTo(nav.entries().map((e) => e.url), here, href);
     if (steps !== null) {
       markOwnTraversal();
       window.history.go(steps);
@@ -107,9 +90,6 @@ export function goUp(href: string, replace: (href: string) => void): void {
   }
   replace(href);
 }
-
-/** Long past the `navigate` a started traversal fires, short enough to go unfelt. */
-const DROPPED_MS = 600;
 
 /**
  * A plain back, as the app's own: the arrow on a screen reached only from
@@ -129,16 +109,25 @@ export function goBack(back: () => void): void {
  * app's back *inside a tap* reads as a device press, and the press guard asked
  * "discard?" of the Done that was keeping the edits, or of the Discard that had
  * just answered it. So the app says so itself, just before it traverses.
+ *
+ * A latch, spent by the one `navigate` it explains, and not a window of time:
+ * a clock says "the app went back within the last second", which a phone slow
+ * enough to deliver the event later answers wrongly — with the discard dialog,
+ * over the Save that had just cleared the draft. It is armed only where a
+ * traversal is actually coming, because one left armed would swallow a real
+ * press instead.
  */
-let ownUntil = 0;
+let ownTraversal = false;
 
 function markOwnTraversal(): void {
-  ownUntil = Date.now() + 1000;
+  // At the start of the history there is nothing to go back to, so `back()`
+  // moves nothing and no `navigate` arrives to spend the latch.
+  ownTraversal = (navigation()?.currentEntry?.index ?? 0) > 0;
 }
 
 /** Was this traversal the app's? Consumed by the one `navigate` it explains. */
 export function takeOwnTraversal(): boolean {
-  const ours = Date.now() < ownUntil;
-  ownUntil = 0;
+  const ours = ownTraversal;
+  ownTraversal = false;
   return ours;
 }

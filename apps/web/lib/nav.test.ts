@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { goBack, goUp, sameScreen, stepsBackTo, takeOwnTraversal } from "./nav";
 
 const GROUPS = "http://app.invalid/";
@@ -70,60 +70,70 @@ describe("sameScreen", () => {
 });
 
 describe("goUp", () => {
-  /** A Navigation API that can be told to drop a traversal the way WebKit does. */
-  function fakeNavigation(urls: string[], here: number, drop: boolean) {
-    const target = new EventTarget();
-    const traversed: string[] = [];
-    const nav = Object.assign(target, {
-      entries: () => urls.map((url, i) => ({ url, key: `k${i}` })),
+  /** A Navigation API with a history in it, and a `history.go` to watch. */
+  function fakeWindow(urls: string[], here: number) {
+    const went: number[] = [];
+    const nav = Object.assign(new EventTarget(), {
+      entries: () => urls.map((url) => ({ url })),
       currentEntry: { index: here },
-      traverseTo: (key: string) => {
-        traversed.push(key);
-        if (!drop) target.dispatchEvent(new Event("navigate"));
-        const pending = new Promise(() => {});
-        return { committed: pending, finished: pending };
-      },
     });
-    return { nav, traversed };
+    return { window: { navigation: nav, history: { go: (n: number) => went.push(n) } }, went };
   }
 
-  function withWindow(nav: unknown, run: () => void) {
+  function withWindow(w: unknown, run: () => void) {
     const g = globalThis as { window?: unknown };
-    g.window = { navigation: nav, history: { go: () => {} } };
+    g.window = w;
     try { run(); } finally { delete g.window; }
   }
 
-  it("unwinds to a parent behind it, and marks the traversal as the app's", () => {
-    vi.useFakeTimers();
-    const { nav, traversed } = fakeNavigation(["/", "/g?id=a", "/g/entry?id=a&e=1"], 2, false);
+  it("goes back over the screens between here and the parent", () => {
+    const { window, went } = fakeWindow(["/", "/g?id=a", "/g/entry?id=a&e=1"], 2);
     const replaced: string[] = [];
-    withWindow(nav, () => goUp("/", (to) => replaced.push(to)));
-    expect(traversed).toEqual(["k0"]);
+    withWindow(window, () => goUp("/", (to) => replaced.push(to)));
+    expect(went).toEqual([-2]);
+    expect(replaced).toEqual([]);
     expect(takeOwnTraversal()).toBe(true);
     expect(takeOwnTraversal()).toBe(false);
-    vi.advanceTimersByTime(1000);
-    expect(replaced).toEqual([]);
-    vi.useRealTimers();
   });
 
-  it("takes the parent's place when a traversal never starts", () => {
-    vi.useFakeTimers();
-    const { nav } = fakeNavigation(["/", "/g?id=a"], 1, true);
+  it("takes the parent's place when it was never visited", () => {
+    const { window, went } = fakeWindow(["/g?id=a", "/g/entry?id=a&e=1"], 1);
     const replaced: string[] = [];
-    withWindow(nav, () => goUp("/", (to) => replaced.push(to)));
-    expect(replaced).toEqual([]);
-    vi.advanceTimersByTime(1000);
+    withWindow(window, () => goUp("/", (to) => replaced.push(to)));
+    expect(went).toEqual([]);
     expect(replaced).toEqual(["/"]);
-    vi.useRealTimers();
+    // Nothing traversed, so nothing to explain to the press guard — a latch
+    // left armed here would swallow the next real press.
+    expect(takeOwnTraversal()).toBe(false);
+  });
+
+  it("takes its place where there is no Navigation API at all", () => {
+    const replaced: string[] = [];
+    withWindow({ history: { go: () => {} } }, () => goUp("/", (to) => replaced.push(to)));
+    expect(replaced).toEqual(["/"]);
   });
 });
 
 describe("goBack", () => {
+  function withWindow(here: number | undefined, run: () => void) {
+    const g = globalThis as { window?: unknown };
+    g.window = here === undefined ? {} : { navigation: { currentEntry: { index: here } } };
+    try { run(); } finally { delete g.window; }
+  }
+
   it("marks the traversal as the app's, once", () => {
     let went = false;
-    goBack(() => { went = true; });
+    withWindow(2, () => goBack(() => { went = true; }));
     expect(went).toBe(true);
     expect(takeOwnTraversal()).toBe(true);
+    expect(takeOwnTraversal()).toBe(false);
+  });
+
+  // A cold load on a screen whose arrow is a plain back: `back()` moves
+  // nothing, so no `navigate` arrives to spend the latch, and an armed one
+  // would answer the *next* press — a real one — as the app's own.
+  it("marks nothing at the start of the history", () => {
+    withWindow(0, () => goBack(() => {}));
     expect(takeOwnTraversal()).toBe(false);
   });
 });

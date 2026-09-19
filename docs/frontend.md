@@ -965,17 +965,29 @@ so the static export ships the full line and the browser narrows it.
   moved *two*: an expense's button reached the groups list, and a group's ran
   off the start of the history, where a traversal that lands nowhere is
   silently dropped and the press appears to do nothing. Hence both halves of
-  the fix: don't cancel a press the browser is already getting right, and when
-  you must, name the destination entry (`traverseTo`) instead of counting to
-  it. A count is only ever as right as the browser's idea of where you are.
+  the fix: don't cancel a press the browser is already getting right, and where
+  you must, take no count at all — put the parent in this screen's place
+  (`swap`, `back-button.ts`), which is the only right move there anyway, since
+  a press is taken over only where going back would land somewhere else.
   Deferring to a macrotask is not enough on its own, though it is still needed
-  — a traversal started while the cancellation unwinds is refused outright.
+  — a navigation started while the cancellation unwinds is refused outright.
 - **Safari's Navigation API is not Chrome's.** `userInitiated` is true for any
   navigation begun while a tap is handled, so the app's own `router.back()`
   looked like the device button and the leave guard asked "discard?" of Done
-  (hence `goBack`, enforced by `rules-check`). And `traverseTo` joins one still
-  pending for the same key, so a traversal WebKit dropped without rejecting
-  swallowed every later press: `goUp` replaces when no `navigate` follows.
+  (hence `goBack`, enforced by `rules-check`). Which traversal is the app's own
+  is said with a **latch**, spent by the one `navigate` it explains — never a
+  window of time, which a phone slow enough to deliver the event later answers
+  with the discard dialog over the Save that had just cleared the draft. A
+  latch is armed only where a traversal is actually coming, since one left
+  armed answers the next *real* press as the app's own.
+- **Don't reach for `traverseTo`.** Naming a history entry by key instead of
+  counting back to it is the same move with a worse failure: WebKit folds a
+  `traverseTo` into one still pending for the same key and never settles one it
+  dropped, so telling a late traversal from a lost one takes a timeout — and a
+  slow phone makes that timeout fire on a late one, replacing the entry
+  underneath a traversal that then lands. `goUp` reads the entries and calls
+  `history.go`, both in one tick and outside any event, where the browser's
+  idea of *here* is this screen ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 - **A controlled input that reformats on every keystroke eats the caret.** If a
   field must reformat as you type, it has to restore the selection itself.
 - **An input's `size` attribute is not a character count**, it is characters

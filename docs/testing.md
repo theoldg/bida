@@ -564,9 +564,17 @@ shortcut is not: headless Chromium binds none, and `Alt+ArrowLeft` fires no
 `navigate` event at all, which makes a guard check written with it pass by
 never pressing anything.
 
+**And that press is not awaited.** A cancelled press never lands, so
+`await page.goBack()` sits out the navigation ceiling — a minute of this
+check's life spent waiting for the one thing it asserts will not happen, and a
+minute of `pnpm verify` spent loading the machine the other seven are racing
+on. What is awaited is the dialog.
+
 The waits are on the history itself: `window.__shape()` goes in through the
 context, so the wait for a shape and the reading of it are one function and
 cannot drift, and every assertion is a condition rather than a pause. The one
 exception is the guard's second half, where the assertion is that the screen
 did *not* move — a cancelled press has nothing to announce, so that one takes a
-`settle` ([above](#scriptslibharnessmjs--what-the-browser-checks-share)).
+`settle` ([above](#scriptslibharnessmjs--what-the-browser-checks-share)). The
+group is built once, by the section that walks in through `/new`, and every
+other section stands on it.

@@ -1,6 +1,6 @@
 # 0007 — A screen is a route, back climbs the hierarchy, the chrome is thin
 
-**Status:** Accepted · 2026-08-27 · revised through 2026-09-05
+**Status:** Accepted · 2026-08-27 · revised through 2026-09-19
 
 **Context.** The original plan put everything inside a group in drawers and
 sheets over `/g`. Drawer state doesn't survive a reload or a back press unless
@@ -34,8 +34,9 @@ expenses you'd looked at rather than climbing out.
   parent among the entries *behind* the current one and goes straight back to
   it, so only descending pushes. The parent is found by comparing path and
   query, never a saved count, which would be wrong the moment the browser
-  trimmed the stack. Without the Navigation API (iOS before 18.4) an up-link
-  replaces the current entry. The two tabs `replace`, being halves of one
+  trimmed the stack — and it then goes back *over* those entries
+  (`history.go`) rather than naming the one it wants (see Rejected). Without
+  the Navigation API (iOS before 18.4) an up-link replaces the current entry. The two tabs `replace`, being halves of one
   screen; `router.back()` stays where "back" is the truth — payers,
   who-had-what and the entry form are only reached from below.
 - **An entry's parent is whoever linked to it.** Four screens link in from
@@ -121,6 +122,19 @@ expenses you'd looked at rather than climbing out.
   entry per press. The Navigation API cancels beforehand.
 - **Make every up-link `replace`** — it leaves the parent twice on the stack, so
   the first press of the device back button appears to do nothing.
+- **Name the destination entry (`traverseTo`) instead of counting back to it**
+  (this ADR's position until 2026-09-19). A key cannot be off by one, which
+  matters in exactly one place: inside a back press the app has cancelled,
+  where the browser's idea of *here* has already moved. It bought that with two
+  wall-clock guesses, because WebKit folds a `traverseTo` into one still
+  pending for the same key and never settles one it dropped — so the arrow
+  needed a timeout to tell a late traversal from a lost one, and a phone slow
+  enough made that timeout fire on a traversal that was merely late: the entry
+  replaced underneath one that then landed, leaving the parent on the stack
+  twice, which is the failure two bullets up. The one place a count is unsafe
+  now takes no count: a cancelled press puts the parent in this screen's place
+  (`swap`), which is the only right move there anyway, since the press is only
+  taken over where going back would land somewhere else.
 - **One fixed parent per screen, the group for every entry** (this ADR's
   position until 2026-09-05, when the owner changed their mind): tidy on paper,
   and it dropped you out of the list you had opened the entry from.

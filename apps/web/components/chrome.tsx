@@ -89,7 +89,7 @@ export function TopBar({ title, sub, back, mid, right }: {
   // (lib/back-button.ts). `back === true` is the one that needs no help: it
   // *is* a plain back, so the button is already right.
   useBackButton(back === undefined || back === true ? undefined
-    : { up, mayLeave: guard?.ask, run });
+    : { up, mayLeave: guard?.ask, swap: (to) => router.replace(to) });
   return (
     <div className="topbar">
       {back === true || guard ? (

@@ -13,7 +13,7 @@
  *
  * So every assertion here reads `navigation.entries()`, never `location`.
  */
-import { ensureBuild, launch, newPhone, newGroup, openGroupsList, reporter, serveExport, settle }
+import { ensureBuild, launch, newPhone, openGroupsList, reporter, serveExport, settle }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -58,13 +58,28 @@ async function is(page, label, want) {
 /** The screen's own back arrow. What follows waits for where it went. */
 const arrow = (page) => page.locator(".topbar .iconbtn").first().click();
 
-const ctx = await newPhone(browser);
-await ctx.addInitScript(SHAPE);
+/**
+ * A phone with nothing on it, so `/` is the groups list rather than the group
+ * it would otherwise resume into (`lib/launch.ts`). The two sections that start
+ * on the list get one each; the rest share a phone with groups on it.
+ */
+async function phone() {
+  const ctx = await newPhone(browser);
+  await ctx.addInitScript(SHAPE);
+  return ctx;
+}
+
+const ctx = await phone();
 
 // ---- 1. the walk in from the groups list -------------------------------
 // Every door into a group is pushed from `/`, so the list is under the ledger
 // and the device's back button climbs the app rather than leaving it.
-{
+//
+// The group this makes is the one the rest of the sections stand on: building
+// one is the most expensive thing here — a form, a picker and a claim — and
+// these checks are only honest while they stay cheap to run
+// ([testing.md](../docs/testing.md)).
+const group = await (async () => {
   const page = await ctx.newPage();
   await page.goto(`${base}/`);
   await page.waitForSelector(".starttile");
@@ -87,14 +102,22 @@ await ctx.addInitScript(SHAPE);
   await is(page, "the balances tab replaces the ledger", { i: 1, urls: ["/", "/g?id=G&tab=balances"] });
   await arrow(page);
   await is(page, "balances' arrow swaps the ledger back in", { i: 1, urls: ["/", "/g?id=G"] });
+  const id = new URL(page.url()).searchParams.get("id");
   await page.close();
+  return id;
+})();
+
+/** That group's ledger, as a cold load: the stack starts here and nowhere else. */
+async function onLedger() {
+  const page = await ctx.newPage();
+  await page.goto(`${base}/g?id=${group}`);
+  await page.waitForSelector(".fab, .empty, .rows");
+  return page;
 }
 
 // ---- 2. an entry, and the arrow that climbs out of it -------------------
 {
-  const page = await ctx.newPage();
-  await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
-  await page.waitForURL(/\/g\?id=/);
+  const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("#what").fill("Dinner");
@@ -119,7 +142,6 @@ await ctx.addInitScript(SHAPE);
 // nobody asked to see again.
 {
   const page = await ctx.newPage();
-  await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
   // In through the list, so the shape under the ledger is the one a thumb makes.
   await openGroupsList(page, base);
   await page.locator(".grouprow").first().click();
@@ -151,21 +173,17 @@ await ctx.addInitScript(SHAPE);
 // never visited. The arrow puts it in this screen's place — which is the whole
 // of the degradation, and the ordinary case of it rather than a rare one.
 {
-  const page = await ctx.newPage();
-  const g = await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
-  const cold = await ctx.newPage();
-  await cold.goto(`${base}/g?id=${g}`);
-  await cold.waitForSelector(".topbar .iconbtn");
+  const cold = await onLedger();
   await is(cold, "a cold ledger has nothing behind it", { i: 0, urls: ["/g?id=G"] });
   await arrow(cold);
   await is(cold, "its arrow swaps the list in rather than going back", { i: 0, urls: ["/"] });
-  await page.close();
   await cold.close();
 }
 
 // ---- 5. the quick split -------------------------------------------------
 {
-  const page = await ctx.newPage();
+  // Its own phone: `/` on one that has been in a group resumes into it.
+  const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
   await page.waitForSelector(".starttile");
   await page.locator("a[href='/quick']").click();
@@ -181,9 +199,7 @@ await ctx.addInitScript(SHAPE);
 // not a navigation. Cancelled outright — the dialog is the whole of the answer
 // and the screen stays put (ADR-0007).
 {
-  const page = await ctx.newPage();
-  await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
-  await page.waitForURL(/\/g\?id=/);
+  const page = await onLedger();
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("#what").fill("Half-typed");
@@ -193,7 +209,12 @@ await ctx.addInitScript(SHAPE);
   // keyboard shortcut is not — headless Chromium binds none, and
   // `Alt+ArrowLeft` fires no `navigate` at all, so a check written with it
   // passes by never pressing anything.
-  await page.goBack().catch(() => {});
+  //
+  // Not awaited, because the whole point is that the press is cancelled: no
+  // navigation ever lands, so the call sits out the navigation ceiling — a
+  // minute of this check's life, spent waiting for the one thing it asserts
+  // will not happen. What is awaited is the dialog.
+  void page.goBack().catch(() => {});
   const asked = await page.waitForSelector(".scrim").then(() => true, () => false);
   report(asked, "a back press on a half-typed form asks before leaving");
   // The one wait with no condition to wait for: the assertion is that the

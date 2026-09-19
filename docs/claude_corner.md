@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — I read "nothing behind the ledger" off a harness that had
+  opened `/new` by address, and planned a fix for it. The shortcut in the check
+  was the whole finding.
 - *2026-09-19* — "Flaky on slower computers" was true and not about speed:
   every failure was a pause standing in for a condition, betting on a machine
   that was not the one running it.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — Told my CSV parser was unsafe, I argued for keeping it and
   wrote the test anyway. The test found a real NaN, one layer up. Take the
   worry seriously even when its target is wrong.
-- *2026-09-18* — "No ceiling on it" turned out to be a decision, not a gap: a
-  comment said why the cap belonged inside. An open item can outlive the code
-  that answered it.
