@@ -12,8 +12,8 @@
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { asInstalledApp, ensureBuild, OUT, serveExport, launch, newPhone, openGroupsList, reporter, newGroup }
-  from "./lib/harness.mjs";
+import { asInstalledApp, ensureBuild, OUT, PATIENCE, serveExport, launch, newPhone, openGroupsList,
+  reporter, newGroup } from "./lib/harness.mjs";
 
 ensureBuild();
 
@@ -59,10 +59,14 @@ for (const [amount, what] of [["4800", "Riad"], ["6200", "Dinner"], ["900", "Tax
 // exactly as closing and reopening the app would.
 await page.goto(`${base}/`);
 await page.waitForFunction(() => navigator.serviceWorker.getRegistration().then((r) => !!r?.active), null,
-  { timeout: 20000 });
+  { timeout: PATIENCE });
 await page.goto(`${base}/`);
-await page.waitForTimeout(500);
-report(await page.evaluate(() => !!navigator.serviceWorker.controller), "service worker controls the page");
+// Control arrives with the load rather than a moment after it — but "the load"
+// is the document's, and the property is read off the page, so wait for the
+// property. A pause in its place was a race the whole check hangs off.
+const controlled = await page.waitForFunction(() => !!navigator.serviceWorker.controller, null,
+  { timeout: PATIENCE }).then(() => true, () => false);
+report(controlled, "service worker controls the page");
 
 // ---- pull the plug ------------------------------------------------------
 await ctx.setOffline(true);
@@ -72,7 +76,7 @@ console.log("\noffline:");
 async function tap(label, act, expect) {
   try {
     await act();
-    await page.waitForSelector(expect, { timeout: 8000 });
+    await page.waitForSelector(expect, { timeout: PATIENCE });
     report(true, label);
   } catch (e) {
     const url = page.url().replace(base, "");
@@ -119,8 +123,8 @@ try {
   await page.locator("input.amount").fill("999");
   await page.locator("#what").fill("Offline beer");
   await page.getByRole("button", { name: "Save" }).click();
-  await page.waitForURL(/\/g\?id=/, { timeout: 8000 });
-  await page.waitForSelector("text=Offline beer", { timeout: 8000 });
+  await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+  await page.waitForSelector("text=Offline beer", { timeout: PATIENCE });
   report(true, "save an expense, land back on the ledger with it in the list");
 } catch {
   report(false, "save an expense, land back on the ledger with it in the list",
@@ -136,17 +140,59 @@ await ctx.setOffline(false);
 const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
 blocked.add(ASSET_TO_DROP);
 swRevision = "flakydeploy01";
-/** `update()` resolves before the install settles, so watch the worker itself. */
-const settled = await page.evaluate(async () => {
+/**
+ * `update()` resolves when the new script has been fetched, not when its
+ * install has finished — and on a machine with seven of these checks on it the
+ * worker is not even `installing` by the time it returns. Polling `installing`
+ * from there read "nothing is installing" as "the install is over", sampled the
+ * caches before the failing build had made one, and called it clean; the cache
+ * it then left behind failed four assertions further down, in three different
+ * sections. A failed install ends in one place — the worker goes `redundant`,
+ * its handler having deleted the half-filled cache first (public/sw.js) — so
+ * that is the event to wait for rather than a quiet moment.
+ */
+const settled = await page.evaluate(async (patience) => {
   const reg = await navigator.serviceWorker.getRegistration();
+  const ended = new Promise((resolve) => {
+    const watch = () => {
+      const sw = reg.installing;
+      if (!sw) return false;
+      const ends = () => { if (sw.state === "redundant" || sw.state === "activated") resolve(sw.state); };
+      sw.addEventListener("statechange", ends);
+      ends();
+      return true;
+    };
+    if (!watch()) reg.addEventListener("updatefound", watch);
+  });
   await reg.update().catch(() => {});
-  for (let i = 0; i < 60 && reg.installing; i++) await new Promise((ok) => setTimeout(ok, 500));
-  return !reg.installing;
-});
+  return await Promise.race([
+    ended,
+    new Promise((ok) => { setTimeout(() => ok("never settled"), patience); }),
+  ]) === "redundant";
+}, PATIENCE);
 const afterFlaky = await page.evaluate(() => caches.keys());
 report(settled && !afterFlaky.includes("bida-shell-flakydeploy01"),
   "an incomplete precache fails the install, and leaves nothing behind", afterFlaky.join(", "));
 report(afterFlaky.includes(cacheBefore), "the working cache survives it");
+
+// Put the lever back *here*, not three sections down where it used to go, and
+// in this order. A `sw.js` fetch is not the page's — `setOffline` does not stop
+// the browser's own update check — so the navigation below asks for it again
+// while the lever still says `flakydeploy01`, and the install that starts then
+// is still fetching its 117 assets when the asset is unblocked further down.
+// It then *succeeds*, as a build nothing ever deployed, and its cache becomes
+// the newest other one: `activate` hands it to every open page as the build
+// they must be running and deletes the cache they really are on. Five
+// assertions in three sections went red for it, none of them about this.
+swRevision = null;
+// And the asset stays blocked until nothing is left installing, so an install
+// already in flight can only end the way this section says it does.
+await page.waitForFunction(async () => {
+  const reg = await navigator.serviceWorker.getRegistration();
+  return !reg?.installing;
+}, null, { timeout: PATIENCE });
+blocked.delete(ASSET_TO_DROP);
+
 // The worker activates the moment it installs, and activating is what deletes
 // the caches it doesn't need — so a hole here would show on the very next launch.
 await page.close();
@@ -169,8 +215,6 @@ await tap("still loads offline on the next launch", () => openGroupsList(page, b
 //   that build's kept cache) until it reaches the list.
 console.log("\nupdating:");
 await ctx.setOffline(false);
-blocked.delete(ASSET_TO_DROP);
-swRevision = null;
 const oldShell = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
 
 const mark = (p) => p.evaluate(() => { window.__beforeTheUpdate = true; });
@@ -184,7 +228,7 @@ const resume = (p) => p.evaluate(() => {
 });
 const reloaded = async (p) => {
   try {
-    await p.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: 10000 });
+    await p.waitForFunction(() => !window.__beforeTheUpdate, null, { timeout: PATIENCE });
     return true;
   } catch { return false; }
 };
@@ -224,7 +268,7 @@ await page.bringToFront();
 // any earlier would already be the build the three pages above booted on.
 swRevision = "gooddeploy01";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
-await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: 20000 }), ".card");
+await tap("a page in use is offered the new build", () => reload.waitFor({ state: "visible", timeout: PATIENCE }), ".card");
 report(new URL(doorstep.url()).pathname === "/" && await reloaded(doorstep),
   "an untouched page on the groups list reloads onto it by itself", doorstep.url().replace(base, ""));
 report(await page.evaluate(() => !!window.__beforeTheUpdate), "a page in use is not reloaded under the person");
@@ -239,7 +283,15 @@ const legacyAnswer = await straggler.evaluate(() =>
 report(legacyAnswer === "OLD", "a page still on the old build is served from that build's cache", legacyAnswer);
 await straggler.locator("a[href*='tab=balances']").first().click().catch(() => {});
 try {
-  await straggler.waitForSelector(".bottomnav a", { timeout: 8000 });
+  // Which tab is in the address, so the address is what says the tap landed.
+  // Read before it changes — and a `waitForSelector` alone reads it before it
+  // changes, since both tabs draw the same nav — every step after this one is
+  // taken on a page that is still arriving: the walk back to the list then
+  // spent both its taps going sideways and the page was still on a group when
+  // the resume it was all for came.
+  await straggler.waitForURL((url) => url.searchParams.get("tab") === "balances",
+    { timeout: PATIENCE });
+  await straggler.waitForSelector(".bottomnav a", { timeout: PATIENCE });
   const kept = new URL(straggler.url()).searchParams.get("id") === g;
   report(kept && await straggler.locator(".bottomnav a").count() === 2,
     "and still knows which group it is on", straggler.url().replace(base, ""));
@@ -252,18 +304,24 @@ report(await straggler.evaluate(() => !!window.__beforeTheUpdate),
 
 // The front door is. Walked to in-app — a `goto` would be a document load, and
 // would take the new build by itself and prove nothing.
-for (let i = 0; i < 2 && new URL(straggler.url()).pathname !== "/"; i++) {
+// Two taps, because back from balances is the ledger and only the ledger
+// leaves the group (app/g/page.tsx) — each waited out by the address it lands
+// on rather than by a pause that was long enough on one machine.
+for (const landed of [
+  (url) => url.pathname === "/g" && !url.searchParams.get("tab"),
+  (url) => url.pathname === "/",
+]) {
   await straggler.locator(".topbar a.iconbtn").first().click().catch(() => {});
-  await straggler.waitForTimeout(400);
+  await straggler.waitForURL(landed, { timeout: PATIENCE }).catch(() => {});
 }
 await resume(straggler);
 report(await reloaded(straggler), "and reloads onto the new build once it reaches the list",
   straggler.url().replace(base, ""));
 
 try {
-  await Promise.all([page.waitForNavigation({ timeout: 15000 }), reload.click()]);
+  await Promise.all([page.waitForNavigation({ timeout: PATIENCE }), reload.click()]);
   await openGroupsList(page, base);
-  await page.waitForSelector(".rows a.row", { timeout: 8000 });
+  await page.waitForSelector(".rows a.row", { timeout: PATIENCE });
   report(true, "tapping the offer reloads onto the new build");
 } catch {
   report(false, "tapping the offer reloads onto the new build", `at ${page.url().replace(base, "")}`);
@@ -311,14 +369,15 @@ await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => 
 // it takes this build the moment it lands, and an evaluate on a page that is
 // navigating throws.
 const after = await (async () => {
+  const deadline = Date.now() + PATIENCE;
   let last = "";
-  for (let i = 0; i < 24; i++) {
+  do {
     const now = (await fresh.evaluate(() => caches.keys()))
       .filter((k) => k.startsWith("bida-shell-")).sort().join(",");
     if (now === last && now.includes(`bida-shell-${swRevision}`)) break;
     last = now;
     await fresh.waitForTimeout(500);
-  }
+  } while (Date.now() < deadline);
   return last ? last.split(",") : [];
 })();
 report(after.includes(oldShell), "the cache of the page two builds back is kept", after.join(", "));
@@ -331,7 +390,8 @@ const stillOld = await fresh.evaluate(() =>
 report(stillOld === "OLD", "that page is still served its own build", stillOld);
 await fresh.locator("a[href*='tab=balances']").first().click().catch(() => {});
 try {
-  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  await fresh.waitForURL((url) => url.searchParams.get("tab") === "balances", { timeout: PATIENCE });
+  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
   report(new URL(fresh.url()).searchParams.get("id") === g && await fresh.locator(".bottomnav a").count() === 2,
     "and can still draw a screen it taps to", fresh.url().replace(base, ""));
 } catch {
@@ -363,7 +423,9 @@ report(refused === "refused", "a payload it cannot be served is refused, not ans
 // And none of it must be felt: the app still navigates as it did.
 await fresh.locator(".bottomnav a").first().click().catch(() => {});
 try {
-  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  // The ledger tab, tapped from balances: again the address is what lands.
+  await fresh.waitForURL((url) => !url.searchParams.get("tab"), { timeout: PATIENCE });
+  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
   const kept = new URL(fresh.url()).searchParams.get("id") === g;
   report(kept && await fresh.locator(".keyless").count() === 0,
     "and a tap still lands on the group, not on \"missing its password\"", fresh.url().replace(base, ""));
@@ -378,9 +440,12 @@ try {
 // since every back arrow in the app is a path (lib/nav.ts) and `/g.txt` is not
 // one. Driven directly, because a navigation is the one request `fetch` cannot
 // make.
-await fresh.goto(`${base}/g.txt?id=${g}&_rsc=probe`);
 try {
-  await fresh.waitForSelector(".bottomnav a", { timeout: 8000 });
+  // Inside the try: this navigation goes through the worker's redirect and on
+  // into the route, and a slow one taking the whole check out with a stack
+  // trace loses every assertion above it as well as this one.
+  await fresh.goto(`${base}/g.txt?id=${g}&_rsc=probe`);
+  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
   report(fresh.url() === `${base}/g?id=${g}` && await fresh.locator(".keyless").count() === 0,
     "and a navigation to a payload lands on the group, at its own address",
     fresh.url().replace(base, ""));
@@ -393,6 +458,11 @@ await page.bringToFront();
 await straggler.close();
 await fresh.close();
 // And the point of all of it: the build it just took still works with no network.
+// `page` is untouched on the front door, so the deploy above reloads it under
+// us — and a network cut while that load is in flight is a blank screen this
+// check would report as a build that cannot paint itself offline. So wait for
+// it to be standing on the list again before pulling the plug.
+await page.waitForSelector(".rows a.row", { timeout: PATIENCE });
 await ctx.setOffline(true);
 await tap("the new build loads offline too", () => openGroupsList(page, base), ".rows a.row");
 

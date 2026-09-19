@@ -15,7 +15,7 @@
  * middle.
  */
 import {
-  ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, reporter,
+  ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
 } from "./lib/harness.mjs";
 
 ensureBuild();
@@ -91,7 +91,7 @@ const manifestOf = (page) => page.evaluate(async () => {
  * whole check out with a stack trace instead.
  */
 const blobManifest = (page) =>
-  page.waitForSelector('link[rel="manifest"][href^="blob:"]', { state: "attached", timeout: 8000 })
+  page.waitForSelector('link[rel="manifest"][href^="blob:"]', { state: "attached", timeout: PATIENCE })
     .then(() => manifestOf(page), () => ({ count: 0, href: null, json: null }));
 
 // ---- a group, and the link that invites someone to it --------------------
@@ -109,14 +109,14 @@ const tabPage = await tab.newPage();
 await tabPage.goto(`${base}/join${fragment}`);
 // No sync API stands behind this check, so the join waits here for ever — and
 // that is the point: an iOS tab is no longer stopped to be asked to install.
-await joined(tabPage).waitFor({ timeout: 8000 });
+await joined(tabPage).waitFor({ timeout: PATIENCE });
 report(await tabPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0,
   "an iOS tab joins without being asked to install first");
 
 // The key is saved behind that line; the carry the tutorial's head is built
 // from follows it into localStorage.
 await tabPage.waitForFunction((hash) => localStorage.getItem("bida.carry") === hash, fragment.slice(1),
-  { timeout: 8000 }).catch(() => {});
+  { timeout: PATIENCE }).catch(() => {});
 await tabPage.goto(`${base}/install${fragment}`);
 
 // On a real iPhone the icon opened at `/` though a swap had happened 41ms in:
@@ -203,10 +203,10 @@ const ski = await inviteTo("Ski", "Eve", "Fen");
 
 await openGroupsList(heldPage, base);
 const banner = heldPage.getByRole("button", { name: "Add bida to home screen" });
-const warned = await banner.first().waitFor({ timeout: 8000 }).then(() => true, () => false);
+const warned = await banner.first().waitFor({ timeout: PATIENCE }).then(() => true, () => false);
 report(warned, "the groups list warns an iOS tab it may forget its groups");
 await banner.first().click();
-await heldPage.waitForURL(/\/install/, { timeout: 8000 });
+await heldPage.waitForURL(/\/install/, { timeout: PATIENCE });
 // Each group with the member this tab claimed in it, so the icon's app
 // doesn't ask who you are again.
 const me = await namesHeld(heldPage);
@@ -265,15 +265,18 @@ await blobManifest(heldPage);
 const heldLoads = countLoads(heldPage);
 await stampStale(heldPage);
 await heldPage.getByText("Flat").first().click();
-await heldPage.waitForURL((url) => url.pathname === "/g", { timeout: 8000 }).catch(() => {});
-const refreshed = await heldPage.waitForFunction(() => !window.__samePage, null, { timeout: 8000 })
+await heldPage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE }).catch(() => {});
+const refreshed = await heldPage.waitForFunction(() => !window.__samePage, null, { timeout: PATIENCE })
   .then(() => true, () => false);
 const rebuilt = await blobManifest(heldPage);
 const rebuiltStart = rebuilt.json?.start_url ?? "";
 report(refreshed && heldLoads.length === 1 && rebuiltStart.startsWith(`${base}/install#`)
   && sameGroups(new URL(rebuiltStart).hash.slice(1), carried),
   "a page whose head predates a change reloads, and its manifest carries it",
-  `${heldLoads.length} loads, start_url: ${rebuiltStart}`);
+  // The URLs, not the count: "2 loads" is the same line whether the second one
+  // was a second reload or a screen this check never meant to visit.
+  `${heldLoads.length} loads${heldLoads.map((u) => `\n        ${u.replace(base, "")}`).join("")}`
+  + `\n        start_url: ${rebuiltStart}`);
 await heldPage.evaluate(() => { window.__afterTheReload = true; });
 await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
@@ -295,7 +298,7 @@ await stampStale(coldPage);
 await coldPage.getByText("Cold").first().click();
 // The screen it lands on *is* one a reload is allowed on — without this the
 // assertion would pass on a page that simply never went anywhere.
-const onLedger = await coldPage.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
+const onLedger = await coldPage.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE })
   .then(() => true, () => false);
 await coldPage.waitForTimeout(1500);
 report(onLedger && coldLoads.length === 0 && await coldPage.evaluate(() => !!window.__samePage),
@@ -306,7 +309,7 @@ report(onLedger && coldLoads.length === 0 && await coldPage.evaluate(() => !!win
 // Folded on every visit, so it is the title that shows, and the button behind it.
 await heldPage.goto(`${base}/g?id=${flatId}`);
 const fold = heldPage.getByRole("button", { name: "Keep your groups on this phone" });
-const folded = await fold.waitFor({ timeout: 8000 }).then(() => true, () => false)
+const folded = await fold.waitFor({ timeout: PATIENCE }).then(() => true, () => false)
   && await heldPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0;
 if (folded) await fold.click();
 report(folded && await heldPage.getByRole("button", { name: "Add bida to home screen" })
@@ -317,7 +320,7 @@ report(folded && await heldPage.getByRole("button", { name: "Add bida to home sc
 // Someone who already has the app can't be told apart from a tab, so the claim
 // list offers them the link to paste there, with its own copy button.
 await heldPage.goto(`${base}/g/claim?id=${flatId}`);
-const offered = await heldPage.getByText("Have the app?").waitFor({ timeout: 8000 }).then(() => true, () => false);
+const offered = await heldPage.getByText("Have the app?").waitFor({ timeout: PATIENCE }).then(() => true, () => false);
 const boxed = await heldPage.locator(".inapp .linkbox .selectable").textContent().catch(() => null);
 // Pinned under the scroll: a long list of people must not carry it off screen.
 const pinned = await heldPage.locator(".inappdock .inapp").evaluate((card) =>
@@ -373,13 +376,13 @@ const freshPage = await fresh.newPage();
 await asInstalledApp(freshPage);
 await freshPage.goto(`${base}/install${fragment}`);
 const handed = await freshPage.waitForURL(
-  (url) => url.pathname === "/join" && url.hash === fragment, { timeout: 8000 },
+  (url) => url.pathname === "/join" && url.hash === fragment, { timeout: PATIENCE },
 ).then(() => true, () => false);
 report(handed, "launching the icon opens the invite it was added for", freshPage.url());
 // The secret is written by the join screen, not by the launch — wait for the
 // line that only draws once it has been (and stays, since no other phone is
 // pushing to this server), or the launch below has nothing to have held.
-await joined(freshPage).waitFor({ timeout: 8000 });
+await joined(freshPage).waitFor({ timeout: PATIENCE });
 
 // ---- and every launch after ----------------------------------------------
 // The fragment has done its work — the key is on this phone now — so the app
@@ -406,12 +409,20 @@ report(new URL(freshPage.url()).pathname !== "/install",
 const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members: ["Bo"] });
 // Which group this phone was last in is written by an effect on the ledger, so
 // relaunching the moment the URL changes races it — and the launch then finds
-// nowhere to go, which is a pass for the wrong reason half the time.
+// nowhere to go, which is a pass for the wrong reason half the time. So wait
+// for the write itself: a pause long enough on one machine is exactly the kind
+// of race this comment is about.
 await freshPage.waitForSelector(".bottomnav a");
-await freshPage.waitForTimeout(400);
+await freshPage.waitForFunction((id) => new Promise((resolve) => {
+  const req = indexedDB.open("hajsik");
+  req.onsuccess = () => {
+    const get = req.result.transaction("device").objectStore("device").get("device");
+    get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
+  };
+}), made, { timeout: PATIENCE });
 await freshPage.goto(`${base}/install${fragment}`);
 const reopened = await freshPage.waitForURL(
-  (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: 8000 },
+  (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: PATIENCE },
 ).then(() => true, () => false);
 report(reopened, "and reopens the group this phone was last in, as any other launch does",
   freshPage.url());
@@ -423,7 +434,7 @@ const many = await iphone();
 const manyPage = await many.newPage();
 await asInstalledApp(manyPage);
 await manyPage.goto(`${base}/install#${carried}`);
-const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: 8000 })
+const landed = await manyPage.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE })
   .then(() => true, () => false);
 report(landed, "launching an icon added with several groups lands on the list", manyPage.url());
 report((await secretsHeld(manyPage)).sort().join(" ") === [ski, flat].sort().join(" "),
@@ -438,7 +449,7 @@ report(Object.keys(me).every((id) => claimed[id] === me[id]),
 // there are none: somebody who installed bida to *keep* their groups, told on
 // the icon's first open that it has no groups yet, has been shown the app
 // losing them.
-report(await manyPage.getByText("Getting your groups").waitFor({ timeout: 8000 })
+report(await manyPage.getByText("Getting your groups").waitFor({ timeout: PATIENCE })
   .then(() => true, () => false)
   && await manyPage.getByText("No groups yet").count() === 0,
   "and waits for them rather than calling itself empty");
@@ -451,7 +462,7 @@ await asInstalledApp(onePage);
 const oneVisited = [];
 onePage.on("framenavigated", (frame) => { if (!frame.parentFrame()) oneVisited.push(frame.url()); });
 await onePage.goto(`${base}/install#${named(flat)}`);
-await onePage.waitForURL((url) => url.pathname === "/" || url.pathname === "/g", { timeout: 8000 })
+await onePage.waitForURL((url) => url.pathname === "/" || url.pathname === "/g", { timeout: PATIENCE })
   .catch(() => {});
 report(!oneVisited.some((url) => new URL(url).pathname === "/join")
   && (await namesHeld(onePage))[flatId] === me[flatId],
@@ -469,7 +480,7 @@ const webview = await newPhone(browser, { userAgent: IN_APP_UA, permissions: ["c
 const webviewPage = await webview.newPage();
 await webviewPage.goto(`${base}/join${fragment}`);
 const refused = await webviewPage.getByText("Open bida in your browser")
-  .waitFor({ timeout: 8000 }).then(() => true, () => false);
+  .waitFor({ timeout: PATIENCE }).then(() => true, () => false);
 report(refused && await joined(webviewPage).count() === 0,
   "an in-app browser is turned round rather than joined in");
 report(await webviewPage.getByText("Instagram").count() > 0,

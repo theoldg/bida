@@ -17,7 +17,7 @@
  * missing, and clearing has to take the group off the phone and leave the
  * address able to bring it back.
  */
-import { ensureBuild, serveExport, launch, newPhone, reporter } from "./lib/harness.mjs";
+import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter } from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
 ensureBuild();
@@ -74,7 +74,7 @@ const menuItem = (text) => page.locator(".rowmenu-item").filter({ hasText: text 
 
 // ---- the address is the whole door -------------------------------------
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 const groupId = new URL(page.url()).searchParams.get("id");
 report(groupId === "demodemodemo", "/demo lands in the demo group's ledger", groupId);
 // No claim gate on the way in: the device is one of the four, which is what
@@ -119,12 +119,12 @@ await page.goto(`${base}/g/scan?id=${groupId}`);
 await page.waitForFunction(() => {
   const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Upload"));
   return btn && !btn.disabled;
-}, null, { timeout: 8000 }).catch(() => {});
+}, null, { timeout: PATIENCE }).catch(() => {});
 report(!await page.getByRole("button", { name: "Upload" }).isDisabled(),
   "the scan is offered in the demo, not greyed out for want of a key");
 await page.locator('input[type=file]').last()
   .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
-await page.waitForURL(/\/g\/entry\/edit/, { timeout: 20000 });
+await page.waitForURL(/\/g\/entry\/edit/, { timeout: PATIENCE });
 await page.waitForSelector('input[aria-label="What"]');
 const what = await page.locator('input[aria-label="What"]').inputValue();
 const amount = await page.locator('input[aria-label^="Amount"]').inputValue();
@@ -161,8 +161,10 @@ await page.getByRole("button", { name: "Close" }).click();
 await openMenu();
 await menuItem("Clear the demo").click();
 await page.getByRole("button", { name: "Clear the demo" }).click();
-await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
-await page.waitForTimeout(400);
+await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
+// The list, drawn: asserting an absence over a screen that has not read Dexie
+// yet is a pass for the wrong reason, and on a slow machine that is all it is.
+await page.waitForFunction(() => !document.querySelector(".skelrow"), null, { timeout: PATIENCE });
 report(await page.getByText("Passage to Alderaan").count() === 0,
   "clearing takes it off the phone, not merely off the list");
 
@@ -170,7 +172,7 @@ report(await page.getByText("Passage to Alderaan").count() === 0,
 // same group again rather than a second one beside it.
 const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 await page.waitForSelector(".rows .row");
 report(new URL(page.url()).searchParams.get("id") === "demodemodemo"
   && await page.locator(".rows .row").count() === rows,
@@ -195,7 +197,7 @@ report(await page.getByText("Still reading this phone").count() === 0,
 const before = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await stampAs(page, "some-older-build");
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 await page.waitForSelector(".rows .row");
 const after = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 const kept = new Set(before.map((op) => op.id));
@@ -207,7 +209,7 @@ report(await page.locator(".rows .row").count() === rows && (await keysHeld(page
 // ...and only once: the stamp it just stored makes the next visit ordinary.
 const third = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await page.goto(`${base}/demo`);
-await page.waitForURL(/\/g\?id=/, { timeout: 12000 });
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 await page.waitForSelector(".rows .row");
 const fourth = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 report(fourth.map((op) => op.id).sort().join() === third.map((op) => op.id).sort().join(),

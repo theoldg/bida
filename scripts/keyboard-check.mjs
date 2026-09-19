@@ -19,7 +19,8 @@
  * that into the fix itself. The assertion is what a thumb cares about: the
  * field *and* the act still above the top of the keys.
  */
-import { ensureBuild, serveExport, launch, newPhone, newGroup, reporter } from "./lib/harness.mjs";
+import { ensureBuild, serveExport, launch, newPhone, newGroup, PATIENCE, reporter, settle }
+  from "./lib/harness.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -54,10 +55,27 @@ async function openKeyboard() {
     });
     view.dispatchEvent(new Event("resize"));
   }, KB);
-  // The app answers a resize two frames later, on purpose: the scroll has to
-  // read the padding that measurement pays for, not the one before it.
-  await page.waitForTimeout(250);
+  // The app answers a resize a frame later and scrolls the frame after that,
+  // on purpose: the scroll has to read the padding that measurement pays for,
+  // not the one before it (components/viewport.tsx). So wait for the measure
+  // to have landed — `--kb` is the app saying there is a keyboard — and then
+  // for the scroll it starts to stop moving. A pause in place of either was a
+  // measurement taken before the app had answered, which reads as an act
+  // behind the keys on a machine that is merely busy.
+  await page.waitForFunction(
+    () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb")) > 0,
+    null, { timeout: PATIENCE },
+  );
+  await scrollSettled();
 }
+
+/** The scroller, two frames in a row without moving. */
+const scrollSettled = () => page.waitForFunction(() => new Promise((ok) => {
+  const scroll = document.querySelector(".scroll, .dialog");
+  if (!scroll) return ok(true);
+  const at = scroll.scrollTop;
+  requestAnimationFrame(() => requestAnimationFrame(() => ok(scroll.scrollTop === at)));
+}), null, { timeout: PATIENCE });
 
 /** Put it away again, for a screen reached without a reload. */
 async function closeKeyboard() {
@@ -66,7 +84,11 @@ async function closeKeyboard() {
     delete window.visualViewport.height;
     window.visualViewport.dispatchEvent(new Event("resize"));
   });
-  await page.waitForTimeout(250);
+  await page.waitForFunction(
+    () => !(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb")) > 0),
+    null, { timeout: PATIENCE },
+  );
+  await scrollSettled();
 }
 
 /**
@@ -109,7 +131,7 @@ await clears("/new — Create is above the keys", "button.btn-lg");
 // The row is a box while a name sits unfiled in it, and a box is the taller of
 // the two states: what clears the keys empty has to clear them drawn.
 await field().fill("Di");
-await page.waitForTimeout(150);
+await settle(page, 150);
 await openKeyboard();
 await clears("/new — and with a name still in the row", "button.btn-lg");
 
@@ -117,7 +139,8 @@ await clears("/new — and with a name still in the row", "button.btn-lg");
 await field().fill("");
 await closeKeyboard();
 await page.getByRole("button", { name: "Create" }).click();
-await page.waitForTimeout(250);
+// The screen this lands on, rather than a moment long enough to have reached it.
+await page.waitForSelector(".rows button.row");
 await openKeyboard();
 await clears("which one are you — Continue is above the keys", ".pad .btn");
 

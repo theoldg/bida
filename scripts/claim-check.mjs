@@ -22,7 +22,7 @@
  * it, nothing may ask again — not the invite link opened a second time, and
  * not the app being launched.
  */
-import { ensureBuild, serveExport, launch, newPhone, reporter } from "./lib/harness.mjs";
+import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, settle } from "./lib/harness.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -47,11 +47,22 @@ async function press(button) {
   const box = await button.boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(150);
+  await settle(page, 150);
   await page.mouse.up();
 }
 
-const arrived = () => page.waitForURL(/\/g\?id=/, { timeout: 8000 }).then(() => true, () => false);
+const arrived = () => page.waitForURL(/\/g\?id=/, { timeout: PATIENCE }).then(() => true, () => false);
+
+/**
+ * The refusal's bloom, gone.
+ *
+ * Every "and it comes back when the flash settles" below is about an animation
+ * the app times itself, and the pause that used to stand in for it was a
+ * number long enough on one machine. The class going is the event; waiting for
+ * it is also what the assertion after each of these means by "settles".
+ */
+const flashOver = () => page.waitForFunction(
+  () => document.querySelectorAll("[class*=flash]").length === 0, null, { timeout: PATIENCE });
 const members = () => page.locator('[aria-label^="Remove "]').count();
 
 // ---- the list you type -------------------------------------------------
@@ -70,7 +81,7 @@ report(await page.locator(".rows button.row").count() === 0
   "and pressing it with nobody on the list refuses, the empty field blooming");
 report(await page.getByRole("button", { name: "Create" }).isDisabled(),
   "spent while that refusal is on screen");
-await page.waitForTimeout(800);
+await flashOver();
 report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and comes back when the flash settles");
 
@@ -81,18 +92,18 @@ await press(page.getByRole("button", { name: "Create" }));
 report(await page.locator(".addrow[class*=flash]").count() === 1,
   "a refusal over an empty list blooms the placeholder again");
 await field().type("T");
-await page.waitForTimeout(60);
+await settle(page, 60);
 report(await page.locator(".addrow[class*=flash]").count() === 0
   && !await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and typing ends it on the spot, Create with it — no waiting the flash out");
 await field().fill("");
-await page.waitForTimeout(80);
+await settle(page, 80);
 
 // The plus is never dead, and on an empty row it does not refuse either: the
 // caret is the answer, and the next press of it files what was typed.
 report(!await plus().isDisabled(), "the plus is tappable on an empty add row");
 await press(plus());
-await page.waitForTimeout(80);
+await settle(page, 80);
 report(await members() === 0
   && await page.locator("[class*=flash]").count() === 0
   && await page.evaluate(() => document.activeElement?.className.includes("addname")),
@@ -100,7 +111,7 @@ report(await members() === 0
 
 // Enter is the keyboard's press of that same plus.
 await field().fill("Theo");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report(await page.locator(".addrow.editing").count() === 1,
   "a name being typed puts the row in a box: it is not on the list yet");
 await page.keyboard.press("Enter");
@@ -109,7 +120,7 @@ report(await page.locator(".addrow.editing").count() === 0, "filing it takes the
 
 // The finger's route: press the plus itself.
 await field().fill("Marie");
-await page.waitForTimeout(80);
+await settle(page, 80);
 await press(plus());
 await page.waitForFunction(() => document.querySelectorAll('[aria-label^="Remove "]').length === 2);
 report(await field().inputValue() === "", "pressing the plus files the name and empties the field");
@@ -117,14 +128,14 @@ report(await field().inputValue() === "", "pressing the plus files the name and 
 // The whole point of the change: leaving the field files nothing.
 await field().fill("Sam");
 await page.locator("#g-name").click();
-await page.waitForTimeout(150);
+await settle(page, 150);
 report(await members() === 2 && await field().inputValue() === "Sam",
   "leaving the field files nothing — the name waits in the box");
 
 // A name the list already holds cannot be filed at all: the plus goes dead
 // rather than warning after the press.
 await field().fill("Marie");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report(await page.locator(".addwarn").count() === 1 && !await plus().isDisabled(),
   "a name already on the list says why, the plus still tappable");
 await press(plus());
@@ -132,18 +143,18 @@ report(await members() === 2
   && await page.locator(".addrow[class*=flash]").count() === 1
   && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
   "and pressing it over that name blooms the name, filing no second Marie");
-await page.waitForTimeout(800);
+await flashOver();
 report(await field().inputValue() === "Marie",
   "a refused press leaves the name where it was typed");
 await field().fill("");
-await page.waitForTimeout(80);
+await settle(page, 80);
 
 // Create is the button that leaves this screen, and everything on it is state:
 // a name still in the row when the group is written is a person who was never
 // in it. So it refuses rather than acting on the list without them — the plus
 // blooms and Create is spent for the length of that flash.
 await field().fill("Sam");
-await page.waitForTimeout(80);
+await settle(page, 80);
 await press(page.getByRole("button", { name: "Create" }));
 report(await page.locator(".rows button.row").count() === 0
   && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1
@@ -151,11 +162,11 @@ report(await page.locator(".rows button.row").count() === 0
   "Create over an unfiled name is refused, and the plus blooms — not the field");
 report(await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and Create is spent while the refusal is on screen");
-await page.waitForTimeout(800);
+await flashOver();
 report(!await page.getByRole("button", { name: "Create" }).isDisabled(),
   "and comes back when the flash settles");
 await field().fill("");
-await page.waitForTimeout(80);
+await settle(page, 80);
 
 // ---- the question it ends on -------------------------------------------
 await page.getByRole("button", { name: "Create" }).click();
@@ -165,7 +176,7 @@ report(await page.locator(".rows button.row").count() === 2, "Create asks which 
 // Nobody is ticked and a name is being typed, and the button must ignore it:
 // it answers to the list, and this name is not on the list.
 await field().fill("Nadia");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report(await page.getByRole("button", { name: "Pick your name" }).count() === 1,
   "the button ignores a name that has only been typed");
 
@@ -199,7 +210,7 @@ report(await page.locator(".rmark svg").count() === 1, "re-opening it ticks whoe
 report(await page.getByText("Have the app?").count() === 0, "and offers no link to paste elsewhere");
 
 await field("Add your name").fill("Ola");
-await page.waitForTimeout(150);
+await settle(page, 150);
 report(await page.locator(".rmark svg").count() === 1
   && await page.getByRole("button", { name: "Continue as Nadia" }).count() === 1,
   "typing a name moves neither the tick nor the button");
@@ -254,7 +265,7 @@ report(await page.evaluate(() => {
 // and its first arrival was read as a launch — the app walked straight back
 // into the group it had just been asked to leave.
 await page.locator(".iconbtn[aria-label='Back']").first().click();
-await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
 await page.waitForTimeout(600);
 report(new URL(page.url()).pathname === "/",
   "backing out of a group joined by link stays on the list");
@@ -268,12 +279,18 @@ await page.goto(`${base}/g?id=${g}`);
 // not merely for the URL `arrived()` saw. Without this the check raced it and
 // failed about a third of the time.
 await page.waitForSelector(".bottomnav a");
-await page.waitForTimeout(400);
+await page.waitForFunction((id) => new Promise((resolve) => {
+  const req = indexedDB.open("hajsik");
+  req.onsuccess = () => {
+    const get = req.result.transaction("device").objectStore("device").get("device");
+    get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
+  };
+}), g, { timeout: PATIENCE });
 await page.goto(`${base}/`);
 report(await arrived(), "launching the app reopens the group last open");
 // Backing out of it is not a launch: the list stays put once it is asked for.
 await page.locator(".iconbtn[aria-label='Back']").first().click();
-await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
 await page.waitForTimeout(500);
 report(new URL(page.url()).pathname === "/", "and Back out of it stays on the list");
 // And the next launch honours where that left the app: leaving from the list
@@ -309,7 +326,7 @@ await press(page.getByRole("button", { name: "Upload" }));
 report(await page.locator(".addrow[class*=flash]").count() === 1
   && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
   "and pressing it with nobody on the list refuses, the empty field blooming");
-await page.waitForTimeout(800);
+await flashOver();
 
 // One person is still not enough to split a bill.
 await field().fill("Ana");
@@ -318,13 +335,13 @@ await page.waitForFunction(() => document.querySelectorAll(".rows .row").length 
 await press(page.getByRole("button", { name: "Upload" }));
 report(await page.locator(".addrow[class*=flash]").count() === 1,
   "and still refuses with only one person on the list");
-await page.waitForTimeout(800);
+await flashOver();
 
 await field().fill("Bo");
 await field().press("Enter");
 await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 3);
 await field().fill("Cy");
-await page.waitForTimeout(80);
+await settle(page, 80);
 await press(page.getByRole("button", { name: "Upload" }));
 report(new URL(page.url()).pathname === "/quick"
   && await page.locator(".addrow .iconbtn[class*=flash]").count() === 1,
@@ -333,7 +350,7 @@ report(await page.getByRole("button", { name: "Upload" }).isDisabled(),
   "and the pair is spent while the refusal is on screen");
 // Spent for the length of the flash and no longer: the retry is the same
 // control, once the screen has finished saying no.
-await page.waitForTimeout(800);
+await flashOver();
 report(!await page.getByRole("button", { name: "Upload" }).isDisabled()
   && await page.locator(".addrow .iconbtn[class*=flash]").count() === 0,
   "and it comes back when the flash settles");

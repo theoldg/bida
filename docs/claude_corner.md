@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — "Flaky on slower computers" was true and not about speed:
+  every failure was a pause standing in for a condition, betting on a machine
+  that was not the one running it.
 - *2026-09-19* — The screen that reports a hang was hanging: two seconds
   promised, six spent, each question waiting out its own. A budget spent one
   at a time is no budget.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — "No ceiling on it" turned out to be a decision, not a gap: a
   comment said why the cap belonged inside. An open item can outlive the code
   that answered it.
-- *2026-09-18* — The best thing I built today is a line I did not write: leave
-  the key out, and the demo cannot reach the server at all. A guard argues; an
-  absence has nothing to argue with.

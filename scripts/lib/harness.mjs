@@ -178,6 +178,26 @@ function freePort() {
 
 /* ---- the browser -------------------------------------------------------- */
 
+/**
+ * How long any one wait here may take before it counts as a failure.
+ *
+ * A ceiling, never a schedule: nothing waits this long on a machine that is
+ * keeping up, and a check that *reaches* it is red either way. It is
+ * playwright's own default, which these checks spent their time undercutting —
+ * 3s, 8s, 10s, each sized for a laptop running one check with nothing else on
+ * it, where `pnpm verify` runs seven chromiums at once and every one of them
+ * is then several times slower than it is alone. A navigation gets twice it,
+ * because that is the wait a loaded machine actually overruns: one that goes
+ * out through the service worker and comes back as a document load.
+ *
+ * **The rule this number is the fallback for:** a wait that gates an assertion
+ * waits for the condition, not for a duration. `waitForTimeout(400)` passes on
+ * a fast machine and reports a bug on a slow one. Reach for it only where the
+ * assertion is that something did *not* happen, which is the one case with no
+ * condition to wait for.
+ */
+export const PATIENCE = 30_000;
+
 export const launch = () => chromium.launch(EXECUTABLE ? { executablePath: EXECUTABLE } : {});
 
 /**
@@ -208,10 +228,22 @@ export async function asInstalledApp(page) {
   });
 }
 
-/** A phone: 390×844, touch, mobile. What every screen is designed against. */
-export const newPhone = (browser, opts = {}) => browser.newContext({
-  viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...opts,
-});
+/**
+ * A phone: 390×844, touch, mobile. What every screen is designed against.
+ *
+ * Every wait made through this context — a click, a `waitForSelector`, a
+ * navigation — gets `PATIENCE` rather than playwright's default, so a check
+ * that asks for no ceiling of its own still has one sized for a machine
+ * running the whole of `pnpm verify`.
+ */
+export async function newPhone(browser, opts = {}) {
+  const ctx = await browser.newContext({
+    viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...opts,
+  });
+  ctx.setDefaultTimeout(PATIENCE);
+  ctx.setDefaultNavigationTimeout(PATIENCE * 2);
+  return ctx;
+}
 
 /* ---- reporting ---------------------------------------------------------- */
 
@@ -239,6 +271,26 @@ export function reporter(page) {
 /* ---- driving the app ---------------------------------------------------- */
 
 /**
+ * Wait `ms` on the page's own clock, then two frames for what it started.
+ *
+ * `page.waitForTimeout` is node's clock, and node is idle here while the page
+ * is the thing being starved — so a pause meant to cover one of the app's own
+ * timers (a 500ms long press, a flash) can be over before that timer has run
+ * on a machine with the rest of `pnpm verify` on it. Measured inside the page,
+ * the pause and whatever it is waiting for are late by the same amount and the
+ * order between them survives. The two frames on the end are the render: a
+ * state change is not on screen until the frame after the one that made it.
+ *
+ * Only where the page stays put. A navigation destroys the context this is
+ * waiting in — which is fine where something is *expected* to happen and the
+ * caller waits for it next, and wrong as a window for proving that nothing
+ * did. Use `waitForTimeout` for those.
+ */
+export const settle = (page, ms = 0) => page.evaluate((n) => new Promise((ok) => {
+  setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(() => ok())), n);
+}), ms).catch(() => {});
+
+/**
  * Open a picker and take a row out of it. Every picker in the app is one of
  * these now, never a `<select>` (ADR-0008).
  *
@@ -248,7 +300,8 @@ export async function pick(page, opener, row) {
   await page.locator(opener).click();
   await page.waitForSelector(".dlist");
   await page.locator(".drow-pick").filter({ hasText: row }).first().click();
-  await page.waitForTimeout(120);
+  // The dialog's own closing, on its clock rather than on node's (`settle`).
+  await settle(page, 120);
 }
 
 /**
@@ -291,10 +344,19 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
 export async function openGroupsList(page, base) {
   await page.goto(`${base}/`);
   // The resume is a `replace` a tick after the load, so a URL read before it
-  // lands would say "already there" and skip the hop that is coming.
-  await page.waitForTimeout(400);
+  // lands would say "already there" and skip the hop that is coming. What says
+  // the decision has been made is the screen: `/` draws the skeleton while it
+  // is still deciding (app/page.tsx), and stops either when the list is drawn
+  // or when the replace has taken the page into the group. Waited for rather
+  // than slept through — a fixed pause here was the whole check's flakiest
+  // line, because a machine running seven of these takes longer than any
+  // number written down.
+  await page.waitForFunction(
+    () => window.location.pathname !== "/" || !document.querySelector(".skelrow"),
+    null, { timeout: PATIENCE },
+  );
   if (new URL(page.url()).pathname !== "/") {
     await page.locator(".iconbtn[aria-label='Back']").first().click();
-    await page.waitForURL((url) => url.pathname === "/", { timeout: 8000 });
+    await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
   }
 }

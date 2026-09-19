@@ -23,9 +23,32 @@
  * And section 4 is the other side of that third one: what this copy does so
  * that it is never the copy holding it.
  */
-import { ensureBuild, launch, newPhone, newGroup, openGroupsList, reporter, serveExport } from "./lib/harness.mjs";
+import { ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, reporter, serveExport }
+  from "./lib/harness.mjs";
 
 ensureBuild();
+
+/**
+ * The /diag report, once it has been built rather than while it is being built.
+ *
+ * The screen draws `Reading…` and replaces it when `collect()` returns, and on
+ * the phone this check is about that costs one patience window per question it
+ * asks the database — several seconds deep, before a machine running the rest
+ * of `pnpm verify` beside it is taken into account. Read after a fixed pause,
+ * the placeholder came back and every assertion about the report failed on an
+ * app that was working. Its last line is the tail of the timeline, so that is
+ * what says the report is whole; a report that never comes is returned as
+ * whatever is on screen, so the assertion below says so rather than a timeout
+ * taking the whole check out.
+ */
+async function diagReport(page) {
+  await page.waitForSelector(".diag");
+  await page.waitForFunction(
+    () => (document.querySelector(".diag")?.textContent ?? "").includes("---- this page"),
+    null, { timeout: PATIENCE },
+  ).catch(() => {});
+  return (await page.locator(".diag").textContent()) ?? "";
+}
 
 const { base, close } = await serveExport();
 const browser = await launch();
@@ -54,9 +77,9 @@ const { report, finish } = reporter();
 
   // Two probes at 6s each (lib/db/live.ts), then the notice stands.
   const notice = page.locator(".stall");
-  const said = await notice.waitFor({ timeout: 20000 }).then(() => true, () => false);
+  const said = await notice.waitFor({ timeout: PATIENCE }).then(() => true, () => false);
   report(said, "and says so rather than sitting there forever",
-    said ? undefined : "no notice after 20s");
+    said ? undefined : `no notice after ${PATIENCE / 1000}s`);
   report(
     said && ((await notice.textContent()) ?? "").includes("Try again"),
     "with something to press",
@@ -67,9 +90,7 @@ const { report, finish } = reporter();
   // there to report.
   await page.locator(".brand").dispatchEvent("contextmenu");
   await page.waitForURL(/\/diag/);
-  await page.waitForSelector(".diag");
-  await page.waitForTimeout(3000); // its own patience window, then it gives up
-  const shown = (await page.locator(".diag").textContent()) ?? "";
+  const shown = await diagReport(page);
   report(shown.includes("NO ANSWER"), "/diag answers even with the database wedged");
   report(shown.includes("db.open") && shown.includes("STILL RUNNING"),
     "and names what never came back",
@@ -101,7 +122,7 @@ const { report, finish } = reporter();
     req.onsuccess = req.onerror = req.onblocked = () => resolve();
   }));
 
-  await page.getByText("No groups yet").waitFor({ timeout: 8000 }).then(
+  await page.getByText("No groups yet").waitFor({ timeout: PATIENCE }).then(
     () => report(true, "closing the connection re-reads: the list empties without a reload"),
     () => report(false, "closing the connection re-reads: the list empties without a reload",
       "still showing the group that is no longer there"),
@@ -158,11 +179,12 @@ const { report, finish } = reporter();
   report(drawn, "a screen read before shows what it read while the database is held elsewhere",
     drawn ? undefined : "skeleton rows over a group this copy had already drawn");
 
-  const said = await page.locator(".stall").waitFor({ timeout: 20000 }).then(() => true, () => false);
-  report(said, "and still says the database is not answering", said ? undefined : "no notice after 20s");
+  const said = await page.locator(".stall").waitFor({ timeout: PATIENCE }).then(() => true, () => false);
+  report(said, "and still says the database is not answering",
+    said ? undefined : `no notice after ${PATIENCE / 1000}s`);
 
   await other.evaluate(() => { window.__hold = false; });
-  const cleared = await page.locator(".stall").waitFor({ state: "detached", timeout: 15000 })
+  const cleared = await page.locator(".stall").waitFor({ state: "detached", timeout: PATIENCE })
     .then(() => true, () => false);
   report(cleared, "the notice takes itself down once the other copy lets go",
     cleared ? undefined : "still stalled after the lock was released");
@@ -170,8 +192,7 @@ const { report, finish } = reporter();
   // /diag names the other copy, which is the line the next report needs.
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.goto(`${base}/diag`);
-  const copies = await page.locator(".diag").filter({ hasText: "copies:" })
-    .waitFor({ timeout: 8000 }).then(async () => (await page.locator(".diag").textContent()) ?? "", () => "");
+  const copies = await diagReport(page);
   const listed = /copies:\s+2\b/.test(copies) && copies.includes("OTHER");
   report(listed, "/diag lists the other copy",
     listed ? undefined : copies.split("\n").find((l) => l.startsWith("copies:")) ?? "no copies line");
@@ -216,13 +237,28 @@ const { report, finish } = reporter();
   }));
 
   // Being on the list is itself written down (`leftOnList`), so this is the
-  // state a background navigation has to leave exactly as it is.
+  // state a background navigation has to leave exactly as it is — and that
+  // write lands from an effect once the launch decision is spent
+  // (lib/launch.ts), which is after the list has drawn. Snapshot the row
+  // before it settles and the list's own write shows up in the next read as a
+  // move the hidden page made: this check's flakiest failure, and a lie.
+  await page.waitForFunction(() => new Promise((resolve) => {
+    const req = window.indexedDB.open("hajsik");
+    req.onsuccess = () => {
+      const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
+      get.onsuccess = () => resolve(get.result?.leftOnList === true);
+    };
+  }), null, { timeout: PATIENCE });
   const before = await deviceRow();
 
   await page.evaluate(() => window.__setHidden(true));
   // Opening a group writes `lastOpenedGroupId`. In the background it must not.
   await page.locator(".grouprow").first().click();
   await page.waitForURL(/\/g\?id=/);
+  // The one pause that stays a pause: the assertion is that nothing was
+  // written, and "nothing" has no condition to wait for. A hidden page also
+  // reads nothing (lib/db/live.ts), so the ledger it lands on is skeleton rows
+  // that will never fill — there is no drawn screen to wait for either.
   await page.waitForTimeout(2000);
   const during = await deviceRow();
   const held = during?.lastOpenedGroupId === before?.lastOpenedGroupId
@@ -240,7 +276,7 @@ const { report, finish } = reporter();
       };
     }),
     groupId,
-    { timeout: 8000 },
+    { timeout: PATIENCE },
   ).then(() => true, () => false);
   report(landed, "and writes it the moment the page is seen again",
     landed ? undefined : "the parked write never landed");
@@ -249,9 +285,7 @@ const { report, finish } = reporter();
   // names which stores answer — the line that turns "the database is held"
   // into the one write holding it.
   await page.goto(`${base}/diag`);
-  await page.waitForSelector(".diag");
-  await page.waitForTimeout(3000);
-  const shown = (await page.locator(".diag").textContent()) ?? "";
+  const shown = await diagReport(page);
   report(shown.includes("parked  device.write"), "/diag shows the write parked, not missing",
     shown.includes("parked") ? undefined : "no parked span in any kept page");
   const named = /stores:\s+all \d+ answer/.test(shown);

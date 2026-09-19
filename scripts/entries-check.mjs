@@ -11,7 +11,7 @@
  * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts —
  * `pnpm entries` builds first if it has to. ADR-0010.
  */
-import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup, openGroupsList }
+import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, pick, newGroup, openGroupsList, settle }
   from "./lib/harness.mjs";
 
 ensureBuild();
@@ -30,7 +30,7 @@ async function save(expectRows) {
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForURL(/\/g\?id=/);
   await page.waitForFunction(
-    (n) => document.querySelectorAll(".rows a.row").length >= n, expectRows, { timeout: 8000 },
+    (n) => document.querySelectorAll(".rows a.row").length >= n, expectRows, { timeout: PATIENCE },
   );
 }
 
@@ -44,7 +44,7 @@ async function saveAndList(expectRows) {
   await page.waitForURL(/\/g\/entry\?/);
   await page.goto(`${base}/g?id=${g}`);
   await page.waitForFunction(
-    (n) => document.querySelectorAll(".rows a.row").length >= n, expectRows, { timeout: 8000 },
+    (n) => document.querySelectorAll(".rows a.row").length >= n, expectRows, { timeout: PATIENCE },
   );
 }
 
@@ -57,7 +57,7 @@ const g = await newGroup(page, base, {
     await pick(page, "#g-cur", "Other");
     await page.locator(".dinput").fill("uzs");
     await page.getByRole("button", { name: "Use it" }).click();
-    await page.waitForTimeout(120);
+    await settle(page, 120);
     report((await page.locator("#g-cur").innerText()).includes("UZS"),
       "an unlisted currency is typed, not scrolled to");
     await pick(page, "#g-cur", "EUR");
@@ -93,15 +93,15 @@ report(await forward.count() === 1 && await inverse.count() === 1,
 report(await page.evaluate(() => document.activeElement?.tagName !== "INPUT"),
   "the rate dialog opens with the caret in neither field");
 await forward.fill("0.8");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report((await inverse.inputValue()) === "1.25", "typing one direction fills in the other");
 await inverse.fill("4");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report((await forward.inputValue()) === "0.25", "and it works the other way too");
 await forward.fill("0.8");
-await page.waitForTimeout(80);
+await settle(page, 80);
 await page.getByRole("button", { name: "Save" }).last().click();
-await page.waitForTimeout(200);
+await settle(page, 200);
 report(await page.locator("dialog.scrim").count() === 0, "saving the rate closes the dialog");
 // What the line says is what the entry is worth in the group's currency — the
 // rate itself is not printed on the form, only the badge that opens where it
@@ -118,7 +118,7 @@ await pick(page, '[aria-label="Currency"]', "EUR");
 report(await page.getByLabel("Set the USD rate").count() === 0,
   "picking the base currency puts the rate away");
 await pick(page, '[aria-label="Currency"]', "USD");
-await page.waitForTimeout(150);
+await settle(page, 150);
 report(await page.locator("dialog.scrim").count() === 0,
   "a currency the group already has a rate for asks nothing");
 await pick(page, '[aria-label="Currency"]', "EUR");
@@ -168,10 +168,10 @@ report((await page.locator("input.amount").inputValue()).replace(/\s/g, "") === 
   "settle-up pre-fills the transfer, income already netted off");
 const wasFrom = await page.locator(".tside .who").first().innerText();
 await page.locator(".tswap").click();
-await page.waitForTimeout(100);
+await settle(page, 100);
 report((await page.locator(".tside .who").last().innerText()) === wasFrom, "the arrow swaps the two sides");
 await page.locator(".tswap").click();
-await page.waitForTimeout(100);
+await settle(page, 100);
 // Either side opens the app's own picker, never a <select> (ADR-0008), and the
 // person already on the other side is in it as a reversal rather than an error.
 // Nothing on this form is a native picker any more — the currency and the payer
@@ -183,19 +183,19 @@ const otherSide = await page.locator(".tside .who").last().innerText();
 report((await page.locator(".drow-pick").filter({ hasText: otherSide }).innerText()).includes("swaps"),
   "the picker offers the other side as a swap");
 await page.locator(".drow-pick").filter({ hasText: otherSide }).click();
-await page.waitForTimeout(100);
+await settle(page, 100);
 report((await page.locator(".tside .who").first().innerText()) === otherSide
   && (await page.locator(".tside .who").last().innerText()) === wasFrom,
   "picking the other side swaps them");
 await page.locator(".tswap").click();
-await page.waitForTimeout(100);
+await settle(page, 100);
 // Not `save()`: settling up came from the balances tab, and saving returns you
 // to the tab you came from rather than dropping you on the ledger.
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/tab=balances/);
 await page.goto(`${base}/g?id=${g}`);
 await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3, null,
-  { timeout: 8000 });
+  { timeout: PATIENCE });
 report((await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
   "a transfer saves and lists");
 
@@ -227,7 +227,7 @@ const kinds = (await page.locator(".drow-pick .rtitle").allInnerTexts()).map((t)
 report(kinds.length === 2 && kinds[0] === "Expense" && kinds[1] === "Income",
   "editing an expense offers expense and income only");
 await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();
-await page.waitForTimeout(120);
+await settle(page, 120);
 await saveAndList(3);
 report((await page.locator(".ramt .big").allInnerTexts()).filter((t) => t.includes("+")).length === 2,
   "an expense can become an income");
@@ -250,25 +250,31 @@ async function hold(row, { ms = 700, drift = 0, contextmenuAt } = {}) {
   await touch("touchStart", x, y);
   let waited = 0;
   if (drift) {
-    await page.waitForTimeout(100);
+    await settle(page, 100);
     await touch("touchMove", x, y + drift);
     waited = 100;
   }
   if (contextmenuAt !== undefined) {
-    await page.waitForTimeout(contextmenuAt - waited);
+    await settle(page, contextmenuAt - waited);
     await page.evaluate(([px, py]) => {
       document.elementFromPoint(px, py)?.dispatchEvent(new MouseEvent("contextmenu",
         { bubbles: true, cancelable: true, clientX: px, clientY: py }));
     }, [x, y]);
     waited = contextmenuAt;
   }
-  await page.waitForTimeout(ms - waited);
+  // On the page's clock, because what this is racing is the app's own 500ms
+  // timer (HOLD_MS, components/long-press.tsx): held by node's, a 700ms hold
+  // on a machine that is starving the page can be over before the timer it is
+  // meant to outlast has run, and a held row draws no menu.
+  await settle(page, ms - waited);
   await touch("touchEnd", x, y + drift);
+  // Node's, deliberately: a short touch is a tap, and the tap navigates — this
+  // is the window that navigation lands in.
   await page.waitForTimeout(250);
 }
 const menus = () => page.locator(".rowmenu").count();
 const dinnerRow = () => page.locator("a.row").filter({ hasText: "Dinner" }).first();
-const closeMenu = async () => { await page.keyboard.press("Escape"); await page.waitForTimeout(100); };
+const closeMenu = async () => { await page.keyboard.press("Escape"); await settle(page, 100); };
 
 await hold(dinnerRow());
 report(await menus() === 1 && page.url() === ledger,
@@ -289,9 +295,9 @@ report(await menus() === 0 && page.url() === ledger,
 // ate the lifting click must not eat this one.
 await hold(dinnerRow());
 await page.locator(".rowmenu-veil").tap();
-await page.waitForTimeout(50);
+await settle(page, 50);
 await dinnerRow().tap();
-await page.waitForURL(/\/g\/entry\?/, { timeout: 3000 }).catch(() => {});
+await page.waitForURL(/\/g\/entry\?/, { timeout: PATIENCE }).catch(() => {});
 report(/\/g\/entry\?/.test(page.url()), "a tap right after a hold's menu closes still opens the row");
 await page.goto(ledger);
 await page.waitForSelector(".rows a.row");
@@ -312,7 +318,7 @@ await hold(dinnerRow());
 await closeMenu();
 await dinnerRow().focus();
 await page.keyboard.press("Enter");
-await page.waitForURL(/\/g\/entry\?/, { timeout: 3000 }).catch(() => {});
+await page.waitForURL(/\/g\/entry\?/, { timeout: PATIENCE }).catch(() => {});
 report(/\/g\/entry\?/.test(page.url()), "Enter on a row after its hold's menu closes still opens it");
 await page.goto(ledger);
 await page.waitForSelector(".rows a.row");
@@ -320,7 +326,7 @@ await page.waitForSelector(".rows a.row");
 // The same hold on the app's name is the door to /diag.
 await openGroupsList(page, base);
 await hold(page.locator(".brand"));
-await page.waitForURL(/\/diag/, { timeout: 3000 }).catch(() => {});
+await page.waitForURL(/\/diag/, { timeout: PATIENCE }).catch(() => {});
 report(/\/diag/.test(page.url()), "a hold on the app's name opens /diag");
 await page.goto(ledger);
 await page.waitForSelector(".rows a.row");
@@ -334,7 +340,7 @@ report(await page.getByRole("menuitem", { name: "Delete" }).count() === 1,
   "a long press on a transfer row offers to delete it");
 await page.getByRole("menuitem", { name: "Delete" }).click();
 await page.getByRole("button", { name: "Delete" }).click();
-await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length === 2, null, { timeout: 8000 })
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length === 2, null, { timeout: PATIENCE })
   .catch(() => {});
 report(!(await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
   "and the transfer leaves the ledger");
@@ -356,7 +362,7 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("100");
 await page.locator("#what").fill("Cab");
 await pick(page, '[aria-label="Currency"]', "USD");
-await page.waitForTimeout(150);
+await settle(page, 150);
 // The group already has a USD rate by now, so nothing is asked and the line
 // under the amount reads it back: 100 USD at 0.8 is €80.00.
 report((await page.getByLabel("Set the USD rate").innerText()).includes("80"),
@@ -364,7 +370,7 @@ report((await page.getByLabel("Set the USD rate").innerText()).includes("80"),
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/);
 await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3,
-  null, { timeout: 8000 });
+  null, { timeout: PATIENCE });
 const cabBefore = await page.locator("a.row").filter({ hasText: "Cab" })
   .locator(".ramt .big").innerText();
 report(cabBefore.includes("80"), "and banks it in the group's currency");
@@ -379,11 +385,11 @@ report((await page.locator(".rows").first().innerText()).includes("USD"),
 await page.locator("button.row").filter({ hasText: "USD" }).click();
 await page.waitForSelector('dialog[aria-label="USD rate"]');
 await page.getByRole("textbox", { name: "Rate, USD to EUR" }).fill("0.4");
-await page.waitForTimeout(100);
+await settle(page, 100);
 report(/re-values/i.test(await page.locator(".dbody").innerText()),
   "the dialog says how much of the ledger the change moves");
 await page.getByRole("button", { name: "Save" }).last().click();
-await page.waitForTimeout(300);
+await settle(page, 300);
 
 await page.goto(`${base}/g?id=${g}`);
 await page.waitForSelector(".rows a.row");
@@ -402,7 +408,7 @@ report(cabAfter.includes("40"),
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("10");
 await page.locator("#what").fill("Coffee");
-await page.waitForTimeout(120);
+await settle(page, 120);
 const rows = () => page.locator(".splitrow").allInnerTexts()
   .then((all) => all.map((t) => t.replace(/\s+/g, " ").trim()).join(" | "));
 const quoted = await rows();
@@ -411,7 +417,7 @@ report(/3\.34/.test(quoted) && /3\.33/.test(quoted),
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/);
 await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 4,
-  null, { timeout: 8000 });
+  null, { timeout: PATIENCE });
 await page.locator("a.row").filter({ hasText: "Coffee" }).click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("link", { name: "Edit" }).click();
@@ -457,12 +463,12 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await pick(page, '[aria-label="What kind of entry"]', "Transfer");
 await page.waitForSelector(".transfer");
 await page.locator("input.amount").fill("5");
-await page.waitForTimeout(120);
+await settle(page, 120);
 await pressSaveTwice();
 await page.waitForFunction(
-  (n) => document.querySelectorAll(".rows a.row").length > n, beforeDouble, { timeout: 8000 },
+  (n) => document.querySelectorAll(".rows a.row").length > n, beforeDouble, { timeout: PATIENCE },
 );
-await page.waitForTimeout(400);
+await settle(page, 400);
 report(await page.locator(".rows a.row").count() === beforeDouble + 1,
   "two presses on Save record one transfer, not two");
 
@@ -471,11 +477,11 @@ report(await page.locator(".rows a.row").count() === beforeDouble + 1,
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("6");
 await page.locator("#what").fill("Twice");
-await page.waitForTimeout(120);
+await settle(page, 120);
 await pressSaveTwice();
 await page.waitForFunction(
   () => [...document.querySelectorAll(".rows a.row")].some((r) => r.innerText.includes("Twice")),
-  null, { timeout: 8000 },
+  null, { timeout: PATIENCE },
 );
 await page.locator("a.row").filter({ hasText: "Twice" }).click();
 await page.waitForURL(/\/g\/entry\?/);
@@ -494,34 +500,34 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.waitForSelector("input.amount");
 const titleField = page.locator("#what").locator("xpath=..");
 await page.getByRole("button", { name: "Save" }).click();
-await page.waitForTimeout(120);
+await settle(page, 120);
 report(/flash-/.test(await titleField.getAttribute("class")),
   "a refused Save flashes the field that stopped it");
-await page.waitForTimeout(900);
+await settle(page, 900);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "and the flash ends, taking its class with it");
 // A number that isn't on this form has nowhere to bloom but the way to it:
 // an entry in a currency the group has no rate for flashes that badge.
 await pick(page, '[aria-label="Currency"]', "MAD");
-await page.waitForTimeout(200);
+await settle(page, 200);
 if (await page.locator("dialog.scrim").count() > 0) {
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
+  await settle(page, 200);
 }
 const rateNote = page.getByRole("button", { name: "set rate" });
 await page.getByRole("button", { name: "Save" }).click();
-await page.waitForTimeout(120);
+await settle(page, 120);
 report(/flash-/.test(await rateNote.getAttribute("class")),
   "a missing rate flashes the badge that opens where it is set");
-await page.waitForTimeout(900);
+await settle(page, 900);
 report(!/flash-/.test(await rateNote.getAttribute("class")),
   "and that flash ends too");
 await pick(page, '[aria-label="Currency"]', "EUR");
 
 await page.locator("#what").fill("Beer");
-await page.waitForTimeout(80);
+await settle(page, 80);
 await page.locator("#what").fill("");
-await page.waitForTimeout(80);
+await settle(page, 80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
 

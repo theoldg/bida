@@ -29,11 +29,13 @@ nothing to collide over, each serving the export on its own port 0, and the
 build is the one thing six of them starting at once would have raced on.
 
 **What they do share is the machine**, and seven headless browsers on a loaded
-one is how a check times out at a wait it makes in a tenth of the time alone. A
-suite whose failing check moves between runs — offline, then homescreen, then
-claim — is saying that, not that three checks are broken: run the named one on
-its own, and believe that answer. A check that fails alone is a real failure,
-every time.
+one is how a check times out at a wait it makes in a tenth of the time alone.
+A suite whose failing check moves between runs — offline, then homescreen, then
+claim — is saying that, so run the named one on its own: a check that fails
+alone is a real failure, every time. One that only fails under the other six is
+not noise either, and quieter machinery is not the fix — it is that check
+betting on how fast the machine is, and the bet is the bug (*A pause is not a
+wait*, below).
 
 `pnpm check` is the gate — nothing else stands between an edit and production,
 so the three things that gate nothing else are in it. The build, because `next
@@ -166,6 +168,13 @@ actually sync.  `pick(page,
 opener, row)` opens one of the app's own dialogs and takes a row out of it;
 every picker in the app is one ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
 
+Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
+playwright's default, and it is the ceiling these checks give their own waits
+too: `pnpm verify` runs seven browsers at once, so the machine is never the one
+a smaller number was written on. Nothing reaches that ceiling on a machine that
+is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
+for the few places that have to out-wait one of the app's own timers.
+
 ## `pnpm shots` — photograph every screen
 
 One browser launch, one PNG per route per theme, no human and no phone. Run it
@@ -292,6 +301,21 @@ Two differences that are the whole reason it is a second script:
   `{ state: "attached" }`, or the wait times out and the check reports the app
   broken. Wait at all: `waitForURL` can return before the new page has parsed
   its head, so a manifest read off the landing is a coin toss.
+- **A pause is not a wait.** `waitForTimeout(400)` is a bet on how fast the
+  machine is, and it was placed on a machine running one check with nothing
+  else on it. Wait for the thing itself — the address after a tap, the row in
+  `device` the screen writes, the class a flash takes with it — with `PATIENCE`
+  as the ceiling. Where what is being out-waited is one of the app's own
+  timers, `settle(page, ms)` puts both clocks in the same starved page. The one
+  honest pause is the window for proving that *nothing* happened, which has no
+  condition to wait for. Eight assertions across three checks were red on a
+  busy machine and green on a quiet one, and not one of them was about the app.
+- **`setOffline` is the page's network, not the browser's.** The update check
+  for `sw.js` goes out anyway — so a lever `offline-check` holds up for one
+  section (a forged revision, a blocked asset) is read by an install nobody
+  asked for, which then finishes against the server as it is *later*. Put the
+  lever back before the navigation that could ask, not when the section reads
+  as over.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.
