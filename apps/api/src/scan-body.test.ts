@@ -310,4 +310,19 @@ describe("the two media", () => {
     expect(promptOf(await wrapped("QUJD", "stas", "text")))
       .toContain("The one thing you don't touch is what they were born as");
   });
+
+  /**
+   * The one field a typed bill's reader is allowed to improve rather than
+   * transcribe — scoped tight, since nothing else in either prompt is
+   * invented.
+   */
+  it("asks a typed bill to clean up a label but never invent one", async () => {
+    const text = promptOf(await wrapped("QUJD", "kind", "text"));
+    expect(text).toContain("Fill in a word another line makes plain but this one dropped");
+    expect(text).toContain("name the brand instead of the genre");
+    expect(text).toContain("never invent a dish, a brand or a detail the line gives no reason to pick");
+
+    const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
+    expect(photo).not.toContain("name the brand instead of the genre");
+  });
 });

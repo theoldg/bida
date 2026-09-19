@@ -220,10 +220,26 @@ const TEXT_LEAD =
  * a model has no legal answer — so it is asked for whichever figure the text
  * actually gives, and `scan.ts` does the multiplying in integer minor units
  * where it can be tested.
+ *
+ * The label is the one field this prompt asks the model to *improve* rather
+ * than transcribe — a receipt already prints a real name, but "10 beef at
+ * 15" typed under a line about skewers is not a name, it's half of one. The
+ * fill-in is scoped tight (only what the surrounding line makes plain, never
+ * a detail nothing in the text suggests) for the same reason nothing else
+ * here is guessed: a wrong label is a smaller mistake than a wrong price, but
+ * it's still the model inventing something, and the bar for that stays high.
  */
 const TEXT_ITEMS =
-  "Return every separate thing that was bought as a line item, each with: label — what "
-  + "the text calls it, in its own words and its own language; labelEn — an English "
+  "Return every separate thing that was bought as a line item, each with: label — a "
+  + "short, clean name for it, the way it would read on a receipt or a shopping list: "
+  + "capitalized, singular, in the text's own language, not necessarily the exact words "
+  + "used. Fill in a word another line makes plain but this one dropped — \"3 chicken "
+  + "skewers at 13\" then \"10 beef at 15\" is \"Chicken skewer\" and \"Beef skewer\", not "
+  + "\"Beef\" — and where a generic word plainly names one well-known brand and nothing "
+  + "else, name the brand instead of the genre (\"large cola\" is \"Coca-Cola\", not "
+  + "\"Cola\"). Guess only what a person reading the same line would also assume; never "
+  + "invent a dish, a brand or a detail the line gives no reason to pick. "
+  + "labelEn — an English "
   + "translation of that label, or null if it is already English; quantity — how many, "
   + "when the text says how many (\"3 chicken\", \"2x beer\", \"beer x4\"), and null when "
   + "it does not say, never inferred from a thing being mentioned twice and never "

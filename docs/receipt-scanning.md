@@ -169,7 +169,7 @@ rules — shared prompt, one amount per line, every figure already multiplied ou
 a total required. That combination cannot read the ordinary case. "3 chicken at
 13, 10 beef at 15" gives a per-unit price and a count, and a reader forbidden to
 multiply has no legal answer for the line; the bill states no total, and one was
-demanded. Three things follow from fixing it:
+demanded. Four things follow from fixing it:
 
 - **Its own prompt** (`scan-body.ts`), about a third shorter than the
   photograph's, with no columns, no printer and no merchant in it. The two are
@@ -189,6 +189,14 @@ demanded. Three things follow from fixing it:
   `error` rather than pick an arrangement — the same refusal path as a bill
   with no prices at all, not a per-line null that `checkScan` would have to
   catch downstream.
+- **A label is a clean guess, not a transcript.** "3 chicken skewers at 13"
+  then "10 beef at 15" reads as two skewers, not chicken skewers and an
+  unqualified beef — the prompt carries a word the second line dropped but the
+  first made plain ("Chicken skewer", "Beef skewer"), and turns a generic word
+  that plainly names one well-known brand into the brand ("large cola" →
+  "Coca-Cola"). It's the one field this prompt improves rather than
+  transcribes, and the guess stays scoped to what the line itself makes
+  plain — never a dish, brand or detail nothing in the text suggests.
 
 **And almost never a title.** A photographed receipt leads with a merchant's
 name; a typed one leads with the food. Asked to name the expense anyway, a model
