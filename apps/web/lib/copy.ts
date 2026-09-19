@@ -515,7 +515,7 @@ export const copy = {
       body: "I made this alone. Tell me what you think! Bug reports, feature requests, words of encouragement, words of discouragement.",
       email: "teodor.lamort@gmail.com",
       source: "Source on GitHub",
-      sourceUrl: "https://github.com/theoldg/money",
+      sourceUrl: "https://github.com/theoldg/bida",
     },
   },
 

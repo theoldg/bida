@@ -10,7 +10,7 @@ You need a Cloudflare account, Node 22+, and pnpm.
 ## Deploy
 
 ```bash
-git clone https://github.com/theoldg/money.git bida && cd bida
+git clone https://github.com/theoldg/bida.git && cd bida
 pnpm install
 ```
 
