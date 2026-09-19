@@ -92,14 +92,14 @@ function EditEntryScreen() {
   const [askRate, setAskRate] = useState<string | null>(null);
   const [failed, setFailed] = useState<string>();
   /**
-   * A save in flight. Two taps on Save land before `router.replace` does, and
-   * both passed `ready` — which is a question about the form, not about
-   * whether one press is already spending it. That wrote a transfer twice,
-   * for twice the money, and gave an expense a second create op saying
-   * nothing. Every other button in the app that writes already holds this
-   * (`ConfirmDialog`, `RateDialog`, `NameAdder`, `WhoPicker`); this one
-   * didn't. Cleared only on failure — a save that worked is navigating away,
-   * and the press that lands during that must still find the button spent.
+   * A save in flight. **Every button that writes needs one** (`ConfirmDialog`,
+   * `RateDialog`, `NameAdder`, `WhoPicker` all hold it): two taps on Save land
+   * before `router.replace` does and both pass `ready`, which asks about the
+   * form and not about whether a press is already spending it — a transfer
+   * written twice, for twice the money.
+   *
+   * Cleared only on failure: a save that worked is navigating away, and the
+   * press that lands during that must still find the button spent.
    */
   const [saving, setSaving] = useState(false);
   // Save is always tappable; a tap while invalid flips this instead of doing
@@ -172,10 +172,10 @@ function EditEntryScreen() {
   };
 
   /**
-   * The rate dialog opens for whatever currency the draft is *in*, not for the
-   * act of picking one — because a scan picks one too, and `/g/scan` fills a
-   * draft on a screen that is already navigating here. A photographed Moroccan
-   * receipt used to arrive looking complete and wrong: it wrote MAD and kept
+   * **The rate dialog opens for whatever currency the draft is *in*, never for
+   * the act of picking one** — a scan picks one too, and `/g/scan` fills a
+   * draft on a screen that is already navigating here. Tied to the picker, a
+   * photographed Moroccan receipt arrives looking complete and wrong: MAD, at
    * whatever rate the draft had.
    *
    * The ref is what keeps it to one ask: dismissing the dialog leaves the
@@ -196,8 +196,8 @@ function EditEntryScreen() {
   // the link asked for. Coming back from the payers editor or the who-had-what
   // grid re-mounts the form with the same key, so the draft survives; arriving
   // from a different link doesn't, so a leftover draft is replaced rather than
-  // handed over (settle up used to land on whatever blank expense was left
-  // behind by an abandoned "+").
+  // handed over — settle up must not land on the blank expense an abandoned
+  // "+" left behind.
   const seedKey = entryId ?? newEntryKey(wantedKind, prefill);
 
   // Seed the draft once the group is loaded: from the entry being edited —
@@ -300,8 +300,8 @@ function EditEntryScreen() {
   }, [groupId]);
 
   const title = entryId ? copy.form.editTitle : copy.form.newTitle;
-  // No members means the draft can't be seeded — no payer to name — and this
-  // screen used to sit as a titled blank forever, with nothing saying that
+  // No members means the draft can't be seeded — no payer to name — and
+  // without this the screen is a titled blank forever, with nothing saying
   // People is where the fix is. It is reachable: a group pulled from the
   // server before its members arrive, or opened by its own link on a phone
   // that hasn't claimed anybody.
@@ -350,9 +350,9 @@ function EditEntryScreen() {
   /**
    * Change the entry's currency, and ask for its rate when the group has none.
    *
-   * This is the "introducing a new currency" moment: picking MAD in a EUR
-   * group used to leave the rate at "1", pass validation, and bank a 500 MAD
-   * dinner as €500. Now the dialog opens on the spot with today's rate ready,
+   * This is the "introducing a new currency" moment. Without it, picking MAD in
+   * a EUR group leaves the rate at "1", passes validation, and banks a 500 MAD
+   * dinner as €500 — so the dialog opens on the spot with today's rate ready,
    * and Save is held until the group has a number either way.
    */
   function pickCurrency(currency: string) {
@@ -380,12 +380,12 @@ function EditEntryScreen() {
   };
 
   /**
-   * A refusal, once what it points at can be seen — the grid's `reveal`, on
-   * the form's own scroll. With the keyboard up the form is a strip of a few
-   * rows, and Save at its foot is a long way from an empty amount at its head:
-   * a flash spent up there was a press that did nothing. So unless one of the
-   * refused controls is wholly in view, the nearest is scrolled to and only
-   * then does it bloom, off a fresh reading of what is still missing.
+   * A refusal, once what it points at can be seen — the grid's `reveal`, on the
+   * form's own scroll. With the keyboard up the form is a strip of a few rows,
+   * and Save at its foot is a long way from an empty amount at its head: a
+   * flash spent up there is a press that did nothing. Unless one of the refused
+   * controls is wholly in view, the nearest is scrolled to and only then does
+   * it bloom, off a fresh reading of what is still missing.
    */
   const refuseInView = (fields: Partial<Record<Refusable, boolean>>) => {
     const box = document.querySelector<HTMLElement>(".scroll");
@@ -575,8 +575,7 @@ function EditEntryScreen() {
           sub={group.name}
           back={{ ask: mayLeave }}
           /* The kind sits up here, on the row that already names what this
-             screen is. Below the title it was a lone chip floating over the
-             amount; the space it vacated is the amount's. */
+             screen is, rather than as a lone chip floating over the amount. */
           right={reachable.length > 1 ? (
             <button type="button" className="chip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")} {...keepsFocus}>

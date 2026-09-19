@@ -22,21 +22,19 @@ import { flashClass, NOT_REFUSED, refused, type Refusal } from "@/lib/refusal";
 /**
  * The whole group, on one screen and then one question.
  *
- * The others used to be somebody else's problem: create, land on an empty
- * ledger, find People, add four names one dialog at a time. They belong here —
- * the names are in your head at exactly this moment, and typing them is one
- * uninterrupted run down the same list they'll appear in. Nothing is written
- * until the last button, so this list is plain state, not ops.
+ * **Every member is named here**, not found later under People: the names are
+ * in your head at exactly this moment, and typing them is one uninterrupted run
+ * down the same list they'll appear in. Nothing is written until the last
+ * button, so this list is plain state, not ops.
  *
- * Your own name is on that list rather than in a field of its own. A separate
- * "You are" box asked for the same list twice and let the two disagree, and it
- * put the question at the top of the screen, before there was a list to answer
- * it with. So the screen ends the way joining a group ends — the same picker,
- * asking which of these people you are (components/who-picker.tsx) — and
- * whoever is picked is the group's first member and the actor on every op that
- * creates it — asked even of a group of one, because the answer is written into
- * every op and a screen that sometimes skips the question is a screen you
- * cannot learn.
+ * **Your own name is on that list, never in a field of its own** — a separate
+ * "You are" box asks for the same list twice, lets the two disagree, and puts
+ * the question above the list that answers it. So the screen ends the way
+ * joining a group ends: the same picker, asking which of these people you are
+ * (components/who-picker.tsx), and whoever is picked is the group's first
+ * member and the actor on every op that creates it. Asked even of a group of
+ * one — the answer is written into every op, and a screen that sometimes skips
+ * the question is a screen you cannot learn.
  */
 
 /**
@@ -77,15 +75,12 @@ export default function NewGroupPage() {
   // it on screen is leaving with work unsaved.
   const [draft, setDraft] = useState<string | null>(null);
   /**
-   * The refusal flash, per field (`lib/refusal.ts`) — same shape as the
-   * entry form's. Create is always tappable; a tap that isn't ready yet
-   * blooms whichever of the two is the reason instead of doing nothing:
-   * a blank name blooms the field itself, and a name still unfiled in the
-   * add row or nobody on the list yet blooms the plus that fixes either.
-   * Everything typed here is thrown away by the button that leaves the
-   * screen — the group is written in one go — so a name left in the add row
-   * when the group is created is a person who was never in it, same as a
-   * group with nobody on the list at all.
+   * The refusal flash, per field (`lib/refusal.ts`) — same shape as the entry
+   * form's. **Create is always tappable**: a tap that isn't ready blooms the
+   * reason (`REFUSABLE`) rather than doing nothing.
+   *
+   * The group is written in one go, so a name left in the add row when Create
+   * lands is a person who was never in it — same as an empty list.
    */
   const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
     name: NOT_REFUSED, list: NOT_REFUSED,

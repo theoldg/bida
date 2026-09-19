@@ -32,10 +32,10 @@ export function Screen({ children, className }: { children: ReactNode; className
 /**
  * A read of this phone's database that has stopped answering.
  *
- * It draws over whatever the screen was showing while it waited — which is a
- * skeleton, and which without this stood there forever looking like a slow
- * phone. `lib/db/live.ts` says why a read dies and what re-arming it means;
- * this is only the part a person sees.
+ * It draws over whatever the screen was showing while it waited — a skeleton,
+ * which without this stands there forever looking like a slow phone.
+ * `lib/db/live.ts` says why a read dies and what re-arming it means; this is
+ * only the part a person sees.
  */
 function StallNotice() {
   const { stalled, blocked } = useStalled();
@@ -120,10 +120,9 @@ export function TopBar({ title, sub, back, mid, right }: {
 }
 
 /**
- * The app's ONE navigation. There is deliberately no top tab strip to go with
- * it: `/g` used to carry both, and the two disagreed about which section you
- * were in. If a screen needs more destinations than fit here, they belong on
- * the group options screen, not in a second row.
+ * The app's ONE navigation. **No top tab strip to go with it** — two navigations
+ * disagree about which section you are in. A screen needing more destinations
+ * than fit here puts them on the group options screen, never in a second row.
  */
 export function BottomNav({ items }: {
   items: { label: string; icon: IconName; href: string; on?: boolean }[];
@@ -230,12 +229,12 @@ export function Failure({ children }: { children: ReactNode }) {
 
 /**
  * The frame, with nothing in it yet — a screen whose group hasn't come out of
- * IndexedDB. Every screen has this moment and they all drew it by hand. The
- * title is blank unless the screen knows it without the ledger.
+ * IndexedDB. Every screen has this moment, so none of them draws it by hand.
+ * The title is blank unless the screen knows it without the ledger.
  *
- * `back` has to be the parent the *loaded* screen will name, not the default:
- * it is the back button's behaviour too now (lib/back-button.ts), so a press
- * during the load would otherwise land somewhere the arrow never goes.
+ * **`back` has to be the parent the *loaded* screen will name**, not the
+ * default: it is the device back button's behaviour too (lib/back-button.ts),
+ * so a press during the load otherwise lands somewhere the arrow never goes.
  */
 export function Blank({ title = " ", back = true }: { title?: string; back?: Back }) {
   return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;
@@ -243,11 +242,10 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: Bac
 
 /**
  * A link that names a group this phone doesn't have. Every screen under `/g`
- * needs one: they all read the group out of the query string, and without this
- * a stale bookmark or a shared URL left them holding a back arrow and nothing
- * else. It always offers the way out — the group list — rather than only
- * saying no. No title: the page's own heading already says what is wrong, and
- * a bar reading "Not found" over it said less.
+ * needs one — they all read the group out of the query string, and a stale
+ * bookmark otherwise leaves them holding a back arrow and nothing else. It
+ * offers the way out (the group list) rather than only saying no, and carries
+ * no title: the page's own heading already says what is wrong.
  */
 export function BadLink() {
   return (
@@ -269,27 +267,25 @@ export function Foot({ children }: { children: ReactNode }) {
 
 /**
  * Every screen reads its group id from the query string, and Next needs the
- * hook that does that to sit behind a Suspense boundary when the page is
- * statically exported. One wrapper, used by every page, instead of nine.
+ * hook that does that to sit behind a Suspense boundary in a static export.
+ * One wrapper, used by every page.
  *
  * Errors are not its job — `Suspense` is not an error boundary, and
- * `ReadErrorBoundary` below sits in the root layout so that the two screens
- * with no query string to read are covered too.
+ * `ReadErrorBoundary` below sits in the root layout so the two screens with no
+ * query string to read are covered too.
  */
 export function QueryBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="app" />}>{children}</Suspense>;
 }
 
 /**
- * The app had no error boundary at all, and needed one: `dexie-react-hooks`
- * reports a failed read by **throwing during render**, so every Dexie error
- * that `liveQuery` does not swallow (see lib/db/live.ts for the two it does)
- * unmounted the whole tree to a white screen. Here it is a sentence and a
- * button. Wrapped around the whole app in app/layout.tsx, once.
+ * `dexie-react-hooks` reports a failed read by **throwing during render**, so
+ * every Dexie error `liveQuery` does not swallow (lib/db/live.ts has the two it
+ * does) would unmount the whole tree to a white screen. Here it is a sentence
+ * and a button. Wrapped around the whole app in app/layout.tsx, once.
  *
- * The one class in the app. React has no hook for this — catching a render
- * error requires `componentDidCatch`/`getDerivedStateFromError`, and there is
- * no function-component equivalent.
+ * The one class in the app: catching a render error requires
+ * `componentDidCatch`/`getDerivedStateFromError`, and React has no hook for it.
  */
 export class ReadErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   override state = { failed: false };

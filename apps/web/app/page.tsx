@@ -111,20 +111,17 @@ export default function GroupsPage() {
 /**
  * Starting something: a group, or a bill split with people who are not one.
  * Two different jobs, so two figures rather than one box cut in two — the
- * ledger's two FABs at a size that can carry a word as well as an icon. The
- * ghost row's dashed square is the mark for a slot in the list these left.
+ * ledger's two FABs at a size that can carry a word as well as an icon.
  *
- * "New group" is the inked one and takes the right, where a thumb rests; the
- * left is a bill split with people who are not a group, and who never become
- * one: it writes no op and leaves nothing behind
+ * "New group" is the inked one and takes the right, where a thumb rests. The
+ * left writes no op and leaves nothing behind
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
- * so it wears the scan FAB's outline instead of the ink. An iOS home-screen
- * app gets a third, outlined too, on the far left: `PasteLinkTile`.
+ * so it wears the scan FAB's outline. An iOS home-screen app gets a third,
+ * outlined too, on the far left: `PasteLinkTile`.
  *
- * Sticky (`.homepair`), not just last-in-flow: a group list long enough to
- * scroll would otherwise carry this off the bottom of the screen, the one
- * thing the two figures the ledger echoes never do. It floats over the rows
- * rather than docking above them — on its own two grounds, as the FABs do.
+ * **Sticky (`.homepair`), not merely last-in-flow**: a group list long enough
+ * to scroll otherwise carries this off the bottom, which the FABs it echoes
+ * never do. It floats over the rows rather than docking above them.
  */
 function StartTiles() {
   return (

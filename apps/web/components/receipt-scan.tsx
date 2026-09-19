@@ -63,29 +63,26 @@ export interface ReceiptScan {
 /**
  * Photograph a bill; the draft comes back filled in.
  *
- * Two screens scan: the expense form's Items tab, and `/g/scan`, which is
- * the same act reached before there is a form. They share this so the two
- * cannot drift — one downscale, one prompt, one set of words for a failure,
- * and one rule about what a scan is allowed to overwrite.
+ * Two screens scan — the expense form's Items tab and `/g/scan`, the same act
+ * reached before there is a form — and share this so they cannot drift: one
+ * downscale, one prompt, one set of words for a failure, one rule about what a
+ * scan may overwrite.
  *
- * **A scan never navigates.** It fills the draft and stops there. It used to
- * push straight to the who-had-what grid whenever the bill had lines, which
- * made every scan a commitment to itemise; the grid is one tap away on the
- * Items tab, and reaching it is the person's decision (ADR-0016). Nothing
- * else wants the screen after a scan either, which is what lets the rate
- * dialog simply open when it is needed.
+ * **A scan never navigates.** It fills the draft and stops there: pushing to
+ * the who-had-what grid whenever the bill has lines makes every scan a
+ * commitment to itemise, and the grid is one tap away on the Items tab
+ * (ADR-0016). Nothing else wants the screen after a scan either, which is what
+ * lets the rate dialog simply open when it is needed.
  *
  * `onScanned` is the one thing a caller may do afterwards — `/g/scan` uses it
- * to hand over to the form. It is skipped when the scan outlived the screen
- * that started it: a scan is a network round trip to a model and people put
- * the phone down, so the draft still takes the result, but nothing yanks
- * anybody back.
+ * to hand over to the form. **Skipped when the scan outlived the screen that
+ * started it**: a scan is a network round trip and people put the phone down,
+ * so the draft still takes the result, but nothing yanks anybody back.
  *
- * **Nor does a scan take the tab back.** Where it is *up to* lives in the
- * store beside the draft (`lib/scan/live.ts`), not in this hook's state, so
- * that neither leaving the Items tab nor leaving the form for the payers
- * editor is mistaken for the scan ending; and what it does on the way back is
- * decided the same way — see `tabAtStart` below.
+ * **Nor does a scan take the tab back.** Where it is *up to* lives in the store
+ * beside the draft (`lib/scan/live.ts`), never in this hook's state, so neither
+ * leaving the Items tab nor leaving the form for the payers editor is mistaken
+ * for the scan ending — see `tabAtStart` below.
  */
 export function useReceiptScan(
   /** The draft this fills, and the screen the scan's state belongs to. */
@@ -119,9 +116,9 @@ export function useReceiptScan(
    * One reading, whichever medium it arrived in.
    *
    * Everything below the `send` argument is the same for a photograph and for a
-   * bill somebody typed: what a scan may overwrite, which tab it may claim,
-   * and what it resets. Two copies of this were two rules about renaming an
-   * expense somebody had named.
+   * bill somebody typed: what a scan may overwrite, which tab it may claim, and
+   * what it resets. **Two copies would be two rules** about renaming an expense
+   * somebody had named.
    */
   const read = useCallback(async (
     medium: ScanMedium,
@@ -222,16 +219,15 @@ export function useReceiptScan(
   }, [read]);
 
   /**
-   * Whether the typing box is open, held **here** rather than in the control
-   * that opens it.
+   * Whether the typing box is open, held **here and never in the control that
+   * opens it**.
    *
-   * The control comes and goes under it: the Items tab draws one shape when
-   * there is no bill and another when there is, and a typed bill's own answer is
-   * what moves it from the first to the second. With the box's state in the
-   * control, it changed position in the tree the moment its own reading landed
-   * — React unmounted it and mounted a fresh one, which reopened holding what
-   * had just been read, over a bill that had just arrived. The hook sits at the
-   * screen's root, where nothing a reading does can move it.
+   * The control comes and goes: the Items tab draws one shape when there is no
+   * bill and another when there is, and a typed bill's own answer moves it from
+   * the first to the second. Held there, the box changes position in the tree
+   * the moment its own reading lands — React unmounts it and mounts a fresh one
+   * holding what was just read, over a bill that has just arrived. This hook
+   * sits at the screen's root, where nothing a reading does can move it.
    */
   const [typing, setTyping] = useState(false);
 
@@ -264,34 +260,25 @@ export function useReceiptScan(
 /**
  * The control every scanning screen wears: one button cut in three.
  *
- * Getting this bill into the form is one act, and the doors are the ways in —
- * photograph it now, pick the photograph you already took, or type it. So it is
- * one bordered box with hairlines between them (`.btn-pair`), not buttons
- * standing side by side, which is the vocabulary for separate jobs and is how
- * the pair read before: equal weight on the form, primary-above-secondary on
- * `/g/scan`, and two different words for the camera on the two screens.
+ * Getting this bill into the form is **one act**, and the doors are the ways in
+ * — photograph it now, pick the photograph you already took, or type it. So it
+ * is one bordered box with hairlines between them (`.btn-pair`), never buttons
+ * standing side by side, which is the vocabulary for separate jobs. A door
+ * outside the box would say typing is a different act, and everything after the
+ * bytes is shared (`useReceiptScan`).
  *
- * It was two doors until typing arrived, and the third joined them in the box
- * rather than beside it (2026-09-19, owner's call): a reading is a reading
- * whichever medium it starts from, and a door standing outside the box would
- * have said typing was a different act — which is exactly what it is not, since
- * everything after the bytes is shared (`useReceiptScan`).
- *
- * While a reading is in flight the doors are gone and the box holds one strip
- * saying "Reading…", because there was only ever one act in it — which is
- * also what retired `ScanSource`, a type whose whole job was knowing which of
- * two buttons should spin.
+ * While a reading is in flight the doors go and the box holds one strip saying
+ * "Reading…" — there is only ever one act in it, so nothing needs to know which
+ * door should spin.
  *
  * Three registers of the same control, so where it sits changes its size and
  * almost nothing else: `lg` where the screen exists for it, `s` on the Items
  * tab, `xs` for replacing a bill already assigned. The first two are ink
- * blocks, because each is the one act of the surface it sits on; only the chip
- * is on paper.
+ * blocks, each being the one act of its surface; only the chip is on paper.
  *
  * `flash` is the entry form's refusal: a Save tapped on an Items tab with no
- * bill behind it fills this box red and lets it settle, which is what the
- * amount and the title have always done. The box carries it, not a half —
- * neither half is the one that was wrong.
+ * bill behind it fills this box red and lets it settle, as the amount and the
+ * title do. **The box carries it, not a half** — neither half was the wrong one.
  */
 export function ScanPair({
   scan, register, flash = "", onFlashEnd, disabled: held = false, refuse,
@@ -322,8 +309,8 @@ export function ScanPair({
   // the moment that tab is picked. Keyed on `busy` as well as mount: a scan
   // spends the token, and the button coming back is the next scan's cue.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
-  // Three doors share the width now, so the glyphs give back a couple of points
-  // and the padding between them narrows. The box keeps the height it had.
+  // Three doors share the width, so the glyphs give back a couple of points and
+  // the padding between them narrows. The box keeps its height.
   const icon = register === "xs" ? 12 : 14;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   // Inverted at both sizes that act: on `/g/scan` it is the screen's one act,

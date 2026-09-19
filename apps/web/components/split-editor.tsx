@@ -17,30 +17,24 @@ import type { SplitTab } from "../lib/draft";
 /**
  * Who the money was spent on, and how much each of them owes for it.
  *
- * This used to be a screen of its own that you pushed onto the stack from the
- * expense form and popped back off with "Done". It isn't any more: an expense
- * is one thought — amount, what, who paid, who for — and pushing a route in
- * the middle of it meant a forward-and-back trip to answer a question the form
- * was already asking. It renders inline, on the form, and edits the same draft.
+ * **Rendered inline on the expense form, never as a route of its own**: an
+ * expense is one thought — amount, what, who paid, who for — and a
+ * forward-and-back trip answers a question the form was already asking.
  *
- * Three arithmetic modes, no more. "Percent" was a fourth and is gone from
- * the UI — nobody says "I'll take 33.33% of the taxi", they say "split it
- * three ways" or "I'll put in a tenner". `SplitSpec` still *has* a percent
- * variant so that expenses already recorded that way keep folding and keep
- * rendering; nothing new can be written in it, and switching mode converts
- * one away for good.
+ * Three arithmetic modes are offered. `SplitSpec` also has a `percent` variant
+ * so expenses already recorded that way keep folding and rendering, but
+ * **nothing new is written in it** and touching any tab converts one away for
+ * good — nobody says "I'll take 33.33% of the taxi".
  *
- * A fourth tab, "Items", sits beside them — scanning a bill and assigning
- * who-had-what (`/g/expense/items`, ADR-0016). What that produces is a
- * `receipt` split, a mode of its own: it divides by weight the way As parts
- * does, and that is the whole of the resemblance. This editor never writes
- * one — the bill does, and it arrives here as `receiptSplit`.
+ * A fourth tab, "Items", scans a bill and assigns who-had-what
+ * (`/g/expense/items`, ADR-0016). It produces a `receipt` split, a mode of its
+ * own: it divides by weight the way As parts does, and that is the whole of
+ * the resemblance. **This editor never writes one** — the bill does, and it
+ * arrives as `receiptSplit`.
  *
- * **Each tab holds its own answer.** This editor draws one of them and edits
- * only that one: the tab bar reports a tap and nothing else — the draft is
- * where a newly opened tab is handed a starting point (`openSplitTab`), once.
- * Receipt's split arrives separately, as `receiptSplit`, and never lands in
- * the arithmetic tabs' inputs.
+ * **Each tab holds its own answer.** This draws one and edits only that one:
+ * the tab bar reports a tap and nothing else, and the draft is where a newly
+ * opened tab is handed a starting point (`openSplitTab`), once.
  */
 
 /** The three arithmetic tabs, in the owner's order. "Items" is the fourth. */
@@ -130,19 +124,17 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
   // split of its own, whatever spec is underneath (often "equal") is not what
   // is being judged, so its verdict would be a verdict on nothing.
   const receiptMissing = showReceipt && (receipt?.missing ?? false);
-  // `splitFooter` — not `check` — decides the wording, the verdict and whether
-  // there is a footer at all: a zero total is arithmetically a satisfied split
-  // and must never be shown as one, so "ok" here means "ok to show a tick",
-  // not `check.ok`, and a split with no amount behind it says nothing.
+  // **`splitFooter`, not `check`, decides the wording and whether there is a
+  // footer at all**: a zero total is arithmetically a satisfied split and must
+  // never be shown as one, so "ok" here means "ok to show a tick", not
+  // `check.ok`.
   //
-  // A Items tab still short of its own split says nothing here either. The
-  // step left — a bill to photograph, or a bill to assign — used to be a red
-  // sentence in this footer, and it was a sentence for a state that is true of
-  // every untouched scan; a refused Save now blooms the control that takes the
-  // step, the way a missing amount blooms the amount. What the footer must
-  // still not do is fall through to the arithmetic underneath: the spec behind
-  // the tab (often "equal") is not what a save would write, so its verdict
-  // would be a verdict on nothing.
+  // An Items tab short of its own split says nothing here: the step left is
+  // pointed at by a refused Save blooming the control that takes it, the way a
+  // missing amount blooms the amount — a sentence would be one for a state true
+  // of every untouched scan. **What it must never do is fall through to the
+  // arithmetic underneath**: the spec behind the tab (often "equal") is not
+  // what a save would write, so its verdict would be a verdict on nothing.
   const foot = receiptMissing ? null
     : check !== null ? splitFooter(check, currency) : null;
   const showFooter = !totalUnknown && foot !== null
@@ -179,9 +171,9 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
 
   /**
    * The figure *is* the statement in "as amounts": whoever has one is in the
-   * split, and clearing it takes them out. There is no tick to hunt for first
-   * — a field you had to unlock on another tab is what made this mode only
-   * usable for whoever Evenly happened to have ticked.
+   * split, and clearing it takes them out. **No tick to hunt for first** — a
+   * field you must unlock on another tab makes this mode usable only for
+   * whoever Evenly happened to have ticked.
    */
   function setExact(memberId: string, minor: number) {
     if (spec.mode !== "exact") return;
@@ -236,10 +228,10 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             const on = included.has(m.id);
             // Where the right-hand side is only a read-out — the tick/plus of
             // "evenly", a legacy percentage — the toggle button swallows it, so
-            // the whole row answers to a tap. A row that looks like one target
+            // the whole row answers to a tap: a row that looks like one target
             // and responds on its left half only reads as broken, and the plus
-            // is the very thing you aim at to put someone back in. "As parts"
-            // and "as amounts" put their own controls there and keep them.
+            // is what you aim at to put someone back in. "As parts" and "as
+            // amounts" put their own controls there and keep them.
             const wholeRow = spec.mode === "equal" || spec.mode === "percent";
             // "As amounts" has nothing to toggle, so its left half is a label
             // for the field rather than a button that would do nothing.
@@ -340,15 +332,14 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
 
 /**
  * The fourth tab's content: the one control that reads a bill before there's
- * one, "edit who-had-what" plus that same control at chip scale once there is —
- * always available, including on an already-saved expense (ADR-0016,
- * superseding ADR-0016's new-expense-only restriction). A fresh reading replaces
- * the old items/tip and resets the who-had-what grid, same as the first one.
+ * one, "edit who-had-what" plus that same control at chip scale once there is.
+ * Available on an already-saved expense too (ADR-0016); a fresh reading
+ * replaces the old items/tip and resets the grid, same as the first one.
  *
- * The control's third door types the bill instead of photographing it, and what
- * it opens is rendered by `useReceiptScan` rather than by this tab — the reading
- * it starts is what moves this panel from one shape to the other, so a dialog
- * living inside either would be unmounted by its own answer.
+ * The control's third door types the bill instead of photographing it. **What
+ * it opens is rendered by `useReceiptScan`, never by this tab** — the reading
+ * moves this panel from one shape to the other, so a dialog living inside
+ * either would be unmounted by its own answer.
  */
 function ReceiptPanel({
   items, scan, flash, onFlashEnd, editItemsHref,

@@ -23,10 +23,10 @@ import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
- * One entry, whichever of the three it is. The id in the query string is
- * looked up in both tables — expense ids and settlement ids are both random
- * and can't collide — so every row in the ledger has a screen, and a transfer
- * is no longer the one thing you could add and never open again (ADR-0010).
+ * One entry, whichever of the three it is. The id in the query string is looked
+ * up in both tables — expense ids and settlement ids are both random and can't
+ * collide — so every row in the ledger has a screen, a transfer included
+ * (ADR-0010).
  */
 export default function EntryPage() {
   return <QueryBoundary><EntryScreen /></QueryBoundary>;

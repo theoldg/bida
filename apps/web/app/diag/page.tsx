@@ -102,19 +102,14 @@ export default function DiagPage() {
  * How long the *whole report* may take before it prints what it has.
  *
  * **This screen must never wait on the database.** It is opened because the
- * database is not answering, and the first version of it asked Dexie for row
- * counts and then sat on "Reading…" forever — a diagnostics screen that hangs
- * on the fault it is diagnosing. Everything that can block is raced against
- * this, and the timeline, which needs no database at all, is printed either
- * way.
+ * database is not answering, so everything that can block is raced against
+ * this, and the timeline, which needs no database at all, prints either way.
  *
- * One window for the report, not one per question — this is the number, and
- * the sequence below is what keeps it honest. It had stopped being both: every
- * blocking line waited out its own two seconds after the one above it had
- * finished waiting out theirs, so the report grew slower every time a line was
- * added to it, and a phone with nothing answering sat on "Reading…" for six.
- * Six seconds is the length of the fault this screen exists to describe
- * (PROBE_MS in lib/db/live.ts), which is how it went unnoticed.
+ * **One window for the report, not one per question.** Await a blocking line
+ * before asking the next and the report grows slower every time a line is
+ * added to it — and six seconds of "Reading…" is exactly the length of the
+ * fault this screen exists to describe (PROBE_MS in lib/db/live.ts), so it
+ * goes unnoticed. The sequence below is what keeps the window honest.
  */
 const PATIENCE_MS = 2000;
 
@@ -165,16 +160,11 @@ function screenLine(): string {
  * Which stores answer a read, one at a time.
  *
  * A lock is per store, and that is the whole diagnosis: the reads that hang
- * name the transaction holding it. The owner's Brave report had every count on
- * the `rows:` line answering while the groups list sat on skeleton rows, and
- * the one store none of those counts touches is `device` — which narrowed it
- * from "something holds the database" to `updateDevice`, the only write in the
- * app that takes `device` and nothing else. That took cross-reading three
- * files; this is the line that says it.
+ * name the transaction holding it, which is the difference between "something
+ * holds the database" and a single writer to point at.
  *
- * Probed in parallel and separately, so one wedged store cannot hide the rest
- * — a single transaction over all of them would have reported "no answer" and
- * lost the shape.
+ * **Probed in parallel and separately**: one transaction over all of them
+ * reports "no answer" and loses the shape, so one wedged store hides the rest.
  */
 async function stores(until: Promise<void>): Promise<string> {
   const d = db();
@@ -227,12 +217,11 @@ async function collect(): Promise<string> {
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);
 
-  // Every question that can block, asked here and read in printing order
-  // below — because they share one window, and a window is only shared by
-  // questions that are already in flight when it opens. Awaiting one before
-  // asking the next is what turned a two-second report into a six-second one
-  // (PATIENCE_MS), and it is the mistake the next line added to this report
-  // will make unless it is added up here too.
+  // **Every question that can block is asked here** and only read in printing
+  // order below: they share one window, and a window is shared only by
+  // questions already in flight when it opens. Await one before asking the next
+  // and the report takes their waits end to end (PATIENCE_MS) — so the next
+  // blocking line added to this report belongs up here too.
   const until = patience();
   const storeLine = stores(until);
   const countsLine = within(
@@ -249,8 +238,8 @@ async function collect(): Promise<string> {
     until,
   );
   // Ops the server had and this build could not open. Skipped rather than
-  // failed on (lib/db/sync.ts), so without this line the app would show a
-  // ledger with holes in it and say nothing at all.
+  // failed on (lib/db/sync.ts), so without this line the app shows a ledger
+  // with holes in it and says nothing at all.
   const unreadLine = within(
     (async () => (await d.groupKeys.toArray())
       .flatMap((key) => (key.unreadable ? [{ groupId: key.groupId, ...key.unreadable }] : [])))(),
@@ -303,11 +292,10 @@ async function collect(): Promise<string> {
   say("stas", stasMode() ? "on" : "off");
   say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
-  // The screen the app is actually being painted on, beside the one it was laid
-  // out for. They are the same number on a phone that is behaving; when they
-  // are not, the difference is the strip at the foot of every screen that a
-  // person reports as "the tabs are gone" — so the report says it in one line
-  // rather than leaving the next session to guess (lib/viewport.ts).
+  // The screen the app is actually painted on, beside the one it was laid out
+  // for. The same number on a phone that is behaving; when they are not, the
+  // difference is the strip at the foot of every screen that a person reports
+  // as "the tabs are gone" (lib/viewport.ts).
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");

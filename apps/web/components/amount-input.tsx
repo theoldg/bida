@@ -7,29 +7,21 @@ import { GROUP, groupDigits } from "../lib/format";
 /**
  * Every field in the app where you type money.
  *
- * Three of them used to be written by hand, and two of those were controlled
- * from the *parsed* value: `value={bare(spec[id] ?? 0, currency)}`, re-derived
- * on every keystroke. Typing "1" showed "1.00" with the caret thrown to the
- * end; typing the "." of "1.50" threw, was swallowed by a `catch`, and simply
- * never appeared. You could not type a decimal amount at all. The owner, on
- * 2026-08-28: *"the amounts number input is really awkward to use, there's no
- * caret and i have no idea what's going on"*.
+ * **It holds the *text* you typed, never a round-trip of the parsed value.**
+ * Controlled from the parsed value, typing "1" shows "1.00" with the caret
+ * thrown to the end and the "." of "1.50" never appears at all — a decimal
+ * amount cannot be typed. The model gets minor units; the field keeps your
+ * half-finished "1." and your caret where you left it.
  *
- * So: one component, and it holds the *text* you typed, not a round-trip of
- * it. The model gets minor units; the field keeps your half-finished "1." and
- * your caret exactly where you left it.
- *
- * It also groups thousands as you type, because "480000" and "48000" are the
- * same glance. The group mark is a narrow no-break space rather than a comma
- * or a point: both of those are decimal separators to somebody, and this app
- * accepts either as one (see the open question in product.md). A space is
- * nobody's decimal separator, so nothing is ambiguous — and stripping it back
- * out on parse cannot eat a character the user meant.
+ * It groups thousands as you type, because "480000" and "48000" are the same
+ * glance. **The group mark is a narrow no-break space**, never a comma or a
+ * point: both of those are decimal separators to somebody, and this app accepts
+ * either as one (see the open question in product.md). A space is nobody's, so
+ * stripping it back out on parse cannot eat a character the user meant.
  *
  * The typing half of that — group, then put the caret back where the finger
- * thinks it is — is `GroupedInput`, and the rate dialog types into one too: a
- * rate is the other number in this app with thousands in it ("1 EUR = 18 000
- * IDR"), and it was the only field left that didn't group them.
+ * thinks it is — is `GroupedInput`, which the rate dialog types into too: a
+ * rate is the other number here with thousands in it ("1 EUR = 18 000 IDR").
  */
 
 /**
@@ -55,12 +47,12 @@ export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
 }
 
 /**
- * The typed amount and the currency it is held in must never disagree: JPY has
- * no minor units and BHD has three, and `sanitizeAmount` otherwise only runs on
- * a keystroke. Switching currency with "12.34" in the field used to leave it
- * reading "12.34" while the model saved ¥12 — no keystroke in between, and
- * nothing on screen saying so. Every write to the entry draft goes through
- * this, and so does every scan: a receipt names its own currency.
+ * **The typed amount and the currency it is held in must never disagree**: JPY
+ * has no minor units and BHD has three, and `sanitizeAmount` otherwise only
+ * runs on a keystroke — so switching currency with "12.34" in the field leaves
+ * it reading "12.34" while the model saves ¥12, with nothing on screen saying
+ * so. Every write to the entry draft goes through this, and so does every
+ * scan: a receipt names its own currency.
  */
 export function clipAmountToCurrency<T extends { amountText: string; currency: string }>(
   draft: T,
@@ -190,12 +182,10 @@ export function GroupedInput({
 
 /**
  * What a half-typed amount settles to once the field is left: "5" -> "5.00",
- * "1." -> "1.00", "1.5" -> "1.50". The text you type is deliberately left
- * alone while you type it (see above), which means a finished field could sit
- * there reading "5" next to a column of "12.00"s — the same number written two
- * ways, and the only one on screen that looks unfinished. Empty stays empty,
- * so a placeholder survives a tap that changed nothing, and a currency with no
- * minor units has nothing to pad.
+ * "1." -> "1.00", "1.5" -> "1.50". The text is left alone *while* you type it
+ * (see above), so without this a finished field sits reading "5" next to a
+ * column of "12.00"s. Empty stays empty, so a placeholder survives a tap that
+ * changed nothing, and a currency with no minor units has nothing to pad.
  */
 export function settleAmount(text: string, currency: CurrencyCode): string {
   if (text === "") return "";

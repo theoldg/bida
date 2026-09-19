@@ -24,9 +24,9 @@ import { useRefusal } from "@/lib/refusal";
  * at what was found, then say which of those people you are. Reading is free
  * and writes nothing — `core/import.ts` hands back a plan — so the count of
  * entries, the currency and the rows that will be left out are all on screen
- * before a single op exists. The alternative was a button that made a group
- * and then said how it went, which is the wrong order for the only question
- * anybody has here: is this going to get my trip right.
+ * before a single op exists. A button that makes the group and then says how it
+ * went answers the only question anybody has here in the wrong order: is this
+ * going to get my trip right.
  *
  * **Refused whole, or not at all.** A file with one unreadable line is not
  * imported minus that line: a ledger missing an entry balances to something

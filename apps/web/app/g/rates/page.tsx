@@ -84,10 +84,10 @@ function RatesScreen() {
     setAsk(null);
   }
 
-  // A rate comes out on the same terms a person does: only when nothing is
-  // left leaning on it. Clearing one used to be allowed and quietly re-priced
-  // every entry written in it — back to whatever rate each was saved at, which
-  // is a different number on every row and no screen said so.
+  // **A rate comes out on the same terms a person does: only when nothing is
+  // left leaning on it.** Clearing one otherwise re-prices every entry written
+  // in it back to whatever rate each was saved at — a different number on every
+  // row, and no screen says so.
   function askRemove(currency: string) {
     const blocking: BlockingEntry[] = [
       ...data.expenses.filter((e) => e.currency === currency).map((e) => ({

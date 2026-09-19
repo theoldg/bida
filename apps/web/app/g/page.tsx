@@ -48,9 +48,9 @@ function GroupScreen() {
   const deleted = useDevice()?.deletedGroups;
   // Opening a group is the moment you want to know whether it is current, so
   // ask the server then rather than waiting for the loop's next 60s tick. A
-  // dead server records its first failure here; the engine's own backoff
-  // retries seconds later, which is what turns the banner on. The rejection is
-  // the recorded failure — `useSyncHealth` reads it, nothing here needs it.
+  // dead server records its first failure here, and the engine's backoff
+  // retries seconds later, which is what turns the banner on. The rejection
+  // *is* the recorded failure — `useSyncHealth` reads it, nothing here does.
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
@@ -71,11 +71,11 @@ function GroupScreen() {
   // The two tabs are one screen, and the ledger is the one you arrive on — so
   // back from balances is the ledger, and only the ledger leaves the group.
   const back = tab === "balances" ? route.group(groupId) : route.groups();
-  // Loading used to be a top bar over nothing — indistinguishable from a tap
-  // that didn't land. Draw the whole frame instead: the group's name is the
-  // only thing here that has to wait for Dexie.
-  // The skeleton covers the redirect above too: a flash of somebody else's
-  // ledger before it lands is worse than a frame that is still loading.
+  // **Draw the whole frame while loading**, not a top bar over nothing, which
+  // is indistinguishable from a tap that didn't land: the group's name is the
+  // only thing here that has to wait for Dexie. The skeleton covers the
+  // redirect above too — a flash of somebody else's ledger is worse than a
+  // frame that is still loading.
   if (data.loading || unclaimed) {
     return (
       <Screen>
@@ -138,9 +138,8 @@ function GroupScreen() {
         <TopBar
           title={group.name}
           back={back}
-          /* One button, not the four icons this bar used to carry: the group's
-             own actions are a menu (components/group-menu.tsx), which leaves
-             the bar to the group's name. */
+          /* One button: the group's own actions are a menu
+             (components/group-menu.tsx), which leaves the bar to its name. */
           right={<GroupMenu groupId={group.id} data={data} />}
         />
 
@@ -182,10 +181,9 @@ function LedgerTab({ data }: { data: GroupData }) {
   // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
 
-  // The ledger's whole job is answering "does this one help me or hurt me?",
-  // so every row carries its own effect on your balance — what you put in for
-  // it, minus what you owe for it — signed and coloured in the figure itself.
-  // They add up to `net`.
+  // The ledger answers "does this one help me or hurt me?", so every row
+  // carries its own effect on your balance — what you put in for it, minus what
+  // you owe for it — signed and coloured in the figure. They add up to `net`.
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   const entries = ledgerRows(expenses, settlements);
@@ -250,10 +248,10 @@ function LedgerTab({ data }: { data: GroupData }) {
 }
 
 /**
- * Hoisted out of `LedgerTab` rather than nested inside it, as `SettlementRow`
- * is: a nested function component is a new identity on every render, which
- * would discard this row's own state — the open delete confirmation — the
- * moment a live query elsewhere in the group redraws the ledger.
+ * **Hoisted out of `LedgerTab`, never nested inside it** (as `SettlementRow`
+ * is): a nested function component is a new identity on every render, which
+ * would discard this row's open delete confirmation the moment a live query
+ * elsewhere in the group redraws the ledger.
  */
 function ExpenseRow({ expense, gid, base, me, memberById }: {
   expense: Expense; gid: string; base: string; me: string | undefined; memberById: Map<string, Member>;
@@ -382,19 +380,17 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
 // ------------------------------------------------- balances and settling
 
 /**
- * Who is up, who is down, and the shortest set of payments that ends it.
- *
- * These were two tabs. They are one question asked twice — the bars tell you
- * a number is wrong, and the payments are the only thing you can do about it,
- * so they belong on the same scroll.
+ * Who is up, who is down, and the shortest set of payments that ends it — one
+ * question asked twice, so they share a scroll: the bars tell you a number is
+ * wrong, and the payments are the only thing you can do about it.
  */
 function BalancesTab({ data }: { data: GroupData }) {
   const { group, members, balances, nameOf, me, transfers } = data;
   if (!group) return null;
-  // Everyone carrying a balance, not only everyone still in the group. A
+  // **Everyone carrying a balance, not only everyone still in the group.** A
   // removed member with a position is precisely who you need to see, and
-  // leaving them off is what made the bars stop summing to zero on screen
-  // while `byMember` went on summing to zero underneath.
+  // leaving them off makes the bars stop summing to zero on screen while
+  // `byMember` goes on summing to zero underneath.
   const live = new Set(members.map((m) => m.id));
   const rows = [
     ...members.map((m) => ({ id: m.id, name: m.name, gone: false })),

@@ -18,9 +18,9 @@ import {
 } from "../lib/scan/items";
 
 /**
- * How long the pointed column stays faint at the least. The scroll is usually
- * longer and sets the pace; this is the floor under a run that was already in
- * view, so opening one always reads the same way.
+ * The floor under how long the pointed column stays faint. The scroll is
+ * usually longer and sets the pace; this keeps a run already in view from
+ * opening and resolving in one frame.
  */
 const HOLD_MS = 280;
 
@@ -34,21 +34,16 @@ const inColumn = (
 /**
  * Who had what: the grid a scanned bill is assigned on (ADR-0016).
  *
- * Two screens wear it, as two screens wear the scan control itself — the
- * group's `/g/entry/items`, a detour off the entry form, and `/quick/items`,
- * where the same bill is being divided among people who are not a group
+ * Worn by `/g/entry/items` and by `/quick/items`, where the same bill is
+ * divided among people who are not a group
  * ([ADR-0035](../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
- * Neither owns it, because two copies of this arithmetic would disagree
- * within a month, and the cent it hands out is the cent the screen after it
- * has to quote (`receiptWeights`).
+ * **Neither owns it** — two copies of this arithmetic would disagree within a
+ * month, and the cent it hands out is the cent the screen after it quotes
+ * (`receiptWeights`). The props are exactly what the two doors differ in:
+ * who the columns are, how a figure is printed, where Done goes.
  *
- * What the two doors differ in is all here: who the columns are, how a figure
- * is printed — a group's currency, or bare, since a quick split converts
- * nothing — and where Done goes. Everything else, the grid decides.
- *
- * It assumes a bill with lines on it. What "no lines" means is the caller's
- * question: the form says split it by hand instead, and a quick split has
- * nothing left to be.
+ * It assumes a bill with lines on it; what "no lines" means is the caller's
+ * question.
  */
 export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack }: {
   title: string;
@@ -71,25 +66,24 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // Whether the deductions are showing one by one or as one figure. Display
   // only — it changes nothing the bill is worth, so nothing is written down.
   const [openDiscounts, setOpenDiscounts] = useState(false);
-  // Splitting a line and merging one back have to be written to the draft as
-  // they happen — the grid's rows and the bill's lines are one list, and the
-  // seeding effect above trusts them to be the same length. So this screen
-  // keeps what it found, and leaving puts it back: tapping ×N to see what a
-  // shared bottle would look like was otherwise a change you couldn't undo.
+  // Splitting a line and merging one back are written to the draft as they
+  // happen — the grid's rows and the bill's lines are one list, and the seeding
+  // effect trusts them to be the same length. **So keep what was found and put
+  // it back on the way out**, or tapping ×N to see what a shared bottle would
+  // look like is a change you can't undo.
   const opened = useRef<Pick<EntryDraft,
     "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
   const [touched, setTouched] = useState(false);
-  // A refused Done, and what it leaves behind: the flash is spent in ~600ms,
-  // the sentence stays until the grid is actually finishable. What blooms is
-  // the lines with nobody on them — all of them, off the one refusal, so a
-  // second press replays every one together. Done itself doesn't: it is the
-  // control that was pressed, not what is missing, so it greys for exactly as
-  // long as the flash and comes back, the entry form's Save exactly.
-  // What blooms has to be on screen to be a signal at all, and on a twenty-line
-  // bill it may not be: with every unassigned line scrolled past, the nearest
-  // is brought in first and the flash waits for the list to land (`reveal`
-  // below). Done stays spent across both, so one press is one answer.
+  // A refused Done: the flash is spent in ~600ms, the sentence stays until the
+  // grid is finishable. What blooms is the lines with nobody on them — all of
+  // them off the one refusal, so a second press replays every one together.
+  // Done greys for exactly as long as the flash, since it is the control that
+  // was pressed, not what is missing.
+  // **A bloom off screen is no signal at all**: with every unassigned line
+  // scrolled past, the nearest is brought in first and the flash waits for the
+  // list to land (`reveal`). Done stays spent across both, so one press is one
+  // answer.
   const refusal = useRefusal();
   const [seeking, setSeeking] = useState(false);
   const wrap = useRef<HTMLDivElement | null>(null);
@@ -116,13 +110,11 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
     };
   }
 
-  // Seeded once, when the people and the scan's items are both in —
-  // restore a previously saved assignment if this grid was already visited,
-  // otherwise an empty grid: everyone is at the table (they are the columns
-  // you tap in), and nothing is anybody's yet. Starting with every item on
-  // everybody meant reading a bill you had already been told the answer to,
-  // and unticking your way out of it; ticking what you had is the work this
-  // screen is for, so it is what the grid asks for.
+  // Seeded once, when the people and the scan's items are both in: a saved
+  // assignment if this grid was already visited, otherwise everyone at the
+  // table and nothing anybody's yet. **Never start with every item on
+  // everybody** — that is a bill you have been told the answer to, and
+  // unticking your way out of it.
   useEffect(() => {
     if (seeded.current || items.length === 0 || people.length === 0) return;
     seeded.current = true;
@@ -217,18 +209,13 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   /**
-   * The line itself, tapped: everybody had it, or nobody did.
+   * The line itself, tapped: everybody had it, or nobody did — the two answers
+   * a whole row usually wants, in one tap rather than one per column.
    *
-   * The two answers a whole row of the bill usually wants — a bottle of wine
-   * the table shared, a dish that turns out to be someone else's entirely —
-   * and one tap rather than one per column. It overwrites whatever was there:
-   * a control that means "all of them" cannot also mean "all of them, except
-   * what you already said", and a second tap puts it back to nobody.
-   *
-   * A folded run takes it whole, portions and all, like `toggleRun` does —
-   * including a run somebody is split across, which `toggleRun` refuses. That
-   * refusal is about a *cell*, where the tap could mean either portion; the
-   * line says all of them, which is not ambiguous.
+   * **It overwrites**: a control meaning "all of them" cannot also mean "all of
+   * them, except what you already said". A folded run takes it whole, including
+   * one somebody is split across, which `toggleRun` refuses — that refusal is
+   * about a *cell*, where the tap could mean either portion.
    */
   function toggleEveryone(start: number, count: number) {
     const ids = involvedMembers.map((m) => m.id);
@@ -269,22 +256,19 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   /**
    * The run that was just opened, brought into view whole and then pointed at.
    *
-   * Two rows have to be in view, not one — the portions are the answer to
-   * "which of them?" and half an answer is no answer — and when there are more
-   * of them than fit, the top wins (`revealWhole`). The flash waits for the
-   * scroll for the same reason the refusal's does: a pointer spent on rows
-   * still travelling is a pointer nobody saw.
+   * **Two rows have to be in view, not one** — half an answer to "which of
+   * them?" is no answer — and when more of them than fit, the top wins
+   * (`revealWhole`). The flash waits for the scroll, like the refusal's: a
+   * pointer spent on rows still travelling is one nobody saw.
    */
   useEffect(() => {
     if (!pending) return;
     const box = wrap.current;
     const head = rowEl.current[pending.start];
     const tail = rowEl.current[pending.start + pending.count - 1];
-    // The column is already faint by now — it was painted that way with the
-    // rows (`point-hold`) — so `aim` is the *release*: the hold ends and the
-    // dots ease back to what they really are. Never sooner than `HOLD_MS`,
-    // or a run that needed no scrolling would open and resolve in one frame,
-    // which is the pointer not happening at all.
+    // The column was painted faint with the rows (`point-hold`), so `aim` is
+    // the *release*: the dots ease back to what they really are. **Never sooner
+    // than `HOLD_MS`**, or a run that needed no scrolling resolves in one frame.
     const since = Date.now();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const aim = () => {
@@ -369,8 +353,8 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   // Several deductions collapse into one row the way repeated items do, and
   // open the same way — the printed names are worth reading ("2 for 1" is not
   // "Loyalty"), but four of them above the tip is a bill nobody can see past.
-  // Unlike an item's ×N this changes nothing about the bill: the rows are not
-  // assignable either way, so it is this screen's own state, not a draft write.
+  // Unlike an item's ×N this is display only: the rows are not assignable
+  // either way, so it stays screen state and is never written to the draft.
   const discountTotal = discounts.reduce((sum, d) => sum + d.minor, 0);
   const discountRows = discounts.length > 1 && !openDiscounts
     ? [{ label: "", minor: discountTotal, of: discounts.length }]
@@ -400,10 +384,9 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   /**
    * The refusal, once the lines it points at can be seen.
    *
-   * Nothing moves while any of them is in view — a list that jumps under
+   * **Nothing moves while any of them is in view** — a list that jumps under
    * somebody already looking at the answer is worse than one that sits still.
-   * Otherwise the nearest is scrolled to, and only then does the flash run:
-   * a bloom spent while the rows are still travelling is a bloom nobody saw.
+   * Otherwise the nearest is scrolled to, and only then does the flash run.
    */
   function reveal() {
     const box = wrap.current;
@@ -446,13 +429,13 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
       if (!refusal.live && !seeking && missing.some(Boolean)) reveal();
       return;
     }
-    // This screen owns only the raw grid: who was there, and who had what.
-    // The total and the split it implies are derived from these fields
-    // wherever they're needed (the expense form's render, and its save) —
-    // not written down here too, so there's nothing that can drift out of
-    // sync with them (ADR-0016). Keep receiptItems/receiptTip and the raw
-    // assignment around (unlike a discarded scan) so "Edit who-had-what" can
-    // reopen this exact grid later, on any device. ADR-0016.
+    // **This screen writes only the raw grid**: who was there, and who had
+    // what. The total and the split it implies are derived from these fields
+    // where they're needed (the expense form's render and its save), never
+    // written down here too, so nothing can drift out of sync with them.
+    // `receiptItems`/`receiptTip` and the raw assignment are kept (unlike a
+    // discarded scan) so "Edit who-had-what" reopens this exact grid later, on
+    // any device. ADR-0016.
     save({
       ...draft,
       receiptInvolved: [...involved],
@@ -474,12 +457,11 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   }
 
   // One line under the grid at a time: what a refused Done was pointing at, or
-  // — until the control has been found once — what the ×N does. The sentence
-  // waits for the refusal that earns it: on arrival nothing is assigned yet, so
-  // printing it then scolds a grid for being untouched. A control you've used
-  // doesn't need explaining either, and the footer is one line tall.
-  // The gentle pointer's restart, the refusal flash's trick exactly
-  // (lib/refusal.ts): two identical animations, so a second one replays.
+  // — until the ×N has been found once — what it does. **The sentence waits for
+  // the refusal that earns it**: on arrival nothing is assigned yet, so printing
+  // it then scolds a grid for being untouched.
+  // The pointer restarts by the refusal flash's trick (lib/refusal.ts): two
+  // identical animations, so a second one replays.
   const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
 
   const note = told && !everyItemAssigned ? (
