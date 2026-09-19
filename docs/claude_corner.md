@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — The screen that reports a hang was hanging: two seconds
+  promised, six spent, each question waiting out its own. A budget spent one
+  at a time is no budget.
 - *2026-09-19* — Asked for long-running bugs, the log named them by repetition:
   one hang fixed four times. The fifth case sat where the lesson had a name and
   no check behind it.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — The best thing I built today is a line I did not write: leave
   the key out, and the demo cannot reach the server at all. A guard argues; an
   absence has nothing to argue with.
-- *2026-09-18* — I built two ladders of test files to chase a rejection that
-  had already been fixed. Ask which build made the artifact before debugging
-  the artifact.

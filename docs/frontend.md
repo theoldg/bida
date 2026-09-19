@@ -541,7 +541,13 @@ the report prints its state beside everything else this phone is doing.
 database is not answering. Everything that can block is raced against a 2s
 patience window and the timeline, which needs no database at all, prints either
 way. The first version asked Dexie for row counts and sat on "Reading…"
-forever; `pnpm stall` now fails if that comes back.
+forever; `pnpm stall` now fails if that comes back — and it did, quietly. **The
+window is one window for the whole report, and the way to keep it one is to
+start every blocking question before awaiting any of them.** Asked in turn,
+each line waits out its own two seconds after the line above it has finished
+waiting out theirs, so the report grows slower every time a line is added to it
+— six seconds by the time it was noticed, which is the length of the fault this
+screen exists to describe. A new line in `collect()` goes up with the others.
 
 ## Every word, in `lib/copy.ts`
 

@@ -99,7 +99,7 @@ export default function DiagPage() {
 }
 
 /**
- * How long any one question here may take before the report gives up on it.
+ * How long the *whole report* may take before it prints what it has.
  *
  * **This screen must never wait on the database.** It is opened because the
  * database is not answering, and the first version of it asked Dexie for row
@@ -107,21 +107,34 @@ export default function DiagPage() {
  * on the fault it is diagnosing. Everything that can block is raced against
  * this, and the timeline, which needs no database at all, is printed either
  * way.
+ *
+ * One window for the report, not one per question — this is the number, and
+ * the sequence below is what keeps it honest. It had stopped being both: every
+ * blocking line waited out its own two seconds after the one above it had
+ * finished waiting out theirs, so the report grew slower every time a line was
+ * added to it, and a phone with nothing answering sat on "Reading…" for six.
+ * Six seconds is the length of the fault this screen exists to describe
+ * (PROBE_MS in lib/db/live.ts), which is how it went unnoticed.
  */
 const PATIENCE_MS = 2000;
 
-/** The answer, or what it means that there wasn't one. */
-async function within<T>(promise: Promise<T>, otherwise: T): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
+/** The one window, started when the report is. */
+function patience(): Promise<void> {
+  return new Promise((resolve) => { setTimeout(resolve, PATIENCE_MS); });
+}
+
+/**
+ * The answer, or what it means that there wasn't one.
+ *
+ * `until` is shared by every question in a report, so asking one more costs
+ * nothing as long as it is *started* with the others rather than awaited in
+ * turn — see `collect`.
+ */
+async function within<T>(promise: Promise<T>, otherwise: T, until: Promise<void>): Promise<T> {
   try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((resolve) => { timer = setTimeout(() => resolve(otherwise), PATIENCE_MS); }),
-    ]);
+    return await Promise.race([promise, until.then(() => otherwise)]);
   } catch {
     return otherwise;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -163,10 +176,10 @@ function screenLine(): string {
  * — a single transaction over all of them would have reported "no answer" and
  * lost the shape.
  */
-async function stores(): Promise<string> {
+async function stores(until: Promise<void>): Promise<string> {
   const d = db();
   const held = (await Promise.all(d.tables.map(async (table) =>
-    (await within(table.count().then(() => true), false)) ? undefined : table.name,
+    (await within(table.count().then(() => true), false, until)) ? undefined : table.name,
   ))).filter((name): name is string => name !== undefined);
   return held.length === 0
     ? `all ${d.tables.length} answer`
@@ -214,12 +227,15 @@ async function collect(): Promise<string> {
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);
 
-  // Started before the counts and read after them: both wait out the same
-  // patience window, and one after the other doubles how long a report takes
-  // on the phone that needs it most — the one where nothing is answering.
-  const storeLine = stores();
-
-  const counts = await within(
+  // Every question that can block, asked here and read in printing order
+  // below — because they share one window, and a window is only shared by
+  // questions that are already in flight when it opens. Awaiting one before
+  // asking the next is what turned a two-second report into a six-second one
+  // (PATIENCE_MS), and it is the mistake the next line added to this report
+  // will make unless it is added up here too.
+  const until = patience();
+  const storeLine = stores(until);
+  const countsLine = within(
     (async () => {
       const [ops, pending, groups, members, expenses, settlements, rates, identities, keys] =
         await Promise.all([
@@ -230,8 +246,43 @@ async function collect(): Promise<string> {
       return { ops, pending, groups, members, expenses, settlements, rates, identities, keys };
     })(),
     undefined,
+    until,
   );
+  // Ops the server had and this build could not open. Skipped rather than
+  // failed on (lib/db/sync.ts), so without this line the app would show a
+  // ledger with holes in it and say nothing at all.
+  const unreadLine = within(
+    (async () => (await d.groupKeys.toArray())
+      .flatMap((key) => (key.unreadable ? [{ groupId: key.groupId, ...key.unreadable }] : [])))(),
+    [],
+    until,
+  );
+  // Whether this origin is evictable is the difference between "the browser
+  // closed our connection" being a wild guess and a likely story.
+  const storageLine = within(
+    (async () => {
+      const persisted = await navigator.storage?.persisted?.();
+      const { usage, quota } = (await navigator.storage?.estimate?.()) ?? {};
+      return `${persisted ? "persisted" : "EVICTABLE"}`
+        + (usage && quota
+          ? `, ${Math.round(usage / 1024)}kB of ${Math.round(quota / 1048576)}MB`
+          : "");
+    })(),
+    "no answer",
+    until,
+  );
+  // Which key this phone scans with — never the key itself, which is a
+  // credential and this report is pasted into chat threads. The line exists
+  // because it decides where a failed scan even went: ours, or Google
+  // directly (lib/scan/key.ts).
+  const scanKeyLine = within(
+    (async () => (await ownKey()) ? "own" : "shared")(),
+    "no answer",
+    until,
+  );
+  const copiesLine = within(copies(), "no answer from the worker", until);
 
+  const counts = await countsLine;
   if (counts) {
     say("ops", `${counts.ops} (${counts.pending} unsynced)`);
     say("rows", `${counts.groups} groups, ${counts.members} members, `
@@ -243,44 +294,14 @@ async function collect(): Promise<string> {
   }
   say("db", `v${d.verno}, ${d.isOpen() ? "open" : "CLOSED"}`);
 
-  // Ops the server had and this build could not open. Skipped rather than
-  // failed on (lib/db/sync.ts), so without this line the app would show a
-  // ledger with holes in it and say nothing at all.
-  const unread = await within(
-    (async () => (await d.groupKeys.toArray())
-      .flatMap((key) => (key.unreadable ? [{ groupId: key.groupId, ...key.unreadable }] : [])))(),
-    [],
-  );
-  if (unread.length > 0) {
-    for (const row of unread) {
-      say("unreadable", `${row.count} op(s) in ${row.groupId} from seq ${row.fromSeq} — `
-        + "this build cannot open them; update the app");
-    }
+  for (const row of await unreadLine) {
+    say("unreadable", `${row.count} op(s) in ${row.groupId} from seq ${row.fromSeq} — `
+      + "this build cannot open them; update the app");
   }
 
-  // Whether this origin is evictable is the difference between "the browser
-  // closed our connection" being a wild guess and a likely story.
-  say("storage", await within(
-    (async () => {
-      const persisted = await navigator.storage?.persisted?.();
-      const { usage, quota } = (await navigator.storage?.estimate?.()) ?? {};
-      return `${persisted ? "persisted" : "EVICTABLE"}`
-        + (usage && quota
-          ? `, ${Math.round(usage / 1024)}kB of ${Math.round(quota / 1048576)}MB`
-          : "");
-    })(),
-    "no answer",
-  ));
-
+  say("storage", await storageLine);
   say("stas", stasMode() ? "on" : "off");
-  // Which key this phone scans with — never the key itself, which is a
-  // credential and this report is pasted into chat threads. The line exists
-  // because it decides where a failed scan even went: ours, or Google
-  // directly (lib/scan/key.ts).
-  say("scan key", await within(
-    (async () => (await ownKey()) ? "own" : "shared")(),
-    "no answer",
-  ));
+  say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
   // The screen the app is actually being painted on, beside the one it was laid
   // out for. They are the same number on a phone that is behaving; when they
@@ -291,7 +312,7 @@ async function collect(): Promise<string> {
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
   say("stores", await storeLine);
-  say("copies", await within(copies(), "no answer from the worker"));
+  say("copies", await copiesLine);
 
   const rows = timeline();
   // The other pages first, because one of them is usually the interesting
