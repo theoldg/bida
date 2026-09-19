@@ -1297,8 +1297,20 @@ dialog.scrim::backdrop { background: transparent }
 .dtext:focus { border-color: var(--ink-2) }
 .dtext::placeholder { color: var(--muted) }
 /* Cancel is the wider-reaching of the two only in the sense that it's free:
-   equal halves, the act on the right where the thumb already is. */
-.drow { display: flex; gap: 8px; margin-top: 14px }
+   equal halves, the act on the right where the thumb already is.
+   Columns and not flex, because "equal" has to survive a child that isn't a
+   `.btn`: flexing two full-width children shares the overflow out in
+   proportion to each one's own padding and border, so the halves came out
+   170/182 the moment `ScanBusy` — which stands in for the act while the model
+   reads rather than sitting beside it — took the right-hand one, and the
+   button appeared to resize under the thumb. A column doesn't care what is in
+   it. `minmax(0, …)` so a long label wraps inside its half instead of pushing
+   the row wider than the card. */
+.drow { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  gap: 8px; margin-top: 14px }
+/* The same stand-in, vertically: the busy box carries a border the button it
+   replaces doesn't, and the row must not grow by those two pixels either. */
+.drow > .btn-pair .btn { padding-top: 11px; padding-bottom: 11px }
 /* A dialog that picks one of a few things is made of the app's own rows, edge to
    edge inside the card — the reason it can show an avatar and a sentence where
    a <select> shows a word. */

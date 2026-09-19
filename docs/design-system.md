@@ -389,6 +389,12 @@ reads as an ordinary assignment.
   fix arriving early and end the refusal by hand (`refusal.onFlashEnd()` with
   no event). It has cost a locked Save on the who-had-what grid and a locked
   add row before it (`lib/refusal.ts`).
+- **Two flex children that both claim the full width are not equal halves.**
+  The overflow is shared out in proportion to what is *inside* each one, so a
+  child with different padding or a border takes a different half: swapping a
+  dialog's act for the `ScanBusy` strip snapped the row to 170/182 and read as
+  the button resizing under the thumb. A row of equal halves is `.drow`'s
+  `grid-auto-columns: minmax(0, 1fr)`, which doesn't care what is in them.
 - **`table-layout: auto` makes every column a function of every cell.** The
   browser measures the content and works backwards, so a table that grows a
   suffix, swaps a button or indents one row re-measures the lot: opening a run
