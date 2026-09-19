@@ -1,25 +1,20 @@
 /**
  * CSV bytes into rows, and nothing beyond that.
  *
- * This lives in `apps/web` rather than `packages/core` for the reason core is
- * pure: a CSV dialect is a parsing decision about somebody else's file, not
- * domain arithmetic. `core/import.ts` takes the rows this hands over and is
- * where the money lives.
+ * In `apps/web` rather than `packages/core` for the reason core is pure: a CSV
+ * dialect is a parsing decision about somebody else's file, not domain
+ * arithmetic. `core/import.ts` takes these rows and is where the money lives.
  *
  * **Liberal on input, strict on output.** `core/export.ts` writes one exact
- * byte shape — LF, no BOM, blank lines where Splitwise puts them — because
- * Tricount refuses the whole file over any of them. Reading has the opposite
- * job: a file arriving here has been through somebody else's export, possibly
- * Excel, possibly a mail client, and CRLF, a lone CR, a BOM and a missing
- * trailing newline are all things it may carry. Every one is accepted.
+ * byte shape because Tricount refuses the whole file over any deviation.
+ * Reading has the opposite job: a file arriving here came through somebody
+ * else's export, possibly Excel, possibly a mail client, so CRLF, a lone CR, a
+ * BOM and a missing trailing newline are all accepted.
  *
- * A real state machine, and not `split("\n")` then `split(",")`, for one
- * reason worth the forty lines: RFC 4180 allows a newline **inside** a quoted
- * cell, and a description somebody typed on a phone is exactly where one
- * turns up. Our own writer folds those to spaces, so our own files never need
- * this — someone else's do, and splitting on LF first turns one description
- * into two broken rows that then fail the row-sums-to-zero check with nothing
- * useful to say about why.
+ * **A real state machine, never `split("\n")` then `split(",")`.** RFC 4180
+ * allows a newline *inside* a quoted cell, and a description typed on a phone
+ * is where one turns up; splitting on LF first turns it into two broken rows
+ * that fail the row-sums-to-zero check with nothing useful to say about why.
  */
 
 /**
@@ -90,10 +85,9 @@ export function parseCsv(text: string): string[][] {
  * As big as a group's ledger could plausibly be, and then some — a thousand
  * entries across twenty people is under a megabyte.
  *
- * Not a security boundary: the file never leaves the phone and no server ever
- * sees it, so the only thing at risk is this tab. It is so a mis-picked video
- * is refused with a sentence instead of freezing the app on the way to the
- * same answer.
+ * **Not a security boundary**: the file never leaves the phone, so the only
+ * thing at risk is this tab. It is so a mis-picked video is refused with a
+ * sentence rather than freezing the app on the way to the same answer.
  */
 const MAX_CSV_BYTES = 8 * 1024 * 1024;
 
@@ -116,9 +110,9 @@ export function looksLikeCsv(file: File): boolean {
  * The group name a file arrives with, since the shape has nowhere to say it.
  *
  * Splitwise names the export after the group, and so does `exportFilename`.
- * Both suffixes come off, the separators become spaces, and what's left is a
- * suggestion in an editable field — never a fact, because a file renamed by a
- * mail client says nothing about the trip.
+ * Both suffixes come off and the separators become spaces. **A suggestion in
+ * an editable field, never a fact**: a file renamed by a mail client says
+ * nothing about the trip.
  */
 export function groupNameFrom(filename: string): string {
   return filename

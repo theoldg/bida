@@ -88,10 +88,9 @@ export async function createGroup(
  * never travels through an op, only through the link fragment. ADR-0003.
  */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
-  // The demo group is the one group that must never hold a key. A key row is
-  // what `runSyncAll` iterates and what `syncGroupOnce` returns early without,
-  // so writing one here is the single line that would start pushing a
-  // tourist's demo into a D1 that gets no further resets
+  // **The demo group must never hold a key.** A key row is what `runSyncAll`
+  // iterates and what `syncGroupOnce` returns early without, so one written
+  // here starts pushing a tourist's demo into a D1 that gets no further resets
   // (docs/sync.md#the-demo-group-has-no-key). `scripts/rules-check.mjs` keeps
   // this the only writer of that table, so this refusal covers all of them.
   if (isDemo(groupId)) throw new Error("the demo group is never given a key");
@@ -114,11 +113,9 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
  * to bring along (docs/ios.md).
  *
  * The secrets, not the groups they open: one just accepted has its key before
- * its ops, and it is the very group the person is installing for. Forgotten
- * groups are left out — the key outlives `forgetGroup`, because re-opening the
- * link is how you come back, and an icon that walks back into a group this
- * phone said it was done with is the one thing carrying them all could get
- * wrong.
+ * its ops, and it is the very group the person is installing for. **Leave out
+ * forgotten groups** — the key outlives `forgetGroup`, so an icon would
+ * otherwise walk back into a group this phone said it was done with.
  *
  * `first` goes at the head: the group the screen that asked is about. Reads
  * only — no `getDevice`, which creates the row — so a live query can run it.
@@ -160,9 +157,9 @@ export async function forgetGroup(groupId: Id): Promise<void> {
  *
  * The other half of `forgetGroup`, and nothing like it. This runs when the
  * group has been deleted from the server (`/delete-my-data`, or a 410 met by
- * the sync engine on any phone that still held it), which is the one event in
- * this app that is not an op and cannot be undone. Nothing is appended and
- * nothing is left to fold: there is no group to record it in.
+ * the sync engine), the one event in this app that is not an op and cannot be
+ * undone. Nothing is appended and nothing is left to fold: there is no group
+ * to record it in.
  */
 export async function eraseGroupLocally(groupId: Id): Promise<void> {
   const d = db();
@@ -200,12 +197,10 @@ export async function eraseGroupLocally(groupId: Id): Promise<void> {
 /**
  * Say who is holding this phone in a group — the first claim, or a switch.
  *
- * This writes an op, unlike everything else about "you": every other op
- * carries an `actor`, and an actor is only readable if the group can see when
- * a device changed which member it speaks for. The claim is keyed by the
- * device's HLC node id, which is already the suffix of every op that device
- * ever stamped, so it publishes nothing the log did not already carry — it
- * just makes it legible. ADR-0003.
+ * This writes an op, unlike everything else about "you": an `actor` is only
+ * readable if the group can see when a device changed which member it speaks
+ * for. Keyed by the device's HLC node id, already the suffix of every op that
+ * device stamped, so it publishes nothing the log did not carry. ADR-0003.
  *
  * Re-claiming the member you already are is a no-op and writes nothing.
  */
@@ -245,13 +240,12 @@ export async function claimIdentity(
  *
  * A device that claimed a member under ADR-0003 has a `meByGroup` entry and no
  * op to show for it: its edits are attributed to somebody with nothing in the
- * log to explain why, and /g/history has nothing to show for a phone that has
- * been in the group for weeks. One `create` op per such group, once — later runs see it
+ * log to explain why. One `create` op per such group, once — later runs see it
  * and do nothing.
  *
- * `claimedAt` is when the claim was published, not when it was made. The
- * earlier date only ever existed in a device-local table that ADR-0003 drops,
- * and inventing a timestamp for the shared log would be worse than a late one.
+ * `claimedAt` is when the claim was *published*, not when it was made: the
+ * earlier date lives only in a device-local table, and inventing a timestamp
+ * for the shared log would be worse than a late one.
  */
 export async function publishExistingClaims(now = Date.now()): Promise<void> {
   const device = await getDevice();
@@ -288,10 +282,9 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
  */
 export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
   // The name *is* the id (core/names.ts). Two phones adding "Ana" offline
-  // therefore write one entity rather than two people nothing on screen tells
-  // apart, and the fold merges the creates. It also means re-adding somebody
-  // who was removed returns the person, balance and history included, rather
-  // than a stranger with their name.
+  // write one entity rather than two people nothing on screen tells apart, and
+  // re-adding somebody who was removed returns the person, balance and history
+  // included, rather than a stranger with their name.
   const memberId = memberIdFor(groupId, name);
   await appendOps(groupId, actor ?? memberId, [
     {
@@ -337,11 +330,10 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
  * `core/invariants.ts`, run to a fixed point.
  *
  * Reaching any of these takes two phones, each right on its own evidence: one
- * removes Bruno, the other — offline — writes a transfer to him; one clears the
- * MAD rate, the other writes a dinner in MAD. Every guard in the app is a
- * courtesy that constrains one replica's view of the log and cannot constrain
- * the union of two ([docs/invariants.md](../../../../../docs/invariants.md)),
- * so what makes the state legal again is this, not the refusal.
+ * removes Bruno, the other — offline — writes a transfer to him. **A guard
+ * constrains one replica's view and never the union of two**
+ * ([docs/invariants.md](../../../../../docs/invariants.md)), so what makes the
+ * state legal again is this, not the refusal.
  *
  * The repairs are ordinary ops — a `deletedAt: null` lift, exactly what
  * re-adding a member or re-setting a cleared rate already writes — so nothing
@@ -363,10 +355,9 @@ export async function healGroup(groupId: Id): Promise<number> {
   if (!me) return 0;
 
   let written = 0;
-  // Bounded rather than `while (true)`: a healer pair that did fight would
-  // otherwise write ops forever, and an op loop that syncs is the worst
-  // failure this file could have. The test proves the fixed point; this is
-  // what keeps a future mistake cheap.
+  // **Bounded, never `while (true)`**: a healer pair that did fight would write
+  // ops forever, and an op loop that syncs is the worst failure this file could
+  // have. The test proves the fixed point; this keeps a future mistake cheap.
   for (let pass = 0; pass < 8; pass++) {
     const state = await groupState(groupId);
     // The claim first, because it is the one repair the registry cannot make

@@ -6,11 +6,10 @@ import type { EntryKind } from "./entry-kind";
 /**
  * Every word the app says to a person, in one place.
  *
- * Two reasons it is one file rather than a string beside each screen. The
- * obvious one is translation: a second language is a second copy of this
- * object and nothing else (ADR-0033). The one that pays off today is tone —
- * the app's voice is only legible when the sentences sit next to each other,
- * and half of these were a paragraph long until they did.
+ * Two reasons it is one file rather than a string beside each screen:
+ * translation — a second language is a second copy of this object and nothing
+ * else (ADR-0033) — and tone, which is only legible when the sentences sit next
+ * to each other.
  *
  * **Rules.**
  * - Screens read `copy`; they never hold a literal a person can read.
@@ -86,8 +85,8 @@ export const copy = {
   },
 
   /**
-   * When reading this phone's own database goes wrong. Rare, and until these
-   * existed it was silent: the screen simply stayed on its skeleton rows.
+   * When reading this phone's own database goes wrong. Rare, and without these
+   * it is silent: the screen simply stays on its skeleton rows.
    * See lib/db/live.ts.
    */
   db: {
@@ -280,8 +279,8 @@ export const copy = {
     newGroup: "New group",
     /** The kebab's row, above About. What it makes is a group, which is why it
         is on this screen and not in a group's own menu, and the menu is the
-        whole of it: an empty list carried a line offering it, and a screen
-        whose one act is "new group" does not need a second pitch on it. */
+        whole of it: a screen whose one act is "new group" does not need a
+        second pitch on it. */
     importGroup: "Import a group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */
@@ -383,9 +382,8 @@ export const copy = {
      * Written twice rather than assembled, because both halves differ: the
      * menu is an ellipsis on iOS and a kebab on Android, and the item under it
      * names Safari on one and says "external browser" on the other. Naming the
-     * button is the whole value of the line — "use the menu" left someone
-     * hunting through a browser they did not choose to be in. Where it sits is
-     * left out: Instagram puts it at the top and Facebook at the bottom.
+     * button is the whole value of the line. Where it sits is left out:
+     * Instagram puts it at the top and Facebook at the bottom.
      */
     how: {
       ios: "Tap the ⋯ menu, then “Open in Safari”.",
@@ -417,11 +415,9 @@ export const copy = {
   /**
    * The screen for things most people never open, and the first of them.
    *
-   * Short on purpose. The first draft explained the budget, the billing and
-   * where the key is stored, and three paragraphs asking somebody to paste a
-   * credential read as a disclaimer rather than an offer. What is left is the
-   * two facts that decide it: the phone calls Google itself, and Google bills
-   * the key.
+   * Short on purpose: three paragraphs about the budget, the billing and where
+   * the key is stored read as a disclaimer rather than an offer. Two facts
+   * decide it — the phone calls Google itself, and Google bills the key.
    */
   advanced: {
     title: "Advanced",
@@ -501,8 +497,8 @@ export const copy = {
     /**
      * The hosted service's one disclaimer, and the counterweight to the four
      * claims above it: they are all promises, and this is the sentence saying
-     * who is behind them. MIT covers the code; nothing covered bida.bid, whose
-     * users are strangers rather than friends who would ask (hosting.md).
+     * who is behind them. MIT covers the code, not bida.bid, whose users are
+     * strangers rather than friends who would ask (hosting.md).
      *
      * It reads after Privacy on purpose. "I can't restore lost links" is a
      * consequence of the sealed row a paragraph above, not an excuse — read
@@ -699,8 +695,8 @@ export const copy = {
      * A link to a group with no password in it — nearly always the address
      * bar copied off a group screen, which names the group and nothing more
      * (group-link.ts). Said wherever that lands: `/join` with a group id and no
-     * secret, and any `/g` screen for a group this phone doesn't hold. Saying
-     * "bad link" there sent the same address straight back.
+     * secret, and any `/g` screen for a group this phone doesn't hold — "bad
+     * link" there would send the same address straight back.
      */
     keyless: {
       empty: "This link is missing its password",

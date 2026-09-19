@@ -10,16 +10,14 @@ import { copy } from "./copy";
 import { payerProblemText } from "./format";
 
 /**
- * What the entry being typed is worth, and whether it may be saved.
+ * What the entry being typed is worth, and whether it may be saved — the
+ * arithmetic behind one grey button.
  *
- * This is the arithmetic behind one grey button. It lived in the form's render
- * body as ten `const`s that each read two of the others, which is why it had
- * no tests: there was no way to ask it a question without mounting a screen.
- * It decides money — an amount, a rate, a split and a base figure — so per
+ * It decides money (an amount, a rate, a split, a base figure), so per
  * [CLAUDE.md](../../../CLAUDE.md) it is a function with a table of cases
- * behind it instead.
+ * behind it rather than `const`s in a render body no test can reach.
  *
- * Nothing here writes. The form patches the draft; this only ever reads one.
+ * **Nothing here writes.** The form patches the draft; this only reads one.
  */
 
 interface EntryCheck {
@@ -121,10 +119,10 @@ export function checkEntry(input: {
   const hasReceiptItems = (draft.receiptItems?.length ?? 0) > 0;
   const onReceiptTab = canScan && activeTab === "receipt" && hasReceiptItems;
 
-  // Receipt's total is `lib/draft.ts`'s to derive, at the one place it is read
-  // — never written into the draft as a cache for some other effect to notice
-  // and resync. Nothing can fall out of step because nothing is recorded
-  // twice (ADR-0016).
+  // Receipt's total is `lib/draft.ts`'s to derive, at the one place it is
+  // read — never written into the draft as a cache for another effect to
+  // resync. Nothing falls out of step because nothing is recorded twice
+  // (ADR-0016).
   const receiptTotal = draftReceiptTotal(draft);
   // Null until "who had what" has actually been visited (or on an old draft
   // with nothing assigned yet) — the arithmetic tab behind it is what a save
@@ -137,10 +135,10 @@ export function checkEntry(input: {
   const amountMinor = draftAmountMinor(draft);
 
   const foreign = draft.currency !== base;
-  // The rate is the group's, read from the registry — not a field on the form
-  // and not a number frozen onto the entry (ADR-0005). Undefined means the
-  // group has never said what this currency is worth, which is the state that
-  // used to be silently `"1"` and bank a 500 MAD dinner as €500.
+  // The rate is the group's, read from the registry — never a field on the
+  // form and never frozen onto the entry (ADR-0005). Undefined means the group
+  // has never said what this currency is worth; defaulting it to `"1"` banks a
+  // 500 MAD dinner as €500.
   const groupRate = rateFor(rates, base, draft.currency);
   // An amount and a rate can each be in range and still multiply out of it.
   // An out-of-range conversion is "no base amount yet", the state a missing
@@ -161,46 +159,36 @@ export function checkEntry(input: {
   const payerCheck = validatePayers(amountMinor, transfer ? null : draft.payers);
 
   // A side has to be somebody still in the group, not merely a non-empty
-  // string. This checked truthiness, and a removed member's id is truthy — so
-  // a settle-up row naming somebody who had left opened a transfer *from* a
-  // person who is not in the group, with Save lit up.
+  // string: a removed member's id is truthy, so a truthiness check lights Save
+  // over a transfer from somebody who has left.
   const live = new Set(input.liveMembers);
   const sidesOk = !transfer
     || (draft.fromMember !== draft.toMember && live.has(draft.fromMember) && live.has(draft.toMember));
 
   // Everybody an entry names has to still be in the group. `paidBy`, the payer
-  // map and the split are all lists of ids, and a member removed while this
-  // entry was open leaves one behind that no picker on either screen can show
-  // — money sitting against a name that is on no list.
-  //
-  // A transfer's two sides are the same fault wearing "—": a removal that
-  // lands while this form is open leaves a side naming somebody no picker
-  // offers, and Save used to be grey over an empty slot with nothing on screen
-  // saying whose name was missing. The settle-up row is no longer a way in —
-  // a removal the group goes on contradicting is undone rather than settled
+  // map and the split are lists of ids, and a member removed while this entry
+  // was open leaves one behind that no picker can show — money against a name
+  // on no list. A transfer's two sides are the same fault wearing "—": Save
+  // grey over an empty slot with nothing saying whose name is missing. A
+  // removal the group goes on contradicting is undone rather than settled
   // around (docs/data-model.md).
   const goneMember = (transfer
     ? [draft.fromMember, draft.toMember]
     : [draft.paidBy, ...Object.keys(draft.payers ?? {}), ...splitParticipants(effectiveSplit)])
     .find((id) => id && !live.has(id));
 
-  // Receipt mode has to have produced the split it claims. Without this the
-  // tab could be opened over an ordinary even split and saved — the entry then
-  // said "by items" beside a split nobody read off a receipt, and a scan
-  // whose grid was never filled in silently went out evenly. The tab is the
-  // claim; `receiptSplit` is whether it is true. Which of the two steps is
-  // outstanding is not recorded here: the tab has the bill or it hasn't, and
-  // that is what decides which of its controls blooms.
+  // Receipt mode has to have produced the split it claims: the tab is the
+  // claim, `receiptSplit` is whether it is true. Without this, opening the tab
+  // over an even split and saving says "by items" beside a split nobody read
+  // off a receipt. Which of the two steps is outstanding is not recorded — the
+  // tab has the bill or it hasn't, and that decides which control blooms.
   const receiptMissing = canScan && activeTab === "receipt" && receiptSplit === null;
 
-  // The one place the form says why Save is grey. It used to live inside the
-  // co-payer card, so the states that render the *single*-payer field — an
-  // empty payer map, a payer who has left — held Save with nothing anywhere on
-  // screen to read. A check with no visible reason is a dead end.
-  // A rate the group hasn't got says nothing here: it is not a typo in a field
-  // on this form, and there is no field. The badge that opens where it is set
-  // blooms on a refused Save instead, the way the Items tab's control does
-  // (design-system.md) — pointing at the fix beats a sentence beside it.
+  // The one place the form says why Save is grey, and it has to be reachable
+  // from every state that holds Save — a check with no visible reason is a
+  // dead end. A missing rate says nothing here: it is not a typo in a field,
+  // and there is no field. The badge that opens where it is set blooms on a
+  // refused Save instead, as the Items tab's control does (design-system.md).
   const blocker = goneMember
     ? copy.form.goneMember(nameOf(goneMember))
     : payerProblemText(payerCheck, draft.currency,

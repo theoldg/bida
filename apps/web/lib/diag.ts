@@ -1,27 +1,23 @@
 /**
  * A flight recorder for the things that make this app wait.
  *
- * It exists because the failure it was built for cannot be caught with
- * devtools: an installed phone pauses on its skeleton rows for ten or twenty
- * seconds, at a moment nobody chose, and by the time a cable is plugged in it
- * is over. Guessing produced three plausible causes and no way to choose
- * between them — a slow `indexedDB.open`, a read queued behind `rebuild`'s
- * readwrite lock on every table, or a live read that died and was re-armed by
- * the watchdog in ./db/live.ts. All three look identical from the outside.
- * They do not look alike on a timeline.
+ * The failure it was built for cannot be caught with devtools: an installed
+ * phone pauses on skeleton rows for ten or twenty seconds at a moment nobody
+ * chose, and it is over by the time a cable is plugged in. A slow
+ * `indexedDB.open`, a read queued behind `rebuild`'s readwrite lock, and a
+ * dead live read re-armed by ./db/live.ts's watchdog look identical from the
+ * outside. They do not look alike on a timeline.
  *
  * **Always on.** A debug flag records nothing on the launch that goes wrong,
- * which is the only launch worth recording. The cost is a bounded array of
- * small objects and a `performance.now()` per event; nothing is formatted
- * until somebody asks for the report.
+ * which is the only launch worth recording. The cost is a bounded array and a
+ * `performance.now()` per event; nothing is formatted until asked for.
  *
  * Read it on /diag — long-press the wordmark on the groups list.
  *
- * **The last few pages' timelines are kept too**, in `localStorage`. The launch that
- * went wrong is over by the time anybody thinks to look at a log, and killing
- * the app to get out of it is exactly what a person does. localStorage rather
- * than a table, deliberately: this recorder has to work on the launch where
- * IndexedDB is the thing that is broken.
+ * **The last few pages' timelines are kept too**, in `localStorage` and never
+ * a table: this recorder has to work on the launch where IndexedDB is what is
+ * broken, and killing the app is exactly what a person does before thinking
+ * to look at a log.
  */
 
 /** One thing that happened, or took a while. */
@@ -43,9 +39,9 @@ interface DiagEvent {
 }
 
 /**
- * Enough to cover a launch and a couple of resumes, and small enough that
- * nobody has to think about it. The oldest go first; a launch is what matters
- * and a launch is at the start, so the report prints both ends when it wraps.
+ * Enough for a launch and a couple of resumes. The oldest go first; a launch
+ * is what matters and is at the start, so the report prints both ends when it
+ * wraps.
  */
 const LIMIT = 400;
 
@@ -68,17 +64,16 @@ const running = new Set<DiagEvent>();
 
 /**
  * Record that something *started*, and get back the way to say it finished.
- * The duration is what most of these lines are for: a number beside a name is
- * the difference between "the app was slow" and "the app spent 13s in
- * `rebuild` while the groups list waited for the same tables".
+ * The duration is the point: a number beside a name is the difference between
+ * "the app was slow" and "13s in `rebuild` while the groups list waited on the
+ * same tables".
  */
 export function started(what: string, info?: string): (info?: string) => void {
   const from = now();
   const span: DiagEvent = { at: Math.round(from), what, info, seq: seq++ };
-  // Held while it runs, so that something which never finishes still has a
-  // line. A read that is hanging *right now* is the whole reason somebody has
-  // this screen open, and recording only on completion is how it would have
-  // been the one thing missing from the report.
+  // Held while it runs, so something that never finishes still has a line. A
+  // read hanging *right now* is why somebody has this screen open; recording
+  // only on completion leaves it out of the report.
   running.add(span);
   return (done?: string) => {
     if (!running.delete(span)) return; // already finished; a double call is a no-op
@@ -91,10 +86,9 @@ export function started(what: string, info?: string): (info?: string) => void {
 
 
 /**
- * The timeline as it stands, in the order things *started* — which is the
- * order that shows one span sitting inside another. Sorted rather than
- * appended in completion order, because the question this recorder answers is
- * "what was the screen waiting on", and that is always an overlap.
+ * The timeline as it stands, in the order things *started* — the order that
+ * shows one span sitting inside another. Sorted rather than left in completion
+ * order, because "what was the screen waiting on" is always an overlap.
  *
  * Anything still running is included, marked with how long it has been going.
  */
@@ -116,9 +110,9 @@ export function loadedAt(): number {
 
 const KEEP = "bida.diag.pages";
 /**
- * How many page logs to keep, this one included. One was not enough: a paste
- * loads `/join` as a second page, and each wrote over the other's log, so the
- * page that hung was the one no report could show.
+ * How many page logs to keep, this one included. More than one because a paste
+ * loads `/join` as a second page, and with one slot each overwrites the
+ * other's log — leaving the page that hung the one no report can show.
  */
 const PAGES = 5;
 
@@ -144,10 +138,9 @@ export function otherPages(): KeptPage[] {
 /**
  * Keep this page's timeline for the next one to read, in its own slot.
  *
- * On `pagehide` and on going hidden, which between them cover the ways a phone
- * leaves an app: backgrounded, swiped away, reloaded, killed. Neither is
- * guaranteed on a process the OS terminates outright, so this is a best
- * effort — which still beats the certainty of losing it.
+ * On `pagehide` and on going hidden, which between them cover backgrounded,
+ * swiped away, reloaded and killed. Neither fires on a process the OS
+ * terminates outright, so this is best effort.
  */
 function save(): void {
   try {
@@ -187,11 +180,9 @@ export function forget(): void {
 }
 
 /**
- * One line per event, fixed-width, newest last.
- *
- * Plain text on purpose: it is read on a phone, pasted into a message, and
- * diffed against the next one. A table that needs a viewer is a table nobody
- * sends.
+ * One line per event, fixed-width, newest last. Plain text because it is read
+ * on a phone, pasted into a message and diffed against the next one; a table
+ * that needs a viewer is one nobody sends.
  */
 export function format(rows: readonly DiagEvent[] = timeline()): string {
   return rows
@@ -229,14 +220,13 @@ interface Arrival {
 /**
  * Every page load's URL, written by an inline script before Next has run.
  *
- * It exists for one question iOS won't answer anywhere else: which URL did the
- * home-screen icon open (docs/ios.md, experiment A)? By the time anyone opens
- * /diag the app has moved on — `/install` hands off to `/join` or `/`, the
- * router rewrites the address — so the URL has to be caught at the door. The
- * very first load in a storage is kept apart and never overwritten, because on
- * iOS the home-screen app's storage is its own and its first load *is* the
- * icon's first launch. Same mask as `hideSecrets`, inlined: this runs before
- * any bundle does.
+ * It answers the one question iOS won't answer elsewhere: which URL did the
+ * home-screen icon open (docs/ios.md, experiment A)? The app has moved on by
+ * the time anyone opens /diag — `/install` hands off, the router rewrites the
+ * address — so the URL is caught at the door. The first load in a storage is
+ * kept apart and never overwritten: on iOS the home-screen app's storage is
+ * its own, so its first load *is* the icon's first launch. Same mask as
+ * `hideSecrets`, inlined because this runs before any bundle.
  */
 export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},m=document.querySelector("link[rel=manifest]"),c=localStorage.getItem("bida.carry");e.mf=!m?"none":m.href.indexOf("blob:")===0?"carry:"+(c?c.split("~").length:"?"):"static";a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
 

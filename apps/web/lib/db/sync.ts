@@ -82,12 +82,10 @@ async function pushPullGroup(
   // Opened before anything is stored, so a half-applied pull is not a state
   // this can reach. A *wrong key* never gets here — the token derived beside it
   // would have been a 403 — so a `SealError` means one row this build cannot
-  // read, and the whole pull used to fail on it, for good: the same row came
-  // back on every retry, and the app could only say sync was failing.
-  //
-  // The likeliest way to mint one is the version byte in `core/seal.ts`. Ship
-  // a second seal format and every phone that hasn't updated meets an op it
-  // must refuse; the ones it *can* read are no reason to hold hostage.
+  // read. **Skip it and keep the rest**: failing the pull means the same row
+  // comes back on every retry and sync never succeeds again. The likeliest way
+  // to mint one is the version byte in `core/seal.ts` — ship a second seal
+  // format and every phone that hasn't updated meets an op it must refuse.
   const pulled: Op[] = [];
   const unreadable: number[] = [];
   for (const op of response.ops) {
@@ -105,10 +103,10 @@ async function pushPullGroup(
  * Everything the server holds for one group, opened and handed back without a
  * byte of it being stored. What `/delete-my-data` shows before it deletes.
  *
- * It lives here, beside `pushPullGroup`, because this file is the boundary the
- * plaintext stops at: a second place deriving the key and opening ops is how
- * that guarantee stops being one thing you can check. Read-only, and it may be
- * a group this phone has never held.
+ * **Keep every key derivation in this file.** It is the boundary the plaintext
+ * stops at, and a second place opening ops is how that guarantee stops being
+ * one thing you can check. Read-only, and it may be a group this phone has
+ * never held.
  *
  * Rejects with `SyncHttpError` — 404 is a group this server never had, 410 one
  * that was deleted, 403 a link whose secret is wrong.
@@ -149,9 +147,8 @@ interface SyncOutcome {
 
 /**
  * Remember that an attempt failed, so a screen can say so. Every caller of
- * `syncGroup` swallows the rejection somewhere — the point of writing it down
- * is that a phone whose changes are going nowhere used to look identical to
- * one that was up to date.
+ * `syncGroup` swallows the rejection somewhere, and a phone whose changes are
+ * going nowhere otherwise looks identical to one that is up to date.
  */
 async function recordFailure(groupId: string, err: unknown): Promise<void> {
   const d = db();
@@ -190,12 +187,11 @@ const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
  * How many queued ops one push carries.
  *
  * Not what keeps the request legal — the server cuts a large push up for D1
- * itself, because it cannot make an old phone do it, and its `413` ceilings sit
- * a hundredfold above this (`apps/api/src/push-limits.ts`). This is what keeps
- * the request *small*. A phone coming back from a fortnight offline has hundreds of ops
- * waiting, and sending them as one body means the whole fortnight rides on a
- * single request surviving a tunnel's worth of signal; in rounds, what got
- * through stays through.
+ * itself and its `413` ceilings sit a hundredfold above this
+ * (`apps/api/src/push-limits.ts`). This keeps the request *small*: a phone back
+ * from a fortnight offline has hundreds of ops waiting, and as one body the
+ * whole fortnight rides on a single request surviving a tunnel's worth of
+ * signal. In rounds, what got through stays through.
  */
 const PUSH_CHUNK = 50;
 
@@ -215,10 +211,9 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  *
  * Single-flight per group: a second call joins the run already going rather
  * than starting another. `syncAll` has a guard of its own, but opening a group
- * calls this directly (app/g/page.tsx) and used to race the loop's run for the
- * same group — the same ops pushed twice, the same ops pulled twice, and two
- * `rebuild()`s taking the readwrite lock on every table in turn at exactly the
- * moment the screen was waiting to read them.
+ * calls this directly (app/g/page.tsx) and would otherwise race the loop's run
+ * for the same group — every op pushed and pulled twice, and two `rebuild()`s
+ * taking the readwrite lock on every table just as the screen waits to read.
  */
 export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
   const already = inFlight.get(groupId);
@@ -279,13 +274,13 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       if (pulled.length > 0) {
         await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
         // Adopt every stamp we've just stored, so this device's next op sorts
-        // after the ops it has seen. Without this the clock only ever moved on
-        // send: reading a peer's expense and correcting it stamped the
-        // correction *before* the create when that peer's phone ran fast, and
-        // the fold discarded it — the amount changed, then snapped back. In the
-        // same transaction as the ops themselves, for the same reason appendOps
-        // advances it in its own: a tab that dies here must not leave the clock
-        // trailing an op the log already holds.
+        // after the ops it has seen. Without it the clock only moves on send:
+        // correcting a peer's expense stamps the correction *before* the create
+        // when that peer's phone runs fast, and the fold discards it — the
+        // amount changes, then snaps back. In the same transaction as the ops
+        // themselves, for the same reason `appendOps` advances it in its own: a
+        // tab that dies here must not leave the clock trailing an op the log
+        // already holds.
         const device = await getDevice();
         const now = Date.now();
         let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
@@ -343,15 +338,15 @@ let backoffMs = 2000;
 const BACKOFF_MAX_MS = 60000;
 
 /**
- * Runs every group's sync once, sequentially. Single-flight across the whole
- * run, not per group: an overlapping call joins the run in flight instead of
+ * Runs every group's sync once, sequentially. **Single-flight across the whole
+ * run, not per group**: an overlapping call joins the run in flight instead of
  * starting a second one.
  *
- * It has to be. Five things trigger this — a local write, visibility, `online`,
- * the 60s interval, and the backoff timer itself — and the second caller used
- * to skip the groups already in flight, finish with nothing attempted, then
- * clear the pending retry and reset the backoff to 2s. Against a dead server
- * the backoff never grew past its first step.
+ * Five things trigger this — a local write, visibility, `online`, the 60s
+ * interval, and the backoff timer itself. Per group, the second caller skips
+ * the groups already in flight, finishes with nothing attempted, then clears
+ * the pending retry and resets the backoff to 2s: against a dead server it
+ * never grows past its first step.
  */
 export function syncAll(): Promise<void> {
   // Not while hidden, for the reason `whenVisible` gives. The debounce after a
@@ -369,7 +364,7 @@ async function runSyncAll(): Promise<void> {
   const keys = await db().groupKeys.toArray();
   // A forgotten group keeps its secret — reopening the invite link un-forgets
   // it — but it stops costing cellular data in the meantime. Without this,
-  // `forgetGroup` only hid the row while its ops went on flowing in forever.
+  // `forgetGroup` hides the row while its ops go on flowing in forever.
   const left = new Set((await getDevice()).leftGroups ?? []);
   let anyFailure = false;
   for (const key of keys) {

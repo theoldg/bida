@@ -28,8 +28,8 @@ interface Described {
    * that moved more than one gets *instead* of a sentence about one of them.
    * An entry is saved whole (`editExpense`), so several at once is ordinary,
    * and a merge can revert somebody's amount in the same op that changes the
-   * description. Ranking the fields is what let a permanent record caption
-   * that revision "changed who's involved" and never mention the money.
+   * description. **Never rank the fields**: a permanent record that captions
+   * such a revision "changed who's involved" never mentions the money.
    */
   also?: Detail[];
 }
@@ -132,8 +132,8 @@ export function describe(
     (typeof v === "number" && Number.isFinite(v) ? money(v, code) : undefined);
   /**
    * The currency the entry's own figures are in — its `amountMinor`, and every
-   * payer's contribution. Only `baseAmountMinor` is in the group's currency, so
-   * printing everything in that one put a euro sign over a figure in dirhams.
+   * payer's contribution. Only `baseAmountMinor` is in the group's currency;
+   * printing everything in that one puts a euro sign over a figure in dirhams.
    */
   const ownCurrency = (state: State): CurrencyCode =>
     (typeof state["currency"] === "string" ? state["currency"] : currency);
@@ -145,10 +145,10 @@ export function describe(
   };
   /**
    * The people of a split, in the order they are printed rather than the order
-   * they are stored. `splitParticipants` sorts by id, and an id is a hash of
-   * the name now (ADR-0034), so a was/now pair came out in two unrelated
-   * orders — "Cy, Ana, Bruno" over "Ana, Bruno" — and the reader had to work
-   * out which name had gone. Sorting by the name puts the two lines in step.
+   * they are stored. `splitParticipants` sorts by id and an id is a hash of the
+   * name (ADR-0034), so a was/now pair comes out in two unrelated orders —
+   * "Cy, Ana, Bruno" over "Ana, Bruno" — and the reader has to work out which
+   * name went. Sorting by the name puts the two lines in step.
    */
   const inNameOrder = (spec: SplitSpec) =>
     splitParticipants(spec)
@@ -184,9 +184,9 @@ export function describe(
 
   if (rev.entity === "expense") {
     // An income and an expense are one entity, and only the revision that
-    // crossed between them carries `kind` — so this is read off the fold. Every
-    // later edit of an income used to be captioned "edited this entry", the one
-    // noun that is never wrong and never says anything either.
+    // crossed between them carries `kind` — so read it off the fold, or every
+    // later edit of an income is captioned "edited this entry", the one noun
+    // that is never wrong and never says anything either.
     const kind = rev.after["kind"] === "income" ? "income" : "expense";
     const noun = copy.entryKind.label[kind].toLowerCase();
 
@@ -230,11 +230,10 @@ export function describe(
     if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
-      // Two questions, in the order a person cares about them: who it is
-      // spent on, and then how much each of them owes. Asking only the first
-      // is what put "changed who's involved" over an edit that moved a part
-      // from one name to another — the same two names on both lines, and
-      // nothing on screen saying what had actually moved.
+      // Two questions, in the order a person cares about them: who it is spent
+      // on, and then how much each of them owes. Ask only the first and an edit
+      // moving a part from one name to another reads "changed who's involved" —
+      // the same two names on both lines, and nothing saying what moved.
       const wasWho = namesOf(was);
       const nowWho = namesOf(now);
       const wasHow = shareLine(was);
@@ -256,13 +255,13 @@ export function describe(
       // mode line below says whether the entry now *reads* differently.
     }
     // The scan behind the split, and the grid that assigned it. Both move
-    // fields no sentence above names, so a save that only reopened the receipt
-    // and moved a salad from one person to another said nothing at all.
+    // fields no sentence above names, so without this a save that reopened the
+    // receipt and moved a salad from one person to another says nothing.
     const lines = (state: State) =>
       (Array.isArray(state["receiptItems"]) ? state["receiptItems"].length : 0);
-    // `receiptDiscounts` and `receiptText`, both plural-and-spelled-out: the
-    // singular `receiptDiscount` this used to ask for is not a field any op has
-    // ever carried, so a save that only moved a bill's deductions said nothing.
+    // `receiptDiscounts` and `receiptText`, both plural-and-spelled-out. There
+    // is no singular `receiptDiscount` field — ask for one and a save that only
+    // moved a bill's deductions says nothing.
     if (field("receiptItems") ?? field("receiptTip") ?? field("receiptTax")
       ?? field("receiptDiscounts") ?? field("receiptText")) {
       const wasLines = lines(rev.before);
@@ -316,9 +315,7 @@ export function describe(
     //
     // Both are read off the fold, because neither is answered by the change
     // alone: adding a co-payer beside the largest contributor moves `payers`
-    // and nothing else, and the name they join is on the entity. That is what
-    // left every co-payer edit captioned "edited this entry" — and unmentioned
-    // altogether where the same save moved something else.
+    // and nothing else, and the name they join is on the entity.
     if (field("payers") ?? field("paidBy")) {
       /** Who put money in, by name: `payerList`, over a state not an `Expense`. */
       const payerNames = (state: State) => {

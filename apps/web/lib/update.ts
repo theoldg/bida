@@ -1,17 +1,16 @@
 /**
  * A new build, taken as soon as it is safe to.
  *
- * `public/sw.js` activates itself the moment a new build is fully precached, and
- * keeps a cache per open page, each still serving the build that page is on.
- * This file is the other half: a page that had the ground change under it
- * reloads onto the new build — but not where it is standing, and not while
- * somebody is looking at it. See `mayReloadHere`.
+ * `public/sw.js` activates itself the moment a new build is fully precached,
+ * and keeps a cache per open page, each serving the build that page is on.
+ * This file is the other half: a page whose ground changed reloads onto the
+ * new build — but not where it is standing, and not while somebody is looking
+ * at it. See `mayReloadHere`.
  *
- * It used to be a tap. The worker waited for every client of the origin to
- * close, and on iOS Safari that is close to never: tabs, and the browser, live
- * through what a person thinks of as quitting, so people killed Safari over and
- * over to get a deploy. The offer is still drawn in the installed app for a page
- * that is being used when the update lands (`components/update.tsx`).
+ * **Never wait for every client to close.** On iOS that is close to never —
+ * tabs and the browser live through what a person thinks of as quitting — so
+ * a deploy arrives only after they kill Safari repeatedly. A page in use when
+ * the update lands is offered the tap instead (`components/update.tsx`).
  */
 
 import { mark } from "./diag";
@@ -66,17 +65,13 @@ function announce(): void {
  * nowhere else.**
  *
  * In the installed app a reload is a relaunch, splash screen and all: on the
- * groups list that is the launch it already looks like, and on a ledger
- * somebody is reading it is indistinguishable from a crash. This used to
- * reload wherever the app happened to be, which put that flash — and, on the
- * two forms, the browser's own "leave site?" — in front of anyone who did
- * nothing but bring the app back to the front.
+ * groups list that is the launch it already looks like; on a ledger somebody
+ * is reading it is indistinguishable from a crash, and on the two forms it
+ * raises the browser's "leave site?".
  *
- * Nothing forces the update through sooner. Holding out used to mean a page
- * left open across two deploys had its own cache deleted under it and could no
- * longer finish drawing; `sw.js` now keeps a cache per open window for as long
- * as that window is on it, so waiting for the front door costs a stale screen
- * and never a broken one.
+ * Nothing forces the update through sooner. `sw.js` keeps a cache per open
+ * window for as long as that window is on it, so waiting for the front door
+ * costs a stale screen and never a broken one.
  */
 function mayReloadHere(): boolean {
   return (location.pathname.replace(/\/$/, "") || FRONT_DOOR) === FRONT_DOOR;
@@ -110,20 +105,18 @@ export function registerServiceWorker(): void {
     // Untouched on the front door is a launch nobody has got to yet: go, and
     // the person never knows there was a build in between.
     const now = mayReloadHere() && !touched && document.visibilityState === "visible";
-    // On the timeline because an update is when a second copy of the app is
-    // most likely to be left behind, holding the database (lib/db/live.ts) —
-    // and because which way this went is the first question to ask of a phone
-    // that is drawing a build behind the one it was told to.
+    // On the timeline because an update is when a second copy is most likely
+    // left behind holding the database (lib/db/live.ts), and because which way
+    // this went is the first question to ask of a phone on a stale build.
     mark("sw.controllerchange", `at ${location.pathname}: ${now ? "reload now" : "reload when free"}`);
     if (now) window.location.reload();
     else reloadWhenFree();
   });
 
   navigator.serviceWorker.register("/sw.js").then((registration) => {
-    // The browser revalidates `sw.js` on navigation, but an installed app — and
-    // a Safari tab — is resumed far more often than it is launched. Asking again
-    // each time it comes back to the front is what makes the check happen on a
-    // phone at all.
+    // The browser revalidates `sw.js` on navigation, but an installed app is
+    // resumed far more often than launched. Asking again on each return to the
+    // front is what makes the check happen on a phone at all.
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") void registration.update().catch(() => {});
     });
@@ -135,14 +128,12 @@ export function registerServiceWorker(): void {
 /**
  * Reload the next time the app is opened somewhere it can afford to.
  *
- * Never while it is hidden: `beforeunload` can't put its question up then, and
- * a load begun as the phone puts the app away is one the phone may not finish.
- * Coming back to the front is the honest moment — on a phone that is the app
- * being resumed, and a reload then is the launch it already looks like.
+ * **Never while hidden**: `beforeunload` can't put its question up, and a load
+ * begun as the phone puts the app away is one it may not finish. Coming back
+ * to the front is a resume, and a reload then is the launch it looks like.
  *
- * A resume onto a screen `mayReloadHere` says no to changes nothing and stays
- * armed, so the update is taken on the first resume that finds the front door.
- * Armed once for the life of the page: a second build arriving must not leave
+ * A resume onto a screen `mayReloadHere` refuses changes nothing and stays
+ * armed. Armed once for the life of the page: a second build must not leave
  * two of these watching.
  */
 function reloadWhenFree(): void {
@@ -159,16 +150,14 @@ function reloadWhenFree(): void {
 
 /**
  * Whether a reload would be served out of the precache rather than off the
- * network. False for the first visit's first minute, while the worker is still
- * fetching the ~2.4 MB shell: a reload then competes with those fetches over
- * one phone connection, which is the difference between a flash and a blank
- * screen in somebody's first minute. Only `KeepCarried` asks
- * (components/install.tsx), and only about a reload nothing on screen needs.
+ * network. False through the first visit's first minute, while the worker
+ * fetches the ~2.4 MB shell: a reload then competes with those fetches over
+ * one phone connection — a blank screen where there should be a flash. Only
+ * `KeepCarried` asks (components/install.tsx).
  *
- * `navigator.serviceWorker.controller` would be the obvious flag and is the
- * wrong one: `public/sw.js` deliberately never calls `clients.claim()`, so the
- * page that installs the worker stays uncontrolled for the whole of its life
- * and would never see one.
+ * **Never `navigator.serviceWorker.controller`**: `public/sw.js` never calls
+ * `clients.claim()`, so the page that installs the worker stays uncontrolled
+ * for life and would never see one.
  */
 export function shellIsWarm(): boolean {
   return warm;

@@ -145,9 +145,9 @@ export async function editExpense(
 
   const merged = { ...existing, ...changes } as ExpenseInput & { deletedAt?: number | null };
   // Both sides of the split comparison written one way. `sameValue` sorts
-  // object keys but not array elements, so toggling a member out and back in
-  // reordered `members` and read as an edit that changed nothing a person
-  // could see (`canonicalSplit`).
+  // object keys but not array elements, so without this, toggling a member out
+  // and back in reorders `members` and reads as an edit that changed nothing a
+  // person could see (`canonicalSplit`).
   const split = canonicalSplit(merged.split);
   const before = { ...existing, split: canonicalSplit(existing.split) };
 

@@ -6,11 +6,9 @@
  * are still moving is a bloom nobody saw, and whatever was refused may have
  * been fixed by the time the scroll lands.
  *
- * The scroll is driven here, frame by frame, rather than handed to
- * `scrollTo({ behavior: "smooth" })`. iOS glided with that and Android jumped,
- * and a smooth scroll has no end event every browser here agrees on either —
- * owning the animation settles both: it moves the same everywhere, and it
- * knows exactly when it has arrived.
+ * **Never `scrollTo({ behavior: "smooth" })`** — iOS glides with it and Android
+ * jumps, and there is no end event every browser here agrees on. Driving the
+ * scroll frame by frame moves the same everywhere and knows when it arrived.
  */
 
 /** The shortest and longest a glide takes; distance decides in between. */

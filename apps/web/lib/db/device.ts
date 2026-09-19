@@ -27,15 +27,15 @@ export async function updateDevice(patch: Partial<DeviceRecord>): Promise<void> 
   // opened, the list left on), and a write on every tap is worth seeing.
   const done = started("device.write", Object.keys(patch).join(","));
   try {
-    // Never from a background page (./visible.ts). This is the smallest write
-    // in the app and it was the one that hung it: `device` is the only store
-    // it takes, and every list and group screen reads that store, so a copy
-    // frozen inside this one put leaves every other copy on skeleton rows
-    // while the op log it is not holding reads perfectly well.
+    // Never from a background page (./visible.ts). The smallest write in the
+    // app is the one that hangs it: `device` is the only store it takes, and
+    // every list and group screen reads that store, so a copy frozen inside
+    // this one put leaves every other copy on skeleton rows while the op log
+    // it is not holding reads perfectly well.
     await whenVisible("device.write");
     // Read inside the gate, not before it, so the fields this patch does not
     // name come from the record as it is now — a put built before a long park
-    // would put back whatever another screen wrote during it.
+    // puts back whatever another screen wrote during it.
     const current = await getDevice();
     await db().device.put({ ...current, ...patch, key: "device" });
   } finally {

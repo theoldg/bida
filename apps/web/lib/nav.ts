@@ -1,32 +1,30 @@
 /**
  * Going up, not going back.
  *
- * Every screen's back arrow names its parent (`route.group(...)`, not "whatever
- * was before"), but a plain `<Link>` *pushes*, so the browser's own back — the
- * Android button, the edge swipe — replayed where you had been instead: group →
- * expense → back to group → device back → that expense again.
+ * Every screen's back arrow names its parent (`route.group(...)`, not
+ * "whatever was before"), but a plain `<Link>` *pushes*, so the browser's own
+ * back replays where you had been: group → expense → back to group → device
+ * back → that expense again.
  *
- * So an up-link doesn't navigate, it *unwinds*: if the parent screen is already
- * behind us in the session's history, we go back to it, however many entries
- * that is, and the screens we're leaving stop being behind us. The stack that
- * remains is the path from the groups list down to where you are, which is what
- * makes the device back button climb the hierarchy one level per press.
+ * So an up-link doesn't navigate, it *unwinds*: where the parent is already
+ * behind us we go back to it, however many entries that is, and what we leave
+ * stops being behind us. The stack that remains is the path from the groups
+ * list down to here, which is what makes the device back button climb the
+ * hierarchy one level per press.
  *
- * The browser's Navigation API is what makes this knowable — `history` alone
- * can't say what its entries are. Where it's missing (iOS before 18.4) an
- * up-link replaces the current entry instead: never the wrong screen, just a
- * back button that can need one extra press.
+ * The Navigation API is what makes this knowable — `history` alone can't say
+ * what its entries are. Where it is missing (iOS before 18.4) an up-link
+ * replaces the current entry: never the wrong screen, just a back button that
+ * can need one extra press.
  *
- * **It reads the entries and then goes back over them.** Naming one by key and
- * asking `traverseTo` for it is the same move on paper, and was two wall-clock
- * guesses in the hand: WebKit folds a `traverseTo` into one still pending for
- * the same key and never settles one it dropped, so the arrow needed a timeout
- * to tell a late traversal from a lost one, and that timeout fired on a slow
- * phone while the traversal was merely late — replacing the entry underneath a
- * traversal that then landed, and leaving the parent on the stack twice. A
- * count has no such failure: it is read and spent in the same tick, outside any
- * event, and the one place where the browser's idea of "here" is not this
- * screen — inside a back press this app cancelled — never counts at all
+ * **Read the entries and go back over them; never name one by key for
+ * `traverseTo`.** WebKit folds a `traverseTo` into one still pending for the
+ * same key and never settles one it dropped, so telling a late traversal from
+ * a lost one takes a timeout — which fires on a slow phone while the traversal
+ * is merely late, replacing the entry underneath it and leaving the parent on
+ * the stack twice. A count is read and spent in the same tick, outside any
+ * event, and the one place the browser's idea of "here" is not this screen —
+ * inside a cancelled back press — never counts at all
  * ([back-button.ts](./back-button.ts)).
  */
 
@@ -104,18 +102,15 @@ export function goBack(back: () => void): void {
 /**
  * The app's own traversal, told apart from the device's back button.
  *
- * `NavigateEvent.userInitiated` is meant to say which is which, and in Chrome
- * it does. WebKit sets it whenever a tap is being handled — so in Safari the
- * app's back *inside a tap* reads as a device press, and the press guard asked
- * "discard?" of the Done that was keeping the edits, or of the Discard that had
- * just answered it. So the app says so itself, just before it traverses.
+ * **Never trust `NavigateEvent.userInitiated`.** Chrome says which is which;
+ * WebKit sets it whenever a tap is being handled, so the app's own back inside
+ * a tap reads as a device press and the guard asks "discard?" of the Done
+ * keeping the edits. The app says so itself instead, just before it traverses.
  *
- * A latch, spent by the one `navigate` it explains, and not a window of time:
- * a clock says "the app went back within the last second", which a phone slow
- * enough to deliver the event later answers wrongly — with the discard dialog,
- * over the Save that had just cleared the draft. It is armed only where a
- * traversal is actually coming, because one left armed would swallow a real
- * press instead.
+ * **A latch spent by the one `navigate` it explains, never a window of time.**
+ * A clock says "the app went back within the last second", which a phone slow
+ * enough to deliver the event later answers wrongly. Armed only where a
+ * traversal is actually coming, since one left armed swallows a real press.
  */
 let ownTraversal = false;
 

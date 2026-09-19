@@ -9,16 +9,12 @@ export type ScanState = "idle" | "scanning" | "error";
 /**
  * The scan in flight for a group, or the last one's refusal.
  *
- * It lives out here beside the draft rather than in the component that
- * started it, and for the same reason: a scan is a network round trip to a
- * model, and the screens it can be started from come and go under it. The
- * Items tab is unmounted the moment you tap Evenly, and the form itself is
- * unmounted by the payers editor and the who-had-what grid — none of which
- * says anything about whether a model is still reading a photograph.
- *
- * Holding it in `useState` meant the "Reading…" strip and its bar were facts
- * about a mounted component: leaving the tab and coming back started the
- * sweep again from nothing, on a scan that was two seconds old.
+ * **Never hold this in a component's `useState`.** A scan is a network round
+ * trip to a model, and the screens it can be started from come and go under
+ * it: the Items tab is unmounted the moment you tap Evenly, and the form
+ * itself by the payers editor and the who-had-what grid. In state, leaving a
+ * tab and coming back restarts the "Reading…" sweep from nothing on a scan
+ * that is two seconds old.
  */
 export interface LiveScan {
   state: Exclude<ScanState, "idle">;
@@ -40,23 +36,17 @@ export interface LiveScan {
 }
 
 /**
- * How long one sweep lasts: three seconds for a photo, two for a typed bill,
- * both jittered. Drawn once per *scan*, so a second scan doesn't repeat the
- * first to the frame — which is what makes a bar read as a canned animation
- * rather than an estimate. Per scan and not per mount: a bar that redrew its
- * own guess on the way back would be a different estimate of the same wait.
+ * How long one sweep lasts: three seconds for a photo, two for a typed bill
+ * (no photo to resize and no 200 KB to push), both jittered.
  *
- * It was two, which is what a scan used to take. It no longer is: the round
- * trip now carries a Turnstile challenge as well as the model, and the
- * upstream API is slower under load than it was. A bar that fills early and
- * then hands over to a spinner is the one failure this control has — it
- * promises an answer and then admits it was guessing — so the estimate tracks
- * the scan rather than the other way round.
+ * **Drawn once per scan, never per mount.** Per scan, so a second scan doesn't
+ * repeat the first to the frame and read as a canned animation; not per mount,
+ * or a bar coming back would give a different estimate of the same wait.
  *
- * A typed bill is shorter for the reasons it is: no photo to resize and no
- * 200 KB to push, so what is left is the challenge, two D1 round trips and the
- * model. The same estimate for both would be a bar that finished a second early
- * every time somebody typed.
+ * Keep the estimate tracking what a scan actually costs — the round trip
+ * carries a Turnstile challenge and two D1 round trips as well as the model. A
+ * bar that fills early and hands over to a spinner is this control's one
+ * failure: it promises an answer and then admits it was guessing.
  */
 function sweepSeconds(medium: ScanMedium): number {
   return medium === "text" ? 1.8 + Math.random() * 0.4 : 2.8 + Math.random() * 0.4;

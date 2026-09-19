@@ -122,10 +122,10 @@ export function useInviteLink(groupId: string | undefined): {
 
   const copy = useMemo(() => {
     if (!link) return undefined;
-    // `writeText` rejects on an insecure context or a denied permission, and
-    // it used to reject into nothing: the icon never flipped, the button read
-    // as inert, and the link — the whole of this app's access model — was
-    // shown nowhere else. A refusal puts it on screen to be read instead.
+    // `writeText` rejects on an insecure context or a denied permission.
+    // Never swallow it: the link is this app's whole access model and is shown
+    // nowhere else, so a silent failure leaves an inert-looking button.
+    // A refusal puts it on screen to be read instead.
     return async () => {
       try {
         await navigator.clipboard.writeText(link);
@@ -272,15 +272,13 @@ export function useGroupData(groupId: string | undefined): GroupData {
  * Send a phone that has not said who it is to the screen that asks.
  *
  * A device with no claimed member has no honest `actor` to sign an op with,
- * and every screen under `/g` writes one: the fallbacks that filled the gap
- * signed with whoever the action was *about*, so removing Bruno from an
- * unclaimed phone went into history as "Bruno left the group". There is no
- * leaving — only being removed — so that line could only ever be a lie.
+ * and every screen under `/g` writes one. **Never fall back to the member an
+ * action is *about***: removing Bruno would go into history as "Bruno left the
+ * group", and there is no leaving — only being removed.
  *
- * `/g` has redirected since the trash button showed up next to every name on
- * an unclaimed phone; the rest of the group's screens are reachable on their
- * own (a bookmark, an invite link's back arrow, a settle-up row), so they
- * redirect too. `/g/claim` is the exception, being the destination.
+ * Every screen under `/g` redirects, not just the ledger: each is reachable on
+ * its own (a bookmark, an invite link's back arrow, a settle-up row).
+ * `/g/claim` is the exception, being the destination.
  *
  * Returns whether we are on our way out, so the caller can draw a frame
  * instead of somebody else's ledger while the replace lands.
@@ -311,12 +309,12 @@ export interface GroupSummary {
  *
  * The home-screen icon is added carrying its invites (docs/ios.md), so its
  * first launch saves the keys and lands on a list whose rows only exist once
- * the server has answered. Until this, that gap was the empty state: somebody
- * who had just installed bida to *keep* their groups was told there were none.
+ * the server has answered. Without this, somebody who installed bida to *keep*
+ * their groups meets the empty state.
  *
- * `leftGroups` is the reason this counts keys against groups rather than
- * trusting either — forgetting a group keeps its key, so a phone that had
- * forgotten everything would have waited forever.
+ * **Count keys against groups, minus `leftGroups`** — forgetting a group keeps
+ * its key, so trusting the keys alone waits forever on a phone that forgot
+ * everything.
  */
 export function useArrivingGroups(): number | undefined {
   return useLive("arrivingGroups", async () => {
@@ -338,8 +336,8 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     const d = db();
     // Five reads, not three per group. Every row on this phone belongs to a
     // group in this list, so fetching each table whole and bucketing it here
-    // moves the same bytes in a constant number of IndexedDB round trips —
-    // the group list was the one screen whose cost grew with the group count.
+    // moves the same bytes in a constant number of IndexedDB round trips,
+    // rather than a cost that grows with the group count.
     const [groups, device, members, expenses, settlements, rates] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),
@@ -393,12 +391,11 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
 /**
  * How sync is actually going for one group.
  *
- * `navigator.onLine` answers a different question — whether there is a link,
- * not whether the other end is answering. A Worker that 500s, a D1 outage or a
- * key the server rejects all leave the phone "online" while nothing it writes
- * ever leaves it, which is the one failure that quietly costs a trip its
- * ledger. So the sync engine writes down how each attempt went and this reads
- * it back.
+ * **Never `navigator.onLine`** — it says whether there is a link, not whether
+ * the other end is answering. A Worker that 500s, a D1 outage or a key the
+ * server rejects all leave the phone "online" while nothing it writes ever
+ * leaves it. The sync engine writes down how each attempt went; this reads it
+ * back.
  */
 interface SyncHealth {
   /** Failing for long enough to be worth saying out loud — see FAILURES_BEFORE_WARNING. */

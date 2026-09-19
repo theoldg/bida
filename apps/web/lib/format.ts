@@ -11,11 +11,10 @@ import { copy, type Noun, type Voice } from "./copy";
  */
 
 /**
- * The mark between thousands, everywhere this app writes a figure itself
- * rather than handing it to `Intl`: a narrow no-break space. A comma and a
- * point are each somebody's decimal separator and this app accepts both as
- * one; a space is nobody's, so a grouped figure is never ambiguous — and
- * stripping it back out on parse cannot eat a character the typist meant.
+ * The mark between thousands wherever this app writes a figure itself rather
+ * than handing it to `Intl`: a narrow no-break space. A comma and a point are
+ * each somebody's decimal separator and this app accepts both; a space is
+ * nobody's, so stripping it on parse cannot eat a character the typist meant.
  */
 export const GROUP = "\u202f";
 
@@ -34,9 +33,9 @@ export function groupDigits(canonical: string): string {
 
 /**
  * A rate, as every screen shows one — exact decimal text, thousands grouped
- * the same way the field you typed it into groups them. A group whose base is
- * a weak currency has rates in the thousands ("1 EUR = 13 000 UZS"), and that
- * was the last figure in the app reading as one long digit string.
+ * the way the field you typed it into groups them. A group based on a weak
+ * currency has rates in the thousands ("1 EUR = 13 000 UZS"), which is
+ * unreadable as one long digit string.
  */
 export function rateText(rate: Rate, digits?: number): string {
   return groupDigits(digits === undefined ? formatRate(rate) : formatRate(rate, digits));
@@ -48,10 +47,9 @@ export function money(minor: number, currency: CurrencyCode, signed = false): st
 
 /**
  * The tip screen's dollars, and nothing else's. `money()` hands `Intl` the
- * reader's locale, which is right for the group's own money and wrong here:
- * outside the US that renders USD as "US$1.25", one line under a `$5` the
- * copy writes by hand, and the two figures stop looking like the same five
- * dollars. Pinned to en-US so the cut matches the price it is a cut of.
+ * reader's locale, which is right for the group's money and wrong here:
+ * outside the US it renders USD as "US$1.25", one line under a `$5` the copy
+ * writes by hand. Pinned to en-US so the cut matches the price it is cut of.
  */
 export function usd(minor: number): string {
   return formatMinor(minor, "USD", { locale: "en-US" });
@@ -71,9 +69,8 @@ export function bare(minor: number, currency: CurrencyCode): string {
 
 /**
  * The "this doesn't add up" sentence for the split and payer editors, in real
- * money. Core hands back a number of minor units and a problem code rather
- * than a sentence, because it doesn't know the currency — "230 minor units
- * unallocated" is not a thing to show anyone. The screen supplies its own
+ * money. Core hands back minor units and a problem code rather than a
+ * sentence, because it doesn't know the currency; the screen supplies the
  * wording around the figure.
  */
 function shortfallText(
@@ -93,23 +90,19 @@ function shortfallText(
  * total itself rather than the shortfall:
  *
  * - **Nobody included yet.** A figure would be beside the point; say the thing.
- * - **Nothing to divide.** `validateSplit` scores 0 minor units allocated out
- *   of 0 as a satisfied split. That is arithmetically true and reads as
- *   nonsense — "€0.00 of €0.00 allocated" under an expense whose amount is
- *   still blank, claiming the split is settled when the expense has no number
- *   yet. It is the most-reported bug in this editor, so the string is made
- *   unreachable here rather than guarded at each of the call sites that can
- *   reach a zero total.
+ * - **Nothing to divide.** `validateSplit` scores 0 of 0 allocated as a
+ *   satisfied split — arithmetically true, and nonsense under an expense whose
+ *   amount is still blank. Made unreachable here rather than guarded at each
+ *   call site that can reach a zero total.
  */
 export function splitFooter(
   check: SplitValidation,
   currency: CurrencyCode,
 ): { ok: boolean; text: string } | null {
   if (check.problem === "empty") return { ok: false, text: copy.split.nobody };
-  // No total is not a sentence here any more. A zero total is arithmetically a
-  // satisfied split and must never be shown as one — but the amount field is
-  // what's missing and the amount field is what says so, by flashing red on a
-  // refused Save. Two places saying it made the second one noise.
+  // A zero total is arithmetically a satisfied split and must never be shown
+  // as one — but the amount field is what's missing, and it says so itself by
+  // flashing red on a refused Save. A second voice here is noise.
   if (check.totalMinor <= 0) return null;
   if (check.ok) {
     return {
@@ -125,9 +118,9 @@ export function splitFooter(
 
 /**
  * Why the payer side can't be saved, in the entry's own currency — or `null`
- * when it can. The payers screen shows it under its own table and the entry
- * form shows it beside the payer field: same sentence either way, because a
- * person moving between the two screens is looking at one thing.
+ * when it can. The payers screen shows it under its table and the entry form
+ * beside the payer field: the same sentence either way, because a person
+ * moving between the two screens is looking at one thing.
  */
 export function payerProblemText(
   check: PayerValidation, currency: CurrencyCode, voice: Voice = "expense",
@@ -149,11 +142,11 @@ export function errorText(err: unknown): string {
 }
 
 /**
- * What a person *sees* as one character. `slice(0, 1)` counts UTF-16 code
- * units, so a name starting with an emoji lost half a surrogate pair and drew
- * the replacement box; a flag or a family is longer still. `Intl.Segmenter`
- * counts what the font draws, and code points are the fallback where it is
- * missing — wrong only for sequences no avatar has room for anyway.
+ * What a person *sees* as one character. **Never `slice(0, 1)`**: it counts
+ * UTF-16 code units, so a name starting with an emoji keeps half a surrogate
+ * pair and draws the replacement box, and a flag or a family is longer still.
+ * `Intl.Segmenter` counts what the font draws; code points are the fallback
+ * where it is missing, wrong only for sequences no avatar has room for.
  */
 const graphemer = typeof Intl !== "undefined" && "Segmenter" in Intl
   ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
@@ -172,11 +165,9 @@ export function initials(name: string): string {
 }
 
 /**
- * How wide a who-had-what column heading is allowed to get. Three graphemes:
- * the grid is one tappable cell per person per line, so the headings set the
- * column width, and a name that keeps growing until it is unique took the
- * whole screen — "Bartholomew" beside "Bartholomew Junior" used to print both
- * names in full and leave no room for the bill.
+ * How wide a who-had-what column heading may get. Three graphemes: the grid is
+ * one tappable cell per person per line, so the headings set the column width,
+ * and a prefix grown until it is unique leaves no room for the bill.
  */
 const CODE_MAX = 3;
 
@@ -187,13 +178,11 @@ const CODE_MAX = 3;
  * instead, so "Bartholomew" and "Bartholomew Junior" are "Ba1" and "Ba2"
  * rather than two headings as wide as the grid.
  *
- * The numbering is why no name may already contain a digit. "ba1" as a name
- * would be indistinguishable from "Ba" numbered 1, so a group holding one
- * gives up on unique codes altogether and takes the bare three-grapheme
- * prefixes, repeats and all — three characters cannot be injective over
- * arbitrary names, and a group that names somebody "ba1" has chosen which
- * half of that to lose. The chips under "Who was there" carry the full names,
- * which is where a repeated code is read.
+ * The numbering is why no name may already contain a digit: "ba1" as a name is
+ * indistinguishable from "Ba" numbered 1, so a group holding one gives up on
+ * unique codes and takes the bare three-grapheme prefixes, repeats and all.
+ * Three characters cannot be injective over arbitrary names. The chips under
+ * "Who was there" carry the full names, which is where a repeat is read.
  */
 export function distinctInitials(members: readonly { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
@@ -277,17 +266,14 @@ interface Whenever {
 }
 
 /**
- * The ledger's order: newest day first, and inside a day the entries we
- * cannot place in it — the ones whose stamp is a day and nothing more — then
- * the rest by their time, latest first.
+ * The ledger's order: newest day first; inside a day, the entries whose stamp
+ * is a day and nothing more, then the rest by time, latest first.
  *
- * A `dateOnly` entry heads its day rather than sinking to the bottom of it,
- * which is where its midnight stamp would otherwise put it: the time is
- * missing, not early. Last comes the `createdAt` tiebreak, for two entries
- * backdated to the same day or added within the same minute — they still need
- * a stable order rather than whatever IndexedDB handed back. `createdAt` is
- * absent on rows written before it existed, so those fall back to `occurredAt`
- * (a wash, but never crashes).
+ * A `dateOnly` entry heads its day rather than sinking to the bottom where its
+ * midnight stamp would put it: the time is missing, not early. `createdAt`
+ * then breaks ties, so two entries backdated to the same day have a stable
+ * order rather than whatever IndexedDB handed back; where it is absent,
+ * `occurredAt` stands in — a wash, but never crashes.
  */
 export function byWhen(a: Whenever, b: Whenever): number {
   const day = startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt);
@@ -321,13 +307,12 @@ export function dateInputValue(ts: number): string {
 }
 
 /**
- * The inverse of `dateInputValue`: local midnight of a `YYYY-MM-DD` day.
+ * The inverse of `dateInputValue`: local midnight of a `YYYY-MM-DD` day. What
+ * an imported row's `occurredAt` becomes, and what a backdated scan already
+ * uses (docs/data-model.md).
  *
- * What an imported row's `occurredAt` becomes, and the same convention a
- * backdated scan already uses — `occurredAt` holds a day and no time of day
- * worth showing, and the stamp is local midnight of it
- * (docs/data-model.md). `Date.parse` is deliberately not used: it reads a
- * bare date as UTC, which lands the day before for anyone west of Greenwich.
+ * **Never `Date.parse`**: it reads a bare date as UTC, which lands the day
+ * before for anyone west of Greenwich.
  */
 export function dayStart(day: string): number {
   const [y, m, d] = day.split("-").map(Number);
@@ -346,13 +331,11 @@ export function withDate(ts: number, value: string): number {
 
 /**
  * How many of something somebody had: "2", "1/2", "1 1/2" — or null for
- * exactly one, which is the ordinary case and says nothing worth printing.
+ * exactly one, the ordinary case, which says nothing worth printing.
  *
  * A count is a fraction because sharing makes it one: a plate split three ways
- * is a third of it each, and the same plate ordered twice and shared once is
- * one and a half. Written out with a slash rather than as ½ ⅓ ¼: the single
- * glyphs are drawn at a fraction of the line's size, which is unreadable at
- * the size this text is already set in.
+ * is a third each. Written with a slash rather than as ½ ⅓ ¼, whose glyphs are
+ * drawn at a fraction of the line's size and unreadable at this text size.
  */
 export function countText(count: { n: number; d: number }): string | null {
   if (count.d <= 0 || count.n <= 0) return null;

@@ -1,40 +1,32 @@
 /**
  * The device's back button, doing what the screen's back arrow does.
  *
- * The two used to disagree. The arrow goes *up* — it names a parent and
- * unwinds to it ([nav.ts](./nav.ts)) — while the button replayed wherever you
- * had been, so the two parted company wherever the arrow skipped a level; and
- * on the entry form the arrow asked before throwing a typed draft away and the
- * button just threw it away.
- *
+ * The arrow goes *up* — it names a parent and unwinds to it
+ * ([nav.ts](./nav.ts)) — where the button would replay wherever you had been.
  * A screen says what its back arrow is, and this makes the button agree. There
  * are only two things it can be, and they need opposite help:
  *
  * - **An ancestor.** Because only descending pushes, that ancestor is normally
- *   the entry right behind us and the browser's own back already goes there:
- *   nothing to do. It is only when the arrow skips a level — a screen opened
- *   from a shared link, so the parent was never visited — that the press has to
- *   be taken over and `goUp` run instead.
- * - **A question**, on the four screens that would lose typed work. Here back
- *   is not a navigation at all, so the press is *cancelled and nothing
- *   follows*: the dialog opens and the screen stays put. If the answer is
- *   already yes — nothing typed — the press is left alone and the browser
- *   takes it back, which is where the arrow was going anyway.
+ *   the entry right behind us and the browser's back already goes there. Only
+ *   where the arrow skips a level — a screen opened from a shared link, so the
+ *   parent was never visited — is the press taken over and `goUp` run.
+ * - **A question**, on the four screens that would lose typed work. Back is
+ *   not a navigation at all there, so the press is *cancelled and nothing
+ *   follows*: the dialog opens, the screen stays. Where the answer is already
+ *   yes, the press is left alone and the browser takes it back.
  *
- * That second case used to cancel the press and then navigate again in its
- * place, which is what made this hard: a traversal begun inside a cancelled one
- * is measured against an index the browser has already moved, and it was the
- * busiest path in the app — every press on those four screens, typed or not.
- * Asking *before* cancelling removes it. What is left re-navigates only where
- * there is genuinely nowhere for the press to go on its own, and does it by
- * putting the parent in this screen's place (`swap`) rather than counting back
- * over entries — which is the same hazard by the other door.
+ * **Ask before cancelling, and never navigate inside a cancelled press.** A
+ * traversal begun inside one is measured against an index the browser has
+ * already moved — and that is the busiest path in the app, every press on
+ * those four screens. What re-navigation is left runs only where the press has
+ * nowhere to go on its own, and does it by putting the parent in this screen's
+ * place (`swap`) rather than counting back over entries, which is the same
+ * hazard by the other door.
  *
- * Only *user*-initiated traversals are considered; the app's own traversal (the
- * arrow, mid-flight) is left alone, which is what keeps this from looping. And
- * only cancellable ones: a browser that refuses — no Navigation API at all
- * (iOS before 18.4), or no recent interaction to spend — keeps its own back,
- * which is no worse than what this replaced.
+ * Only *user*-initiated traversals count; the app's own (the arrow, mid-flight)
+ * is left alone, which is what keeps this from looping. And only cancellable
+ * ones: a browser that refuses — no Navigation API (iOS before 18.4), or no
+ * recent interaction to spend — keeps its own back.
  */
 import { useEffect, useRef } from "react";
 import { sameScreen, takeOwnTraversal } from "./nav";
@@ -107,10 +99,10 @@ function onNavigate(event: Event): void {
   if (!back || !isBackPress(e, navigation()?.currentEntry?.index)) return;
   // Asked and answered no: cancel, and let the dialog be the whole of it.
   if (back.mayLeave && !back.mayLeave()) { e.preventDefault(); return; }
-  // The browser is already going where the arrow points — which, with only
-  // descending pushing, is nearly every press in the app. Leaving it alone is
-  // not a shortcut: cancelling and re-navigating to the screen the press was
-  // headed for anyway is the whole of what used to go wrong.
+  // The browser is already going where the arrow points — with only
+  // descending pushing, nearly every press in the app. Leaving it alone is not
+  // a shortcut: cancelling and re-navigating to the screen the press was
+  // headed for anyway is the whole of what goes wrong.
   const up = back.up;
   if (up === undefined || sameScreen(e.destination.url, up)) return;
   e.preventDefault();

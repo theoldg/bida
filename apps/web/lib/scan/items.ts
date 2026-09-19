@@ -55,25 +55,20 @@ export function billCharges(extras: BillExtras | null): BillCharge[] {
  * Who had what, read two ways at once: as split weights, and as each person's
  * own copy of the bill.
  *
- * Each item's printed amount is divided evenly among the members checked for
- * that row (the same largest-remainder rule as a real split), then the
- * per-member results are summed. The sum is only ever used as a *ratio*
- * against the expense's real, converted total — see the split editor's
- * "shares" mode — so it doesn't matter that it's denominated in the receipt's
- * own currency rather than the group's base currency.
+ * Each item's printed amount divides evenly among the members checked for that
+ * row (the same largest-remainder rule as a real split), then the per-member
+ * results are summed. The sum is only ever a *ratio* against the expense's
+ * converted total, so its being in the receipt's currency doesn't matter.
  *
- * The extras — tip, tax, discount — are nobody's order, so they can't be
- * ticked for: each is spread across everyone at the table in proportion to
- * what they did order, and the discount is the one that comes off
- * (`BillExtras`). Proportional is the only division the grid can justify while
- * it has no way to say who a particular credit belongs to, and it is the
- * fairest one anyway: a discount exists because of the whole order, so it is
- * shared the way the order was (ADR-0016).
+ * The extras — tip, tax, discount — are nobody's order and can't be ticked
+ * for, so each is spread in proportion to what people did order, the discount
+ * coming off (`BillExtras`). Proportional is the only division the grid can
+ * justify with no way to say whose a credit is, and a discount exists because
+ * of the whole order anyway (ADR-0016).
  *
- * The lines are that same arithmetic, kept rather than summed away: one entry
- * per label, carrying how much of it was theirs. They are what the entry
- * screen expands a person's row into, and they add up to that person's weight
- * by construction — there is no second calculation to drift from this one.
+ * The lines are that arithmetic kept rather than summed away: one entry per
+ * label with how much of it was theirs. They add up to the person's weight by
+ * construction, so there is no second calculation to drift from this one.
  */
 export function receiptBreakdown(
   items: readonly BillLine[],
@@ -124,12 +119,11 @@ export function receiptBreakdown(
     let minor = 0;
     try { minor = parseMinor(charge.amount, currency); } catch { continue; /* mid-type */ }
     if (minor <= 0) continue;
-    // Scaled to what each person already ordered, not split evenly — someone
-    // who had the €40 steak tips more, and takes more of the loyalty discount,
-    // than someone who had a coffee. Only members with a positive item weight
-    // can take a proportional share; if none of them have one yet (nobody's
-    // assigned anything), fall back to an even split so the figure isn't
-    // silently dropped.
+    // Scaled to what each person already ordered, not split evenly: whoever
+    // had the €40 steak tips more, and takes more of the loyalty discount,
+    // than whoever had a coffee. Only a positive item weight can take a
+    // proportional share, so with nothing assigned yet it falls back to an
+    // even split rather than dropping the figure.
     const proportional: Record<string, number> = {};
     for (const id of involved) if (ordered[id]) proportional[id] = ordered[id];
     const { shares } = Object.keys(proportional).length > 0
@@ -143,9 +137,9 @@ export function receiptBreakdown(
     }
   }
 
-  // A discount worth more than the bill it comes off would owe somebody money,
-  // which is not a thing an expense can do. `checkScan` refuses such a receipt
-  // outright, so this is the floor under a bill typed into that state by hand.
+  // A discount worth more than the bill would owe somebody money, which an
+  // expense cannot do. `checkScan` refuses such a receipt outright; this is
+  // the floor under a bill typed into that state by hand.
   for (const [id, v] of Object.entries(weights)) if (v < 0) weights[id] = 0;
 
   // Zero-weight members are dropped, not kept at 0: "shares" mode reads
@@ -167,12 +161,11 @@ export function weightsFromItems(
 }
 
 /**
- * The receipt's own total: every line item, plus the tip and the tax, less the
- * discounts, in the receipt's currency. This is what Receipt mode treats as
- * the expense amount — derived from the bill, not typed separately — so it
- * stays in lockstep with whatever "who had what" actually adds up to. Returns
- * null when there's nothing to sum (no items parse), so the caller can leave
- * the amount alone rather than overwrite it with zero.
+ * The receipt's own total: every line item, plus tip and tax, less discounts,
+ * in the receipt's currency. Receipt mode treats it as the expense amount —
+ * derived from the bill, never typed separately — so it stays in lockstep with
+ * what "who had what" adds up to. Null when there is nothing to sum, so the
+ * caller leaves the amount alone rather than overwriting it with zero.
  */
 export function receiptTotalMinor(
   items: { amount: string }[],
@@ -194,20 +187,17 @@ export function receiptTotalMinor(
  * The amount to write into the draft when a tab change takes the total back
  * off Receipt mode — or null to leave the amount field alone.
  *
- * Receipt's total is derived at read time and deliberately never cached
- * (ADR-0016), which holds for exactly as long as the Items tab is the one
- * showing it. Switching to Evenly / As parts / As amounts ends that: the
- * person is taking the number back by hand, and the only place a typed amount
- * lives is `amountText`. The split already makes precisely this handoff, via
- * `convertSplitMode`; this is its missing other half. Without it the amount
- * falls back to whatever `amountText` held before the scan — routinely
- * nothing, because OCR often reads the line items and misses the printed
- * total — and the expense silently becomes worth zero, which surfaces as a
- * greyed-out Save and the "€0.00 of €0.00 allocated" footer.
+ * Receipt's total is derived at read time and never cached (ADR-0016), which
+ * holds only while the Items tab is showing it. Switching to an arithmetic tab
+ * ends that: the person is taking the number back by hand, and a typed amount
+ * lives only in `amountText`. This is the amount half of the handoff
+ * `convertSplitMode` makes for the split; without it the amount falls back to
+ * whatever preceded the scan — routinely nothing, since OCR often reads the
+ * line items and misses the printed total — and the expense is worth zero.
  *
- * A one-shot conversion at an explicit user action, not a mirror: it fires
- * only on the receipt → arithmetic transition, so switching between two
- * arithmetic tabs never snaps a hand-typed amount back to what the bill says.
+ * **A one-shot conversion at an explicit action, not a mirror.** It fires only
+ * on receipt → arithmetic, so moving between two arithmetic tabs never snaps a
+ * hand-typed amount back to what the bill says.
  */
 export function handOffReceiptTotal(
   from: SplitMode,
@@ -226,16 +216,15 @@ export function handOffReceiptTotal(
 /**
  * Unfolding a printed line into separately assignable portions.
  *
- * A receipt prints "Salad ×2  9.00" as one line, but two salads can have been
- * eaten by different people — Alice and Bob shared one, Charlie had the other.
- * One row can't say that, so the row becomes two, each carrying half the
- * printed amount and its own set of eaters. Nothing downstream learns a new
- * concept: the grid still reduces to weights, and the bill is still the sum of
- * its lines. ADR-0016.
+ * A receipt prints "Salad ×2  9.00" as one line, but the two salads can have
+ * gone to different people. One row can't say that, so it becomes two, each
+ * carrying half the printed amount and its own eaters. Nothing downstream
+ * learns a new concept: the grid still reduces to weights and the bill is
+ * still the sum of its lines. ADR-0016.
  *
- * Portions are marked (`portionOf`), not inferred from equal labels, so a
- * receipt that happens to print two identical lines isn't drawn as something
- * that was unfolded — and so merging back is exact.
+ * **Portions are marked (`portionOf`), never inferred from equal labels**, so
+ * a receipt printing two identical lines isn't drawn as an unfolded one — and
+ * merging back is exact.
  */
 
 /** Where a row sits in an unfolded group: its start, its place, the size. */
@@ -304,11 +293,11 @@ export function unfoldItem(
  * The portions of one run, read as the single line they came from: amounts
  * summed back up and the count printed again as its quantity.
  *
- * A **view**, not an edit. Folding a run used to write this line back over the
- * portions, which threw away which of them was whose — and could move money by
- * a cent, since three portions of 5.67/5.67/5.66 shared two ways do not round
- * like one 17.00 line does. The bill keeps its portions once it has them; this
- * is only how the grid draws them while the run is closed.
+ * **A view, never an edit.** Writing this line back over the portions throws
+ * away which of them was whose, and moves money by a cent: three portions of
+ * 5.67/5.67/5.66 shared two ways do not round like one 17.00 line. The bill
+ * keeps its portions once it has them; this is how the grid draws them while
+ * the run is closed.
  */
 export function foldedLine(
   items: readonly ReceiptItem[],

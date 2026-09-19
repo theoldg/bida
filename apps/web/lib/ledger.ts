@@ -13,11 +13,10 @@ import { byWhen } from "./format";
  * income is a `row: "expense"` — because which of the three it is lives on the
  * expense itself (`kindOf`).
  *
- * A row carries the stored entry and nothing copied off it. It used to copy
- * out the two fields the order was decided by, and the day a third joined them
- * (`dateOnly`) the copy quietly stopped keeping up: every backdated receipt
- * sorted as though it had a time, on the one screen that matters. What places
- * a row in time is asked of the entry.
+ * **A row carries the stored entry and nothing copied off it.** Copy out the
+ * fields the order is decided by and the next one to join them (`dateOnly` was)
+ * is quietly left behind: every backdated receipt sorts as though it had a
+ * time, on the one screen that matters.
  */
 export type LedgerRow =
   | { row: "expense"; expense: Expense }

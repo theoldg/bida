@@ -34,9 +34,9 @@ export class ScanUnreliableError extends Error {
 }
 
 /**
- * The phone can't reach anything. Scanning is the one act in the app that
- * needs a network — everything else is local first — so "couldn't read that
- * receipt" was a lie about the photo when the truth was about the signal.
+ * The phone can't reach anything. Scanning is the one act in the app that needs
+ * a network, so it is the one place "couldn't read that receipt" would be a lie
+ * about the photo when the truth is about the signal.
  */
 export class ScanOfflineError extends Error {}
 
@@ -222,10 +222,9 @@ async function readOnSharedKey(
   if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
 
   // Started together, not one after the other: encoding the bill is CPU and
-  // the challenge is a round trip to Cloudflare, so run in sequence they
-  // simply added up. `turnstileToken` usually has a warmed one to hand over
-  // (`warmTurnstile`), and where it doesn't the challenge hides behind the
-  // resize instead of following it.
+  // the challenge is a round trip to Cloudflare, so in sequence they add up.
+  // `turnstileToken` usually has a warmed one to hand over (`warmTurnstile`),
+  // and where it doesn't the challenge hides behind the resize.
   const [billBase64, token, turnstile] = await Promise.all([
     encode(),
     groupToken(groupId, secret),

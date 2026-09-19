@@ -14,10 +14,8 @@
  *   painted on, which is a shell whose last strip — the bottom nav, the about
  *   line — is off the bottom with no way to scroll to it.
  *
- * Paying the second one as `--kb` is how a bogus measurement at load became
- * permanent padding nobody asked for, so the two are told apart here rather
- * than in the component: a gap is a keyboard only while something is being
- * typed into.
+ * **A gap is a keyboard only while something is being typed into.** Paying the
+ * second case as `--kb` is permanent padding nobody asked for.
  */
 
 /** One look at the two viewports, and who has the caret. */
@@ -60,8 +58,8 @@ export function gapOf(v: ViewportReading): ViewportGap {
 
 /**
  * What a press on a control beside a field has to do about the caret
- * (`keepsFocus`, components/bits.tsx). Three cases, and the middle one is the
- * whole reason this is a function rather than a boolean:
+ * (`keepsFocus`, components/bits.tsx). The middle case is the whole reason this
+ * is a function rather than a boolean:
  *
  * - **hold** — a keyboard is up, so the press must not blur the field: the
  *   blur retracts it, the page reflows, and the `click` misses the button.

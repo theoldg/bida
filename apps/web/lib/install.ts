@@ -169,12 +169,12 @@ const CARRY = "bida.carry";
  * The app's manifest link, written by an inline script at the top of every
  * page's head — the HTML itself carries none.
  *
- * On a real iPhone Safari took the manifest the page *loaded* with: a link
- * swapped 41ms in was ignored and the icon opened at `/`. So in an iOS tab the
- * link has to be right before anything reads the head, on whatever page the
- * share sheet is opened from, and the groups have to come from something
- * synchronous — localStorage, kept by `keepCarried`. Everywhere else, and in
- * a tab holding no groups, it is the static manifest.
+ * **Safari takes the manifest the page *loaded* with** — a link swapped 41ms in
+ * is ignored and the icon opens at `/`. So in an iOS tab the link has to be
+ * written before anything reads the head, on whatever page the share sheet is
+ * opened from, and the groups have to come from something synchronous:
+ * localStorage, kept by `keepCarried`. Everywhere else, and in a tab holding no
+ * groups, it is the static manifest.
  *
  * `data-carry` records what the head was built with, so a page can tell when
  * it has gone stale (`headIsStale`). `looksIos` and `isStandalone` are
@@ -212,9 +212,9 @@ export function keepCarried(groups: readonly CarriedGroup[]): void {
 /**
  * Whether this page's manifest was built from a carry that has since changed —
  * a group joined, or a name picked, after it loaded. Safari won't read a
- * swapped link, so an icon added from this page would leave that change behind
- * (the owner's phone arrived with two groups and one name). Only a reload fixes
- * it; `reloadCostsNothing` (lib/update.ts) says where one is harmless.
+ * swapped link, so an icon added from this page leaves that change behind. Only
+ * a reload fixes it; `reloadCostsNothing` (lib/update.ts) says where one is
+ * harmless.
  */
 export function headIsStale(): boolean {
   const link = document.head.querySelector('link[rel="manifest"]');

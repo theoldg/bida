@@ -10,50 +10,43 @@ import { route } from "./group-link";
 /**
  * Launching the app puts you back in the group you were last in.
  *
- * Nearly everyone is in one group at a time — a trip, a flat — so the groups
- * list was a screen you passed through on the way to the only thing you came
- * for. `/g` already records which group that was (`setLastOpenedGroup`, kept
- * for `/new`'s currency default); this reads it back at the door.
+ * Nearly everyone is in one group at a time, so the list is a screen passed
+ * through on the way to the only thing you came for. `/g` records which group
+ * that was (`setLastOpenedGroup`); this reads it back at the door.
  *
- * Unless the list is where you left off. Backing out of a group is how a
- * person says they are done with it, and an app that walks straight back in
- * on the next launch has ignored the one instruction it was given — so the
- * list records itself as this device's place (`setLeftOnList`) exactly as a
- * group does, and a launch reopens whichever of the two was last.
+ * Unless the list is where you left off. Backing out of a group says you are
+ * done with it, so the list records itself as this device's place
+ * (`setLeftOnList`) exactly as a group does, and a launch reopens whichever
+ * was last.
  *
- * A *launch*, and not every arrival at `/`: the list is still where the back
+ * **A launch, not every arrival at `/`.** The list is still where the back
  * arrow goes, and going back must not be turned around. That question has one
- * answer and one home — `arrival`, below.
+ * home — `arrival`, below.
  */
 
 /**
  * What brought the app to the groups list, and so what the list owes it.
  *
- * One value, because this was three flags reaching the same `useResumeLastGroup`
- * by different routes, and every screen that learned to send somebody to the
- * list added a fourth way to be wrong about it. The answers, in the order the
- * hook spends them:
+ * **One value, not a flag per caller.** Every screen that learns to send
+ * somebody to the list would otherwise add another way to be wrong about it.
+ * The answers, in the order the hook spends them:
  *
- * - **A group handed over** by `/join` (`handOverToGroup`). That screen has two
- *   halves to do and can only do one: give its own history entry back to the
- *   list, so the group it opens has the list underneath it rather than the chat
- *   the invite was tapped in — and open the group. Asked for in one tick the
- *   router folds the two into the last one, so `/join` takes the entry back and
- *   leaves the group here. The list picks it up on its way through and
- *   *pushes*, which is what makes the back button climb into the app rather
- *   than out of it.
- * - **A launch** the list was told about (`launchedOnto`). `/install` is the
- *   one caller: the iOS icon's `start_url` is `/install#<carry>`, so the
- *   document never loads on the list and `startedOnList` rightly says this copy
- *   of the app did not start there. Without a word from `/install` every launch
- *   of that icon — the install the whole of docs/ios.md exists to produce —
- *   landed on the list with the group you were last in unopened, while the same
- *   phone's Android install reopened it.
+ * - **A group handed over** by `/join` (`handOverToGroup`). That screen has
+ *   two things to do and can only do one: give its history entry back to the
+ *   list, so the group opens with the list underneath it rather than the chat
+ *   the invite was tapped in — and open the group. Asked in one tick the
+ *   router folds them into the last, so `/join` takes the entry back and
+ *   leaves the group here. The list picks it up on the way through and
+ *   *pushes*, so Back climbs into the app rather than out of it.
+ * - **A launch** the list was told about (`launchedOnto`), from `/install`
+ *   alone: the iOS icon's `start_url` is `/install#<carry>`, so the document
+ *   never loads on the list and `startedOnList` rightly says so. Without that
+ *   word, every launch of the icon docs/ios.md exists to produce lands on the
+ *   list with the last group unopened.
  * - **Nothing**, and the browser is asked instead (`isLaunch`).
  *
- * Spent on the first decision either way: whichever way that goes, the app has
- * now been launched, and coming back to the list later is a person's choice
- * rather than a door to be shut again.
+ * Spent on the first decision either way: the app has now been launched, and
+ * coming back to the list later is a choice rather than a door to shut again.
  */
 let arrival: { kind: "group"; groupId: string } | { kind: "launch" } | undefined;
 /** Set once the hook has spent `arrival`, so an in-app return is never a launch. */
@@ -73,11 +66,10 @@ export function launchedOnto(): void {
  * Which group a launch should reopen, if any. Pure, and exported for its test:
  * reading the device record and the group is the hook's job below.
  *
- * A group this phone has forgotten (`leftGroups`) or archived is not somewhere
- * to be put back into, and neither is one whose row is gone — the id outlives
- * the group it names, since nothing clears it when a group is forgotten. Nor
- * is one you left behind on the list (`leftOnList`): the id outlives that too,
- * because `/new` and `/quick` still want it for their currency.
+ * Not a group this phone has forgotten (`leftGroups`), archived, or whose row
+ * is gone — the id outlives the group it names, since nothing clears it on
+ * forgetting. Nor one you left behind on the list (`leftOnList`): the id
+ * outlives that too, because `/new` and `/quick` want it for their currency.
  */
 export function resumeGroupId(
   device: Pick<DeviceRecord, "lastOpenedGroupId" | "leftGroups" | "leftOnList"> | undefined,
@@ -125,11 +117,9 @@ export function useResumeLastGroup(): boolean {
       const id = resumeGroupId(device, group);
       if (!id) { setDeciding(false); return; }
       router.replace(route.group(id));
-      // Still here a moment later means the replace didn't take — the router
-      // is the app's, not the browser's, and this is the first thing asked of
-      // it. Whatever the cause, the answer is the list: a resume that quietly
-      // fails must cost a launch, not leave the app on a skeleton nothing
-      // will ever fill.
+      // Still here a moment later means the replace didn't take. Whatever the
+      // cause, the answer is the list: a resume that quietly fails costs a
+      // launch, and must not leave the app on a skeleton nothing will fill.
       timer = setTimeout(() => setDeciding(false), 2000);
     })();
     return () => { cancelled = true; clearTimeout(timer); };
@@ -150,16 +140,12 @@ export function useResumeLastGroup(): boolean {
 /**
  * Did the document itself load on the groups list?
  *
- * The app is one document for its whole life, so the navigation type below
- * says how *that* load happened and never changes again, however many screens
- * are walked through after it. An invite link is the case that made this
- * matter: it loads the document on `/join`, lands in the group without ever
- * drawing the list, and the first press of Back was then read as a launch —
- * the list flashed and the app walked straight back into the group it had just
- * been asked to leave. Only a copy of the app that started on the list has a
- * launch to spend on reopening a group; one that started on a link has already
- * spent it on the link. An address that cannot be read is taken for the list,
- * which is the old answer.
+ * The app is one document for its whole life, so the navigation type says how
+ * *that* load happened and never changes, however many screens follow. **Only
+ * a copy that started on the list has a launch to spend on reopening a
+ * group**; one that started on an invite link already spent it on the link,
+ * and without this the first Back out of that group reads as a launch and
+ * walks straight back in. An unreadable address is taken for the list.
  *
  * Pure, and exported for its test: reading the timing entry is the caller's.
  */

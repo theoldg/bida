@@ -8,8 +8,7 @@ import { useState } from "react";
  * A refusal points rather than explains: whatever stopped the press blooms
  * `--debit` and settles back over ~600ms, and the control that was pressed is
  * spent for exactly that long — a press that does nothing has to look like it
- * landed (docs/design-system.md). The shape of it
- * is two numbers, and both are load-bearing.
+ * landed (docs/design-system.md). Both numbers are load-bearing.
  *
  * `live` is the one that is easy to leave out. A `::placeholder` is not
  * rendered while the field has text, so typing into a refused field and

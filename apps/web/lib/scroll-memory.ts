@@ -7,9 +7,7 @@ import { useEffect, type RefObject } from "react";
  *
  * The app scrolls inside a div — `.scroll` in `components/chrome.tsx`, one per
  * screen — and not the document, so the browser's own restoration, which knows
- * only about the document, restored nothing: open the fortieth entry in a
- * ledger, come back, and you are at the top of the list with the row you were
- * just reading somewhere below the fold.
+ * only about the document, restores nothing.
  *
  * Held in memory rather than in `sessionStorage`. A reload refolds the whole
  * app out of Dexie anyway, and an offset into a list that is about to be

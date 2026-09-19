@@ -32,11 +32,9 @@ export function groupCsv(data: GroupData): string {
     expenses: Object.fromEntries(data.expenses.map((e) => [e.id, e])),
     settlements: Object.fromEntries(data.settlements.map((s) => [s.id, s])),
   };
-  // The local day, which is the only honest one: an expense added at 23:00
-  // must not export as tomorrow. Same function the date field shows. The clock
-  // is read here rather than taken as an argument because it only dates the
-  // foot — nothing on a screen depends on it, and both callers would pass
-  // `Date.now()`.
+  // The local day, the only honest one: an expense added at 23:00 must not
+  // export as tomorrow. Same function the date field shows. The clock is read
+  // here rather than passed in because it only dates the foot.
   return groupToCsv(state, { formatDay: dateInputValue, exportedAt: Date.now() });
 }
 
@@ -63,20 +61,18 @@ export type HandoffPlan = "share" | "download" | "text";
  *
  * 1. **The share sheet** (`navigator.share` with a file). The only way to save
  *    a file out of an iOS home-screen app, and the nicest way anywhere: the
- *    sheet holds Save to Files, Mail and every messaging app, and it comes
- *    back to bida afterwards. `text/csv` is on the permitted list for a shared
- *    file; `application/json` is not, which is one of the reasons the export
- *    is a CSV and nothing else.
- * 2. **A download** — but never in an iOS home-screen app. There it is not
- *    merely unsupported: as of iOS 18.4 it replaces the app with a full-screen
- *    "Open in …" that has no way back, so a phone that tried it would lose the
- *    app rather than gain a file (docs/ios.md). An iOS *tab* is fine, Safari
- *    having a real download manager, so the gate is `iosHomeScreenApp` and not
- *    "is this an iPhone".
+ *    sheet holds Save to Files, Mail and every messaging app, and comes back
+ *    to bida afterwards. `text/csv` is on the permitted list for a shared
+ *    file and `application/json` is not, which is one reason the export is a
+ *    CSV and nothing else.
+ * 2. **A download** — **never in an iOS home-screen app**, where as of iOS
+ *    18.4 it replaces the app with a full-screen "Open in …" that has no way
+ *    back, losing the app rather than gaining a file (docs/ios.md). An iOS
+ *    *tab* is fine, so the gate is `iosHomeScreenApp` and not "is this an
+ *    iPhone".
  * 3. **The text**, on a screen (`/g/export`).
  *
- * Taken as facts rather than read here, like `offerFrom`'s: the whole of this
- * decision is three lines of table, and it is worth being able to state them.
+ * Taken as facts rather than read here, like `offerFrom`'s.
  */
 export function handoffPlan({ canShare, iosApp }: {
   canShare: boolean; iosApp: boolean;
@@ -88,9 +84,9 @@ export function handoffPlan({ canShare, iosApp }: {
 /**
  * Which rung this browser is on, without building a file to find out.
  *
- * `/g/export` asks, because it is an ordinary route and so can be arrived at
- * by a browser that could have taken a file perfectly well — and a screen that
- * tells that person their browser can't save one is simply wrong.
+ * `/g/export` asks, being an ordinary route a browser that could have taken a
+ * file may arrive at — and telling that person their browser can't save one
+ * is simply wrong.
  */
 export function fileHandoff(): HandoffPlan {
   const probe = new File([""], "probe.csv", { type: "text/csv" });
@@ -103,11 +99,10 @@ export function fileHandoff(): HandoffPlan {
 /**
  * Hand the file over by the best means this browser actually has.
  *
- * A rung is tried when the one above is *unavailable*, never as a retry after
- * it failed — on iOS, dropping to the download after a share that went wrong
- * is precisely how somebody ends up stranded outside the app with no way back.
- * The one exception is a share that was never delivered at all (below), which
- * leaves us exactly where an absent share sheet would have.
+ * **A rung is tried when the one above is unavailable, never as a retry after
+ * it failed**: on iOS, dropping to the download after a failed share strands
+ * somebody outside the app with no way back. The exception is a share never
+ * delivered at all (below), which leaves us where an absent sheet would have.
  */
 export async function handOffCsv(filename: string, csv: string): Promise<Handoff> {
   const file = new File([csv], filename, { type: "text/csv" });
@@ -144,8 +139,8 @@ function download(filename: string, csv: string): void {
   document.body.append(link);
   link.click();
   link.remove();
-  // Not revoked in the same turn: a browser that hasn't started reading the
-  // blob yet cancels the download instead. There is no event that says it has,
-  // so this is a timer, and the cost of it being wrong is one held blob.
+  // Never revoked in the same turn: a browser that hasn't started reading the
+  // blob cancels the download instead. No event says when it has, so this is a
+  // timer, and the cost of it being wrong is one held blob.
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

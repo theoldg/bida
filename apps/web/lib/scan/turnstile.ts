@@ -24,11 +24,9 @@ const SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explic
 /**
  * How long a warmed token may sit before it is thrown away unspent.
  *
- * Cloudflare gives a token 300s, and what has to be true is that it is still
- * valid when the *Worker* verifies it — which is after the press, the upload
- * and the queue behind it. Half the real life is the margin: a token older
- * than this is dropped and a fresh one minted at the press, which is exactly
- * what the code did before any of this.
+ * Cloudflare gives a token 300s, and it has to be valid when the *Worker*
+ * verifies it — after the press, the upload and the queue behind it. Half the
+ * real life is the margin; an older one is dropped and minted again at press.
  */
 const WARM_TTL_MS = 120_000;
 
@@ -82,16 +80,15 @@ function loadScript(): Promise<void> {
 /**
  * Run the widget once and resolve with what it says.
  *
- * The widget is rendered into a fixed host at the foot of the screen rather
- * than off-screen: `interaction-only` draws nothing at all in the ordinary
- * case, but a challenge that *does* need a tap has to be somewhere a thumb can
- * reach it, or the scan waits out its timeout for a checkbox nobody can see.
+ * **Rendered into a fixed host at the foot of the screen, never off-screen.**
+ * `interaction-only` draws nothing in the ordinary case, but a challenge that
+ * *does* need a tap must be somewhere a thumb can reach, or the scan waits out
+ * its timeout for a checkbox nobody can see.
  *
- * Which is why `interactive` exists. A warm runs with it false and gives up
- * the moment Cloudflare wants a tap: a checkbox floating over the Items tab,
- * asked for by nobody, is worse than the second it would have saved. The
- * press runs with it true, where a challenge is something the person just
- * asked for and the widget appears in answer to it.
+ * Hence `interactive`. A warm runs false and gives up the moment Cloudflare
+ * wants a tap — a checkbox floating over the Items tab, asked for by nobody,
+ * is worse than the second it saves. The press runs true, where the challenge
+ * answers something the person just asked for.
  */
 async function mint(interactive: boolean): Promise<string> {
   await loadScript();
@@ -150,8 +147,8 @@ function takeWarmed(): string | null {
  *
  * The token is filed into the slot *in the continuation that resolves this
  * promise*, so anybody awaiting it sees a filled slot rather than racing the
- * filing — which is what keeps `turnstileToken` from ever handing back a token
- * that is also still sitting in `warmed`, to be spent a second time.
+ * filing — which is what stops `turnstileToken` handing back a token still
+ * sitting in `warmed`, to be spent twice.
  */
 function startMint(): Promise<string> {
   if (minting) return minting;
@@ -166,14 +163,11 @@ function startMint(): Promise<string> {
 /**
  * Start the challenge now, so pressing a scan button doesn't wait for it.
  *
- * Called wherever a scan control is on screen and ready to press (`ScanPair`),
- * which is the honest reading of "about to scan" — the Items tab, `/g/scan`,
- * `/quick`, and the chip beside a bill already assigned.
+ * Called wherever a scan control is on screen and ready to press (`ScanPair`).
  *
- * **It never throws and never reports.** A warm that fails has cost nobody
- * anything: the token is minted again at the press, and *that* is where a
- * blocked browser is named, on the screen of somebody who actually asked for
- * a scan. Warming is speculative, so it is also silent.
+ * **It never throws and never reports.** A failed warm costs nobody anything:
+ * the token is minted again at the press, and that is where a blocked browser
+ * is named, in front of somebody who actually asked for a scan.
  */
 export function warmTurnstile(): void {
   if (!SITE_KEY || typeof document === "undefined") return;

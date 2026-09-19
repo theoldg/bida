@@ -16,11 +16,9 @@
  *   healer had just put back. Lifecycle is decided by delete ops and repairs,
  *   never by a content save.
  * - **`createdAt` is write-once**, enforced in the fold (`WRITE_ONCE_FIELDS`),
- *   because every whole write now carries one.
+ *   because every whole write carries one.
  *
- * The rule lives here, once, because it was written out twice before: the
- * expense editor and the transfer editor each rolled their own copy, and the
- * copies drifted.
+ * **Every editor patches through here.** Rolled per screen, the copies drift.
  */
 
 /**
@@ -74,7 +72,6 @@ export function wholeEntity(fields: Record<string, unknown>): Record<string, unk
  *
  * A whole-entity patch names every field, so it cannot answer this itself — and
  * an op that changes nothing is a row in the history saying nothing happened.
- * Compared against the stored entity by the same rule the diff used to use.
  */
 export function movesAnything(existing: object, whole: Record<string, unknown>): boolean {
   const held = existing as Record<string, unknown>;
@@ -95,10 +92,9 @@ function stableJson(value: unknown): string {
 /**
  * Is this the value the entity already holds?
  *
- * `null` and absent are the same value — not set. `only()` leaves an unset
+ * **`null` and absent are the same value — not set.** `only()` leaves an unset
  * field off the create op entirely while the form always sends an explicit
- * `null` for it, and reading those as different wrote a phantom revision on
- * every first edit.
+ * `null` for it; read as different, every first edit writes a phantom revision.
  */
 export function sameValue(a: unknown, b: unknown): boolean {
   if (a === b) return true;
