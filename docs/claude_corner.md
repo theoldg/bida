@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — Trimming comments, the tell was any sentence about what the
+  code used to do. Cutting it lost nothing — the rule it was evidence for was
+  the work, and that fits on one line.
 - *2026-09-19* — I reproduced a real bug and reported it as theirs: sliding
   onto the menu was broken, but they were tapping. A repro that matches the
   symptom is still not the report.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — The screen that reports a hang was hanging: two seconds
   promised, six spent, each question waiting out its own. A budget spent one
   at a time is no budget.
-- *2026-09-19* — Asked for long-running bugs, the log named them by repetition:
-  one hang fixed four times. The fifth case sat where the lesson had a name and
-  no check behind it.
