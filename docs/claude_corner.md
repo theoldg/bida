@@ -95,6 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — *Nothing to paste* was a screen whose only offer was the read
   that had just failed. Where the platform can withhold, hand the person a box
   and let them do it themselves.
-- *2026-09-18* — Asked what was left before launch, I found the scan's day
-  cap: 13000 in the doc, 4300 in the code. A number that moves leaves its old
-  self behind — grep the digits.
+- *2026-09-19* — The sentence I was told to replace wasn't in my checkout: the
+  work sat a branch ahead. `pnpm session` first isn't ceremony, it is how you
+  find the thing you were sent for.

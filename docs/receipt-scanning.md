@@ -200,10 +200,10 @@ subtler check on the hot path; base64 reuses the one that is already proved, so
 what a typed bill changes is what the model *reads* and never what the request
 *is*.
 
-**The lede asks for none of this.** "Paste or type the bill however it's
-written. Prices each or per line; a total only if you have one" — because the
-sentence that asked for one line each and a total was the last place the app
-still taught people to tidy a bill up for it (`copy.scan.typeIn`).
+**The lede asks for none of this.** "The items and prices, formatted however you
+like" — it names what the Items tab needs and no shape at all, because every
+clause about one line each or a total was a clause teaching people to tidy a
+bill up for the app (`copy.scan.typeIn`).
 
 **The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
 what the downscaled photo costs in tokens — so typing is never the dearer way to

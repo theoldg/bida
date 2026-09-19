@@ -1132,17 +1132,16 @@ export const copy = {
       openLong: "Type it in",
       title: "Type the bill in",
       /**
-       * What to put in the box. It asks for the things bought because that is
-       * what the Items tab is for — a total alone leaves nothing to assign —
-       * and it says "paste" first, since a bill in a chat message or an emailed
-       * receipt is the usual reason to be here at all.
+       * What to put in the box: the things bought, because that is what the
+       * Items tab is for — a total alone leaves nothing to assign.
        *
-       * It no longer asks for one line each or for a total, because the reading
-       * wants neither: prices each or per line both work, and a bill with no
-       * total is the ordinary case rather than a refused one. This sentence was
-       * the last place the app still taught people to tidy a bill up for it.
+       * It asks for nothing else, and in particular for no shape. The reading
+       * wants neither one line each nor a total: prices each or per line both
+       * work, and a bill with no total is the ordinary case rather than a
+       * refused one. Every clause that named a format was a clause teaching
+       * people to tidy a bill up for the app, so the sentence keeps none.
        */
-      lede: "Paste or type the bill however it’s written. Prices each or per line; a total only if you have one.",
+      lede: "The items and prices, formatted however you like.",
       placeholder: "3 chicken skewers at 13, 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",
