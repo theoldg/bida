@@ -15,6 +15,10 @@ import { mark } from "./diag";
  * the recorder takes it, and /diag has it the next time somebody says the menu
  * ignored them.
  *
+ * It has already earned itself once: the answer was a tap that landed whole on
+ * the item and brought no click, which is why the items no longer wait for one
+ * (components/row-menu.tsx). Every reading of that press by hand was wrong.
+ *
  * Only while a card is open, which is seldom and briefly: a capped array and a
  * `performance.now()` per event, formatted only when the report asks.
  * `pointermove` is left out — it is the one that would flood this.

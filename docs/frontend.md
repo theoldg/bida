@@ -531,7 +531,8 @@ no machine here reproduces — it wants an iPhone — and every explanation for 
 is a different line in that one sequence: a click that never came, one
 swallowed, one landing on the veil, a `pointercancel` where a lift should be,
 a card that grew an item after it was placed, or one that went away with no
-press behind it at all.
+press behind it at all. It was the first of those, on the first try — see the
+Gotcha below — and the trace that said so is the only reason anyone knows.
 
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script
@@ -844,6 +845,21 @@ so the static export ships the full line and the browser narrows it.
   item under it, and clicks that item on the lift. It must have travelled
   `SLOP_PX` first, because the card is only a few px clear of the row and a
   resting finger's drift is not a choice.
+- **A tap can arrive on iOS with no click in it.** The whole press lands on
+  the element — `pointerdown`, `pointerup`, `touchstart`, `touchend`, no
+  `pointercancel`, nothing swallowed — and WebKit simply dispatches no `click`.
+  The same tap a second later is answered normally, so it reads as a control
+  that works every other time rather than one that is broken. It is not the
+  callout, the selection handles or the double-tap wait: `user-select`,
+  `-webkit-touch-callout` and `touch-action` have all three off already
+  (`globals.css`). **So a touch gesture that must not be missed cannot be built
+  on `click`.** A row menu's items answer the `pointerup` instead
+  (`components/row-menu.tsx`) — asking `elementFromPoint` where that lift
+  actually landed, since a touch's `pointerup` goes to whatever its
+  `pointerdown` went to however far the finger has moved — and `clickGuard`
+  (`lib/click-guard.ts`) eats the click if it does come, because by then the
+  card is gone and it would land on the row underneath. `pnpm entries` sends
+  the clickless tap by hand; a real one in Chromium always brings its click.
 - **A read that never answers is indistinguishable from a slow one.** Both are
   `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton

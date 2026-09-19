@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
+import { clickGuard } from "../lib/click-guard";
 import { tick } from "../lib/haptics";
-import { guarding, note } from "../lib/menu-trace";
 import { RowMenu, type SheetAction } from "./row-menu";
 
 /** iOS's own long-press default; Android's is 400–500ms. */
@@ -12,12 +12,6 @@ const HOLD_MS = 500;
  * the hold has been answered, past this it is a reach for the menu.
  */
 const SLOP_PX = 10;
-/**
- * How long after a hold's finger lifts its click may still arrive. Generous:
- * the guard also ends at the next press, so it cannot eat a real tap.
- */
-const LIFT_CLICK_MS = 1000;
-
 /**
  * Once a touch hold has been answered, the finger still down owns the rest of
  * the gesture — and three things want it.
@@ -32,19 +26,12 @@ const LIFT_CLICK_MS = 1000;
  * only a few px clear of the row and a finger that never moved picked nothing.
  *
  * The other two are leftovers: Android's own `contextmenu`, and the click as
- * the finger lifts. Both hit-test where the finger is — by then the menu's
- * veil, or the next screen — so **they are caught on `document`, not on the
- * held element**. That half ends at the click, at the next press anywhere, or
- * LIFT_CLICK_MS after the lift, and outlives the finger by design: a click can
- * arrive after the lift, but nothing may still be holding the scroller off by
- * then. A click with `detail === 0` is never a finger — it is a keyboard's, or
- * the one this makes itself to choose an item.
+ * the finger lifts. Both outlive the finger and hit-test wherever it ended up,
+ * so both are `clickGuard`'s (`lib/click-guard.ts`) — the half of this that
+ * ends after the hand has gone.
  */
 function heldFinger(from: { x: number; y: number } | null) {
-  let timer: ReturnType<typeof setTimeout> | undefined;
   let hot: Element | null = null;
-  /** `end` is reached more than one way; the recorder is told once. */
-  let over = false;
 
   /** The menu item under the finger, once it has moved far enough to mean it. */
   const itemAt = (at: { clientX: number; clientY: number }) =>
@@ -65,38 +52,20 @@ function heldFinger(from: { x: number; y: number } | null) {
 
   const keep = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
   const onMove = (e: globalThis.PointerEvent) => warm(itemAt(e));
-  const swallow = (e: Event) => {
-    note(`swallow ${e.type}`);
-    e.preventDefault();
-    e.stopPropagation();
-  };
   /** The finger is gone; only the events it has already caused are still due. */
   const release = () => {
     warm(null);
     document.removeEventListener("touchmove", keep, { capture: true });
     document.removeEventListener("pointermove", onMove, true);
   };
-  const end = () => {
-    if (!over) { over = true; guarding(false); }
-    clearTimeout(timer);
-    release();
-    document.removeEventListener("click", onClick, true);
-    document.removeEventListener("contextmenu", swallow, true);
-    document.removeEventListener("pointerdown", end, true);
-  };
-  const onClick = (e: globalThis.MouseEvent) => {
-    if (e.detail === 0) return;
-    swallow(e);
-    end();
-  };
   // Not passive, or `preventDefault` is ignored and the scroller takes the
   // touch anyway — the one listener here that has to say so out loud.
   document.addEventListener("touchmove", keep, { passive: false, capture: true });
   document.addEventListener("pointermove", onMove, true);
-  document.addEventListener("click", onClick, true);
-  document.addEventListener("contextmenu", swallow, true);
-  document.addEventListener("pointerdown", end, true);
-  guarding(true);
+  // Nothing may still be holding the scroller off once the guard is done, so
+  // the two halves end together — a second finger landing mid-hold ends both.
+  const guard = clickGuard(release);
+
   return {
     /**
      * The finger has lifted at `at`, or been taken away (no point). Choosing
@@ -106,8 +75,7 @@ function heldFinger(from: { x: number; y: number } | null) {
     lifted: (at?: { clientX: number; clientY: number }) => {
       const item = at ? itemAt(at) : null;
       release();
-      clearTimeout(timer);
-      timer = setTimeout(end, LIFT_CLICK_MS);
+      guard.expire();
       if (item instanceof HTMLElement) item.click();
     },
   };

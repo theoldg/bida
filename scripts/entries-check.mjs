@@ -334,6 +334,44 @@ report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
   "a held finger that only drifts chooses nothing, and the menu stays");
 await closeMenu();
 
+// A tap on a menu item that arrives without its click. iOS sends this: the
+// whole press lands on the item — pointerdown, pointerup, touchstart, touchend,
+// no pointercancel — and WebKit dispatches no click at all, so the card sat
+// there and the press had to be made twice. Sent by hand, because Chromium
+// always follows a real tap with the click this is about not having.
+async function tapWithoutClick(item, liftBy = 0) {
+  const b = await item.boundingBox();
+  await page.evaluate(([x, y, by]) => {
+    const at = document.elementFromPoint(x, y);
+    const how = (cy) => ({ bubbles: true, cancelable: true, clientX: x, clientY: cy,
+      pointerId: 7, pointerType: "touch", isPrimary: true });
+    at?.dispatchEvent(new PointerEvent("pointerdown", how(y)));
+    // A touch's `pointerup` goes to the element its `pointerdown` went to,
+    // however far the finger has travelled since — which is what makes where
+    // the lift actually landed worth asking about.
+    at?.dispatchEvent(new PointerEvent("pointerup", how(y + by)));
+  }, [b.x + b.width / 2, b.y + b.height / 2, liftBy]);
+}
+const deleteItem = () => page.getByRole("menuitem", { name: "Delete" });
+
+await hold(dinnerRow());
+await tapWithoutClick(deleteItem());
+await settle(page, 150);
+report(await menus() === 0 && await page.locator("dialog[open]").count() === 1
+  && page.url() === ledger,
+  "a menu item answers a tap that brought no click, as iOS sometimes sends one");
+await page.getByRole("button", { name: "Cancel" }).click();
+await settle(page, 150);
+
+// And only where the lift lands: coming down on "Delete" and sliding off it is
+// how that press is called off, and no click is coming to say so either.
+await hold(dinnerRow());
+await tapWithoutClick(deleteItem(), 80);
+await settle(page, 150);
+report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
+  "a finger that comes down on a menu item and lifts off it chooses nothing");
+await closeMenu();
+
 // Straight after a hold's menu closes, the next tap is a tap — the guard that
 // ate the lifting click must not eat this one.
 await hold(dinnerRow());

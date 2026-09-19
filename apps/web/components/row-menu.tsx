@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./icons";
+import { clickGuard } from "../lib/click-guard";
 import { note, traceMenu } from "../lib/menu-trace";
 
 export interface SheetAction {
@@ -20,6 +21,13 @@ export interface SheetAction {
  * that chases the touch appears somewhere new every time, and a second press
  * has to hunt for the item it just used. Flipped above the row when there isn't
  * room below, and kept off the screen edges either way.
+ *
+ * **An item may not wait for its click.** On iOS a tap can land whole on one —
+ * `pointerdown`, `pointerup`, `touchstart`, `touchend`, no `pointercancel` —
+ * and bring no `click` at all, so the card sat there and the press had to be
+ * made twice. The lift is answered instead, and the click, if it ever comes,
+ * is swallowed (`lib/click-guard.ts`). frontend.md's Gotchas has the whole of
+ * it; a `/diag` trace is what caught it (`lib/menu-trace.ts`).
  *
  * An invisible veil catches the outside tap that closes it; Escape and a scroll
  * (captured on `document` — the scrolling element is `.scroll`, not the window)
@@ -104,6 +112,10 @@ export function RowMenu({ anchor, actions, onClose }: {
     };
   }, [onClose]);
 
+  /** The pointer whose press started on an item, so its lift can finish there. */
+  const finger = useRef(-1);
+  const choose = (a: SheetAction) => { note("chose"); onClose(); a.onSelect(); };
+
   return (
     <>
       <div className="rowmenu-veil" onClick={() => { note("veil"); onClose(); }}
@@ -112,7 +124,21 @@ export function RowMenu({ anchor, actions, onClose }: {
         style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? "visible" : "hidden" }}>
         {actions.map((a) => (
           <button key={a.label} type="button" className="rowmenu-item" role="menuitem"
-            onClick={() => { note("chose"); onClose(); a.onSelect(); }}>
+            onPointerDown={(e) => { finger.current = e.pointerType === "mouse" ? -1 : e.pointerId; }}
+            onPointerUp={(e) => {
+              if (e.pointerId !== finger.current) return;
+              finger.current = -1;
+              // A touch's `pointerup` goes to its `pointerdown`'s element
+              // however far the finger has moved, so where it landed is asked
+              // rather than assumed: sliding off "Delete" calls that press off.
+              const under = document.elementFromPoint(e.clientX, e.clientY);
+              if (!e.currentTarget.contains(under)) return;
+              // The card goes with the press, so a click still to come lands
+              // on the row underneath, or on the screen the action just opened.
+              clickGuard().expire();
+              choose(a);
+            }}
+            onClick={() => choose(a)}>
             {a.icon
               ? <Icon name={a.icon} size={15} style={a.danger ? { color: "var(--debit)" } : undefined} />
               : null}

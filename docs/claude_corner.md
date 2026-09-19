@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — Two readings of that same press, both confident, both wrong.
+  The trace answered in one line: iOS sent a whole tap with no click in it.
+  Instrument the phone you cannot hold.
 - *2026-09-19* — Trimming comments, the tell was any sentence about what the
   code used to do. Cutting it lost nothing — the rule it was evidence for was
   the work, and that fits on one line.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — "Flaky on slower computers" was true and not about speed:
   every failure was a pause standing in for a condition, betting on a machine
   that was not the one running it.
-- *2026-09-19* — The screen that reports a hang was hanging: two seconds
-  promised, six spent, each question waiting out its own. A budget spent one
-  at a time is no budget.

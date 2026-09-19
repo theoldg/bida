@@ -340,7 +340,11 @@ click is not what an iPhone sends: a hold opens one menu that its own lifting
 click and Android's `contextmenu` leave open, and a tap, a scroll, a tap just
 after and Enter all still navigate. The held finger then **slides onto an item
 without lifting** and is answered, which is the gesture the browser reads as a
-scroll and drops on the floor; a finger that only drifts chooses nothing.
+scroll and drops on the floor; a finger that only drifts chooses nothing. And a
+menu item is tapped **without a click** — pointer and touch events dispatched
+by hand, because that is the tap iOS sometimes sends and Chromium never does
+([frontend.md](frontend.md#gotchas)) — while a lift that slides off the item
+first still chooses nothing.
 
 It also opens the two screens that carry the in-memory draft with no draft to
 carry — which is what a reload, a restored tab or a kept link is — and holds
