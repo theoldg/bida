@@ -1141,7 +1141,7 @@ export const copy = {
        * people to tidy a bill up for the app, so the sentence keeps none.
        */
       lede: "The items and prices, formatted however you like.",
-      placeholder: "3 chicken skewers at 13\n10 beef at 15\nlarge cola 10\ntip 10",
+      placeholder: "3 chicken skewers at 13\nand 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",
       /** Only near the cap: a counter nobody is close to is fat. */
