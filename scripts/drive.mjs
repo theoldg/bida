@@ -30,6 +30,7 @@
  *   back | forward | reload | screen | wait <ms>
  *   offline on|off      cut this phone's network, or restore it
  *   receipt <name>      hand this phone a canned receipt — see `receipt list`
+ *                       (it answers a bill typed into "Type it in" as well)
  *   clipboard           read what the page put on this phone's clipboard
  *   forget              throw this phone away and start it factory-fresh
  *   html [n]            markup and computed style — for calibrating the reader
@@ -558,8 +559,9 @@ async function start() {
           page.on("filechooser", answer);
         }
         return say([
-          `the next photo this phone takes reads as "${args[0]}" (${fixture.exercises}) — ${fixture.note}`,
+          `the next bill this phone reads answers as "${args[0]}" (${fixture.exercises}) — ${fixture.note}`,
           "press the app's own scan or upload button; a scan is a round trip, so read the screen again if it is still working",
+          "the stub answers a typed bill too: press \"Type it in\", fill the box and press \"Read it\"",
         ]);
       }
       case "clipboard": {

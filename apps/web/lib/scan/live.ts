@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { ScanMedium } from "@bida/core";
 
 /** Where a scan is: idle, in flight, or refused. */
 export type ScanState = "idle" | "scanning" | "error";
@@ -30,14 +31,20 @@ export interface LiveScan {
   startedAt: number;
   /** The sweep this scan was given, in seconds — see `sweepSeconds`. */
   seconds: number;
+  /**
+   * Whether this reading is of a photograph or of a bill somebody typed. The
+   * bar's pace comes off it, and so does which words a refusal is said in:
+   * "try a flatter, square-on photo" is nonsense advice about typing.
+   */
+  medium: ScanMedium;
 }
 
 /**
- * How long one sweep lasts. Three seconds, jittered: drawn once per *scan* so
- * a second scan doesn't repeat the first to the frame, which is what makes a
- * bar read as a canned animation rather than an estimate. Per scan and not per
- * mount — a bar that redrew its own guess on the way back would be a different
- * estimate of the same wait.
+ * How long one sweep lasts: three seconds for a photo, two for a typed bill,
+ * both jittered. Drawn once per *scan*, so a second scan doesn't repeat the
+ * first to the frame — which is what makes a bar read as a canned animation
+ * rather than an estimate. Per scan and not per mount: a bar that redrew its
+ * own guess on the way back would be a different estimate of the same wait.
  *
  * It was two, which is what a scan used to take. It no longer is: the round
  * trip now carries a Turnstile challenge as well as the model, and the
@@ -45,9 +52,14 @@ export interface LiveScan {
  * then hands over to a spinner is the one failure this control has — it
  * promises an answer and then admits it was guessing — so the estimate tracks
  * the scan rather than the other way round.
+ *
+ * A typed bill is shorter for the reasons it is: no photo to resize and no
+ * 200 KB to push, so what is left is the challenge, two D1 round trips and the
+ * model. The same estimate for both would be a bar that finished a second early
+ * every time somebody typed.
  */
-function sweepSeconds(): number {
-  return 2.8 + Math.random() * 0.4;
+function sweepSeconds(medium: ScanMedium): number {
+  return medium === "text" ? 1.8 + Math.random() * 0.4 : 2.8 + Math.random() * 0.4;
 }
 
 const scans = new Map<string, LiveScan>();
@@ -58,9 +70,9 @@ function emit(): void {
 }
 
 /** A scan has just been sent. Clears whatever the last one refused with. */
-export function beginScan(groupId: string): void {
+export function beginScan(groupId: string, medium: ScanMedium = "photo"): void {
   scans.set(groupId, {
-    state: "scanning", error: null, startedAt: Date.now(), seconds: sweepSeconds(),
+    state: "scanning", error: null, startedAt: Date.now(), seconds: sweepSeconds(medium), medium,
   });
   emit();
 }
@@ -79,6 +91,7 @@ export function failScan(groupId: string, error: string | null): void {
     error,
     startedAt: live?.startedAt ?? Date.now(),
     seconds: live?.seconds ?? 0,
+    medium: live?.medium ?? "photo",
   });
   emit();
 }

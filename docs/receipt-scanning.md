@@ -3,7 +3,8 @@
 *For: whoever builds or changes the scan. All of it is built and deployed;
 [ADR-0016](decisions/0016-receipts.md) holds the UX rulings.*
 
-Photograph a receipt, get the expense form filled in. One model call, one
+Photograph a receipt — or [type it in](#typing-a-bill-in) — and get the expense
+form filled in. One model call, one
 Worker request, and a form you still have to look at before anything is saved.
 Three screens start one: `/g/scan`, the camera above the ledger's "+", which is
 the act with nothing else on screen; the form's own "Items" tab, for a
@@ -11,8 +12,10 @@ bill you reach for once the expense exists; and `/quick`, where there is no
 group at all ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
 All three call `useReceiptScan` and wear
 `ScanPair` (`components/receipt-scan.tsx`), so neither the behaviour nor the
-control can drift — one act, three doors, one button cut in two
-([design-system.md](design-system.md#palette-roles)).
+control can drift — one act, two doors, one button cut in two
+([design-system.md](design-system.md#palette-roles)). The Items tab stands a
+third door beside that pair, which is [typing the bill
+in](#typing-a-bill-in).
 
 `/g/scan` and `/quick` both have to promise something they can't show, since a
 scan's result is on another screen, so they draw it — one drawing,
@@ -53,9 +56,11 @@ off receipts — so `diagram.test.ts` adds them up.
 
 ```
 phone: capture or pick from library → downscale → base64 (+ a Turnstile token)
-  ↓ POST /api/groups/:id/scan   (body = the image; bearer = group secret)
+       — or the typed bill, straight to base64
+  ↓ POST /api/groups/:id/scan   (body = the bill; bearer = group secret;
+                                 X-Input: text for a typed one)
 worker: verify the browser, count the budget, book the scan,
-        then wrap the image in our prompt + schema and add the API key
+        then wrap the bill in our prompt + schema and add the API key
   ↓
 Gemini Flash-Lite on Vertex AI, one key shared by everyone
   ↑ response streamed straight back, untouched
@@ -128,24 +133,93 @@ never leaves this phone") true only most of the time, and a caveat is what the
 feature exists to not have. A blocked browser is told so and keeps the shared
 path.
 
+## Typing a bill in
+
+**Type it in**, beside the scan pair on the Items tab and nowhere else. A box,
+the bill's own lines pasted or typed into it, and the same filled draft comes
+back. It is for the bill nobody photographed — a receipt that arrived as a chat
+message or an email, one already thrown away, one a camera has just failed on
+twice.
+
+Everything after the bytes is shared with a photograph: the same endpoint, the
+same bearer, the same Turnstile token, the same three budget buckets, the same
+`checkScan`, the same rules about what a reading may overwrite. A typed bill
+asks the same model the same question, so it costs what a photo costs and is
+counted the same (`parseBillText`, `web/lib/scan/index.ts`).
+
+**It rides the envelope as base64, in an `inlineData` part with
+`mimeType: "text/plain"`** — which the Worker chooses, never the caller. That is
+not a detail: it is what lets the guard below stay the guard it already was.
+Escaping arbitrary text into a JSON string as it streamed would mean a second,
+subtler check on the hot path; base64 reuses the one that is already proved, so
+what a typed bill changes is what the model *reads* and never what the request
+*is*.
+
+**The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
+what the downscaled photo costs in tokens — so typing is never the dearer way to
+read a bill — and well clear of any real one: a sixty-line till roll is about
+1,800. The dialog counts down only in the last fifth of it, because a counter
+nobody is near is fat. The Worker's `MAX_TEXT_BYTES` sits far above that as an
+abuse ceiling on bytes, in the same spirit as the push caps; the character count
+is the number a person is held to.
+
+**The text is kept, on the draft and on the saved expense** (`receiptText`), for
+the reason `receiptItems` is: reopening the box holds what was typed, on this
+phone or another, so correcting a misread bill is editing rather than retyping.
+A photograph clears it, the way it clears the grid — what is kept has to describe
+the bill actually on the draft. Nothing else shows it: the bill's own lines and
+each person's copy of them are the reading, and printing the raw text under them
+would be the same thing twice.
+
+**The dialog is the panel's sibling, not its child, and takes its state from the
+scan.** `scan.live` is the one `LiveScan` the tab behind is also watching, which
+is what makes the bar a clock on the reading: close the box mid-read and the
+draft still fills; open it again and the bar is where the reading actually is. A
+refusal leaves the box standing with the text intact, because unlike a bad
+photograph a bad bill is fixed where it was typed.
+
 ## The envelope, and who owns it
 
-On the shared path the client sends **the photo and nothing else** — the base64
-JPEG as the whole body, `text/plain`. The prompt and the response schema live
+On the shared path the client sends **the bill and nothing else** — base64 as
+the whole body, `text/plain`: the downscaled JPEG, or the typed bill's own UTF-8.
+The prompt and the response schema live
 in `packages/core/src/scan-body.ts`, because both ends build the same body now;
-the Worker streams the photo into its copy (`apps/api/src/scan-body.ts`), so on
-that path the only thing a caller decides is which image Gemini reads.
+the Worker streams the bill into its copy (`apps/api/src/scan-body.ts`), so on
+that path a caller decides which bill Gemini reads and which of four envelopes
+we hold it arrives in — never a word of the request.
+
+**Four, because two things about the prompt move**: the tone of a refusal (Staś
+below) and the medium the bill arrived in. Each moves by picking one of two
+constants core holds. What a bill is read *by* — the title rules, the total, the
+tip, the tax, the discounts, the line items — is one shared block whichever pair
+is asked for, and `scan-body.test.ts` holds all four to it byte for byte. A
+typed bill read by different rules would price a split differently depending on
+whether anybody had a camera to hand.
+
+What the medium is allowed to move is only what would be actively wrong about
+the other one: how the bill is attached, the paragraph about reading an amount
+per line (a photograph can shear its own columns; text has no columns left to
+shear), and the refusals — "too blurry, re-shoot it" is useless advice about
+something somebody typed, in either tone.
 
 That is deliberate, and it is what the endpoint is *for*. A scan credential
 costs one unauthenticated request to mint — `ensureGroup` registers any id on
 first sight, which is what a quick split relies on (below) — so the bearer check
 is a speed bump, not a gate. What keeps our key off the open internet is that
-there is no request a caller can compose: not a prompt, not a schema, not a
-second image. The worst a minted credential buys is having a picture read.
+there is no *request* a caller can compose: not a prompt, not a schema, not a
+second part, not a destination. **What a typed bill changes, and the owner ruled
+on it (2026-09-19):** a caller's own words now reach the model on our key, so the
+worst a minted credential buys is no longer only having a picture read. It is
+still confined on every side that matters — the schema is ours, so the only thing
+that can come back is a bill-shaped object (a title under 40 characters, amounts,
+one error sentence); the destination and the model are ours; Turnstile and all
+three buckets are unchanged. What weakened is the word *impossible*: a caller
+cannot write the request, and can put sentences inside it.
 
 ### Staś mode
 
-The one thing a caller gets to say about the prompt, and it says it by picking
+One of the two things a caller gets to say about the prompt (the other being the
+medium above), and it says it by picking
 one of two paragraphs core holds. `X-Stas: 1` on the scan request swaps
 the refusal wording for the vicious version — send a photo that isn't a
 receipt, or one too blurry to read, and it comes back at *you*, not at the
@@ -154,7 +228,10 @@ still have to say plainly what's wrong so the person knows what to re-shoot, and
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
 pre-encoded per isolate like the other, so the second costs two short byte
-arrays and no branch on the hot path.
+arrays and no branch on the hot path — four pairs now, the medium having doubled
+them, which is still two arrays per envelope and no code path of its own. Both
+tones carry a typed bill's own refusal as well, since a roast about a thumb says
+nothing about a wall of text.
 
 It is off, and turned on by hand on `/diag` — the hidden diagnostics screen, a
 long-press on the wordmark — which is `localStorage` on that phone
@@ -172,14 +249,14 @@ The free plan gives **10 ms CPU per request** and 100k requests/day. Requests
 aren't the problem — a scan is one. CPU is, and only if we *deserialize* the
 image: waiting on the upstream call is wall time, which doesn't count.
 
-So the envelope is pre-encoded once per isolate and the photo is streamed
-between its halves. The Worker never parses a body and never holds the image:
+So the envelope is pre-encoded once per isolate and the bill is streamed
+between its halves. The Worker never parses a body and never holds the bill:
 
 ```ts
-// apps/api/src/scan-body.ts — the prompt and schema, cut in two at the image
+// apps/api/src/scan-body.ts — the prompt and schema, cut in two at the bill
 const [prefix, suffix] = JSON.stringify(buildScanRequestBody(SENTINEL)).split(SENTINEL);
 // apps/api/src/index.ts — PREFIX, then the caller's bytes, then SUFFIX
-body: wrapImage(c.req.raw.body, (err) => { refusal.err = err; }),
+body: wrapPayload(c.req.raw.body, (err) => { refusal.err = err; }, tone, medium),
 ```
 
 The rules that follow from it:
@@ -191,9 +268,11 @@ The rules that follow from it:
 - **That lookup is the security boundary, not a content-type nicety.** The
   caller's bytes land inside a JSON string, so a body carrying a `"` or a `\`
   closes that string and writes its own `contents` — the arbitrary request this
-  endpoint exists not to forward. Base64 has neither character, so `wrapImage`
+  endpoint exists not to forward. Base64 has neither character, so `wrapPayload`
   rejects every byte outside its alphabet and the hole closes outright.
-  `scan-body.test.ts` is mostly attempts to get a second field past it.
+  `scan-body.test.ts` is mostly attempts to get a second field past it. **A typed
+  bill travels base64 for this one reason** and no other: it keeps the caller's
+  *bytes* out of the request even while the caller's words reach the model.
 - **The client never names the destination.** URL, model and key are Worker-side
   constants. A client-supplied URL would make this an open proxy to anywhere
   with our key attached.
@@ -201,8 +280,10 @@ The rules that follow from it:
   base64 in the browser. Vision models don't read a receipt better above that.
   The Worker caps the body at `MAX_IMAGE_BYTES` (400 kB — that with room to
   spare), refusing on `content-length` before a byte is streamed anywhere, and
-  counting again as it streams for the caller whose header lied.
-- **One request per scan.** No automatic retry — a retry doubles both our
+  counting again as it streams for the caller whose header lied. A typed bill has
+  a cap of its own, two orders of magnitude below it (`MAX_TEXT_BYTES`): a body
+  sent as text does not get to spend the image allowance.
+- **One request per reading**, typed or photographed. No automatic retry — a retry doubles both our
   requests and the shared daily Gemini quota. A failure says so and leaves the
   control enabled — the retry is the same button, not a second one.
 - **Auth authenticates a *secret*, not a membership** — the existing
@@ -429,7 +510,9 @@ error to sentence. Anything else falls back to the generic message.
 
 This is the one endpoint in the app that spends money, so it is the one with a
 budget. Three buckets, and they answer different questions — `SCAN_LIMITS` in
-`packages/core/src/scan.ts` holds the numbers, because both ends need them:
+`packages/core/src/scan.ts` holds the numbers, because both ends need them. A
+bill typed in spends them exactly as a photographed one does, being the same
+question to the same model:
 
 | bucket | limit | what it is |
 |---|---|---|
@@ -553,12 +636,20 @@ Deliberate, for a group of friends under fifty people:
 
 - **One key, shared globally.** Anyone with the app URL and a group secret
   spends it, and a secret costs one request to mint. What that buys is confined
-  twice over: the Worker owns the envelope, so nobody can put their own prompt
-  on our key, and the budget above caps what having images read can cost.
-- **The photo still leaves the phone readable.** Op bodies are sealed
+  twice over: the Worker owns the envelope, so nobody can put their own *request*
+  on our key, and the budget above caps what having bills read can cost.
+- **A typed bill puts a caller's own words in front of that key** — the one thing
+  the envelope used to make impossible, and a call the owner made knowingly
+  (2026-09-19 — [The envelope, and who owns it](#the-envelope-and-who-owns-it)).
+  The prompt, the schema, the model and the destination stay ours, so what comes
+  back is a bill-shaped object and not a general-purpose answer; the budget and
+  Turnstile are untouched. Read the paragraph under **The envelope** before
+  widening what a caller may send.
+- **The bill still leaves the phone readable.** Op bodies are sealed
   ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)), so a receipt
   on its way to Google is **the one thing in the app that doesn't** — a place,
-  a date, a card's last four. `/about` names it as the exception rather than
+  a date, a card's last four — and that is as true of one typed out as of one
+  photographed. `/about` names it as the exception rather than
   burying it in a clause. What it is no longer is training data: Vertex does
   not train on what it reads, which is the shared path's one privacy gain from
   moving off AI Studio.
@@ -578,17 +669,21 @@ and the answer is still no
 
 ## What it's made of
 
-`packages/core/src/scan.ts` — the normaliser and `SCAN_LIMITS`, no network ·
+`packages/core/src/scan.ts` — the normaliser, `SCAN_LIMITS` and
+`BILL_TEXT_MAX`, no network ·
 `apps/api`'s `scan-limits.ts` — the budget, the client key and Turnstile ·
 `apps/web/lib/scan/budget.ts` and `turnstile.ts`, their two halves on the phone
 · `apps/api`'s `POST
-/api/groups/:id/scan`, the same bearer-token check as sync, passing through to
+/api/groups/:id/scan` — `X-Input: text` for a typed bill — the same bearer-token
+check as sync, passing through to
 `GEMINI_MODEL = "gemini-3.1-flash-lite"` (one constant in `packages/core/src/scan-body.ts`;
 the key is the `GEMINI_API_KEY` Worker secret —
 [hosting.md](hosting.md#deploying)) and the envelope is
-`apps/api/src/scan-body.ts` (prompt, its two refusal tones, structured output
-schema, and the base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
-`response.ts`, `scanReceipt()` · `components/receipt-scan.tsx`, the hook all three scanning screens
+`apps/api/src/scan-body.ts` (four pre-encoded envelopes — two tones by two
+media — and the base64 guard `scan-body.test.ts` attacks) · `apps/web/lib/scan/` — `downscale.ts`,
+`text.ts`, `response.ts`, `scanReceipt()` and `parseBillText()` ·
+`components/bill-text-dialog.tsx`, the box a bill is typed into ·
+`components/receipt-scan.tsx`, the hook all three scanning screens
 share — `/g/scan`, the Items tab on `/g/entry/edit`, and `/quick` — with
 the who-had-what grid (`components/who-had-what.tsx`) a tap behind the tab and
 the screen after the scan respectively. The control they wear draws the round
@@ -607,7 +702,11 @@ a scan whose draft was discarded on the way out drops its result on arrival.
 `scripts/fixtures/receipts/`; the scan button is then pressed like any other
 control and everything but the round trip to Gemini really runs. It is the only
 way to reach the who-had-what grid outside a real scan —
-[drive.md](drive.md).
+[drive.md](drive.md). It answers a typed bill too, the stub being on the URL and
+not on the medium: `click` the Items tab's third door, `fill` the box, press
+**Read it**. What comes back is the fixture rather than a reading of what was
+typed, which is the right trade for a driver — the dialog, the bar, the refusal
+and the draft it fills are all the app's own.
 
 ## Gotchas
 

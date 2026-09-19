@@ -1103,6 +1103,13 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .btn-pair.pair-xs { display: inline-flex }
 .btn-pair.pair-xs .btn { font-size: 10.5px; font-weight: 500; padding: 4.5px 9px; gap: 5px;
   color: var(--ink-2) }
+/* ---- the ways a bill gets in ----
+   The photo pair, and beside it the door that types one. Stacked on the Items
+   tab, where each is the width of the tab and the ink block leads; in a row at
+   chip scale, where all three are footnotes standing among the assigned bill's
+   own figures and a stack would be a column of chips. */
+.scanways { display: flex; flex-direction: column; gap: 8px }
+.scanways.row { flex-direction: row; flex-wrap: wrap; align-items: center }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
@@ -1273,6 +1280,19 @@ dialog.scrim::backdrop { background: transparent }
   color: var(--ink); outline: none }
 .dinput:focus { border-color: var(--ink-2) }
 .dinput::placeholder { color: var(--muted); font-weight: 500 }
+/* A bill typed in rather than photographed: `.dinput`'s box with room for
+   several lines, set smaller and lighter than that one because fifteen-pixel
+   semibold over eight rows is a wall rather than a field. It inherits the app's
+   type like everything else, which is already monospaced — and on a pasted
+   receipt that happens to earn its keep, since the amounts line up.
+   No resize handle: dragged, the card grows past the scrim on a phone, and
+   eight rows with a scroll after them is the shape that fits every screen. */
+.dtext { width: 100%; margin-top: 12px; background: var(--card-2);
+  border: 1px solid var(--rule); border-radius: var(--r-s); padding: 10px 12px;
+  font: inherit; font-size: 12.5px; line-height: 1.55; color: var(--ink);
+  outline: none; resize: none; display: block; max-height: 40dvh }
+.dtext:focus { border-color: var(--ink-2) }
+.dtext::placeholder { color: var(--muted) }
 /* Cancel is the wider-reaching of the two only in the sense that it's free:
    equal halves, the act on the right where the thumb already is. */
 .drow { display: flex; gap: 8px; margin-top: 14px }

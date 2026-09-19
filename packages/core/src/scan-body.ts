@@ -1,8 +1,13 @@
 /**
- * The receipt-reading request, and the two refusals it can come back with.
+ * The bill-reading request: one prompt, one schema, and the bill itself — a
+ * photograph, or the text of it somebody typed.
  *
  * Pure data — no I/O, no fetch — so the Worker and the phone can each send it
  * to Google themselves. `scan.ts` beside this reads what comes back.
+ *
+ * Two constants move inside it and nothing else does: the tone of a refusal
+ * (Staś mode) and the medium the bill arrived in. Everything a bill is read
+ * *by* is one shared block, whichever pair is asked for.
  */
 
 /** The model both paths call. Ours to move, never a caller's. */
@@ -27,8 +32,51 @@ export const AI_STUDIO_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
- * The two answers to a photo that is not a usable receipt, and the only part of
- * the prompt that has a second version.
+ * Which medium a bill arrives in.
+ *
+ * A photograph is the original act; text is the same bill typed or pasted by
+ * the person splitting it, for a receipt that never got photographed or one a
+ * camera cannot save (docs/receipt-scanning.md#typing-a-bill-in). The reading
+ * rules are one constant either way — only the paragraphs that would be
+ * actively wrong about the other medium are swapped.
+ */
+export type ScanMedium = "photo" | "text";
+
+/** How the bill is named before the field rules, which are the same for both. */
+const LEAD: Record<ScanMedium, string> = {
+  photo: "Read this receipt. ",
+  text:
+    "Read this receipt. You are given the bill as text — typed or pasted by the person "
+    + "splitting it, not photographed — so read the words and the figures and never mind "
+    + "how they are laid out. ",
+};
+
+/**
+ * Reading one amount per line, which is where the two media genuinely differ:
+ * a photograph can shear its own columns, and text has no columns left to
+ * shear. Told the photo's rule about a wrapped row drifting under the amount
+ * column, a model reading pasted text looks for a column that was never there.
+ */
+const LAYOUT: Record<ScanMedium, string> = {
+  photo:
+    "Read the columns as the printer laid them out, not as the photo happens to line "
+    + "them up: a receipt shot at an angle shears them, so an amount can sit lower than "
+    + "the label it belongs to. A label the printer wrapped over two or three rows is "
+    + "still one line item with one amount — join the rows, and don't let a wrapped row "
+    + "that has drifted under the amount column take an amount of its own. Every printed "
+    + "amount belongs to exactly one line item: none dropped, none counted twice. ",
+  text:
+    "The text may have lost the bill's own layout: an amount can sit on the row below "
+    + "the label it belongs to, a label and its amount can be run together with no gap, "
+    + "and one label can be broken across several rows. Join what belongs together and "
+    + "read one amount per line item. Every amount in the text belongs to exactly one "
+    + "thing — a line item, the total, the tip, the tax or a discount: none dropped, "
+    + "none counted twice. ",
+};
+
+/**
+ * The two answers to something that is not a usable bill, per tone and per
+ * medium, and the only part of the prompt that has more than one version.
  *
  * `kind` is the app's voice: a photo somebody took of their thumb gets a joke
  * about the thumb, never about them. `stas` is Staś mode — switched on by hand
@@ -38,52 +86,179 @@ export const AI_STUDIO_URL =
  * prompt, the same schema and the same arithmetic either way, so a mean scan
  * cannot be a wrong one.
  *
- * Both still have to say plainly what is wrong with the picture — an insult
- * that leaves somebody guessing what to re-shoot is a worse refusal, not a
- * funnier one. `stas` is pointed at the person, on purpose and at the owner's
- * asking; twice it was sent back for being too polite. The single thing it is
- * told to leave alone is what somebody was born as, which is not a softening
- * of the joke but the difference between a roast and something nobody wants
- * their expense app saying.
+ * The medium splits these too, because a refusal's whole job is naming what to
+ * send instead, and "too blurry, re-shoot it" is useless advice about something
+ * somebody typed. The field rules on either side of this paragraph are one
+ * shared constant, which is what keeps four refusals from being four readers
+ * (`scan-body.test.ts`).
+ *
+ * Both tones still have to say plainly what is wrong — an insult that leaves
+ * somebody guessing what to send is a worse refusal, not a funnier one. `stas`
+ * is pointed at the person, on purpose and at the owner's asking; twice it was
+ * sent back for being too polite. The single thing it is told to leave alone is
+ * what somebody was born as, which is not a softening of the joke but the
+ * difference between a roast and something nobody wants their expense app
+ * saying.
  */
-const REFUSAL = {
-  kind:
-    "If the photo isn't a receipt at "
-    + "all, set error to one short pun or joke about the picture's actual subject, "
-    + "still saying plainly it's not a receipt. If it's too blurry or cut off to read, "
-    + "set error to one short, slightly "
-    + "humorous sentence saying so — light and self-deprecating, never at the "
-    + "photographer's expense, and it still has to say plainly what's wrong so they know "
-    + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
-    + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
-    + "leave every other field null or empty.",
+const REFUSAL: Record<"kind" | "stas", Record<ScanMedium, string>> = {
+  kind: {
+    photo:
+      "If the photo isn't a receipt at "
+      + "all, set error to one short pun or joke about the picture's actual subject, "
+      + "still saying plainly it's not a receipt. If it's too blurry or cut off to read, "
+      + "set error to one short, slightly "
+      + "humorous sentence saying so — light and self-deprecating, never at the "
+      + "photographer's expense, and it still has to say plainly what's wrong so they know "
+      + "what to re-shoot (e.g. \"Lovely photo, but I can't buy anything with it — that's "
+      + "not a receipt.\" or \"Too blurry — I've read tea leaves with better odds.\") and "
+      + "leave every other field null or empty.",
 
-  stas:
-    "If the photo isn't a receipt at all, set error to a brutal one- or two-sentence "
-    + "roast of the person who sent it. Go at them, not at the picture: their judgement, "
-    + "their competence, their apparent grasp of what a receipt is, the sheer confidence "
-    + "it took to send this to a machine that asked for one. Be genuinely cruel about it. "
-    + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
-    + "compliment anything first, and don't award them points for trying. Say plainly "
-    + "that it is not a receipt, in the middle of the insult rather than instead of it. "
-    + "If it's too blurry or cut off to read, tear into them the same way — their "
-    + "eyesight, their hands, their standards, the fact that they looked at this and "
-    + "thought it would do — and still say plainly what's wrong so they know what to "
-    + "re-shoot (e.g. \"Congratulations, you have photographed your own thumb. Your thumb "
-    + "has never bought anything. Point the camera at the paper.\" or \"You looked at "
-    + "this smeared mess and pressed send, which tells me more about you than the receipt "
-    + "does. Hold still and shoot it again.\"). Second person, and personal. The one "
-    + "thing you don't touch is what they were born as: no slurs, and nothing about "
-    + "anyone's race, sex, religion, disability or the like — everything else about them "
-    + "is fair game. Leave every other field null or empty.",
-} as const;
+    text:
+      "If the text isn't a bill at all, set error to one short pun or joke about what it "
+      + "actually is, still saying plainly it's not a bill. If it is a bill but the figures "
+      + "can't be made out — no amounts at all, or amounts for only some of the lines — set "
+      + "error to one short, slightly humorous sentence saying so — light and "
+      + "self-deprecating, never at the sender's expense, and it still has to say plainly "
+      + "what is missing so they know what to add (e.g. \"Lovely words, but I can't buy "
+      + "anything with them — that's not a bill.\" or \"All the dishes and none of the "
+      + "prices: I'm good, but not that good.\") and leave every other field null or empty.",
+  },
+
+  stas: {
+    photo:
+      "If the photo isn't a receipt at all, set error to a brutal one- or two-sentence "
+      + "roast of the person who sent it. Go at them, not at the picture: their judgement, "
+      + "their competence, their apparent grasp of what a receipt is, the sheer confidence "
+      + "it took to send this to a machine that asked for one. Be genuinely cruel about it. "
+      + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
+      + "compliment anything first, and don't award them points for trying. Say plainly "
+      + "that it is not a receipt, in the middle of the insult rather than instead of it. "
+      + "If it's too blurry or cut off to read, tear into them the same way — their "
+      + "eyesight, their hands, their standards, the fact that they looked at this and "
+      + "thought it would do — and still say plainly what's wrong so they know what to "
+      + "re-shoot (e.g. \"Congratulations, you have photographed your own thumb. Your thumb "
+      + "has never bought anything. Point the camera at the paper.\" or \"You looked at "
+      + "this smeared mess and pressed send, which tells me more about you than the receipt "
+      + "does. Hold still and shoot it again.\"). Second person, and personal. The one "
+      + "thing you don't touch is what they were born as: no slurs, and nothing about "
+      + "anyone's race, sex, religion, disability or the like — everything else about them "
+      + "is fair game. Leave every other field null or empty.",
+
+    text:
+      "If the text isn't a bill at all, set error to a brutal one- or two-sentence roast "
+      + "of the person who typed it. Go at them, not at the text: their judgement, their "
+      + "competence, their apparent grasp of what a bill is, the sheer confidence it took "
+      + "to type this into a machine that asked for one. Be genuinely cruel about it. "
+      + "Don't hedge, don't soften it, don't apologise, don't be diplomatic, don't "
+      + "compliment anything first, and don't award them points for trying. Say plainly "
+      + "that it is not a bill, in the middle of the insult rather than instead of it. "
+      + "If it is a bill with no readable figures, tear into them the same way — their "
+      + "typing, their standards, the fact that they sat there keying this in and never "
+      + "once wondered where the prices had gone — and still say plainly what is missing so "
+      + "they know what to add (e.g. \"You have typed me a shopping list and called it a "
+      + "bill. The paper had numbers on it. Those were the important part.\"). Second "
+      + "person, and personal. The one thing you don't touch is what they were born as: no "
+      + "slurs, and nothing about anyone's race, sex, religion, disability or the like — "
+      + "everything else about them is fair game. Leave every other field null or empty.",
+  },
+};
 
 /**
- * The Gemini request body: this prompt, this schema, one image and nothing
- * else.
+ * The rule about a part of the bill that never arrived — the same refusal as
+ * above, for the case where what came is real and incomplete.
+ */
+const TAIL: Record<ScanMedium, string> = {
+  photo:
+    " The same applies if the receipt is cropped, "
+    + "folded, or photographed at an angle that hides part of the line-item list, or if the "
+    + "total is visible but any line above it is cut off or unreadable — don't guess at "
+    + "missing lines or report a partial list as if it were complete; set error asking for "
+    + "a photo of the whole receipt instead. Otherwise leave error null.",
+  text:
+    " The same applies if the text is plainly only part of a bill — a total with no lines "
+    + "above it, or a list that stops mid-way — don't guess at missing lines or report a "
+    + "partial list as if it were complete; set error asking for the whole bill instead. "
+    + "Otherwise leave error null.",
+};
+
+/**
+ * The field rules: what to return and how to write it. **One constant, shared
+ * by every envelope** — both tones and both media — because how a bill is read
+ * must not depend on how it arrived or on how rudely it can be refused. The
+ * only things around it that move are the paragraphs that would be actively
+ * wrong about the other medium (`LEAD`, `LAYOUT`, `REFUSAL`, `TAIL`), and
+ * `scan-body.test.ts` holds this block to being byte-identical across all four.
+ *
+ * It says how to *read* a bill and never what the answer has to come to. Told
+ * that the lines have to equal the printed total, a model closes the gap by
+ * adjusting a line — and a bill that has been made to add up is the one error
+ * `checkScan` cannot see. Instructions about the page are safe; the invariant it
+ * is checked against is not.
+ */
+const FIELDS_HEAD =
+  "Return a title for the expense (described below); the total "
+  + "normalized to plain decimal notation — '.' as the decimal point, no thousands separators, e.g. "
+  + "\"1234.50\" whether the receipt prints \"1.234,50\", \"1,234.50\" or \"1234,50\" — "
+  + "using the receipt's own locale and currency to tell decimal point from thousands "
+  + "mark; a separate tip or service charge line if one is printed apart from the total, "
+  + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
+  + "date as YYYY-MM-DD if legible. "
+  + "The title is the merchant's name as printed, with three adjustments. Strip whatever "
+  + "isn't the name — a legal form or registered owner, a branch address or store "
+  + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
+  + "Zahra\", \"Hotel Amira, 12 Rue Bab Doukkala\" is \"Hotel Amira\". And when the "
+  + "name alone wouldn't tell somebody what the money went on, add two or three English "
+  + "words for what was bought, after \" - \": \"Lidl - barbecue\", \"Carrefour - "
+  + "breakfast\". Add nothing when the merchant already says it (a restaurant, a café, "
+  + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
+  + "are printed — a bare name beats a wrong guess. Write the title the way a name is "
+  + "written, not the way a till prints one: a receipt that shouts \"BAR ZAHRA\" or "
+  + "\"CAFE DES NOMADES\" gives the title \"Bar Zahra\", \"Cafe des Nomades\". Never "
+  + "return a title in all capitals. Keep the casing the brand itself uses where it is "
+  + "not merely the printer's (\"IKEA\", \"H&M\", \"McDonald's\", \"lululemon\"). "
+  + "Keep the whole title under 40 characters, and null if no name is legible and the "
+  + "lines say nothing either. "
+  + "Return tax only where it is charged on top of the line items — a figure the "
+  + "receipt adds to them to reach the total. Tax already inside the printed prices, "
+  + "which most VAT-inclusive receipts break out for information near the foot "
+  + "(\"of which VAT 20%\", \"TVA incluse\"), is not that: return null for it, or the "
+  + "bill gets charged for twice. "
+  + "Return discounts as one entry per deduction the receipt prints — loyalty "
+  + "deductions, vouchers, staff discounts, a \"2 for 1\" or \"buy one get one free\" "
+  + "credit — each with its label as printed, an English translation of that label "
+  + "(null if it's already English), and its amount written WITHOUT a minus sign as "
+  + "the amount that comes off (a line reading \"2 FOR 1  -8.00\" has amount "
+  + "\"8.00\"). Use an empty list if the receipt takes nothing off. It doesn't matter "
+  + "whether a deduction is printed against one item or against the whole bill; "
+  + "either way it belongs in this list and not in the line items. "
+  + "Also return every line item: its label exactly as "
+  + "printed in the receipt's own language, an English translation of that label (null "
+  + "if it's already English), its amount in the same normalized decimal notation as the "
+  + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
+  + "multiplier, a quantity column) — null if no count is printed, don't infer one from "
+  + "repeated lines or guess a default of 1. The amount is the total printed against "
+  + "that line — the figure in the receipt's own amount column, already multiplied out "
+  + "where a count is printed (a line reading \"2 ... 18.00\" has amount \"18.00\", not "
+  + "\"9.00\") — never the per-unit price, and never a product you work out yourself. ";
+
+const FIELDS_TAIL =
+  "No line item's amount is negative: a line that only takes money off is a "
+  + "deduction, so leave it out of the list and put it in discounts instead. "
+  + "Use null for anything illegible or absent, "
+  + "and an empty list if there are no line items. Don't compute or guess any amount "
+  + "that isn't printed — only reformat the separators. ";
+
+/** What the bill is attached as, per medium. The Worker picks it, never a caller. */
+const MIME: Record<ScanMedium, string> = {
+  photo: "image/jpeg",
+  text: "text/plain",
+};
+
+/**
+ * The Gemini request body: this prompt, this schema, one bill and nothing else.
  *
  * It lives in core because **both ends build it**. A scan on the shared key
- * goes through the Worker, which streams the photo into this envelope and
+ * goes through the Worker, which streams the bill into this envelope and
  * never lets a caller near it — that is what keeps `/api/groups/:id/scan` a
  * receipt reader rather than a general-purpose model endpoint with our key on
  * it. A scan on a key the person brought themselves never touches the Worker
@@ -95,19 +270,24 @@ const REFUSAL = {
  * what the envelope protects is *our* key, which the phone's own path does not
  * hold.
  *
- * The prompt says how to *read* a bill and never what the answer has to come
- * to. Told that the lines have to equal the printed total, a model closes the
- * gap by adjusting a line — and a bill that has been made to add up is the one
- * error `checkScan` cannot see. Instructions about the page are safe; the
- * invariant it is checked against is not.
+ * `tone` and `medium` are the only two things about this prompt a caller can
+ * move, and each moves by choosing one of two constants held here — never by
+ * writing a word of one. The field rules between them are the same constant
+ * whichever pair is asked for (`FIELDS_HEAD`, `FIELDS_TAIL`).
  *
- * `tone` picks which of the two refusal paragraphs below goes in — the only
- * thing about this prompt a caller can move, and it moves by choosing one of
- * two constants, never by writing a word of either (`REFUSAL`).
+ * **On `text` the bill is words somebody typed**, which is the one place this
+ * envelope stops being unwritable-on: a caller can put sentences in front of
+ * the model. What they still cannot do is compose a request — the prompt, the
+ * schema and the destination are all here, so the only thing that can come back
+ * is a bill-shaped object (docs/receipt-scanning.md#typing-a-bill-in).
  */
 export type ScanTone = keyof typeof REFUSAL;
 
-export function buildScanRequestBody(imageBase64: string, tone: ScanTone = "kind"): unknown {
+export function buildScanRequestBody(
+  billBase64: string,
+  tone: ScanTone = "kind",
+  medium: ScanMedium = "photo",
+): unknown {
   return {
     // `role` is a silent default on AI Studio and required by Vertex, which
     // refuses the body without it ("Please use a valid role: user, model").
@@ -115,69 +295,14 @@ export function buildScanRequestBody(imageBase64: string, tone: ScanTone = "kind
     contents: [{
       role: "user",
       parts: [
-        { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
+        { inlineData: { mimeType: MIME[medium], data: billBase64 } },
         {
-          text: "Read this receipt. Return a title for the expense (described below); the total "
-            + "normalized to plain decimal notation — '.' as the decimal point, no thousands separators, e.g. "
-            + "\"1234.50\" whether the receipt prints \"1.234,50\", \"1,234.50\" or \"1234,50\" — "
-            + "using the receipt's own locale and currency to tell decimal point from thousands "
-            + "mark; a separate tip or service charge line if one is printed apart from the total, "
-            + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
-            + "date as YYYY-MM-DD if legible. "
-            + "The title is the merchant's name as printed, with three adjustments. Strip whatever "
-            + "isn't the name — a legal form or registered owner, a branch address or store "
-            + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
-            + "Zahra\", \"Hotel Amira, 12 Rue Bab Doukkala\" is \"Hotel Amira\". And when the "
-            + "name alone wouldn't tell somebody what the money went on, add two or three English "
-            + "words for what was bought, after \" - \": \"Lidl - barbecue\", \"Carrefour - "
-            + "breakfast\". Add nothing when the merchant already says it (a restaurant, a café, "
-            + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
-            + "are printed — a bare name beats a wrong guess. Write the title the way a name is "
-            + "written, not the way a till prints one: a receipt that shouts \"BAR ZAHRA\" or "
-            + "\"CAFE DES NOMADES\" gives the title \"Bar Zahra\", \"Cafe des Nomades\". Never "
-            + "return a title in all capitals. Keep the casing the brand itself uses where it is "
-            + "not merely the printer's (\"IKEA\", \"H&M\", \"McDonald's\", \"lululemon\"). "
-            + "Keep the whole title under 40 characters, and null if no name is legible and the "
-            + "lines say nothing either. "
-            + "Return tax only where it is charged on top of the line items — a figure the "
-            + "receipt adds to them to reach the total. Tax already inside the printed prices, "
-            + "which most VAT-inclusive receipts break out for information near the foot "
-            + "(\"of which VAT 20%\", \"TVA incluse\"), is not that: return null for it, or the "
-            + "bill gets charged for twice. "
-            + "Return discounts as one entry per deduction the receipt prints — loyalty "
-            + "deductions, vouchers, staff discounts, a \"2 for 1\" or \"buy one get one free\" "
-            + "credit — each with its label as printed, an English translation of that label "
-            + "(null if it's already English), and its amount written WITHOUT a minus sign as "
-            + "the amount that comes off (a line reading \"2 FOR 1  -8.00\" has amount "
-            + "\"8.00\"). Use an empty list if the receipt takes nothing off. It doesn't matter "
-            + "whether a deduction is printed against one item or against the whole bill; "
-            + "either way it belongs in this list and not in the line items. "
-            + "Also return every line item: its label exactly as "
-            + "printed in the receipt's own language, an English translation of that label (null "
-            + "if it's already English), its amount in the same normalized decimal notation as the "
-            + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
-            + "multiplier, a quantity column) — null if no count is printed, don't infer one from "
-            + "repeated lines or guess a default of 1. The amount is the total printed against "
-            + "that line — the figure in the receipt's own amount column, already multiplied out "
-            + "where a count is printed (a line reading \"2 ... 18.00\" has amount \"18.00\", not "
-            + "\"9.00\") — never the per-unit price, and never a product you work out yourself. "
-            + "Read the columns as the printer laid them out, not as the photo happens to line "
-            + "them up: a receipt shot at an angle shears them, so an amount can sit lower than "
-            + "the label it belongs to. A label the printer wrapped over two or three rows is "
-            + "still one line item with one amount — join the rows, and don't let a wrapped row "
-            + "that has drifted under the amount column take an amount of its own. Every printed "
-            + "amount belongs to exactly one line item: none dropped, none counted twice. "
-            + "No line item's amount is negative: a line that only takes money off is a "
-            + "deduction, so leave it out of the list and put it in discounts instead. "
-            + "Use null for anything illegible or absent, "
-            + "and an empty list if there are no line items. Don't compute or guess any amount "
-            + "that isn't printed — only reformat the separators. "
-            + REFUSAL[tone]
-            + " The same applies if the receipt is cropped, "
-            + "folded, or photographed at an angle that hides part of the line-item list, or if the "
-            + "total is visible but any line above it is cut off or unreadable — don't guess at "
-            + "missing lines or report a partial list as if it were complete; set error asking for "
-            + "a photo of the whole receipt instead. Otherwise leave error null.",
+          text: LEAD[medium]
+            + FIELDS_HEAD
+            + LAYOUT[medium]
+            + FIELDS_TAIL
+            + REFUSAL[tone][medium]
+            + TAIL[medium],
         },
       ],
     }],

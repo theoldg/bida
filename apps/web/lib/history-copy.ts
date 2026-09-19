@@ -260,8 +260,11 @@ export function describe(
     // and moved a salad from one person to another said nothing at all.
     const lines = (state: State) =>
       (Array.isArray(state["receiptItems"]) ? state["receiptItems"].length : 0);
-    if (field("receiptItems") ?? field("receiptTip")
-      ?? field("receiptTax") ?? field("receiptDiscount")) {
+    // `receiptDiscounts` and `receiptText`, both plural-and-spelled-out: the
+    // singular `receiptDiscount` this used to ask for is not a field any op has
+    // ever carried, so a save that only moved a bill's deductions said nothing.
+    if (field("receiptItems") ?? field("receiptTip") ?? field("receiptTax")
+      ?? field("receiptDiscounts") ?? field("receiptText")) {
       const wasLines = lines(rev.before);
       const nowLines = lines(rev.after);
       parts.push({

@@ -31,7 +31,8 @@ export function Dialog({ title, onClose, children }: {
     if (!el || el.open) return;
     el.showModal();
     // A prompt opens on its field, with the old value selected — the one habit
-    // worth keeping from prompt(). Every other dialog opens on nothing: its
+    // worth keeping from prompt(). So does a box asking for several lines, where
+    // the box *is* the dialog. Every other dialog opens on nothing: its
     // buttons are one Tab away and neither should fire on a stray Enter.
     //
     // That second half needs saying out loud, because `showModal()` does not
@@ -42,8 +43,14 @@ export function Dialog({ title, onClose, children }: {
     // `data-autofocus` that used to do it was taken off. So focus lands on the
     // card, which is inside the dialog (Escape and the tab ring still belong
     // to it) and is not something you can type into.
-    const field = el.querySelector<HTMLInputElement>("input[data-autofocus]");
-    if (field) { field.focus(); field.select(); } else card.current?.focus();
+    const field = el.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+      "input[data-autofocus], textarea[data-autofocus]",
+    );
+    // Selected in a field of one line, where the old value is a word to type
+    // over. Never in a box of several: a bill somebody typed is reopened to be
+    // corrected, and the first keystroke would take the whole of it.
+    if (field) { field.focus(); if (field instanceof HTMLInputElement) field.select(); }
+    else card.current?.focus();
   }, []);
 
   return (

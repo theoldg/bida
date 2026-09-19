@@ -6,9 +6,9 @@ import { copy } from "../lib/copy";
 import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft";
-import { readBill, scanCurrency } from "@bida/core";
+import { readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
 import {
-  normalizeScan, scanReceipt,
+  normalizeScan, parseBillText, scanReceipt,
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
@@ -23,7 +23,7 @@ export type { ScanState } from "../lib/scan/live";
  * everything else is the phone's condition or the app's own arithmetic, and
  * the app says those in its voice.
  */
-export function scanErrorText(err: unknown): string | null {
+export function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | null {
   if (err instanceof ScanOfflineError) return copy.scan.offline;
   if (err instanceof TurnstileBlockedError) return copy.scan.unverified[err.side];
   // Before the budget refusals, and it can never be confused with one: a phone
@@ -34,7 +34,9 @@ export function scanErrorText(err: unknown): string | null {
   }
   if (err instanceof ScanUnavailableError) return copy.scan.busy;
   if (err instanceof ScanRejectedError) return err.message;
-  if (err instanceof ScanUnreliableError) return copy.scan.problem[err.problem];
+  // The only refusal whose words depend on how the bill arrived: two of the
+  // three ask for a different photo, which is no help to somebody typing.
+  if (err instanceof ScanUnreliableError) return copy.scan.problem[medium][err.problem];
   return null;
 }
 
@@ -45,6 +47,12 @@ export interface ReceiptScan {
   disabled: boolean;
   openCamera: () => void;
   openLibrary: () => void;
+  /**
+   * The third way in: a bill typed or pasted instead of photographed. The
+   * caller has capped and cleaned it (`lib/scan/text.ts`); this sends it and
+   * fills the draft exactly as a photograph would.
+   */
+  readText: (text: string) => Promise<void>;
   /** The two hidden file inputs the halves above click. Render once per screen. */
   inputs: React.ReactNode;
 }
@@ -104,20 +112,32 @@ export function useReceiptScan(
   const before = useRef(scanAs);
   before.current = scanAs;
 
-  const onPhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !groupId || !before.current) return;
+  /**
+   * One reading, whichever medium it arrived in.
+   *
+   * Everything below the `send` argument is the same for a photograph and for a
+   * bill somebody typed: what a scan may overwrite, which tab it may claim,
+   * and what it resets. Two copies of this were two rules about renaming an
+   * expense somebody had named.
+   */
+  const read = useCallback(async (
+    medium: ScanMedium,
+    send: (sender: ScanAs, currency: string) => Promise<ScanResult>,
+    /** Kept on the draft when this reading was of typed text, so reopening the
+        dialog holds what was typed rather than an empty box over a bill. */
+    text: string | null,
+  ) => {
+    if (!groupId || !before.current) return;
     const current = getDraft(groupId);
     if (!current) return;
     // Which tab the scan was started from, so the arrival can tell "still
     // where I left it" from "moved on" — see the `splitTab` handoff below.
     const tabAtStart = activeSplitTab(current);
-    beginScan(groupId);
+    beginScan(groupId, medium);
     try {
       const sender = before.current;
       await sender.prepare?.();
-      const result = await scanReceipt(file, sender.id, sender.secret, current.currency);
+      const result = await send(sender, current.currency);
       const patch = normalizeScan(result, Date.now());
       // Read as a bill rather than off the raw result: a deduction printed as
       // a negative line belongs in the discount, not in the grid as something
@@ -158,9 +178,13 @@ export function useReceiptScan(
         receiptTip: bill.extras.tip,
         receiptTax: bill.extras.tax,
         receiptDiscounts: bill.extras.discounts.length > 0 ? bill.extras.discounts : null,
-        // A fresh scan replaces whatever grid was saved before.
+        // A fresh reading replaces whatever grid was saved before.
         receiptInvolved: null,
         receiptAssignments: null,
+        // And whatever the bill last arrived as. A photograph clears the text
+        // for the same reason it clears the grid: what is kept has to describe
+        // the bill that is actually on the draft.
+        receiptText: text,
         // A bill with lines claims the Items tab, unless somebody has moved
         // off it while the model read (`tabAfterScan`).
         ...(scanTab !== undefined ? { splitTab: scanTab } : {}),
@@ -168,15 +192,35 @@ export function useReceiptScan(
       clearScan(groupId);
       if (onScreen.current) scanned.current?.();
     } catch (err) {
-      failScan(groupId, scanErrorText(err));
+      failScan(groupId, scanErrorText(err, medium));
     }
   }, [groupId]);
+
+  const onPhoto = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    await read(
+      "photo",
+      (sender, currency) => scanReceipt(file, sender.id, sender.secret, currency),
+      null,
+    );
+  }, [read]);
+
+  const readText = useCallback(async (text: string) => {
+    await read(
+      "text",
+      (sender, currency) => parseBillText(text, sender.id, sender.secret, currency),
+      text,
+    );
+  }, [read]);
 
   return {
     live,
     disabled: !scanAs,
     openCamera: () => cameraInput.current?.click(),
     openLibrary: () => libraryInput.current?.click(),
+    readText,
     inputs: (
       <>
         <input ref={cameraInput} type="file" accept="image/*" capture="environment"
@@ -225,6 +269,53 @@ function ScanBar({ startedAt, seconds, onFull }: {
 }
 
 /**
+ * "Reading…", with the bar sweeping across it — the one thing every surface
+ * that starts a reading shows while one is in flight.
+ *
+ * Shared rather than copied because it is a clock on the *scan*, not on
+ * whatever is drawing it: the pair on the Items tab and the dialog that types a
+ * bill in are both looking at one `LiveScan`, and two implementations would be
+ * two estimates of one wait. `box` is the class the caller's own register wants
+ * around it, because the strip is the same and where it sits is not.
+ */
+export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
+  live: LiveScan;
+  box: string;
+  /** The register's own class for the strip inside — `btn btn-lg` on `/g/scan`. */
+  button?: string;
+  onFlashEnd?: (e: React.AnimationEvent) => void;
+}) {
+  /**
+   * The sweep has run out and the scan is still going, so the spinner takes
+   * over. Reset the moment the scan ends — the next one is a fresh sweep of
+   * its own, and an answer that beat it never shows a spinner at all.
+   *
+   * Two ways to be past it, because this control can mount onto a scan
+   * already in flight: the sweep finished under us (`setFull`), or it had
+   * already finished before we were rendered at all — a bar that would start
+   * beyond its own end and never fire `animationend`.
+   */
+  const [full, setFull] = useState(false);
+  const overrun = Date.now() - live.startedAt >= live.seconds * 1000;
+  const spinning = full || overrun;
+  // One element, so the box keeps the height it had and nothing under it moves
+  // while the model reads. Disabled through the same `.btn:disabled` every
+  // other spent button in the app uses.
+  return (
+    <div className={`${box} pair-busy`} onAnimationEnd={onFlashEnd}>
+      {spinning ? null : (
+        <ScanBar startedAt={live.startedAt} seconds={live.seconds}
+          onFull={() => setFull(true)} />
+      )}
+      <button type="button" className={button} disabled aria-live="polite">
+        {spinning ? <span className="spinner" aria-hidden="true" /> : null}
+        {copy.scan.reading}
+      </button>
+    </div>
+  );
+}
+
+/**
  * The control both scanning screens wear: one button cut in two.
  *
  * Photographing the bill and picking a photo of it are the same act with two
@@ -239,6 +330,10 @@ function ScanBar({ startedAt, seconds, onFull }: {
  * also what retired `ScanSource`, a type whose whole job was knowing which of
  * two buttons should spin.
  *
+ * On the Items tab a third door stands beside the pair (`onType`) — the same
+ * reading, of a bill somebody types instead of photographing. It is a sibling
+ * and not a third segment, for the reason given where it is drawn.
+ *
  * Three registers of the same control, so where it sits changes its size and
  * almost nothing else: `lg` where the screen exists for it, `s` on the Items
  * tab, `xs` for replacing a bill already assigned. The first two are ink
@@ -251,7 +346,7 @@ function ScanBar({ startedAt, seconds, onFull }: {
  * neither half is the one that was wrong.
  */
 export function ScanPair({
-  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse,
+  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse, onType,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
@@ -268,22 +363,16 @@ export function ScanPair({
    * refused, and neither door opens.
    */
   refuse?: () => boolean;
+  /**
+   * Offer the third way in as well — a bill typed or pasted rather than
+   * photographed. Only the Items tab passes it: `/g/scan` and `/quick` are the
+   * camera's own screens, and a form is what typing needs to land on.
+   */
+  onType?: () => void;
 }) {
   const { live } = scan;
   const disabled = scan.disabled || held;
   const busy = live?.state === "scanning";
-  /**
-   * The sweep has run out and the scan is still going, so the spinner takes
-   * over. Reset the moment the scan ends — the next one is a fresh sweep of
-   * its own, and an answer that beat it never shows a spinner at all.
-   *
-   * Two ways to be past it, because this control can mount onto a scan
-   * already in flight: the sweep finished under us (`setFull`), or it had
-   * already finished before we were rendered at all — a bar that would start
-   * beyond its own end and never fire `animationend`.
-   */
-  const [full, setFull] = useState(false);
-  useEffect(() => { if (!busy) setFull(false); }, [busy]);
   // Run the challenge while the button is merely sitting there, so pressing it
   // doesn't wait for a round trip to Cloudflare (`warmTurnstile`). Every screen
   // that scans wears this control, so warming here is what "wherever a scan
@@ -291,7 +380,6 @@ export function ScanPair({
   // the moment that tab is picked. Keyed on `busy` as well as mount: a scan
   // spends the token, and the button coming back is the next scan's cue.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
-  const overrun = live !== undefined && Date.now() - live.startedAt >= live.seconds * 1000;
   const icon = register === "xs" ? 13 : register === "lg" ? 17 : 16;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
   // Inverted at both sizes that act: on `/g/scan` it is the screen's one act,
@@ -301,26 +389,14 @@ export function ScanPair({
   const box = `btn-pair${register === "xs" ? " pair-xs" : " pair-p"}${flash}`;
   const open = (door: () => void) => () => { if (!refuse?.()) door(); };
 
-  // One element, so the box keeps the height it had and nothing under it moves
-  // while the model reads. Disabled through the same `.btn:disabled` every
-  // other spent button in the app uses.
+  // One reading at a time, so one strip covers the photograph's two doors and
+  // the typed bill's alike — there is nothing else to be doing while the model
+  // reads, and a door left standing beside "Reading…" would invite a second.
   if (busy && live) {
-    const spinning = full || overrun;
-    return (
-      <div className={`${box} pair-busy`} onAnimationEnd={onFlashEnd}>
-        {spinning ? null : (
-          <ScanBar startedAt={live.startedAt} seconds={live.seconds}
-            onFull={() => setFull(true)} />
-        )}
-        <button type="button" className={half} disabled aria-live="polite">
-          {spinning ? <span className="spinner" aria-hidden="true" /> : null}
-          {copy.scan.reading}
-        </button>
-      </div>
-    );
+    return <ScanBusy live={live} box={box} button={half} onFlashEnd={onFlashEnd} />;
   }
 
-  return (
+  const photo = (
     <div className={box} onAnimationEnd={onFlashEnd}>
       <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}
         {...keepsFocus}>
@@ -332,6 +408,30 @@ export function ScanPair({
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
+    </div>
+  );
+  if (!onType) return photo;
+
+  // Beside the pair rather than inside it. The two halves above are one act
+  // with two doors — a camera now, or a camera earlier — and the hairline
+  // between them says exactly that; a third segment in the same box would say
+  // that typing is a way of taking a photograph. It is the answer to not having
+  // taken one, so it stands on its own, and on paper under an ink block because
+  // photographing is still the shorter road.
+  const door = (
+    <button type="button" className={register === "xs" ? "btn" : "btn btn-s"}
+      disabled={disabled} onClick={() => { if (!refuse?.()) onType(); }} {...keepsFocus}>
+      <Icon name="edit" size={icon} />
+      {copy.scan.typeIn.open}
+    </button>
+  );
+  return (
+    <div className={register === "xs" ? "scanways row" : "scanways"}>
+      {photo}
+      {/* At chip scale the door borrows the pair's own box so it reads as one
+          more chip among them rather than a different kind of thing — a box of
+          one door, which is what `.btn-pair` dresses. */}
+      {register === "xs" ? <div className="btn-pair pair-xs">{door}</div> : door}
     </div>
   );
 }

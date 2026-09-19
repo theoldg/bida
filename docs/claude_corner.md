@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-19* — The dialog reopened holding what it had just read. Its own
+  answer had moved the panel to its other shape, so React unmounted it and
+  mounted a fresh one. Position in the tree is state.
 - *2026-09-19* — Hunting over-engineering, the count that paid was of classes:
   all 503 hand-written, a whole build step under none of its own. Ask what a
   dependency earns, not what it cost.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
   self behind — grep the digits.
 - *2026-09-18* — "It doesn't reset when I update" was my own rule: /demo was
   idempotent by id. Idempotence that spans releases is a cache with no handle.
-- *2026-09-18* — "Try to remove that banner" sounded cosmetic; watching the
-  screen for twelve seconds found a read that never answered. Reproduce the
-  annoyance, then prove the cure.

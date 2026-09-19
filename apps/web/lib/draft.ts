@@ -128,6 +128,15 @@ export interface EntryDraft {
   receiptInvolved?: string[] | null;
   /** Per-item member ids, same order as `receiptItems`, last time it was saved. */
   receiptAssignments?: string[][] | null;
+  /**
+   * The bill as text, when that is how it was read — what somebody typed into
+   * "Type it in" rather than photographed (`BILL_TEXT_MAX` caps it). Kept for
+   * the same reason `receiptItems` is: the dialog reopens holding it, on this
+   * phone or another, so correcting a misread bill is editing what was typed
+   * rather than typing it again. Absent on a photographed bill and on one with
+   * no scan at all.
+   */
+  receiptText?: string | null;
   /** Explicit tab choice; see `SplitTab`. */
   splitTab?: SplitTab;
   /**

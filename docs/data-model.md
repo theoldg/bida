@@ -75,6 +75,9 @@ Expense {
   receiptItems?, receiptTip?, receiptInvolved?, receiptAssignments?,
                       // the parsed bill behind a `receipt` split, kept so the
                       // who-had-what grid can reopen (ADR-0016)
+  receiptText?,       // the bill as typed, when it was typed rather than
+                      // photographed — so the box reopens holding it
+                      // (receipt-scanning.md#typing-a-bill-in)
   deletedAt?
 }
 ```

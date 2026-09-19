@@ -42,6 +42,8 @@ export interface ExpenseInput {
   receiptDiscounts?: ReceiptDiscount[] | null;
   receiptInvolved?: Id[] | null;
   receiptAssignments?: Id[][] | null;
+  /** The bill as typed, when it was typed rather than photographed. */
+  receiptText?: string | null;
 }
 
 /**
@@ -116,6 +118,7 @@ export async function addExpense(
             receiptDiscounts: input.receiptDiscounts,
             receiptInvolved: input.receiptInvolved,
             receiptAssignments: input.receiptAssignments,
+            receiptText: input.receiptText,
           }),
         },
       },
@@ -177,6 +180,7 @@ export async function editExpense(
     receiptDiscounts: merged.receiptDiscounts,
     receiptInvolved: merged.receiptInvolved,
     receiptAssignments: merged.receiptAssignments,
+    receiptText: merged.receiptText,
   });
 
   // A save that moved nothing is a revision saying nothing happened.

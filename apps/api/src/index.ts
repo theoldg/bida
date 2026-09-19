@@ -3,7 +3,9 @@ import {
   VERTEX_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
 import { bearerToken, sha256Hex } from "./auth";
-import { MAX_IMAGE_BYTES, NotAnImageError, type ScanTone, wrapImage } from "./scan-body";
+import {
+  MAX_BYTES, NotBase64Error, type ScanMedium, type ScanTone, wrapPayload,
+} from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
 import { declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
@@ -111,14 +113,15 @@ app.get("/api/rates/:from/:to", async (c) => {
 });
 
 /**
- * Read a receipt. The body is the photo, base64, and nothing else.
+ * Read a bill. The body is the bill, base64, and nothing else — a photo of it,
+ * or (`X-Input: text`) the text of it somebody typed.
  *
- * The prompt and the response schema are ours (`scan-body.ts`), so the only
- * thing a caller decides is which image Gemini reads — this is a receipt
- * reader, not our API key behind an open prompt. The image is streamed into
- * the envelope rather than read, so the Worker still parses no body and holds
- * no photo; what it costs is one table lookup per byte, and the reason it is
- * worth that is in `wrapImage`.
+ * The prompt and the response schema are ours (`scan-body.ts`), so what a
+ * caller decides is which bill Gemini reads and which of four envelopes we hold
+ * it arrives in — never a word of the request. The bill is streamed into that
+ * envelope rather than read, so the Worker still parses no body and holds
+ * nothing; what it costs is one table lookup per byte, and the reason it is
+ * worth that is in `wrapPayload`.
  */
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");
@@ -151,15 +154,20 @@ app.post("/api/groups/:id/scan", async (c) => {
   if (full) return c.json({ error: `${full} scan limit reached`, scope: full }, 429);
   await recordScan(c.env.DB, groupId, client, now);
 
+  // A typed bill and a photograph are the same act on the same budget, and
+  // differ only in which envelope they are wrapped in and how big they are
+  // allowed to be. Like Staś below, the header picks one of ours.
+  const medium: ScanMedium = c.req.header("x-input") === "text" ? "text" : "photo";
+
   // Asked of the header first because it is the one check that costs nothing
   // and the only one that can refuse a body before it is streamed anywhere.
-  // `wrapImage` counts the bytes too, for the caller whose header lies.
+  // `wrapPayload` counts the bytes too, for the caller whose header lies.
   const declared = Number(c.req.header("content-length") ?? NaN);
   if (!Number.isFinite(declared)) return c.json({ error: "content-length required" }, 411);
-  if (declared > MAX_IMAGE_BYTES) return c.json({ error: "image too large" }, 413);
+  if (declared > MAX_BYTES[medium]) return c.json({ error: "bill too large" }, 413);
 
-  const image = c.req.raw.body;
-  if (!image) return c.json({ error: "no image" }, 400);
+  const bill = c.req.raw.body;
+  if (!bill) return c.json({ error: "no bill" }, 400);
 
   // Staś mode: the phone asks for the meaner of the two refusal paragraphs
   // (`scan-body.ts`). A header, because it is the one thing about the prompt a
@@ -174,13 +182,13 @@ app.post("/api/groups/:id/scan", async (c) => {
   // headers* arrive, so a body that errors after that resolves rather than
   // rejects. Hence `refusal`, checked on both paths: it is set before the
   // throw that truncates the request, so it cannot lose the race with a reply.
-  const refusal: { err: NotAnImageError | null } = { err: null };
+  const refusal: { err: NotBase64Error | null } = { err: null };
   let upstream: Response;
   try {
     upstream = await fetch(VERTEX_URL, {
       method: "POST",
       headers: { "x-goog-api-key": c.env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: wrapImage(image, (err) => { refusal.err = err; }, tone),
+      body: wrapPayload(bill, (err) => { refusal.err = err; }, tone, medium),
       // @ts-expect-error -- required by Workers to stream a request body through
       duplex: "half",
     });

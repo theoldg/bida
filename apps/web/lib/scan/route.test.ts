@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "../db/dexie";
 import { setGeminiKey } from "../db/device";
-import { ScanKeyError, ScanLimitError, ScanOfflineError, scanReceipt } from "./index";
+import {
+  parseBillText, ScanKeyError, ScanLimitError, ScanOfflineError, scanReceipt,
+} from "./index";
 
 /**
  * Which way a scan leaves the phone.
@@ -142,5 +144,78 @@ describe("a phone with a key of its own", () => {
     answering(() => answer(BILL));
     await expect(scanReceipt(PHOTO, "g1", "s3cret", "EUR")).rejects.toThrow(ScanOfflineError);
     expect(calls).toHaveLength(0);
+  });
+});
+
+/**
+ * A bill somebody typed goes out the same two doors as a photograph and is
+ * guarded by the same things — the point being that typing is not a cheaper act
+ * to us, so it is not a less-counted one either
+ * (docs/receipt-scanning.md#typing-a-bill-in).
+ */
+describe("a bill typed in rather than photographed", () => {
+  const TYPED = "Tagine 12.00\nTotal 12.00";
+
+  it("goes to the same endpoint, with the same bearer and the same token", async () => {
+    answering(() => answer(BILL));
+    await parseBillText(TYPED, "g1", "s3cret", "EUR");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe("/api/groups/g1/scan");
+    const headers = calls[0]!.init.headers as Record<string, string>;
+    expect(headers["Authorization"]).toMatch(/^Bearer /);
+    expect(headers["X-Turnstile-Token"]).toBe("turnstile-token");
+  });
+
+  // The one header that tells the Worker which of its four envelopes to wrap
+  // this in. The body is the text, base64 — never the text itself, which is
+  // what keeps the endpoint's guard the guard it already was.
+  it("asks for the text envelope, and sends base64", async () => {
+    answering(() => answer(BILL));
+    await parseBillText(TYPED, "g1", "s3cret", "EUR");
+
+    const headers = calls[0]!.init.headers as Record<string, string>;
+    expect(headers["X-Input"]).toBe("text");
+    const body = calls[0]!.init.body as string;
+    expect(body).toMatch(/^[A-Za-z0-9+/]+={0,2}$/);
+    expect(atob(body)).toBe(TYPED);
+  });
+
+  it("a photograph asks for no envelope at all, which is the photo one", async () => {
+    answering(() => answer(BILL));
+    await scanReceipt(PHOTO, "g1", "s3cret", "EUR");
+    expect((calls[0]!.init.headers as Record<string, string>)["X-Input"]).toBeUndefined();
+  });
+
+  it("spends the caller budget, exactly as a photograph does", async () => {
+    answering(() => answer(BILL));
+    await parseBillText(TYPED, "g1", "s3cret", "EUR");
+    expect((await db().device.get("device"))?.scanLog ?? []).toHaveLength(1);
+  });
+
+  it("refuses before it sends anything, on a phone with no network", async () => {
+    answering(() => answer(BILL));
+    vi.stubGlobal("navigator", { onLine: false });
+    await expect(parseBillText(TYPED, "g1", "s3cret", "EUR")).rejects.toThrow(ScanOfflineError);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("goes straight to Google on a phone with its own key, sending nothing of ours", async () => {
+    await setGeminiKey(KEY);
+    answering(() => answer(BILL));
+    await parseBillText(TYPED, "g1", "s3cret", "EUR");
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toContain("generativelanguage.googleapis.com");
+    const headers = calls[0]!.init.headers as Record<string, string>;
+    expect(headers["Authorization"]).toBeUndefined();
+    expect(headers["X-Turnstile-Token"]).toBeUndefined();
+    expect(minted).not.toHaveBeenCalled();
+    // The envelope is built here, so the medium is an argument and not a header.
+    const body = JSON.parse(calls[0]!.init.body as string) as
+      { contents: { parts: Record<string, unknown>[] }[] };
+    expect(body.contents[0]!.parts[0]!["inlineData"])
+      .toMatchObject({ mimeType: "text/plain" });
+    expect((await db().device.get("device"))?.scanLog ?? []).toHaveLength(0);
   });
 });

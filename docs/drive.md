@@ -24,7 +24,7 @@ pnpm drive stop
 | `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
-| `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next scan reads it |
+| `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
 | `clipboard` | read what the page copied — how the invite link travels |
 | `screen` · `wait <ms>` | look again, or give something time to settle |
 | `forget` | throw this phone away and start it factory-fresh |
@@ -48,7 +48,11 @@ test of the arithmetic, which was right both times.
 phone rather than the screen — the same family as `offline` — and the scan
 button is still the app's own, pressed by number: the hidden file input opens a
 real chooser, this answers it with a real (1×1) image the client really
-downscales, and only the round trip to Gemini is faked. It is the one way to
+downscales, and only the round trip to Gemini is faked. It arms the Items tab's
+**Type it in** as well, the stub being on the URL and not on the medium: `fill`
+the box and press **Read it**, and the fixture comes back rather than a reading
+of what was typed — which still drives the dialog, its bar, its refusal and the
+draft it fills. It is the one way to
 reach the who-had-what grid — by either door, the entry form's or a quick
 split's — since a scanned bill lives in an in-memory draft and cannot be
 seeded by poking storage.

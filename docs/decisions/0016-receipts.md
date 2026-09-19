@@ -1,6 +1,7 @@
 # 0016 — A scanned receipt is a split mode of its own
 
-**Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12)
+**Status:** Accepted · 2026-08-28 (discounts and tax, 2026-09-12; a bill may be
+typed rather than photographed, 2026-09-19)
 
 **Context.** The owner asked to photograph a bill and assign its lines: *"a
 selection of involved users … then a table with columns as users and rows as
@@ -27,9 +28,17 @@ bill's own weights in it. A receipt is a mode — **"By items"**, because the
 photograph is how the lines got typed in and a mode's name is how the money
 divides — it names itself (`copy.split.mode`), and nothing asks a second field.
 
+**A photograph is how the lines usually got in, and not the only way.** A bill
+may be typed or pasted instead — the same reading, the same envelope with one
+`mimeType` changed, the same arithmetic after it — so nothing in this decision is
+about a camera. What the medium changes is covered in
+[receipt-scanning.md](../receipt-scanning.md#typing-a-bill-in), including the one
+thing it costs: a typed bill puts a caller's own words in front of the shared
+Gemini key, which the envelope used to make impossible.
+
 **The parsed bill lives on the expense, not in the draft.** `receiptItems`,
-`receiptTip`, `receiptInvolved` and `receiptAssignments` are ordinary optional
-fields on `Expense`, travelling in the op's `patch` like `description` — so they
+`receiptTip`, `receiptInvolved`, `receiptAssignments` and `receiptText` are
+ordinary optional fields on `Expense`, travelling in the op's `patch` like `description` — so they
 sync, replay and fold with no change to `Op`, `fold.ts`, the D1 schema or the
 Dexie schema, and the grid reopens later from any device. Ops already written
 in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops

@@ -1,6 +1,6 @@
 import {
   AI_STUDIO_URL, buildScanRequestBody, checkScan,
-  scanCurrency, type ScanLimitScope, type ScanProblem, type ScanResult,
+  scanCurrency, type ScanLimitScope, type ScanMedium, type ScanProblem, type ScanResult,
 } from "@bida/core";
 import { groupToken } from "../seal";
 import { noteScan, overCallerBudget } from "./budget";
@@ -8,6 +8,7 @@ import { downscaleToBase64Jpeg } from "./downscale";
 import { ownKey } from "./key";
 import { parseScanResponse } from "./response";
 import { stasMode } from "./stas";
+import { billTextToBase64 } from "./text";
 import { TurnstileBlockedError, turnstileToken } from "./turnstile";
 
 export { TurnstileBlockedError } from "./turnstile";
@@ -97,23 +98,59 @@ export async function scanReceipt(
   /** The draft's currency — what a receipt that doesn't name its own is counted in. */
   currency: string,
 ): Promise<ScanResult> {
-  // Asked before the downscale, which is the expensive part: there is no point
-  // resizing a photo we cannot send. True of both paths — neither has anything
-  // to say to a phone with no network.
+  return readBill(() => downscaleToBase64Jpeg(photo), "photo", groupId, secret, currency);
+}
+
+/**
+ * The same reading, of a bill somebody typed instead of photographed.
+ *
+ * Everything but the bytes is shared with `scanReceipt`: the same envelope with
+ * one `mimeType` changed, the same bearer, the same Turnstile token, the same
+ * three budgets, and the same `checkScan` at the end. A typed bill is not a
+ * cheaper act — it asks the same model the same question — so it is not a
+ * cheaper one to us either (docs/receipt-scanning.md#typing-a-bill-in).
+ *
+ * The caller has already capped and cleaned the text (`./text.ts`); this
+ * encodes it and sends it.
+ */
+export async function parseBillText(
+  text: string,
+  groupId: string,
+  secret: string,
+  currency: string,
+): Promise<ScanResult> {
+  return readBill(() => Promise.resolve(billTextToBase64(text)), "text", groupId, secret, currency);
+}
+
+/**
+ * One door for every bill, whichever medium it arrived in and whoever's key
+ * paid for it: parse, honour the model's own refusal, then hold the answer to
+ * `checkScan`. Everything downstream of here may assume the bill it holds adds
+ * up.
+ */
+async function readBill(
+  /** The bill as base64, run inside the round trip so a slow resize hides
+   *  behind the challenge rather than following it (Gotchas). */
+  encode: () => Promise<string>,
+  medium: ScanMedium,
+  groupId: string,
+  secret: string,
+  currency: string,
+): Promise<ScanResult> {
+  // Asked before the encode, which for a photo is the expensive part: there is
+  // no point resizing one we cannot send. True of both paths — neither has
+  // anything to say to a phone with no network.
   if (typeof navigator !== "undefined" && navigator.onLine === false) {
     throw new ScanOfflineError("offline");
   }
 
   const own = await ownKey();
   const answer = own
-    ? await scanOnOwnKey(photo, own)
-    : await scanOnSharedKey(photo, groupId, secret);
+    ? await readOnOwnKey(encode, medium, own)
+    : await readOnSharedKey(encode, medium, groupId, secret);
 
   const result = parseScanResponse(answer);
   if (result.error) throw new ScanRejectedError(result.error);
-  // Checked here rather than at the call site so there is one door: everything
-  // downstream of this function may assume the bill it holds adds up — and
-  // whose key paid for it makes no difference to that.
   const problem = checkScan(result, scanCurrency(result, currency));
   if (problem) throw new ScanUnreliableError(problem);
   return result;
@@ -129,16 +166,22 @@ export async function scanReceipt(
  * no fallback through the Worker when it fails: a key that has gone somewhere
  * else once is a key that went somewhere else.
  */
-async function scanOnOwnKey(photo: File | Blob, key: string): Promise<unknown> {
-  const imageBase64 = await downscaleToBase64Jpeg(photo);
+async function readOnOwnKey(
+  encode: () => Promise<string>,
+  medium: ScanMedium,
+  key: string,
+): Promise<unknown> {
+  const billBase64 = await encode();
   let res: Response;
   try {
     res = await fetch(AI_STUDIO_URL, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
-      // Staś mode still picks between the two refusals core holds — here it is
-      // simply an argument, with no header and no Worker in between.
-      body: JSON.stringify(buildScanRequestBody(imageBase64, stasMode() ? "stas" : "kind")),
+      // Staś mode and the medium both still pick between envelopes core holds —
+      // here they are simply arguments, with no headers and no Worker between.
+      body: JSON.stringify(
+        buildScanRequestBody(billBase64, stasMode() ? "stas" : "kind", medium),
+      ),
     });
   } catch (err) {
     // Same reading as the shared path: fetch rejects only when the request
@@ -165,8 +208,9 @@ async function scanOnOwnKey(photo: File | Blob, key: string): Promise<unknown> {
  * envelope, counts what it costs and will not send anything for a browser it
  * could not verify.
  */
-async function scanOnSharedKey(
-  photo: File | Blob,
+async function readOnSharedKey(
+  encode: () => Promise<string>,
+  medium: ScanMedium,
   groupId: string,
   secret: string,
 ): Promise<unknown> {
@@ -175,13 +219,13 @@ async function scanOnSharedKey(
   // to send. The Worker asks again — this copy is advice (./budget.ts).
   if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
 
-  // Started together, not one after the other: resizing the photo is CPU and
+  // Started together, not one after the other: encoding the bill is CPU and
   // the challenge is a round trip to Cloudflare, so run in sequence they
   // simply added up. `turnstileToken` usually has a warmed one to hand over
   // (`warmTurnstile`), and where it doesn't the challenge hides behind the
   // resize instead of following it.
-  const [imageBase64, token, turnstile] = await Promise.all([
-    downscaleToBase64Jpeg(photo),
+  const [billBase64, token, turnstile] = await Promise.all([
+    encode(),
     groupToken(groupId, secret),
     // One token is spent per scan and never reused. A blocked script is a
     // refusal, not a fallback — see ./turnstile.ts.
@@ -190,9 +234,9 @@ async function scanOnSharedKey(
   await noteScan(groupId);
   let res: Response;
   try {
-    // The body is the photo and nothing else: the prompt and the response
+    // The body is the bill and nothing else: the prompt and the response
     // schema are the Worker's, which is what stops our Gemini key from being
-    // an open one — docs/receipt-scanning.md#the-worker-owns-the-envelope.
+    // an open one — docs/receipt-scanning.md#the-envelope-and-who-owns-it.
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
       headers: {
@@ -202,8 +246,11 @@ async function scanOnSharedKey(
         // One bit, and it picks between two prompts the Worker holds — never
         // a word of one. The envelope stays the Worker's (./stas.ts).
         ...(stasMode() ? { "X-Stas": "1" } : {}),
+        // Which of the four envelopes the Worker holds. Absent is a photo, so
+        // every request already written means what it always did.
+        ...(medium === "text" ? { "X-Input": "text" } : {}),
       },
-      body: imageBase64,
+      body: billBase64,
     });
   } catch (err) {
     // fetch only rejects when the request never reached a server — a captive

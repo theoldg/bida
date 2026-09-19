@@ -1,4 +1,6 @@
-import type { ExtraKind, ImportRefusalCode, ScanProblem, SplitSpec } from "@bida/core";
+import type {
+  ExtraKind, ImportRefusalCode, ScanMedium, ScanProblem, SplitSpec,
+} from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
 /**
@@ -1107,6 +1109,34 @@ export const copy = {
     reading: "Reading…",
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
+    /**
+     * The third way a bill gets in, offered on the Items tab alone: the same
+     * reading, of words instead of a photograph. It stands apart from the pair
+     * above rather than inside it, because those two are one act with two doors
+     * — a camera now or a camera earlier — and this is the answer to not having
+     * used one (docs/receipt-scanning.md#typing-a-bill-in).
+     *
+     * The label is the invitation and not the noun: "Bill text" would name a
+     * field nobody asked for, and what the tap actually offers is doing it the
+     * other way.
+     */
+    typeIn: {
+      open: "Type it in",
+      title: "Type the bill in",
+      /**
+       * What to put in the box. It asks for the bill's own lines because that
+       * is what the Items tab is for — a total alone leaves nothing to assign —
+       * and it says "paste" first, since a bill in a chat message or an emailed
+       * receipt is the usual reason to be here at all.
+       */
+      lede: "Paste or type the bill: one line each, with its price, and the total. Tip, tax and discounts too if it has them.",
+      placeholder: "Tagine 18.00\nCouscous 14.50\nMint tea 6.30\nTotal 38.80",
+      field: "The bill, as text",
+      confirm: "Read it",
+      /** Only near the cap: a counter nobody is close to is fat. */
+      left: (n: number) => `${n} characters left`,
+      full: "That’s the longest bill this will read. Trim it, or photograph it instead.",
+    },
     /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
@@ -1121,12 +1151,24 @@ export const copy = {
      * The app's own three refusals, one per way a reading can fail to add up
      * (`checkScan`). Each says which it is, because each asks for something
      * different back: another photo, a straighter one, or the form instead.
+     *
+     * Twice over, because two of the three name the fix and the fix depends on
+     * how the bill arrived — "try a flatter, square-on photo" is no help at all
+     * to somebody who typed it. The verdict is the same either way; only the
+     * ask moves.
      */
     problem: {
-      "no-total": "I can’t make out the total on that one.",
-      "unreadable-line": "I can’t read every line on that one.",
-      mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
-    } satisfies Record<ScanProblem, string>,
+      photo: {
+        "no-total": "I can’t make out the total on that one.",
+        "unreadable-line": "I can’t read every line on that one.",
+        mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
+      },
+      text: {
+        "no-total": "I can’t find the total in that.",
+        "unreadable-line": "I can’t read an amount for every line in that.",
+        mismatch: "The lines don’t add up to the total. Check the figures, or leave the total out.",
+      },
+    } satisfies Record<ScanMedium, Record<ScanProblem, string>>,
     offline: "You’re offline: scanning needs a connection.",
     busy: "Gemini’s busy. Try again in a minute.",
     /**
@@ -1138,10 +1180,13 @@ export const copy = {
      *
      * They are the only place the cap is ever mentioned: a counter nobody is
      * near is fat, and the refusal says the whole of it when it matters.
+     * "Type this one in", meaning *into the form, by hand*.
+     * There is a button of that name on this very tab now, and pressing it
+     * spends the budget that has just refused — so they say the field instead.
      */
     limit: {
-      you: "That’s your scans for now: scanning is capped. Type this one in, or come back later.",
-      global: "The shared scan budget is spent. Type this one in, or try later.",
+      you: "That’s your readings for now: reading a bill is capped. Fill the form in by hand, or come back later.",
+      global: "The shared reading budget is spent. Fill the form in by hand, or try later.",
     },
     /**
      * Fail-closed, and named: a blocked script is not a bad photograph. Two
@@ -1152,7 +1197,7 @@ export const copy = {
      */
     unverified: {
       browser: "Couldn’t check this browser: scanning needs challenges.cloudflare.com.",
-      server: "This browser check was refused: scanning is misconfigured here. Type this one in.",
+      server: "This browser check was refused: scanning is misconfigured here. Fill the form in by hand.",
     },
     /**
      * The two ways a key somebody brought themselves stops working. Neither is

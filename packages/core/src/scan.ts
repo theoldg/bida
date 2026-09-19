@@ -317,3 +317,15 @@ export const SCAN_LIMITS = {
 /** Which bucket a refusal came out of. The phone prints a different sentence for each. */
 export type ScanLimitScope = keyof typeof SCAN_LIMITS;
 
+/**
+ * The longest a bill somebody types in may be, in characters.
+ *
+ * Here beside the budget because it is the same kind of number: what one
+ * reading is allowed to cost. Four thousand characters is roughly what the
+ * downscaled photo costs in tokens, so a typed bill is never the dearer way to
+ * read one — and no real bill comes close, a sixty-line till roll being about
+ * 1,800. The Worker's `MAX_TEXT_BYTES` sits well above this: that one is an
+ * abuse ceiling on bytes, and this is the number a person is held to.
+ */
+export const BILL_TEXT_MAX = 4000;
+

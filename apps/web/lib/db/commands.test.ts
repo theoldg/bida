@@ -290,7 +290,7 @@ describe("commands", () => {
       "amountMinor", "attachmentIds", "baseAmountMinor", "categoryId", "currency",
       "dateOnly", "description", "kind", "occurredAt", "paidBy", "payers", "rateToBase",
       "receiptAssignments", "receiptDiscounts", "receiptInvolved", "receiptItems",
-      "receiptTax", "receiptTip",
+      "receiptTax", "receiptText", "receiptTip",
       "split",
     ]);
     // Lifecycle and identity never: a stale content save must not re-tombstone
