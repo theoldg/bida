@@ -53,7 +53,27 @@ string, and a link naming a group this phone doesn't have — a stale bookmark, 
 URL shared to somebody who never joined — used to leave the sub-screens holding
 a back arrow and nothing else, or spinning forever on `useGroupData(undefined)`.
 Each, `/g` included, renders `BadLink` (`components/chrome.tsx`), which says
-what a proper invite link is, under a bar with no title.
+what a proper invite link is, under a bar with no title. `pnpm rules` fails a
+`/g` page that renders none: `data.group` is `undefined` while the read is in
+flight and again when there is no such group, so a screen that forgets to ask
+which of the two it has is a blank that never fills — `/g/claim` and
+`/g/entry/items` both were.
+
+**A screen whose draft has gone hands back rather than waiting.** The entry
+form's two detours — `/g/payers` and `/g/entry/items` — edit one side of a
+draft that lives in memory and nowhere else (`lib/draft.ts`), so a reload, a
+bookmark or a forward press onto an entry already saved arrives with nothing
+to edit. Each `replace`s to the group's ledger, where the form was opened
+from, as the quick split's own two screens do to `/quick`. Waiting was a
+titled blank over a back arrow that a cold load has nowhere to take.
+
+**A path that is no route** gets `app/not-found.tsx` — the export's
+`out/404.html`, which is what the Worker serves for anything it hasn't got
+(`not_found_handling`, `apps/api/wrangler.toml`). It says `BadLinkNotice`, the
+same sentence `/join` says about a link that opens nothing, over a bar back to
+the groups list: this app is pasted links, and a chat client wrapping a long
+one so half of it arrives is the ordinary way here. Next's own 404 was a
+system-font white page with no way back into the app.
 
 **Back goes up, not back.** A screen's `back` is one of two things and the
 device's button agrees with both (`lib/back-button.ts`,

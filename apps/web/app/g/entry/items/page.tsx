@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { goBack } from "../../../../lib/nav";
-import { Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, TopBar } from "../../../../components/chrome";
 import { WhoHadWhat } from "../../../../components/who-had-what";
 import { copy } from "../../../../lib/copy";
 import { money } from "../../../../lib/format";
@@ -37,8 +38,26 @@ function ItemsScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
 
-  if (!groupId || unclaimed || !data.group || !draft) {
-    return <Blank title={copy.items.title} />;
+  // Nothing to assign because there is no draft at all: this screen was
+  // reached by a reload, a bookmark or a forward press onto an entry that has
+  // since been saved. A draft is in memory only (lib/draft.ts), so there is
+  // nothing to come back — the group is where this detour started, and the
+  // quick split's own grid does the same one route over (app/quick/items).
+  // Without it the screen was a titled blank forever, over a back arrow that
+  // a cold load has nowhere to take.
+  useEffect(() => {
+    if (groupId && !data.loading && data.group && !unclaimed && !draft) {
+      router.replace(route.group(groupId));
+    }
+  }, [groupId, data.loading, data.group, unclaimed, draft, router]);
+
+  // The id check every screen under `/g` makes (docs/frontend.md#routing):
+  // `data.group` is `undefined` while the read is in flight and again when
+  // there is no such group, and only the second of those is a bad link.
+  if (!groupId) return <BadLink />;
+  if (!data.loading && !data.group) return <BadLink />;
+  if (unclaimed || !data.group || !draft) {
+    return <Blank title={copy.items.title} back={route.group(groupId)} />;
   }
 
   if ((draft.receiptItems?.length ?? 0) === 0) {

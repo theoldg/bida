@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { goBack } from "../../../lib/nav";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "../../../components/amount-input";
 import { keepsFocus } from "../../../components/bits";
@@ -11,6 +11,7 @@ import { ConfirmDialog } from "../../../components/dialog";
 import { Icon } from "../../../components/icons";
 import { copy } from "../../../lib/copy";
 import { bare, money, payerProblemText } from "../../../lib/format";
+import { route } from "../../../lib/group-link";
 import { useClaimGate, useGroupData } from "../../../lib/hooks";
 import { draftAmountMinor, saveDraft, useDraft } from "../../../lib/draft";
 
@@ -47,9 +48,23 @@ function PayersScreen() {
   const opened = useRef<{ payers: Record<string, number> | null; paidBy: string } | null>(null);
   if (draft && !opened.current) opened.current = { payers: draft.payers, paidBy: draft.paidBy };
 
+  // No draft at all: a reload, a bookmark, or a forward press onto an entry
+  // that has since been saved. The draft this screen edits one side of lives
+  // in memory (lib/draft.ts), so there is nothing here to put back and nothing
+  // for the arrow to return to — the group is where the form was opened from.
+  // Without it this sat as a titled blank forever. The grid one route over
+  // does the same, and so does the quick split (app/quick/result).
+  useEffect(() => {
+    if (groupId && !data.loading && data.group && !unclaimed && !draft) {
+      router.replace(route.group(groupId));
+    }
+  }, [groupId, data.loading, data.group, unclaimed, draft, router]);
+
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
-  if (unclaimed || !data.group || !draft) return <Blank title={copy.payers.title.expense} />;
+  if (unclaimed || !data.group || !draft) {
+    return <Blank title={copy.payers.title.expense} back={route.group(groupId)} />;
+  }
   const gid = groupId, current = draft;
   // Which way the entry runs is which way this screen speaks: money going out
   // is paid, money coming in is received. A transfer never reaches this screen.

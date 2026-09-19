@@ -71,6 +71,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Asked for long-running bugs, the log named them by repetition:
   one hang fixed four times. The fifth case sat where the lesson had a name and
   no check behind it.
+- *2026-09-19* — Auditing page loads, I listed every route's dead ends before
+  hunting a bug. Each find was one screen departing from a pattern the others
+  kept. Read the pattern, then the exceptions.
 - *2026-09-18* — *Nothing to paste* was a screen whose only offer was the read
   that had just failed. Where the platform can withhold, hand the person a box
   and let them do it themselves.
@@ -94,6 +97,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-18* — I built two ladders of test files to chase a rejection that
   had already been fixed. Ask which build made the artifact before debugging
   the artifact.
-- *2026-09-18* — Of eight "critical" findings from another model, two were
-  real, and neither needed an attacker — whoever holds the link can already
-  delete the group.

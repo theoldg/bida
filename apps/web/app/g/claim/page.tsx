@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
+import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "../../../components/chrome";
 import { useInstallOffer } from "../../../components/install";
 import { UseInApp } from "../../../components/use-in-app";
 import { WhoPicker } from "../../../components/who-picker";
@@ -49,7 +49,15 @@ function ClaimScreen() {
     if (deleted) router.replace(route.groups());
   }, [deleted, router]);
 
-  if (!groupId || !data.group) return <Blank back={route.groups()} />;
+  // The same id check every other screen under `/g` makes: a link naming a
+  // group this phone doesn't have used to sit here as a blank with a back
+  // arrow, forever, because `data.group` is `undefined` for "still reading"
+  // and for "there is no such group" alike. Asked only once the read has
+  // answered, and never over a group this phone knows was deleted — the
+  // redirect above is already carrying that one off (docs/frontend.md#routing).
+  if (!groupId) return <BadLink />;
+  if (!data.loading && !data.group && !deleted) return <BadLink />;
+  if (!data.group) return <Blank back={route.groups()} />;
   const group = data.group;
 
   async function add(name: string) {

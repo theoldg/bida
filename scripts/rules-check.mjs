@@ -130,6 +130,23 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
+/**
+ * docs/frontend.md#routing: every screen under `/g` reads its group out of the
+ * query string, and a link naming a group this phone doesn't have — a stale
+ * bookmark, a URL shared to somebody who never joined — has to say so. Left to
+ * the loading branch, `data.group` is `undefined` for "still reading" and for
+ * "there is no such group" alike, and the screen is a back arrow over nothing,
+ * forever. Two of them had drifted back to that before this check existed.
+ */
+for (const file of sources(join(ROOT, "apps/web/app/g"))) {
+  if (!file.endsWith(join("page.tsx"))) continue;
+  if (!/<BadLink\b/.test(code(readFileSync(file, "utf8")))) {
+    fail(file, "renders no `BadLink` — every screen under `/g` validates its `id`, or a "
+      + "link to a group this phone hasn't got is a blank that never fills "
+      + "(docs/frontend.md#routing)");
+  }
+}
+
 // ADR-0007: the app goes back through `goBack` or `goUp` (lib/nav.ts), which
 // mark the traversal as the app's own. Safari reports any back taken inside a
 // tap as the device's button, so a bare one is answered by the press guard —
@@ -217,6 +234,7 @@ for (const p of problems) console.log(`FAIL  ${p}`);
 console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
-    + "every live read watched, the demo holds no key, back goes through nav, no browser dialogs, "
+    + "every live read watched, every /g screen checks its id, the demo holds no key, "
+    + "back goes through nav, no browser dialogs, "
     + "no stray copy, no em dash in copy");
 process.exit(problems.length ? 1 : 0);
