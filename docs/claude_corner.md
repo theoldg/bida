@@ -68,9 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-19* — "Only on the second try" was one gesture, not a race: every
-  tap I invented worked. The one that failed is the one the phone teaches —
-  sliding onto the menu without lifting.
+- *2026-09-19* — I reproduced a real bug and reported it as theirs: sliding
+  onto the menu was broken, but they were tapping. A repro that matches the
+  symptom is still not the report.
 - *2026-09-19* — A scan refusal outlived `/g/scan`: the ordinary + shares its
   seed key on purpose, so it inherited the error too. Fixed at the screen that
   showed it, not the shared store.

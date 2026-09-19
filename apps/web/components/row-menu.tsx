@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./icons";
+import { note, traceMenu } from "../lib/menu-trace";
 
 export interface SheetAction {
   label: string;
@@ -32,6 +33,10 @@ export function RowMenu({ anchor, actions, onClose }: {
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // First, so the recorder is listening before the effects below add the
+  // listeners it exists to explain (lib/menu-trace.ts).
+  useEffect(traceMenu, []);
 
   // Positioned after the first paint, once the card's real size is known —
   // a guessed size would either clip at the screen edge or leave a gap.
@@ -97,7 +102,7 @@ export function RowMenu({ anchor, actions, onClose }: {
         style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, visibility: pos ? "visible" : "hidden" }}>
         {actions.map((a) => (
           <button key={a.label} type="button" className="rowmenu-item" role="menuitem"
-            onClick={() => { onClose(); a.onSelect(); }}>
+            onClick={() => { note("chose"); onClose(); a.onSelect(); }}>
             {a.icon
               ? <Icon name={a.icon} size={15} style={a.danger ? { color: "var(--debit)" } : undefined} />
               : null}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from "react";
 import { tick } from "../lib/haptics";
+import { guarding, note } from "../lib/menu-trace";
 import { RowMenu, type SheetAction } from "./row-menu";
 
 /** iOS's own long-press default; Android's is 400–500ms. */
@@ -45,6 +46,8 @@ const LIFT_CLICK_MS = 1000;
 function heldFinger(from: { x: number; y: number } | null) {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let hot: Element | null = null;
+  /** `end` is reached more than one way; the recorder is told once. */
+  let over = false;
 
   /** The menu item under the finger, once it has moved far enough to mean it. */
   const itemAt = (at: { clientX: number; clientY: number }) =>
@@ -66,6 +69,7 @@ function heldFinger(from: { x: number; y: number } | null) {
   const keep = (e: TouchEvent) => { if (e.cancelable) e.preventDefault(); };
   const onMove = (e: globalThis.PointerEvent) => warm(itemAt(e));
   const swallow = (e: Event) => {
+    note(`swallow ${e.type}`);
     e.preventDefault();
     e.stopPropagation();
   };
@@ -76,6 +80,7 @@ function heldFinger(from: { x: number; y: number } | null) {
     document.removeEventListener("pointermove", onMove, true);
   };
   const end = () => {
+    if (!over) { over = true; guarding(false); }
     clearTimeout(timer);
     release();
     document.removeEventListener("click", onClick, true);
@@ -94,6 +99,7 @@ function heldFinger(from: { x: number; y: number } | null) {
   document.addEventListener("click", onClick, true);
   document.addEventListener("contextmenu", swallow, true);
   document.addEventListener("pointerdown", end, true);
+  guarding(true);
   return {
     /**
      * The finger has lifted at `at`, or been taken away (no point). Choosing

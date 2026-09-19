@@ -517,6 +517,15 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the tabs are gone" (see [Gotchas](#gotchas)).
 
+A **`menu.trace`** line is written each time a row menu closes: every press,
+lift, cancel and click the phone sent while the card was open, where each one
+landed, and what the hold's guard did with it (`lib/menu-trace.ts`). It is
+there because "the menu answered on the second press" is a report no machine
+here reproduces — it wants an iPhone — and because every explanation for it is
+a different line in that one sequence. A click that never came, one swallowed,
+one landing on the veil and a `pointercancel` where a lift should be are told
+apart by reading it.
+
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script
 in the layout writes each load's URL to localStorage before Next runs, and keeps
@@ -821,9 +830,9 @@ so the static export ships the full line and the browser narrows it.
   (`touch-action: pan-x pan-y` on `html, body`), so sliding off the held row
   hands the touch to the scroller, which fires `pointercancel` and **dispatches
   no click at all**. That slide is the thumb reaching for the card the hold
-  just opened — the way an iPhone's own long-press menus are used — so it
-  looked like the menu only answered every other try: nothing happened, the
-  card stayed, and the tap after it worked. `heldFinger` refuses the scroll
+  just opened — the way an iPhone's own long-press menus are used — and it did
+  nothing whatever: the card sat there until you let go and tapped it again.
+  `heldFinger` refuses the scroll
   (`touchmove`, non-passive, for as long as the finger is down), washes the
   item under it, and clicks that item on the lift. It must have travelled
   `SLOP_PX` first, because the card is only a few px clear of the row and a
