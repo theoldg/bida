@@ -8,17 +8,16 @@ import { copy } from "../lib/copy";
 /**
  * The app's own popup, in place of `prompt()` and `confirm()`.
  *
- * The browser's dialogs were the one place the design didn't reach: another
- * app's typeface and buttons dropped over this one, announcing themselves as
- * the browser asking rather than the app, with a single line of text and no
- * room for the sentence that names what is about to change. This one is drawn
- * from the same vocabulary as everything else — a scrim, a hairline card, the
- * app's buttons ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)).
+ * The browser's dialogs drop another app's typeface and buttons over this one,
+ * announcing themselves as the browser asking, with a single line of text and
+ * no room for the sentence naming what is about to change. This is drawn from
+ * the same vocabulary as everything else — a scrim, a hairline card, the app's
+ * buttons ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)).
  *
- * It is a real `<dialog>` opened with `showModal()`, so focus, Escape and the
- * inertness of the screen behind are the platform's job and not ours. The
- * element fills the viewport and carries the scrim itself, which is what makes
- * "did they tap outside the card" a plain target check.
+ * A real `<dialog>` opened with `showModal()`, so focus, Escape and the
+ * inertness of the screen behind are the platform's job. The element fills the
+ * viewport and carries the scrim itself, which makes "did they tap outside the
+ * card" a plain target check.
  */
 export function Dialog({ title, onClose, children }: {
   title: string; onClose: () => void; children: ReactNode;
@@ -32,17 +31,16 @@ export function Dialog({ title, onClose, children }: {
     el.showModal();
     // A prompt opens on its field, with the old value selected — the one habit
     // worth keeping from prompt(). So does a box asking for several lines, where
-    // the box *is* the dialog. Every other dialog opens on nothing: its
+    // the box *is* the dialog. **Every other dialog opens on nothing**: its
     // buttons are one Tab away and neither should fire on a stray Enter.
     //
-    // That second half needs saying out loud, because `showModal()` does not
-    // open on nothing. With no `autofocus` in the card it focuses the first
-    // focusable descendant itself, which in a dialog whose first control is a
-    // field is the field — the rate editor opened with the keyboard up over
-    // the line saying how many entries saving re-values, long after the
-    // `data-autofocus` that used to do it was taken off. So focus lands on the
-    // card, which is inside the dialog (Escape and the tab ring still belong
-    // to it) and is not something you can type into.
+    // That second half has to be said out loud: `showModal()` does not open on
+    // nothing. With no `autofocus` in the card it focuses the first focusable
+    // descendant, which in a dialog whose first control is a field is the field
+    // — so the rate editor opens with the keyboard up over the line saying how
+    // many entries saving re-values. Focus lands on the card instead, which is
+    // inside the dialog (Escape and the tab ring still belong to it) and is not
+    // something you can type into.
     const field = el.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       "input[data-autofocus], textarea[data-autofocus]",
     );
@@ -57,8 +55,8 @@ export function Dialog({ title, onClose, children }: {
     <dialog className="scrim" ref={frame} aria-label={title}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       // The card is a child, so a press landing on the element itself landed on
-      // the scrim. mousedown, not click: a drag that starts on the card and
-      // ends outside it isn't a tap outside it.
+      // the scrim. **mousedown, not click**: a drag that starts on the card and
+      // ends outside it is not a tap outside it.
       onMouseDown={(e) => { if (e.target === frame.current) onClose(); }}>
       <div className="dialog" role="document" ref={card} tabIndex={-1}>
         <h3 className="dtitle">{title}</h3>
@@ -150,10 +148,10 @@ export function PromptDialog({
 /**
  * Pick one of a handful of things — the third dialog, in place of a `<select>`.
  *
- * A native picker is the same intrusion `prompt()` was (ADR-0008): on a phone
- * it is a full-height wheel or sheet in the OS's typeface, and it can show a
- * name and nothing else. Ours is the rows the rest of the app is made of, so
- * a row can say what the caller needs to say about it.
+ * A native picker is the same intrusion `prompt()` is (ADR-0008): on a phone a
+ * full-height wheel or sheet in the OS's typeface, showing a name and nothing
+ * else. Ours is the rows the rest of the app is made of, so a row can say what
+ * the caller needs to say about it.
  *
  * `note` is that sentence — what picking this one does, when it isn't simply
  * "this one now". The current choice carries a check and closes the dialog

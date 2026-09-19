@@ -16,12 +16,9 @@ import { promptInstall } from "../lib/install";
  * screen. On a desktop browser that neither installs nor tells us, only the
  * plain offer shows.
  *
- * **The same button either way.** The two paths differ in what the tap does —
- * Chrome's sheet here, `/install`'s walkthrough there — and that is what the
- * label says. They used to differ in kind as well: a text link with a share
- * glyph for Chrome, an inked button for iOS, which made one screen ask for the
- * same thing twice over in two voices, with the share glyph drawn on the one
- * platform whose install is not a share sheet.
+ * **The same button either way** — the paths differ only in what the tap does
+ * (Chrome's sheet here, `/install`'s walkthrough there), and the label says so.
+ * Two shapes for it make one screen ask the same thing twice in two voices.
  */
 export function AboutOffline() {
   const offer = useInstallOffer();

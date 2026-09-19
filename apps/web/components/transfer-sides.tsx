@@ -10,17 +10,16 @@ import { copy } from "../lib/copy";
 /**
  * A transfer's two sides, and the one-tap reversal between them.
  *
- * Getting the direction the wrong way round is the mistake this form invites,
- * and it is one people make *after* picking both names — so the fix is the
- * arrow itself, which points the way the money goes and reverses it when
- * pressed, rather than two pickers you have to re-open in turn.
+ * Getting the direction backwards is the mistake this form invites, and it is
+ * made *after* both names are picked — so **the fix is the arrow itself**,
+ * which points the way the money goes and reverses on press, rather than two
+ * pickers to re-open in turn.
  *
- * Each half is labelled above the person: "From" then a face, which is the
- * order the sentence is read in. Tapping one opens our own picker rather than
- * the browser's wheel (ADR-0008) — which is what lets the person already on
- * the other side stay in the list, saying what picking them does: it swaps the
- * sides, the only reading of "send this to the person who is sending it" that
- * isn't the error message below.
+ * Each half is labelled above the person: "From" then a face, the order the
+ * sentence reads in. Tapping one opens our own picker, not the browser's wheel
+ * (ADR-0008), which is what lets the person already on the other side stay in
+ * the list: picking them swaps the sides, the only sane reading of "send this
+ * to the person who is sending it".
  */
 export function TransferSides({ members, from, to, onChange }: {
   members: Member[];

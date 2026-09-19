@@ -38,13 +38,11 @@ function ItemsScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
 
-  // Nothing to assign because there is no draft at all: this screen was
-  // reached by a reload, a bookmark or a forward press onto an entry that has
-  // since been saved. A draft is in memory only (lib/draft.ts), so there is
-  // nothing to come back — the group is where this detour started, and the
-  // quick split's own grid does the same one route over (app/quick/items).
-  // Without it the screen was a titled blank forever, over a back arrow that
-  // a cold load has nowhere to take.
+  // No draft at all: reached by a reload, a bookmark, or a forward press onto
+  // an entry since saved. A draft is in memory only (lib/draft.ts), so nothing
+  // is coming back — **leave for the group** rather than sit as a titled blank
+  // over a back arrow a cold load has nowhere to take. The quick split's grid
+  // does the same one route over (app/quick/items).
   useEffect(() => {
     if (groupId && !data.loading && data.group && !unclaimed && !draft) {
       router.replace(route.group(groupId));

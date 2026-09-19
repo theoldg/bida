@@ -11,56 +11,42 @@ import { nameTaken } from "@bida/core";
 /**
  * Adding people, in the list itself.
  *
- * This was a `PromptDialog`, and a dialog is the wrong shape for it: nobody
- * adds one person. Four names meant four round trips through a scrim — open,
- * type, confirm, watch it close — when the act is simply typing. Here the last
- * row of the list *is* the field: Enter files the name and hands the caret
- * back, so a group of six is one uninterrupted burst of typing.
+ * **Never a dialog** — nobody adds one person, and four names through a scrim
+ * is four round trips when the act is simply typing (a removal keeps its
+ * dialog: it has a consequence to state first, ADR-0008). Here the last row of
+ * the list *is* the field: Enter files the name and hands the caret back, so a
+ * group of six is one uninterrupted burst of typing.
  *
- * The dialogs stay where they belong (ADR-0008) — a removal has a consequence
- * to state first.
+ * **A name is filed when the plus is pressed, never when the field is left.**
+ * On blur a name lands while you are looking at something else, and a screen
+ * can rewrite itself between a press and its release. The plus is the one
+ * button a finger presses, Enter reaches and a screen reader announces.
  *
- * **A name is filed when it is pressed, never when the field is left.** Blur
- * once filed it, so a name could land while you were looking at something else
- * and a screen could rewrite itself between a press and its release. It is the
- * plus on the right of the row that files — the same button a finger presses,
- * a keyboard reaches with Enter, and a screen reader announces.
+ * **The plus is never dead.** On an empty row it focuses the field rather than
+ * refusing: there is nothing to say no *about* yet, and a control that answers
+ * nothing reads as a broken app. Its one refusal is a name the list already
+ * holds (`core/names.ts` — two people with one name are two people nothing on
+ * screen tells apart, and the same key besides): that name blooms, because
+ * editing it is the fix and no press will ever file it.
  *
- * **The plus is never dead**, and on an empty row it does not refuse either —
- * it focuses the field. A control that looks like a button and answers nothing
- * reads as a broken app, but there is nothing to say no *about* before a name
- * is typed: the keyboard opening is the answer, and the same button files what
- * gets typed into it. The one press of it that refuses is a name the list
- * already holds (`core/names.ts` — two people with one name are two people
- * nothing on screen tells apart, and the same key besides): that name blooms,
- * because editing it is the fix and no press will ever file it, and the note
- * under the row says so in words.
+ * **A screen's refusal blooms whatever has to change**, so `flash` is routed
+ * here rather than hung on one control: a Create pressed over an unfiled name
+ * points at the plus, one pressed over a list too short points at the field.
+ * Only that second case reddens the placeholder.
  *
- * **A screen's refusal blooms whatever has to change**, which is why `flash`
- * is routed here rather than hung on one control: a Create pressed over an
- * unfiled name points at the plus, the whole of that fix, and one pressed over
- * a list too short to go on with points at the field, where the missing name
- * has to be typed. That second case is the only thing that reddens the
- * placeholder — the plus's own press never does.
+ * **A keystroke ends any flash on this row** rather than letting it run out —
+ * typing *is* the fix landing — and whoever owns the flash is told
+ * (`lib/refusal.ts`), since a control spent for the length of one is spent
+ * until it hears the end. Unlike Create, the plus is *not* spent that way: the
+ * very next press has to file.
  *
- * **A keystroke ends any flash on this row**, rather than leaving it to run
- * out: typing *is* the fix landing, and a placeholder that has just been typed
- * over cannot carry a refusal anyway. Whoever owns the flash is told
- * (`lib/refusal.ts`), because a control spent for the length of one is spent
- * until it hears the end.
+ * While the field holds anything the row draws itself as a box
+ * (`globals.css`): a name sitting in it is *not* on the list yet, and a row
+ * that looks like the committed rows above says the opposite.
  *
- * Unlike Create, the plus is *not* spent for the length of a flash: the fix is
- * a keystroke away and the very next press of it has to file.
- *
- * While the field holds anything, the row draws itself as a box
- * (`globals.css`) — because a name sitting in it is *not* on the list yet, and
- * a row that looks exactly like the committed rows above it says the opposite.
- * The box is the difference between typed and filed, made visible.
- *
- * The row **follows the list down**, as a browser scrolls to a field only as it
- * takes focus, and this one never lets go — far enough down to keep the act the
- * list ends on in view with it, rather than flush against the keyboard with
- * that act behind one (`--act-below`, globals.css).
+ * The row **follows the list down** — far enough to keep the act the list ends
+ * on in view with it, rather than flush against the keyboard with that act
+ * behind one (`--act-below`, globals.css).
  */
 export interface AddNameHandle {
   /** Throw away whatever is in the field, filing nothing. */
@@ -114,16 +100,15 @@ export function AddName({
 
   // The list grows above this row, so past a screenful the field is below the
   // fold and the rest of the names are typed blind — the browser scrolls to a
-  // field when it takes focus, and this one never loses it. Follow it once it
-  // has actually moved: after the render that added the name, not in the
-  // handler that asked for it. `nearest` scrolls the least that works, so a
-  // field already in view doesn't jump.
+  // field only as it takes focus, and this one never loses it. **Follow after
+  // the render that added the name, not in the handler that asked for it**, and
+  // with `nearest`, so a field already in view doesn't jump.
   //
-  // The field rather than the row, because the browser's own scroll on focus
-  // and the one the keyboard opening makes both aim at the field: one target,
-  // one `scroll-margin-bottom`, and three scrolls that land in the same place —
-  // far enough down that the act the list ends on comes up too
-  // (`bringIntoView`, components/viewport.tsx).
+  // The field rather than the row: the browser's own scroll on focus and the
+  // keyboard's both aim at the field, so one target and one
+  // `scroll-margin-bottom` puts all three scrolls in the same place — far
+  // enough down that the act the list ends on comes up too (`bringIntoView`,
+  // components/viewport.tsx).
   const count = taken.length;
   const seen = useRef(count);
   useEffect(() => {
@@ -151,10 +136,10 @@ export function AddName({
     e.preventDefault();
     if (busy) return;
     if (!ready) {
-      // An empty row has nothing to refuse — the caret is the whole answer,
-      // and the next press of this same plus files what was typed. A name the
-      // list already holds is the one press that says no, and it says it on
-      // the name, which is what has to change.
+      // An empty row has nothing to refuse — the caret is the whole answer, and
+      // the next press of this plus files what was typed. A name the list
+      // already holds is the one press that says no, and it says it on the
+      // name, which is what has to change.
       if (value.trim().length > 0 && already) own.refuse();
       field.current?.focus();
       return;

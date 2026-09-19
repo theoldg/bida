@@ -9,20 +9,18 @@ import { VERSION } from "@/lib/version";
 
 /**
  * Who can edit, whether it works on a train, where to complain, who can read
- * what you typed, what is and isn't promised, and — last, being the one line
- * here nobody is meant to act on lightly — where to ask for a group to be
- * erased. Six claims, no pitch:
- * this screen is reached from the foot of the groups list, so whoever is on it
- * already has the app and does not need it described back to them. The source
- * link sits above them all, since it is the one thing here somebody might come
- * looking for on its own, and the build's number sits in the bar's far corner,
- * out of the reading altogether.
+ * what you typed, what is and isn't promised, and — last, being the one nobody
+ * should act on lightly — where to ask for a group to be erased.
  *
- * The page itself is prose and links, so it stays a server component. The two
- * sections whose sentences aren't fixed at build time draw themselves —
- * "Works offline" (`AboutOffline`), which depends on whether the phone already
- * did it, and "Delete your data" (`AboutDelete`), which names the host it is
- * being read from.
+ * **Six claims, no pitch**: this screen is reached from the foot of the groups
+ * list, so whoever is on it already has the app. The source link sits above
+ * them all, being the one thing somebody might come looking for on its own, and
+ * the build number sits in the bar's far corner, out of the reading.
+ *
+ * Prose and links, so it stays a server component. The two sections whose
+ * sentences aren't fixed at build time draw themselves — `AboutOffline`, which
+ * depends on whether the phone already did it, and `AboutDelete`, which names
+ * the host it is being read from.
  */
 export default function AboutPage() {
   const { feedback, privacy, guarantees } = copy.about;
@@ -95,13 +93,9 @@ export default function AboutPage() {
 
 /**
  * One saved expense as the database actually holds it: the answer to "what can
- * you see?", shown instead of asserted.
- *
- * An actual table rather than the JSON it really is, and rather than a
- * label/value list — the reader of this screen is somebody splitting a dinner
- * bill, and braces would make the shape look like a developer's aside rather
- * than the short row it is. Four fields, three of them meaningless on their
- * own, and the fourth unreadable.
+ * you see?", shown instead of asserted. A table rather than the JSON it really
+ * is — the reader is somebody splitting a dinner bill, and braces would make it
+ * look like a developer's aside rather than the short row it is.
  */
 function SealedRow() {
   const { sealed } = copy.about.privacy;
@@ -118,11 +112,11 @@ function SealedRow() {
 }
 
 /**
- * One claim: its heading, its paragraph, and whatever hangs under that —
- * links, or the sealed-row table. `AboutOffline` and `AboutDelete` draw their
- * own version of the same markup, their paragraphs not being fixed at build
- * time. A card apiece
- * would have made a settings list out of something read top to bottom, once.
+ * One claim: its heading, its paragraph, and whatever hangs under that — links,
+ * or the sealed-row table. `AboutOffline` and `AboutDelete` draw their own
+ * version of the same markup, their paragraphs not being fixed at build time.
+ * **No card apiece** — that makes a settings list out of something read top to
+ * bottom, once.
  */
 function Section({ title, children, under }: {
   title: string; children: ReactNode; under?: ReactNode;

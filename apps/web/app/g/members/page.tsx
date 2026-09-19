@@ -19,17 +19,16 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
 /**
  * People: who is in the group, and which of them this phone is.
  *
- * Who this phone is is a row of its own with a button on it, not a tap on
- * somebody's name. A list whose rows silently rewrote your identity had no way
- * to say so before it happened, and the same rows carry a trash button — one
- * miss and you had signed the group's log as someone else. It is a decision,
- * so it is asked: the button opens the list as a `ChoiceDialog` (ADR-0008),
- * and picking writes the claim op (ADR-0003).
+ * **Who this phone is is a row of its own with a button on it, never a tap on
+ * somebody's name.** A list whose rows rewrite your identity cannot say so
+ * before it happens, and the same rows carry a trash button — one miss and you
+ * have signed the group's log as someone else. So it is asked: the button opens
+ * the list as a `ChoiceDialog` (ADR-0008), and picking writes the claim op
+ * (ADR-0003).
  *
  * Adding is the last row of the list rather than a dialog — a group is filled
- * in one burst of typing, and a scrim per name made that four acts instead of
- * one (components/name-adder.tsx). Removing keeps its dialog: it is one
- * decision, and it has a consequence to state (ADR-0008).
+ * in one burst of typing (components/name-adder.tsx). Removing keeps its
+ * dialog: one decision, with a consequence to state (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
@@ -74,16 +73,15 @@ function MembersScreen() {
     setAsk(null);
   }
 
-  // A tombstoned member's past entries are meant to stay exactly as they were
-  // (removeMember's whole point), but "past" means past: someone still named
-  // on a live one — a payer, a name in the split, a side of a transfer — isn't
-  // a stray balance, they're an open one. Removing them wouldn't touch the
-  // entry, just make it un-editable by anyone who can no longer pick them.
+  // A tombstoned member's past entries stay exactly as they were
+  // (removeMember's whole point), but "past" means past: someone still named on
+  // a live one — a payer, a name in the split, a side of a transfer — is an
+  // open balance, not a stray one. Removing them leaves the entry untouched and
+  // un-editable by anyone who can no longer pick them.
   //
-  // Both kinds, via core, because asking about expenses alone is what let a
-  // transfer's counterparty be removed — leaving the payer +50 on screen with
-  // nothing balancing them, and a settle-up row with no name and a dead id
-  // behind it.
+  // **Both kinds, via core.** Ask about expenses alone and a transfer's
+  // counterparty can be removed, leaving the payer +50 on screen with nothing
+  // balancing them and a settle-up row with a dead id behind it.
   function askRemove(memberId: string, name: string) {
     // A group with nobody in it is a screen with nothing to do on it: the
     // entry form can't seed a payer and gives up, silently. Your own row has

@@ -15,35 +15,28 @@ export interface Who {
 }
 
 /**
- * "Which one are you?" — the last step of both ways into a group.
+ * "Which one are you?" — the last step of both ways into a group. Joining asks
+ * because a link hands a device a group full of strangers; creating asks
+ * because you typed all these names, so which is yours is one tap.
  *
- * Joining ends here because a link hands a device a group full of strangers and
- * no idea which one it speaks for. Creating ends here for the opposite reason:
- * you typed all of these names, so asking which is yours is one tap, where the
- * separate "You are" field it replaced was a second name box that meant the
- * same list twice and could disagree with itself.
+ * One screen for both, so the question reads the same whichever door you came
+ * through — and **picking here is a selection, never a claim**. Creating writes
+ * the group with this name as its actor; joining writes the claim op
+ * (ADR-0003). Both happen on the button, not on the tap.
  *
- * One screen for both, so the question is asked the same way whichever door you
- * came through — and so the answer costs the same nothing either side of it:
- * picking here is a selection, never a claim. Creating writes the group with
- * this name as its actor; joining writes the claim op (ADR-0003). Both happen
- * on the button, not on the tap.
+ * **The button answers to the tick and nothing else.** A name half-typed in the
+ * add row is not an answer, and a button that rewrites itself with every
+ * keystroke is reading intent out of a field nobody has pressed anything on.
+ * Filing that name is the plus's job (components/name-adder.tsx); this screen
+ * ticks the row that arrives, because a name you typed into the list you are
+ * picking yourself out of is the pick.
  *
- * The button answers to the tick and to nothing else. A name still being typed
- * in the add row is not an answer to the question — it is a name being typed,
- * and a button that rewrote itself with every keystroke was reading intent out
- * of a field nobody had pressed anything on. Filing that name is the plus's
- * job (components/name-adder.tsx); what this screen does is take the row that
- * arrives and tick it, because a name you typed into the list you are picking
- * yourself out of is the pick.
- *
- * The button sits under the list rather than in a `Foot`, because it is the
- * next thing you do after tapping your name and not a fixture of the screen:
- * pinned to the bottom of a short list it read as unrelated to the tap that
- * had just lit it up. A list too long for the screen is the other case, and
- * `.whodock` is sticky for it — the button stops at the foot of the scroller
- * and the names scroll under it. It is the act the screen exists for, so it is
- * the same `.btn-lg` register as Create and Save (docs/design-system.md).
+ * **Under the list, not in a `Foot`** — it is the next thing you do after
+ * tapping your name, and pinned to the bottom of a short list it reads as
+ * unrelated to the tap that just lit it up. `.whodock` is sticky for the list
+ * too long to fit: the button stops at the foot of the scroller and the names
+ * scroll under it. Same `.btn-lg` register as Create and Save
+ * (docs/design-system.md).
  */
 export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue }: {
   people: readonly Who[];
@@ -92,8 +85,7 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
             a false start, so it goes — one question, one answer on screen. */}
         {people.map((p) => (
           // The check mark is a shape, and a shape says nothing to a screen
-          // reader: without `aria-pressed` the only thing that named the pick
-          // was the button at the foot of the screen.
+          // reader — without `aria-pressed` nothing on the row names the pick.
           <button key={p.id} className="row" aria-pressed={p.id === picked}
             onClick={() => { adder.current?.clear(); onPick(p.id); }} {...keepsFocus}>
             <div className="rmain">

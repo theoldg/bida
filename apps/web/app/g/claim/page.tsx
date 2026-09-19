@@ -12,17 +12,14 @@ import { formatJoinLink, route } from "@/lib/group-link";
 import { useDevice, useGroupData, useGroupSecret } from "@/lib/hooks";
 
 /**
- * The last step of joining: which of these people are you?
+ * The last step of joining: which of these people are you? The same list `/new`
+ * finishes on (components/who-picker.tsx), with one job — **never `/g/members`,
+ * a management screen whose only way onward is a "back" that reads like undoing
+ * what you just did.
  *
- * `/join` used to hand a new device straight to `/g/members`, which is the
- * right list of names and the wrong screen to be dropped on — it is a
- * management screen, so once you had tapped your name the only way onward was
- * "back", which reads like undoing what you just did.
- *
- * This is the same list with one job, and the same one `/new` finishes on
- * (components/who-picker.tsx). Nothing is written until the button: tapping a
- * name here is a selection, not a claim (which is an op, and public —
- * ADR-0003). It can be changed later on People, where the same names are.
+ * Nothing is written until the button: tapping a name is a selection, not a
+ * claim (which is an op, and public — ADR-0003), and it can be changed later on
+ * People.
  */
 export default function ClaimPage() {
   return <QueryBoundary><ClaimScreen /></QueryBoundary>;
@@ -49,12 +46,11 @@ function ClaimScreen() {
     if (deleted) router.replace(route.groups());
   }, [deleted, router]);
 
-  // The same id check every other screen under `/g` makes: a link naming a
-  // group this phone doesn't have used to sit here as a blank with a back
-  // arrow, forever, because `data.group` is `undefined` for "still reading"
-  // and for "there is no such group" alike. Asked only once the read has
-  // answered, and never over a group this phone knows was deleted — the
-  // redirect above is already carrying that one off (docs/frontend.md#routing).
+  // The same id check every other screen under `/g` makes. **Ask only once the
+  // read has answered**: `data.group` is `undefined` for "still reading" and
+  // "no such group" alike, so asking sooner leaves a link this phone is still
+  // fetching sitting as a bad-link screen. Never over a group known deleted —
+  // the redirect above carries that one off (docs/frontend.md#routing).
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group && !deleted) return <BadLink />;
   if (!data.group) return <Blank back={route.groups()} />;

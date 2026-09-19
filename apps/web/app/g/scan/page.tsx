@@ -13,14 +13,11 @@ import { useScanAs } from "@/lib/quick";
 import { clearScan, getLiveScan } from "@/lib/scan/live";
 
 /**
- * The scan, before there is a form.
- *
- * Photographing the bill is how an expense most often starts, and it used to
- * be four taps down: "+", then the split editor, then its fourth tab, then
- * the camera. This is that act with nothing else on the screen — and what
- * comes back is an ordinary expense form, filled in, which you are free to
- * split evenly. The scan reads what is printed; it does not decide how the
- * money divides (ADR-0016).
+ * The scan, before there is a form — photographing the bill is how an expense
+ * most often starts, so it is one tap rather than four down inside the split
+ * editor. What comes back is an ordinary expense form, filled in, which you are
+ * free to split evenly: **the scan reads what is printed, it does not decide how
+ * the money divides** (ADR-0016).
  */
 export default function ScanPage() {
   return <QueryBoundary><ScanScreen /></QueryBoundary>;
@@ -64,14 +61,12 @@ function ScanScreen() {
   }, [groupId, data.loading, data.group, data.me, data.members]);
 
   /**
-   * This screen exists to show a refusal, once. Leaving it any way other than
-   * a scan landing (`onScanned` above, which already clears the error itself)
-   * means the person has read it and moved on — most often to the ordinary
-   * "+", which seeds under this same key precisely so a *successful* scan is
-   * picked up there, and so inherits this store entry too. Without this, the
-   * form that opens next carries a refusal nobody caused on it, under a scan
-   * button that never rang. A scan still in flight is untouched — it belongs
-   * to the draft, not to this screen (`lib/scan/live.ts`).
+   * This screen shows a refusal once. Leaving it any way but a scan landing
+   * (`onScanned`, which clears the error itself) means it has been read and
+   * moved on from — most often to the ordinary "+", which seeds under this same
+   * key and so would inherit the error too, putting a refusal nobody caused
+   * under a scan button that never rang. **A scan still in flight is untouched**
+   * — it belongs to the draft, not to this screen (`lib/scan/live.ts`).
    */
   useEffect(() => () => {
     if (groupId && getLiveScan(groupId)?.state === "error") clearScan(groupId);

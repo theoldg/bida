@@ -31,27 +31,24 @@ export function bringIntoView(el: Element) {
 }
 
 /**
- * The one place the visual viewport is measured, and the two things that fall
- * out of it: how much of the app the on-screen keyboard is sitting on top of,
- * as `--kb`, and a layout viewport taller than the screen, which is a bug in
- * the browser and is recorded rather than paid for (lib/viewport.ts).
+ * **The one place the visual viewport is measured**, and the two things that
+ * fall out of it: how much of the app the on-screen keyboard covers, as `--kb`,
+ * and a layout viewport taller than the screen, which is a browser bug and is
+ * recorded rather than paid for (lib/viewport.ts).
  *
  * The shell is `100dvh` and never scrolls (globals.css), which is right until a
- * keyboard opens: on iOS it and its accessory bar — the suggestion strip, the
- * "Done" and arrow buttons — are drawn *over* the layout viewport rather than
- * shortening it, so `dvh` doesn't move, `.scroll`'s bottom edge is now behind
- * the keyboard, and anything scrolled to that edge is under the accessory bar.
- * Scrolling a field into view lands it exactly there, which is the one place it
- * must not be.
+ * keyboard opens: on iOS it and its accessory bar — suggestion strip, "Done"
+ * and arrows — are drawn *over* the layout viewport rather than shortening it,
+ * so `dvh` doesn't move and `.scroll`'s bottom edge sits behind the keyboard.
+ * Scrolling a field into view lands it exactly there.
  *
  * `.scroll` spends the covered strip as real space at the end of the list and
  * as `scroll-padding-bottom`, so every scroll — ours and the browser's own on
  * focus — stops short of the keyboard instead of under it.
  *
- * Set on `<html>` rather than the shell because dialogs and the FAB live
- * outside it, and a value on the root is reachable from all of them — the
- * dialog scrim spends it the same way, so a card asking for a number is centred
- * above the keyboard rather than behind it.
+ * **Set on `<html>`, not the shell**: dialogs and the FAB live outside it and
+ * need the same value, so a card asking for a number is centred above the
+ * keyboard rather than behind it.
  */
 export function MeasureViewport() {
   useEffect(() => {
@@ -71,12 +68,11 @@ export function MeasureViewport() {
       // Whether there is a keyboard at all is this component's to know; how
       // much air to leave above one is the stylesheet's (`--kb-gap`).
       root.toggleAttribute("data-kb", kb > 0);
-      // A gap with nobody typing is the app being painted on a screen shorter
-      // than the one it was laid out for: the last strip of every screen — the
-      // bottom nav, the about line — is below the fold, in a shell that cannot
-      // scroll. Nothing here can give those pixels back, so the recorder takes
-      // the measurement instead, and /diag has the number the next time
-      // somebody says the tabs went missing.
+      // A gap with nobody typing is the app painted on a screen shorter than
+      // the one it was laid out for: the last strip of every screen — bottom
+      // nav, about line — is below the fold in a shell that cannot scroll.
+      // Nothing here can give those pixels back, so record it and /diag has the
+      // number next time somebody says the tabs went missing.
       if (unexplained !== reported) {
         reported = unexplained;
         mark("viewport.gap", unexplained
@@ -88,19 +84,16 @@ export function MeasureViewport() {
     }
 
     /**
-     * The keyboard opening is the one moment worth re-scrolling for: the
-     * browser has already put the field flush against the accessory bar by
-     * then, and it did that before `--kb` existed. Same call as everywhere
-     * else — now with somewhere to stop.
+     * The keyboard opening is the one moment worth re-scrolling for: the browser
+     * has already put the field flush against the accessory bar, and it did that
+     * before `--kb` existed.
      *
      * A dialog is the other scroller worth following into: its card is centred
      * in what the keyboard leaves (globals.css), and one taller than that
-     * scrolls inside itself, so a field below the fold still has to be brought
-     * up.
+     * scrolls inside itself.
      *
-     * Where a field needs more than itself in view — the add row, which the
-     * screen's act sits under — the field says so in `scroll-margin-bottom`,
-     * and `bringIntoView` spends it. One call for every field either way.
+     * A field needing more than itself in view says so in `scroll-margin-bottom`
+     * and `bringIntoView` spends it — **one call for every field either way**.
      */
     function follow() {
       const focused = document.activeElement;

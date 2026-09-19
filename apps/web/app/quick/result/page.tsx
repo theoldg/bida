@@ -47,10 +47,9 @@ export default function QuickResultPage() {
   }, [copied]);
 
   const ready = draft !== undefined && (draft.receiptItems?.length ?? 0) > 0;
-  // Leaving on purpose throws the split away too, and this screen must not
-  // read that as "arrived with nothing" and send anybody back to the start:
-  // the two are the same state one tick apart, and the redirect below won
-  // the race against the way out.
+  // Leaving on purpose throws the split away too, and "left" and "arrived with
+  // nothing" are the same state one tick apart. **Mark the way out**, or the
+  // redirect below wins the race and sends anybody leaving back to the start.
   const leaving = useRef(false);
   // A reload loses a quick split — it is a draft, and no draft in this app
   // outlives its screens. Start again rather than show an empty answer.

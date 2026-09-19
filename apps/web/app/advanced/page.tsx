@@ -15,24 +15,22 @@ import { checkGeminiKey, maskKey, type KeyRefusal } from "@/lib/scan/key";
  * your own.
  *
  * **One row, which locks.** Pasting a key and holding one are the same screen
- * with the same field in the same place — before, it is typed into; after, it
- * is disabled, showing the key masked, with a bin where the plus was. The
- * first version swapped the whole section for a different one on success,
- * which threw the screen into a shape nobody had asked for at the moment they
- * were reading it. Nothing moves now but the button and the line under it.
+ * with the same field in the same place — typed into before, disabled and
+ * masked after, with a bin where the plus was. **Nothing moves but the button
+ * and the line under it**: swapping the section out on success throws the
+ * screen into a shape nobody asked for at the moment they are reading it.
  *
- * The row is the app's add-a-name row (`components/name-adder.tsx`) and not a
- * field with a Save under it: a plus on the right of what you typed is how
- * this app files a thing, and there is only one act here to spend a button on.
+ * The row is the app's add-a-name row (`components/name-adder.tsx`), not a
+ * field with a Save under it: a plus on the right of what you typed is how this
+ * app files a thing.
  *
  * **A key is never stored unchecked.** The plus asks Google once
- * (`checkGeminiKey`), which settles two questions at once: whether the key is
- * good, and whether this browser can reach Google at all. The second has no
- * other moment to be found in — a scan on a brought key is a call this browser
- * makes itself, so a blocker or a shield defeats the feature however good the
- * key is, and that is better said here, with the key in hand, than over a
- * receipt. There is no fallback through our Worker on purpose: the promise is
- * that the key does not leave the phone
+ * (`checkGeminiKey`), settling two questions: whether the key is good, and
+ * whether this browser can reach Google at all. The second has no other moment
+ * to be found in — a scan on a brought key is a call this browser makes itself,
+ * so a blocker defeats the feature however good the key is, and that is better
+ * said here than over a receipt. **No fallback through our Worker**: the promise
+ * is that the key does not leave the phone
  * (docs/receipt-scanning.md#a-key-of-your-own).
  */
 export default function AdvancedPage() {

@@ -19,29 +19,26 @@ const SLOP_PX = 10;
 const LIFT_CLICK_MS = 1000;
 
 /**
- * Once a touch hold has been answered, the finger that is still down owns the
- * rest of the gesture — and three things want it.
+ * Once a touch hold has been answered, the finger still down owns the rest of
+ * the gesture — and three things want it.
  *
- * The browser wants to read its next movement as a scroll: pans are allowed
- * everywhere (`touch-action` on `html, body`), so sliding off the row hands
- * the touch to the scroller, which fires `pointercancel` and dispatches no
- * click at all. But that movement is the hand reaching for the menu the hold
- * has just opened — a menu you can slide onto without lifting is how a phone's
- * own long-press menus work, and the finger tries it whether or not we are
- * listening. So the scroll is refused and the item under the finger when it
- * lifts is the one chosen. It has to have travelled `SLOP_PX` to choose one:
- * the card is only a few px clear of the row, and a finger that never moved
- * did not pick anything.
+ * The browser wants its next movement as a scroll: pans are allowed everywhere
+ * (`touch-action` on `html, body`), so sliding off the row hands the touch to
+ * the scroller, which fires `pointercancel` and dispatches no click at all. But
+ * that movement is the hand reaching for the menu the hold just opened, which
+ * is how a phone's own long-press menus work and what the finger tries whether
+ * or not we are listening. **So the scroll is refused** and the item under the
+ * finger when it lifts is chosen — after `SLOP_PX` of travel, since the card is
+ * only a few px clear of the row and a finger that never moved picked nothing.
  *
- * The other two are leftovers the press is not asking for: Android's own
- * `contextmenu`, and the click as the finger lifts. Both are hit-tested where
- * the finger is — by then the menu's veil, which closes on either, or for a
- * hold that navigates, the next screen — so they are caught on `document`, not
- * on the held element. That half ends at the click, at the next press
- * anywhere, or LIFT_CLICK_MS after the lift, and it outlives the finger by
- * design: a click can arrive after the lift, but nothing may still be holding
- * the scroller off by then. A click with `detail === 0` is never a finger —
- * that is a keyboard's, or the one this makes itself to choose an item.
+ * The other two are leftovers: Android's own `contextmenu`, and the click as
+ * the finger lifts. Both hit-test where the finger is — by then the menu's
+ * veil, or the next screen — so **they are caught on `document`, not on the
+ * held element**. That half ends at the click, at the next press anywhere, or
+ * LIFT_CLICK_MS after the lift, and outlives the finger by design: a click can
+ * arrive after the lift, but nothing may still be holding the scroller off by
+ * then. A click with `detail === 0` is never a finger — it is a keyboard's, or
+ * the one this makes itself to choose an item.
  */
 function heldFinger(from: { x: number; y: number } | null) {
   let timer: ReturnType<typeof setTimeout> | undefined;

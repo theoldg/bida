@@ -13,19 +13,17 @@ export interface SheetAction {
 
 /**
  * A handful of actions for the row that was long-pressed or right-clicked — a
- * small card, not a dialog that dims the whole screen behind it (that's for a
- * decision with a sentence to say about it; this is a menu).
+ * small card, not a dialog that dims the whole screen (that's for a decision
+ * with a sentence to say about it; this is a menu).
  *
- * It hangs off the row's own bottom right corner, and where inside the row the
- * finger landed makes no difference to that: a card that chased the touch
- * appeared somewhere new every time, and a second press had to hunt for the
- * item it had just used. Flipped above the row when there isn't room below it,
- * and kept off the screen edges either way.
+ * **It hangs off the row's bottom right corner, never off the finger** — a card
+ * that chases the touch appears somewhere new every time, and a second press
+ * has to hunt for the item it just used. Flipped above the row when there isn't
+ * room below, and kept off the screen edges either way.
  *
- * An invisible veil behind the card catches the outside tap that closes it;
- * Escape and a scroll (captured on `document`, since the scrolling element is
- * `.scroll`, not the window) do the same — so the row's position is read once,
- * when the menu opens, and cannot go stale under it.
+ * An invisible veil catches the outside tap that closes it; Escape and a scroll
+ * (captured on `document` — the scrolling element is `.scroll`, not the window)
+ * do the same, so the row's position is read once and cannot go stale under it.
  */
 export function RowMenu({ anchor, actions, onClose }: {
   /** The pressed row, in viewport coordinates. */
@@ -69,11 +67,10 @@ export function RowMenu({ anchor, actions, onClose }: {
     });
   }, [anchor]);
 
-  // Nothing focuses this card, so opening it left the caret on the row behind
-  // the veil: Escape closed a menu the keyboard was never in, and Tab walked
-  // the page underneath it. `Dialog` gets all of that from `showModal()`; a
-  // card anchored to a row cannot be a modal dialog, so it moves focus itself
-  // and hands it back on the way out.
+  // `Dialog` gets focus handling from `showModal()`; a card anchored to a row
+  // cannot be a modal dialog, so **it moves focus in itself and hands it back on
+  // the way out** — otherwise the caret stays on the row behind the veil, Escape
+  // closes a menu the keyboard was never in, and Tab walks the page underneath.
   const opener = useRef<Element | null>(null);
   useEffect(() => {
     opener.current = document.activeElement;

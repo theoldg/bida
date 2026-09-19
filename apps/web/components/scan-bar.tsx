@@ -21,15 +21,13 @@ import type { LiveScan } from "../lib/scan/live";
  * slower. The bar promises the *usual* scan and not this one, which is why it is
  * `aria-hidden`: what a screen reader is owed is the "Reading…" beside it.
  *
- * Three details it cannot do without. The duration is inline because it is a
- * different number every sweep and the class holds only the shape. The
- * *negative* delay is what makes the bar a clock on the scan rather than on
- * itself: a bar mounting onto a scan already a second old starts a second in,
- * so leaving the Items tab and coming back resumes the sweep instead of
- * promising the whole wait again. And the animation's end is the one event the
- * box must not hear — `.btn-pair` listens on the way up for the refusal flash
- * (`onFlashEnd`), and an unstopped `animationend` reads there as a flash that
- * has settled.
+ * Three details it cannot do without. The duration is inline, being a different
+ * number every sweep while the class holds only the shape. The **negative**
+ * delay makes the bar a clock on the scan rather than on itself: one mounting
+ * onto a scan already a second old starts a second in, so leaving the Items tab
+ * and coming back resumes the sweep. And **`animationend` must be stopped** —
+ * `.btn-pair` listens on the way up for the refusal flash (`onFlashEnd`), and
+ * reads a loose one as a flash that has settled.
  */
 function ScanBar({ startedAt, seconds, onFull }: {
   startedAt: number;
@@ -47,14 +45,13 @@ function ScanBar({ startedAt, seconds, onFull }: {
 }
 
 /**
- * "Reading…", with the bar sweeping across it — the one thing every surface
- * that starts a reading shows while one is in flight.
+ * "Reading…", with the bar sweeping across it — what every surface that starts
+ * a reading shows while one is in flight.
  *
- * Shared rather than copied because it is a clock on the *scan*, not on
- * whatever is drawing it: the pair on the Items tab and the dialog that types a
- * bill in are both looking at one `LiveScan`, and two implementations would be
- * two estimates of one wait. `box` is the class the caller's own register wants
- * around it, because the strip is the same and where it sits is not.
+ * **Shared, never copied**: it is a clock on the *scan*, not on whatever draws
+ * it, and the Items tab's pair and the type-a-bill dialog both watch one
+ * `LiveScan` — two implementations would be two estimates of one wait. `box` is
+ * the caller's own class, since the strip is the same and where it sits is not.
  */
 export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
   live: LiveScan;
@@ -65,13 +62,12 @@ export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
 }) {
   /**
    * The sweep has run out and the scan is still going, so the spinner takes
-   * over. Reset the moment the scan ends — the next one is a fresh sweep of
-   * its own, and an answer that beat it never shows a spinner at all.
+   * over. Reset the moment the scan ends — the next is a fresh sweep of its own.
    *
-   * Two ways to be past it, because this control can mount onto a scan
-   * already in flight: the sweep finished under us (`setFull`), or it had
-   * already finished before we were rendered at all — a bar that would start
-   * beyond its own end and never fire `animationend`.
+   * **Two ways to be past it**, because this control can mount onto a scan
+   * already in flight: the sweep finished under us (`setFull`), or it finished
+   * before we rendered at all — a bar starting beyond its own end never fires
+   * `animationend`.
    */
   const [full, setFull] = useState(false);
   const overrun = Date.now() - live.startedAt >= live.seconds * 1000;

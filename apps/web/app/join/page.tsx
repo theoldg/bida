@@ -15,44 +15,33 @@ import { isKeylessFragment, parseJoinLink, route } from "@/lib/group-link";
 
 /**
  * Lands a `/join#<groupId>.<secret>` link: saves the secret, then pulls the
- * group's op log from the server (see docs/sync.md) so a second device can
+ * group's op log from the server (docs/sync.md) so a second device can
  * actually seat itself, not just recognise a group it already had locally.
  *
- * The first sync attempt can fail honestly — offline, or the creating device
- * hasn't pushed yet — without the join itself having failed: the secret is
- * saved either way, and `StartSync`'s background loop (root layout) keeps
- * retrying with backoff and on reconnect. So this screen watches the local DB
- * with a live query rather than a one-shot check: the moment the group lands
- * (from this attempt or a later background retry), it moves on by itself —
- * nobody has to be told to reopen the link.
+ * A first sync can fail honestly — offline, or the creating device hasn't
+ * pushed yet — without the join having failed: the secret is saved either way,
+ * and `StartSync`'s background loop retries. **So watch the local DB with a
+ * live query, never a one-shot check** — the moment the group lands, from this
+ * attempt or a later retry, the screen moves on by itself.
  *
- * Where it moves on *to* is the group itself, by way of the groups list: this
- * screen's own history entry goes to the list, and the group is pushed on top
- * of it (`handOverToGroup`). A link tapped in a chat opens a browser on a
- * history one entry deep, so a group that took that entry for itself had
- * nothing underneath — and the device's back button left for the chat rather
- * than climbing the app, which is what it does everywhere else.
+ * It moves on to the group *by way of the groups list*: this screen's history
+ * entry goes to the list and the group is pushed on top (`handOverToGroup`).
+ * A link tapped in a chat opens a browser one entry deep, so a group taking
+ * that entry for itself has nothing underneath, and back leaves for the chat
+ * rather than climbing the app.
  *
  * **There is no state where this screen is up and the person is not joining**,
- * so it says so from the prerendered HTML: the wordmark and "Joining…", before
- * a byte of the bundle has arrived. What used to be there was `Blank` — a back
- * arrow over an empty screen, held from first byte until the hash was parsed,
- * which is the first thing bida ever showed somebody their friend invited. The
- * three branches that override it — a bad link, a keyless one, a secret the
- * server refuses — are the only ones that need JS to decide, and they are rare.
+ * so it says so from the prerendered HTML — wordmark and "Joining…", before a
+ * byte of the bundle arrives. The three branches that override it (bad link,
+ * keyless, a secret the server refuses) are the only ones needing JS, and are
+ * rare. The *body* waits for the key: "finishes by itself once the other phone
+ * syncs" is a promise about this link, and before the fragment is parsed there
+ * is no link to promise it of.
  *
- * The *body* waits for the key, though: "finishes by itself once the other
- * phone syncs" is a promise about this particular link, and before the fragment
- * is parsed and saved there is no link to promise it of.
- *
- * A first arrival still ends on
- * "which one are you?", but it is `useClaimGate` that sends it there — one
- * place decides whether this phone has said who it is, and this screen is not
- * a second one. Re-opening a link you have already accepted used to reopen
- * that question, which reads as being asked to join a group you are in; now it
- * just opens the group. (It is not `/g/members` either way: that is a
- * management screen, and a new arrival dropped on it has "back" as its only
- * way onward.)
+ * A first arrival ends on "which one are you?", but **`useClaimGate` is the one
+ * place that decides whether this phone has said who it is** — not this screen,
+ * and not `/g/members`, which is a management screen a new arrival can only
+ * back out of.
  */
 export default function JoinPage() {
   return <QueryBoundary><JoinScreen /></QueryBoundary>;
@@ -75,10 +64,9 @@ function JoinScreen() {
     };
     read();
     // A second invite link opened while this screen is up is a hash change and
-    // nothing else — no navigation, no remount — so read on mount alone left
-    // the screen answering about the first link forever. Which is worst
-    // exactly where it matters: the first one was refused and the good one is
-    // what arrives next.
+    // nothing else — no navigation, no remount. **Read on mount alone and the
+    // screen answers about the first link forever**, which bites exactly where
+    // it matters: the first was refused and the good one is what arrives next.
     addEventListener("hashchange", read);
     return () => removeEventListener("hashchange", read);
   }, []);

@@ -48,31 +48,24 @@ export default function InstallPage() {
  * The icon's first launch: the groups the tab held, and who it was in each.
  *
  * A group this phone does not hold yet has its key saved. One the tab had
- * named has that member claimed here too, so nobody is asked "who are you?"
- * again — as a claim of this app's own, since it is a device of its own
- * (history: "Ana started editing from a new device"). Claimed before the group
- * has synced: the claim is an op like any other and goes up with the next push.
+ * named has that member claimed here too — a claim of this app's own, since it
+ * is a device of its own ("Ana started editing from a new device") — before the
+ * group has synced, since the claim is an op and rides the next push.
  *
- * One group, not named, is the newcomer who tapped Add to home screen before
- * picking a name, and `/join` says it best — it names the group and waits out
- * a first sync. Anything else lands on the list, filling as each group syncs.
- * Nothing new means the fragment is spent: the icon is a door into the app,
- * not into one group forever.
+ * One group, unnamed, is the newcomer who added the icon before picking a name,
+ * so `/join` says it best. Anything else lands on the list, filling as each
+ * group syncs.
  *
- * And a door is a launch, which is `lib/launch.ts`'s to answer, not this
- * screen's — so it says `launchedOnto` and lets the list decide. The icon's
+ * A spent fragment is still a launch, and **that is `lib/launch.ts`'s to answer,
+ * not this screen's** — say `launchedOnto` and let the list decide. The icon's
  * `start_url` is this route, so the document never loads on the list and
- * nothing else could tell: every launch after the first landed on the list with
- * the group you were last in unopened, on the one install docs/ios.md is for.
- * Only when the carry brought nothing, though — an icon that has just saved a
- * key or claimed a name has something to show on the list itself.
+ * nothing else can tell a launch from a navigation.
  *
- * Nothing here un-forgets: `saveGroupKey` would undo a `forgetGroup`, and an
+ * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`, and an
  * icon must not walk back into a group this phone said it was done with.
  *
- * `location.replace`, not the router, for the hand-off to `/join`: Next's
- * router drops the fragment when it gives up and loads the page itself, which
- * is the very first thing asked of it on a freshly installed app
+ * **`location.replace`, not the router**, for the hand-off to `/join`: Next's
+ * router drops the fragment when it gives up and loads the page itself
  * (docs/ios.md#gotchas).
  */
 function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
@@ -149,8 +142,8 @@ function Tutorial() {
 
 /**
  * For whoever added bida and still meets the banner, so it sits above the
- * recording rather than under it; folded on every visit, since most readers
- * haven't added it yet and the clip is what they came for.
+ * recording rather than under it; folded, since most readers haven't added it
+ * yet and the clip is what they came for.
  */
 function AlreadyAdded({ browser }: { browser: string | undefined }) {
   const [open, setOpen] = useState(false);

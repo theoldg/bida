@@ -12,23 +12,19 @@ import type { LiveScan } from "../lib/scan/live";
 
 /**
  * Type the bill in — the scan control's third door, for a receipt nobody
- * photographed, one a camera has already failed on, or one that arrived as text
- * in the first place (docs/receipt-scanning.md#typing-a-bill-in).
- *
- * What it sends goes through the same reading as a photograph and comes back as
- * the same filled draft, so there is nothing here about bills, lines or totals:
- * the box, the cap, and the two things the photo path says elsewhere.
+ * photographed, one a camera has failed on, or one that arrived as text
+ * (docs/receipt-scanning.md#typing-a-bill-in). What it sends goes through the
+ * same reading as a photograph and comes back as the same filled draft, so
+ * there is nothing here about bills, lines or totals: the box and the cap.
  *
  * **It takes its state from the reading, not from itself.** `live` is the one
- * `LiveScan` the screen behind it is also watching, which is what lets the bar be
- * a clock on the reading rather than on this dialog: close it mid-read and the
- * draft still fills, open it again and the bar is where the reading actually is.
- * A refusal keeps the dialog standing with the text intact, because unlike a bad
- * photograph a bad bill is fixed where it was typed.
+ * `LiveScan` the screen behind it is also watching, so the bar is a clock on the
+ * reading: close it mid-read and the draft still fills, reopen it and the bar is
+ * where the reading actually is. A refusal keeps the dialog standing with the
+ * text intact — unlike a bad photograph, a bad bill is fixed where it was typed.
  *
- * It is rendered by `useReceiptScan` and never by a screen, for the reason given
- * there: a dialog whose own answer moves the panel around it is a dialog that
- * gets unmounted mid-sentence.
+ * **Rendered by `useReceiptScan`, never by a screen**: a dialog whose own answer
+ * moves the panel around it gets unmounted mid-sentence.
  */
 export function BillTextDialog({ live, initial = "", onRead, onClose }: {
   live: LiveScan | undefined;

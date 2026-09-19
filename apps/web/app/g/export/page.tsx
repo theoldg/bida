@@ -9,24 +9,19 @@ import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
- * The export as text, for a browser that cannot hand over a file.
+ * The export as text, for a browser that cannot hand over a file. Reached from
+ * nowhere but the last rung of `lib/export.ts` — where there is a share sheet or
+ * a download, the menu item finishes on its own.
  *
- * Reached from nowhere but the last rung of `lib/export.ts`: where there is a
- * share sheet or a download, the menu item finishes on its own and this screen
- * never appears. Selecting a ledger out of a `<pre>` and pasting it into Sheets
- * is a poor way to get a file, and it is the difference between an export that
- * exists on that phone and one that doesn't.
- *
- * It **rebuilds the CSV itself** rather than being handed the text. A route
+ * It **rebuilds the CSV itself** rather than being handed the text: a route
  * cannot carry a file, and a screen whose content evaporates on reload is the
- * drawer state ADR-0007 was written to get rid of. That also makes it
- * addressable, which costs nothing: it is a readout of a group this phone
- * already holds the key to.
+ * drawer state ADR-0007 was written to get rid of. Being addressable costs
+ * nothing — it is a readout of a group this phone already holds the key to.
  *
- * Laid out like `/diag`, the app's other "here is the text, take it
- * somewhere" screen — including the button at the top of the scroll rather
- * than in a `Foot`, since the thing below it is hundreds of lines and the
- * bottom of an installed app is where the system's own bar sits.
+ * Laid out like `/diag`, the app's other "here is the text, take it somewhere"
+ * screen — **button at the top of the scroll, not in a `Foot`**, since what is
+ * below it is hundreds of lines and the bottom of an installed app is where the
+ * system's own bar sits.
  */
 export default function ExportPage() {
   return <QueryBoundary><ExportScreen /></QueryBoundary>;

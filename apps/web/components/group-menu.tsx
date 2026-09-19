@@ -14,23 +14,19 @@ import { InviteFallback } from "./invite";
 import { MenuButton, type SheetAction } from "./row-menu";
 
 /**
- * Everything a group can be asked for that isn't the ledger, behind one
- * button. These were four icons in the top bar, which is as many as the bar
- * holds and one more than reads: four unlabelled glyphs are four guesses, and
- * the group's name — the one thing that says which group you are in — was
- * squeezed to fit them. The menu is the same card a long press opens on a row
- * (`RowMenu`), so the app has one menu, not two.
+ * Everything a group can be asked for that isn't the ledger, behind one button
+ * — **not a row of icons in the top bar**, where unlabelled glyphs are guesses
+ * and the group's name gets squeezed to fit them. Same card a long press opens
+ * on a row (`RowMenu`), so the app has one menu, not two.
  *
- * Forgetting is here too, and it is the only place inside a group that offers
- * it; the groups list offers the same pair from outside (app/page.tsx). It
- * does not wait for a claim: a group this phone never said who it was in is
- * the one it most wants off the list, and forgetting is purely local
- * (`forgetGroup`), so there is nothing an unclaimed phone lacks to do it.
+ * Forgetting is here too, the only place inside a group that offers it; the
+ * groups list offers the same pair from outside (app/page.tsx). **It does not
+ * wait for a claim**: a group this phone never said who it was in is the one it
+ * most wants off the list, and `forgetGroup` is purely local.
  *
- * `data` comes from the screen rather than a hook of this component's own:
- * exporting needs the whole ledger, `/g` is already holding it, and a second
- * `useGroupData` here would be a second live subscription to the rows on
- * screen.
+ * `data` comes from the screen, not a hook of this component's own — exporting
+ * needs the whole ledger, `/g` is already holding it, and a second
+ * `useGroupData` would be a second live subscription to the rows on screen.
  */
 export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData }) {
   const router = useRouter();

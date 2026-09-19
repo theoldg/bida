@@ -22,13 +22,12 @@ import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
  * the receipt knows. Amounts are in the expense's own currency for the same
  * reason (ADR-0010).
  *
- * Every row's field is open from the start, typed zero or blank drops that
- * person rather than a tap toggling them out — the field *is* the statement,
- * same reasoning as `SplitEditor`'s exact mode. Falling back to nobody typed
- * in at all collapses the draft to a plain single payer (`payers: null`)
- * rather than sitting on a degenerate all-zero map, which is also how "back
- * to one payer" used to work as an explicit button — clearing the fields
- * reaches the same place without one.
+ * Every row's field is open from the start and a typed zero or blank drops
+ * that person, rather than a tap toggling them out — the field *is* the
+ * statement, as in `SplitEditor`'s exact mode. Nobody typed in at all collapses
+ * the draft to a plain single payer (`payers: null`) rather than sitting on a
+ * degenerate all-zero map, so clearing the fields is "back to one payer" and
+ * no button has to be.
  */
 export default function PayersPage() {
   return <QueryBoundary><PayersScreen /></QueryBoundary>;
@@ -49,11 +48,10 @@ function PayersScreen() {
   if (draft && !opened.current) opened.current = { payers: draft.payers, paidBy: draft.paidBy };
 
   // No draft at all: a reload, a bookmark, or a forward press onto an entry
-  // that has since been saved. The draft this screen edits one side of lives
-  // in memory (lib/draft.ts), so there is nothing here to put back and nothing
-  // for the arrow to return to — the group is where the form was opened from.
-  // Without it this sat as a titled blank forever. The grid one route over
-  // does the same, and so does the quick split (app/quick/result).
+  // that has since been saved. The draft this screen edits one side of lives in
+  // memory (lib/draft.ts), so there is nothing to put back and nothing for the
+  // arrow to return to — without this the screen is a titled blank forever. The
+  // grid one route over does the same, and so does app/quick/result.
   useEffect(() => {
     if (groupId && !data.loading && data.group && !unclaimed && !draft) {
       router.replace(route.group(groupId));
@@ -72,8 +70,8 @@ function PayersScreen() {
   const currency = draft.currency;
 
   // What the form says this entry is worth, from the same function the form
-  // asks — a scanned bill is worth what its lines add up to, and reading
-  // `amountText` alone had this screen calling that expense €0.00.
+  // asks: a scanned bill is worth what its lines add up to, so reading
+  // `amountText` alone calls that expense €0.00.
   const amountMinor = draftAmountMinor(draft);
 
   // A draft with no `payers` yet means the ordinary one-payer expense; show it

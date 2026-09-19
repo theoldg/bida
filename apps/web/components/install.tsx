@@ -45,20 +45,17 @@ async function carryThenInstall(first?: string): Promise<void> {
  * load, and the share sheet can be opened on any page (`headIsStale`).
  *
  * Wider than the update's own reload, which holds out for the groups list
- * (`mayReloadHere`, lib/update.ts): this one is an iOS tab's, where a reload
- * is a flash rather than a relaunch, and the visit it fires on is a
- * newcomer's first, which never passes the list at all.
+ * (`mayReloadHere`, lib/update.ts): this is an iOS tab's, where a reload is a
+ * flash rather than a relaunch, and the visit it fires on is a newcomer's
+ * first, which never passes the list at all.
  *
- * Harmless includes cheap. The reload's only job is to have the head right for
- * a share sheet nobody has opened yet, so nothing on screen is waiting on it —
- * and the visit it fires on most reliably is the newcomer's first, where their
- * document load was `/join` with an empty carry and everything since has been
- * the router. That is also the one minute the shell is being fetched over the
- * phone's connection, so the reload would go to the network and race the
- * precache for it. Deferring costs nothing: this effect runs again on every
- * pathname change, and the next reloadable screen does it once the shell is
- * warm. If the worker never lands at all, never reloading is the better
- * trade — a stale head costs a paste later, a blank first minute costs the app.
+ * **Harmless includes cheap.** Nothing on screen waits on this reload — its
+ * only job is a head for a share sheet nobody has opened yet — and the visit it
+ * fires on is the one minute the shell is being fetched over the phone's
+ * connection, where it would go to the network and race the precache.
+ * Deferring costs nothing: the effect runs again on every pathname change. If
+ * the worker never lands, never reloading is the better trade — a stale head
+ * costs a paste later, a blank first minute costs the app.
  */
 function KeepCarried() {
   const groups = useLive("carried", () => heldInvites(), []);
@@ -208,12 +205,11 @@ export function LedgerInstall({ groupId }: { groupId: string }) {
 
 /**
  * The banner's button on its own, for the about screen's "Works offline" in an
- * iOS tab: `/install` is where the how lives, so the one line that sat there
- * restating it gave way to the door. `first` is the group to lead the carry,
- * when there is one to prefer.
+ * iOS tab — `/install` is where the how lives, so that section is a door rather
+ * than a line restating it. `first` is the group to lead the carry, if any.
  *
- * `location.assign` rather than a `<Link>`: the fragment is the invites, and
- * the router drops it when it falls back to loading the page itself
+ * **`location.assign`, never a `<Link>`**: the fragment is the invites, and the
+ * router drops it when it falls back to loading the page itself
  * (docs/ios.md#gotchas).
  */
 export function InstallButton({ first }: { first?: string }) {

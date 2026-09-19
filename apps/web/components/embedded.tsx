@@ -24,17 +24,14 @@ function embedded(): boolean {
  *
  * **Everything is behind this**, sync and the service worker included, not just
  * the screens: a webview is a storage nobody can get back to, so a group joined
- * in one is a key that dies with the app switcher and a claim the person makes
- * again the moment they open the same link properly. Joining twice from one
- * invite is the failure docs/ios.md is built around, and the in-app browser is
- * the commonest way into it — Messenger and Instagram turn theirs back on at
- * every update, so this is not a setting anyone can be asked to fix once.
+ * in one is a key that dies with the app switcher and a claim made again the
+ * moment the link is opened properly. Joining twice from one invite is the
+ * failure docs/ios.md is built around.
  *
- * Refusing is the whole of the design. There is nothing to offer in here: no
- * Add to Home Screen in a webview, and no way for a page to send itself to a
- * real browser (no scheme, no universal link — Android's `intent://` is the
- * only one and it is Android's alone). So the screen names the app, says what
- * to press, and hands over the link.
+ * **Refusing is the whole design** — there is nothing to offer in here: no Add
+ * to Home Screen in a webview, and no way for a page to send itself to a real
+ * browser (Android's `intent://` is the only scheme, and Android's alone). So
+ * the screen names the app, says what to press, and hands over the link.
  *
  * Nothing renders it on the server and it is false through hydration, so the
  * export stays one HTML file and the first client render decides.

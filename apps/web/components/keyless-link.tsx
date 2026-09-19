@@ -43,14 +43,13 @@ export function BadLinkNotice() {
 /**
  * A link to a group with no password in it — nearly always a group screen's
  * address copied out of the browser's bar, which names the group and nothing
- * more (lib/group-link.ts). "Bad link" sent people straight back to the same
- * bar for the same address, so this says where the working one comes from and
- * draws it: the group's top bar with its menu open and the invite row lit.
+ * more (lib/group-link.ts). **Say where the working link comes from**, not "bad
+ * link", which sends people back to the same bar for the same address: the
+ * group's top bar with its menu open and the invite row lit.
  *
  * The drawing is a picture, not a control — `aria-hidden`, divs rather than
- * buttons — and it borrows the real menu's classes and labels so it can't
- * drift from the thing it depicts. Only the page's content: `BadLink` in
- * chrome.tsx draws it too, and the frame around it is each caller's.
+ * buttons — borrowing the real menu's classes and labels so it can't drift from
+ * what it depicts. Page content only; the frame is each caller's.
  */
 export function KeylessLink() {
   const { keyless } = copy.join;

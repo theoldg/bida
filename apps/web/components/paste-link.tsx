@@ -20,13 +20,10 @@ import { readClipboardText } from "../lib/paste";
  * show what was pasted (`lib/failed-link.ts`). A refused read is the person
  * dismissing iOS's paste prompt: a no, not an error.
  *
- * **Nothing on the clipboard opens a box to paste into**, rather than a screen
- * saying so. iOS hands the pasteboard over on its own terms and an empty read
- * is not an empty clipboard (`lib/paste.ts`) — but a field is: touch and hold,
- * Paste, and the same routing runs on what lands there. It replaced `/paste`,
- * which could only say "Nothing to paste" and offer the same read again.
- *
- * What the clipboard *says* takes more than one read: `lib/paste.ts`.
+ * **Nothing on the clipboard opens a box to paste into**, never a screen saying
+ * so: iOS hands the pasteboard over on its own terms and an empty read is not
+ * an empty clipboard (`lib/paste.ts`) — but a field is. Touch and hold, Paste,
+ * and the same routing runs on what lands there.
  */
 export function usePasteLink(): { paste: () => Promise<void>; dialog: ReactNode } {
   const router = useRouter();

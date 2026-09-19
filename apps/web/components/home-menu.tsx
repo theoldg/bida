@@ -11,15 +11,13 @@ import { route } from "../lib/group-link";
 /**
  * Everything the groups list can be asked for that isn't a group, behind one
  * button — the same card the group screen's kebab opens (`GroupMenu`), so the
- * app has one menu everywhere. These were two unlabelled glyphs in the bar,
- * and a sun is not a sentence: the theme switch now says which way it goes,
- * and "About bida" says what it is rather than leaving an ⓘ to be guessed.
+ * app has one menu everywhere. **Labels, not glyphs**: a sun is not a sentence,
+ * so the theme switch says which way it goes and "About bida" says what it is.
  *
- * The theme is read from the DOM rather than from the device record:
- * `<html data-theme>` is set before first paint by the script in ./theme.tsx,
- * while Dexie is still opening, so this is the only source that is right on
- * the very first render. The record stays the durable copy — `applyTheme`
- * writes through to localStorage, and this writes through to Dexie.
+ * **The theme is read from the DOM, not the device record**: `<html data-theme>`
+ * is set before first paint by the script in ./theme.tsx, while Dexie is still
+ * opening, so it is the only source right on the first render. The record stays
+ * the durable copy — `applyTheme` writes through to localStorage, this to Dexie.
  */
 const QUERY = "(prefers-color-scheme: dark)";
 const listeners = new Set<() => void>();
