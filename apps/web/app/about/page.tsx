@@ -84,10 +84,15 @@ export default function AboutPage() {
             <Section title={guarantees.title} under={
               <ul className="warnlist">
                 <li><Icon name="info" size={14} />{guarantees.warnings[0]}</li>
+                {/* One span around the whole sentence: the row is a two-column
+                    grid, so a bare <Link> beside the text would be a third grid
+                    item and start its own row under the icon. */}
                 <li><Icon name="info" size={14} />
-                  {guarantees.scanBreaks.lede}
-                  <Link href={route.support()}>{guarantees.scanBreaks.link}</Link>
-                  {guarantees.scanBreaks.tail}
+                  <span>
+                    {guarantees.scanBreaks.lede}
+                    <Link href={route.support()}>{guarantees.scanBreaks.link}</Link>
+                    {guarantees.scanBreaks.tail}
+                  </span>
                 </li>
                 <li><Icon name="info" size={14} />{guarantees.warnings[1]}</li>
               </ul>

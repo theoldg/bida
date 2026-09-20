@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — "fix the paragraph break nonsense": no paragraph anywhere,
+  just a link that counted as one grid item too many. A screenshot names the
+  symptom; the layout box names the bug.
 - *2026-09-20* — "the group's popular currencies below the main one": core had
   already sorted them that way for the rates screen. The picker simply never
   asked for the list.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Three repros on headless Chromium, all green, before they said
   "Android installed PWA". The platform was the bug. Ask which phone before
   writing the first repro.
-- *2026-09-20* — "make the number columns their own columns" — I had built one
-  long chain through the whole screen because the DOM offered one. Where a
-  chain ends is a design call, not a tree walk.

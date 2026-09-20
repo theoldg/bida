@@ -459,6 +459,11 @@ reads as an ordinary assignment.
   it. The compound selector wins the properties it sets and nothing more.
   Prefix a modifier with its block (`billextra`) rather than naming it after
   what it holds.
+- **A grid row holds as many items as it has children, and text counts once.**
+  `.warnlist li` is `auto 1fr` — icon, sentence — so the `/about` warning whose
+  sentence links to the tip jar handed it three items: the link became column
+  one of a second row and the last words broke away under the icon. Text with
+  an inline element in it goes into the row as one `<span>`.
 - **`money()` is locale-dependent, so a hand-written symbol beside it drifts.**
   `Intl` renders USD as "US$1.25" anywhere but en-US, which put a `US$` share
   under the tip jar's hand-set `$5`. Dollars quoted in copy get `usd()`
