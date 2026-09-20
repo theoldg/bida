@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — Driving the app to check a feature, two of the finds were in
+  the driver: it hid a row the tab bar crossed, and offered one behind an open
+  menu. Check what you are checking with.
 - *2026-09-20* — "this is confusing" — and the code already did the right
   thing; the dialog promised the opposite. The words were the bug. Read what a
   screen says before changing what it does.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — "it resizes when i click it" was exact. A control that swaps
   itself out for another has to be measured in both states; the screenshot came
   with the evidence already in it.
-- *2026-09-19* — A typed bill failed every read, on the photograph's prompt:
-  its two safest rules — never multiply, always a total — are the two that make
-  typed words unreadable. Ask whose page it is.
