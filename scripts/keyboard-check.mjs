@@ -12,6 +12,11 @@
  * button gains a line, a row gains padding, and the fix is quietly a few pixels
  * short on a phone nobody in this repo is holding.
  *
+ * It also holds the other thing a phone keyboard does to a form: the confirm
+ * key, which on a field drawn promising "next" has to leave the caret in the
+ * field below it (`walkFields`, components/viewport.tsx). That half needs no
+ * faking — a headless browser presses Enter like any other.
+ *
  * There is no keyboard in a headless browser, so one is faked where the app
  * reads it — `visualViewport.height` — and the app answers as it would on a
  * phone: `gapOf` calls the gap a keyboard, `--kb` is paid, and the scroll that
@@ -161,6 +166,79 @@ await page.goto(`${base}/g/members?id=${groupId}`);
 await page.waitForSelector(".ghostrow");
 await openKeyboard();
 await clears("people — changing who you are is above the keys", ".ghostrow");
+
+// ---- the confirm key ----------------------------------------------------
+/**
+ * Where the caret is, named the way a failure can be read: a field's id where
+ * it has one, its label otherwise. `"nothing"` is a field put down, which is
+ * what the end of a chain does.
+ */
+const caret = () => page.evaluate(() => {
+  const el = document.activeElement;
+  if (!el || el === document.body) return "nothing";
+  return el.id || el.getAttribute("aria-label") || el.tagName.toLowerCase();
+});
+
+// The group name hands over to the row the people go in — two fields nothing
+// else on that screen sits between.
+await page.goto(`${base}/new`);
+await page.locator("#g-name").focus();
+await page.keyboard.press("Enter");
+report(await caret() === "Add someone",
+  "/new — the confirm key takes the caret from the name to the add row",
+  `caret on ${await caret()}`);
+
+// The entry form: the amount hands over to what it was for. The date between
+// that and the split is a spinner the walk steps over.
+await page.goto(`${base}/g/entry/edit?id=${groupId}`);
+await page.locator("input.amount").focus();
+await page.keyboard.press("Enter");
+report(await caret() === "what", "the entry form — the amount hands the caret to the note",
+  `caret on ${await caret()}`);
+
+// A column of figures is the case this is for: one press per person, down the
+// list, without a tap between any two of them.
+await page.getByRole("button", { name: "As amounts" }).click();
+await settle(page, 120);
+await page.locator("#what").focus();
+await page.keyboard.press("Enter");
+const first = await caret();
+report(first.startsWith("sp-"), "the note hands the caret into the split's first row",
+  `caret on ${first}`);
+
+const walked = [first];
+for (let i = 1; i < CROWD.length; i++) {
+  await page.keyboard.press("Enter");
+  walked.push(await caret());
+}
+report(new Set(walked).size === CROWD.length && walked.every((id) => id.startsWith("sp-")),
+  "one press per person walks the whole column",
+  `${walked.length} rows, ${new Set(walked).size} of them distinct`);
+
+// The last row says "done", and a confirm key that means done must not wrap
+// round to the top of the list it has just been walked down.
+const last = walked[walked.length - 1];
+await page.keyboard.press("Enter");
+report(await caret() === last, "the last row's confirm key does not wrap round",
+  `caret on ${await caret()}, was ${last}`);
+
+// The other column, on a screen of its own and with its own idea of which row
+// is the last one: who actually paid.
+await page.locator("input.amount").fill("60");
+await page.locator(".pick-sub").click();
+await page.waitForURL(/\/g\/payers/);
+await page.locator("input.splitin").first().focus();
+const payers = [await caret()];
+for (let i = 1; i < CROWD.length; i++) {
+  await page.keyboard.press("Enter");
+  payers.push(await caret());
+}
+await page.keyboard.press("Enter");
+report(new Set(payers).size === CROWD.length
+  && payers.every((id) => id.startsWith("payer-"))
+  && await caret() === payers[payers.length - 1],
+  "payers — one press per person, and the last row stays put",
+  `${new Set(payers).size} distinct rows, ended on ${await caret()}`);
 
 await browser.close();
 close();

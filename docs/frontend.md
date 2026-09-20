@@ -220,6 +220,24 @@ confers nothing without the secret.
   second and a half, and so does the group menu's kebab (`MenuButton`'s
   `confirmed`) — the menu card closes on the tap, so without it the one action
   in the app with no visible result had no result at all.
+- **The confirm key moves the caret on, where a field says it does.** A phone
+  keyboard's bottom-right key is whatever `enterKeyHint` names it, and the word
+  it wears is a promise — so `"next"` is both the opt-in and the instruction:
+  `walkFields` (`components/viewport.tsx`), hung on `.scroll` because the next
+  field is rarely a sibling, walks that screen's fields in the order they are
+  laid out and puts the caret at the *end* of what is already in one (entered at
+  character nought, a typed "5" turns "12.00" into "512.00"). It steps over what
+  has no caret to take — a date spinner, a disabled amount, a tab's fields not
+  drawn (`landsOn`, `lib/viewport.ts`) — and where a field promised "next" and
+  nothing is left, it puts the field down, which is the "done" it should have
+  been drawn with. An IME's Enter is a candidate being picked, never a field
+  being finished. **A dialog is not walked**: its Enter submits the card, and
+  the rate pair's two fields are one number twice, so "next" there would be
+  a sideways step. Four screens ask for it — the entry form's amount, its note
+  while "as amounts" is the tab showing, `/new`'s group name, and the two
+  columns of figures (the split editor's "as amounts" and `/g/payers`), where
+  one press per person is the whole point. `pnpm keyboard` walks both columns
+  ([testing.md](testing.md)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
   — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is

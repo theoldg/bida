@@ -600,7 +600,7 @@ function EditEntryScreen() {
                 className="amount"
                 fieldClassName={`big${flashClass(refusedFields.amount)}`}
                 aria-label={copy.form.amount(draft.currency)}
-                enterKeyHint="done"
+                enterKeyHint="next"
                 placeholder="0"
                 currency={draft.currency}
                 value={receiptTotal !== null
@@ -662,7 +662,12 @@ function EditEntryScreen() {
 
             <div className={`field${flashClass(refusedFields.title)}`} data-refuse="title" onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
+              {/* The last field on this screen unless "as amounts" is the tab
+                  showing, which is the only one that draws fields of its own —
+                  the date between them is a spinner the confirm key can't
+                  walk into (`landsOn`, lib/viewport.ts). */}
               <input id="what" value={draft.description}
+                enterKeyHint={!transfer && activeTab === "exact" ? "next" : "done"}
                 aria-label={transfer ? copy.form.note : copy.form.what}
                 placeholder={transfer ? copy.form.note : copy.form.whatPlaceholder}
                 onChange={(e) => patch({ description: e.target.value })} />

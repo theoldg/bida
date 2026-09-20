@@ -10,6 +10,7 @@ import { useScrollMemory } from "../lib/scroll-memory";
 import { goUp, goBack } from "../lib/nav";
 import { keepsFocus } from "./bits";
 import { KeylessLink } from "./keyless-link";
+import { walkFields } from "./viewport";
 import { Icon, type IconName } from "./icons";
 
 /**
@@ -59,11 +60,16 @@ export function Body({ children }: { children: ReactNode }) {
  * The one scrolling middle of a screen — and the only scroller in the app the
  * browser would otherwise forget, since it is a div rather than the document.
  * `lib/scroll-memory.ts` is what puts it back where you left it.
+ *
+ * It is also the scope the confirm key walks: a screen's fields in the order
+ * they are laid out, from whichever of them was drawn promising "next"
+ * (`walkFields`, components/viewport.tsx). A dialog is deliberately not one —
+ * its Enter submits the card, which is the answer it was already giving.
  */
 export function Scroll({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   useScrollMemory(ref);
-  return <div className="scroll" ref={ref}>{children}</div>;
+  return <div className="scroll" ref={ref} onKeyDown={walkFields}>{children}</div>;
 }
 
 /**

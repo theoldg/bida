@@ -7,7 +7,7 @@ pnpm check        # links · rules · version · typecheck · tests · export bu
 pnpm verify       # every browser check against a real build, together, ~50s
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
-pnpm keyboard     # the act a list of names is typed for, against an open keyboard
+pnpm keyboard     # what a phone keyboard does to a form: the act under it, the confirm key
 pnpm offline      # just every screen with the network cut
 pnpm stall        # what a screen does when reading this phone's database stops working
 pnpm homescreen   # the invite an iOS icon is added with, both ends of it
@@ -400,7 +400,7 @@ reopens the group last open, while backing out of that one must leave the list
 alone — and must be remembered, so the launch after it lands on the list until
 the group is opened again (`apps/web/lib/launch.ts`).
 
-## `pnpm keyboard` — the act under the add row, against an open keyboard
+## `pnpm keyboard` — a form under a phone keyboard
 
 Four screens ask for people in that same row, and each ends on the act those
 people are for — Create, "Continue as …", the scan pair, "Change who you are" —
@@ -419,6 +419,13 @@ field *and* the act still above the top of the keys. The list is ten people
 deep on every screen on purpose: three fit above a keyboard whatever the scroll
 does, and a check that passes with the fix deleted is worse than none — with
 `--act-below` at zero, all five assertions fail.
+
+The confirm key is the other half, and it needs no faking — a headless browser
+presses Enter like any other. It walks the two screens the fix is really for,
+the split editor's "as amounts" and `/g/payers`, one press per person down a
+column of ten, and asserts what a thumb would notice: every row reached, each
+one once, and the last row staying put rather than wrapping round to the top
+([frontend.md](frontend.md#state)).
 
 ## `pnpm stall` — a read of this phone's database that dies
 

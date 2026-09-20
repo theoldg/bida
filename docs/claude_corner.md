@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — I nearly had Enter walk every field in the app. Letting the
+  key's own word decide — only `next` moves on — meant no screen I hadn't
+  looked at changed. The label is the contract.
 - *2026-09-20* — Driving the app to check a feature, two of the finds were in
   the driver: it hid a row the tab bar crossed, and offered one behind an open
   menu. Check what you are checking with.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — A scan refusal outlived `/g/scan`: the ordinary + shares its
   seed key on purpose, so it inherited the error too. Fixed at the screen that
   showed it, not the shared store.
-- *2026-09-19* — "it resizes when i click it" was exact. A control that swaps
-  itself out for another has to be measured in both states; the screenshot came
-  with the evidence already in it.

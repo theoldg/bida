@@ -224,7 +224,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
           {showReceipt && receipt ? (
             <ReceiptPanel {...receipt} members={members} me={me} currency={currency}
               shares={shares} included={included} />
-          ) : members.map((m) => {
+          ) : members.map((m, i) => {
             const on = included.has(m.id);
             // Where the right-hand side is only a read-out — the tick/plus of
             // "evenly", a legacy percentage — the toggle button swallows it, so
@@ -258,7 +258,12 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 ) : null}
                 {/* Never disabled. Every row can be typed into, whoever any
                     other tab has ticked: typing is how somebody joins this one. */}
+                {/* A column of figures is typed down, not tapped between:
+                    the confirm key takes the caret to the next person, and
+                    the last row — the end of the screen's fields — says
+                    "done" instead (`walkFields`, components/viewport.tsx). */}
                 <MinorAmountInput id={fieldId} className="bignum splitin"
+                  enterKeyHint={i === members.length - 1 ? "done" : "next"}
                   aria-label={copy.split.amountFor(m.name)}
                   currency={currency}
                   valueMinor={spec.amounts[m.id] ?? 0}

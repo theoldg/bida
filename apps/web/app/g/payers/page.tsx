@@ -134,9 +134,13 @@ function PayersScreen() {
 
         <Scroll>
           <div className="rows">
-            {data.members.map((m) => {
+            {data.members.map((m, i) => {
               const on = (spec[m.id] ?? 0) > 0;
               const fieldId = `payer-${m.id}`;
+              // A column of figures is what a confirm key is for: it walks to
+              // the next person rather than closing the keyboard between each
+              // one. The last row has nowhere to go, and says so.
+              const last = i === data.members.length - 1;
               return (
                 <div key={m.id} className={`row${m.id === data.me ? " mine" : ""}`}>
                   <label htmlFor={fieldId}
@@ -164,6 +168,7 @@ function PayersScreen() {
                         aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
                     ) : null}
                     <MinorAmountInput id={fieldId} className="bignum splitin"
+                      enterKeyHint={last ? "done" : "next"}
                       aria-label={copy.payers.contribution[voice](m.name)}
                       currency={currency}
                       valueMinor={spec[m.id] ?? 0}

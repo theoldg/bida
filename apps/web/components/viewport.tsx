@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
-import { gapOf, isTyping, reachOf } from "../lib/viewport";
+import { gapOf, isTyping, landsOn, movesOn, reachOf } from "../lib/viewport";
 
 /**
  * Bring a field into view, and whatever it says has to come up with it.
@@ -130,4 +130,57 @@ export function MeasureViewport() {
     };
   }, []);
   return null;
+}
+
+/**
+ * The confirm key, walking a screen's fields.
+ *
+ * Hung on `.scroll` rather than on each field, because the next field is
+ * rarely a sibling of the one being left: on the entry form it is two boxes
+ * down, and in the split editor it is the next member's row. The screen is the
+ * scope, so the order is the one a thumb meets them in and a field added to a
+ * form between two others needs nothing said here.
+ *
+ * **Only a field wearing `enterKeyHint="next"` is walked from** (`movesOn`):
+ * the key's word is the opt-in, so nothing moves on a screen that never asked.
+ * Where it asked and there is nothing left to move to — a tab switched while
+ * the caret sat in the field above it — the field is put down instead, which
+ * is what the "done" it should have been drawn with would have done anyway.
+ *
+ * The caret goes to the *end* of what is already there: a field entered at
+ * character nought turns a typed "5" into "512.00", and the column of amounts
+ * this walks is full of figures somebody is replacing.
+ */
+export function walkFields(e: React.KeyboardEvent<HTMLElement>) {
+  const from = e.target;
+  if (!(from instanceof HTMLElement)) return;
+  if (!movesOn({
+    key: e.key, hint: from.enterKeyHint, isComposing: e.nativeEvent.isComposing,
+    altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey,
+  })) return;
+  // Nothing else may read this press: a field inside a `<form>` would submit
+  // it, and the promise the key made is to move on instead.
+  e.preventDefault();
+  const fields = [...e.currentTarget.querySelectorAll("input, textarea")].filter(walkable);
+  const next = fields[fields.indexOf(from) + 1];
+  if (!next) { from.blur(); return; }
+  next.focus();
+  if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) {
+    // Guarded: `setSelectionRange` throws on the input types that have no
+    // caret to place, and one of those is a field away from being added here.
+    try { next.setSelectionRange(next.value.length, next.value.length); } catch { /* no caret */ }
+  }
+  bringIntoView(next);
+}
+
+/** Whether the caret can be put in this one (`landsOn`, lib/viewport.ts). */
+function walkable(el: Element): el is HTMLElement {
+  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
+  return landsOn({
+    typing: isTyping(el),
+    type: el instanceof HTMLInputElement ? el.type : "textarea",
+    disabled: el.disabled,
+    readOnly: el.readOnly,
+    drawn: el.getClientRects().length > 0,
+  });
 }
