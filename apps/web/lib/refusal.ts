@@ -10,11 +10,12 @@ import { useState } from "react";
  * spent for exactly that long — a press that does nothing has to look like it
  * landed (docs/design-system.md). Both numbers are load-bearing.
  *
- * `live` is the one that is easy to leave out. A `::placeholder` is not
- * rendered while the field has text, so typing into a refused field and
- * emptying it again *creates the pseudo-element afresh* — and a fresh
- * pseudo-element starts any animation still declared on it. The class has to
- * come off when the flash ends, not sit there waiting to be replayed.
+ * `live` is the one that is easy to leave out. The class is what says a
+ * refusal is still on screen, and the control that was pressed is spent for
+ * exactly that long, so it has to come off when the flash ends rather than sit
+ * there — a class left on is a button greyed for good. It is also what lends a
+ * `::placeholder` the ink it blooms in (`globals.css`), which nothing should
+ * keep past the 600ms it was lent for.
  *
  * `n` is the restart. A second refusal while the first is still running would
  * change nothing in the class list, so the browser would not replay it; the
@@ -94,10 +95,11 @@ export function useRefusal(): {
     flash: flashClass(state),
     live: state.live,
     refuse: () => setState(refused),
-    // Only the control's own animation counts: a placeholder is a
-    // pseudo-element on the same clock, and `pseudoElement` is how an
-    // animation event says which of the two it is. No event at all is the fix
-    // arriving early, and that always counts.
+    // Only the control's own animation counts. Nothing on a pseudo-element
+    // can report anyway — Blink runs no animation declared on one — but a
+    // `pseudoElement` event from anywhere else would end a flash that is still
+    // running, so it is turned away here. No event at all is the fix arriving
+    // early, and that always counts.
     onFlashEnd: (e) => {
       if (e?.pseudoElement) return;
       setState((r) => ({ ...r, live: false }));

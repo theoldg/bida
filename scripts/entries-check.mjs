@@ -13,6 +13,7 @@
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, pick, newGroup, openGroupsList, settle }
   from "./lib/harness.mjs";
+import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
 ensureBuild();
 const { base, close } = await serveExport();
@@ -670,10 +671,9 @@ report((await page.locator(".entrytitle").innerText()) === "Convert me",
   "and the round trip lands back on an ordinary expense");
 
 // ---- a refused Save points at the field, once -------------------------
-// The flash has to end and take its class with it. A `::placeholder` is not
-// rendered while the field has text, so a class left on a settled field gets
-// its animation started again the moment the field goes back to empty — which
-// flashed a refusal at somebody who had only deleted a title.
+// The flash has to end and take its class with it: the class is also what
+// spends Save for the length of a refusal, so one left on a settled field is a
+// button greyed for good (lib/refusal.ts).
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.waitForSelector("input.amount");
 const titleField = page.locator("#what").locator("xpath=..");
@@ -708,6 +708,29 @@ await page.locator("#what").fill("");
 await settle(page, 80);
 report(!/flash-/.test(await titleField.getAttribute("class")),
   "emptying a field again is not a refusal");
+
+// ---- a refused Done blooms the rows, not the words on them --------------
+// The grid points at every line nobody has been given, and it points with the
+// whole row — the class is on the `<tr>`, because most of a row is the columns
+// of dots and the two lines of text at its left end were a refusal you had to
+// be looking for (globals.css, "save refusal").
+await stubScan(page, "cafe-clock");
+await page.goto(`${base}/g/entry/edit?id=${g}`);
+await page.waitForSelector("input.amount");
+await page.locator('input[aria-label="Upload a receipt photo"]')
+  .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
+await page.getByRole("link", { name: /(Assign|Edit) who.had.what/ }).click();
+await page.waitForURL(/entry\/items/);
+await page.waitForSelector(".itemtable tbody tr");
+await page.getByRole("button", { name: "Done" }).click();
+await settle(page, 150);
+const bloomed = page.locator(".itemtable tbody tr[class*='flash-']");
+report(await bloomed.count() > 0, "a refused Done blooms the rows nobody has been given");
+report(await page.locator(".itemtable tbody tr[class*='flash-'] .itemname").count() > 0,
+  "and the words on them go with the row they are on");
+await settle(page, 900);
+report(await page.locator(".itemtable tbody tr[class*='flash-']").count() === 0,
+  "and that flash ends too, so Done comes back");
 
 // ---- a screen whose draft is gone hands back -------------------------
 // The entry draft lives in memory only (lib/draft.ts), so every way of

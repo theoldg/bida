@@ -97,6 +97,12 @@ textarea { resize: vertical }
      at each use: `var()` inside a custom property resolves against the `--hl`
      that won on `:root`, so this follows the theme without a dark copy. */
   --hl-row:color-mix(in srgb, var(--hl) 30%, transparent);
+  /* The ground a refusal fills where a solid `--debit` would swallow what sits
+     on it: a bill's row, which carries the dots and the ×N, and the plate under
+     the amount, which carries 42px of figure. Derived here like `--hl-row`, and
+     opaque rather than a tint — the grid's label column is sticky and the dots
+     pass underneath it, so anything translucent would show them through. */
+  --debit-wash:color-mix(in srgb, var(--debit) 22%, var(--card));
   /* Laid over whatever a control already sits on, so one value covers a row on
      paper and a highlighted row alike. */
   --press:rgba(22,23,26,.09);
@@ -1756,11 +1762,14 @@ button.amtnote:active { background: var(--hl-edge) }
 
 /* ---- save refusal ----
    A tap on Save that can't go through blooms the offending field red and lets
-   it settle back: the amount's underline, the title's box, and the placeholder
-   in either. No keyframe names 0% or 100%, so both ends are taken from the
-   element's own computed style — the field fades back to whatever it actually
-   was, which keeps this correct in both themes and while the field is focused
-   (`.amountfield:focus-within` is brand, not `--rule`).
+   it settle back — **the whole of it**, ground included: a field whose edge
+   went red around unchanged grey writing was the quietest thing in the app,
+   and the one the eye missed. The title's box fills like an ink block, the
+   amount takes a red plate under its figure, and a row of a bill nobody has
+   been given washes end to end. No keyframe names 0% or 100%, so both ends are
+   taken from the element's own computed style — the field fades back to
+   whatever it actually was, which keeps this correct in both themes and while
+   the field is focused (`.amountfield:focus-within` is brand, not `--rule`).
 
    The shape is deliberately lopsided: red in ~90ms, held ~180ms, then ~330ms
    easing back out. An answer to a tap has to arrive fast enough to read as
@@ -1776,60 +1785,79 @@ button.amtnote:active { background: var(--hl-edge) }
    caret, the focus and any IME composition with it.
 
    The form takes the class off again when the flash ends, and that is not
-   tidiness: a `::placeholder` is not rendered while the field has text, so
-   typing a title and deleting it creates the pseudo-element afresh — and a
-   fresh pseudo-element starts any animation still declared on it. Left on,
-   the class turns every emptied field into a refusal it never earned. */
-@keyframes refuse-line-a { 15%, 45% { border-bottom-color: var(--debit) } }
-@keyframes refuse-line-b { 15%, 45% { border-bottom-color: var(--debit) } }
-@keyframes refuse-box-a { 15%, 45% { border-color: var(--debit) } }
-@keyframes refuse-box-b { 15%, 45% { border-color: var(--debit) } }
-/* Text and, through `currentColor`, the icons beside it — a field's
-   placeholder, or the label on a control that is what's missing. */
+   tidiness: the class is also what says the refusal is still on screen, and
+   the button that was pressed is spent for exactly that long
+   (`lib/refusal.ts`). Left on, Save stays greyed for good. */
+/* Text and, through `currentColor`, the icons beside it — the words on a row
+   the grid is pointing at, or the label on a control that is what's missing. */
 @keyframes refuse-text-a { 15%, 45% { color: var(--debit) } }
 @keyframes refuse-text-b { 15%, 45% { color: var(--debit) } }
-/* The amount's placeholder sits at .35 opacity, faint enough that a colour
-   change alone barely registers; it brightens with the red and settles back
-   to whatever the computed style says, same as every other stop here. */
-@keyframes refuse-amount-ph-a { 15%, 45% { color: var(--debit); opacity: .7 } }
-@keyframes refuse-amount-ph-b { 15%, 45% { color: var(--debit); opacity: .7 } }
+/* The same, for writing that is riding on a ground which has itself just gone
+   `--debit`: the label and the text inside a filled field. `--brand-ink` is
+   the one ink token that stays readable on it in both themes (see the fill
+   below), so a filled field's words take that rather than the red. */
+@keyframes refuse-ink-a { 15%, 45% { color: var(--brand-ink) } }
+@keyframes refuse-ink-b { 15%, 45% { color: var(--brand-ink) } }
+/* Where a solid `--debit` would swallow what sits on it, the ground takes
+   `--debit-wash` instead and the ink on top goes red rather than inverting: a
+   bill's row, which carries the assignment dots and the ×N control, and the
+   plate under the amount, which carries the biggest figure on any screen. It
+   is still the whole block going red, which is the point — a line of red text
+   in an unchanged row was a refusal you had to be looking for. */
+@keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash) } }
+@keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash) } }
+/* The amount is a field, so its rule goes with its plate: the figure ends up
+   in a red block capped by the red line it is typed on. */
+@keyframes refuse-plate-a { 15%, 45% {
+  background-color: var(--debit-wash); border-bottom-color: var(--debit) } }
+@keyframes refuse-plate-b { 15%, 45% {
+  background-color: var(--debit-wash); border-bottom-color: var(--debit) } }
 
-/* A filled control has no border to bloom and too little of it is text for a
-   colour change alone to carry the refusal: the "Assign who had what" door and
-   the scan pair are `--brand` on `--brand`, and the rate badge under the
-   amount is 11px of ink on a wash. They fill instead — the whole control goes
-   red and its label rides along. `--debit` runs with `--brand`'s polarity in
-   both themes — dark on the light ground, light on the dark one — so
-   `--brand-ink` is the one ink token that stays readable on top of it, which
-   is why the labels need no animation of their own: they are that token
-   already, and the divider between the pair's halves is mixed from it.
-   `border-color` goes with the fill for the one of the three that has a
-   border: a `--brand` frame left around a red block reads as a control
-   half-refusing. */
+/* **The fill**: the whole box goes red at once, ground, border and label. It
+   is what a control with no edge to bloom has to do — the "Assign who had
+   what" door and the scan pair are `--brand` on `--brand`, and the rate badge
+   under the amount is 11px of ink on a wash — and it is what a field does too,
+   because a red edge around unchanged writing is the smallest signal in the
+   app for the biggest thing it has to say. `--debit` runs with `--brand`'s
+   polarity in both themes — dark on the light ground, light on the dark one —
+   so `--brand-ink` is the one ink token that stays readable on top of it,
+   which is why an ink block's labels need no animation of their own: they are
+   that token already, and the divider between the pair's halves is mixed from
+   it. A field's do (`refuse-ink`), since they start as `--ink` and `--muted`.
+   `border-color` goes with the fill wherever there is one: a `--brand` or
+   `--rule-soft` frame left around a red block reads as a half-refusal. */
 @keyframes refuse-fill-a { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 @keyframes refuse-fill-b { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 
-.amountfield.flash-a { animation: refuse-line-a .6s ease-in-out }
-.amountfield.flash-b { animation: refuse-line-b .6s ease-in-out }
-.field.flash-a { animation: refuse-box-a .6s ease-in-out }
-.field.flash-b { animation: refuse-box-b .6s ease-in-out }
-.amountfield.flash-a input::placeholder { animation: refuse-amount-ph-a .6s ease-in-out }
-.amountfield.flash-b input::placeholder { animation: refuse-amount-ph-b .6s ease-in-out }
-.field.flash-a input::placeholder { animation: refuse-text-a .6s ease-in-out }
-.field.flash-b input::placeholder { animation: refuse-text-b .6s ease-in-out }
-/* And its label. "What:" is the one word that says which field is being
-   refused, and a box blooming around a placeholder that has been typed over —
-   the title is empty on a refusal, but the note beside a transfer needn't
-   be — left the red with nothing to name. */
-.field.flash-a label { animation: refuse-text-a .6s ease-in-out }
-.field.flash-b label { animation: refuse-text-b .6s ease-in-out }
-/* The Items tab refuses the same way a field does, because what is missing
-   there is a step and not a figure: the control that takes it blooms. Both
-   controls that take one are ink blocks — the scan pair and the door to the
-   grid — so both fill, and a control is more than its edge: ground, border,
-   labels and their icons (`currentColor`) all go at once. */
+/* The amount: the plate, the rule under it and the figure on top. The plate is
+   what carries this one — the "0" a refused amount usually shows is a
+   `::placeholder`, and **a `::placeholder` cannot be animated at all** (see
+   below), so the faint nought sits there through the flash while the block
+   under it goes red. The input's own colour is named for the other case: a
+   nought typed in by hand is refused too, and unchanged ink over a red plate
+   reads as a field that half-refused. */
+.amountfield.flash-a { animation: refuse-plate-a .6s ease-in-out }
+.amountfield.flash-b { animation: refuse-plate-b .6s ease-in-out }
+.amountfield.flash-a input { animation: refuse-text-a .6s ease-in-out }
+.amountfield.flash-b input { animation: refuse-text-b .6s ease-in-out }
+/* A field fills whole, the way the ink blocks below do: ground, border, label
+   and whatever is written in it, all in one. The label goes because "What:" is
+   the one word that says *which* field was refused; the input because a
+   refusal can land on a field with writing in it — the note beside a transfer
+   needn't be empty — and grey text on a red ground is the same half-refusal a
+   `--brand` frame around a red block would be. `--brand-ink` on `--debit` is
+   the pair that reads in both themes (`refuse-fill`, below). */
+.field.flash-a { animation: refuse-fill-a .6s ease-in-out }
+.field.flash-b { animation: refuse-fill-b .6s ease-in-out }
+.field.flash-a label, .field.flash-a input { animation: refuse-ink-a .6s ease-in-out }
+.field.flash-b label, .field.flash-b input { animation: refuse-ink-b .6s ease-in-out }
+/* The Items tab fills too, because what is missing there is a step and not a
+   figure: the control that takes it blooms. Both controls that take one are
+   ink blocks — the scan pair and the door to the grid — and a control is more
+   than its edge: ground, border, labels and their icons (`currentColor`) all
+   go at once. */
 /* The last of them is the add row's plus, refused: a quick split's scan pair
    pressed over a name still sitting unfiled in the field points at the plus,
    which is the whole of the fix (components/name-adder.tsx). It fills like the
@@ -1843,29 +1871,50 @@ button.amtnote:active { background: var(--hl-edge) }
 /* The other half of that refusal: the plus is the fix only while a good name
    sits unfiled in the row, and when the field itself is what's wrong the row
    blooms instead — "Add someone" on an empty field, the typed name on one the
-   list already holds (components/name-adder.tsx). A row is neither a field nor
-   a filled control, so it refuses the way a `.field` does, in text: the
-   placeholder carries the empty case and the input's own colour the typed one.
+   list already holds (components/name-adder.tsx). A row is not a box — it is a
+   line of writing between two controls, with no ground of its own to fill — so
+   this is the one refusal that is text alone: the placeholder carries the
+   empty case and the input's own colour the typed one.
    Both are named, and the input's is load-bearing beyond the ink — a
    `::placeholder` animation ends as a pseudo-element event, which every
    refusal handler here ignores on purpose, so the element's own animation is
    what tells a screen its flash is over. */
-.addrow.flash-a .addname, .addrow.flash-a .addname::placeholder {
-  animation: refuse-text-a .6s ease-in-out }
-.addrow.flash-b .addname, .addrow.flash-b .addname::placeholder {
-  animation: refuse-text-b .6s ease-in-out }
+.addrow.flash-a .addname { animation: refuse-text-a .6s ease-in-out }
+.addrow.flash-b .addname { animation: refuse-text-b .6s ease-in-out }
+
+/* **A `::placeholder` cannot be animated.** Blink drops any animation declared
+   on one — the rule parses, the class lands, and nothing whatsoever happens —
+   so the word an empty field shows has to ride on the ink that *can* animate:
+   mixed from `currentColor`, which is the input's own colour mid-flash. 47% of
+   it is `--muted` to the pixel on a light ground, so the swap as the class
+   lands and leaves is invisible; at the peak it is 47% of whatever the refusal
+   made the field, which is a pink light enough to read "Title" through a fill
+   and a red faint enough to read "Add someone" through a bloom. The amount's
+   own "0" keeps its `--muted` and leaves the job to the plate: it sits at .35
+   opacity by design, and no fixed share of `currentColor` can be both that
+   faint at rest and bolder than it at the peak. */
+.field.flash-a input::placeholder, .field.flash-b input::placeholder,
+.addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
+  color: color-mix(in srgb, currentColor 47%, transparent) }
 
 /* A refused Done on the who-had-what grid blooms the button and, with it, every
    line nobody has been given — which is what is actually missing, and the only
-   way to find it again in twenty rows of bill. A row has no field and no filled
-   control to go red, so its own words do: the printed name, the amount under
-   it, and the ×N or portion beside either. All three are named, because the two
-   quiet ones carry their own `--muted` and would not take a colour inherited
-   from the line. */
-.itemtext.flash-a .itemname, .itemtext.flash-a .itemamount, .itemtext.flash-a .itemqty {
-  animation: refuse-text-a .6s ease-in-out }
-.itemtext.flash-b .itemname, .itemtext.flash-b .itemamount, .itemtext.flash-b .itemqty {
-  animation: refuse-text-b .6s ease-in-out }
+   way to find it again in twenty rows of bill. **The whole row goes**, right
+   across the columns of dots: most of a row is empty space, and reddening the
+   two lines of text at its left end was a signal you had to be looking for. It
+   washes rather than fills, because the dots and the ×N have to stay legible
+   through it, and its own words still go `--debit` on top. All three are named,
+   because the two quiet ones carry their own `--muted` and would not take a
+   colour inherited from the line.
+   The class is on the row, not on the name — the name is a button and only
+   half the row — so the cells' own pointer animation has to stop on the way up
+   or it would end the refusal early (components/who-had-what.tsx). */
+.itemtable tr.flash-a > td { animation: refuse-wash-a .6s ease-in-out }
+.itemtable tr.flash-b > td { animation: refuse-wash-b .6s ease-in-out }
+.itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
+.itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
+.itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
+.itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
 
 /* The one exemption from the global reduced-motion clamp, and it is deliberate:
    that query is about movement — transforms, parallax, anything with a vector
@@ -1881,14 +1930,14 @@ button.amtnote:active { background: var(--hl-edge) }
   .field.flash-a, .field.flash-b,
   .btn-pair.flash-a, .btn-pair.flash-b, .btn.flash-a, .btn.flash-b,
   .amtnote.flash-a, .amtnote.flash-b, .iconbtn.flash-a, .iconbtn.flash-b,
-  .amountfield.flash-a input::placeholder, .amountfield.flash-b input::placeholder,
-  .field.flash-a input::placeholder, .field.flash-b input::placeholder,
+  .amountfield.flash-a input, .amountfield.flash-b input,
+  .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,
   .addrow.flash-a .addname, .addrow.flash-b .addname,
-  .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder,
-  .itemtext.flash-a .itemname, .itemtext.flash-b .itemname,
-  .itemtext.flash-a .itemamount, .itemtext.flash-b .itemamount,
-  .itemtext.flash-a .itemqty, .itemtext.flash-b .itemqty {
+  .itemtable tr.flash-a > td, .itemtable tr.flash-b > td,
+  .itemtable tr.flash-a .itemname, .itemtable tr.flash-b .itemname,
+  .itemtable tr.flash-a .itemamount, .itemtable tr.flash-b .itemamount,
+  .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty {
     animation-duration: .6s !important }
 }
 

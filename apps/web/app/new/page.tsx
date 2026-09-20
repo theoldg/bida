@@ -94,9 +94,9 @@ export default function NewGroupPage() {
   /** A refusal is still on screen, so Create is spent for exactly as long. */
   const refusing = REFUSABLE.some((f) => refusedFields[f].live);
   /**
-   * The flash is over. Only the field's own animation counts — the
-   * placeholder is a pseudo-element on the same clock — and no event at all is
-   * the add row saying the fix landed before the animation ran out.
+   * The flash is over. Only the control's own animation counts — a
+   * `pseudoElement` event is somebody else's — and no event at all is the add
+   * row saying the fix landed before the animation ran out.
    */
   const settled = (field: Refusable) => (e?: React.AnimationEvent) => {
     if (e?.pseudoElement) return;

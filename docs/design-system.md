@@ -298,19 +298,23 @@ line is not the only way to say it, and where the fix is a control on screen
 the control blooms and the sentence goes.
 
 A *refused* action points instead of explaining: a Save that can't go through
-blooms whatever stopped it `--debit` and lets it settle back over ~600ms. A
-missing figure blooms its field — the amount's underline, the title's box, and
-the label and placeholder in either — and so does the multi-payer door, which
-has no amount to divide. The label goes red with the box because it is the word
-that says *which* field was refused, and a box around typed-over text has no
-placeholder left to colour. A missing *step* blooms the whole control that takes it, edge, label,
+blooms whatever stopped it `--debit` and lets it settle back over ~600ms —
+**whole, ground included**. A missing figure blooms its field: the title's box
+fills like an ink block, its label and whatever is written in it riding along
+in `--brand-ink`, and the amount takes a red plate under its figure and the
+rule it is typed on. The label goes with the fill because it is the word that
+says *which* field was refused. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
 grid, which is the Items tab's entire complaint now that the red sentence
 under it is gone. Both of those are ink blocks, so both fill (below). Pointing beats wording there, because "scan a receipt" was
 true of every untouched bill and read as a scolding for arriving. Where what is missing is spread over
 several rows, every one of them blooms: a Done on the who-had-what grid points
-at each line nobody has been given, name and amount, which is how you find it
-again in twenty rows of bill. **A refusal nobody can see whole is a press that
+at each line nobody has been given — the whole row, right across the columns of
+dots, since most of a row is empty space and the two lines of text at its left
+end were a refusal you had to be looking for. That one washes rather than
+fills, because the dots and the ×N have to stay legible through it; its words
+still go `--debit` on top. This is how you find the line again in twenty rows
+of bill. **A refusal nobody can see whole is a press that
 did nothing**, so unless one of those rows is fully in view — a name with its
 amount cut off by the fold is not — the nearest is brought into the grid
 smoothly first and the flash runs when it lands (`lib/reveal.ts`, `lib/seek.ts`);
@@ -323,11 +327,13 @@ control that was pressed, not what is missing — it only greys for the length o
 the flash and any travel before it, like Save. A number that
 is not on the form at all blooms the way *to* it and loses its sentence for the
 same reason: a foreign entry whose currency the group has no rate for points at
-its "set rate" badge. **An inverted or edgeless control fills whole**,
+its "set rate" badge. **A control fills whole**,
 ground and border together, rather than colouring its label: that badge, 11px
-on a wash, and the two ink blocks — the who-had-what door and the scan pair.
-A filled ground is the same size of signal as a bloomed edge; a label alone is
-not, and a `--brand` frame left around a red block reads as half a refusal. The
+on a wash, the two ink blocks — the who-had-what door and the scan pair — and
+a field, which has an edge and was the quieter for using it: a red line around
+unchanged grey writing is the smallest signal in the app for the biggest thing
+it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
+frame left around a red block reads as half a refusal. The
 add row's plus fills for the same reason — what Create and a quick split's scan
 pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
 too little ink to be seen going red, so the ground goes instead. **A refusal
@@ -416,8 +422,15 @@ reads as an ordinary assignment.
   (`--hl-row`, `.mine`, `.btn-pair`, the dialog scrim); a browser below that
   draws each one flat, and the scrim opaque.
 - **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
-  way up, so anything else that animates inside it — the scan's own sweep —
-  has to stop the event, or a flash that never ran reads as one that settled.
+  way up, so anything else that animates inside it — the scan's own sweep, the
+  who-had-what grid's pointer inside a bloomed row — has to stop the event, or
+  a flash that never ran reads as one that settled.
+- **A `::placeholder` cannot be animated.** Blink drops any animation declared
+  on one: the rule parses, the class lands, nothing happens. Three refusals
+  were dead on arrival that way for months, visible in no test — a
+  `getComputedStyle(el, "::placeholder")` mid-flash is what says so. What works
+  is animating the *input* and mixing the placeholder from `currentColor`, so
+  the faint word rides the ink that can move (`globals.css`, "save refusal").
 - **An animation taken off mid-flight reports nothing.** The refusal class is
   conditional on what is wrong, so fixing it *during* the flash removes the
   class and no `animationend` ever fires — and a control spent for the length

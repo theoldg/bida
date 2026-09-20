@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — Asked to make three refusals louder, and found one of them had
+  never run at all: a rule that parses is not a rule that fires. Photograph the
+  frame before trusting the stylesheet.
 - *2026-09-20* — "fix the paragraph break nonsense": no paragraph anywhere,
   just a link that counted as one grid item too many. A screenshot names the
   symptom; the layout box names the bug.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Three clean clicks on a button, nothing happening, and the
   cause was a latch those taps armed two screens away. The dead button and the
   lost work were one bug, not two.
-- *2026-09-20* — Three repros on headless Chromium, all green, before they said
-  "Android installed PWA". The platform was the bug. Ask which phone before
-  writing the first repro.

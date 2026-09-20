@@ -544,22 +544,24 @@ export function WhoHadWhat({
                   ? runAssignment(assignments.slice(line.start, line.start + line.count)) : null;
                 const part = folded ? null : runs[line.start] ?? null;
                 const into = folded || part ? null : unfoldableInto(item, draft.currency);
+                // A line nobody has been given blooms with the refusal, and it
+                // is the row that blooms — the ground across every column, not
+                // only the words at its left end (globals.css). The listener is
+                // here for the same reason: the animation runs on the cells,
+                // and an `animationend` reaches the row on the way up.
                 return (
-                  <tr key={line.start} className={part ? "part" : undefined}
-                    ref={(el) => { rowEl.current[line.start] = el; }}>
+                  <tr key={line.start} ref={(el) => { rowEl.current[line.start] = el; }}
+                    onAnimationEnd={refusal.onFlashEnd}
+                    className={`${part ? "part" : ""}${lineMissing[li] ? refusal.flash : ""}` || undefined}>
                     <td className="itemlabel">
                       <div className="itemrow">
-                        {/* A line nobody has been given blooms with the
-                            refusal — name and amount, which is how you find
-                            it again in twenty rows of bill.
-
-                            It is also the button for "everybody had this" and
-                            "nobody did" (`toggleEveryone`): the name is the
-                            one target on the row that isn't a person's
-                            column, so it is where the answer about the whole
-                            row belongs. */}
-                        <button type="button" className={`itemtext${lineMissing[li] ? refusal.flash : ""}`}
-                          onAnimationEnd={refusal.onFlashEnd} {...keepsFocus}
+                        {/* The button for "everybody had this" and "nobody
+                            did" (`toggleEveryone`): the name is the one target
+                            on the row that isn't a person's column, so it is
+                            where the answer about the whole row belongs. The
+                            refusal is on the row above it now, words and
+                            ground together. */}
+                        <button type="button" className="itemtext" {...keepsFocus}
                           onClick={() => toggleEveryone(line.start, folded ? line.count : 1)}
                           aria-label={copy.items.everyone(shown.label)}>
                           <span className="itemname">
@@ -619,7 +621,13 @@ export function WhoHadWhat({
                       return (
                         <td key={m.id}>
                           <button className={`itemcell${held ? " point-hold" : aimed ? pointClass : ""}`}
-                            onAnimationEnd={() => setPoint(null)} {...keepsFocus}
+                            // Stopped on the way up: the refusal listens for
+                            // its flash on the row, and a pointer settling
+                            // inside one would otherwise be read as that flash
+                            // ending — cutting the refusal short and handing
+                            // Done back mid-bloom (docs/design-system.md).
+                            onAnimationEnd={(e) => { e.stopPropagation(); setPoint(null); }}
+                            {...keepsFocus}
                             onClick={() => (run?.detailed
                               ? openForEditing(line.start, line.count, m.id)
                               : folded
