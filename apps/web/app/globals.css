@@ -1608,6 +1608,14 @@ dialog.scrim::backdrop { background: transparent }
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
+/* The tabs' soft rule is invisible against a `.mine` wash, so a first row that
+   is yours reads as joined to the control above it — the same swallowing two
+   stacked highlighted rows suffer (see `.mine` under the ledger). The lid's own
+   line takes the stronger colour, rather than the row growing a border:
+   `.splitlist` clips, so a border pulled up under the tabs is never drawn. */
+.splitbox:has(.splitlist > .splitrow.mine:first-child) .seg {
+  border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent);
+}
 .splitrow { display: flex; align-items: center; gap: 10px; padding: 7px 12px;
   border-bottom: 1px solid var(--rule-soft); position: relative }
 .splitin { width: 82px; text-align: right; background: transparent; border: 0;

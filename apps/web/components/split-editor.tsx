@@ -413,9 +413,9 @@ function ReceiptPanel({
            still enabled, and it is the retry. */
         <Failure>{scan.refusal}</Failure>
       ) : (
-        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
-          {copy.scan.terms}
-        </div>
+        /* The same disclosure, drawn the same way, as the scanning screens
+           carry under their own control. */
+        <p className="scanterms" style={{ marginTop: 7 }}>{copy.scan.terms}</p>
       )}
     </div>
   );

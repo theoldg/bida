@@ -148,6 +148,11 @@ tinted, so a row's own green or red stays the only colour on the line — and th
 *only* way you are marked, since a member is always printed by name, never as
 "You".
 
+**The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
+so wherever a washed row abuts something — the row below it, or the split
+editor's mode tabs above it — that boundary is redrawn at 14% ink or it reads as
+one merged block.
+
 **Not on the ledger.** There nearly every entry is one of yours, so a wash on
 each lit the whole screen and marked nothing: ledger rows are the plain rows of
 the groups list. What they did to your balance is said on the figure — `+€45,00`

@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — "there's no line between the tabs and the row": the rule was
+  there, the wash over the row ate it. A missing border is sometimes a border
+  you cannot see.
 - *2026-09-20* — the transfer chip's missing option had a comment saying
   exactly why — and the fix was still to reverse it: two new commands, a
   reseeded split id, an ADR edited.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Driving the app to check a feature, two of the finds were in
   the driver: it hid a row the tab bar crossed, and offered one behind an open
   menu. Check what you are checking with.
-- *2026-09-20* — "this is confusing" — and the code already did the right
-  thing; the dialog promised the opposite. The words were the bug. Read what a
-  screen says before changing what it does.
