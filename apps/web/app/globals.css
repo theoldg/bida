@@ -588,6 +588,10 @@ a { color: inherit; text-decoration: none }
    a class rather than by `!important`: the row is the width of the column here,
    not an inset row in a list. */
 .advanced .addrow.keyrow { margin: 16px 0 0; width: 100% }
+/* Set down from the paragraph it follows, which /install's fold is not: there
+   the fold is an aside to the steps above it, here it is the next thing on the
+   screen, and hard against the lede it read as that paragraph's last line. */
+.advanced .installfold { margin-top: 16px }
 .keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
 /* Locked: the field stays exactly where it was and stops being a field. Muted
    ground rather than the box's paper, so the row reads as filled in rather

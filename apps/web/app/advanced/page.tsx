@@ -127,6 +127,10 @@ export default function AdvancedPage() {
  * or don't care where one comes from, and the free tier's own fine print
  * (a request cap, and training on what it reads) is a footnote next to the
  * row above it, not a reason to hold this screen open longer.
+ *
+ * Set down from the paragraph above it rather than trailing off the end of it,
+ * so the shut fold reads as the next thing on the screen and not as that
+ * paragraph's last line.
  */
 function FreeKeyFold() {
   const [open, setOpen] = useState(false);
@@ -138,14 +142,15 @@ function FreeKeyFold() {
         {key.where}
       </button>
       {open ? (
-        <>
-          <div className="aboutlinks">
-            <a className="aboutlink" href={key.whereUrl} target="_blank" rel="noreferrer noopener">
-              <Icon name="link" size={14} />{key.where}
-            </a>
-          </div>
-          <p>{key.freeTier}</p>
-        </>
+        // One paragraph, the link set in its last sentence: an `.aboutlink`
+        // row under a fold whose own button already says where to go was the
+        // same sentence twice, once as a heading (app/about/page.tsx).
+        <p>
+          {key.freeTier}{" "}
+          {key.site.lede}
+          <a href={key.whereUrl} target="_blank" rel="noreferrer noopener">{key.site.link}</a>
+          {key.site.tail}
+        </p>
       ) : null}
     </div>
   );

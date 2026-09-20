@@ -431,6 +431,10 @@ export const copy = {
       /** The free tier's own terms, not ours — worth re-checking before
           editing (docs/receipt-scanning.md#trust-and-what-were-accepting). */
       freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
+      /** Split around the link, the way /about's warning rows are: the door out
+          is a word in the sentence that dates the terms, not a row of its own
+          repeating the line that opened the fold. */
+      site: { lede: "Check their ", link: "website", tail: " for what it allows today." },
       placeholder: "Paste a Gemini API key",
       /** The plus files the key, the way the plus on a name files a name. */
       use: "Use this key",
