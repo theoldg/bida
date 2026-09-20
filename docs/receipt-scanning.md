@@ -252,11 +252,16 @@ would be the same thing twice.
 is what makes the bar a clock on the reading: close the box mid-read and the
 draft still fills; open it again and the bar is where the reading actually is. A
 refusal leaves the box standing with the text intact, because unlike a bad
-photograph a bad bill is fixed where it was typed — and **closing on it takes it
-with you**: the message was read where the fix was, so it doesn't follow you out
-and sit under the control on the screen behind, which never rang. Only a typed
-reading's; a photograph's refusal belongs to the screen that took it, and the box
-merely stood over it.
+photograph a bad bill is fixed where it was typed.
+
+**And it is said there and nowhere else.** Whose refusal a reading's is gets
+decided once, in the hook: the surface it was started from carries the sentence
+and the other carries nothing (`ReceiptScan.refusal`, which is null while the
+last reading was typed). The screen behind the box never rang, so printing it
+under its control too was the same message twice — and one that then stayed up
+after the box was shut, over a control nobody had touched. The mirror holds: a
+photograph refused before the box was opened belongs to the screen that took it,
+and is not repeated over the top of it.
 
 ## The envelope, and who owns it
 

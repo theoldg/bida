@@ -12,9 +12,7 @@ import {
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
-import {
-  beginScan, clearScan, failScan, getLiveScan, useLiveScan, type LiveScan,
-} from "../lib/scan/live";
+import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
 import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
@@ -47,6 +45,16 @@ function scanErrorText(err: unknown, medium: ScanMedium = "photo"): string | nul
 export interface ReceiptScan {
   /** The scan in flight or last refused, straight off the store. Undefined while idle. */
   live: LiveScan | undefined;
+  /**
+   * The refusal **this screen** says under its control, in words, or null.
+   *
+   * Not the same thing as `live.error`: a typed bill's refusal is said in the
+   * box it was typed into and nowhere else, so it is null here. The screen
+   * behind that box never rang — the sentence there would be the same one
+   * twice, and still standing after the box is shut. Every screen reads this
+   * rather than the store, so there is one answer to *whose refusal is it*.
+   */
+  refusal: string | null;
   /** Nothing can be sent without the group's secret, so the control asks this. */
   disabled: boolean;
   openCamera: () => void;
@@ -234,24 +242,18 @@ export function useReceiptScan(
   const [typing, setTyping] = useState(false);
 
   /**
-   * Shut the box — and take its refusal with it.
-   *
-   * A bill the model wouldn't read is said inside the dialog, where the fix is,
-   * and that is where it was read. Leaving on the back of it is having seen it,
-   * so the sentence doesn't follow you out and sit under the control on the
-   * screen behind, which never rang. **Only a typed reading's**: a photograph's
-   * refusal belongs to the screen that took it, and the box merely stood over it
-   * for a moment.
+   * Whose refusal it is, decided in one place: the surface the reading was
+   * started from says it, and the other says nothing at all. A bill typed into
+   * the box is fixed in the box, so that is where the sentence goes; a
+   * photograph belongs to the screen that took it, which is also the only
+   * surface still standing afterwards.
    */
-  const closeTyping = useCallback(() => {
-    setTyping(false);
-    if (!groupId) return;
-    const last = getLiveScan(groupId);
-    if (last?.state === "error" && last.medium === "text") clearScan(groupId);
-  }, [groupId]);
+  const said = live?.state === "error" ? live.error ?? copy.scan.failed : null;
+  const typed = live?.medium === "text";
 
   return {
     live,
+    refusal: typed ? null : said,
     disabled: !scanAs,
     openCamera: () => cameraInput.current?.click(),
     openLibrary: () => libraryInput.current?.click(),
@@ -265,11 +267,11 @@ export function useReceiptScan(
           style={{ display: "none" }} onChange={(e) => void onPhoto(e)}
           aria-label={copy.scan.library} />
         {typing ? (
-          <BillTextDialog live={live} onRead={readText}
+          <BillTextDialog live={live} refusal={typed ? said : null} onRead={readText}
             // Read at open, not held: the box shows what the draft carries now,
             // which a photograph in between will have cleared.
             initial={(groupId ? getDraft(groupId)?.receiptText : null) ?? ""}
-            onClose={closeTyping} />
+            onClose={() => setTyping(false)} />
         ) : null}
       </>
     ),

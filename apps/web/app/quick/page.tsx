@@ -177,8 +177,7 @@ export default function QuickPage() {
 
             {/* No "try again" beside either message: the control above is
                 still enabled, and it is the retry. */}
-            {scan.live?.state === "error"
-              ? <Failure>{scan.live.error ?? copy.scan.failed}</Failure> : null}
+            {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
             {noLines && scan.live?.state !== "scanning"
               ? <Failure>{copy.quick.noLines}</Failure> : null}
 

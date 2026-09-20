@@ -21,13 +21,16 @@ import type { LiveScan } from "../lib/scan/live";
  * `LiveScan` the screen behind it is also watching, so the bar is a clock on the
  * reading: close it mid-read and the draft still fills, reopen it and the bar is
  * where the reading actually is. A refusal keeps the dialog standing with the
- * text intact — unlike a bad photograph, a bad bill is fixed where it was typed.
+ * text intact — unlike a bad photograph, a bad bill is fixed where it was typed,
+ * which is also why this is the one place it is said.
  *
  * **Rendered by `useReceiptScan`, never by a screen**: a dialog whose own answer
  * moves the panel around it gets unmounted mid-sentence.
  */
-export function BillTextDialog({ live, initial = "", onRead, onClose }: {
+export function BillTextDialog({ live, refusal, initial = "", onRead, onClose }: {
   live: LiveScan | undefined;
+  /** This box's own refusal, in words, or null — the hook decides whose it is. */
+  refusal: string | null;
   /** What was typed last time, off the draft. Editing beats retyping. */
   initial?: string;
   onRead: (text: string) => Promise<void>;
@@ -72,11 +75,13 @@ export function BillTextDialog({ live, initial = "", onRead, onClose }: {
             {left <= 0 ? copy.scan.typeIn.full : copy.scan.typeIn.left(left)}
           </div>
         ) : null}
-        {/* The reading's own refusal, said where the fix is. The screen behind is
-            showing the same sentence; this one is the copy somebody can act on
-            without closing anything. */}
-        {live?.state === "error"
-          ? <Failure>{live.error ?? copy.scan.failed}</Failure> : null}
+        {/* A typed bill's refusal, said where the fix is — and said **only**
+            here: the screen behind never rang this reading, so it does not
+            carry the sentence (`ReceiptScan.refusal`). Shut the box and the
+            message goes with the text it was about. A photograph refused
+            before the box was opened is the screen's, and is not repeated
+            over it. */}
+        {refusal ? <Failure>{refusal}</Failure> : null}
         <div className="drow">
           {/* Enabled while the model reads, and it only closes the box: the
               reading outlives the dialog the way a scan outlives the tab that

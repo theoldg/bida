@@ -95,6 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — My iOS fix destroyed Android: `click` is a touch's last event,
   so answering the lift left `mousedown` to land on the dialog just opened and
   shut it. Ask what is still to come.
-- *2026-09-20* — "i have already seen the error message in the dialog: don't
-  display it" — a refusal read where the fix is has been read. Clearing it on
-  the way out is the fix, not saying it twice.
+- *2026-09-20* — "never put the text there in the first place" — I had cleared
+  the duplicate message on the way out instead. Don't tidy up after something
+  that shouldn't be said at all.

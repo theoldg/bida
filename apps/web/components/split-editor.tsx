@@ -392,8 +392,8 @@ function ReceiptPanel({
           {/* Nothing to refuse here: with a bill on screen the outstanding
               step is the door above, not another photograph. */}
           <ScanPair scan={scan} register="xs" />
-          {scan.live?.state === "error" ? (
-            <Failure>{scan.live.error ?? copy.scan.failed} {copy.scan.keptOld}</Failure>
+          {scan.refusal ? (
+            <Failure>{scan.refusal} {copy.scan.keptOld}</Failure>
           ) : null}
         </div>
       </div>
@@ -408,10 +408,10 @@ function ReceiptPanel({
       <div data-refuse="receipt">
         <ScanPair scan={scan} register="s" flash={flash} onFlashEnd={onFlashEnd} />
       </div>
-      {scan.live?.state === "error" ? (
+      {scan.refusal ? (
         /* No "try again" beside the message: the control is right above it,
            still enabled, and it is the retry. */
-        <Failure>{scan.live.error ?? copy.scan.failed}</Failure>
+        <Failure>{scan.refusal}</Failure>
       ) : (
         <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 7 }}>
           {copy.scan.terms}

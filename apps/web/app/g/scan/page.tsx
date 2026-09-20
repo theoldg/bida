@@ -114,8 +114,7 @@ function ScanScreen() {
 
               {/* No "try again" beside the message: the control above it is
                   still enabled, and it is the retry. */}
-              {scan.live?.state === "error"
-                ? <Failure>{scan.live.error ?? copy.scan.failed}</Failure> : null}
+              {scan.refusal ? <Failure>{scan.refusal}</Failure> : null}
 
               <p className="scanterms">{copy.scan.terms}</p>
             </div>
