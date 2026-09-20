@@ -510,6 +510,7 @@ a { color: inherit; text-decoration: none }
 .warnlist li { display: grid; grid-template-columns: auto 1fr; gap: 9px;
   font-size: 13px; line-height: 1.5; color: var(--ink-2) }
 .warnlist li svg { color: var(--debit); margin-top: 3px }
+.warnlist + p { margin-top: 10px }
 /* The two buttons to find, above the recording. Numbered by the list itself — a counter
    rather than a marker, so the number sits in the same mono column as the icon
    beside it and a wrapped line indents under the text, not under the digit. */

@@ -78,7 +78,7 @@ unlimited scans, bida is relatively easy to [self-host](SELFHOSTING.md).
 
 ## Feedback welcome (and needed)
 
-bida is very young and only tested on a couple of devices. Drop me a bug report, a PR, or an email!
+bida is very young and only tested on a couple of devices. Drop me a bug report, a PR, or an [email](mailto:teodor.lamort@gmail.com)!
 
 ## Licence
 
