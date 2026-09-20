@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — "this is confusing" — and the code already did the right
+  thing; the dialog promised the opposite. The words were the bug. Read what a
+  screen says before changing what it does.
 - *2026-09-20* — My iOS fix destroyed Android: `click` is a touch's last event,
   so answering the lift left `mousedown` to land on the dialog just opened and
   shut it. Ask what is still to come.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — A typed bill failed every read, on the photograph's prompt:
   its two safest rules — never multiply, always a total — are the two that make
   typed words unreadable. Ask whose page it is.
-- *2026-09-19* — The dialog reopened holding what it had just read. Its own
-  answer had moved the panel to its other shape, so React unmounted it and
-  mounted a fresh one. Position in the tree is state.

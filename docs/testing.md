@@ -465,8 +465,9 @@ folds identically). What this check asks is what the seed cannot: that
 `/demo` lands on a populated ledger rather than a claim gate or an empty
 state, that the balances do not cancel, that the mark is at its head, that the
 cantina tab opens onto the bill it was itemised from, that **Copy invite link**
-refuses out loud, and that clearing takes the group off the phone while the
-address brings the same one back, entry for entry.
+refuses out loud, and that clearing a demo somebody has added an entry to
+takes the whole group off the phone while the address lays the shipped story
+down again — entry for entry, and without the one that was added.
 
 It then says this phone holds an older build's seed — a `demoSeed` of its own
 invention, written straight into the device record — and reopens the address,

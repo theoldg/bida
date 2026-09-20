@@ -744,7 +744,9 @@ export const copy = {
     title: "Demo group: not synced",
     /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
-    clearBody: "This takes the demo off this phone. Opening the address again brings it back, exactly as it is now.",
+    /** Not "brings it back": the seed is deterministic, so what the address
+     *  lays down is the story as shipped, not the one you played with. */
+    clearBody: "This wipes the demo off the phone, along with anything you did in it. The address lays down a fresh one.",
     /** The one genuinely broken thing: no key, so no invite link to hand over. */
     noLink: {
       title: "No invite link",

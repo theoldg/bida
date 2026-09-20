@@ -14,8 +14,9 @@
  * the demo would carry on looking perfect.
  *
  * Then the two ends of it: Invite has to refuse out loud rather than go
- * missing, and clearing has to take the group off the phone and leave the
- * address able to bring it back.
+ * missing, and clearing has to take the group off the phone — the entries you
+ * added along with the seed's — while leaving the address able to lay a fresh
+ * demo down.
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter } from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
@@ -158,6 +159,21 @@ report(await page.getByText("No invite link").count() === 1,
 await page.getByRole("button", { name: "Close" }).click();
 
 // ---- and the way out ----------------------------------------------------
+// Play with it first. A demo nobody touched would clear and reopen identically
+// whether the address re-seeds or merely un-hides what was there, so the only
+// version of this worth checking is one carrying a change of the person's own
+// — which is also the one the dialog makes a promise about.
+await page.goto(`${base}/g/entry/edit?id=${groupId}`);
+await page.locator("input.amount").fill("12");
+await page.locator("#what").fill("Droid oil");
+await page.getByRole("button", { name: "Save" }).click();
+await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+await page.waitForFunction(
+  (n) => document.querySelectorAll(".rows .row").length > n, rows, { timeout: PATIENCE },
+);
+report(await page.getByText("Droid oil").count() > 0,
+  "the demo takes an entry of your own, like any other group");
+
 await openMenu();
 await menuItem("Clear the demo").click();
 await page.getByRole("button", { name: "Clear the demo" }).click();
@@ -169,7 +185,8 @@ report(await page.getByText("Passage to Alderaan").count() === 0,
   "clearing takes it off the phone, not merely off the list");
 
 // Deterministic seed, so the address is also the reset: reopening builds the
-// same group again rather than a second one beside it.
+// story as shipped, rather than the one that was played with or a second copy
+// beside it. This is what the clear dialog promises, in as many words.
 const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
@@ -177,6 +194,8 @@ await page.waitForSelector(".rows .row");
 report(new URL(page.url()).searchParams.get("id") === "demodemodemo"
   && await page.locator(".rows .row").count() === rows,
   "and the address brings the same group back, entry for entry");
+report(await page.getByText("Droid oil").count() === 0,
+  "as it was shipped: the entry added before clearing is not in it");
 report((await keysHeld(page)).length === 0, "still with no key to its name");
 
 // ---- and it does not accuse itself of being stuck ----------------------
