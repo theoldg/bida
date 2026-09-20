@@ -180,7 +180,13 @@ demanded. Four things follow from fixing it:
   to; `unitAmount` is the price of one, beside a `quantity`. The model fills
   whichever the bill gives and never both, and `lineMinor` does the
   multiplication in integer minor units, where it is tested — asking a model for
-  a figure the page does not hold is what makes it invent one.
+  a figure the page does not hold is what makes it invent one. Only the
+  multiplied one is written out: `readBill` keeps the model's own string for a
+  line the bill priced outright, so `checkScan` can refuse an unreadable one
+  and show what arrived. The grid prints it through `priced` (`lib/format.ts`)
+  rather than as it came, since "cola 10" beside a multiplied "39.00" is one
+  column in two formats — and the string still survives wherever it isn't a
+  figure.
 - **A missing total is ordinary**, not a refusal. See
   [What a reading is checked against](#what-a-reading-is-checked-against).
 - **A line with more numbers than the words explain is a refusal, not a

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
   bare, byWhen, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
-  initials, rateText, splitFooter, usd, whenLabel,
+  initials, priced, rateText, splitFooter, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -78,6 +78,33 @@ describe("bare", () => {
 
     expect(parseMinor(minorToDecimalString(123450, "EUR"), "EUR")).toBe(123450);
     expect(parseMinor(minorToDecimalString(25000, "JPY"), "JPY")).toBe(25000);
+  });
+});
+
+describe("priced", () => {
+  it("writes a line's figure the way the column around it is written", () => {
+    // The typed door's ordinary answer: a bill saying "cola 10" gives the
+    // model "10", while the line beside it — three at 13 — is multiplied out
+    // to "39.00" by `lineMinor`. Printed as they arrive, one column holds
+    // both (found driving `pnpm drive` against the `skewers` fixture).
+    expect(priced("10", "EUR")).toBe("10.00");
+    expect(priced("39.00", "EUR")).toBe("39.00");
+    expect(priced("1234.5", "EUR")).toBe("1,234.50");
+    expect(priced("1 234,50", "EUR")).toBe("1,234.50");
+    expect(priced("500", "JPY")).toBe("500");
+    expect(priced("5.5", "TND")).toBe("5.500");
+    // Finer than the currency goes is not a refusal here: `lineMinor` parses
+    // the same string and rounds it the same way, so the figure shown is the
+    // one the line actually contributes.
+    expect(priced("1.005", "EUR")).toBe("1.01");
+  });
+
+  it("hands back what arrived when what arrived is not a figure", () => {
+    // `readBill` keeps the model's own string so `checkScan` can refuse it
+    // and the grid can show what came back — so the refusal has to survive
+    // the formatting, not be swallowed by it.
+    expect(priced("", "EUR")).toBe("");
+    expect(priced("??", "EUR")).toBe("??");
   });
 });
 

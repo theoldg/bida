@@ -1,5 +1,5 @@
 import {
-  formatMinor, formatRate, startOfLocalDay,
+  formatMinor, formatRate, parseMinor, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
 } from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
@@ -65,6 +65,21 @@ export function usd(minor: number): string {
  */
 export function bare(minor: number, currency: CurrencyCode): string {
   return formatMinor(minor, currency, { showCurrency: false });
+}
+
+/**
+ * A bill line's figure, as the grid prints it beside the label.
+ *
+ * **What arrives here is the model's own string, not a number.** `readBill`
+ * keeps it verbatim for the line a bill priced outright, because `checkScan`
+ * refuses an unreadable one and has to show what came back — only a
+ * multiplied line is written out (`core/scan.ts`). So a model answering "10"
+ * where the rest of the bill says "39.00" used to put an unformatted figure
+ * in a column of money. Reading it and writing it again is this file's job,
+ * and the string survives exactly where it still isn't a figure.
+ */
+export function priced(amount: string, currency: CurrencyCode): string {
+  try { return bare(parseMinor(amount, currency), currency); } catch { return amount; }
 }
 
 /**

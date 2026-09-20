@@ -11,7 +11,7 @@ import { copy } from "../lib/copy";
 import { useRefusal } from "../lib/refusal";
 import { nearestOutOfView, revealWhole, scrollTarget } from "../lib/reveal";
 import { glide } from "../lib/seek";
-import { bare, distinctInitials } from "../lib/format";
+import { bare, distinctInitials, priced } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
   foldedLine, portions, receiptTotalMinor, runAssignment, unfoldItem, unfoldableInto,
@@ -45,7 +45,9 @@ const inColumn = (
  * It assumes a bill with lines on it; what "no lines" means is the caller's
  * question.
  */
-export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack }: {
+export function WhoHadWhat({
+  title, people, draft, save, format, saysCurrency = true, onDone, onBack,
+}: {
   title: string;
   /** The columns: everybody who might have been at this table. */
   people: readonly { id: string; name: string }[];
@@ -53,6 +55,14 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
   /** Writes the draft back — the grid's rows and the bill's lines are one list. */
   save: (draft: EntryDraft) => void;
   format: (minor: number) => string;
+  /**
+   * Whether the currency may be *said* as well as counted in. A quick split
+   * carries one only for its minor-unit exponent and prints no symbol
+   * anywhere ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
+   * so the tip field's label — the one place here that names it in words —
+   * would otherwise tell a screen reader a currency the screen never shows.
+   */
+  saysCurrency?: boolean;
   /** Done, with the grid written down. */
   onDone: () => void;
   /** Left without keeping it; the bill has been put back as it was found. */
@@ -564,7 +574,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                               the label's own line has a button to share
                               with and a name of any length in it. */}
                           <span className="itemamount">
-                            {shown.amount}
+                            {priced(shown.amount, draft.currency)}
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
                         </button>
@@ -699,7 +709,7 @@ export function WhoHadWhat({ title, people, draft, save, format, onDone, onBack 
                         `receiptTotalMinor` quietly dropped it from the total. */}
                     <AmountInput className="itemamountin" frame="none"
                       currency={draft.currency} placeholder={bare(0, draft.currency)}
-                      aria-label={copy.items.tipLabel(draft.currency)}
+                      aria-label={copy.items.tipLabel(saysCurrency ? draft.currency : null)}
                       value={draft.receiptTip ?? ""}
                       onChange={(text) => {
                         setTouched(true);
