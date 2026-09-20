@@ -134,10 +134,16 @@ path.
 
 ## Typing a bill in
 
-**The scan control's third door**, on every screen that reads a bill. A box, the
+**The scan control's third door**, on every screen that reads a bill but
+`/g/scan`. A box, the
 bill pasted or typed into it however it is written, and the same filled draft
 comes back. It is for the bill nobody photographed — a receipt that arrived as a chat message
 or an email, one already thrown away, one a camera has just failed on twice.
+
+**Not on `/g/scan`** (2026-09-20, owner's call): the ledger FAB that opens that
+screen is a camera and the screen draws a photograph, so it offers two doors
+(`typeIn={false}`). Words go in where the form is already open — the Items tab —
+or on `/quick`, which has no form behind it.
 
 It is **in** the box and not beside it (2026-09-19, owner's call). A reading is a
 reading whichever medium it starts from, and a door standing outside would have

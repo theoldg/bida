@@ -104,8 +104,13 @@ function ScanScreen() {
               {/* This screen exists for this one act, so the control takes the
                   full width at `.btn-lg` and the primary register — the same
                   emphasis the entry form's Save gets, size being the only
-                  emphasis this palette has left. */}
-              <ScanPair scan={scan} register="lg" />
+                  emphasis this palette has left.
+
+                  Two doors and not three: the tap that got here was a camera,
+                  and the picture above promises a photograph. A bill that
+                  arrived as words is typed into the form's Items tab, where the
+                  form it fills is already open. */}
+              <ScanPair scan={scan} register="lg" typeIn={false} />
 
               {/* No "try again" beside the message: the control above it is
                   still enabled, and it is the retry. */}

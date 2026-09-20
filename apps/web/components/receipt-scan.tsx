@@ -12,7 +12,9 @@ import {
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
-import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import {
+  beginScan, clearScan, failScan, getLiveScan, useLiveScan, type LiveScan,
+} from "../lib/scan/live";
 import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
@@ -231,6 +233,23 @@ export function useReceiptScan(
    */
   const [typing, setTyping] = useState(false);
 
+  /**
+   * Shut the box — and take its refusal with it.
+   *
+   * A bill the model wouldn't read is said inside the dialog, where the fix is,
+   * and that is where it was read. Leaving on the back of it is having seen it,
+   * so the sentence doesn't follow you out and sit under the control on the
+   * screen behind, which never rang. **Only a typed reading's**: a photograph's
+   * refusal belongs to the screen that took it, and the box merely stood over it
+   * for a moment.
+   */
+  const closeTyping = useCallback(() => {
+    setTyping(false);
+    if (!groupId) return;
+    const last = getLiveScan(groupId);
+    if (last?.state === "error" && last.medium === "text") clearScan(groupId);
+  }, [groupId]);
+
   return {
     live,
     disabled: !scanAs,
@@ -250,7 +269,7 @@ export function useReceiptScan(
             // Read at open, not held: the box shows what the draft carries now,
             // which a photograph in between will have cleared.
             initial={(groupId ? getDraft(groupId)?.receiptText : null) ?? ""}
-            onClose={() => setTyping(false)} />
+            onClose={closeTyping} />
         ) : null}
       </>
     ),
@@ -267,6 +286,12 @@ export function useReceiptScan(
  * outside the box would say typing is a different act, and everything after the
  * bytes is shared (`useReceiptScan`).
  *
+ * **Cut in two where the tap that got here was the camera** (`typeIn={false}`):
+ * the ledger's scan FAB is a camera, and a screen reached by pressing one is
+ * asking for the photograph it drew, not offering a box to write in. Typing
+ * stays where the bill might already be words — the quick split, and the Items
+ * tab of a form somebody is filling in anyway.
+ *
  * While a reading is in flight the doors go and the box holds one strip saying
  * "Reading…" — there is only ever one act in it, so nothing needs to know which
  * door should spin.
@@ -281,10 +306,12 @@ export function useReceiptScan(
  * title do. **The box carries it, not a half** — neither half was the wrong one.
  */
 export function ScanPair({
-  scan, register, flash = "", onFlashEnd, disabled: held = false, refuse,
+  scan, register, typeIn = true, flash = "", onFlashEnd, disabled: held = false, refuse,
 }: {
   scan: ReceiptScan;
   register: "lg" | "s" | "xs";
+  /** Whether the third door is offered at all — see the note above. */
+  typeIn?: boolean;
   flash?: string;
   onFlashEnd?: (e: React.AnimationEvent) => void;
   /** Held shut by the screen as well: spent for the length of its own
@@ -339,14 +366,17 @@ export function ScanPair({
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
-      {/* The third door, and the reason this is no longer a pair: the box is the
-          act, and typing the bill is a way into it rather than a thing beside
-          it. The pencil, because what is behind this one is a field. */}
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}
-        {...keepsFocus}>
-        <Icon name="edit" size={icon} />
-        {register === "xs" ? copy.scan.typeIn.openLong : copy.scan.typeIn.open}
-      </button>
+      {/* The third door, and the reason this is usually no longer a pair: the
+          box is the act, and typing the bill is a way into it rather than a
+          thing beside it. The pencil, because what is behind this one is a
+          field. */}
+      {typeIn ? (
+        <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}
+          {...keepsFocus}>
+          <Icon name="edit" size={icon} />
+          {register === "xs" ? copy.scan.typeIn.openLong : copy.scan.typeIn.open}
+        </button>
+      ) : null}
     </div>
   );
 }
