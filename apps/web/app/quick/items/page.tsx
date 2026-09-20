@@ -40,6 +40,7 @@ export default function QuickItemsPage() {
       draft={draft}
       save={(next) => saveDraft(cred.id, next)}
       format={(minor) => bare(minor, draft.currency)}
+      saysCurrency={false}
       onDone={() => router.push(route.quickResult())}
       onBack={() => goBack(() => router.back())} />
   );

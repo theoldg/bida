@@ -1244,7 +1244,9 @@ export const copy = {
      */
     extra: { tip: "Tip + service", tax: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
     tipPercent: (percent: number) => `${percent}%`,
-    tipLabel: (currency: string) => `Tip and service, in ${currency}`,
+    /** `null` where the screen prints no currency at all — a quick split (ADR-0035). */
+    tipLabel: (currency: string | null) =>
+      currency ? `Tip and service, in ${currency}` : "Tip and service",
     /** The one affordance a person misses: the tip is a field, not a printed line. */
     tipHint: "tap to edit",
     /**
