@@ -12,7 +12,7 @@ import { RateDialog } from "@/components/rate-dialog";
 import { clearRate, setRate } from "@/lib/db/commands";
 import { copy } from "@/lib/copy";
 import {
-  COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
+  currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
 } from "@/lib/currencies";
 import { money, plural, rateText } from "@/lib/format";
 import { route } from "@/lib/group-link";
@@ -151,7 +151,7 @@ function RatesScreen() {
           title={copy.currency.title}
           value={base}
           options={[
-            ...[...new Set([base, ...COMMON_CURRENCIES])].map((c) => ({
+            ...currencyChoices([base], currencies.map((u) => u.currency)).map((c) => ({
               value: c,
               label: currencyLabel(c),
               note: c === base ? copy.currency.isBase

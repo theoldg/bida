@@ -18,7 +18,7 @@ import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
 import { RateDialog } from "@/components/rate-dialog";
 import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
-import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
+import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import {
   addExpense, convertToExpense, convertToSettlement, editExpense, editSettlement, recordSettlement, setRate,
 } from "@/lib/db/commands";
@@ -807,7 +807,9 @@ function EditEntryScreen() {
           title={copy.currency.title}
           value={draft.currency}
           options={[
-            ...[...new Set([base, draft.currency, ...COMMON_CURRENCIES])].map((c) => ({
+            ...currencyChoices(
+              [base, draft.currency], data.currencies.map((c) => c.currency),
+            ).map((c) => ({
               value: c,
               label: currencyLabel(c),
               note: c === base ? copy.currency.isBase : undefined,

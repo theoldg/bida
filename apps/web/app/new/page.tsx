@@ -10,7 +10,7 @@ import { Icon } from "@/components/icons";
 import { AddName } from "@/components/name-adder";
 import { WhoPicker } from "@/components/who-picker";
 import { copy } from "@/lib/copy";
-import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
+import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import { createGroup } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { errorText } from "@/lib/format";
@@ -274,7 +274,7 @@ export default function NewGroupPage() {
           title={copy.currency.title}
           value={currency}
           options={[
-            ...[...new Set([currency, ...COMMON_CURRENCIES])].map((c) => ({
+            ...currencyChoices([currency]).map((c) => ({
               value: c, label: currencyLabel(c),
             })),
             { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },

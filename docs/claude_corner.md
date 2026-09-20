@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — "the group's popular currencies below the main one": core had
+  already sorted them that way for the rates screen. The picker simply never
+  asked for the list.
 - *2026-09-20* — "there's no line between the tabs and the row": the rule was
   there, the wash over the row ate it. A missing border is sometimes a border
   you cannot see.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — "make the number columns their own columns" — I had built one
   long chain through the whole screen because the DOM offered one. Where a
   chain ends is a design call, not a tree walk.
-- *2026-09-20* — Driving the app to check a feature, two of the finds were in
-  the driver: it hid a row the tab bar crossed, and offered one behind an open
-  menu. Check what you are checking with.

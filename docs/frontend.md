@@ -260,6 +260,12 @@ confers nothing without the secret.
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
   the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
+- **The currency picker offers the group's own currencies first** — the base
+  one, then whatever the ledger is written in, most spent-in first, then the
+  short common list (`lib/currencies.ts`, `currencyChoices`). A trip spends in
+  two or three, and scrolling past seventeen to reach one of them is the whole
+  of the annoyance. Names come from `Intl.DisplayNames`, with a small fallback
+  map for the codes a trimmed locale build answers bare (ISK, UZS).
 - **Adding people is not a dialog.** `components/name-adder.tsx` is the last row
   of a list of names, built like the rows above it — name on the left, one
   control on the right — because that is what it becomes. **A name is filed by
