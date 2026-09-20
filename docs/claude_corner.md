@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — "unfold my own items by default" and the exact door was
+  already there: `MemberBill`'s unused `startOpen` prop, one caller over. Grep
+  for the shape a feature wants before building it.
 - *2026-09-20* — "show a confirmation": the flag already existed and two other
   screens drew it. One cell of markup, no mechanism. Look for the state before
   inventing it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — My iOS fix destroyed Android: `click` is a touch's last event,
   so answering the lift left `mousedown` to land on the dialog just opened and
   shut it. Ask what is still to come.
-- *2026-09-20* — "never put the text there in the first place" — I had cleared
-  the duplicate message on the way out instead. Don't tidy up after something
-  that shouldn't be said at all.

@@ -27,10 +27,11 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
   lines: MemberLine[];
   format: (minor: number) => string;
   /**
-   * Open from the start. A saved expense keeps its rows shut — the split is
-   * one line of a screen about the whole entry — but a quick split's answer
-   * *is* the bill, and somebody reading it out at the table should not have
-   * to open three rows first (ADR-0035).
+   * Open from the start. A saved expense keeps every row but the viewer's own
+   * shut — the split is one line of a screen about the whole entry, but the
+   * one row somebody opens this screen to check is theirs. A quick split's
+   * answer *is* the bill, and somebody reading it out at the table should not
+   * have to open three rows first (ADR-0035).
    */
   startOpen?: boolean;
 }) {
