@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — Same Discard, same code: dead after a back press, fine from
+  the arrow. The log held the one variable I had not thought to vary. When a
+  fix half-works, diff the two runs, not the code.
 - *2026-09-20* — Three clean clicks on a button, nothing happening, and the
   cause was a latch those taps armed two screens away. The dead button and the
   lost work were one bug, not two.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Reading the repo as a stranger, not as its author, found what
   766 commits had not: the install guide's first command cloned the old repo
   name. Nobody who knew it ran it.
-- *2026-09-19* — Two readings of that same press, both confident, both wrong.
-  The trace answered in one line: iOS sent a whole tap with no click in it.
-  Instrument the phone you cannot hold.

@@ -1191,6 +1191,25 @@ so the static export ships the full line and the browser narrows it.
   `lib/nav.ts`), which is also what the card being answered deserves. `pnpm
   nav` drives it with `history.go` stubbed to a no-op, which is the whole of
   what the phone does.
+- **Closing the card was not the whole of it: a *refused* press swallows the
+  next traversal too.** With the dialog down before the going, Discard on
+  `/new` still did nothing — but only where the dialog had been opened by the
+  device's back button. The same tap from the back arrow, on the same screen
+  and the same code, went. A press this app cancels leaves Android holding a
+  traversal it will not deliver again, so the `history.go` that follows returns
+  with nothing moved and no `navigate` to say so. `goUp` therefore *checks*:
+  still on the entry it asked from 400ms later is a traversal that was
+  swallowed, and the parent takes this screen's place instead — a push, which
+  is not the queue that is stuck. This is the one clock the file allows,
+  because here it fails the cheap way: a traversal that was merely late lands
+  on an entry that is already the parent.
+- **A screen that asks has to stop asking before it goes.** `mayLeave` is read
+  again on the way out, so a guard still saying no answers the app's own
+  leaving. The entry form never saw it — its Discard clears the draft that
+  `mayLeave` reads — but `/new` holds its names in `useState` and clears
+  nothing, so `typed` was still true the whole way out: with the latch spent or
+  the traversal retried, the going was met with a second "discard?". Both
+  screens that leave this way now put a `leaving` ref down first.
 - **Don't reach for `traverseTo`.** Naming a history entry by key instead of
   counting back to it is the same move with a worse failure: WebKit folds a
   `traverseTo` into one still pending for the same key and never settles one it

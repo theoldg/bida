@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isCurrencyCode } from "@bida/core";
 import { Eyebrow, keepsFocus } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
@@ -115,12 +115,27 @@ export default function NewGroupPage() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [typed]);
 
+  /**
+   * Discard was answered, so this screen has stopped guarding the way out.
+   *
+   * **Every screen that asks has to put this down before it goes**, and the
+   * ones that keep their work somewhere have it for free: the entry form's
+   * Discard clears the draft, and `mayLeave` reads the draft. A list of names
+   * held in `useState` has nothing to clear — `typed` is still true the whole
+   * way out — so without this the guard answers the going itself, and a
+   * traversal that has to be asked for twice is asked "discard?" the second
+   * time (lib/nav.ts, lib/back-button.ts).
+   */
+  const leaving = useRef(false);
+
   function leave() {
+    leaving.current = true;
     goUp(route.groups(), (to) => router.replace(to));
   }
 
   /** May we leave? Not with names on the screen — ask, and stay put. */
   function mayLeave() {
+    if (leaving.current) return true;
     if (typed && !busy) { setAsk("discard"); return false; }
     return true;
   }

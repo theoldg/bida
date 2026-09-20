@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eyebrow, keepsFocus } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -102,7 +102,16 @@ export default function QuickPage() {
 
   const typed = people.length > 0 || typing !== null || (draft?.receiptItems?.length ?? 0) > 0;
 
+  /**
+   * Discard was answered, so this screen has stopped guarding the way out.
+   * `typed` reads state the clearing below doesn't reach until the next render,
+   * and a guard still saying no answers the going itself — see the same ref on
+   * `/new` for the whole of why.
+   */
+  const leaving = useRef(false);
+
   function leave() {
+    leaving.current = true;
     if (cred) clearDraft(cred.id);
     clearQuickPeople();
     goUp(route.groups(), (to) => router.replace(to));
@@ -110,6 +119,7 @@ export default function QuickPage() {
 
   /** May we leave? Not with a split on the screen — ask, and stay put. */
   function mayLeave() {
+    if (leaving.current) return true;
     if (typed) { setAsking(true); return false; }
     return true;
   }

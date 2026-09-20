@@ -310,16 +310,20 @@ async function onLedger() {
   await page.close();
 }
 
-// ---- 9. the traversal that never came, and the press it would have eaten --
+// ---- 9. the traversal that never came, and the act happening anyway -------
 // `history.go` can be called and simply not move — on Android, from an act
-// tapped inside a modal dialog, which is what killed Discard on `/new`. Stubbed
-// to a no-op here, because that is the whole of what the phone does.
+// tapped inside a modal dialog, and again from any act at all once a back press
+// this app *refused* has left the phone holding a traversal it will not deliver
+// again. That second one is why Discard on `/new` was dead after a device back
+// press and fine from the arrow. Stubbed to a no-op here, because that is the
+// whole of what the phone does.
 //
-// Two things must survive it. The card comes down, because leaving closes any
-// dialog *before* the going rather than with the screen. And the latch that
-// tells the app's own traversal from a device press must not still be armed
-// afterwards: an armed one is spent by the next real press, which is then waved
-// through with no guard at all, and the typed group goes with it (lib/nav.ts).
+// Three things must survive it. The card comes down, because leaving closes any
+// dialog *before* the going rather than with the screen. Nothing moves at
+// first, since nothing was delivered. And then it happens anyway: `goUp` checks
+// that its traversal landed and puts the parent in this screen's place when it
+// didn't (lib/nav.ts). That the latch is not left armed by the traversal that
+// never came is `lib/nav.test.ts`'s, which can read it.
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -339,12 +343,14 @@ async function onLedger() {
   report(/\/new/.test(stuck.urls[stuck.i] ?? ""), "the screen is still there, since nothing moved");
   report(await page.locator("#g-name").inputValue() === "Trip", "and so is what was typed");
 
-  // The next thing the hand does is proof the traversal is not coming.
-  await page.locator("#g-name").click();
-  void page.goBack().catch(() => {});
-  const asked = await page.waitForSelector(".scrim[open]").then(() => true, () => false);
-  report(asked, "so the next back press is still guarded, not spent on a stale latch",
-    asked ? "" : "the press was read as the app's own and went through unasked");
+  // And then the check fires and the parent takes this screen's place, so the
+  // button a phone read as dead does what it says after all.
+  await page.waitForURL((url) => new URL(url).pathname === "/", { timeout: 4000 })
+    .then(() => {}, () => {});
+  const after = await stack(page);
+  const landed = new URL(after.urls[after.i] ?? "http://x/nowhere", base).pathname === "/";
+  report(landed, "and then the parent takes its place, so Discard is not dead after all",
+    landed ? "" : `still at ${after.urls[after.i]}`);
   await page.close();
 }
 

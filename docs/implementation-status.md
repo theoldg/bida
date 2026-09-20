@@ -54,9 +54,17 @@ Two things, and both are watches rather than tasks.
   The dead button and the vanished group were one cause. Leaving now takes the
   dialog down before it goes, and the latch is spent by the next press anywhere
   ([frontend.md](frontend.md#gotchas)); `pnpm nav` drives both with `history.go`
-  stubbed to a no-op. **This watch stands on its own terms** — a press the
-  browser makes uncancellable still leaves `/new` with nothing, and a draft
-  store is what would make that cost a dialog instead of the work.
+  stubbed to a no-op. **Taking the card down was not the whole of it** (1.0.48,
+  2026-09-20): the next trace showed Discard dead again, and only where the
+  dialog had been opened by the device's back button — the same tap from the
+  arrow went. A press this app *refuses* leaves Android holding a traversal it
+  will not deliver again. `goUp` now checks that its traversal moved and puts
+  the parent in this screen's place when it didn't, and `/new` and `/quick`
+  stop guarding the way out once Discard is answered, which is what the entry
+  form got for free from clearing its draft
+  ([frontend.md](frontend.md#gotchas)). **This watch stands on its own terms** —
+  a press the browser makes uncancellable still leaves `/new` with nothing, and
+  a draft store is what would make that cost a dialog instead of the work.
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found

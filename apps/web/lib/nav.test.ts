@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { goBack, goUp, sameScreen, stepsBackTo, takeOwnTraversal } from "./nav";
 
 const GROUPS = "http://app.invalid/";
@@ -70,14 +70,22 @@ describe("sameScreen", () => {
 });
 
 describe("goUp", () => {
-  /** A Navigation API with a history in it, and a `history.go` to watch. */
-  function fakeWindow(urls: string[], here: number) {
+  /**
+   * A Navigation API with a history in it, and a `history.go` to watch.
+   * `delivers` is the phone: `false` is Android swallowing the traversal —
+   * `go` returns, the entry never changes, and no `navigate` ever comes.
+   */
+  function fakeWindow(urls: string[], here: number, delivers = true) {
     const went: number[] = [];
     const nav = Object.assign(new EventTarget(), {
       entries: () => urls.map((url) => ({ url })),
       currentEntry: { index: here },
     });
-    return { window: { navigation: nav, history: { go: (n: number) => went.push(n) } }, went };
+    const go = (n: number) => {
+      went.push(n);
+      if (delivers) nav.currentEntry = { index: here + n };
+    };
+    return { window: { navigation: nav, history: { go } }, went };
   }
 
   function withWindow(w: unknown, run: () => void) {
@@ -85,6 +93,8 @@ describe("goUp", () => {
     g.window = w;
     try { run(); } finally { delete g.window; }
   }
+
+  afterEach(() => { vi.useRealTimers(); takeOwnTraversal(); });
 
   it("goes back over the screens between here and the parent", () => {
     const { window, went } = fakeWindow(["/", "/g?id=a", "/g/entry?id=a&e=1"], 2);
@@ -105,6 +115,34 @@ describe("goUp", () => {
     // Nothing traversed, so nothing to explain to the press guard — a latch
     // left armed here would swallow the next real press.
     expect(takeOwnTraversal()).toBe(false);
+  });
+
+  it("takes the parent's place when the traversal is swallowed", () => {
+    vi.useFakeTimers();
+    const { window, went } = fakeWindow(["/", "/new"], 1, false);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goUp("/", (to) => replaced.push(to));
+      expect(went).toEqual([-1]);
+      expect(replaced).toEqual([]);
+      vi.runAllTimers();
+      expect(replaced).toEqual(["/"]);
+    });
+    // Armed for a `navigate` that never came, so it must not be left to answer
+    // the next real press.
+    expect(takeOwnTraversal()).toBe(false);
+  });
+
+  it("leaves a traversal that arrived alone", () => {
+    vi.useFakeTimers();
+    const { window } = fakeWindow(["/", "/g?id=a", "/g/entry?id=a&e=1"], 2);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goUp("/", (to) => replaced.push(to));
+      vi.runAllTimers();
+    });
+    expect(replaced).toEqual([]);
+    expect(takeOwnTraversal()).toBe(true);
   });
 
   it("takes its place where there is no Navigation API at all", () => {

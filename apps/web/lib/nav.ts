@@ -93,6 +93,29 @@ function closeDialogs(): void {
 }
 
 /**
+ * **A traversal Android can swallow whole, and the act happening anyway.**
+ *
+ * A back press this app *refused* — cancelled, so the dialog could ask
+ * ([back-button.ts](./back-button.ts)) — leaves Android holding a traversal it
+ * will not deliver again. The `history.go` that Discard then asks for returns
+ * and nothing moves: no `navigate` event, no error, the card gone and the
+ * screen still there. It is only ever after a refused press; the same tap from
+ * the back arrow, on the same screen, goes.
+ *
+ * So the traversal is asked for and then *checked*: still on the same entry a
+ * beat later is one that was swallowed, and the parent is put in this screen's
+ * place instead — the same landing by the other door, and a push rather than a
+ * traversal, which is not the queue that is stuck.
+ *
+ * **A wrong guess costs an entry, never the act.** A traversal that was merely
+ * late arrives after the replace and spends itself on an entry that is already
+ * the parent — the screen is right either way. That is the opposite trade from
+ * the one `traverseTo` forced (see this file's head), which is why a clock is
+ * allowed to decide this and not that.
+ */
+const SWALLOWED_MS = 400;
+
+/**
  * Move to `href` as an ancestor: back out to it if we came through it, and
  * otherwise take its place. Either way nothing that was below it stays behind
  * us, so the next press of the device's back button leaves the parent too.
@@ -106,6 +129,15 @@ export function goUp(href: string, replace: (href: string) => void): void {
     if (steps !== null) {
       markOwnTraversal();
       window.history.go(steps);
+      setTimeout(() => {
+        // Anywhere but where we asked from is a traversal that arrived — or a
+        // hand that has moved on, which is not ours to undo either.
+        if (navigation()?.currentEntry?.index !== here) return;
+        // The latch was armed for a `navigate` that is never coming, and one
+        // left armed swallows a real press.
+        disarmOwnTraversal();
+        replace(href);
+      }, SWALLOWED_MS);
       return;
     }
   }
@@ -116,6 +148,11 @@ export function goUp(href: string, replace: (href: string) => void): void {
  * A plain back, as the app's own: the arrow on a screen reached only from
  * below, Done, Discard. Anything in the app that goes back goes through here or
  * `goUp`, never `router.back()` directly — see `takeOwnTraversal`.
+ *
+ * No check like `goUp`'s above it: this names no parent, so there is nothing to
+ * put in this screen's place when the traversal is swallowed. The screens on
+ * this door answer that the other way — their act stops the guard saying no
+ * (`clearDraft`), so the press that follows walks out instead of asking again.
  */
 export function goBack(back: () => void): void {
   closeDialogs();
