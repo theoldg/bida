@@ -44,13 +44,19 @@ Two things, and both are watches rather than tasks.
   back button went dead — is fixed and driven. **The first trace back from a
   phone rules this watch out of the report that started it** (1.0.42,
   2026-09-20): every press read `cancelable=true active=true`, and no dialog was
-  shut by the platform. What is left of that report is a run of taps *on the
-  card* the app never heard, and nothing recorded a tap on a dialog — so the
-  press recorder now covers one the way it already covered a row menu,
-  naming the part each press and each lift landed on and every step the keyboard
-  took under it ([frontend.md](frontend.md#the-flight-recorder-and-diag)).
-  **Waiting on the next trace**, which is the only thing that will say which of
-  the explanations it is.
+  shut by the platform. **The report that started this watch was a different
+  bug entirely, and it is now found and fixed** (1.0.46, 2026-09-20): the
+  recorder, extended to cover a dialog's presses, showed three clean clicks on
+  Discard with nothing following. `history.go` from an act tapped inside a modal
+  dialog is not delivered on Android, so the screen never left — and each of
+  those taps armed the latch that tells the app's own traversal from a device
+  press, nothing spent it, and the next real press was waved through unguarded.
+  The dead button and the vanished group were one cause. Leaving now takes the
+  dialog down before it goes, and the latch is spent by the next press anywhere
+  ([frontend.md](frontend.md#gotchas)); `pnpm nav` drives both with `history.go`
+  stubbed to a no-op. **This watch stands on its own terms** — a press the
+  browser makes uncancellable still leaves `/new` with nothing, and a draft
+  store is what would make that cost a dialog instead of the work.
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found

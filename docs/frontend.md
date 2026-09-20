@@ -1173,7 +1173,24 @@ so the static export ships the full line and the browser narrows it.
   window of time, which a phone slow enough to deliver the event later answers
   with the discard dialog over the Save that had just cleared the draft. A
   latch is armed only where a traversal is actually coming, since one left
-  armed answers the next *real* press as the app's own.
+  armed answers the next *real* press as the app's own — **and it is also spent
+  by the next press or keystroke anywhere**, because "actually coming" is not
+  something the arming code can know (see the next Gotcha). The app's traversal
+  arrives long before a hand can move again, so a hand that has moved is proof
+  it is not coming. That fails the safe way round: a latch dropped early costs
+  a "discard?" nobody needed, one held too long costs the work.
+- **`history.go` can be called and simply not move.** From an act tapped inside
+  a modal `<dialog>` on Android the traversal is never delivered: no `navigate`
+  arrives, nothing changes, and the button looks dead — Discard on `/new` did
+  nothing to three taps in a row while Cancel answered in 3ms. The dead button
+  was the lesser half. Each of those taps armed the latch above, nothing spent
+  it, and the next *real* back press was read as the app's own and waved
+  through with no guard at all, so the typed group went with no warning. One
+  report, one cause, two symptoms that looked unrelated. Leaving now closes any
+  open dialog **before** the going rather than with the screen (`closeDialogs`,
+  `lib/nav.ts`), which is also what the card being answered deserves. `pnpm
+  nav` drives it with `history.go` stubbed to a no-op, which is the whole of
+  what the phone does.
 - **Don't reach for `traverseTo`.** Naming a history entry by key instead of
   counting back to it is the same move with a worse failure: WebKit folds a
   `traverseTo` into one still pending for the same key and never settles one it

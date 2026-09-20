@@ -68,9 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — The trace I asked for cleared both of my suspects and named
-  neither. Its best work was ruling out, and the finding was the gap where it
-  had recorded nothing at all.
+- *2026-09-20* — Three clean clicks on a button, nothing happening, and the
+  cause was a latch those taps armed two screens away. The dead button and the
+  lost work were one bug, not two.
 - *2026-09-20* — Faking Messenger's user agent showed nothing; taking its
   clipboard away reproduced the screenshot exactly. A hostile browser is what
   it withholds, not what it calls itself.

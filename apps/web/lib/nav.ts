@@ -71,11 +71,34 @@ export function stepsBackTo(entries: (string | null)[], here: number, target: st
 }
 
 /**
+ * **Leaving takes any open dialog with it, before the going rather than with
+ * the screen.**
+ *
+ * A modal `<dialog>` is in the top layer with a close watcher registered on it,
+ * and a traversal begun underneath one is a traversal Android does not deliver:
+ * `history.go` is called from the act's own tap, returns, and nothing moves —
+ * the card is still there and the screen has not left. Discard on `/new` was
+ * dead for exactly this reason, and every other act that navigates out of a
+ * dialog sits on the same hazard.
+ *
+ * `close()` empties the top layer synchronously, and the element's own `close`
+ * listener is what tells the state still drawing it (components/dialog.tsx), so
+ * the card is down before the first line of the navigation runs.
+ */
+function closeDialogs(): void {
+  if (typeof document === "undefined") return;
+  for (const el of document.querySelectorAll("dialog[open]")) {
+    if (el instanceof HTMLDialogElement && el.matches(":modal")) el.close();
+  }
+}
+
+/**
  * Move to `href` as an ancestor: back out to it if we came through it, and
  * otherwise take its place. Either way nothing that was below it stays behind
  * us, so the next press of the device's back button leaves the parent too.
  */
 export function goUp(href: string, replace: (href: string) => void): void {
+  closeDialogs();
   const nav = navigation();
   const here = nav?.currentEntry?.index;
   if (nav && here !== undefined && here >= 0) {
@@ -95,6 +118,7 @@ export function goUp(href: string, replace: (href: string) => void): void {
  * `goUp`, never `router.back()` directly — see `takeOwnTraversal`.
  */
 export function goBack(back: () => void): void {
+  closeDialogs();
   markOwnTraversal();
   back();
 }
@@ -114,15 +138,45 @@ export function goBack(back: () => void): void {
  */
 let ownTraversal = false;
 
+/**
+ * **And spent by the next thing the hand does, because a traversal that never
+ * arrives leaves it armed and an armed latch swallows a real press.**
+ *
+ * That is not hypothetical and it is not cheap: `history.go` can be called and
+ * simply not move — the traversal is never delivered and no `navigate` comes to
+ * spend this. The next press of the device's button is then read as the app's
+ * own, waved through with no guard, and the screen that was holding typed work
+ * loses it with no dialog and no warning. That is the whole of what `/new` was
+ * doing, and the trace said so: `back.press ours` on a press whose own
+ * `userInitiated` was `true`.
+ *
+ * So the latch also ends at the next press or keystroke anywhere. The app's
+ * traversal arrives long before a hand can move again; a hand that *has* moved
+ * is proof it is not coming. Still not a clock — the same reasoning the click
+ * guard is built on (lib/click-guard.ts), and it fails the safe way: a latch
+ * dropped too early costs a "discard?" nobody needed, where one held too long
+ * costs the work.
+ */
+function disarmOwnTraversal(): void {
+  ownTraversal = false;
+  if (typeof document === "undefined") return;
+  document.removeEventListener("pointerdown", disarmOwnTraversal, true);
+  document.removeEventListener("keydown", disarmOwnTraversal, true);
+}
+
 function markOwnTraversal(): void {
   // At the start of the history there is nothing to go back to, so `back()`
   // moves nothing and no `navigate` arrives to spend the latch.
   ownTraversal = (navigation()?.currentEntry?.index ?? 0) > 0;
+  if (!ownTraversal || typeof document === "undefined") return;
+  // Capture, so a handler that stops the press still spends this.
+  document.addEventListener("pointerdown", disarmOwnTraversal, true);
+  document.addEventListener("keydown", disarmOwnTraversal, true);
 }
 
 /** Was this traversal the app's? Consumed by the one `navigate` it explains. */
 export function takeOwnTraversal(): boolean {
   const ours = ownTraversal;
-  ownTraversal = false;
+  disarmOwnTraversal();
   return ours;
 }

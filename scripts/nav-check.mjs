@@ -310,6 +310,44 @@ async function onLedger() {
   await page.close();
 }
 
+// ---- 9. the traversal that never came, and the press it would have eaten --
+// `history.go` can be called and simply not move — on Android, from an act
+// tapped inside a modal dialog, which is what killed Discard on `/new`. Stubbed
+// to a no-op here, because that is the whole of what the phone does.
+//
+// Two things must survive it. The card comes down, because leaving closes any
+// dialog *before* the going rather than with the screen. And the latch that
+// tells the app's own traversal from a device press must not still be armed
+// afterwards: an armed one is spent by the next real press, which is then waved
+// through with no guard at all, and the typed group goes with it (lib/nav.ts).
+{
+  const page = await (await phone()).newPage();
+  await page.goto(`${base}/`);
+  await page.waitForSelector(".starttile");
+  await page.locator("a[href='/new']").click();
+  await page.waitForURL(/\/new/);
+  await page.locator("#g-name").fill("Trip");
+  void page.goBack().catch(() => {});
+  await page.waitForSelector(".scrim[open]");
+
+  await page.evaluate(() => { window.history.go = () => {}; });
+  await page.locator(".scrim .drow button").nth(1).click();
+  await settle(page, 200);
+  report(await page.locator("dialog.scrim").count() === 0,
+    "an act that cannot travel still takes its dialog down with it");
+  const stuck = await stack(page);
+  report(/\/new/.test(stuck.urls[stuck.i] ?? ""), "the screen is still there, since nothing moved");
+  report(await page.locator("#g-name").inputValue() === "Trip", "and so is what was typed");
+
+  // The next thing the hand does is proof the traversal is not coming.
+  await page.locator("#g-name").click();
+  void page.goBack().catch(() => {});
+  const asked = await page.waitForSelector(".scrim[open]").then(() => true, () => false);
+  report(asked, "so the next back press is still guarded, not spent on a stale latch",
+    asked ? "" : "the press was read as the app's own and went through unasked");
+  await page.close();
+}
+
 await browser.close();
 close();
 finish();
