@@ -24,4 +24,5 @@ export { setRate, clearRate } from "./rates";
 export {
   addExpense, editExpense, deleteExpense, type ExpenseInput,
   recordSettlement, editSettlement, deleteSettlement, type SettlementInput,
+  convertToSettlement, convertToExpense,
 } from "./entries";

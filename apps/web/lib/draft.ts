@@ -56,10 +56,16 @@ export interface EntryDraft {
   /** Which of the three this is. The form's kind chip writes it. */
   kind: EntryKind;
   /**
-   * Present when editing rather than creating: an expense id when `kind` is
-   * expense or income, a settlement id when it's a transfer.
+   * Present when editing rather than creating: the id of the entity the
+   * screen was opened on. Which table that id lives in is fixed for the
+   * life of the draft — the kind chip can swap `kind` by hand, expense/income
+   * to transfer included, without moving it. Save reads `entryTable` and
+   * converts (delete the old entity, create the new one) when the two now
+   * disagree — `convertToSettlement`/`convertToExpense`, commands/entries.ts.
    */
   entryId?: string;
+  /** Which table `entryId` names. Set once, at seeding, alongside it. */
+  entryTable?: "expense" | "settlement";
   /**
    * The id a create will be written under, allocated with the draft.
    *
@@ -183,13 +189,24 @@ export function legacyPercent(draft: EntryDraft): SplitSpec | null {
 }
 
 /**
- * What rounding ties break by, everywhere this draft is priced: the id of the
- * entry being edited, or the one a create will be written under. Every screen
- * that shows a person a figure asks for it here, so the cent the form quotes
- * is the cent the ledger keeps.
+ * What rounding ties break by, everywhere this draft is priced: the id the
+ * expense being saved will actually carry, so the cent the form quotes is the
+ * cent the ledger keeps.
+ *
+ * That id is `entryId` while the kind chip agrees with `entryTable` — an
+ * ordinary edit, writing back under the id it was opened on. Once they
+ * disagree — a transfer switched to an expense, or the reverse — Save
+ * converts rather than edits (`convertToExpense`/`convertToSettlement`,
+ * commands/entries.ts) and the expense lands under `newEntryId` instead, so
+ * the split has to be seeded by that id from the first tap, not just the one
+ * the write turns out to use.
  */
 export function splitSeed(draft: EntryDraft): string {
-  return draft.entryId ?? draft.newEntryId;
+  if (!draft.entryId) return draft.newEntryId;
+  const sameEntity = draft.kind === "transfer"
+    ? draft.entryTable === "settlement"
+    : draft.entryTable !== "settlement";
+  return sameEntity ? draft.entryId : draft.newEntryId;
 }
 
 /** A tab nothing has been typed into yet: everybody out, nothing allocated. */

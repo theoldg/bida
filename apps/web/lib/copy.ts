@@ -967,7 +967,6 @@ export const copy = {
     editTitle: "Edit",
     /** The kind chip's label, and the title of the dialog it opens. */
     kindTitle: "What kind of entry",
-    editKind: (kind: string) => `Edit ${kind}`,
     amount: (currency: string) => `Amount in ${currency}`,
     currency: "Currency",
     fromReceipt: "read from receipt",

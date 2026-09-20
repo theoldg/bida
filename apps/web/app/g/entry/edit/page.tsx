@@ -20,7 +20,7 @@ import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
 import { COMMON_CURRENCIES, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import {
-  addExpense, editExpense, editSettlement, recordSettlement, setRate,
+  addExpense, convertToExpense, convertToSettlement, editExpense, editSettlement, recordSettlement, setRate,
 } from "@/lib/db/commands";
 import { ENTRY_KINDS, kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
@@ -216,6 +216,7 @@ function EditEntryScreen() {
         seedDraft(groupId, {
           ...blankDraft(kindOf(e), me, base, data.members.map((m) => m.id)),
           entryId,
+          entryTable: "expense",
           // `minorToDecimalString`, never `bare`: this is the canonical text
           // `parseMinor` reads back, and `bare` groups thousands. "1,234.50"
           // fails to parse (amount silently 0) and "25,000" JPY parses as 25.
@@ -255,6 +256,7 @@ function EditEntryScreen() {
       seedDraft(groupId, {
         ...blankDraft("transfer", me, base, data.members.map((m) => m.id)),
         entryId,
+        entryTable: "settlement",
         amountText: minorToDecimalString(s.amountMinor, s.currency),
         currency: s.currency,
         description: s.note ?? "",
@@ -339,6 +341,11 @@ function EditEntryScreen() {
   const base = group.baseCurrency;
   const kind = draft.kind;
   const transfer = kind === "transfer";
+  // Which table `draft.entryId` actually lives in — fixed for the life of the
+  // draft (`entryTable`, lib/draft.ts) unlike `kind`, which the chip can swap
+  // by hand. The two agreeing is the ordinary case; when Save finds they
+  // don't, that's the conversion (`convertToSettlement`/`convertToExpense`).
+  const originalKind = draft.entryTable;
 
   // Merges against the latest saved draft, not the `draft` this render closed
   // over — some interactions (switching split tabs) call patch() twice in one
@@ -500,6 +507,11 @@ function EditEntryScreen() {
     setSaving(true);
     setFailed(undefined);
     const rate = foreign ? groupRate ?? "1" : "1";
+    // Where Save sends us back to. Unchanged from `saveTo` unless a
+    // conversion just replaced the entity `saveTo` was built to point at —
+    // its id is gone, and `route.entry(groupId, oldId, ...)` would land on
+    // "this entry is gone" rather than the row just written.
+    let target = saveTo;
     try {
       if (transfer) {
         const input = {
@@ -512,8 +524,13 @@ function EditEntryScreen() {
           dateOnly: draft.dateOnly ? true : null,
           note: draft.description.trim() || null,
         };
-        if (draft.entryId) await editSettlement(groupId, actor, draft.entryId, input);
-        else await recordSettlement(groupId, actor, input);
+        if (!draft.entryId) await recordSettlement(groupId, actor, input);
+        // The id names an expense, not a transfer: the chip was switched
+        // since this screen opened, so Save converts rather than edits.
+        else if (originalKind === "expense") {
+          const settlementId = await convertToSettlement(groupId, actor, draft.entryId, input);
+          target = route.entry(groupId, settlementId, via);
+        } else await editSettlement(groupId, actor, draft.entryId, input);
       } else {
         const input = {
           kind,
@@ -540,48 +557,48 @@ function EditEntryScreen() {
           receiptInvolved: canScan ? draft.receiptInvolved ?? null : null,
           receiptAssignments: canScan ? draft.receiptAssignments ?? null : null,
         };
-        if (draft.entryId) await editExpense(groupId, actor, draft.entryId, input);
-        // Written under the id the form has been quoting its split with, so
-        // the cent it showed on somebody's row is the cent the ledger keeps.
-        else await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
+        if (!draft.entryId) {
+          // Written under the id the form has been quoting its split with, so
+          // the cent it showed on somebody's row is the cent the ledger keeps.
+          await addExpense(groupId, actor, input, Date.now(), draft.newEntryId);
+        } else if (originalKind === "settlement") {
+          const expenseId = await convertToExpense(groupId, actor, draft.entryId, input, Date.now(), draft.newEntryId);
+          target = route.entry(groupId, expenseId, via);
+        } else {
+          await editExpense(groupId, actor, draft.entryId, input);
+        }
       }
       clearDraft(groupId);
       // `goUp`, not a replace: the screen we are going back to is already
       // behind us, and replacing would leave it on the stack twice.
-      goUp(saveTo, (to) => router.replace(to));
+      goUp(target, (to) => router.replace(to));
     } catch (err) {
       setSaving(false);
       setFailed(errorText(err));
     }
   };
 
-  /**
-   * Which kinds this screen can still become. Everything, on a new entry.
-   * Editing an expense keeps the one field that separates it from an income,
-   * so those two stay open — but a transfer is a different entity with a
-   * different shape, and turning one into the other is a delete and an add,
-   * not an edit. A control that can't do anything doesn't get drawn.
-   */
-  const reachable: EntryKind[] = !draft.entryId ? [...ENTRY_KINDS]
-    : transfer ? ["transfer"] : ["expense", "income"];
-
   return (
     <Screen>
       <Body>
         <TopBar
-          title={draft.entryId
-            ? (reachable.length > 1 ? copy.form.editTitle : copy.form.editKind(copy.entryKind.label[kind].toLowerCase()))
-            : copy.form.newTitle}
+          title={draft.entryId ? copy.form.editTitle : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
           /* The kind sits up here, on the row that already names what this
-             screen is, rather than as a lone chip floating over the amount. */
-          right={reachable.length > 1 ? (
+             screen is, rather than as a lone chip floating over the amount.
+             All three kinds are always reachable: expense ↔ income is one
+             field on the same entity, expense/income ↔ transfer costs a
+             convert instead of an edit (`convertToSettlement`/
+             `convertToExpense`, commands/entries.ts) — but the chip doesn't
+             need to know which, and the draft carries the amount, currency,
+             date and words across any of the six pairs. */
+          right={
             <button type="button" className="chip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")} {...keepsFocus}>
               {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
             </button>
-          ) : undefined}
+          }
         />
 
         <Scroll>
@@ -824,7 +841,7 @@ function EditEntryScreen() {
         <ChoiceDialog
           title={copy.form.kindTitle}
           value={kind}
-          options={reachable.map((k) => ({
+          options={ENTRY_KINDS.map((k) => ({
             value: k, label: copy.entryKind.label[k], note: copy.entryKind.blurb[k],
           }))}
           onPick={changeKind}

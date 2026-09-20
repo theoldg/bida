@@ -1,7 +1,7 @@
 import {
   canonicalSplit, newId, primaryPayer,
-  type CurrencyCode, type ExpenseKind, type Id, type Rate, type ReceiptDiscount, type ReceiptItem,
-  type SplitSpec,
+  type CurrencyCode, type ExchangeRate, type ExpenseKind, type Id, type Rate, type ReceiptDiscount,
+  type ReceiptItem, type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
@@ -67,6 +67,50 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
 }
 
 /**
+ * The `create` patch for an expense — shared by `addExpense`, which writes it
+ * alone, and `convertToExpense`, which writes it beside the tombstone of the
+ * transfer it replaces. One builder, so the two can't describe the same
+ * entity differently.
+ */
+function expenseCreatePatch(
+  input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+) {
+  const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
+  const payer = normalisePayers(input);
+  return {
+    // Written only for an income: an ordinary expense is the absence of this
+    // field, on every op ever appended, and stays that way.
+    ...(input.kind === "income" ? { kind: "income" } : {}),
+    description: input.description,
+    occurredAt: input.occurredAt,
+    createdAt: now,
+    amountMinor: input.amountMinor,
+    currency: input.currency,
+    rateToBase,
+    baseAmountMinor: toBase({ ...input, rateToBase }, base),
+    paidBy: payer.paidBy,
+    // Canonical from the very first op, so an edit that re-picks the same
+    // people compares equal to it — see `canonicalSplit`.
+    split: canonicalSplit(input.split),
+    // Absent on an ordinary expense — see `only`. No `deletedAt` either: the
+    // id is fresh, so a create is never a tombstone.
+    ...only({
+      dateOnly: input.dateOnly ? true : null,
+      categoryId: input.categoryId,
+      payers: payer.payers,
+      attachmentIds: input.attachmentIds,
+      receiptItems: input.receiptItems,
+      receiptTip: input.receiptTip,
+      receiptTax: input.receiptTax,
+      receiptDiscounts: input.receiptDiscounts,
+      receiptInvolved: input.receiptInvolved,
+      receiptAssignments: input.receiptAssignments,
+      receiptText: input.receiptText,
+    }),
+  };
+}
+
+/**
  * `expenseId` is the caller's to give, because the form that quoted the split
  * has to write it under the id it quoted: the leftover minor unit goes by
  * `tiebreakSeed`, which is that id (core/split.ts, `splitSeed` in lib/draft).
@@ -80,49 +124,10 @@ export async function addExpense(
   expenseId: Id = newId(),
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
-  const seed = { ...input, rateToBase: rateToWrite(input.currency, input.rateToBase, base, rates) };
-  const payer = normalisePayers(input);
   await appendOps(
     groupId,
     actor,
-    [
-      {
-        entity: "expense",
-        entityId: expenseId,
-        kind: "create",
-        patch: {
-          // Written only for an income: an ordinary expense is the absence of
-          // this field, on every op ever appended, and stays that way.
-          ...(input.kind === "income" ? { kind: "income" } : {}),
-          description: input.description,
-          occurredAt: input.occurredAt,
-          createdAt: now,
-          amountMinor: input.amountMinor,
-          currency: input.currency,
-          rateToBase: seed.rateToBase,
-          baseAmountMinor: toBase(seed, base),
-          paidBy: payer.paidBy,
-          // Canonical from the very first op, so an edit that re-picks the same
-          // people compares equal to it — see `canonicalSplit`.
-          split: canonicalSplit(input.split),
-          // Absent on an ordinary expense — see `only`. No `deletedAt` either:
-          // the id is fresh, so a create is never a tombstone.
-          ...only({
-            dateOnly: input.dateOnly ? true : null,
-            categoryId: input.categoryId,
-            payers: payer.payers,
-            attachmentIds: input.attachmentIds,
-            receiptItems: input.receiptItems,
-            receiptTip: input.receiptTip,
-            receiptTax: input.receiptTax,
-            receiptDiscounts: input.receiptDiscounts,
-            receiptInvolved: input.receiptInvolved,
-            receiptAssignments: input.receiptAssignments,
-            receiptText: input.receiptText,
-          }),
-        },
-      },
-    ],
+    [{ entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) }],
     now,
   );
   return expenseId;
@@ -215,6 +220,24 @@ export interface SettlementInput {
   note?: string | null;
 }
 
+/** The `create` patch for a transfer — shared with `convertToSettlement`. */
+function settlementCreatePatch(
+  input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
+) {
+  const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
+  return {
+    fromMember: input.fromMember,
+    toMember: input.toMember,
+    amountMinor: input.amountMinor,
+    currency: input.currency,
+    rateToBase,
+    baseAmountMinor: toBase({ ...input, rateToBase }, base),
+    occurredAt: input.occurredAt,
+    createdAt: now,
+    ...only({ dateOnly: input.dateOnly ? true : null, note: input.note }),
+  };
+}
+
 export async function recordSettlement(
   groupId: Id,
   actor: Id,
@@ -223,29 +246,13 @@ export async function recordSettlement(
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
   const settlementId = newId();
-  const seed = { ...input, rateToBase: rateToWrite(input.currency, input.rateToBase, base, rates) };
-
   await appendOps(
     groupId,
     actor,
-    [
-      {
-        entity: "settlement",
-        entityId: settlementId,
-        kind: "create",
-        patch: {
-          fromMember: input.fromMember,
-          toMember: input.toMember,
-          amountMinor: input.amountMinor,
-          currency: input.currency,
-          rateToBase: seed.rateToBase,
-          baseAmountMinor: toBase(seed, base),
-          occurredAt: input.occurredAt,
-          createdAt: now,
-          ...only({ dateOnly: input.dateOnly ? true : null, note: input.note }),
-        },
-      },
-    ],
+    [{
+      entity: "settlement", entityId: settlementId, kind: "create",
+      patch: settlementCreatePatch(input, base, rates, now),
+    }],
     now,
   );
   return settlementId;
@@ -296,4 +303,45 @@ export async function deleteSettlement(
   await appendOps(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
   ]);
+}
+
+// ------------------------------------------------------ kind conversion
+
+/**
+ * An expense or income becoming a transfer. Not an edit — a transfer is a
+ * `Settlement`, a different entity with a different shape (ADR-0010) — so the
+ * expense is tombstoned and the transfer created fresh, both in the one
+ * append: a partial write must never leave the money recorded as neither.
+ */
+export async function convertToSettlement(
+  groupId: Id,
+  actor: Id,
+  expenseId: Id,
+  input: SettlementInput,
+  now = Date.now(),
+): Promise<Id> {
+  const { base, rates } = await valuationOf(groupId);
+  const settlementId = newId();
+  await appendOps(groupId, actor, [
+    { entity: "expense", entityId: expenseId, kind: "delete", patch: {} },
+    { entity: "settlement", entityId: settlementId, kind: "create", patch: settlementCreatePatch(input, base, rates, now) },
+  ], now);
+  return settlementId;
+}
+
+/** The other direction of `convertToSettlement`. */
+export async function convertToExpense(
+  groupId: Id,
+  actor: Id,
+  settlementId: Id,
+  input: ExpenseInput,
+  now = Date.now(),
+  expenseId: Id = newId(),
+): Promise<Id> {
+  const { base, rates } = await valuationOf(groupId);
+  await appendOps(groupId, actor, [
+    { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
+    { entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) },
+  ], now);
+  return expenseId;
 }
