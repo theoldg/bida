@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — A sentence typed into a title wrapped the top bar to six
+  lines. The fix was not a smaller title: a bar is furniture, and what a person
+  types belongs in the screen.
 - *2026-09-19* — Reading the repo as a stranger, not as its author, found what
   766 commits had not: the install guide's first command cloned the old repo
   name. Nobody who knew it ran it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Hunting over-engineering, the count that paid was of classes:
   all 503 hand-written, a whole build step under none of its own. Ask what a
   dependency earns, not what it cost.
-- *2026-09-19* — I read "nothing behind the ledger" off a harness that had
-  opened `/new` by address, and planned a fix for it. The shortcut in the check
-  was the whole finding.

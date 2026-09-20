@@ -72,6 +72,7 @@ function EntryScreen() {
   }
 
   const kind: EntryKind = expense ? kindOf(expense) : "transfer";
+  const title = expense?.description.trim();
   const edits = Math.max(0, opCount - 1);
   const foreign = entry.currency !== group.baseCurrency;
   async function remove() {
@@ -85,8 +86,13 @@ function EntryScreen() {
   return (
     <Screen>
       <Body>
+        {/* The bar names which of the three this is and when it happened —
+            two bounded strings, so it is the same height on every entry in
+            every group. What the entry is *called* is the one thing here
+            nobody has a length for, and it is in the screen below
+            (`.entrytitle`). */}
         <TopBar
-          title={expense ? (expense.description || copy.group.untitled) : copy.group.transfer}
+          title={copy.entryKind.label[kind]}
           sub={whenLabel(entry)}
           back={parent}
           right={<>
@@ -101,6 +107,11 @@ function EntryScreen() {
 
         <Scroll>
           <div className="pad" style={{ paddingTop: 2 }}>
+            {/* Nothing at all when there is nothing: an expense saved without
+                a title is already named "Expense" by the bar, and a line
+                reading "Untitled" under it only says so again. A transfer has
+                never had one — its words are the note, under the two sides. */}
+            {title ? <h2 className="entrytitle selectable">{title}</h2> : null}
             <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
               <span className="bignum" style={{ fontSize: 32 }}>
                 {money(entry.baseAmountMinor, group.baseCurrency)}
@@ -112,9 +123,6 @@ function EntryScreen() {
               ) : null}
             </div>
             <div style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}>
-              {/* Expenses are the default and say nothing; the two that run
-                  differently name themselves once, here. */}
-              {kind !== "expense" ? <span className="chip hl">{copy.entryKind.label[kind]}</span> : null}
               {foreign ? <span className="chip">{copy.entry.rate(rateText(entry.rateToBase))}</span> : null}
               {edits > 0 ? (
                 <Link href={route.history(groupId, entry.id, via)} className="chip">

@@ -234,6 +234,19 @@ the slack as air above and below. The amount column is leaded tighter than it
 was, so that fixed height stays close to the old two-line row's and the ledger
 holds as many entries per screen.
 
+## The bar is furniture
+
+Every top bar is the same height on every screen, whatever anyone typed into
+the app. `.topbar`'s title and sub-line clamp at two lines — what a
+40-character group name takes at 17px — and elide past that; a `capped` title,
+which has a centred control to end before, still stops at one. Text with more
+to say than that says it **in the screen**: an entry's own title is `.entrytitle`
+at the head of `/g/entry`, a step under the figure it names, where it wraps as
+far as it likes and can be selected. The bar keeps the kind and the date, both
+bounded. Growing the bar instead is what this looked like before, and a bar
+grown to six lines leaves its own back arrow and bin floating in the middle of
+a paragraph.
+
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two

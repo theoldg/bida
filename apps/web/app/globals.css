@@ -350,12 +350,19 @@ a { color: inherit; text-decoration: none }
 [data-env="dev"] .topbar { background: var(--dev-bar) }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 .topbar-title { min-width: 0 }
+/* The bar is furniture, and furniture keeps its shape whatever is typed into
+   the app. Two lines is what a 40-character group name takes here; past that
+   the bar would grow and strand its own buttons in the middle of a paragraph,
+   which is what a sentence typed into an expense's title used to do. Anything
+   with more to say than this says it in the screen — `.entrytitle`. */
+.topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere }
 /* A `mid` control is centred on the bar, so the title has to end before it
    whatever it says — capped at the gap in front of the widest chip, and
    elided rather than wrapped into a second line the bar has no room for. */
 .topbar-title.capped { max-width: calc(50% - 52px) }
 .topbar-title.capped h3, .topbar-title.capped .sub {
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 /* Inset to the bar's own padding rather than centred on its box: the top
    padding grows with the safe area and the bottom doesn't, so a `top: 50%`
    would ride high on a notched phone. */
@@ -919,6 +926,14 @@ a { color: inherit; text-decoration: none }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
+/* An entry's own words, on the entry's own screen (app/g/entry/page.tsx).
+   They sat in the top bar until a title somebody wrote a sentence into wrapped
+   to six lines and left the bar's clock and bin floating in the middle of it.
+   A step under the figure below it rather than over it: the amount is still
+   what the screen is about, and this is what it was for. `anywhere`, because
+   a pasted URL is one word and there is no hyphenation to fall back on. */
+.entrytitle { font-size: 17px; letter-spacing: -.03em; line-height: 1.35;
+  padding-top: 4px; margin-bottom: 7px; overflow-wrap: anywhere; text-wrap: pretty }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;
