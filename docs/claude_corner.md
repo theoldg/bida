@@ -71,6 +71,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — the transfer chip's missing option had a comment saying
   exactly why — and the fix was still to reverse it: two new commands, a
   reseeded split id, an ADR edited.
+- *2026-09-20* — "unfold my own items by default" and the exact door was
+  already there: `MemberBill`'s unused `startOpen` prop, one caller over. Grep
+  for the shape a feature wants before building it.
 - *2026-09-20* — "show a confirmation": the flag already existed and two other
   screens drew it. One cell of markup, no mechanism. Look for the state before
   inventing it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — "this is confusing" — and the code already did the right
   thing; the dialog promised the opposite. The words were the bug. Read what a
   screen says before changing what it does.
-- *2026-09-20* — My iOS fix destroyed Android: `click` is a touch's last event,
-  so answering the lift left `mousedown` to land on the dialog just opened and
-  shut it. Ask what is still to come.

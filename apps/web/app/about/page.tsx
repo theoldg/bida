@@ -14,9 +14,10 @@ import { VERSION } from "@/lib/version";
  * should act on lightly — where to ask for a group to be erased.
  *
  * **Six claims, no pitch**: this screen is reached from the foot of the groups
- * list, so whoever is on it already has the app. The source link sits above
- * them all, being the one thing somebody might come looking for on its own, and
- * the build number sits in the bar's far corner, out of the reading.
+ * list, so whoever is on it already has the app. Email and source sit above
+ * them all, on one line, being the two things somebody might come looking for
+ * on their own, and the build number sits in the bar's far corner, out of the
+ * reading.
  *
  * Prose and links, so it stays a server component. The two sections whose
  * sentences aren't fixed at build time draw themselves — `AboutOffline`, which
@@ -36,26 +37,27 @@ export default function AboutPage() {
           right={<span className="topbarver">{copy.about.version}{VERSION}</span>} />
         <Scroll>
           <div className="pad about">
-            <a className="aboutlink" href={feedback.sourceUrl}
-              target="_blank" rel="noreferrer noopener">
-              <Icon name="link" size={14} />{feedback.source}
-            </a>
+            {/* Email and source, together on one line: the two doors out of
+                the app that somebody might come looking for on their own,
+                ahead of the six claims rather than one of them. */}
+            <div className="aboutcontact">
+              <a className="aboutlink" href={`mailto:${feedback.email}`}>
+                <Icon name="mail" size={14} />{feedback.emailLabel}
+              </a>
+              <a className="aboutlink" href={feedback.sourceUrl}
+                target="_blank" rel="noreferrer noopener">
+                <Icon name="link" size={14} />{feedback.source}
+              </a>
+            </div>
 
             <Section title={copy.about.noAccounts.title}>{copy.about.noAccounts.body}</Section>
 
             <AboutOffline />
 
-            {/* The one door out of the app besides the source link above. A
-                mailto rather than a form: a form needs an endpoint, an inbox
-                and a spam story, and the address is the whole of what it
-                would have sent. */}
-            <Section title={feedback.title} under={
-              <div className="aboutlinks">
-                <a className="aboutlink" href={`mailto:${feedback.email}`}>
-                  <Icon name="mail" size={14} />{feedback.email}
-                </a>
-              </div>
-            }>{feedback.body}</Section>
+            {/* The mailto above is the door; a form needs an endpoint, an
+                inbox and a spam story, and the address is the whole of what
+                it would have sent. */}
+            <Section title={feedback.title}>{feedback.body}</Section>
 
             {/* Led by its own bold sentence, ahead of the paragraph it is an
                 exception to: the photograph leaves for somebody else's server

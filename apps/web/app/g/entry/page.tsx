@@ -242,7 +242,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
           return <MemberBill key={m.id} name={k} total={v} lines={lines}
-            format={(minor) => money(minor, expense.currency)} />;
+            format={(minor) => money(minor, expense.currency)} startOpen={m.id === data.me} />;
         })}
       </Card>
     </div>
