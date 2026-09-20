@@ -311,6 +311,18 @@ Two differences that are the whole reason it is a second script:
   honest pause is the window for proving that *nothing* happened, which has no
   condition to wait for. Eight assertions across three checks were red on a
   busy machine and green on a quiet one, and not one of them was about the app.
+- **`pnpm offline` is standing proof of that, and a cloud container is where it
+  shows.** Under `pnpm verify` it goes red in roughly two runs of three and
+  passes alone every time — on the agent's container, which is slower than the
+  owner's laptop, so seven headless browsers at once starves it first. The bet
+  is the settle loop that reads the shell caches once `gooddeploy02` installs:
+  it stops when two samples 500ms apart agree *and* the new revision is there,
+  which is quiescence rather than the answer. `activate`'s deletion can simply
+  not have been scheduled inside that gap, so the loop calls the list settled
+  with `flakydeploy01` still in it and the three assertions reading it go red
+  together. Waiting for the set the check expects, with `PATIENCE` as the
+  ceiling, is the fix; nothing about the app is wrong. Not new — it does the
+  same on `6c659a6` (2026-09-20).
 - **`setOffline` is the page's network, not the browser's.** The update check
   for `sw.js` goes out anyway — so a lever `offline-check` holds up for one
   section (a forged revision, a blocked asset) is read by an install nobody
