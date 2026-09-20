@@ -474,7 +474,8 @@ the ledger and syncing against nothing.
 **Not linked from anywhere.** A screen whose job is deleting other people's
 data has no business one tap from a ledger, so `/about` writes the address out
 unlinked (`AboutDelete`, naming the host the app was opened from, since the dev
-Worker holds its own groups), and the two gentler things people usually want — Export data, Forget group — are offered on it by name.
+Worker holds its own groups), and the screen itself names the gentler thing
+most people are actually after — Export data — before it asks for a link.
 
 ## Getting a group off the phone
 

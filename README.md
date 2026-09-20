@@ -76,6 +76,10 @@ receipt scanning is very cheap and funded by a tip jar.
 If you want even more privacy, or you'd like to hook up your own Gemini API key for
 unlimited scans, bida is relatively easy to [self-host](SELFHOSTING.md).
 
+## Feedback welcome (and needed)
+
+bida is very young and only tested on a couple of devices. Drop me a bug report, a PR, or an email!
+
 ## Licence
 
 [MIT](LICENSE)

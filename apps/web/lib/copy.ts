@@ -163,9 +163,8 @@ export const copy = {
    */
   importData: {
     title: "Import a group",
-    /** What this makes, and what it leaves alone. */
-    lede: "A file exported from Splitwise (or from bida) becomes a new group, with everybody in it and every entry on its day.",
-    safe: "Nothing you already have changes.",
+    /** What this makes, and what it's made from. */
+    lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
     pick: "Choose a file",
     /** The second way in, for a phone whose browser has no file picker worth
         using and for a file that arrived in a chat: the text itself. */
@@ -423,9 +422,12 @@ export const copy = {
     title: "Advanced",
     key: {
       title: "Bring your own key",
-      lede: "Scans normally go through this app’s server, on a key shared by everybody, with a daily cap. Paste your own Gemini key and this phone calls Google directly instead: no cap, and nothing counted here.",
+      lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
+      /** The free tier's own terms, not ours — worth re-checking before
+          editing (docs/receipt-scanning.md#trust-and-what-were-accepting). */
+      freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
       placeholder: "Paste a Gemini API key",
       /** The plus files the key, the way the plus on a name files a name. */
       use: "Use this key",
@@ -465,19 +467,12 @@ export const copy = {
     privacy: {
       title: "Privacy",
       scanTitle: "Receipt scanning leaves your phone.",
-      scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something: not the photo, just the count, for rate limiting purposes.",
-      /** The one way the sentence above stops being true of this phone. Said
-          here and not only on `/advanced`, because this is the screen somebody
-          reads when they mind (docs/receipt-scanning.md#a-key-of-your-own). */
-      scanOwnKey: "Bring your own Gemini key under Advanced and the photo goes straight from your phone to Google: it never passes through this server, and nothing here counts it.",
-      /**
-       * The inversion the shared path created. Ours is Vertex, which does not
-       * train on what it reads; a key somebody makes for themselves is an AI
-       * Studio one, whose free tier does. So the screen that offers more
-       * privacy has to name the one way it buys less. Italicised at the render
-       * site (`app/about/page.tsx`), which is where markup lives.
-       */
-      scanOwnKeyWarning: "Warning: a free-tier key lets Google train on your images.",
+      scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
+      /** Points at `/advanced` rather than repeating it — what's true of a
+          brought key (no cap, but a free-tier one trains on what it reads)
+          is said once, there, and not again here. The link itself sits under
+          this sentence (`app/about/page.tsx`), named for the screen it opens. */
+      ownKeyPointer: "If you want to send your own requests to Google directly, see “Bring your own key” below.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
@@ -500,15 +495,19 @@ export const copy = {
      * who is behind them. MIT covers the code, not bida.bid, whose users are
      * strangers rather than friends who would ask (hosting.md).
      *
-     * It reads after Privacy on purpose. "I can't restore lost links" is a
-     * consequence of the sealed row a paragraph above, not an excuse — read
-     * before it, it would sound like one. The reassurance leads the warning
-     * because the database really is not going anywhere: the risk here is a
-     * side project's attention, not Cloudflare's storage.
+     * It reads after Privacy on purpose. Losing an invite link with nobody
+     * left holding a copy is a consequence of the sealed row a paragraph
+     * above, not an excuse — read before it, it would sound like one.
      */
     guarantees: {
       title: "No guarantees",
-      body: "I built bida in my spare time. Your groups are stored in a real database, but as a one-person project, I can’t guarantee it’ll last forever, and I can’t restore lost links. Please back up anything important and use at your own risk.",
+      lede: "Please back up anything important and use at your own risk.",
+      /** Three ways this can go wrong, roughly in order of how likely each is. */
+      warnings: [
+        "The server runs on its own, for free, so your data is not going anywhere… unless Cloudflare changes their free-plan policy.",
+        "Receipt scanning will break if I stop paying for it. The tip jar helps!",
+        "If you manage to remove a group from every device and then lose the invite link, there’s no way to bring it back.",
+      ],
     },
     feedback: {
       title: "Feedback",
@@ -545,22 +544,18 @@ export const copy = {
       title: "Delete your data",
       body: (address: string) => `You can request data deletion by visiting ${address}.`,
     },
-    lede: "This erases a whole group from this server: every expense, every person in it, and the entire history of who changed what.",
+    lede: "This permanently erases a whole group from the server.",
     /** The three things people get wrong about what this button is for. */
     warnings: [
-      "It deletes the group for everybody, not just for you. Nobody else in it is asked, and nobody else is told.",
-      "It cannot be undone. There is no backup and no copy on the server afterwards, so not even I can bring the group back.",
-      "Other phones keep what they already downloaded until somebody deletes it there too. They stop syncing, and the invite link stops working for good.",
+      "It deletes the group for everybody. Nobody else is asked.",
+      "Every member device will also destroy their copy next time they open bida.",
+      "It cannot be undone.",
     ],
-    /** Offered before the field, because most people here want one of these. */
-    gentler: {
-      title: "Probably what you want instead",
-      export: "To keep your numbers, open the group and choose Export data.",
-      forget: "To take a group off this phone only, open the group and choose Forget group. The rest of the group is untouched.",
-    },
+    /** The one thing worth doing before the field below. */
+    backup: "Make sure this is what you want, and consider backing up via the “export data” button.",
     ask: {
       title: "Which group?",
-      body: "Paste the group’s invite link. Holding that link is the only thing that proves a group is yours to delete, so the app asks for it rather than for a group name.",
+      body: "Paste the group’s invite link:",
       placeholder: "https://bida.bid/join#…",
       paste: "Paste link",
       act: "Find this group",
@@ -601,7 +596,7 @@ export const copy = {
       title: "Deleted",
       body: (name: string) => `${name} is gone from the server, and off this phone.`,
       /** Said last because it is the one thing the button could not do. */
-      rest: "If anybody else still has this group on their phone, it stays there until they delete it too. Their app will stop syncing now.",
+      rest: "Every other phone that has this group will destroy its own copy the next time it opens bida.",
       back: "Back to my groups",
     },
   },
@@ -1145,7 +1140,7 @@ export const copy = {
        * refused one. Every clause that named a format was a clause teaching
        * people to tidy a bill up for the app, so the sentence keeps none.
        */
-      lede: "The items and prices, formatted however you like.",
+      lede: "The items and prices, in any format.",
       placeholder: "3 chicken skewers at 13\nand 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",

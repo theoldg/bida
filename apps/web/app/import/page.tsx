@@ -162,7 +162,6 @@ export default function ImportPage() {
               ) : (
                 <>
                   <p>{words.lede}</p>
-                  <p>{words.safe}</p>
 
                   <div style={{ paddingTop: 12 }}>
                     <button type="button" className="btn btn-p" onClick={() => file.current?.click()}

@@ -125,12 +125,7 @@ export default function DeleteMyDataPage() {
                 <li key={line}><Icon name="info" size={14} />{line}</li>
               ))}
             </ul>
-          </section>
-
-          <section className="aboutsect">
-            <h4>{c.gentler.title}</h4>
-            <p>{c.gentler.export}</p>
-            <p>{c.gentler.forget}</p>
+            <p>{c.backup}</p>
           </section>
 
           {found ? (

@@ -243,6 +243,13 @@ export const route = {
    */
   tip: (groupId: string) => `/g/tip?id=${encodeURIComponent(groupId)}`,
   /**
+   * The same tip jar with no group behind it — for `/about`'s guarantees
+   * section, read by somebody who may not have one open. Drops the per-member
+   * split and the "add as an expense" button, since neither means anything
+   * without a group to split into (app/tip/page.tsx).
+   */
+  support: () => "/tip",
+  /**
    * The donation as an ordinary expense, named and otherwise blank — the
    * amount is whatever was actually given, which only the giver knows. `via`
    * is "balances" so saving lands back where the tip screen was reached from.

@@ -78,6 +78,7 @@ export default function AdvancedPage() {
                   <Icon name="link" size={14} />{key.where}
                 </a>
               </div>
+              <p className="keynote">{key.freeTier}</p>
 
               {/* Always a box, typed into or locked: what is in this row is
                   either not a key yet or not editable, and neither is the

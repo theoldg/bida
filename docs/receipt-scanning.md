@@ -746,8 +746,9 @@ Deliberate, for a group of friends under fifty people:
 - **A brought key is the exception to that exception.** `/advanced` takes an AI
   Studio key, and the free tier of that API *is* used to improve Google's
   products. So the path that keeps the photo away from our server is the one
-  where Google may train on it, and `/about` says so in as many words. The
-  inversion is worth re-reading before editing either sentence.
+  where Google may train on it, and `/advanced` says so in as many words —
+  `/about` only points there, rather than repeating it. The inversion is worth
+  re-reading before editing either sentence.
 - **Terms can change overnight.** If they do, scanning 404s and the button
   hides. The app is unaffected.
 

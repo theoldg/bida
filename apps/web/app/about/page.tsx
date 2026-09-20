@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { AboutDelete } from "@/components/about-delete";
 import { AboutOffline } from "@/components/about-offline";
@@ -62,6 +63,12 @@ export default function AboutPage() {
                 sealed. Said after the rest, it would read like a footnote. */}
             <Section title={privacy.title} under={
               <>
+                <p>{privacy.ownKeyPointer}</p>
+                <div className="aboutlinks">
+                  <Link className="aboutlink" href={route.advanced()}>
+                    <Icon name="link" size={14} />{copy.advanced.key.title}
+                  </Link>
+                </div>
                 <p> <strong> {privacy.e2eTitle} </strong> {privacy.body}</p>
                 <SealedRow />
                 <p>{privacy.key}</p>
@@ -70,14 +77,26 @@ export default function AboutPage() {
             }>
               <>
                 <strong>{privacy.scanTitle}</strong> {privacy.scan}
-                {" "}{privacy.scanOwnKey}{" "}<em>{privacy.scanOwnKeyWarning}</em>
               </>
             </Section>
 
             {/* After the sealed row, because the sentence that matters here
                 — a lost link is a group nobody can recover — is a consequence
                 of it rather than a disclaimer that happens to sit nearby. */}
-            <Section title={guarantees.title}>{guarantees.body}</Section>
+            <Section title={guarantees.title} under={
+              <>
+                <ul className="warnlist">
+                  {guarantees.warnings.map((line) => (
+                    <li key={line}><Icon name="info" size={14} />{line}</li>
+                  ))}
+                </ul>
+                <div className="aboutlinks">
+                  <Link className="aboutlink" href={route.support()}>
+                    <Icon name="dollar" size={14} />{copy.tip.fab}
+                  </Link>
+                </div>
+              </>
+            }>{guarantees.lede}</Section>
 
             {/* Last, under the promises it is the other half of: a server that
                 cannot read a group can still be asked to stop holding one.
