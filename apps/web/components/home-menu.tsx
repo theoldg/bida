@@ -64,11 +64,11 @@ export function HomeMenu() {
       icon: "merge",
       onSelect: () => router.push(route.import()),
     },
-    { label: copy.groups.about, icon: "info", onSelect: () => router.push(route.about()) },
-    // Last, and after "About bida" on purpose: the screen behind it is for the
-    // person who already knows they want something off the default, and a menu
-    // reads top-down.
     { label: copy.groups.advanced, icon: "sliders", onSelect: () => router.push(route.advanced()) },
+    // Last, and after "Advanced" on purpose: it's the readout everyone can use,
+    // while Advanced is for the person who already knows they want something
+    // off the default, and a menu reads top-down.
+    { label: copy.groups.about, icon: "info", onSelect: () => router.push(route.about()) },
   ];
 
   return <MenuButton icon="more" label={copy.groups.menu} actions={actions} />;
