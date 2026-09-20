@@ -434,7 +434,7 @@ export const copy = {
       /** Split around the link, the way /about's warning rows are: the door out
           is a word in the sentence that dates the terms, not a row of its own
           repeating the line that opened the fold. */
-      site: { lede: "Check their ", link: "website", tail: " for what it allows today." },
+      site: { lede: "Check their ", link: "website", tail: "." },
       placeholder: "Paste a Gemini API key",
       /** The plus files the key, the way the plus on a name files a name. */
       use: "Use this key",
