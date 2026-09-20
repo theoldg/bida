@@ -8,6 +8,7 @@ import {
   type Expense, type Group, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "@/components/bits";
+import { FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -21,6 +22,14 @@ import { money, plural, rateText, whenLabel } from "@/lib/format";
 import { receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
+
+/**
+ * The type a title is set in, largest first, ending at the size it wraps at.
+ * A one-word expense is a heading; a sentence is a paragraph — and the step
+ * between them is what stops the short ones looking like a caption on the
+ * figure. Nothing here reaches the amount's 32px: the money still leads.
+ */
+const ENTRY_TITLE_SIZES = [26, 22, 17] as const;
 
 /**
  * One entry, whichever of the three it is. The id in the query string is looked
@@ -111,18 +120,16 @@ function EntryScreen() {
                 a title is already named "Expense" by the bar, and a line
                 reading "Untitled" under it only says so again. A transfer has
                 never had one — its words are the note, under the two sides. */}
-            {title ? <h2 className="entrytitle selectable">{title}</h2> : null}
-            <div style={{ display: "flex", alignItems: "baseline", gap: 9, flexWrap: "wrap" }}>
-              <span className="bignum" style={{ fontSize: 32 }}>
-                {money(entry.baseAmountMinor, group.baseCurrency)}
-              </span>
+            {title ? (
+              <FitTitle className="entrytitle selectable" text={title} sizes={ENTRY_TITLE_SIZES} />
+            ) : null}
+            <div className="entryfig">
+              <span className="bignum">{money(entry.baseAmountMinor, group.baseCurrency)}</span>
               {foreign ? (
-                <span className="num" style={{ fontSize: 13, color: "var(--muted)" }}>
-                  {money(entry.amountMinor, entry.currency)}
-                </span>
+                <span className="num">{money(entry.amountMinor, entry.currency)}</span>
               ) : null}
             </div>
-            <div style={{ display: "flex", gap: 6, marginTop: 9, flexWrap: "wrap" }}>
+            <div className="entrychips">
               {foreign ? <span className="chip">{copy.entry.rate(rateText(entry.rateToBase))}</span> : null}
               {edits > 0 ? (
                 <Link href={route.history(groupId, entry.id, via)} className="chip">

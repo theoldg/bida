@@ -354,9 +354,14 @@ a { color: inherit; text-decoration: none }
    the app. Two lines is what a 40-character group name takes here; past that
    the bar would grow and strand its own buttons in the middle of a paragraph,
    which is what a sentence typed into an expense's title used to do. Anything
-   with more to say than this says it in the screen — `.entrytitle`. */
+   with more to say than this says it in the screen — `.entrytitle`. The
+   sub-line gets one line, not two: every one of them is a caption on the title
+   above it — a name, a date, a figure — and a caption that runs to a second
+   line is the thing it captions, in the wrong place. */
 .topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere }
+  overflow: hidden; overflow-wrap: anywhere }
+.topbar h3 { -webkit-line-clamp: 2 }
+.topbar .sub { -webkit-line-clamp: 1 }
 /* A `mid` control is centred on the bar, so the title has to end before it
    whatever it says — capped at the gap in front of the widest chip, and
    elided rather than wrapped into a second line the bar has no room for. */
@@ -926,14 +931,29 @@ a { color: inherit; text-decoration: none }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
-/* An entry's own words, on the entry's own screen (app/g/entry/page.tsx).
-   They sat in the top bar until a title somebody wrote a sentence into wrapped
-   to six lines and left the bar's clock and bin floating in the middle of it.
-   A step under the figure below it rather than over it: the amount is still
-   what the screen is about, and this is what it was for. `anywhere`, because
-   a pasted URL is one word and there is no hyphenation to fall back on. */
-.entrytitle { font-size: 17px; letter-spacing: -.03em; line-height: 1.35;
-  padding-top: 4px; margin-bottom: 7px; overflow-wrap: anywhere; text-wrap: pretty }
+/* The head of an entry's own screen (app/g/entry/page.tsx): what it is called,
+   on the left, and what it cost, on the right — the ledger row you tapped to
+   get here, opened out. The title sat in the top bar until a sentence typed
+   into one wrapped the bar to six lines and left its clock and bin floating in
+   the middle of a paragraph.
+
+   Its size is not in this rule: `FitTitle` measures the words and takes the
+   largest step that says them in one line, so "Dinner" is a heading and a
+   sentence is a paragraph. `ENTRY_TITLE_SIZES` in the screen is the ladder,
+   and this is everything that holds at any rung on it. `anywhere`, because a
+   pasted URL is one word and there is no hyphenation to fall back on. */
+.entrytitle { letter-spacing: -.03em; line-height: 1.3; padding-top: 4px;
+  overflow-wrap: anywhere; text-wrap: pretty }
+/* Right, like the ledger's amount column — and reversed rather than reordered,
+   so the figure that moves the balance keeps the edge and the sum as it was
+   spent sits inboard of it, while the reading order stays base-first. */
+.entryfig { display: flex; flex-direction: row-reverse; justify-content: flex-start;
+  align-items: baseline; gap: 9px; margin-top: 7px }
+.entryfig .bignum { font-size: 32px }
+.entryfig .num { font-size: 13px; color: var(--muted) }
+/* Under the figure they qualify, so they hang off the same edge. */
+.entrychips { display: flex; justify-content: flex-end; gap: 6px; margin-top: 9px;
+  flex-wrap: wrap }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;

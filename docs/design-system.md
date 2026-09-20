@@ -237,15 +237,22 @@ holds as many entries per screen.
 ## The bar is furniture
 
 Every top bar is the same height on every screen, whatever anyone typed into
-the app. `.topbar`'s title and sub-line clamp at two lines — what a
-40-character group name takes at 17px — and elide past that; a `capped` title,
-which has a centred control to end before, still stops at one. Text with more
-to say than that says it **in the screen**: an entry's own title is `.entrytitle`
-at the head of `/g/entry`, a step under the figure it names, where it wraps as
-far as it likes and can be selected. The bar keeps the kind and the date, both
-bounded. Growing the bar instead is what this looked like before, and a bar
-grown to six lines leaves its own back arrow and bin floating in the middle of
-a paragraph.
+the app. A `.topbar` title clamps at two lines — what a 40-character group name
+takes at 17px — and its sub-line at one, because every sub-line in the app is a
+caption on the title above it (a name, a date, a figure) and a caption running
+to a second line is the thing it captions, in the wrong place. A `capped`
+title, which has a centred control to end before, stops at one too. Growing the
+bar instead is what this looked like before, and a bar grown to six lines
+leaves its own back arrow and bin floating in the middle of a paragraph.
+
+Text with more to say than that says it **in the screen**. `/g/entry`'s head is
+the ledger row you tapped, opened out: the title left, the figure right — and
+the bar keeps only the kind and the date, both bounded. The title's size is
+measured rather than set (`FitTitle`, on `lib/fit.ts` like `.rmeta`'s wording
+ladder): it takes the largest step that says the words in one line and falls to
+the wrapping size when none does, so "Dinner" is a heading and a sentence is a
+paragraph. Nothing on that ladder reaches the amount's 32px — the money still
+leads.
 
 ## An arrow points one way, and an income says so twice
 
