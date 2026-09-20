@@ -136,7 +136,6 @@ await pick(page, '[aria-label="What kind of entry"]', "Income");
 await page.locator("input.amount").fill("300");
 await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Received by").count() > 0, "an income relabels the payer picker");
-report(await page.getByText("Shared with").count() > 0, "an income relabels the split");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 
 // Who put the money in is a different question on an income, and the screen

@@ -65,7 +65,7 @@ interface ReceiptTabProps {
 export function SplitEditor({ members, me, title, totalMinor, totalUnknown, currency, spec, receiptSplit, seed, onChange, tab, onTabChange, receipt }: {
   members: Member[];
   me: string | undefined;
-  /** "Split" on an expense, "Shared with" on an income — `copy.entryKind.split`. */
+  /** "Split" for both an expense and an income, "To" for a transfer — `copy.entryKind.split`. */
   title: string;
   /** The expense total in the group's base currency — what the split divides. */
   totalMinor: number;

@@ -921,7 +921,7 @@ export const copy = {
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
     payerCount: (label: string, people: string) => `${label} · ${people}`,
-    /** "Split · evenly" · "Shared with · by items". */
+    /** "Split · evenly" · "Split · by items" · "To · as parts". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
     deleteBody: "The history keeps a record.",
@@ -938,8 +938,10 @@ export const copy = {
     verb: { expense: "paid", income: "received" } as Voiced<string>,
     /** Over the payer picker: who put it in, or who took it in. */
     payer: { expense: "Paid by", income: "Received by", transfer: "From" } as Record<EntryKind, string>,
-    /** Over the split: who it was spent on, or who it belongs to. */
-    split: { expense: "Split", income: "Shared with", transfer: "To" } as Record<EntryKind, string>,
+    /** Over the split. Same word for an expense and an income — both answer
+        "split how", not "spent on" vs "belongs to", and a reader flips
+        between the two often enough that the label shouldn't. */
+    split: { expense: "Split", income: "Split", transfer: "To" } as Record<EntryKind, string>,
     /** Under each kind in the form's picker. Three words nobody has to already
         know the app to tell apart — "transfer" against "expense" is the pair
         that actually gets picked wrong, so each says where the money goes. */
