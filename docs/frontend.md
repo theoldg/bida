@@ -85,7 +85,15 @@ needs no help here, because with only descending pushing the browser's own back
 *is* the arrow; it is taken over only where the arrow skips a level. `{ ask }`
 is a screen that would lose typed work: it answers *may I leave?* before
 anything is cancelled, and a no cancels the press with the dialog as the whole
-of the answer — nothing navigates in its place. An
+of the answer — nothing navigates in its place. **Cancelling a press is not
+free**: it spends the document's history-action activation, which is also what
+lets the dialog it opens refuse the *next* close request, and what the browser
+requires before it will mark a traversal cancelable at all. So a run of back
+presses with no tap between them degrades — the dialog is shut by a press the
+app cannot hear about without `Dialog`'s `close` listener (Gotchas), and
+eventually a press arrives uncancelable and leaves for good. That last one is
+the degradation ADR-0007 names, and on `/new` it is data loss: the screen is
+plain state, with no draft behind it. An
 entry is the one screen whose parent isn't fixed: the history feed, the two
 "can't remove this yet" lists and the balances tab's settle-up rows link in from
 beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back
@@ -1028,6 +1036,17 @@ so the static export ships the full line and the browser narrows it.
   it, and looks implemented. The wrapper must own the vertical scroll too, with
   `border-collapse: separate`, or the collapsed border belongs to the table and
   slides out from under the frozen row.
+- **A `<dialog>` can be shut by the platform without a word.** `showModal()`
+  registers a close watcher, and only a document holding history-action
+  activation may refuse a close request: without it no `cancel` fires at all and
+  the element simply closes. The back press that opens a discard dialog has just
+  spent that activation on cancelling itself, so on Android the very next press
+  shuts the dialog silently. `Dialog` therefore listens for `close` as well as
+  `cancel` — otherwise the element stays mounted and shut, the screen goes on
+  believing its dialog is up, and on `/new` that belief is what every further
+  press is answered with: `ask` is already `"discard"`, so setting it renders
+  nothing, and the back button and the arrow both go dead with nothing on
+  screen. `pnpm nav` drives it.
 - **Only a real `<dialog>` gets focus for free — and it spends it without
   asking.** `Dialog` calls `showModal()`, so the platform keeps Tab inside and
   makes the screen behind inert, but it also focuses the first focusable

@@ -24,10 +24,32 @@ export function Dialog({ title, onClose, children }: {
 }) {
   const frame = useRef<HTMLDialogElement>(null);
   const card = useRef<HTMLDivElement>(null);
+  // The `close` listener below is hung once and outlives every render; the
+  // handler it has to call is a new closure on each one.
+  const closed = useRef(onClose);
+  closed.current = onClose;
 
   useEffect(() => {
     const el = frame.current;
     if (!el || el.open) return;
+    /**
+     * **Whoever shuts this element, the state drawing it hears about it.**
+     *
+     * `showModal()` registers a close watcher, and a close request the browser
+     * will not let us refuse fires no `cancel` at all — the dialog simply
+     * closes, and `onCancel` below never runs. Only a document holding
+     * history-action activation may refuse one, and on Android the back press
+     * that *opened* this dialog spent exactly that: the very next press shuts
+     * it silently.
+     *
+     * Without this the element stays mounted and shut — invisible, while the
+     * screen still believes its dialog is up. On `/new` that belief is the
+     * answer every further back press gets (`ask` is already `"discard"`, so
+     * setting it changes nothing and re-renders nothing) and the screen stops
+     * answering the back button at all.
+     */
+    const heard = () => closed.current();
+    el.addEventListener("close", heard);
     el.showModal();
     // A prompt opens on its field, with the old value selected — the one habit
     // worth keeping from prompt(). So does a box asking for several lines, where
@@ -49,6 +71,7 @@ export function Dialog({ title, onClose, children }: {
     // corrected, and the first keystroke would take the whole of it.
     if (field) { field.focus(); if (field instanceof HTMLInputElement) field.select(); }
     else card.current?.focus();
+    return () => el.removeEventListener("close", heard);
   }, []);
 
   return (

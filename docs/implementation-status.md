@@ -27,7 +27,21 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-One thing, and it is a watch rather than a task.
+Two things, and both are watches rather than tasks.
+
+- **A back press the browser will not let us cancel leaves `/new` with
+  nothing.** The guard on a screen holding typed work is a *cancelled* press,
+  and a browser only allows that while the document holds history-action
+  activation — which the previous cancelled press spent. A run of presses with
+  no tap between them therefore ends in one that goes through unasked, and
+  `/new` is plain React state with no draft behind it, so the typed group is
+  gone. ADR-0007 names an uncancellable press as the accepted degradation; that
+  was reasoned for a shared link's first press, where there is nothing to lose.
+  Closing it means either a draft store for `/new` or absorbing the press
+  instead of cancelling it — **an ADR-level call, so it is the owner's**
+  ([frontend.md](frontend.md#routing)). The trap it used to sit behind — the
+  dialog shut by the platform with the screen still believing it was up, so the
+  back button went dead — is fixed and driven (2026-09-20).
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found

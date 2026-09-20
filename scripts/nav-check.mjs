@@ -227,6 +227,44 @@ async function onLedger() {
   await page.close();
 }
 
+// ---- 7. the dialog the platform shuts by itself ------------------------
+// The press guard answers with a dialog, and `showModal()` registers a close
+// watcher with it. A close request the browser will not let us refuse — on
+// Android the next back press, since the one that opened the dialog spent the
+// document's history-action activation — fires no `cancel`: the element just
+// closes. If the screen does not hear that, it goes on believing its dialog is
+// up, and on `/new` that belief is the answer every further press gets: the
+// state is already `"discard"`, so setting it renders nothing, and the back
+// button and the arrow both go dead with nothing on screen
+// (components/dialog.tsx).
+{
+  const page = await (await phone()).newPage();
+  await page.goto(`${base}/`);
+  await page.waitForSelector(".starttile");
+  await page.locator("a[href='/new']").click();
+  await page.waitForURL(/\/new/);
+  await page.locator("#g-name").fill("Trip");
+  void page.goBack().catch(() => {});
+  await page.waitForSelector(".scrim").catch(() => {});
+  report(await page.locator(".scrim[open]").count() === 1, "a back press on a half-typed /new asks too");
+
+  // What the close watcher does, done to the element directly: closed, with no
+  // `cancel` to hear it by. Driving the real one takes an Android back press.
+  await page.evaluate(() => document.querySelector("dialog.scrim")?.close());
+  await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
+  const heard = await page.locator("dialog.scrim").count() === 0;
+  report(heard, "the screen hears the platform shut it, and stops drawing it",
+    heard ? "" : "the element is still mounted — the screen thinks its dialog is up");
+
+  void page.goBack().catch(() => {});
+  const again = await page.waitForSelector(".scrim[open]").then(() => true, () => false);
+  report(again, "so the next press asks again rather than being swallowed");
+  await settle(page, 200);
+  const here = await stack(page);
+  report(/\/new/.test(here.urls[here.i] ?? ""), "and the typed group is still on screen");
+  await page.close();
+}
+
 await browser.close();
 close();
 finish();
