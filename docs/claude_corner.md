@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — My iOS fix destroyed Android: `click` is a touch's last event,
+  so answering the lift left `mousedown` to land on the dialog just opened and
+  shut it. Ask what is still to come.
 - *2026-09-20* — A sentence typed into a title wrapped the top bar to six
   lines. The fix was not a smaller title: a bar is furniture, and what a person
   types belongs in the screen.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — The dialog reopened holding what it had just read. Its own
   answer had moved the panel to its other shape, so React unmounted it and
   mounted a fresh one. Position in the tree is state.
-- *2026-09-19* — Hunting over-engineering, the count that paid was of classes:
-  all 503 hand-written, a whole build step under none of its own. Ask what a
-  dependency earns, not what it cost.

@@ -24,9 +24,17 @@ import { mark } from "./diag";
  * `pointermove` is left out — it is the one that would flood this.
  */
 
-/** Everything a press can be made of, minus the one that repeats. */
+/**
+ * Everything a press can be made of, minus the one that repeats.
+ *
+ * The compatibility mouse pair is in here because leaving it out cost a
+ * release: a press answered on the lift was recorded as clean, and the
+ * `mousedown` that undid it arrived after the card — and so the recorder —
+ * had gone (components/row-menu.tsx).
+ */
 const KINDS = [
   "pointerdown", "pointerup", "pointercancel", "click", "contextmenu",
+  "mousedown", "mouseup",
   "touchstart", "touchend", "touchcancel", "scroll", "selectstart", "dragstart",
 ] as const;
 

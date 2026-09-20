@@ -344,7 +344,11 @@ scroll and drops on the floor; a finger that only drifts chooses nothing. And a
 menu item is tapped **without a click** — pointer and touch events dispatched
 by hand, because that is the tap iOS sometimes sends and Chromium never does
 ([frontend.md](frontend.md#gotchas)) — while a lift that slides off the item
-first still chooses nothing.
+first still chooses nothing. Then the tap every *other* phone sends, whole,
+which asks **where that tap's own `mousedown` landed** rather than whether the
+dialog it opened survived: a dialog's card is centred, so a menu halfway down
+the screen drops the stray press harmlessly on the card, and the version that
+had broken every row above and below it passed that way.
 
 It also opens the two screens that carry the in-memory draft with no draft to
 carry — which is what a reload, a restored tab or a kept link is — and holds

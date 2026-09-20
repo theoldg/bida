@@ -855,13 +855,32 @@ so the static export ships the full line and the browser narrows it.
   callout, the selection handles or the double-tap wait: `user-select`,
   `-webkit-touch-callout` and `touch-action` have all three off already
   (`globals.css`). **So a touch gesture that must not be missed cannot be built
-  on `click`.** A row menu's items answer the `pointerup` instead
-  (`components/row-menu.tsx`) — asking `elementFromPoint` where that lift
+  on `click`** — but nor can it simply be moved off it. A row menu's items wait
+  `CLICK_GRACE_MS` for the click and answer the `pointerup` only if none comes
+  (`components/row-menu.tsx`), asking `elementFromPoint` where that lift
   actually landed, since a touch's `pointerup` goes to whatever its
-  `pointerdown` went to however far the finger has moved — and `clickGuard`
-  (`lib/click-guard.ts`) eats the click if it does come, because by then the
-  card is gone and it would land on the row underneath. `pnpm entries` sends
-  the clickless tap by hand; a real one in Chromium always brings its click.
+  `pointerdown` went to however far the finger has moved. `clickGuard`
+  (`lib/click-guard.ts`) eats a click that turns up after that, because by then
+  the card is gone and it would land on the row underneath. `pnpm entries`
+  sends the clickless tap by hand; a real one in Chromium always brings its
+  click.
+- **`click` is the *last* event of a touch, and acting earlier leaves the rest
+  of it to land on what you drew.** A release that answered the `pointerup`
+  outright shipped, fixed iOS, and broke Android completely, because the
+  browser still had `touchend`, `mousedown` and `mouseup` to deliver — onto a
+  screen the action had already changed. `Dialog` light-dismisses on
+  `mousedown` (deliberately: a drag off the card is not a tap outside it), so
+  the stray one landed on the confirm dialog's own scrim and closed it 6ms
+  after it opened: **Delete and Forget did nothing at all.** Whether it hit the
+  scrim or the centred card was decided by how far down the list the row was —
+  six of eight positions on the groups list, which is what made it read as
+  working sometimes. iOS was untouched: the tap that brings no click brings no
+  compatibility mouse events either, so the fix only ever paid off where the
+  leftovers weren't. `clickGuard` guards `click` and `contextmenu` and nothing
+  else; the `/diag` trace stops when the card unmounts, so it recorded a clean
+  `chose` and none of this. `pnpm entries` asks where that `mousedown` landed,
+  rather than whether the dialog survived — over the middle of the screen it
+  lands on the card and survives on the broken code too.
 - **A read that never answers is indistinguishable from a slow one.** Both are
   `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton

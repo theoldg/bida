@@ -372,6 +372,44 @@ report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
   "a finger that comes down on a menu item and lifts off it chooses nothing");
 await closeMenu();
 
+// And the press every other phone sends: a whole tap, click and all. Chromium
+// is Android's engine, so this is the Android case exactly — the lift, then
+// `touchend`, then the compatibility `mousedown`/`mouseup`/`click`. Answering
+// the lift outright made the last three leftovers, delivered onto whatever the
+// action had drawn in the meantime: the `mousedown` landed on the confirm
+// dialog's own scrim and dismissed it 6ms after it opened, so Delete did
+// nothing at all. Held above the fold, because a menu item over the middle of
+// the screen lands on the dialog's card instead and the press survives by luck.
+async function tap(item) {
+  const b = await item.boundingBox();
+  const x = b.x + b.width / 2, y = b.y + b.height / 2;
+  await touch("touchStart", x, y);
+  await settle(page, 60);
+  await touch("touchEnd", x, y);
+}
+await hold(dinnerRow());
+// Where that `mousedown` lands is the whole of it, and it is asked rather than
+// inferred from what survived: a dialog's card is centred, so a menu halfway
+// down the screen drops the stray press on the card, where it does no harm and
+// a check that only looked at the dialog would pass on the broken code.
+await page.evaluate(() => {
+  window.__stray = [];
+  document.addEventListener("mousedown", (e) => window.__stray.push(
+    e.target instanceof Element && e.target.closest(".rowmenu-item")
+      ? "item" : `${e.target.tagName}.${String(e.target.className).split(" ")[0]}`),
+    true);
+});
+await tap(deleteItem());
+await settle(page, 250);
+const stray = await page.evaluate(() => window.__stray);
+report(stray.length > 0 && stray.every((w) => w === "item"),
+  "the tap's own mousedown lands on the item, not on what the action drew",
+  `landed on ${stray.join(", ") || "nothing — the tap sent no mousedown"}`);
+report(await menus() === 0 && await page.locator("dialog[open]").count() === 1,
+  "and a real tap leaves standing the dialog it opened");
+await page.getByRole("button", { name: "Cancel" }).click();
+await settle(page, 150);
+
 // Straight after a hold's menu closes, the next tap is a tap — the guard that
 // ate the lifting click must not eat this one.
 await hold(dinnerRow());

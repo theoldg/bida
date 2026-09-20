@@ -5,6 +5,15 @@ import { Icon, type IconName } from "./icons";
 import { clickGuard } from "../lib/click-guard";
 import { note, traceMenu } from "../lib/menu-trace";
 
+/**
+ * How long a lift waits for the click that should follow it.
+ *
+ * A tap's events arrive in one burst — the click that works comes ~5ms after
+ * the lift — so this is many times over what it is waiting for, and is spent
+ * only on a press that was never going to bring one.
+ */
+const CLICK_GRACE_MS = 150;
+
 export interface SheetAction {
   label: string;
   icon?: IconName;
@@ -22,12 +31,18 @@ export interface SheetAction {
  * has to hunt for the item it just used. Flipped above the row when there isn't
  * room below, and kept off the screen edges either way.
  *
- * **An item may not wait for its click.** On iOS a tap can land whole on one —
+ * **An item's click may never come.** On iOS a tap can land whole on one —
  * `pointerdown`, `pointerup`, `touchstart`, `touchend`, no `pointercancel` —
  * and bring no `click` at all, so the card sat there and the press had to be
- * made twice. The lift is answered instead, and the click, if it ever comes,
- * is swallowed (`lib/click-guard.ts`). frontend.md's Gotchas has the whole of
- * it; a `/diag` trace is what caught it (`lib/menu-trace.ts`).
+ * made twice. **So the lift answers for it — but only after waiting to see.**
+ * Taking the lift outright instead was worse than what it fixed: `click` is
+ * the *last* event of a touch, and acting on `pointerup` left `touchend`,
+ * `mousedown` and `mouseup` still to be delivered, onto whatever the action
+ * had by then drawn. On Android that `mousedown` landed on the confirm
+ * dialog the item had just opened and dismissed it 6ms later, so Delete and
+ * Forget did nothing at all — on the rows whose menu sat clear of the
+ * dialog's card, which is most of them. frontend.md's Gotchas has the whole
+ * of it; a `/diag` trace is what caught the first half (`lib/menu-trace.ts`).
  *
  * An invisible veil catches the outside tap that closes it; Escape and a scroll
  * (captured on `document` — the scrolling element is `.scroll`, not the window)
@@ -114,7 +129,15 @@ export function RowMenu({ anchor, actions, onClose }: {
 
   /** The pointer whose press started on an item, so its lift can finish there. */
   const finger = useRef(-1);
-  const choose = (a: SheetAction) => { note("chose"); onClose(); a.onSelect(); };
+  /** A lift still waiting to see whether its click is coming. */
+  const waiting = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(waiting.current), []);
+  const choose = (a: SheetAction) => {
+    clearTimeout(waiting.current);
+    note("chose");
+    onClose();
+    a.onSelect();
+  };
 
   return (
     <>
@@ -133,11 +156,19 @@ export function RowMenu({ anchor, actions, onClose }: {
               // rather than assumed: sliding off "Delete" calls that press off.
               const under = document.elementFromPoint(e.clientX, e.clientY);
               if (!e.currentTarget.contains(under)) return;
-              // The card goes with the press, so a click still to come lands
-              // on the row underneath, or on the screen the action just opened.
-              clickGuard().expire();
-              choose(a);
+              // The click, when there is one, is a few ms behind this — so wait
+              // for it rather than take the lift outright, and act only if none
+              // comes. See CLICK_GRACE_MS.
+              waiting.current = setTimeout(() => {
+                note("no click");
+                // It can still turn up late, and the card has gone with the
+                // press: it would land on the row underneath, or on the screen
+                // the action just opened.
+                clickGuard().expire();
+                choose(a);
+              }, CLICK_GRACE_MS);
             }}
+            onPointerCancel={() => { finger.current = -1; }}
             onClick={() => choose(a)}>
             {a.icon
               ? <Icon name={a.icon} size={15} style={a.danger ? { color: "var(--debit)" } : undefined} />
