@@ -470,9 +470,9 @@ export const copy = {
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
       /** Points at `/advanced` rather than repeating it — what's true of a
           brought key (no cap, but a free-tier one trains on what it reads)
-          is said once, there, and not again here. The link itself sits under
-          this sentence (`app/about/page.tsx`), named for the screen it opens. */
-      ownKeyPointer: "If you want to send your own requests to Google directly, see “Bring your own key” below.",
+          is said once, there, and not again here. Ends right before the link
+          itself, set inline mid-sentence (`app/about/page.tsx`). */
+      ownKeyPointer: "If you want to send your own requests to Google directly, see",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**
@@ -502,12 +502,17 @@ export const copy = {
     guarantees: {
       title: "No guarantees",
       lede: "Please back up anything important and use at your own risk.",
-      /** Three ways this can go wrong, roughly in order of how likely each is. */
+      /** The first and last of the three ways this can go wrong. The middle
+          one links out mid-sentence, so it is `scanBreaks` below and not a
+          fourth string here — see `app/about/page.tsx`. */
       warnings: [
         "The server runs on its own, for free, so your data is not going anywhere… unless Cloudflare changes their free-plan policy.",
-        "Receipt scanning will break if I stop paying for it. The tip jar helps!",
         "If you manage to remove a group from every device and then lose the invite link, there’s no way to bring it back.",
       ],
+      /** Split around the words that link to `/tip`, so the link lands on
+          "tip jar" itself and not a row underneath it. Rendered between the
+          two `warnings` above. */
+      scanBreaks: { lede: "Receipt scanning will break if I stop paying for it. The ", link: "tip jar", tail: " helps!" },
     },
     feedback: {
       title: "Feedback",

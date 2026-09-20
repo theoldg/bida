@@ -68,8 +68,7 @@ export function IconSprite() {
           <path d="M15.5 4.5l4 4L7 21l-4.5.5.5-4.5z" /><path d="M13.5 6.5l4 4" />
         </symbol>
         {/* A dollar sign, for the two screens that ask for money
-            (app/g/tip/page.tsx, app/tip/page.tsx, and the link into the
-            second from `/about`). Not a cup and not a heart: both say "pay the
+            (app/g/tip/page.tsx, app/tip/page.tsx). Not a cup and not a heart: both say "pay the
             person", and the ask is narrower — it is a bill being paid, which
             is the whole claim that screen makes. The currency it draws is not
             the group's, and needn't be: this is the glyph for money itself,

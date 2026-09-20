@@ -73,12 +73,7 @@ export default function AdvancedPage() {
             <section className="aboutsect">
               <h4>{key.title}</h4>
               <p>{key.lede}</p>
-              <div className="aboutlinks">
-                <a className="aboutlink" href={key.whereUrl} target="_blank" rel="noreferrer noopener">
-                  <Icon name="link" size={14} />{key.where}
-                </a>
-              </div>
-              <p className="keynote">{key.freeTier}</p>
+              <FreeKeyFold />
 
               {/* Always a box, typed into or locked: what is in this row is
                   either not a key yet or not editable, and neither is the
@@ -124,5 +119,34 @@ export default function AdvancedPage() {
         </Scroll>
       </Body>
     </Screen>
+  );
+}
+
+/**
+ * Where to get a key, folded shut: most readers already have a key in mind
+ * or don't care where one comes from, and the free tier's own fine print
+ * (a request cap, and training on what it reads) is a footnote next to the
+ * row above it, not a reason to hold this screen open longer.
+ */
+function FreeKeyFold() {
+  const [open, setOpen] = useState(false);
+  const { key } = copy.advanced;
+  return (
+    <div className="installfold">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
+        {key.where}
+      </button>
+      {open ? (
+        <>
+          <div className="aboutlinks">
+            <a className="aboutlink" href={key.whereUrl} target="_blank" rel="noreferrer noopener">
+              <Icon name="link" size={14} />{key.where}
+            </a>
+          </div>
+          <p>{key.freeTier}</p>
+        </>
+      ) : null}
+    </div>
   );
 }
