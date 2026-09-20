@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "./icons";
 import { clickGuard } from "../lib/click-guard";
-import { note, traceMenu } from "../lib/menu-trace";
+import { note, tracePress } from "../lib/press-trace";
 
 /**
  * How long a lift waits for the click that should follow it.
@@ -42,7 +42,7 @@ export interface SheetAction {
  * dialog the item had just opened and dismissed it 6ms later, so Delete and
  * Forget did nothing at all — on the rows whose menu sat clear of the
  * dialog's card, which is most of them. frontend.md's Gotchas has the whole
- * of it; a `/diag` trace is what caught the first half (`lib/menu-trace.ts`).
+ * of it; a `/diag` trace is what caught the first half (`lib/press-trace.ts`).
  *
  * An invisible veil catches the outside tap that closes it; Escape and a scroll
  * (captured on `document` — the scrolling element is `.scroll`, not the window)
@@ -56,10 +56,10 @@ export function RowMenu({ anchor, actions, onClose }: {
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
   // First, so the recorder is listening before the effects below add the
-  // listeners it exists to explain (lib/menu-trace.ts). Every way out notes
+  // listeners it exists to explain (lib/press-trace.ts). Every way out notes
   // itself, so a card that went away on its own — a re-render from under it,
   // rather than a press — is the trace with no reason at the end of it.
-  useEffect(() => traceMenu(actions.length), []);
+  useEffect(() => tracePress("menu.trace", `items=${actions.length}`), []);
 
   // An action list that grows while the card is open moves every item below
   // the new one, and the card was measured and placed before it did. The one

@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — The trace I asked for cleared both of my suspects and named
+  neither. Its best work was ruling out, and the finding was the gap where it
+  had recorded nothing at all.
 - *2026-09-20* — Faking Messenger's user agent showed nothing; taking its
   clipboard away reproduced the screenshot exactly. A hostile browser is what
   it withholds, not what it calls itself.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Two readings of that same press, both confident, both wrong.
   The trace answered in one line: iOS sent a whole tap with no click in it.
   Instrument the phone you cannot hold.
-- *2026-09-19* — Trimming comments, the tell was any sentence about what the
-  code used to do. Cutting it lost nothing — the rule it was evidence for was
-  the work, and that fits on one line.

@@ -265,6 +265,38 @@ async function onLedger() {
   await page.close();
 }
 
+// ---- 8. and the recorder has the taps it was given ---------------------
+// "It refused a bunch of taps" is a report a phone gives and no build machine
+// reproduces, and every explanation for it is a different line in the same
+// short sequence — a lift on the card where the press went down on the button,
+// a click that never came at all. Guessing at one by hand has been wrong every
+// time it was tried here, so the sequence is recorded while a dialog is up and
+// /diag carries it in its head (lib/press-trace.ts).
+{
+  const page = await (await phone()).newPage();
+  await page.goto(`${base}/`);
+  await page.waitForSelector(".starttile");
+  await page.locator("a[href='/new']").click();
+  await page.waitForURL(/\/new/);
+  await page.locator("#g-name").fill("Trip");
+  void page.goBack().catch(() => {});
+  await page.waitForSelector(".scrim[open]").catch(() => {});
+  // Cancel: the left half of the row, so `btn0`.
+  await page.locator(".scrim .drow .btn-s").click();
+  await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
+
+  await page.goto(`${base}/diag`);
+  await page.waitForSelector("pre");
+  const head = (await page.locator("pre").innerText()).split("---- this page")[0];
+  const line = head.split("\n").find((l) => l.includes("dialog  ")) ?? "";
+  report(/menus and dialogs, newest first:/.test(head),
+    "a dialog's presses ride in the head of /diag, where a cut-short paste keeps them");
+  report(/click@btn0/.test(line), "and the tap that dismissed it is named by the part it landed on",
+    line || "no dialog trace at all");
+  report(/gone dismissed/.test(line), "and the way the card went out is the end of the line", line);
+  await page.close();
+}
+
 await browser.close();
 close();
 finish();

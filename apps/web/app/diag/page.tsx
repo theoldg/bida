@@ -310,13 +310,15 @@ async function collect(): Promise<string> {
   // Up here, not down in the timeline where they were written: this report is
   // hundreds of lines and gets pasted into a chat, so the one block somebody
   // is asked for has to survive being cut short. Every page's, because the
-  // press that went wrong was two pages ago as often as not.
-  const menus = [...otherPages().flatMap((page) => page.events), ...rows]
-    .filter((e) => e.what === "menu.trace")
-    .slice(-6)
+  // press that went wrong was two pages ago as often as not. Menus and
+  // dialogs together — they are the same question asked of two overlays, and
+  // a menu item that opens a dialog is one story across both.
+  const presses = [...otherPages().flatMap((page) => page.events), ...rows]
+    .filter((e) => e.what === "menu.trace" || e.what === "dialog.trace")
+    .slice(-8)
     .reverse()
-    .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.info ?? ""}`);
-  if (menus.length) lines.push("", "row menus, newest first:", ...menus);
+    .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.what.replace(".trace", "")}  ${e.info ?? ""}`);
+  if (presses.length) lines.push("", "menus and dialogs, newest first:", ...presses);
   // Each page headed by the address it was on, secrets masked. Newest first,
   // like everything below the head: the launch that hung is the launch you
   // killed the app to get out of, and a paste that loads `/join` is a second

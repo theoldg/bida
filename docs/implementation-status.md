@@ -41,9 +41,16 @@ Two things, and both are watches rather than tasks.
   instead of cancelling it — **an ADR-level call, so it is the owner's**
   ([frontend.md](frontend.md#routing)). The trap it used to sit behind — the
   dialog shut by the platform with the screen still believing it was up, so the
-  back button went dead — is fixed and driven, and **every press is now in the
-  flight recorder**, so the next report of this says which of the two it was
-  ([frontend.md](frontend.md#the-flight-recorder-and-diag)) (2026-09-20).
+  back button went dead — is fixed and driven. **The first trace back from a
+  phone rules this watch out of the report that started it** (1.0.42,
+  2026-09-20): every press read `cancelable=true active=true`, and no dialog was
+  shut by the platform. What is left of that report is a run of taps *on the
+  card* the app never heard, and nothing recorded a tap on a dialog — so the
+  press recorder now covers one the way it already covered a row menu,
+  naming the part each press and each lift landed on and every step the keyboard
+  took under it ([frontend.md](frontend.md#the-flight-recorder-and-diag)).
+  **Waiting on the next trace**, which is the only thing that will say which of
+  the explanations it is.
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found

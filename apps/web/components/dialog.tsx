@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { mark } from "../lib/diag";
+import { note, tracePress } from "../lib/press-trace";
 import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
@@ -34,6 +35,18 @@ export function Dialog({ title, onClose, children }: {
     const el = frame.current;
     if (!el || el.open) return;
     /**
+     * **First, so the recorder is listening before anything below can be what
+     * it has to explain** — `showModal()` moves focus, and moving focus off a
+     * field folds the keyboard, which changes where this card is drawn
+     * (`--kb`, globals.css).
+     *
+     * A dialog that refuses a run of taps is the report this exists for, and
+     * it is the report a phone gives and a build machine never does. Every way
+     * out notes itself, so a card that went away with no press behind it is
+     * the trace with no reason at the end of it (lib/press-trace.ts).
+     */
+    const stop = tracePress("dialog.trace", title);
+    /**
      * **Whoever shuts this element, the state drawing it hears about it.**
      *
      * `showModal()` registers a close watcher, and a close request the browser
@@ -49,7 +62,7 @@ export function Dialog({ title, onClose, children }: {
      * setting it changes nothing and re-renders nothing) and the screen stops
      * answering the back button at all.
      */
-    const heard = () => closed.current();
+    const heard = () => { note("close event"); closed.current(); };
     el.addEventListener("close", heard);
     mark("dialog.open", title);
     el.showModal();
@@ -78,18 +91,22 @@ export function Dialog({ title, onClose, children }: {
       // as it goes is the app closing it — a tap on Cancel or the scrim, or a
       // close request we were allowed to refuse. Already shut is the platform
       // having taken it, which is the failure this listener exists for.
-      mark("dialog.gone", `${title}  ${el.open ? "dismissed" : "SHUT BY THE PLATFORM"}`);
+      const how = el.open ? "dismissed" : "SHUT BY THE PLATFORM";
+      mark("dialog.gone", `${title}  ${how}`);
       el.removeEventListener("close", heard);
+      // Last, so the line it writes holds everything above it.
+      note(`gone ${how}`);
+      stop();
     };
   }, []);
 
   return (
     <dialog className="scrim" ref={frame} aria-label={title}
-      onCancel={(e) => { e.preventDefault(); onClose(); }}
+      onCancel={(e) => { note("cancel refused"); e.preventDefault(); onClose(); }}
       // The card is a child, so a press landing on the element itself landed on
       // the scrim. **mousedown, not click**: a drag that starts on the card and
       // ends outside it is not a tap outside it.
-      onMouseDown={(e) => { if (e.target === frame.current) onClose(); }}>
+      onMouseDown={(e) => { if (e.target === frame.current) { note("scrim"); onClose(); } }}>
       <div className="dialog" role="document" ref={card} tabIndex={-1}>
         <h3 className="dtitle">{title}</h3>
         {children}

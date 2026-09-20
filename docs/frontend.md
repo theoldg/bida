@@ -561,7 +561,7 @@ sits above the read it was blocking rather than below it.
 **The report reads newest first — the head, then this page, then the pages
 before it, then the home-screen hand-off.** It is pasted from a phone into a
 chat box that will not take all of it, so what just went wrong has to be in the
-part that survives being cut short; the same reason the `row menus` block is in
+part that survives being cut short; the same reason the `menus and dialogs` block is in
 the head. Only the *printing* is turned round. `timeline()` still orders by
 when things started, so the overlap above is intact and the timestamps say
 which span contains which.
@@ -574,7 +574,8 @@ screen. One `back.press` line per traversal names what was done with it
 (`ours`, `ASKED`, `let through`, `swap`) beside the event's own `cancelable`
 and `active`; `dialog.open` and `dialog.gone` bracket each dialog, and
 `dialog.gone` says whether it was `dismissed` or `SHUT BY THE PLATFORM`
-(see [Gotchas](#gotchas)).
+(see [Gotchas](#gotchas)). What a thumb did to the card between those two is
+the `menus and dialogs` block below.
 
 Its Copy button sticks to the top of the scroll rather than sitting in a
 `Foot`. The bottom of an installed app is where the system navigation bar is,
@@ -593,22 +594,29 @@ cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
 "the tabs are gone" (see [Gotchas](#gotchas)).
 
-A **`row menus`** block sits in the head, not down in the timeline where its
-lines are written: one per menu that has closed, from every page kept, holding
-every press, lift, cancel and click the phone sent while the card was open,
-where each landed, what the hold's guard did with it, and which way the card
-went out (`lib/menu-trace.ts`). It is in the head because this report is
-hundreds of lines and is read by being pasted somewhere, so the block somebody
-is asked for has to survive the paste being cut short — the first one was at
-the foot and was never seen.
+A **`menus and dialogs`** block sits in the head, not down in the timeline
+where its lines are written: one per overlay that has closed, from every page
+kept, holding every press, lift, cancel and click the phone sent while it was
+open, where each landed, what the hold's guard did with it, every step the
+keyboard took under it, and which way it went out (`lib/press-trace.ts`). It is
+in the head because this report is hundreds of lines and is read by being
+pasted somewhere, so the block somebody is asked for has to survive the paste
+being cut short — the first one was at the foot and was never seen.
 
-It is there at all because "the menu answered on the second press" is a report
-no machine here reproduces — it wants an iPhone — and every explanation for it
-is a different line in that one sequence: a click that never came, one
-swallowed, one landing on the veil, a `pointercancel` where a lift should be,
-a card that grew an item after it was placed, or one that went away with no
-press behind it at all. It was the first of those, on the first try — see the
-Gotcha below — and the trace that said so is the only reason anyone knows.
+It is there at all because "the menu answered on the second press" and "it
+refused a bunch of taps" are reports no machine here reproduces — they want a
+phone — and every explanation for one is a different line in that one sequence:
+a click that never came, one swallowed, one landing on the veil or the scrim, a
+`pointercancel` where a lift should be, a card that grew an item after it was
+placed or moved as the keyboard folded, or one that went away with no press
+behind it at all. It was the first of those, on the first try — see the Gotcha
+below — and the trace that said so is the only reason anyone knows.
+
+**A dialog's parts are named apart from each other**, because that is the whole
+question a refused tap asks: `pointerdown@btn1` lifting on `card` is the card
+having moved out from under the finger, and Chrome sends no `click` when the
+press and the lift have no target in common. `kb 404->0` beside it is what
+moved it (`--kb`, components/viewport.tsx).
 
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script
@@ -1101,6 +1109,14 @@ so the static export ships the full line and the browser narrows it.
   press is answered with: `ask` is already `"discard"`, so setting it renders
   nothing, and the back button and the arrow both go dead with nothing on
   screen. `pnpm nav` drives it.
+- **A press and a lift on different elements make no `click` at all.** Chrome
+  delivers the `mouseup` to whatever is under the finger by then and fires
+  nothing else: there is no click to fall back on, and no event says a tap was
+  lost. So anything that moves between `pointerdown` and the lift eats the tap
+  in silence — a dialog card recentring as `--kb` steps down while the keyboard
+  folds is the one to watch, since opening a dialog blurs the field that raised
+  the keyboard. This is why the press recorder names a dialog's buttons apart
+  from its card: the two targets side by side are the only evidence there is.
 - **Only a real `<dialog>` gets focus for free — and it spends it without
   asking.** `Dialog` calls `showModal()`, so the platform keeps Tab inside and
   makes the screen behind inert, but it also focuses the first focusable

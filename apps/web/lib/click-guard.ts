@@ -1,6 +1,6 @@
 "use client";
 
-import { guarding, note } from "./menu-trace";
+import { guarding, note } from "./press-trace";
 
 /**
  * How long after the finger is gone a click it caused may still arrive.

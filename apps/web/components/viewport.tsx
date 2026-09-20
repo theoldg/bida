@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
+import { note } from "../lib/press-trace";
 import { confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
 
 /**
@@ -57,6 +58,7 @@ export function MeasureViewport() {
     const root = document.documentElement;
     let frame = 0;
     let reported = 0;
+    let paid = 0;
 
     function measure() {
       if (!view) return;
@@ -65,6 +67,12 @@ export function MeasureViewport() {
         scale: view.scale, typing: isTyping(document.activeElement),
       });
       root.style.setProperty("--kb", `${kb}px`);
+      // A dialog's card is centred in what the keyboard leaves, so every step
+      // of this moves it — and a card that moves between a press and its lift
+      // is a tap the browser sends no click for. Only while something is open
+      // over the screen; the rest of the time this writes nothing
+      // (lib/press-trace.ts).
+      if (kb !== paid) { note(`kb ${paid}->${kb}`); paid = kb; }
       // Whether there is a keyboard at all is this component's to know; how
       // much air to leave above one is the stylesheet's (`--kb-gap`).
       root.toggleAttribute("data-kb", kb > 0);
