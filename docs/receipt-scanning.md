@@ -252,7 +252,11 @@ would be the same thing twice.
 is what makes the bar a clock on the reading: close the box mid-read and the
 draft still fills; open it again and the bar is where the reading actually is. A
 refusal leaves the box standing with the text intact, because unlike a bad
-photograph a bad bill is fixed where it was typed.
+photograph a bad bill is fixed where it was typed — and **closing on it takes it
+with you**: the message was read where the fix was, so it doesn't follow you out
+and sit under the control on the screen behind, which never rang. Only a typed
+reading's; a photograph's refusal belongs to the screen that took it, and the box
+merely stood over it.
 
 ## The envelope, and who owns it
 

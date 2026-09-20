@@ -77,9 +77,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Three clean clicks on a button, nothing happening, and the
   cause was a latch those taps armed two screens away. The dead button and the
   lost work were one bug, not two.
-- *2026-09-20* — Faking Messenger's user agent showed nothing; taking its
-  clipboard away reproduced the screenshot exactly. A hostile browser is what
-  it withholds, not what it calls itself.
 - *2026-09-20* — Three repros on headless Chromium, all green, before they said
   "Android installed PWA". The platform was the bug. Ask which phone before
   writing the first repro.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — A sentence typed into a title wrapped the top bar to six
   lines. The fix was not a smaller title: a bar is furniture, and what a person
   types belongs in the screen.
+- *2026-09-20* — "i have already seen the error message in the dialog: don't
+  display it" — a refusal read where the fix is has been read. Clearing it on
+  the way out is the fix, not saying it twice.
