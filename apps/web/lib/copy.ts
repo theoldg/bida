@@ -639,6 +639,11 @@ export const copy = {
      * than a thing one person pays.
      */
     each: (share: string) => `You can split it! In this group, that’s ${share} each.`,
+    /** The same line, for the one group that can't actually split anything —
+        a solo group still gets the whole ask, so the joke owns that instead
+        of pretending the math works. */
+    eachSolo: (share: string) => `You can split it! In this group, that’s ${share} each. `
+      + "Okay, that doesn’t really land when it’s just you here, but you get the point.",
     /**
      * The joke that lets the screen stop asking. Everything above it is a
      * number and a claim about a number; one line that is obviously neither

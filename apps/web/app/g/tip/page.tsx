@@ -41,6 +41,8 @@ function TipScreen() {
   }
 
   const each = tipShareMinor(data.members.map((m) => m.id));
+  // The joke's premise: this group has somebody else to split with.
+  const eachLine = data.members.length === 1 ? copy.tip.eachSolo : copy.tip.each;
 
   return (
     <Screen>
@@ -63,7 +65,7 @@ function TipScreen() {
                 aside as the line before it, and a `<br>` that lands mid-wrap
                 on a narrow screen is worse than no break at all. */}
             <p className="tipeach">
-              {copy.tip.each(usd(each))} {copy.tip.yacht}
+              {eachLine(usd(each))} {copy.tip.yacht}
             </p>
 
             <div className="tipacts">
