@@ -219,6 +219,7 @@ export default function ImportPage() {
                       export after the group, and editable because a file a
                       mail client renamed says nothing about the trip. */}
                   <input id="i-name" value={name} maxLength={40}
+                    enterKeyHint="done"
                     placeholder={copy.newGroup.namePlaceholder}
                     onChange={(e) => setName(e.target.value)} />
                 </div>

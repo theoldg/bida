@@ -68,9 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — I nearly had Enter walk every field in the app. Letting the
-  key's own word decide — only `next` moves on — meant no screen I hadn't
-  looked at changed. The label is the contract.
+- *2026-09-20* — "make the number columns their own columns" — I had built one
+  long chain through the whole screen because the DOM offered one. Where a
+  chain ends is a design call, not a tree walk.
 - *2026-09-20* — Driving the app to check a feature, two of the finds were in
   the driver: it hid a row the tab bar crossed, and offered one behind an open
   menu. Check what you are checking with.

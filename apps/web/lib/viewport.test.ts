@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { caretOnPress, gapOf, landsOn, movesOn, reachOf } from "./viewport";
+import { caretOnPress, confirmAct, gapOf, landsOn, reachOf } from "./viewport";
 
 /** A phone with nothing covering it: the two viewports agree. */
 const PHONE = { inner: 844, visible: 844, offset: 0, scale: 1, typing: false };
@@ -87,35 +87,36 @@ const NEXT = {
   altKey: false, ctrlKey: false, metaKey: false, shiftKey: false,
 };
 
-describe("which press moves the caret on", () => {
-  it("is the confirm key on a field that said it would", () => {
-    expect(movesOn(NEXT)).toBe(true);
+describe("what the confirm key does to the field it was pressed in", () => {
+  it("hands the caret on where the field said it would", () => {
+    expect(confirmAct(NEXT)).toBe("next");
   });
 
-  // The hint is the opt-in: every other screen in the app keeps the Enter it
-  // had, which is a form's submit or nothing at all.
-  it("is nothing at all on a field drawn any other way", () => {
-    expect(movesOn({ ...NEXT, hint: "done" })).toBe(false);
-    expect(movesOn({ ...NEXT, hint: "" })).toBe(false);
-    expect(movesOn({ ...NEXT, hint: "go" })).toBe(false);
+  // What makes a column of figures a chain of its own: the field above it says
+  // "done", so the press puts the keyboard away instead of diving in.
+  it("folds the keyboard on every other field, hinted or not", () => {
+    expect(confirmAct({ ...NEXT, hint: "done" })).toBe("fold");
+    expect(confirmAct({ ...NEXT, hint: "" })).toBe("fold");
+    expect(confirmAct({ ...NEXT, hint: "go" })).toBe("fold");
   });
 
-  it("is not some other key", () => {
-    expect(movesOn({ ...NEXT, key: "Tab" })).toBe(false);
-    expect(movesOn({ ...NEXT, key: " " })).toBe(false);
+  it("is nothing on some other key", () => {
+    expect(confirmAct({ ...NEXT, key: "Tab" })).toBe("none");
+    expect(confirmAct({ ...NEXT, key: " ", hint: "done" })).toBe("none");
   });
 
   // An IME's Enter picks the candidate it is offering. Taking it would move
-  // the caret out of a word half-typed.
-  it("is not the Enter that closes a composition", () => {
-    expect(movesOn({ ...NEXT, isComposing: true })).toBe(false);
+  // the caret out of a word half-typed, or shut the keyboard on it.
+  it("is nothing on the Enter that closes a composition", () => {
+    expect(confirmAct({ ...NEXT, isComposing: true })).toBe("none");
+    expect(confirmAct({ ...NEXT, isComposing: true, hint: "done" })).toBe("none");
   });
 
-  it("is not a chord", () => {
-    expect(movesOn({ ...NEXT, shiftKey: true })).toBe(false);
-    expect(movesOn({ ...NEXT, metaKey: true })).toBe(false);
-    expect(movesOn({ ...NEXT, ctrlKey: true })).toBe(false);
-    expect(movesOn({ ...NEXT, altKey: true })).toBe(false);
+  it("is nothing on a chord", () => {
+    expect(confirmAct({ ...NEXT, shiftKey: true })).toBe("none");
+    expect(confirmAct({ ...NEXT, metaKey: true })).toBe("none");
+    expect(confirmAct({ ...NEXT, ctrlKey: true })).toBe("none");
+    expect(confirmAct({ ...NEXT, altKey: true, hint: "done" })).toBe("none");
   });
 });
 

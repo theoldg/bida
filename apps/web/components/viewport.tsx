@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
-import { gapOf, isTyping, landsOn, movesOn, reachOf } from "../lib/viewport";
+import { confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
 
 /**
  * Bring a field into view, and whatever it says has to come up with it.
@@ -133,48 +133,59 @@ export function MeasureViewport() {
 }
 
 /**
- * The confirm key, walking a screen's fields.
+ * The confirm key, walking a screen's fields and folding the keyboard at the
+ * end of them.
  *
  * Hung on `.scroll` rather than on each field, because the next field is
- * rarely a sibling of the one being left: on the entry form it is two boxes
- * down, and in the split editor it is the next member's row. The screen is the
- * scope, so the order is the one a thumb meets them in and a field added to a
- * form between two others needs nothing said here.
+ * rarely a sibling of the one being left: on the entry form it is the box
+ * below, and in the split editor it is the next member's row. The screen is
+ * the scope, so the order is the one a thumb meets them in and a field added
+ * between two others needs nothing said here.
  *
- * **Only a field wearing `enterKeyHint="next"` is walked from** (`movesOn`):
- * the key's word is the opt-in, so nothing moves on a screen that never asked.
- * Where it asked and there is nothing left to move to — a tab switched while
- * the caret sat in the field above it — the field is put down instead, which
- * is what the "done" it should have been drawn with would have done anyway.
+ * **A field wearing `enterKeyHint="next"` hands the caret on; every other
+ * field is the end of its chain and folds the keyboard** (`confirmAct`). That
+ * is what makes a column of figures a chain of its own: the entry form's note
+ * says "done", so a press there puts the keyboard away rather than diving into
+ * the split editor underneath, and the split's own last row does the same
+ * rather than wrapping round.
  *
- * The caret goes to the *end* of what is already there: a field entered at
- * character nought turns a typed "5" into "512.00", and the column of amounts
- * this walks is full of figures somebody is replacing.
+ * **A field inside a `<form>` is left alone.** Its Enter is already spoken
+ * for — the add row files the name and hands the caret straight back, a dialog
+ * submits its card — and those are better answers than either of these.
+ *
+ * The caret goes to the *end* of what is already in the field it lands in: a
+ * field entered at character nought turns a typed "5" into "512.00", and the
+ * columns this walks are full of figures somebody is replacing.
  */
 export function walkFields(e: React.KeyboardEvent<HTMLElement>) {
   const from = e.target;
-  if (!(from instanceof HTMLElement)) return;
-  if (!movesOn({
+  if (!walkable(from) || from.closest("form")) return;
+  const act = confirmAct({
     key: e.key, hint: from.enterKeyHint, isComposing: e.nativeEvent.isComposing,
     altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey,
-  })) return;
-  // Nothing else may read this press: a field inside a `<form>` would submit
-  // it, and the promise the key made is to move on instead.
+  });
+  if (act === "none") return;
   e.preventDefault();
-  const fields = [...e.currentTarget.querySelectorAll("input, textarea")].filter(walkable);
-  const next = fields[fields.indexOf(from) + 1];
+  const next = act === "next" ? after(from, e.currentTarget) : null;
+  // Folding is the field being put down: the keyboard goes with the caret.
   if (!next) { from.blur(); return; }
   next.focus();
-  if (next instanceof HTMLInputElement || next instanceof HTMLTextAreaElement) {
-    // Guarded: `setSelectionRange` throws on the input types that have no
-    // caret to place, and one of those is a field away from being added here.
-    try { next.setSelectionRange(next.value.length, next.value.length); } catch { /* no caret */ }
-  }
+  // Guarded: `setSelectionRange` throws on the input types that have no caret
+  // to place, and one of those is a field away from being added here.
+  try { next.setSelectionRange(next.value.length, next.value.length); } catch { /* no caret */ }
   bringIntoView(next);
 }
 
-/** Whether the caret can be put in this one (`landsOn`, lib/viewport.ts). */
-function walkable(el: Element): el is HTMLElement {
+/** The field after this one on the screen, or null at the end of them. */
+function after(from: Field, scope: HTMLElement): Field | null {
+  const fields = [...scope.querySelectorAll("input, textarea")].filter(walkable);
+  return fields[fields.indexOf(from) + 1] ?? null;
+}
+
+type Field = HTMLInputElement | HTMLTextAreaElement;
+
+/** Whether the caret can be in this one at all (`landsOn`, lib/viewport.ts). */
+function walkable(el: EventTarget | null): el is Field {
   if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
   return landsOn({
     typing: isTyping(el),

@@ -126,27 +126,32 @@ export function isTyping(el: Element | null): boolean {
 }
 
 /**
- * **The confirm key moves on where a field says it does**, and nowhere else.
+ * **What the confirm key does to the field it was pressed in**: hand the caret
+ * to the next field, or fold the keyboard away.
  *
  * A phone keyboard's bottom-right key is whatever `enterKeyHint` says it is,
  * and the word it wears is a promise: a field drawn with "next" has to leave
- * the caret in the field below it, or the key is a lie under the thumb. The
- * hint is therefore the opt-in *and* the instruction — a screen that never asks
- * for it keeps Enter exactly as it was, which is a `<form>`'s submit on the
- * four that have one and nothing at all everywhere else.
+ * the caret in the field below it, or the key is a lie under the thumb. Every
+ * other field is the end of its chain, and the end of a chain folds the
+ * keyboard — which is what a thumb means by the press, and what keeps a column
+ * of figures from spilling into whatever field happens to be drawn after it.
  *
  * Two presses wear the same key and mean something else: a chord, and the Enter
  * that picks an IME candidate — a composition is a word being chosen, not a
  * field being finished.
  */
-export function movesOn(e: {
+export type ConfirmAct = "next" | "fold" | "none";
+
+export function confirmAct(e: {
   key: string;
+  /** The field's `enterKeyHint`; "" where it was drawn without one. */
   hint: string;
   isComposing: boolean;
   altKey: boolean; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean;
-}): boolean {
-  if (e.hint !== "next" || e.key !== "Enter" || e.isComposing) return false;
-  return !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey;
+}): ConfirmAct {
+  if (e.key !== "Enter" || e.isComposing) return "none";
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return "none";
+  return e.hint === "next" ? "next" : "fold";
 }
 
 /**

@@ -196,17 +196,20 @@ await page.keyboard.press("Enter");
 report(await caret() === "what", "the entry form — the amount hands the caret to the note",
   `caret on ${await caret()}`);
 
-// A column of figures is the case this is for: one press per person, down the
-// list, without a tap between any two of them.
+// The note is the end of that chain, not a way into the split underneath: the
+// column of figures is the chain a thumb starts on purpose, by tapping a row.
 await page.getByRole("button", { name: "As amounts" }).click();
 await settle(page, 120);
 await page.locator("#what").focus();
 await page.keyboard.press("Enter");
-const first = await caret();
-report(first.startsWith("sp-"), "the note hands the caret into the split's first row",
-  `caret on ${first}`);
+report(await caret() === "nothing",
+  "the entry form — the note folds the keyboard rather than entering the column",
+  `caret on ${await caret()}`);
 
-const walked = [first];
+// A column of figures is the case this is for: one press per person, down the
+// list, without a tap between any two of them.
+await page.locator("input.splitin").first().focus();
+const walked = [await caret()];
 for (let i = 1; i < CROWD.length; i++) {
   await page.keyboard.press("Enter");
   walked.push(await caret());
@@ -215,12 +218,11 @@ report(new Set(walked).size === CROWD.length && walked.every((id) => id.startsWi
   "one press per person walks the whole column",
   `${walked.length} rows, ${new Set(walked).size} of them distinct`);
 
-// The last row says "done", and a confirm key that means done must not wrap
-// round to the top of the list it has just been walked down.
-const last = walked[walked.length - 1];
+// And the last of them folds the keyboard — never a wrap round to the top of
+// the list it has just been walked down.
 await page.keyboard.press("Enter");
-report(await caret() === last, "the last row's confirm key does not wrap round",
-  `caret on ${await caret()}, was ${last}`);
+report(await caret() === "nothing", "the last row folds the keyboard",
+  `caret on ${await caret()}, was ${walked[walked.length - 1]}`);
 
 // The other column, on a screen of its own and with its own idea of which row
 // is the last one: who actually paid.
@@ -236,9 +238,20 @@ for (let i = 1; i < CROWD.length; i++) {
 await page.keyboard.press("Enter");
 report(new Set(payers).size === CROWD.length
   && payers.every((id) => id.startsWith("payer-"))
-  && await caret() === payers[payers.length - 1],
-  "payers — one press per person, and the last row stays put",
+  && await caret() === "nothing",
+  "payers — one press per person, and the last of them folds the keyboard",
   `${new Set(payers).size} distinct rows, ended on ${await caret()}`);
+
+// Every other field on a screen is the end of a chain of one, and ends it the
+// same way. The add row is the exception that must not change: it is a form,
+// and its Enter files the name and hands the caret straight back.
+await page.goto(`${base}/new`);
+await page.locator("#g-name").fill("Trip");
+await page.getByLabel("Add someone").fill("Ana");
+await page.keyboard.press("Enter");
+report(await caret() === "Add someone" && await page.locator(".rows .rtitle").count() === 1,
+  "/new — the add row still files the name and keeps the caret",
+  `caret on ${await caret()}`);
 
 await browser.close();
 close();

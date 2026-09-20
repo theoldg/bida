@@ -708,6 +708,7 @@ export function WhoHadWhat({
                         input took "5.5.5" and kept showing it while
                         `receiptTotalMinor` quietly dropped it from the total. */}
                     <AmountInput className="itemamountin" frame="none"
+                      enterKeyHint="done"
                       currency={draft.currency} placeholder={bare(0, draft.currency)}
                       aria-label={copy.items.tipLabel(saysCurrency ? draft.currency : null)}
                       value={draft.receiptTip ?? ""}

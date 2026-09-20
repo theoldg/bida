@@ -424,8 +424,11 @@ The confirm key is the other half, and it needs no faking — a headless browser
 presses Enter like any other. It walks the two screens the fix is really for,
 the split editor's "as amounts" and `/g/payers`, one press per person down a
 column of ten, and asserts what a thumb would notice: every row reached, each
-one once, and the last row staying put rather than wrapping round to the top
-([frontend.md](frontend.md#state)).
+one once, and the last of them folding the keyboard rather than wrapping round
+to the top. The two assertions that keep the chains apart are the other ones
+worth having — the entry form's note folds rather than diving into the column
+underneath, and the add row, which is a `<form>`, still files the name and
+hands the caret back ([frontend.md](frontend.md#state)).
 
 ## `pnpm stall` — a read of this phone's database that dies
 

@@ -662,12 +662,12 @@ function EditEntryScreen() {
 
             <div className={`field${flashClass(refusedFields.title)}`} data-refuse="title" onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
-              {/* The last field on this screen unless "as amounts" is the tab
-                  showing, which is the only one that draws fields of its own —
-                  the date between them is a spinner the confirm key can't
-                  walk into (`landsOn`, lib/viewport.ts). */}
+              {/* The end of this chain, whatever tab is showing underneath:
+                  the split's column of figures is a chain of its own, and a
+                  press here folds the keyboard rather than diving into it
+                  (`walkFields`, components/viewport.tsx). */}
               <input id="what" value={draft.description}
-                enterKeyHint={!transfer && activeTab === "exact" ? "next" : "done"}
+                enterKeyHint="done"
                 aria-label={transfer ? copy.form.note : copy.form.what}
                 placeholder={transfer ? copy.form.note : copy.form.whatPlaceholder}
                 onChange={(e) => patch({ description: e.target.value })} />
