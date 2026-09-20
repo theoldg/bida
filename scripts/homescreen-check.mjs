@@ -498,6 +498,28 @@ report(await webviewPage.locator(".escapelink .linkbox .selectable").textContent
 report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
   "nothing is written to a storage nobody can get back to");
 
+// **And it has to survive the browser it is shown in.** Some in-app browsers
+// expose no `navigator.clipboard` at all, and this screen copies the link on
+// arrival — a bare `writeText` throws there rather than rejecting, and the
+// screen renders outside `ReadErrorBoundary`, so the throw took the whole page
+// down to Next's "Application error". On the one screen those visitors get.
+// See docs/frontend.md#the-clipboard.
+const dry = await newPhone(browser, { userAgent: IN_APP_UA });
+const dryPage = await dry.newPage();
+const crashes = [];
+dryPage.on("pageerror", (e) => crashes.push(e.message.split("\n")[0]));
+await dryPage.addInitScript(() => {
+  Object.defineProperty(navigator, "clipboard", { get: () => undefined, configurable: true });
+});
+await dryPage.goto(`${base}/join${fragment}`);
+await dryPage.waitForTimeout(600);
+report(await dryPage.getByText("Open bida in your browser").count() > 0 && crashes.length === 0,
+  "a webview with no clipboard still gets the way out, not an error page", crashes.join(" "));
+report(await dryPage.locator(".escapelink .linkbox .selectable").textContent()
+  .catch(() => null) === `${base}/join${fragment}`,
+  "with the link still there to be taken by hand");
+await dry.close();
+
 // The cost of being wrong. A false positive locks somebody out of the app
 // altogether, so the browsers that look most like a webview are the ones to
 // prove: the home-screen app, whose agent drops `Safari/` exactly as a webview

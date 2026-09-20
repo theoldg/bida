@@ -772,6 +772,9 @@ export const copy = {
       body: (browser: string | undefined) => `Links always open in ${lower(browser)}. Paste this there instead.`,
       copyLink: "Copy",
       copied: "Copied",
+      /** No clipboard to write to at all, which some in-app browsers are
+          (lib/clipboard.ts): the link is still there to be taken by hand. */
+      hold: "Hold to copy",
     },
   },
 

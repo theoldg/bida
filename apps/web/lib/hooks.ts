@@ -12,6 +12,7 @@ import {
 import { db, type DeviceRecord } from "./db/dexie";
 import { useLive } from "./db/live";
 import { getDevice } from "./db/device";
+import { writeClipboardText } from "./clipboard";
 import { copy } from "./copy";
 import { byWhen } from "./format";
 import { tick } from "./haptics";
@@ -122,13 +123,14 @@ export function useInviteLink(groupId: string | undefined): {
 
   const copy = useMemo(() => {
     if (!link) return undefined;
-    // `writeText` rejects on an insecure context or a denied permission.
-    // Never swallow it: the link is this app's whole access model and is shown
-    // nowhere else, so a silent failure leaves an inert-looking button.
-    // A refusal puts it on screen to be read instead.
+    // A write is refused on an insecure context or a denied permission, and
+    // impossible where there is no clipboard (lib/clipboard.ts). Never swallow
+    // it: the link is this app's whole access model and is shown nowhere else,
+    // so a silent failure leaves an inert-looking button. A refusal puts it on
+    // screen to be read instead.
     return async () => {
       try {
-        await navigator.clipboard.writeText(link);
+        await writeClipboardText(link);
         setCopied(true);
         // The check that says so is a small glyph in a top bar, and on the
         // groups list it is in a menu that has already closed (lib/haptics.ts).

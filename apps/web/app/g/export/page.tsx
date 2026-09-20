@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { fileHandoff, groupCsv, type HandoffPlan } from "@/lib/export";
 import { route } from "@/lib/group-link";
@@ -67,10 +68,12 @@ function ExportScreen() {
             </p>
             <button type="button" className="btn btn-p" disabled={empty}
               onClick={() => {
-                navigator.clipboard.writeText(csv).then(
+                writeClipboardText(csv).then(
                   () => setCopied(true),
                   // The clipboard refuses on an insecure context or a denied
-                  // permission. The file is already on screen to be selected,
+                  // permission, and is missing outright in some in-app
+                  // browsers (lib/clipboard.ts). The file is already on screen
+                  // to be selected,
                   // which is the whole point of this screen, so there is
                   // nothing to recover from and nothing to say.
                   () => setCopied(false),

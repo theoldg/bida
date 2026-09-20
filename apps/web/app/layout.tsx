@@ -31,6 +31,38 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: copy.app.name,
   description: copy.app.description,
+  // **A link to this app is nearly always sent in a chat**, so the card the
+  // chat app draws around it is the first thing anyone sees of bida — and with
+  // no Open Graph tags it drew a bare one: a title if the scraper bothered to
+  // parse the head, no icon, and different every time depending on what it had
+  // cached. The tags are static and say nothing about the group: the secret
+  // lives in the fragment, which never leaves the phone, and a scraper reading
+  // `/join` learns only that bida exists.
+  //
+  // Absolute URLs, via `metadataBase` — a crawler has no page to resolve a
+  // relative one against. Pinned to production rather than read from the
+  // environment, because the build is byte-identical on both Workers
+  // (docs/hosting.md#dev-and-production) and only production's links get sent
+  // to anybody.
+  metadataBase: new URL("https://bida.bid"),
+  openGraph: {
+    type: "website",
+    siteName: copy.app.name,
+    title: copy.app.name,
+    description: copy.app.description,
+    url: "/",
+    // The 512 rather than the 192: Facebook drops an image under 200px, and
+    // this is the icon the app is already installed under.
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: copy.app.name }],
+  },
+  // "summary", not "summary_large_image": the icon is square, and a square
+  // stretched across a wide card is a logo with bars either side of it.
+  twitter: {
+    card: "summary",
+    title: copy.app.name,
+    description: copy.app.description,
+    images: ["/icon-512.png"],
+  },
   // No `manifest`: `manifestScript` writes the link first thing in the head,
   // because an iOS tab needs a different one there before Safari reads it.
   // **Name the icons**, or every cold load asks for /favicon.ico and takes a

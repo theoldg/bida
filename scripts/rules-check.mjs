@@ -160,6 +160,32 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
+/**
+ * docs/frontend.md#the-clipboard: `navigator.clipboard` is `undefined` in a
+ * browser that ships without one, so a bare `navigator.clipboard.writeText(…)`
+ * throws where every caller was written to expect a rejection — and the one
+ * screen that copies unprompted, the way out of an in-app browser, renders
+ * outside the error boundary, so the throw took the whole page down to Next's
+ * "Application error". Which is what people actually saw, on the only screen
+ * an in-app browser ever gets.
+ *
+ * One door for writing (`lib/clipboard.ts`) and one for reading
+ * (`lib/paste.ts`, whose every call is already inside the `try` that awaits
+ * it). Named here because it costs a line to lose and is invisible until it is
+ * somebody else's phone.
+ */
+{
+  const DOORS = ["apps/web/lib/clipboard.ts", "apps/web/lib/paste.ts"].map((p) => join(ROOT, p));
+  for (const file of sources(join(ROOT, "apps/web"))) {
+    if (DOORS.includes(file)) continue;
+    if (/navigator\s*\.\s*clipboard/.test(code(readFileSync(file, "utf8")))) {
+      fail(file, "reaches `navigator.clipboard` directly — write through "
+        + "`writeClipboardText` (lib/clipboard.ts), or a browser without a clipboard "
+        + "throws where a refusal was expected (docs/frontend.md#the-clipboard)");
+    }
+  }
+}
+
 // ADR-0008, and the owner said it three times: asking is components/dialog.tsx.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
@@ -235,6 +261,6 @@ console.log(problems.length
   ? `\n${problems.length} broken rule(s)`
   : "rules: core is pure, refusals come from the registry, a bill is priced in one place, "
     + "every live read watched, every /g screen checks its id, the demo holds no key, "
-    + "back goes through nav, no browser dialogs, "
+    + "back goes through nav, one door to the clipboard, no browser dialogs, "
     + "no stray copy, no em dash in copy");
 process.exit(problems.length ? 1 : 0);

@@ -7,6 +7,7 @@ import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog, Dialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { MemberBill } from "@/components/member-bill";
+import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { clearDraft, useDraft } from "@/lib/draft";
 import { bare } from "@/lib/format";
@@ -65,11 +66,12 @@ export default function QuickResultPage() {
 
   async function hand() {
     try {
-      await navigator.clipboard.writeText(text);
+      await writeClipboardText(text);
       setCopied(true);
     } catch {
       // The clipboard is refused on an insecure context or a denied
-      // permission, and a button that looks inert is worse than no button:
+      // permission, and absent altogether in some in-app browsers
+      // (lib/clipboard.ts). A button that looks inert is worse than no button:
       // put the text on screen to be read instead (`components/invite.tsx`
       // does the same for the one other string this app hands over).
       setFailed(true);

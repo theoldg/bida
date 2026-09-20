@@ -512,6 +512,33 @@ This narrows the "copying, not `navigator.share`" rule in `useInviteLink` —
 that was about a *link*, where the clipboard is the destination and the sheet
 is a detour. A file has no clipboard.
 
+## The clipboard
+
+Four screens hand a string over — the invite link, a quick split, the CSV,
+the `/diag` report — and every one of them was written for a clipboard that
+**refuses**: `writeText` rejects on an insecure context or a denied
+permission, and the answer is to put the text on screen to be read instead
+(`InviteFallback`, and the same shape on the other three).
+
+What none of them survived is a browser with **no clipboard at all**.
+`navigator.clipboard` is then `undefined`, so `navigator.clipboard.writeText(…)`
+throws before there is a promise to reject, and a synchronous throw is not
+what a rejection handler catches. That is fatal in the worst possible place:
+the way out of an in-app browser (`components/embedded.tsx`) copies the link
+on arrival and renders *outside* `ReadErrorBoundary`, so the throw took the
+page down to Next's "Application error" — on the only screen those visitors
+get, and the one whose whole job is to hand over the link. Which is what was
+reported, from Messenger, in September 2026.
+
+So writing goes through **one door**, `lib/clipboard.ts`, where a missing
+clipboard is the same *no* as a refused one — the shape every caller already
+had. `hasClipboard()` is for the control that should say something else
+without one: `CopyLink` drops the button and says *Hold to copy* over the
+selectable link, rather than answering a press with nothing. Reading has its
+own door for its own reasons (`lib/paste.ts`, whose calls are all already
+inside the `try` that awaits them). `rules-check` holds the pair, because it
+costs a line to lose and is invisible until it is somebody else's phone.
+
 ## The flight recorder, and `/diag`
 
 `lib/diag.ts` records what the app spends its time on, always, into a bounded
@@ -700,6 +727,15 @@ fold. On the `manual` branch (an iOS tab) the nudge gives way to `InstallBanner`
 the top of the list — and, folded on every visit, atop each group's ledger — the list's remembered on the same flag, both linking to `/install`: the
 seven days are WebKit's, every iOS browser is one, and a warning that true
 belongs first ([ios.md](ios.md)).
+
+**A link to this app is nearly always sent in a chat**, so `metadata` in the
+layout also carries Open Graph and Twitter tags: with none, the card a chat app
+draws was bare and inconsistent — whatever its scraper had cached. They are
+static and say nothing about the group, which they could not anyway: the secret
+is in the fragment and never leaves the phone. `metadataBase` is pinned to
+`https://bida.bid` because a crawler has no page to resolve a relative URL
+against and the build is byte-identical on both Workers
+([hosting.md](hosting.md#dev-and-production)).
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

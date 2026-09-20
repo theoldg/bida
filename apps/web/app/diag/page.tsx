@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
 import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
@@ -62,11 +63,13 @@ export default function DiagPage() {
           <div className="diag-act">
             <button type="button" className="btn btn-p" disabled={!report}
               onClick={() => {
-                navigator.clipboard.writeText(report ?? "").then(
+                writeClipboardText(report ?? "").then(
                   () => setCopied(true),
                   // The clipboard refuses on an insecure context or a denied
-                  // permission. The whole report is already on screen to be
-                  // selected or photographed, so there is nothing to recover.
+                  // permission, and is missing outright in some in-app
+                  // browsers (lib/clipboard.ts). The whole report is already on
+                  // screen to be selected or photographed, so there is nothing
+                  // to recover.
                   () => setCopied(false),
                 );
               }}>

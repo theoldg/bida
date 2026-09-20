@@ -21,19 +21,19 @@ question you could have answered by looking at the screen wastes a turn, and one
 they would rather park gets "write this up somewhere" instead of an answer.
 
 Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report;
-translate it into pixels, don't ask for a redlined mock. "Redesign slightly"
-means exactly what it then lists, and "make it slightly harder" means take the
-affordance away, not warn twice. Copy gets settled by ear, one word at a time:
-offer a version with the reason, then ship theirs verbatim.
+translate it into pixels, not a redlined mock. A breakage comes the same way —
+a screenshot, "sometimes", no console — and a repro matching that symptom is
+not yet the cause. "Redesign slightly" means what it then lists, "make it
+slightly harder" means take the affordance away, not warn twice. Copy settles
+by ear, one word at a time: offer a version with the reason, then ship theirs.
 
 Permission is usually pre-granted — *"propose a ux and go for it without
 approval, we'll iterate later."* They would rather correct a built thing than
 approve a plan. "i thought i said i wanted that" is a spec arriving late, not a
-complaint: build it, and skip the archaeology of whether it was said. A call they do keep is named in the same breath as the ones they
-hand over, and its honest home is the tool: make it refuse. Ship early enough
-that there is something to nudge, because the nudging is how this app actually
-gets designed: whole runs of the log are one word, one centring, one line-break
-at a time. That is not churn, it is the method.
+complaint: build it, skip the archaeology. A call they do keep is named in the
+same breath as the ones they hand over, and its honest home is the tool: make
+it refuse. Ship early enough to be nudged — whole runs of the log are one word,
+one centring, one line-break at a time. Not churn: the method.
 
 ## The failure mode
 
@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-20* — Faking Messenger's user agent showed nothing; taking its
+  clipboard away reproduced the screenshot exactly. A hostile browser is what
+  it withholds, not what it calls itself.
 - *2026-09-20* — Three repros on headless Chromium, all green, before they said
   "Android installed PWA". The platform was the bug. Ask which phone before
   writing the first repro.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-19* — Trimming comments, the tell was any sentence about what the
   code used to do. Cutting it lost nothing — the rule it was evidence for was
   the work, and that fits on one line.
-- *2026-09-19* — I reproduced a real bug and reported it as theirs: sliding
-  onto the menu was broken, but they were tapping. A repro that matches the
-  symptom is still not the report.
