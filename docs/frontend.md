@@ -556,7 +556,25 @@ Two properties do the work, and `lib/diag.test.ts` holds both. A span that has
 now is the reason somebody has the screen open, and recording only on
 completion is how that would have been the one line missing. And the timeline
 is ordered by when things **started**, not when they ended, so a long `rebuild`
-prints above the read it was blocking rather than below it.
+sits above the read it was blocking rather than below it.
+
+**The report reads newest first — the head, then this page, then the pages
+before it, then the home-screen hand-off.** It is pasted from a phone into a
+chat box that will not take all of it, so what just went wrong has to be in the
+part that survives being cut short; the same reason the `row menus` block is in
+the head. Only the *printing* is turned round. `timeline()` still orders by
+when things started, so the overlap above is intact and the timestamps say
+which span contains which.
+
+**Back presses and dialogs are in it**, because neither can be watched with a
+cable: a thumb on a system button in an installed app, and what decides the
+outcome — whether the browser made the press cancelable, whether the document
+still had an interaction to spend — is gone by the time anyone opens this
+screen. One `back.press` line per traversal names what was done with it
+(`ours`, `ASKED`, `let through`, `swap`) beside the event's own `cancelable`
+and `active`; `dialog.open` and `dialog.gone` bracket each dialog, and
+`dialog.gone` says whether it was `dismissed` or `SHUT BY THE PLATFORM`
+(see [Gotchas](#gotchas)).
 
 Its Copy button sticks to the top of the scroll rather than sitting in a
 `Foot`. The bottom of an installed app is where the system navigation bar is,

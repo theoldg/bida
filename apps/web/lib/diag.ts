@@ -128,11 +128,12 @@ const readKept = (): KeptPage[] => {
 };
 
 /**
- * Every other page's kept timeline, oldest first. Read when asked, not at
- * load: a page opened after this one, and left, is often the one that matters.
+ * Every other page's kept timeline, **newest first** like everything else the
+ * report prints. Read when asked, not at load: a page opened after this one,
+ * and left, is often the one that matters.
  */
 export function otherPages(): KeptPage[] {
-  return readKept().filter((page) => page.at !== startedAt).sort((a, b) => a.at - b.at);
+  return readKept().filter((page) => page.at !== startedAt).sort((a, b) => b.at - a.at);
 }
 
 /**
@@ -180,12 +181,20 @@ export function forget(): void {
 }
 
 /**
- * One line per event, fixed-width, newest last. Plain text because it is read
- * on a phone, pasted into a message and diffed against the next one; a table
- * that needs a viewer is one nobody sends.
+ * One line per event, fixed-width, **newest first**. Plain text because it is
+ * read on a phone, pasted into a message and diffed against the next one; a
+ * table that needs a viewer is one nobody sends.
+ *
+ * Newest first because the report is hundreds of lines and a phone pastes the
+ * top of it: what just went wrong has to be in the part that survives. It
+ * costs the one thing the start order bought — an enclosing span printed above
+ * what it was blocking — and the timestamps still say which contains which, so
+ * `timeline()` keeps ordering by when things *started* and only the printing
+ * is turned round.
  */
 export function format(rows: readonly DiagEvent[] = timeline()): string {
-  return rows
+  return [...rows]
+    .reverse()
     .map((e) => {
       const at = `${(e.at / 1000).toFixed(2)}s`.padStart(8);
       const took = e.ms === undefined ? "" : ` ${`+${e.ms}ms`.padStart(8)}`;
@@ -255,9 +264,9 @@ export function handoff(): string {
   const notes = read<{ at: number; what: string; info?: string }[]>(NOTES, []);
   return [
     `first load:   ${first ? arrival(first) : "none recorded"}`,
-    "", "loads, newest last:",
-    ...read<Arrival[]>(ARRIVALS, []).map(arrival),
-    "", "install steps, newest last:",
-    ...(notes.length ? notes.map((n) => `${when(n.at)}  ${n.what}${n.info ? `  ${n.info}` : ""}`) : ["none"]),
+    "", "loads, newest first:",
+    ...read<Arrival[]>(ARRIVALS, []).reverse().map(arrival),
+    "", "install steps, newest first:",
+    ...(notes.length ? notes.reverse().map((n) => `${when(n.at)}  ${n.what}${n.info ? `  ${n.info}` : ""}`) : ["none"]),
   ].join("\n");
 }

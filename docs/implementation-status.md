@@ -41,7 +41,9 @@ Two things, and both are watches rather than tasks.
   instead of cancelling it — **an ADR-level call, so it is the owner's**
   ([frontend.md](frontend.md#routing)). The trap it used to sit behind — the
   dialog shut by the platform with the screen still believing it was up, so the
-  back button went dead — is fixed and driven (2026-09-20).
+  back button went dead — is fixed and driven, and **every press is now in the
+  flight recorder**, so the next report of this says which of the two it was
+  ([frontend.md](frontend.md#the-flight-recorder-and-diag)) (2026-09-20).
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found

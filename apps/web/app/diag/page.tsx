@@ -314,19 +314,28 @@ async function collect(): Promise<string> {
   const menus = [...otherPages().flatMap((page) => page.events), ...rows]
     .filter((e) => e.what === "menu.trace")
     .slice(-6)
+    .reverse()
     .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.info ?? ""}`);
-  if (menus.length) lines.push("", "row menus, newest last:", ...menus);
-  // The other pages first, because one of them is usually the interesting
-  // one: the launch that hung is the launch you killed the app to get out of,
-  // and a paste that loads `/join` is a second page beside this one. Each is
-  // headed by the address it was on, secrets masked.
+  if (menus.length) lines.push("", "row menus, newest first:", ...menus);
+  // Each page headed by the address it was on, secrets masked. Newest first,
+  // like everything below the head: the launch that hung is the launch you
+  // killed the app to get out of, and a paste that loads `/join` is a second
+  // page beside this one.
   const past = otherPages().map((page) =>
     `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
     + `${format(page.events)}\n\n`).join("");
 
-  // Which URL the home-screen icon opened, and what /install made of it — the
-  // iOS hand-off, whose every step is gone from the screen by the time anyone
-  // looks (docs/ios.md, experiment A). Secrets masked.
-  return `${lines.join("\n")}\n\n---- home screen ----\n\n${handoff()}\n\n${past}`
-    + `---- this page (${rows.length} events) ----\n\n${format(rows)}\n`;
+  /**
+   * **The head, then everything else newest first.**
+   *
+   * A phone pastes the top of this and stops — the report is hundreds of lines
+   * and a chat box is not. So the order is what a reader needs in that first
+   * screenful: the counts, because they are the scale every timing is read
+   * against, then this page's timeline with the most recent line at the top,
+   * then the pages before it, and last the home-screen hand-off, which
+   * describes an install rather than the thing that just went wrong
+   * (docs/ios.md, experiment A). Secrets masked throughout.
+   */
+  return `${lines.join("\n")}\n\n---- this page (${rows.length} events) ----\n\n${format(rows)}\n\n`
+    + `${past}---- home screen ----\n\n${handoff()}\n`;
 }

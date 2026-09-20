@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { mark } from "../lib/diag";
 import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
@@ -50,6 +51,7 @@ export function Dialog({ title, onClose, children }: {
      */
     const heard = () => closed.current();
     el.addEventListener("close", heard);
+    mark("dialog.open", title);
     el.showModal();
     // A prompt opens on its field, with the old value selected — the one habit
     // worth keeping from prompt(). So does a box asking for several lines, where
@@ -71,7 +73,14 @@ export function Dialog({ title, onClose, children }: {
     // corrected, and the first keystroke would take the whole of it.
     if (field) { field.focus(); if (field instanceof HTMLInputElement) field.select(); }
     else card.current?.focus();
-    return () => el.removeEventListener("close", heard);
+    return () => {
+      // **How it ended, which is the whole question on a phone.** Still open
+      // as it goes is the app closing it — a tap on Cancel or the scrim, or a
+      // close request we were allowed to refuse. Already shut is the platform
+      // having taken it, which is the failure this listener exists for.
+      mark("dialog.gone", `${title}  ${el.open ? "dismissed" : "SHUT BY THE PLATFORM"}`);
+      el.removeEventListener("close", heard);
+    };
   }, []);
 
   return (

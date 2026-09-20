@@ -59,6 +59,29 @@ describe("the flight recorder", () => {
     expect(out.split("\n")).toHaveLength(1);
   });
 
+  /**
+   * The report is hundreds of lines and a phone pastes the top of it, so the
+   * line somebody is being asked about has to be in the part that survives.
+   * The model still orders by when things started — only the printing is
+   * turned round.
+   */
+  it("prints newest first, while the timeline still starts at the start", () => {
+    mark("first");
+    mark("second");
+    mark("third");
+    expect(timeline().map((e) => e.what)).toEqual(["first", "second", "third"]);
+    expect(format().split("\n").map((l) => l.trim().split(/\s+/)[1]))
+      .toEqual(["third", "second", "first"]);
+  });
+
+  it("does not reorder the rows it was handed", () => {
+    mark("first");
+    mark("second");
+    const rows = timeline();
+    format(rows);
+    expect(rows.map((e) => e.what)).toEqual(["first", "second"]);
+  });
+
   it("keeps the newest when it runs past its limit", () => {
     for (let i = 0; i < 450; i++) mark("tick", String(i));
     const rows = timeline();

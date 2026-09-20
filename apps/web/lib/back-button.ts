@@ -29,6 +29,7 @@
  * recent interaction to spend — keeps its own back.
  */
 import { useEffect, useRef } from "react";
+import { mark } from "./diag";
 import { sameScreen, takeOwnTraversal } from "./nav";
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
@@ -89,22 +90,47 @@ export function isBackPress(
   return e.cancelable;
 }
 
+/**
+ * Every press, and what was done with it, in the flight recorder.
+ *
+ * This path cannot be watched with a cable: it is a thumb on a system button
+ * in an installed app, and what decides the outcome — whether the browser made
+ * the event cancelable, whether the document still had an interaction to spend
+ * — is gone by the time anyone asks. One line each says which of them it was
+ * (lib/diag.ts).
+ */
+function saw(e: NavigateEventLike, here: number | undefined, act: string): void {
+  mark("back.press", `${act}  ${e.navigationType} to=${e.destination.index} here=${here}`
+    + ` user=${e.userInitiated} cancelable=${e.cancelable}`
+    + ` active=${navigator.userActivation?.isActive ?? "?"}`);
+}
+
 function onNavigate(event: Event): void {
   const e = event as NavigateEventLike;
+  // A push or a replace is the app moving itself, and neither the guard below
+  // nor the recorder has anything to say about one. Only a traversal can be
+  // the device's button.
+  if (e.navigationType !== "traverse") return;
+  const here = navigation()?.currentEntry?.index;
   // The screen on show, and only it: a screen that declares no back action
   // (the groups list, or one whose arrow is a plain back) keeps the browser's.
   // The app's own traversal first, whatever the event claims (`nav.ts`).
-  if (e.navigationType === "traverse" && takeOwnTraversal()) return;
+  if (takeOwnTraversal()) { saw(e, here, "ours"); return; }
   const back = screens[screens.length - 1]?.current;
-  if (!back || !isBackPress(e, navigation()?.currentEntry?.index)) return;
+  // Told apart in the log, because they are the two different ways a press
+  // gets no guard at all: no screen asked for one, or the browser handed over
+  // a press this cannot be spent on — the degradation ADR-0007 names.
+  if (!back) { saw(e, here, "no screen"); return; }
+  if (!isBackPress(e, here)) { saw(e, here, "not ours to take"); return; }
   // Asked and answered no: cancel, and let the dialog be the whole of it.
-  if (back.mayLeave && !back.mayLeave()) { e.preventDefault(); return; }
+  if (back.mayLeave && !back.mayLeave()) { saw(e, here, "ASKED"); e.preventDefault(); return; }
   // The browser is already going where the arrow points — with only
   // descending pushing, nearly every press in the app. Leaving it alone is not
   // a shortcut: cancelling and re-navigating to the screen the press was
   // headed for anyway is the whole of what goes wrong.
   const up = back.up;
-  if (up === undefined || sameScreen(e.destination.url, up)) return;
+  if (up === undefined || sameScreen(e.destination.url, up)) { saw(e, here, "let through"); return; }
+  saw(e, here, "swap");
   e.preventDefault();
   // Out of the event's *task* before navigating again, not merely out of its
   // microtask checkpoint: a navigation started while the cancellation is still
