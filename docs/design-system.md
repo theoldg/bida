@@ -246,13 +246,14 @@ bar instead is what this looked like before, and a bar grown to six lines
 leaves its own back arrow and bin floating in the middle of a paragraph.
 
 Text with more to say than that says it **in the screen**. `/g/entry`'s head is
-the ledger row you tapped, opened out: the title left, the figure right — and
-the bar keeps only the kind and the date, both bounded. The title's size is
-measured rather than set (`FitTitle`, on `lib/fit.ts` like `.rmeta`'s wording
-ladder): it takes the largest step that says the words in one line and falls to
-the wrapping size when none does, so "Dinner" is a heading and a sentence is a
-paragraph. Nothing on that ladder reaches the amount's 32px — the money still
-leads.
+the entry's own title, with the figure under it and the bar left holding only
+the kind and the date, both bounded. The title's size is measured rather than
+set (`FitTitle`, on `lib/fit.ts` like `.rmeta`'s wording ladder): it takes the
+largest step that says the words in one line and falls to the wrapping size
+when none does, so "Dinner" is a heading and a sentence is a paragraph. Nothing
+on that ladder reaches the amount's 32px — the money still leads, and it keeps
+the same left margin as the title, since a figure pushed to the other edge
+strands the short ones.
 
 ## An arrow points one way, and an income says so twice
 
