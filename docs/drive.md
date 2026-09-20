@@ -22,6 +22,7 @@ pnpm drive stop
 | `goto <path>` · `back` · `forward` · `reload` | move around |
 | `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key> [times]` | act on the numbered control the last screen handed you |
 | `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
+| `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — `/import`'s paste box is a CSV or nothing |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |
@@ -74,7 +75,7 @@ accumulated history. Its state lives in `.drive/`, gitignored.
 Its first use is the one it is shaped by — handing an agent the app the way a
 stranger gets it, so it has to work the screen out rather than read the source.
 So it offers no vocabulary from the app: no `#g-name`, no `newGroup`, only
-numbers. Four rules separate it from dumping `innerText`, each one a wrong
+numbers. Five rules separate it from dumping `innerText`, each one a wrong
 answer it gave before:
 
 - **Layout decides the lines, not tags.** The app writes `<span>` with
@@ -83,8 +84,17 @@ answer it gave before:
   inside it is numbered; the rest is counted as out of reach, and the text under
   the scrim is dropped. `:modal` answers this for a `<dialog>`; the row menu is
   a fixed veil with a `role="menu"` beside it and no dialog at all, so a scrim
-  is also recognised by hit-testing the centre of the screen.
+  is also recognised by hit-testing the centre of the screen. **The fold is
+  asked after the scrim, not before it** — a row below the screen kept its
+  number with the menu open, and pressing it worked only because Playwright's
+  scroll closed the menu on the way down.
 - **A phone is 844px tall.** What is below the fold is marked a scroll away.
+- **Something on top covers a point, not a control.** The tab bar crosses the
+  last ledger row; the row is pressable everywhere it isn't. So the hit test
+  asks about the middle and the four edges, a press is aimed at whichever
+  answered, and only a control with no point left is out of reach. Reading the
+  demo used to lose whichever entry the bar happened to cross, and with no
+  `scroll` command, lose it for good.
 - **CSS is also text.** `text-transform` is what a person reads (`LEDGER`, not
   `Ledger`), `text-overflow` is what they never get to (`…`), and
   visually-hidden text is read out by screen readers but is not on the page, so

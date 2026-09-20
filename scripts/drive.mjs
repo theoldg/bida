@@ -77,7 +77,10 @@ const READ = `(() => {
   // took 1-5 while the form behind them still wore 1-20, so \`click 1\` matched
   // the older element, waited for a control under the scrim to become
   // pressable, and timed out. Same stale numbers were what \`html <n>\` read.
-  for (const el of document.querySelectorAll("[data-drive]")) el.removeAttribute("data-drive");
+  for (const el of document.querySelectorAll("[data-drive]")) {
+    el.removeAttribute("data-drive");
+    el.removeAttribute("data-drive-at");
+  }
 
   // A native modal makes the rest of the document inert, which is exactly the
   // question being asked; :modal answers it without knowing the app's classes.
@@ -109,6 +112,9 @@ const READ = `(() => {
     ? [...document.querySelectorAll('[role="menu"],[role="dialog"],[role="listbox"]')]
         .filter((el) => el !== veil && getComputedStyle(el).position === "fixed").pop() ?? null
     : null;
+
+  /** Whatever is on top, whichever kind it is — what a scrim leaves reachable. */
+  const sheet = modal ?? overlay ?? veil;
 
   let behind = 0;
 
@@ -145,21 +151,57 @@ const READ = `(() => {
     return text;
   };
 
-  /** Where a person's finger would land: on it, past the fold, or nowhere. */
+  /**
+   * Where on the last-reached control a finger should land, as an offset
+   * inside it, or null for its middle. Read by \`emit\` immediately after
+   * \`reach\`, which is the only caller that can still say which element it
+   * belongs to.
+   */
+  let reachAt = null;
+
+  /**
+   * Where a person's finger would land: on it, past the fold, or nowhere.
+   *
+   * **A scrim takes the whole screen, fold and all.** What a scroll would
+   * bring into view is no more reachable than what is already under it — the
+   * scroll that would fetch it closes the sheet on the way
+   * (\`components/row-menu.tsx\`). So the fold is asked *after* the sheet, not
+   * before it: a ledger row below the fold used to keep its number while the
+   * group menu was open, and pressing it worked only because Playwright's
+   * scroll dismissed the menu first — which is precisely the reading the dump
+   * is there to prevent.
+   *
+   * **Something small on top covers a point, not a control.** The tab bar
+   * crosses the last ledger row and the FABs float over it; the row is still
+   * pressable everywhere they are not. So the hit test asks about several
+   * points and only a control with none of them left is out of reach.
+   */
   const reach = (el) => {
+    reachAt = null;
     if (modal && !modal.contains(el)) return "behind";
     const r = el.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) return "behind";
-    if (r.bottom <= 0) return "above";
-    if (r.top >= vh) return "below";
-    const x = Math.min(Math.max(r.left + r.width / 2, 1), vw - 1);
-    const y = Math.min(Math.max(r.top + r.height / 2, 1), vh - 1);
-    const hit = document.elementFromPoint(x, y);
-    if (!hit) return "behind";
-    if (el.contains(hit) || hit.contains(el)) return "on";
+    const away = r.bottom <= 0 ? "above" : r.top >= vh ? "below" : null;
+    if (away) return sheet && !sheet.contains(el) ? "behind" : away;
+    const inset = Math.min(8, r.width / 2, r.height / 2);
+    // The middle first, so an ordinary control records no offset at all and
+    // a press stays a press in the middle of the thing.
+    for (const [dx, dy] of [
+      [r.width / 2, r.height / 2],
+      [inset, r.height / 2], [r.width - inset, r.height / 2],
+      [r.width / 2, inset], [r.width / 2, r.height - inset],
+    ]) {
+      const x = Math.min(Math.max(r.left + dx, 1), vw - 1);
+      const y = Math.min(Math.max(r.top + dy, 1), vh - 1);
+      const hit = document.elementFromPoint(x, y);
+      if (!hit || !(el.contains(hit) || hit.contains(el))) continue;
+      if (dx !== r.width / 2 || dy !== r.height / 2) reachAt = { x: dx, y: dy };
+      return "on";
+    }
     // Under a scrim there is nothing to distinguish from being behind a modal:
-    // it is off the screen a person has. Without one, something small is merely
-    // sitting on top — a floating button over a row — and the row is still there.
+    // it is off the screen a person has. Without one, something is sitting on
+    // top of the whole of it — a dump that numbered it would be offering a
+    // press that lands somewhere else.
     return veil ? "behind" : "covered";
   };
 
@@ -297,10 +339,15 @@ const READ = `(() => {
   /** Number a control and describe it. Returns its rendered text, or "" if unreachable. */
   const emit = (el, inSet = false) => {
     const where = reach(el);
+    const at = reachAt;
     if (where === "behind" || where === "covered") { behind++; return null; }
     // Only what a finger can reach gets a number. A control you cannot press is
     // not an option, and numbering it invites pressing it anyway.
     el.setAttribute("data-drive", String(++n));
+    // Where the press goes, when the middle is not free: the tab bar crossing
+    // the last ledger row leaves the row pressable above it, and a press
+    // aimed at the middle would land on the bar instead.
+    if (at) el.setAttribute("data-drive-at", \`\${at.x},\${at.y}\`);
     const isField = ["INPUT", "SELECT", "TEXTAREA"].includes(el.tagName);
     const name = isField ? null : labelOf(el);
     const what = isField
@@ -426,7 +473,6 @@ const READ = `(() => {
   else if (!active.hasAttribute("data-drive"))
     lines.push(\`── keyboard focus is on <\${active.tagName.toLowerCase()}>, not a numbered control ──\`);
 
-  const sheet = modal ?? overlay ?? veil;
   if (sheet) {
     const named = sheet.getAttribute("aria-label");
     lines.unshift(\`── a sheet is open\${named ? \`: "\${named}"\` : ""} — only what is listed can be pressed ──\`);
@@ -507,24 +553,53 @@ async function start() {
       return sel;
     };
 
+    /**
+     * Where on a control to press. Its middle, unless the dump found the
+     * middle taken — the tab bar crosses the last ledger row, and Playwright
+     * refuses a press whose point lands on something else.
+     */
+    /**
+     * The text a command carries. A command is one line and is split on
+     * whitespace, so a newline could not survive the trip — and the box that
+     * most wants one is `/import`'s, where a pasted CSV is the whole feature.
+     * `\n` is how the dump already writes a newline back out, so it is what
+     * typing one looks like going in.
+     */
+    const typed = (parts) => parts.join(" ").replace(/\\n/g, "\n");
+
+    const aim = async (sel) => {
+      const at = await page.getAttribute(sel, "data-drive-at");
+      if (!at) return {};
+      const [x, y] = at.split(",").map(Number);
+      return { position: { x, y } };
+    };
+
     switch (verb) {
       case undefined: case "screen": break;
       case "goto": await page.goto(arg.startsWith("http") ? arg : base + (arg.startsWith("/") ? arg : `/${arg}`), { waitUntil: "domcontentloaded" }); break;
-      case "click": await page.click(await target(args[0]), { timeout: 5000, strict: true }); break;
-      case "fill": await page.fill(await target(args[0]), args.slice(1).join(" "), { strict: true }); break;
+      case "click": {
+        const sel = await target(args[0]);
+        await page.click(sel, { timeout: 5000, strict: true, ...(await aim(sel)) });
+        break;
+      }
+      case "fill": await page.fill(await target(args[0]), typed(args.slice(1)), { strict: true }); break;
       // `fill` sets a value; it does not type one. The amount field regroups
       // digits and puts the caret back on every keystroke, and a whole value
       // dropped in fires that once — so the code the owner most wants stressed
       // was the code `fill` could not reach. This keys it in one character at a
       // time, at the caret, which is also how `press Backspace` gets to run
       // against a separator it has to delete through.
-      case "type": await page.locator(await target(args[0])).pressSequentially(args.slice(1).join(" "), { delay: 20, timeout: 5000 }); break;
+      case "type": await page.locator(await target(args[0])).pressSequentially(typed(args.slice(1)), { delay: 20, timeout: 5000 }); break;
       case "select": await page.selectOption(await target(args[0]), { label: args.slice(1).join(" ") }, { strict: true }); break;
       case "press": for (let i = Math.max(1, Number(args[1] ?? 1)); i > 0; i--) await page.keyboard.press(args[0]); break;
       // Some actions live behind a long press and nowhere else, so a driver
       // that can only click cannot reach them at all. A right click is the
       // same `contextmenu` event a touch hold sends.
-      case "hold": await page.click(await target(args[0]), { button: "right", strict: true }); break;
+      case "hold": {
+        const sel = await target(args[0]);
+        await page.click(sel, { button: "right", strict: true, ...(await aim(sel)) });
+        break;
+      }
       case "back": await page.goBack(); break;
       case "forward": await page.goForward(); break;
       case "reload": await page.reload(); break;
