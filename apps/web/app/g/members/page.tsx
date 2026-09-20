@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@bida/core";
-import { GhostRow } from "@/components/bits";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ChoiceDialog, ConfirmDialog, Dialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
@@ -19,12 +18,12 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
 /**
  * People: who is in the group, and which of them this phone is.
  *
- * **Who this phone is is a row of its own with a button on it, never a tap on
+ * **Who this phone is is a button of its own below the list, never a tap on
  * somebody's name.** A list whose rows rewrite your identity cannot say so
  * before it happens, and the same rows carry a trash button — one miss and you
- * have signed the group's log as someone else. So it is asked: the button opens
- * the list as a `ChoiceDialog` (ADR-0008), and picking writes the claim op
- * (ADR-0003).
+ * have signed the group's log as someone else. So it is asked, with the same
+ * weight as "Edit" on an entry: the button opens the list as a `ChoiceDialog`
+ * (ADR-0008), and picking writes the claim op (ADR-0003).
  *
  * Adding is the last row of the list rather than a dialog — a group is filled
  * in one burst of typing (components/name-adder.tsx). Removing keeps its
@@ -153,12 +152,17 @@ function MembersScreen() {
             ))}
 
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
+          </div>
 
-            {/* Under the list with the other things you can do to it, because
-                it is about this phone rather than about anyone on it. Which
-                name is yours is already on the list, as the check mark. */}
-            <GhostRow icon="users" label={copy.members.whoChange}
-              onClick={() => setAsk({ kind: "who" })} />
+          {/* Its own button below the list, not a row in it — the same weight
+              as "Edit" on an entry (app/g/entry/page.tsx), because rewriting
+              whose name every future entry is signed with is a bigger act
+              than the taps above it. Which name is yours is already on the
+              list, as the check mark. */}
+          <div className="pad" style={{ paddingTop: 4 }}>
+            <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
+              {copy.members.whoChange}
+            </button>
           </div>
         </Scroll>
       </Body>

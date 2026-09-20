@@ -163,9 +163,9 @@ await clears("quick split — the scan pair is above the keys", ".btn-pair");
 const [me, ...others] = CROWD;
 const groupId = await newGroup(page, base, { name: "Trip", me, members: others });
 await page.goto(`${base}/g/members?id=${groupId}`);
-await page.waitForSelector(".ghostrow");
+await page.waitForSelector(".pad .btn");
 await openKeyboard();
-await clears("people — changing who you are is above the keys", ".ghostrow");
+await clears("people — changing who you are is above the keys", ".pad .btn");
 
 // ---- the confirm key ----------------------------------------------------
 /**
