@@ -31,6 +31,7 @@
 import { useEffect, useRef } from "react";
 import { mark } from "./diag";
 import { sameScreen, takeOwnTraversal } from "./nav";
+import { note } from "./press-trace";
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
 type NavigateEventLike = Event & {
@@ -103,6 +104,11 @@ function saw(e: NavigateEventLike, here: number | undefined, act: string): void 
   mark("back.press", `${act}  ${e.navigationType} to=${e.destination.index} here=${here}`
     + ` user=${e.userInitiated} cancelable=${e.cancelable}`
     + ` active=${navigator.userActivation?.isActive ?? "?"}`);
+  // And again inside whatever is open over the screen, where it belongs beside
+  // the taps rather than in a timeline the reader has to align by hand. A press
+  // the close watcher takes reaches neither — it is the `close event` the
+  // dialog notes for itself (components/dialog.tsx).
+  note(`back ${act}`);
 }
 
 function onNavigate(event: Event): void {

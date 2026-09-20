@@ -41,18 +41,45 @@ const KINDS = [
 ] as const;
 
 /**
- * Long enough for a press that failed and the one that worked after it. Past
- * this the line stops growing rather than the mark growing unbounded — the
- * answer is in the first few either way.
+ * How much of a long sequence is kept, and **which parts**.
+ *
+ * One flat cap was enough for a row menu, which is open for a single press and
+ * answers it. It is the wrong shape for a dialog that refuses a run of taps:
+ * that is open for seconds, spends six or seven events on every tap, and a cap
+ * that stops the line growing throws away the taps the report is about — the
+ * last one, which worked, and whatever was different about it.
+ *
+ * So both ends are kept. The head holds the opening and the first press that
+ * went wrong; the tail holds the run that ended it. What fell out between them
+ * is counted, and the count is itself a reading: it says how many taps this
+ * took.
  */
-const LIMIT = 30;
+const HEAD = 12;
+const TAIL = 26;
 
 /** One thing open over the screen, and what has happened under it so far. */
 interface Trace {
   /** The mark it is written as: `menu.trace`, `dialog.trace`. */
   what: string;
-  steps: string[];
+  head: string[];
+  tail: string[];
+  /** Steps that fell out of the middle, which is a count of taps, roughly. */
+  dropped: number;
   from: number;
+  /**
+   * Where the thing that is open was drawn, asked at each press.
+   *
+   * **The one question a refused tap asks that no event answers**: a card
+   * centred in a layout viewport with a keyboard over the bottom half of it is
+   * drawn where the finger cannot reach, and every event says only that the
+   * press never arrived. Read at `pointerdown`, which is a handful of times per
+   * trace and never while nothing is open, and **written only when it has
+   * changed**: the same four numbers under every tap of a run is the noise that
+   * hides the one tap they were different for, which is the whole answer.
+   */
+  box?: () => string;
+  /** The last reading, so an unchanged one costs nothing but the read. */
+  was?: string;
 }
 
 let open: Trace | null = null;
@@ -79,6 +106,11 @@ function where(target: EventTarget | null): string {
   if (pick) return `pick${kin(pick)}`;
   const btn = target.closest(".dialog button");
   if (btn) return `btn${kin(btn)}`;
+  // **A disabled button takes no pointer events at all**, so a press aimed at
+  // one lands on the row holding it. That has to read differently from the
+  // card's body, or "it ignored my tap" and "there was nothing there to tap"
+  // are the same line.
+  if (target.closest(".drow")) return "row";
   if (target.closest(".dialog")) return "card";
   if (target instanceof HTMLDialogElement) return "scrim";
   const cls = typeof target.className === "string" ? target.className.split(" ")[0] : "";
@@ -87,8 +119,11 @@ function where(target: EventTarget | null): string {
 
 /** Add a line of our own — something the app did, rather than was told. */
 export function note(what: string): void {
-  if (!open || open.steps.length >= LIMIT) return;
-  open.steps.push(`+${Math.round(performance.now() - open.from)} ${what}`);
+  if (!open) return;
+  const line = `+${Math.round(performance.now() - open.from)} ${what}`;
+  if (open.head.length < HEAD) { open.head.push(line); return; }
+  open.tail.push(line);
+  if (open.tail.length > TAIL) { open.tail.shift(); open.dropped++; }
 }
 
 /** A hold's guard went up or came down (`components/long-press.tsx`). */
@@ -98,11 +133,18 @@ export function guarding(on: boolean): void {
 }
 
 function onAny(e: Event): void {
-  if (!open || open.steps.length >= LIMIT) return;
+  if (!open) return;
   // `detail` is how a click says whether a finger made it: 0 is a keyboard's,
   // or one the app dispatched itself, and the guard lets those through.
   const detail = e instanceof MouseEvent ? ` d${e.detail}` : "";
   note(`${e.type}@${where(e.target)}${detail}`);
+  // Only on the way down: the answer is where the card was when the finger
+  // landed, not where it had got to by the lift. Said once, and then again only
+  // if it moved — a card that moved mid-run is what this is looking for.
+  if (e.type === "pointerdown" && open.box) {
+    const box = open.box();
+    if (box && box !== open.was) { open.was = box; note(box); }
+  }
 }
 
 function listen(on: boolean): void {
@@ -117,10 +159,11 @@ function listen(on: boolean): void {
 
 function flush(): void {
   if (!open) return;
-  const { what, steps } = open;
+  const { what, head, tail, dropped } = open;
   open = null;
   listen(false);
-  mark(what, steps.join("  ") || "nothing happened");
+  const middle = dropped ? [`…${dropped} more…`] : [];
+  mark(what, [...head, ...middle, ...tail].join("  ") || "nothing happened");
 }
 
 /**
@@ -131,10 +174,13 @@ function flush(): void {
  * sharing, and the handover is where the menu's line ends. The stop is checked
  * against what it started, so the menu unmounting a beat later cannot cut the
  * dialog's trace short.
+ *
+ * `box` is asked at each press for where the thing is drawn; leave it out and
+ * the trace is events alone.
  */
-export function tracePress(what: string, opening: string): () => void {
+export function tracePress(what: string, opening: string, box?: () => string): () => void {
   flush();
-  const mine: Trace = { what, steps: [], from: performance.now() };
+  const mine: Trace = { what, head: [], tail: [], dropped: 0, from: performance.now(), box };
   open = mine;
   note(`open guards=${guards} ${opening}`);
   listen(true);

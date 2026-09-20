@@ -615,8 +615,27 @@ below — and the trace that said so is the only reason anyone knows.
 **A dialog's parts are named apart from each other**, because that is the whole
 question a refused tap asks: `pointerdown@btn1` lifting on `card` is the card
 having moved out from under the finger, and Chrome sends no `click` when the
-press and the lift have no target in common. `kb 404->0` beside it is what
-moved it (`--kb`, components/viewport.tsx).
+press and the lift have no target in common. `row` rather than `card` is a
+press that reached the button's row and not the button — a disabled one takes
+no pointer events at all — and `kb 404->0` is what moved things
+(`--kb`, components/viewport.tsx). Back presses are noted inline as well as in
+the timeline, so a thumb alternating between the system button and the card
+reads in one line.
+
+Each press also carries **where the card was against what was on screen** —
+`card 320-520 visible 0-437 of 841` — which is the one thing no event says. A
+modal `<dialog>` is laid out in the layout viewport and the strip a keyboard
+covers is paid out of it as padding, so a card drawn while that payment is
+wrong is centred over the keys and a tap aimed at its buttons never reaches the
+page at all. It is written once and then only when it changes, because the same
+numbers under every tap of a run are what would hide the one tap they were
+different for.
+
+**Both ends of a long sequence are kept, and the middle is counted**
+(`…27 more…`). A flat cap was right for a menu, which is open for one press; a
+dialog refusing a run of taps spends seven events on each of them, and the
+taps that matter are the first one that went wrong and the last one, which
+worked.
 
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script

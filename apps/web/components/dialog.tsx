@@ -45,7 +45,26 @@ export function Dialog({ title, onClose, children }: {
      * out notes itself, so a card that went away with no press behind it is
      * the trace with no reason at the end of it (lib/press-trace.ts).
      */
-    const stop = tracePress("dialog.trace", title);
+    const stop = tracePress("dialog.trace", title, () => {
+      /**
+       * **Where the card was when the finger landed, against what was on
+       * screen.** A modal `<dialog>` is laid out in the *layout* viewport, and
+       * the strip a keyboard covers is paid out of it as padding (`--kb`,
+       * globals.css) — so a card drawn while that payment is wrong is centred
+       * over the keys, and a tap aimed at its buttons never reaches the page at
+       * all. No event says that happened; these four numbers do.
+       *
+       * The payment is wrong for as long as it takes a blurred field's keyboard
+       * to retract, because `--kb` goes to zero the moment focus leaves the
+       * field and `showModal()` moves focus off it (lib/viewport.ts).
+       */
+      const box = card.current?.getBoundingClientRect();
+      const view = window.visualViewport;
+      if (!box || !view) return "";
+      const top = Math.round(view.offsetTop);
+      return `card ${Math.round(box.top)}-${Math.round(box.bottom)}`
+        + ` visible ${top}-${Math.round(top + view.height)} of ${Math.round(window.innerHeight)}`;
+    });
     /**
      * **Whoever shuts this element, the state drawing it hears about it.**
      *

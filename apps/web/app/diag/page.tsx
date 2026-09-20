@@ -315,7 +315,7 @@ async function collect(): Promise<string> {
   // a menu item that opens a dialog is one story across both.
   const presses = [...otherPages().flatMap((page) => page.events), ...rows]
     .filter((e) => e.what === "menu.trace" || e.what === "dialog.trace")
-    .slice(-8)
+    .slice(-6)
     .reverse()
     .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.what.replace(".trace", "")}  ${e.info ?? ""}`);
   if (presses.length) lines.push("", "menus and dialogs, newest first:", ...presses);

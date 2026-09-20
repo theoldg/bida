@@ -269,9 +269,10 @@ async function onLedger() {
 // "It refused a bunch of taps" is a report a phone gives and no build machine
 // reproduces, and every explanation for it is a different line in the same
 // short sequence — a lift on the card where the press went down on the button,
-// a click that never came at all. Guessing at one by hand has been wrong every
-// time it was tried here, so the sequence is recorded while a dialog is up and
-// /diag carries it in its head (lib/press-trace.ts).
+// a click that never came at all, a card drawn over the keyboard so the press
+// never reached the page. Guessing at one by hand has been wrong every time it
+// was tried here, so the sequence is recorded while a dialog is up and /diag
+// carries it in its head (lib/press-trace.ts).
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -281,7 +282,11 @@ async function onLedger() {
   await page.locator("#g-name").fill("Trip");
   void page.goBack().catch(() => {});
   await page.waitForSelector(".scrim[open]").catch(() => {});
-  // Cancel: the left half of the row, so `btn0`.
+
+  // A run of taps that lands on the card and does nothing — the shape of the
+  // report, and far more steps than either end of the line holds.
+  for (let i = 0; i < 8; i++) await page.locator(".scrim .dtitle").click();
+  // Then the one that works. Cancel is the left half of the row, so `btn0`.
   await page.locator(".scrim .drow .btn-s").click();
   await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
 
@@ -291,9 +296,17 @@ async function onLedger() {
   const line = head.split("\n").find((l) => l.includes("dialog  ")) ?? "";
   report(/menus and dialogs, newest first:/.test(head),
     "a dialog's presses ride in the head of /diag, where a cut-short paste keeps them");
-  report(/click@btn0/.test(line), "and the tap that dismissed it is named by the part it landed on",
+  report(/pointerdown@card/.test(line), "and a tap is named by the part it landed on",
     line || "no dialog trace at all");
-  report(/gone dismissed/.test(line), "and the way the card went out is the end of the line", line);
+  report(/card \d+-\d+ visible \d+-\d+ of \d+/.test(line),
+    "with where the card was against what was on screen, which no event says", line);
+
+  // Both ends, which is the whole point of the shape: a run of refused taps
+  // must not push the one that worked off the end of the line.
+  report(/…\d+ more…/.test(line), "a long run drops out of the middle, counted", line);
+  report(/open guards=0 Discard/.test(line), "the head still holds the opening", line);
+  report(/click@btn0/.test(line) && /gone dismissed/.test(line),
+    "and the tail still holds the tap that ended it", line);
   await page.close();
 }
 
