@@ -225,9 +225,15 @@ confers nothing without the secret.
   link on screen to be read (`InviteFallback`,
   [ADR-0003](decisions/0003-link-only-access.md)). A copy that works says so
   where it was asked for: the People bar's own button flips to a check for a
-  second and a half, and so does the group menu's kebab (`MenuButton`'s
-  `confirmed`) — the menu card closes on the tap, so without it the one action
-  in the app with no visible result had no result at all.
+  second and a half, so does the group menu's kebab (`MenuButton`'s
+  `confirmed`), and on the groups list — where the menu card has closed and
+  there is no bar to put a glyph in — **the row's own figure turns away on its
+  X axis and the check comes up behind it** (`.grouprow .ramt.copied`), the
+  transfer arrow's "these traded places" read applied to one cell. A
+  transition and not the swap's keyframes, because this reverses itself when
+  `invite.copied` lapses and a class going away replays no animation. Without
+  any of it the one action in the app with no visible result had no result at
+  all.
 - **The confirm key hands the caret on, or folds the keyboard.** A phone
   keyboard's bottom-right key is whatever `enterKeyHint` names it, and the word
   it wears is a promise — so `"next"` is both the opt-in and the instruction,

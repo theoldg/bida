@@ -298,6 +298,9 @@ export const copy = {
         app spends on itself. */
     menu: "Menu",
     whoAreYou: "who are you?",
+    /** In place of the figure for a moment, under the check that says the
+        row's link is on the clipboard — lower case, like the words it stands in for. */
+    copied: "copied",
     youOwe: "you owe",
     youreOwed: "you’re owed",
     settled: "settled",

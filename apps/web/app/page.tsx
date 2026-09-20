@@ -208,24 +208,37 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
             {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
           </div>
         </div>
-        <div className="ramt">
-          {netMinor === undefined ? (
-            <>
-              <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
-              <div className="sm">{copy.groups.whoAreYou}</div>
-            </>
-          ) : (
-            <>
-              <div className={`big ${signClass(netMinor)}`}
-                style={netMinor === 0 ? { color: "var(--muted)" } : undefined}>
-                {money(netMinor, group.baseCurrency, netMinor !== 0)}
-              </div>
-              <div className="sm">
-                {netMinor < 0 ? copy.groups.youOwe
-                  : netMinor > 0 ? copy.groups.youreOwed : copy.groups.settled}
-              </div>
-            </>
-          )}
+        {/* The figure is also where copying the row's link answers: it flips
+            away and a check turns up in its place for as long as
+            `invite.copied` holds. The menu that started the copy has closed by
+            then and the clipboard says nothing, so without this a long press
+            ends in silence — and the eye is already on this row. */}
+        <div className={`ramt${invite.copied ? " copied" : ""}`}>
+          <div className="amtface">
+            {netMinor === undefined ? (
+              <>
+                <div className="big" style={{ color: "var(--muted)" }}>{copy.none}</div>
+                <div className="sm">{copy.groups.whoAreYou}</div>
+              </>
+            ) : (
+              <>
+                <div className={`big ${signClass(netMinor)}`}
+                  style={netMinor === 0 ? { color: "var(--muted)" } : undefined}>
+                  {money(netMinor, group.baseCurrency, netMinor !== 0)}
+                </div>
+                <div className="sm">
+                  {netMinor < 0 ? copy.groups.youOwe
+                    : netMinor > 0 ? copy.groups.youreOwed : copy.groups.settled}
+                </div>
+              </>
+            )}
+          </div>
+          {/* Always drawn, because the flip back is a transition on a class
+              going away — and hidden from a reader until it means something. */}
+          <div className="copiedface" aria-hidden={!invite.copied}>
+            <Icon name="check" size={18} />
+            <div className="sm">{copy.groups.copied}</div>
+          </div>
         </div>
       </Link>
 
