@@ -745,8 +745,12 @@ export const copy = {
     /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
     /** Not "brings it back": the seed is deterministic, so what the address
-     *  lays down is the story as shipped, not the one you played with. */
-    clearBody: "This wipes the demo off the phone, along with anything you did in it. The address lays down a fresh one.",
+     *  lays down is the story as shipped, not the one you played with. It is
+     *  written out rather than linked, and the caller passes the host, because
+     *  nothing in the app links to `/demo` and a static export cannot know
+     *  which server it is being read from (`useHost`). */
+    clearBody: (address: string) =>
+      `This wipes the demo off the phone, along with anything you did in it. Visit ${address} to create a fresh one.`,
     /** The one genuinely broken thing: no key, so no invite link to hand over. */
     noLink: {
       title: "No invite link",

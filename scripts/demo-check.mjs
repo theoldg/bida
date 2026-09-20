@@ -176,6 +176,13 @@ report(await page.getByText("Droid oil").count() > 0,
 
 await openMenu();
 await menuItem("Clear the demo").click();
+// The dialog names the address to come back to, and the host in it is the
+// browser's own (`useHost`): a static export cannot know which server it is
+// being read from, so an unwired host would leave a bare "/demo" here.
+await page.waitForSelector(".dbody");
+const promise = await page.locator(".dbody").innerText();
+report(promise.includes(`Visit ${new URL(base).host}/demo to create a fresh one.`),
+  "the clear dialog sends you to this server's own /demo", promise);
 await page.getByRole("button", { name: "Clear the demo" }).click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
 // The list, drawn: asserting an absence over a screen that has not read Dexie

@@ -7,7 +7,7 @@ import { copy } from "../lib/copy";
 import { clearDemo, forgetGroup } from "../lib/db/commands";
 import { exportFilename, groupCsv, handOffCsv } from "../lib/export";
 import { route } from "../lib/group-link";
-import { useInviteLink, type GroupData } from "../lib/hooks";
+import { useHost, useInviteLink, type GroupData } from "../lib/hooks";
 import { DemoNoLink } from "./demo";
 import { ConfirmDialog } from "./dialog";
 import { InviteFallback } from "./invite";
@@ -37,6 +37,9 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
   // (components/demo.tsx).
   const demo = isDemo(groupId);
   const [noLink, setNoLink] = useState(false);
+  // Clearing the demo names the address that lays a fresh one down, and only
+  // the browser knows which host that is (`useHost`).
+  const host = useHost();
 
   /**
    * Export: build the file, then hand it over by whatever this browser has.
@@ -93,7 +96,7 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
           confirm={demo ? copy.demo.clear : copy.members.forget}
           danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{demo ? copy.demo.clearBody : copy.members.forgetBody}</p>
+          <p>{demo ? copy.demo.clearBody(`${host}${route.demo()}`) : copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </>

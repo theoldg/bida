@@ -21,7 +21,7 @@ import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { iosHomeScreenApp } from "@/lib/install";
 import { useResumeLastGroup } from "@/lib/launch";
-import { useArrivingGroups, useGroupSummaries, useInviteLink, type GroupSummary } from "@/lib/hooks";
+import { useArrivingGroups, useGroupSummaries, useHost, useInviteLink, type GroupSummary } from "@/lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -176,6 +176,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
   // it back, so the same row clears it instead (lib/db/commands/demo.ts).
   const demo = isDemo(group.id);
   const [noLink, setNoLink] = useState(false);
+  // As in the group's own menu: the fresh demo's address is the browser's to
+  // know, not the build's (`useHost`).
+  const host = useHost();
 
   const { hold, menu } = useLongPressMenu([
     ...(demo
@@ -238,7 +241,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
           confirm={demo ? copy.demo.clear : copy.members.forget}
           danger={true}
           onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{demo ? copy.demo.clearBody : copy.members.forgetBody}</p>
+          <p>{demo ? copy.demo.clearBody(`${host}${route.demo()}`) : copy.members.forgetBody}</p>
         </ConfirmDialog>
       ) : null}
     </>

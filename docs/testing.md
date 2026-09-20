@@ -467,7 +467,9 @@ state, that the balances do not cancel, that the mark is at its head, that the
 cantina tab opens onto the bill it was itemised from, that **Copy invite link**
 refuses out loud, and that clearing a demo somebody has added an entry to
 takes the whole group off the phone while the address lays the shipped story
-down again — entry for entry, and without the one that was added.
+down again — entry for entry, and without the one that was added. The dialog
+that offers it has to name this server's own `/demo`, host and all: the host is
+the browser's to supply, so an unwired one would read as a bare path.
 
 It then says this phone holds an older build's seed — a `demoSeed` of its own
 invention, written straight into the device record — and reopens the address,

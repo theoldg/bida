@@ -430,6 +430,22 @@ export function useSyncHealth(groupId: string | undefined): SyncHealth {
   }, [key]);
 }
 
+/**
+ * The host this copy of the app was opened from — `""` until the bundle lands.
+ *
+ * Which server somebody is on is a thing only the browser knows: the dev
+ * Worker is its own host and a self-hosted one is somebody else's
+ * ([hosting.md](../../../docs/hosting.md)), so an address cannot be baked into
+ * a static export. A sentence that names one is therefore a client island, and
+ * before hydration it reads as the bare path — still the right address from
+ * where it is being read.
+ */
+export function useHost(): string {
+  const [host, setHost] = useState("");
+  useEffect(() => setHost(location.host), []);
+  return host;
+}
+
 /** Whether the browser thinks it is online. Drives the offline banner. */
 export function useOnline(): boolean {
   const [online, setOnline] = useState(true);
