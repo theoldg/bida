@@ -1073,7 +1073,8 @@ so the static export ships the full line and the browser narrows it.
   where nothing scrolls: the bottom nav on a group, the about line under the
   groups list. Reported on an installed phone after tapping Reload for a new
   build, never on a launch, and never reproduced in a browser these checks can
-  drive. **How to recognise it:** everything else is right, the FAB is exactly
+  drive — so the phone is the only place the fix could be shown to hold, and it
+  does (2026-09-21). **How to recognise it:** everything else is right, the FAB is exactly
   where it belongs, and the groups list's start pair has slid *lower* than
   usual — a `position: fixed` FAB is placed against the ICB, so a FAB that has
   not moved while `margin-top: auto` pushes the pair down says the ICB is the
