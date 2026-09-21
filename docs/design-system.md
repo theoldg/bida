@@ -377,8 +377,9 @@ reads as an ordinary assignment.
 ## Rules that are not negotiable
 
 1. **Colour is never the only signal**, and is never spent on anything but
-   money. Debit and credit carry a sign *and* a word *and* a bar direction;
-   pending sync carries a dot *and* a banner.
+   money. Debit and credit carry a sign *and* a word *and* a bar direction —
+   the sign only where no word sits right above the figure, so the ledger's net
+   card ("You owe") prints no minus; pending sync carries a dot *and* a banner.
 2. **Both themes are designed.** Tokens on bare `:root` (light), redefined under
    `@media (prefers-color-scheme: dark)` guarded with `:root:not([data-theme=
    "light"])`, and again under `:root[data-theme="dark"]`. Never declare a

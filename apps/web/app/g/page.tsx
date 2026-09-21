@@ -208,7 +208,7 @@ function LedgerTab({ data }: { data: GroupData }) {
       {me ? (
         <div className="mysummary pad">
           {/* The tint is neutral on purpose: the eyebrow and the figure are
-              already signed and coloured, and a card-sized wash of green or
+              already worded and coloured, and a card-sized wash of green or
               red is the loudest thing on a screen that spends colour only on
               money. */}
           <Card style={{ flex: 1, padding: "10px 12px" }}>
@@ -217,8 +217,12 @@ function LedgerTab({ data }: { data: GroupData }) {
                 {net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square}
               </span>
             </div>
+            {/* Unsigned, unlike every other figure in the app: this is the
+                one place that says which way the money goes in words, right
+                above it. A "-" under "You owe" is a third telling of the same
+                fact — and the one that reads as arithmetic rather than debt. */}
             <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
-              {money(net, group.baseCurrency, net !== 0)}
+              {money(Math.abs(net), group.baseCurrency)}
             </div>
           </Card>
         </div>
