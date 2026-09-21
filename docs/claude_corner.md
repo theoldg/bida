@@ -68,9 +68,6 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — "there's no line between the tabs and the row": the rule was
-  there, the wash over the row ate it. A missing border is sometimes a border
-  you cannot see.
 - *2026-09-20* — the transfer chip's missing option had a comment saying
   exactly why — and the fix was still to reverse it: two new commands, a
   reseeded split id, an ADR edited.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "hide the install banner in the demo": the card's own comment
   already carried the rule — draw it only once there is a group to lose. The
   demo was an instance of one written down.
+- *2026-09-21* — "i got hold on an iphone": not a bug report, a window. The
+  answer was the list of what only that phone can settle, ordered by what it
+  would close.

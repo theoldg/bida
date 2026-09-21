@@ -1,11 +1,13 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-[the design](#the-design) is built, and [A](#a-in-detail) works on a real
-iPhone from `/install` (2026-09-16).** Built since and waiting on the phone:
-Share from any page, the names coming along, the in-app browser refused, and
-whether `canShare({files})` is true inside the home-screen app — which is
-whether the export can hand over a file there at all ([5](#the-problem)).*
+[the design](#the-design) is built; [A](#a-in-detail) works on a real iPhone
+from `/install` (2026-09-16), and the export's share sheet hands a file over
+inside the home-screen app, so `canShare({files})` is true there
+(2026-09-18).** Built since and waiting on the phone: the carry from a page
+other than `/install`, the names coming along, and the in-app browser refused —
+[the phone checklist](testing.md#what-only-a-phone-can-check) is how to spend
+one.*
 
 ## The problem
 
