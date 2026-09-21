@@ -17,7 +17,10 @@
  *
  * **Undocumented means it can stop working**, and the refusal a person sees
  * says so rather than blaming their link (`copy.importData.refused`). What it
- * cannot do is cost anything: there is no key here to spend.
+ * cannot do is cost anything: there is no key here to spend. The three
+ * constants below are the whole of what bunq gates on, and **a real link came
+ * back on them** (2026-09-21) — so a session that finds this refusing is
+ * looking at something that moved, not at a guess that was always wrong.
  */
 
 const BASE = "https://api.tricount.bunq.com/v1";
@@ -32,8 +35,8 @@ const USER_AGENT = "com.bunq.tricount.android:RELEASE:7.0.7:3174:ANDROID:13:C";
 /**
  * A per-request id the handshake wants. Constant, and deliberately the one
  * every published client sends: it is not deduplicated — those clients would
- * answer once and never again if it were — and a value nobody has tried is a
- * way for this to fail that we cannot test from here.
+ * answer once and never again if it were — and a value nobody has tried is one
+ * more way for this to fail that no test of ours would catch.
  */
 const REQUEST_ID = "049bfcdf-6ae4-4cee-af7b-45da31ea85d0";
 
