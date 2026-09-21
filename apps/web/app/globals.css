@@ -699,6 +699,22 @@ a { color: inherit; text-decoration: none }
 .grouprow .ramt.copied .copiedface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
 @media (prefers-reduced-motion: reduce) {
   .grouprow .ramt .amtface, .grouprow .ramt .copiedface { transition: none } }
+/* The same flip at the size of one glyph, for the two icon buttons that copy
+   the link where a whole figure cannot: the group's kebab and People's top bar
+   (`FlipCheck`). Same .2s/.16s pair as above, so the gesture reads the same
+   whichever of the three places it is made in. Shallower perspective because
+   the box is 18px, not a column of digits: 260px across that little barely
+   bends. */
+.flipcheck { position: relative; display: block; perspective: 120px }
+.flipcheck .flipface, .flipcheck .checkface {
+  display: block; transition: transform .2s ease, opacity .2s ease; backface-visibility: hidden }
+.flipcheck .flipface { transition-delay: .16s }
+.flipcheck .checkface { position: absolute; inset: 0; color: var(--brand);
+  transform: rotateX(-90deg); opacity: 0 }
+.flipcheck.on .flipface { transform: rotateX(90deg); opacity: 0; transition-delay: 0s }
+.flipcheck.on .checkface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
+@media (prefers-reduced-motion: reduce) {
+  .flipcheck .flipface, .flipcheck .checkface { transition: none } }
 /* A ledger row's height must not depend on what is in it. Only some entries
    carry a second figure — the sum as it was spent, before the group's currency
    — and a row that grew a line for it broke the rhythm of the list wherever one

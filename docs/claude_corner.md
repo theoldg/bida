@@ -68,9 +68,6 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — the transfer chip's missing option had a comment saying
-  exactly why — and the fix was still to reverse it: two new commands, a
-  reseeded split id, an ADR edited.
 - *2026-09-20* — "unfold my own items by default" and the exact door was
   already there: `MemberBill`'s unused `startOpen` prop, one caller over. Grep
   for the shape a feature wants before building it.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — A phone in hand closed four watches in one message. The
   clipboard retry I had reasoned out so carefully was three extra taps: a
   retry the person has to approve is not a retry.
+- *2026-09-21* — Asked to animate one button, its neighbour's comment said the
+  two confirm "the same way". Doing only the one named would have quietly made
+  that sentence false.

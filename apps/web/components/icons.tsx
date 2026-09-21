@@ -144,3 +144,23 @@ export function Icon({ name, size = 16, className, style }: {
     </svg>
   );
 }
+
+/**
+ * An icon that turns away on its X axis and leaves a check behind it for as
+ * long as `on` holds — the groups list's flip (`.grouprow .ramt.copied`)
+ * shrunk to a single glyph, so copying an invite link confirms itself the same
+ * way wherever it was asked for rather than swapping icons on the spot.
+ *
+ * Both faces are always drawn: the flip back is a transition on a class going
+ * away, and a face that isn't there has nothing to run.
+ */
+export function FlipCheck({ name, size = 16, on }: {
+  name: IconName; size?: number; on: boolean;
+}) {
+  return (
+    <span className={`flipcheck${on ? " on" : ""}`} style={{ width: size, height: size }}>
+      <Icon name={name} size={size} className="flipface" />
+      <Icon name="check" size={size} className="checkface" />
+    </span>
+  );
+}

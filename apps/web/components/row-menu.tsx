@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Icon, type IconName } from "./icons";
+import { FlipCheck, Icon, type IconName } from "./icons";
 import { clickGuard } from "../lib/click-guard";
 import { note, tracePress } from "../lib/press-trace";
 
@@ -191,10 +191,11 @@ export function MenuButton({ icon, label, actions, confirmed = false }: {
   icon: IconName; label: string; actions: SheetAction[];
   /**
    * An action inside the menu has just done something, and there is nothing
-   * left on screen to say so: the card closed on the tap. The button wears the
-   * check the same action's own button wears elsewhere (`InviteButton`), so
-   * copying the link from the menu and copying it from People's top bar
-   * confirm themselves the same way.
+   * left on screen to say so: the card closed on the tap. The icon turns away
+   * and a check comes up behind it (`FlipCheck`) — the same flip the groups
+   * list runs in a row's figure, and the same one the action's own button
+   * wears elsewhere (`InviteButton`), so copying the link confirms itself the
+   * same way from all three.
    */
   confirmed?: boolean;
 }) {
@@ -204,8 +205,7 @@ export function MenuButton({ icon, label, actions, confirmed = false }: {
       <button type="button" className="iconbtn" aria-label={label} aria-haspopup="menu"
         aria-expanded={anchor ? true : undefined}
         onClick={(e) => setAnchor(e.currentTarget.getBoundingClientRect())}>
-        <Icon name={confirmed ? "check" : icon} size={18}
-          style={confirmed ? { color: "var(--brand)" } : undefined} />
+        <FlipCheck name={icon} size={18} on={confirmed} />
       </button>
       {anchor ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} /> : null}
     </>

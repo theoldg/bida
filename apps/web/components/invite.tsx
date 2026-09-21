@@ -4,7 +4,7 @@ import { isDemo } from "@bida/core";
 import { useState } from "react";
 import { DemoNoLink } from "./demo";
 import { Dialog } from "./dialog";
-import { Icon } from "./icons";
+import { FlipCheck } from "./icons";
 import { copy } from "../lib/copy";
 import { useInviteLink } from "../lib/hooks";
 
@@ -27,8 +27,7 @@ export function InviteButton({ groupId }: { groupId: string | undefined }) {
     <>
       <button className="iconbtn" aria-label={copy.group.copyLink}
         onClick={demo ? () => setNoLink(true) : invite.copy}>
-        <Icon name={invite.copied ? "check" : "link"} size={18}
-          style={invite.copied ? { color: "var(--brand)" } : undefined} />
+        <FlipCheck name="link" size={18} on={invite.copied} />
       </button>
 
       {noLink ? <DemoNoLink onClose={() => setNoLink(false)} /> : null}
