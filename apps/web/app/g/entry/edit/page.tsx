@@ -301,6 +301,30 @@ function EditEntryScreen() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [groupId]);
 
+  /**
+   * This screen has answered for its draft and is on its way out, so it has
+   * stopped guarding the way — the same flag `/new` keeps for the same reason
+   * (app/new/page.tsx), and the reason the draft is no longer thrown away
+   * before the going.
+   */
+  const leaving = useRef(false);
+  /**
+   * **The draft goes when the screen does, not before.**
+   *
+   * Discard and Save used to clear it and then leave, which is fine only if
+   * the leaving is instant. It is not: a traversal Android swallows is
+   * repaired a breath later (`SWALLOWED_MS`, lib/nav.ts), and with the draft
+   * already gone those milliseconds are spent drawing `<Blank title="New" />`
+   * — the render below, once `draft` is undefined. That is what made a screen
+   * which failed to leave read as a fresh blank entry instead, and it is what
+   * sent three rounds of this bug after the wrong thing
+   * (docs/frontend.md#gotchas).
+   *
+   * Guarded by the flag, because the payers editor and the who-had-what grid
+   * unmount this screen too and the draft is not theirs to throw away.
+   */
+  useEffect(() => () => { if (leaving.current && groupId) clearDraft(groupId); }, [groupId]);
+
   const title = entryId ? copy.form.editTitle : copy.form.newTitle;
   // No members means the draft can't be seeded — no payer to name — and
   // without this the screen is a titled blank forever, with nothing saying
@@ -474,6 +498,7 @@ function EditEntryScreen() {
   // first, but only once something has actually been typed.
   /** May we leave? Not with a typed draft — ask, and stay put. */
   function mayLeave() {
+    if (leaving.current) return true;
     if (!groupId) return true;
     if (isDraftDirty(groupId)) { setAsk("discard"); return false; }
     clearDraft(groupId);
@@ -481,8 +506,10 @@ function EditEntryScreen() {
   }
 
   function discard() {
-    if (!groupId) return;
-    clearDraft(groupId);
+    // Once, however many presses land in the window the repair above needs:
+    // each would ask for its own traversal and schedule its own repair.
+    if (!groupId || leaving.current) return;
+    leaving.current = true;
     goBack(() => router.back(), (to) => router.replace(to));
   }
 
@@ -568,7 +595,7 @@ function EditEntryScreen() {
           await editExpense(groupId, actor, draft.entryId, input);
         }
       }
-      clearDraft(groupId);
+      leaving.current = true;
       // `goUp`, not a replace: the screen we are going back to is already
       // behind us, and replacing would leave it on the stack twice.
       goUp(target, (to) => router.replace(to));
