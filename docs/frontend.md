@@ -797,9 +797,10 @@ is in the fragment and never leaves the phone. `metadataBase` is pinned to
 against and the build is byte-identical on both Workers
 ([hosting.md](hosting.md#dev-and-production)). **There is no `og:url`** — as a
 root-level default every route claimed to be the site root, and an invite
-pasted into Messenger on iOS arrives as exactly that bare origin, path and
-fragment gone, where the same paste on Android keeps the whole link. Left out,
-a scraper uses the URL it fetched.
+pasted into Messenger on iOS arrived as exactly that bare origin, path and
+fragment gone, where the same paste on Android kept the whole link. Left out,
+a scraper uses the URL it fetched, and the invite arrives whole — driven on a
+phone (2026-09-21), which is what settled that the tag was the cause.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

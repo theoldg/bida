@@ -68,9 +68,6 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — Asked to make three refusals louder, and found one of them had
-  never run at all: a rule that parses is not a rule that fires. Photograph the
-  frame before trusting the stylesheet.
 - *2026-09-20* — "fix the paragraph break nonsense": no paragraph anywhere,
   just a link that counted as one grid item too many. A screenshot names the
   symptom; the layout box names the bug.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Asked to explain one bug, I led with the more interesting
   concept next door, and had to be asked twice what it had to do with the
   symptom. Catch them up on the bug they have.
+- *2026-09-21* — "the lock and messenger link are resolved": two watches closed
+  on a phone I cannot see, and one of them hid a line still marked unfixed. Ask
+  what resolved covers before deleting it.
