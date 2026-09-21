@@ -27,7 +27,14 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Three things, and all of them are watches rather than tasks.
+Four things: three watches, and one diagnosed bug.
+
+- **Discard on the entry form does not leave**, on a phone whose app resumed
+  into a group rather than opening on the list. A press this app *refuses*
+  swallows a traversal to history index 0, and `goBack` — unlike `goUp` — has
+  no check that its traversal moved, so the screen stays with its draft
+  cleared and reads as a blank "New". Diagnosed from two phone traces, fix
+  named and not written: [navigation-bug.md](navigation-bug.md) (2026-09-21).
 
 - **An invite pasted into Messenger on an iPhone arrives as the bare origin.**
   `https://bida.bid` — path and fragment gone, so the recipient lands on "Bad

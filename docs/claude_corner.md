@@ -92,9 +92,9 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Asked to fact-check one delete warning against the code, and
   found a different screen — the success one — was the copy that had actually
   drifted from what deleting now does.
-- *2026-09-20* — Same Discard, same code: dead after a back press, fine from
-  the arrow. The log held the one variable I had not thought to vary. When a
-  fix half-works, diff the two runs, not the code.
+- *2026-09-21* — Same Discard, dead on one install and fine on another, same
+  version. Three theories off the code, all wrong; one trace settled it. The
+  variable was a number I had not thought to read.
 - *2026-09-21* — Twice I explained an iPhone paste bug from search summaries;
   twice the fetched page said the opposite. The owner's "works fine on android"
   cut more than all the reading.
