@@ -92,8 +92,10 @@ requires before it will mark a traversal cancelable at all. So a run of back
 presses with no tap between them degrades — the dialog is shut by a press the
 app cannot hear about without `Dialog`'s `close` listener (Gotchas), and
 eventually a press arrives uncancelable and leaves for good. That last one is
-the degradation ADR-0007 names, and on `/new` it is data loss: the screen is
-plain state, with no draft behind it. An
+the degradation ADR-0007 names, and it is **accepted behaviour, not a bug to
+fix**: on `/new` and `/quick` it costs what was typed, and a page that could
+refuse indefinitely is the trap the metering exists to prevent. Any tap in the
+page refills it. An
 entry is the one screen whose parent isn't fixed: the history feed, the two
 "can't remove this yet" lists and the balances tab's settle-up rows link in from
 beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back

@@ -27,7 +27,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Three things, and all of them are watches rather than tasks.
+Two things, and both of them are watches rather than tasks.
 
 - **An invite pasted into Messenger on an iPhone arrives as the bare origin.**
   `https://bida.bid` — path and fragment gone, so the recipient lands on "Bad
@@ -38,47 +38,6 @@ Three things, and all of them are watches rather than tasks.
   metadata is the cause: a fragment cannot survive any path that rebuilds the
   link from a scrape, because it never reaches the server to be scraped
   ([frontend.md](frontend.md#pwa)).
-
-- **A back press the browser will not let us cancel leaves `/new` with
-  nothing.** The guard on a screen holding typed work is a *cancelled* press,
-  and a browser only allows that while the document holds history-action
-  activation — which the previous cancelled press spent. A run of presses with
-  no tap between them therefore ends in one that goes through unasked, and
-  `/new` is plain React state with no draft behind it, so the typed group is
-  gone. ADR-0007 names an uncancellable press as the accepted degradation; that
-  was reasoned for a shared link's first press, where there is nothing to lose.
-  Closing it means either a draft store for `/new` or absorbing the press
-  instead of cancelling it — **an ADR-level call, so it is the owner's**
-  ([frontend.md](frontend.md#routing)). The trap it used to sit behind — the
-  dialog shut by the platform with the screen still believing it was up, so the
-  back button went dead — is fixed and driven. **The first trace back from a
-  phone rules this watch out of the report that started it** (1.0.42,
-  2026-09-20): every press read `cancelable=true active=true`, and no dialog was
-  shut by the platform. **The report that started this watch was a different
-  bug entirely, and it is now found and fixed** (1.0.46, 2026-09-20): the
-  recorder, extended to cover a dialog's presses, showed three clean clicks on
-  Discard with nothing following. `history.go` from an act tapped inside a modal
-  dialog is not delivered on Android, so the screen never left — and each of
-  those taps armed the latch that tells the app's own traversal from a device
-  press, nothing spent it, and the next real press was waved through unguarded.
-  The dead button and the vanished group were one cause. Leaving now takes the
-  dialog down before it goes, and the latch is spent by the next press anywhere
-  ([frontend.md](frontend.md#gotchas)); `pnpm nav` drives both with `history.go`
-  stubbed to a no-op. **Taking the card down was not the whole of it** (1.0.48,
-  2026-09-20): the next trace showed Discard dead again, and only where the
-  dialog had been opened by the device's back button — the same tap from the
-  arrow went. A press this app *refuses* leaves Android holding a traversal it
-  will not deliver again — whenever the target is index 0, which is what a
-  phone that resumed into a group gives the screen above its ledger. **Every
-  exit now names somewhere to land and shares one check** that its traversal
-  moved (1.0.64, 2026-09-21): `goUp` the parent it counted back to, `goBack`
-  the entry behind it, read off `navigation.entries()`. The screens that ask
-  stop guarding the way out once Discard is answered, and the entry form no
-  longer throws its draft away before the going — that is what made a screen
-  which failed to leave read as a blank "New"
-  ([frontend.md](frontend.md#gotchas)). **This watch stands on its own terms** —
-  a press the browser makes uncancellable still leaves `/new` with nothing, and
-  a draft store is what would make that cost a dialog instead of the work.
 
 - **Who holds the lock when an installed phone hangs.** A lock held outside the
   page by another copy of the app frozen mid-transaction. All three cases found
@@ -95,12 +54,18 @@ Three things, and all of them are watches rather than tasks.
   exists for. Nothing checks the writes — `rules-check` enforces `useLive` and
   `goBack`, not `whenVisible`. **Open only as a watch.**
 
-**Two former items here are closed as decisions, not as work** (2026-09-18), so
-a session that rediscovers either is rediscovering a call the owner has already
-made: **no per-caller counter on `POST /ops`**, because counting callers means
-storing a row about each of them ([sync.md](sync.md#the-push-has-a-ceiling)),
-and **no hard quota on the Cloud project**, because the owner watches the spend
-with alerts of their own ([hosting.md](hosting.md#cost-tripwires)).
+**Three former items here are closed as decisions, not as work**, so a session
+that rediscovers one is rediscovering a call the owner has already made:
+**no per-caller counter on `POST /ops`**, because counting callers means
+storing a row about each of them ([sync.md](sync.md#the-push-has-a-ceiling));
+**no hard quota on the Cloud project**, because the owner watches the spend
+with alerts of their own ([hosting.md](hosting.md#cost-tripwires)); and **an
+uncancellable back press is behaviour, not a bug** — *"if someone does back 3x
+in a row without interacting with the page they deserve to be let out"* (the
+owner, 2026-09-21). So `/new` and `/quick` get no draft store and the press is
+not absorbed; a run of presses with no tap between them ends in one that leaves
+unasked, and losing what was typed is the price of the platform's own promise
+that a page cannot trap you ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 
 ## What a cold session needs to know
 

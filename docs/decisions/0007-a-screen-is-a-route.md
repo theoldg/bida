@@ -1,6 +1,6 @@
 # 0007 — A screen is a route, back climbs the hierarchy, the chrome is thin
 
-**Status:** Accepted · 2026-08-27 · revised through 2026-09-19
+**Status:** Accepted · 2026-08-27 · revised through 2026-09-21
 
 **Context.** The original plan put everything inside a group in drawers and
 sheets over `/g`. Drawer state doesn't survive a reload or a back press unless
@@ -93,6 +93,19 @@ expenses you'd looked at rather than climbing out.
   false`, `canIntercept: false`. There is nothing to take over. Within a session
   every navigation is same-document and the arrow wins as described. This is
   that degradation, and it is the ordinary case of it rather than a rare one.
+- **A run of presses reaches it too, and that is behaviour rather than a bug**
+  (the owner, 2026-09-21: *"if someone does back 3x in a row without
+  interacting with the page they deserve to be let out"*). Cancelling a press
+  spends the document's history-action activation, which is also what lets the
+  dialog it opens refuse the next close request — so press one asks, press two
+  shuts the card, and press three arrives uncancelable and leaves. Any tap in
+  the page refills it. On `/new` and `/quick`, which hold their work in
+  `useState`, that press costs what was typed. **Both ways out of it are
+  refused**: no draft store for those two, because a draft that outlives its
+  screen has no honest rule for when it reopens rather than clears; and the
+  press is not absorbed by a guard history entry, because that is this app
+  building the trap the metering exists to prevent. The platform's promise is
+  that a page cannot hold you, and this app keeps it.
 - Each `page.tsx` carries its own "read `?id=`, look up the group, render
   not-found" preamble instead of one drawer router.
 - Anything new that goes *up* or sideways must say so — a plain `<Link>` to an
