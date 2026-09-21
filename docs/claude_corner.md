@@ -77,9 +77,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — "fix the paragraph break nonsense": no paragraph anywhere,
   just a link that counted as one grid item too many. A screenshot names the
   symptom; the layout box names the bug.
-- *2026-09-20* — "the group's popular currencies below the main one": core had
-  already sorted them that way for the rates screen. The picker simply never
-  asked for the list.
 - *2026-09-20* — "there's no line between the tabs and the row": the rule was
   there, the wash over the row ate it. A missing border is sometimes a border
   you cannot see.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-20* — Same Discard, same code: dead after a back press, fine from
   the arrow. The log held the one variable I had not thought to vary. When a
   fix half-works, diff the two runs, not the code.
+- *2026-09-21* — Twice I explained an iPhone paste bug from search summaries;
+  twice the fetched page said the opposite. The owner's "works fine on android"
+  cut more than all the reading.

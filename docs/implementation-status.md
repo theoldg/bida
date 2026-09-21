@@ -27,7 +27,17 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Two things, and both are watches rather than tasks.
+Three things, and all of them are watches rather than tasks.
+
+- **An invite pasted into Messenger on an iPhone arrives as the bare origin.**
+  `https://bida.bid` — path and fragment gone, so the recipient lands on "Bad
+  link" — where the same paste on Android keeps the whole link and draws the
+  card. The one string the app handed a scraper that matched it was `og:url`, a
+  root-level default claiming every route was the site root; it is gone as of
+  1.0.62 and **unverified on a phone**. If the collapse survives that, no
+  metadata is the cause: a fragment cannot survive any path that rebuilds the
+  link from a scrape, because it never reaches the server to be scraped
+  ([frontend.md](frontend.md#pwa)).
 
 - **A back press the browser will not let us cancel leaves `/new` with
   nothing.** The guard on a screen holding typed work is a *cancelled* press,

@@ -793,7 +793,11 @@ static and say nothing about the group, which they could not anyway: the secret
 is in the fragment and never leaves the phone. `metadataBase` is pinned to
 `https://bida.bid` because a crawler has no page to resolve a relative URL
 against and the build is byte-identical on both Workers
-([hosting.md](hosting.md#dev-and-production)).
+([hosting.md](hosting.md#dev-and-production)). **There is no `og:url`** — as a
+root-level default every route claimed to be the site root, and an invite
+pasted into Messenger on iOS arrives as exactly that bare origin, path and
+fragment gone, where the same paste on Android keeps the whole link. Left out,
+a scraper uses the URL it fetched.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —

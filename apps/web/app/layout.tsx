@@ -50,7 +50,12 @@ export const metadata: Metadata = {
     siteName: copy.app.name,
     title: copy.app.name,
     description: copy.app.description,
-    url: "/",
+    // **No `og:url`** — it is a root-level default, so every route would claim
+    // to be `https://bida.bid`. An invite pasted into Messenger on iOS arrives
+    // as exactly that bare origin, path and fragment gone, where the same paste
+    // on Android keeps the whole link — and this is the only string we hand a
+    // scraper that matches it. Left out, a scraper uses the URL it fetched; the
+    // card these tags exist for never needed it.
     // The 512 rather than the 192: Facebook drops an image under 200px, and
     // this is the icon the app is already installed under.
     images: [{ url: "/icon-512.png", width: 512, height: 512, alt: copy.app.name }],
