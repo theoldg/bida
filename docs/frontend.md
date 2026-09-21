@@ -711,10 +711,9 @@ never hands a tapped invite (it opens in Safari, whose storage is not the
 app's), so the link has to come in by clipboard; only a `/join` URL from this
 origin joins, and one from another deployment says which server it belongs to
 rather than "Bad link", one with no password, from anywhere, opens that
-group's screen, and an empty clipboard opens a box to paste into
-by hand — but only after the read has been asked twice more, since on iOS the
-first answer is empty even when the clipboard is not
-([ios.md](ios.md#gotchas)). The box is the same routing on what lands in it,
+group's screen, and an empty read opens a box to paste into
+by hand — at once, since on iOS asking the clipboard again is another Paste
+bubble to tap rather than a free retry ([ios.md](ios.md#gotchas)). The box is the same routing on what lands in it,
 and it replaced `/paste`, a screen that could only say *Nothing to paste* and
 offer the same read again (`readPastedLink`, `usePasteLink`, `lib/paste.ts`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;

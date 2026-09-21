@@ -95,6 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "hide the install banner in the demo": the card's own comment
   already carried the rule — draw it only once there is a group to lose. The
   demo was an instance of one written down.
-- *2026-09-21* — "i got hold on an iphone": not a bug report, a window. The
-  answer was the list of what only that phone can settle, ordered by what it
-  would close.
+- *2026-09-21* — A phone in hand closed four watches in one message. The
+  clipboard retry I had reasoned out so carefully was three extra taps: a
+  retry the person has to approve is not a retry.

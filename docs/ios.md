@@ -4,8 +4,8 @@
 [the design](#the-design) is built; [A](#a-in-detail) works on a real iPhone
 from `/install` (2026-09-16), and the export's share sheet hands a file over
 inside the home-screen app, so `canShare({files})` is true there
-(2026-09-18).** Built since and waiting on the phone: the carry from a page
-other than `/install`, the names coming along, and the in-app browser refused —
+(2026-09-18). The carry works from an ordinary page and brings the names with
+it (2026-09-21).** Waiting on a phone still: the in-app browser refused —
 [the phone checklist](testing.md#what-only-a-phone-can-check) is how to spend
 one.*
 
@@ -74,7 +74,7 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone** (from `/install`; from any page and with names, built and awaiting the phone). Paste link stays for groups joined after the install |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone**: from `/install` (2026-09-16), and from an ordinary page with the names along (2026-09-21) — so it is the manifest that carries, since a page other than `/install` has nothing of its own to give. Paste link stays for groups joined after the install |
 | B | **Ask before joining**, a full screen of Add to home screen / Continue in Safari | Built, then dropped (2026-09-17) once A carried every group from any page: the banner asks, and the question stood between a newcomer and the group |
 | C | **The claim screen offers the link** — [*Have the app?*](#gclaim--have-the-app) — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little. A webview is gated, and is not this: a tab is somewhere a person can be served, and a webview is not |
@@ -138,9 +138,10 @@ suggests (`WebPage::getApplicationManifest` walks the head when asked):
 - A link swapped 41ms after load was ignored — the icon opened at `/`, the
   static `start_url`. Safari reads at load.
 - With nothing in the HTML and the blob added at 45ms, the icon opened at
-  `/install#<both groups>` and synced both. The fragment survives. Which of
-  manifest and page URL did it is still not known; a launch from a page other
-  than `/install` settles it, since only the manifest carries anything there.
+  `/install#<both groups>` and synced both. The fragment survives. **It is the
+  blob manifest that carries it** (2026-09-21): the same install from a group's
+  ledger, a page whose own URL holds nothing, opened on `/install#…` with the
+  group and the name in it.
 - `start_url` must be absolute (a blob has no base), and `id` is pinned so it
   stays one app. Nothing bars a `blob:` manifest; the only gate would be CSP
   `manifest-src`, and this app sends none.
@@ -305,16 +306,16 @@ is rightly let through: it is Chrome, storage and menus and all.
   and the install bought nothing. It defaults on, and nothing can read it:
   `isStandalone()` stays false, so the banner rightly keeps warning.
 - `navigator.clipboard.readText()` on iOS draws its own Paste bubble even after
-  a tap — a paste is always two taps. **And the read that drew the bubble is
-  the one that comes back empty**: access is granted for the pasteboard's
-  change count, and the granting read can still be served from the pre-grant
-  snapshot, so it answers `""` and the next one — now silent — has the text.
-  A resume is the same shape, the pasteboard not being back yet. So an empty
-  read is re-read before it is believed ([lib/paste.ts](../apps/web/lib/paste.ts));
-  believing one is what put *Nothing to paste* in front of a copied invite.
-  Three reads can still all come back empty with the link on the pasteboard, so
-  the end of that road is a box to paste into by hand, not a screen saying the
-  clipboard was empty (`usePasteLink`).
+  a tap — a paste is always two taps — and **the read that drew the bubble can
+  be the one that comes back empty**: access is granted for the pasteboard's
+  change count, and the granting read is still served from the pre-grant
+  snapshot. A resume is the same shape, the pasteboard not being back yet.
+  **Re-reading is not the answer, because a second read is a second bubble**:
+  the retry written for it cost four taps on the owner's phone before the box
+  it ends at appeared (2026-09-21). So one read decides, and an empty one goes
+  straight to a box to paste into by hand — never a screen saying the clipboard
+  was empty, which is what put *Nothing to paste* in front of a copied invite
+  ([lib/paste.ts](../apps/web/lib/paste.ts), `usePasteLink`).
 - A pasted join link is opened with `location.replace`, not `router.push`. When
   Next's router gives up and loads the page itself — say the build it fetched
   isn't the one on screen, which is easy on a freshly installed app — it
