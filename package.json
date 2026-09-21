@@ -1,6 +1,6 @@
 {
   "name": "bida",
-  "version": "1.0.72",
+  "version": "1.0.73",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -27,6 +27,7 @@
     "stall": "node scripts/stall-check.mjs",
     "homescreen": "node scripts/homescreen-check.mjs",
     "nav": "node scripts/nav-check.mjs",
+    "tricount": "node scripts/tricount-check.mjs",
     "demo": "node scripts/demo-check.mjs",
     "shots": "node scripts/shots.mjs",
     "readme-shots": "node scripts/readme-shots.mjs",

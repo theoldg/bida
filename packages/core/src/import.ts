@@ -82,8 +82,16 @@ export type ImportRefusalCode =
   | "overpaid"
   /** Nothing left to import once the empty rows were dropped. */
   | "no-entries"
-  /** The plan's balances disagree with the file's own foot. */
-  | "checksum";
+  /** The plan's balances disagree with the ones the source stated. */
+  | "checksum"
+  /** The JSON behind a tricount link is not a tricount. (`tricount.ts`) */
+  | "not-tricount"
+  /** A tricount entry whose amount is not a number the currency can hold. */
+  | "tricount-amount"
+  /** A tricount entry with no date in it, or one that is not a real day. */
+  | "tricount-date"
+  /** A tricount entry whose shares do not add up to what it cost. */
+  | "tricount-split";
 
 /**
  * Why a file was refused. `message` is terse and for a developer — the sentence
@@ -157,6 +165,11 @@ interface DroppedRow {
 }
 
 export interface ImportPlan {
+  /**
+   * What the source calls the group, when its shape has somewhere to say it.
+   * A CSV has not — the filename carries it — and a tricount has.
+   */
+  title?: string;
   /** The file's single currency. Becomes the group's base. */
   currency: CurrencyCode;
   /** Member names in header order — the order the columns are in, which is the writer's sort. */
@@ -194,7 +207,7 @@ function text(cell: string | undefined): string {
  * The write side has no equivalent, so `__proto__` is refused at the header
  * instead (`readHeader`).
  */
-function at(map: Record<string, number>, key: string): number {
+export function at(map: Record<string, number>, key: string): number {
   return Object.hasOwn(map, key) ? map[key]! : 0;
 }
 
@@ -262,7 +275,7 @@ export function readCsvGroup(
     throw new ImportError("no-entries", "nothing to import");
   }
 
-  checkFoot({ currency, members, entries, transfers, dropped, stated });
+  checkStated({ currency, members, entries, transfers, dropped, stated });
   return { currency, members, entries, transfers, dropped, stated };
 }
 
@@ -507,11 +520,15 @@ function isRealDay(day: string): boolean {
 }
 
 /**
- * The plan's own balances against the file's foot, to the cent — the reason
- * the foot is worth reading at all. Computed from the plan rather than by
- * folding it, because the plan is what the person is about to approve.
+ * The plan's own balances against the ones the source stated, to the cent —
+ * the reason the foot is worth reading at all. Computed from the plan rather
+ * than by folding it, because the plan is what the person is about to approve.
+ *
+ * Exported because every reader wants it: `tricount.ts` states its balances by
+ * a different route and checks them through here, so the one arithmetic that
+ * makes an import trustworthy has one home.
  */
-function checkFoot(plan: ImportPlan): void {
+export function checkStated(plan: ImportPlan): void {
   const computed: Record<string, number> = {};
   const move = (name: string, minor: number) => {
     computed[name] = at(computed, name) + minor;

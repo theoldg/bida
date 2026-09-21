@@ -11,6 +11,7 @@ export * from "./rates.js";
 export * from "./balance.js";
 export * from "./export.js";
 export * from "./import.js";
+export * from "./tricount.js";
 export * from "./invariants.js";
 export * from "./settle.js";
 export * from "./scan.js";

@@ -29,12 +29,17 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
                             POST /groups/:id/scan       the one endpoint that
                               └─ D1 (scan_hits)         spends money
                             GET  /rates/:from/:to       a rate suggestion
+                            POST /tricount             somebody else's ledger
 ```
 
 The two op endpoints are [sync.md](sync.md#the-protocol); the scan is
 [receipt-scanning.md](receipt-scanning.md), and it is the one route that never
 parses its body — the photo is streamed between the halves of a prompt the
-Worker owns, to stay inside 10 ms of CPU.
+Worker owns, to stay inside 10 ms of CPU. The last two are passthroughs to
+somebody else's server, there because a browser cannot make either call
+itself; `/tricount` is what **Import a group** fetches a Tricount link with
+([data-model.md](data-model.md#reading-a-tricount-back)), and the 10 ms is why
+the throwaway key that handshake wants is made on the phone.
 
 ## Layers, and what may import what
 

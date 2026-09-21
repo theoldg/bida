@@ -355,6 +355,43 @@ possibly Excel. What is refused rather than guessed: a date that is not
 (no rate can be supplied and the foot sums across them), and a cell finer than
 its currency.
 
+### Reading a tricount back
+
+Tricount has no export button, so the file above is not an option for anybody
+coming from it — but its app talks to an API, and `core/tricount.ts` reads what
+that answers into **the same `ImportPlan`**. Past that one function nothing
+downstream knows which source it came from, which is the point: the readout,
+the who-picker and the single `appendOps` batch are all the CSV's.
+
+The shape is bunq's `Registry`: `memberships`, and `all_registry_entry` where
+each entry states its `amount`, the membership that `owned` it and the
+`allocations` saying whose it was — **signed from the group's side**, so an
+expense is negative all the way down and an income positive. One line flips
+that into our positive minor units with the direction in `kind`.
+
+So the spreadsheet's hard case does not arise: payer and shares are stated
+separately, and an expense comes back exactly as it was entered. Two readings
+are still rules rather than recoveries, both taking the option that loses
+nothing:
+
+- **One payer per entry**, because `membership_owned` is one membership.
+- **A repayment is a transfer only with the shape**: `type_transaction` is
+  `BALANCE` *and* exactly one other person is on the receiving end. Anything
+  else is an expense, the same ruling the `Payment` token gets above.
+
+There is no foot row, so the checksum is computed **by the route the app
+itself uses** — allocations minus what you owned — which is not the route the
+plan takes. That is what makes it worth checking: a transfer read backwards, an
+income unflipped or a payer wrongly apportioned leaves the raw sums alone and
+moves the plan's. Mixed currencies are refused as they are in a CSV, and a
+refusal names the entry rather than a line, since a line is not what a person
+sees when they open the tricount.
+
+**The fetch is not here.** `apps/api/src/tricount.ts` makes the two calls and
+`apps/web/lib/import/tricount.ts` makes the key pair they want, because core is
+pure and because an undocumented API is exactly the thing to keep one file wide
+([frontend.md](frontend.md#bringing-a-group-onto-the-phone)).
+
 ## D1 schema
 
 The server stores **sealed** ops and nothing else it could read

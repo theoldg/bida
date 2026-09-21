@@ -2041,14 +2041,18 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
 /* ---- import ----
-   A file pasted as text. Tall enough to show that something landed in it and
-   no taller, since nobody reads a CSV here; monospaced, because the one thing
-   anybody looks for in it is whether the columns line up. */
-.csvbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
+   A file pasted as text, and above it the Tricount link that is the other
+   thing pasted on that screen. One box for both, because they are the same
+   act; tall enough to show that something landed in it and no taller, since
+   nobody reads a CSV here; monospaced, because the one thing anybody looks for
+   in either is whether it came over whole. */
+.csvbox, .linkbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
   color: var(--ink); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 9px 11px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5;
   resize: vertical; outline: none }
-.csvbox::placeholder { color: var(--muted) }
+.csvbox::placeholder, .linkbox::placeholder { color: var(--muted) }
+/* One line, and nothing to drag: a link has no second line to reveal. */
+.linkbox { resize: none; text-overflow: ellipsis }
 
 /* Turnstile's widget — the one third-party pixel in the app, and normally no
    pixel at all: `interaction-only` draws nothing unless a challenge actually

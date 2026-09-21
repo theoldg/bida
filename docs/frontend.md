@@ -432,37 +432,51 @@ Dexie behaviour itself, so an upgrade that fixes it tells us.
 ## Bringing a group onto the phone
 
 **Import a group**, in the groups list's kebab above About, is the other
-direction: a CSV in the shape [data-model.md](data-model.md#the-group-as-a-spreadsheet)
-describes, read back into a new group. The kebab is the whole of the entry
-point — an empty list carried a line offering it for a session, and a screen
-whose one act is already "new group" does not want a second pitch on it.
+direction: somebody else's ledger read into a new group. The kebab is the whole
+of the entry point — an empty list carried a line offering it for a session, and
+a screen whose one act is already "new group" does not want a second pitch on it.
 
-**Three steps, and the file is read on the first.** Pick or paste, look at what
-was found, say which of those people you are. Reading writes nothing —
-`core/import.ts` hands back a plan — so the people, the currency, the counts
-and the rows that will be left out are all on screen before an op exists. The
-alternative was a button that made a group and then reported how it went, which
-is the wrong order for the only question anybody has here.
+**Three sources, one readout.** A CSV in the shape
+[data-model.md](data-model.md#the-group-as-a-spreadsheet) describes — chosen as
+a file, or pasted as text for the phone whose browser has no picker worth using
+— or **a Tricount link**, fetched. All three land in the same `ImportPlan`, and
+past that moment the screen cannot tell which it was.
 
-Three pieces, each in the layer that owns it:
+**Three steps, and the source is read on the first.** Pick, paste or fetch,
+look at what was found, say which of those people you are. Reading writes
+nothing — `core/import.ts` and `core/tricount.ts` both hand back a plan — so
+the people, the currency, the counts and the rows that will be left out are all
+on screen before an op exists. The alternative was a button that made a group
+and then reported how it went, which is the wrong order for the only question
+anybody has here. Once a plan is up it is the screen, and the three ways in
+collapse to one button back to them, with what was typed still in place.
+
+Five pieces, each in the layer that owns it:
 
 | | |
 | --- | --- |
-| `core/import.ts` | Rows to a plan, and every refusal. Pure, and takes `dayToTimestamp` the way `export.ts` takes `formatDay` |
+| `core/import.ts` | Rows to a plan, and every refusal. Pure, and takes `dayToTimestamp` the way `export.ts` takes `formatDay`. `checkStated` is the plan-against-stated-balances check, shared with the reader below |
+| `core/tricount.ts` | A tricount's JSON to the same plan ([data-model.md](data-model.md#reading-a-tricount-back)). Pure for the same reason, and it fetches nothing |
 | `lib/import/csv.ts` | The bytes: an RFC 4180 state machine, the size guard, and the group name off the filename. A dialect is a parsing decision about somebody else's file, not domain arithmetic, so it is not in core — and it is not a dependency, since a library that auto-detects the delimiter is working against a reader whose whole rule is to refuse rather than guess. `parseCsv` is one swappable function if that changes |
+| `lib/import/tricount.ts` | The link: the key out of whatever was pasted, a throwaway RSA public key the handshake wants, and one POST to `/api/tricount`. The private half is dropped where it is made, since nothing in that protocol signs anything |
 | `lib/db/commands/import.ts` | The plan as **one `appendOps` batch** under one actor: a hundred rows are not a hundred things somebody did a millisecond apart, and one batch is also the only atomic shape |
 
-**A refusal is whole-file, and says which line to fix.** Every code in
+**A refusal is whole-source, and says what to fix.** Every code in
 `ImportRefusalCode` has a sentence in `copy.importData.refused`, interpolating
 the `line` (1-based, as a spreadsheet counts, blank lines included) and the one
-fact that code carries. The refusals are the most-read words the feature has,
-which is why they are in `copy.ts` and the `ImportError` messages are terse
-developer strings ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+fact that code carries; the tricount codes name the entry instead, which is
+what a person sees when they open it. The refusals are the most-read words the
+feature has, which is why they are in `copy.ts` and the `ImportError` messages
+are terse developer strings ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
+Three sentences beside them are not refusals of a ledger at all and say so:
+that was not a Tricount link, this phone is offline, and **Tricount is not
+answering** — the last one saying plainly that bida reads tricounts the way
+Tricount's own app does and that this can stop working without warning.
 
-The group's **name** is the one thing the shape cannot state, so it is asked —
-prefilled from the filename, since both exporters name the file after the
-group, and editable because a file a mail client renamed says nothing about the
-trip.
+The group's **name** is asked either way, prefilled and editable: a tricount
+states its title, and a file can only be guessed at from its filename, since
+both exporters name the file after the group and a mail client may have renamed
+it since.
 
 ## Deleting a group
 

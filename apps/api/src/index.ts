@@ -10,6 +10,9 @@ import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./sca
 import { declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
 import { pageForPayload } from "./payload";
+import {
+  fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
+} from "./tricount";
 import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
 
 /**
@@ -198,6 +201,68 @@ app.post("/api/groups/:id/scan", async (c) => {
   }
   if (refusal.err) return c.json({ error: refusal.err.message }, 400);
   return new Response(upstream.body, { status: upstream.status });
+});
+
+/**
+ * The JSON behind a tricount link, so **Import a group** can read somebody's
+ * tricount the way it reads a Splitwise CSV (docs/data-model.md#reading-a-tricount-back).
+ *
+ * Behind our own endpoint because the browser cannot make this call —
+ * `api.tricount.bunq.com` answers no preflight — and the handshake it needs is
+ * in `tricount.ts`. Unauthenticated for the reasons `/api/rates` is: the input
+ * is a token the caller already holds, it spends no key of ours, and there is
+ * no group here to belong to yet. What it is not is a general proxy — the two
+ * fields are checked into a shape before either call is made, and the only
+ * host it can reach is the one compiled in.
+ *
+ * **A POST, so the tricount's own secret is not in a URL.** The link is the
+ * whole of the authority over that tricount, the same way ours is over a group
+ * ([ADR-0003](../../../docs/decisions/0003-link-only-access.md)), and a path is
+ * the one part of a request that gets written down by everything it passes.
+ * Nothing here logs it either, and the ledger it opens is streamed to the
+ * phone rather than read.
+ */
+app.post("/api/tricount", async (c) => {
+  let body: { key?: unknown; clientKey?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  if (!isTricountKey(body.key)) return c.json({ error: "not a tricount link" }, 400);
+  if (!isClientKey(body.clientKey)) return c.json({ error: "not a client key" }, 400);
+
+  const appId = crypto.randomUUID();
+  let session: Awaited<ReturnType<typeof openSession>>;
+  try {
+    session = await openSession(body.clientKey, appId);
+  } catch {
+    session = null;
+  }
+  // No session is tricount refusing to talk to us at all, which is the failure
+  // mode an undocumented API has — told apart from "no such tricount" below,
+  // because one of them is the person's link to fix and the other is not.
+  if (!session) return c.json({ error: "tricount would not open a session", scope: "down" }, 502);
+
+  let upstream: Response;
+  try {
+    upstream = await fetchRegistry(session, body.key, appId);
+  } catch {
+    return c.json({ error: "tricount did not answer", scope: "down" }, 502);
+  }
+  // A link that names nothing, or a tricount that has been deleted. Answered in
+  // our own shape rather than passed through, so the phone has one thing to
+  // read and never bunq's error wording.
+  if (!upstream.ok) return c.json({ error: "no tricount for that link", scope: "unknown" }, 404);
+
+  const declared = Number(upstream.headers.get("content-length") ?? NaN);
+  if (Number.isFinite(declared) && declared > MAX_REGISTRY_BYTES) {
+    return c.json({ error: "that tricount is too big to import" }, 413);
+  }
+  return new Response(upstream.body, {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
 });
 
 app.post("/api/groups/:id/ops", async (c) => {

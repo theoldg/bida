@@ -163,8 +163,8 @@ export const copy = {
    */
   importData: {
     title: "Import a group",
-    /** What this makes, and what it's made from. */
-    lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
+    /** What this makes, and what it's made from — all three sources of one. */
+    lede: "Create a new bida group from a Tricount link, or from a file exported from Splitwise (or from bida).",
     pick: "Choose a file",
     /** The second way in, for a phone whose browser has no file picker worth
         using and for a file that arrived in a chat: the text itself. */
@@ -172,6 +172,24 @@ export const copy = {
     pastePlaceholder: "Date,Description,Category,Cost,Currency,…",
     read: "Read it",
     reading: "Reading…",
+    /** Back to the three ways in, once a plan is on screen and is not the one wanted. */
+    again: "Start again",
+
+    /**
+     * The third way in, and the shortest one: a tricount is fetched from its
+     * own link rather than exported first, so this is the only source here
+     * that asks nothing of the other app.
+     */
+    orTricount: "Or paste a Tricount link:",
+    tricountPlaceholder: "https://tricount.com/…",
+    fetch: "Fetch it",
+    fetching: "Fetching…",
+    /** Pasted something with no tricount key in it, before anything is sent. */
+    notTricount: "That isn’t a Tricount link. In Tricount, open the tricount, then Share, then copy the link.",
+    /** The phone is off the network — its own failure, not the link's. */
+    tricountOffline: "This phone can’t reach the internet, and a Tricount link has to be fetched.",
+    /** Tricount is not answering us. Nothing about the link is wrong. */
+    tricountDown: "Tricount isn’t answering. Tricount has no official way to export a group, so bida reads it the way Tricount’s own app does, and that can stop working without warning. Exporting from Tricount to a file and choosing it above still works.",
     /** Picked something that is plainly not a ledger (`looksLikeCsv`). */
     notFile: "That isn’t a spreadsheet file. In Splitwise, open the group, then Export as spreadsheet.",
     tooBig: "That file is far too big to be a group’s ledger.",
@@ -201,12 +219,12 @@ export const copy = {
     refused: {
       empty: () => "There is nothing in that file.",
       header: () => "That file doesn’t start with a Splitwise export’s columns: Date, Description, Category, Cost, Currency, and then one column per person.",
-      "no-members": () => "That file has no columns for people, so there are no balances in it.",
-      "duplicate-member": (f) => `Two columns are both called “${f.detail}”, so there is no telling which balance is whose. Rename one in the file.`,
-      "blank-member": () => "One of the people columns has no name at the top of it. Name it in the file.",
-      "bad-member-name": (f) => `A column is called “${f.detail}”, which bida can’t use as a name. Rename it in the file.`,
+      "no-members": () => "There are no people in it, so there are no balances to import.",
+      "duplicate-member": (f) => `Two people in it are both called “${f.detail}”, so there is no telling which balance is whose. Rename one of them where it came from.`,
+      "blank-member": () => "One of the people in it has no name at all. Name them where it came from.",
+      "bad-member-name": (f) => `Somebody in it is called “${f.detail}”, which bida can’t use as a name. Rename them where it came from.`,
       "extra-cells": (f) => `Line ${f.line} has more cells than the file has columns (${f.detail}).`,
-      "mixed-currency": (f) => `That file mixes ${f.detail}. bida can import one currency at a time, so split it or convert it first.`,
+      "mixed-currency": (f) => `That mixes ${f.detail}. bida can import one currency at a time, so split it or convert it first.`,
       "unknown-currency": (f) => (f.detail
         ? `“${f.detail}” isn’t a currency bida knows.`
         : "No row in that file says which currency it is in."),
@@ -216,14 +234,25 @@ export const copy = {
       "too-precise": (f) => `Line ${f.line} has an amount finer than its currency goes (${f.detail}).`,
       "row-not-zero": (f) => `Line ${f.line} doesn’t add up: the people’s columns should come to zero, and they come to ${f.detail}.`,
       overpaid: (f) => `Line ${f.line} says more was paid than the thing cost (${f.detail}).`,
-      "no-entries": () => "There is nothing to import: no row in that file carries any money.",
+      "no-entries": () => "There is nothing to import: nothing in it carries any money.",
       /**
        * The check that makes the whole feature trustworthy, so the sentence
        * says the file was left alone rather than apologising: bida read the
        * rows, added them up, and got something other than the file's own
        * total.
        */
-      checksum: (f) => `The balances bida read don’t match the file’s own “Total balance” row (${f.detail}). Nothing was imported.`,
+      checksum: (f) => `The balances bida read don’t match the ones it was given (${f.detail}). Nothing was imported.`,
+
+      /**
+       * The four a tricount can raise. They name the entry rather than a line,
+       * since that is what a person sees when they open the tricount, and the
+       * first of them is the one that is nobody's mistake: the API behind a
+       * Tricount link is not one Tricount publishes.
+       */
+      "not-tricount": () => "That link doesn’t open a Tricount. Check that it is the link Tricount’s own Share gives you, and that the tricount still exists.",
+      "tricount-amount": (f) => `One entry (${f.detail}) has an amount bida can’t read.`,
+      "tricount-date": (f) => `One entry (${f.detail}) has no date bida can read, and filing a whole trip under today isn’t a guess worth making.`,
+      "tricount-split": (f) => `One entry (${f.detail}) doesn’t add up: the shares should come to what it cost.`,
     } as Record<ImportRefusalCode, (fact: RefusalFact) => string>,
   },
 

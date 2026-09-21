@@ -13,6 +13,7 @@ pnpm stall        # what a screen does when reading this phone's database stops 
 pnpm homescreen   # the invite an iOS icon is added with, both ends of it
 pnpm demo         # /demo lands on a populated ledger, and holds no key
 pnpm nav          # where the back arrow goes, and what it leaves on the stack
+pnpm tricount     # a Tricount link, pasted, all the way to a balanced group
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
@@ -632,6 +633,28 @@ did *not* move — a cancelled press has nothing to announce, so that one takes 
 `settle` ([above](#scriptslibharnessmjs--what-the-browser-checks-share)). The
 group is built once, by the section that walks in through `/new`, and every
 other section stands on it.
+
+## `pnpm tricount` — a Tricount link, pasted, all the way to a balanced group
+
+`core/tricount.ts` is tested against the shape exhaustively, and none of those
+tests can prove the **wiring**: that the link field is on the import screen,
+that the key comes out of what was pasted rather than out of the host, that
+WebCrypto makes a key the request carries, and that the plan the reader hands
+back builds the group the CSV path would
+([data-model.md](data-model.md#reading-a-tricount-back)).
+
+So the fixture is one trip holding both readings that are rules rather than
+recoveries — an expense split three ways and a repayment as a `BALANCE` — and
+the assertion at the end is the **balances tab**, to the cent, because a
+transfer read backwards or an income unflipped shows nowhere else. Then five
+refusals, which is where a reader this liberal is most likely to be wrong: not
+a link at all, a link that opens nothing, tricount not answering, two
+currencies, and an entry whose shares miss by a cent.
+
+**`/api/tricount` is stubbed and everything else is real** — the bargain
+`stubScan` makes about Gemini. Tricount publishes no API and answers no
+preflight, so the half that talks to bunq (`apps/api/src/tricount.ts`) is the
+half no check can hold and a session has to try against a real link by hand.
 
 ## What only a phone can check
 
