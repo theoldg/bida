@@ -39,6 +39,9 @@ export default function GroupsPage() {
   // already carry an `archivedAt`, and the fold still applies one. This is the
   // only place that decides what it means to a list of "your groups".
   const groups = resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt);
+  // Which group the install offer draws for, and whether it draws at all: the
+  // first that an icon would actually carry, so the demo is passed over.
+  const lead = groups?.find((g) => !isDemo(g.group.id));
 
   return (
     <Screen>
@@ -73,8 +76,13 @@ export default function GroupsPage() {
               (components/install.tsx). One card, one of two bodies. The group
               it names is only which one leads the iOS carry — the top row,
               the most recently active and the one the app would reopen by
-              itself (lib/launch.ts). */}
-            {groups && groups.length > 0 ? <InstallOfferCard groupId={groups[0]!.group.id} /> : null}
+              itself (lib/launch.ts).
+
+              The demo is not a group to lose, and not one to lead with: it has
+              no key, so it is not among what an icon would carry, and `/demo`
+              lays it down again anyway (docs/sync.md#the-demo-group-has-no-key).
+              A list holding only the demo is still somebody looking around. */}
+            {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
             {/* An empty list is only empty once nothing is on its way: an icon
               added to keep someone's groups must not greet them with "No

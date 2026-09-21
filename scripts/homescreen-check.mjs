@@ -316,6 +316,29 @@ report(folded && await heldPage.getByRole("button", { name: "Add bida to home sc
   .waitFor({ timeout: 2000 }).then(() => true, () => false),
   "a group's ledger asks an iOS tab too, folded");
 
+// ---- but never about the demo ---------------------------------------------
+// The demo holds no key, so it is not among what an icon would carry and there
+// is nothing here for this tab to lose — `/demo` lays the story down again
+// (docs/sync.md#the-demo-group-has-no-key). The mark at the head of its ledger
+// says nothing here syncs; a banner under it offering to rescue the group
+// would take that back one line later. A phone of its own, because the demo
+// joins whatever list it is opened on, and the checks above read that list.
+const tourist = await iphone();
+const touristPage = await tourist.newPage();
+await touristPage.goto(`${base}/demo`);
+// The mark is the proof this ran at all: without it an absent banner would
+// only mean the ledger never drew.
+const marked = await touristPage.locator(".demomark").waitFor({ timeout: PATIENCE })
+  .then(() => true, () => false);
+const demoBanner = () => touristPage.getByRole("button", { name: "Keep your groups on this phone" });
+const quietLedger = await demoBanner().count() === 0;
+await openGroupsList(touristPage, base);
+const listed = await touristPage.locator(".rows .row").count();
+const quietList = await demoBanner().count() === 0;
+report(marked && quietLedger && listed > 0 && quietList,
+  "the demo's ledger, and a list holding only the demo, ask nothing about the home screen",
+  `${listed} rows`);
+
 // ---- which one are you, in a tab ------------------------------------------
 // Someone who already has the app can't be told apart from a tab, so the claim
 // list offers them the link to paste there, with its own copy button.

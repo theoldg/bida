@@ -223,6 +223,13 @@ chose Safari can't put away is nagging.
 folded on every visit and remembering nothing, since the entries are that
 screen's job. Its fold is its own; the list's is the device's.
 
+**Neither place asks about the demo.** It holds no key, so it is not among what
+an icon would carry and there is nothing here a tab could lose — `/demo` lays
+the story down again ([sync.md](sync.md#the-demo-group-has-no-key)). Its ledger
+draws no card under the mark that says nothing here syncs, and a list holding
+only the demo is still someone looking around, so it counts as no group to
+lose. `pnpm homescreen` holds both.
+
 Android is on the ledger for the same reason iOS is, and it is not about
 eviction: `lib/launch.ts` reopens the group you were last in, and `/join`
 pushes the group over the list, so the list is a screen most people never

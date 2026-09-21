@@ -68,9 +68,6 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — "fix the paragraph break nonsense": no paragraph anywhere,
-  just a link that counted as one grid item too many. A screenshot names the
-  symptom; the layout box names the bug.
 - *2026-09-20* — "there's no line between the tabs and the row": the rule was
   there, the wash over the row ate it. A missing border is sometimes a border
   you cannot see.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "the lock and messenger link are resolved": two watches closed
   on a phone I cannot see, and one of them hid a line still marked unfixed. Ask
   what resolved covers before deleting it.
+- *2026-09-21* — "hide the install banner in the demo": the card's own comment
+  already carried the rule — draw it only once there is a group to lose. The
+  demo was an instance of one written down.

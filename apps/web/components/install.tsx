@@ -1,5 +1,6 @@
 "use client";
 
+import { isDemo } from "@bida/core";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Icon } from "./icons";
@@ -181,11 +182,18 @@ export function InstallOfferCard({ groupId }: { groupId: string }) {
  * Folded on every visit and remembering nothing: the entries are what that
  * screen is for, so it offers itself as one line each time rather than taking
  * the list's fold. That line goes the moment the phone installs.
+ *
+ * **Never in the demo.** No key means no invite to carry, so the banner's
+ * offer is empty there, and nothing the browser clears is lost — `/demo` lays
+ * the story down again (docs/sync.md#the-demo-group-has-no-key). The mark
+ * directly above says nothing here syncs; a card under it urging you to save
+ * this group would take that back in the next line.
  */
 export function LedgerInstall({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
   const [open, setOpen] = useState(false);
   const toggle = () => setOpen(!open);
+  if (isDemo(groupId)) return null;
   if (offer === "manual") {
     return (
       <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>
