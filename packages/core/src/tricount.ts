@@ -25,13 +25,12 @@ import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type Curr
  *
  * The spreadsheet's hard case — one cell holding `paid − owed`, from which no
  * arithmetic recovers both ([import.ts](./import.ts)) — does not arise: an
- * entry states its payer and each share separately, so an expense comes back
- * exactly as it was entered. Two things still do not survive:
+ * entry states its payer and each share separately, so **an expense comes back
+ * exactly as it was entered**, and `membership_owned` being a single
+ * membership loses nothing, because Tricount has no several-payers expense to
+ * lose (the owner, 2026-09-21). One reading is still a rule rather than a
+ * recovery:
  *
- * - **One payer per entry.** `membership_owned` is a single membership, so a
- *   tricount split across several payers arrives as one. Nothing observed in
- *   the wild does that; if one does, its balances still land, since the
- *   checksum is what decides whether the import stands.
  * - **A repayment is a transfer only when it has the shape** — `BALANCE`
  *   *and* exactly one person on the receiving end. Anything else is read as an
  *   expense, which is the reading that loses nothing, the same ruling

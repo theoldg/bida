@@ -370,14 +370,13 @@ expense is negative all the way down and an income positive. One line flips
 that into our positive minor units with the direction in `kind`.
 
 So the spreadsheet's hard case does not arise: payer and shares are stated
-separately, and an expense comes back exactly as it was entered. Two readings
-are still rules rather than recoveries, both taking the option that loses
-nothing:
-
-- **One payer per entry**, because `membership_owned` is one membership.
-- **A repayment is a transfer only with the shape**: `type_transaction` is
-  `BALANCE` *and* exactly one other person is on the receiving end. Anything
-  else is an expense, the same ruling the `Payment` token gets above.
+separately, and **an expense comes back exactly as it was entered**.
+`membership_owned` is one membership and that costs nothing, since Tricount
+has no expense paid by several people. One reading is still a rule rather than
+a recovery, and it takes the option that loses nothing: **a repayment is a
+transfer only with the shape** — `type_transaction` is `BALANCE` *and* exactly
+one other person is on the receiving end. Anything else is an expense, the same
+ruling the `Payment` token gets above.
 
 There is no foot row, so the checksum is computed **by the route the app
 itself uses** — allocations minus what you owned — which is not the route the
