@@ -1214,19 +1214,40 @@ so the static export ships the full line and the browser narrows it.
   device's back button. The same tap from the back arrow, on the same screen
   and the same code, went. A press this app cancels leaves Android holding a
   traversal it will not deliver again, so the `history.go` that follows returns
-  with nothing moved and no `navigate` to say so. `goUp` therefore *checks*:
-  still on the entry it asked from 400ms later is a traversal that was
-  swallowed, and the parent takes this screen's place instead — a push, which
-  is not the queue that is stuck. This is the one clock the file allows,
-  because here it fails the cheap way: a traversal that was merely late lands
-  on an entry that is already the parent.
+  with nothing moved and no `navigate` to say so. What decides whether it bites
+  is **where the screen sits**, not which screen it is: the target has to be
+  index 0, which is what a phone that resumed into a group gives the form
+  pushed onto its ledger. So the going *checks*: still on the entry it asked
+  from 150ms later is a traversal that was swallowed, and the destination takes
+  this screen's place instead — a push, which is not the queue that is stuck.
+  This is the one clock the file allows, because here it fails the cheap way: a
+  traversal that was merely late lands on an entry that is already the
+  destination, so overrunning the window costs a duplicate entry and never a
+  wrong screen.
+- **So every exit has to name somewhere to land, or no check can rescue it.**
+  `goUp` always had a parent to put in this screen's place and `goBack` had
+  nothing, which is why Discard on the entry form stayed put for three rounds
+  after the two fixes above. Its destination was never unknowable: the entry
+  behind us is where `back()` is going by definition, so `goBack` reads it off
+  `navigation.entries()` and hands it to the same repair. `rules-check` spells
+  out the two-argument shape, so an exit the repair cannot reach fails the gate
+  rather than waiting for a phone to find it.
+- **Clearing the work before the going is what disguised all of this.** Discard
+  cleared the draft and then left; the entry form renders from the draft, so
+  the clear landed first and the screen became `<Blank title="New" />` — and
+  where the going was swallowed, that is where it stayed. A screen that failed
+  to navigate should look like a screen that did not move. This one looked like
+  Discard had worked and opened a fresh blank entry, which is the wrong symptom
+  and sent three investigations after the wrong thing. The draft now goes when
+  the screen does, in the unmount, behind the `leaving` ref below.
 - **A screen that asks has to stop asking before it goes.** `mayLeave` is read
   again on the way out, so a guard still saying no answers the app's own
-  leaving. The entry form never saw it — its Discard clears the draft that
-  `mayLeave` reads — but `/new` holds its names in `useState` and clears
-  nothing, so `typed` was still true the whole way out: with the latch spent or
-  the traversal retried, the going was met with a second "discard?". Both
-  screens that leave this way now put a `leaving` ref down first.
+  leaving. `/new` holds its names in `useState` and clears nothing, so `typed`
+  was still true the whole way out: with the latch spent or the traversal
+  retried, the going was met with a second "discard?". Every screen that leaves
+  this way puts a `leaving` ref down first — the entry form included, which
+  used to get it for free from clearing the draft `mayLeave` reads and must
+  not, per the Gotcha above.
 - **Don't reach for `traverseTo`.** Naming a history entry by key instead of
   counting back to it is the same move with a worse failure: WebKit folds a
   `traverseTo` into one still pending for the same key and never settles one it

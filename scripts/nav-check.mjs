@@ -318,12 +318,20 @@ async function onLedger() {
 // press and fine from the arrow. Stubbed to a no-op here, because that is the
 // whole of what the phone does.
 //
-// Three things must survive it. The card comes down, because leaving closes any
-// dialog *before* the going rather than with the screen. Nothing moves at
-// first, since nothing was delivered. And then it happens anyway: `goUp` checks
-// that its traversal landed and puts the parent in this screen's place when it
-// didn't (lib/nav.ts). That the latch is not left armed by the traversal that
-// never came is `lib/nav.test.ts`'s, which can read it.
+// Two things must survive it. The card comes down, because leaving closes any
+// dialog *before* the going rather than with the screen. And the act happens
+// anyway: the going checks that its traversal landed and puts the destination
+// in this screen's place when it didn't (lib/nav.ts). That the latch is not
+// left armed by the traversal that never came is `lib/nav.test.ts`'s, which
+// can read it.
+//
+// **What is not asserted here is the stuck moment in between**, and that is
+// deliberate. It used to be — the screen still on `/new` with its text in it,
+// read after a 200ms pause — which was a bet that the repair's window was
+// longer than the pause. Shortening the window to 150ms collected that bet
+// (docs/testing.md). Nothing is lost: `history.go` is stubbed to a no-op, so
+// a traversal cannot be what moved this, and landing at the parent at all is
+// already proof the repair is what did it.
 {
   const page = await (await phone()).newPage();
   await page.goto(`${base}/`);
@@ -336,12 +344,9 @@ async function onLedger() {
 
   await page.evaluate(() => { window.history.go = () => {}; });
   await page.locator(".scrim .drow button").nth(1).click();
-  await settle(page, 200);
+  await page.waitForFunction(() => !document.querySelector("dialog.scrim")).catch(() => {});
   report(await page.locator("dialog.scrim").count() === 0,
     "an act that cannot travel still takes its dialog down with it");
-  const stuck = await stack(page);
-  report(/\/new/.test(stuck.urls[stuck.i] ?? ""), "the screen is still there, since nothing moved");
-  report(await page.locator("#g-name").inputValue() === "Trip", "and so is what was typed");
 
   // And then the check fires and the parent takes this screen's place, so the
   // button a phone read as dead does what it says after all.
@@ -351,6 +356,55 @@ async function onLedger() {
   const landed = new URL(after.urls[after.i] ?? "http://x/nowhere", base).pathname === "/";
   report(landed, "and then the parent takes its place, so Discard is not dead after all",
     landed ? "" : `still at ${after.urls[after.i]}`);
+  await page.close();
+}
+
+// ---- 10. Discard on a form one entry above the ledger --------------------
+// The whole of the bug this section was written for. A cold ledger is index 0,
+// so the form pushed onto it is index 1 and its Discard traverses to 0 — and
+// after a press this app *refused*, a traversal to index 0 is one Android does
+// not deliver. `goUp` always survived that; `goBack` had nothing to put in this
+// screen's place, so Discard stayed put. It reads the entry behind it off the
+// stack now, which is where `back()` was going anyway (lib/nav.ts).
+//
+// And the draft is no longer thrown away before the going, which is what made
+// a screen that failed to leave look like a fresh blank entry instead: a bar
+// still titled "New" with no form under it is that blank, and nothing else in
+// the app draws one.
+{
+  const page = await onLedger();
+  await page.locator(".fab").last().click();
+  await page.waitForURL(/\/g\/entry\/edit/);
+  await page.locator("#what").fill("Half-typed");
+  await is(page, "the form sits one entry above a cold ledger",
+    { i: 1, urls: ["/g?id=G", "/g/entry/edit?id=G"] });
+
+  void page.goBack().catch(() => {});
+  await page.waitForSelector(".scrim[open]");
+
+  // Recorded rather than sampled: the repair is quicker than a round trip to
+  // ask, so a check that looks for the blank after the fact never sees it.
+  await page.evaluate(() => {
+    window.__blanked = false;
+    const look = () => {
+      const bar = document.querySelector(".topbar h3");
+      if (bar?.textContent === "New" && !document.querySelector("#what")) window.__blanked = true;
+    };
+    new MutationObserver(look).observe(document.body, { childList: true, subtree: true });
+  });
+
+  // What the phone does, and the whole of it: `history.back` returns, nothing
+  // moves, and no `navigate` ever comes to say so.
+  await page.evaluate(() => { window.history.back = () => {}; });
+  await page.locator(".scrim .drow button").nth(1).click();
+  await page.waitForURL((url) => new URL(url).pathname === "/g", { timeout: 4000 })
+    .then(() => {}, () => {});
+  const after = await stack(page);
+  const landed = /^\/g\?/.test(after.urls[after.i] ?? "");
+  report(landed, "Discard leaves a form the traversal cannot carry out of",
+    landed ? "" : `still at ${after.urls[after.i]}`);
+  report(await page.evaluate(() => window.__blanked) === false,
+    "and never draws the blank \"New\" that made this read as a fresh entry");
   await page.close();
 }
 

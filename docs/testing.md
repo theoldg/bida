@@ -311,6 +311,25 @@ Two differences that are the whole reason it is a second script:
   honest pause is the window for proving that *nothing* happened, which has no
   condition to wait for. Eight assertions across three checks were red on a
   busy machine and green on a quiet one, and not one of them was about the app.
+- **The app has its own clock now, and a starved machine can overrun it.**
+  `SWALLOWED_MS` (150ms, `lib/nav.ts`) is how long a going waits before
+  deciding its traversal was swallowed and putting the destination in this
+  screen's place. On a box running seven headless browsers a traversal that is
+  merely late can land after that, and the repair has already replaced: the
+  cost is **one duplicate entry, never a wrong screen** — which is why the
+  clock is allowed at all. So a check asserting where a repair *landed* is
+  safe, and one asserting the **shape of the stack** across a repair is the one
+  that can go red on a busy machine and green alone. Say which you are writing.
+- **And a check must not bet on that window either.** `pnpm nav` §9 read the
+  screen after a 200ms pause to prove it was still stuck, which only worked
+  while the window was 400ms; shortening it to 150 collected the bet, and the
+  section went red on a change that was correct. The stuck moment is not worth
+  asserting anyway — `history.go` is stubbed to a no-op there, so a traversal
+  cannot be what moved the screen, and landing at the destination at all is
+  already proof the repair did it. Where the intermediate state genuinely is
+  the assertion, **record it instead of sampling it**: §10 hangs a
+  `MutationObserver` before the tap and reads the flag afterwards, because the
+  repair is quicker than a round trip to ask.
 - **`pnpm offline` is standing proof of that, and a cloud container is where it
   shows.** Under `pnpm verify` it goes red in roughly two runs of three and
   passes alone every time — on the agent's container, which is slower than the

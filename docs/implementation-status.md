@@ -27,14 +27,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Four things: three watches, and one diagnosed bug.
-
-- **Discard on the entry form does not leave**, on a phone whose app resumed
-  into a group rather than opening on the list. A press this app *refuses*
-  swallows a traversal to history index 0, and `goBack` — unlike `goUp` — has
-  no check that its traversal moved, so the screen stays with its draft
-  cleared and reads as a blank "New". Diagnosed from two phone traces, fix
-  named and not written: [navigation-bug.md](navigation-bug.md) (2026-09-21).
+Three things, and all of them are watches rather than tasks.
 
 - **An invite pasted into Messenger on an iPhone arrives as the bare origin.**
   `https://bida.bid` — path and fragment gone, so the recipient lands on "Bad
@@ -75,10 +68,14 @@ Four things: three watches, and one diagnosed bug.
   2026-09-20): the next trace showed Discard dead again, and only where the
   dialog had been opened by the device's back button — the same tap from the
   arrow went. A press this app *refuses* leaves Android holding a traversal it
-  will not deliver again. `goUp` now checks that its traversal moved and puts
-  the parent in this screen's place when it didn't, and `/new` and `/quick`
-  stop guarding the way out once Discard is answered, which is what the entry
-  form got for free from clearing its draft
+  will not deliver again — whenever the target is index 0, which is what a
+  phone that resumed into a group gives the screen above its ledger. **Every
+  exit now names somewhere to land and shares one check** that its traversal
+  moved (1.0.64, 2026-09-21): `goUp` the parent it counted back to, `goBack`
+  the entry behind it, read off `navigation.entries()`. The screens that ask
+  stop guarding the way out once Discard is answered, and the entry form no
+  longer throws its draft away before the going — that is what made a screen
+  which failed to leave read as a blank "New"
   ([frontend.md](frontend.md#gotchas)). **This watch stands on its own terms** —
   a press the browser makes uncancellable still leaves `/new` with nothing, and
   a draft store is what would make that cost a dialog instead of the work.

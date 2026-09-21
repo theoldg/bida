@@ -68,9 +68,6 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
-- *2026-09-20* — "drop the card lower, link inline": the fold's link row was
-  its own button's sentence again. The ask named the spacing; the repetition
-  was what it was pointing at.
 - *2026-09-20* — Asked to make three refusals louder, and found one of them had
   never run at all: a rule that parses is not a rule that fires. Photograph the
   frame before trusting the stylesheet.
@@ -98,3 +95,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Twice I explained an iPhone paste bug from search summaries;
   twice the fetched page said the opposite. The owner's "works fine on android"
   cut more than all the reading.
+- *2026-09-21* — Asked to explain one bug, I led with the more interesting
+  concept next door, and had to be asked twice what it had to do with the
+  symptom. Catch them up on the bug they have.
