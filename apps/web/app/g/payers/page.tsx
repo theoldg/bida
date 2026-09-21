@@ -112,7 +112,7 @@ function PayersScreen() {
   function discard() {
     const was = opened.current;
     if (was) saveDraft(gid, { ...current, payers: was.payers, paidBy: was.paidBy });
-    goBack(() => router.back());
+    goBack(() => router.back(), (to) => router.replace(to));
   }
 
   /** Hand the unallocated remainder to one person — the usual last step. */
@@ -128,7 +128,8 @@ function PayersScreen() {
       <Body>
         <TopBar title={copy.payers.title[voice]}
           sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
-          right={<button className="action" onClick={() => goBack(() => router.back())} disabled={!check.ok} {...keepsFocus}>
+          right={<button className="action" disabled={!check.ok} {...keepsFocus}
+            onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
             {copy.act.done}
           </button>} />
 

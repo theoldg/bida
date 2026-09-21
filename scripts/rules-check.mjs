@@ -151,12 +151,20 @@ for (const file of sources(join(ROOT, "apps/web/app/g"))) {
 // mark the traversal as the app's own. Safari reports any back taken inside a
 // tap as the device's button, so a bare one is answered by the press guard —
 // Done on payers asked to discard what it was keeping.
+//
+// `goBack` takes the replace as well as the back, and only that shape is
+// spelt out here: a traversal Android swallows is repaired by putting the
+// destination in this screen's place, and an exit that handed over no way to
+// do that is one the repair cannot reach (docs/frontend.md#gotchas).
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "nav.ts"))) continue;
-  const src = code(readFileSync(file, "utf8")).replace(/goBack\(\(\)\s*=>\s*router\.back\(\)\)/g, "");
+  const src = code(readFileSync(file, "utf8"))
+    .replace(/goBack\(\(\)\s*=>\s*router\.back\(\),\s*\(to\)\s*=>\s*router\.replace\(to\)\)/g, "");
   if (/\brouter\.back\s*\(|\bhistory\.(back|go)\s*\(|\bnavigation\.(back|traverseTo)\s*\(/.test(src)) {
-    fail(file, "goes back directly — use `goBack`/`goUp` from lib/nav.ts, or Safari "
-      + "mistakes it for the device's back button (ADR-0007)");
+    fail(file, "goes back directly — use `goUp`, or `goBack(() => router.back(), "
+      + "(to) => router.replace(to))`, from lib/nav.ts: Safari mistakes a bare one for "
+      + "the device's back button, and an exit that hands over no replace cannot be "
+      + "repaired when Android swallows the traversal (ADR-0007)");
   }
 }
 

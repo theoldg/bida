@@ -42,6 +42,6 @@ export default function QuickItemsPage() {
       format={(minor) => bare(minor, draft.currency)}
       saysCurrency={false}
       onDone={() => router.push(route.quickResult())}
-      onBack={() => goBack(() => router.back())} />
+      onBack={() => goBack(() => router.back(), (to) => router.replace(to))} />
   );
 }

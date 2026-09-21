@@ -153,15 +153,28 @@ describe("goUp", () => {
 });
 
 describe("goBack", () => {
-  function withWindow(here: number | undefined, run: () => void) {
+  /** The same phone `goUp`'s tests use: `delivers` false is Android swallowing it. */
+  function fakeWindow(urls: string[], here: number, delivers = true) {
+    const nav = Object.assign(new EventTarget(), {
+      entries: () => urls.map((url) => ({ url })),
+      currentEntry: { index: here },
+    });
+    const back = () => { if (delivers) nav.currentEntry = { index: here - 1 }; };
+    return { window: { navigation: nav, history: { back } }, back };
+  }
+
+  function withWindow(w: unknown, run: () => void) {
     const g = globalThis as { window?: unknown };
-    g.window = here === undefined ? {} : { navigation: { currentEntry: { index: here } } };
+    g.window = w;
     try { run(); } finally { delete g.window; }
   }
 
+  afterEach(() => { vi.useRealTimers(); takeOwnTraversal(); });
+
   it("marks the traversal as the app's, once", () => {
+    const { window, back } = fakeWindow(["/", "/g?id=a", "/g/payers?id=a"], 2);
     let went = false;
-    withWindow(2, () => goBack(() => { went = true; }));
+    withWindow(window, () => goBack(() => { went = true; back(); }, () => {}));
     expect(went).toBe(true);
     expect(takeOwnTraversal()).toBe(true);
     expect(takeOwnTraversal()).toBe(false);
@@ -171,7 +184,53 @@ describe("goBack", () => {
   // nothing, so no `navigate` arrives to spend the latch, and an armed one
   // would answer the *next* press — a real one — as the app's own.
   it("marks nothing at the start of the history", () => {
-    withWindow(0, () => goBack(() => {}));
+    const g = globalThis as { window?: unknown };
+    g.window = { navigation: { currentEntry: { index: 0 } } };
+    try { goBack(() => {}, () => {}); } finally { delete g.window; }
     expect(takeOwnTraversal()).toBe(false);
+  });
+
+  /**
+   * The bug this door had and `goUp` did not: a press the app refused leaves
+   * Android holding a traversal to index 0 it will not deliver, and Discard on
+   * the entry form had nothing to put in its place. The entry behind us is
+   * where `back()` was going anyway, so it is read off the stack.
+   */
+  it("takes the entry behind us when the traversal is swallowed", () => {
+    vi.useFakeTimers();
+    const { window, back } = fakeWindow(["/g?id=a", "/g/entry/edit?id=a"], 1, false);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goBack(back, (to) => replaced.push(to));
+      expect(replaced).toEqual([]);
+      vi.runAllTimers();
+      expect(replaced).toEqual(["/g?id=a"]);
+    });
+    // Armed for a `navigate` that never came, so it must not be left to answer
+    // the next real press.
+    expect(takeOwnTraversal()).toBe(false);
+  });
+
+  it("leaves a traversal that arrived alone", () => {
+    vi.useFakeTimers();
+    const { window, back } = fakeWindow(["/g?id=a", "/g/entry/edit?id=a"], 1);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goBack(back, (to) => replaced.push(to));
+      vi.runAllTimers();
+    });
+    expect(replaced).toEqual([]);
+    expect(takeOwnTraversal()).toBe(true);
+  });
+
+  it("has nothing to fall back on at the start of the history", () => {
+    vi.useFakeTimers();
+    const { window } = fakeWindow(["/g?id=a"], 0, false);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goBack(() => {}, (to) => replaced.push(to));
+      vi.runAllTimers();
+    });
+    expect(replaced).toEqual([]);
   });
 });

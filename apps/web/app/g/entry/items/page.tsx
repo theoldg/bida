@@ -78,7 +78,7 @@ function ItemsScreen() {
       format={(minor) => money(minor, draft.currency)}
       // Both ways off this screen are the way back onto the form, which is
       // where it was opened from: only what has been written down differs.
-      onDone={() => goBack(() => router.back())}
-      onBack={() => goBack(() => router.back())} />
+      onDone={() => goBack(() => router.back(), (to) => router.replace(to))}
+      onBack={() => goBack(() => router.back(), (to) => router.replace(to))} />
   );
 }

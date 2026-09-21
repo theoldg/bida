@@ -103,17 +103,48 @@ function closeDialogs(): void {
  * the back arrow, on the same screen, goes.
  *
  * So the traversal is asked for and then *checked*: still on the same entry a
- * beat later is one that was swallowed, and the parent is put in this screen's
- * place instead — the same landing by the other door, and a push rather than a
- * traversal, which is not the queue that is stuck.
+ * beat later is one that was swallowed, and the destination is put in this
+ * screen's place instead — the same landing by the other door, and a push
+ * rather than a traversal, which is not the queue that is stuck.
  *
  * **A wrong guess costs an entry, never the act.** A traversal that was merely
  * late arrives after the replace and spends itself on an entry that is already
- * the parent — the screen is right either way. That is the opposite trade from
- * the one `traverseTo` forced (see this file's head), which is why a clock is
- * allowed to decide this and not that.
+ * the destination — the screen is right either way. That is the opposite trade
+ * from the one `traverseTo` forced (see this file's head), which is why a clock
+ * is allowed to decide this and not that — and why it is short. A delivered
+ * traversal lands in about ten milliseconds; the wait is time somebody spends
+ * looking at the screen they just asked to leave, so the margin buys nothing a
+ * person wants. What a phone slow enough to overrun it pays is one duplicate
+ * entry, which is a back press, not a wrong screen (docs/testing.md).
  */
-const SWALLOWED_MS = 400;
+const SWALLOWED_MS = 150;
+
+/**
+ * Go, and put the destination here if the going is swallowed.
+ *
+ * **Every exit in this app names somewhere to land**, which is the whole of
+ * why one check can cover them all: `goUp` names the parent it counted back
+ * to, and `goBack` reads the entry it is stepping onto off the stack. An exit
+ * with no destination is the one thing no check can rescue, and that is what
+ * Discard on the entry form was for three rounds — the traversal swallowed,
+ * nothing to put in its place, and the screen left believing it had gone.
+ */
+function leaveTo(to: string | undefined, traverse: () => void, replace: (to: string) => void): void {
+  closeDialogs();
+  const here = navigation()?.currentEntry?.index;
+  markOwnTraversal();
+  traverse();
+  if (to === undefined || here === undefined) return;
+  setTimeout(() => {
+    // Anywhere but where we asked from is a traversal that arrived — or a
+    // hand that has moved on, which is not ours to undo either.
+    if (navigation()?.currentEntry?.index !== here) return;
+    // The latch was armed for a `navigate` that is never coming, and one
+    // left armed swallows a real press.
+    disarmOwnTraversal();
+    replace(to);
+  }, SWALLOWED_MS);
+}
 
 /**
  * Move to `href` as an ancestor: back out to it if we came through it, and
@@ -121,26 +152,13 @@ const SWALLOWED_MS = 400;
  * us, so the next press of the device's back button leaves the parent too.
  */
 export function goUp(href: string, replace: (href: string) => void): void {
-  closeDialogs();
   const nav = navigation();
   const here = nav?.currentEntry?.index;
   if (nav && here !== undefined && here >= 0) {
     const steps = stepsBackTo(nav.entries().map((e) => e.url), here, href);
-    if (steps !== null) {
-      markOwnTraversal();
-      window.history.go(steps);
-      setTimeout(() => {
-        // Anywhere but where we asked from is a traversal that arrived — or a
-        // hand that has moved on, which is not ours to undo either.
-        if (navigation()?.currentEntry?.index !== here) return;
-        // The latch was armed for a `navigate` that is never coming, and one
-        // left armed swallows a real press.
-        disarmOwnTraversal();
-        replace(href);
-      }, SWALLOWED_MS);
-      return;
-    }
+    if (steps !== null) { leaveTo(href, () => window.history.go(steps), replace); return; }
   }
+  closeDialogs();
   replace(href);
 }
 
@@ -149,15 +167,17 @@ export function goUp(href: string, replace: (href: string) => void): void {
  * below, Done, Discard. Anything in the app that goes back goes through here or
  * `goUp`, never `router.back()` directly — see `takeOwnTraversal`.
  *
- * No check like `goUp`'s above it: this names no parent, so there is nothing to
- * put in this screen's place when the traversal is swallowed. The screens on
- * this door answer that the other way — their act stops the guard saying no
- * (`clearDraft`), so the press that follows walks out instead of asking again.
+ * **It names no parent, so it reads one.** The entry behind us is where
+ * `back()` is going by definition, so it can be taken off the stack rather
+ * than decided at each call — correct by construction, and nothing for a
+ * caller to get wrong. That is what gives this door the swallow check too.
  */
-export function goBack(back: () => void): void {
-  closeDialogs();
-  markOwnTraversal();
-  back();
+export function goBack(back: () => void, replace: (to: string) => void): void {
+  const nav = navigation();
+  const here = nav?.currentEntry?.index;
+  const behind = here !== undefined && here > 0
+    ? nav?.entries()[here - 1]?.url ?? undefined : undefined;
+  leaveTo(behind, back, replace);
 }
 
 /**

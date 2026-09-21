@@ -483,7 +483,7 @@ function EditEntryScreen() {
   function discard() {
     if (!groupId) return;
     clearDraft(groupId);
-    goBack(() => router.back());
+    goBack(() => router.back(), (to) => router.replace(to));
   }
 
   // An arrow, not a hoisted `function`: a declaration is created before the

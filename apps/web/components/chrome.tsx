@@ -88,7 +88,7 @@ export function TopBar({ title, sub, back, mid, right }: {
   const up = typeof back === "string" ? back : guard?.up;
   const run = up !== undefined
     ? () => goUp(up, (to) => router.replace(to))
-    : () => goBack(() => router.back());
+    : () => goBack(() => router.back(), (to) => router.replace(to));
   /** The arrow: ask first where there is something to ask about. */
   const press = () => { if (!guard || guard.ask()) run(); };
   // The device's back button does exactly what this arrow does
