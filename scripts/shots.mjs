@@ -192,18 +192,21 @@ async function main() {
         process.stdout.write(`${theme}/${name} `);
       }
 
-      // Settling up is entering a transfer, so tapping a suggested payment
-      // lands on the entry form with the kind, both sides and the amount
-      // already filled — the one place that state gets photographed.
+      // Settling up asks in a card rather than on a form: tapping a suggested
+      // payment states the payment and offers to record it, with nothing in it
+      // to type into. It has no URL of its own, so this is the only shot of it.
       await page.goto(`${base}/g?id=${groupId}&tab=balances`);
-      await page.locator("a.card").first().click();
-      await page.waitForURL(/entry\/edit/);
+      await page.locator("button.card").first().click();
+      await page.waitForSelector("dialog.scrim .settle");
       await page.waitForTimeout(250);
-      await page.screenshot({ path: join(SHOTS, `${theme}-entry-transfer-prefilled.png`) });
-      process.stdout.write(`${theme}/entry-transfer-prefilled `);
+      await page.screenshot({ path: join(SHOTS, `${theme}-settle-record.png`) });
+      process.stdout.write(`${theme}/settle-record `);
+      await page.keyboard.press("Escape");
 
-      // ...and the picker behind either side of it, which is a <dialog> rather
-      // than the browser's wheel (ADR-0008), so it has no URL of its own.
+      // The picker behind either side of a transfer, which is a <dialog>
+      // rather than the browser's wheel (ADR-0008), so it has no URL either.
+      await page.goto(`${base}/g/entry/edit?id=${groupId}&kind=transfer`);
+      await page.waitForSelector(".transfer");
       await page.getByLabel("Who received it").click();
       await page.waitForSelector(".dlist");
       await page.waitForTimeout(200);

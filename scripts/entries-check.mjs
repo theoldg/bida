@@ -156,16 +156,28 @@ report((await page.locator(".rmeta").first().innerText()).includes("received"), 
 report((await page.locator(".ramt .big").first().innerText()).includes("+"), "the income row signs its figure");
 report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 
-// ---- a transfer, reached the way a reimbursement is ---------------------
+// ---- settling up, which is a card and not a form -----------------------
+// Tapping a suggested payment used to open the transfer form with both sides
+// and the amount filled in. It opens a dialog stating the same three facts,
+// and nothing in it can be typed into: the figures are the app's, not yours.
 await page.goto(`${base}/g?id=${g}&tab=balances`);
-await page.waitForSelector("a.card");
-report(await page.locator("a.card").count() === 2, "settle-up suggests the payments");
-await page.locator("a.card").first().click();
-await page.waitForURL(/entry\/edit/);
-await page.waitForSelector(".transfer");
+await page.waitForSelector("button.card");
+report(await page.locator("button.card").count() === 2, "settle-up suggests the payments");
+await page.locator("button.card").first().click();
+await page.waitForSelector("dialog.scrim .settle");
 // (9000 − 300) ÷ 3. If this figure moves, an income stopped reducing the debt.
-report((await page.locator("input.amount").inputValue()).replace(/\s/g, "") === "2900.00",
-  "settle-up pre-fills the transfer, income already netted off");
+report((await page.locator(".settleamt").innerText()).includes("2,900.00"),
+  "the card states the payment, income already netted off");
+report(await page.locator("dialog.scrim input, dialog.scrim textarea").count() === 0,
+  "nothing in the card is a field");
+await page.getByRole("button", { name: "Record" }).click();
+await page.waitForSelector("dialog.scrim", { state: "detached", timeout: PATIENCE });
+report(await page.locator("button.card").count() < 2, "Record settles it, so the list is shorter");
+
+// ---- the transfer form, reached the way any entry is -------------------
+await page.goto(`${base}/g/entry/edit?id=${g}&kind=transfer`);
+await page.waitForSelector(".transfer");
+await page.locator("input.amount").fill("40");
 const wasFrom = await page.locator(".tside .who").first().innerText();
 await page.locator(".tswap").click();
 await settle(page, 100);
@@ -189,12 +201,9 @@ report((await page.locator(".tside .who").first().innerText()) === otherSide
   "picking the other side swaps them");
 await page.locator(".tswap").click();
 await settle(page, 100);
-// Not `save()`: settling up came from the balances tab, and saving returns you
-// to the tab you came from rather than dropping you on the ledger.
-await page.getByRole("button", { name: "Save" }).click();
-await page.waitForURL(/tab=balances/);
+await save(4);
 await page.goto(`${base}/g?id=${g}`);
-await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 3, null,
+await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length >= 4, null,
   { timeout: PATIENCE });
 report((await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
   "a transfer saves and lists");
@@ -454,16 +463,21 @@ await page.waitForSelector(".rows a.row");
 // ---- and a transfer's row answers a long press, as an expense's does ---
 // It didn't: the delete menu was on the expense row only, so the one entry
 // with no other way to remove it from the ledger was the transfer.
+const transferRows = async () =>
+  (await page.locator(".rmeta").allInnerTexts()).filter((t) => t.startsWith("Transfer")).length;
+// Two of them reach the ledger — the card's on the balances tab wrote one and
+// the form wrote the other — so this deletes one and counts, rather than
+// asking whether any are left.
+const before = await transferRows();
 await page.locator("a.row").filter({ hasText: "paid" }).first().click({ button: "right" });
 await page.waitForSelector(".rowmenu");
 report(await page.getByRole("menuitem", { name: "Delete" }).count() === 1,
   "a long press on a transfer row offers to delete it");
 await page.getByRole("menuitem", { name: "Delete" }).click();
 await page.getByRole("button", { name: "Delete" }).click();
-await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length === 2, null, { timeout: PATIENCE })
-  .catch(() => {});
-report(!(await page.locator(".rmeta").allInnerTexts()).some((t) => t.startsWith("Transfer")),
-  "and the transfer leaves the ledger");
+await page.waitForFunction((n) => document.querySelectorAll(".rows a.row").length === n, before + 1,
+  { timeout: PATIENCE }).catch(() => {});
+report(await transferRows() === before - 1, "and the transfer leaves the ledger");
 
 // ---- and the log says what happened, in the app's own words ------------
 await page.goto(`${base}/g/history?id=${g}`);

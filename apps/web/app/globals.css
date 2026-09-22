@@ -2090,3 +2090,20 @@ button.amtnote:active { background: var(--hl-edge) }
    since it is the only thing being asked for at that moment. */
 .turnstile { position: fixed; left: 50%; z-index: 7;
   bottom: calc(env(safe-area-inset-bottom) + 76px); transform: translateX(-50%) }
+
+/* ---- settling up, in a dialog
+   Tapping a suggested payment used to open the entry form with both sides and
+   the amount filled in — a whole screen asking you to confirm figures the app
+   worked out and you cannot improve. It asks in a card instead: nothing here
+   is a field, because nothing here is yours to change. Two names, the row's own
+   arrow and the figure — no avatars, because initials say less than the name
+   already beside them and two squares turn one sentence into a diagram. */
+.settle { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 5px 0 1px }
+.settleflow { display: flex; align-items: center; justify-content: center; gap: 11px;
+  max-width: 100% }
+/* A long name is cut rather than wrapped: the two sides read as one line, and
+   a name that wrapped would push the arrow off it. */
+.settlename { font-size: 16.5px; font-weight: 600; color: var(--ink); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.settlearrow { color: var(--muted); flex: none }
+.settleamt { font-size: 26px; color: var(--ink) }

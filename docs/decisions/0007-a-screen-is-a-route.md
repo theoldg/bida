@@ -41,8 +41,8 @@ expenses you'd looked at rather than climbing out.
   who-had-what and the entry form are only reached from below.
 - **An entry's parent is whoever linked to it.** Four screens link in from
   *beside* an entry rather than above it — the history feed, the two "can't
-  remove this yet" lists on People and Rates, and the balances tab, whose
-  settle-up rows open a pre-filled transfer — and climbing to the group from
+  remove this yet" lists on People and Rates, and the balances tab, whose tip
+  jar records what you gave as an expense — and climbing to the group from
   there threw away the list you were working through. So those links name
   themselves (`via=history|members|rates|balances`, `lib/group-link.ts`) and the
   entry unwinds to the list; from the ledger, with no `via`, the parent is the

@@ -37,9 +37,9 @@ apportions `baseAmountMinor` with the same seeded largest-remainder rule a
 reachable.** `/g/entry/edit` is one chip naming the kind, centred on the top
 bar, and swaps only the middle of the form; the amount, currency, date and
 words survive a change of mind, whichever pair of kinds it is. A chip rather
-than three buttons because nothing opens this form asking for an income and
-settle-up prefills the transfer: the kind is already right on nearly every
-entry, so it is worth one tap on the rare one and none on the rest. The split
+than three buttons because nothing opens this form asking for an income, and
+settling up doesn't open it at all — it records the transfer from a card on the
+balances tab. The kind is already right on nearly every entry, so it is worth one tap on the rare one and none on the rest. The split
 editor is inline on it, in three modes — Evenly · As parts · As amounts
 (`equal`, `shares`, `exact`).
 

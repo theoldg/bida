@@ -91,7 +91,8 @@ await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bign
 await tap("in-app Back to the group",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), ".daylabel");
 await tap("balances tab", () => page.locator("a[href*='tab=balances']").first().click(), ".bar");
-await tap("tap a suggested transfer", () => page.locator("a.card").first().click(), ".transfer");
+await tap("tap a suggested transfer", () => page.locator("button.card").first().click(), ".settle");
+await page.keyboard.press("Escape");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
 await tap("members", () => page.goto(`${base}/g/members?id=${g}`), ".rows .row");
 // The one switch that isn't in a group: light/dark, on the groups list.

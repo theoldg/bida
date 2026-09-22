@@ -229,14 +229,6 @@ export const route = {
     `/g/history?id=${encodeURIComponent(groupId)}${entryId ? `&e=${encodeURIComponent(entryId)}` : ""}`
     + (via ? `&via=${via}` : ""),
   /**
-   * Settle up: a transfer, pre-filled with who owes whom, how much, and —
-   * since the caller knows this is a reimbursement and a blank "+" doesn't —
-   * what to call it.
-   */
-  transferBetween: (groupId: string, from: string, to: string, amount: number, title: string) =>
-    `${route.addEntry(groupId, "transfer", "balances")}&from=${encodeURIComponent(from)}`
-    + `&to=${encodeURIComponent(to)}&amount=${amount}&title=${encodeURIComponent(title)}`,
-  /**
    * What a scan costs, where to chip in, and the offer to split what you gave
    * with the group. Off the foot of the balances tab — not a FAB: the balances
    * tab is a reading, and the app's two floating buttons are the ledger's.

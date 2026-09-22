@@ -71,6 +71,7 @@ export const copy = {
     add: "Add",
     back: "Back",
     cancel: "Cancel",
+    record: "Record",
     create: "Create",
     delete: "Delete",
     discard: "Discard",
@@ -892,6 +893,8 @@ export const copy = {
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
     settleUp: "Settle up",
     allSquare: "Everyone’s square",
+    /** The card a suggested payment opens: it states, it doesn’t ask. */
+    recordTitle: "Record this reimbursement",
   },
 
   // ------------------------------------------------------------- people

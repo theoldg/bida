@@ -340,7 +340,7 @@ describe("newEntryKey", () => {
   it("is the same for a blank expense however it is asked for", () => {
     expect(newEntryKey("expense")).toBe(newEntryKey(null));
     expect(newEntryKey(undefined)).toBe(newEntryKey("expense", {}));
-    expect(newEntryKey("expense", { from: undefined, amount: 0 })).toBe(newEntryKey("expense"));
+    expect(newEntryKey("expense", { title: undefined })).toBe(newEntryKey("expense"));
   });
 
   it("separates entries a link asked for differently", () => {
@@ -348,16 +348,13 @@ describe("newEntryKey", () => {
       newEntryKey("expense"),
       newEntryKey("income"),
       newEntryKey("transfer"),
-      newEntryKey("transfer", { from: "a", to: "b", amount: 500 }),
-      newEntryKey("transfer", { from: "a", to: "b", amount: 700 }),
-      newEntryKey("transfer", { from: "b", to: "a", amount: 500 }),
       // The tip screen's named expense: a "+" left half-filled must not be
       // what the donation link lands on.
       newEntryKey("expense", { title: "Coffee for bida" }),
       newEntryKey("expense", { title: "Something else" }),
     ];
-    // Settle-up used to land on whatever blank expense an abandoned "+" had
-    // left behind, which is this set collapsing.
+    // The tip screen used to land on whatever blank expense an abandoned "+"
+    // had left behind, which is this set collapsing.
     expect(new Set(keys).size).toBe(keys.length);
   });
 });

@@ -74,14 +74,11 @@ function EditEntryScreen() {
   // "can't remove this yet" list. Saving goes back there (lib/group-link.ts).
   const via = parseEntrySource(params.get("via"));
   const saveTo = groupId ? formParent(groupId, entryId, via) : "/";
-  // Settle-up hands a transfer its two sides, its amount in base units, and
-  // its note — so a blank "+" is the only way to reach a transfer untitled.
-  const prefill = {
-    from: params.get("from") ?? undefined,
-    to: params.get("to") ?? undefined,
-    amount: Number(params.get("amount") ?? "0"),
-    title: params.get("title") ?? undefined,
-  };
+  // A link may hand a new entry its name — the tip screen does, and settle-up
+  // did until it stopped opening this form at all (app/g/page.tsx). Nothing
+  // else is seeded from a query: a figure arriving by link is a figure nobody
+  // typed, which is exactly what settle-up's card is for.
+  const prefill = { title: params.get("title") ?? undefined };
 
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
@@ -273,24 +270,12 @@ function EditEntryScreen() {
     const blank = blankDraft(kind, me, base, data.members.map((m) => m.id));
     seedDraft(groupId, {
       ...blank,
-      // A name and an amount are things any caller may know — settle-up knows
-      // both, the tip screen knows only the name. The two sides are the
-      // transfer's alone, because no other kind has them.
       ...(prefill.title ? { description: prefill.title } : {}),
-      // The suggestion is already in the group's base currency, so it seeds
-      // the amount directly rather than going back through a rate.
-      ...(Number.isFinite(prefill.amount) && prefill.amount > 0
-        ? { amountText: minorToDecimalString(prefill.amount, base) } : {}),
-      ...(kind === "transfer" ? {
-        ...(prefill.from ? { fromMember: prefill.from } : {}),
-        ...(prefill.to ? { toMember: prefill.to } : {}),
-      } : {}),
     }, seedKey);
     // `prefill` is rebuilt each render; the query params behind it are what
     // actually change, and the draft is only ever seeded once per entry.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId, entryId, seedKey, wantedKind, prefill.from, prefill.to, prefill.amount, prefill.title,
-    data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
+  }, [groupId, entryId, seedKey, wantedKind, prefill.title, data.loading, data.group, data.members, data.me, data.expenses, data.settlements]);
 
   // Nothing is stored, so a reload or a closed tab loses what's typed. Let the
   // browser say so, the same way it does for any other half-filled form.
@@ -476,7 +461,7 @@ function EditEntryScreen() {
     const handoff = leavingReceipt
       ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, receiptExtras(draft), draft.currency)
       : null;
-    // "Reimbursement" is only ever typed in by settle up's prefill, never by
+    // "Reimbursement" is only ever written by settle up's card, never by
     // switching kind here. Leaving a transfer that still carries it hands the
     // next kind an empty field rather than a word about a transfer it no
     // longer is.

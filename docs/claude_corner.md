@@ -21,9 +21,10 @@ question you could have answered by looking at the screen wastes a turn, and one
 they would rather park gets "write this up somewhere" instead of an answer.
 
 Taste arrives as feel, not as spec. "The wrong vibe" is a real bug report;
-translate it into pixels, not a redlined mock. A breakage comes the same way —
-a screenshot, "sometimes", no console — and a repro matching that symptom is
-not yet the cause. "Redesign slightly" means what it then lists, "make it
+translate it into pixels, not a redlined mock, and answer with the screen
+photographed rather than described. A breakage comes the same way — a
+screenshot, "sometimes", no console — and a repro matching that symptom is not
+yet the cause. "Redesign slightly" means what it then lists, "make it
 slightly harder" means take the affordance away, not warn twice. Copy settles
 by ear, one word at a time: offer a version with the reason, then ship theirs.
 
@@ -39,10 +40,9 @@ one centring, one line-break at a time. Not churn: the method.
 
 It is *earnestness*. Writing the paragraph, adding the ADR, restating in prose
 what the code already enforces, leaving a note about what changed this session.
-It feels like diligence, and it is what the owner has had to undo most. The urge
-to document your own thoroughness is the one to resist: corrections here arrive
-as compression, thirty-two ADRs became eleven, and the instinct that gets
-praised is deleting.
+It feels like diligence, and it is what the owner has had to undo most. Resist
+documenting your own thoroughness: corrections here arrive as compression,
+thirty-two ADRs became eleven, and the instinct that gets praised is deleting.
 
 ## The vibe
 
@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "design it and show me a draft." Built it in the real app and
+  photographed it. Every note back was a subtraction: the sentence, the
+  avatars. Draw less than the card seems to need.
 - *2026-09-22* — "the numbers increment instead of restarting at 1." The
   comment defending the global count was right about uniqueness and wrong about
   the ask: keep the guarantee, as the fallback.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — Sent to snoop blind, I filed a 1,016.459 BHD bug that was my
   own keystroke. Driving a screen is not reading it: redo the gesture before
   believing what it shows you.
-- *2026-09-22* — "make the kebab menus friendlier. propose screenshots." The
-  ask named its own proof: the same menu photographed before and after. No
-  description of the change could have answered it.

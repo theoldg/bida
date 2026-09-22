@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
-  type Expense, type Member, type Settlement,
+  type Expense, type Member, type Settlement, type Transfer,
 } from "@bida/core";
 import { kindOf, myEffect } from "@/lib/entry-kind";
 import { Card, Eyebrow, signClass } from "@/components/bits";
@@ -21,7 +21,7 @@ import { LedgerInstall } from "@/components/install";
 import { Icon } from "@/components/icons";
 import { useLongPressMenu } from "@/components/long-press";
 import { copy } from "@/lib/copy";
-import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
+import { deleteExpense, deleteSettlement, recordSettlement } from "@/lib/db/commands";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money, plural } from "@/lib/format";
@@ -390,6 +390,9 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
  */
 function BalancesTab({ data }: { data: GroupData }) {
   const { group, members, balances, nameOf, me, transfers } = data;
+  // Which suggested payment is being confirmed, if any — the card is the only
+  // thing standing between a tap here and a write.
+  const [settling, setSettling] = useState<Transfer | undefined>(undefined);
   if (!group) return null;
   // **Everyone carrying a balance, not only everyone still in the group.** A
   // removed member with a position is precisely who you need to see, and
@@ -457,22 +460,77 @@ function BalancesTab({ data }: { data: GroupData }) {
           {transfers.map((t) => {
             const involvesMe = t.from === me || t.to === me;
             return (
-              <Link key={`${t.from}-${t.to}`}
-                href={route.transferBetween(group.id, t.from, t.to, t.amountMinor, copy.form.reimbursement)}
+              <button key={`${t.from}-${t.to}`} type="button"
+                onClick={() => setSettling(t)}
                 className={`card${involvesMe ? " mine" : ""}`}
-                style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px", position: "relative" }}>
+                style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px",
+                  position: "relative", width: "100%", textAlign: "left" }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.from)}</span>
                 <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.to)}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>
-              </Link>
+              </button>
             );
           })}
         </div>
       </div>
       <div style={{ height: 24 }} />
+
+      {settling && me ? (
+        <SettleDialog t={settling} groupId={group.id} actor={me} base={group.baseCurrency}
+          nameOf={nameOf} onClose={() => setSettling(undefined)} />
+      ) : null}
     </Scroll>
+  );
+}
+
+/**
+ * What a suggested payment opens: the row again, enlarged, and two buttons.
+ *
+ * The form it used to open had both sides, the amount and the title already
+ * filled — a whole screen of fields asking you to agree with arithmetic you
+ * cannot improve, with the real question ("did this actually happen?") nowhere
+ * on it. So nothing here is editable, and nothing is here that isn't the
+ * payment: two names, an arrow and a figure are the whole of what Record
+ * writes, and a card that says it twice is a card that doubts itself. A payment
+ * that wasn't quite this one is an entry like any other — the ledger's "+", or
+ * an edit afterwards.
+ */
+function SettleDialog({ t, groupId, actor, base, nameOf, onClose }: {
+  t: Transfer;
+  groupId: string; actor: string; base: string;
+  nameOf: (id: string) => string;
+  onClose: () => void;
+}) {
+  const from = nameOf(t.from);
+  const to = nameOf(t.to);
+  return (
+    <ConfirmDialog title={copy.group.recordTitle} confirm={copy.act.record}
+      onConfirm={async () => {
+        await recordSettlement(groupId, actor, {
+          fromMember: t.from,
+          toMember: t.to,
+          amountMinor: t.amountMinor,
+          currency: base,
+          // The suggestion is already in the group's own currency, so there is
+          // no rate to ask for and none to apply.
+          rateToBase: "1",
+          occurredAt: Date.now(),
+          note: copy.form.reimbursement,
+        });
+        onClose();
+      }}
+      onClose={onClose}>
+      <div className="settle">
+        <div className="settleflow">
+          <span className="settlename">{from}</span>
+          <Icon name="arrow" size={18} className="settlearrow" />
+          <span className="settlename">{to}</span>
+        </div>
+        <div className="bignum settleamt">{money(t.amountMinor, base)}</div>
+      </div>
+    </ConfirmDialog>
   );
 }

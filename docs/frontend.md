@@ -20,7 +20,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
-| `/g?id=[&tab=]` | The group: ledger / balances tabs — back from balances is the ledger, not the groups list, since the two tabs are one screen. Settling lives under the balances; the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
+| `/g?id=[&tab=]` | The group: ledger / balances tabs — back from balances is the ledger, not the groups list, since the two tabs are one screen. Settling lives under the balances, and a suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`, `app/g/page.tsx`); the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
 | `/g/scan?id=` | Scan first, decide after: a drawing of what a photo becomes, and the control that takes one, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
@@ -97,7 +97,7 @@ fix**: on `/new` and `/quick` it costs what was typed, and a page that could
 refuse indefinitely is the trap the metering exists to prevent. Any tap in the
 page refills it. An
 entry is the one screen whose parent isn't fixed: the history feed, the two
-"can't remove this yet" lists and the balances tab's settle-up rows link in from
+"can't remove this yet" lists and the balances tab's tip jar link in from
 beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back
 there instead of to the group. The entry form carries the same `via` — through
 who-had-what and back — so **saving** unwinds to wherever the form was opened

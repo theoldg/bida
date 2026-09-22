@@ -37,10 +37,7 @@ describe("where saving the entry form goes", () => {
     expect(formParent("g1", "x1", undefined)).toBe(route.entry("g1", "x1"));
   });
 
-  it("is the balances tab when settle up opened the form", () => {
-    expect(route.transferBetween("g1", "a", "b", 500, "Reimbursement"))
-      .toBe("/g/entry/edit?id=g1&kind=transfer&via=balances"
-        + "&from=a&to=b&amount=500&title=Reimbursement");
+  it("is the balances tab for a form the balances tab opened", () => {
     expect(formParent("g1", undefined, "balances")).toBe(route.group("g1", "balances"));
   });
 
