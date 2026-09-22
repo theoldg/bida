@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — I argued a hamburger would collide with "the menu one
+  thumb away". That menu is a kebab. Check the app for the shape you say
+  collides before arguing from convention.
 - *2026-09-22* — "use some nonsense star wars language" for the demo receipt.
   The feature was built and checked; what it still lacked was a bill anyone
   would ever press the button on.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Asked to explain one bug, I led with the more interesting
   concept next door, and had to be asked twice what it had to do with the
   symptom. Catch them up on the bug they have.
-- *2026-09-21* — "the lock and messenger link are resolved": two watches closed
-  on a phone I cannot see, and one of them hid a line still marked unfixed. Ask
-  what resolved covers before deleting it.
