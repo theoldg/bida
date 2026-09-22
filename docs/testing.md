@@ -211,25 +211,28 @@ Chromium is at `/opt/pw-browsers/chromium` (override with `CHROMIUM_PATH`);
 `scripts/readme-shots.mjs` walks the same UI with the opposite brief. `shots`
 leans on states worth catching — a split that doesn't add up, a payer who
 overpaid, a server that can't be reached; a stranger deciding whether to open
-the app should see none of those, so this one seeds a trip that adds up in
-prices a person might actually pay, and photographs two rows of three: the app
-a Tricount user already expects (ledger, balances, adding an expense) over the
-part they came for (a scan mid-read, the who-had-what grid, and the saved
-expense read back line by line).
+the app should see none of those, so this one photographs two rows of three:
+the app a Tricount user already expects (ledger, balances, adding an expense)
+over the part they came for (a scan mid-read, the who-had-what grid, and the
+saved expense read back line by line).
+
+**The group in them is the demo** (`core/src/demo.ts`), the one `/demo` lays
+down for a visitor — written to give every screen something to say, which is
+what six screenshots need, and the README then shows what the front page's
+button actually opens. Its entity ids are constants, so the cantina tab is
+addressable (`demo-cantina`) rather than something to hunt for; the grid is
+still reached through the entry form, because it reads a draft and a draft
+lives in memory.
 
 The scan's bar is a CSS animation on a wall clock, so `waitForTimeout` would
 photograph a different fraction on every machine: the request is routed into a
 hole and the animation is paused at a fixed progress instead (`freezeScanBar`).
-The two after it need a scan that *answers*, which is `stubScan` and the same
-canned bill `pnpm drive` uses.
 
-Two differences that are the whole reason it is a second script:
+Two things worth knowing:
 
-- **It serves the real Worker** (`serveWorker`), not the export. Against a
-  static server every push 404s and the ledger wears "Can't reach the server",
-  which is the first thing a reader would see. That costs ~10s of `wrangler
-  dev` boot, and `settled()` waits for the banner to be gone rather than for a
-  timeout.
+- **`DemoCard` is removed before the ledger shot.** It says "Demo group: not
+  synced" and never dismisses, which is right in the demo and the opposite of
+  the pitch when it sits in the README. The fact is the demo's, not the app's.
 - **Its output is committed.** `shots/` is gitignored, so a README cannot point
   at it; `docs/media/` is not. Re-run and commit what moves when one of the
   six screens changes.
