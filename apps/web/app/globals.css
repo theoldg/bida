@@ -1466,15 +1466,23 @@ dialog.scrim::backdrop { background: transparent }
    tap that closes it. `left`/`top` are set from JS: the card hangs off the
    pressed row's bottom right corner, not off the point pressed. */
 .rowmenu-veil { position: fixed; inset: 0; z-index: 5 }
-.rowmenu { position: fixed; z-index: 6; min-width: 168px; max-width: calc(100vw - 24px);
+.rowmenu { position: fixed; z-index: 6; min-width: 188px; max-width: calc(100vw - 24px);
   background: var(--card);
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
-  padding: 4px; animation: fadein .1s ease-out }
-/* 12px of vertical padding, not 9: at 13.5px over 1.5 the row was 38px tall,
-   under the 44px a finger is measured against, and a menu of them read as a
-   list squeezed into a card. */
-.rowmenu-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-  padding: 12px 10px; border-radius: var(--r-s); font-size: 13.5px; font-weight: 600 }
+  padding: 5px; animation: fadein .1s ease-out }
+/* 13px of vertical padding over 14.5px text: the row is ~48px, clear of the
+   44px a finger is measured against. It was 12 over 13.5 — which cleared it by
+   a hair and read as a list squeezed into a card, next to the phone's own
+   menus. This is a handful of items opened one at a time, not a list to
+   scroll: the room costs nothing and the labels are the whole point. */
+.rowmenu-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 13px 12px; border-radius: var(--r-s); font-size: 14.5px; font-weight: 600 }
+/* A hairline between items, inset by the card's padding so it reads as a fold
+   in the card rather than a line drawn across it. `--rule-soft`, not `--rule`:
+   it is there to keep a finger from reading six labels as one block, not to
+   fence them off — and the last of them is usually the destructive one, which
+   this gives its own edge for free. */
+.rowmenu-item + .rowmenu-item { border-top: 1px solid var(--rule-soft) }
 /* `.rowmenu-hot` is the same wash under a finger that slid onto the item from
    the hold that opened the card without lifting (components/long-press.tsx) —
    that touch belongs to the row, so `:active` never reaches here. */

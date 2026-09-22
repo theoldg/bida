@@ -353,6 +353,16 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-add-member.png`) });
       process.stdout.write(`${theme}/add-member `);
 
+      // The group's kebab, open: the menu card carrying as many items as it
+      // ever holds, a destructive one last. The groups list's is the same card
+      // with two rows on it, so this is the shot that shows the whole of it.
+      await page.goto(`${base}/g?id=${groupId}`);
+      await page.getByRole("button", { name: "Group menu" }).click();
+      await page.waitForSelector(".rowmenu");
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: join(SHOTS, `${theme}-group-menu.png`) });
+      process.stdout.write(`${theme}/group-menu `);
+
       // Forgetting lives only in the groups list's row menu, so the shot goes
       // through it: a right click opens the menu, and the confirmation is the
       // dialog this app draws in place of confirm() (ADR-0008).

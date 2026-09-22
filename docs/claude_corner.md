@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "make the kebab menus friendlier. propose screenshots." The
+  ask named its own proof: the same menu photographed before and after. No
+  description of the change could have answered it.
 - *2026-09-22* — "Let's workshop the fine print first." One line took four
   rounds; the screen under it took one pass. Their version of my sentence was
   shorter every time.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "drop the minus, it's already red and says you owe". The same
   reason took the plus with it. Ask whether the argument is symmetric before
   fixing only the half you were handed.
-- *2026-09-21* — "figure it out, other online tools manage it." They were
-  telling me where the answer was, not that I was clever. Three published
-  clients had the protocol; reasoning had none of it.

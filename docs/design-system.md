@@ -399,7 +399,9 @@ reads as an ordinary assignment.
    The hold's own finger may slide onto an item and let go rather than lift
    and tap again, as it may in the menus the phone draws itself. A top bar
    whose actions outgrow it opens that same card from a button instead
-   (`MenuButton`), so the app has one menu and not two.
+   (`MenuButton`), so the app has one menu and not two. The card is drawn for a
+   thumb: ~48px rows under a 14.5px label, parted by a `--rule-soft` hairline so
+   six actions read as six rather than as a block.
    Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is

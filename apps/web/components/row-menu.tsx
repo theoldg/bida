@@ -171,7 +171,7 @@ export function RowMenu({ anchor, actions, onClose }: {
             onPointerCancel={() => { finger.current = -1; }}
             onClick={() => choose(a)}>
             {a.icon
-              ? <Icon name={a.icon} size={15} style={a.danger ? { color: "var(--debit)" } : undefined} />
+              ? <Icon name={a.icon} size={17} style={a.danger ? { color: "var(--debit)" } : undefined} />
               : null}
             <span style={a.danger ? { color: "var(--debit)" } : undefined}>{a.label}</span>
           </button>

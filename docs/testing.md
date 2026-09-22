@@ -194,10 +194,11 @@ instruction, [standing-instructions](standing-instructions.md#workflow).
    *for*); the edit gives history a revision that isn't a create. It buys a
    harness that fails loudly when a screen it isn't even photographing breaks.
 3. **Walks the routes in both themes** via two `newContext()`s with
-   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Fourteen scenes have no URL
+   `colorScheme` set, 390×844 at `deviceScaleFactor: 2`. Fifteen scenes have no URL
    worth visiting and are reached by driving instead: five dialogs (add member,
    forget group — from the groups list's row menu — delete entry, a transfer
-   side's person picker, and the rate editor), `who-had-what` twice, `expense-split-amounts` (a deliberate
+   side's person picker, and the rate editor), the group's kebab open — the one
+   shot of the menu card carrying a full set of items — `who-had-what` twice, `expense-split-amounts` (a deliberate
    shortfall), `payers`, and the three of a quick split (people, grid, answer)
    — every one of them hangs off an in-memory draft, so its own URL
    photographs an empty frame.
