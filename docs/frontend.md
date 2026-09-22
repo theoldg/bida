@@ -32,50 +32,45 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on. In an iOS tab, a card under it holds the link to paste into the home-screen app (`UseInApp`, [ios.md](ios.md#gclaim--have-the-app)) |
 | `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): the drawing of what a scan becomes, who is splitting, and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
-| `/demo` | The demo group: creates it, or reopens the one already on the phone, and `replace`s into its ledger. Idempotent because its id is the constant `DEMO_GROUP_ID` (`core/demo.ts`), so arriving twice reopens one group rather than stacking copies — except across releases: `demoStamp()` fingerprints the seed itself, and a phone holding an older build's is erased and re-seeded, since the demo is this version's pitch and not a group anybody keeps. **Linked from nowhere in the app** — not the empty groups list, not a start tile, not `/about`, not the README: the demo is a group somebody sends you to, and a door inside the app would make it a feature of the app instead. Inside, it is an ordinary group with four differences, all of them consequences of having no key ([sync.md](sync.md#the-demo-group-has-no-key)): a mark at the head of its ledger that neither folds nor dismisses (`components/demo.tsx`), **no install offer under that mark** ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)), **Copy invite link** refusing out loud instead of going missing — the link genuinely does not exist — and **Clear the demo** in place of Forget group, which calls `eraseGroupLocally` rather than `forgetGroup`, since a hidden demo with no link to reopen it is a group that is gone and still on disk. Clearing is therefore the reset: the ops go, the entries you added go with them, and the address lays the shipped story down again rather than handing back the one you played with — which its dialog says in as many words, writing the address out for somebody to visit. The host in it comes from `useHost`, since a static export cannot know which server it is being read from Scanning, export and the tip jar are all allowed and all work ([product.md](product.md#the-mvp)) — the camera on this phone's own scan credential rather than the key it hasn't got (`useScanAs`, [sync.md](sync.md#the-demo-group-has-no-key)) |
-| `/about` | The source link first, then who can edit, whether it works offline, where to complain, what the server can see, and the one disclaimer the hosted service has: a one-person project that cannot guarantee it lasts and cannot restore a lost link, which is why it reads after the sealed row rather than before it. The one screen the app spends on itself, off the quiet line at the foot of the groups list. No pitch: whoever is here already has the app. One client island in an otherwise static page — the whole of "Works offline" (`AboutOffline`, the same `lib/install.ts` state as the nudge on the groups list), because the sentence itself changes once the phone already did it, not just the offer under it. Privacy *shows* one stored row rather than asserting anything, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) and changes in the same commit as that does. Its two exceptions — a receipt photo, and the Tricount fetch — are repeated here, but the copy that has to be read is `copy.scan.terms` and `copy.importData.fineprint`, on the screens that do those things. The build's version sits in the top bar's far corner as `v0.1.3`, out of the prose entirely, since this is the screen somebody is told to look at ([hosting.md](hosting.md#versions)) |
+| `/demo` | The demo group: creates it, or reopens the one on the phone, and `replace`s into its ledger. Idempotent because its id is the constant `DEMO_GROUP_ID` (`core/demo.ts`); `demoStamp()` fingerprints the seed, so an older build's demo is erased and re-seeded. **Linked from nowhere in the app** — it is a group somebody sends you to. It differs from an ordinary group only where it has no key ([sync.md](sync.md#the-demo-group-has-no-key)): a permanent mark atop the ledger (`components/demo.tsx`), **no install offer** under it ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)), **Copy invite link** refusing out loud, and **Clear the demo** in place of Forget group — `eraseGroupLocally`, not `forgetGroup`, since a hidden demo with no link is dead data; its dialog prints the address (`useHost`) that re-seeds it. Scanning, export and the tip jar all work ([product.md](product.md#the-mvp)) — the camera on this phone's own scan credential (`useScanAs`) |
+| `/about` | Source link, who can edit, offline, where to complain, what the server can see, and the hosted service's one disclaimer (a one-person project that cannot restore a lost link). Off the quiet line at the foot of the groups list; no pitch. "Works offline" is its one client island (`AboutOffline`, `lib/install.ts`). Privacy *shows* one stored row, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) — change it in the same commit as that. Its two exceptions (receipt photo, Tricount fetch) are repeated here, but the binding copy is `copy.scan.terms` and `copy.importData.fineprint`. The build's version sits in the top bar's corner ([hosting.md](hosting.md#versions)) |
 | `/g/export?id=` | The group as a spreadsheet, in text, for a browser that cannot hand over a file — `/diag`'s layout, because it is the same act. Reached only from the last rung of `lib/export.ts`; it rebuilds the CSV itself rather than being handed it, since a route cannot carry a file and a readout that empties on reload is the drawer state [ADR-0007](decisions/0007-a-screen-is-a-route.md) removed. Being an ordinary route it can also just be opened, so the sentence over the text asks `fileHandoff()` rather than asserting that this browser can't save one ([below](#getting-a-group-off-the-phone)) |
 | `/import` | A Splitwise (or bida) CSV as a **new** group ([below](#bringing-a-group-onto-the-phone)). Off the groups list's kebab, not from inside a group: what it makes *is* a group, and merging a file into one that already has entries would mean deciding which row is which entry, which the file carries no ids to decide. Pick a file or paste a Tricount link, read, look at the plan, then the `/g/claim` picker over the source's own people — with no add row, since a name with no column in the file has no balance to be |
 | `/delete-my-data` | Deleting a whole group from the server, for everybody in it ([below](#deleting-a-group)). Linked from nowhere: `/about` prints the address for somebody to type, which is the first of this screen's frictions. It is the address somebody reaches for anyway when they want a service to forget them |
 | `/diag` | The flight recorder's readout. Linked from nowhere — long-press the app's name on the groups list ([below](#the-flight-recorder-and-diag)) |
-| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). Everything else is the waiting screen, and it is in the static export: the wordmark and *Joining…* from first byte, since an invite link is the only way onto this route. Only the body — *finishes by itself once the other phone syncs* — waits for the key, being a promise about a link nothing has read yet. It used to prerender a bare bar and a back arrow, which is what a stranger saw until the bundle landed |
+| `/join#<groupId>.<secret>` | Invite landing: saves the secret, pulls, then hands the group to `/`, which pushes it (`handOverToGroup`, `lib/launch.ts`) — a link tapped in a chat opens a browser one history entry deep, so this screen gives its entry to the groups list rather than to the group, and the device's back button climbs the app instead of leaving for the chat. A phone that has never said who it is goes on to `/g/claim` — but by `useClaimGate` below, not by this screen, so the same link opened again by someone already in the group just opens it. A fragment with a group id and no secret — and any `/g` screen for a group this phone doesn't hold — shows `KeylessLink` instead of "Bad link": that is the browser bar's address, so it says so and draws the group menu with "Copy invite link" lit. Both failures share its layout and print the link they are about — what was pasted, if it came by **Paste link** (`lib/failed-link.ts`). Everything else is the waiting screen, prerendered in the static export (wordmark and *Joining…* from first byte); only its body waits for the key |
 | `/install` | iOS only: why the home-screen app, and how. Also where the icon first opens, taking in the groups and names it carries. Off the iOS tab's banner, atop the groups list or a group's ledger |
 
 **Every `/g` route requires a claimed identity**, via `useClaimGate`
 (`lib/hooks.ts`), which sends a phone that hasn't answered "who are you" to
 `/g/claim`. An unclaimed device has no honest `actor` to sign an op with, and
 every screen under `/g` writes one — so it is an illegal state, not a case to
-accommodate. It used to be gated on `/g` alone, and the rest are reachable
-without passing through it (a bookmark, the join flow's back arrow, a link
-beside a settle-up row): People then offered a trash button on every name, and
-the removal it wrote was signed by the person being removed.
+accommodate. Gate every `/g` route, not just `/g`: the others are reachable
+directly (a bookmark, a back arrow, a settle-up link), and an ungated one signs
+ops as nobody.
 
 **Every `/g` route validates its id.** They all read the group out of the query
 string, and a link naming a group this phone doesn't have — a stale bookmark, a
-URL shared to somebody who never joined — used to leave the sub-screens holding
-a back arrow and nothing else, or spinning forever on `useGroupData(undefined)`.
-Each, `/g` included, renders `BadLink` (`components/chrome.tsx`), which says
+URL shared to somebody who never joined — must not spin forever on
+`useGroupData(undefined)`. Each, `/g` included, renders `BadLink` (`components/chrome.tsx`), which says
 what a proper invite link is, under a bar with no title. `pnpm rules` fails a
 `/g` page that renders none: `data.group` is `undefined` while the read is in
 flight and again when there is no such group, so a screen that forgets to ask
-which of the two it has is a blank that never fills — `/g/claim` and
-`/g/entry/items` both were.
+which of the two it has is a blank that never fills.
 
 **A screen whose draft has gone hands back rather than waiting.** The entry
 form's two detours — `/g/payers` and `/g/entry/items` — edit one side of a
 draft that lives in memory and nowhere else (`lib/draft.ts`), so a reload, a
 bookmark or a forward press onto an entry already saved arrives with nothing
 to edit. Each `replace`s to the group's ledger, where the form was opened
-from, as the quick split's own two screens do to `/quick`. Waiting was a
-titled blank over a back arrow that a cold load has nowhere to take.
+from, as the quick split's own two screens do to `/quick`.
 
 **A path that is no route** gets `app/not-found.tsx` — the export's
 `out/404.html`, which is what the Worker serves for anything it hasn't got
 (`not_found_handling`, `apps/api/wrangler.toml`). It says `BadLinkNotice`, the
 same sentence `/join` says about a link that opens nothing, over a bar back to
 the groups list: this app is pasted links, and a chat client wrapping a long
-one so half of it arrives is the ordinary way here. Next's own 404 was a
-system-font white page with no way back into the app.
+one so half of it arrives is the ordinary way here.
 
 **Back goes up, not back.** A screen's `back` is one of two things and the
 device's button agrees with both (`lib/back-button.ts`,
@@ -115,14 +110,12 @@ confers nothing without the secret.
   `useLiveQuery` directly (`pnpm run rules` fails one) — see
   [A live read can die](#a-live-read-can-die).
   No Redux, no Zustand, no server-state library; adding one is an ADR.
-  `undefined` from a live read means *not answered yet*, not *empty* — the two
-  used to render the same blank. A list screen shows `SkeletonRows` in that
+  `undefined` from a live read means *not answered yet*, not *empty*. A list screen shows `SkeletonRows` in that
   window and its empty state only once the read has answered.
 - Writes go through `lib/db/commands/` — one function per user intent, each
   building an op, appending it and materialising it in one transaction
   (`append.ts`). **Components never write to Dexie directly.** The rule that an
-  op carries only what changed is `patch.ts`, once, for both entry editors: it
-  was written out at each of them and the two copies drifted.
+  op carries only what changed is `patch.ts`, once, for both entry editors.
 - Device-local, never-synced state (who "you" are, theme, whether the install
   nudge is folded, the last group opened, and the scan credential a quick split
   photographs with — [ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
@@ -130,8 +123,7 @@ confers nothing without the secret.
   `lastOpenedGroupId`, which `/g` sets on every visit (`setLastOpenedGroup`):
   `/new` defaults a fresh group's currency to that group's rather than always
   EUR, and `/` reopens the group itself on a launch (`lib/launch.ts`) — nearly
-  everyone is in one group at a time, and the list was a screen passed through
-  on the way to it. A *launch* and not every arrival: the back arrow out of a
+  everyone is in one group at a time. A *launch* and not every arrival: the back arrow out of a
   group must not be turned around, so the resume happens once per running copy
   of the app (a module flag), only on a fresh `navigate` — never on a reload or
   a back/forward traversal — and only where the document itself loaded on `/`
@@ -162,16 +154,14 @@ confers nothing without the secret.
   answer — something leaving throws away
   ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
   **What the entry is worth is `draftAmountMinor` and nowhere else** — a
-  scanned bill is worth what its lines add up to, and the payers editor
-  reading `amountText` on its own is how it came to call one €0.00. With no
+  scanned bill is worth what its lines add up to, whatever `amountText` says. With no
   amount at all the door onto that screen doesn't open: there is nothing to
   divide between payers, so the tap reddens the amount field instead — the
   same red Save gives it, held until something asks for it.
 - **A draft carries the id its entry will be written under** (`newEntryId`,
   read through `splitSeed`). The leftover minor unit goes by `tiebreakSeed`,
-  which is the entry's id — so a form pricing its rows under a placeholder
-  showed the cent on one person's row and wrote it to another's, an arithmetic
-  right both times that still disagreed with the screen that asked. `addExpense`
+  which is the entry's id — so a form pricing its rows under a placeholder id
+  shows the cent on one row and writes it to another. `addExpense`
   takes the id rather than minting one. `pnpm entries` holds it.
 - **Each split tab is its own input** (`SplitInputs`, ADR-0010): the editor
   draws and edits the tab showing, `openSplitTab` is the one place a newly
@@ -188,26 +178,20 @@ confers nothing without the secret.
   screen to mount. The form reads its answers and writes none of them.
 - **Save is the last row of the form, and the kind is the top of it.** One
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
-  screen has exactly one act and an underlined word in the corner read as
-  optional; a save failure is said above it. The kind chip moved
-  the other way, onto the top bar — centred on the bar itself (`TopBar`'s `mid`
-  slot), not wedged between the title and the edge, which is what the `capped`
-  title is for — and gives the amount the space it used to float over.
+  screen has exactly one act; a save failure is said above it. The kind chip is
+  centred on the top bar (`TopBar`'s `mid` slot, beside a `capped` title).
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
-  A grey button gave no reason for the two gaps every empty form starts in —
-  no amount, no title — and a structural one (`blocker`: a missing rate, a
-  removed member, an unbalanced payer split) used to render the moment it
-  became true, before the user had done anything to earn a red line. Tapping
+  A grey button gives no reason, and a red line before any tap is unearned.
+  Tapping
   Save while `!checkEntry(...).ready` sets the form's own `attemptedSave`
   instead of saving; every red state is gated on it, so a fresh screen shows
   none of them. `amountMissing`/`titleMissing` *flash* their field red rather
   than adding a caption — a word doesn't fit next to the hero figure and reads
   oddly in a number field — counted per field so a repeat refusal replays
   ([design-system.md](design-system.md#a-dialog-is-ours-and-its-button-says-the-act)).
-  That flash is the only thing that reports a missing amount: the split editor
-  used to answer "Enter an amount to split" in its footer, which was the same
-  fact in a second place, and `splitFooter` now returns `null` for a zero
-  total. `blocker` is a sentence about a relationship the form can't fix by
+  That flash is the only thing that reports a missing amount — `splitFooter`
+  returns `null` for a zero total. `blocker` (a missing rate, a removed member,
+  an unbalanced payer split) is a sentence about a relationship the form can't fix by
   typing into the field it's next to, so it keeps its spot above the split
   editor, behind the same flag; `receiptBlocker` stays in the split's footer,
   its "Scan a receipt" half behind the flag for the same reason — an untouched
@@ -216,14 +200,12 @@ confers nothing without the secret.
   is focused or scrolled to: the form is one screen.
 - **A press already spending the draft is the form's own `saving` flag.**
   `checkEntry` answers whether the entry *may* be saved, which is a question
-  about the form and not about whether a save is in flight — so two taps landing
-  before `router.replace` did both went through, recording a transfer twice for
-  twice the money. Every other button in the app that writes already held one.
-  `pnpm entries` presses Save twice.
+  about the form, not whether a save is in flight; without the flag a double
+  tap before `router.replace` records the entry twice. `pnpm entries` presses
+  Save twice.
 - **The invite link is `components/invite.tsx`**, written once for the People
   screen's top bar, the groups list's row menu and the group's own menu. `navigator.clipboard.writeText` rejects on an insecure
-  context or a denied permission, and used to reject into nothing — an
-  inert-looking button, and the link shown nowhere else. A refusal puts the
+  context or a denied permission; a refusal puts the
   link on screen to be read (`InviteFallback`,
   [ADR-0003](decisions/0003-link-only-access.md)). A copy that works says so
   where it was asked for, and **all three places run the same flip**: the thing
@@ -239,8 +221,7 @@ confers nothing without the secret.
   across a whole line (`FlipLabel`, `.flipcheck.line`). A transition and not
   the swap's keyframes, because this reverses itself a second and a half later when
   `invite.copied` lapses and a class going away replays no animation — which is
-  also why both faces stay drawn. Without any of it the one action in the app
-  with no visible result had no result at all.
+  also why both faces stay drawn.
 - **The confirm key hands the caret on, or folds the keyboard.** A phone
   keyboard's bottom-right key is whatever `enterKeyHint` names it, and the word
   it wears is a promise — so `"next"` is both the opt-in and the instruction,
@@ -339,11 +320,10 @@ confers nothing without the secret.
   **total** — it runs inside a render over every patch the log holds, so one
   throw is a white screen, not a missing line. People are listed **by name**,
   not in the order they are stored: an id is a hash of the name (ADR-0034), so
-  sorting by it put a was/now pair in two unrelated orders.
+  sorting by it puts a was/now pair in two unrelated orders.
 - **The history screen reads the deleted entries too.** Both its subject links
   and its title come from maps built over every entry the group has ever had —
-  half the reason to open it is one that is gone, and the alive-only lists
-  titled every one of those "Transfer".
+  half the reason to open it is one that is gone.
 
 ## A live read can die
 
@@ -355,8 +335,7 @@ in-flight IndexedDB transactions are aborted; Chrome force-closes the
 connection under storage pressure. Either way nothing is emitted — no value, no
 error — and the subscription is then **dead**: the querier is never run again,
 not even by a write to the table it reads. A screen reads "no value yet" as
-"still loading", so the app sat on its skeleton rows until it was killed and
-relaunched, silently.
+"still loading", so the app sits on its skeleton rows until relaunched.
 
 `lib/db/live.ts` is why **every live read goes through `useLive`**. A dead
 subscription cannot be revived, so three things make a new one: the connection
@@ -369,26 +348,21 @@ own, because `indexedDB.open` has no timeout and Dexie's handler only logs.
 **A read can also be alive and queued.** An IndexedDB lock belongs to the
 origin, not to the page: a readwrite transaction that another copy of the app
 (a forgotten tab, a window left behind by an update) was frozen half way
-through holds it, and every read of those stores waits, in every copy — the
-owner's `/diag` showed reads hanging at once and clearing in the same
-millisecond a minute later.
+through holds it, and every read of those stores waits, in every copy.
 
 **The lock is per store, and that is the whole diagnosis.** Which reads hang
 names the transaction holding it, because no two writes here take the same
 scope: `device` alone is `updateDevice`, `ops`+`groupKeys`+`device` is the sync
 commit, every entity table is `rebuild`, and all of it at once is `appendOps`.
-A Brave hang read as "the database is held" was one `updateDevice`: the groups
-list sat on skeleton rows while the op log beside it counted fine, because
-every list and group screen reads `device` and nothing else was locked.
-`/diag`'s `stores:` line says which answer, so the next one is a line rather
-than a cross-reading.
+A groups list on skeleton rows while the op log counts fine is an
+`updateDevice` lock: every list and group screen reads `device`. `/diag`'s
+`stores:` line names which stores are waiting.
 
 No page can break another's lock, so three things limit it. **A hidden copy
 touches the database at all** — neither half, because either one frozen
 mid-transaction strands a lock the whole origin then queues behind.
 
-*Writes* wait for the front: `whenVisible` in `lib/db/visible.ts`, which the
-sync commit already used and `updateDevice` did not. What must *not* wait is a
+*Writes* wait for the front: `whenVisible` in `lib/db/visible.ts`. What must *not* wait is a
 write holding something that exists nowhere else: `saveGroupKey` stores an
 invite's secret, and a tab killed while parked would lose the group.
 
@@ -417,16 +391,13 @@ own. `/diag`'s `copies:` line names every copy the service worker can see, and
 whether it is hidden.
 
 `ReadErrorBoundary` (app/layout.tsx) catches the rest. `dexie-react-hooks`
-reports a failed read by throwing during render, and the app had no boundary at
-all, so every error `liveQuery` did *not* swallow took the tree to a white
-screen.
+reports a failed read by throwing during render; without a boundary every error
+`liveQuery` does *not* swallow is a white screen.
 
 **A querier must never resolve `undefined`.** That is the one value `useLive`
 cannot read, because it is how `useLiveQuery` says "no answer yet": a read that
-legitimately has nothing to report has to say `null`. `useGroupSecret` returned
-the key row's secret straight, so a group with no key row — which the demo is,
-permanently — was a read that never answered, and "Still reading this phone's
-data…" stood over a ledger that had drawn twelve seconds earlier.
+legitimately has nothing to report has to say `null` — a group with no key row
+(the demo, permanently) would otherwise be a read that never answers.
 `pnpm demo` waits out the watchdog to hold that one.
 
 `pnpm stall` drives both halves in a browser; `lib/db/live.test.ts` pins the
@@ -436,25 +407,19 @@ Dexie behaviour itself, so an upgrade that fixes it tells us.
 
 **Import a group**, in the groups list's kebab above About, is the other
 direction: somebody else's ledger read into a new group. The kebab is the whole
-of the entry point — an empty list carried a line offering it for a session, and
-a screen whose one act is already "new group" does not want a second pitch on it.
+of the entry point.
 
 **Two sources, one readout.** A CSV in the shape
 [data-model.md](data-model.md#the-group-as-a-spreadsheet) describes, chosen as
 a file — or **a Tricount link**, fetched. Both land in the same `ImportPlan`,
-and past that moment the screen cannot tell which it was. Pasting the CSV as
-text is no longer one of them: that box was there for a browser with no file
-picker worth using, and on the phones that turn up the picker works — leaving
-four lines of somebody else's spreadsheet sitting above the link most people
-came to paste.
+and past that moment the screen cannot tell which it was. There is no box to
+paste CSV text into.
 
 **Three steps, and the source is read on the first.** Pick or fetch, look at
 what was found, say which of those people you are. Reading writes
 nothing — `core/import.ts` and `core/tricount.ts` both hand back a plan — so
 the people, the currency, the counts and the rows that will be left out are all
-on screen before an op exists. The alternative was a button that made a group
-and then reported how it went, which is the wrong order for the only question
-anybody has here. Once a plan is up it is the screen, and the two ways in
+on screen before an op exists. Once a plan is up it is the screen, and the two ways in
 collapse to one button back to them, with what was typed still in place.
 
 **Fetching a link says what it costs, under the button.** *Sent through bida's
@@ -502,18 +467,16 @@ end the group, and asking for it means the screen works from a phone that was
 never in that group.
 
 The link is used to pull the whole log and open it, so what stands on screen
-before the button is the real group, named, counted and dated rather than an id
-nobody can read (`lib/db/erase.ts`). Then four frictions, in a codebase whose
-every other screen removes them: typing the address to get here, finding the
-link, typing the group's name, and a dialog that names the group again. What is deleted is the server's copy, for
-everybody, plus this phone's.
+before the button is the real group, named, counted and dated
+(`lib/db/erase.ts`). Then four deliberate frictions: typing the address to get
+here, finding the link, typing the group's name, and a dialog that names the
+group again. What is deleted is the server's copy, for everybody, plus this
+phone's.
 
 **The other phones learn from the 410.** Their next sync erases the group there
 too and drops it off their list, wherever the app happened to be standing; the
 group screen and `/join` say it was deleted, and `/g/claim` sends them back to
-the list ([sync.md](sync.md#deleting-a-group)). "Deleted for everybody" would
-otherwise mean "deleted for whoever pressed it", with four phones still holding
-the ledger and syncing against nothing.
+the list ([sync.md](sync.md#deleting-a-group)).
 
 **Not linked from anywhere.** A screen whose job is deleting other people's
 data has no business one tap from a ledger, so `/about` writes the address out
@@ -528,11 +491,8 @@ Splitwise's export shape — the only format anything else imports, Tricount
 included, whose import *is* "import from Splitwise". The file is
 `core/export.ts`; `lib/export.ts` is the part with a platform in it.
 
-There is no format question and no JSON. The choice was a dialog for a while
-in the planning and it earned nothing: "CSV or JSON" names two file types
-rather than two things a person wants, and a data dump is what `/diag`
-already is for. `application/json` is also not a shareable file type, so the
-export a person actually wants is the one the share sheet will carry.
+There is no format question and no JSON: a data dump is what `/diag` is for,
+and `application/json` is not a file type the share sheet carries.
 
 **Three rungs, and only *unavailability* descends** (`handoffPlan`, taking its
 facts as arguments so the table can be stated and tested):
@@ -565,15 +525,12 @@ the `/diag` report — and every one of them was written for a clipboard that
 permission, and the answer is to put the text on screen to be read instead
 (`InviteFallback`, and the same shape on the other three).
 
-What none of them survived is a browser with **no clipboard at all**.
-`navigator.clipboard` is then `undefined`, so `navigator.clipboard.writeText(…)`
-throws before there is a promise to reject, and a synchronous throw is not
-what a rejection handler catches. That is fatal in the worst possible place:
-the way out of an in-app browser (`components/embedded.tsx`) copies the link
-on arrival and renders *outside* `ReadErrorBoundary`, so the throw took the
-page down to Next's "Application error" — on the only screen those visitors
-get, and the one whose whole job is to hand over the link. Which is what was
-reported, from Messenger, in September 2026.
+A browser can also have **no clipboard at all** (in-app browsers such as
+Messenger's). `navigator.clipboard` is then `undefined`, so
+`navigator.clipboard.writeText(…)` throws before there is a promise to reject,
+and a rejection handler does not catch it. The way out of an in-app browser
+(`components/embedded.tsx`) copies the link on arrival and renders *outside*
+`ReadErrorBoundary`, so there it is Next's "Application error".
 
 So writing goes through **one door**, `lib/clipboard.ts`, where a missing
 clipboard is the same *no* as a refused one — the shape every caller already
@@ -598,10 +555,9 @@ overlap.
 
 Two properties do the work, and `lib/diag.test.ts` holds both. A span that has
 **not finished** still prints, marked `STILL RUNNING` — a read hanging right
-now is the reason somebody has the screen open, and recording only on
-completion is how that would have been the one line missing. And the timeline
-is ordered by when things **started**, not when they ended, so a long `rebuild`
-sits above the read it was blocking rather than below it.
+now is why the screen is open. And the timeline is ordered by when things
+**started**, not when they ended, so a long `rebuild` sits above the read it
+was blocking rather than below it.
 
 **The report reads newest first — the head, then this page, then the pages
 before it, then the home-screen hand-off.** It is pasted from a phone into a
@@ -623,11 +579,8 @@ and `active`; `dialog.open` and `dialog.gone` bracket each dialog, and
 the `menus and dialogs` block below.
 
 Its Copy button sticks to the top of the scroll rather than sitting in a
-`Foot`. The bottom of an installed app is where the system navigation bar is,
-and `env(safe-area-inset-bottom)` reads 0 on Android often enough that a foot
-there is a button with its lower half cut off — which is what happened. The
-top is also where it belongs: the screen is opened in order to copy, and the
-report under it is hundreds of lines.
+`Foot`: `env(safe-area-inset-bottom)` reads 0 on Android often enough that a
+foot button sits half under the system navigation bar.
 
 The report opens with `version:` (`lib/version.ts`), because every other line in
 it describes a phone and none of them say which build that phone was running
@@ -644,18 +597,14 @@ where its lines are written: one per overlay that has closed, from every page
 kept, holding every press, lift, cancel and click the phone sent while it was
 open, where each landed, what the hold's guard did with it, every step the
 keyboard took under it, and which way it went out (`lib/press-trace.ts`). It is
-in the head because this report is hundreds of lines and is read by being
-pasted somewhere, so the block somebody is asked for has to survive the paste
-being cut short — the first one was at the foot and was never seen.
+in the head so it survives a paste being cut short.
 
-It is there at all because "the menu answered on the second press" and "it
-refused a bunch of taps" are reports no machine here reproduces — they want a
-phone — and every explanation for one is a different line in that one sequence:
-a click that never came, one swallowed, one landing on the veil or the scrim, a
-`pointercancel` where a lift should be, a card that grew an item after it was
-placed or moved as the keyboard folded, or one that went away with no press
-behind it at all. It was the first of those, on the first try — see the Gotcha
-below — and the trace that said so is the only reason anyone knows.
+It exists because "the menu answered on the second press" and "it refused a
+bunch of taps" reproduce only on a phone, and every explanation for one is a
+different line in that sequence: a click that never came, one swallowed, one
+landing on the veil or the scrim, a `pointercancel` where a lift should be, a
+card that grew or moved under the finger, or one that closed with no press
+behind it.
 
 **A dialog's parts are named apart from each other**, because that is the whole
 question a refused tap asks: `pointerdown@btn1` lifting on `card` is the card
@@ -677,10 +626,8 @@ numbers under every tap of a run are what would hide the one tap they were
 different for.
 
 **Both ends of a long sequence are kept, and the middle is counted**
-(`…27 more…`). A flat cap was right for a menu, which is open for one press; a
-dialog refusing a run of taps spends seven events on each of them, and the
-taps that matter are the first one that went wrong and the last one, which
-worked.
+(`…27 more…`): the taps that matter are the first that went wrong and the last,
+which worked.
 
 A `home screen` block follows, for the iOS hand-off ([ios.md](ios.md#a-in-detail)),
 whose every step is off the screen by the time anyone looks. An inline script
@@ -705,14 +652,10 @@ the report prints its state beside everything else this phone is doing.
 **`/diag` must never wait on the database.** It is opened *because* the
 database is not answering. Everything that can block is raced against a 2s
 patience window and the timeline, which needs no database at all, prints either
-way. The first version asked Dexie for row counts and sat on "Reading…"
-forever; `pnpm stall` now fails if that comes back — and it did, quietly. **The
-window is one window for the whole report, and the way to keep it one is to
-start every blocking question before awaiting any of them.** Asked in turn,
-each line waits out its own two seconds after the line above it has finished
-waiting out theirs, so the report grows slower every time a line is added to it
-— six seconds by the time it was noticed, which is the length of the fault this
-screen exists to describe. A new line in `collect()` goes up with the others.
+way; `pnpm stall` fails if it waits. **The window is one window for the whole
+report: start every blocking question before awaiting any of them**, or each
+line waits out its own two seconds after the one above. A new line in
+`collect()` goes up with the others.
 
 ## Every word, in `lib/copy.ts`
 
@@ -727,9 +670,8 @@ blank figure, is the one exception, and `rules` enforces both halves.
 A string whose wording depends on which way the entry runs is `Voiced<T>` —
 `{ expense, income }`, keyed by the entry's kind. Money going out is *paid* and
 money coming in is *received*, and a screen that switches only its title
-describes the entry the person is not looking at: `/g/payers` asked "Who
-received it" and then said "Ana didn't pay" under her name. Every sentence on
-that screen is voiced now, as are the history's payer lines.
+describes the entry the person is not looking at. Every sentence on
+`/g/payers` is voiced, as are the history's payer lines.
 
 ## One navigation
 
@@ -743,9 +685,8 @@ origin joins, and one from another deployment says which server it belongs to
 rather than "Bad link", one with no password, from anywhere, opens that
 group's screen, and an empty read opens a box to paste into
 by hand — at once, since on iOS asking the clipboard again is another Paste
-bubble to tap rather than a free retry ([ios.md](ios.md#gotchas)). The box is the same routing on what lands in it,
-and it replaced `/paste`, a screen that could only say *Nothing to paste* and
-offer the same read again (`readPastedLink`, `usePasteLink`, `lib/paste.ts`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
+bubble to tap rather than a free retry ([ios.md](ios.md#gotchas)). The box is the same routing on what lands in it
+(`readPastedLink`, `usePasteLink`, `lib/paste.ts`) — (`.homepair`, which takes the `margin-top: auto` in a full-height
 `.homescroll` to settle at the foot of a short list, and `position: sticky;
 bottom: 0` to stay there — floating ungrounded over the rows, as the FABs do —
 once a long one would otherwise scroll it out of reach), with nothing under them — the
@@ -757,9 +698,8 @@ them behind a top-bar icon, not a second row — three icons is the ceiling.
 ## A screen comes back where you left it
 
 The app scrolls inside a div — one `.scroll` per screen — so the browser's own
-restoration, which knows only about the document, restored nothing: the
-fortieth entry of a ledger, opened and backed out of, put you at the top of the
-list. `lib/scroll-memory.ts` keeps one offset per route in memory (the query
+restoration, which knows only about the document, restores nothing.
+`lib/scroll-memory.ts` keeps one offset per route in memory (the query
 included: `?id=` is which group, `?tab=` is which list), and `Scroll` puts it
 back on the way in. It aims at the furthest point the content has reached and
 stays unfinished until the real one exists, because the rows arrive from Dexie
@@ -818,18 +758,15 @@ seven days are WebKit's, every iOS browser is one, and a warning that true
 belongs first ([ios.md](ios.md)).
 
 **A link to this app is nearly always sent in a chat**, so `metadata` in the
-layout also carries Open Graph and Twitter tags: with none, the card a chat app
-draws was bare and inconsistent — whatever its scraper had cached. They are
+layout also carries Open Graph and Twitter tags for the card a chat app draws. They are
 static and say nothing about the group, which they could not anyway: the secret
 is in the fragment and never leaves the phone. `metadataBase` is pinned to
 `https://bida.bid` because a crawler has no page to resolve a relative URL
 against and the build is byte-identical on both Workers
-([hosting.md](hosting.md#dev-and-production)). **There is no `og:url`** — as a
-root-level default every route claimed to be the site root, and an invite
-pasted into Messenger on iOS arrived as exactly that bare origin, path and
-fragment gone, where the same paste on Android kept the whole link. Left out,
-a scraper uses the URL it fetched, and the invite arrives whole — driven on a
-phone (2026-09-21), which is what settled that the tag was the cause.
+([hosting.md](hosting.md#dev-and-production)). **There must be no `og:url`** —
+as a root-level default every route claims to be the site root, and Messenger
+on iOS then delivers an invite as the bare origin, path and fragment gone.
+Left out, a scraper uses the URL it fetched.
 
 `public/sw.js` precaches the whole export — routes, hashed `/_next/static/`
 chunks, *and* the `.txt` RSC payloads Next fetches on every in-app tap —
@@ -841,10 +778,10 @@ you two disagreeing sources of truth.
 router's fetch of `/g/claim.txt?id=…` fails, Next hands that URL to the browser
 as a plain navigation — and served literally it is a screenful of
 `1:"$Sreact.fragment"` where a screen should be. `sw.js` redirects those back to
-the route, carrying the `?id=` and dropping `_rsc`. A redirect and not the
-route's shell served in its place, which is what it did: the address the app
-then runs at is the address it was asked for, and `/g.txt` is not a route — back
-arrows are paths (`lib/nav.ts`), and so is `reloadCostsNothing`. So does the Worker (`apps/api/src/payload.ts`), because a
+the route, carrying the `?id=` and dropping `_rsc`. A redirect, not the route's
+shell served in place: the app runs at the address it was asked for, and
+`/g.txt` is not a route — back arrows are paths (`lib/nav.ts`), and so is
+`reloadCostsNothing`. So does the Worker (`apps/api/src/payload.ts`), because a
 service worker only sees a page it controls and this one does not claim a first
 visit: the iPhone that has just tapped an invite is on its first load, has no
 worker yet, and is on its way to `/g/claim`
@@ -864,16 +801,14 @@ across three open pages.
 **A new build is taken as soon as it is safe, by itself.** `sw.js` calls
 `skipWaiting` the moment the whole build is precached, rather than waiting for
 the last client of the origin to close — on iOS Safari tabs and the browser
-outlive what a person thinks of as quitting, so waiting meant killing Safari
-over and over to get a deploy. `activate` writes down **which build each open
+outlive what a person thinks of as quitting. `activate` writes down **which build each open
 window is running** (in memory and in the `bida-legacy` cache, since the browser
 stops idle workers) and keeps every cache still spoken for: those pages go on
 being served their own build, so their next tap can't mix an old router with a
 new payload. A cache nothing is on is deleted, so the cost is one kept shell per
 window somebody left open, and a window that closes takes its cache with it.
-It used to keep the newest other cache alone and hand it to everyone open,
-which is right exactly once: at the deploy after, a page a build further back
-had its own cache deleted and was served a stranger's `/g.txt`.
+Keeping only the newest other cache is not enough: two deploys later a page
+further back is served a stranger's `/g.txt`.
 
 Every window open when `activate` runs is written down, because none of them can
 be on this build — which build they *are* on is the guess, and `null` is the
@@ -881,9 +816,8 @@ honest answer when nothing can answer for one: a cache evicted under it, or a
 first build with nothing before it. Such a window is then **refused a payload**
 rather than handed this build's. Next answers a build id that is not its own by
 navigating to the *response's* URL, and a response out of a cache carries its
-cache key, which for a payload is a bare path — one file answers every `?id=`.
-So the group went missing on the way, and the bare `/g` that loaded could only
-say the link was missing its password. Refused, the router falls back to the URL
+cache key, which for a payload is a bare path — one file answers every `?id=` —
+so the group id is lost on the way. Refused, the router falls back to the URL
 *it* asked for, and the redirect above turns that back into the route; the cost
 is that the window's next tap is a full load rather than a routed one (Gotcha
 below).
@@ -893,9 +827,7 @@ hears `controllerchange` and waits for the front door — at once if the page is
 there already and nobody has touched it, otherwise the first time the app is
 resumed onto it, never while hidden. A reload in the installed app is a
 relaunch, splash and all, and one on a ledger reads as a crash; on the two forms
-it also put the browser's own "leave site?" in front of somebody who had done
-nothing but reopen the app, and their draft is in memory
-(`lib/draft.ts`). `reloadCostsNothing` is the one list of screens that hold
+it would throw away a draft that lives only in memory (`lib/draft.ts`). `reloadCostsNothing` is the one list of screens that hold
 nothing only this page has, and the iOS carry reload — which cannot wait for a
 list a newcomer never passes — is its other caller ([ios.md](ios.md#a-in-detail)).
 `lib/update.ts` also re-checks `sw.js` on every resume (an installed app is
@@ -925,13 +857,12 @@ separator — "," and "." both accepted — fraction clipped to the currency's
 exponent, leading zeros stripped), **restores the caret** across its own
 reformatting, and **never autofocuses** — a draft that opens with the keyboard
 up hides the rest of the form before you have looked at it. `MinorAmountInput`
-holds typed text locally and re-reads the model only on outside change — don't
-go back to `value={bare(parseMinor(text))}`, which ate the caret and erased a half-typed
+holds typed text locally and re-reads the model only on outside change — never
+`value={bare(parseMinor(text))}`, which eats the caret and erases a half-typed
 "12.".
 
 `GroupedInput` is the caret-and-grouping half on its own, and the rate dialog
-types into one: a rate is the other figure here with thousands in it, and it
-was the last field that didn't group them. What may be typed is its `sanitize`
+types into one: a rate is the other figure here with thousands in it. What may be typed is its `sanitize`
 — `sanitizeRate` clips no decimals, `sanitizeAmount` clips to the currency's
 exponent. The grouping itself is `groupDigits` in `lib/format.ts`, with
 `rateText` for the rates we *print*; both are pure and tested.
@@ -965,10 +896,9 @@ so the static export ships the full line and the browser narrows it.
 ## Gotchas
 
 - **A cached response's URL is its cache key, not the one that was asked for.**
-  Which is invisible until something reads it back: Next reads `res.url` off
-  every payload whose build id isn't its own and navigates there, so a payload
-  served from the precache — keyed by path, since the query on one is only ever
-  app state — sent a phone to a `/g` screen with no group on it. Whatever must
+  Next reads `res.url` off every payload whose build id isn't its own and
+  navigates there, so a payload served from the precache — keyed by path —
+  sends a phone to a `/g` screen with no group on it. Whatever must
   survive such a hand-off has to ride on the request, not the response.
 - **Never `black-translucent` on iOS 26.** The home-screen app is drawn from
   the top of the screen but laid out a status bar shorter (WebKit bug 301108):
@@ -980,9 +910,7 @@ so the static export ships the full line and the browser narrows it.
   cover. What *is* ours is what it falls on: the strip above the page is body's
   background, so where that differs from the bar under it the scrim has an edge
   to reveal and reads as a band rather than a vignette. Matching the two at
-  phone width is the whole fix (`.app`, globals.css). The gradient stays; the
-  seam is what was visible, and the dev build's green bar is what made it
-  obvious.
+  phone width is the whole fix (`.app`, globals.css).
 - **Two navigations asked for in one tick are folded into the last one.** A
   screen that wants to both give its history entry away and push another on top
   cannot: `router.replace` then `router.push` leaves only the push, whatever it
@@ -998,10 +926,8 @@ so the static export ships the full line and the browser narrows it.
   browser has already decided it is: pans are allowed everywhere
   (`touch-action: pan-x pan-y` on `html, body`), so sliding off the held row
   hands the touch to the scroller, which fires `pointercancel` and **dispatches
-  no click at all**. That slide is the thumb reaching for the card the hold
-  just opened — the way an iPhone's own long-press menus are used — and it did
-  nothing whatever: the card sat there until you let go and tapped it again.
-  `heldFinger` refuses the scroll
+  no click at all** — yet that slide is the thumb reaching for the card the
+  hold just opened. `heldFinger` refuses the scroll
   (`touchmove`, non-passive, for as long as the finger is down), washes the
   item under it, and clicks that item on the lift. It must have travelled
   `SLOP_PX` first, because the card is only a few px clear of the row and a
@@ -1024,22 +950,16 @@ so the static export ships the full line and the browser narrows it.
   sends the clickless tap by hand; a real one in Chromium always brings its
   click.
 - **`click` is the *last* event of a touch, and acting earlier leaves the rest
-  of it to land on what you drew.** A release that answered the `pointerup`
-  outright shipped, fixed iOS, and broke Android completely, because the
-  browser still had `touchend`, `mousedown` and `mouseup` to deliver — onto a
-  screen the action had already changed. `Dialog` light-dismisses on
-  `mousedown` (deliberately: a drag off the card is not a tap outside it), so
-  the stray one landed on the confirm dialog's own scrim and closed it 6ms
-  after it opened: **Delete and Forget did nothing at all.** Whether it hit the
-  scrim or the centred card was decided by how far down the list the row was —
-  six of eight positions on the groups list, which is what made it read as
-  working sometimes. iOS was untouched: the tap that brings no click brings no
-  compatibility mouse events either, so the fix only ever paid off where the
-  leftovers weren't. `clickGuard` guards `click` and `contextmenu` and nothing
-  else; the `/diag` trace stops when the card unmounts, so it recorded a clean
-  `chose` and none of this. `pnpm entries` asks where that `mousedown` landed,
-  rather than whether the dialog survived — over the middle of the screen it
-  lands on the card and survives on the broken code too.
+  of it to land on what you drew.** Answer a `pointerup` outright and Android
+  still delivers `touchend`, `mousedown` and `mouseup` onto the changed screen.
+  `Dialog` light-dismisses on `mousedown` (a drag off the card is not a tap
+  outside it), so a stray one lands on a just-opened confirm dialog's scrim
+  and closes it — Delete and Forget then do nothing, depending on the row's
+  position. iOS is immune: the tap that brings no click brings no compatibility
+  mouse events either. `clickGuard` guards `click` and `contextmenu` and
+  nothing else; the `/diag` trace stops when the card unmounts, so it cannot
+  see this. `pnpm entries` asks where that `mousedown` landed, not whether the
+  dialog survived — mid-screen it lands on the card and survives regardless.
 - **A read that never answers is indistinguishable from a slow one.** Both are
   `undefined`, and nothing in Dexie times out — not `indexedDB.open`, and not a
   `liveQuery` whose error was swallowed. Every screen that draws a skeleton
@@ -1057,16 +977,14 @@ so the static export ships the full line and the browser narrows it.
   forgotten tab on the same domain pins the old build for as long as it lives,
   and on iOS Safari even killing the browser rarely clears it — while an
   incognito window shows the new build and makes it look like a deploy problem.
-  That is why the worker no longer waits (see [PWA](#pwa)).
+  That is why the worker does not wait (see [PWA](#pwa)).
 - **`caches.match` searches every cache in the origin, not yours.** And there
   is always another one to find: `controllerchange` fires *before* the new
   worker's `activate` handler runs, so a page reloading onto the new build is
-  answered while the previous build's cache is still there. Unscoped,
-  the new worker served that reload an old shell — or, worse, an old `/g.txt`,
-  whose client references name chunks this build doesn't have. The screen then
-  drew with pieces of it missing (the bottom nav among them) and stayed that
-  way until the app was launched again, because the router keeps the payload it
-  was handed. Every read goes through `lookup()`, which opens `CACHE_NAME` — or,
+  answered while the previous build's cache is still there. Unscoped, the new
+  worker can serve that reload an old shell or an old `/g.txt` naming chunks
+  this build doesn't have — a screen with pieces missing until relaunch, since
+  the router keeps the payload it was handed. Every read goes through `lookup()`, which opens `CACHE_NAME` — or,
   for a page still running the previous build, that build's cache; `offline-check` plants a cache the precache never heard of and fails
   on anything but a 404.
 - **A page left on the old build breaks on its next tap.** It fetches the new
@@ -1081,13 +999,12 @@ so the static export ships the full line and the browser narrows it.
   but `<meta name="theme-color">` *is* still read, for one thing: whether the
   icons drawn on that bar are light or dark. Adaptive theme-color tags
   therefore flip the icons over a bar that cannot follow, and dark mode ends as
-  white icons on a paper bar. Hence one colour in both places, ink, so the
-  white icons the app asks for always have an ink bar under them. A colour
-  probe settles which layer paints what: give the manifest's two colours and
-  the meta tag values nothing else uses, reinstall, and read the screen —
-  splash is `background_color`, status bar is `theme_color`.
+  white icons on a paper bar. Hence one colour in both places, ink. To tell
+  which layer paints what, give each colour a value nothing else uses,
+  reinstall, and read the screen — splash is `background_color`, status bar is
+  `theme_color`.
 - **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
-- **Anything floating above the dock rises with `--nav-foot`**, never a fixed `bottom`. The dock's foot is the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed 78px FAB looked right everywhere but sat flush on the tabs of the iOS PWA.
+- **Anything floating above the dock rises with `--nav-foot`**, never a fixed `bottom`. The dock's foot is the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed offset that looks right in every check sits on the tabs of the iOS PWA.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
@@ -1101,10 +1018,8 @@ so the static export ships the full line and the browser narrows it.
   measurements, `dvh` and a percentage of the initial containing block. A `dvh`
   reported larger than the ICB puts the bottom of the shell below the fold,
   where nothing scrolls: the bottom nav on a group, the about line under the
-  groups list. Reported on an installed phone after tapping Reload for a new
-  build, never on a launch, and never reproduced in a browser these checks can
-  drive — so the phone is the only place the fix could be shown to hold, and it
-  does (2026-09-21). **How to recognise it:** everything else is right, the FAB is exactly
+  groups list. Seen on an installed phone after Reload onto a new build; no
+  browser check reproduces it. **How to recognise it:** everything else is right, the FAB is exactly
   where it belongs, and the groups list's start pair has slid *lower* than
   usual — a `position: fixed` FAB is placed against the ICB, so a FAB that has
   not moved while `margin-top: auto` pushes the pair down says the ICB is the
@@ -1124,10 +1039,8 @@ so the static export ships the full line and the browser narrows it.
   `scroll-padding-bottom`. Padding is what a last row can scroll into;
   scroll-padding is where a field mid-form stops. A dialog sits outside the
   shell and pays the same toll: the scrim spends `--kb` as bottom padding, so a
-  card is centred in what is left rather than behind the keys — without it the
-  rate pair's own fields and Save were under them. `.foot` pays it too, for the
-  screens that still pin an act; the entry form stopped pinning Save and lets
-  it scroll instead. **An act that scrolls has to be scrolled to**: the four
+  card is centred in what is left rather than behind the keys. `.foot` pays it
+  too, for the screens that pin an act. **An act that scrolls has to be scrolled to**: the four
   screens that ask for people put Create, "Continue as …", the scan pair or
   "Change who you are" under the add row, so the field asks for that much room
   beneath itself (`--act-below`) and `bringIntoView` spends it. It has to be
@@ -1138,27 +1051,26 @@ so the static export ships the full line and the browser narrows it.
   not drag the list down to re-hang the field at the bottom of the screen.
   `pnpm keyboard` holds all four ([testing.md](testing.md)). **A gap with nobody typing is not a keyboard** and is
   never paid as one (`lib/viewport.ts`): the difference between the two
-  viewports is a keyboard only while something has the caret, and measuring it
-  at load on a browser that reports the two differently made permanent padding
-  at the foot of every list out of a keyboard nobody had opened.
+  viewports is a keyboard only while something has the caret; otherwise a
+  browser that reports the two differently gets permanent padding at the foot
+  of every list.
 - **A press that closes the keyboard is a press that never lands.** A button
   tapped while a field has the caret blurs it on `mousedown`; the keyboard
   retracts, the visual viewport grows, the page reflows — and the `click` misses,
   because the button has moved out from under a thumb that hasn't lifted. It
-  reads as a button needing two taps, and it took Create, the scan pair, Save,
-  Continue, the back arrow, the split tabs and every icon button beside a field. `keepsFocus`
+  reads as a button needing two taps. `keepsFocus`
   (`components/bits.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
   the field keeps focus and nothing moves. Spread it on anything pressable that
   shares a screen with a field. Tab and Enter are untouched — a keyboard never
   moves the layout out from under itself. **It holds off only while `data-kb`
   says there is a keyboard**: Android's back button closes the keyboard and
   leaves the caret in the field, and holding that focus through the next press
-  had Chrome open the keyboard again over the answer the tap had just given. In
+  makes Chrome reopen the keyboard over the tap's answer. In
   that state it blurs the field itself rather than trusting the press to move
   focus — which browser and target both get a say in. The three cases are
   `caretOnPress` (`lib/viewport.ts`), which is where the test is.
-- **`scrollTo({ behavior: "smooth" })` is not smooth everywhere.** It glided
-  on iOS and jumped on Android, and has no end event to wait on either, so a
+- **`scrollTo({ behavior: "smooth" })` is not smooth everywhere.** It glides
+  on iOS and jumps on Android, and has no end event to wait on either, so a
   scroll the app has to wait for is driven by hand, frame by frame (`glide`,
   `lib/seek.ts`). Reduced motion still puts it in place at once.
 - **A sticky `<thead>` needs a scrollport to stick to.** In a wrapper that only
@@ -1190,15 +1102,13 @@ so the static export ships the full line and the browser narrows it.
   asking.** `Dialog` calls `showModal()`, so the platform keeps Tab inside and
   makes the screen behind inert, but it also focuses the first focusable
   descendant when nothing in the card claims focus. In a dialog whose first
-  control is a field that is the field, keyboard and all: taking
-  `data-autofocus` off the rate editor's field changed nothing on a phone.
-  `Dialog` therefore parks focus on the card itself unless an
+  control is a field that is the field, keyboard and all, `data-autofocus` or
+  not. `Dialog` therefore parks focus on the card itself unless an
   `input[data-autofocus]` asks for it, which only `PromptDialog` does. `RowMenu` is a card anchored to the row — or the button
   (`MenuButton`) — it was opened from and cannot be one, so it does that by hand: it focuses its first item once it
   has been positioned — a `visibility: hidden` element cannot take focus, and
   `preventScroll`, because a scroll is what closes it — and hands focus back to
-  the row on the way out. Without that the long-press menu opened with the
-  caret still on the row behind its own veil.
+  the row on the way out.
 - **A revision's `changes` are only the fields that actually differed.** Saving
   an expense in a new currency at the same rate writes `currency` and no amount
   field at all, so history copy must never read one field because a sibling
@@ -1206,10 +1116,8 @@ so the static export ships the full line and the browser narrows it.
 - **A cancelled back press leaves the browser counting from the entry the
   press was heading for**, not from the screen still on show — for the rest of
   that task, and on a real phone for longer than that. So `history.go(-1)`
-  moved *two*: an expense's button reached the groups list, and a group's ran
-  off the start of the history, where a traversal that lands nowhere is
-  silently dropped and the press appears to do nothing. Hence both halves of
-  the fix: don't cancel a press the browser is already getting right, and where
+  moves *two* — or off the start of the history, where the traversal is
+  silently dropped. Hence: don't cancel a press the browser is already getting right, and where
   you must, take no count at all — put the parent in this screen's place
   (`swap`, `back-button.ts`), which is the only right move there anyway, since
   a press is taken over only where going back would land somewhere else.
@@ -1217,11 +1125,10 @@ so the static export ships the full line and the browser narrows it.
   — a navigation started while the cancellation unwinds is refused outright.
 - **Safari's Navigation API is not Chrome's.** `userInitiated` is true for any
   navigation begun while a tap is handled, so the app's own `router.back()`
-  looked like the device button and the leave guard asked "discard?" of Done
-  (hence `goBack`, enforced by `rules-check`). Which traversal is the app's own
-  is said with a **latch**, spent by the one `navigate` it explains — never a
-  window of time, which a phone slow enough to deliver the event later answers
-  with the discard dialog over the Save that had just cleared the draft. A
+  looks like the device button (hence `goBack`, enforced by `rules-check`).
+  Which traversal is the app's own is said with a **latch**, spent by the one
+  `navigate` it explains — never a window of time, which a slow phone
+  overruns. A
   latch is armed only where a traversal is actually coming, since one left
   armed answers the next *real* press as the app's own — **and it is also spent
   by the next press or keystroke anywhere**, because "actually coming" is not
@@ -1231,21 +1138,15 @@ so the static export ships the full line and the browser narrows it.
   a "discard?" nobody needed, one held too long costs the work.
 - **`history.go` can be called and simply not move.** From an act tapped inside
   a modal `<dialog>` on Android the traversal is never delivered: no `navigate`
-  arrives, nothing changes, and the button looks dead — Discard on `/new` did
-  nothing to three taps in a row while Cancel answered in 3ms. The dead button
-  was the lesser half. Each of those taps armed the latch above, nothing spent
-  it, and the next *real* back press was read as the app's own and waved
-  through with no guard at all, so the typed group went with no warning. One
-  report, one cause, two symptoms that looked unrelated. Leaving now closes any
-  open dialog **before** the going rather than with the screen (`closeDialogs`,
+  arrives, nothing changes, and the button looks dead. Worse, each such tap
+  arms the latch above, nothing spends it, and the next *real* back press is
+  waved through with no guard, losing typed work. Leaving closes any open
+  dialog **before** the going rather than with the screen (`closeDialogs`,
   `lib/nav.ts`), which is also what the card being answered deserves. `pnpm
   nav` drives it with `history.go` stubbed to a no-op, which is the whole of
   what the phone does.
-- **Closing the card was not the whole of it: a *refused* press swallows the
-  next traversal too.** With the dialog down before the going, Discard on
-  `/new` still did nothing — but only where the dialog had been opened by the
-  device's back button. The same tap from the back arrow, on the same screen
-  and the same code, went. A press this app cancels leaves Android holding a
+- **A *refused* press swallows the next traversal too.** A press this app
+  cancels (a dialog opened by the device's back button) leaves Android holding a
   traversal it will not deliver again, so the `history.go` that follows returns
   with nothing moved and no `navigate` to say so. What decides whether it bites
   is **where the screen sits**, not which screen it is: the target has to be
@@ -1258,29 +1159,19 @@ so the static export ships the full line and the browser narrows it.
   destination, so overrunning the window costs a duplicate entry and never a
   wrong screen.
 - **So every exit has to name somewhere to land, or no check can rescue it.**
-  `goUp` always had a parent to put in this screen's place and `goBack` had
-  nothing, which is why Discard on the entry form stayed put for three rounds
-  after the two fixes above. Its destination was never unknowable: the entry
-  behind us is where `back()` is going by definition, so `goBack` reads it off
-  `navigation.entries()` and hands it to the same repair. `rules-check` spells
+  `goUp` has a parent to put in this screen's place; `goBack` reads the entry
+  behind off `navigation.entries()` and hands it to the same repair. `rules-check` spells
   out the two-argument shape, so an exit the repair cannot reach fails the gate
   rather than waiting for a phone to find it.
-- **Clearing the work before the going is what disguised all of this.** Discard
-  cleared the draft and then left; the entry form renders from the draft, so
-  the clear landed first and the screen became `<Blank title="New" />` — and
-  where the going was swallowed, that is where it stayed. A screen that failed
-  to navigate should look like a screen that did not move. This one looked like
-  Discard had worked and opened a fresh blank entry, which is the wrong symptom
-  and sent three investigations after the wrong thing. The draft now goes when
-  the screen does, in the unmount, behind the `leaving` ref below.
+- **Don't clear the work before the going.** The entry form renders from the
+  draft, so clearing it first makes a swallowed navigation look like a fresh
+  blank entry instead of a screen that did not move. The draft goes when the
+  screen does, in the unmount, behind the `leaving` ref below.
 - **A screen that asks has to stop asking before it goes.** `mayLeave` is read
   again on the way out, so a guard still saying no answers the app's own
-  leaving. `/new` holds its names in `useState` and clears nothing, so `typed`
-  was still true the whole way out: with the latch spent or the traversal
-  retried, the going was met with a second "discard?". Every screen that leaves
-  this way puts a `leaving` ref down first — the entry form included, which
-  used to get it for free from clearing the draft `mayLeave` reads and must
-  not, per the Gotcha above.
+  leaving with a second "discard?". Every screen that leaves this way puts a
+  `leaving` ref down first — the entry form included, which must not rely on
+  clearing the draft, per the Gotcha above.
 - **Don't reach for `traverseTo`.** Naming a history entry by key instead of
   counting back to it is the same move with a worse failure: WebKit folds a
   `traverseTo` into one still pending for the same key and never settles one it
@@ -1302,5 +1193,4 @@ so the static export ships the full line and the browser narrows it.
 - **`patch()` on the expense draft must merge against the latest saved draft,
   not the `draft` the current render closed over.** Two `patch()` calls in one
   handler otherwise both merge onto the same stale closure and the second
-  silently undoes the first — which is how a tab switch lost the tab it had
-  just set. `patch()` reads `getDraft(groupId)` itself, so a handler may.
+  silently undoes the first. `patch()` reads `getDraft(groupId)` itself, so a handler may.
