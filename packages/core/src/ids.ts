@@ -31,11 +31,9 @@ const ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz";
 const BASE36_LIMIT = 252;
 
 /**
- * `length` characters of base36, each worth its full log2(36) ≈ 5.17 bits.
- * Lowercase and digits only: safe in a URL fragment, a path and a query string
- * alike, and readable down a phone line. **Redraw bytes at or above
- * `BASE36_LIMIT`, never `%`** — folding biases the first four characters, and
- * the entropy figures below are quoted at people, so they had better be true.
+ * `length` base36 characters (≈5.17 bits each): safe in a fragment, path or
+ * query. **Redraw bytes ≥ `BASE36_LIMIT`, never `%`** — modulo biases the
+ * output, and the entropy figures below are quoted to people.
  */
 function randomBase36(length: number): string {
   const c = getCrypto();
@@ -58,25 +56,16 @@ export function newNodeId(): string {
 }
 
 /**
- * A group's id: 12 base36 characters, ~62 bits.
- *
- * Every link carries it — `/join#<groupId>.<secret>` — so its length is
- * something people see and paste. Minted on the phone, offline, with nobody to
- * ask whether it is taken, so the length is a birthday bet: a million groups
- * collide with probability ~1 in 10 million. A collision is not a leak, since
- * reading takes the secret; it costs the second group its sync. 62 bits also
- * keeps the id unguessable, which matters because `POST /ops` registers any
- * unseen id (ADR-0003).
+ * A group id: 12 base36 characters, ~62 bits, minted offline with nobody to
+ * ask. A million groups collide at ~1 in 10 million; a collision costs the
+ * second group its sync, not its privacy. Also unguessable, which matters as
+ * `POST /ops` registers any unseen id (ADR-0003).
  */
 export function newGroupId(): string {
   return randomBase36(12);
 }
 
-/**
- * The group's shared secret. 16 characters of base36, URL-fragment safe —
- * ~83 bits, not the 128 a 16-byte key would carry: a base36 character holds
- * log2(36) ≈ 5.17 bits. Whoever holds this holds the group — see ADR-0003.
- */
+/** The group's secret: 16 base36 characters, ~83 bits. Whoever holds it holds the group (ADR-0003). */
 export function newGroupSecret(): string {
   return randomBase36(16);
 }

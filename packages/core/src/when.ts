@@ -1,10 +1,6 @@
 /**
- * Which local day a stamp falls in.
- *
- * Whether an entry has a *time* is not read off its stamp — nothing here can
- * tell midnight the moment from midnight the empty field. The entry says so
- * itself, in `dateOnly` (types.ts), and this file only ever answers the
- * question a ledger groups and sorts by: which day.
+ * Which local day a stamp falls in. Whether an entry has a *time* can't be
+ * read off the stamp — that is `dateOnly` (types.ts).
  */
 
 /** Whether two stamps fall on the same local day. */

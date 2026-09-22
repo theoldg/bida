@@ -2,9 +2,9 @@ import { isHlc, type Hlc } from "./hlc.js";
 import type { Id } from "./types.js";
 
 /**
- * Nothing is ever mutated in place. Every change is one of these, appended to a
- * per-group log. The log is the sync wire format, the offline write buffer and
- * the version history all at once. See ADR-0002.
+ * Nothing is mutated in place: every change is one of these, appended to a
+ * per-group log — the sync wire format, offline buffer and history at once.
+ * ADR-0002.
  */
 
 export type EntityKind =
@@ -45,12 +45,9 @@ const KINDS: readonly OpKind[] = ["create", "update", "delete", "restore"];
 export const IMMUTABLE_FIELDS = new Set(["id", "groupId"]);
 
 /**
- * Fields a patch may set once and never change: the first value the log carries
- * wins, whatever arrives later.
- *
- * `createdAt` breaks ties between same-day entries in list order, so an edit
- * must leave it alone. The rule is held here and not merely documented: an
- * entry's content is written whole (docs/sync.md), so every edit carries one.
+ * Fields set once: the first value in the log wins. `createdAt` breaks
+ * same-day ties, and since entry content is written whole (docs/sync.md)
+ * every edit carries one, so it is enforced here.
  */
 export const WRITE_ONCE_FIELDS = new Set(["createdAt"]);
 
@@ -63,10 +60,7 @@ function str(v: unknown, field: string): string {
   return v;
 }
 
-/**
- * Validate an op arriving from anywhere untrusted — the network, IndexedDB
- * written by an older version of the app, a test fixture.
- */
+/** Validate an untrusted op: network, IndexedDB from an older build, a fixture. */
 export function validateOp(input: unknown): Op {
   if (typeof input !== "object" || input === null) {
     throw new OpValidationError("op must be an object");
@@ -88,9 +82,8 @@ export function validateOp(input: unknown): Op {
   if (seq !== undefined && seq !== null && typeof seq !== "number") {
     throw new OpValidationError("op.seq must be a number, null or absent");
   }
-  // Not trusted as any string: a stamp is what the fold sorts on and what
-  // `hlcReceive` adopts, and one it could not parse threw inside the sync
-  // commit on every retry, for every phone in the group.
+  // The fold sorts on it and `hlcReceive` adopts it; an unparseable one threw
+  // inside every phone's sync commit on every retry.
   const hlc = str(o["hlc"], "hlc");
   if (!isHlc(hlc)) throw new OpValidationError(`op.hlc is not a stamp this clock can adopt: ${hlc}`);
   const note = o["note"];

@@ -9,11 +9,7 @@ function row(id: string, rate: string, extra: Partial<ExchangeRate> = {}): Excha
   return { id, groupId: GROUP, rate, source: "typed", asOf: 0, ...extra };
 }
 
-/**
- * The Marrakech fixture, plus whatever rate ops a test wants on the end of it.
- * A pair list rather than an object, so a test can set a rate and then remove
- * it — which is two ops on one currency, and the interesting case.
- */
+/** Marrakech plus rate ops, as pairs so a test can set then remove one currency. */
 function marrakechWith(...rates: [code: string, rate: string | null][]): GroupState {
   const b = new OpBuilder("rates", 1_744_600_000_000);
   for (const [code, rate] of rates) {
@@ -68,8 +64,7 @@ describe("repriceEntry", () => {
     expect(repriceEntry(eur, "EUR", {})).toBe(eur);
   });
 
-  // A rate arrives from another phone; a wrong one must cost that row its
-  // repricing and nothing else. Balances render or the app is a white screen.
+  // A bad rate from another phone costs that row its repricing and nothing more.
   it("keeps what was stored when the conversion won't fit", () => {
     const huge = { amountMinor: 9_000_000_000_000_000, currency: "MAD", rateToBase: "1", baseAmountMinor: 5710 };
     const out = repriceEntry(huge, "EUR", { MAD: row("MAD", "999999999") });
@@ -97,9 +92,7 @@ describe("atCurrentRates", () => {
     expect(atCurrentRates(state)).toBe(state);
   });
 
-  // Removing a rate is not "the group has no idea what MAD is worth": it is
-  // back to what each entry was saved with, which is what a group written
-  // before the registry existed has for every one of its foreign entries.
+  // Deleting a rate falls back to each entry's saved rate, not "unknown".
   it("falls back to the frozen rate when the row is deleted", () => {
     const frozen = computeBalances(foldOps(marrakechOps()));
     const moved = atCurrentRates(marrakechWith(["MAD", "0.1"]));

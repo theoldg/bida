@@ -8,14 +8,12 @@ import {
 } from "./types.js";
 
 /**
- * State is a deterministic fold over the op log. Ordering is by HLC, always —
- * never by seq (that is arrival order at the server) and never by createdAt
- * (that is a phone's opinion of the time). See ADR-0002.
+ * State is a deterministic fold over the op log, ordered by HLC — never by
+ * seq (server arrival) or createdAt (a phone's opinion). ADR-0002.
  *
- * The fold is TOTAL: any subset of ops, in any order, produces some valid
- * state. An update arriving before its create yields a partial entity that
- * completes when the create lands. Never throw on a surprising op — a throw
- * here bricks the whole app for one bad row.
+ * The fold is TOTAL: any subset of ops in any order gives a valid state (an
+ * update before its create is a partial entity). Never throw on a surprising
+ * op — one bad row would brick the app.
  */
 
 export function sortOps(ops: readonly Op[]): Op[] {
@@ -25,14 +23,9 @@ export function sortOps(ops: readonly Op[]): Op[] {
 type Bag = Record<string, unknown>;
 
 /**
- * Apply a patch, honouring the two kinds of field a patch may not simply set.
- * `IMMUTABLE_FIELDS` are never taken; `WRITE_ONCE_FIELDS` only when the entity
- * has not got one yet — a stale device re-sending the entity it holds carries a
- * `createdAt` too, and list order breaks ties on that.
- *
- * Also where an op in an older shape is brought up to date. Exported because
- * history folds the same log and **must** fold it the same way: a second copy
- * of these rules is a second answer to what the log means.
+ * Apply a patch: `IMMUTABLE_FIELDS` never, `WRITE_ONCE_FIELDS` only if unset.
+ * Also upgrades older op shapes. Exported so history folds identically — a
+ * second copy of these rules is a second answer to what the log means.
  */
 export function applyPatch(target: Bag, patch: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(patch)) {
@@ -75,8 +68,7 @@ function applyOp(state: GroupState, op: Op): void {
   switch (op.kind) {
     case "create":
     case "update":
-    // A restore carries the resolved field values of the revision being
-    // restored, so it applies exactly like an update. History is never rewound.
+    // Applies like an update; history is never rewound.
     case "restore":
       applyPatch(target, op.patch);
       break;
@@ -100,10 +92,8 @@ export function foldOps(ops: readonly Op[]): GroupState {
 }
 
 /**
- * Fold an already-folded state forward with new ops. Only valid when every op
- * in `incoming` sorts after `state.lastHlc` — otherwise a later write could be
- * clobbered by an earlier one arriving late. Returns null when that isn't the
- * case, and the caller must re-fold from scratch.
+ * Fold new ops onto a state. Only valid if every op sorts after
+ * `state.lastHlc`; otherwise returns null and the caller re-folds.
  */
 export function foldForward(state: GroupState, incoming: readonly Op[]): GroupState | null {
   const sorted = sortOps(incoming);

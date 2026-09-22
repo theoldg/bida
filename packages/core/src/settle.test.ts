@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { applyTransfers, settleUp } from "./settle.js";
 
 /**
- * The minimum, worked out a different way from settle.ts: recursively peel off
- * every zero-sum group that contains the first member and keep the cut that
- * yields the most groups. Too slow for the app, fine for eight people.
+ * The minimum computed independently: recursively peel off every zero-sum
+ * group containing the first member, keep the cut with most groups. Fine for
+ * eight people.
  */
 function bruteForceMinimum(balances: Record<string, number>): number {
   const v = Object.values(balances).filter((x) => x !== 0);
@@ -47,8 +47,7 @@ describe("settleUp", () => {
       const balances: Record<string, number> = {};
       let running = 0;
       for (let i = 0; i < n - 1; i++) {
-        // Few distinct amounts, so exact matches and cancelling subsets are
-        // common — that is where a greedy pass loses to the minimum.
+        // Few distinct amounts make cancelling subsets common — where greedy loses.
         const v = (1 + Math.floor(rand() * 4)) * 100 * (rand() < 0.5 ? -1 : 1);
         balances[`m${i}`] = v;
         running += v;
@@ -85,9 +84,8 @@ describe("settleUp", () => {
   });
 
   it("gives a small debtor one transfer, and splits the big one instead", () => {
-    // b owes a little, a owes a lot; no single creditor can absorb a. The old
-    // biggest-first pass paid a into both creditors and then left b with the
-    // remainder of one of them — two transfers for the person owing least.
+    // No single creditor can absorb a; a biggest-first pass would give b, who owes
+    // least, two transfers.
     const transfers = settleUp({ a: -900, b: -100, c: 500, d: 500 });
     expect(transfers.filter((t) => t.from === "b")).toHaveLength(1);
     expect(transfers.filter((t) => t.from === "a")).toHaveLength(2);
@@ -110,9 +108,8 @@ describe("settleUp", () => {
       const biggestCredit = Math.max(0, ...Object.values(balances));
       const debts = Object.entries(balances).filter(([, v]) => v < 0);
       if (debts.length === 0) continue;
-      // Whoever owes least is served first, against creditors nothing has
-      // touched yet — so one payment, unless the group's largest single credit
-      // is smaller than even that debt.
+      // The smallest debtor meets untouched creditors, so pays once unless the
+      // largest credit is smaller than that debt.
       const [id, balance] = debts.sort(([a, x], [b, y]) => x - y || (a < b ? 1 : -1)).at(-1)!;
       if (-balance > biggestCredit) continue;
       expect(settleUp(balances).filter((t) => t.from === id)).toHaveLength(1);
@@ -120,8 +117,7 @@ describe("settleUp", () => {
   });
 
   it("settles an evenly split trip of 60, exactly and fast", () => {
-    // Everyone owes or is owed the same: the shape the search collapses best,
-    // and the shape a real trip has. 30 pieces of two, so 30 transfers.
+    // Everyone owes or is owed the same, as on a real trip: 30 pairs, 30 transfers.
     const balances: Record<string, number> = {};
     for (let i = 0; i < 30; i++) balances[`owes${i}`] = -2_500;
     for (let i = 0; i < 30; i++) balances[`owed${i}`] = 2_500;
@@ -133,8 +129,7 @@ describe("settleUp", () => {
   });
 
   it("finds the pieces in a group of 40 that splits three ways", () => {
-    // Ten rounds of "one person paid for three": pieces of four, and no two
-    // members cancel exactly, so this is the search working, not the pairing.
+    // Pieces of four with no exact cancellations: the search, not the pairing.
     const balances: Record<string, number> = {};
     for (let i = 0; i < 30; i++) balances[`ate${i}`] = -1_000;
     for (let i = 0; i < 10; i++) balances[`paid${i}`] = 3_000;
@@ -142,9 +137,8 @@ describe("settleUp", () => {
   });
 
   it("still clears a group too large for the exact pass", () => {
-    // Twenty members, no two balances alike: this is the shape that exhausts
-    // the search budget, so it settles on the fallback. Not provably fewest —
-    // but it must still square everyone off, in at most n−1 payments.
+    // Twenty distinct balances exhaust the budget: the fallback must still clear
+    // everyone in at most n−1 payments.
     const balances: Record<string, number> = {};
     let running = 0;
     for (let i = 0; i < 19; i++) {

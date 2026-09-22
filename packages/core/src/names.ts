@@ -1,23 +1,13 @@
 /**
- * A member's name *is* their identity: every screen shows a bare name and no
- * id, so a second "Ana" is two people nobody can tell apart, one quietly
- * holding half the bill.
- *
- * `nameTaken` is the courtesy refusal at the field, and like every refusal it
- * reads one replica. What holds the invariant is `memberIdFor`: two phones
- * adding "Ana" offline write the *same* entity, so the creates merge
- * ([docs/invariants.md](../../../docs/invariants.md)).
- *
- * That works only while the key is immutable — a natural key over a mutable
- * name would free a name whose id is still occupied, and the next person to
- * type it would inherit the balance. Forbidding rename is what pays for this.
+ * A member's name *is* their identity: screens show bare names, so a second
+ * "Ana" is two people nobody can tell apart. `nameTaken` is a courtesy
+ * refusal; what holds the invariant is `memberIdFor` — two phones adding "Ana"
+ * offline write the same entity ([docs/invariants.md](../../../docs/invariants.md)).
+ * That needs an immutable key, so names can't be renamed: a freed name would
+ * inherit its old id's balance.
  */
 
-/**
- * Same-name is judged by what a person reads, not by bytes: spaces around it,
- * a double space inside it and capitals are all the same name to everyone
- * looking at the list. NFC first, so a typed "é" matches a composed one.
- */
+/** Same name as a person reads it: trimmed, inner spaces collapsed, case-folded, NFC. */
 export function nameKey(name: string): string {
   return name.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
@@ -29,13 +19,9 @@ export function nameTaken(name: string, taken: readonly string[]): boolean {
 }
 
 /**
- * FNV-1a over UTF-8, four times with different offset bases: 128 bits of id.
- * Hand-rolled because a hash library is a forever dependency
- * ([CLAUDE.md](../../../CLAUDE.md)) and `crypto.subtle` is async while every
- * caller here is pure and synchronous.
- *
- * Not cryptographic and not required to be — nothing is authenticated by it,
- * and it only has to avoid colliding across one group's handful of names.
+ * FNV-1a over UTF-8 four times with different offsets: 128 bits. Hand-rolled
+ * (no dependency; `crypto.subtle` is async). Not cryptographic — it only has
+ * to avoid collisions within one group's names.
  */
 const FNV_PRIME = 0x01000193;
 const BASES = [0x811c9dc5, 0x9dc5811c, 0xc5811c9d, 0x1c9dc581];
@@ -55,14 +41,10 @@ function hash128(text: string): string {
 }
 
 /**
- * The member id for a name in a group. Deterministic, so the same name typed
- * on two phones is one member — and scoped to the group, so "Ana" in one trip
- * is nobody's business in another.
- *
- * Shaped like `newId()`'s UUID so ids stay one kind of thing everywhere, but
- * it is not one: nothing may depend on the version bits. **Members carrying a
- * random `newId()` cannot be re-keyed** — every entry references them and ops
- * are never rewritten — so some groups knowingly keep the gap.
+ * The member id for a name in a group: same name on two phones, one member;
+ * scoped per group. UUID-shaped but not one — don't rely on version bits.
+ * Older members with a random `newId()` can't be re-keyed, since ops are never
+ * rewritten.
  */
 export function memberIdFor(groupId: string, name: string): string {
   const hex = hash128(`member\n${groupId}\n${nameKey(name)}`);
@@ -71,11 +53,7 @@ export function memberIdFor(groupId: string, name: string): string {
   ].join("-");
 }
 
-/**
- * The avatar hue for that member, from the same key. Derived rather than
- * random so two phones adding "Ana" at once write a byte-identical create —
- * whichever one the merge keeps, nothing about her changes.
- */
+/** The avatar hue, derived so two phones adding "Ana" write byte-identical creates. */
 export function colorSeedFor(groupId: string, name: string): number {
   return parseInt(hash128(`color\n${groupId}\n${nameKey(name)}`).slice(0, 8), 16) % 360;
 }

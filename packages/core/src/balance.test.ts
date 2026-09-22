@@ -79,9 +79,7 @@ describe("computeBalances", () => {
     const after = computeBalances(foldOps(b.ops));
     expect(after.byMember).toEqual({ a: 0, b: 0 });
     expect(after.totalSpendMinor).toBe(1000);
-    // Named separately because a summary reading "paid X · share Y" beside a
-    // balance has to be able to reach that balance; the transfer is the term
-    // that used to be missing from it.
+    // A "paid X · share Y" summary has to be able to reach the balance.
     expect(after.settledMinor).toEqual({ a: -500, b: 500 });
   });
 
@@ -129,10 +127,7 @@ describe("computeBalances", () => {
   });
 });
 
-/**
- * An income is an expense read backwards. These pin the sign in the one place
- * that applies it — everything else in core treats the two identically.
- */
+/** An income is an expense read backwards; these pin the sign where it's applied. */
 describe("income", () => {
   /** Two members, and whatever entries the caller adds. */
   function group(): OpBuilder {
@@ -229,10 +224,8 @@ describe("income", () => {
   });
 
   /**
-   * The identity every per-member summary is built on. It is the one that
-   * broke: transfers moved `byMember` while appearing in no named term, so a
-   * card reading "paid €54.00 · share €53.50" sat under a balance of €13.00.
-   * All four terms have to be here, or the missing one is the bug again.
+   * Per-member terms must add back to the balance — a term left out (as
+   * transfers once were) puts "paid €54.00 · share €53.50" over a balance of €13.00.
    */
   it("splits every balance into terms that add back up to it", () => {
     const b = group();

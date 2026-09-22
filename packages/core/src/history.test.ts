@@ -26,9 +26,7 @@ function soukLog() {
 }
 
 describe("entityHistory", () => {
-  // Spelling a default out on a create put a null -> null row in the entity's
-  // own history: nine "changes" that changed nothing, on every expense. The
-  // create writes only what it carries now, so the revision names only that.
+  // A create spelling out defaults would list null -> null "changes".
   it("names only the fields a create actually carried", () => {
     const b = new OpBuilder();
     b.push("expense", "e-lean", "create", {
@@ -44,10 +42,7 @@ describe("entityHistory", () => {
     ]);
   });
 
-  // A create leaves an unset field off the op entirely, so an edit that sends
-  // an explicit `null` for it is not a change: reading absent and null as
-  // different put "changed the category" in the log over edits that never
-  // touched one, on the first edit of every expense.
+  // A create omits unset fields, so an edit sending `null` is not a change.
   it("does not count an absent field written back as null", () => {
     const b = new OpBuilder();
     b.push("expense", "e-cat", "create", {
@@ -91,9 +86,7 @@ describe("entityHistory", () => {
     expect(change?.after).toBe(185_000);
   });
 
-  // A revision names the fields that moved; the sentence over it regularly
-  // needs one that didn't — the currency a contribution is in, whether this
-  // entry is an income, who the other payer was.
+  // Sentences need fields the op didn't move: the currency, income or not, the other payer.
   it("carries the whole entity either side of the revision", () => {
     const { ops } = soukLog();
     const amountRev = entityHistory(ops, "e-souk").find((r) => r.op.note === "forgot the rug");
@@ -179,9 +172,8 @@ describe("ops from a group are scoped to it", () => {
 
 describe("a whole-entity write", () => {
   /**
-   * The amendment that keeps history readable once an entry's content is
-   * written whole: a revision is the diff of two folds, not a reading of the
-   * op's keys. Without it every edit would say "changed everything".
+   * With whole-entity writes, a revision must be the diff of two folds, not the
+   * op's keys — or every edit says "changed everything".
    */
   it("reads as the one field that actually moved", () => {
     const b = new OpBuilder();
@@ -209,8 +201,7 @@ describe("a whole-entity write", () => {
   });
 
   it("does not report a createdAt the fold silently ignored", () => {
-    // Write-once: a later op carrying one changes nothing, so it must not read
-    // as a change either.
+    // Write-once: a later value changes nothing, so mustn't read as a change.
     const b = new OpBuilder();
     b.push("expense", "e-taxi", "create", { description: "Taxi", createdAt: 100 }, THEO);
     b.push("expense", "e-taxi", "update", { description: "Grand taxi", createdAt: 999 }, THEO);

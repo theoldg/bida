@@ -1,32 +1,21 @@
 /**
- * The bill-reading request: one prompt, one schema, and the bill itself — a
- * photograph, or the text of it somebody typed. Pure data, no I/O, so the
- * Worker and the phone can each send it to Google. `scan.ts` reads the reply.
+ * The bill-reading request: prompt, schema and the bill (a photo or typed
+ * text). Pure data, so the Worker and the phone can both send it. `scan.ts`
+ * reads the reply.
  *
- * **Two prompts, not one prompt with two dialects.** A till roll and a chat
- * message are different documents, and the rules that make a photograph read
- * safely (amounts already multiplied out, nothing computed, a total to
- * reconcile against) are what make typed text unreadable. The schema holds
- * them together, not shared paragraphs.
- *
- * Both promise one answer shape and one set of conventions: plain decimal,
- * deductions as positive magnitudes, tax only where it sits on top, nothing
- * written in capitals. Within a medium, tone moves the refusal paragraph and
- * nothing else — `apps/api/src/scan-body.test.ts` holds them to both.
+ * **Two prompts, not one with two dialects**: the rules that make a photo read
+ * safely (amounts multiplied out, compute nothing, a total to reconcile) make
+ * typed text unreadable. Both share one answer shape and conventions; tone
+ * moves only the refusal paragraph (`apps/api/src/scan-body.test.ts`).
  */
 
 /** The model both paths call. Ours to move, never a caller's. */
 const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 /**
- * Two hosts for one model, because the two paths pay for it differently.
- * `VERTEX_URL` takes our shared Agent Platform key, billed to the Cloud
- * project, which is the only place Google's Cloud credit can be spent.
- * `AI_STUDIO_URL` takes a key a person made for themselves
- * (docs/receipt-scanning.md#a-key-of-your-own).
- *
- * The envelope is the same for both: a brought key buys a different payer, not
- * a different reading.
+ * Two hosts for one model, billed differently: `VERTEX_URL` takes our shared
+ * key, billed to the Cloud project (where the credit is); `AI_STUDIO_URL` takes
+ * a person's own key (docs/receipt-scanning.md#a-key-of-your-own). Same envelope.
  */
 export const VERTEX_URL =
   `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
@@ -34,41 +23,26 @@ export const VERTEX_URL =
 export const AI_STUDIO_URL =
   `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-/**
- * Which medium a bill arrives in: a photograph, or the same bill typed or
- * pasted for a receipt nobody photographed
- * (docs/receipt-scanning.md#typing-a-bill-in). Each has its own prompt below.
- */
+/** A photograph, or a bill typed in (docs/receipt-scanning.md#typing-a-bill-in). */
 export type ScanMedium = "photo" | "text";
 
 /**
- * The two tones. `kind` is the app's voice: a photo of somebody's thumb gets a
- * joke about the thumb, never about them. `stas` is Staś mode, switched on by
- * hand on `/diag`, and it is pointed at the person on purpose.
- *
- * Tone moves the refusal paragraph and nothing else — same prompt, schema and
- * arithmetic either way, so a mean scan cannot be a wrong one
- * (`scan-body.test.ts`).
- *
- * Both tones must still say plainly what is wrong: an insult that leaves
- * somebody guessing what to send is a worse refusal, not a funnier one. The
- * one thing `stas` leaves alone is what somebody was born as.
+ * `kind` is the app's voice: jokes about the thumb in the photo, never the
+ * person. `stas` (toggled on `/diag`) aims at the person on purpose, but
+ * never at what somebody was born as. Either must still say plainly what to
+ * re-send. Tone moves only the refusal (`scan-body.test.ts`).
  */
 export type ScanTone = "kind" | "stas";
 
 /* ── A photograph of a receipt ─────────────────────────────────────────────
- *
- * A till roll has columns, a merchant, every amount already multiplied out and
- * a total at the foot, and every rule below leans on one of those.
+ * Columns, a merchant, amounts multiplied out, a total at the foot.
  */
 
 const PHOTO_LEAD = "Read this receipt. ";
 
 /**
- * The field rules for a photograph. **Says how to read the page, never what
- * the answer has to come to**: told the lines must equal the printed total, a
- * model closes the gap by adjusting a line, and a bill made to add up is the
- * one error `checkScan` cannot see.
+ * Photo field rules. **Say how to read, never what it must come to**: told the
+ * lines must equal the total, a model adjusts a line, which `checkScan` can't see.
  */
 const PHOTO_FIELDS_HEAD =
   "Return a title for the expense (described below); the total "
@@ -115,10 +89,8 @@ const PHOTO_FIELDS_HEAD =
   + "figure to return. ";
 
 /**
- * One rule for both written fields, because a till shouts every one of them.
- * The casing is the *only* thing a photograph's reader may change about a
- * label — the words, the language and the spelling are transcribed, or the
- * person checking a split against the paper is comparing two different bills.
+ * Casing is the only thing the reader may change about a label; words and
+ * spelling are transcribed so the split can be checked against the paper.
  */
 const PHOTO_CASING =
   "A till prints in capitals; a name is not written that way. Case the title and every "
@@ -185,13 +157,8 @@ const PHOTO_TAIL =
   + "a photo of the whole receipt instead. Otherwise leave error null.";
 
 /* ── A bill somebody typed ─────────────────────────────────────────────────
- *
- * Its own instruction, and deliberately about a third shorter than the
- * photograph's. What arrives here is a WhatsApp message, an email, a note made
- * at the table: no columns, usually no merchant and usually no total. Three of
- * the photograph's rules are actively wrong about it — every amount already
- * multiplied out, never compute anything, a total always there — and those
- * three are what this rewrites (docs/receipt-scanning.md#typing-a-bill-in).
+ * A message or note: no columns, usually no merchant or total. Rewrites the
+ * three photo rules that are wrong here (docs/receipt-scanning.md#typing-a-bill-in).
  */
 
 const TEXT_LEAD =
@@ -203,15 +170,10 @@ const TEXT_LEAD =
   + "things, and one thing can be spread over several lines. ";
 
 /**
- * The line items, and where this prompt earns its keep. A typist writes the
- * unit price — "3 chicken at 13 each", and the 39 is nowhere on the page — so
- * asking for an amount while forbidding multiplication leaves no legal answer.
- * It asks for whichever figure the text gives; `scan.ts` multiplies, in minor
- * units, where it can be tested.
- *
- * The label is the one field the model may *improve* rather than transcribe:
- * "10 beef at 15" under a line about skewers is half a name. Scoped tight —
- * only what the surrounding line makes plain — because it is still invention.
+ * A typist writes the unit price ("3 chicken at 13 each"), so asking for a line
+ * amount while forbidding multiplication leaves no legal answer; `scan.ts`
+ * multiplies. The label may be completed from the surrounding line — scoped
+ * tight, since it is still invention.
  */
 const TEXT_ITEMS =
   "Return every separate thing that was bought as a line item, each with: label — a "
@@ -246,9 +208,8 @@ const TEXT_ITEMS =
   + "announcement out, or the bill is counted twice. ";
 
 /**
- * The total, which a typed bill usually does not have. Asked for one anyway a
- * model supplies it, and a total derived from the lines cannot then check the
- * lines — `checkScan` reconciles only against a figure the bill itself stated
+ * A typed bill usually has no total; asked for one, the model makes one up,
+ * and a derived total can't check the lines
  * (docs/receipt-scanning.md#what-a-reading-is-checked-against).
  */
 const TEXT_TOTAL =
@@ -272,10 +233,8 @@ const TEXT_EXTRAS =
   + "not an amount: return null rather than working it out. ";
 
 /**
- * Almost never a title: a typed bill usually leads with the food, and a model
- * asked to name the expense describes the list back ("Skewers", "Barbecue").
- * That is worse than the empty field the person was about to type into, and it
- * lands in the draft as though it had been read off the bill.
+ * Almost never a title: asked to name a food list, the model describes it back
+ * ("Skewers"), which is worse than the empty field and looks read off the bill.
  */
 const TEXT_TITLE =
   "Return title only where the text plainly names where the money went — a restaurant, "
@@ -344,10 +303,7 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
     + "field null or empty; otherwise leave error null.",
 };
 
-/**
- * The four prompts, built once. Within a medium the only difference is the
- * refusal — the invariant `scan-body.test.ts` holds them to.
- */
+/** The four prompts. Within a medium only the refusal differs (`scan-body.test.ts`). */
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   photo: {
     kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
@@ -370,21 +326,11 @@ const MIME: Record<ScanMedium, string> = {
 };
 
 /**
- * The Gemini request body: this prompt, this schema, one bill and nothing else.
- *
- * In core because **both ends build it** — the Worker on the shared key, the
- * phone on a key the person brought
- * (docs/receipt-scanning.md#a-key-of-your-own) — so the two readings cannot
- * drift apart. Building it here is what keeps `/api/groups/:id/scan` a receipt
- * reader rather than a general-purpose model endpoint with our key on it.
- *
- * `tone` and `medium` are all a caller can move, and each moves by choosing
- * one of the four strings in `PROMPT`, never by writing a word of one.
- *
- * **On `text` the bill is words somebody typed**, so a caller can put
- * sentences in front of the model. They still cannot compose a request: the
- * prompt, schema and destination are all here, so only a bill-shaped object
- * can come back (docs/receipt-scanning.md#typing-a-bill-in).
+ * The Gemini request body. In core because both the Worker and the phone (own
+ * key) build it, so readings can't drift — and it keeps `/api/groups/:id/scan`
+ * a receipt reader, not a general model endpoint on our key. A caller picks
+ * `tone` and `medium`, never a word of the prompt. On `text` the bill is
+ * user-written, but only a bill-shaped object can come back.
  */
 export function buildScanRequestBody(
   billBase64: string,
@@ -392,8 +338,7 @@ export function buildScanRequestBody(
   medium: ScanMedium = "photo",
 ): unknown {
   return {
-    // A silent default on AI Studio, required by Vertex. Stated once so one
-    // envelope satisfies both hosts.
+    // Optional on AI Studio, required by Vertex.
     contents: [{
       role: "user",
       parts: [
@@ -431,10 +376,7 @@ export function buildScanRequestBody(
               properties: {
                 label: { type: "STRING" },
                 labelEn: { type: "STRING", nullable: true },
-                // Nullable together, and exactly one of them filled: a typed
-                // bill gives the price of one where a till gives the line's
-                // own total, and asking for a figure the page doesn't hold is
-                // what makes a model invent one. `lineMinor` resolves the pair.
+                // Exactly one filled; see `ScanLineItem`.
                 amount: { type: "STRING", nullable: true },
                 unitAmount: { type: "STRING", nullable: true },
                 quantity: { type: "INTEGER", nullable: true },

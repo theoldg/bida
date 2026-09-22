@@ -2,44 +2,23 @@ import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type Curr
 import { resolveSplit } from "./split.js";
 
 /**
- * A Splitwise CSV read back into a group — `export.ts` run the other way. Takes
- * rows already parsed out of the bytes (the dialect lives in
- * `apps/web/lib/import/csv.ts`, so core stays free of it) and returns a
- * **plan**. Nothing here writes anything.
- * docs/data-model.md#the-group-as-a-spreadsheet.
+ * A Splitwise CSV read back into a group — `export.ts` in reverse. Takes parsed
+ * rows (the dialect is `apps/web/lib/import/csv.ts`) and returns a **plan**;
+ * nothing here writes. Liberal in what it reads (CRLF, BOM, case), but refuses
+ * anything that needs a guess. docs/data-model.md#the-group-as-a-spreadsheet.
  *
- * **Reading is liberal where writing is strict.** Someone else's export, or a
- * round trip through Excel, brings CRLF, a BOM and its own capitalisation; all
- * accepted. What is refused is anything that would need a guess.
+ * **A member's cell is `paid − owed`**, which does not invert. One positive
+ * column (every file Splitwise writes) is lossless: that member paid, split
+ * `exact` at `paid − delta`. Several positive columns become payers at
+ * `deltaᵢ × cost / Σ positive` by largest remainder — balances exact, payer
+ * figures a guess. Both need `Σ positive ≤ cost`.
  *
- * ## The one thing that does not invert
+ * A row is dropped only when it carries no money; anything else that can't
+ * become an entry refuses the whole file, naming the line.
  *
- * **A member's cell is `paid − owed`** — one number standing for two, and no
- * arithmetic gets both back. So the reading is a *stated rule*:
- *
- * - **One positive column** (every file Splitwise itself writes) is lossless:
- *   that member paid the cost, and the split is `exact` at `paid − delta`.
- * - **Several** are the payers at `paidᵢ = deltaᵢ × cost / Σ positive`, by the
- *   same largest-remainder method a shares split uses. Balances come back to
- *   the cent; the payer figures are a guess that happens to add up.
- *
- * Both need `Σ positive ≤ cost`, checked once before either branch: more
- * net-paid than the thing cost puts somebody's `owed` below zero.
- *
- * ## What is dropped and what refuses
- *
- * **A row is dropped only when it carries no money** — every cell zero adds
- * nothing to any column total, so the foot checksum survives, and our own
- * writer emits exactly that row for an expense it could not apportion.
- * Anything else that cannot become an entry **refuses the whole file**, naming
- * the line: silently losing a row that moves money is the worse outcome.
- *
- * ## The foot is the checksum
- *
- * `Total balance` is `computeBalances().byMember` as the writer saw it, so
- * recomputing it from the plan catches a misread column, a wrongly dropped row
- * and a drifted rounding rule. It cannot catch an income read backwards, which
- * nets zero either way; a test holds that one.
+ * The `Total balance` foot is the checksum: recomputing it from the plan catches
+ * a misread column, a wrong drop and rounding drift. It can't catch an income
+ * read backwards (nets zero); a test holds that.
  */
 
 /** The five cells the format dictates, and the tokens `export.ts` writes into them. */
@@ -94,9 +73,8 @@ export type ImportRefusalCode =
   | "tricount-split";
 
 /**
- * Why a file was refused. `message` is terse and for a developer — the sentence
- * a person reads is `copy.importData.refused[code]` (ADR-0033) — and `line` and
- * `detail` are what that sentence interpolates.
+ * Why a file was refused. `message` is for a developer; the person reads
+ * `copy.importData.refused[code]`, interpolating `line` and `detail`.
  */
 export class ImportError extends Error {
   readonly code: ImportRefusalCode;
@@ -115,10 +93,7 @@ export class ImportError extends Error {
 }
 
 interface ImportOptions {
-  /**
-   * `YYYY-MM-DD` to a timestamp. Local midnight is the honest answer and only
-   * the app knows the timezone, as with `export.ts`'s `formatDay`.
-   */
+  /** `YYYY-MM-DD` to a timestamp at local midnight; only the app knows the timezone. */
   dayToTimestamp: (day: string) => number;
 }
 
@@ -128,11 +103,8 @@ export interface PlannedEntry {
   kind: "expense" | "income";
   description: string;
   /**
-   * The `Category` cell verbatim, or null for the protocol tokens `General`
-   * and `Payment`, which nobody chose. `categoryId` is free text on the entry,
-   * and `export.ts` writes it straight into this column, so this is the exact
-   * mirror. No screen shows it until the picker lands
-   * (docs/product.md#deliberately-not-in-the-mvp); history and a re-export do.
+   * The `Category` cell verbatim, or null for the tokens `General` and
+   * `Payment`, which nobody chose — the exact mirror of what `export.ts` writes.
    */
   categoryId: string | null;
   day: string;
@@ -165,10 +137,7 @@ interface DroppedRow {
 }
 
 export interface ImportPlan {
-  /**
-   * What the source calls the group, when its shape has somewhere to say it.
-   * A CSV has not — the filename carries it — and a tricount has.
-   */
+  /** The group's name, when the source has one (a tricount does; a CSV's is the filename). */
   title?: string;
   /** The file's single currency. Becomes the group's base. */
   currency: CurrencyCode;
@@ -198,23 +167,17 @@ function text(cell: string | undefined): string {
 }
 
 /**
- * A figure out of a map keyed by a member's name. **Never `map[name] ?? 0`**:
- * the names come out of somebody else's file, and `map["constructor"]` hands
- * back a function, so `??` never fires and the arithmetic downstream becomes
- * NaN. `Object.hasOwn` fixes it while keeping whatever prototype the map came
- * with, which matters — `resolveSplit` builds some of them.
- *
- * The write side has no equivalent, so `__proto__` is refused at the header
- * instead (`readHeader`).
+ * A figure keyed by a member's name. **Never `map[name] ?? 0`**: names come
+ * from somebody else's file and `map["constructor"]` is a function, giving
+ * NaN. `__proto__` is refused at the header instead (`readHeader`).
  */
 export function at(map: Record<string, number>, key: string): number {
   return Object.hasOwn(map, key) ? map[key]! : 0;
 }
 
 /**
- * Read the rows into a plan, or throw an `ImportError` naming the line. Two
- * passes: the currency is stated per row and decides how every amount parses,
- * so it is found before any money is read.
+ * Read the rows into a plan, or throw an `ImportError` naming the line. The
+ * currency decides how every amount parses, so it is found first.
  */
 export function readCsvGroup(
   rows: readonly (readonly string[])[],
@@ -222,7 +185,7 @@ export function readCsvGroup(
 ): ImportPlan {
   const lines: Line[] = [];
   rows.forEach((cells, i) => {
-    // Blank lines are structure in this format, not data — the shape has three.
+    // Blank lines are structure in this format, not data.
     if (cells.every((c) => text(c) === "")) return;
     lines.push({ line: i + 1, cells: [...cells] });
   });
@@ -234,8 +197,8 @@ export function readCsvGroup(
   const body = lines.slice(1);
 
   for (const row of body) {
-    // Fewer cells is a short row, which every spreadsheet writes. More is data
-    // with nowhere to go, and ignoring it is how a column gets misread.
+    // Fewer cells is a normal short row. More is data with nowhere to go, and
+    // ignoring it is how a column gets misread.
     if (row.cells.length > width) {
       throw new ImportError("extra-cells",
         `line ${row.line}: ${row.cells.length} cells, header has ${width}`,
@@ -247,8 +210,8 @@ export function readCsvGroup(
   const currency = readCurrency(body);
   const exp = exponentOf(currency);
 
-  // Found by its `Description`, never by position: its `Date` cell holds a
-  // real date, so a reader going by shape books the checksum as an expense.
+  // Found by its `Description`, never by position: its `Date` cell holds a real
+  // date, so a shape-based reader books the checksum as an expense.
   const footIndex = body.findIndex((row) => token(row.cells[1]) === TOTAL_BALANCE);
   if (footIndex === -1) {
     throw new ImportError("no-foot", "no Total balance row");
@@ -299,16 +262,14 @@ function readHeader({ line, cells }: Line): string[] {
   if (names.some((n) => n === "")) {
     throw new ImportError("blank-member", "a member column has no name", line);
   }
-  // `__proto__` is the one header name a plain object cannot hold: assigning
-  // it sets the prototype and stores nothing, so the figures vanish and the
-  // refusal arrives as a baffling checksum mismatch three steps later. The
-  // alternative is null-prototype maps down through `resolveSplit`.
+  // Assigning `__proto__` on a plain object stores nothing, so the figures would
+  // vanish and surface as a baffling checksum mismatch later.
   const reserved = names.find((n) => n === "__proto__");
   if (reserved !== undefined) {
     throw new ImportError("bad-member-name", `member column named ${reserved}`, line, reserved);
   }
-  // Indistinguishable columns would merge two people's balances. `export.ts`
-  // can emit such a file for a group holding two members of one name.
+  // Would merge two people's balances. `export.ts` emits this for a group
+  // holding two members of one name.
   const seen = new Set<string>();
   for (const name of names) {
     const key = name.toLocaleLowerCase();
@@ -338,8 +299,7 @@ function readCurrency(body: readonly Line[]): CurrencyCode {
     throw new ImportError("unknown-currency", "no row states a currency");
   }
   if (codes.length > 1) {
-    // The foot sums across currencies, so the checksum is gone exactly where
-    // the import would be least sure.
+    // The foot sums across currencies, so the checksum is meaningless.
     throw new ImportError("mixed-currency", `mixes ${codes.join(",")}`, undefined,
       codes.join(", "));
   }
@@ -357,9 +317,8 @@ function amount(row: Line, index: number, currency: CurrencyCode, exp: number): 
     throw new ImportError("bad-amount", `line ${row.line}: ${raw} is not an amount`,
       row.line, raw);
   }
-  // `parseMinor` rounds excess precision away, which is right for a keyboard
-  // and wrong here: more decimals than the currency has means the wrong
-  // currency or the wrong column, and rounding hides it.
+  // `parseMinor` rounds excess precision, right for a keyboard but wrong here:
+  // extra decimals mean the wrong currency or column.
   const frac = raw.replace(/\s/g, "").replace(",", ".").split(".")[1] ?? "";
   if (frac.length > exp) {
     throw new ImportError("too-precise", `line ${row.line}: ${raw} is finer than ${currency}`,
@@ -390,14 +349,12 @@ function readRow(
     throw new ImportError("row-not-zero", `line ${row.line}: members sum to ${net}`,
       row.line, minorToDecimalString(net, currency));
   }
-  // A thing cost money and nothing about who — what our own writer emits for
-  // an expense it could not apportion. Adds nothing to any column total.
+  // What our own writer emits for an expense it could not apportion.
   if (deltas.every((d) => d === 0)) return { kind: "dropped", row: { line: row.line, description } };
 
   const day = text(row.cells[0]);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !isRealDay(day)) {
-    // `01/02/2026` is two different days on two continents, and no reading of
-    // it is true.
+    // `01/02/2026` is two different days on two continents.
     throw new ImportError("bad-date",
       `line ${row.line}: ${day} is not YYYY-MM-DD`, row.line, day);
   }
@@ -406,8 +363,7 @@ function readRow(
   const transfer = asTransfer(row, members, deltas, cost, category, description, day, occurredAt);
   if (transfer) return { kind: "transfer", row: transfer };
 
-  // An income runs the other way through the amount column and the member
-  // columns alike. Flipped back here, so the rest need not know which it is.
+  // An income is negative in the amount and member columns alike; flip it here.
   const income = cost < 0;
   const amountMinor = Math.abs(cost);
   const net_ = deltas.map((d) => (income ? -d : d));
@@ -424,8 +380,7 @@ function readRow(
   const owed: Record<string, number> = {};
   members.forEach((name, i) => {
     const share = at(paid, name) - (net_[i] ?? 0);
-    // Left out rather than carried at zero: what a person would have entered,
-    // and `resolveSplit` reads an `exact` split off this map.
+    // Omitted rather than zero: `resolveSplit` reads an `exact` split off this map.
     if (share !== 0) owed[name] = share;
   });
 
@@ -448,13 +403,9 @@ function readRow(
 }
 
 /**
- * A transfer, or nothing. Two things must agree: `Category` says `Payment`,
- * **and** the row has the shape — exactly two non-zero figures, equal and
- * opposite, sized to the cost. **Never read the description**: a keyword list
- * in free text turns "payment for dinner" into a transfer.
- *
- * Token without the shape comes in as an expense, the reading that loses
- * nothing.
+ * A transfer, or null. Needs the `Payment` category **and** the shape: two
+ * non-zero figures, equal and opposite, sized to the cost. Never reads the
+ * description ("payment for dinner"). Token without shape imports as an expense.
  */
 function asTransfer(
   row: Line,
@@ -488,10 +439,8 @@ function asTransfer(
 }
 
 /**
- * Who paid, from the positive columns; `Σ positive ≤ cost` is already checked.
- * One column means that member paid the whole thing. Several are apportioned
- * through the same largest-remainder distribution a shares split uses, seeded
- * off the row — deterministic without an entity id that doesn't exist yet.
+ * Who paid, from the positive columns. Several are apportioned by the
+ * shares-split distribution, seeded off the row since no entity id exists yet.
  */
 function payersOf(
   members: readonly string[],
@@ -520,13 +469,9 @@ function isRealDay(day: string): boolean {
 }
 
 /**
- * The plan's own balances against the ones the source stated, to the cent —
- * the reason the foot is worth reading at all. Computed from the plan rather
- * than by folding it, because the plan is what the person is about to approve.
- *
- * Exported because every reader wants it: `tricount.ts` states its balances by
- * a different route and checks them through here, so the one arithmetic that
- * makes an import trustworthy has one home.
+ * The plan's balances against the source's, to the cent. Computed from the
+ * plan because that is what the person approves. `tricount.ts` checks through
+ * here too.
  */
 export function checkStated(plan: ImportPlan): void {
   const computed: Record<string, number> = {};

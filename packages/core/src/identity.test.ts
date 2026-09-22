@@ -6,10 +6,8 @@ import { createHlcState, formatHlc } from "./hlc.js";
 import { GROUP, MARIE, SAM } from "./fixtures.test-helper.js";
 
 /**
- * Identity claims are ops like everything else (ADR-0003): a device says which
- * member it speaks for, and the group can read it. The device's HLC node id is
- * the entity id, so the claim is keyed by the same string that already ends
- * every op that device stamped.
+ * Identity claims are ops (ADR-0003), keyed by the device's HLC node id — the
+ * string ending every op that device stamped.
  */
 
 const PHONE = "sams1phone";

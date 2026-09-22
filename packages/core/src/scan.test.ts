@@ -29,8 +29,7 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, currency: "eur" }, "EUR", NOW)).toMatchObject({ currency: "EUR" });
   });
 
-  // Anything formatMinor would throw on has to be dropped, not repaired:
-  // the form formats the draft's currency on every render.
+  // Dropped, not repaired: the form formats the draft's currency on every render.
   it.each(["\u20ac", "EU", "USDT", "12", "", "  "])(
     "drops a currency that isn't three letters: %j",
     (currency) => {
@@ -43,16 +42,14 @@ describe("normalizeScan", () => {
     expect(occurredAt).toBe(new Date(2026, 7, 28).getTime());
   });
 
-  // The whole point: whatever the offset, the day you read back is the day
-  // that was printed on the receipt.
+  // Whatever the offset, the day read back is the day printed.
   it("reads the date back as the day that was printed", () => {
     const { occurredAt } = normalizeScan({ ...blank, date: "2026-04-04" }, "EUR", NOW);
     const back = new Date(occurredAt!);
     expect([back.getFullYear(), back.getMonth() + 1, back.getDate()]).toEqual([2026, 4, 4]);
   });
 
-  // Midnight is this app's "day known, time not", so a receipt scanned on the
-  // day it was printed must not claim it: the scan is the time.
+  // Midnight means "day known, time not", so a receipt printed today takes the scan's time.
   it("stamps a receipt printed today with the moment of the scan", () => {
     const today = new Date(NOW);
     const printed = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -60,8 +57,7 @@ describe("normalizeScan", () => {
       .toMatchObject({ occurredAt: NOW, dateOnly: false });
   });
 
-  // Midnight carries no meaning of its own now: a scan that happens to land on
-  // it is a moment like any other, and the patch says so.
+  // A scan landing exactly on midnight is still a moment.
   it("keeps a receipt scanned in the millisecond of midnight as a moment", () => {
     const at = new Date(2026, 8, 5).getTime();
     expect(normalizeScan({ ...blank, date: "2026-09-05" }, "EUR", at))
@@ -80,9 +76,7 @@ describe("normalizeScan", () => {
     expect(normalizeScan({ ...blank, date: "last Tuesday" }, "EUR", NOW)).not.toHaveProperty("occurredAt");
   });
 
-  // The title is the model's, adaptations and all — the prompt asks it to
-  // strip what isn't the name and to say what was bought where the name alone
-  // wouldn't. Nothing here second-guesses that; it lands as typed.
+  // The title is the model's, landed as-is.
   it("passes the title through as the description", () => {
     expect(normalizeScan({ ...blank, title: "Lidl - barbecue" }, "EUR", NOW))
       .toMatchObject({ description: "Lidl - barbecue" });
@@ -140,8 +134,7 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBeNull();
   });
 
-  // A promotional line really is free, and it takes no share of anything —
-  // which is exactly what a zero weight does downstream.
+  // A free promotional line takes no share — a zero weight downstream.
   it("accepts a free line", () => {
     const result = { ...blank, total: "12.50", lineItems: [line("12.50"), line("0.00")] };
     expect(checkScan(result, "EUR")).toBeNull();
@@ -185,8 +178,7 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBeNull();
   });
 
-  // The "buy 1 get 1 free" the owner asked about: two pizzas and the cheaper
-  // one credited back. It reconciles, and `readBill` pools the credit.
+  // Two pizzas and the cheaper one credited back; `readBill` pools the credit.
   it("accepts a buy-one-get-one credit", () => {
     const result = {
       ...blank, total: "10.00", discounts: [off("8.00", "2 for 1")],
@@ -212,8 +204,7 @@ describe("checkScan", () => {
     expect(checkScan(result, "EUR")).toBe("mismatch");
   });
 
-  // The whole point of the check: one missed line is the failure that prices
-  // the grid against a total the receipt never printed.
+  // One missed line would price the grid against a total the receipt never printed.
   it.each(["29.99", "30.01", "35.00"])("refuses lines that miss the total by any amount: %j", (total) => {
     const result = { ...blank, total, lineItems: [line("12.50"), line("17.50")] };
     expect(checkScan(result, "EUR")).toBe("mismatch");
@@ -236,8 +227,7 @@ describe("readBill", () => {
     const credit = { label: "Remise", labelEn: "Discount", amount: "-5.00", unitAmount: null, quantity: null };
     const bill = readBill({ ...blank, lineItems: [line("30.00"), credit] }, "EUR");
     expect(bill.items.map((i) => i.amount)).toEqual(["30.00"]);
-    // Both, because which one is read is the reader's choice and not the
-    // scan's (`billLabel`, apps/web/lib/scan/items.ts).
+    // Which label is read is the reader's choice (`billLabel`, apps/web/lib/scan/items.ts).
     expect(bill.extras.discounts).toEqual([{ label: "Remise", labelEn: "Discount", amount: "5.00" }]);
   });
 
@@ -252,8 +242,7 @@ describe("readBill", () => {
     expect(bill.extras.discounts.at(-1)!.label).toBe("Loyalty");
   });
 
-  // A magnitude is what the prompt asks for, but a model that echoes the
-  // printed minus sign must not turn a deduction into a surcharge.
+  // A model echoing the printed minus must not make a deduction a surcharge.
   it("reads a discount as a magnitude whichever way the sign arrives", () => {
     for (const amount of ["8.00", "-8.00"]) {
       expect(readBill({ ...blank, discounts: [off(amount)] }, "EUR").extras.discounts)
@@ -285,11 +274,9 @@ describe("receiptExtras", () => {
 });
 
 /**
- * A line states its cost one of two ways, and this is the only multiplication
- * in the whole reading. It is here rather than in the prompt because a bill
- * priced per unit is most of what people type — "3 chicken at 13 each" — and a
- * model asked to work the 39 out itself is a model that has been given
- * permission to produce a figure the bill does not contain.
+ * The only multiplication in the reading. Here, not in the prompt: per-unit
+ * pricing is most of what people type, and a model asked to multiply may
+ * produce a figure the bill doesn't contain.
  */
 describe("lineMinor", () => {
   it("takes the line total where the bill gives one", () => {
@@ -305,7 +292,7 @@ describe("lineMinor", () => {
   it("multiplies in minor units, so a fractional price can't drift", () => {
     expect(lineMinor(each("0.01", 3), "EUR")).toBe(3);
     expect(lineMinor(each("1.15", 3), "EUR")).toBe(345);
-    // The float that would have been: 1.15 * 3 is 3.4499999999999997.
+    // 1.15 * 3 is 3.4499999999999997 as a float.
     expect(lineMinor(each("1.15", 3), "EUR")).not.toBe(Math.round(1.15 * 3 * 100) - 1);
   });
 
@@ -322,8 +309,7 @@ describe("lineMinor", () => {
     expect(lineMinor(each("-2.00", 3), "EUR")).toBe(-600);
   });
 
-  // Half a figure prices nothing, and taking the per-unit price for the line
-  // would charge three skewers as one.
+  // Taking the unit price as the line would charge three skewers as one.
   it.each([
     ["a price with no count", { ...each("13", 3), quantity: null }],
     ["a count with no price", { ...line("x"), quantity: 3, amount: null }],
@@ -353,9 +339,7 @@ describe("readBill, on a bill priced per unit", () => {
     expect(bill.extras.discounts).toEqual([{ label: "x", labelEn: null, amount: "5.00" }]);
   });
 
-  // `checkScan` is what refuses a line like this, and it can only do that if
-  // what arrives here stays unreadable rather than being quietly priced at the
-  // per-unit figure.
+  // Must stay unreadable for `checkScan` to refuse it.
   it("leaves a line it cannot price unpriced, rather than guessing at it", () => {
     const bill = readBill({ ...blank, lineItems: [{ ...each("13", 3), quantity: null }] }, "EUR");
     expect(bill.items[0]!.amount).toBe("");
@@ -365,9 +349,8 @@ describe("readBill, on a bill priced per unit", () => {
 });
 
 /**
- * The bill nobody added up. A photographed receipt always prints a total, so a
- * missing one there is a cropped photograph and still a refusal; a typed one
- * usually has none, and refusing those refused almost every bill anybody types.
+ * No stated total: refused on a photo (it's cropped), accepted on a typed bill,
+ * which usually has none.
  */
 describe("checkScan, on a bill that states no total", () => {
   const typed = { ...blank, lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")] };
@@ -404,9 +387,7 @@ describe("checkScan, on a bill that states no total", () => {
       .toBe("unreadable-line");
   });
 
-  // The whole reason the derived total is not then checked against the lines:
-  // it came from them, so it agrees with them by construction. What is still
-  // worth refusing is a total the bill did state and does not match.
+  // A derived total agrees with the lines by construction; only a stated one is checked.
   it("reconciles against a total the bill did state, in either medium", () => {
     const stated = { ...typed, total: "233.00" };
     expect(checkScan(stated, "EUR", "text")).toBeNull();
@@ -437,8 +418,7 @@ describe("billTotalMinor", () => {
 });
 
 describe("normalizeScan, on a bill that states no total", () => {
-  // The Polish skewers that started this: 3 at 13, 10 at 15, 2 at 17, a cola
-  // at 10 and a tip of 10, with no total written anywhere.
+  // 3 at 13, 10 at 15, 2 at 17, a cola at 10, tip 10, no total written.
   const typed: ScanResult = {
     ...blank,
     lineItems: [each("13", 3), each("15", 10), each("17", 2), line("10")],

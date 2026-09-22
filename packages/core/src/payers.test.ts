@@ -89,9 +89,8 @@ describe("settlementInvolves / memberInvolved", () => {
     expect(settlementInvolves(s, CARL)).toBe(false);
   });
 
-  // The bug this pair exists for: the members screen asked about expenses
-  // only, so a transfer to somebody was no obstacle to removing them — and
-  // the group was left showing a balance with nothing on the other side.
+  // A member only in a transfer must block removal, or a balance is left with
+  // nothing on the other side.
   it("sees a member who is only in a transfer", () => {
     const tables = { expenses: [], settlements: [settlement({ fromMember: ALICE, toMember: BOB })] };
 
@@ -123,8 +122,7 @@ describe("settlementInvolves / memberInvolved", () => {
 
 describe("expenseInvolves — receipt involvement", () => {
   it("counts somebody marked present who was assigned nothing", () => {
-    // "Who was there" is a person saying they were at the meal. Owing zero is
-    // an outcome, not an absence: removing them left their id in the grid.
+    // Owing zero is an outcome, not absence: removing them would leave their id in the grid.
     const e = expense({
       split: { mode: "equal", members: [BOB] },
       paidBy: BOB,

@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { newGroupId, newGroupSecret, newId, newNodeId } from "./ids.js";
 
-/**
- * Ids are minted on the phone and never checked against anything, so their
- * only defence is their shape: the alphabet a URL can carry, and enough
- * characters that two phones never mint the same group.
- */
+/** Ids are never checked against anything, so their shape is their only defence. */
 
 const BASE36 = /^[0-9a-z]+$/;
 
@@ -47,9 +43,8 @@ describe("newGroupId", () => {
 
 describe("base36 minting", () => {
   it("draws again rather than folding a byte that would bias the alphabet", () => {
-    // 252..255 are the four bytes `% 36` would have turned into 0..3. Dropping
-    // them leaves the first draw four characters short, so it draws again and
-    // the cycling stub repeats its head: "zzzzzzzy" then "zzzz".
+    // 252..255 would bias `% 36`; dropping them forces a redraw, and the cycling
+    // stub repeats its head: "zzzzzzzy" then "zzzz".
     stubCrypto([252, 253, 254, 255, 35, 71, 107, 143, 179, 215, 251, 34]);
     expect(newGroupId()).toBe("zzzzzzzyzzzz");
   });

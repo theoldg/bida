@@ -3,11 +3,9 @@ import { ImportError } from "./import.js";
 import { readTricount } from "./tricount.js";
 
 /**
- * The reader against the shape bunq actually answers with. The fixtures below
- * are that shape trimmed to the fields read — the payload carries avatars,
- * attachments and ids none of this looks at — and the arithmetic is the part
- * that matters: every test that builds a plan also asserts the balances,
- * because the checksum is what decides whether an import stands.
+ * The reader against bunq's real shape, trimmed to the fields read. Every test
+ * building a plan asserts balances too: the checksum decides whether an import
+ * stands.
  */
 
 const at = (day: string) => Date.parse(`${day}T00:00:00Z`);
@@ -120,7 +118,7 @@ describe("readTricount", () => {
       occurredAt: at("2026-04-11"),
       line: 2,
     }]);
-    // Which is the whole point of getting the direction right.
+    // Why the direction matters.
     expect(balances(plan)).toEqual({ Ana: 0, Bo: 0 });
   });
 
@@ -135,8 +133,7 @@ describe("readTricount", () => {
   });
 
   it("reads a BALANCE without the shape as an expense rather than guessing", () => {
-    // Two people on the receiving end is not a transfer between two people,
-    // and reading it as an expense loses nothing.
+    // Two recipients isn't a transfer between two people; an expense loses nothing.
     const plan = read(tricount(["Ana", "Bo", "Cy"], [
       entry({
         type: "BALANCE", value: "-10.00", owner: "Ana", shares: { Bo: "-6.00", Cy: "-4.00" },
@@ -148,9 +145,7 @@ describe("readTricount", () => {
   });
 
   it("does not make a transfer out of a repayment to oneself", () => {
-    // A transfer from Ana to Ana is a no-op the ledger would still print, so
-    // it comes back as the expense the shape rules default to, and either
-    // reading leaves the balances where they were.
+    // Ana to Ana: read as an expense, and balances don't move either way.
     const plan = read(tricount(["Ana", "Bo"], [
       entry({ type: "BALANCE", value: "-5.00", owner: "Ana", shares: { Ana: "-5.00" } }),
     ]));
@@ -240,9 +235,7 @@ describe("readTricount", () => {
   });
 
   it("sums a person allocated twice on one entry", () => {
-    // Two allocations, one person — the map `owed` is built on must add them
-    // rather than let the second overwrite the first, or the entry's own
-    // shares stop coming to what it cost.
+    // Two allocations for one person must add, not overwrite.
     const twice = entry({ value: "-6.00", owner: "Ana", shares: { Bo: "-2.00" } });
     twice.RegistryEntry.allocations.push({
       amount: { value: "-4.00", currency: "EUR" },

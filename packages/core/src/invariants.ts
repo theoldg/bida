@@ -7,19 +7,15 @@ import {
 } from "./types.js";
 
 /**
- * The invariants a merge can break, and the repair that folds each one away.
+ * The invariants a merge can break, and the repair that folds each away.
  *
- * The op log guarantees convergence, not validity: an invariant spanning two
- * entities is checked in the UI against one device's snapshot, which is a wish
- * and not a guard ([docs/invariants.md](../../../docs/invariants.md)). So
- * `repair` is required and the refusal `wouldViolate` is optional — you cannot
- * register a refusal without saying how the state it fails to prevent heals.
+ * The op log guarantees convergence, not validity: a cross-entity check in the
+ * UI sees one device's snapshot ([docs/invariants.md](../../../docs/invariants.md)).
+ * So `repair` is required and `wouldViolate` optional.
  *
- * A healer must be: a pure detector named for the *state* (not the race that
- * produced it); ordinary ops, nothing the fold must learn; idempotent, so a
- * second device writes nothing; deterministic, so two writing at once agree;
- * and its history note names the cause, not an actor. `invariants.test.ts`
- * holds every entry to all five and demands a fixture that violates it.
+ * A healer must: detect a *state*, not a race; write ordinary ops; be
+ * idempotent and deterministic, so concurrent devices agree; and name the
+ * cause, not an actor, in its note. `invariants.test.ts` enforces all five.
  */
 
 /** An op with everything the appender stamps — id, hlc, actor, clock — left off. */
@@ -32,9 +28,8 @@ export interface OpDraft {
 }
 
 /**
- * One invariant, its detector and its repair. `V` is whatever the detector
- * names — a member, a rate row — and all `repair` is handed, so a repair
- * cannot quietly consult state the detector never looked at.
+ * One invariant. `repair` is handed only the detector's output, so it can't
+ * consult state the detector never looked at.
  */
 interface Invariant<V> {
   /** Stable identifier. Appears in test failures and in the healer's history note. */
@@ -45,11 +40,7 @@ interface Invariant<V> {
   detect(state: GroupState): V[];
   /** Ops that fold the violation away. Required; see the note at the top. */
   repair(violations: readonly V[]): OpDraft[];
-  /**
-   * Would appending this draft break the invariant, as far as *this* device
-   * can see? A courtesy refusal, never correctness: one replica's snapshot
-   * cannot constrain the union of two.
-   */
+  /** A courtesy refusal from this device's snapshot — never correctness. */
   wouldViolate?(state: GroupState, draft: OpDraft): boolean;
 }
 
@@ -58,10 +49,7 @@ interface Declared<V> extends Invariant<V> {
   wouldViolate(state: GroupState, draft: OpDraft): boolean;
 }
 
-/**
- * `V` erased, so one array can hold all of them. Safe because the registry
- * only ever hands a detector's own output back to its own repair.
- */
+/** `V` erased; safe because each detector's output only reaches its own repair. */
 export type RegisteredInvariant = Declared<unknown>;
 
 /** Type-check an invariant against its own violation type, and fill in its guard. */
@@ -74,10 +62,8 @@ function defineInvariant<V>(spec: Invariant<V>): Declared<V> {
 }
 
 /**
- * A live entry names only live members. Reaching this takes two phones — one
- * removes Bruno, the other, offline, writes a transfer to him. The tombstone
- * gives way: an entry is money somebody typed, a removal is only the claim
- * that nobody was naming them.
+ * A live entry names only live members (one phone removes Bruno while another,
+ * offline, pays him). The tombstone gives way: an entry is money somebody typed.
  */
 export const liveEntriesNameLiveMembers = defineInvariant<Member>({
   name: "liveEntriesNameLiveMembers",
@@ -106,13 +92,9 @@ export const liveEntriesNameLiveMembers = defineInvariant<Member>({
 });
 
 /**
- * A currency a live entry is written in has a live rate — the mirror of the
- * member case, failing the same way. The repair is the lift `setRate` already
- * writes (rates.ts); a rate op's entity id is the currency code, so it lands
- * on the tombstoned row.
- *
- * A currency with **no row at all** is deliberately not detected: there is no
- * number to restore, and `needsRate` and the rate dialog already own it.
+ * A currency a live entry uses has a live rate. The repair is `setRate`'s lift;
+ * rate ops are keyed by currency, so it lands on the tombstoned row. A currency
+ * with no row at all is left to `needsRate` and the rate dialog.
  */
 export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
   name: "liveEntriesHaveLiveRates",
@@ -121,8 +103,7 @@ export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
     return currenciesInUse(state)
       .filter((c) => c.entryCount > 0 && c.rate === undefined)
       .map((c) => state.rates[c.currency])
-      // `rate: undefined` also covers a currency with no row and one whose
-      // rate string is unparseable. Only a tombstone is a state a lift repairs.
+      // Only a tombstone is something a lift repairs.
       .filter((row): row is ExchangeRate => !!row && !!row.deletedAt)
       .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   },
@@ -142,20 +123,15 @@ export const liveEntriesHaveLiveRates = defineInvariant<ExchangeRate>({
 });
 
 /**
- * Every invariant the app repairs. Order is not significant and must not become
- * so: healers that fight — one tombstoning what another lifts — are an op loop
- * that syncs. `healGroup` runs to a fixed point; the property test proves one
- * exists for each entry.
+ * Every invariant the app repairs. Order must not matter: healers that fight
+ * are an op loop that syncs. The property test proves a fixed point exists.
  */
 export const INVARIANTS: readonly RegisteredInvariant[] = [
   liveEntriesNameLiveMembers,
   liveEntriesHaveLiveRates,
 ];
 
-/**
- * The ops that would make this state legal. Empty when it already is, which is
- * what makes running this on every merge cost nothing.
- */
+/** The ops that would make this state legal; empty when it is, so it's free on every merge. */
 export function healDrafts(state: GroupState): OpDraft[] {
   const drafts: OpDraft[] = [];
   for (const invariant of INVARIANTS) {
@@ -166,24 +142,17 @@ export function healDrafts(state: GroupState): OpDraft[] {
 }
 
 /**
- * Would this draft break something, on the evidence this device holds? The
- * single source for every refusal in the UI — a screen asking its own version
- * lets the guard and the healer drift
- * ([docs/invariants.md](../../../docs/invariants.md)).
+ * Would this draft break something, on this device's evidence? The single
+ * source for UI refusals, so guard and healer can't drift.
  */
 export function wouldViolate(state: GroupState, draft: OpDraft): RegisteredInvariant | undefined {
   return INVARIANTS.find((i) => i.wouldViolate(state, draft));
 }
 
 /**
- * The op that puts this device's own member back, when a merge removed them.
- *
- * Cannot be in `INVARIANTS`: a registered detector sees only `GroupState`, and
- * the premise here is device-local — *which* member this phone is. Registered,
- * every device would resurrect every claimed member and no removal would ever
- * stick. Device-local, only the person removed argues back, and **forgetting
- * the group ends it**: a forgotten group is skipped by the sync loop
- * (docs/invariants.md).
+ * The op restoring this device's own member after a merge removed them. Not in
+ * `INVARIANTS`: registered, every device would resurrect every claimed member
+ * and no removal would stick. Forgetting the group ends it (docs/invariants.md).
  */
 export function restoreClaimDrafts(state: GroupState, memberId: Id): OpDraft[] {
   const member = state.members[memberId];

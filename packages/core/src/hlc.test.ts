@@ -48,8 +48,7 @@ describe("hlc", () => {
     expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
   });
 
-  // A fast phone is somebody's expense and is adopted; a phone in 2099 would
-  // pin every clock it met to 2099, so it is not.
+  // A fast phone is adopted; one in 2099 would pin every clock it met.
   it("adopts a stamp up to a day ahead and not one past it", () => {
     const now = 1_756_300_000_000;
     const state = createHlcState("aaa", now, 0);
@@ -65,8 +64,7 @@ describe("hlc", () => {
     expect(isAhead(future, 4_100_000_000_000 - MAX_DRIFT_MS)).toBe(false);
   });
 
-  // Adopted before the bound existed, or this phone's own wall clock set wrong
-  // and then fixed: either way peers would refuse every op it stamped.
+  // A clock past the bound would have every op refused by peers.
   it("brings its own clock back from beyond the bound to the wall", () => {
     const now = 1_756_300_000_000;
     const pinned = createHlcState("aaa", 4_100_000_000_000, 42);
@@ -75,9 +73,8 @@ describe("hlc", () => {
     expect(hlcReceive(pinned, remote, now).physical).toBe(now);
   });
 
-  // A peer pinned far ahead means the wall clock never catches up, so every op
-  // sent or received spends the counter. Running out used to throw, and a
-  // phone that throws here can never write or sync again.
+  // A peer pinned ahead keeps the counter spending; throwing on overflow would
+  // stop the phone writing or syncing for good.
   it("carries a full counter into the millisecond instead of throwing", () => {
     const full = createHlcState("aaa", 5000, 99999);
     const sent = hlcSend(full, 1000);
@@ -92,8 +89,7 @@ describe("hlc", () => {
 
   it("knows a stamp it can adopt from one it cannot", () => {
     expect(isHlc(formatHlc(createHlcState("abc", 1756300000000, 7)))).toBe(true);
-    // Shape and range only: whether 2099 is too far ahead depends on when you
-    // ask, which is `isAhead`'s question.
+    // Shape and range only; "too far ahead" is `isAhead`'s question.
     expect(isHlc(formatHlc(createHlcState("abc", 4_100_000_000_000, 0)))).toBe(true);
     expect(isHlc(formatHlc(createHlcState("abc", 10 ** 14 - 1, 0)))).toBe(true);
     // Past the year 5138 it is not, and adopting it would run out of digits.

@@ -2,23 +2,15 @@ import { validateOp, type Op } from "./ops.js";
 import type { Id } from "./types.js";
 
 /**
- * End-to-end encryption of the op log (ADR-0036).
+ * End-to-end encryption of the op log (ADR-0036). The link secret never leaves
+ * the phone; one HKDF-SHA256 derives two unrelated values:
  *
- * The link secret never leaves the phone. Two independent values are derived
- * from it, and the server only ever meets the first:
+ * - a **token**, sent as bearer; the server stores `sha256(token)`.
+ * - a **content key**, AES-GCM-256, sealing every op body.
  *
- * - a **token**, sent as the bearer. The server stores `sha256(token)`, so a
- *   database leak hands out a hash of something that decrypts nothing.
- * - a **content key**, AES-GCM-256, which every op body is sealed under.
- *
- * The server stores an id, a group id, a sequence number and a ciphertext.
- * Everything carrying meaning — the patch, the actor, the entity, the note,
- * the stamp — is inside the seal.
- *
- * One HKDF-SHA256 over the secret with two `info` strings, so the token tells
- * you nothing about the key. Not a password KDF and it does not need to be: a
- * secret is ~83 random bits (`newGroupSecret`), not something a person typed.
- * **Shorten the secret and this choice has to be made again.**
+ * The server holds only id, group id, seq and ciphertext. HKDF, not a password
+ * KDF, because the secret is ~83 random bits (`newGroupSecret`). **Shorten the
+ * secret and this choice must be revisited.**
  */
 
 /** The slice of WebCrypto we need, so core stays free of DOM lib types. */
@@ -56,10 +48,8 @@ export interface GroupCrypto {
 }
 
 /**
- * An op as it crosses the wire and sits in D1: an envelope the server can route
- * and a body it cannot read. `id` stays in the clear as the idempotency key a
- * retried push dedupes on — a random UUID says nothing about what it carries —
- * and `groupId` is the address.
+ * An op on the wire and in D1. `id` stays clear as the idempotency key for
+ * retried pushes (a random UUID reveals nothing); `groupId` is the address.
  */
 export interface SealedOp {
   id: Id;
@@ -86,8 +76,7 @@ async function hkdf(secret: string, groupId: string, info: string): Promise<Arra
     {
       name: "HKDF",
       hash: "SHA-256",
-      // The group id is the salt: two groups that somehow shared a secret still
-      // get different keys, and it costs nothing to bind them.
+      // Binds keys to the group, in case two groups ever shared a secret.
       salt: utf8.encode(`bida/v1/${groupId}`),
       info: utf8.encode(info),
     },
@@ -96,11 +85,7 @@ async function hkdf(secret: string, groupId: string, info: string): Promise<Arra
   );
 }
 
-/**
- * The token and the content key for one group's link secret. Deterministic:
- * every device holding the link derives the same pair, which is the whole of
- * how a group agrees on a key with no key exchange.
- */
+/** Deterministic, so every device holding the link agrees on the key without exchange. */
 export async function deriveGroupCrypto(secret: string, groupId: string): Promise<GroupCrypto> {
   const [auth, content] = await Promise.all([
     hkdf(secret, groupId, "auth"),
@@ -113,12 +98,8 @@ export async function deriveGroupCrypto(secret: string, groupId: string): Promis
 }
 
 /**
- * Seal an op for the server.
- *
- * The envelope is the additional authenticated data, so a ciphertext cannot be
- * moved to another op id or another group and still open: the server can drop
- * an op or reorder the log, but it cannot forge one or shuffle bodies between
- * them without every phone noticing.
+ * Seal an op. The envelope is the AAD, so the server can drop or reorder ops
+ * but can't forge one or move a body to another id or group.
  */
 export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
   const body: OpBody = {
@@ -145,12 +126,11 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
 }
 
 /**
- * Open a sealed op, or throw `SealError` — and only that, for anything wrong
- * with the row itself. The caller skips a `SealError` and records where it
- * was (`lib/db/sync.ts`), so an op this build cannot read costs that op and
- * not the group's sync. That includes one that opens fine and names an entity
- * or a kind a newer build added: the likeliest unreadable op there is. The
- * envelope is re-validated despite arriving typed: it arrives from the network.
+ * Open a sealed op, or throw `SealError` (and only that) for anything wrong
+ * with the row. The caller skips and records it (`lib/db/sync.ts`), so an op
+ * this build can't read — most likely a newer build's entity or kind — costs
+ * that op, not the group's sync. The envelope is re-validated: it came off the
+ * network.
  */
 export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> {
   const sealed = validateSealedOp(input);
@@ -195,9 +175,8 @@ function aad(id: string, groupId: string): Uint8Array {
 }
 
 /**
- * Validate an envelope arriving from anywhere untrusted. It checks the routing
- * fields and nothing else — the body's integrity is the seal's job, and a
- * server that could check it would be a server that could read it.
+ * Validate an untrusted envelope's routing fields only. The body is the seal's
+ * job; a server that could check it could read it.
  */
 export function validateSealedOp(input: unknown): SealedOp {
   if (typeof input !== "object" || input === null) {

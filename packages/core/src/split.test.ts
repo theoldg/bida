@@ -113,8 +113,7 @@ describe("validateSplit", () => {
     const v = validateSplit(17039, { mode: "exact", amounts: { a: 8520, b: 8000 } });
     expect(v.ok).toBe(false);
     expect(v.allocatedMinor).toBe(16520);
-    // The shortfall comes back as a number, not a sentence: only the UI knows
-    // the currency it should be shown in.
+    // A number, not a sentence: only the UI knows the currency.
     expect(v.problem).toBe("under");
     expect(v.diffMinor).toBe(519);
   });
@@ -180,8 +179,7 @@ describe("convertSplitMode", () => {
     expect(validateSplit(0, spec).ok).toBe(true);
   });
 
-  // Zeroing every part in the editor and then switching tabs used to throw out
-  // of `resolveSplit`, leaving the tab unswitched and an error on the console.
+  // Zeroing every part then switching tabs must not throw out of `resolveSplit`.
   it("carries an empty split into every mode instead of throwing", () => {
     const empty: SplitSpec[] = [
       { mode: "equal", members: [] },
@@ -218,8 +216,7 @@ describe("property: every split sums to the total", () => {
 });
 
 describe("canonicalSplit", () => {
-  // The whole point: JSON.stringify is what the command layer and the history
-  // compare with, so two specs meaning the same thing must serialise the same.
+  // JSON.stringify is what the command layer and history compare with.
   it("sorts members, whatever order they were picked in", () => {
     const picked: SplitSpec = { mode: "equal", members: ["c", "a", "b"] };
     expect(JSON.stringify(canonicalSplit(picked)))
@@ -248,11 +245,8 @@ describe("canonicalSplit", () => {
 });
 
 describe("upgradeReceiptSplit", () => {
-  // A receipt used to be stored as `shares` with a `splitTab: "receipt"` flag
-  // beside it, and four screens — the ledger row, the entry, the history and
-  // the form's own tab — each asked those two fields their own way. This is
-  // what is left of that: one upgrade, run where ops become state, after which
-  // a receipt is a `receipt` split and nobody asks a second field.
+  // Legacy receipts are `shares` plus `splitTab: "receipt"`; one upgrade where
+  // ops become state makes them `receipt` splits.
   const items = [{ label: "Tea", amount: "3.00" }];
   const weights = { a: 1, b: 2 };
   const legacy = (extra: Record<string, unknown>): { split: SplitSpec } => {
@@ -268,8 +262,7 @@ describe("upgradeReceiptSplit", () => {
       .toEqual({ mode: "receipt", weights });
   });
 
-  // Entries predating the flag have no tab to read: a `shares` spec beside a
-  // scanned bill is the only thing a finished grid could have written.
+  // No flag: a `shares` spec beside a scanned bill can only be a finished grid.
   it("reads an entry saved before the tab was stored", () => {
     expect(legacy({ receiptItems: items }).split).toEqual({ mode: "receipt", weights });
   });

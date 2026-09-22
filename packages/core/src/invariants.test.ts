@@ -10,12 +10,9 @@ import { ADA, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test
 import type { GroupState } from "./types.js";
 
 /**
- * Every invariant in the registry, held to the five rules in invariants.ts.
- *
- * This is deliberately registry-driven rather than a test per healer: the
- * defect class it guards is *an invariant nobody finished*, so the test that
- * matters is the one a new entry cannot be added without satisfying. Adding to
- * `INVARIANTS` without adding a scenario below fails the first test in the file.
+ * Every registered invariant, held to the five rules in invariants.ts.
+ * Registry-driven so a new entry can't be added without a scenario below —
+ * the first test fails otherwise.
  */
 
 /** Stamp repair drafts as ops that sort after everything already in the log. */
@@ -49,8 +46,7 @@ function shuffled(ops: readonly Op[], seed: number): Op[] {
 
 /** Ops reaching a state that violates one invariant, per registered name. */
 const SCENARIOS: Record<string, () => Op[]> = {
-  // Two phones, each right: one removes Ada, the other is offline and Ada is
-  // on every expense in the fixture. The merge leaves a tombstone over money.
+  // One phone removes Ada while another, offline, has her on every expense.
   liveEntriesNameLiveMembers: () => [
     ...marrakechOps(),
     {
@@ -59,8 +55,7 @@ const SCENARIOS: Record<string, () => Op[]> = {
       actor: MARIE, note: null, createdAt: 1_743_700_000_000, seq: null,
     },
   ],
-  // The same race one entity over: the group clears its MAD rate while five
-  // live entries are still written in MAD.
+  // The group clears its MAD rate while five live entries use MAD.
   liveEntriesHaveLiveRates: () => [
     ...marrakechOps(),
     {
@@ -79,8 +74,7 @@ const SCENARIOS: Record<string, () => Op[]> = {
 
 describe("the registry", () => {
   it("has a violating scenario for every invariant it declares", () => {
-    // The ratchet. An invariant with no scenario is one whose healer has never
-    // been run — the exact shape of every defect in docs/invariants.md.
+    // An invariant with no scenario has a healer that has never run.
     expect(INVARIANTS.map((i) => i.name).sort()).toEqual(Object.keys(SCENARIOS).sort());
   });
 
@@ -105,8 +99,7 @@ describe.each(INVARIANTS.map((i) => [i.name, i] as const))("%s", (name, invarian
   });
 
   it("detects the same state however the ops arrived", () => {
-    // Detection is a pure function of state, and state is a fold — so the order
-    // ops landed in cannot change what gets repaired.
+    // Detection is a function of the fold, so arrival order can't change the repair.
     const expected = invariant.detect(violated());
     for (let seed = 1; seed <= 20; seed++) {
       expect(invariant.detect(foldOps(shuffled(ops(), seed)))).toEqual(expected);
@@ -180,8 +173,7 @@ describe("the courtesy refusals", () => {
   });
 
   it("is a refusal, not a correctness mechanism", () => {
-    // The guard reads one replica. The peer that cannot see the entry writes
-    // the removal anyway, and the healer is what the merge relies on.
+    // The peer that can't see the entry removes anyway; the healer is what the merge relies on.
     const blind = foldOps(marrakechOps().filter((o) => o.entity !== "expense"));
 
     expect(wouldViolate(blind, {
@@ -192,8 +184,7 @@ describe("the courtesy refusals", () => {
 
 describe("liveEntriesHaveLiveRates", () => {
   it("leaves alone a currency the group has never priced", () => {
-    // Marrakech spends in MAD with no rate row at all. There is no number to
-    // restore — that is the rate dialog's job, not a healer's.
+    // No rate row at all: the rate dialog's job, not a healer's.
     expect(liveEntriesHaveLiveRates.detect(foldOps(marrakechOps()))).toEqual([]);
   });
 
@@ -240,10 +231,7 @@ describe("liveEntriesNameLiveMembers", () => {
   });
 });
 
-/**
- * Not a registered invariant, and the tests say why: its premise is which
- * member *this* phone is, which no `GroupState` holds. See `restoreClaimDrafts`.
- */
+/** Not registered: its premise is which member *this* phone is. See `restoreClaimDrafts`. */
 describe("restoreClaimDrafts", () => {
   const removed = (member: string): GroupState => foldOps([
     ...marrakechOps().filter((o) => o.entity !== "expense"),

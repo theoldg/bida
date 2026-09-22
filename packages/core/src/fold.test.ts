@@ -49,9 +49,8 @@ describe("foldOps", () => {
   });
 
   it("takes createdAt once and never again", () => {
-    // Write-once, and it has to be held here: an entry's content is written
-    // whole, so every edit carries a createdAt, and the field the list order
-    // breaks ties on would otherwise be reassigned by whoever saved last.
+    // Every whole-entity edit carries a createdAt, so the list's tiebreak would
+    // otherwise go to whoever saved last.
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner", createdAt: 100 } }),
       op({ entityId: "e1", kind: "update", hlc: at(2), patch: { description: "lunch", createdAt: 999 } }),
@@ -63,7 +62,7 @@ describe("foldOps", () => {
   });
 
   it("still accepts createdAt on an entity that has never had one", () => {
-    // Entries written before the field existed must be able to gain one.
+    // Older entries without one must be able to gain one.
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner" } }),
       op({ entityId: "e1", kind: "update", hlc: at(2), patch: { createdAt: 500 } }),
@@ -73,9 +72,8 @@ describe("foldOps", () => {
   });
 
   it("lets a whole-entity write lose to a later delete, and not undo it", () => {
-    // The amendment the whole-entity merge does not work without: content
-    // merges whole, deletedAt merges per field. A stale save must not
-    // resurrect — or re-tombstone — what a delete or a healer decided.
+    // Content merges whole, deletedAt per field: a stale save must not resurrect
+    // or re-tombstone what a delete or healer decided.
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: { description: "dinner" } }),
       op({ entityId: "e1", kind: "delete", hlc: at(2) }),
@@ -137,10 +135,9 @@ describe("foldOps", () => {
 });
 
 /**
- * A create writes no field it would only be defaulting — `only()` in
- * apps/web/lib/db/commands/patch.ts drops them. That is only safe because absent and
- * spelled-out-null fold to the same entity for every reader, which is what
- * these pin.
+ * A create omits fields it would only default (`only()` in
+ * apps/web/lib/db/commands/patch.ts). Safe only because absent and null fold
+ * the same for every reader, pinned here.
  */
 describe("a create that leaves its defaults out", () => {
   const carried = {
@@ -154,7 +151,7 @@ describe("a create that leaves its defaults out", () => {
     paidBy: THEO,
     split: { mode: "equal", members: [THEO] },
   };
-  /** What the same expense used to be written as, before `only()`. */
+  /** The same expense with its defaults spelled out. */
   const defaults = {
     categoryId: null, payers: null, attachmentIds: [], receiptItems: null,
     receiptTip: null, receiptInvolved: null, receiptAssignments: null,
@@ -202,9 +199,8 @@ describe("a create that leaves its defaults out", () => {
 });
 
 describe("an expense written in the old receipt shape", () => {
-  // Real ops in the log say `shares` with a `splitTab: "receipt"` beside them.
-  // Reading those two fields together was every screen's job and every
-  // screen's bug; the fold does it once, and hands out a `receipt` split.
+  // Legacy ops say `shares` plus `splitTab: "receipt"`; the fold turns them into
+  // a `receipt` split once, for every screen.
   const legacy = {
     description: "Dinner",
     occurredAt: 1,
@@ -232,8 +228,7 @@ describe("an expense written in the old receipt shape", () => {
       .toEqual({ mode: "shares", weights: { a: 6000, b: 3000 } });
   });
 
-  // The flag was written by a later edit too, and the fold applies each op in
-  // turn: an entry whose last save left Receipt must not still read as one.
+  // A later save that left Receipt must not still read as one.
   it("follows a later save that left the receipt behind", () => {
     const ops = [
       op({ entityId: "e1", kind: "create", hlc: at(1), patch: legacy }),

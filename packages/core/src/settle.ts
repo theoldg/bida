@@ -1,29 +1,23 @@
 import type { Id } from "./types.js";
 
 /**
- * Reduce a set of balances to the fewest payments that clear everyone.
+ * Reduce balances to the fewest payments that clear everyone.
  *
- * The minimum is `n − p`, where `p` is the largest number of disjoint zero-sum
- * pieces the group cuts into. Finding that cut is NP-hard — it contains
- * subset-sum — so `partition` leans on three cuts that make it affordable:
+ * The minimum is `n − p`, `p` being the most disjoint zero-sum pieces the group
+ * cuts into. That is NP-hard (it contains subset-sum), so `partition` uses
+ * three cuts:
  *
- * 1. **Cancel exact opposites** first. Two people the search never sees, and
- *    it is the common case: one person's share of one dinner.
- * 2. **Search over amounts, not people.** Two members owing the same are
- *    interchangeable, so the state is *how many* hold each amount. An evenly
- *    split trip collapses from millions of subsets to a handful of states.
- * 3. **Stop at the first zero.** Extending a piece that already sums to zero
- *    can only merge two pieces into one, which never wins.
+ * 1. **Cancel exact opposites** first — the common case.
+ * 2. **Search over amounts, not people**: equal balances are interchangeable,
+ *    so the state is how many hold each amount.
+ * 3. **Stop at the first zero**: extending a zero-sum piece only merges pieces.
  *
- * What survives all three is a group of ~18+ with no two balances alike, which
- * is also the shape with the least to gain. There `partition` spends a fixed
- * budget, then `peel`s off what triples and quadruples it can find and settles
- * the rest as one piece: still `≤ n−1`, no longer provably fewest. So the UI
- * says "simplest way to settle" and not "optimal".
+ * A group of ~18+ with no two balances alike exhausts the budget; then `peel`
+ * takes what triples and quadruples it can and settles the rest as one piece —
+ * `≤ n−1` but not provably fewest, hence "simplest", not "optimal", in the UI.
  *
- * `fill` then decides who pays whom, which the count alone leaves open:
- * smallest debtor first, into the smallest creditor who can absorb the whole
- * debt. Every piece costs `size − 1` however it is filled, so this is free.
+ * `fill` picks who pays whom: smallest debtor into the smallest creditor who
+ * can absorb it. Every piece costs `size − 1` regardless.
  */
 
 export interface Transfer {
@@ -37,15 +31,13 @@ interface Party {
   amount: number;
 }
 
-/** Steps of search before `partition` gives up on being exact. The ceiling
- *  costs about 2ms; only a group of ~18+ with no two balances alike reaches it. */
+/** Search steps before `partition` stops being exact; about 2ms. */
 const SEARCH_BUDGET = 50_000;
 
 class OutOfBudget extends Error {}
 
 export function settleUp(balances: Record<Id, number>): Transfer[] {
-  // Sorted by id so the answer is the same on every device, whatever order the
-  // record was built in.
+  // Sorted by id so every device gets the same answer.
   const people: Party[] = Object.entries(balances)
     .filter(([, balance]) => balance !== 0)
     .map(([id, balance]) => ({ id, amount: balance }))
@@ -168,19 +160,15 @@ function search(
     }
   };
 
-  // Anchor on one holder of the first amount — every piece contains one, and
-  // fixing it means no piece is enumerated twice. Carry on at the same index:
-  // a piece may hold several people owing that same amount.
+  // Anchor on one holder of the first amount so no piece is enumerated twice;
+  // stay on the same index, as a piece may hold several of that amount.
   chosen[first] = 1;
   walk(first, amounts[first]!, 1);
   chosen[first] = 0;
   return entry.best;
 }
 
-/**
- * Out of budget: take the zero-sum triples and quadruples that a table of pair
- * sums can find, and leave the rest. Cheap, and better than giving up whole.
- */
+/** Out of budget: take the zero-sum triples and quadruples a pair-sum table finds. */
 function peel(amounts: readonly number[], counts: readonly number[]): number[][] {
   const items: number[] = [];
   for (const [i, count] of counts.entries()) for (let k = 0; k < count; k++) items.push(i);
@@ -236,9 +224,8 @@ function fill(piece: readonly Party[]): Transfer[] {
   const transfers: Transfer[] = [];
   for (const debtor of debtors) {
     while (debtor.amount > 0) {
-      // Best fit: the smallest creditor who can take the rest in one payment,
-      // so the large creditors stay whole for the debts that need them. If
-      // nobody can, empty the largest creditor and go round again.
+      // Best fit keeps large creditors whole for the debts that need them; if nobody
+      // fits, empty the largest and go round again.
       const creditor = creditors.find((c) => c.amount >= debtor.amount) ?? largest(creditors);
       if (!creditor) break;
       const amount = Math.min(debtor.amount, creditor.amount);

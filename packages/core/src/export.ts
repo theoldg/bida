@@ -4,30 +4,20 @@ import { resolveSplit } from "./split.js";
 import { alive, type Expense, type GroupState, type Id, type Settlement } from "./types.js";
 
 /**
- * A group as the CSV every other splitter can read.
+ * A group as Splitwise's CSV export — the one shape every other splitter
+ * (Tricount included) imports: `Date,Description,Category,Cost,Currency` then a
+ * column per member.
  *
- * The one interoperable shape is **Splitwise's export**:
- * `Date,Description,Category,Cost,Currency` then a column per member. Even
- * Tricount's importer takes that and not its own format, so this is what gets
- * a group into Tricount, Splitwise, Sesterce, Spliit and a spreadsheet.
- *
- * **A member's column is `paid − owed` for that row**, signed, so every row
- * sums to zero and the column totals are the balances. Not a second opinion
- * about the arithmetic: the payer map and split come from `resolvePayers` and
- * `resolveSplit` under the seeds `computeBalances` uses, so the `Total
- * balance` foot is `byMember` to the cent. If they disagree, this file is wrong.
- *
- * **Everything is in the group's base currency.** The shape has one `Currency`
- * per row and nowhere to say a row is in MAD while the balance below is in
- * euros, so the caller hands over a state already repriced at the registry
- * (`atCurrentRates`). ADR-0005.
+ * **A member's cell is `paid − owed`**, so rows sum to zero and column totals
+ * are balances. Figures come from `resolvePayers`/`resolveSplit` under
+ * `computeBalances`'s seeds, so the `Total balance` foot equals `byMember` to
+ * the cent. Everything is in base currency: the caller reprices first
+ * (`atCurrentRates`, ADR-0005).
  */
 
 /**
- * The three cells the format dictates, not the app — protocol tokens, so they
- * live here and not in `copy.ts` (ADR-0033 covers what a person reads on a
- * screen). An importer matches `Payment` literally, skips the `Total balance`
- * row, and falls back to `General`. Never translate them.
+ * Protocol tokens, not copy: importers match `Payment` literally, skip
+ * `Total balance` and fall back to `General`. Never translate them.
  */
 const PAYMENT = "Payment";
 const GENERAL = "General";
@@ -35,16 +25,11 @@ const TOTAL_BALANCE = "Total balance";
 
 interface CsvOptions {
   /**
-   * A timestamp as `YYYY-MM-DD`. An argument for the reason core takes its
-   * clock as one: the honest answer is the *local* day — an expense added at
-   * 23:00 must not export as tomorrow — and only the app knows the timezone.
-   * Pass `apps/web/lib/format.ts`'s `dateInputValue`, which the form shows.
+   * A timestamp as the *local* `YYYY-MM-DD` — only the app knows the timezone.
+   * Pass `apps/web/lib/format.ts`'s `dateInputValue`.
    */
   formatDay: (ts: number) => string;
-  /**
-   * When the file is being written — the foot's `Date` cell, which a real
-   * Splitwise export fills with the export day rather than leaving empty.
-   */
+  /** The foot's `Date` cell, which Splitwise fills with the export day. */
   exportedAt: number;
 }
 
@@ -57,14 +42,10 @@ interface ExportColumn {
 }
 
 /**
- * Whose columns the file has, left to right: the group, then anybody removed
- * who is still on a live entry. A departed member needs a column or the totals
- * stop summing to zero. Their header is the plain name with nothing appended —
- * an importer matches on it, so "Bruno (removed)" imports as a fourth person.
- *
- * Sorted by name then id, never by object order, which is a fold's accident.
- * Two members really can share a name, and then the file has two identical
- * headers; the alternative corrupts the cell an importer reads.
+ * The member columns: the group, then anyone removed who is still on a live
+ * entry (or totals stop summing to zero). Headers are the plain name —
+ * "Bruno (removed)" would import as a new person. Sorted by name then id; two
+ * members may share a name and so a header.
  */
 export function exportColumns(state: GroupState): ExportColumn[] {
   const byName = (a: ExportColumn, b: ExportColumn) =>
@@ -75,8 +56,8 @@ export function exportColumns(state: GroupState): ExportColumn[] {
     .sort(byName);
   const present = new Set(here.map((c) => c.id));
 
-  // Whoever a row moves money for, asked of the same two functions that write
-  // the figures — the only way no figure lands in a column that isn't there.
+  // Asked of the same functions that write the figures, so no figure lands in
+  // a missing column.
   const named = new Set<Id>();
   for (const e of alive(state.expenses)) {
     for (const id of Object.keys(expenseRow(e, () => "").deltas)) named.add(id);
@@ -108,10 +89,7 @@ interface Row {
   deltas: Record<Id, number>;
 }
 
-/**
- * The group as one CSV, oldest row first — chronological, unlike every screen
- * in the app, because that is what a spreadsheet is read top-down for.
- */
+/** The group as one CSV, oldest first, as a spreadsheet is read. */
 export function groupToCsv(state: GroupState, { formatDay, exportedAt }: CsvOptions): string {
   const group = state.group;
   if (!group) throw new Error("groupToCsv: no group in this state");
@@ -126,8 +104,7 @@ export function groupToCsv(state: GroupState, { formatDay, exportedAt }: CsvOpti
   const money = (minor: number) => minorToDecimalString(minor, currency);
   const lines: string[] = [
     row(["Date", "Description", "Category", "Cost", "Currency", ...columns.map((c) => c.name)]),
-    // A blank line under the header and another above the foot: a real
-    // Splitwise export has both.
+    // Blank lines under the header and above the foot, as Splitwise writes.
     "",
   ];
 
@@ -143,18 +120,16 @@ export function groupToCsv(state: GroupState, { formatDay, exportedAt }: CsvOpti
     ]));
   }
 
-  // The foot is a summary, not an expense, and every cell is load-bearing:
-  // the export day in `Date` (an importer parses it), the words in
-  // `Description` (it aborts the file on them), a space for category and cost.
-  // There is nowhere here to put a total spend figure.
+  // Every foot cell matters to importers: the export day in `Date`, the words in
+  // `Description`, a space for category and cost.
   lines.push("");
   lines.push(row([
     formatDay(exportedAt), TOTAL_BALANCE, " ", " ", currency,
     ...columns.map((c) => money(totals[c.id] ?? 0)),
   ]));
 
-  // LF and a trailing blank line, and no BOM — what Splitwise emits, checked
-  // against an export Tricount accepts. CRLF here and Tricount takes nothing.
+  // LF, a trailing blank line, no BOM — as Splitwise emits. Tricount takes
+  // nothing with CRLF.
   return `${lines.map((line) => `${line}\n`).join("")}\n`;
 }
 
@@ -167,16 +142,14 @@ function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
   try {
     shares = resolveSplit(e.baseAmountMinor, e.split, { tiebreakSeed: e.id }).shares;
   } catch {
-    // An expense `computeBalances` could not apportion either, so it is in
-    // that report's `problems`. Kept with every column zero: dropping it loses
-    // money somebody typed, and apportioning the payers alone leaves a row
-    // that doesn't sum to zero and a foot that no longer matches `byMember`.
+    // Unapportionable (also in `computeBalances`' `problems`). Kept with every
+    // column zero: dropping it loses money, and apportioning only the payers
+    // breaks the zero sum and the foot.
     shares = undefined;
   }
 
   if (shares) {
-    // The same two loops `computeBalances` runs, with the sign it applies: an
-    // income is an expense read backwards (ADR-0010).
+    // The same loops as `computeBalances`, with an income read backwards.
     for (const [id, amount] of Object.entries(resolvePayers(e))) move(id, income ? -amount : amount);
     for (const [id, amount] of Object.entries(shares)) move(id, income ? amount : -amount);
   }
@@ -187,9 +160,7 @@ function expenseRow(e: Expense, formatDay: (ts: number) => string): Row {
     date: formatDay(e.occurredAt),
     description: e.description,
     category: e.categoryId || GENERAL,
-    // One amount column, and nothing in the format says "income" — so the
-    // sign is all that can. An importer refusing a negative refuses the row
-    // rather than silently booking a cost.
+    // The sign is the only way this format can say "income".
     costMinor: income ? -e.baseAmountMinor : e.baseAmountMinor,
     deltas,
   };
@@ -214,13 +185,9 @@ function row(cells: string[]): string {
 }
 
 /**
- * A cell, escaped as RFC 4180 has it: quoted when it holds a comma or a quote,
- * inner quotes doubled. Descriptions are free text, so `Dinner, wine and "the
- * good cheese"` must stay one cell.
- *
- * A newline is the exception and folds to a space. RFC 4180 allows one inside
- * a quoted cell, but a reader that splits on LF before parsing quotes sees a
- * record break — and two in a row look like the blank line ending the file.
+ * A cell escaped per RFC 4180: quoted when it holds a comma or quote, quotes
+ * doubled. A newline folds to a space: readers splitting on LF first would see
+ * a record break.
  */
 function cell(value: string): string {
   const flat = value.replace(/[\r\n]+/g, " ");

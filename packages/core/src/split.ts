@@ -1,30 +1,21 @@
 import type { ArithmeticSplit, ArithmeticMode, Id, SplitSpec } from "./types.js";
 
 /**
- * Splitting. Two properties carry everything here:
- *   1. Shares sum to the total EXACTLY. Not approximately.
- *   2. The result is byte-identical on every device, so two phones folding the
- *      same ops never disagree about a balance.
- *
- * (2) is why remainders go by largest fractional part with a seeded, pure
- * tiebreak, and never by the iteration order of an object.
+ * Splitting. Shares sum to the total exactly, and the result is identical on
+ * every device — hence largest-remainder with a seeded pure tiebreak, never
+ * object iteration order.
  */
 
 interface SplitResult {
   /** memberId -> minor units, in the expense's base currency. Sums to the total. */
   shares: Record<Id, number>;
-  /**
-   * Members handed an extra minor unit because the total wouldn't divide.
-   * Diagnostic only — the UI deliberately never shows this.
-   */
+  /** Members handed an extra minor unit. Diagnostic only; the UI never shows it. */
   remainderAbsorbedBy: Id[];
 }
 
 /**
- * Why a split doesn't add up. Core names the problem and never formats it: it
- * knows minor units and not the currency, so a sentence built here would read
- * "230 minor units unallocated" beside figures saying "€2.30". The number is
- * the field; the sentence is the caller's.
+ * Why a split doesn't add up. Core names the problem and never formats it:
+ * it doesn't know the currency, so the sentence is the caller's.
  */
 export type SplitProblem = "empty" | "under" | "over" | "percent";
 
@@ -44,10 +35,8 @@ export class SplitError extends Error {}
 
 interface SplitOptions {
   /**
-   * Rotates who absorbs the leftover minor units. Without it ties break by
-   * ascending member id and the same person subsidises every split in the
-   * group. Pass the expense id: the burden moves around and stays
-   * deterministic across devices. Deliberately invisible in the UI.
+   * Rotates who absorbs leftover minor units, so the same person doesn't
+   * subsidise every split. Pass the expense id. Invisible in the UI.
    */
   tiebreakSeed?: string;
 }
@@ -80,11 +69,9 @@ function sortedKeys<T>(map: Record<Id, T>): Record<Id, T> {
 }
 
 /**
- * The same split written one way: members sorted and deduplicated, weight maps
- * keyed in sorted order. Two specs meaning the same thing then serialise the
- * same, which is the only way anything downstream tells "nobody moved" from
- * "somebody re-picked the same people" — toggling a member out and back in
- * reorders the array, and order is not what a person is shown.
+ * The split in canonical form: members sorted and deduplicated, maps keyed in
+ * order. Lets anything downstream tell "nobody moved" from "somebody re-picked
+ * the same people" by serialising.
  */
 export function canonicalSplit(spec: SplitSpec): SplitSpec {
   switch (spec.mode) {
@@ -214,10 +201,7 @@ export function resolveSplit(
   return distribute(BigInt(totalMinor), weightsOf(spec, participants), options.tiebreakSeed);
 }
 
-/**
- * Non-throwing check for the UI, which needs to render a half-finished split
- * without exploding. Drives the "€170,39 of €170,39 allocated" banner.
- */
+/** Non-throwing check, so the UI can render a half-finished split. */
 export function validateSplit(
   totalMinor: number,
   spec: SplitSpec,
@@ -285,11 +269,8 @@ export function shareOf(
 }
 
 /**
- * Switching modes should keep everyone's current amounts, not reset them.
- *
- * Only into a mode somebody types: a receipt's weights come from its bill and
- * from nowhere else, so there is no such thing as converting *to* one
- * (`ArithmeticMode`, ADR-0016).
+ * Switch modes keeping everyone's current amounts. Never into `receipt`:
+ * its weights come from the bill only (ADR-0016).
  */
 export function convertSplitMode(
   totalMinor: number,
@@ -299,9 +280,8 @@ export function convertSplitMode(
 ): ArithmeticSplit {
   if (spec.mode === mode) return spec as ArithmeticSplit;
   const participants = splitParticipants(spec);
-  // Nobody included is a state the editor lets you sit in, and the tabs must
-  // still switch. `resolveSplit` refuses an empty split rather than invent
-  // one, so the empty spec is built here instead of thrown over.
+  // The editor lets you sit with nobody included and must still switch tabs;
+  // `resolveSplit` refuses an empty split, so build it here.
   if (participants.length === 0) {
     switch (mode) {
       case "equal": return { mode: "equal", members: [] };
@@ -348,14 +328,9 @@ export function convertSplitMode(
 }
 
 /**
- * Rewrite an op-log expense that carries a receipt as `shares` plus a
- * `splitTab: "receipt"` flag into the `receipt` mode the app works in.
- *
- * The only code that knows that older shape, and it runs where ops become
- * state (`applyPatch`) — so the fold, the history and every other reader see
- * one shape and nobody asks a second field. With no flag at all, a `shares`
- * split beside a scanned bill is a receipt. Mutates in place: the bag being
- * folded is the fold's own. ADR-0016.
+ * Rewrite a legacy receipt expense (`shares` plus `splitTab: "receipt"`, or
+ * `shares` beside a scanned bill) into `receipt` mode. Runs in `applyPatch`,
+ * so every reader sees one shape. Mutates in place. ADR-0016.
  */
 export function upgradeReceiptSplit(entity: Record<string, unknown>): void {
   const spec = entity["split"] as SplitSpec | undefined;

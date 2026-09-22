@@ -3,17 +3,13 @@ import { resolveSplit } from "./split.js";
 import { alive, type GroupState, type Id } from "./types.js";
 
 /**
- * Balances are DERIVED on read, never stored. balance = paid − owed, in the
- * group's base currency minor units. Positive means the group owes you.
+ * Balances are derived on read, never stored: paid − owed, in base minor
+ * units; positive means the group owes you. They always sum to zero, or
+ * something upstream is broken.
  *
- * The set always sums to zero. If it doesn't, something upstream is broken and
- * we want to know loudly rather than quietly misreport a debt.
- *
- * An **income** is an expense read backwards, and this is the one place that
- * knows it: whoever took the money in is down by it, and everybody it was
- * shared with is up by their share. Nothing else in core branches on
- * `Expense.kind` — the amount, the payer map and the split are the same
- * positive arithmetic either way (ADR-0010).
+ * The one place that knows an **income** runs backwards: the receiver is down
+ * by it, the sharers up by their share. Nothing else in core branches on
+ * `Expense.kind` (ADR-0010).
  */
 
 export interface BalanceReport {
@@ -29,9 +25,8 @@ export interface BalanceReport {
   receivedMinor: Record<Id, number>;
   incomeShareMinor: Record<Id, number>;
   /**
-   * Per member: what transfers did to their balance — sent minus received.
-   * Named separately because a summary built from `paidMinor` and `owedMinor`
-   * alone cannot reach the figure `byMember` shows beside it.
+   * Per member: sent minus received in transfers — without it `paidMinor` and
+   * `owedMinor` can't reach `byMember`.
    */
   settledMinor: Record<Id, number>;
   /** Entries we could not apportion. Rendered as a warning, never swallowed. */
@@ -85,9 +80,7 @@ export function computeBalances(state: GroupState): BalanceReport {
     if (income) totalIncomeMinor += e.baseAmountMinor;
     else totalSpendMinor += e.baseAmountMinor;
 
-    // Credit every payer. With no co-sponsors that is one entry for `paidBy`
-    // carrying the whole amount. On an income the same map names who
-    // *received* it, and it runs the other way.
+    // On an income the payer map names who received, and runs the other way.
     for (const [id, amount] of Object.entries(resolvePayers(e))) {
       touch(id);
       if (income) {

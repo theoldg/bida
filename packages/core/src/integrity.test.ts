@@ -10,32 +10,16 @@ import { alive, type GroupState } from "./types.js";
 import { ADA, ALL, GROUP, MAD_RATE, MARIE, THEO, marrakechOps } from "./fixtures.test-helper.js";
 
 /**
- * The properties that hold whatever the log says — checked over merges nobody
- * wrote a healer for.
+ * Properties that hold whatever the log says, over merges nobody wrote a
+ * healer for — the only layer that catches an undeclared cross-entity
+ * precondition.
  *
- * Every other test in this file's neighbourhood is registry-driven: it proves
- * the invariants we *declared* have working repairs. This one is the opposite
- * and is the only layer with a chance against the invariant nobody thought of.
- * It folds hostile permutations and asserts the properties the app depends on
- * everywhere, so a future feature that introduces a cross-entity precondition
- * and forgets to declare it fails here rather than in somebody's ledger.
- *
- * ## Existence is not liveness
- *
- * Two different properties, and conflating them writes a healer that destroys
- * history:
- *
- * - **Existence** — the referenced row is in the state. Always required. It is
- *   also always true by construction: a `delete` sets `deletedAt` and never
- *   removes a row, so nothing can dangle.
- * - **Liveness** — the referenced row is not tombstoned. Required only of
- *   references that move money: an entry's members and an entry's currency.
- *
- * An `identity` row pointing at a removed member is the case that forces the
- * distinction. It is a true historical fact — that device *did* claim to be
- * Bruno — and every op it stamped is attributed through it, so a healer that
- * repointed or dropped it would erase the attribution to satisfy a property we
- * never wanted. Identity claims are checked for existence and nothing more.
+ * **Existence is not liveness.** Existence (the referenced row is in state) is
+ * always required and always true, since a delete only tombstones. Liveness
+ * (not tombstoned) is required only of references that move money: an entry's
+ * members and currency. An `identity` pointing at a removed member is a true
+ * historical fact that attributes its ops, so claims are checked for existence
+ * only — a healer repointing them would erase attribution.
  */
 
 type Strength = "live" | "exists";
@@ -82,8 +66,7 @@ function broken(state: GroupState): string[] {
   const problems: string[] = [];
   for (const ref of references(state)) {
     const row = ref.kind === "member" ? state.members[ref.to] : state.rates[ref.to];
-    // A rate the group has never set is a currency it has not priced, not a
-    // dangling reference — there is no row to point at and nothing to repair.
+    // A rate never set is an unpriced currency, not a dangling reference.
     if (!row) {
       if (ref.kind === "member") problems.push(`${ref.from} names missing member ${ref.to}`);
       continue;
@@ -127,9 +110,8 @@ function op(entity: Op["entity"], entityId: string, kind: Op["kind"], patch: Rec
 }
 
 /**
- * Writes no single device would make together: every removal, every clearing,
- * every tombstone — the union of what several offline phones could each
- * legitimately write, which is exactly the state no guard can prevent.
+ * The union of what several offline phones could each legitimately write:
+ * every removal, clearing and tombstone — the state no guard can prevent.
  */
 function hostileOps(): Op[] {
   const at = 1_743_900_000_000;
@@ -159,9 +141,7 @@ describe("integrity under hostile merges", () => {
   });
 
   it("healing leaves no live entry naming a removed member or currency", () => {
-    // The property, not the invariant: nothing here names a healer, so an
-    // undeclared cross-entity reference fails this even though no detector
-    // knows about it.
+    // Names no healer, so an undeclared reference fails here too.
     for (let seed = 1; seed <= 60; seed++) {
       const log = [...marrakechOps(), ...subsets(hostileOps(), seed)];
 
@@ -181,8 +161,7 @@ describe("integrity under hostile merges", () => {
     for (let seed = 1; seed <= 60; seed++) {
       const log = [...marrakechOps(), ...subsets(hostileOps(), seed)];
 
-      // Before healing as well as after: a repair must never be what rescues
-      // the arithmetic, only what rescues the references.
+      // Before healing too: repairs rescue references, never arithmetic.
       expect(() => assertBalanced(computeBalances(foldOps(log)))).not.toThrow();
       expect(() => assertBalanced(computeBalances(healed(log)))).not.toThrow();
     }
@@ -200,8 +179,7 @@ describe("integrity under hostile merges", () => {
   });
 
   it("lets a claim point at a member the group removed", () => {
-    // Existence, not liveness. Bruno's phone is gone; the claim is still the
-    // reason his old ops can be attributed, and healing it would erase that.
+    // Existence, not liveness: the claim still attributes Bruno's old ops.
     const at = 1_743_900_000_000;
     const log = [
       ...marrakechOps().filter((o) => o.entity !== "expense"),

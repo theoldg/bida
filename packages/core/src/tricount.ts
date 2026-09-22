@@ -5,45 +5,24 @@ import {
 import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 
 /**
- * A tricount read into the same **plan** `import.ts` hands back from a CSV, so
- * everything downstream — the readout, the who-picker, the one `appendOps`
- * batch — is untouched. Nothing here writes anything, and nothing here fetches:
- * the JSON arrives from `apps/web/lib/import/tricount.ts` through the Worker
+ * A tricount read into the same **plan** `import.ts` returns from a CSV.
+ * Nothing here writes or fetches: the JSON comes from
+ * `apps/web/lib/import/tricount.ts` via the Worker
  * (docs/data-model.md#reading-a-tricount-back).
  *
- * ## What the shape is
+ * A group is a `Registry` of `memberships` and `all_registry_entry`, each entry
+ * with an `amount`, the membership that `owned` it (who paid) and `allocations`
+ * (whose it was). Every figure is **signed from the group's side** — expenses
+ * negative — and converted to positive minor units in one place.
  *
- * Tricount is bunq's, and a group is a `Registry`: a list of `memberships` and
- * a list of `all_registry_entry`, each entry carrying an `amount`, the
- * membership that `owned` it — the person whose pocket the money left — and
- * `allocations` saying whose it was. Every figure is **signed from the
- * group's side**: an expense is negative all the way down, an income positive.
- * One line converts that to ours and the rest of this file reads in the
- * positive minor units [CLAUDE.md](../../../CLAUDE.md#non-negotiables) insists on.
+ * Unlike a CSV this inverts exactly: payer and shares are stated separately,
+ * and Tricount has no multi-payer expense. The one rule: a repayment is a
+ * transfer only if it is `BALANCE` *and* has exactly one recipient; otherwise
+ * it imports as an expense.
  *
- * ## Why this inverts where a CSV does not
- *
- * The spreadsheet's hard case — one cell holding `paid − owed`, from which no
- * arithmetic recovers both ([import.ts](./import.ts)) — does not arise: an
- * entry states its payer and each share separately, so **an expense comes back
- * exactly as it was entered**, and `membership_owned` being a single
- * membership loses nothing, because Tricount has no several-payers expense to
- * lose (the owner, 2026-09-21). One reading is still a rule rather than a
- * recovery:
- *
- * - **A repayment is a transfer only when it has the shape** — `BALANCE`
- *   *and* exactly one person on the receiving end. Anything else is read as an
- *   expense, which is the reading that loses nothing, the same ruling
- *   `asTransfer` makes about the `Payment` token.
- *
- * ## The checksum
- *
- * A tricount has no foot row, so one is computed — from the raw figures, by
- * **the route the app itself uses** (allocations minus what you owned), which
- * is not the route the plan takes. That is what makes it worth checking: it
- * catches a transfer read backwards, an income unflipped and a payer wrongly
- * apportioned, because none of those change the raw sums and all of them
- * change the plan's.
+ * There is no foot row, so the checksum is computed from the raw figures by
+ * the app's own route (allocations minus owned), not the plan's — which is why
+ * it catches a transfer backwards, an unflipped income or a wrong payer.
  */
 
 /** A repayment between two members rather than something that cost money. */
@@ -83,9 +62,8 @@ function str(from: unknown, key: string): string {
 }
 
 /**
- * The name on a membership wrapper. `display_name` is what the app shows and
- * what the other exporters read; the pointer's name is the same string on
- * every payload seen, and is taken only when the first is missing.
+ * The name on a membership. `display_name` is what other exporters read; the
+ * pointer's name is only a fallback.
  */
 function memberName(wrapper: unknown): string {
   const member = field(wrapper, "RegistryMembershipNonUser") ?? wrapper;
@@ -104,18 +82,14 @@ function registryOf(payload: unknown): unknown {
       if (found) return found;
     }
   }
-  // A tricount that has been renamed, deleted or made private answers with an
-  // Error array rather than a Registry, and that is the same refusal here: we
-  // have no registry to read, and the sentence says the link is the thing to
-  // check.
+  // A renamed, deleted or private tricount answers with an Error array; same
+  // refusal, and the sentence says to check the link.
   return undefined;
 }
 
 /**
- * Read a tricount payload into a plan, or throw an `ImportError`. Every
- * refusal here is whole-tricount and names the entry rather than a line
- * number, for the reason the CSV reader names the line: a ledger missing one
- * entry balances to something nobody can account for.
+ * Read a tricount payload into a plan, or throw an `ImportError` naming the
+ * entry: a ledger missing one entry balances to something unaccountable.
  */
 export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptions): ImportPlan {
   const registry = registryOf(payload);
@@ -146,9 +120,8 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
       if (share !== 0) shares.push({ name: alloc.name, minor: share });
     }
 
-    // Carries no money, so it adds nothing to anybody's balance and the
-    // checksum survives dropping it — the one row a CSV drops, for the one
-    // reason. A tricount writes these as an entry somebody zeroed out.
+    // Carries no money, so dropping it keeps the checksum — what a zeroed-out
+    // entry looks like.
     if (value === 0 && allocated === 0) {
       dropped.push({ line: entry.line, description: entry.description });
       continue;
@@ -159,8 +132,8 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
         undefined, `${named(entry)} — ${minorToDecimalString(allocated - value, currency)} out`);
     }
 
-    // Tricount signs everything from the group's side: money out is negative.
-    // From here down it is ours — positive, with the direction in `kind`.
+    // Money out is negative in Tricount. From here on it is positive, with the
+    // direction in `kind`.
     const income = value > 0;
     const amountMinor = Math.abs(value);
     const day = readDay(entry);
@@ -190,17 +163,14 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
           `entry ${entry.line}: ${share.name} owes ${held}`,
           undefined, `${named(entry)} — ${minorToDecimalString(held, currency)} for ${share.name}`);
       }
-      // Summed rather than assigned: a tricount can list one person twice on
-      // one entry, and `owed` is the split the group will be given.
+      // Summed: a tricount can list one person twice on one entry.
       owed[share.name] = at(owed, share.name) + held;
     }
 
     entries.push({
       kind: income ? "income" : "expense",
       description: entry.description,
-      // Free text on the entry here as in a CSV, so it comes back verbatim.
-      // Tricount's own default reads as a category nobody picked, and lands
-      // as nothing for the same reason `General` does.
+      // Free text, verbatim. Tricount's default reads as nothing, like `General`.
       categoryId: entry.category === "" || /^(general|uncategori[sz]ed)$/i.test(entry.category)
         ? null : entry.category,
       day,
@@ -257,10 +227,8 @@ function readEntries(registry: unknown): RawEntry[] {
 }
 
 /**
- * The one currency. A tricount can hold several, priced against each other by
- * rates we are not given, and its balances are stated in the base alone — so
- * the same refusal a mixed CSV gets, for the same reason: what we would import
- * is a ledger nothing can check.
+ * The one currency. Balances are stated in the base only, with rates we
+ * aren't given, so a mixed tricount is refused like a mixed CSV.
  */
 function readCurrency(raw: readonly RawEntry[]): CurrencyCode {
   const found = new Set<string>();
@@ -283,19 +251,16 @@ function readCurrency(raw: readonly RawEntry[]): CurrencyCode {
 }
 
 /**
- * Everybody with a balance: the memberships, in the tricount's own order, and
- * then anybody an entry names who is not among them. The second half is not
- * paranoia — a membership list is what the app shows, and an entry can outlive
- * the person's row in it, so reading only the list would drop money on the
- * floor and fail the checksum three steps later with nothing useful to say.
+ * Everybody with a balance: the memberships in order, then anyone an entry
+ * names who isn't among them — an entry can outlive the person's membership,
+ * and dropping them fails the checksum unhelpfully.
  */
 function readMembers(registry: unknown, raw: readonly RawEntry[]): string[] {
   const memberships = field(registry, "memberships");
   const names = (Array.isArray(memberships) ? memberships : []).map(memberName);
   for (const entry of raw) {
-    // The blank is pushed like any other name, so the refusal below fires:
-    // skipping it here would leave an entry whose payer is nobody, and the
-    // checksum would catch that three steps later with nothing to say.
+    // Keep the blank so the refusal below fires, rather than an entry whose
+    // payer is nobody failing the checksum later.
     for (const name of [entry.owner, ...entry.allocations.map((a) => a.name)]) {
       if (!names.includes(name)) names.push(name);
     }
@@ -305,9 +270,8 @@ function readMembers(registry: unknown, raw: readonly RawEntry[]): string[] {
   if (names.some((n) => n === "")) {
     throw new ImportError("blank-member", "a membership has no name");
   }
-  // The same two names a CSV header refuses, for the same two reasons:
-  // `__proto__` is stored nowhere and vanishes, and two people of one name
-  // have one balance between them. See `readHeader`.
+  // Refused as in a CSV header (`readHeader`): `__proto__` vanishes, and two
+  // people of one name share one balance.
   const reserved = names.find((n) => n === "__proto__");
   if (reserved !== undefined) {
     throw new ImportError("bad-member-name", `a member is called ${reserved}`, undefined, reserved);
@@ -338,10 +302,7 @@ function amount(entry: RawEntry, value: string, currency: CurrencyCode, exp: num
     throw new ImportError("tricount-amount", `entry ${entry.line}: ${value} is not an amount`,
       undefined, `${named(entry)} — ${value}`);
   }
-  // `parseMinor` rounds excess precision away, which is right for a keyboard
-  // and wrong here: more decimals than the currency has means we are reading
-  // the wrong currency, and rounding hides it. Same ruling as `amount` in
-  // `import.ts`.
+  // As in `import.ts`: extra decimals mean the wrong currency, and rounding hides it.
   const frac = value.replace(/\s/g, "").replace(",", ".").split(".")[1] ?? "";
   if (frac.length > exp) {
     throw new ImportError("tricount-amount", `entry ${entry.line}: ${value} is finer than ${currency}`,
@@ -351,11 +312,8 @@ function amount(entry: RawEntry, value: string, currency: CurrencyCode, exp: num
 }
 
 /**
- * The day an entry happened. The field is a timestamp with a space in it
- * (`2026-04-11 18:22:05.000000`) and the date is its head; a `T` in place of
- * the space is accepted for the same reason the CSV reader accepts CRLF.
- * Nothing guesses at a day it cannot see — the alternative is filing somebody's
- * whole trip under today.
+ * The entry's day: the head of `2026-04-11 18:22:05.000000` (a `T` is
+ * accepted too). Never guesses — the alternative files a trip under today.
  */
 function readDay(entry: RawEntry): string {
   const head = /^(\d{4}-\d{2}-\d{2})(?:[T ]|$)/.exec(entry.date)?.[1];

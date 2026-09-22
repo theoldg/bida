@@ -4,14 +4,10 @@ import { applyPatch, sortOps } from "./fold.js";
 import type { Id } from "./types.js";
 
 /**
- * Version history falls straight out of the op log — no extra storage, and it
- * cannot drift from the data, because it IS the data. See ADR-0002.
- *
- * **A revision is a diff of two folds, never a reading of the stored patch.**
- * `running` is the entity folded up to and including each op, by the same
- * `applyPatch` the real fold uses; a change is a field that moved across it.
- * That is what lets an entry's content be written whole — the op says "here is
- * the whole expense" and the revision still reads "changed the amount".
+ * Version history is the op log, so it can't drift from the data (ADR-0002).
+ * **A revision is a diff of two folds, never the stored patch**: `running` is
+ * folded with the real `applyPatch`, so a whole-entity write still reads as
+ * "changed the amount".
  */
 
 interface FieldChange {
@@ -19,9 +15,8 @@ interface FieldChange {
   before: unknown;
   after: unknown;
   /**
-   * A later op overwrote this field. Note this is "was replaced later", not
-   * strictly "was concurrent" — HLC alone cannot prove concurrency, and for the
-   * history UI "Marie later changed this" is the honest, useful statement.
+   * A later op overwrote this field — "replaced later", not provably concurrent,
+   * which HLC can't show.
    */
   supersededByOpId?: Id;
 }
@@ -32,11 +27,8 @@ export interface Revision {
   entity: Op["entity"];
   changes: FieldChange[];
   /**
-   * The whole entity either side of this op — every field, not only the ones
-   * that moved. `changes` says what the revision did; these say what it did it
-   * *to*, which is what lets a sentence name a field the op never moved: the
-   * currency a contribution is in, whether this is an income, who the other
-   * payer was.
+   * The whole entity either side of this op, so a sentence can name fields the
+   * op didn't move (the currency, income or not, the other payer).
    */
   before: Readonly<Record<string, unknown>>;
   after: Readonly<Record<string, unknown>>;
@@ -46,10 +38,8 @@ export interface Revision {
 
 function equalish(a: unknown, b: unknown): boolean {
   if (a === b) return true;
-  // An absent field and an explicit `null` are the same value — not set. A
-  // create leaves an unset field off entirely, so an edit sending `null` for it
-  // is not a change anybody made; calling it one puts "changed the category" in
-  // the log over edits that never touched one.
+  // Absent and `null` both mean unset: a create omits unset fields, so an edit
+  // sending `null` isn't a change and mustn't read as "changed the category".
   if ((a ?? null) === null || (b ?? null) === null) return (a ?? null) === (b ?? null);
   if (typeof a !== "object" || typeof b !== "object") return false;
   return JSON.stringify(a) === JSON.stringify(b);
@@ -72,14 +62,11 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       changes.push({ field: "deletedAt", before: running["deletedAt"] ?? null, after: op.createdAt });
       running["deletedAt"] = op.createdAt;
     } else {
-      // Fold the op in, then diff the two states — never read the patch as
-      // though its keys were the changes. A whole-entity write names every
-      // field it holds and moves almost none of them.
+      // Diff the folds; a whole-entity patch names every field and moves almost none.
       applyPatch(running, op.patch);
       for (const field of Object.keys(op.patch)) {
         if (IMMUTABLE_FIELDS.has(field)) continue;
-        // Silently ignored by the fold on an entity that already has one, so
-        // it is not a change anybody made and must not read as one.
+        // The fold ignores it on an entity that already has one.
         if (WRITE_ONCE_FIELDS.has(field) && before[field] !== undefined
           && before[field] !== null) continue;
         if (equalish(before[field], running[field])) continue;

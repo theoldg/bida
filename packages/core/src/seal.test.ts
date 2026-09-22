@@ -4,10 +4,9 @@ import {
 } from "./index.js";
 
 /**
- * The server must not be able to read a group (ADR-0036). These tests are the
- * claim the about screen makes, held to the code: what crosses the wire is an
- * id, a group id and a ciphertext, and the bearer token the server checks
- * cannot be walked back to the key that opens it.
+ * The server must not be able to read a group (ADR-0036): the wire carries an
+ * id, a group id and ciphertext, and the bearer token can't be walked back to
+ * the key.
  */
 
 const SECRET = "k3n9wq2patl0vzx7bd4rmc8jyf";
@@ -71,10 +70,8 @@ describe("sealOp / openOp", () => {
   });
 
   /**
-   * Probes are seven characters or longer, and several carry a space. Base64 is
-   * 64 symbols with no space in them, so a short probe like "EUR" turns up in a
-   * few hundred random characters often enough to fail this test for no reason
-   * — which is how a canary gets deleted. Anything this long never collides.
+   * Probes are 7+ characters, several with a space, so they can't turn up in
+   * random base64 by chance — a short one like "EUR" would flake.
    */
   it("puts nothing readable on the wire", async () => {
     const crypto = await deriveGroupCrypto(SECRET, GROUP);
@@ -124,9 +121,8 @@ describe("sealOp / openOp", () => {
     await expect(openOp(crypto, { ...sealed, sealed: future })).rejects.toThrow(/version/);
   });
 
-  // The caller skips a SealError and fails on anything else, so an op that
-  // opens but is not one this build knows must be a SealError — or a newer
-  // build's first new entity wedges every phone that has not updated.
+  // The caller skips only SealError, so an unknown-but-openable op must be one,
+  // or a newer build's first new entity wedges every older phone.
   it("refuses an op from a newer build as a SealError, so it can be skipped", async () => {
     const crypto = await deriveGroupCrypto(SECRET, GROUP);
     const sealed = await sealOp(crypto, op({ entity: "category" as Op["entity"] }));

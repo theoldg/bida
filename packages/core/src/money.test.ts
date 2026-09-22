@@ -31,9 +31,7 @@ describe("isCurrencyCode", () => {
     },
   );
 
-  // Intl is happy with "eur"; the rest of the app is not, since a code is
-  // compared against the group's base by string equality. Callers uppercase
-  // before asking, so this stays a check on the canonical form.
+  // Codes are compared by string equality with the group's base; callers uppercase first.
   it("rejects a lowercase code even though Intl would take it", () => {
     expect(isCurrencyCode("eur")).toBe(false);
     expect(() => formatMinor(1000, "eur")).not.toThrow();
@@ -128,8 +126,7 @@ describe("convertMinor", () => {
 });
 
 describe("sanitizeRate", () => {
-  // The typed text has to come out as something isValidRate accepts, or the
-  // field goes red at somebody whose keyboard is simply not American.
+  // Must come out as something isValidRate accepts, whatever the keyboard.
   it.each([
     ["4,32", "4.32"],
     ["4.32", "4.32"],
@@ -174,8 +171,7 @@ describe("rateFromNumber", () => {
     expect(rateFromNumber(value)).toBe(want);
   });
 
-  // The bug this exists for: String(5e-7) is "5e-7", which isValidRate rejects,
-  // and a rate that fails validation is a Save that never lights.
+  // String(5e-7) is "5e-7", which isValidRate rejects — a Save that never lights.
   it.each([5e-7, 1.0834e-5, 2.5e-8, 1e-21])("writes %s out in full", (value) => {
     const rate = rateFromNumber(value);
     expect(rate).not.toContain("e");
@@ -231,10 +227,8 @@ describe("invertRate", () => {
     expect(invertRate("0.10005", 3)).toBe("10");
   });
 
-  // The whole reason for the two digit counts. Somebody types "1 EUR = 4.5 PLN"
-  // into the dialog's second field; the registry stores the first direction,
-  // so what is kept is 1/4.5 — and the field they typed in has to still read
-  // "4.5" afterwards rather than "4.500000001".
+  // Typing "1 EUR = 4.5 PLN" in the second field stores 1/4.5; the field must
+  // still read "4.5" afterwards, not "4.500000001".
   const asTypedBack = (typed: string) =>
     formatRate(invertRate(invertRate(typed, RATE_DIGITS), RATE_DIGITS), RATE_SHOWN_DIGITS);
 
@@ -268,10 +262,8 @@ describe("formatRate", () => {
     expect(formatRate("10")).toBe("10");
   });
 
-  // Display only. The digits it drops are still on the stored rate, and they
-  // are the ones convertMinor reads — which only shows up on an amount big
-  // enough for a ten-billionth to be worth a cent, but that is the point:
-  // shortening is for the eye and never for the arithmetic.
+  // Display only: convertMinor reads the dropped digits, which matter on a large
+  // enough amount.
   it("never changes what the arithmetic uses", () => {
     const stored = invertRate("4.5");
     expect(stored).toBe("0.222222222222");

@@ -1,7 +1,6 @@
 /**
- * Money is always an integer number of minor units (cents, agorot, fils...).
- * There is no float representation of money anywhere in this codebase.
- * See docs/data-model.md#money.
+ * Money is always an integer number of minor units — never a float.
+ * docs/data-model.md#money.
  */
 
 export type CurrencyCode = string;
@@ -18,9 +17,8 @@ const EXPONENT_OVERRIDES: Record<string, number> = {
 };
 
 /**
- * The three ASCII letters `Intl.NumberFormat` accepts as a currency. Anything
- * else ("€", "EU", "USDT") makes it throw, so check any code reaching the
- * model, the picker or a draft against this first.
+ * Three ASCII letters, which is all `Intl.NumberFormat` accepts ("€" or
+ * "USDT" makes it throw). Check any code reaching the model, picker or draft.
  */
 export function isCurrencyCode(code: string): boolean {
   return /^[A-Z]{3}$/.test(code);
@@ -125,11 +123,7 @@ export function isValidRate(rate: string): boolean {
   return /^\d+(\.\d+)?$/.test(rate.trim()) && Number(rate) > 0;
 }
 
-/**
- * Whatever a keyboard produced, as the text `isValidRate` reads — "," is the
- * decimal separator to half of Europe. Nothing is clipped: how many decimals a
- * rate carries is its own business (ADR-0005).
- */
+/** A keyboard's rate as `isValidRate` reads it ("," is a decimal point too). Never clipped (ADR-0005). */
 export function sanitizeRate(raw: string): string {
   const text = raw.replace(/[^0-9.,]/g, "").replace(/,/g, ".");
   const first = text.indexOf(".");
@@ -145,11 +139,8 @@ function parseRate(rate: Rate): { num: bigint; scale: number } {
 }
 
 /**
- * Convert an amount in `from` minor units into `to` minor units at `rate`,
- * where rate is expressed as "1 unit of `from` = rate units of `to`".
- *
- * Rounded once, half-away-from-zero. The result is stored, not recomputed —
- * see ADR-0005.
+ * Convert `from` minor units to `to` minor units, where 1 `from` = `rate`
+ * `to`. Rounded once, half-away-from-zero; the result is stored (ADR-0005).
  */
 export function convertMinor(
   minor: number,
@@ -177,10 +168,8 @@ export function sumMinor(values: Iterable<number>): number {
 }
 
 /**
- * Significant digits in a rate the *app* wrote — the feed's, and the reciprocal
- * of one typed the other way round. Not a limit on money; `convertMinor` reads
- * the whole string. Twelve so a rate typed as its inverse survives the round
- * trip: "4.5" inverted and shown at `RATE_SHOWN_DIGITS` reads "4.5" again.
+ * Significant digits in a rate the app writes (fetched, or an inverted one).
+ * Twelve so an inverted rate round-trips: "4.5" inverted twice reads "4.5".
  */
 export const RATE_DIGITS = 12;
 
@@ -209,10 +198,8 @@ function trimRate(text: string): string {
 }
 
 /**
- * A rate from a JSON number, as the exact decimal string `Rate` is. The feed
- * publishes floats and this is the one door they come in through; everything
- * downstream is the string. The two helpers above undo the shapes
- * `toPrecision` can produce that `isValidRate` rejects.
+ * A JSON-number rate as an exact decimal string — the one door floats come
+ * in through. The helpers above undo `toPrecision` shapes `isValidRate` rejects.
  */
 export function rateFromNumber(value: number, significantDigits = RATE_DIGITS): Rate {
   if (!Number.isFinite(value) || value <= 0) {
@@ -224,9 +211,8 @@ export function rateFromNumber(value: number, significantDigits = RATE_DIGITS): 
 }
 
 /**
- * Round a positive decimal string to `significantDigits`, half-away-from-zero.
- * Works on the digits themselves — no float, no `toPrecision`, since the input
- * may carry more precision than a double holds.
+ * Round a positive decimal string to `significantDigits`, half-away-from-zero,
+ * on the digits themselves: the input may hold more precision than a double.
  */
 function toSignificant(whole: string, frac: string, significantDigits: number): string {
   const digits = whole + frac;
@@ -234,9 +220,8 @@ function toSignificant(whole: string, frac: string, significantDigits: number): 
   if (lead === -1) return "0";
   const keep = lead + significantDigits;
   if (keep >= digits.length) return trimRate(`${whole}.${frac}`);
-  // Round the kept prefix as an integer, then put the point back where the
-  // whole part ends. Carrying past the front ("999" -> "1000") lengthens it,
-  // which moves the point one to the right — exactly what the extra digit means.
+  // Round the kept prefix as an integer; a carry past the front ("999" -> "1000")
+  // adds a digit, moving the point right as it should.
   const roundUp = Number(digits[keep]) >= 5;
   const kept = (BigInt(digits.slice(0, keep)) + (roundUp ? 1n : 0n)).toString()
     .padStart(keep, "0");
@@ -248,13 +233,9 @@ function toSignificant(whole: string, frac: string, significantDigits: number): 
 }
 
 /**
- * The same rate read the other way round: "1 PLN = 0.234 EUR" becomes
- * "1 EUR = 4.27350 PLN". Runs on every keystroke in whichever field of the
- * dialog isn't being typed in.
- *
- * Exact bigint long division, never `1 / Number(rate)`: a reciprocal somebody
- * saves *becomes* the rate every balance is computed from, so it is money
- * arithmetic and gets money arithmetic's treatment.
+ * The rate read the other way round ("1 PLN = 0.234 EUR" -> "1 EUR = 4.27350
+ * PLN"). Exact bigint division, never `1 / Number(rate)`: a saved reciprocal
+ * becomes the rate every balance uses.
  */
 export function invertRate(rate: Rate, significantDigits = RATE_DIGITS): Rate {
   const { num, scale } = parseRate(rate);

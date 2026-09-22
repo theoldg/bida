@@ -12,9 +12,8 @@ const csvOf = (state: GroupState) =>
   groupToCsv(state, { formatDay: utcDay, exportedAt: EXPORTED_AT });
 
 /**
- * The file as records and cells, with the quoting undone — and without the two
- * blank lines the shape carries, which every assertion below would otherwise
- * have to count around. `theShapeOfTheFile` is where those are checked.
+ * The file as records and cells, unquoted, without the two structural blank
+ * lines (`theShapeOfTheFile` checks those).
  */
 function parse(csv: string): string[][] {
   expect(csv.endsWith("\n\n")).toBe(true);
@@ -37,10 +36,7 @@ function parse(csv: string): string[][] {
   });
 }
 
-/**
- * The property the whole file rests on: a row that moves money between people
- * nets to nothing, so the column totals are balances rather than an opinion.
- */
+/** Every row nets to zero, so column totals are balances. */
 function everyRowSumsToZero(csv: string): void {
   const rows = parse(csv);
   const members = rows[0]!.slice(5);
@@ -100,8 +96,7 @@ describe("the Marrakech trip, as a spreadsheet", () => {
   });
 
   it("dates the foot the day the file left, and leaves its cost cell blank", () => {
-    // Cell for cell what a real export writes — the total spend has nowhere to
-    // go, because the `Date` column is the one an importer parses strictly.
+    // Exactly what a real export writes; importers parse `Date` strictly.
     expect(rows[rows.length - 1]!.slice(0, 5)).toEqual([
       "2026-09-18", "Total balance", " ", " ", "EUR",
     ]);
@@ -217,9 +212,7 @@ describe("currencies whose minor unit isn't a hundredth", () => {
     const state = groupIn("TND", 1000);
     const row = parse(csvOf(state))[1]!;
     expect(row[3]).toBe("1.000");
-    // Every cell to three places, and 1000 millimes ÷ 3 leaves one over —
-    // Ada absorbs it here, which is the seeded draw and so is the same figure
-    // on every device that exports this group (`resolveSplit`).
+    // 1000 millimes ÷ 3 leaves one over; the seeded draw gives it to Ada on every device.
     expect(row.slice(5)).toEqual(["0.666", "-0.333", "-0.333"]);
     expect(footMinor(csvOf(state), "TND")).toEqual(computeBalances(state).byMember);
   });
@@ -268,7 +261,7 @@ describe("what a person typed into a description", () => {
 
   it("folds a newline into a space, so it can never read as a record break", () => {
     expect(described("Taxi\nfrom the airport")[1]![1]).toBe("Taxi from the airport");
-    // Two of them would otherwise look like the blank line that ends the file.
+    // Two newlines would otherwise look like the blank line ending the file.
     expect(described("Taxi\n\nfrom the airport")[1]![1]).toBe("Taxi from the airport");
   });
 
@@ -319,8 +312,7 @@ describe("an expense nothing can apportion", () => {
       amountMinor: 1000, currency: "EUR", rateToBase: "1", baseAmountMinor: 1000,
       paidBy: ADA, split: { mode: "equal", members: [ADA, MARIE] },
     }, ADA);
-    // An exact split that doesn't add up: `resolveSplit` refuses it, and
-    // `computeBalances` leaves it out of the balances entirely.
+    // Doesn't add up: `computeBalances` leaves it out.
     b.push("expense", "e2", "create", {
       description: "Broken", occurredAt: Date.UTC(2026, 0, 3),
       amountMinor: 900, currency: "EUR", rateToBase: "1", baseAmountMinor: 900,
@@ -346,9 +338,9 @@ describe("an expense nothing can apportion", () => {
 });
 
 /**
- * The bytes, pinned — because getting these wrong is what stopped Tricount
- * reading a single file we wrote, and no assertion about cells would have
- * caught it. Checked against a real Splitwise export Tricount accepts.
+ * The bytes, pinned: getting them wrong makes Tricount reject the file, and
+ * no cell assertion would notice. Checked against a Splitwise export Tricount
+ * accepts.
  */
 describe("the bytes an importer actually reads", () => {
   const csv = csvOf(foldOps(marrakechOps()));
@@ -366,9 +358,8 @@ describe("the bytes an importer actually reads", () => {
     expect(lines[1]).toBe("");
     expect(lines[lines.length - 4]).toBe("");
     expect(csv.endsWith("\n\n")).toBe(true);
-    // Those two and no others — splitting on LF leaves a further pair of empty
-    // strings for the trailing blank line. A blank line among the records would
-    // end the import early for a reader that treats one as the end of the file.
+    // Exactly those blanks (LF split adds two for the trailing line); another
+    // would end the import early for some readers.
     expect(lines.filter((l) => l === "")).toHaveLength(4);
   });
 });

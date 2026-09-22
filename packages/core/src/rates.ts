@@ -2,19 +2,13 @@ import { convertMinor, isValidRate, type CurrencyCode, type Rate } from "./money
 import { alive, type ExchangeRate, type GroupState, type Id } from "./types.js";
 
 /**
- * The group's exchange-rate registry, applied.
+ * The group's rate registry, applied. A rate is the group's, so entries are
+ * **valued on read** at today's rate — fix a typo and every entry follows
+ * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)). The entry's
+ * own `rateToBase` is the fallback for a currency with no row.
  *
- * A rate is a fact about the group, not about one entry: one number per
- * currency, corrected in one place. So a foreign entry is **valued on read** at
- * whatever the registry says today — fix a fat-fingered rate and every entry in
- * that currency follows
- * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)). The
- * `rateToBase` on the entry is the fallback for the one case the registry
- * cannot answer: a currency with no row at all.
- *
- * **Nothing here throws.** A rate is a string somebody typed on another phone;
- * a bad one costs that currency its repricing, not the whole ledger its
- * balances.
+ * **Nothing here throws**: a bad rate from another phone costs that currency
+ * its repricing, not the ledger its balances.
  */
 
 /** The registry's rate for a currency, or undefined when it hasn't got one. */
@@ -38,11 +32,8 @@ interface RateBearing {
 }
 
 /**
- * One entry at the group's current rate, or the entry untouched when the
- * registry has nothing to say about its currency.
- *
- * Returns the same object when nothing changes, so a re-priced state is cheap
- * to compare and a React render is not woken by a pass that did nothing.
+ * One entry at the current rate, or untouched without one. Returns the same
+ * object when nothing changes, so React isn't woken.
  */
 export function repriceEntry<T extends RateBearing>(
   entry: T,
@@ -64,11 +55,8 @@ export function repriceEntry<T extends RateBearing>(
 }
 
 /**
- * A whole group valued at its current rates: every expense and every transfer.
- *
- * Run once where the state is assembled, never threaded through each reader —
- * a screen that misses it quietly reports a different number from the rest of
- * the app.
+ * A whole group at current rates. Run once where state is assembled — a
+ * screen that misses it reports different numbers from the rest.
  */
 export function atCurrentRates(state: GroupState): GroupState {
   const base = state.group?.baseCurrency;
@@ -99,12 +87,8 @@ export interface CurrencyInUse {
 }
 
 /**
- * Every currency the registry has to answer for: the ones entries are written
- * in, plus the ones somebody added ahead of spending in them. Never the base
- * currency — it is what the others are measured in.
- *
- * Sorted by how much of the ledger rides on it, so the currency the trip is
- * being spent in is the first row.
+ * Every currency needing a rate: those in use plus those added in advance,
+ * never the base. Sorted by how much of the ledger rides on each.
  */
 export function currenciesInUse(state: GroupState): CurrencyInUse[] {
   const base = state.group?.baseCurrency;

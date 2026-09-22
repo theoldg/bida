@@ -10,11 +10,7 @@ import type { Op } from "./ops.js";
 import { applyTransfers, settleUp } from "./settle.js";
 import { alive } from "./types.js";
 
-/**
- * The seed is a group somebody will look around, so what is guarded here is
- * what a visitor would notice: that it folds to the story it claims, that the
- * money is legal, and that the balances give settle-up something to do.
- */
+/** What a visitor would notice: it folds to its story, the money is legal, and settle-up has work. */
 
 const NOW = Date.UTC(2026, 8, 18, 12, 0, 0);
 
@@ -73,9 +69,7 @@ describe("demoOps", () => {
     // One deleted and one edited, so history is not all creates.
     expect(entries.filter((e) => e.deletedAt)).toHaveLength(1);
     expect(state.expenses["demo-passage"]?.description).toBe("Passage to Alderaan, no questions");
-    // The rest of the spread: two payers, a foreign currency priced by the
-    // group's own registry, an income, a transfer, and one entry that leaves
-    // people out.
+    // Two payers, a registry-priced foreign currency, an income, a transfer, a partial split.
     expect(Object.keys(state.expenses["demo-cantina"]?.payers ?? {})).toHaveLength(2);
     expect(state.expenses["demo-docking"]?.currency).toBe("WUP");
     expect(state.rates["WUP"]?.rate).toBe("0.0625");
@@ -89,13 +83,10 @@ describe("demoOps", () => {
     const dinner = foldOps(stamp()).expenses["demo-cantina"]!;
     const split = dinner.split;
     expect(split.mode).toBe("receipt");
-    // The weights are the bill read per person, so they come to the total. Any
-    // other sum would still *split* — weights are a ratio — while quietly
-    // pricing the lines at something nobody ordered.
+    // Weights are a ratio, so a wrong sum would still split — at prices nobody ordered.
     expect(sumMinor(Object.values(split.mode === "receipt" ? split.weights : {})))
       .toBe(dinner.amountMinor);
-    // A line per printed line, and a row of names for each: the grid the entry
-    // screen reopens (ADR-0016) is only a grid while those two agree.
+    // The grid only reopens (ADR-0016) while lines and assignment rows agree.
     expect(dinner.receiptAssignments).toHaveLength(dinner.receiptItems!.length);
     expect(sumMinor(dinner.receiptItems!.map((i) => parseMinor(i.amount, "CRD"))))
       .toBe(dinner.amountMinor);
@@ -158,11 +149,7 @@ describe("demoOps", () => {
   });
 });
 
-/**
- * The stamp is what makes an app update a re-seed (lib/db/commands/demo.ts).
- * It has one job in each direction: hold still while only the calendar moves,
- * and move the moment the story does.
- */
+/** Makes an app update re-seed (lib/db/commands/demo.ts): still across days, moves with the story. */
 describe("demoStamp", () => {
   it("is the same string every time it is asked", () => {
     expect(demoStamp()).toBe(demoStamp());
@@ -170,9 +157,7 @@ describe("demoStamp", () => {
   });
 
   it("does not move with the clock, or the phone's timezone", () => {
-    // Stamping is `demoOps` with its dates zeroed, so a demo opened tomorrow —
-    // or in another timezone, which shifts every local midnight in it — is
-    // still the same story and must not throw the group away.
+    // Dates are zeroed, so another day or timezone is the same story.
     const tz = process.env.TZ;
     try {
       process.env.TZ = "UTC";

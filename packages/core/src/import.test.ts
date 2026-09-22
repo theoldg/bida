@@ -15,9 +15,8 @@ const dayToTimestamp = (day: string) => Date.parse(`${day}T00:00:00Z`);
 const read = (rows: string[][]): ImportPlan => readCsvGroup(rows, { dayToTimestamp });
 
 /**
- * Our own file, back into rows — blank lines and all, because tolerating the
- * three the shape carries is part of what is under test. Only good enough for
- * what `export.ts` emits; the real parser is `apps/web/lib/import/csv.ts`.
+ * Our own file back into rows, blank lines included. Only good enough for what
+ * `export.ts` emits; the real parser is `apps/web/lib/import/csv.ts`.
  */
 function records(csv: string): string[][] {
   return csv.replace(/\n$/, "").split("\n").map((line) => {
@@ -45,8 +44,7 @@ const csvOf = (ops: Op[]) =>
 /** The balances a plan produces, by the same arithmetic the foot check uses. */
 function balancesOf(plan: ImportPlan): Record<string, number> {
   const out: Record<string, number> = {};
-  // `Object.hasOwn` for the reason `at` in import.ts exists: a member called
-  // "constructor" otherwise reads back a function off the prototype.
+  // `Object.hasOwn`, as in import.ts's `at`: "constructor" would read a function.
   const move = (name: string, minor: number) => {
     out[name] = (Object.hasOwn(out, name) ? out[name]! : 0) + minor;
   };
@@ -84,11 +82,8 @@ const foot = (ada: string, theo: string) =>
   ["2026-09-18", "Total balance", " ", " ", "EUR", ada, theo];
 
 /**
- * The round trip, which is the property the whole module is for: what
- * `export.ts` writes, read back, must reproduce every balance to the cent.
- * The payer figures are explicitly not part of that — a single number per
- * member cannot carry both sides — so these assert balances, and the payer
- * reading is pinned separately below.
+ * The round trip: what `export.ts` writes, read back, reproduces every balance
+ * to the cent. Payer figures can't round-trip, so they're pinned separately.
  */
 describe("the Marrakech trip, exported and read back", () => {
   const ops = marrakechOps();
@@ -150,8 +145,7 @@ describe("the category column", () => {
       foot("-15.00", "15.00"),
     ));
     expect(plan.entries[0]!.categoryId).toBe("Dining out");
-    // And never in the description, which is the invention that would survive
-    // a re-export as part of what somebody typed.
+    // Never invent in the description: it would survive a re-export as typed text.
     expect(plan.entries[0]!.description).toBe("Dinner");
   });
 
@@ -197,8 +191,7 @@ describe("a transfer", () => {
   });
 
   it("falls back to an expense when the category says Payment and the shape disagrees", () => {
-    // Three people moved, so this is not one person paying another whatever
-    // the category says. Read as an expense it loses nothing.
+    // Three people moved, so not a transfer whatever the category says.
     const rows = [
       ["Date", "Description", "Category", "Cost", "Currency", "ada", "sam", "theo"],
       ["2026-04-06", "Payment", "Payment", "30.00", "EUR", "20.00", "-10.00", "-10.00"],
@@ -227,10 +220,9 @@ describe("a transfer", () => {
 });
 
 /**
- * The sign of the `Cost` column is the only thing in the file that says which
- * way an entry runs — and it turns the member columns round with it. Getting
- * that backwards leaves every row still summing to zero and the foot still
- * matching, so the checksum cannot catch it. These tests are what holds it.
+ * `Cost`'s sign alone says which way an entry runs, and flips the member
+ * columns. Backwards still sums to zero and matches the foot, so only these
+ * tests catch it.
  */
 describe("an income, which runs the other way through one amount column", () => {
   const b = new OpBuilder();
@@ -269,9 +261,7 @@ describe("several positive columns, which are a guess that adds up", () => {
   for (const [i, id] of ALL.entries()) {
     b.push("member", id, "create", { name: id, colorSeed: i }, THEO);
   }
-  // 500 put in by two people, consumed by two others: both payers come out
-  // above their own share, so two columns are positive and there is no
-  // lossless reading of who handed over what.
+  // Two payers both above their own share: two positive columns, no lossless reading.
   b.push("expense", "e-boat", "create", {
     description: "Boat", occurredAt: Date.UTC(2026, 3, 9),
     amountMinor: 50000, currency: "EUR", rateToBase: "1", baseAmountMinor: 50000,
@@ -302,10 +292,8 @@ describe("several positive columns, which are a guess that adds up", () => {
 });
 
 /**
- * Our own writer emits a row of nothing but zeros for an expense
- * `computeBalances` could not apportion, so a round trip of our own file has
- * to survive one — and it contributes nothing to any column, so dropping it
- * leaves the foot intact.
+ * Our writer emits an all-zero row for an expense it couldn't apportion; it
+ * adds nothing to any column, so dropping it keeps the foot.
  */
 describe("a row that carries no money", () => {
   const b = new OpBuilder();
@@ -318,8 +306,7 @@ describe("a row that carries no money", () => {
     currency: "EUR", rateToBase: "1", baseAmountMinor: 3000, paidBy: ADA,
     split: { mode: "equal", members: [ADA, THEO] },
   }, ADA);
-  // A split naming nobody: `resolveSplit` throws on it, so `export.ts` writes
-  // the row with every column zero rather than lose what somebody typed.
+  // A split naming nobody: `resolveSplit` throws, so `export.ts` writes zeros.
   b.push("expense", "e-broken", "create", {
     description: "Broken", occurredAt: Date.UTC(2026, 3, 4), amountMinor: 1000,
     currency: "EUR", rateToBase: "1", baseAmountMinor: 1000, paidBy: ADA,
@@ -373,15 +360,14 @@ describe("what the shape says about the bytes, read liberally", () => {
       foot("-15.00", "15.00"),
       ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
     ));
-    // Read as an expense the foot would be a 0-cost row, and the balances
-    // would come out double.
+    // As an expense the foot would be a 0-cost row and balances would double.
     expect(plan.entries).toHaveLength(1);
   });
 
   it("pads a short row out, because every spreadsheet drops trailing empties", () => {
     const plan = read([
       ["Date", "Description", "Category", "Cost", "Currency", "ada", "sam", "theo"],
-      // Theo's cell is simply not there, which is nought rather than a mystery.
+      // A missing cell is zero.
       ["2026-04-03", "Dinner", "General", "30.00", "EUR", "-15.00", "15.00"],
       ["2026-09-18", "Total balance", " ", " ", "EUR", "-15.00", "15.00", "0.00"],
     ]);
@@ -563,10 +549,8 @@ describe("what it refuses, and why each one would have needed a guess", () => {
 });
 
 /**
- * The property, over the fixture's own permutations: whatever the group holds,
- * exporting it and reading it back reproduces `computeBalances`. A foreign
- * currency is repriced before the export by the same `atCurrentRates` the app
- * uses, so the file is single-currency even when the group is not.
+ * Over the fixture's permutations, export then import reproduces
+ * `computeBalances`. Foreign currencies are repriced first (`atCurrentRates`).
  */
 describe("export then import, over a group with everything in it", () => {
   it("reproduces the balances whatever the entries are", () => {
@@ -576,8 +560,7 @@ describe("export then import, over a group with everything in it", () => {
       b.push("member", id, "create", { name: id, colorSeed: i }, THEO);
     }
     const eur = (mad: number) => convertMinor(mad, "MAD", "EUR", MAD_RATE);
-    // An expense, an income, a co-sponsored one, an uneven shares split, and a
-    // transfer — the five readings this module has, in one file.
+    // Expense, income, co-paid, uneven shares, transfer: every reading this module has.
     b.push("expense", "e-1", "create", {
       description: "Riad", occurredAt: Date.UTC(2026, 3, 3), amountMinor: 58000,
       currency: "EUR", rateToBase: "1", baseAmountMinor: 58000, paidBy: MARIE,
@@ -612,11 +595,7 @@ describe("export then import, over a group with everything in it", () => {
   });
 });
 
-/**
- * The header names every map in the module is keyed by, and they come out of
- * somebody else's file. Only one such string is dangerous, and it is refused
- * by name rather than worked around.
- */
+/** Member names key every map here and come from somebody else's file. */
 describe("a member column named something a plain object cannot hold", () => {
   it("is refused, instead of vanishing into a prototype", () => {
     expect(refusal([
