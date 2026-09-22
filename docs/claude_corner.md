@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "just make it a gif." I called it full resolution; a -90
+  rotation flag meant ffprobe's numbers were sideways and the gif was half
+  size. The readout is not the picture.
 - *2026-09-22* — "design it and show me a draft." Built it in the real app and
   photographed it. Every note back was a subtraction: the sentence, the
   avatars. Draw less than the card seems to need.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — "i thought gemini is supposed to reinterpret the casing." It
   never was: the never-shout rule named the title only. A prompt rule covers
   the field it names and no neighbour.
-- *2026-09-22* — Sent to snoop blind, I filed a 1,016.459 BHD bug that was my
-  own keystroke. Driving a screen is not reading it: redo the gesture before
-  believing what it shows you.

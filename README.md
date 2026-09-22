@@ -15,6 +15,17 @@
 </p>
 
 
+<details open>
+<summary><b>Quick split demo</b> — scan a receipt, tap who had what, copy the result</summary>
+<br>
+<p align="center">
+  <img src="docs/media/quick-split.gif" width="320" alt="Scanning a receipt and splitting it item by item, without creating a group">
+</p>
+</details>
+
+<details>
+<summary><b>Gallery</b> — the ledger, balances, an expense, and itemized splitting</summary>
+<br>
 <table>
 <tr>
 <td width="33%"><img src="docs/media/ledger.png" alt=""></td>
@@ -27,6 +38,7 @@
 <td width="33%"><img src="docs/media/summary.png" alt=""></td>
 </tr>
 </table>
+</details>
 
 *This is a personal project, almost entirely written with Claude Code.*
 
@@ -50,7 +62,7 @@ Grid-like UI for assigning who-had-what.
   
 - **Auditable edit history.** If you don't trust your friends.
 
-- **Splitwise import and export.**
+- **Splitwise/Triount import and export.** Bring groups in and out via CSV or Tricount link.
   
 - **Dark mode.**
   
