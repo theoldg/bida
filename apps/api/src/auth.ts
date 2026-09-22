@@ -1,9 +1,7 @@
 /**
- * Link-only auth (ADR-0003), over a token the phone derives (ADR-0036).
- *
- * The bearer is not the group's link secret: it is one HKDF branch of it, and
- * the branch that opens the ops is the other one. So there is deliberately no
- * variable called `secret` in this Worker — it never receives one.
+ * Link-only auth (ADR-0003) over a derived token (ADR-0036). The bearer is one
+ * HKDF branch of the link secret; the key is the other. No variable here is
+ * called `secret` — the Worker never receives one.
  */
 
 export async function sha256Hex(input: string): Promise<string> {

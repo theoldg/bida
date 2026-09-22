@@ -4,15 +4,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
 
 /**
- * The store, against real SQLite running the real migrations.
- *
- * Two things can be wrong here, and neither is the SQL. A delete that leaves a
- * row `ensureGroup` will hand back as a live group is a deletion the next phone
- * to sync undoes (docs/sync.md#deleting-a-group), and nothing in the app would
- * say so — so the test that matters is the push after the delete. And a seq
- * number reserved before its row exists is an op a pulling phone is told about
- * and can never read, so `batch` below is a transaction like D1's: the point of
- * the accept tests is what another caller sees *during* one.
+ * The store against real SQLite with the real migrations. What matters: a
+ * delete must survive the next phone's push (docs/sync.md#deleting-a-group),
+ * and a seq must never be visible before its row — so `batch` is transactional
+ * like D1's, and the accept tests look at what another caller sees mid-batch.
  */
 
 type Row = Record<string, unknown>;
@@ -22,10 +17,8 @@ function fakeD1(): D1Database {
   for (const file of ["0001_init.sql", "0003_group_tombstone.sql"]) {
     sqlite.exec(readFileSync(new URL(`../migrations/${file}`, import.meta.url), "utf8"));
   }
-  // SQLite here would bind thousands; D1 stops at a hundred. Without this the
-  // fake is more forgiving than production in the one way that matters — a
-  // clause built out of the caller's array passes every test and then fails on
-  // the phone with the biggest queue.
+  // D1 binds at most 100; SQLite thousands. Without this the fake passes a
+  // clause that fails on the phone with the biggest queue.
   const D1_MAX_BOUND_PARAMS = 100;
   const bound = (args: unknown[]) => {
     if (args.length > D1_MAX_BOUND_PARAMS) {
@@ -41,10 +34,8 @@ function fakeD1(): D1Database {
   });
   return {
     prepare,
-    // D1 runs a batch in one transaction and rolls the whole thing back if any
-    // statement fails. `acceptOps` reserves and inserts in a single batch on
-    // exactly that promise, so a fake that ran the statements loose would pass
-    // a store that cannot hold its invariant.
+    // D1 batches are one transaction; `acceptOps` depends on it, so a loose fake
+    // would pass a broken store.
     batch: async (stmts: { all: () => Promise<{ results: Row[] }> }[]) => {
       sqlite.exec("BEGIN");
       try {
@@ -82,8 +73,7 @@ describe("deleteGroup", () => {
     const group = await getGroup(db, "g1");
     expect(group).not.toBeNull();
     expect(isDeleted(group!)).toBe(true);
-    // Nothing is kept that could say anything about the group: not the token
-    // this server was checking, and not a single op.
+    // Nothing kept that says anything about the group: no token, no op.
     expect(group!.token_hash).toBe("");
   });
 
@@ -112,8 +102,7 @@ describe("acceptOps", () => {
     await acceptOps(db, "g1", [sealed("op3"), sealed("op4")], NOW);
     const group = await getGroup(db, "g1");
     const ops = await opsSince(db, "g1", 0);
-    // The invariant the pulling phone spends: `latestSeq` names a row it can
-    // already read, so a cursor parked on it has skipped nothing.
+    // `latestSeq` names a row already readable, so a cursor on it skips nothing.
     expect(group!.last_op_seq).toBe(4);
     expect(ops.map((op) => op.seq)).toEqual([1, 2, 3, 4]);
   });
@@ -127,9 +116,8 @@ describe("acceptOps", () => {
   });
 
   it("takes the counter back down with a batch that fails", async () => {
-    // Two rows for one id: the second insert hits `ops.id` and the whole batch
-    // rolls back. What must not survive is the reserve — a counter left ahead
-    // of the log is the cursor bug with no op to show for it.
+    // The duplicate insert rolls the batch back, reserve included — a counter
+    // ahead of the log is the cursor bug.
     await expect(acceptOps(db, "g1", [sealed("op3"), sealed("op3")], NOW)).rejects.toThrow();
     const group = await getGroup(db, "g1");
     expect(group!.last_op_seq).toBe(2);

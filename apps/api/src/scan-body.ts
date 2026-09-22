@@ -1,25 +1,16 @@
 /**
- * The Worker's half of the scan request: the bill, streamed into the envelope
- * `@bida/core` describes, without the Worker ever holding it.
- *
- * The prompt and the schema are not here — both ends build the same body now
- * (core/scan-body.ts), because a phone scanning on its own key sends one
- * without us. What stays here is the part only a server does: refusing to
- * forward anything that is not base64.
+ * The Worker's half of the scan request: the bill streamed into core's
+ * envelope (core/scan-body.ts) without the Worker holding it, refusing
+ * anything that isn't base64.
  */
 import { buildScanRequestBody, type ScanMedium, type ScanTone } from "@bida/core";
 
 export type { ScanMedium, ScanTone } from "@bida/core";
 
 /**
- * The envelope, split in two around where the bill goes — one pair per tone
- * per medium.
- *
- * Built by calling core's builder with a sentinel and cutting the JSON at it,
- * so the streamed request is the same body a phone sends and there is no
- * second copy of the prompt to drift. Done once per isolate: a scan
- * pays for a stream copy of two short byte arrays and nothing else, and each
- * further tone or medium costs one more pair of them, not a second code path.
+ * The envelope split around where the bill goes, one pair per tone and medium.
+ * Built by cutting core's JSON at a sentinel, so there is no second copy of the
+ * prompt. Once per isolate.
  */
 const SENTINEL = "__RECEIPT_IMAGE__";
 
@@ -36,18 +27,10 @@ const ENVELOPE: Record<ScanTone, Record<ScanMedium, { prefix: Uint8Array; suffix
 };
 
 /**
- * The largest base64 body we will wrap, per medium. The phone downscales a
- * photo to a ~200 KB JPEG (`lib/scan/downscale.ts`), which is ~270 KB once
- * base64 grows it by a third; `MAX_IMAGE_BYTES` is that with room to spare, and
- * an answer to the caller who would rather send us a 50 MB "photo" to pay
- * Gemini for.
- *
- * A typed bill is capped at 4,000 characters on the phone (`BILL_TEXT_MAX`,
- * core/scan.ts), which is ~4 KB of Latin text and ~5.4 KB base64. The ceiling
- * here is well above that on purpose: it has to hold 4,000 characters of a
- * three-byte script too, and like the push caps it is an abuse ceiling rather
- * than a protocol limit. What bounds the ordinary cost is the character count
- * the dialog enforces.
+ * The largest base64 body we wrap. A downscaled photo is ~200 KB JPEG, ~270 KB
+ * base64 (`lib/scan/downscale.ts`); this leaves room and refuses a 50 MB
+ * "photo". Text is capped at 4,000 characters on the phone (`BILL_TEXT_MAX`);
+ * its ceiling here is an abuse limit that must still fit a three-byte script.
  */
 export const MAX_IMAGE_BYTES = 400_000;
 
@@ -71,33 +54,21 @@ const BASE64 = (() => {
 export class NotBase64Error extends Error {}
 
 /**
- * The request body for one scan: our envelope with the caller's bill in it —
- * a base64 JPEG, or a typed bill base64'd the same way.
+ * Our envelope with the caller's bill (base64 JPEG or base64 text), streamed
+ * between the halves so the Worker never parses a body (docs/hosting.md).
  *
- * The bill is *streamed* between the two halves rather than read, so the
- * Worker never holds it and never parses a body — the 10 ms CPU budget
- * that shaped this endpoint is untouched (docs/hosting.md). The only work per
- * chunk is the alphabet check, which is not politeness about content types:
- * the bytes land inside a JSON string, so a body carrying a quote or a
- * backslash could close that string and write its own `contents` — the arbitrary
- * request this endpoint exists to not forward. Base64 has neither character,
- * so rejecting everything outside its alphabet closes the hole outright and
- * costs one table lookup per byte.
- *
- * **That is why a typed bill travels base64 too.** Escaping arbitrary text into
- * a JSON string as it streamed would mean a second, subtler guard on the hot
- * path; base64 reuses the one that is already proved, and the medium rides in
- * the envelope's own `mimeType` instead — which is ours, not the caller's.
- * So what changes with a typed bill is what the model *reads*, never what the
- * request *is*.
+ * The per-chunk alphabet check is a security boundary: the bytes land inside a
+ * JSON string, so a quote or backslash could close it and inject its own
+ * `contents`. Base64 has neither, so rejecting anything outside it closes the
+ * hole at one lookup per byte. **That is why typed bills travel base64 too** —
+ * escaping text while streaming would be a second, subtler guard; the medium
+ * rides in our own `mimeType`.
  */
 export function wrapPayload(
   bill: ReadableStream<Uint8Array>,
-  /** Told before the stream errors, because a refusal surfaces at `fetch` as
-   *  whatever the runtime wraps it in, and the caller deserves the real one. */
+  /** Called before the stream errors, since `fetch` surfaces the refusal wrapped. */
   onRefuse?: (err: NotBase64Error) => void,
-  /** Which pre-encoded envelope to wrap it in. A caller picks one of four, and
-   *  that is the whole of what a caller can say about the prompt. */
+  /** One of four pre-encoded envelopes — all a caller can say about the prompt. */
   tone: ScanTone = "kind",
   medium: ScanMedium = "photo",
 ): ReadableStream<Uint8Array> {

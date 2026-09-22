@@ -1,9 +1,7 @@
 /**
- * How the dev Worker tells you it is the dev Worker, without the web export
- * knowing: the build stays byte-identical across both Workers
- * (docs/hosting.md#dev-and-production), so the difference is put on here, on
- * the way out. Only a Worker whose `BIDA_ENV` var is `"dev"` calls this, and
- * only `[env.dev]` sets it — production never runs a line of it.
+ * How the dev Worker marks itself while the export stays byte-identical across
+ * Workers (docs/hosting.md#dev-and-production): applied on the way out, only
+ * where `BIDA_ENV` is `"dev"` (`[env.dev]`).
  */
 
 /** The icons `pnpm icons` stamps with DEV, served at the ordinary URLs. */
@@ -15,9 +13,8 @@ export function devAssetPath(pathname: string): string {
 }
 
 /**
- * An asset, dressed for dev. HTML gets `data-env="dev"` on its root, which is
- * all the CSS needs to tint the top bar; the service worker precaches pages
- * through here, so an installed dev app keeps the tint offline.
+ * An asset, dressed for dev: HTML gets `data-env="dev"`, which tints the top
+ * bar. The service worker precaches through here, so it stays tinted offline.
  */
 export async function devAsset(assets: Fetcher, request: Request): Promise<Response> {
   const url = new URL(request.url);

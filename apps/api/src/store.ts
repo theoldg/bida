@@ -1,10 +1,8 @@
 import type { SealedOp } from "@bida/core";
 
 /**
- * The D1-backed half of the sync protocol (docs/sync.md). The server appends
- * and assigns sequence numbers; it never folds ops into entities — that stays
- * client-only (ADR-0002) — and since ADR-0036 it cannot, because every op
- * arrives sealed and the key is derived from a secret it never receives.
+ * The D1 half of sync (docs/sync.md). The server appends and assigns seqs; it
+ * never folds (ADR-0002) and can't, since ops are sealed (ADR-0036).
  */
 
 interface GroupRow {
@@ -13,10 +11,9 @@ interface GroupRow {
   created_at: number;
   last_op_seq: number;
   /**
-   * Set when the group was deleted on request (`DELETE /api/groups/:id`, from
-   * `/delete-my-data`). The row stays so the id cannot be registered again:
-   * without it, the next phone still holding the link would push its local log
-   * back and the deletion would undo itself. `0003_group_tombstone.sql`.
+   * Set when deleted on request. The row stays so the id can't be registered
+   * again — otherwise the next phone with the link pushes the log back.
+   * `0003_group_tombstone.sql`.
    */
   deleted_at: number | null;
 }
@@ -42,17 +39,13 @@ export function isDeleted(group: GroupRow): boolean {
 }
 
 /**
- * Delete one group: every op, and the group itself down to a tombstone.
+ * Delete one group: every op, and the group to a tombstone. The only
+ * destructive path, and the only non-append in the app (ADR-0002): "delete my
+ * data" can't be an entry in a log the server keeps. Authorised by the link's
+ * token like everything else (ADR-0003).
  *
- * The only destructive path in the API, and the only one in the app that is not
- * an appended op (ADR-0002) — because "delete my data" cannot be answered with
- * an entry in a log the server still holds. It is authorised the way everything
- * else is, by the token derived from the link secret: whoever holds the link is
- * the group, so whoever holds the link can end it (ADR-0003).
- *
- * `last_op_seq` is deliberately left where it was. Nothing may be written to
- * this id again, and a counter that went backwards would be the one thing that
- * could hand a future op the sequence number of a deleted one.
+ * `last_op_seq` is left as is: a counter going backwards could hand a future
+ * op a deleted op's seq.
  */
 export async function deleteGroup(
   db: D1Database, groupId: string, now: number,
@@ -93,17 +86,13 @@ export async function opsSince(
 }
 
 /**
- * D1 binds at most 100 parameters to one statement, so nothing here may build
- * a clause out of the caller's array without cutting it first. A phone coming
- * back from a fortnight offline pushes its whole queue in one request, and the
- * `IN (...)` below used to grow with it: past ~99 ops every push that phone
- * made failed, it retried the same oversized batch forever, and the app said
- * only that sync was failing.
+ * D1 binds at most 100 parameters per statement, so never build a clause from
+ * the caller's array uncut. A phone back from weeks offline pushes its whole
+ * queue at once; an uncut `IN (...)` fails every push past ~99 ops, retried
+ * forever.
  *
- * The cut is here rather than at the door because the server cannot make old
- * phones chunk. Refusing a large push with a 413 would wedge exactly the
- * clients that cannot do anything about it, which is the same bug wearing a
- * status code.
+ * Cut here, not refused with a 413: the server can't make old phones chunk,
+ * and a refusal wedges exactly those clients.
  */
 const IDS_PER_QUERY = 90;
 const OPS_PER_BATCH = 100;
@@ -115,24 +104,17 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Accept a batch of sealed ops. Idempotent on `SealedOp.id`: an op already in
- * the log keeps its original seq instead of being reassigned or duplicated,
- * which is what makes retrying a push after a dropped response safe. A retry
- * seals the same op under a fresh IV, so the two ciphertexts differ — the id is
- * what says they are one op, and the first one stored is the one that stays.
+ * Accept sealed ops, idempotent on `SealedOp.id`: an op already stored keeps
+ * its seq, so retrying after a dropped response is safe. A retry reseals under
+ * a fresh IV, so the id — not the ciphertext — identifies it; the first stays.
  *
- * Reserving the sequence numbers and writing the rows is **one** `db.batch`,
- * which D1 runs as a single transaction. That is what holds the invariant the
- * pulling phone depends on: every seq up to `last_op_seq` is a row it can
- * already read. Two statements could not hold it — a phone syncing between the
- * reserve and the insert was answered with a `latestSeq` covering rows that
- * were not there yet, wrote it down as its cursor, and never asked for that
- * range again. The ops were not lost on the server; they were lost to that
- * phone, silently and for good.
+ * Reserving seqs and writing rows is **one** `db.batch` (one D1 transaction),
+ * holding the invariant pulls rely on: every seq up to `last_op_seq` is a
+ * readable row. As two statements, a pull between them got a `latestSeq`
+ * covering missing rows, saved it as its cursor, and never saw those ops.
  *
- * Two pushes racing the same op id now collide on `ops.id` and take the whole
- * batch down rather than half-writing it. The push fails, the phone retries,
- * and the retry finds the row already there — which is the idempotent path.
+ * Two pushes racing one op id collide on `ops.id` and fail whole; the retry
+ * then finds the row, which is the idempotent path.
  */
 export async function acceptOps(
   db: D1Database,
@@ -164,15 +146,13 @@ export async function acceptOps(
     return { assigned, latestSeq: group?.last_op_seq ?? 0 };
   }
 
-  // One transaction per chunk rather than one for the push: each still reserves
-  // and writes together, which is the whole invariant, and a run of them leaves
-  // the log exactly as a run of smaller pushes would.
+  // One transaction per chunk: each reserves and writes together, and a run
+  // leaves the log as smaller pushes would.
   let latestSeq = 0;
   for (const batch of chunk(fresh, OPS_PER_BATCH)) {
-    // The reserve first, then one insert per op reading the counter back out of
-    // the row it just moved: `last_op_seq - (n - 1 - i)` is op `i`'s number. The
-    // subquery is what lets the insert be bound before the reserve has run, and
-    // so lets both live in the one batch.
+    // Reserve first, then each insert reads the counter back from the row just
+    // moved (`last_op_seq - (n - 1 - i)` is op `i`'s seq); the subquery lets both
+    // be bound in one batch.
     const statements = [
       db
         .prepare(

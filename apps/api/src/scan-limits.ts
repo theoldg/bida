@@ -1,13 +1,8 @@
 /**
- * Enforcing `SCAN_LIMITS` (core), and the two checks that have nowhere else to
- * live: the one-way client key, and Turnstile.
- *
- * The scan endpoint is the one place in this app that spends money, and the
- * credential in front of it is deliberately cheap to mint — `ensureGroup`
- * registers any unseen id on first sight, because that is how a quick split
- * works (ADR-0035). So the bearer check is a speed bump and these are the
- * gates. Why each number is what it is:
- * docs/receipt-scanning.md#what-the-scan-costs.
+ * Enforcing `SCAN_LIMITS` (core), plus the one-way client key and Turnstile.
+ * The scan is the only endpoint that spends money, and its credential is cheap
+ * — `ensureGroup` registers any unseen id (ADR-0035) — so the bearer is a speed
+ * bump and these are the gates. docs/receipt-scanning.md#what-the-scan-costs.
  */
 
 import { SCAN_LIMITS, type ScanLimitScope } from "@bida/core";
@@ -19,12 +14,8 @@ const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
 /**
- * The caller's address, one way. Never the address itself: there are four
- * billion IPv4s, so a bare `sha256` of one is an IP with extra steps — a
- * rainbow table is minutes of laptop time. The key is a Worker secret
- * (`SCAN_IP_SALT`), so a leaked D1 row is noise to anyone but us. Truncated
- * because 64 bits is already far past collision at this scale, and rotating
- * the secret only resets buckets that live 24h anyway.
+ * The caller's IP, HMAC'd with `SCAN_IP_SALT`: a bare sha256 of an IPv4 is
+ * rainbow-tabled in minutes. Truncated to 64 bits, plenty at this scale.
  */
 export async function clientKey(ip: string, salt: string): Promise<string> {
   const key = await crypto.subtle.importKey(
@@ -34,10 +25,7 @@ export async function clientKey(ip: string, salt: string): Promise<string> {
   return [...new Uint8Array(mac)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/**
- * Which bucket is full, or null. `global` is asked first because it is the one
- * refusal that isn't about the person reading it.
- */
+/** Which bucket is full, or null. `global` first: it's the refusal that isn't about the reader. */
 export function overLimit(counts: ScanCounts): ScanLimitScope | null {
   for (const scope of ["global", "client", "caller"] as const) {
     const { hour, day } = SCAN_LIMITS[scope];
@@ -58,20 +46,15 @@ interface CountRow {
   global_hour: number; global_day: number;
 }
 
-/**
- * Every count in one query. SQLite's booleans are 1 and 0, so the six windows
- * are six conditional sums over the same day of rows — at most the global
- * daily cap of them, and that is the point of pruning at 24h.
- */
+/** Every count in one query: six conditional sums over at most a day of rows (pruned at 24h). */
 export async function countScans(
   db: D1Database, caller: string, client: string | null, now: number,
 ): Promise<ScanCounts> {
   const hourAgo = now - HOUR;
   const dayAgo = now - DAY;
-  // A null client is a deployment with no `SCAN_IP_SALT`. The bucket is then
-  // absent rather than shared: the sentinel matches no real key (those are 16
-  // hex), and the count below is zeroed, so nobody lands behind a second and
-  // much tighter global cap just because the salt was never set.
+  // No `SCAN_IP_SALT`: the client bucket is absent, not shared — the sentinel
+  // matches no real key and its count is zeroed, so nobody gets a tighter
+  // second global cap.
   const row = await db.prepare(`
     SELECT
       COALESCE(SUM(caller = ?1 AND at > ?3), 0) AS caller_hour,
@@ -90,12 +73,8 @@ export async function countScans(
 }
 
 /**
- * Book the scan, and drop what has aged out.
- *
- * Called *before* the upstream request, not after: a call that hangs, or a
- * photo Gemini refuses, has still been paid for. The prune rides along in the
- * same batch because it is the same round trip and there is no other moment
- * that reliably happens once per scan.
+ * Book the scan and prune old rows, *before* the upstream request, so a hang
+ * or refusal is still paid for. The prune rides the same round trip.
  */
 export async function recordScan(
   db: D1Database, caller: string, client: string | null, now: number,
@@ -108,15 +87,9 @@ export async function recordScan(
 }
 
 /**
- * Is there a real browser behind this request?
- *
- * Everything above counts a caller who volunteers to be counted. Turnstile is
- * the one check a script cannot simply opt out of, and it is why the cheap
- * credential is survivable: a fresh id buys nothing without a fresh token, and
- * a token costs a browser.
- *
- * Verified server-side, before the image is streamed anywhere — a token the
- * client merely holds proves nothing.
+ * Is there a real browser behind this? The counts only bind a caller who lets
+ * themselves be counted; Turnstile is what a script can't skip, so a fresh id
+ * buys nothing without a fresh token. Verified server-side, before streaming.
  */
 export async function turnstileOk(secret: string, token: string | null, ip: string): Promise<boolean> {
   if (!token) return false;
@@ -131,9 +104,7 @@ export async function turnstileOk(secret: string, token: string | null, ip: stri
     const body = await res.json<{ success?: unknown }>();
     return body.success === true;
   } catch {
-    // Cloudflare's own endpoint being unreachable from a Cloudflare Worker is
-    // not a verdict on the caller, but fail-open here would make the check
-    // optional for anyone who can cause it — so it refuses.
+    // Fail-open would make the check optional for anyone able to cause it.
     return false;
   }
 }

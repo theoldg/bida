@@ -1,47 +1,34 @@
 /**
- * A payload URL asked for as a page, and the page it should have been.
+ * A payload URL requested as a page, and the page it should have been.
  *
- * Next's router fetches a route's RSC payload — `/g/claim.txt?id=…&_rsc=…` —
- * on every in-app tap, and when that fetch fails, or answers for a build the
- * page isn't running, it hands the *payload* URL to the browser as a plain
- * navigation (`fetch-server-response.js`: `doMpaNavigation`, and the `catch`
- * that falls back to the rewritten `.txt` URL). Served literally, that is a
- * screenful of `1:"$Sreact.fragment"` where a screen should be.
+ * When Next's router fails to fetch a route's RSC payload (`/g/claim.txt?…&_rsc=…`)
+ * or gets one from another build, it navigates to the payload URL itself
+ * (`doMpaNavigation` in `fetch-server-response.js`) — a screen of
+ * `1:"$Sreact.fragment"`.
  *
- * The service worker already turns those back into the route
- * (`apps/web/public/sw.js`) — but only for a page it controls, and it does not
- * claim on a first visit. That gap is the whole iPhone join flow: the invitee
- * who has just tapped a link is on their first load of the origin, has no
- * controlling worker yet, and `/g/claim` is where `useClaimGate` sends them.
- * So the rule stands here as well, where every phone passes whichever worker
- * it does or doesn't have. Production has to route `.txt` through the Worker
- * for this to run at all — `[assets] run_worker_first` in `wrangler.toml`.
+ * The service worker fixes that (`apps/web/public/sw.js`) but only once it
+ * controls the page, which it doesn't on a first visit — exactly the iPhone
+ * invitee landing on `/g/claim`. So the rule is here too. Needs
+ * `[assets] run_worker_first` for `.txt` in `wrangler.toml`.
  *
- * Nothing else in the export ends in `.txt`. If that ever stops being true,
- * this wants a carve-out and so does the service worker.
+ * Nothing else in the export ends in `.txt`; if that changes, both places need
+ * a carve-out.
  */
 
 /** Is this request the browser asking for a *document*, not the router asking for data? */
 function wantsPage(request: Request): boolean {
-  // Set by every browser since Safari 16.4, and set on the router's own fetch
-  // too (as `empty`), so where it exists it is the whole answer.
+  // Sent by browsers since Safari 16.4, and as `empty` on the router's fetch.
   const dest = request.headers.get("Sec-Fetch-Dest");
   if (dest) return dest === "document";
-  // Older WebKit — a good deal of the iPhones this is for. A navigation asks
-  // for `text/html`; Next sets no `Accept` on the payload fetch, so it gets
-  // `*/*`.
+  // Older WebKit (many target iPhones): navigations ask for `text/html`; Next's
+  // payload fetch sends no `Accept`.
   return (request.headers.get("Accept") ?? "").includes("text/html");
 }
 
 /**
- * The route to send a mis-navigated payload request to, or `null` to serve the
- * request as it stands.
- *
- * The query is not decoration: `?id=` is which group the screen is of, so it
- * carries across rather than landing on a bare route that can only say "No
- * group". `_rsc` is the router's own cache-buster and goes. The fragment needs
- * no help — a browser re-applies it across a redirect, which is what keeps a
- * `/join#<id>.<secret>` link's secret alive through one of these.
+ * The route to redirect a mis-navigated payload request to, or `null`. `?id=`
+ * carries across (it names the group); `_rsc` is dropped. The fragment survives
+ * a redirect on its own, keeping a `/join#<id>.<secret>` secret intact.
  */
 export function pageForPayload(request: Request): string | null {
   if (request.method !== "GET") return null;

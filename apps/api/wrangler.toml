@@ -8,29 +8,21 @@ compatibility_date = "2026-08-27"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
-# Assets still come straight from the edge; these two paths do not. `/api/*` is
-# the sync API, which reached the Worker by falling past the assets until this
-# list existed — **a list names everything the Worker handles, so leaving the
-# API out of it 404s the whole API**. `/*.txt` is the RSC payloads: a payload
-# URL navigated to as a page is a screenful of flight data, and the Worker
-# redirects it to its route (src/payload.ts). Nothing else in the export ends in
-# `.txt`, so that second rule costs one invocation per mis-navigation and none
-# per asset.
+# Everything else comes straight from the edge. **This list names everything
+# the Worker handles — drop `/api/*` and the whole API 404s.** `/*.txt` is the
+# RSC payloads, which the Worker redirects to their route (src/payload.ts).
 run_worker_first = ["/api/*", "/*.txt"]
 
-# Created by `wrangler d1 create hajsik` — database_id filled in once that's
-# run with a real Cloudflare token. See docs/hosting.md#deploying.
+# docs/hosting.md#deploying.
 [[d1_databases]]
 binding = "DB"
 database_name = "hajsik"
 database_id = "809ab9d2-f6b3-4183-a9b1-8204848655f3"
 migrations_dir = "migrations"
 
-# The dev Worker: its own hostname, its own D1, deployed from the `dev` branch.
-# Wrangler environments inherit nothing — [assets] and the binding are restated
-# here or the dev Worker ships without them. A group link is same-origin, so
-# these two worlds cannot reach each other: a link made on dev only ever talks
-# to `hajsik-dev`, and production's finished log is unreachable from here.
+# The dev Worker: own hostname and D1, deployed from `dev`. Environments inherit
+# nothing, so [assets] and the binding are restated. Group links are
+# same-origin, so dev can't reach production's data.
 # docs/hosting.md#dev-and-production.
 [env.dev]
 name = "hajsik-dev"
@@ -39,16 +31,14 @@ name = "hajsik-dev"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
-# Dev only: every asset passes through the Worker, which serves the DEV-stamped
-# icons and tags HTML so the top bar tints (src/dev-env.ts). Production serves
-# assets straight from the edge, as before.
+# Dev only: every asset passes through the Worker for the DEV icons and top-bar
+# tint (src/dev-env.ts).
 run_worker_first = true
 
 [env.dev.vars]
 BIDA_ENV = "dev"
 
-# Created by `wrangler d1 create hajsik-dev` on 2026-09-14. Disposable, unlike
-# the production database — this is the one a schema change gets tried on.
+# Disposable, unlike production — try schema changes here.
 [[env.dev.d1_databases]]
 binding = "DB"
 database_name = "hajsik-dev"

@@ -5,14 +5,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { clientKey, countScans, overLimit, recordScan } from "./scan-limits";
 
 /**
- * The scan budget, against real SQLite running the real migration.
- *
- * A stub that answers whatever the assertion wants would prove nothing here:
- * the thing that can be wrong is the query — six conditional sums over one
- * day of rows — and an off-by-one in it either lets an eleventh scan through
- * or refuses a tenth. So `0002_scan_limits.sql` is executed as written, and
- * the shim below is only enough D1 to carry the two statements this module
- * sends.
+ * The scan budget against real SQLite running `0002_scan_limits.sql`: the
+ * query is what can be wrong (an off-by-one lets an eleventh scan through), so
+ * the shim is just enough D1 for its two statements.
  */
 
 type Row = Record<string, unknown>;
@@ -71,8 +66,7 @@ describe("countScans", () => {
     await recordScan(db, "g1", "aa", NOW - 25 * HOUR);
     expect((await countScans(db, "g1", "aa", NOW)).caller.day).toBe(0);
     await recordScan(db, "g2", "bb", NOW);
-    // Pruned, not merely uncounted — the 24h horizon is what keeps the query
-    // scanning at most a global daily cap's worth of rows.
+    // Pruned, not just uncounted: the 24h horizon bounds what the query scans.
     const all = await db.prepare("SELECT COUNT(*) AS n FROM scan_hits").first<{ n: number }>();
     expect(all?.n).toBe(1);
   });
@@ -122,8 +116,7 @@ describe("clientKey", () => {
     const a = await clientKey("203.0.113.7", "salt");
     expect(a).toBe(await clientKey("203.0.113.7", "salt"));
     expect(a).not.toBe(await clientKey("203.0.113.8", "salt"));
-    // The whole point of the secret: the same address under another salt is
-    // another key, so a leaked table cannot be walked back to addresses.
+    // Another salt, another key: a leaked table can't be walked back to addresses.
     expect(a).not.toBe(await clientKey("203.0.113.7", "other salt"));
     expect(a).toMatch(/^[0-9a-f]{16}$/);
     expect(a).not.toContain("203");

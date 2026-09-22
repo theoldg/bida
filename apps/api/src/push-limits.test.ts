@@ -5,12 +5,7 @@ import {
   declaredTooLarge, pushTooLarge,
 } from "./push-limits";
 
-/**
- * The ceilings on one push (push-limits.ts). Pure functions over an envelope,
- * so there is no D1 shim here — what can be wrong is an off-by-one that either
- * refuses an honest phone or lets an unbounded body through, and both ends of
- * every cap are checked below.
- */
+/** The push ceilings (push-limits.ts), checked at both ends of every cap. */
 
 function op(sealedBytes: number, i = 0): SealedOp {
   return { id: `op-${i}`, groupId: "g1", sealed: "A".repeat(sealedBytes), seq: null };
@@ -27,8 +22,7 @@ describe("declaredTooLarge", () => {
     });
   });
 
-  // Deliberate, and the one place this route differs from the scan's: it
-  // buffers rather than streams, so `pushTooLarge` bounds it anyway.
+  // Unlike the scan: this route buffers, so `pushTooLarge` bounds it anyway.
   it("lets a missing or unparseable header through rather than 411", () => {
     expect(declaredTooLarge(null)).toBeNull();
     expect(declaredTooLarge("chunked")).toBeNull();
@@ -54,8 +48,7 @@ describe("pushTooLarge", () => {
     });
   });
 
-  // The cap the count and the per-op size cannot hold between them: plenty of
-  // ops, each legal on its own, adding up to a body neither one refuses.
+  // Many individually legal ops adding up past the byte cap.
   it("refuses a total over the byte cap built from individually legal ops", () => {
     const n = Math.ceil(MAX_PUSH_BYTES / MAX_SEALED_BYTES) + 1;
     expect(n).toBeLessThan(MAX_OPS_PER_PUSH);
@@ -65,7 +58,7 @@ describe("pushTooLarge", () => {
   });
 
   it("sits far enough above honest traffic to be unreachable by one", () => {
-    // A cap an honest phone can hit is the bug these replace, not a fix.
+    // An honest phone must never hit a cap.
     expect(MAX_SEALED_BYTES).toBeGreaterThan(HONEST_RECEIPT_BYTES * 5);
     expect(MAX_OPS_PER_PUSH).toBeGreaterThan(50 * 50);
   });

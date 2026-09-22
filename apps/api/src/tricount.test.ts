@@ -2,11 +2,9 @@ import { describe, expect, it } from "vitest";
 import { isClientKey, isTricountKey, sessionFrom } from "./tricount";
 
 /**
- * The two checks standing between a caller and a request the Worker makes to
- * somebody else, and the one place the handshake's reply is read. What this
- * file cannot cover is bunq answering — it is an API nobody documents, so the
- * shape below is the one the published clients read and the endpoint is
- * exercised against the real thing by hand.
+ * The two input checks before the Worker calls bunq, and the handshake reply
+ * parse. bunq itself is undocumented and exercised by hand; the reply shape
+ * here is what published clients read.
  */
 
 /** A real 2048-bit SPKI public key, PEM. The private half never existed here. */

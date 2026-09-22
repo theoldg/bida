@@ -6,14 +6,10 @@ import {
 } from "./scan-body";
 
 /**
- * What this endpoint promises is *negative*: whatever a caller sends, the
- * request that reaches Gemini is our prompt, our schema and one bill. The
- * whole promise rests on `wrapPayload` refusing anything but base64, because the
- * bytes are placed inside a JSON string — so these tests are mostly attempts
- * to get a second field past it.
- *
- * A typed bill is base64 for exactly that reason: the caller's words reach the
- * model, and the caller's *bytes* still cannot reach the request.
+ * The promise is negative: whatever a caller sends, Gemini gets our prompt, our
+ * schema and one bill. It rests on `wrapPayload` refusing non-base64 (the bytes
+ * sit in a JSON string), so these mostly try to smuggle a second field past it.
+ * Typed bills are base64 for the same reason.
  */
 
 const stream = (body: string): ReadableStream<Uint8Array> =>
@@ -63,8 +59,7 @@ describe("the envelope", () => {
 });
 
 describe("what it refuses", () => {
-  // The one that matters: a quote closes the JSON string the image sits in,
-  // and everything after it would be a request the caller wrote.
+  // A quote closes the JSON string, and whatever follows is caller-written request.
   it.each([
     ['a quote', 'QUJD","x":"'],
     ['a backslash', "QUJD\\"],
@@ -84,9 +79,7 @@ describe("what it refuses", () => {
     await expect(wrapped("Q".repeat(MAX_IMAGE_BYTES))).resolves.toContain("inlineData");
   });
 
-  // The typed bill's cap is its own, and far below the photo's — an abuse
-  // ceiling on what the dialog already limits to 4,000 characters. A body sent
-  // as text does not get to spend the image allowance.
+  // Text has its own, far lower cap; it can't spend the image allowance.
   it("a typed bill larger than the text cap", async () => {
     await expect(wrapped("Q".repeat(MAX_TEXT_BYTES + 1), "kind", "text"))
       .rejects.toThrow(NotBase64Error);
@@ -109,11 +102,9 @@ describe("what it refuses", () => {
 });
 
 /**
- * Staś mode moves one paragraph of the prompt and must move nothing else: a
- * mean refusal is a joke, a differently-read receipt is a wrong bill. The
- * tone also arrives as a *header*, so what is tested here is that it picks
- * between two envelopes we hold rather than putting any of it in a caller's
- * hands — the promise the rest of this file is about.
+ * Staś mode moves one paragraph and nothing else — a mean refusal is a joke, a
+ * differently-read receipt is a wrong bill. The header picks one of our
+ * envelopes; nothing reaches caller hands.
  */
 describe("the two tones", () => {
   it("is the kind one when nobody asks", async () => {
@@ -124,8 +115,7 @@ describe("the two tones", () => {
     expect(await wrapped("QUJD", "stas")).toBe(JSON.stringify(buildScanRequestBody("QUJD", "stas")));
   });
 
-  // The one sentence the two tones contradict each other on, and the whole
-  // point of the second: Staś mode is at the photographer's expense.
+  // The one sentence the tones contradict: Staś mode is at the photographer's expense.
   it("spares the photographer in one tone and not the other", async () => {
     const spare = "never at the photographer's expense";
     expect(promptOf(await wrapped("QUJD", "kind"))).toContain(spare);
@@ -138,9 +128,8 @@ describe("the two tones", () => {
 
   it("changes only how a photo is refused — never how a bill is read", async () => {
     const [kind, stas] = [promptOf(await wrapped("QUJD")), promptOf(await wrapped("QUJD", "stas"))];
-    // Everything before the refusal paragraph is the reading instructions, and
-    // everything after it is the cropped-receipt rule: both are word for word
-    // the same, or the two tones would be two different readers.
+    // Reading instructions before and cropped-receipt rule after must match word
+    // for word, or the tones are two different readers.
     const marker = "If the photo isn't a receipt at all,";
     expect(kind.slice(0, kind.indexOf(marker))).toBe(stas.slice(0, stas.indexOf(marker)));
     const tail = "The same applies if the receipt is cropped,";
@@ -156,11 +145,8 @@ describe("the two tones", () => {
 });
 
 /**
- * A bill somebody typed is read by the same rules as one photographed. What the
- * two envelopes are allowed to differ on is the medium — how the bill is
- * attached, the advice about its layout, and how it is refused — and nothing
- * else: a typed bill that read by different rules would price a split
- * differently depending on whether anybody had a camera to hand.
+ * The media may differ in attachment, layout advice and refusal only — or a
+ * split would price differently depending on whether anybody had a camera.
  */
 describe("the two media", () => {
   it("is the photo when nobody asks", async () => {
@@ -191,17 +177,11 @@ describe("the two media", () => {
   });
 
   /**
-   * The two prompts are two documents now, so there is no shared block left to
-   * compare byte for byte. What replaces that check is the thing the block was
-   * protecting: one answer shape, and the conventions a reading of either
-   * medium must not disagree about. A photograph and a typed bill may differ on
-   * how to read a page; they may not differ on what a discount's sign means.
+   * The prompts are separate documents, so instead of a shared block this checks
+   * one answer shape and the conventions both must agree on.
    */
   it("asks both media for every field the schema requires", async () => {
-    // `labelEn` is the one the photo prompt describes rather than names ("an
-    // English translation of that label"), so it is left off the list: what is
-    // being checked is that neither prompt has quietly stopped asking for a
-    // field the schema still requires an answer for.
+    // `labelEn` is described, not named, in the photo prompt, so it is left off.
     const fields = [
       "title", "total", "tip", "tax", "discounts", "currency", "date",
       "label", "amount", "unitAmount", "quantity", "error",
@@ -223,16 +203,13 @@ describe("the two media", () => {
       expect(prompt).toContain("WITHOUT a minus sign");
       // Tax only where it sits on top, or the bill is charged for twice.
       expect(prompt).toContain("charged for twice");
-      // A name is not a shout, and a till roll shouts everything it prints.
+      // A till roll prints everything in capitals; a name isn't a shout.
       expect(prompt).toContain("all capitals");
       expect(prompt).toContain("40 characters");
     }
   });
 
-  /**
-   * Tone may move the refusal and nothing else. It is the reason Staś mode can
-   * be as mean as the owner likes: a mean scan still cannot be a wrong one.
-   */
+  /** Tone moves the refusal only, so a mean scan can't be a wrong one. */
   it.each([
     ["photo", "If the photo isn't a receipt at"],
     ["text", "If the text is not a bill at all"],
@@ -245,10 +222,8 @@ describe("the two media", () => {
   });
 
   /**
-   * The rule the whole redesign turned on. A till prints the extension, so a
-   * photograph's amount is never worked out; somebody typing writes the price
-   * of one, and the extension exists nowhere — asked for it anyway, the model
-   * either invents a figure or has no legal answer at all (`lineMinor`).
+   * A till prints the line total, so a photo's is never computed; a typist writes
+   * the unit price and the total exists nowhere (`lineMinor`).
    */
   it("asks a photograph for the line total and a typed bill for either figure", async () => {
     const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
@@ -267,7 +242,7 @@ describe("the two media", () => {
       const prompt = promptOf(await wrapped("QUJD", tone, "text"));
       expect(prompt).toContain("never add the bill up yourself");
       expect(prompt).toContain("never a reason to refuse a bill");
-      // And the refusal paragraph says it a second time, where it would bite.
+      // Repeated in the refusal paragraph, where it would bite.
       expect(prompt.slice(prompt.indexOf("If the text is not a bill at all")))
         .toContain("A bill with no total is none of these cases");
     }
@@ -282,14 +257,13 @@ describe("the two media", () => {
 
   it("never asks a typed bill to be re-shot", async () => {
     for (const tone of ["kind", "stas"] as const) {
-      // Only the refusal is looked at: the lead paragraph says "not
-      // photographed", which is the point of it.
+      // Only the refusal: the lead says "not photographed" on purpose.
       const prompt = promptOf(await wrapped("QUJD", tone, "text"));
       const refusal = prompt.slice(prompt.indexOf("If the text is not a bill at all"));
       expect(refusal).not.toContain("re-shoot");
       expect(refusal).not.toContain("blurry");
       expect(refusal).not.toContain("photo");
-      // It still has to say what is missing, which is the whole job of a refusal.
+      // A refusal's job is to say what is missing.
       expect(refusal).toContain("what is missing");
     }
   });
@@ -311,17 +285,11 @@ describe("the two media", () => {
       .toContain("The one thing you don't touch is what they were born as");
   });
 
+  /** The one field a typed bill's reader may improve, scoped tight. */
   /**
-   * The one field a typed bill's reader is allowed to improve rather than
-   * transcribe — scoped tight, since nothing else in either prompt is
-   * invented.
-   */
-  /**
-   * The casing is the one thing the photograph's reader may change about a
-   * label. It used to govern the title alone, so a receipt that printed
-   * "POULET ROTI" put that in the grid in capitals while the expense above it
-   * read "Bar Zahra" — one rule now covers both fields, and it is scoped to
-   * the casing so a label stays a transcript.
+   * Casing is the one thing a photo's reader may change about a label or title,
+   * so "POULET ROTI" doesn't sit in capitals under "Bar Zahra"; the words stay a
+   * transcript.
    */
   it("asks a photograph to re-case a label, and to change nothing else about it", async () => {
     const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
@@ -329,7 +297,7 @@ describe("the two media", () => {
     expect(photo).toContain("\"POULET ROTI\" is \"Poulet roti\"");
     // Scoped: the words are still the receipt's, whatever case they arrive in.
     expect(photo).toContain("their language and their spelling stay");
-    // And a brand's own casing is not a printer's.
+    // A brand's own casing isn't a printer's.
     expect(photo).toContain("lululemon");
   });
 
