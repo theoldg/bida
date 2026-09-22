@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "animate a flip like the other copy actions." The gesture was
+  already written three times over. The work was finding it and widening it to
+  a labelled line, not designing one.
 - *2026-09-22* — "make the translation icon tighter." The code's own comment
   said 文 over A, so I read the diagonal as settled. It was only where the
   first draft's strokes happened to land.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — "Let's workshop the fine print first." One line took four
   rounds; the screen under it took one pass. Their version of my sentence was
   shorter every time.
-- *2026-09-21* — Same Discard, dead on one install and fine on another, same
-  version. Three theories off the code, all wrong; one trace settled it. The
-  variable was a number I had not thought to read.
