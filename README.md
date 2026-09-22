@@ -16,13 +16,6 @@
 
 
 <details open>
-<summary><h3>Quick split demo</h3></summary>
-<p align="center">
-  <img src="docs/media/quick-split.gif" width="320" alt="Scanning a receipt and splitting it item by item, without creating a group">
-</p>
-</details>
-
-<details>
 <summary><h3>Gallery</h3></summary>
 <table>
 <tr>
@@ -36,6 +29,13 @@
 <td width="33%"><img src="docs/media/summary.png" alt=""></td>
 </tr>
 </table>
+</details>
+
+<details>
+<summary><h3>Quick split demo</h3></summary>
+<p align="center">
+  <img src="docs/media/quick-split.gif" width="320" alt="Scanning a receipt and splitting it item by item, without creating a group">
+</p>
 </details>
 
 *This is a personal project, almost entirely written with Claude Code.*

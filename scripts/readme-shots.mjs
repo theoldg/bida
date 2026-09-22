@@ -174,6 +174,8 @@ async function main() {
     // onto the lines behind their figure (ADR-0016). This is the shot that
     // says the grid is not a one-way trip. Reached from the ledger rather than
     // by saving the draft above, which would append an op for a screenshot.
+    // In English as well, without a second press: the choice made on the grid
+    // is the phone's and not that screen's, so it carries to the read-back.
     await page.goto(`${base}/g/entry?id=${GROUP}&e=${CANTINA}`);
     await page.getByRole("button", { name: /^Ben/ }).click();
     await settle(page, 250);
