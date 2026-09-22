@@ -63,6 +63,10 @@ to remove more from this list than you add.
   with incorrect premises, very much so". Say the premise is wrong and why,
   then still fix the symptom it was reported about: a wrong reason does not
   make the report wrong.
+- **Fix the friction you hit.** *2026-09-22* — "if any routine task wastes you
+  a step, either update the corresponding script, or the instructions", and if
+  two or three postcards name the same easy fix, make it in passing. "dont let
+  this bloat the instructions. keep them simple."
 
 ## Product
 
