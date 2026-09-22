@@ -1307,8 +1307,6 @@ export const copy = {
     /** `null` where the screen prints no currency at all — a quick split (ADR-0035). */
     tipLabel: (currency: string | null) =>
       currency ? `Tip and service, in ${currency}` : "Tip and service",
-    /** The one affordance a person misses: the tip is a field, not a printed line. */
-    tipHint: "tap to edit",
     /**
      * The bar's translation toggle, named for what a press would do rather
      * than for the state it is in — the same rule the theme switch follows.
@@ -1368,7 +1366,6 @@ export const copy = {
     },
     discardTitle: "Discard this grid?",
     discardBody: "The bill goes back to the lines the scan read.",
-    unfoldHint: { before: "Tap a", after: "to split a line." },
   },
 
   // ------------------------------------------------------------- history

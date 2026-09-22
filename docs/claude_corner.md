@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "remove the help texts." The strings were a third of it: a CSS
+  class and a boolean computed only to gate them died with them. Pull the whole
+  thread, not the words.
 - *2026-09-22* — "just make it a gif." I called it full resolution; a -90
   rotation flag meant ffprobe's numbers were sideways and the gif was half
   size. The readout is not the picture.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — "anything we should be doing about this warning?" pasted over
   a CI log. Not a question about the warning: the fix, asked politely. Two
   lines of YAML, one turn.
-- *2026-09-22* — "i thought gemini is supposed to reinterpret the casing." It
-  never was: the never-shout rule named the title only. A prompt rule covers
-  the field it names and no neighbour.

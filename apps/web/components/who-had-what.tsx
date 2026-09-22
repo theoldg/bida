@@ -357,7 +357,6 @@ export function WhoHadWhat({
   }, [refusal, blooms]);
   const everyItemAssigned = assignments.length === items.length && assignments.every((r) => r.size > 0);
   const canFinish = involvedMembers.length > 0 && everyItemAssigned && Object.keys(weights).length > 0;
-  const canUnfoldSomething = items.some((item) => unfoldableInto(item, draft.currency) !== null);
   // The extras the bill printed, in the order it printed them, and signed the
   // way they are worth: a deduction is the one figure on this screen that comes
   // off. The tip is not among them — it is typed, and has its own row.
@@ -475,10 +474,9 @@ export function WhoHadWhat({
     onBack();
   }
 
-  // One line under the grid at a time: what a refused Done was pointing at, or
-  // — until the ×N has been found once — what it does. **The sentence waits for
-  // the refusal that earns it**: on arrival nothing is assigned yet, so printing
-  // it then scolds a grid for being untouched.
+  // One line under the grid: what a refused Done was pointing at. **The
+  // sentence waits for the refusal that earns it**: on arrival nothing is
+  // assigned yet, so printing it then scolds a grid for being untouched.
   // The pointer restarts by the refusal flash's trick (lib/refusal.ts): two
   // identical animations, so a second one replays.
   const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
@@ -498,10 +496,6 @@ export function WhoHadWhat({
 
   const note = told && !everyItemAssigned ? (
     <div className="footnote bad">{copy.items.needsSomeone}</div>
-  ) : canUnfoldSomething && runs.every((r) => r === null) ? (
-    <div className="footnote">
-      {copy.items.unfoldHint.before} <b>×N</b> {copy.items.unfoldHint.after}
-    </div>
   ) : null;
 
   return (
@@ -748,7 +742,6 @@ export function WhoHadWhat({
                       }} />
                     <Icon name="edit" size={11} className="tipedit" />
                   </span>
-                  {draft.receiptTip ? null : <span className="tiphint">{copy.items.tipHint}</span>}
                 </td>
                 {involvedMembers.map((m) => <td key={m.id}><span className="itemcell ghost"><span className="dot" /></span></td>)}
               </tr>

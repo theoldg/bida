@@ -929,7 +929,6 @@ a { color: inherit; text-decoration: none }
 .itemamountin:focus { border-color: var(--brand) }
 .itemamountin::placeholder { color: var(--muted) }
 .tipedit { color: var(--muted); flex: none }
-.tiphint { font-size: 10px; color: var(--muted); display: block; margin-top: 2px }
 /* Fills its `<td>` rather than sitting in it as a 40px island: the column went
    from 56px to 44px, and a cell that takes the whole of it is the larger tap
    target of the two — the full column width by the row's own height. It also
