@@ -70,17 +70,15 @@ and a digest, a failure spills only the stages that failed and names the
 failure, so one run tells you everything that is broken.
 
 The flip side: **the browser checks below gate nothing**, so one can go red and
-stay red. `pnpm entries` spent a commit asserting a string the copy had since
-recapitalised. Run `pnpm verify` after touching a screen, not only when
-something feels wrong.
+stay red. Run `pnpm verify` after touching a screen, not only when something
+feels wrong.
 
 `packages/core` gets real coverage; the bar is in
 [CLAUDE.md](../CLAUDE.md#working-agreements). The web app gets less, and not all
 of it is smoke: the command layer, `checkEntry` and the split tabs' own
 inputs — where being wrong outside core costs money — are covered in earnest,
-the screens are not. The merge rule itself has its own suite (`lib/db/commands/patch.test.ts`),
-because reaching it only through a saved entry is how the two entry editors
-came to disagree about it. `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
+the screens are not. The merge rule itself has its own suite
+(`lib/db/commands/patch.test.ts`), shared by both entry editors. `vitest.config.ts` includes `lib/**` *and* `components/**`, which is why
 `sanitizeAmount` and `groupDigits` are exported from `amount-input.tsx` rather
 than hidden in it. Rendering isn't tested — `pnpm shots` is what looks at
 screens.
@@ -101,9 +99,8 @@ otherwise have to read the whole suite to learn:
 - **`settleUp` clears every balance to zero**, 300 randomised groups, and uses
   **the fewest transfers possible** — checked against a brute-force minimum
   written a different way, over 2,000 randomised groups of four shapes (a few
-  repeated amounts, all different, two amounts, wide random). That differential
-  is what caught the search missing pieces that held two people owing the same;
-  keep all four shapes if you touch it.
+  repeated amounts, all different, two amounts, wide random). Keep all four
+  shapes if you touch it: equal debts are where a search misses pieces.
 - **HLCs are totally ordered by string comparison**, and a peer's stamp is
   absorbed on receive up to a day ahead — so a reply to their op always sorts
   after it — and held back past that, until the wall catches up.
@@ -141,8 +138,8 @@ total spend 963,14 · transfers theo→marie 105,62 · sam→marie 111,47 · ada
 ## `scripts/lib/harness.mjs` — what the browser checks share
 
 A build, a server that speaks the static export's dialect, a phone-shaped
-browser, a pass/fail tally that owns the exit code, and a seeded group. Written
-three times they drifted; written once, the next check costs a dozen lines:
+browser, a pass/fail tally that owns the exit code, and a seeded group, so the
+next check costs a dozen lines:
 
 ```js
 import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup }
@@ -241,15 +238,12 @@ Two things worth knowing:
 
 - **A browser check that asks for a sentence will be rearranged under.** Copy
   is settled by ear here, one word at a time, so a selector naming the words is
-  a selector with an expiry date: `pnpm offline` reached the theme toggle by
-  "Switch to dark mode" and went red the day the label shortened to "Dark
-  mode", and stayed red because nothing runs it on a push. Name what a control
+  a selector with an expiry date — and nothing runs these on a push. Name what a control
   *is* — its icon, its class, its role — and leave the wording to `copy.ts`.
-- **A shot wears the harness's locale and clock.** Left at Playwright's
-  defaults, every entry carried whatever hour the container was at — a
-  restaurant bill stamped 00:11, a different silly hour every run. The context
-  sets `locale`, `timezoneId` and a resumed `clock.install`, so the trip is
-  always photographed at dinner time.
+- **A shot wears the harness's locale and clock.** At Playwright's defaults
+  every entry carries the container's hour. The context sets `locale`,
+  `timezoneId` and a resumed `clock.install`, so the trip is always
+  photographed at dinner time.
 - **`pnpm` skips postinstall scripts by default, which breaks vitest and
   `wrangler dev`.** The root `package.json` carries
   `"pnpm": { "onlyBuiltDependencies": ["esbuild", "workerd"] }`; anything that
@@ -261,21 +255,18 @@ Two things worth knowing:
   longer, and the exact envelope key set is what actually pins the shape down.
 - **`/g` is both a file and a directory** in the export, so the static server
   must `statSync(p).isFile()` before serving and only then fall through to
-  `${file}.html`. Serving the directory hit is an `EISDIR` crash. Fixed once, in
-  the harness — don't hand-roll a fourth server.
+  `${file}.html`. Serving the directory hit is an `EISDIR` crash. The harness
+  handles it — don't hand-roll another server.
 - **A check that needs the installed app has to say so.** The update offer is
   drawn only when `display-mode: standalone` matches, and neither playwright nor
   CDP's media emulation can set that — `asInstalledApp(page)` answers the query
-  instead, before the navigation that should see it. Four assertions in
-  `offline-check` sat red for a day because the offer they tap had quietly
-  become installed-only.
+  instead, before the navigation that should see it.
 - **Locate by role and id, not by guessed label text.** On `/new` the label is
   "Name"; "Group name" is only the placeholder, so `getByLabel` hangs.
-- **Two things must never answer to one accessible name.** The add row's button
-  once carried the field's own label, and `getByLabel("Add someone")` died of a
-  strict-mode violation — which is the driver saying what a screen reader would
-  have found: the same name twice. It says what it does instead — "Add" — so the
-  field keeps its own name and the button is reachable by role.
+- **Two things must never answer to one accessible name.** A strict-mode
+  violation from `getByLabel` is the driver saying what a screen reader would
+  find: the same name twice. The add row's button says "Add", so the field
+  keeps its own name and the button is reachable by role.
 - **Scope row-level clicks to the row.** `getByRole("button", { name: /the
   rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
   member's name. Getting this wrong seeds a "co-sponsored" expense that quietly
@@ -290,12 +281,8 @@ Two things worth knowing:
   element or its placeholder.
 - **Nothing gates these, so they rot quietly.** `pnpm check` doesn't run them,
   so a screen change that moves a control or a landing goes in green and is
-  found here weeks later. Three did at once: the multi-payer door became a
-  `<button>` held shut until there is an amount, so `getByRole("link")` hung;
-  and saving now returns you where you came from — the balances tab, an entry's
-  own screen — so a wait for the ledger's rows timed out on a page that had
-  none. When you move a control or change where a save lands, grep these
-  scripts for it in the same commit.
+  found here weeks later. When you move a control, change its role, or change
+  where a save lands, grep these scripts for it in the same commit.
 - **`page.goto` between screens is a different app.** The app never reloads in
   normal use — every move is one document, back included — so anything the
   browser keeps in memory (where each screen was scrolled,
@@ -314,9 +301,8 @@ Two things worth knowing:
   as the ceiling. Where what is being out-waited is one of the app's own
   timers, `settle(page, ms)` puts both clocks in the same starved page. The one
   honest pause is the window for proving that *nothing* happened, which has no
-  condition to wait for. Eight assertions across three checks were red on a
-  busy machine and green on a quiet one, and not one of them was about the app.
-- **The app has its own clock now, and a starved machine can overrun it.**
+  condition to wait for.
+- **The app has its own clock, and a starved machine can overrun it.**
   `SWALLOWED_MS` (150ms, `lib/nav.ts`) is how long a going waits before
   deciding its traversal was swallowed and putting the destination in this
   screen's place. On a box running seven headless browsers a traversal that is
@@ -325,28 +311,21 @@ Two things worth knowing:
   clock is allowed at all. So a check asserting where a repair *landed* is
   safe, and one asserting the **shape of the stack** across a repair is the one
   that can go red on a busy machine and green alone. Say which you are writing.
-- **And a check must not bet on that window either.** `pnpm nav` §9 read the
-  screen after a 200ms pause to prove it was still stuck, which only worked
-  while the window was 400ms; shortening it to 150 collected the bet, and the
-  section went red on a change that was correct. The stuck moment is not worth
-  asserting anyway — `history.go` is stubbed to a no-op there, so a traversal
+- **And a check must not bet on that window either** — a pause sampling the
+  "still stuck" moment breaks whenever `SWALLOWED_MS` changes. The stuck moment
+  is not worth asserting anyway — in `pnpm nav` §9 `history.go` is stubbed to a no-op, so a traversal
   cannot be what moved the screen, and landing at the destination at all is
   already proof the repair did it. Where the intermediate state genuinely is
   the assertion, **record it instead of sampling it**: §10 hangs a
   `MutationObserver` before the tap and reads the flag afterwards, because the
   repair is quicker than a round trip to ask.
-- **`pnpm offline` is standing proof of that, and a cloud container is where it
-  shows.** Under `pnpm verify` it goes red in roughly two runs of three and
-  passes alone every time — on the agent's container, which is slower than the
-  owner's laptop, so seven headless browsers at once starves it first. The bet
-  is the settle loop that reads the shell caches once `gooddeploy02` installs:
-  it stops when two samples 500ms apart agree *and* the new revision is there,
-  which is quiescence rather than the answer. `activate`'s deletion can simply
-  not have been scheduled inside that gap, so the loop calls the list settled
-  with `flakydeploy01` still in it and the three assertions reading it go red
-  together. Waiting for the set the check expects, with `PATIENCE` as the
-  ceiling, is the fix; nothing about the app is wrong. Not new — it does the
-  same on `6c659a6` (2026-09-20).
+- **`pnpm offline` flakes under `pnpm verify` on a slow machine** (a cloud
+  container more than a laptop) and passes alone. The bet is the settle loop
+  that reads the shell caches once `gooddeploy02` installs: it stops when two
+  samples 500ms apart agree *and* the new revision is there, which is
+  quiescence rather than the answer — `activate`'s deletion may not have run,
+  leaving `flakydeploy01` in the list. Waiting for the set the check expects,
+  with `PATIENCE` as the ceiling, is the fix; nothing about the app is wrong.
 - **`setOffline` is the page's network, not the browser's.** The update check
   for `sw.js` goes out anyway — so a lever `offline-check` holds up for one
   section (a forged revision, a blocked asset) is read by an install nobody
@@ -369,9 +348,8 @@ also drives the rate registry end to end — a new currency opening the dialog b
 itself, the two directions of the field moving together, and correcting a saved
 rate re-valuing an entry already in the ledger
 ([ADR-0005](decisions/0005-money-and-currency.md)). And it presses Save twice
-from the keyboard, because one press was landing as two writes and a `click()`
-cannot reproduce that — it waits for a settled screen in between, which is
-exactly the window the second tap arrives in. It holds rows with real touch, too, since a right
+from the keyboard, since a `click()` waits for a settled screen in between and
+so cannot reproduce a double write. It holds rows with real touch, too, since a right
 click is not what an iPhone sends: a hold opens one menu that its own lifting
 click and Android's `contextmenu` leave open, and a tap, a scroll, a tap just
 after and Enter all still navigate. The held finger then **slides onto an item
@@ -383,8 +361,7 @@ by hand, because that is the tap iOS sometimes sends and Chromium never does
 first still chooses nothing. Then the tap every *other* phone sends, whole,
 which asks **where that tap's own `mousedown` landed** rather than whether the
 dialog it opened survived: a dialog's card is centred, so a menu halfway down
-the screen drops the stray press harmlessly on the card, and the version that
-had broken every row above and below it passed that way.
+the screen drops the stray press harmlessly on the card and would hide the bug.
 
 It also opens the two screens that carry the in-memory draft with no draft to
 carry — which is what a reload, a restored tab or a kept link is — and holds
@@ -396,7 +373,7 @@ beside it ([frontend.md](frontend.md#routing)).
 
 **Wait on state, not on a URL:** a save navigates before Dexie has redrawn, so
 every assertion here follows a `waitForFunction` on the row count. Skipping
-that is what makes a check like this flake and then get deleted.
+that is what makes a check like this flake.
 
 ## `pnpm claim` — the name that has not been filed yet
 
@@ -429,9 +406,8 @@ never asked again. The invite link is copied out of People and opened a second
 time — it must land in the group, not back on the picker, with the groups list
 left in the history entry under it, so the device's back button climbs the app
 rather than leaving for wherever the link was tapped. Backing out of *that*
-group is the press this pair was written for: a document that loaded on `/join`
-never drew the list, and its first arrival there was read as a launch, so the
-app walked straight back into the group. Then the app is launched, which
+group must stay on the list: a document that loaded on `/join` never drew the
+list, and its first arrival there must not be read as a launch. Then the app is launched, which
 reopens the group last open, while backing out of that one must leave the list
 alone — and must be remembered, so the launch after it lands on the list until
 the group is opened again (`apps/web/lib/launch.ts`).
@@ -468,9 +444,9 @@ hands the caret back ([frontend.md](frontend.md#state)).
 
 ## `pnpm stall` — a read of this phone's database that dies
 
-The defect it was written for is the one no screen could report: an installed
-Android app hanging on its skeleton rows, indefinitely, with nothing in the
-console ([frontend.md](frontend.md#a-live-read-can-die)). Two halves.
+It holds the defect no screen can report: an installed Android app hanging on
+its skeleton rows, indefinitely, with nothing in the console
+([frontend.md](frontend.md#a-live-read-can-die)).
 
 `indexedDB.open` is stubbed to return a request that never fires an event —
 what a wedged backing store or a blocked upgrade does, and what nothing in
@@ -480,7 +456,7 @@ fails, which is what makes it a check rather than a screenshot.
 
 It also opens `/diag` while the database is still wedged and fails unless the
 readout names what never came back. A diagnostics screen that hangs on the
-fault it reports is worse than none, and that is what the first one did.
+fault it reports is worse than none.
 
 Then the database is deleted from another connection, which is what a browser
 reclaiming storage looks like from inside the page. That half is a smoke test
@@ -530,8 +506,8 @@ all ([sync.md](sync.md#the-demo-group-has-no-key)).
 
 It also sits on the ledger for fourteen seconds and asks for the stall notice,
 which costs the check its slowest assertion and is worth it: a group with no
-key row is the demo's defining property, and a read that answered `undefined`
-for it accused the app of being stuck long after the screen had drawn
+key row is the demo's defining property, and a read answering `undefined` for
+it would raise the notice over a drawn screen
 ([frontend.md](frontend.md#a-live-read-can-die)).
 
 The assertion worth having is the quiet one: `groupKeys` stays empty
@@ -573,8 +549,8 @@ a warm phone's stale head is mended by a row tap on the list, and a phone with
 no service worker at all — a first visit, mid-precache — keeps its stale head
 through the same tap. Both count document requests, and the move is a row tap
 rather than the back arrow on purpose: the arrow *traverses* (`lib/nav.ts`),
-and a cross-document traversal rebuilds the head by itself, which left the
-first of these green with the reload switched off.
+and a cross-document traversal rebuilds the head by itself, which would pass
+with the reload switched off.
 
 The app end (`asInstalledApp`): a launch on one invite nobody has named hands
 it to `/join`; a launch whose secrets are already on the phone doesn't — the
@@ -598,12 +574,9 @@ It needs no server beyond the static export: the join screen's own work is
 ## `pnpm nav` — where the back arrow goes, and what it leaves behind
 
 The arrow's destination is the half the other checks already stumble over on
-their way somewhere else. The half nothing watched is **the shape of the
-history behind it** — whether the screens you left are still there — and that is
-what the device's back button reads on the next press, so the two came apart
-silently: the same arrow on the same screen traversed to its parent when the
-parent was on the stack and *replaced* it when it wasn't, keeping the screens it
-left forward in the first case and erasing them in the second. Every assertion
+their way somewhere else. This one watches **the shape of the history behind
+it** — whether the screens you left are still there — which is what the device's
+back button reads on the next press. Every assertion
 here reads `navigation.entries()` rather than `location`
 ([ADR-0007](decisions/0007-a-screen-is-a-route.md), `lib/nav.ts`).
 
@@ -624,10 +597,8 @@ shortcut is not: headless Chromium binds none, and `Alt+ArrowLeft` fires no
 never pressing anything.
 
 **And that press is not awaited.** A cancelled press never lands, so
-`await page.goBack()` sits out the navigation ceiling — a minute of this
-check's life spent waiting for the one thing it asserts will not happen, and a
-minute of `pnpm verify` spent loading the machine the other seven are racing
-on. What is awaited is the dialog.
+`await page.goBack()` would sit out the navigation ceiling. What is awaited is
+the dialog.
 
 The waits are on the history itself: `window.__shape()` goes in through the
 context, so the wait for a shape and the reading of it are one function and
@@ -657,10 +628,9 @@ currencies, and an entry whose shares miss by a cent.
 
 **`/api/tricount` is stubbed and everything else is real** — the bargain
 `stubScan` makes about Gemini. Tricount publishes no API, so the half that
-talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold: a
-real link is the only thing that proves it, and one did (2026-09-21). Try one
-by hand after touching those constants, since nothing here will go red when
-bunq moves.
+talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold. Try a
+real link by hand after touching those constants, since nothing here will go
+red when bunq moves.
 
 ## What only a phone can check
 
@@ -694,7 +664,7 @@ screen` block says which manifest each load got and which URL the icon opened.
 
 - **Hold a row, slide onto the card it opened, lift on an item.** The slide is
   a scroll as far as the browser is concerned; `heldFinger` is what makes it a
-  tap. Doing nothing at all is the old symptom.
+  tap. Nothing happening means it has broken.
 - **A control that answers every other time** is the clickless tap. It is in
   the block or it is something else.
 - **Delete and Forget**, from the hold and from the kebab: the confirm dialog

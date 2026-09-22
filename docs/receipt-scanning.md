@@ -28,9 +28,7 @@ On `/g/scan` the drawing is the screen: under it, one line (`copy.scan.lede`)
 says the two things it can only imply — the whole form comes back filled, and
 the bill's own lines are a way to split it — and picture and line are one
 block, centred with the control under it and a wide gap between the two, so the
-drawing reads as what the control leads to rather than as a caption on it. The
-drawing replaced a sentence saying the same thing, and that sentence is now its
-`alt`.
+drawing reads as what the control leads to rather than as a caption on it.
 
 On `/quick` it is the head of the screen instead (`.quickshow`), over the list
 of who is splitting, with a line of its own: `copy.quick.lede`, not
@@ -47,9 +45,9 @@ The words are `copy.scan.diagram`, but the arithmetic isn't: `lib/scan/diagram.t
 sums the shares from the same lines the left-hand card prints, and picks the
 three names by the seed it is given — the group's id, or the quick split's
 credential — so one group or one split sees the same faces each time and two
-don't see the same ones. Fewer than three names borrows stand-ins. Nothing in the app would notice a picture whose shares stopped
-adding to its own total — on the one screen whose whole job is reading totals
-off receipts — so `diagram.test.ts` adds them up.
+don't see the same ones. Fewer than three names borrows stand-ins.
+`diagram.test.ts` checks the shares add up to the picture's total, since
+nothing else would notice.
 
 ## The shape
 
@@ -92,9 +90,9 @@ defaults silently; core states it so one envelope satisfies both.
 
 Not because the browser can't call Google: it can.
 `generativelanguage.googleapis.com` answers a preflight from any origin and
-allows `x-goog-api-key`, which this doc denied until somebody checked
-(2026-09-18). That is what makes the section below possible — and it changes
-nothing about *our* key, which is shared and therefore never leaves the server.
+allows `x-goog-api-key`. That is what makes the section below possible — and it
+changes nothing about *our* key, which is shared and therefore never leaves the
+server.
 
 ## A key of your own
 
@@ -140,16 +138,14 @@ bill pasted or typed into it however it is written, and the same filled draft
 comes back. It is for the bill nobody photographed — a receipt that arrived as a chat message
 or an email, one already thrown away, one a camera has just failed on twice.
 
-**Not on `/g/scan`** (2026-09-20, owner's call): the ledger FAB that opens that
+**Not on `/g/scan`** (owner's call): the ledger FAB that opens that
 screen is a camera and the screen draws a photograph, so it offers two doors
 (`typeIn={false}`). Words go in where the form is already open — the Items tab —
 or on `/quick`, which has no form behind it.
 
-It is **in** the box and not beside it (2026-09-19, owner's call). A reading is a
-reading whichever medium it starts from, and a door standing outside would have
-said typing was a different act — which is exactly what it is not. What that
-costs is room: three doors share the width of a phone, so the glyphs went down a
-couple of points and the door says **"Type"** at the two full-width registers,
+It is **in** the box and not beside it (owner's call): a reading is a reading
+whichever medium it starts from. What that costs is room: three doors share the
+width of a phone, so the door says **"Type"** at the two full-width registers,
 where a third of 360 pixels holds ten characters or a pencil and not both. At the
 chip register — a bill already read, the control standing among its figures —
 the box is sized by its contents and it says "Type it in" in full, the way the
@@ -158,10 +154,9 @@ camera's door already says "Scan" in one place and "Rescan" in another
 
 The box itself is rendered by `useReceiptScan`, never by a screen, and rides
 `scan.inputs` beside the two hidden file inputs. The hook sits at the screen's
-root, where nothing a reading does can move it; owned by the control, it was
-unmounted by its own answer — the Items tab draws one shape when there is no bill
-and another when there is, so the box reopened holding what had just been read,
-over a bill that had just arrived.
+root, where nothing a reading does can move it; owned by the control, it would
+be unmounted by its own answer, since the Items tab draws one shape with no
+bill and another with one.
 
 Everything after the bytes is shared with a photograph: the same endpoint, the
 same bearer, the same Turnstile token, the same three budget buckets, the same
@@ -170,12 +165,9 @@ costs what a photo costs and is counted the same (`parseBillText`,
 `web/lib/scan/index.ts`).
 
 **What it is not is the same question.** A till roll and a WhatsApp message are
-different documents, and for a while the typed one was read by the photograph's
-rules — shared prompt, one amount per line, every figure already multiplied out,
-a total required. That combination cannot read the ordinary case. "3 chicken at
-13, 10 beef at 15" gives a per-unit price and a count, and a reader forbidden to
-multiply has no legal answer for the line; the bill states no total, and one was
-demanded. Four things follow from fixing it:
+different documents: the photograph's rules (one multiplied amount per line, a
+total required) cannot read "3 chicken at 13, 10 beef at 15", which gives a
+per-unit price and states no total. So:
 
 - **Its own prompt** (`scan-body.ts`), about a third shorter than the
   photograph's, with no columns, no printer and no merchant in it. The two are
@@ -219,17 +211,14 @@ for a title only where the text plainly names where the money went, and null is
 the expected answer.
 
 **It rides the envelope as base64, in an `inlineData` part with
-`mimeType: "text/plain"`** — which the Worker chooses, never the caller. That is
-not a detail: it is what lets the guard below stay the guard it already was.
-Escaping arbitrary text into a JSON string as it streamed would mean a second,
-subtler check on the hot path; base64 reuses the one that is already proved, so
-what a typed bill changes is what the model *reads* and never what the request
-*is*.
+`mimeType: "text/plain"`** — which the Worker chooses, never the caller. That
+is what lets the guard below stay the one guard: escaping arbitrary text into a
+JSON string as it streamed would need a second, subtler check on the hot path.
+A typed bill changes what the model *reads* and never what the request *is*.
 
 **The lede asks for none of this.** "The items and prices, formatted however you
-like" — it names what the Items tab needs and no shape at all, because every
-clause about one line each or a total was a clause teaching people to tidy a
-bill up for the app (`copy.scan.typeIn`).
+like" — it names what the Items tab needs and no shape at all, so nobody tidies
+a bill up for the app (`copy.scan.typeIn`).
 
 **The cap is 4,000 characters** (`BILL_TEXT_MAX`, core/scan.ts), which is about
 what the downscaled photo costs in tokens — so typing is never the dearer way to
@@ -257,9 +246,8 @@ photograph a bad bill is fixed where it was typed.
 **And it is said there and nowhere else.** Whose refusal a reading's is gets
 decided once, in the hook: the surface it was started from carries the sentence
 and the other carries nothing (`ReceiptScan.refusal`, which is null while the
-last reading was typed). The screen behind the box never rang, so printing it
-under its control too was the same message twice — and one that then stayed up
-after the box was shut, over a control nobody had touched. The mirror holds: a
+last reading was typed), so the message never shows twice or outlives the
+box. The mirror holds: a
 photograph refused before the box was opened belongs to the screen that took it,
 and is not repeated over the top of it.
 
@@ -268,7 +256,7 @@ and is not repeated over the top of it.
 On the shared path the client sends **the bill and nothing else** — base64 as
 the whole body, `text/plain`: the downscaled JPEG, or the typed bill's own UTF-8.
 The prompt and the response schema live
-in `packages/core/src/scan-body.ts`, because both ends build the same body now;
+in `packages/core/src/scan-body.ts`, because both ends build the same body (a brought key builds it on the phone);
 the Worker streams the bill into its copy (`apps/api/src/scan-body.ts`), so on
 that path a caller decides which bill Gemini reads and which of four envelopes
 we hold it arrives in — never a word of the request.
@@ -292,14 +280,14 @@ costs one unauthenticated request to mint — `ensureGroup` registers any id on
 first sight, which is what a quick split relies on (below) — so the bearer check
 is a speed bump, not a gate. What keeps our key off the open internet is that
 there is no *request* a caller can compose: not a prompt, not a schema, not a
-second part, not a destination. **What a typed bill changes, and the owner ruled
-on it (2026-09-19):** a caller's own words now reach the model on our key, so the
-worst a minted credential buys is no longer only having a picture read. It is
+second part, not a destination. **What a typed bill changes (owner's ruling):**
+a caller's own words reach the model on our key, so the worst a minted
+credential buys is more than having a picture read. It is
 still confined on every side that matters — the schema is ours, so the only thing
 that can come back is a bill-shaped object (a title under 40 characters, amounts,
 one error sentence); the destination and the model are ours; Turnstile and all
-three buckets are unchanged. What weakened is the word *impossible*: a caller
-cannot write the request, and can put sentences inside it.
+three buckets apply. A caller cannot write the request, but can put sentences
+inside it.
 
 ### Staś mode
 
@@ -312,9 +300,8 @@ photo. Both paragraphs are in `REFUSAL` (`packages/core/src/scan-body.ts`), both
 still have to say plainly what's wrong so the person knows what to re-shoot, and everything
 else in the prompt is word for word the same, so a mean scan can't also be a
 wrong one (`scan-body.test.ts` checks exactly that). Each tone's envelope is
-pre-encoded per isolate like the other, so the second costs two short byte
-arrays and no branch on the hot path — four pairs now, the medium having doubled
-them, which is still two arrays per envelope and no code path of its own. Both
+pre-encoded per isolate, so each of the four envelopes is two short byte arrays
+and no branch on the hot path. Both
 tones carry a typed bill's own refusal as well, since a roast about a thumb says
 nothing about a wall of text.
 
@@ -347,9 +334,7 @@ body: wrapPayload(c.req.raw.body, (err) => { refusal.err = err; }, tone, medium)
 The rules that follow from it:
 
 - **The Worker composes the request body; the client parses the response.** The
-  prompt and the response schema live in `apps/api/src/scan-body.ts`. They used
-  to live on the phone, for the CPU reason above — which the streamed envelope
-  keeps, at the cost of one table lookup per byte.
+  streamed envelope keeps the CPU cost to one table lookup per byte.
 - **That lookup is the security boundary, not a content-type nicety.** The
   caller's bytes land inside a JSON string, so a body carrying a `"` or a `\`
   closes that string and writes its own `contents` — the arbitrary request this
@@ -382,8 +367,8 @@ The rules that follow from it:
   a stable caller is the unit the budget counts, and that path parameter is
   what it keys on.
 
-Nothing changes in `sw.js` — it already ignores non-GET and cross-origin, and
-`/api/*` was never cached.
+`sw.js` needs nothing: it ignores non-GET and cross-origin, and never caches
+`/api/*`.
 
 ## What the model decides, and what it must not
 
@@ -435,12 +420,10 @@ and what is held back is what you are working against — the row of initials
 across the top and the column of names down the left, so neither a column nor a
 row can go anonymous on a bill that outruns the screen in both directions. The
 chips are set once before anything is assigned and the totals are read at the
-end, so freezing either costs the grid height it needs more: at eight people on
-a 360×640 phone they held 351 of 640 pixels and left the grid 230 — three and a
-half lines of a twelve-line bill. Only Done stays put, being the way out.
-Column widths are declared in a `<colgroup>` under `table-layout: fixed`, never
-measured from the cells: content-derived widths moved every dot on the screen
-each time a run was opened.
+end, so freezing either costs the grid height it needs more (at eight people
+on a 360×640 phone, over half the screen). Only Done stays put, being the way
+out. Column widths are declared in a `<colgroup>` under `table-layout: fixed`,
+never measured from the cells, or every dot moves each time a run is opened.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. **A tap on the line itself — the name
@@ -464,7 +447,7 @@ being untouched.
 split a printed "Salad ×2" into portions — there have to be rows before there
 is anything to assign — but from then on the same button only opens and closes
 a *view* of them (`foldedLine`), and the portions stay in the draft. So folding
-can no longer throw away which portion was whose, and it cannot move a cent
+never throws away which portion was whose, and cannot move a cent
 either: three portions of 5.67/5.67/5.66 shared two ways do not round like one
 17.00 line. A folded run whose portions went to different people wears the
 split mark on everyone who had any of it, and a tap on one of those cells opens
@@ -497,8 +480,8 @@ unfold it writes nothing to the draft. Each person's own copy of the bill names
 them one by one too (`billCharges`, `receiptBreakdown`).
 
 Proportional is the reading [ADR-0016](decisions/0016-receipts.md) settles on,
-and the argument is the "buy 1 get 1 free" the owner asked about — ham pizza
-10, cheese pizza 8, discount 8. The credit exists because *both* pizzas were
+and the argument is "buy 1 get 1 free" — ham pizza 10, cheese pizza 8,
+discount 8. The credit exists because *both* pizzas were
 bought, so giving all of it to the cheaper one leaves the other person paying
 full price for a promotion their order created. Pro rata (5.56 / 4.44) is the
 same rule a whole-bill loyalty deduction follows, scoped to what it came off,
@@ -528,8 +511,9 @@ prompt already asks the model for `parseMinor()`-ready notation, so there's no
 separator-guessing to do locally. Conversion to minor units stays where it
 already is — `parseMinor` on save. The scan asks for no category: an expense
 carries a `categoryId`, but nothing in the app makes a category or maps a name
-to an id, so the field went out with nowhere to land (Categories is
-deferred — [product.md](product.md#deliberately-not-in-the-mvp)). Two prompt lines and a schema property bring it back.
+to an id (Categories is deferred —
+[product.md](product.md#deliberately-not-in-the-mvp)). Two prompt lines and a
+schema property would add it.
 
 Two fields the model doesn't get the last word on:
 
@@ -561,13 +545,12 @@ which half of "Hotel Amira, 12 Rue Bab Doukkala" is the name. It is a title,
 not a reading, which is why the field is `title` and not `merchant`: nothing
 downstream treats it as the merchant of record.
 
-**A scan never navigates.** Finding lines used to push straight to the
-who-had-what grid, which made every scan a commitment to itemise a bill
-somebody may only have wanted the total off; the grid is one tap away on the
-Items tab, and going is the person's decision (ADR-0016). The tab's own
-complaint waits for a save attempt, the way the missing amount does: arriving
-from `/g/scan` is now the ordinary way to be standing here, and a bill that
-read perfectly well should not be met in red. Nor does a bill
+**A scan never navigates.** Pushing to the who-had-what grid would make every
+scan a commitment to itemise a bill somebody may only want the total off; the
+grid is one tap away on the Items tab, and going is the person's decision
+(ADR-0016). The tab's own complaint waits for a save attempt, the way the
+missing amount does: a bill that read perfectly well should not be met in red.
+Nor does a bill
 with no lines claim that tab — there is nothing to assign, so it leaves the
 split where it was. **Nor does one that has lines, if the tab moved while the
 model read** (`tabAfterScan`, lib/draft.ts): tapping Evenly is a decision about
@@ -608,9 +591,8 @@ particular misreading to fail.
 
 The bar above needs a total that is **evidence**, and only one medium always
 has one. A till roll prints one, so a photograph with none is a cropped
-photograph and is refused as it always was. A typed bill usually has none — the
-person who had already added it up did not need us — and demanding one refused
-almost every bill anybody types.
+photograph and is refused. A typed bill usually has none, and demanding one
+would refuse almost every bill anybody types.
 
 So `checkScan` takes the medium, and reconciles only against a figure the bill
 itself stated. Where a typed bill states none, its lines *are* the bill:
@@ -622,7 +604,7 @@ lines must equal the total closes the gap by adjusting a line, and a bill that
 has been *made* to add up is the one error this function cannot see.
 
 Two conditions of the *phone* are told apart from that, because neither has
-anything to do with the photo and the generic message sent people back to
+anything to do with the photo and the generic message would send people back to
 re-shoot a receipt that was fine: a `429`/`503` from Gemini throws
 `ScanUnavailableError` ("Gemini is busy"), and — **scanning being the one act in
 the app that needs a network** — an offline phone throws `ScanOfflineError`,
@@ -645,25 +627,21 @@ question to the same model:
 | **client** | 20/hour, 50/day | the address, HMAC'd. Loose enough for a table of friends behind one restaurant wifi |
 | **global** | 700/hour, 4300/day | the bill — sized to spend the Cloud credit over two months, against real use of tens of scans a day |
 
-**Measured, not estimated** (2026-09-18, one real call through this envelope):
+**Measured, not estimated** (one real call through this envelope):
 a scan is ~2,740 input tokens — ~1,530 of prompt and schema, the rest the image
 — and a few hundred out. At `gemini-3.1-flash-lite`'s $0.25/$1.50 per million
 that is **about $11 per 10,000 scans**, and the day cap above is what spends the
 Cloud credit over roughly two months rather than anything derived from a price.
 
-**Cheaper was tried and cost too much.** The Flash-Lite line gets dearer each
-generation — 2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50, 3.5 at $0.30/$2.50 — so
-2.5 ran the shared scan for a few hours at roughly a third of the price, and
-was sent back: too dumb on real receipts (2026-09-18). On the one feature whose
-whole job is reading numbers off paper, a wrong total costs more than the
-model does. **The price is not the thing to optimise here**, which is the
-reason to read this paragraph before moving `GEMINI_MODEL` down again.
+**Don't move `GEMINI_MODEL` down to save money.** The Flash-Lite line gets
+dearer each generation (2.5 at $0.10/$0.40, 3.1 at $0.25/$1.50), but 2.5 is too
+weak on real receipts, and on the feature whose whole job is reading numbers
+off paper a wrong total costs more than the model does.
 
 The tip jar's **$5 ≈ 4,000 scans** (`TIP_USD_MINOR`, `web/lib/tip.ts`) is the
 measured figure rounded down — $5 buys more like 4,400. It understates on
 purpose: a donation ask is the one screen that must not overstate what the
-money buys. It moves with the model, and the day cap no longer derives from
-it.
+money buys. It moves with the model; the day cap does not derive from it.
 
 **Only the global cap bounds what the owner pays.** A credential costs one
 unauthenticated request to mint, by design, so the caller bucket is politeness:
@@ -698,10 +676,9 @@ thing that cannot help. Said identically, the second sends the wrong person
 looking.
 
 The widget is **Managed**, and Managed does sometimes challenge a real person:
-a "verify you are human" box, which they tap, after which the scan runs. That
-friction was weighed against dropping Turnstile — the global cap bounds the
-bill either way, so what Turnstile buys is that one script cannot spend
-everybody's day — and the owner kept it (2026-09-14). It is why the host sits
+a "verify you are human" box, which they tap, after which the scan runs. The
+owner keeps that friction: the global cap bounds the bill either way, and what
+Turnstile buys is that one script cannot spend everybody's day. It is why the host sits
 **on screen** (`.turnstile`, above the bottom bar) rather than parked
 off it: a challenge nobody can reach is a scan that waits out its own timeout.
 
@@ -738,8 +715,7 @@ for a bucket you spent, `copy.scan.limit.global` for one somebody else did.
 They are deliberately not `copy.scan.busy` — waiting a minute fixes an
 overloaded Gemini and does nothing at all about a spent budget.
 
-**Both secrets are optional, and a deployment without them is the old
-unlimited one.** No `TURNSTILE_SECRET_KEY` and the Worker checks no token; no
+**Both secrets are optional, and a deployment without them is unlimited.** No `TURNSTILE_SECRET_KEY` and the Worker checks no token; no
 `SCAN_IP_SALT` and the client bucket is absent rather than shared. That is what
 lets someone self-host without a Turnstile account (SELFHOSTING.md).
 
@@ -763,9 +739,8 @@ Deliberate, for a group of friends under fifty people:
   spends it, and a secret costs one request to mint. What that buys is confined
   twice over: the Worker owns the envelope, so nobody can put their own *request*
   on our key, and the budget above caps what having bills read can cost.
-- **A typed bill puts a caller's own words in front of that key** — the one thing
-  the envelope used to make impossible, and a call the owner made knowingly
-  (2026-09-19 — [The envelope, and who owns it](#the-envelope-and-who-owns-it)).
+- **A typed bill puts a caller's own words in front of that key** — a call the
+  owner made knowingly ([The envelope, and who owns it](#the-envelope-and-who-owns-it)).
   The prompt, the schema, the model and the destination stay ours, so what comes
   back is a bill-shaped object and not a general-purpose answer; the budget and
   Turnstile are untouched. Read the paragraph under **The envelope** before
@@ -775,9 +750,8 @@ Deliberate, for a group of friends under fifty people:
   on its way to Google is **the one thing in the app that doesn't** — a place,
   a date, a card's last four — and that is as true of one typed out as of one
   photographed. `/about` names it as the exception rather than
-  burying it in a clause. What it is no longer is training data: Vertex does
-  not train on what it reads, which is the shared path's one privacy gain from
-  moving off AI Studio.
+  burying it in a clause. It is not training data: Vertex does not train on
+  what it reads.
 - **A brought key is the exception to that exception.** `/advanced` takes an AI
   Studio key, and the free tier of that API *is* used to improve Google's
   products. So the path that keeps the photo away from our server is the one
@@ -787,10 +761,8 @@ Deliberate, for a group of friends under fifty people:
 - **Terms can change overnight.** If they do, scanning 404s and the button
   hides. The app is unaffected.
 
-**The training problem is fixed** for the shared path, which is what moving to
-Vertex bought; it survives only on a brought free-tier key, where the person
-chose the payer. The other open question is whether the photo is stored at all,
-and the answer is still no
+Training survives only on a brought free-tier key, where the person chose the
+payer. The photo is not stored at all
 ([product.md](product.md#deliberately-not-in-the-mvp)).
 
 ## What it's made of
@@ -819,7 +791,7 @@ spinner only when the model is slower
 to* is `lib/scan/live.ts`, a store keyed by group beside the draft rather than
 state in the control: the bar is a clock on the scan (a negative
 `animation-delay` puts a remounted bar where the scan actually is), so
-switching tabs or stepping out to the payers editor no longer restarts it, and
+switching tabs or stepping out to the payers editor does not restart it, and
 a scan whose draft was discarded on the way out drops its result on arrival.
 
 ## Driving it without a phone
@@ -839,9 +811,8 @@ and the draft it fills are all the app's own.
 - **Turnstile cannot be verified by a browser you automate.** Playwright is
   detected — headless renders no widget at all, headful renders the checkbox
   and then fails `600010` when nothing clicks it — so neither outcome says
-  anything about whether real people get through. Two automated failures were
-  nearly read as a broken deployment; what settled it was a person scanning a
-  receipt on a phone. **If you change the widget, a human has to test it.**
+  anything about whether real people get through, and neither means the
+  deployment is broken. **If you change the widget, a human has to test it.**
 - **A driven scan spends the budget too.** `pnpm drive`'s `receipt <name>`
   stubs the round trip to Gemini, not `lib/scan/budget.ts`, so an eleventh scan
   on one phone is refused by the app itself with `copy.scan.limit.you`. That is
@@ -853,10 +824,9 @@ and the draft it fills are all the app's own.
 - **`fetch` resolves when the response *headers* arrive, not when the request
   body finishes.** A streamed request body that errors after that point
   resolves the promise rather than rejecting it, so the `catch` around the
-  upstream call never runs and a refused image answered **200**. Whatever a
+  upstream call never runs and a refused image answers **200**. Whatever a
   streaming body needs to report has to be read from a flag on both paths, not
-  caught — which is what `refusal` in the scan handler is. Verified against
-  workerd with the upstream pointed at a local echo.
+  caught — which is what `refusal` in the scan handler is.
 - **A refusal still opens the upstream connection.** The alphabet check happens
   mid-stream, so by the time a bad body is found Gemini already has our prefix;
   refusing truncates the request, and what upstream receives is an unterminated
@@ -882,11 +852,8 @@ and the draft it fills are all the app's own.
   model told the lines have to equal the total closes the gap by adjusting a
   line, and a bill that has been made to add up is the one error `checkScan`
   cannot see.
-- **A rule written for one field governs one field.** The prompt told the model
-  not to shout a *title* and said nothing about labels, so an expense read "Bar
-  Zahra" while every line under it stayed in the till's capitals — and the
-  wording that caused it, "its label exactly as printed", looked like a
-  transcription rule rather than a casing one. Where a convention is about how
+- **A rule written for one field governs one field.** A casing rule written
+  for the *title* leaves every label in the till's capitals. Where a convention is about how
   a string is written rather than which string it is, give it its own paragraph
   naming every field it covers (`PHOTO_CASING`).
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
@@ -894,58 +861,45 @@ and the draft it fills are all the app's own.
   `-latest` alias before assuming the free tier is gone. A 503 on the same key
   at the same moment is overload, not a verdict on the model.
 - **The sweep is an estimate of a real scan, so it moves when the scan does.**
-  It was two seconds, calibrated before Turnstile and the budget existed; those
-  put two third-party round trips and two D1 ones in front of the model, so
-  `sweepSeconds` is three. A bar that fills early and hands over to the spinner
-  is this control admitting it was guessing — the one failure it has.
+  `sweepSeconds` is three, covering Turnstile, the budget's D1 round trips and
+  the model; anything added in front of the model should move it. A bar that
+  fills early hands over to the spinner.
 - **What the scan waits on, it waits on in parallel.** Resizing the photo is
-  CPU and the challenge is a round trip; run one after the other they simply
-  added up, so `scanReceipt` starts the downscale, the bearer token and
+  CPU and the challenge is a round trip, so `scanReceipt` starts the downscale, the bearer token and
   `turnstileToken` together. The warm above is the other half of the same
   idea — the cheapest round trip is the one that already happened.
-- **A screen coming back is not a scan starting.** "Reading…" and its bar were
-  `useState` in the control, so the Items tab unmounting — a tab switch, or the
-  payers editor — read as the scan ending, and coming back read as a new one:
-  the sweep began again on a scan already two seconds old. What is durable is
-  the scan, not the control drawing it.
-- **A scan that navigates has to be ordered against anything else wanting the
-  screen, so it stopped navigating.** Opening the rate dialog and calling
-  `router.push` in the same tick is not a sequence — the navigation unmounts
-  the dialog before anybody sees it — and the sequencing state that fixed it
-  outlived its usefulness the moment the grid became a tap rather than a
-  destination.
+- **A screen coming back is not a scan starting.** Scan state in the control's
+  `useState` restarts the bar whenever the Items tab unmounts (a tab switch, the
+  payers editor). What is durable is the scan, not the control drawing it.
+- **Opening a dialog and calling `router.push` in the same tick is not a
+  sequence** — the navigation unmounts the dialog before anybody sees it. One
+  more reason a scan does not navigate.
 - **What a bill is worth is asked of `receiptWeights` (lib/draft.ts), never of
   `weightsFromItems` under it.** Dividing a line leaves a remainder cent, and
-  only `tiebreakSeed` says whose it is; the grid picked its own (`"new"`, from
-  before the draft carried the id its entry would be written under) and so
-  quoted €22.25 for someone the form then saved at €22.24 — two screens read
-  one after the other. The wrapper takes the rows and names the seed itself, so
+  only `tiebreakSeed` says whose it is, and a screen choosing its own seed
+  quotes a cent the form then saves on someone else. The wrapper takes the rows
+  and names the seed itself, so
   a caller cannot get it wrong, and `pnpm rules` fails on a screen that reaches
   past it.
 - **Two things that mean different things to a person are two things in the
-  code, however alike their arithmetic.** A receipt split was a `shares` spec
-  with a flag beside it, and every screen naming a split had to read both: the
-  ledger row called a scanned bill "as parts", the log counted its weights as
-  parts ("Teo ×3943 parts"), and the flag kept saying "Receipt" over a split
-  somebody had switched back to Evenly. `receipt` is a `SplitMode` now and the
-  flag is gone — upgraded on the way out of the op log (`upgradeReceiptSplit`).
+  code, however alike their arithmetic.** `receipt` is its own `SplitMode`, not
+  `shares` with a flag; old ops carrying the flag are upgraded on the way out of
+  the op log (`upgradeReceiptSplit`).
 - **A model field that reaches `formatMinor` is a crash waiting to happen.**
   `Intl.NumberFormat` throws on anything but three ASCII letters, the form
-  formats on every render, and there is no error boundary — one "€" in the
-  scan's `currency` white-screened the screen you were typing on.
+  formats on every render — one "€" in the scan's `currency` white-screens the
+  form.
 - `validateSplit(0, spec)` reads as **fully allocated**, not incomplete
-  (`allocated === total === 0`) — it printed "€0.00 of €0.00 allocated" under a
-  green check in four places. The verdict is `splitFooter`'s (`lib/format.ts`)
-  now, so the string is unreachable rather than guarded per call site.
+  (`allocated === total === 0`). The verdict is `splitFooter`'s
+  (`lib/format.ts`), so "€0.00 of €0.00 allocated" is unreachable rather than
+  guarded per call site.
 - **Don't write a derived value into the draft for another screen's effect to
   resync.** That resync is only as reliable as the next mount happening before
   anyone reads the value, and a screen that writes the input then navigates away
   (`/g/entry/items`'s "Done") beats it. Recompute inline instead — and where one
   tab derives what another tab merely reads, closing it needs an explicit
   handoff, or leaving Receipt zeroes the amount.
-- **A refusal on `/g/scan` used to outlive the screen that showed it.** The
-  ordinary "+" seeds under the exact same key (so a *successful* scan there is
-  picked up by the form) and so inherited the same `lib/scan/live.ts` entry —
-  leave a failed scan any way but a landing and the next screen opened a
-  refusal nobody caused on it, under a scan button that never rang. `/g/scan`
-  now clears its own error, and only its error, on the way out.
+- **A refusal on `/g/scan` must not outlive the screen.** The ordinary "+"
+  seeds under the same key (so a *successful* scan there is picked up by the
+  form) and so shares the `lib/scan/live.ts` entry. `/g/scan` clears its own
+  error, and only its error, on the way out.
