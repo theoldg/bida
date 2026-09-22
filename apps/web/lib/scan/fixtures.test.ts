@@ -9,14 +9,11 @@ import { parseScanResponse } from "./response";
 
 /**
  * The canned receipts `pnpm drive`'s `receipt` command hands a phone
- * (`scripts/fixtures/receipts/`), checked against the code that will read
- * them.
+ * (`scripts/fixtures/receipts/`), checked against the code that reads them.
  *
- * Each one claims, in `exercises`, which verdict it is there to produce. That
- * claim is the whole value of the fixture — a "mismatch" bill that quietly
- * starts adding up tests nothing, and says so nowhere. This is the only thing
- * standing between the set and that: the inline fixture these replaced had
- * drifted to a field `ScanResult` has never had, undetected.
+ * Each claims in `exercises` which verdict it produces — the fixture's whole
+ * value. A "mismatch" bill that starts adding up tests nothing and says so
+ * nowhere; this is what catches it.
  */
 const DIR = fileURLToPath(new URL("../../../../scripts/fixtures/receipts/", import.meta.url));
 

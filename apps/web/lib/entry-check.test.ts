@@ -5,11 +5,10 @@ import { blankDraft, type EntryDraft } from "./draft";
 import { copy } from "./copy";
 
 /**
- * The arithmetic behind one grey button. Every case here was previously only
- * reachable by mounting the entry form and reading a disabled attribute, which
- * is why several of them shipped broken — a rate silently defaulting to "1", a
- * transfer to somebody who had left with Save lit up, an Items tab over a
- * split nobody read off a receipt. They are questions now.
+ * The arithmetic behind one grey button, as plain questions — a rate
+ * defaulting to "1", a transfer to someone who left, an Items tab over a
+ * split no receipt produced — rather than a disabled attribute on a mounted
+ * form.
  */
 
 const THEO = "m-theo", MARIE = "m-marie", GONE = "m-gone";
@@ -172,9 +171,8 @@ describe("checkEntry", () => {
     });
 
     it("reads its split off the bill, not off the tab it was opened over", () => {
-      // A scan used to convert whatever As parts held into its own answer.
-      // The tab's parts are still 3:1 in the draft (`draft.test.ts`); what
-      // this expense is worth to each of them comes from the receipt alone.
+      // The As parts tab still holds 3:1 in the draft (`draft.test.ts`); what
+      // this expense is worth to each comes from the receipt alone.
       const draft = expense({
         splits: { shares: { mode: "shares", weights: { [THEO]: 3, [MARIE]: 1 } } },
         splitTab: "receipt",

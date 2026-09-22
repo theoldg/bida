@@ -9,14 +9,12 @@ import { byWhen } from "./format";
  */
 
 /**
- * One row. `row` names the table it came from, not the entry's kind — an
- * income is a `row: "expense"` — because which of the three it is lives on the
- * expense itself (`kindOf`).
+ * One row. `row` names the table, not the kind — an income is `row:
+ * "expense"`; the kind is on the expense (`kindOf`).
  *
- * **A row carries the stored entry and nothing copied off it.** Copy out the
- * fields the order is decided by and the next one to join them (`dateOnly` was)
- * is quietly left behind: every backdated receipt sorts as though it had a
- * time, on the one screen that matters.
+ * **A row carries the stored entry and nothing copied off it** — copied
+ * fields miss the next one the order depends on (as `dateOnly` would),
+ * silently mis-sorting the ledger.
  */
 export type LedgerRow =
   | { row: "expense"; expense: Expense }

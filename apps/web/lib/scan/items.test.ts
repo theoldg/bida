@@ -206,7 +206,7 @@ describe("foldedLine", () => {
     const unfolded = unfoldItem(before, 1, "EUR")!;
     expect(foldedLine(unfolded.items, 1, 2, "EUR"))
       .toEqual({ label: "Salad", amount: "9.00", quantity: 2, portionOf: null });
-    // The bill itself is untouched: folding is a view now, not an edit.
+    // The bill itself is untouched: folding is a view, not an edit.
     expect(unfolded.items).toHaveLength(3);
   });
 
@@ -398,10 +398,9 @@ describe("receiptBreakdown", () => {
 });
 
 describe("bill extras", () => {
-  // The owner's own question: "buy 1 get 1 free" printed as two pizzas and a
-  // credit for the cheaper one. The credit exists because both were bought, so
-  // it comes off both in the ratio they were ordered in — the same rule a
-  // whole-bill discount follows, which is the point: one rule, not two.
+  // "Buy 1 get 1 free": two pizzas and a credit for the cheaper. The credit
+  // comes off both in the ratio ordered — the same rule as a whole-bill
+  // discount, so there is one rule, not two.
   it("takes a two-for-one off both pizzas in proportion", () => {
     const weights = weightsFromItems(
       [{ amount: "10.00" }, { amount: "8.00" }],

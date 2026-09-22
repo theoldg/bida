@@ -387,14 +387,11 @@ describe("commands", () => {
       await assertMaterialisedMatchesLog(groupId);
     });
 
-    // The concurrency this rule deliberately gives up, asserted rather than
-    // left to be discovered: a phone that saves from a snapshot taken before
-    // its peer's edit posts that stale value with everything else, and the
-    // later HLC wins the whole entity. What it buys is that the result is a
-    // version somebody looked at — an amount can no longer sit beside a split
-    // from another phone that does not sum to it, which is the one state no
-    // healer could repair. The losing edit is still in the log, and history
-    // shows it (docs/invariants.md).
+    // The concurrency this rule gives up, asserted: a save from a snapshot older
+    // than a peer's edit posts the stale value, and the later HLC wins the whole
+    // entity. In return every result is a version somebody saw — never an amount
+    // beside a split that doesn't sum to it. The loser stays in the log and
+    // history (docs/invariants.md).
     it("lets the last edit win the whole entry, when the second never saw the first", async () => {
       const { groupId, theo, marie, expenseId } = await gelato();
       // Taken before Theo's save: Marie's phone is offline and still holds this.
@@ -593,11 +590,9 @@ describe("commands", () => {
   });
 
   /**
-   * The race the members screen's refusal cannot cover: it won't remove
-   * somebody named on a live entry, but two phones can each be right offline —
-   * one removes Marie, the other writes a transfer to her — and the merge is
-   * where they meet. `removeMember` itself doesn't refuse, which is what lets
-   * these three tests stand in for that merge.
+   * The race the members screen's refusal can't cover: offline, one phone
+   * removes Marie while the other writes a transfer to her. `removeMember`
+   * doesn't refuse, so these tests stand in for that merge.
    */
   it("puts back a member removed while an entry still named them", async () => {
     const { groupId, theo, marie } = await trip();
@@ -962,9 +957,8 @@ describe("commands", () => {
       rateToBase: "0.0921",
       occurredAt: 2,
     });
-    // 1.00 MAD is €0.09 at either rate. The whole entry rides along now, but
-    // the derived figure is re-derived rather than carried, so it stays the
-    // number this amount is actually worth.
+    // 1.00 MAD is €0.09 at either rate. The derived figure is re-derived on
+    // edit, not carried, so it stays what this amount is worth.
     await editSettlement(groupId, marie, id, { rateToBase: "0.0925" });
     const [update] = (await db().ops.where("entityId").equals(id).toArray())
       .filter((o) => o.kind === "update");

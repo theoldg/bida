@@ -6,17 +6,13 @@ import {
 } from "./index";
 
 /**
- * Which way a scan leaves the phone.
- *
- * This is the whole of the bring-your-own-key feature: the reading, the form
- * it fills and the arithmetic after it are the same either way, and the only
- * thing that changes is who is called and what is sent with it. So what is
- * tested here is negative, and the negatives are the point — with a key of
- * their own, nothing of ours is asked, spent or told
+ * Which way a scan leaves the phone — the whole of bring-your-own-key, since
+ * everything else is the same either way. The negatives are the point: with
+ * their own key, nothing of ours is asked, spent or told
  * (docs/receipt-scanning.md#a-key-of-your-own).
  *
- * The photo never gets resized here: the downscale is canvas work with no
- * standing in node, and nothing this file asserts depends on the bytes.
+ * Downscaling is mocked: it is canvas work, and nothing here depends on the
+ * bytes.
  */
 
 vi.mock("./downscale", () => ({ downscaleToBase64Jpeg: () => Promise.resolve("QUJD") }));

@@ -3,14 +3,11 @@ import { createContext, runInContext } from "node:vm";
 import { beforeEach, describe, expect, it } from "vitest";
 
 /**
- * `public/sw.js` is a classic worker script — no imports, no exports, and a
- * `self.addEventListener` at the top level — so it is read off disk and run in
- * a context with the Cache API stubbed. Its top-level `function` declarations
- * land on that context's global, which is what makes them reachable here.
- *
- * Worth the sandbox because the worker decides where a mis-routed navigation
- * ends up, and getting that wrong is invisible until a phone in the field is
- * looking at the wrong screen. `pnpm offline` drives the real thing.
+ * `public/sw.js` is a classic worker script, so it is read off disk and run
+ * in a context with the Cache API stubbed; its top-level functions land on
+ * that context's global. Worth it because a mis-routed navigation is
+ * invisible until a phone shows the wrong screen. `pnpm offline` drives the
+ * real thing.
  */
 const SOURCE = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
 
@@ -111,12 +108,10 @@ describe("a payload asked for by a page that is not on this build", () => {
   });
 
   /**
-   * The bug this file was written for. Handed this build's payload, Next finds a
-   * build id that is not its own and hard-navigates to the response's URL — the
-   * cache key, which carries no query — so the phone lands on a bare `/g/entry`
-   * and the screen can only say the link is missing its password. Failing is
-   * what sends the router down its `catch` instead, which falls back to the URL
-   * it asked for, `?id=` and all.
+   * Handed this build's payload, Next sees a foreign build id and
+   * hard-navigates to the response URL — the cache key, with no query — landing
+   * on a bare `/g/entry` ("missing its password"). Failing sends the router to
+   * its `catch`, which falls back to the URL it asked for, `?id=` and all.
    */
   it("fails, rather than answer from this build, once that cache has gone", async () => {
     const { payloadFor } = load({ ...caches, ...legacy({ tab: null }) });

@@ -45,9 +45,8 @@ export function IconSprite() {
           <circle cx="9" cy="8" r="3.4" />
           <path d="M2.5 19.5a6.5 6.5 0 0113 0M16 5.2a3.4 3.4 0 010 5.6M18 14.4a6.5 6.5 0 013.5 5.1" />
         </symbol>
-        {/* The ledger tab. Three bare rules — the bullets that used to lead them
-            were three more marks to resolve at 19px, and said "a list" no
-            harder than the rules already do. */}
+        {/* The ledger tab: three bare rules, no bullets — fewer marks to resolve
+            at 19px. */}
         <symbol id="i-list" viewBox="0 0 24 24" {...S} strokeWidth="2">
           <path d="M3.6 7h16.8M3.6 12h16.8M3.6 17h16.8" />
         </symbol>
@@ -61,9 +60,8 @@ export function IconSprite() {
           <path d="M2.8 9l18.4-3.7" />
           <path d="M12 7.15L6.2 18.8h11.6z" />
         </symbol>
-        {/* One-sided on purpose. The two-headed "swap" arrow it replaced read as
-            "these two are square with each other", which is the opposite of
-            what a settle-up row says: money goes this way, once. */}
+        {/* One-sided on purpose: a two-headed arrow reads as "square with each
+            other", the opposite of a settle-up row. */}
         <symbol id="i-arrow" viewBox="0 0 24 24" {...S} strokeWidth="2">
           <path d="M4 12h14M12.5 6l6 6-6 6" />
         </symbol>
@@ -166,13 +164,10 @@ export function Icon({ name, size = 16, className, style }: {
 }
 
 /**
- * An icon that turns away on its X axis and leaves a check behind it for as
- * long as `on` holds — the groups list's flip (`.grouprow .ramt.copied`)
- * shrunk to a single glyph, so copying an invite link confirms itself the same
- * way wherever it was asked for rather than swapping icons on the spot.
- *
- * Both faces are always drawn: the flip back is a transition on a class going
- * away, and a face that isn't there has nothing to run.
+ * An icon that flips on its X axis to a check while `on` holds — the groups
+ * list's flip (`.grouprow .ramt.copied`) as one glyph, so copying confirms
+ * itself the same way everywhere. Both faces are always drawn: the flip back
+ * is a transition on a class going away.
  */
 export function FlipCheck({ name, size = 16, on }: {
   name: IconName; size?: number; on: boolean;
@@ -186,14 +181,9 @@ export function FlipCheck({ name, size = 16, on }: {
 }
 
 /**
- * The same flip across a whole line: an action's label turns away and a check
- * with its own word comes up behind it. For a button that says what it does in
- * words rather than a glyph, so answering in place still reads as the gesture
- * every other copy in this app makes.
- *
- * Both faces are always drawn, for the reason above; the one facing away is
- * hidden from a reader as well, so the button is named by whichever face is
- * turned towards them.
+ * The same flip across a whole button label, for actions named in words.
+ * Both faces are always drawn; the one facing away is hidden from readers,
+ * so the button is named by the visible face.
  */
 export function FlipLabel({ label, done, on }: {
   label: string; done: string; on: boolean;

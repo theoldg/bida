@@ -40,13 +40,9 @@ export function currencyLabel(code: string): string {
 }
 
 /**
- * The order a currency picker offers, deduplicated.
- *
- * The group's own currencies come right after the base one, most spent-in
- * first (`currenciesInUse` sorts them), because a trip spends in two or three
- * currencies and scrolling past the other seventeen to reach the one every
- * entry is in is the whole of the annoyance. `pinned` is what the screen puts
- * above them — the base currency, and whatever is currently picked.
+ * The order a currency picker offers, deduplicated: `pinned` (the base and
+ * the current pick), then the group's own currencies, most spent-in first
+ * (`currenciesInUse`), then the rest.
  */
 export function currencyChoices(
   pinned: readonly string[], inUse: readonly string[] = [],

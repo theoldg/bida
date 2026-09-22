@@ -8,15 +8,12 @@ import { syncAll, syncGroup } from "./sync";
 import { VERSION } from "../version";
 
 /**
- * The sync engine's job is narrow: ship unsynced ops out, absorb whatever
- * comes back, and never lose or duplicate anything in the process. The wire
- * format itself (docs/sync.md) is exercised here against a mocked fetch —
- * the real server round-trip is apps/api's job.
+ * The sync engine: ship unsynced ops out, absorb what comes back, never lose
+ * or duplicate. The wire format (docs/sync.md) runs against a mocked fetch;
+ * the real round trip is apps/api's.
  *
- * The mocked server is held to the real one's ignorance: it is handed sealed
- * ops and it answers with sealed ops, because that is all the real one has
- * (ADR-0036). `serverOps` is the seam — a peer's phone sealing what this one
- * will have to open.
+ * The mock is as ignorant as the real server: sealed ops in, sealed ops out
+ * (ADR-0036). `serverOps` is a peer's phone sealing what this one must open.
  */
 
 /** What a peer pushed, as the server would hand it back: sealed, never plain. */
@@ -132,8 +129,8 @@ describe("syncGroup", () => {
       },
       hlc, actor: theo, note: null, createdAt: Date.now(), seq,
     });
-    // The middle one used to overflow the counter inside the commit, which
-    // rolled back and came back on every retry, for every phone in the group.
+    // The middle one overflows the counter inside the commit unless handled —
+    // a rollback that would repeat on every retry, for every phone.
     const ops = await serverOps(groupId, [
       expense(1, formatHlc(createHlcState("peer", Date.now(), 0))),
       expense(2, "999999999999999-99999-evil"),
@@ -492,9 +489,8 @@ describe("syncGroup", () => {
 });
 
 /**
- * A phone whose changes are going nowhere used to look exactly like one that
- * was up to date. These are the record the banner reads — see
- * lib/hooks.ts#useSyncHealth.
+ * A phone whose changes go nowhere must not look up to date. These are the
+ * record the banner reads — see lib/hooks.ts#useSyncHealth.
  */
 describe("sync health", () => {
   beforeEach(wipe);
@@ -555,10 +551,9 @@ describe("sync health", () => {
     expect(key?.lastSyncedAt).toBe(1234);
   });
 
-  // The whole point of an HLC: having *seen* a peer's op is what makes this
-  // device stamp after it. Ordering by wall clock alone let a peer three hours
-  // fast win every conflict, and the correction you typed in reply to their
-  // op sorted before it and was folded away.
+  // The point of an HLC: having *seen* a peer's op makes this device stamp
+  // after it. By wall clock alone a peer three hours fast wins every conflict,
+  // and a reply to their op sorts before it.
   it("adopts the clock of every op it pulls, so a reply sorts after it", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     const before = await getDevice();
@@ -620,9 +615,9 @@ describe("syncAll", () => {
     expect(fetchMock).toHaveBeenCalled();
   });
 
-  // Five things trigger syncAll. An overlapping call used to attempt nothing,
-  // conclude "no failures", and reset the backoff the failing run had just
-  // grown — so a dead server was retried every two seconds forever.
+  // Five things trigger syncAll. An overlapping call must join the run in
+  // flight — attempting nothing and reporting "no failures" would reset the
+  // backoff and retry a dead server every two seconds.
   it("joins the run already in flight rather than starting a second one", async () => {
     await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     let inFlight = 0;

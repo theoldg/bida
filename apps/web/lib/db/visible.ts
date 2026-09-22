@@ -5,11 +5,10 @@ import { started } from "../diag";
  *
  * An IndexedDB lock belongs to the origin, not to the page. A phone freezes a
  * hidden app, and a readwrite transaction frozen half way through keeps its
- * lock forever: every read of those stores, in every copy of the app, queues
- * behind it until the frozen page is looked at or killed. No page can break
- * another's lock, so the only defence is not opening one while hidden. This is
- * the app's rule and not sync's — `updateDevice` writing `device` from a
- * background `/join` is what hung the groups list in front of the owner.
+ * lock: every read of those stores, in every copy of the app, queues behind it
+ * until the frozen page is looked at or killed. No page can break another's
+ * lock, so the only defence is not opening one while hidden. The app's rule,
+ * not just sync's — a background `updateDevice` hangs the groups list too.
  *
  * **What must not wait is a write holding something that exists nowhere
  * else** — `saveGroupKey` stores the secret from an invite link, and a tab

@@ -3,15 +3,11 @@ import { db } from "./dexie";
 import { getDevice, setInstallNudgeCollapsed, setLeftOnList, updateDevice } from "./device";
 
 /**
- * The device record is the smallest write in the app and the one that hung it.
- *
- * `device` is the only store `updateDevice` takes, and every list and group
- * screen reads that store — so a copy of the app frozen inside this one put
- * holds a lock the whole origin queues behind, while the op log it is not
- * holding reads perfectly well. That is the shape the owner's Brave report
- * had: eight stores counting fine, `device` not answering, skeleton rows.
- *
- * So it waits for the front, like the sync commit (./visible.ts).
+ * The device record is the smallest write in the app and the one that can
+ * hang it: `device` is the only store `updateDevice` takes and every screen
+ * reads it, so a copy frozen inside this put holds a lock the whole origin
+ * queues behind — every store reads fine but `device`, and screens sit on
+ * skeletons. So it waits for the front, like the sync commit (./visible.ts).
  */
 describe("updateDevice while the app is in the background", () => {
   const show = (state: "visible" | "hidden") => {
@@ -47,9 +43,8 @@ describe("updateDevice while the app is in the background", () => {
 
     const parked = updateDevice({ theme: "dark" });
     await new Promise((r) => setTimeout(r, 50));
-    // Another copy of the app — or this one, before the park cleared — sets a
-    // field this patch does not name. A put built from the pre-park read would
-    // carry the old value back over it.
+    // Another copy of the app sets a field this patch doesn't name; a put built
+    // from the pre-park read would carry the old value back over it.
     await db().device.update("device", { lastOpenedGroupId: "marrakech" });
 
     page.visibilityState = "visible";

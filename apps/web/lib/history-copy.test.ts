@@ -79,8 +79,8 @@ async function sharedExpense() {
 suite("describe", () => {
   beforeEach(wipe);
 
-  // The bug these three exist for: every one of them used to read "Theo
-  // changed who's involved" over the identical pair of names, twice.
+  // Guards against "Theo changed who's involved" over an identical pair of
+  // names.
   it("writes nothing at all when the same people are picked again", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     const before = (await described(groupId)).length;
@@ -99,8 +99,8 @@ suite("describe", () => {
 
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how it’s split");
-    // Both lines carry a figure, which is the whole point — the old sentence
-    // printed the same two names above and below.
+    // Both lines carry a figure, so the diff says something the names alone
+    // don't.
     expect(latest!.diff!.was).toBe("Evenly");
     expect(latest!.diff!.now).toContain("Theo ×2");
     expect(latest!.diff!.now).toContain("Marie ×1");
@@ -307,9 +307,8 @@ suite("describe", () => {
     expect((await described(groupId))[0]!.said).toBe("Theo turned this back into an expense");
   });
 
-  // The whole of what a co-payer edit used to say. `paidBy` stays on the
-  // largest contributor, so adding somebody beside them moves `payers` alone —
-  // the one field no sentence named.
+  // `paidBy` stays on the largest contributor, so adding a co-payer moves
+  // `payers` alone — which must still produce a sentence.
   it("names a co-payer added beside the person who was already paying", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
@@ -320,7 +319,7 @@ suite("describe", () => {
     expect(latest!.rev.changes.map((c) => c.field)).toEqual(["payers"]);
     expect(latest!.said).toBe("Theo changed who paid");
     expect(latest!.diff!.was).toBe("Theo");
-    // What each of them put in, not just that there are two of them now.
+    // What each of them put in, not just that there are two.
     expect(latest!.diff!.now).toContain("Theo €60.00");
     expect(latest!.diff!.now).toContain("Marie €40.00");
   });
@@ -433,9 +432,8 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who had what");
   });
 
-  // A receipt's weights are the bill divided into minor units, and the log
-  // printed them as parts: "Teo ×3943 parts · Marie ×2206 parts", a sentence
-  // about numbers nobody chose. A receipt is its own mode now, and says so.
+  // A receipt's weights are minor units, not parts a person chose, so the
+  // sentence names the mode and the bill ("×3943 parts" is the failure).
   it("names the mode and the bill, and never counts the weights as parts", async () => {
     const { groupId, theo, marie, expenseId } = await sharedExpense();
     await editExpense(groupId, theo, expenseId, {
@@ -551,10 +549,9 @@ suite("describe", () => {
     expect((await described(groupId))[0]!.said).toBe("Marie joined the group");
   });
 
-  // A rate is the group's, so its revisions land in the feed like any other —
-  // and the entity id is the currency itself, which is what lets the sentence
-  // name it without a lookup. Before this branch existed they read "renamed
-  // the group".
+  // A rate's revisions land in the feed like any other, and its entity id is
+  // the currency, so the sentence names it without a lookup (and never reads
+  // as "renamed the group").
   it("names the currency a rate revision is about", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Siurek", baseCurrency: "EUR", myName: "Theo",

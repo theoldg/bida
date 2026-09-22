@@ -8,14 +8,10 @@ import {
 } from "./draft";
 
 /**
- * Four tabs, four answers.
- *
- * The split editor used to hold one `SplitSpec` and convert it on every tab
- * switch, so the tabs edited each other: leaving somebody out under Evenly
- * deleted the parts they had under As parts, As amounts would only let you
- * type for whoever Evenly had ticked, and a scan overwrote all three. What is
- * checked here is that opening a tab is a handoff made **once** — and that
- * from then on each tab keeps what was typed into it, whatever the others say.
+ * Four tabs, four answers. Opening a tab is a handoff made **once**; from then
+ * on each tab keeps what was typed into it, whatever the others say — so
+ * leaving someone out under Evenly can't erase their parts, and a scan can't
+ * overwrite all three.
  */
 
 const A = "m-ana", B = "m-bo", C = "m-cy";
@@ -160,9 +156,8 @@ describe("a blank draft", () => {
     expect(d.description).toBe("");
   });
 
-  // Every typed entry — expense, income, transfer, quick — starts here, and
-  // a typed entry always has a time: only a backdated scan says otherwise.
-  // Midnight is an ordinary moment now that nothing reads it as a sentinel.
+  // Every typed entry starts with a time of day; only a backdated scan says
+  // otherwise. Midnight is an ordinary moment, not a sentinel.
   it("starts with a time of day, midnight included", () => {
     const midnight = new Date(2026, 3, 4).getTime();
     vi.useFakeTimers();
@@ -218,13 +213,10 @@ describe("choosing a day", () => {
 });
 
 /**
- * The cent the form quotes is the cent the ledger keeps.
- *
- * `resolveSplit` hands the leftover minor unit out by `tiebreakSeed`, and the
- * seed is the entry's id — so a draft pricing its rows under a placeholder
- * showed the extra cent on one person's row and wrote it to another's. The
- * draft allocates the id it will be written under, and every screen prices
- * under `splitSeed`.
+ * The cent the form quotes is the cent the ledger keeps. `resolveSplit` hands
+ * the leftover minor unit out by `tiebreakSeed`, which is the entry's id — so
+ * the draft allocates the id it will be written under, and every screen
+ * prices under `splitSeed`.
  */
 describe("what rounding ties break by", () => {
   it("is the id a new entry will be written under, not a placeholder", () => {
@@ -279,13 +271,10 @@ describe("what rounding ties break by", () => {
 });
 
 /**
- * A bill on the grid, and the same bill once Done has written it down.
- *
- * Every line here divides three ways with a cent left over, which is the only
- * thing that can differ between the two readings — and did: the grid seeded
- * its rows with the string `"new"` while the form and the save used the id the
- * entry would be written under, so a €76.50 bill showed one person €22.25 and
- * saved them €22.24. `receiptWeights` is now the one place that names a seed.
+ * A bill on the grid, and the same bill once Done has written it down. Every
+ * line divides three ways with a cent left over, the one thing that could
+ * differ if the grid and the save seeded differently (€22.25 shown, €22.24
+ * saved). `receiptWeights` is the one place that names a seed.
  */
 describe("a scanned bill prices the same on both screens", () => {
   const BILL = [
@@ -353,8 +342,8 @@ describe("newEntryKey", () => {
       newEntryKey("expense", { title: "Coffee for bida" }),
       newEntryKey("expense", { title: "Something else" }),
     ];
-    // The tip screen used to land on whatever blank expense an abandoned "+"
-    // had left behind, which is this set collapsing.
+    // A blank-expense key collision would land the tip screen on an abandoned
+    // "+" draft.
     expect(new Set(keys).size).toBe(keys.length);
   });
 });

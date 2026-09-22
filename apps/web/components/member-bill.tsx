@@ -7,19 +7,14 @@ import { countText } from "../lib/format";
 import type { MemberLine } from "../lib/scan/items";
 
 /**
- * One person's row on a scanned bill, opened: what they had, as the bill
- * printed it.
+ * One person's row on a scanned bill, opened: what they had, as printed.
  *
- * Only the split's share of a line is theirs, so the count is a fraction —
- * "×1/2" for a plate shared with somebody, "×1 1/2" for one of their own and
- * half of another, "×2" for a line they had all of and the receipt printed
- * twice (`countText`). The amounts are the same cents the split was derived
- * from, so a row and its lines agree by construction.
+ * Counts are fractions of lines — "×1/2" shared, "×1 1/2", "×2"
+ * (`countText`) — and amounts are the cents the split was derived from, so a
+ * row and its lines agree by construction.
  *
- * Two screens read a bill back this way: a saved expense (ADR-0016) and the
- * answer a quick split ends on (ADR-0035). Both wear the same ruled list of
- * people; only whether the rows start open differs. How a figure is printed is
- * the caller's — the group's currency, or bare.
+ * Used by a saved expense (ADR-0016) and a quick split's result (ADR-0035);
+ * only `startOpen` and the figure format differ.
  */
 export function MemberBill({ name, total, lines, format, startOpen = false }: {
   name: string;
@@ -27,11 +22,8 @@ export function MemberBill({ name, total, lines, format, startOpen = false }: {
   lines: MemberLine[];
   format: (minor: number) => string;
   /**
-   * Open from the start. A saved expense keeps every row but the viewer's own
-   * shut — the split is one line of a screen about the whole entry, but the
-   * one row somebody opens this screen to check is theirs. A quick split's
-   * answer *is* the bill, and somebody reading it out at the table should not
-   * have to open three rows first (ADR-0035).
+   * Open from the start. A saved expense keeps rows shut but the viewer's own;
+   * a quick split's answer *is* the bill, read out at the table (ADR-0035).
    */
   startOpen?: boolean;
 }) {

@@ -20,8 +20,7 @@ describe("sanitizeAmount", () => {
   });
 
   it("keeps a half-typed amount half-typed", () => {
-    // The old field parsed on every keystroke and threw this away, so "1.50"
-    // could never be typed at all.
+    // Parsing this away on a keystroke would make "1.50" untypeable.
     expect(sanitizeAmount("1.", "EUR")).toBe("1.");
     expect(sanitizeAmount("", "EUR")).toBe("");
   });

@@ -12,16 +12,12 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
  * The tip jar: what a scan costs, and the two things you can do about it.
+ * `$5 ≈ 10,000 receipt scans` is the argument — a checkable number — and the
+ * line under it splits the five dollars four ways.
  *
- * A line, a figure, and what the figure comes to here. `$5 ≈ 10,000 receipt
- * scans` *is* the argument — a number a reader can check beats a plea they
- * cannot — and the line under it does the thing this app is for: five dollars
- * split four ways is a number nobody has to feel about.
- *
- * Two buttons, in the order things happen. Donating is somebody else's site;
- * recording it is what you do afterwards, which is why nothing here writes an
- * entry on its own — the second button opens the ordinary form, named and
- * otherwise blank, because how much you gave is a thing only you know.
+ * Two buttons in order: donate (somebody else's site), then record it. Nothing
+ * writes an entry on its own; the second opens the ordinary form, named and
+ * otherwise blank, since only you know what you gave.
  */
 export default function TipPage() {
   return <QueryBoundary><TipScreen /></QueryBoundary>;
@@ -61,9 +57,8 @@ function TipScreen() {
                 every other amount, because it is the same kind of claim. */}
             <div className="tiprate">{rate}</div>
 
-            {/* One paragraph and no hand-placed break: the joke is the same
-                aside as the line before it, and a `<br>` that lands mid-wrap
-                on a narrow screen is worse than no break at all. */}
+            {/* No hand-placed break: a `<br>` landing mid-wrap on a narrow screen is
+                worse than none. */}
             <p className="tipeach">
               {eachLine(usd(each))} {copy.tip.yacht}
             </p>

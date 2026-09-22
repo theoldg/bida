@@ -7,11 +7,9 @@ import { testing } from "./live";
 const settle = () => new Promise((r) => setTimeout(r, 60));
 
 /**
- * The first block is not a test of our code. It pins the Dexie behaviour that
- * lib/db/live.ts exists to work around, so that the day an upgrade fixes it we
- * find out here rather than carrying the workaround forever. If these fail
- * because Dexie now delivers the error, delete `useLive`'s watchdog and let
- * the error boundary have it.
+ * Not a test of our code: it pins the Dexie behaviour lib/db/live.ts works
+ * around. If these fail because Dexie now delivers the error, delete
+ * `useLive`'s watchdog and let the error boundary have it.
  */
 describe("what liveQuery does with an error the browser caused", () => {
   /** Named the way Chrome names a transaction killed under a frozen page. */
@@ -177,17 +175,14 @@ describe("the health record behind useLive", () => {
 });
 
 /**
- * The second Dexie behaviour this file pins, and the reason a hidden page must
- * read nothing (lib/db/live.ts, "A hidden page reads nothing").
+ * The second pinned Dexie behaviour, and why a hidden page reads nothing
+ * (lib/db/live.ts). A write re-runs every querier that observed its tables,
+ * in this realm and in every other copy on the origin via
+ * `BroadcastChannel('x-storagemutated-1')` — making a *backgrounded* copy open
+ * a transaction, which a freezable page must never do.
  *
- * A write signals every querier that observed the tables it touched — in this
- * realm directly, and in every other copy of the app on the origin over
- * `BroadcastChannel('x-storagemutated-1')`. That is how the copy in front of
- * you makes a *backgrounded* copy open a transaction, which is the one thing a
- * freezable page must never be doing.
- *
- * If a Dexie upgrade ever stops re-running queriers on a remote write, the
- * gate in `timedQuerier` is no longer load-bearing and these say so.
+ * If Dexie stops re-running queriers on remote writes, the gate in
+ * `timedQuerier` is no longer load-bearing and these say so.
  */
 describe("what a write does to a querier that is not on screen", () => {
   it("re-runs one that read the table, which is the poke we must not answer", async () => {

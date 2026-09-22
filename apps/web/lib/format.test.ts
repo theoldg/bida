@@ -32,12 +32,9 @@ describe("rateText", () => {
 
 describe("splitFooter", () => {
   it("never reports a zero total as a satisfied split", () => {
-    // The owner's recurring report, reproduced: an expense whose amount is
-    // still blank, split "as amounts" with everyone on zero. validateSplit is
-    // arithmetically right that 0 === 0, but "€0.00 of €0.00 allocated" would
-    // claim the split is settled when there is nothing to settle. It says
-    // nothing at all instead — the missing amount is the amount field's to
-    // report, and it flashes red on a refused Save.
+    // A blank amount split "as amounts" with everyone on zero: 0 === 0, but
+    // "€0.00 of €0.00 allocated" would claim a settled split. It says nothing —
+    // the missing amount is the amount field's to report, flashing on Save.
     const check = validateSplit(0, { mode: "exact", amounts: { a: 0, b: 0 } });
     expect(check.ok).toBe(true);
     expect(splitFooter(check, "EUR")).toBeNull();
@@ -302,8 +299,8 @@ describe("byWhen", () => {
     expect(ids([...rows].sort(byWhen))).toEqual(["next-day", "timeless", "prev-day"]);
   });
 
-  // The old sentinel's one bad case, now simply not a case: an entry stamped
-  // at midnight that means it sorts as the earliest moment of its day.
+  // Midnight is not a sentinel: an entry stamped at midnight sorts as the
+  // earliest moment of its day.
   it("sorts a real midnight entry as the earliest of its day", () => {
     const rows = [
       { id: "midnight", occurredAt: day(4), createdAt: day(4) },

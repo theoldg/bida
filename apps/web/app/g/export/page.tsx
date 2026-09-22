@@ -10,19 +10,14 @@ import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /**
- * The export as text, for a browser that cannot hand over a file. Reached from
- * nowhere but the last rung of `lib/export.ts` — where there is a share sheet or
- * a download, the menu item finishes on its own.
+ * The export as text, for a browser that can't hand over a file — reached only
+ * from the last rung of `lib/export.ts`.
  *
- * It **rebuilds the CSV itself** rather than being handed the text: a route
- * cannot carry a file, and a screen whose content evaporates on reload is the
- * drawer state ADR-0007 was written to get rid of. Being addressable costs
- * nothing — it is a readout of a group this phone already holds the key to.
+ * It **rebuilds the CSV itself**: a route can't carry a file, and content that
+ * evaporates on reload is what ADR-0007 forbids.
  *
- * Laid out like `/diag`, the app's other "here is the text, take it somewhere"
- * screen — **button at the top of the scroll, not in a `Foot`**, since what is
- * below it is hundreds of lines and the bottom of an installed app is where the
- * system's own bar sits.
+ * Laid out like `/diag` — **button at the top of the scroll, not in a
+ * `Foot`**, above hundreds of lines and clear of the system bar.
  */
 export default function ExportPage() {
   return <QueryBoundary><ExportScreen /></QueryBoundary>;

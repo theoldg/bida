@@ -1,11 +1,8 @@
 import { BILL_TEXT_MAX } from "@bida/core";
 
 /**
- * A bill somebody typed, on its way to the same envelope a photograph rides in.
- *
- * Two jobs, both small enough to be worth testing rather than trusting: the cap
- * the dialog is held to, and base64 of UTF-8 — which the browser has no direct
- * call for, `btoa` refusing anything above U+00FF.
+ * A typed bill, on its way into the same envelope a photo rides in: the
+ * dialog's cap, and base64 of UTF-8 (`btoa` refuses anything above U+00FF).
  */
 
 /**
@@ -23,12 +20,9 @@ export function billTextLeft(text: string): number {
 }
 
 /**
- * Base64 of this text's UTF-8 bytes.
- *
- * Chunked, because `String.fromCharCode(...bytes)` on one spread argument list
- * is a stack overflow somewhere in the tens of thousands — well above
- * `BILL_TEXT_MAX`, but the cap is a product decision and this is not the place
- * to inherit a crash from someone raising it.
+ * Base64 of this text's UTF-8 bytes. Chunked: spreading all bytes into
+ * `String.fromCharCode` overflows the stack in the tens of thousands — above
+ * `BILL_TEXT_MAX` today, but the cap may be raised.
  */
 export function billTextToBase64(text: string): string {
   const bytes = new TextEncoder().encode(text);

@@ -2,9 +2,8 @@ import { describe, expect, it } from "vitest";
 import { only, sameValue } from "./patch";
 
 /**
- * The merge rule, asked directly. Every case here was previously reachable
- * only by saving an entry and reading the op it appended, which is how the two
- * entry editors came to disagree about it in the first place.
+ * The merge rule, asked directly rather than through an editor's save — so
+ * the two entry editors can't disagree about it.
  */
 
 describe("only", () => {
@@ -34,9 +33,8 @@ describe("sameValue", () => {
   });
 
   it("does not ignore the order elements are in", () => {
-    // A split's members are an array, and swapping two of them is not a
-    // change a person can see — which is why the expense editor canonicalises
-    // the split before it gets here rather than asking this to be cleverer.
+    // Swapped split members aren't a visible change, but this isn't clever about
+    // it: the expense editor canonicalises the split before it gets here.
     expect(sameValue(["a", "b"], ["b", "a"])).toBe(false);
   });
 });

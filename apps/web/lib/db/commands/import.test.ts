@@ -9,13 +9,9 @@ import { groupCsv } from "../../export";
 import type { GroupData } from "../../hooks";
 
 /**
- * The write half of the import: a plan in, one batch of ops out.
- *
- * The arithmetic is `core/import.ts`'s and tested there. What is tested here
- * is that writing it back does not lose it — the balances of the group this
- * creates must be the balances the file stated, which is the whole promise —
- * and that a hundred rows arrive as one thing that happened rather than a
- * hundred.
+ * The write half of the import: a plan in, one batch of ops out. The
+ * arithmetic is tested in `core/import.ts`; here, that the created group's
+ * balances are the file's, and that the rows arrive as one event.
  */
 
 async function wipe() {
@@ -174,11 +170,8 @@ describe("a file written as a group", () => {
 });
 
 /**
- * The round trip through both halves and the database: a group imported and
- * then exported again writes a file whose balances are the ones it came in
- * with. What is *not* claimed is byte equality — a single number per member
- * cannot carry both sides, so who paid may be read differently while every
- * balance holds.
+ * Import then export: the balances survive. Not byte equality — one number
+ * per member can't carry both sides, so who paid may read differently.
  */
 describe("imported, then exported again", () => {
   beforeEach(wipe);
