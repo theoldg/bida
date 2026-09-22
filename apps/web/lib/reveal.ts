@@ -1,17 +1,12 @@
 /**
- * Finding the thing a refusal is pointing at, when it is off the screen.
+ * Finding the thing a refusal is pointing at, when it is off the screen — on a
+ * twenty-line bill the flash may land where nobody is looking.
  *
- * A refusal points rather than explains (docs/design-system.md), which works
- * only while what blooms is in view — on a twenty-line bill, a Done pressed
- * with the offending lines scrolled past flashes red where nobody is looking.
+ * If *any* target is wholly on screen, flash where it stands; moving a list
+ * under somebody who can see the answer is worse. Otherwise bring the nearest
+ * in whole and flash when the scroll lands.
  *
- * So: is *any* of them wholly on screen? If one is, the flash goes ahead where
- * it stands — moving a list under somebody who can already see the answer is
- * worse than not moving it. If none is, the nearest is brought in whole and
- * the flash waits for the scroll to land.
- *
- * Geometry here, scrolling elsewhere: this is worth a test and none of it
- * needs a DOM.
+ * Pure geometry, so it is testable without a DOM.
  */
 
 /** One candidate, measured against the same viewport as the band. */
@@ -32,10 +27,8 @@ interface ViewBand { top: number; bottom: number }
 const SLACK = 1;
 
 /**
- * What to add to the scroller's `scrollTop` to reach the nearest row that is
- * out of view, or `null` when one is in view already. Negative scrolls up.
- * Nearest means least scrolling, so a row just above the fold wins over one
- * twelve lines below it.
+ * What to add to `scrollTop` to reach the nearest out-of-view row (least
+ * scrolling), or `null` when one is in view already. Negative scrolls up.
  */
 export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): number | null {
   let best: number | null = null;
@@ -54,10 +47,9 @@ export function nearestOutOfView(rows: readonly RowBox[], band: ViewBand): numbe
 }
 
 /**
- * Where a scroll by `reach` actually lands: a scroller stops at its ends, so a
- * row near the foot of the list is reached as far as the list goes and no
- * further. What a caller waits on has to be this, not `scrollTop + reach`, or
- * it waits for a position the scroller can never report.
+ * Where a scroll by `reach` actually lands, clamped to the scroller's ends.
+ * Wait on this, not `scrollTop + reach`, or you wait for a position the
+ * scroller can never report.
  */
 export function scrollTarget(
   box: { scrollTop: number; scrollHeight: number; clientHeight: number },
@@ -67,11 +59,9 @@ export function scrollTarget(
 }
 
 /**
- * What to add to `scrollTop` to show all of one box — a run of portions just
- * opened, whose first and last row are one thing now.
- *
- * **The top wins when it cannot all fit.** The label and the first portion are
- * what say which line opened; the rest is plainly below.
+ * What to add to `scrollTop` to show all of one box (a just-opened run of
+ * portions). **The top wins when it cannot all fit** — the label and first
+ * portion say which line opened.
  */
 export function revealWhole(box: RowBox, band: ViewBand): number {
   const tooTall = box.bottom - box.top > band.bottom - band.top + SLACK;

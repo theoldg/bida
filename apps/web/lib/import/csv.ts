@@ -1,29 +1,19 @@
 /**
- * CSV bytes into rows, and nothing beyond that.
+ * CSV bytes into rows, and nothing beyond that. Here rather than in core
+ * because a CSV dialect is a parsing decision, not domain arithmetic;
+ * `core/import.ts` takes the rows.
  *
- * In `apps/web` rather than `packages/core` for the reason core is pure: a CSV
- * dialect is a parsing decision about somebody else's file, not domain
- * arithmetic. `core/import.ts` takes these rows and is where the money lives.
+ * **Liberal on input**, unlike `core/export.ts`'s one exact byte shape: CRLF,
+ * a lone CR, a BOM and a missing trailing newline are all accepted.
  *
- * **Liberal on input, strict on output.** `core/export.ts` writes one exact
- * byte shape because Tricount refuses the whole file over any deviation.
- * Reading has the opposite job: a file arriving here came through somebody
- * else's export, possibly Excel, possibly a mail client, so CRLF, a lone CR, a
- * BOM and a missing trailing newline are all accepted.
- *
- * **A real state machine, never `split("\n")` then `split(",")`.** RFC 4180
- * allows a newline *inside* a quoted cell, and a description typed on a phone
- * is where one turns up; splitting on LF first turns it into two broken rows
- * that fail the row-sums-to-zero check with nothing useful to say about why.
+ * **A real state machine, never `split("\n")`** — RFC 4180 allows a newline
+ * inside a quoted cell, and a phone-typed description is where one turns up.
  */
 
 /**
- * Every record in the file, cells unquoted, in order.
- *
- * Blank lines are kept as rows of one empty cell rather than dropped: they are
- * structure in this format (the shape has three), `core/import.ts` skips them
- * by value, and keeping them is what makes the line numbers in a refusal match
- * what the person sees in their spreadsheet.
+ * Every record in the file, cells unquoted, in order. Blank lines are kept as
+ * rows of one empty cell: they are structure (the shape has three), and
+ * keeping them makes a refusal's line numbers match the spreadsheet.
  */
 export function parseCsv(text: string): string[][] {
   // The BOM, if there is one, belongs to the file and not to the first cell.
@@ -82,12 +72,9 @@ export function parseCsv(text: string): string[][] {
 }
 
 /**
- * As big as a group's ledger could plausibly be, and then some — a thousand
- * entries across twenty people is under a megabyte.
- *
- * **Not a security boundary**: the file never leaves the phone, so the only
- * thing at risk is this tab. It is so a mis-picked video is refused with a
- * sentence rather than freezing the app on the way to the same answer.
+ * Far above any plausible ledger (1000 entries × 20 people is under 1 MB).
+ * **Not a security boundary** — the file never leaves the phone; it is so a
+ * mis-picked video is refused rather than freezing the tab.
  */
 const MAX_CSV_BYTES = 8 * 1024 * 1024;
 
@@ -107,12 +94,9 @@ export function looksLikeCsv(file: File): boolean {
 }
 
 /**
- * The group name a file arrives with, since the shape has nowhere to say it.
- *
- * Splitwise names the export after the group, and so does `exportFilename`.
- * Both suffixes come off and the separators become spaces. **A suggestion in
- * an editable field, never a fact**: a file renamed by a mail client says
- * nothing about the trip.
+ * The group name a file arrives with: Splitwise and `exportFilename` both name
+ * the file after the group. Suffixes off, separators to spaces. **A suggestion
+ * in an editable field, never a fact** — mail clients rename files.
  */
 export function groupNameFrom(filename: string): string {
   return filename

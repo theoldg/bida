@@ -7,21 +7,16 @@ import { GROUP, groupDigits } from "../lib/format";
 /**
  * Every field in the app where you type money.
  *
- * **It holds the *text* you typed, never a round-trip of the parsed value.**
- * Controlled from the parsed value, typing "1" shows "1.00" with the caret
- * thrown to the end and the "." of "1.50" never appears at all — a decimal
- * amount cannot be typed. The model gets minor units; the field keeps your
- * half-finished "1." and your caret where you left it.
+ * **It holds the *text* you typed, never a round-trip of the parsed value** —
+ * controlled from the parsed value, "1" snaps to "1.00" with the caret thrown
+ * to the end, and a decimal can't be typed at all. The model gets minor units.
  *
- * It groups thousands as you type, because "480000" and "48000" are the same
- * glance. **The group mark is a narrow no-break space**, never a comma or a
- * point: both of those are decimal separators to somebody, and this app accepts
- * either as one (see the open question in product.md). A space is nobody's, so
- * stripping it back out on parse cannot eat a character the user meant.
+ * Thousands are grouped as you type, with **a narrow no-break space**, never a
+ * comma or point: both are somebody's decimal separator and either is accepted
+ * as one, so stripping a space on parse can't eat a meant character.
  *
- * The typing half of that — group, then put the caret back where the finger
- * thinks it is — is `GroupedInput`, which the rate dialog types into too: a
- * rate is the other number here with thousands in it ("1 EUR = 18 000 IDR").
+ * The grouping and caret handling is `GroupedInput`, shared with the rate
+ * dialog ("1 EUR = 18 000 IDR").
  */
 
 /**
@@ -47,12 +42,10 @@ export function sanitizeAmount(raw: string, currency: CurrencyCode): string {
 }
 
 /**
- * **The typed amount and the currency it is held in must never disagree**: JPY
- * has no minor units and BHD has three, and `sanitizeAmount` otherwise only
- * runs on a keystroke — so switching currency with "12.34" in the field leaves
- * it reading "12.34" while the model saves ¥12, with nothing on screen saying
- * so. Every write to the entry draft goes through this, and so does every
- * scan: a receipt names its own currency.
+ * **The typed amount and its currency must never disagree**: JPY has no minor
+ * units and BHD three, and `sanitizeAmount` only runs on a keystroke — so
+ * switching currency over "12.34" would save ¥12 with nothing on screen
+ * saying so. Every draft write and every scan goes through this.
  */
 export function clipAmountToCurrency<T extends { amountText: string; currency: string }>(
   draft: T,
@@ -133,9 +126,8 @@ export function GroupedInput({
   }
 
   /**
-   * Backspace onto a group mark should eat the digit in front of it, not the
-   * space — the space isn't something the user typed, so deleting it would
-   * look like the key did nothing.
+   * Backspace onto a group mark eats the digit in front of it — deleting the
+   * space, which nobody typed, would look like the key did nothing.
    */
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     const el = e.currentTarget;
@@ -182,10 +174,8 @@ export function GroupedInput({
 
 /**
  * What a half-typed amount settles to once the field is left: "5" -> "5.00",
- * "1." -> "1.00", "1.5" -> "1.50". The text is left alone *while* you type it
- * (see above), so without this a finished field sits reading "5" next to a
- * column of "12.00"s. Empty stays empty, so a placeholder survives a tap that
- * changed nothing, and a currency with no minor units has nothing to pad.
+ * "1." -> "1.00". Empty stays empty so a placeholder survives, and a
+ * zero-decimal currency has nothing to pad.
  */
 export function settleAmount(text: string, currency: CurrencyCode): string {
   if (text === "") return "";
@@ -228,10 +218,9 @@ interface MinorAmountInputProps extends Omit<AmountInputProps, "value" | "onChan
 }
 
 /**
- * The same field for the editors that think in minor units (split amounts,
- * payer contributions). The text is local; the model only ever sees the
- * parsed number. It re-reads the model when something *else* changes it — the
- * "rest" button, a mode switch — and stays out of the way while you type.
+ * The same field for editors that think in minor units (split amounts, payer
+ * contributions). The text is local; it re-reads the model only when something
+ * *else* changes it (the "rest" button, a mode switch).
  */
 export function MinorAmountInput({
   valueMinor, onChangeMinor, currency, ...rest

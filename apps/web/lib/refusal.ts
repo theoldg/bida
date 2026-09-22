@@ -5,24 +5,17 @@ import { useState } from "react";
 /**
  * A press that cannot go through, and the flash that answers it.
  *
- * A refusal points rather than explains: whatever stopped the press blooms
- * `--debit` and settles back over ~600ms, and the control that was pressed is
- * spent for exactly that long — a press that does nothing has to look like it
- * landed (docs/design-system.md). Both numbers are load-bearing.
+ * Whatever stopped the press blooms `--debit` and settles back over ~600ms,
+ * and the pressed control is spent for exactly that long, so a press that does
+ * nothing still looks like it landed (docs/design-system.md).
  *
- * `live` is the one that is easy to leave out. The class is what says a
- * refusal is still on screen, and the control that was pressed is spent for
- * exactly that long, so it has to come off when the flash ends rather than sit
- * there — a class left on is a button greyed for good. It is also what lends a
- * `::placeholder` the ink it blooms in (`globals.css`), which nothing should
- * keep past the 600ms it was lent for.
+ * **`live` must come off when the flash ends** — a class left on is a button
+ * greyed for good, and a `::placeholder` keeping ink it was lent (`globals.css`).
  *
- * `n` is the restart. A second refusal while the first is still running would
- * change nothing in the class list, so the browser would not replay it; the
- * parity picks between two identical animations, which changes
- * `animation-name` and guarantees it does. (A React `key` would restart it
- * too, by remounting the <input> and taking the caret, the focus and any IME
- * composition with it.)
+ * `n` is the restart: a second refusal mid-flash wouldn't change the class
+ * list, so parity picks between two identical animations to force a replay.
+ * A React `key` would too, but remounts the <input> and loses caret, focus and
+ * IME composition.
  */
 export interface Refusal { n: number; live: boolean }
 
@@ -35,9 +28,8 @@ export function refused(r: Refusal): Refusal {
 
 /**
  * Of the fields a refusal was aimed at, the ones still missing now. A refusal
- * that scrolls first is aimed when Save is pressed and lands when the scroll
- * does, and a field fixed in between has nothing left to bloom — a flash on it
- * would spend Save for a problem that is gone.
+ * that scrolls first lands when the scroll does, and a field fixed in between
+ * must not bloom — it would spend Save for a problem that is gone.
  */
 export function stillMissing<K extends string>(
   aimed: Partial<Record<K, boolean>>,
@@ -70,16 +62,12 @@ export function flashClass(r: Refusal): string {
 }
 
 /**
- * A refusal on one control, for a screen with only one thing to refuse. A
- * form with several fields to bloom keeps its own record of them instead
- * (`app/g/entry/edit/page.tsx`).
+ * A refusal on one control, for a screen with one thing to refuse; forms with
+ * several keep their own record (`app/g/entry/edit/page.tsx`).
  *
- * `onFlashEnd` takes the animation's own event, and takes **nothing** when the
- * fix arrives before the animation does — a keystroke in the add row ends its
- * flash on the spot (`components/name-adder.tsx`). Something has to say so:
- * the class comes off with the refusal, so no `animationend` ever fires for a
- * flash that was cut short, and a control spent for the length of one would
- * stay spent forever.
+ * `onFlashEnd` takes **nothing** when the fix arrives before the animation
+ * ends (`components/name-adder.tsx`): the class comes off, no `animationend`
+ * fires, and without the call the control stays spent forever.
  */
 export function useRefusal(): {
   /** Hang on the control that blooms, with `onFlashEnd` beside it. */
@@ -95,11 +83,9 @@ export function useRefusal(): {
     flash: flashClass(state),
     live: state.live,
     refuse: () => setState(refused),
-    // Only the control's own animation counts. Nothing on a pseudo-element
-    // can report anyway — Blink runs no animation declared on one — but a
-    // `pseudoElement` event from anywhere else would end a flash that is still
-    // running, so it is turned away here. No event at all is the fix arriving
-    // early, and that always counts.
+    // Only the control's own animation counts: a `pseudoElement` event from
+    // elsewhere would end a flash still running. No event at all is the fix
+    // arriving early, and always counts.
     onFlashEnd: (e) => {
       if (e?.pseudoElement) return;
       setState((r) => ({ ...r, live: false }));

@@ -20,33 +20,23 @@ import {
 import { useRefusal } from "@/lib/refusal";
 
 /**
- * Somebody else's ledger as a group of ours. Reached from the groups list's
- * kebab and from nowhere else: what it makes is a group, so it belongs where
- * groups are made, and a screen whose one act is already "new group" does not
- * need a second pitch printed on it.
+ * Somebody else's ledger as a group of ours. Reached only from the groups
+ * list's kebab, since what it makes is a group.
  *
- * **Three steps, and the source is read on the first.** Pick or fetch, then
- * look at what was found, then say which of those people you are. Reading
- * is free and writes nothing — `core/import.ts` and `core/tricount.ts` both
- * hand back the same plan — so the count of entries, the currency and the rows
- * that will be left out are all on screen before a single op exists. A button
- * that makes the group and then says how it went answers the only question
- * anybody has here in the wrong order: is this going to get my trip right.
+ * **Three steps, and the source is read on the first**: pick or fetch, look at
+ * what was found, say which person you are. Reading writes nothing, so the
+ * entry count, currency and skipped rows are on screen before any op exists.
  *
- * **Two sources, one readout.** A file or a Tricount link — and past the
- * moment a plan exists, the screen cannot tell which it was. That is the whole
- * reason the tricount reader returns an `ImportPlan` rather than anything of
- * its own (docs/data-model.md#reading-a-tricount-back).
+ * **Two sources, one readout.** A file or a Tricount link both become an
+ * `ImportPlan`, and past that the screen can't tell which it was
+ * (docs/data-model.md#reading-a-tricount-back).
  *
- * **Refused whole, or not at all.** A source with one unreadable entry is not
- * imported minus that entry: a ledger missing one balances to something nobody
- * can account for, and the checksum is what makes the rest trustworthy. So a
- * refusal names what to change and the source stays where it is
+ * **Refused whole, or not at all.** A ledger missing one entry balances to
+ * something nobody can account for, so a refusal names what to change
  * (`copy.importData.refused`).
  *
- * **The who question has no add row.** Everywhere else in the app that picker
- * lets you file a name it doesn't have; here the list is the source's own
- * people, and a name that is not one of them has no balance to be.
+ * **The who question has no add row**: a name not in the source has no
+ * balance to be.
  */
 export default function ImportPage() {
   const router = useRouter();
@@ -69,15 +59,11 @@ export default function ImportPage() {
   function adopt(found: ImportPlan, suggestion: string) {
     setWhy(undefined);
     setPlan(found);
-    // A tricount states its own title and a spreadsheet cannot, so one of
-    // these is a fact and the other a guess off a filename. Both land in the
-    // same editable field, because a name is the one thing here nobody minds
-    // retyping.
+    // A tricount states its own title; a spreadsheet's is a guess off the
+    // filename. Both land in the same editable field.
     setName(found.title?.trim() || suggestion);
-    // A source with one person in it answers its own question, so the picker
-    // at the end is a formality; it is still asked, because the answer is
-    // the actor on every op and a screen that sometimes skips a step is a
-    // screen you cannot learn (app/new/page.tsx says the same).
+    // Asked even with one person: the answer is the actor on every op, and the
+    // step is never skipped (as in app/new/page.tsx).
     setPicked(found.members.length === 1 ? found.members[0] : undefined);
   }
 
@@ -102,10 +88,9 @@ export default function ImportPage() {
   }
 
   /**
-   * A link in, the same plan out. The one step here a chosen file does not
-   * have is a network, so it has the two sentences a network needs: this
-   * phone is off it, or tricount is not answering — which are different things
-   * to do about it, and neither is the person's link being wrong.
+   * A link in, the same plan out. The network is the one step a file doesn't
+   * have, so it gets two messages: this phone is offline, or tricount isn't
+   * answering — neither means the link is wrong.
    */
   async function fetchLink() {
     const key = tricountKey(link);
@@ -193,10 +178,8 @@ export default function ImportPage() {
         <Scroll>
           <div className="pad about">
             <section className="aboutsect">
-              {/* The picker itself is the OS's, opened by a button of ours: a
-                  bare file input cannot be styled and reads as a form somebody
-                  forgot to finish. Always mounted, because it is how a second
-                  file is chosen once the first one has been read. */}
+              {/* The OS picker behind a button of ours — a bare file input can't be
+                  styled. Always mounted: it is how a second file is chosen. */}
               <input ref={file} type="file" accept=".csv,text/csv,text/plain"
                 style={{ display: "none" }}
                 onChange={(e) => {
@@ -206,11 +189,8 @@ export default function ImportPage() {
                   e.target.value = "";
                 }} />
 
-              {/* Once there is a plan on screen it is the screen, and the two
-                  ways in collapse to one button back to them: a link left
-                  sitting above its own readout is noise between a person and
-                  the only thing they came here to check. What was typed is
-                  still there when they come back. */}
+              {/* Once a plan is on screen, the two ways in collapse to one button back
+                  to them. What was typed is still there on return. */}
               {plan ? (
                 <button type="button" className="btn btn-s"
                   onClick={() => { setPlan(undefined); setWhy(undefined); }} {...keepsFocus}>
@@ -227,12 +207,9 @@ export default function ImportPage() {
                     </button>
                   </div>
 
-                  {/* The second way in, and the shortest: Tricount has no export
-                      button, so the alternative for somebody coming from it is
-                      no import at all. The link is the whole of the authority
-                      over that tricount, which is why it is fetched through
-                      our Worker with a POST and never written into a URL
-                      (apps/api/src/tricount.ts). */}
+                  {/* Tricount has no export button, so the link is the only way in from it.
+                      The link is full authority over that tricount, so it goes through our
+                      Worker in a POST body, never a URL (apps/api/src/tricount.ts). */}
                   <p className="hint" style={{ marginTop: 14 }}>{words.orTricount}</p>
                   <input className="linkbox selectable" type="url" value={link}
                     aria-label={words.orTricount} placeholder={words.tricountPlaceholder}

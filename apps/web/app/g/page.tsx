@@ -46,11 +46,9 @@ function GroupScreen() {
   const sync = useSyncHealth(groupId);
   // Ids only, and only ever a handful: what this phone knows was deleted.
   const deleted = useDevice()?.deletedGroups;
-  // Opening a group is the moment you want to know whether it is current, so
-  // ask the server then rather than waiting for the loop's next 60s tick. A
-  // dead server records its first failure here, and the engine's backoff
-  // retries seconds later, which is what turns the banner on. The rejection
-  // *is* the recorded failure — `useSyncHealth` reads it, nothing here does.
+  // Opening a group is when you want it current, so sync now rather than on
+  // the next 60s tick. A failure is recorded by the engine and read by
+  // `useSyncHealth`; the backoff retry is what turns the banner on.
   useEffect(() => {
     if (groupId) void syncGroup(groupId).catch(() => {});
   }, [groupId]);
@@ -61,9 +59,8 @@ function GroupScreen() {
     if (groupId) void setLastOpenedGroup(groupId);
   }, [groupId]);
 
-  // Joining isn't finished until "who are you" is answered. Unclaimed, nothing
-  // here works the way it reads: every row is somebody else's, and there is no
-  // honest name to sign a write with. `useClaimGate` says the rest.
+  // Joining isn't finished until "who are you" is answered; unclaimed, there
+  // is no honest name to sign a write with. See `useClaimGate`.
   const unclaimed = useClaimGate(groupId, data);
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
@@ -71,11 +68,9 @@ function GroupScreen() {
   // The two tabs are one screen, and the ledger is the one you arrive on — so
   // back from balances is the ledger, and only the ledger leaves the group.
   const back = tab === "balances" ? route.group(groupId) : route.groups();
-  // **Draw the whole frame while loading**, not a top bar over nothing, which
-  // is indistinguishable from a tap that didn't land: the group's name is the
-  // only thing here that has to wait for Dexie. The skeleton covers the
-  // redirect above too — a flash of somebody else's ledger is worse than a
-  // frame that is still loading.
+  // **Draw the whole frame while loading** — a bare top bar looks like a tap
+  // that didn't land. It also covers the redirect above, rather than flashing
+  // somebody else's ledger.
   if (data.loading || unclaimed) {
     return (
       <Screen>
@@ -94,10 +89,8 @@ function GroupScreen() {
       </Screen>
     );
   }
-  // A group deleted from the server takes this phone's copy with it, wherever
-  // the app happened to be standing (lib/db/sync.ts). So the screen that was
-  // showing it says so, rather than the "bad link" a missing group otherwise
-  // means, and the groups list behind it no longer has the group on it.
+  // A group deleted from the server takes this phone's copy with it
+  // (lib/db/sync.ts), so the screen says "deleted" rather than "bad link".
   if (!data.group) {
     return deleted?.includes(groupId)
       ? (
@@ -114,11 +107,9 @@ function GroupScreen() {
   return (
     <Screen>
       <Body>
-        {/* Three ways for a group to be out of step with its friends, in the
-            order of how badly you need to know. Being offline is the benign
-            one and says so; a server that won't answer is the one that used to
-            be invisible; a refused key is the one that never heals by itself.
-            No colour on any of them — that is spent on balances (ADR-0023). */}
+        {/* Three ways to be out of step, most urgent last: offline (benign), a
+            server that won't answer, a refused key (never heals by itself). No
+            colour — that is for balances (ADR-0023). */}
         {!online ? (
           <Banner icon="off">
             {data.pendingOps > 0
@@ -146,10 +137,8 @@ function GroupScreen() {
         {tab === "ledger" ? <LedgerTab data={data} /> : <BalancesTab data={data} />}
       </Body>
 
-      {/* Two ways to start an expense: type it, or photograph the bill. Both
-          live on the ledger only — the balances tab is a reading, not a place
-          you add to, so the corner is free there for the one thing this app
-          asks for (app/g/tip). */}
+      {/* Two ways to start an expense, on the ledger only. The balances tab's
+          corner is for the tip jar (app/g/tip). */}
       {tab === "ledger" ? (
         <>
           <ScanFab href={route.scan(group.id)} />
@@ -157,13 +146,9 @@ function GroupScreen() {
         </>
       ) : <SupportFab href={route.tip(group.id)} />}
 
-      {/* One navigation, at the bottom, and only what a group actually is: what
-          moved through it, and who is up or down because of it. "Settle" was a
-          third destination and is now the bottom half of Balances; "Group" was
-          a fourth and is now Settings, next to the group list, because every
-          switch on it belonged to the phone rather than to this group. The
-          first tab is "Ledger", not "Expenses", because two of the three
-          things on it aren't expenses (ADR-0010). */}
+      {/* One navigation, only what a group is: what moved through it, and who
+          is up or down. "Ledger", not "Expenses", because two of its three
+          kinds aren't expenses (ADR-0010). */}
       <BottomNav items={[
         { label: copy.group.tabs.ledger, icon: "list", href: route.group(group.id), on: tab === "ledger" },
         { label: copy.group.tabs.balances, icon: "seesaw", href: route.group(group.id, "balances"),
@@ -192,14 +177,10 @@ function LedgerTab({ data }: { data: GroupData }) {
 
   return (
     <Scroll>
-      {/* Both inside the scroll, not fixed above it: on a phone they are two
-          cards' worth of a screen that is for the rows under them, and the
-          ledger you opened to read was starting a third of the way down. They
-          say what they say on arrival and then get out of the way. */}
-      {/* Either platform's install offer, folded to one line — the card
-          decides which, and whether there is one at all (docs/ios.md). Here
-          because this is the screen a launch and a join both land on, so the
-          list's copy of it is one most people never scroll past. */}
+      {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
+          third of the way down. */}
+      {/* Either platform's install offer, folded to one line (docs/ios.md).
+          Here because launches and joins both land on this screen. */}
       {/* Above the install offer, because it outranks it: what group you are
           standing in comes before what to do with this browser. It draws
           nothing for every other group. */}
@@ -207,20 +188,16 @@ function LedgerTab({ data }: { data: GroupData }) {
       <LedgerInstall groupId={gid} />
       {me ? (
         <div className="mysummary pad">
-          {/* The tint is neutral on purpose: the eyebrow and the figure are
-              already worded and coloured, and a card-sized wash of green or
-              red is the loudest thing on a screen that spends colour only on
-              money. */}
+          {/* Neutral tint on purpose: the eyebrow and figure already carry the
+              colour. */}
           <Card style={{ flex: 1, padding: "10px 12px" }}>
             <div className="eyebrow" style={{ color: net === 0 ? "var(--muted)" : "inherit" }}>
               <span className={signClass(net)}>
                 {net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square}
               </span>
             </div>
-            {/* Unsigned, unlike every other figure in the app: this is the
-                one place that says which way the money goes in words, right
-                above it. A "-" under "You owe" is a third telling of the same
-                fact — and the one that reads as arithmetic rather than debt. */}
+            {/* Unsigned, unlike every other figure: "You owe" above already says
+                the direction, and a "-" reads as arithmetic rather than debt. */}
             <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
               {money(Math.abs(net), group.baseCurrency)}
             </div>
@@ -327,9 +304,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 }
 
 /**
- * A transfer's row. It carries the same long press as an expense's: a transfer
- * is an entry like the other two (ADR-0010), and the one it doesn't belong to
- * is the one you most want to take back.
+ * A transfer's row, with the same long press as an expense's (ADR-0010).
  */
 function SettlementRow({ settlement, gid, base, me, memberById }: {
   settlement: Settlement; gid: string; base: string; me: string | undefined;
@@ -385,8 +360,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
 
 /**
  * Who is up, who is down, and the shortest set of payments that ends it — one
- * question asked twice, so they share a scroll: the bars tell you a number is
- * wrong, and the payments are the only thing you can do about it.
+ * scroll, since the payments are what you do about the bars.
  */
 function BalancesTab({ data }: { data: GroupData }) {
   const { group, members, balances, nameOf, me, transfers } = data;
@@ -394,10 +368,9 @@ function BalancesTab({ data }: { data: GroupData }) {
   // thing standing between a tap here and a write.
   const [settling, setSettling] = useState<Transfer | undefined>(undefined);
   if (!group) return null;
-  // **Everyone carrying a balance, not only everyone still in the group.** A
-  // removed member with a position is precisely who you need to see, and
-  // leaving them off makes the bars stop summing to zero on screen while
-  // `byMember` goes on summing to zero underneath.
+  // **Everyone carrying a balance, not only current members.** A removed
+  // member with a position is who you need to see, and dropping them makes the
+  // bars stop summing to zero on screen.
   const live = new Set(members.map((m) => m.id));
   const rows = [
     ...members.map((m) => ({ id: m.id, name: m.name, gone: false })),
@@ -488,15 +461,9 @@ function BalancesTab({ data }: { data: GroupData }) {
 
 /**
  * What a suggested payment opens: the row again, enlarged, and two buttons.
- *
- * The form it used to open had both sides, the amount and the title already
- * filled — a whole screen of fields asking you to agree with arithmetic you
- * cannot improve, with the real question ("did this actually happen?") nowhere
- * on it. So nothing here is editable, and nothing is here that isn't the
- * payment: two names, an arrow and a figure are the whole of what Record
- * writes, and a card that says it twice is a card that doubts itself. A payment
- * that wasn't quite this one is an entry like any other — the ledger's "+", or
- * an edit afterwards.
+ * Nothing is editable — two names, an arrow and a figure are all Record
+ * writes, and the only question is whether it happened. A different payment
+ * is an ordinary entry, or an edit afterwards.
  */
 function SettleDialog({ t, groupId, actor, base, nameOf, onClose }: {
   t: Transfer;

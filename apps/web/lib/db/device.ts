@@ -27,15 +27,11 @@ export async function updateDevice(patch: Partial<DeviceRecord>): Promise<void> 
   // opened, the list left on), and a write on every tap is worth seeing.
   const done = started("device.write", Object.keys(patch).join(","));
   try {
-    // Never from a background page (./visible.ts). The smallest write in the
-    // app is the one that hangs it: `device` is the only store it takes, and
-    // every list and group screen reads that store, so a copy frozen inside
-    // this one put leaves every other copy on skeleton rows while the op log
-    // it is not holding reads perfectly well.
+    // Never from a background page (./visible.ts). `device` is read by every
+    // list and group screen, so a put frozen here leaves them all on skeletons.
     await whenVisible("device.write");
-    // Read inside the gate, not before it, so the fields this patch does not
-    // name come from the record as it is now — a put built before a long park
-    // puts back whatever another screen wrote during it.
+    // Read inside the gate so unnamed fields come from the record as it is now,
+    // not as it was before a long park.
     const current = await getDevice();
     await db().device.put({ ...current, ...patch, key: "device" });
   } finally {
@@ -50,13 +46,9 @@ export async function getMe(groupId: string): Promise<string | undefined> {
 }
 
 /**
- * Point this device at a member, without touching the op log.
- *
- * This is the device-local half only. Nothing outside this module should call
- * it: `claimIdentity` in ./commands.ts is the whole operation — it writes the
- * `identity` op that lets everybody else read `Op.actor` honestly (ADR-0003),
- * and calls this. Kept here, and kept private-by-convention, so that the
- * device record still has exactly one writer.
+ * Point this device at a member, without touching the op log. Device-local
+ * half only: call `claimIdentity` (./commands.ts), which also writes the
+ * `identity` op (ADR-0003). Here so the device record has one writer.
  */
 export async function setMe(groupId: string, memberId: string): Promise<void> {
   const device = await getDevice();
@@ -124,11 +116,9 @@ export async function setBillEnglish(english: boolean): Promise<void> {
 
 /**
  * Point this phone's scans at a key its owner brought, or back at the shared
- * one. Device-local and never an op — see `DeviceRecord.geminiKey`.
- *
- * Trimmed on the way in, because a key arrives by paste and a clipboard is
- * where a trailing newline lives. Removing is `undefined` rather than an empty
- * string: absent is what every phone that never pasted one already reads as.
+ * one. Device-local, never an op — see `DeviceRecord.geminiKey`. Trimmed
+ * because pasted keys carry newlines; removal is `undefined`, the same absent
+ * every phone that never pasted one reads.
  */
 export async function setGeminiKey(key: string | undefined): Promise<void> {
   const trimmed = key?.trim();

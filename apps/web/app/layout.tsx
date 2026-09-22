@@ -17,10 +17,8 @@ import { EmbeddedGate } from "@/components/embedded";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// One face for the whole app — headings, prose and figures alike; hierarchy is
-// carried by weight and tracking instead. Self-hosted at build time by
-// next/font, so nothing is fetched from Google at runtime, which matters for a
-// PWA that has to render offline.
+// One face for the whole app; hierarchy is weight and tracking. Self-hosted
+// by next/font at build time, so the PWA renders offline.
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
@@ -31,34 +29,23 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: copy.app.name,
   description: copy.app.description,
-  // **A link to this app is nearly always sent in a chat**, so the card the
-  // chat app draws around it is the first thing anyone sees of bida — and with
-  // no Open Graph tags it drew a bare one: a title if the scraper bothered to
-  // parse the head, no icon, and different every time depending on what it had
-  // cached. The tags are static and say nothing about the group: the secret
-  // lives in the fragment, which never leaves the phone, and a scraper reading
-  // `/join` learns only that bida exists.
+  // **A link to this app is nearly always sent in a chat**, so the preview card
+  // is the first thing anyone sees. The tags are static and say nothing about a
+  // group: the secret lives in the fragment, which never reaches a scraper.
   //
-  // Absolute URLs, via `metadataBase` — a crawler has no page to resolve a
-  // relative one against. Pinned to production rather than read from the
-  // environment, because the build is byte-identical on both Workers
-  // (docs/hosting.md#dev-and-production) and only production's links get sent
-  // to anybody.
+  // Absolute URLs via `metadataBase`, pinned to production: the build is
+  // byte-identical on both Workers (docs/hosting.md#dev-and-production) and
+  // only production links get shared.
   metadataBase: new URL("https://bida.bid"),
   openGraph: {
     type: "website",
     siteName: copy.app.name,
     title: copy.app.name,
     description: copy.app.description,
-    // **No `og:url`** — it is a root-level default, so every route would claim
-    // to be `https://bida.bid`. An invite pasted into Messenger on iOS arrived
-    // as exactly that bare origin, path and fragment gone, where the same paste
-    // on Android kept the whole link — and this was the only string we handed a
-    // scraper that matched it. Left out, a scraper uses the URL it fetched and
-    // the invite survives the paste; the card these tags exist for never needed
-    // it.
-    // The 512 rather than the 192: Facebook drops an image under 200px, and
-    // this is the icon the app is already installed under.
+    // **No `og:url`** — as a root default every route would claim to be
+    // `https://bida.bid`, and Messenger on iOS then pastes an invite as that bare
+    // origin, path and fragment gone. Without it a scraper uses the fetched URL.
+    // The 512 rather than the 192: Facebook drops images under 200px.
     images: [{ url: "/icon-512.png", width: 512, height: 512, alt: copy.app.name }],
   },
   // "summary", not "summary_large_image": the icon is square, and a square
@@ -69,19 +56,16 @@ export const metadata: Metadata = {
     description: copy.app.description,
     images: ["/icon-512.png"],
   },
-  // No `manifest`: `manifestScript` writes the link first thing in the head,
-  // because an iOS tab needs a different one there before Safari reads it.
-  // **Name the icons**, or every cold load asks for /favicon.ico and takes a
-  // 404 — a wasted request on the visit that can least afford one. The PWA
-  // icons are already on disk; point at them rather than adding a file.
+  // No `manifest`: `manifestScript` writes the link first in the head, because
+  // an iOS tab needs a different one. **Name the icons**, or every cold load
+  // takes a /favicon.ico 404.
   icons: {
     icon: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
     apple: [{ url: "/icon-192.png", sizes: "192x192" }],
   },
-  // "default", so iOS lays the app out below the status bar rather than under
-  // it. **Not "black-translucent"**: it draws from the top of the screen but
-  // still takes the bar off the height (iOS 26, WebKit bug 301108), stranding
-  // a strip nothing can paint at the bottom.
+  // "default", so iOS lays the app out below the status bar. **Not
+  // "black-translucent"**: it draws from the top but still takes the bar off the
+  // height (iOS 26, WebKit bug 301108), stranding an unpaintable bottom strip.
   appleWebApp: { capable: true, title: copy.app.name, statusBarStyle: "default" },
 };
 
@@ -89,17 +73,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // A pinch on a ledger is a mis-grip: the layout is already sized for a thumb,
-  // and a zoomed page strands the fixed bottom bar off-screen. Android honours
-  // this pair; iOS Safari ignores it in a tab (but obeys once installed), so
-  // CSS `touch-action` and `NoPinchZoom` finish the job.
+  // A pinch is a mis-grip, and zoom strands the fixed bottom bar. Android
+  // honours this; iOS Safari only once installed, so CSS `touch-action` and
+  // `NoPinchZoom` finish the job.
   maximumScale: 1,
   userScalable: false,
-  // **One colour, never per-theme**, and the same value as the manifest's
-  // theme_color: an installed Android app paints its status bar from the
-  // manifest, and this tag only decides whether the icons on it are light or
-  // dark. Media-scoped or toggled tags flip the icons over a bar that cannot
-  // follow — white on white. See frontend.md#gotchas.
+  // **One colour, never per-theme**, matching the manifest's theme_color: the
+  // installed Android status bar is painted from the manifest and this tag only
+  // picks icon contrast. Per-theme tags give white on white. frontend.md#gotchas.
   themeColor: "#0E0F11",
 };
 
@@ -110,12 +91,10 @@ const manifest = JSON.parse(
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // `suppressHydrationWarning` is for one attribute only: `data-theme`,
-    // which <ThemeScript /> writes before React runs (components/theme.tsx).
-    // The export is prerendered light, so on a phone set to dark the server
-    // HTML and the hydrating client genuinely disagree — the alternative is a
-    // flash of paper white. It covers this element's own attributes, not its
-    // subtree, so a real mismatch inside the app still reports itself.
+    // `suppressHydrationWarning` covers only this element's attributes, for
+    // `data-theme`, which <ThemeScript /> writes before React runs
+    // (components/theme.tsx). The export is prerendered light, so a dark phone
+    // genuinely disagrees with the server HTML.
     <html lang="en" className={mono.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: manifestScript(manifest) }} />
