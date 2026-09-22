@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "make the translation icon tighter." The code's own comment
+  said 文 over A, so I read the diagonal as settled. It was only where the
+  first draft's strokes happened to land.
 - *2026-09-22* — I argued a hamburger would collide with "the menu one
   thumb away". That menu is a kebab. Check the app for the shape you say
   collides before arguing from convention.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Same Discard, dead on one install and fine on another, same
   version. Three theories off the code, all wrong; one trace settled it. The
   variable was a number I had not thought to read.
-- *2026-09-21* — Asked to explain one bug, I led with the more interesting
-  concept next door, and had to be asked twice what it had to do with the
-  symptom. Catch them up on the bug they have.

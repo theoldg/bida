@@ -110,14 +110,16 @@ export function IconSprite() {
           <path d="M12 3.5v11" /><path d="M8.5 7l3.5-3.5L15.5 7" />
           <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
         </symbol>
-        {/* The one everybody's phone already taught them: 文 over A. Both
-            glyphs are drawn rather than typed — a <text> element would be at
-            the mercy of whatever font the phone has for Han, and on a phone
-            with none it renders as a box. Strokes, like every other icon. */}
+        {/* The one everybody's phone already taught them: 文 beside A, the
+            two sharing a baseline and a cap height so it reads as one word
+            rather than two glyphs falling down a diagonal. Both are drawn
+            rather than typed — a <text> element would be at the mercy of
+            whatever font the phone has for Han, and on a phone with none it
+            renders as a box. Strokes, like every other icon. */}
         <symbol id="i-translate" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
-          <path d="M7 2.6v1.4M2.8 5.6h8.4" />
-          <path d="M8.6 5.9L3.4 13M5.3 8.2L10.1 13" />
-          <path d="M12.7 21.4l4.3-10.6 4.3 10.6M14.4 17.9h5.2" />
+          <path d="M6.1 6.4v1.5M1.7 9.6h8.8" />
+          <path d="M7.8 9.9L2.3 17.4M4.3 12.3L9.4 17.4" />
+          <path d="M13.1 17.4l4.7-11 4.7 11M15 13.8h5.7" />
         </symbol>
         <symbol id="i-image" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <rect x="3" y="4.5" width="18" height="15" rx="2" />
