@@ -88,7 +88,7 @@ function GroupScreen() {
           : <SupportFab href={route.tip(groupId)} />}
         <BottomNav items={[
           { label: copy.group.tabs.ledger, icon: "list", href: route.group(groupId), on: tab === "ledger" },
-          { label: copy.group.tabs.balances, icon: "scale", href: route.group(groupId, "balances"),
+          { label: copy.group.tabs.balances, icon: "seesaw", href: route.group(groupId, "balances"),
             on: tab === "balances" },
         ]} />
       </Screen>
@@ -166,7 +166,7 @@ function GroupScreen() {
           things on it aren't expenses (ADR-0010). */}
       <BottomNav items={[
         { label: copy.group.tabs.ledger, icon: "list", href: route.group(group.id), on: tab === "ledger" },
-        { label: copy.group.tabs.balances, icon: "scale", href: route.group(group.id, "balances"),
+        { label: copy.group.tabs.balances, icon: "seesaw", href: route.group(group.id, "balances"),
           on: tab === "balances" },
       ]} />
     </Screen>
