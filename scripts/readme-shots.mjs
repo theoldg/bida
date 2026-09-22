@@ -162,6 +162,11 @@ async function main() {
     await page.goto(`${base}/g/entry/edit?id=${GROUP}&e=${CANTINA}`);
     await page.getByRole("link", { name: /(Assign|Edit) who.had.what/ }).click();
     await page.waitForURL(/entry\/items/);
+    // Pressed into English. The demo's tab is printed in the cantina's own
+    // tongue, which is what puts the toggle on the bar at all (ADR-0016) — but
+    // a reader who cannot read the lines cannot see that the grid is a bill,
+    // so the shot is of the press rather than of what it acts on.
+    await page.getByRole("button", { name: "Show the bill in English" }).click();
     await settle(page, 250);
     await shot("items");
 
