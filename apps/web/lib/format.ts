@@ -193,6 +193,9 @@ const CODE_MAX = 3;
  * instead, so "Bartholomew" and "Bartholomew Junior" are "Ba1" and "Ba2"
  * rather than two headings as wide as the grid.
  *
+ * The number counts the people sharing that prefix, so it starts again at 1
+ * for each set of them: "Ma1 Ma2 Ju1 Ju2", never "Ma1 Ma2 Ju3 Ju4".
+ *
  * The numbering is why no name may already contain a digit: "ba1" as a name is
  * indistinguishable from "Ba" numbered 1, so a group holding one gives up on
  * unique codes and takes the bare three-grapheme prefixes, repeats and all.
@@ -218,16 +221,36 @@ export function distinctInitials(members: readonly { id: string; name: string }[
   // ASCII digits only: the suffix is written with those, so those are the ones
   // a name can be confused with.
   const numbered = !members.some((m) => /[0-9]/.test(m.name));
-  left.forEach((m, i) => {
-    if (!numbered) { out.set(m.id, prefix(m.id, CODE_MAX)); return; }
-    // Numbered across all the leftovers rather than within each colliding
-    // group, so the digits alone tell them apart: a code ends in exactly as
-    // many digits as its number has (no name holds one), so no two can land on
-    // the same string however their prefixes were cut.
+  if (!numbered) {
+    for (const m of left) out.set(m.id, prefix(m.id, CODE_MAX));
+    return out;
+  }
+  const code = (id: string, i: number) => {
     const n = String(i + 1);
     const room = CODE_MAX - n.length;
-    out.set(m.id, (room > 0 ? prefix(m.id, room) : "") + n);
-  });
+    return (room > 0 ? prefix(id, room) : "") + n;
+  };
+  // Numbered within each run of leftovers that will *print* the same prefix —
+  // two graphemes, the width a single-digit code leaves, rather than the three
+  // that made them collide. So "Martin"/"Marta" and "Matteo"/"Matilda" number
+  // as one "Ma" run (Ma1..Ma4), which is the only way four headings reading
+  // "Ma" can be told apart, while a "Ju" run beside them starts over at Ju1.
+  const runs = new Map<string, string[]>();
+  for (const m of left) {
+    const key = prefix(m.id, CODE_MAX - 1);
+    runs.set(key, [...(runs.get(key) ?? []), m.id]);
+  }
+  const codes = new Map<string, string>();
+  for (const ids of runs.values()) ids.forEach((id, i) => codes.set(id, code(id, i)));
+  // Ten in one run needs two digits, which costs the prefix a grapheme — and
+  // cut that short it can equal another run's, so the restart is what breaks.
+  // Numbering across every leftover instead cannot: a code ends in exactly as
+  // many digits as its number has (no name holds one), so if no two share a
+  // number no two share a code, however their prefixes were cut.
+  if (new Set(codes.values()).size < codes.size) {
+    left.forEach((m, i) => codes.set(m.id, code(m.id, i)));
+  }
+  for (const [id, c] of codes) out.set(id, c);
   return out;
 }
 

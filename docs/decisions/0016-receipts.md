@@ -127,7 +127,8 @@ person's lines on the entry screen, and a quick split's text.
 is unique ("John"/"Jane") but **never past three graphemes** — they are the
 column headings, so they set the column width, and "Bartholomew" beside
 "Bartholomew Junior" grew until the bill had no room left. Whoever still
-collides at three is numbered instead ("Ba1"/"Ba2"), and a group where any name
+collides at three is numbered instead ("Ba1"/"Ba2"), counting from 1 again at
+each prefix ("Ma1 Ma2 Ju1 Ju2"), and a group where any name
 already holds a digit gives up on unique codes and takes the bare prefixes,
 repeats and all: three characters cannot be injective over arbitrary names, and
 the chips above the grid carry the full names. Local to the one place initials

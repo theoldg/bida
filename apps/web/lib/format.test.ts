@@ -160,6 +160,31 @@ describe("distinctInitials", () => {
     expect(codes(["Bartholomew", "Bartholomew Junior"])).toEqual(["Ba1", "Ba2"]);
   });
 
+  it("starts the numbers again at 1 for each prefix, not once for the group", () => {
+    expect(codes(["Martin", "Marta", "Julia", "Julian"]))
+      .toEqual(["Ma1", "Ma2", "Ju1", "Ju2"]);
+  });
+
+  // The number tells apart the people who *print* the same two graphemes, so
+  // "Mar" and "Mat" are one run of four — restarting inside each would hand
+  // out "Ma1" twice.
+  it("numbers everyone sharing the printed prefix as one run", () => {
+    expect(codes(["Martin", "Marta", "Matteo", "Matilda"]))
+      .toEqual(["Ma1", "Ma2", "Ma3", "Ma4"]);
+  });
+
+  // Two digits eat a grapheme of the prefix, so two runs that share their
+  // first one would both reach "B10". The restart is what gives way.
+  it("falls back to one run of numbers when restarting would collide", () => {
+    const names = [
+      ...Array.from({ length: 10 }, (_, i) => `Bartholomew ${"x".repeat(i + 1)}`),
+      ...Array.from({ length: 10 }, (_, i) => `Bonifacio ${"x".repeat(i + 1)}`),
+    ];
+    const out = codes(names);
+    expect(new Set(out).size).toBe(names.length);
+    for (const code of out) expect(graphemes(code).length).toBeLessThanOrEqual(3);
+  });
+
   it("caps every code at three graphemes, however adversarial the names", () => {
     const names = [
       "Bartholomew", "Bartholomew Junior", "Bartholomew Senior",
