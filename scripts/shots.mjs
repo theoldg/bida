@@ -19,6 +19,7 @@
  * Chromium comes from PLAYWRIGHT_BROWSERS_PATH (already on disk in the agent
  * environment). Never run `playwright install`.
  */
+import { Buffer } from "node:buffer";
 import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { ROOT, ensureBuild, serveExport, launch, newPhone, openGroupsList, pick, newGroup }
@@ -315,16 +316,17 @@ async function main() {
 
       // The import, past its first screen (which is in `routes` above): the
       // plan a file is read into before anything is written, the same screen
-      // refused, and the question it ends on. Pasted rather than picked
-      // because the two are the same read, and a file picker is the OS's.
+      // refused, and the question it ends on. The picker is the OS's, so the
+      // file goes straight to the input it opens — which is the real path, and
+      // the only one now that the paste box is gone.
       await page.goto(`${base}/import`);
-      await page.locator("textarea.csvbox").fill(CSV);
-      await page.getByRole("button", { name: "Read it" }).click();
+      await page.setInputFiles('input[type="file"]', {
+        name: "Marrakech.csv", mimeType: "text/csv", buffer: Buffer.from(CSV),
+      });
       await page.waitForSelector(".rows .row");
-      // Pasting has no filename to take a name off, so the field is typed into
-      // — which is also what the shot should show, since it is the one thing
-      // the shape cannot state.
-      await page.locator("#i-name").fill("Marrakech");
+      // The name field is left as the file filled it: a Splitwise export is
+      // named after the group, and the shot should show what a person actually
+      // arrives at rather than a field typed into for the camera.
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-import-plan.png`) });
       process.stdout.write(`${theme}/import-plan `);
@@ -335,8 +337,9 @@ async function main() {
       process.stdout.write(`${theme}/import-who `);
 
       await page.goto(`${base}/import`);
-      await page.locator("textarea.csvbox").fill(BAD_CSV);
-      await page.getByRole("button", { name: "Read it" }).click();
+      await page.setInputFiles('input[type="file"]', {
+        name: "Marrakech.csv", mimeType: "text/csv", buffer: Buffer.from(BAD_CSV),
+      });
       await page.waitForSelector("p.failure");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-import-refused.png`) });

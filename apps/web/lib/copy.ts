@@ -163,20 +163,14 @@ export const copy = {
    */
   importData: {
     title: "Import a group",
-    /** What this makes, and what it's made from — all three sources of one. */
-    lede: "Create a new bida group from a Tricount link, or from a file exported from Splitwise (or from bida).",
+    /** What this makes, and what it's made from. */
+    lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
     pick: "Choose a file",
-    /** The second way in, for a phone whose browser has no file picker worth
-        using and for a file that arrived in a chat: the text itself. */
-    orPaste: "Or paste the file’s text:",
-    pastePlaceholder: "Date,Description,Category,Cost,Currency,…",
-    read: "Read it",
-    reading: "Reading…",
-    /** Back to the three ways in, once a plan is on screen and is not the one wanted. */
+    /** Back to the two ways in, once a plan is on screen and is not the one wanted. */
     again: "Start again",
 
     /**
-     * The third way in, and the shortest one: a tricount is fetched from its
+     * The second way in, and the shortest one: a tricount is fetched from its
      * own link rather than exported first, so this is the only source here
      * that asks nothing of the other app.
      */
@@ -184,6 +178,14 @@ export const copy = {
     tricountPlaceholder: "https://tricount.com/…",
     fetch: "Fetch it",
     fetching: "Fetching…",
+    /**
+     * What a fetch costs, under the button that starts one rather than after
+     * it: the link goes to our Worker because the browser cannot call bunq
+     * itself, so this is the one thing in the app that leaves the phone
+     * readable (`apps/api/src/index.ts`). Said the way /about says it of a
+     * scan, and in the same two words the rest of the app is not.
+     */
+    fineprint: "Sent through bida’s server, unencrypted. Not stored.",
     /** Pasted something with no tricount key in it, before anything is sent. */
     notTricount: "That isn’t a Tricount link. In Tricount, open the tricount, then Share, then copy the link.",
     /** The phone is off the network — its own failure, not the link's. */

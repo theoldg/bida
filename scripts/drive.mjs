@@ -561,7 +561,7 @@ async function start() {
     /**
      * The text a command carries. A command is one line and is split on
      * whitespace, so a newline could not survive the trip — and the box that
-     * most wants one is `/import`'s, where a pasted CSV is the whole feature.
+     * most wants one is the typed bill's, where the lines are the items.
      * `\n` is how the dump already writes a newline back out, so it is what
      * typing one looks like going in.
      */

@@ -2041,18 +2041,23 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
 /* ---- import ----
-   A file pasted as text, and above it the Tricount link that is the other
-   thing pasted on that screen. One box for both, because they are the same
-   act; tall enough to show that something landed in it and no taller, since
-   nobody reads a CSV here; monospaced, because the one thing anybody looks for
-   in either is whether it came over whole. */
-.csvbox, .linkbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
+   The Tricount link, which is the one thing typed on that screen: one line,
+   nothing to drag, and monospaced, because the only thing anybody looks for in
+   a pasted link is whether it came over whole. (`components/copy-link.tsx`
+   spells its own box the same, above — both rules land on both elements, so a
+   property added here is added there too.) */
+.linkbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
   color: var(--ink); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 9px 11px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5;
-  resize: vertical; outline: none }
-.csvbox::placeholder, .linkbox::placeholder { color: var(--muted) }
-/* One line, and nothing to drag: a link has no second line to reveal. */
-.linkbox { resize: none; text-overflow: ellipsis }
+  text-overflow: ellipsis; outline: none }
+.linkbox::placeholder { color: var(--muted) }
+/* What a fetch costs, under the button that starts one (app/import/page.tsx).
+   Qualified by the section the way a refusal there has to be, since
+   `.aboutsect p` would otherwise set the size. Balanced rather than left to
+   wrap: it is two lines on a phone either way, and two even ones read as a
+   remark where a line and a stray word read as a mistake. */
+.aboutsect p.fineprint { margin: 9px 2px 0; font-size: 11px; line-height: 1.45;
+  color: var(--muted); text-wrap: balance }
 
 /* Turnstile's widget — the one third-party pixel in the app, and normally no
    pixel at all: `interaction-only` draws nothing unless a challenge actually

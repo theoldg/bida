@@ -22,7 +22,7 @@ pnpm drive stop
 | `goto <path>` · `back` · `forward` · `reload` | move around |
 | `click <n>` · `fill <n> <text>` · `select <n> <label>` · `press <Key> [times]` | act on the numbered control the last screen handed you |
 | `type <n> <text>` | key it in one character at a time — `fill` sets a value in one go, which never runs the amount field's regrouping or its caret |
-| `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — `/import`'s paste box is a CSV or nothing |
+| `\n` in a `fill` or `type` | the newline a one-line command cannot hold, written the way the dump writes one back — the box that most wants one is the typed bill's, whose lines are the items |
 | `hold <n>` | long-press — the only way to the row menus |
 | `offline on\|off` | cut this phone's network, or restore it |
 | `receipt <name>` · `receipt list` · `receipt off` | hand this phone a canned bill, so the next reading answers with it — a photograph or one typed in |

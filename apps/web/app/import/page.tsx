@@ -25,18 +25,18 @@ import { useRefusal } from "@/lib/refusal";
  * groups are made, and a screen whose one act is already "new group" does not
  * need a second pitch printed on it.
  *
- * **Three steps, and the source is read on the first.** Pick, paste or fetch,
- * then look at what was found, then say which of those people you are. Reading
+ * **Three steps, and the source is read on the first.** Pick or fetch, then
+ * look at what was found, then say which of those people you are. Reading
  * is free and writes nothing — `core/import.ts` and `core/tricount.ts` both
  * hand back the same plan — so the count of entries, the currency and the rows
  * that will be left out are all on screen before a single op exists. A button
  * that makes the group and then says how it went answers the only question
  * anybody has here in the wrong order: is this going to get my trip right.
  *
- * **Three sources, one readout.** A file, its text, or a Tricount link — and
- * past the moment a plan exists, the screen cannot tell which it was. That is
- * the whole reason the tricount reader returns an `ImportPlan` rather than
- * anything of its own (docs/data-model.md#reading-a-tricount-back).
+ * **Two sources, one readout.** A file or a Tricount link — and past the
+ * moment a plan exists, the screen cannot tell which it was. That is the whole
+ * reason the tricount reader returns an `ImportPlan` rather than anything of
+ * its own (docs/data-model.md#reading-a-tricount-back).
  *
  * **Refused whole, or not at all.** A source with one unreadable entry is not
  * imported minus that entry: a ledger missing one balances to something nobody
@@ -51,7 +51,6 @@ import { useRefusal } from "@/lib/refusal";
 export default function ImportPage() {
   const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
-  const [pasted, setPasted] = useState("");
   const [link, setLink] = useState("");
   const [fetching, setFetching] = useState(false);
   const [plan, setPlan] = useState<ImportPlan>();
@@ -103,8 +102,8 @@ export default function ImportPage() {
   }
 
   /**
-   * A link in, the same plan out. The one step here the other two sources do
-   * not have is a network, so it has the two sentences a network needs: this
+   * A link in, the same plan out. The one step here a chosen file does not
+   * have is a network, so it has the two sentences a network needs: this
    * phone is off it, or tricount is not answering — which are different things
    * to do about it, and neither is the person's link being wrong.
    */
@@ -207,10 +206,10 @@ export default function ImportPage() {
                   e.target.value = "";
                 }} />
 
-              {/* Once there is a plan on screen it is the screen, and the three
-                  ways in collapse to one button back to them: a pasted ledger
-                  left sitting above its own readout is noise between a person
-                  and the only thing they came here to check. What was typed is
+              {/* Once there is a plan on screen it is the screen, and the two
+                  ways in collapse to one button back to them: a link left
+                  sitting above its own readout is noise between a person and
+                  the only thing they came here to check. What was typed is
                   still there when they come back. */}
               {plan ? (
                 <button type="button" className="btn btn-s"
@@ -228,7 +227,7 @@ export default function ImportPage() {
                     </button>
                   </div>
 
-                  {/* The third way in, and the shortest: Tricount has no export
+                  {/* The second way in, and the shortest: Tricount has no export
                       button, so the alternative for somebody coming from it is
                       no import at all. The link is the whole of the authority
                       over that tricount, which is why it is fetched through
@@ -245,21 +244,10 @@ export default function ImportPage() {
                     onClick={() => void fetchLink()} {...keepsFocus}>
                     {fetching ? words.fetching : words.fetch}
                   </button>
-
-                  {/* The second way in, and not a lesser one: a file that
-                      arrived in a chat is text somebody can select, and an iOS
-                      browser with no Files access is a phone where the button
-                      above leads nowhere at all. */}
-                  <p className="hint" style={{ marginTop: 14 }}>{words.orPaste}</p>
-                  <textarea className="csvbox selectable" rows={4} value={pasted}
-                    aria-label={words.orPaste} placeholder={words.pastePlaceholder}
-                    autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                    onChange={(e) => setPasted(e.target.value)} />
-                  <button type="button" className="btn btn-s" style={{ marginTop: 8 }}
-                    disabled={pasted.trim().length === 0}
-                    onClick={() => read(pasted, "")} {...keepsFocus}>
-                    {words.read}
-                  </button>
+                  {/* Under the button and not above the field: it is about
+                      what the press does, and a person who never presses it
+                      never had a link to give away. */}
+                  <p className="fineprint">{words.fineprint}</p>
                 </>
               )}
 
