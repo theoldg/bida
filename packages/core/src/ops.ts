@@ -1,4 +1,4 @@
-import type { Hlc } from "./hlc.js";
+import { isHlc, type Hlc } from "./hlc.js";
 import type { Id } from "./types.js";
 
 /**
@@ -88,6 +88,11 @@ export function validateOp(input: unknown): Op {
   if (seq !== undefined && seq !== null && typeof seq !== "number") {
     throw new OpValidationError("op.seq must be a number, null or absent");
   }
+  // Not trusted as any string: a stamp is what the fold sorts on and what
+  // `hlcReceive` adopts, and one it could not parse threw inside the sync
+  // commit on every retry, for every phone in the group.
+  const hlc = str(o["hlc"], "hlc");
+  if (!isHlc(hlc)) throw new OpValidationError(`op.hlc is not a stamp this clock can adopt: ${hlc}`);
   const note = o["note"];
   if (note !== undefined && note !== null && typeof note !== "string") {
     throw new OpValidationError("op.note must be a string, null or absent");
@@ -99,7 +104,7 @@ export function validateOp(input: unknown): Op {
     entityId: str(o["entityId"], "entityId"),
     kind,
     patch: patch as Record<string, unknown>,
-    hlc: str(o["hlc"], "hlc"),
+    hlc,
     actor: str(o["actor"], "actor"),
     note: (note as string | null | undefined) ?? null,
     createdAt,

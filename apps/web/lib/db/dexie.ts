@@ -134,6 +134,8 @@ export interface Unreadable {
   count: number;
   fromSeq: number;
   at: number;
+  /** The `VERSION` that skipped them. Any other build rewinds once (`sync.ts`). */
+  build?: string;
 }
 
 /**

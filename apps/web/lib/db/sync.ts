@@ -6,6 +6,7 @@ import { groupCrypto } from "../seal";
 import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
 import { db, type StoredOp, type Unreadable } from "./dexie";
+import { VERSION } from "../version";
 import { rebuild } from "./fold";
 import { whenVisible } from "./visible";
 
@@ -84,8 +85,9 @@ async function pushPullGroup(
   // would have been a 403 — so a `SealError` means one row this build cannot
   // read. **Skip it and keep the rest**: failing the pull means the same row
   // comes back on every retry and sync never succeeds again. The likeliest way
-  // to mint one is the version byte in `core/seal.ts` — ship a second seal
-  // format and every phone that hasn't updated meets an op it must refuse.
+  // to mint one is a newer build: an entity or op kind this one has never
+  // heard of, or a second seal format. A stamp no clock could have written is
+  // the other, and the one a peer can mint on purpose.
   const pulled: Op[] = [];
   const unreadable: number[] = [];
   for (const op of response.ops) {
@@ -177,6 +179,7 @@ function skipped(before: Unreadable | undefined, seqs: readonly number[]): Unrea
     count: (before?.count ?? 0) + seqs.length,
     fromSeq: Math.min(before?.fromSeq ?? Infinity, ...seqs),
     at: Date.now(),
+    build: VERSION,
   };
 }
 
@@ -232,7 +235,15 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // One round with nothing to push is the plain pull — the case where this
   // phone has written nothing since it last synced, which is most of them.
   const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
-  let since = key.lastSeq;
+  // Skipping an op is only safe because it is still on the server. The first
+  // run of any build but the one that skipped it pulls again from the earliest
+  // one, and starts the record afresh: whatever still will not open is written
+  // down again, and what now opens lands. Once per build, not per run, so a
+  // row nothing can read costs one re-pull per deploy rather than one a minute.
+  let rewinding = key.unreadable !== undefined && key.unreadable.build !== VERSION;
+  let since = rewinding
+    ? Math.max(0, Math.min(key.lastSeq, key.unreadable!.fromSeq - 1))
+    : key.lastSeq;
   let pushed = 0;
   let pulledCount = 0;
 
@@ -297,7 +308,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
         lastSyncedAt: Date.now(),
         failure: undefined,
-        unreadable: skipped(current?.unreadable, unreadable),
+        unreadable: skipped(rewinding ? undefined : current?.unreadable, unreadable),
       });
     }).then(() => committed(), (err: unknown) => {
       committed("failed");
@@ -305,6 +316,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     });
 
     since = Math.max(latestSeq, since);
+    rewinding = false;
     pushed += pending.length;
     pulledCount += pulled.length;
   }

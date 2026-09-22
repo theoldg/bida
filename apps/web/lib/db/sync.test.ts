@@ -5,6 +5,7 @@ import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, saveGroupKey } from "./commands";
 import { getDevice } from "./device";
 import { syncAll, syncGroup } from "./sync";
+import { VERSION } from "../version";
 
 /**
  * The sync engine's job is narrow: ship unsynced ops out, absorb whatever
@@ -114,6 +115,103 @@ describe("syncGroup", () => {
     expect(key?.unreadable?.fromSeq).toBe(2);
     // And the group is usable: both readable expenses folded.
     expect(await db().expenses.where("groupId").equals(groupId).count()).toBe(2);
+  });
+
+  it("skips a stamp no clock could write instead of failing every sync after it", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const expense = (seq: number, hlc: string) => ({
+      id: `op-${seq}`, groupId, entity: "expense" as const, entityId: `e-${seq}`,
+      kind: "create" as const,
+      patch: {
+        description: `e${seq}`, occurredAt: 1, amountMinor: 1000, currency: "EUR",
+        rateToBase: "1", baseAmountMinor: 1000, paidBy: theo,
+        split: { mode: "equal", members: [theo] },
+      },
+      hlc, actor: theo, note: null, createdAt: Date.now(), seq,
+    });
+    // The middle one used to overflow the counter inside the commit, which
+    // rolled back and came back on every retry, for every phone in the group.
+    const ops = await serverOps(groupId, [
+      expense(1, formatHlc(createHlcState("peer", Date.now(), 0))),
+      expense(2, "999999999999999-99999-evil"),
+      expense(3, formatHlc(createHlcState("peer", Date.now(), 1))),
+    ]);
+    vi.stubGlobal("fetch", vi.fn(async () =>
+      new Response(JSON.stringify({ assigned: {}, ops, latestSeq: 3 })),
+    ));
+
+    const outcome = await syncGroup(groupId);
+
+    expect(outcome?.pulled).toBe(2);
+    expect((await db().groupKeys.get(groupId))?.unreadable).toMatchObject({ count: 1, fromSeq: 2 });
+    // And the clock was not dragged to the end of time by it.
+    expect((await getDevice()).hlcPhysical).toBeLessThan(10 ** 14);
+  });
+
+  it("winds back to what it skipped, once, on a build that did not skip it", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({
+      groupId, secret: "shh", lastSeq: 9,
+      unreadable: { count: 1, fromSeq: 4, at: 1, build: "0.9.0" },
+    });
+    const late = await serverOps(groupId, [{
+      id: "op-4", groupId, entity: "expense", entityId: "e-4", kind: "create",
+      patch: {
+        description: "Riad", occurredAt: 1, amountMinor: 1000, currency: "EUR",
+        rateToBase: "1", baseAmountMinor: 1000, paidBy: theo,
+        split: { mode: "equal", members: [theo] },
+      },
+      hlc: formatHlc(createHlcState("peer", Date.now(), 0)),
+      actor: theo, note: null, createdAt: Date.now(), seq: 4,
+    }]);
+    const asked: number[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[]; since: number };
+      asked.push(body.since);
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, 10 + i]));
+      // Only the first ask reaches back far enough to get the op again.
+      const ops = body.since < 4 ? late : [];
+      return new Response(JSON.stringify({ assigned, ops, latestSeq: 9 + body.ops.length }));
+    }));
+
+    await syncGroup(groupId);
+    // This build reads it: the expense lands, and the record of it goes.
+    expect(asked[0]).toBe(3);
+    expect(await db().expenses.get("e-4")).toBeDefined();
+    const key = await db().groupKeys.get(groupId);
+    expect(key?.unreadable).toBeUndefined();
+    expect(key?.lastSeq).toBeGreaterThanOrEqual(9);
+
+    // Nothing left to wind back to, so the next run asks from the cursor.
+    await syncGroup(groupId);
+    expect(asked.at(-1)).toBe(key?.lastSeq);
+  });
+
+  it("does not wind back again on the build that did the skipping", async () => {
+    const { groupId } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({
+      groupId, secret: "shh", lastSeq: 9,
+      unreadable: { count: 1, fromSeq: 4, at: 1, build: VERSION },
+    });
+    const asked: number[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[]; since: number };
+      asked.push(body.since);
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, 10 + i]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: 9 + body.ops.length }));
+    }));
+
+    await syncGroup(groupId);
+
+    expect(asked[0]).toBe(9);
+    expect((await db().groupKeys.get(groupId))?.unreadable?.fromSeq).toBe(4);
   });
 
   it("does nothing when this device holds no secret for the group", async () => {

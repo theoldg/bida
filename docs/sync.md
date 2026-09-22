@@ -88,7 +88,11 @@ throws it away.
 
 **Any stamp is adopted, however far ahead it reads.** There is no time limit on
 an update: a late or far-future op is still somebody's expense, and refusing it
-loses that expense to protect a guarantee adopting it already provides.
+loses that expense to protect a guarantee adopting it already provides. What
+that costs is a clock pinned ahead that the wall never catches, so a full
+counter carries into the millisecond rather than throwing. The one refusal is a
+stamp no clock writes — the wrong shape, or past the year 5138 (`isHlc`, from
+`validateOp`) — which is skipped like any op this build cannot read.
 
 **Order by HLC, never by `seq` and never by `createdAt`.** `seq` orders arrival
 at the server and answers only "what have I not pulled yet".
@@ -207,11 +211,12 @@ in `pushPullGroup` is the whole of why the server holds ciphertext. A pulled op
 is opened before anything is stored, so a run never half-applies. One that will
 not open is skipped rather than fatal — it is counted on the group key and
 printed on `/diag`, because the same row came back on every retry and wedged
-the group for good. What mints one is the seal's version byte: ship a second
-format and a phone that hasn't updated meets ops it must refuse, and the ones
-it *can* read are no reason to hold hostage. The cursor moves past a skipped
-op, so `unreadable.fromSeq` is the number a later build winds `lastSeq` back to
-in order to see it again. A single-flight loop triggered by a local write
+the group for good. What mints one is a newer build — a new entity or op kind,
+or a second seal format — so `openOp` turns anything wrong with an opened row
+into a `SealError`, the one error the pull skips. The cursor moves past a
+skipped op, so the record carries `fromSeq` and the build that skipped it, and
+the first run of any other build pulls again from `fromSeq - 1`: once per
+build, so a row nothing can read costs a re-pull per deploy. A single-flight loop triggered by a local write
 (debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the

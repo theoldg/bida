@@ -21,7 +21,7 @@ function op(over: Partial<Op> = {}): Op {
     entityId: "e-1",
     kind: "create",
     patch: { title: "Dinner at Da Enzo", amountMinor: 8450, currency: "EUR" },
-    hlc: "0000001756300000000-000000-abc123",
+    hlc: "000001756300000-00000-abc123",
     actor: "m-1",
     note: "split three ways",
     createdAt: 1756300000000,
@@ -122,6 +122,22 @@ describe("sealOp / openOp", () => {
     // top bits: "AQ..." is version 1, "Ag..." is version 2.
     const future = "Ag" + sealed.sealed.slice(2);
     await expect(openOp(crypto, { ...sealed, sealed: future })).rejects.toThrow(/version/);
+  });
+
+  // The caller skips a SealError and fails on anything else, so an op that
+  // opens but is not one this build knows must be a SealError — or a newer
+  // build's first new entity wedges every phone that has not updated.
+  it("refuses an op from a newer build as a SealError, so it can be skipped", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    const sealed = await sealOp(crypto, op({ entity: "category" as Op["entity"] }));
+    await expect(openOp(crypto, sealed)).rejects.toThrow(SealError);
+  });
+
+  it("refuses a stamp no clock could have written as a SealError", async () => {
+    const crypto = await deriveGroupCrypto(SECRET, GROUP);
+    for (const hlc of ["zzz", "999999999999999-99999-evil", "000001756300000-00000-NOPE"]) {
+      await expect(openOp(crypto, await sealOp(crypto, op({ hlc })))).rejects.toThrow(SealError);
+    }
   });
 
   it("refuses something that isn't base64 at all", async () => {

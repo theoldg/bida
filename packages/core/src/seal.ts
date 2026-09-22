@@ -145,8 +145,11 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
 }
 
 /**
- * Open a sealed op, or throw `SealError`. **Never skip a body that will not
- * open** — skipping advances the sync cursor and loses the op for good. The
+ * Open a sealed op, or throw `SealError` — and only that, for anything wrong
+ * with the row itself. The caller skips a `SealError` and records where it
+ * was (`lib/db/sync.ts`), so an op this build cannot read costs that op and
+ * not the group's sync. That includes one that opens fine and names an entity
+ * or a kind a newer build added: the likeliest unreadable op there is. The
  * envelope is re-validated despite arriving typed: it arrives from the network.
  */
 export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> {
@@ -175,12 +178,16 @@ export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> 
     throw new SealError("sealed op opened to something that isn't JSON");
   }
   if (typeof body !== "object" || body === null) throw new SealError("sealed op body isn't an object");
-  return validateOp({
-    ...(body as Record<string, unknown>),
-    id: sealed.id,
-    groupId: sealed.groupId,
-    seq: sealed.seq ?? null,
-  });
+  try {
+    return validateOp({
+      ...(body as Record<string, unknown>),
+      id: sealed.id,
+      groupId: sealed.groupId,
+      seq: sealed.seq ?? null,
+    });
+  } catch (err) {
+    throw new SealError(`sealed op opened to one this build cannot read: ${(err as Error).message}`);
+  }
 }
 
 function aad(id: string, groupId: string): Uint8Array {

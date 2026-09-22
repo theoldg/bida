@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, maxHlc, parseHlc,
+  compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, isHlc, maxHlc, parseHlc,
 } from "./hlc.js";
 
 describe("hlc", () => {
@@ -56,6 +56,35 @@ describe("hlc", () => {
     const next = hlcReceive(state, remote, 1000);
     expect(next.physical).toBe(10 ** 12);
     expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
+  });
+
+  // A peer pinned far ahead means the wall clock never catches up, so every op
+  // sent or received spends the counter. Running out used to throw, and a
+  // phone that throws here can never write or sync again.
+  it("carries a full counter into the millisecond instead of throwing", () => {
+    const full = createHlcState("aaa", 5000, 99999);
+    const sent = hlcSend(full, 1000);
+    expect(sent.state).toMatchObject({ physical: 5001, counter: 0 });
+    expect(compareHlc(sent.hlc, formatHlc(full))).toBe(1);
+
+    const remote = formatHlc(createHlcState("bbb", 5000, 99999));
+    const got = hlcReceive(createHlcState("aaa", 0, 0), remote, 1000);
+    expect(got).toMatchObject({ physical: 5001, counter: 0 });
+    expect(compareHlc(formatHlc(got), remote)).toBe(1);
+  });
+
+  it("knows a stamp it can adopt from one it cannot", () => {
+    expect(isHlc(formatHlc(createHlcState("abc", 1756300000000, 7)))).toBe(true);
+    // Far ahead is still a clock — somebody's phone set to 2099.
+    expect(isHlc(formatHlc(createHlcState("abc", 4_100_000_000_000, 0)))).toBe(true);
+    expect(isHlc(formatHlc(createHlcState("abc", 10 ** 14 - 1, 0)))).toBe(true);
+    // Past the year 5138 it is not, and adopting it would run out of digits.
+    expect(isHlc(formatHlc(createHlcState("abc", 10 ** 14, 0)))).toBe(false);
+    expect(isHlc("999999999999999-99999-evil")).toBe(false);
+    for (const bad of ["zzz", "", "000001756300000-00000-", "000001756300000-00000-ABC",
+      "0000001756300000000-000000-abc123"]) {
+      expect(isHlc(bad)).toBe(false);
+    }
   });
 
   it("rejects malformed stamps and node ids", () => {
