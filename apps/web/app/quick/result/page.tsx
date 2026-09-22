@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/bits";
 import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog, Dialog } from "@/components/dialog";
-import { Icon } from "@/components/icons";
+import { FlipLabel } from "@/components/icons";
 import { MemberBill } from "@/components/member-bill";
 import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
@@ -114,9 +114,12 @@ export default function QuickResultPage() {
 
           {/* The one act this screen exists for, and then the way out. */}
           <div className="pad" style={{ paddingTop: 18 }}>
+            {/* The label turns away and the check comes up behind it, the flip
+                every other copy in the app answers with (`FlipLabel`) — here
+                on the button itself, because this screen has nothing else on
+                it to say the clipboard took the bill. */}
             <button type="button" className="btn btn-p btn-lg" onClick={() => void hand()}>
-              {copied ? <Icon name="check" size={16} /> : null}
-              {copied ? copy.quick.copied : copy.quick.copy}
+              <FlipLabel label={copy.quick.copy} done={copy.quick.copied} on={copied} />
             </button>
           </div>
           <div className="pad" style={{ paddingTop: 8, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>

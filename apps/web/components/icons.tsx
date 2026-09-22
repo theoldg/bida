@@ -184,3 +184,27 @@ export function FlipCheck({ name, size = 16, on }: {
     </span>
   );
 }
+
+/**
+ * The same flip across a whole line: an action's label turns away and a check
+ * with its own word comes up behind it. For a button that says what it does in
+ * words rather than a glyph, so answering in place still reads as the gesture
+ * every other copy in this app makes.
+ *
+ * Both faces are always drawn, for the reason above; the one facing away is
+ * hidden from a reader as well, so the button is named by whichever face is
+ * turned towards them.
+ */
+export function FlipLabel({ label, done, on }: {
+  label: string; done: string; on: boolean;
+}) {
+  return (
+    <span className={`flipcheck line${on ? " on" : ""}`}>
+      <span className="flipface" aria-hidden={on}>{label}</span>
+      <span className="checkface" aria-hidden={!on}>
+        <Icon name="check" size={16} />
+        {done}
+      </span>
+    </span>
+  );
+}

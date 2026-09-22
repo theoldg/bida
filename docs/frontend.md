@@ -233,8 +233,11 @@ confers nothing without the secret.
   glyph in — that cell is the row's own figure (`.grouprow .ramt.copied`); on
   the group's kebab (`MenuButton`'s `confirmed`) and People's top bar
   (`InviteButton`) it is the 18px glyph itself, same timings at a shallower
-  perspective (`FlipCheck`, `.flipcheck`). A transition and not the swap's
-  keyframes, because this reverses itself a second and a half later when
+  perspective (`FlipCheck`, `.flipcheck`). A quick split's hand-over is not a
+  link but it is a copy, so it answers the same way from its own button: the
+  label turns and the check comes up beside the word behind it, the same flip
+  across a whole line (`FlipLabel`, `.flipcheck.line`). A transition and not
+  the swap's keyframes, because this reverses itself a second and a half later when
   `invite.copied` lapses and a class going away replays no animation — which is
   also why both faces stay drawn. Without any of it the one action in the app
   with no visible result had no result at all.
