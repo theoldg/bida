@@ -44,7 +44,7 @@ Next.js (`output: 'export'`) + hand-written CSS + hand-rolled components
 Hono API by one Cloudflare Worker. Data is an append-only op log in IndexedDB
 (Dexie), synced to D1 **sealed** — the server cannot read a group
 ([ADR-0036](docs/decisions/0036-the-server-cannot-read-a-group.md)). No accounts
-— a group is a secret link, and that link is now the key as well. [architecture.md](docs/architecture.md) ·
+— a group is a secret link, and that link is the key as well. [architecture.md](docs/architecture.md) ·
 [hosting.md](docs/hosting.md).
 
 ## Current state
@@ -54,8 +54,7 @@ holds three kinds of entry — expense, income, transfer
 ([ADR-0010](docs/decisions/0010-what-an-entry-is.md)), state two phones can
 merge into that no check can prevent is named and repaired by
 [docs/invariants.md](docs/invariants.md), and what syncs is encrypted end to
-end. **The D1 log is finished data now** — the encryption cutover was the last
-reset it will ever get ([standing-instructions](docs/standing-instructions.md#product)).
+end. **The D1 log is finished data** — it is never reset again ([standing-instructions](docs/standing-instructions.md#product)).
 
 **Exact state and next action live in
 [docs/implementation-status.md](docs/implementation-status.md)** — not here, so

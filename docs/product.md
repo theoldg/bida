@@ -29,8 +29,7 @@ ledger you cannot take elsewhere is a ledger somebody else owns.
    read only ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 2. **A receipt reads itself into the form.** Photograph a bill and it fills the
    expense, line items and all ([ADR-0016](decisions/0016-receipts.md)). The
-   photo is read and thrown away — storing it was the other half of this and
-   was cut.
+   photo is read and thrown away.
 3. **A personal lens, always on.** The app reads as *your* ledger: what each
    row did to your balance, signed and coloured; rows you're not in faded back;
    your net on top ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
@@ -58,7 +57,7 @@ different story lays it down over the old one.
 
 **The tip jar.** One screen (`/g/tip`, off a FAB on the balances tab), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two
-buttons — `$5 ≈ 10,000 receipt scans`
+buttons — `$5 ≈ 4,000 receipt scans`
 ([what a scan costs](receipt-scanning.md#what-the-scan-costs)), cut by the
 group the way the group cuts everything else, then Buy Me a Coffee and an
 ordinary expense to record what you gave. Donating happens on somebody else's

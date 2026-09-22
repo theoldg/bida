@@ -56,7 +56,7 @@ link with ([data-model.md](data-model.md#reading-a-tricount-back)), and the
 Core being pure is what makes the money logic testable and lets client and
 server agree without a second implementation. Keep it that way.
 
-## The server is deliberately stupid, and now deliberately blind
+## The server is deliberately stupid, and deliberately blind
 
 It appends ops, assigns a per-group sequence number and hands them back. **It
 does not fold**, does not compute balances, and cannot read an op at all: every
@@ -65,9 +65,9 @@ receives ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). All it
 validates is the envelope it routes on.
 
 That halves the code, removes a class of client/server disagreement, and keeps
-us trivially inside D1's free tier. It also closes a door that used to be open:
-anything wanting to read content — email digests, a public summary page — has to
-run on a device that holds a key, or reverse the ADR.
+us trivially inside D1's free tier. The cost: anything wanting to read content
+— email digests, a public summary page — has to run on a device that holds a
+key, or reverse the ADR.
 
 ## Lifecycle of a new expense
 

@@ -34,16 +34,14 @@ pnpm drive stop
 **Two devices are two names.** Each phone is its own `newContext()` — its own
 IndexedDB, the part a single-context test cannot simulate — and `serveWorker()`
 puts a real Worker and D1 behind them, so `ana` and `bruno` sync through the API
-rather than a mock. That is the stack the `/join` bug needed
-([sync.md](sync.md#gotchas)): `ana` creates the group, `clipboard` yields the
-invite link, `bruno` opens it on a phone with no storage at all — the "never used
-the app before" device the bug reports care about.
+rather than a mock: `ana` creates the group, `clipboard` yields the invite
+link, `bruno` opens it on a phone with no storage at all — the "never used the
+app before" device ([sync.md](sync.md#gotchas)).
 
-**A figure shown beside a balance has to be able to reach it.** Two of the three
-defects a blind walk turned up were a screen stating part of an arithmetic it
-presented as the whole: a balance summary missing the transfer leg, and a split
-asking for an amount that was typed but unconvertible. Neither is caught by a
-test of the arithmetic, which was right both times.
+**A figure shown beside a balance has to be able to reach it.** What a blind
+walk finds that tests don't is a screen stating part of an arithmetic as the
+whole (a summary missing the transfer leg, say) — the arithmetic itself is
+right.
 
 **A scan can be driven without a camera or a key.** `receipt <name>` arms the
 phone rather than the screen — the same family as `offline` — and the scan
@@ -75,8 +73,7 @@ accumulated history. Its state lives in `.drive/`, gitignored.
 Its first use is the one it is shaped by — handing an agent the app the way a
 stranger gets it, so it has to work the screen out rather than read the source.
 So it offers no vocabulary from the app: no `#g-name`, no `newGroup`, only
-numbers. Five rules separate it from dumping `innerText`, each one a wrong
-answer it gave before:
+numbers. Five rules separate it from dumping `innerText`:
 
 - **Layout decides the lines, not tags.** The app writes `<span>` with
   `display:block`, which a tag list read as `Split3 people`.
@@ -85,16 +82,13 @@ answer it gave before:
   the scrim is dropped. `:modal` answers this for a `<dialog>`; the row menu is
   a fixed veil with a `role="menu"` beside it and no dialog at all, so a scrim
   is also recognised by hit-testing the centre of the screen. **The fold is
-  asked after the scrim, not before it** — a row below the screen kept its
-  number with the menu open, and pressing it worked only because Playwright's
-  scroll closed the menu on the way down.
+  asked after the scrim, not before it**, or a row below the screen keeps its
+  number with the menu open.
 - **A phone is 844px tall.** What is below the fold is marked a scroll away.
 - **Something on top covers a point, not a control.** The tab bar crosses the
   last ledger row; the row is pressable everywhere it isn't. So the hit test
   asks about the middle and the four edges, a press is aimed at whichever
-  answered, and only a control with no point left is out of reach. Reading the
-  demo used to lose whichever entry the bar happened to cross, and with no
-  `scroll` command, lose it for good.
+  answered, and only a control with no point left is out of reach.
 - **CSS is also text.** `text-transform` is what a person reads (`LEDGER`, not
   `Ledger`), `text-overflow` is what they never get to (`…`), and
   visually-hidden text is read out by screen readers but is not on the page, so
@@ -117,7 +111,7 @@ control that never tells a screen reader which segment is live is a finding, and
 this is where it surfaces. Members of one set are labelled alike, which is what
 separates a segmented control from a control standing between two fields: the
 transfer's two sides and the swap button between them are three buttons painted
-two ways, and were read out as a question whose answer was the swap. Styling
+two ways, and must not read as a question whose answer is the swap. Styling
 answers only from three members up: in a pair
 each differs from the other and nothing makes one the odd one out, so a pair with
 nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
@@ -147,7 +141,6 @@ nothing in ARIA is read as `nothing marked as chosen` rather than guessed at.
   the session — `forget` is not enough, the caches are the context's.
 - **The daemon holds a browser and a Worker**, and `stop` takes both with it:
   `serveWorker` spawns `wrangler` detached and signals the process group, so the
-  `workerd` underneath it goes too. It used to survive, and enough survivors
-  exhaust memory — at which point a fresh `start` hangs before it ever writes
-  `.drive/ready.json`. If a start ever hangs, that is still the first thing to
-  check with `ps`.
+  `workerd` underneath it goes too. Surviving `workerd`s exhaust memory, and a
+  fresh `start` then hangs before it writes `.drive/ready.json` — if a start
+  hangs, check `ps` first.

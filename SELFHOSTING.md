@@ -79,15 +79,16 @@ run in the `pre-push` hook, which `pnpm install` wires up.
 
 ## Receipt scanning
 
-`POST /api/groups/:id/scan` proxies to the Gemini API using a Worker secret:
+`POST /api/groups/:id/scan` proxies to Gemini on Vertex AI using a Worker secret:
 
 ```bash
 pnpm --filter @bida/api exec wrangler secret put GEMINI_API_KEY
 ```
 
-That is your Google AI Studio key, and it needs the Cloudflare auth above like
-anything else here. Set it once, not per deploy. Without it the scan button fails and the rest of
-the app is unaffected.
+That is an API key from a Google Cloud project with Vertex AI enabled — **not**
+an AI Studio key, which Vertex refuses with `PERMISSION_DENIED`
+([docs/hosting.md](docs/hosting.md#deploying)). Set it once, not per deploy.
+Without it the scan button fails and the rest of the app is unaffected.
 
 You can also skip it entirely: each person can paste their own Gemini key under
 **Advanced**, and a phone that has one calls Google directly and never asks your
@@ -156,9 +157,10 @@ phones.
 
 ## What you're signing up for
 
-- Nothing is ever deleted from the op log, and there is no admin panel and no
-  way to delete a group. [docs/hosting.md](docs/hosting.md) does the arithmetic
-  on when 500 MB runs out.
+- Nothing is deleted from the op log except a whole group, by someone holding
+  its link at `/delete-my-data`; there is no admin panel.
+  [docs/hosting.md](docs/hosting.md) does the arithmetic on when 500 MB runs
+  out.
 - D1's only infrastructure-level undo is Time Travel: 7 days on the free plan.
 - The server cannot read a group's data — it is encrypted on the phone
   ([ADR-0036](docs/decisions/0036-the-server-cannot-read-a-group.md)). That also

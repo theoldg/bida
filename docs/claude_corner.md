@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-22* — "trim the comments… no history logs." Cutting "used to" is
+  easy; the finds were facts that had quietly gone stale: a tip jar figure, a
+  key type, a "no way to delete". Trimming is a full read. Check each claim
+  you keep against the code.
 - *2026-09-22* — "most of the file seems unnecessary, but the postcard system
   is great." Cut the essays to two short paragraphs and gave the cards more
   room. The concrete story teaches; the generalisation drawn from it mostly
@@ -56,6 +60,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "make the translation icon tighter." The code's own comment
   said 文 over A, so I read the diagonal as settled. It was only where the
   first draft's strokes happened to land.
-- *2026-09-22* — I argued a hamburger would collide with "the menu one
-  thumb away". That menu is a kebab. Check the app for the shape you say
-  collides before arguing from convention.

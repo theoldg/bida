@@ -3,17 +3,13 @@
 *For: anyone adding a check that reads other entities, or touching member
 identity or the merge rule.*
 
-The class of defect this file exists for is closed: every invariant in the
-table below is held by something the code enforces, not by a doc. It stays as
-the map — what each one is held by, why the guards alone were never enough, and
-what a new one has to do to be added.
+Every invariant in the table below is held by something the code enforces, not
+by a doc. This file is the map — what each one is held by, why guards alone
+are never enough, and what a new one has to do to be added.
 
 **Why this class and not another.** Every other bug costs a screen. These cost
-the ledger. Two phones that fold the same log into different balances break the
-one promise the app makes, and they break it quietly — nobody asked for the
-money to move, so nobody is looking when it does. The two defects found so far
-both reached a real group: one left a departed member holding a debt with no way
-to settle it, the other priced one person's dinner twice.
+the ledger, and quietly — nobody asked for the money to move, so nobody is
+looking when it does.
 
 ## The rule
 
@@ -63,16 +59,14 @@ missing a refusal yields a state with no trace to repair from.
 
 ## Why each is held the way it is
 
-The calls that closed this, and what each one bought. The merge rule and the
-name key are the two worth copying: each retires an invariant rather than
-registering a healer for it.
+The merge rule and the name key are the two worth copying: each retires an
+invariant rather than registering a healer for it.
 
 **An entry merges whole, not per field**
 ([ADR-0002](decisions/0002-append-only-op-log.md),
 [sync.md](sync.md#the-operation)). It belongs on this list because of what it
 removes: an amount from one phone beside a split from another that does not sum
-to it was reachable, dropped the entry out of balances behind a warning, and was
-the one case no healer could repair — nothing recovers intent from two
+to it is the one case no healer could repair — nothing recovers intent from two
 half-edits. Making every stored entry a version somebody looked at turns that
 invariant **unreachable**, which is always the answer to prefer.
 
@@ -85,8 +79,8 @@ as such.
 `memberId = hash(groupId + nameKey)`, so two phones adding "Ana" offline mint
 the *same id* — the creates are one entity, the fold merges them, and there is
 no duplicate to find. The refusal on the field stays, because it costs nothing
-and catches every case one device can see both halves of; it now says what to
-do rather than only saying no. The reasoning, what it costs and what was
+and catches every case one device can see both halves of, and says what to do
+rather than only saying no. The reasoning, what it costs and what was
 rejected: [ADR-0034](decisions/0034-a-member-is-their-name.md).
 
 **A cleared rate comes back the same way a member does.** A live entry — an
@@ -121,9 +115,9 @@ a shared ledger is not where that gets settled.
 
 It signs as the subject, not as whoever noticed, and that is what lets it run
 in `syncGroup` — where merges actually happen — rather than waiting for
-somebody to open a screen. All healing moved there with it, for the same
-reason: a local write is refused before it lands, so a merge is the only thing
-that can produce an illegal state. It also makes the empty group impossible
+somebody to open a screen. All healing runs there, for the same reason: a
+local write is refused before it lands, so a merge is the only thing that can
+produce an illegal state. It also makes the empty group impossible
 rather than merely rare, since every claimed member's phone restores them.
 
 It is the one repair the registry cannot hold, and `restoreClaimDrafts` lives
@@ -133,12 +127,12 @@ resurrect every claimed member and forgetting would end nothing.
 
 ## Open questions
 
-- **What does the removal sheet promise now?** If a claimed phone always
+- **What does the removal sheet promise?** If a claimed phone always
   restores its person, removal only sticks against somebody who has forgotten
   the group or lost the phone. That is the intended behaviour, but the sheet
   still reads as though removing is final, and it is the one screen that would
   then be lying.
-- **Does the log stay small enough?** Measured, and the answer is yes for now:
+- **Does the log stay small enough?** Measured, and the answer is yes:
   whole-entity ops cost about 2.5x, and a scanned expense's `receiptItems` is
   most of what the database holds
   ([hosting.md](hosting.md#how-full-can-it-get)). Ops are never collected
@@ -147,9 +141,9 @@ resurrect every claimed member and forgetting would end nothing.
 
 ## Enforcement
 
-Docs are how a cold agent learns this; they enforce nothing. `data-model.md`
-described the removal guard correctly and the guard still shipped without a
-healer. And the server cannot help — it stores ops and assigns `seq`, it never
+Docs are how a cold agent learns this; they enforce nothing — a guard
+described correctly in a doc can still ship without a healer. And the server
+cannot help — it stores ops and assigns `seq`, it never
 folds ([ADR-0002](decisions/0002-append-only-op-log.md)) — so enforcement is
 client-side at authoring time or nowhere. Four layers, weakest first:
 
@@ -182,13 +176,11 @@ dropped it would erase the attribution to satisfy a property nobody wanted.
 
 ## Gotchas
 
-- **A guard and its healer must be one declaration.** They used to be two
-  functions that happened to agree — one refusing, another detecting — and free
-  to drift. Every defect in this file was a guard whose healer was never
-  written: the check looked like enforcement, so nobody asked what happened when
-  it lost. `Invariant` now requires the repair and makes the refusal the
-  optional half, which is the inversion that matters.
+- **A guard and its healer must be one declaration.** Two functions that happen
+  to agree — one refusing, another detecting — drift, and a guard looks like
+  enforcement, so nobody asks what happens when it loses. `Invariant` requires
+  the repair and makes the refusal the optional half.
 - **Healers must not fight.** One that tombstones and one that lifts, pointed
   at the same row, is an op loop that syncs. Whatever runs them has to reach a
-  fixed point and be tested for it, especially once healing moves onto the sync
-  path where a repair triggers the push that triggers the repair.
+  fixed point and be tested for it, since on the sync path a repair triggers
+  the push that triggers the repair.
