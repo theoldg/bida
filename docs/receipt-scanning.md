@@ -180,7 +180,7 @@ demanded. Four things follow from fixing it:
 - **Its own prompt** (`scan-body.ts`), about a third shorter than the
   photograph's, with no columns, no printer and no merchant in it. The two are
   held together by the schema and by the conventions neither may disagree about
-  — plain decimal, deductions positive, tax only on top, no title in capitals —
+  — plain decimal, deductions positive, tax only on top, nothing in capitals —
   rather than by shared paragraphs (`apps/api/src/scan-body.test.ts`).
 - **A line states its price either way.** `amount` is what the whole line came
   to; `unitAmount` is the price of one, beside a `quantity`. The model fills
@@ -394,7 +394,7 @@ and differs in the three places [Typing a bill in](#typing-a-bill-in) names.
 
 | It returns | Type |
 |---|---|
-| title | string → `description` — the merchant's name, minus the parts that aren't the name ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what was bought where the name alone wouldn't say ("Lidl - barbecue"). Nothing added when the merchant already says it, when the lines are too mixed, or when none are printed: a bare name beats a wrong guess. Cased as a name is written, never in the capitals a till prints ("BAR ZAHRA" → "Bar Zahra"), keeping the casing a brand owns ("IKEA", "H&M") |
+| title | string → `description` — the merchant's name, minus the parts that aren't the name ("Bar Zahra - Sarl M. Benali" → "Bar Zahra"), plus two or three words of what was bought where the name alone wouldn't say ("Lidl - barbecue"). Nothing added when the merchant already says it, when the lines are too mixed, or when none are printed: a bare name beats a wrong guess. |
 | total | plain decimal notation, `parseMinor()`-ready: `"42.50"`, `"1234.50"` — the model normalizes whatever separators the receipt prints, never local code. Only ever a figure the bill itself states: null where it states none, and never added up ([what a reading is checked against](#what-a-reading-is-checked-against)) |
 | tip | a separate tip/service-charge line, same normalized notation, or null |
 | tax | tax charged *on top of* the lines, same notation, or null — VAT already inside the printed prices, which most European receipts break out near the foot, is not this and would be counted twice |
@@ -403,6 +403,14 @@ and differs in the three places [Typing a bill in](#typing-a-bill-in) names.
 | date | `YYYY-MM-DD` if legible, else null — trusted as printed, no date parser here |
 | lineItems | `{ label, labelEn, amount, unitAmount, quantity }[]` — printed label (a label the printer wrapped over several rows is one item), English translation (null if already English), a count only when the bill actually states one (e.g. "2x", a qty column) — never inferred from repeated lines or defaulted to 1 — and **exactly one of the two figures**, in the same normalized notation as `total`. `amount` is what the whole line came to, which is what a till prints and so always the photograph's answer; `unitAmount` is the price of one, which is how somebody typing writes it ("3 chicken at 13 each"), and `lineMinor` multiplies it by the count |
 | error | a short, lightly humorous sentence if the photo isn't a receipt or is unreadable (e.g. "Too blurry — I've read tea leaves with better odds."), else null — every other field is null/empty when set. In Staś mode the same sentence, delivered as an insult aimed at the photographer (above) |
+
+**Nothing comes back in the printer's capitals.** A till shouts every string it
+prints, and the title, the line-item labels and the discount labels are all
+written the way a name is written instead: "BAR ZAHRA" → "Bar Zahra", "POULET
+ROTI" → "Poulet roti", keeping the casing a brand owns ("IKEA", "H&M",
+"lululemon"). The casing is the only thing the reading changes about a label —
+the words, their language and their spelling are the receipt's, or the person
+checking the grid against the paper is comparing two different bills.
 
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
 reached by tapping the Items tab's button — "Assign who had what" on a bill
@@ -862,6 +870,13 @@ and the draft it fills are all the app's own.
   model told the lines have to equal the total closes the gap by adjusting a
   line, and a bill that has been made to add up is the one error `checkScan`
   cannot see.
+- **A rule written for one field governs one field.** The prompt told the model
+  not to shout a *title* and said nothing about labels, so an expense read "Bar
+  Zahra" while every line under it stayed in the till's capitals — and the
+  wording that caused it, "its label exactly as printed", looked like a
+  transcription rule rather than a casing one. Where a convention is about how
+  a string is written rather than which string it is, give it its own paragraph
+  naming every field it covers (`PHOTO_CASING`).
 - `gemini-2.5-flash` is **404 for new keys**, and Google's error names the
   replacement. If `3.1-flash-lite` ever goes the same way, try the current
   `-latest` alias before assuming the free tier is gone. A 503 on the same key

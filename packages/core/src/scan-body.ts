@@ -10,9 +10,9 @@
  * them together, not shared paragraphs.
  *
  * Both promise one answer shape and one set of conventions: plain decimal,
- * deductions as positive magnitudes, tax only where it sits on top, no title
- * in capitals. Within a medium, tone moves the refusal paragraph and nothing
- * else — `apps/api/src/scan-body.test.ts` holds them to both.
+ * deductions as positive magnitudes, tax only where it sits on top, nothing
+ * written in capitals. Within a medium, tone moves the refusal paragraph and
+ * nothing else — `apps/api/src/scan-body.test.ts` holds them to both.
  */
 
 /** The model both paths call. Ours to move, never a caller's. */
@@ -78,7 +78,7 @@ const PHOTO_FIELDS_HEAD =
   + "mark; a separate tip or service charge line if one is printed apart from the total, "
   + "same normalized notation, else null; the ISO 4217 currency code if legible; the "
   + "date as YYYY-MM-DD if legible. "
-  + "The title is the merchant's name as printed, with three adjustments. Strip whatever "
+  + "The title is the merchant's name as printed, with two adjustments. Strip whatever "
   + "isn't the name — a legal form or registered owner, a branch address or store "
   + "number, a slogan, a till or VAT line: \"Bar Zahra - Sarl M. Benali\" is \"Bar "
   + "Zahra\", \"Hotel Amira, 12 Rue Bab Doukkala\" is \"Hotel Amira\". And when the "
@@ -86,11 +86,7 @@ const PHOTO_FIELDS_HEAD =
   + "words for what was bought, after \" - \": \"Lidl - barbecue\", \"Carrefour - "
   + "breakfast\". Add nothing when the merchant already says it (a restaurant, a café, "
   + "a taxi), when the lines are too mixed to sum up in a few words, or when no lines "
-  + "are printed — a bare name beats a wrong guess. Write the title the way a name is "
-  + "written, not the way a till prints one: a receipt that shouts \"BAR ZAHRA\" or "
-  + "\"CAFE DES NOMADES\" gives the title \"Bar Zahra\", \"Cafe des Nomades\". Never "
-  + "return a title in all capitals. Keep the casing the brand itself uses where it is "
-  + "not merely the printer's (\"IKEA\", \"H&M\", \"McDonald's\", \"lululemon\"). "
+  + "are printed — a bare name beats a wrong guess. "
   + "Keep the whole title under 40 characters, and null if no name is legible and the "
   + "lines say nothing either. "
   + "Return tax only where it is charged on top of the line items — a figure the "
@@ -106,8 +102,8 @@ const PHOTO_FIELDS_HEAD =
   + "\"8.00\"). Use an empty list if the receipt takes nothing off. It doesn't matter "
   + "whether a deduction is printed against one item or against the whole bill; "
   + "either way it belongs in this list and not in the line items. "
-  + "Also return every line item: its label exactly as "
-  + "printed in the receipt's own language, an English translation of that label (null "
+  + "Also return every line item: its label as "
+  + "printed, in the receipt's own language, an English translation of that label (null "
   + "if it's already English), its amount in the same normalized decimal notation as the "
   + "total, and a quantity if the receipt states a count for that line (e.g. \"2x\", a "
   + "multiplier, a quantity column) — null if no count is printed, don't infer one from "
@@ -117,6 +113,20 @@ const PHOTO_FIELDS_HEAD =
   + "\"9.00\") — never the per-unit price, and never a product you work out yourself. "
   + "Leave unitAmount null on every line: a till prints the extension, and that is the "
   + "figure to return. ";
+
+/**
+ * One rule for both written fields, because a till shouts every one of them.
+ * The casing is the *only* thing a photograph's reader may change about a
+ * label — the words, the language and the spelling are transcribed, or the
+ * person checking a split against the paper is comparing two different bills.
+ */
+const PHOTO_CASING =
+  "A till prints in capitals; a name is not written that way. Case the title and every "
+  + "label as ordinary writing, never in all capitals: \"BAR ZAHRA\" is \"Bar Zahra\", "
+  + "\"POULET ROTI\" is \"Poulet roti\". Keep the casing a brand owns where it is the "
+  + "brand's and not the printer's (\"IKEA\", \"H&M\", \"McDonald's\", \"lululemon\"). "
+  + "Re-case only: the words themselves, their language and their spelling stay "
+  + "exactly as the receipt prints them. ";
 
 /** A photograph can shear its own columns, which is the whole of this paragraph. */
 const PHOTO_LAYOUT =
@@ -340,9 +350,9 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
  */
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   photo: {
-    kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
+    kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
       + PHOTO_REFUSAL.kind + PHOTO_TAIL,
-    stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
+    stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
       + PHOTO_REFUSAL.stas + PHOTO_TAIL,
   },
   text: {

@@ -223,7 +223,7 @@ describe("the two media", () => {
       expect(prompt).toContain("WITHOUT a minus sign");
       // Tax only where it sits on top, or the bill is charged for twice.
       expect(prompt).toContain("charged for twice");
-      // A title is a name, not a shout.
+      // A name is not a shout, and a till roll shouts everything it prints.
       expect(prompt).toContain("all capitals");
       expect(prompt).toContain("40 characters");
     }
@@ -316,6 +316,23 @@ describe("the two media", () => {
    * transcribe — scoped tight, since nothing else in either prompt is
    * invented.
    */
+  /**
+   * The casing is the one thing the photograph's reader may change about a
+   * label. It used to govern the title alone, so a receipt that printed
+   * "POULET ROTI" put that in the grid in capitals while the expense above it
+   * read "Bar Zahra" — one rule now covers both fields, and it is scoped to
+   * the casing so a label stays a transcript.
+   */
+  it("asks a photograph to re-case a label, and to change nothing else about it", async () => {
+    const photo = promptOf(await wrapped("QUJD", "kind", "photo"));
+    expect(photo).toContain("Case the title and every label as ordinary writing");
+    expect(photo).toContain("\"POULET ROTI\" is \"Poulet roti\"");
+    // Scoped: the words are still the receipt's, whatever case they arrive in.
+    expect(photo).toContain("their language and their spelling stay");
+    // And a brand's own casing is not a printer's.
+    expect(photo).toContain("lululemon");
+  });
+
   it("asks a typed bill to clean up a label but never invent one", async () => {
     const text = promptOf(await wrapped("QUJD", "kind", "text"));
     expect(text).toContain("Fill in a word another line makes plain but this one dropped");

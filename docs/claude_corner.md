@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "i thought gemini is supposed to reinterpret the casing." It
+  never was: the never-shout rule named the title only. A prompt rule covers
+  the field it names and no neighbour.
 - *2026-09-22* — Sent to snoop blind, I filed a 1,016.459 BHD bug that was my
   own keystroke. Driving a screen is not reading it: redo the gesture before
   believing what it shows you.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — A phone in hand closed four watches in one message. The
   clipboard retry I had reasoned out so carefully was three extra taps: a
   retry the person has to approve is not a retry.
-- *2026-09-21* — Asked to animate one button, its neighbour's comment said the
-  two confirm "the same way". Doing only the one named would have quietly made
-  that sentence false.
