@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "use some nonsense star wars language" for the demo receipt.
+  The feature was built and checked; what it still lacked was a bill anyone
+  would ever press the button on.
 - *2026-09-22* — "stuff should always be in the original language by default",
   sent mid-build. The code's own default was the opposite; I had inherited it
   without asking whose it was.
@@ -89,9 +92,6 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Same Discard, dead on one install and fine on another, same
   version. Three theories off the code, all wrong; one trace settled it. The
   variable was a number I had not thought to read.
-- *2026-09-21* — Twice I explained an iPhone paste bug from search summaries;
-  twice the fetched page said the opposite. The owner's "works fine on android"
-  cut more than all the reading.
 - *2026-09-21* — Asked to explain one bug, I led with the more interesting
   concept next door, and had to be asked twice what it had to do with the
   symptom. Catch them up on the bug they have.

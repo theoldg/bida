@@ -99,8 +99,10 @@ report(await page.getByText("By items").count() > 0,
 // Each person's row opens onto their own lines — the grid kept on the entry.
 await page.locator(".billgroup .kv").filter({ hasText: "Ben" }).first().click();
 await page.waitForSelector(".billline");
-report(await page.getByText("Blue milk").count() > 0,
-  "and Ben's row opens onto what Ben ordered");
+// In the cantina's own tongue, which is how a bill reads until the grid's
+// translation icon is pressed (docs/receipt-scanning.md).
+report(await page.getByText("Bunta koosa").count() > 0,
+  "and Ben's row opens onto what Ben ordered, as the cantina wrote it");
 await page.goBack();
 await page.waitForSelector(".rows .row");
 

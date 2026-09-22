@@ -95,19 +95,24 @@ const ENTRY = {
  * One table, read three ways — printed lines, grid, split weights — rather
  * than three lists that have to be kept agreeing.
  *
+ * **The tab is written in the local tongue**, with the English beside it, so
+ * the demo carries the one thing a bill in your own language cannot show: the
+ * translation icon on the who-had-what bar, and the same lines reading both
+ * ways ([ADR-0016](../../../docs/decisions/0016-receipts.md)).
+ *
  * **Every line must divide evenly** among the people on it: the
  * largest-remainder tiebreak for a leftover cent lives in the web's
  * `receiptBreakdown`, so a line that needed it would quote a figure core
  * cannot check. `scan/items.test.ts` holds the readings to each other.
  */
 const DEMO_BILL: readonly {
-  label: string; minor: number; quantity?: number; who: readonly DemoName[];
+  label: string; labelEn: string; minor: number; quantity?: number; who: readonly DemoName[];
 }[] = [
-  { label: "Jawa juice", minor: 2_400, quantity: 2, who: ["Luke", "Han"] },
-  { label: "Blue milk", minor: 900, who: ["Ben"] },
-  { label: "Tall glass of ardees", minor: 1_600, who: ["Chewie"] },
-  { label: "For the Modal Nodes", minor: 2_000, who: DEMO_NAMES },
-  { label: "Back booth, the quiet one", minor: 1_200, who: DEMO_NAMES },
+  { label: "Jawa hoopa", labelEn: "Jawa juice", minor: 2_400, quantity: 2, who: ["Luke", "Han"] },
+  { label: "Bunta koosa", labelEn: "Blue milk", minor: 900, who: ["Ben"] },
+  { label: "Ardees jeeska", labelEn: "Tall glass of ardees", minor: 1_600, who: ["Chewie"] },
+  { label: "Doopee da Modal Nodes", labelEn: "For the Modal Nodes", minor: 2_000, who: DEMO_NAMES },
+  { label: "Wabba kroba, da nudchaa", labelEn: "Back booth, the quiet one", minor: 1_200, who: DEMO_NAMES },
 ];
 
 /** What each person's own lines come to: the tab's split, itemised. */
@@ -223,8 +228,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         paidBy: ids.Luke,
         payers: { [ids.Luke]: 5_000, [ids.Han]: 3_100 },
         split: { mode: "receipt", weights: billWeights(ids) },
-        receiptItems: DEMO_BILL.map(({ label, minor, quantity }) => ({
+        receiptItems: DEMO_BILL.map(({ label, labelEn, minor, quantity }) => ({
           label,
+          labelEn,
           amount: minorToDecimalString(minor, DEMO_CURRENCY),
           ...(quantity ? { quantity } : {}),
         })),
