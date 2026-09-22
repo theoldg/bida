@@ -1,11 +1,8 @@
 # iOS: the tab and the home-screen app are two phones
 
 *For: anyone touching joining, installing or storage on iPhone. **Status:
-[the design](#the-design) is built; [A](#a-in-detail) works on a real iPhone
-from `/install` (2026-09-16), and the export's share sheet hands a file over
-inside the home-screen app, so `canShare({files})` is true there
-(2026-09-18). The carry works from an ordinary page and brings the names with
-it (2026-09-21).** Waiting on a phone still: the in-app browser refused —
+[the design](#the-design) is built and [A](#a-in-detail) works on a real
+iPhone.** Not yet tried on a phone: the in-app browser refusal —
 [the phone checklist](testing.md#what-only-a-phone-can-check) is how to spend
 one.*
 
@@ -74,8 +71,8 @@ into tab use, not to lock the casual one out.
 
 | | Idea | Verdict |
 |---|---|---|
-| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone**: from `/install` (2026-09-16), and from an ordinary page with the names along (2026-09-21) — so it is the manifest that carries, since a page other than `/install` has nothing of its own to give. Paste link stays for groups joined after the install |
-| B | **Ask before joining**, a full screen of Add to home screen / Continue in Safari | Built, then dropped (2026-09-17) once A carried every group from any page: the banner asks, and the question stood between a newcomer and the group |
+| A | **The icon carries the invite.** On iOS the home-screen icon starts at the manifest's `start_url`, or the page's own URL (fragment included) when there is none. If the page someone installs from carries `#id.secret`, the first launch of the icon is the join — no paste | **Works on iPhone**, from `/install` and from an ordinary page with the names along — so it is the manifest that carries. Paste link stays for groups joined after the install |
+| B | **Ask before joining**, a full screen of Add to home screen / Continue in Safari | Rejected: A carries every group from any page, so the banner asks, and a question here stands between a newcomer and the group |
 | C | **The claim screen offers the link** — [*Have the app?*](#gclaim--have-the-app) — so the app is one Paste away | Built: the regular's whole path, and the newcomer's if A fails |
 | D | **Hard gate** — no group in an iOS tab at all | Rejected: breaks the casual check, and a tab user loses little. A webview is gated, and is not this: a tab is somewhere a person can be served, and a webview is not |
 | E | **Server hand-off** (tab parks the key, app collects it) | Rejected: nothing links the two sides without a code the person types, which is worse than paste — and a key on the server undoes [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) |
@@ -104,17 +101,14 @@ standalone come from the `apple-*` tags either way.
    head is built from it.
 
 **A group joined or named after the page loaded** leaves its head stale, and
-Safari won't read a swapped link: the owner's icon arrived with two groups and
-one name. The link records what it was built with (`data-carry`); when that no
+Safari won't read a swapped link. The link records what it was built with (`data-carry`); when that no
 longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
 nothing can be lost (`reloadCostsNothing`: the list, a group, members, history,
 an entry, about), never mid-join or in a form, and never before the app shell is
 precached (`shellIsWarm`, [frontend.md](frontend.md#pwa)). Wider than the
 update's own reload, which holds out for the groups list: this one fires for a
-newcomer who never passes it. From cache it is a
-flash, once. Before that it is a network load racing the worker's own fetches,
-in the newcomer's first minute — whose document load was `/join` with an empty
-carry, so it is exactly who this fires for. Nothing on screen wants it, so it
+newcomer who never passes it. From cache it is a flash, once; before the shell
+is cached it would be a network load racing the worker's own fetches, so it
 waits for the next reloadable screen.
 
 **Every launch of the icon** (`app/install/page.tsx`) — `start_url` is this
@@ -129,19 +123,18 @@ than into one group forever, and nothing un-forgets: `saveGroupKey` would undo
 a `forgetGroup`. A launch the fragment has nothing left to give is an ordinary
 one, so it says `launchedOnto` and the list reopens the group you were last in
 as it would for any other start (`lib/launch.ts`): the document never loads on
-the list here, so nothing about the address could tell, and without it this
-install — the one this page exists to produce — was alone in never resuming.
+the list here, so nothing about the address could tell.
 
-**What the phone runs settled** (2026-09-16), against what WebKit's source
-suggests (`WebPage::getApplicationManifest` walks the head when asked):
+**What a real iPhone does**, against what WebKit's source suggests
+(`WebPage::getApplicationManifest` walks the head when asked):
 
-- A link swapped 41ms after load was ignored — the icon opened at `/`, the
+- A link swapped 41ms after load is ignored — the icon opens at `/`, the
   static `start_url`. Safari reads at load.
-- With nothing in the HTML and the blob added at 45ms, the icon opened at
-  `/install#<both groups>` and synced both. The fragment survives. **It is the
-  blob manifest that carries it** (2026-09-21): the same install from a group's
-  ledger, a page whose own URL holds nothing, opened on `/install#…` with the
-  group and the name in it.
+- With nothing in the HTML and the blob added at 45ms, the icon opens at
+  `/install#<both groups>` and syncs both. The fragment survives. **It is the
+  blob manifest that carries it**: an install from a group's ledger, a page
+  whose own URL holds nothing, opens on `/install#…` with the group and the
+  name in it.
 - `start_url` must be absolute (a blob has no base), and `id` is pinned so it
   stays one app. Nothing bars a `blob:` manifest; the only gate would be CSP
   `manifest-src`, and this app sends none.
@@ -199,8 +192,8 @@ forward is out of the browser.
 
 **One card, two bodies, the same two places on both platforms.** The shell is
 `FoldedOffer` (`components/install.tsx`) and `offer` picks the body, so the two
-platforms cannot drift apart in shape again — the difference between them is in
-the words and nowhere else:
+platforms cannot drift apart in shape — the difference between them is in the
+words and nowhere else:
 
 - **iOS is a warning.** *Keep your groups on this phone / Safari may forget
   them*, with **Add bida to home screen** into `/install`, carrying every group
@@ -211,9 +204,8 @@ the words and nowhere else:
   IndexedDB, so installing buys ergonomics and a reliable `persist()` — never a
   group back, and declining costs nothing.
 
-Both scroll with what is under them; neither is pinned. On the ledger that
-matters most — it and your balance sat above the scroller, and the rows the
-screen is for started a third of the way down.
+Both scroll with what is under them; neither is pinned — pinned on the ledger,
+the rows the screen is for would start a third of the way down.
 
 **The groups list**, shown only once the tab holds a group. An empty home is
 someone looking around: Quick split stores nothing and is the right way to try
@@ -238,15 +230,13 @@ eviction: `lib/launch.ts` reopens the group you were last in, and `/join`
 pushes the group over the list, so the list is a screen most people never
 linger on. Chrome's own mini-infobar is suppressed (`preventDefault`, so we can
 draw the button ourselves), so without the ledger card the regular Android
-user — joined by a link, launching straight into their group — was offered the
-install nowhere at all. It goes the moment the phone installs, since `offer`
+user — joined by a link, launching straight into their group — would be offered
+the install nowhere at all. It goes the moment the phone installs, since `offer`
 stops being `ready`.
 
 `/about`'s *Works offline* carries the same button on both, with no group
 preferred first — `/install` says the how on iOS, and on Android the tap is the
-install. It used to be a text link with a share glyph for Chrome and an inked
-button for iOS: one section asking twice in two voices, with iOS's idiom drawn
-on the platform that has no share sheet in it.
+install.
 
 ### `/g/claim` — *Have the app?*
 
@@ -310,17 +300,14 @@ is rightly let through: it is Chrome, storage and menus and all.
   be the one that comes back empty**: access is granted for the pasteboard's
   change count, and the granting read is still served from the pre-grant
   snapshot. A resume is the same shape, the pasteboard not being back yet.
-  **Re-reading is not the answer, because a second read is a second bubble**:
-  the retry written for it cost four taps on the owner's phone before the box
-  it ends at appeared (2026-09-21). So one read decides, and an empty one goes
-  straight to a box to paste into by hand — never a screen saying the clipboard
-  was empty, which is what put *Nothing to paste* in front of a copied invite
+  **Re-reading is not the answer, because a second read is a second bubble.**
+  So one read decides, and an empty one goes straight to a box to paste into by
+  hand — never a screen saying the clipboard was empty
   ([lib/paste.ts](../apps/web/lib/paste.ts), `usePasteLink`).
 - A pasted join link is opened with `location.replace`, not `router.push`. When
   Next's router gives up and loads the page itself — say the build it fetched
   isn't the one on screen, which is easy on a freshly installed app — it
-  uses the fetch's URL, and that has no `#`. The join then said "Bad link", and
-  pasting again worked because that page load had brought the app up to date.
+  uses the fetch's URL, and that has no `#`, so the join says "Bad link".
   **That URL also still ends in `.txt`**, so the same give-up on any other tap
   lands the phone on the route's RSC payload, rendered as text — the whole
   screen a page of `1:"$Sreact.fragment"`. The service worker and the Worker
@@ -330,7 +317,7 @@ is rightly let through: it is Chrome, storage and menus and all.
   most of the invites this doc is about.
   Not `assign` either: the page it leaves goes into WebKit's page cache still
   holding the database, `/join` waits on it, and the back arrow restores it to
-  wait on `/join` in turn; the owner's phone hung a minute that way. A group
+  wait on `/join` in turn — a hang of a minute. A group
   already held skips the page load altogether.
 - **Safari reads the manifest at page load**, not when the share sheet opens,
   whatever WebKit's source suggests. Changing the link later does nothing — so

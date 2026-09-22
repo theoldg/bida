@@ -37,7 +37,7 @@ Two fields never ride along on a content save, and the repairs in
   saving device believed, so a save made offline would undo a tombstone, or
   re-apply one a healer had just lifted.
 - **`createdAt` is write-once**, held in the fold by `WRITE_ONCE_FIELDS` rather
-  than hoped for, because every whole write now carries one.
+  than hoped for, because every whole write carries one.
 
 **The command layer is what makes that true.** `editExpense` and
 `editSettlement` build the entity from the stored row plus the form, re-derive
@@ -56,8 +56,7 @@ what keeps a restored member from being an argument that runs forever.
 
 **A `create` writes no field it would only be defaulting.** The fold treats
 absent as the default, so `receiptItems: null` on an expense nobody scanned is
-bytes in the log and a row in its own history saying nothing changed — eight
-such fields on every ordinary expense, a quarter of the op. `only()` in
+bytes in the log and a row in its own history saying nothing changed. `only()` in
 `apps/web/lib/db/commands/patch.ts` drops them. The exception is a `rate` create:
 its entity id is the currency code, so setting a rate the group had cleared
 lands on the tombstoned row and must write `deletedAt: null` to lift it. In an
@@ -106,7 +105,7 @@ Sort by `hlc` ascending, then per entity: `create` initialises; `update` assigns
 each field in `patch` — **last write wins by HLC**, over the whole entity for an
 entry and per field for everything else; `delete` sets
 `deletedAt` and never removes the row; `restore` applies exactly like an update
-— nothing emits one any more
+— nothing emits one
 ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)), but groups
 in production hold them.
 
@@ -138,8 +137,8 @@ and all it gets.
 A push carries up to fifty queued ops, and a phone with more sends rounds until
 its queue is empty — what got through stays through, rather than a fortnight's
 backlog riding on one request. The accept cuts the batch up again on its own
-side, so no clause outgrows D1's hundred bound parameters even when the phone
-sending it is too old to know that — see the gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
+side, so no clause outgrows D1's hundred bound parameters whatever the phone
+sends — see the gotcha below. Accepting is idempotent on `Op.id`, which is what makes retry
 safe on a flaky connection — a retry re-seals under a fresh IV, so the two ciphertexts differ
 and the id is what says they are one op. **There is no create-group endpoint**:
 a group's first push registers it, storing `sha256(token)` from that request,
@@ -173,8 +172,8 @@ make an old build chunk differently. That is the same reasoning that keeps D1
 batching on the server's side of the door (the gotcha below).
 
 **They bound one request, not a campaign**, and that is where it stops. A
-counter per caller is the obvious next move and the owner has declined it
-(2026-09-18): counting callers means keeping a row about each one, which is
+counter per caller is the obvious next move and the owner has declined it:
+counting callers means keeping a row about each one, which is
 the one thing a server that cannot read a group should not start doing, and
 the ceilings above already sit far enough over honest traffic that a flood
 hits Cloudflare's own limits first. A `429` from the platform costs a quiet
@@ -213,8 +212,8 @@ at**: ops are plain in Dexie and on every screen, and the `sealOp`/`openOp` pair
 in `pushPullGroup` is the whole of why the server holds ciphertext. A pulled op
 is opened before anything is stored, so a run never half-applies. One that will
 not open is skipped rather than fatal — it is counted on the group key and
-printed on `/diag`, because the same row came back on every retry and wedged
-the group for good. What mints one is a newer build — a new entity or op kind,
+printed on `/diag` — since the same row comes back on every retry and would
+wedge the group for good. What mints one is a newer build — a new entity or op kind,
 or a second seal format — so `openOp` turns anything wrong with an opened row
 into a `SealError`, the one error the pull skips. The cursor moves past a
 skipped op, so the record carries `fromSeq` and the build that skipped it, and
@@ -225,9 +224,8 @@ while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the
 whole run and `syncGroup` over one group, and an overlapping call gets back the
 promise already in flight. Both guards are needed: opening a group syncs it
-directly, and that raced the loop into pushing and pulling the same ops twice
-and taking the `rebuild()` lock on every table twice, under a screen that was
-waiting to read them. A run that attempted nothing must never conclude "no
+directly, and without the per-group guard that races the loop into pushing and
+pulling the same ops twice and taking the `rebuild()` lock twice. A run that attempted nothing must never conclude "no
 failures" and reset a backoff the failing run had grown. **Nothing writes while
 the app is hidden:** no run starts, and a response that lands after the app
 went to the background waits for it to come back before its transaction opens
@@ -294,8 +292,8 @@ only a save from a snapshot older than the peer's edit loses one. Members, rates
 and identities still merge per field.
 
 `FieldChange.supersededByOpId` from `core/history.ts` marks which later op
-replaced a field, and is tested — but nothing renders it (owner, 2026-08-28:
-*"they're visually noisy"*). It's there if a future screen wants it.
+replaced a field, and is tested — but nothing renders it (the owner finds it
+visually noisy). It's there if a future screen wants it.
 
 We never present a conflict-resolution dialog. For an expense splitter that
 would be worse than being briefly wrong — the group can see the history and fix
@@ -335,9 +333,8 @@ merge can revert somebody's amount in the same op that changes the description.
 So the sentences above are for a revision that moved exactly one field. Where
 more than one moved, **no field outranks another**: the line says only that the
 entry was edited, and each field that moved gets a labelled was/now line under
-it. Ranking them is how the log came to caption that revision "changed who's
-involved" and never mention that the amount had gone back — the one thing an
-audit trail exists to answer.
+it. Ranking them would caption a revision "changed who's involved" and hide
+that the amount had gone back — the one thing an audit trail exists to answer.
 
 ## Gotchas
 
@@ -348,20 +345,18 @@ audit trail exists to answer.
   got genuinely large the answer is snapshotting, and that's a new ADR.
 - `createdAt` is display-only. Sort by it and conflicts start resolving
   differently on different phones.
-- **A screen waiting on sync must watch the DB, not check once.** `/join` used
-  to run `syncGroup()` and check the local table once with `useState`; a
-  brand-new device whose first attempt failed dead-ended on "couldn't find that
-  group" while `StartSync`'s background loop was already retrying successfully.
-  It now watches `groups` with `useLiveQuery` and moves on the moment the group
-  lands, from any attempt. The secret is saved up front either way.
+- **A screen waiting on sync must watch the DB, not check once.** A one-shot
+  check after `syncGroup()` dead-ends a new device whose first attempt failed
+  while `StartSync`'s background loop retries successfully. `/join` watches
+  `groups` live and moves on the moment the group lands, from any attempt. The
+  secret is saved up front either way.
 - **D1 binds a hundred parameters to a statement, not a thousand.** Nothing may
   build a clause out of an array that came in over the wire: `acceptOps` cuts
-  the queue up before it asks which ops it already has. The version that didn't
-  worked for a year and then met a phone with a fortnight of expenses on it,
-  which pushed, failed, and retried the identical oversized batch forever.
+  the queue up before it asks which ops it already has. Otherwise a phone with a
+  fortnight of expenses pushes, fails, and retries the identical oversized
+  batch forever.
 - **A seq number must never exist before its row does.** `acceptOps` reserves
   and inserts in one `db.batch`, which D1 runs as a transaction, because a phone
   that pulls in between is told `latestSeq` covers rows it cannot read yet —
   and it writes that number down as its cursor. The ops stay on the server and
-  are lost to that phone for good. Two statements looked fine at this app's
-  scale for exactly as long as nobody worked out what the losing phone does next.
+  are lost to that phone for good.

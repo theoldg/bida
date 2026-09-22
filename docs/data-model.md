@@ -108,10 +108,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   `memberInvolved` (payers.ts) still finds them on a live entry of **either**
   kind — a payer or split participant on an expense, or a side of a transfer.
   Past involvement they've since been edited out of doesn't count. Ask that
-  function rather than one of its halves: asking about expenses alone left
-  groups carrying a balance with nothing on the other side of it. It also
-  refuses the **last** member: a group with nobody in it has no payer to seed
-  an entry with, and the form gave up on that silently.
+  function rather than one of its halves: asking about expenses alone leaves a
+  balance with nothing on the other side of it. It also refuses the **last**
+  member: a group with nobody in it has no payer to seed an entry with.
 - **A removal the group goes on contradicting is undone.** That refusal needs
   both facts on one phone, so two offline beat it — one removes Bruno, the
   other writes a transfer to him — and the merge lands a tombstone on live
@@ -122,15 +121,13 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   `deletedAt: null` — as re-setting a cleared rate lifts that row's — and
   history says the entry is why rather than naming the phone that noticed. The
   sync engine runs it, right after the merge that could have caused it — a
-  local write is refused before it lands, so nothing else can. Being named on a receipt's "who was there" counts as
-  being involved, even where it costs nothing. Until this ran, a departed
-  member's balance had no way
-  out: the balances tab offered the settle-up row that would square them off,
-  and the transfer form refused the name that row opened with.
-- **A rate comes out on the same terms**, and comes back on them too. Clearing
-  one used to be allowed, and every entry written in that currency silently
-  fell back to the rate it was saved at — a different number on each row, and
-  no screen mentioning it. `/g/rates` blocks removal while any entry is written
+  local write is refused before it lands, so nothing else can. Being named on a
+  receipt's "who was there" counts as being involved, even where it costs
+  nothing. Without this a departed member's balance has no way out: the
+  transfer form refuses the name the settle-up row opens with.
+- **A rate comes out on the same terms**, and comes back on them too. A cleared
+  rate would silently drop every entry in that currency back to the rate it was
+  saved at. `/g/rates` blocks removal while any entry is written
   in that currency, listing them, exactly as People does; and when two phones
   beat that refusal, `liveEntriesHaveLiveRates` lifts the tombstone the way the
   member healer does. A currency the group has *never* priced is a different
@@ -147,10 +144,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   ([invariants.md](invariants.md#why-each-is-held-the-way-it-is)).
 - A removed member who still carries a balance is **shown** on the balances
   tab, marked as departed. `computeBalances` `touch()`es them so the set sums
-  to zero; hiding them is what made the bars stop summing to zero on screen.
-  The row is a moment rather than a resting state now that the removal is
-  undone — but only a phone holding both halves of the race can undo it, and
-  every other one still has to draw a balance that adds up.
+  to zero on screen. The row is a moment rather than a resting state, since
+  the removal is undone — but only a phone holding both halves of the race can
+  undo it, and every other one still has to draw a balance that adds up.
 - `baseAmountMinor` and `rateToBase` are **stored**, but they are not what an
   entry is worth: `atCurrentRates` (`core/rates.ts`) reprices every entry at the
   registry in `stateOf()`, so one pass values the whole app and no call site can
@@ -229,8 +225,8 @@ diverge, and the seeded draw buys fairness inside that constraint.
 **A split is written canonically** (`canonicalSplit`): members sorted and
 deduplicated, weight maps keyed in sorted order. The log is diffed and read as
 JSON, so two specs meaning the same thing have to serialise the same — toggling
-a member out and straight back in reorders the array, and that used to append an
-op saying "changed who's involved" with the identical names on both lines.
+a member out and straight back in reorders the array, and must not append an
+op saying "changed who's involved" with identical names on both lines.
 
 ## Co-sponsored expenses
 
@@ -287,8 +283,7 @@ but a reader splitting on LF first sees a record break, and two would look like
 the blank line that ends the file. Every one of those is pinned by a test,
 because **Tricount refuses the whole file over any of them** while its row
 counter happily reaches the end — the blank lines especially, which read as
-cosmetic and are not: the same file with them stripped is rejected
-(2026-09-18).
+cosmetic and are not: the same file with them stripped is rejected.
 
 **A member's cell is `paid − owed` for that row.** Every row therefore nets to
 zero and the column totals are the balances — the `Total balance` foot is
@@ -396,12 +391,11 @@ pure and because an undocumented API is exactly the thing to keep one file wide
 The server stores **sealed** ops and nothing else it could read
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). There is no
 `expenses` table on the server, which is the whole point of
-[ADR-0002](decisions/0002-append-only-op-log.md) — and now no `entity`, `patch`
-or `actor` column either, because those said what an op meant.
+[ADR-0002](decisions/0002-append-only-op-log.md) — and no `entity`, `patch`
+or `actor` column either, because those would say what an op meant.
 
-**Changing it keeps what is in it.** The 2026-09-12 reset was the last one the
-owner authorises, so a change here is a new numbered migration beside
-`0001_init.sql` rather than an edit to it —
+**Changing it keeps what is in it.** The data is never reset again, so a change
+here is a new numbered migration, never an edit to an applied one —
 [hosting.md](hosting.md#a-schema-change-from-here-on).
 
 ```sql
@@ -430,9 +424,9 @@ because every window it answers is an hour or a day, and nothing in it says
 what was photographed — only that somebody spent a call
 ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
 
-There is no `attachments` table: it indexed R2 objects for a feature that was
-cut ([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one
-would want different columns anyway.
+There is no `attachments` table: attachments are not built
+([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one
+would want its own columns.
 
 ## IndexedDB (Dexie), schema v8
 
@@ -445,11 +439,9 @@ would want different columns anyway.
 | `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
 
-**One version declares all of it.** The chain of seven that got here has been
-collapsed: every phone had run them, and what a schema was on the way here is
-the git log's business. The v8 upgrade does one thing — re-arm every op as
-pending and reset each sync cursor — because the server's copy was wiped when
-sealing landed and the phone's log is what refills it
+**One version declares all of it.** Earlier versions are collapsed away. The
+v8 upgrade does one thing — re-arm every op as pending and reset each sync
+cursor — so a phone's log refills a server copy that was wiped for sealing
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
 
 The materialised stores are a **cache**: if a migration gets confusing, drop
@@ -462,6 +454,6 @@ why re-keying a table costs a drop and a `rebuild()`, not a data migration.
   `core/money.ts`; don't reach for `toFixed`.
 - **A device's identity id is its HLC node id** — one string per install, the
   same in every group it joins. So `identities` is keyed by `[groupId+id]`, like
-  `rates`: keyed by the node id alone, as it once was, a phone in two
-  groups had one row, and re-folding either group deleted the other's claim.
+  `rates`: keyed by the node id alone, a phone in two groups would have one row,
+  and re-folding either group would delete the other's claim.
   Anything re-folding one entity has to scope by group as well as by id.

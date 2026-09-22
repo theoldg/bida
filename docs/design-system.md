@@ -19,10 +19,9 @@ underneath: ruled rows, a red column and a green column.
 as words, and nothing under it; a sub-line would caption the list you are already looking at. Every
 other top bar says the thing you opened, so a second name would be branding
 where a title should be. **The mark is not in the app**: `design/brand/logo.svg`
-is the home-screen icon `pnpm icons` rasterises, and in the bar it sat beside a
-three-letter name that did not need illustrating. If it ever comes back it
-comes back as that file in an `<img>`, never redrawn in `--brand` to make it
-theme-aware — that was tried, and a tracing of a logo is a worse logo.
+is the home-screen icon `pnpm icons` rasterises. If it ever comes back it comes
+back as that file in an `<img>`, never redrawn in `--brand` to make it
+theme-aware — a tracing of a logo is a worse logo.
 
 The screen behind the info glyph (`/about`) is the app's only prose: a measured column (`.about`, ~34em, centred in the shell — `/advanced` and `/install` wear it too), each claim under a
 monospace eyebrow in `--ink-2` — the `.daylabel` register, which is how this app
@@ -118,21 +117,19 @@ that says "Type it in" in full, the same way it says "Rescan" for "Scan" — and
 promises, since that result lands on another screen: a bill of four lines and a
 total, the arrow, and the expense that comes back split by that bill between
 three of the people splitting it. One drawing on both screens
-(`components/scan-diagram.tsx`) — the app's one picture, and it is built out of the
+(`components/scan-diagram.tsx`) — the app's one picture, built out of the
 interface it explains rather than of illustration — the same square card, the
 same label-and-number rows, the same hairline under a total, at half the type
-size on `--draw-*`. The bill is the one exception, and deliberately so: it is
-torn off top and bottom and has no outline or radius at all, because a square
-card is exactly what it would otherwise be mistaken for — the form beside it.
-Each half is as wide as half the control beneath it, so the three line up; the sentence the picture replaced is its `alt`; and the shares
+size on `--draw-*`. The bill is the one exception: torn off top and bottom with
+no outline or radius, or it would be mistaken for the form beside it. Each half
+is as wide as half the control beneath it, so the three line up; and the shares
 are summed from the lines on the left (`lib/scan/diagram.ts`), never typed, so
 the two halves can't drift apart. Each screen gives it its own
 line: `/g/scan` centres the pair, `/quick` wears it as a head over the list of
 who is splitting — with the space around the pair, not inside it — and the
 names in it are that list.
 
-**Dark is not the light palette turned down** — the owner's call, against a
-first pass that was green and yellow. Grounds are near-neutral in both
+**Dark is not the light palette turned down** — the owner's call. Grounds are near-neutral in both
 themes (`#0E0F11`, `#141517`, `#1A1C1F` dark), and `--credit`/`--debit` keep
 their hues — they're semantic and must not drift. Both dark blocks
 (`prefers-color-scheme` and `[data-theme="dark"]`) carry identical values.
@@ -154,8 +151,7 @@ editor's mode tabs above it — that boundary is redrawn at 14% ink or it reads 
 one merged block.
 
 **Not on the ledger.** There nearly every entry is one of yours, so a wash on
-each lit the whole screen and marked nothing: ledger rows are the plain rows of
-the groups list. What they did to your balance is said on the figure — `+€45,00`
+each would mark nothing: ledger rows are the plain rows of the groups list. What they did to your balance is said on the figure — `+€45,00`
 green, `−€14,28` red — and the exception is what the list marks: a row you are
 no part of drops to 58% opacity rather than disappearing.
 
@@ -197,8 +193,8 @@ than the bar (`.question`) sets that title above the bar's 17px, centred — bod
 400/500 at 14px, labels and eyebrows uppercase at `.12em`.
 
 Money keeps `.num` — `font-variant-numeric: tabular-nums` — so decimal points
-align down a column even though everything is already monospaced. Body sets
-wider than a proportional face did, so titles truncate a word earlier: accepted.
+align down a column even though everything is already monospaced. Monospace
+sets wide, so titles truncate a word earlier: accepted.
 
 ## A money field has an underline
 
@@ -231,14 +227,11 @@ share count next, the payer never. `.rmeta` keeps its ellipsis for the last
 rung, because a name can be any length at all.
 
 A ledger row is always the same height, whether or not it carries a second
-figure — the sum as it was spent, before the group's currency. A row that grew a
-line for that one broke the rhythm of the list wherever one landed, so the row
-is held to the height of the three-figure case and its column is centred in it
+figure — the sum as it was spent, before the group's currency. The row is held
+to the height of the three-figure case and its column is centred in it
 (`.entryrow`, and `.grouprow`/`.skelrow` with it, so a row is a row on every
-screen): a two-figure row keeps the sum and your share together and takes
-the slack as air above and below. The amount column is leaded tighter than it
-was, so that fixed height stays close to the old two-line row's and the ledger
-holds as many entries per screen.
+screen): a two-figure row takes the slack as air above and below. The amount
+column is leaded tight so that height stays close to a two-line row's.
 
 ## The bar is furniture
 
@@ -247,9 +240,8 @@ the app. A `.topbar` title clamps at two lines — what a 40-character group nam
 takes at 17px — and its sub-line at one, because every sub-line in the app is a
 caption on the title above it (a name, a date, a figure) and a caption running
 to a second line is the thing it captions, in the wrong place. A `capped`
-title, which has a centred control to end before, stops at one too. Growing the
-bar instead is what this looked like before, and a bar grown to six lines
-leaves its own back arrow and bin floating in the middle of a paragraph.
+title, which has a centred control to end before, stops at one too. A bar that
+grows leaves its own back arrow and bin floating in the middle of a paragraph.
 
 Text with more to say than that says it **in the screen**. `/g/entry`'s head is
 the entry's own title, with the figure under it and the bar left holding only
@@ -264,8 +256,7 @@ strands the short ones.
 ## An arrow points one way, and an income says so twice
 
 A settle row is a *thing to do* — "you pay Marie €12" — not a statement that two
-people are connected, which is what the double-headed swap arrow said.
-`i-arrow` always points payer → payee, left to right, matching
+people are connected, so never a double-headed arrow. `i-arrow` always points payer → payee, left to right, matching
 the names beside it; on the transfer form (`.transfer`) it sits between the two
 sides and *pressing it reverses them*, because backwards is the mistake that
 control exists to make cheap — so there it is an inked square, a control, and on
@@ -305,13 +296,12 @@ in `--brand-ink`, and the amount takes a red plate under its figure and the
 rule it is typed on. The label goes with the fill because it is the word that
 says *which* field was refused. A missing *step* blooms the whole control that takes it, edge, label,
 icons and any rule inside it: the scan pair and the door to the who-had-what
-grid, which is the Items tab's entire complaint now that the red sentence
-under it is gone. Both of those are ink blocks, so both fill (below). Pointing beats wording there, because "scan a receipt" was
-true of every untouched bill and read as a scolding for arriving. Where what is missing is spread over
+grid, which is the Items tab's entire complaint. Both of those are ink blocks,
+so both fill (below). Pointing beats wording there, because "scan a receipt" is
+true of every untouched bill and reads as a scolding for arriving. Where what is missing is spread over
 several rows, every one of them blooms: a Done on the who-had-what grid points
 at each line nobody has been given — the whole row, right across the columns of
-dots, since most of a row is empty space and the two lines of text at its left
-end were a refusal you had to be looking for. That one washes rather than
+dots, since most of a row is empty space. That one washes rather than
 fills, because the dots and the ×N have to stay legible through it; its words
 still go `--debit` on top. This is how you find the line again in twenty rows
 of bill. **A refusal nobody can see whole is a press that
@@ -330,9 +320,8 @@ same reason: a foreign entry whose currency the group has no rate for points at
 its "set rate" badge. **A control fills whole**,
 ground and border together, rather than colouring its label: that badge, 11px
 on a wash, the two ink blocks — the who-had-what door and the scan pair — and
-a field, which has an edge and was the quieter for using it: a red line around
-unchanged grey writing is the smallest signal in the app for the biggest thing
-it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
+a field: a red line around unchanged grey writing is the smallest signal in the
+app for the biggest thing it has to say. A label alone is smaller still, and a `--brand` or `--rule-soft`
 frame left around a red block reads as half a refusal. The
 add row's plus fills for the same reason — what Create and a quick split's scan
 pair point at over a name nobody has filed is 15px of glyph in a 32px box, far
@@ -420,8 +409,8 @@ reads as an ordinary assignment.
   the reset at the head of `globals.css` is every browser default the screens
   were written against, so an element nothing renders yet — `<small>`,
   `<summary>`, `<optgroup>` — arrives with its own defaults intact.
-- **`color-mix` is used unguarded** and nothing generates a fallback for it any
-  more, which puts the floor at Safari 16.2 and Chrome 111. Four values want it
+- **`color-mix` is used unguarded** and nothing generates a fallback for it,
+  which puts the floor at Safari 16.2 and Chrome 111. Four values want it
   (`--hl-row`, `.mine`, `.btn-pair`, the dialog scrim); a browser below that
   draws each one flat, and the scrim opaque.
 - **`animationend` bubbles.** `.btn-pair` listens for the refusal flash on the
@@ -429,9 +418,8 @@ reads as an ordinary assignment.
   who-had-what grid's pointer inside a bloomed row — has to stop the event, or
   a flash that never ran reads as one that settled.
 - **A `::placeholder` cannot be animated.** Blink drops any animation declared
-  on one: the rule parses, the class lands, nothing happens. Three refusals
-  were dead on arrival that way for months, visible in no test — a
-  `getComputedStyle(el, "::placeholder")` mid-flash is what says so. What works
+  on one: the rule parses, the class lands, nothing happens, and no test sees
+  it — a `getComputedStyle(el, "::placeholder")` mid-flash is what says so. What works
   is animating the *input* and mixing the placeholder from `currentColor`, so
   the faint word rides the ink that can move (`globals.css`, "save refusal").
 - **An animation taken off mid-flight reports nothing.** The refusal class is
@@ -439,27 +427,22 @@ reads as an ordinary assignment.
   class and no `animationend` ever fires — and a control spent for the length
   of one stays spent for good. Whatever put the flash there has to notice the
   fix arriving early and end the refusal by hand (`refusal.onFlashEnd()` with
-  no event). It has cost a locked Save on the who-had-what grid and a locked
-  add row before it (`lib/refusal.ts`).
+  no event, `lib/refusal.ts`).
 - **Two flex children that both claim the full width are not equal halves.**
   The overflow is shared out in proportion to what is *inside* each one, so a
-  child with different padding or a border takes a different half: swapping a
-  dialog's act for the `ScanBusy` strip snapped the row to 170/182 and read as
-  the button resizing under the thumb. A row of equal halves is `.drow`'s
+  child with different padding or a border takes a different half, and a swap
+  inside one reads as the button resizing under the thumb. A row of equal halves is `.drow`'s
   `grid-auto-columns: minmax(0, 1fr)`, which doesn't care what is in them.
 - **`table-layout: auto` makes every column a function of every cell.** The
   browser measures the content and works backwards, so a table that grows a
-  suffix, swaps a button or indents one row re-measures the lot: opening a run
-  on the who-had-what grid moved the name column 3px and every dot after it.
-  A table whose shape changes under the reader declares its widths in a
+  suffix, swaps a button or indents one row re-measures the lot. A table whose shape changes under the reader declares its widths in a
   `<colgroup>` and takes `table-layout: fixed`. It also has to carry a
   `min-width`, or the columns are squashed below the size of what is inside
   them rather than overflowing the scroller.
 - **A sticky cell needs an opaque background, and a row-state selector will
-  steal it.** `tr.part td` is more specific than the `.itemlabel` that set the
-  card behind the frozen name column, so it replaced that base with the
-  translucent band — which then painted *twice* down the names and once across
-  the cells: one row, two greys. A cell that other cells scroll under has to
+  steal it.** `tr.part td` is more specific than the `.itemlabel` that sets the
+  card behind the frozen name column, so a translucent row band replaces it and
+  paints *twice* down the names. A cell that other cells scroll under has to
   restate its background colour wherever a row state sets one.
 - **`width: 100%` inside a scroll container is the *visible* width**, not the
   scrollWidth — a block child's containing block is the scroller's content box.
@@ -469,18 +452,14 @@ reads as an ordinary assignment.
   such thing, and wraps at the table's width with half of itself off to the
   right.
 - **One global stylesheet means a bare class name lands everywhere it is
-  spelled.** `.billline.tip` was compounded and still took the tip jar's `.tip`
-  — a centred flex column with 22px of gap — so every discount and tax line in
-  a person's bill stacked its label over its figure with a band of air around
-  it. The compound selector wins the properties it sets and nothing more.
+  spelled.** A compound like `.billline.tip` still takes every property of the
+  tip jar's `.tip` that it doesn't set itself.
   Prefix a modifier with its block (`billextra`) rather than naming it after
   what it holds.
 - **A grid row holds as many items as it has children, and text counts once.**
-  `.warnlist li` is `auto 1fr` — icon, sentence — so the `/about` warning whose
-  sentence links to the tip jar handed it three items: the link became column
-  one of a second row and the last words broke away under the icon. Text with
-  an inline element in it goes into the row as one `<span>`.
+  `.warnlist li` is `auto 1fr` — icon, sentence — so a sentence with a link in
+  it becomes three items and wraps onto a second row. Text with an inline
+  element in it goes into the row as one `<span>`.
 - **`money()` is locale-dependent, so a hand-written symbol beside it drifts.**
-  `Intl` renders USD as "US$1.25" anywhere but en-US, which put a `US$` share
-  under the tip jar's hand-set `$5`. Dollars quoted in copy get `usd()`
+  `Intl` renders USD as "US$1.25" anywhere but en-US. Dollars quoted in copy get `usd()`
   (`lib/format.ts`), pinned to en-US; the group's own money stays the reader's.

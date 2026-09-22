@@ -13,8 +13,8 @@ Decision and rejected alternatives:
 | Static Assets · custom domain | The Next.js export · a nice URL | included · free with DNS on Cloudflare |
 
 We expect a few hundred requests/day and thousands of rows, ever. (Limits
-verified 2026-08-30; re-check, free tiers move.) Nothing is stored outside D1:
-receipt photos were the one thing that would have been, and they were cut
+verified 2026-08-30; re-check, free tiers move.) Nothing is stored outside D1;
+receipt photos are not kept
 ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)).
 
 The one endpoint that spends actual money is the scan, and its budget is
@@ -23,8 +23,8 @@ The one endpoint that spends actual money is the scan, and its budget is
 **Treat this deployment as public.** The repo is public, bida.bid is being
 advertised to users online, and its traffic is strangers' — so every ceiling on
 this page is a threat surface and not only a capacity estimate. The numbers
-above are what a *few hundred honest requests* need; what matters now is what
-one unfriendly caller can spend of them. Two endpoints take a body without
+above are what a *few hundred honest requests* need; what matters is what one
+unfriendly caller can spend of them. Two endpoints take a body without
 costing money and are therefore the ones to reason about: the scan, which has a
 budget, and the push, which has ceilings on one request and, by decision rather
 than by oversight, no counter across many
@@ -59,9 +59,8 @@ nothing needs doing yet.
 
 **So: no eviction strategy, and no near date for one.** At this project's real
 scale — a few trips a year — 500 MB is centuries of use. It becomes a question
-at roughly a thousand new groups a month, which is no longer unimaginable now
-that the app is advertised rather than passed between friends; growth that fast
-would be the good problem, and it arrives with warning. **Abuse would not.** A
+at roughly a thousand new groups a month; growth that fast would be the good
+problem, and it arrives with warning. **Abuse would not.** A
 caller writing deliberate garbage reaches the same ceiling without the warning,
 which is why the push is capped at all
 ([sync.md](sync.md#the-push-has-a-ceiling)).
@@ -115,7 +114,7 @@ when `main` moves.
 
 The last two are the scan budget
 ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) and both are
-optional — without them the endpoint is the old unlimited one. **Set
+optional — without them the endpoint is unlimited. **Set
 `TURNSTILE_SECRET_KEY` last**, after a deploy carrying the matching site key
 (committed in `.github/workflows/deploy.yml`, since it is public and only
 works on its own domains): a Worker checking for a token the app isn't sending
@@ -222,10 +221,9 @@ twice, and the worst case is two of them.
 
 ### A schema change, from here on
 
-**The database is finished, and wiping it is no longer on the table**
-([standing-instructions.md](standing-instructions.md#product)). The sealing
-cutover on 2026-09-12 was the last reset the owner will authorise; what is in
-D1 now is somebody's ledger, and there is no other copy but the phones'.
+**The database is finished, and wiping it is not on the table**
+([standing-instructions.md](standing-instructions.md#product)). What is in D1
+is somebody's ledger, and there is no other copy but the phones'.
 
 So a schema change is **a new numbered migration that keeps what is there** —
 `0002_*.sql`, then `0003_*.sql`. [`0001_init.sql`](../apps/api/migrations/0001_init.sql)
@@ -245,12 +243,11 @@ Worker, which also answers on <https://hajsik.hajsik-api.workers.dev>. Dev is
 <https://hajsik-dev.hajsik-api.workers.dev>. All three are permanent;
 `workers.dev` subdomains don't expire while the Worker exists. **Production has
 two hostnames, and anything keyed to an origin has to name `bida.bid`** — the
-one people actually open. The Turnstile widget is the live example: it named
-only the `workers.dev` pair, so every scan on `bida.bid` was refused while the
-same build scanned fine on the other host.
+one people actually open. A Turnstile widget naming only the `workers.dev`
+host refuses every scan on `bida.bid`.
 
-The Worker and the D1 database are still called `hajsik`, from before the
-rebrand, and they keep those names. A Worker's name *is* its hostname, and a
+The Worker and the D1 database are called `hajsik`, the project's old name, and
+they keep those names. A Worker's name *is* its hostname, and a
 group is a secret link to that hostname ([ADR-0003](decisions/0003-link-only-access.md)):
 rename it and every link anyone has shared points at nothing. Renaming the D1
 is worse — it creates an empty database beside the live one. Whatever the app
@@ -281,10 +278,9 @@ Recognise these if you ever propose one:
 - Raising `SCAN_LIMITS.global` without doing the arithmetic: it is the only
   number that bounds the Gemini bill, at roughly $0.001 a scan
   ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). A hard
-  project quota under it was offered and declined — the owner watches the
-  spend with billing alerts of their own (2026-09-18), so the counter is the
-  brake and they are the watch on it. Don't re-propose the quota; do keep the
-  arithmetic honest.
+  project quota under it was declined — the owner watches the spend with
+  billing alerts of their own, so the counter is the brake and they are the
+  watch on it. Don't re-propose the quota; do keep the arithmetic honest.
 
 ## Gotchas
 
@@ -293,7 +289,7 @@ Recognise these if you ever propose one:
   disables the billing account. `SCAN_LIMITS.global` is the only hard brake we
   have, and it is the better one — it fails as a refusal with a sentence
   rather than as a dead key. The owner runs alerts on the account beside it
-  and takes the residual risk knowingly (2026-09-18).
+  and takes the residual risk knowingly.
 - **A key that validates is not a key that works.** `checkGeminiKey`
   (`web/lib/scan/key.ts`) asks Google's free `models` list, which answers 200
   for a key with no credit and no permission — exactly what a funded-looking
