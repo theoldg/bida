@@ -16,7 +16,7 @@
 
 
 <details open>
-<summary><b>Quick split demo</b> — scan a receipt, tap who had what, copy the result</summary>
+<summary> ### Quick split demo </summary>
 <br>
 <p align="center">
   <img src="docs/media/quick-split.gif" width="320" alt="Scanning a receipt and splitting it item by item, without creating a group">
@@ -24,7 +24,7 @@
 </details>
 
 <details>
-<summary><b>Gallery</b> — the ledger, balances, an expense, and itemized splitting</summary>
+<summary> ### Gallery </summary>
 <br>
 <table>
 <tr>
