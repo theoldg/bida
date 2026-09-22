@@ -26,25 +26,18 @@ import { formatJoinLink, route } from "./group-link";
  */
 
 /**
- * The rows that haven't been tombstoned. Core exports an `alive` of its own
- * over the keyed records in a `GroupState`; this is the same rule over what
- * Dexie hands back, which is arrays.
+ * The rows that haven't been tombstoned — core's `alive`, over Dexie's arrays.
  */
 function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined): T[] {
   return (rows ?? []).filter((r) => !r.deletedAt);
 }
 
 /**
- * The keyed shape every reader in core wants, out of the arrays Dexie gives —
- * **valued at the group's current rates**.
- *
- * Both hooks below need it — one for a group, one for every group at once —
- * and a balance computed from a hand-built state that forgot a field is the
- * kind of wrong nothing else catches. The repricing is here for the same
- * reason: an entry's stored `baseAmountMinor` is what it was saved at, the
- * registry says what it is worth, and one screen reading the stored figure
- * while the rest read the registry is exactly the disagreement this whole
- * thing exists to remove (ADR-0005).
+ * The keyed shape core's readers want, from Dexie's arrays — **valued at the
+ * group's current rates**. One builder, because a hand-built state missing a
+ * field is wrong in a way nothing catches, and one screen reading the stored
+ * `baseAmountMinor` while the rest read the registry is the disagreement
+ * ADR-0005 removes.
  */
 function stateOf(
   group: Group | undefined,
@@ -84,15 +77,11 @@ export function useBillEnglish(): boolean {
 }
 
 /**
- * The invite secret for a group, if this device holds it (creator or a device
- * that joined).
+ * The invite secret for a group, if this device holds it.
  *
- * `null`, not `undefined`, for a group with no key row: to `useLive` an
- * `undefined` result is a read that has not answered yet, so a group that
- * genuinely holds no secret was a read that never answered — two probes, and
- * then "Still reading this phone's data…" standing over a ledger that had
- * drawn twelve seconds earlier. The demo group is that case permanently
- * (core/demo.ts), and a phone whose key was dropped is it transiently.
+ * `null`, not `undefined`, for no key row: to `useLive` `undefined` is a read
+ * that hasn't answered, so the demo group (core/demo.ts) or a dropped key
+ * would show "Still reading this phone's data…" over a drawn ledger.
  */
 export function useGroupSecret(groupId: string | undefined): string | undefined {
   return useLive("groupSecret", async () => {
@@ -102,12 +91,9 @@ export function useGroupSecret(groupId: string | undefined): string | undefined 
 }
 
 /**
- * The invite link for a group, and a one-tap copy of it.
- *
- * Copying, not `navigator.share`: the share sheet is a modal detour with a
- * different set of destinations on every phone, and the answer was always
- * "put it on the clipboard". `copied` flips back on its own so the button can
- * say so without a dialog to dismiss.
+ * The invite link for a group, and a one-tap copy of it. Clipboard, not
+ * `navigator.share` — the share sheet is a different detour on every phone.
+ * `copied` flips back on its own, so no dialog to dismiss.
  */
 export function useInviteLink(groupId: string | undefined): {
   copy: (() => Promise<void>) | undefined;
@@ -132,11 +118,9 @@ export function useInviteLink(groupId: string | undefined): {
 
   const copy = useMemo(() => {
     if (!link) return undefined;
-    // A write is refused on an insecure context or a denied permission, and
-    // impossible where there is no clipboard (lib/clipboard.ts). Never swallow
-    // it: the link is this app's whole access model and is shown nowhere else,
-    // so a silent failure leaves an inert-looking button. A refusal puts it on
-    // screen to be read instead.
+    // A write fails on an insecure context, a denied permission or no clipboard
+    // (lib/clipboard.ts). Never swallow it: the link is the whole access model,
+    // so a refusal puts it on screen to be read instead.
     return async () => {
       try {
         await writeClipboardText(link);
@@ -158,10 +142,9 @@ export interface GroupData {
   /** Live members, sorted by name — the list every picker offers. */
   members: Member[];
   /**
-   * Every member the group has ever had, removed ones included. An id on an
-   * entry outlives the member it names (removal is a tombstone, never a
-   * rewrite), so a map of the living answers "who is this?" with `undefined`
-   * exactly when somebody has left — which is when the name matters most.
+   * Every member the group has ever had, removed ones included: an entry's id
+   * outlives the member (removal is a tombstone), and the name matters most
+   * exactly when they've left.
    */
   memberById: Map<string, Member>;
   /** Their name, or `copy.unknown`. Use this rather than reaching into the map. */
@@ -185,11 +168,9 @@ export interface GroupData {
   me: string | undefined;
   /**
    * The invariant this write would break, as far as this device can see, or
-   * undefined. **The only source of a refusal in the app.** A screen that
-   * decides for itself is the defect docs/invariants.md exists for: the guard
-   * and its healer become two things that agree until they don't. It is a
-   * courtesy either way — it reads one replica, and `healGroup` is what makes
-   * the state legal when it loses.
+   * undefined. **The only source of a refusal in the app** — a screen deciding
+   * for itself is the drift docs/invariants.md is about. A courtesy either way:
+   * `healGroup` is what makes the state legal when it loses.
    */
   guard: (draft: OpDraft) => RegisteredInvariant | undefined;
   pendingOps: number;
@@ -246,11 +227,9 @@ export function useGroupData(groupId: string | undefined): GroupData {
 
     const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
-    // Detection needs the tombstones, which `state` has filtered out — a
-    // removed member on a live entry is the whole point. Folded from the raw
-    // rows and handed to the registry, never re-derived here: a screen that
-    // decides for itself what is broken is the drift docs/invariants.md is
-    // about.
+    // Detection needs the tombstones `state` filtered out — a removed member on a
+    // live entry is the point. Folded from raw rows and handed to the registry,
+    // never re-derived here.
     const withTombstones: GroupState = {
       ...emptyGroupState(),
       group: rows.group,
@@ -280,19 +259,15 @@ export function useGroupData(groupId: string | undefined): GroupData {
 }
 
 /**
- * Send a phone that has not said who it is to the screen that asks.
+ * Send a phone that hasn't said who it is to the screen that asks.
  *
- * A device with no claimed member has no honest `actor` to sign an op with,
- * and every screen under `/g` writes one. **Never fall back to the member an
- * action is *about***: removing Bruno would go into history as "Bruno left the
- * group", and there is no leaving — only being removed.
+ * A device with no claimed member has no honest `actor` for an op. **Never
+ * fall back to the member an action is *about***: removing Bruno would read
+ * "Bruno left the group", and there is no leaving.
  *
- * Every screen under `/g` redirects, not just the ledger: each is reachable on
- * its own (a bookmark, an invite link's back arrow, a settle-up row).
- * `/g/claim` is the exception, being the destination.
- *
- * Returns whether we are on our way out, so the caller can draw a frame
- * instead of somebody else's ledger while the replace lands.
+ * Every `/g` screen redirects (each is reachable on its own) except
+ * `/g/claim`. Returns whether we are leaving, so the caller draws a frame
+ * rather than somebody else's ledger.
  */
 export function useClaimGate(groupId: string | undefined, data: GroupData): boolean {
   const router = useRouter();
@@ -315,17 +290,12 @@ export interface GroupSummary {
 }
 
 /**
- * How many groups this phone holds a key to but has never seen — saved and
- * waiting on a first sync.
- *
- * The home-screen icon is added carrying its invites (docs/ios.md), so its
- * first launch saves the keys and lands on a list whose rows only exist once
- * the server has answered. Without this, somebody who installed bida to *keep*
- * their groups meets the empty state.
+ * How many groups this phone holds a key to but has never seen — waiting on a
+ * first sync. A home-screen icon arrives carrying its invites (docs/ios.md),
+ * and without this its first launch shows the empty state.
  *
  * **Count keys against groups, minus `leftGroups`** — forgetting a group keeps
- * its key, so trusting the keys alone waits forever on a phone that forgot
- * everything.
+ * its key, so keys alone would wait forever.
  */
 export function useArrivingGroups(): number | undefined {
   return useLive("arrivingGroups", async () => {
@@ -345,10 +315,8 @@ export function useArrivingGroups(): number | undefined {
 export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLive("groupSummaries", async () => {
     const d = db();
-    // Five reads, not three per group. Every row on this phone belongs to a
-    // group in this list, so fetching each table whole and bucketing it here
-    // moves the same bytes in a constant number of IndexedDB round trips,
-    // rather than a cost that grows with the group count.
+    // Five reads, not three per group: fetching each table whole and bucketing
+    // here is a constant number of IndexedDB round trips.
     const [groups, device, members, expenses, settlements, rates] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),
@@ -400,13 +368,9 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
 }
 
 /**
- * How sync is actually going for one group.
- *
- * **Never `navigator.onLine`** — it says whether there is a link, not whether
- * the other end is answering. A Worker that 500s, a D1 outage or a key the
- * server rejects all leave the phone "online" while nothing it writes ever
- * leaves it. The sync engine writes down how each attempt went; this reads it
- * back.
+ * How sync is actually going for one group. **Never `navigator.onLine`** — it
+ * says there is a link, not that the server answers; a 500, a D1 outage or a
+ * rejected key all look "online". This reads what the engine recorded.
  */
 interface SyncHealth {
   /** Failing for long enough to be worth saying out loud — see FAILURES_BEFORE_WARNING. */
@@ -418,9 +382,8 @@ interface SyncHealth {
 }
 
 /**
- * One failed attempt is a dropped packet on a train. Two, spaced by the
- * engine's own backoff, is a server that isn't there — and only then does a
- * banner earn its place.
+ * One failure is a dropped packet on a train; two, spaced by the engine's
+ * backoff, is a server that isn't there — only then a banner.
  */
 const FAILURES_BEFORE_WARNING = 2;
 
@@ -442,14 +405,10 @@ export function useSyncHealth(groupId: string | undefined): SyncHealth {
 }
 
 /**
- * The host this copy of the app was opened from — `""` until the bundle lands.
- *
- * Which server somebody is on is a thing only the browser knows: the dev
- * Worker is its own host and a self-hosted one is somebody else's
- * ([hosting.md](../../../docs/hosting.md)), so an address cannot be baked into
- * a static export. A sentence that names one is therefore a client island, and
- * before hydration it reads as the bare path — still the right address from
- * where it is being read.
+ * The host this copy was opened from — `""` until the bundle lands. Only the
+ * browser knows it (dev and self-hosted Workers differ,
+ * [hosting.md](../../../docs/hosting.md)), so it can't be baked into the
+ * export; before hydration a sentence shows the bare path.
  */
 export function useHost(): string {
   const [host, setHost] = useState("");

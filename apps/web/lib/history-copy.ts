@@ -6,30 +6,26 @@ import { copy } from "./copy";
 import { dayLabel, money, plural, rateText } from "./format";
 
 /**
- * Which sentence the log gets for a revision. The sentences themselves are
- * `copy.history` — this file only decides which one applies, and what goes in
- * the lines under it. A revision that moved several fields gets no sentence
- * about any one of them: it says the entry was edited, and lists them.
+ * Which sentence the log gets for a revision (`copy.history` holds the words),
+ * and the lines under it. A revision that moved several fields says the entry
+ * was edited and lists them.
  *
- * It must be **total**: it runs inside a render over every patch the log
- * holds, so one throw is a white screen, not a missing line.
+ * It must be **total**: it runs in a render over every patch, so one throw is
+ * a white screen, not a missing line.
  *
- * **Read the entity, not only the change.** A revision carries the fold either
- * side of it (`Revision.before` / `after`), and half of what makes a sentence
- * useful is in there rather than in the fields that moved: whether this entry
- * is an income, the currency its figures are in, who the other payer was.
+ * **Read the entity, not only the change.** `Revision.before` / `after` say
+ * whether this is an income, which currency the figures are in, who the other
+ * payer was.
  */
 
 interface Described {
   what: string;
   diff?: { was?: string; now: string };
   /**
-   * Every field the revision changed, a labelled line each — what a revision
-   * that moved more than one gets *instead* of a sentence about one of them.
-   * An entry is saved whole (`editExpense`), so several at once is ordinary,
-   * and a merge can revert somebody's amount in the same op that changes the
-   * description. **Never rank the fields**: a permanent record that captions
-   * such a revision "changed who's involved" never mentions the money.
+   * Every field the revision changed, a labelled line each, in place of a
+   * sentence. An entry is saved whole (`editExpense`), so several at once is
+   * ordinary. **Never rank the fields**: a caption of "changed who's involved"
+   * over a revision that also moved the money never mentions the money.
    */
   also?: Detail[];
 }
@@ -52,17 +48,15 @@ interface Part {
   /** Under the sentence. */
   diff?: Values;
   /**
-   * On the labelled line, where that wants saying differently: a crossing into
-   * an income is a whole sentence on its own but a line needs the two words,
-   * and a count of photos is in the sentence already.
+   * On the labelled line, where it reads differently: a crossing into an income
+   * needs just the two words, and a photo count is in the sentence already.
    */
   line?: Values;
 }
 
 /**
- * One field moved: it gets its sentence, and its diff under it. More than one
- * moved: no field outranks another, so the sentence says only that the entry
- * was edited and each of them gets an equal line beneath it.
+ * One field moved: its sentence and diff. More than one: "edited" and an equal
+ * line each.
  */
 function assemble(parts: Part[], edited: string): Described {
   const [first] = parts;
@@ -73,10 +67,8 @@ function assemble(parts: Part[], edited: string): Described {
 
 /**
  * Everybody's share of the whole, in basis points — the one reading of a split
- * that survives a change of mode. "Evenly between two" and "one part each" are
- * the same split written twice, and a log announcing a difference between them
- * is noise. Null where nothing is allocated at all: an empty split, or one
- * whose every part is zero.
+ * that survives a change of mode ("evenly between two" is "one part each").
+ * Null where nothing is allocated.
  */
 function proportions(spec: SplitSpec | null | undefined): Record<Id, number> | null {
   if (!spec) return null;
@@ -106,10 +98,9 @@ function coPayers(state: State): [Id, number][] | null {
   if (!spec || typeof spec !== "object") return null;
   const live = Object.entries(spec as Record<string, unknown>)
     .filter(([, v]) => typeof v === "number" && Number.isFinite(v) && v !== 0) as [Id, number][];
-  // One contributor is a single payer written the long way — `normalisePayers`
-  // stores null for it, and an edit that collapses the map to one name has
-  // changed nothing a person can see. The order is the caller's to set, and it
-  // sets it by name — see `inNameOrder`.
+  // One contributor is a single payer written the long way (`normalisePayers`
+  // stores null), so nothing visible changed. Ordered by the caller, by name
+  // (`inNameOrder`).
   return live.length > 1 ? live : null;
 }
 
@@ -131,9 +122,8 @@ export function describe(
   const cash = (v: unknown, code: CurrencyCode = currency) =>
     (typeof v === "number" && Number.isFinite(v) ? money(v, code) : undefined);
   /**
-   * The currency the entry's own figures are in — its `amountMinor`, and every
-   * payer's contribution. Only `baseAmountMinor` is in the group's currency;
-   * printing everything in that one puts a euro sign over a figure in dirhams.
+   * The currency of the entry's own figures (`amountMinor`, every payer's
+   * contribution). Only `baseAmountMinor` is in the group's.
    */
   const ownCurrency = (state: State): CurrencyCode =>
     (typeof state["currency"] === "string" ? state["currency"] : currency);
@@ -144,11 +134,8 @@ export function describe(
     return { was: day(c.before), now: day(c.after) ?? "" };
   };
   /**
-   * The people of a split, in the order they are printed rather than the order
-   * they are stored. `splitParticipants` sorts by id and an id is a hash of the
-   * name (ADR-0034), so a was/now pair comes out in two unrelated orders —
-   * "Cy, Ana, Bruno" over "Ana, Bruno" — and the reader has to work out which
-   * name went. Sorting by the name puts the two lines in step.
+   * A split's people in printed order, by name. Ids are hashes of names
+   * (ADR-0034), so id order puts a was/now pair in two unrelated orders.
    */
   const inNameOrder = (spec: SplitSpec) =>
     splitParticipants(spec)
@@ -162,17 +149,14 @@ export function describe(
       ?.map(([id, amount]) => [id, nameOf(id), amount] as const)
       .sort(([, a], [, b]) => a.localeCompare(b)) ?? null;
   /**
-   * What each person is down for, in the mode's own words — "Evenly", "Ana ×2
-   * · Bo ×1", "Ana €12.00 · Bo €8.00". The names are already on the line above
-   * when the *people* changed; this line is for when only the shares did.
+   * What each person is down for, in the mode's words — "Evenly", "Ana ×2 ·
+   * Bo ×1", "Ana €12.00 · Bo €8.00". For when only the shares changed.
    */
   const shareLine = (spec: SplitSpec | null | undefined): string => {
     if (!spec) return "";
     if (spec.mode === "equal") return copy.split.mode.equal;
-    // A receipt's weights are the bill divided up, in minor units — they are
-    // nobody's chosen number, and printed as parts they read "Teo ×3943
-    // parts". The line for a receipt is what it is; who had what changed is
-    // the sentence above it (`changedWhoHadWhat`).
+    // A receipt's weights are minor units, not chosen numbers ("Teo ×3943
+    // parts"); the sentence above says who had what changed.
     if (spec.mode === "receipt") return copy.split.mode.receipt;
     return inNameOrder(spec).map(([id, name]) => {
       const value = spec.mode === "shares" ? copy.history.parts(spec.weights[id] ?? 0)
@@ -183,10 +167,9 @@ export function describe(
   };
 
   if (rev.entity === "expense") {
-    // An income and an expense are one entity, and only the revision that
-    // crossed between them carries `kind` — so read it off the fold, or every
-    // later edit of an income is captioned "edited this entry", the one noun
-    // that is never wrong and never says anything either.
+    // Only the revision that crossed between income and expense carries `kind`,
+    // so read it off the fold — or every later income edit says "edited this
+    // entry".
     const kind = rev.after["kind"] === "income" ? "income" : "expense";
     const noun = copy.entryKind.label[kind].toLowerCase();
 
@@ -205,17 +188,13 @@ export function describe(
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
 
-    // Everything the revision moved, in the order the screens read it. An
-    // entry is saved whole, so this is regularly several fields — collected
-    // rather than returned one at a time, since the first one recognised is
-    // not allowed to be the only one the log mentions.
+    // Everything the revision moved, in screen order. Collected, since the first
+    // field recognised must not be the only one mentioned.
     const parts: Part[] = [];
     const named = said.field;
 
-    // A crossing between the two is worth a sentence; the bookkeeping isn't.
-    // An expense is the *absence* of `kind` on the log, so an edit that carries
-    // `kind: "expense"` against nothing changed nothing — say what else the
-    // edit did instead of announcing a direction it never left.
+    // A crossing is worth a sentence. An expense is the *absence* of `kind`, so
+    // `kind: "expense"` against nothing changed nothing.
     const crossing = field("kind");
     if (crossing && (crossing.after === "income" || crossing.before === "income")) {
       const kindWord = (v: unknown) =>
@@ -230,10 +209,8 @@ export function describe(
     if (split) {
       const was = split.before as SplitSpec | null;
       const now = split.after as SplitSpec;
-      // Two questions, in the order a person cares about them: who it is spent
-      // on, and then how much each of them owes. Ask only the first and an edit
-      // moving a part from one name to another reads "changed who's involved" —
-      // the same two names on both lines, and nothing saying what moved.
+      // Who it is spent on, then how much each owes. Only the first, and moving a
+      // part between names reads "changed who's involved" over the same two names.
       const wasWho = namesOf(was);
       const nowWho = namesOf(now);
       const wasHow = shareLine(was);
@@ -250,9 +227,8 @@ export function describe(
           diff: { was: wasHow || undefined, now: nowHow },
         });
       }
-      // Same people, same shares: the spec was rewritten — a re-picked member,
-      // a mode swapped for an identical one — and nobody's money moved. The
-      // mode line below says whether the entry now *reads* differently.
+      // Same people, same shares: the spec was rewritten and nobody's money moved.
+      // The mode line below says whether it now *reads* differently.
     }
     // The scan behind the split, and the grid that assigned it. Both move
     // fields no sentence above names, so without this a save that reopened the
@@ -278,15 +254,9 @@ export function describe(
     } else if (field("receiptInvolved") ?? field("receiptAssignments")) {
       parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat });
     }
-    // The three amount fields move together, but only the ones that actually
-    // changed reach here: switching an expense to another currency at the same
-    // rate leaves the figure alone, so there is a currency change and no
-    // amount change to report. Say what changed rather than assuming a number
-    // is there to print.
-    //
-    // Each figure is printed in its own currency — the base one is the group's,
-    // and `amountMinor` is in the entry's, which is only ever the same currency
-    // by coincidence.
+    // Only the amount fields that actually changed reach here: a currency switch
+    // at the same rate is a currency change with no amount change. Each figure is
+    // printed in its own currency — `amountMinor` is the entry's, base the group's.
     const inBase = field("baseAmountMinor");
     const amount = inBase ?? field("amountMinor");
     if (amount) {
@@ -310,12 +280,9 @@ export function describe(
         diff: { was: text(rate.before), now: text(rate.after) ?? "" },
       });
     }
-    // The payer side asks the split's two questions over again — who put money
-    // in, then how much each of them did — and answers whichever moved.
-    //
-    // Both are read off the fold, because neither is answered by the change
-    // alone: adding a co-payer beside the largest contributor moves `payers`
-    // and nothing else, and the name they join is on the entity.
+    // The payer side asks the split's two questions again. Both are read off the
+    // fold: adding a co-payer moves only `payers`, and the name they join is on
+    // the entity.
     if (field("payers") ?? field("paidBy")) {
       /** Who put money in, by name: `payerList`, over a state not an `Expense`. */
       const payerNames = (state: State) => {
@@ -323,9 +290,8 @@ export function describe(
         return spec ? spec.map(([, name]) => name).join(", ") : nameOf(state["paidBy"]);
       };
       /**
-       * The same people and what each of them put in, in the entry's own
-       * currency — "Ana €40.00 · Bo €10.00". It carries the names with it, so
-       * one line answers both questions and neither ever repeats the other.
+       * Each payer and what they put in, in the entry's currency — "Ana €40.00 ·
+       * Bo €10.00" — one line answering both questions.
        */
       const payerLine = (state: State) => {
         const spec = payersByName(state);
@@ -377,12 +343,9 @@ export function describe(
         line: { was: plural(before, copy.noun.photo), now: plural(after, copy.noun.photo) },
       });
     }
-    // The last resort, and only that: what the entry screen calls this split,
-    // which is its mode and nothing else — a receipt is a mode (ADR-0016), so
-    // there is no second field to consult here. A mode swapped for one that
-    // means the same thing is noise beside a real change and is dropped above,
-    // but it is the whole of some saves — switching tab and saving — and those
-    // read as "edited this entry" with nothing under them.
+    // The last resort: the split's mode (a receipt is a mode, ADR-0016). A
+    // same-meaning mode swap is dropped above, but it is the whole of some saves,
+    // which would otherwise read "edited this entry" with nothing under it.
     if (parts.length === 0) {
       const modeLabel = (state: State): string => {
         const spec = state["split"] as SplitSpec | null | undefined;
@@ -403,10 +366,8 @@ export function describe(
   if (rev.entity === "identity") {
     const c = field("memberId");
     const now = nameOf(c?.after);
-    // The entity id is a device, but nobody reads the log for devices: a claim
-    // moving is one person becoming another, and the sentence says so on its
-    // own — "Teo became Seppi" needs no was/now line repeating the two names
-    // under it in red and green.
+    // The entity id is a device, but a claim moving is one person becoming
+    // another — "Teo became Seppi" needs no was/now line.
     if (rev.isCreate) return { what: said.newDevice(now) };
     return { what: said.became(nameOf(c?.before), now) };
   }
@@ -451,9 +412,8 @@ export function describe(
         diff: { was: text(rate.before), now: text(rate.after) ?? "" },
       });
     }
-    // Both sides on one line, read off the fold: a swap moves both fields and
-    // named only one of them, so the log said "Ana → Bo" over an edit whose
-    // whole point was that it is now the other way round.
+    // Both sides on one line, read off the fold: a swap moves both fields, and
+    // naming one says nothing.
     if (field("fromMember") ?? field("toMember")) {
       const between = (state: State) =>
         `${nameOf(state["fromMember"])} → ${nameOf(state["toMember"])}`;
@@ -480,10 +440,8 @@ export function describe(
     // the same person joining three times over.
     const them = memberById.get(rev.entityId)?.name
       ?? (typeof field("name")?.after === "string" ? field("name")!.after as string : copy.someoneLower);
-    // `self` on a create is somebody adding themselves — the one write a phone
-    // makes before it has claimed anybody, on the join screen. There is no
-    // matching self-delete: you cannot leave a group, only be removed
-    // (docs/data-model.md), and the trash button is never on your own row.
+    // `self` on a create is somebody adding themselves on the join screen. No
+    // self-delete exists: you can only be removed (docs/data-model.md).
     const self = rev.op.actor === rev.entityId;
     if (rev.isCreate) return { what: self ? said.joined(them) : said.added(who, them) };
     if (rev.isDelete) return { what: said.removed(who, them) };
@@ -508,10 +466,8 @@ export function describe(
     const pair = (v: unknown) =>
       (typeof v === "string" && isValidRate(v) ? said.ratePair(code, rateText(v), currency) : undefined);
     if (rev.isDelete) return { what: said.removedRate(who, code) };
-    // The rate half of the same repair, and it has to come before the `rate`
-    // field below: a lift carries only `deletedAt`, so without this it fell
-    // through to "changed the MAD rate" — an edit nobody made, over a number
-    // that did not move.
+    // The rate half of the same repair, before the `rate` field below: a lift
+    // carries only `deletedAt`, and would read as "changed the MAD rate".
     if (field("deletedAt")?.after === null) return { what: said.restoredRate(code) };
     const c = field("rate");
     const now = pair(c?.after);

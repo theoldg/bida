@@ -9,12 +9,10 @@ import { movesAnything, only, wholeEntity } from "./patch";
 import { rateToWrite, toBase, valuationOf } from "./rates";
 
 /**
- * The three kinds of entry — expense, income and transfer (ADR-0010) — added,
- * edited and tombstoned. Everything in the app that moves money lands here.
- *
- * The two editors are deliberately the same shape: diff the form against what
- * is stored (`patch.ts`), then let the registry re-derive what the change is
- * worth (`rates.ts`). Neither step is written out twice.
+ * The three kinds of entry (ADR-0010) — added, edited and tombstoned.
+ * Everything that moves money lands here. Both editors diff the form against
+ * what is stored (`patch.ts`), then let the registry re-derive what the
+ * change is worth (`rates.ts`).
  */
 
 export interface ExpenseInput {
@@ -47,12 +45,10 @@ export interface ExpenseInput {
 }
 
 /**
- * Normalise the payer side before it is written.
- *
- * A `payers` map with one contributor is just a single payer and is stored as
- * null, so the common case never carries a redundant field. With two or more,
- * `paidBy` is rewritten as the largest contributor so a list row, an avatar and
- * an older client all still have one sensible answer. ADR-0010.
+ * Normalise the payer side before it is written. One contributor is a single
+ * payer, stored as null `payers`. With two or more, `paidBy` becomes the
+ * largest contributor, so a row, an avatar and an older client still have one
+ * answer. ADR-0010.
  */
 function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, number> | null } {
   const spec = input.payers;
@@ -67,10 +63,8 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
 }
 
 /**
- * The `create` patch for an expense — shared by `addExpense`, which writes it
- * alone, and `convertToExpense`, which writes it beside the tombstone of the
- * transfer it replaces. One builder, so the two can't describe the same
- * entity differently.
+ * The `create` patch for an expense, shared by `addExpense` and
+ * `convertToExpense` so the two can't describe it differently.
  */
 function expenseCreatePatch(
   input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
@@ -111,10 +105,9 @@ function expenseCreatePatch(
 }
 
 /**
- * `expenseId` is the caller's to give, because the form that quoted the split
- * has to write it under the id it quoted: the leftover minor unit goes by
- * `tiebreakSeed`, which is that id (core/split.ts, `splitSeed` in lib/draft).
- * Left out, one is minted here.
+ * `expenseId` comes from the caller, because the leftover minor unit goes by
+ * `tiebreakSeed`, which is that id (core/split.ts, `splitSeed` in lib/draft):
+ * the form must write under the id it quoted. Minted here if absent.
  */
 export async function addExpense(
   groupId: Id,
@@ -149,10 +142,8 @@ export async function editExpense(
   if (!existing) throw new Error(`unknown expense: ${expenseId}`);
 
   const merged = { ...existing, ...changes } as ExpenseInput & { deletedAt?: number | null };
-  // Both sides of the split comparison written one way. `sameValue` sorts
-  // object keys but not array elements, so without this, toggling a member out
-  // and back in reorders `members` and reads as an edit that changed nothing a
-  // person could see (`canonicalSplit`).
+  // `sameValue` sorts object keys but not arrays, so toggling a member out and
+  // back in would reorder `members` and read as an edit (`canonicalSplit`).
   const split = canonicalSplit(merged.split);
   const before = { ...existing, split: canonicalSplit(existing.split) };
 
@@ -259,9 +250,8 @@ export async function recordSettlement(
 }
 
 /**
- * Edit a transfer. The same rule as `editExpense`, by the same functions: the
- * whole entry reaches the log, and the base figure is re-derived from the
- * registry rather than carried over.
+ * Edit a transfer, by `editExpense`'s rule: the whole entry reaches the log,
+ * and the base figure is re-derived from the registry.
  */
 export async function editSettlement(
   groupId: Id,
@@ -308,10 +298,9 @@ export async function deleteSettlement(
 // ------------------------------------------------------ kind conversion
 
 /**
- * An expense or income becoming a transfer. Not an edit — a transfer is a
- * `Settlement`, a different entity with a different shape (ADR-0010) — so the
- * expense is tombstoned and the transfer created fresh, both in the one
- * append: a partial write must never leave the money recorded as neither.
+ * An expense or income becoming a transfer — a different entity (ADR-0010),
+ * so the expense is tombstoned and the transfer created in one append: a
+ * partial write must never leave the money recorded as neither.
  */
 export async function convertToSettlement(
   groupId: Id,

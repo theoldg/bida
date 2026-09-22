@@ -8,17 +8,13 @@ import { confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
 /**
  * Bring a field into view, and whatever it says has to come up with it.
  *
- * `nearest` scrolls the least that works, which is the whole answer for an
- * ordinary field and most of it for the add row — where the act the list ends
- * on sits underneath, on the scroll rather than in a pinned foot. A field says
- * how much room that act needs in `scroll-margin-bottom` (`--act-below`,
- * globals.css); the browser spends it when it has to scroll anyway and skips it
- * when it decides the field is already in view, which is exactly the case a
- * keyboard makes — so the remainder is paid here (`reachOf`).
+ * `nearest` covers an ordinary field. The add row also needs room for the act
+ * below it, declared as `scroll-margin-bottom` (`--act-below`, globals.css) —
+ * which the browser skips when it thinks the field is already in view, exactly
+ * the keyboard case. The remainder is paid here (`reachOf`).
  *
- * The one scroll every path shares: ours when a name is filed
- * (name-adder.tsx), ours when the keyboard opens (`follow` below), and the
- * browser's own on focus, which this one lands on top of.
+ * Shared by name-adder.tsx, `follow` below, and on top of the browser's own
+ * scroll on focus.
  */
 export function bringIntoView(el: Element) {
   el.scrollIntoView({ block: "nearest" });
@@ -32,24 +28,17 @@ export function bringIntoView(el: Element) {
 }
 
 /**
- * **The one place the visual viewport is measured**, and the two things that
- * fall out of it: how much of the app the on-screen keyboard covers, as `--kb`,
- * and a layout viewport taller than the screen, which is a browser bug and is
- * recorded rather than paid for (lib/viewport.ts).
+ * **The one place the visual viewport is measured**: how much the keyboard
+ * covers, as `--kb`, and a layout viewport taller than the screen — a browser
+ * bug, recorded rather than paid for (lib/viewport.ts).
  *
- * The shell is `100dvh` and never scrolls (globals.css), which is right until a
- * keyboard opens: on iOS it and its accessory bar — suggestion strip, "Done"
- * and arrows — are drawn *over* the layout viewport rather than shortening it,
- * so `dvh` doesn't move and `.scroll`'s bottom edge sits behind the keyboard.
- * Scrolling a field into view lands it exactly there.
- *
- * `.scroll` spends the covered strip as real space at the end of the list and
- * as `scroll-padding-bottom`, so every scroll — ours and the browser's own on
- * focus — stops short of the keyboard instead of under it.
+ * On iOS the keyboard and its accessory bar overlay the `100dvh` shell rather
+ * than shortening it, so `.scroll` ends behind them. `.scroll` spends the
+ * covered strip as trailing space and `scroll-padding-bottom`, so every scroll
+ * stops short of the keyboard.
  *
  * **Set on `<html>`, not the shell**: dialogs and the FAB live outside it and
- * need the same value, so a card asking for a number is centred above the
- * keyboard rather than behind it.
+ * need the same value.
  */
 export function MeasureViewport() {
   useEffect(() => {
@@ -67,20 +56,16 @@ export function MeasureViewport() {
         scale: view.scale, typing: isTyping(document.activeElement),
       });
       root.style.setProperty("--kb", `${kb}px`);
-      // A dialog's card is centred in what the keyboard leaves, so every step
-      // of this moves it — and a card that moves between a press and its lift
-      // is a tap the browser sends no click for. Only while something is open
-      // over the screen; the rest of the time this writes nothing
-      // (lib/press-trace.ts).
+      // A dialog's card is centred in what the keyboard leaves, so each step
+      // moves it — and a card moving between press and lift gets no click.
+      // Traced only while an overlay is open (lib/press-trace.ts).
       if (kb !== paid) { note(`kb ${paid}->${kb}`); paid = kb; }
       // Whether there is a keyboard at all is this component's to know; how
       // much air to leave above one is the stylesheet's (`--kb-gap`).
       root.toggleAttribute("data-kb", kb > 0);
-      // A gap with nobody typing is the app painted on a screen shorter than
-      // the one it was laid out for: the last strip of every screen — bottom
-      // nav, about line — is below the fold in a shell that cannot scroll.
-      // Nothing here can give those pixels back, so record it and /diag has the
-      // number next time somebody says the tabs went missing.
+      // A gap with nobody typing is a screen shorter than the layout: the last
+      // strip of every screen is unreachable. Nothing can give those pixels back,
+      // so record it for /diag.
       if (unexplained !== reported) {
         reported = unexplained;
         mark("viewport.gap", unexplained
@@ -93,15 +78,10 @@ export function MeasureViewport() {
 
     /**
      * The keyboard opening is the one moment worth re-scrolling for: the browser
-     * has already put the field flush against the accessory bar, and it did that
-     * before `--kb` existed.
-     *
-     * A dialog is the other scroller worth following into: its card is centred
-     * in what the keyboard leaves (globals.css), and one taller than that
-     * scrolls inside itself.
-     *
-     * A field needing more than itself in view says so in `scroll-margin-bottom`
-     * and `bringIntoView` spends it — **one call for every field either way**.
+     * already put the field against the accessory bar, before `--kb` existed.
+     * A dialog is followed too — its card is centred in what the keyboard leaves,
+     * and a tall one scrolls inside itself. **One `bringIntoView` call for every
+     * field.**
      */
     function follow() {
       const focused = document.activeElement;
@@ -144,26 +124,19 @@ export function MeasureViewport() {
  * The confirm key, walking a screen's fields and folding the keyboard at the
  * end of them.
  *
- * Hung on `.scroll` rather than on each field, because the next field is
- * rarely a sibling of the one being left: on the entry form it is the box
- * below, and in the split editor it is the next member's row. The screen is
- * the scope, so the order is the one a thumb meets them in and a field added
- * between two others needs nothing said here.
+ * On `.scroll`, not on each field: the next field is rarely a sibling (the
+ * box below, the next member's row), and screen order is thumb order.
  *
- * **A field wearing `enterKeyHint="next"` hands the caret on; every other
- * field is the end of its chain and folds the keyboard** (`confirmAct`). That
- * is what makes a column of figures a chain of its own: the entry form's note
- * says "done", so a press there puts the keyboard away rather than diving into
- * the split editor underneath, and the split's own last row does the same
- * rather than wrapping round.
+ * **`enterKeyHint="next"` hands the caret on; every other field ends its chain
+ * and folds the keyboard** (`confirmAct`) — so the entry form's note says
+ * "done" rather than diving into the split editor, whose last row does the
+ * same rather than wrapping round.
  *
- * **A field inside a `<form>` is left alone.** Its Enter is already spoken
- * for — the add row files the name and hands the caret straight back, a dialog
- * submits its card — and those are better answers than either of these.
+ * **A field inside a `<form>` is left alone**: its Enter already files a name
+ * or submits a card.
  *
- * The caret goes to the *end* of what is already in the field it lands in: a
- * field entered at character nought turns a typed "5" into "512.00", and the
- * columns this walks are full of figures somebody is replacing.
+ * The caret goes to the *end* of the field it lands in: at character nought a
+ * typed "5" turns "12.00" into "512.00".
  */
 export function walkFields(e: React.KeyboardEvent<HTMLElement>) {
   const from = e.target;

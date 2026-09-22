@@ -10,9 +10,8 @@ import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
 
 /**
- * A group, who this phone is in it, and who else is. Three things that only
- * look like three: a group is created with its people in it, and the device
- * says which of them it speaks for in the same breath.
+ * A group, who this phone is in it, and who else is: created together, with
+ * the device saying which member it speaks for.
  */
 
 export interface NewGroupInput {
@@ -88,11 +87,10 @@ export async function createGroup(
  * never travels through an op, only through the link fragment. ADR-0003.
  */
 export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
-  // **The demo group must never hold a key.** A key row is what `runSyncAll`
-  // iterates and what `syncGroupOnce` returns early without, so one written
-  // here starts pushing a tourist's demo into a D1 that gets no further resets
+  // **The demo group must never hold a key.** A key row is what the sync loop
+  // walks, so one here would push a demo into a D1 that gets no further resets
   // (docs/sync.md#the-demo-group-has-no-key). `scripts/rules-check.mjs` keeps
-  // this the only writer of that table, so this refusal covers all of them.
+  // this the table's only writer, so this refusal covers all of them.
   if (isDemo(groupId)) throw new Error("the demo group is never given a key");
   const existing = await db().groupKeys.get(groupId);
   // A fresh link is the only cure for a 403, so opening one clears the failure
@@ -112,13 +110,11 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
  * Every group this phone holds, and who it is in each, for a home-screen icon
  * to bring along (docs/ios.md).
  *
- * The secrets, not the groups they open: one just accepted has its key before
- * its ops, and it is the very group the person is installing for. **Leave out
- * forgotten groups** — the key outlives `forgetGroup`, so an icon would
- * otherwise walk back into a group this phone said it was done with.
+ * The secrets, not the groups: one just accepted has its key before its ops.
+ * **Leave out forgotten groups** — the key outlives `forgetGroup`.
  *
- * `first` goes at the head: the group the screen that asked is about. Reads
- * only — no `getDevice`, which creates the row — so a live query can run it.
+ * `first` goes at the head. Reads only — no `getDevice`, which creates the
+ * row — so a live query can run it.
  */
 export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
   const [keys, device] = await Promise.all([db().groupKeys.toArray(), db().device.get("device")]);
@@ -136,14 +132,11 @@ export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
 }
 
 /**
- * Forget a group on this phone: hides it from this device's list and drops
- * which member this phone is in it. Purely local — nothing is appended to the
- * op log, so it's invisible to everyone else in the group and there's nothing
- * for history to show. Membership is untouched; opening the invite link again
- * (`saveGroupKey`) un-forgets it and the claim gate asks who is holding the
- * phone, since after a forget that may well be somebody else. The identity
- * row on the log stays until that answer overwrites it. Groups are never
- * deleted, whether forgotten by everyone or not.
+ * Forget a group on this phone: hide it from this device's list and drop
+ * which member this phone is. Purely local — no op, so invisible to the group.
+ * Opening the invite link again (`saveGroupKey`) un-forgets it, and the claim
+ * gate asks who holds the phone, since that may have changed. The identity row
+ * stays until that answer overwrites it.
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
   await hideGroup(groupId);
@@ -151,15 +144,11 @@ export async function forgetGroup(groupId: Id): Promise<void> {
 
 /**
  * Take one group off this phone for good: its ops, every table folded from
- * them, the link secret, and what the device record remembers of it. The id is
- * written to `deletedGroups` so the screens can say what happened rather than
- * showing a group that has silently stopped existing.
+ * them, the secret, and the device record's memory of it. The id goes into
+ * `deletedGroups` so screens can say what happened.
  *
- * The other half of `forgetGroup`, and nothing like it. This runs when the
- * group has been deleted from the server (`/delete-my-data`, or a 410 met by
- * the sync engine), the one event in this app that is not an op and cannot be
- * undone. Nothing is appended and nothing is left to fold: there is no group
- * to record it in.
+ * Runs only when the server deleted the group (`/delete-my-data`, or a 410 in
+ * sync) — the one event that is not an op. Nothing is appended.
  */
 export async function eraseGroupLocally(groupId: Id): Promise<void> {
   const d = db();
@@ -197,12 +186,10 @@ export async function eraseGroupLocally(groupId: Id): Promise<void> {
 /**
  * Say who is holding this phone in a group — the first claim, or a switch.
  *
- * This writes an op, unlike everything else about "you": an `actor` is only
- * readable if the group can see when a device changed which member it speaks
- * for. Keyed by the device's HLC node id, already the suffix of every op that
- * device stamped, so it publishes nothing the log did not carry. ADR-0003.
- *
- * Re-claiming the member you already are is a no-op and writes nothing.
+ * An op, unlike everything else about "you": an `actor` is only readable if
+ * the group sees when a device changed member. Keyed by the device's HLC node
+ * id, already on every op it stamped, so it publishes nothing new. ADR-0003.
+ * Re-claiming the same member writes nothing.
  */
 export async function claimIdentity(
   groupId: Id,
@@ -236,16 +223,12 @@ export async function claimIdentity(
 }
 
 /**
- * Publish claims this device made before identity was on the log.
+ * Publish claims made before identity was on the log: a `meByGroup` entry
+ * with no op behind it gets one `create`, once.
  *
- * A device that claimed a member under ADR-0003 has a `meByGroup` entry and no
- * op to show for it: its edits are attributed to somebody with nothing in the
- * log to explain why. One `create` op per such group, once — later runs see it
- * and do nothing.
- *
- * `claimedAt` is when the claim was *published*, not when it was made: the
- * earlier date lives only in a device-local table, and inventing a timestamp
- * for the shared log would be worse than a late one.
+ * `claimedAt` is when the claim was *published*: the real date is only
+ * device-local, and an invented timestamp on the shared log is worse than a
+ * late one.
  */
 export async function publishExistingClaims(now = Date.now()): Promise<void> {
   const device = await getDevice();
@@ -275,16 +258,13 @@ export async function publishExistingClaims(now = Date.now()): Promise<void> {
 // --------------------------------------------------------------- members
 
 /**
- * `actor` is optional because of the one case where there isn't one yet: a
- * phone joining a group adds the person holding it before it has claimed
- * anybody, and "someone added Theo" is a worse account of that than the
- * person arriving under their own name.
+ * `actor` is optional for a phone joining a group, which adds its holder
+ * before it has claimed anybody.
  */
 export async function addMember(groupId: Id, actor: Id | undefined, name: string): Promise<Id> {
-  // The name *is* the id (core/names.ts). Two phones adding "Ana" offline
-  // write one entity rather than two people nothing on screen tells apart, and
-  // re-adding somebody who was removed returns the person, balance and history
-  // included, rather than a stranger with their name.
+  // The name *is* the id (core/names.ts): two phones adding "Ana" offline write
+  // one entity, and re-adding a removed member returns the person, balance and
+  // history included.
   const memberId = memberIdFor(groupId, name);
   await appendOps(groupId, actor ?? memberId, [
     {
@@ -298,10 +278,8 @@ export async function addMember(groupId: Id, actor: Id | undefined, name: string
 }
 
 /**
- * No screen calls this any more — the rename button is gone from People, and
- * renaming is on its way out of the log too (owner, 2026-09-05). Kept only
- * until that lands; folding still has to read the `name` updates already
- * written by every group that used it.
+ * No screen calls this; renaming is being removed. Folding still reads the
+ * `name` updates already written.
  */
 export async function renameMember(
   groupId: Id,
@@ -325,32 +303,23 @@ export async function removeMember(groupId: Id, actor: Id, memberId: Id): Promis
 }
 
 /**
- * Repair every invariant the merged log has broken, and put this phone's own
- * member back if the merge removed them — `INVARIANTS` in
- * `core/invariants.ts`, run to a fixed point.
+ * Repair every invariant the merged log has broken (`INVARIANTS`,
+ * `core/invariants.ts`), and put this phone's own member back if the merge
+ * removed them, to a fixed point.
  *
- * Reaching any of these takes two phones, each right on its own evidence: one
- * removes Bruno, the other — offline — writes a transfer to him. **A guard
- * constrains one replica's view and never the union of two**
- * ([docs/invariants.md](../../../../../docs/invariants.md)), so what makes the
- * state legal again is this, not the refusal.
+ * These states take two phones, each right on its own evidence. **A guard
+ * constrains one replica's view, never the union of two**
+ * ([docs/invariants.md](../../../../../docs/invariants.md)), so this is what
+ * makes the state legal again.
  *
- * The repairs are ordinary ops — a `deletedAt: null` lift, exactly what
- * re-adding a member or re-setting a cleared rate already writes — so nothing
- * about the fold, the wire format or history has to learn a new shape.
- *
- * Idempotent, and safe to call from anywhere: it reads the log itself, a healed
- * state fails its own detector, and two devices noticing at once write the same
- * repair, which folds to the same state. The loop is what makes it total —
- * repairing one invariant can reveal another — and it terminates because each
- * pass either writes nothing or strictly reduces what the detectors find,
- * which `invariants.test.ts` holds every registered entry to.
+ * Repairs are ordinary ops (a `deletedAt: null` lift), so nothing new for the
+ * fold, wire format or history. Idempotent: two devices healing at once write
+ * the same repair. It terminates because each pass writes nothing or strictly
+ * reduces what the detectors find (`invariants.test.ts`).
  */
 export async function healGroup(groupId: Id): Promise<number> {
-  // Who this phone is, which is both the signature on the repairs and — for
-  // the claim below — the thing being repaired. A device that hasn't said who
-  // it is has no honest name to sign with and nothing of its own to put back,
-  // so it heals nothing; the phones that are in the group will.
+  // This phone's member signs the repairs and is itself repaired below. A
+  // device that hasn't claimed anybody heals nothing; the others will.
   const me = await getMe(groupId);
   if (!me) return 0;
 

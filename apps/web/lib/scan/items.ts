@@ -27,15 +27,10 @@ interface Labelled { label: string; labelEn?: string | null }
 /**
  * A line's label in the language the bill is being read in.
  *
- * **The original is the default**, everywhere and always: the person holding
- * the receipt is reading those same words, and a screen that silently renames
- * "Tagine" to "Lamb stew" cannot be checked against the paper. English is a
- * tap on the who-had-what bar (components/who-had-what.tsx), device-local and
- * remembered, and it reaches the saved expense's copy of the bill too.
- *
- * Falls back to the original for a line the model gave no English for — a bill
- * half in one language and half in the other is one the scan already read
- * right, and a blank label would be the only real loss on this screen.
+ * **The original is the default**: the receipt in hand says those words, and a
+ * silent "Tagine" → "Lamb stew" can't be checked against it. English is a
+ * device-local toggle on the who-had-what bar, and reaches the saved copy of
+ * the bill too. Falls back to the original where the model gave no English.
  */
 export function billLabel(line: Labelled, english: boolean): string {
   return english ? line.labelEn || line.label : line.label;
@@ -52,10 +47,8 @@ export function billExtrasIn(extras: BillExtras, english: boolean): BillExtras {
 }
 
 /**
- * Whether anything on this bill reads differently in English — which is what
- * decides whether the toggle is drawn at all. A receipt printed in English
- * comes back with no translation on any line, and a control that does nothing
- * is worse than no control.
+ * Whether anything reads differently in English, which decides whether the
+ * toggle is drawn at all.
  */
 export function hasTranslation<T extends Labelled>(
   ...lines: readonly (readonly T[] | null | undefined)[]
@@ -76,12 +69,9 @@ function plus(a: Count, b: Count): Count { return count(a.n * b.d + b.n * a.d, a
 interface BillCharge { kind: ExtraKind; label: string; amount: string; seed: string }
 
 /**
- * The extras as a flat list, in the order a printed bill rules them off under
- * the items — every deduction by name, then the tax, then the tip.
- *
- * Each deduction is spread on its own rather than as one pooled figure. The
- * two divide identically, but this way each person's copy of the bill can say
- * "2 for 1 −4.44" rather than one number they'd have to take on trust.
+ * The extras as a flat list, as a bill rules them off: each deduction by name,
+ * then tax, then tip. Deductions stay separate (they divide identically) so a
+ * person's copy says "2 for 1 −4.44" rather than one opaque figure.
  */
 export function billCharges(extras: BillExtras | null): BillCharge[] {
   if (!extras) return [];
@@ -95,22 +85,17 @@ export function billCharges(extras: BillExtras | null): BillCharge[] {
 
 /**
  * Who had what, read two ways at once: as split weights, and as each person's
- * own copy of the bill.
+ * copy of the bill.
  *
- * Each item's printed amount divides evenly among the members checked for that
- * row (the same largest-remainder rule as a real split), then the per-member
- * results are summed. The sum is only ever a *ratio* against the expense's
- * converted total, so its being in the receipt's currency doesn't matter.
+ * Each item divides among the members checked for it (largest remainder, as a
+ * real split), and the results are summed. The sum is only a *ratio* against
+ * the converted total, so its currency doesn't matter.
  *
- * The extras — tip, tax, discount — are nobody's order and can't be ticked
- * for, so each is spread in proportion to what people did order, the discount
- * coming off (`BillExtras`). Proportional is the only division the grid can
- * justify with no way to say whose a credit is, and a discount exists because
- * of the whole order anyway (ADR-0016).
+ * Tip, tax and discounts are nobody's order, so each is spread in proportion
+ * to what people did order (ADR-0016) — the only division the grid can justify.
  *
- * The lines are that arithmetic kept rather than summed away: one entry per
- * label with how much of it was theirs. They add up to the person's weight by
- * construction, so there is no second calculation to drift from this one.
+ * The lines are that arithmetic kept rather than summed away, so they add up
+ * to the weight by construction.
  */
 export function receiptBreakdown(
   items: readonly BillLine[],
@@ -151,21 +136,16 @@ export function receiptBreakdown(
     }
   });
 
-  // What each person ordered, fixed before a single extra is spread: all of
-  // them divide by that same ratio, so the tip a person pays doesn't change
-  // how much of the tax or of a discount is theirs, and the order they're
-  // applied in can't matter.
+  // What each person ordered, fixed before any extra is spread, so the extras
+  // don't affect one another and their order can't matter.
   const ordered = { ...weights };
   for (const charge of billCharges(extras)) {
     if (involved.size === 0) continue;
     let minor = 0;
     try { minor = parseMinor(charge.amount, currency); } catch { continue; /* mid-type */ }
     if (minor <= 0) continue;
-    // Scaled to what each person already ordered, not split evenly: whoever
-    // had the €40 steak tips more, and takes more of the loyalty discount,
-    // than whoever had a coffee. Only a positive item weight can take a
-    // proportional share, so with nothing assigned yet it falls back to an
-    // even split rather than dropping the figure.
+    // Proportional to what each ordered: the €40 steak tips more than the coffee.
+    // With nothing assigned yet it falls back to even rather than dropping it.
     const proportional: Record<string, number> = {};
     for (const id of involved) if (ordered[id]) proportional[id] = ordered[id];
     const { shares } = Object.keys(proportional).length > 0
@@ -203,11 +183,10 @@ export function weightsFromItems(
 }
 
 /**
- * The receipt's own total: every line item, plus tip and tax, less discounts,
- * in the receipt's currency. Receipt mode treats it as the expense amount —
- * derived from the bill, never typed separately — so it stays in lockstep with
- * what "who had what" adds up to. Null when there is nothing to sum, so the
- * caller leaves the amount alone rather than overwriting it with zero.
+ * The receipt's own total — items plus tip and tax, less discounts — in its
+ * currency. Receipt mode derives the amount from this, never typed, so it
+ * matches what "who had what" adds up to. Null when there is nothing to sum,
+ * so the caller leaves the amount alone rather than zeroing it.
  */
 export function receiptTotalMinor(
   items: readonly { amount: string }[],
@@ -226,20 +205,17 @@ export function receiptTotalMinor(
 }
 
 /**
- * The amount to write into the draft when a tab change takes the total back
- * off Receipt mode — or null to leave the amount field alone.
+ * The amount to write into the draft when a tab change leaves Receipt mode,
+ * or null to leave it alone.
  *
- * Receipt's total is derived at read time and never cached (ADR-0016), which
- * holds only while the Items tab is showing it. Switching to an arithmetic tab
- * ends that: the person is taking the number back by hand, and a typed amount
- * lives only in `amountText`. This is the amount half of the handoff
- * `convertSplitMode` makes for the split; without it the amount falls back to
- * whatever preceded the scan — routinely nothing, since OCR often reads the
- * line items and misses the printed total — and the expense is worth zero.
+ * Receipt's total is derived at read time (ADR-0016), and a typed amount
+ * lives only in `amountText` — so without this handoff (the amount half of
+ * `convertSplitMode`) the amount reverts to whatever preceded the scan, often
+ * nothing, and the expense is worth zero.
  *
- * **A one-shot conversion at an explicit action, not a mirror.** It fires only
- * on receipt → arithmetic, so moving between two arithmetic tabs never snaps a
- * hand-typed amount back to what the bill says.
+ * **One-shot, at an explicit action, not a mirror**: only receipt →
+ * arithmetic, so switching between arithmetic tabs never overwrites a typed
+ * amount.
  */
 export function handOffReceiptTotal(
   from: SplitMode,
@@ -256,27 +232,21 @@ export function handOffReceiptTotal(
 }
 
 /**
- * Unfolding a printed line into separately assignable portions.
- *
- * A receipt prints "Salad ×2  9.00" as one line, but the two salads can have
- * gone to different people. One row can't say that, so it becomes two, each
- * carrying half the printed amount and its own eaters. Nothing downstream
- * learns a new concept: the grid still reduces to weights and the bill is
- * still the sum of its lines. ADR-0016.
+ * Unfolding a printed line into separately assignable portions: "Salad ×2
+ * 9.00" becomes two rows at half each, with their own eaters. Downstream
+ * still sees weights and a bill that is the sum of its lines. ADR-0016.
  *
  * **Portions are marked (`portionOf`), never inferred from equal labels**, so
- * a receipt printing two identical lines isn't drawn as an unfolded one — and
- * merging back is exact.
+ * two identical printed lines aren't mistaken for one, and merging is exact.
  */
 
 /** Where a row sits in an unfolded group: its start, its place, the size. */
 interface Portion { start: number; index: number; of: number }
 
 /**
- * One entry per item: null for an ordinary printed line, else the portion it
- * is. A run counts only when all `of` consecutive rows agree on the label and
- * the count, so a half-deleted group degrades to ordinary lines rather than
- * rendering a bracket around the wrong rows.
+ * One entry per item: null for an ordinary line, else its portion. A run
+ * counts only when all `of` consecutive rows agree on label and count, so a
+ * half-deleted group degrades to ordinary lines.
  */
 export function portions(items: readonly ReceiptItem[]): (Portion | null)[] {
   const out: (Portion | null)[] = items.map(() => null);
@@ -301,12 +271,10 @@ export function unfoldableInto(item: ReceiptItem, currency: string): number | nu
 }
 
 /**
- * Split `items[index]` into one row per printed unit. The portions sum to the
- * line exactly — the remainder goes to the earliest ones, a cent at a time —
- * so the bill's total, and the tip percentage read off it, don't move.
- *
- * Returns the new list plus where it grew, so the caller can widen the grid's
- * assignment rows in step, or null when the line isn't unfoldable.
+ * Split `items[index]` into one row per printed unit, summing to the line
+ * exactly (remainder to the earliest, a cent at a time), so the total and tip
+ * percentage don't move. Returns the list and where it grew, so the caller
+ * widens the assignment rows in step; null when not unfoldable.
  */
 export function unfoldItem(
   items: readonly ReceiptItem[],
@@ -333,14 +301,11 @@ export function unfoldItem(
 }
 
 /**
- * The portions of one run, read as the single line they came from: amounts
- * summed back up and the count printed again as its quantity.
+ * A run's portions read as the single line they came from.
  *
- * **A view, never an edit.** Writing this line back over the portions throws
- * away which of them was whose, and moves money by a cent: three portions of
- * 5.67/5.67/5.66 shared two ways do not round like one 17.00 line. The bill
- * keeps its portions once it has them; this is how the grid draws them while
- * the run is closed.
+ * **A view, never an edit.** Writing it back loses who had which portion and
+ * moves money by a cent: 5.67/5.67/5.66 shared two ways doesn't round like one
+ * 17.00 line.
  */
 export function foldedLine(
   items: readonly ReceiptItem[],
@@ -380,12 +345,9 @@ interface RunAssignment {
 }
 
 /**
- * The run's rows, read as one row.
- *
- * A detailed run marks **everyone who had any of it** the same split way, even
- * the person who had all three: no cell in such a row may look like an ordinary
- * assignment, because none of them can be tapped like one. What "2 of 3" was is
- * still in the rows underneath, a tap away — this is the cover, not the record.
+ * The run's rows, read as one row. A detailed run marks **everyone who had any
+ * of it** as split, even whoever had all of it: none of its cells can be
+ * tapped like an ordinary one. The rows underneath are the record.
  */
 export function runAssignment(rows: readonly ReadonlySet<string>[]): RunAssignment {
   const counts = new Map<string, number>();

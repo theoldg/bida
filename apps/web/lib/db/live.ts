@@ -8,44 +8,31 @@ import { db } from "./dexie";
 /**
  * Reading from Dexie, and noticing when the read never comes back.
  *
- * **Every live read in the app goes through `useLive`, never `useLiveQuery`.**
- * `liveQuery` swallows `DatabaseClosedError` and `AbortError` rather than
- * delivering them, meaning to ignore a query it superseded itself — but a
- * query the *browser* killed arrives by the same door. Android freezes a
- * backgrounded PWA and aborts its in-flight transactions; Chrome force-closes
- * the connection under storage pressure. Either way nothing is emitted, no
- * value and no error, and the subscription is dead: the querier never runs
- * again, not even on a write to the table it observes (measured against Dexie
- * 4.4.5 in ./live.test.ts). A screen reads "no value yet" as "still loading",
- * so it sits on skeleton rows with nothing in the console.
+ * **Every live read goes through `useLive`, never `useLiveQuery`.**
+ * `liveQuery` swallows `DatabaseClosedError` and `AbortError` (meant for
+ * queries it superseded), and a query the *browser* killed arrives the same
+ * way: Android aborts a frozen PWA's transactions, Chrome force-closes under
+ * storage pressure. Nothing is emitted and the subscription is dead, even to
+ * writes (measured against Dexie 4.4.5 in ./live.test.ts) — a screen sits on
+ * skeleton rows with nothing in the console.
  *
- * A dead subscription can't be revived, only replaced. Three things ask for
- * that below: the connection closing, the app returning to the foreground, and
- * a read that has taken too long.
- *
- * A read can also be *alive and waiting*, queued behind a readwrite
- * transaction a frozen copy will never finish. A new subscription joins the
- * same queue, so the last probe opens a fresh connection instead, and every
- * read remembers its last answer so a screen opened during the wait shows that
- * rather than skeleton rows.
+ * A dead subscription can only be replaced: on the connection closing, on
+ * return to the foreground, and on a read taking too long. A read can also be
+ * *alive and waiting* behind a transaction a frozen copy will never finish; a
+ * new subscription joins that queue, so the last probe opens a fresh
+ * connection, and every read remembers its last answer to show meanwhile.
  *
  * ## A hidden page reads nothing
  *
  * The mirror of `whenVisible` (./visible.ts): **no copy of the app touches
- * IndexedDB while hidden.** Reads need the rule as much as writes and are
- * harder to see, because nothing in this app asks for them — Dexie does. Every
- * write broadcasts to every copy on the origin (`x-storagemutated-1`), each of
- * which re-runs the queriers for the changed tables. So a backgrounded copy
- * opens a readonly transaction across half the schema whenever the copy in
- * front of you saves. A tab and the installed app cannot both be foreground,
- * so one is always freezable: freeze it mid-read and its readonly locks are
- * held forever, and the next `appendOps` queues behind them and never returns.
+ * IndexedDB while hidden.** Dexie broadcasts every write to every copy on the
+ * origin (`x-storagemutated-1`), which re-runs their queriers — so a
+ * backgrounded copy reads whenever the front one saves. Frozen mid-read, it
+ * holds readonly locks forever and the next `appendOps` never returns.
  *
- * Hence the gate in `timedQuerier`: while hidden a read answers from
- * `remembered` and opens no transaction. Dexie then stops signalling a querier
- * that observed nothing, which is the point — returning to the front bumps
- * `epoch` and every read starts again for real. The watchdog is held shut with
- * it: it would `reopen()` the connection from the very page that must be idle.
+ * So while hidden `timedQuerier` answers from `remembered` and opens no
+ * transaction; returning bumps `epoch` and every read restarts. The watchdog
+ * is held shut too, since it would `reopen()` from the page that must be idle.
  */
 
 /** How long a read may return nothing before we assume it never will. */
@@ -57,19 +44,16 @@ interface Health {
   /** Bumped to re-subscribe every live read in the app. In every query's deps. */
   epoch: number;
   /**
-   * An upgrade is blocked by another connection — a second tab, or the same
-   * app in the browser — holding the older version. Dexie's own handler logs a
-   * warning and waits forever, and `indexedDB.open` has no timeout, so without
-   * this the app cannot know it is never opening. A new subscription cannot
-   * help; only closing the other copy can.
+   * An upgrade blocked by another connection (a second tab or the browser copy)
+   * on the older version. Dexie waits forever and `indexedDB.open` has no
+   * timeout, so this is the only way to know. Only closing the other copy helps.
    */
   blocked: boolean;
   /** How many mounted reads have given up. Drives the notice — see `useStalled`. */
   stalls: number;
   /**
-   * Whether this page is in the background, where it reads nothing — see the
-   * header. Mirrored into the store rather than read off `document` in render
-   * so that the watchdog re-evaluates when it changes.
+   * Whether this page is in the background (see the header). In the store, not
+   * read off `document` in render, so the watchdog re-evaluates on change.
    */
   hidden: boolean;
 }
@@ -92,9 +76,8 @@ function subscribe(listener: () => void): () => void {
 }
 
 /**
- * Re-subscribe every live read. Clears `blocked` with it: whatever we were
- * waiting on, this is the app deciding to start over, and if the block is
- * still there the next open will say so again.
+ * Re-subscribe every live read. Clears `blocked`: if the block persists, the
+ * next open says so again.
  */
 function bump(): void {
   health.epoch += 1;
@@ -104,12 +87,9 @@ function bump(): void {
 
 /**
  * The last answer each read gave, by name and deps, for the life of the page.
- *
- * `useLiveQuery` holds its value per mounted component, so every navigation
- * starts from `undefined` — skeleton rows for as long as the database takes,
- * which is forever while a lock is held elsewhere. A returning screen shows
- * what it read a minute ago, replaced the moment a live answer arrives.
- * Bounded by the groups on the phone.
+ * `useLiveQuery` holds values per component, so every navigation would start
+ * from skeleton rows — forever while a lock is held elsewhere. Bounded by the
+ * groups on the phone.
  */
 const remembered = new Map<string, unknown>();
 
@@ -119,12 +99,9 @@ let lastReopen = -Infinity;
 let reopening = false;
 
 /**
- * Close this page's connection and open a new one.
- *
- * A read waiting in the browser's queue stays there however often it is asked
- * again, so a fresh connection is the one lever this page has on a stuck
- * backend. It cannot release a lock another copy holds — /diag lists those —
- * and never aborts a running transaction: `IDBDatabase.close` lets them finish.
+ * Close this page's connection and open a new one — the one lever on a read
+ * stuck in the browser's queue. Can't release another copy's lock (/diag
+ * lists those), and never aborts a running transaction: `close` lets it finish.
  */
 function reopen(): void {
   const now = Date.now();
@@ -171,11 +148,9 @@ function arm(): void {
   // prerenders these screens, and the tests run in node.
   if (typeof document === "undefined") return;
 
-  // A subscription can die while backgrounded, where no render notices and the
-  // watchdog isn't running. An installed app is resumed far more often than
-  // launched, so this is the common repair, and nearly free: a read with a
-  // value keeps showing it across the re-subscribe (dexie-react-hooks holds
-  // the last result in a ref), so re-arming costs a query, not a skeleton.
+  // A subscription can die while backgrounded, unseen. An installed app is
+  // resumed far more than launched, so this is the common repair, and nearly
+  // free: dexie-react-hooks keeps the last value across the re-subscribe.
   document.addEventListener("visibilitychange", () => {
     mark(`app.${document.visibilityState}`);
     health.hidden = isHidden();
@@ -209,14 +184,9 @@ function addStall(): () => void {
 }
 
 /**
- * A live read of the database, re-armed when it dies.
- *
- * `name` is what this read is called on the /diag timeline, first because a
- * read nobody can name is a ten-second wait nobody can explain.
- *
- * Same contract as `useLiveQuery` — `undefined` until the first value — except
- * that `undefined` decays into something a person is told about rather than
- * lasting forever. See `useStalled`.
+ * A live read of the database, re-armed when it dies. `name` labels it on the
+ * /diag timeline. Same contract as `useLiveQuery` — `undefined` until the
+ * first value — except that `undefined` decays into a notice (`useStalled`).
  */
 export function useLive<T>(
   name: string, querier: () => Promise<T>, deps: readonly unknown[],
@@ -235,14 +205,10 @@ export function useLive<T>(
   // its watchdog from zero on the same render that starts the read.
   const n = probe.key === key ? probe.n : 0;
 
-  // Every read, timed and named: a skeleton on screen is a read that has not
-  // come back, and its duration next to `rebuild`, `sync.pushpull` and
-  // `db.open` on one clock says which of them it was waiting for.
-  //
-  // Both counters go in the name, or a second span under the same name is
-  // unreadable: `n` is the watchdog giving up on this read, `epoch` is every
-  // read starting over (`bump`), and Dexie re-running a querier of its own
-  // accord is neither.
+  // Every read, timed and named, so a skeleton's wait lines up against
+  // `rebuild`, `sync.pushpull` and `db.open` on one clock. Both counters are in
+  // the name: `n` is the watchdog retrying, `epoch` every read restarting
+  // (`bump`); Dexie re-running a querier is neither.
   const label = `${name}${n > 0 ? ` retry#${n}` : ""}${epoch > 0 ? ` epoch#${epoch}` : ""}`;
   const memo = `${name} ${key}`;
   const timedQuerier = useMemo(() => async (): Promise<T | undefined> => {
@@ -300,9 +266,8 @@ export function useLive<T>(
 }
 
 /**
- * Whether any read on screen has given up, and why. Read by one component —
- * the notice in `Screen` — so every screen inherits it rather than nine of
- * them checking for themselves.
+ * Whether any read on screen has given up, and why. Read once, by `Screen`'s
+ * notice, so every screen inherits it.
  */
 export function useStalled(): { stalled: boolean; blocked: boolean } {
   const stalls = useSyncExternalStore(subscribe, () => health.stalls, () => 0);

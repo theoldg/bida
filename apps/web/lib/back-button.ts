@@ -1,32 +1,24 @@
 /**
  * The device's back button, doing what the screen's back arrow does.
  *
- * The arrow goes *up* — it names a parent and unwinds to it
- * ([nav.ts](./nav.ts)) — where the button would replay wherever you had been.
- * A screen says what its back arrow is, and this makes the button agree. There
- * are only two things it can be, and they need opposite help:
+ * The arrow goes *up* ([nav.ts](./nav.ts)); the button would replay history.
+ * A screen's arrow is one of two things, needing opposite help:
  *
- * - **An ancestor.** Because only descending pushes, that ancestor is normally
- *   the entry right behind us and the browser's back already goes there. Only
- *   where the arrow skips a level — a screen opened from a shared link, so the
- *   parent was never visited — is the press taken over and `goUp` run.
- * - **A question**, on the four screens that would lose typed work. Back is
- *   not a navigation at all there, so the press is *cancelled and nothing
- *   follows*: the dialog opens, the screen stays. Where the answer is already
- *   yes, the press is left alone and the browser takes it back.
+ * - **An ancestor.** Only descending pushes, so it is normally right behind
+ *   us and the browser's back already goes there. Only where the arrow skips a
+ *   level (a screen opened from a shared link) is the press taken over.
+ * - **A question**, on the four screens that would lose typed work: the press
+ *   is *cancelled and nothing follows* — the dialog opens. Where the answer is
+ *   already yes, the browser takes the press.
  *
- * **Ask before cancelling, and never navigate inside a cancelled press.** A
- * traversal begun inside one is measured against an index the browser has
- * already moved — and that is the busiest path in the app, every press on
- * those four screens. What re-navigation is left runs only where the press has
- * nowhere to go on its own, and does it by putting the parent in this screen's
- * place (`swap`) rather than counting back over entries, which is the same
- * hazard by the other door.
+ * **Ask before cancelling, and never navigate inside a cancelled press**: a
+ * traversal there is measured against an index the browser already moved.
+ * The takeover replaces this screen with the parent (`swap`) rather than
+ * counting back, which is the same hazard by another door.
  *
- * Only *user*-initiated traversals count; the app's own (the arrow, mid-flight)
- * is left alone, which is what keeps this from looping. And only cancellable
- * ones: a browser that refuses — no Navigation API (iOS before 18.4), or no
- * recent interaction to spend — keeps its own back.
+ * Only *user*-initiated, cancellable traversals count; the app's own are left
+ * alone (no loop), and a browser that won't cancel — no Navigation API (iOS
+ * before 18.4), or no interaction to spend — keeps its own back.
  */
 import { useEffect, useRef } from "react";
 import { mark } from "./diag";
@@ -56,13 +48,9 @@ interface ScreenBack {
    */
   mayLeave?: () => boolean;
   /**
-   * Put `up` in this screen's place, for the press that has to be taken over.
-   *
-   * A swap, never a count back: this runs inside a press the app has just
-   * cancelled, where the browser's idea of where we are is the entry the press
-   * was heading for and `history.go(-1)` would move two. It is also the right
-   * move on its own terms — the takeover happens only where going back would
-   * not land on the parent.
+   * Put `up` in this screen's place, for a press that has to be taken over. A
+   * swap, never a count back: inside a cancelled press the browser thinks we are
+   * already on the destination entry, so `history.go(-1)` would move two.
    */
   swap: (to: string) => void;
 }
@@ -75,8 +63,7 @@ const screens: { current?: ScreenBack }[] = [];
 let listening = false;
 
 /**
- * Is this the device's back button? Pure, and exported for its test: reading
- * the event and the current index is the caller's.
+ * Is this the device's back button? Pure, and exported for its test.
  */
 export function isBackPress(
   e: {
@@ -92,22 +79,16 @@ export function isBackPress(
 }
 
 /**
- * Every press, and what was done with it, in the flight recorder.
- *
- * This path cannot be watched with a cable: it is a thumb on a system button
- * in an installed app, and what decides the outcome — whether the browser made
- * the event cancelable, whether the document still had an interaction to spend
- * — is gone by the time anyone asks. One line each says which of them it was
- * (lib/diag.ts).
+ * Every press, and what was done with it, in the flight recorder — whether
+ * the event was cancelable and whether an interaction was left to spend are
+ * gone by the time anyone asks (lib/diag.ts).
  */
 function saw(e: NavigateEventLike, here: number | undefined, act: string): void {
   mark("back.press", `${act}  ${e.navigationType} to=${e.destination.index} here=${here}`
     + ` user=${e.userInitiated} cancelable=${e.cancelable}`
     + ` active=${navigator.userActivation?.isActive ?? "?"}`);
-  // And again inside whatever is open over the screen, where it belongs beside
-  // the taps rather than in a timeline the reader has to align by hand. A press
-  // the close watcher takes reaches neither — it is the `close event` the
-  // dialog notes for itself (components/dialog.tsx).
+  // And inside whatever is open, beside the taps. A press the close watcher
+  // takes reaches neither — it is the dialog's own `close event`.
   note(`back ${act}`);
 }
 
@@ -130,10 +111,9 @@ function onNavigate(event: Event): void {
   if (!isBackPress(e, here)) { saw(e, here, "not ours to take"); return; }
   // Asked and answered no: cancel, and let the dialog be the whole of it.
   if (back.mayLeave && !back.mayLeave()) { saw(e, here, "ASKED"); e.preventDefault(); return; }
-  // The browser is already going where the arrow points — with only
-  // descending pushing, nearly every press in the app. Leaving it alone is not
-  // a shortcut: cancelling and re-navigating to the screen the press was
-  // headed for anyway is the whole of what goes wrong.
+  // The browser is already going where the arrow points — nearly every press.
+  // Cancelling and re-navigating to the same place is the whole of what goes
+  // wrong.
   const up = back.up;
   if (up === undefined || sameScreen(e.destination.url, up)) { saw(e, here, "let through"); return; }
   saw(e, here, "swap");
@@ -146,9 +126,8 @@ function onNavigate(event: Event): void {
 
 /**
  * While this screen is on show, the device's back button agrees with its back
- * arrow. `undefined` — a screen with no arrow, such as the groups list, or one
- * whose arrow is already a plain back — leaves the button alone, so the app can
- * still be left.
+ * arrow. `undefined` (no arrow, or a plain back) leaves it alone, so the app
+ * can still be left.
  */
 export function useBackButton(back: ScreenBack | undefined): void {
   const held = useRef(back);

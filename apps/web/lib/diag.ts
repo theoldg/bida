@@ -1,23 +1,18 @@
 /**
  * A flight recorder for the things that make this app wait.
  *
- * The failure it was built for cannot be caught with devtools: an installed
- * phone pauses on skeleton rows for ten or twenty seconds at a moment nobody
- * chose, and it is over by the time a cable is plugged in. A slow
- * `indexedDB.open`, a read queued behind `rebuild`'s readwrite lock, and a
- * dead live read re-armed by ./db/live.ts's watchdog look identical from the
- * outside. They do not look alike on a timeline.
+ * An installed phone pausing on skeleton rows for ten seconds is over before
+ * devtools can be attached, and a slow `indexedDB.open`, a read queued behind
+ * `rebuild`'s lock and a dead live read look identical — except on a timeline.
  *
- * **Always on.** A debug flag records nothing on the launch that goes wrong,
- * which is the only launch worth recording. The cost is a bounded array and a
- * `performance.now()` per event; nothing is formatted until asked for.
+ * **Always on**: a debug flag records nothing on the launch that goes wrong.
+ * The cost is a bounded array and a `performance.now()` per event.
  *
  * Read it on /diag — long-press the wordmark on the groups list.
  *
- * **The last few pages' timelines are kept too**, in `localStorage` and never
- * a table: this recorder has to work on the launch where IndexedDB is what is
- * broken, and killing the app is exactly what a person does before thinking
- * to look at a log.
+ * **The last few pages' timelines are kept too**, in `localStorage`, never a
+ * table: it has to work when IndexedDB is what's broken, and people kill the
+ * app before thinking to look.
  */
 
 /** One thing that happened, or took a while. */
@@ -31,17 +26,15 @@ interface DiagEvent {
   /** Whatever makes the line worth reading — a key, a count, a reason. */
   info?: string;
   /**
-   * Creation order. Not printed — it is what breaks a tie when two things
-   * start inside the same millisecond, so that a `rebuild` and the read
-   * waiting on it never swap places just because the read finished first.
+   * Creation order, not printed: breaks ties within a millisecond, so a
+   * `rebuild` and the read waiting on it never swap places.
    */
   seq: number;
 }
 
 /**
- * Enough for a launch and a couple of resumes. The oldest go first; a launch
- * is what matters and is at the start, so the report prints both ends when it
- * wraps.
+ * Enough for a launch and a couple of resumes. The oldest go first; the report
+ * prints both ends when it wraps, since the launch is at the start.
  */
 const LIMIT = 400;
 
@@ -64,16 +57,13 @@ const running = new Set<DiagEvent>();
 
 /**
  * Record that something *started*, and get back the way to say it finished.
- * The duration is the point: a number beside a name is the difference between
- * "the app was slow" and "13s in `rebuild` while the groups list waited on the
- * same tables".
+ * The duration is the point.
  */
 export function started(what: string, info?: string): (info?: string) => void {
   const from = now();
   const span: DiagEvent = { at: Math.round(from), what, info, seq: seq++ };
-  // Held while it runs, so something that never finishes still has a line. A
-  // read hanging *right now* is why somebody has this screen open; recording
-  // only on completion leaves it out of the report.
+  // Held while it runs, so a read hanging *right now* — the reason somebody
+  // opened this screen — is in the report.
   running.add(span);
   return (done?: string) => {
     if (!running.delete(span)) return; // already finished; a double call is a no-op
@@ -86,11 +76,9 @@ export function started(what: string, info?: string): (info?: string) => void {
 
 
 /**
- * The timeline as it stands, in the order things *started* — the order that
- * shows one span sitting inside another. Sorted rather than left in completion
- * order, because "what was the screen waiting on" is always an overlap.
- *
- * Anything still running is included, marked with how long it has been going.
+ * The timeline in the order things *started*, so one span shows inside
+ * another — "what was it waiting on" is always an overlap. Running spans are
+ * included, with how long they've been going.
  */
 export function timeline(): DiagEvent[] {
   const live = [...running].map((span): DiagEvent => ({
@@ -110,9 +98,9 @@ export function loadedAt(): number {
 
 const KEEP = "bida.diag.pages";
 /**
- * How many page logs to keep, this one included. More than one because a paste
- * loads `/join` as a second page, and with one slot each overwrites the
- * other's log — leaving the page that hung the one no report can show.
+ * How many page logs to keep, this one included. More than one because a
+ * paste loads `/join` as a second page, which would overwrite the one that
+ * hung.
  */
 const PAGES = 5;
 
@@ -128,20 +116,17 @@ const readKept = (): KeptPage[] => {
 };
 
 /**
- * Every other page's kept timeline, **newest first** like everything else the
- * report prints. Read when asked, not at load: a page opened after this one,
- * and left, is often the one that matters.
+ * Every other page's kept timeline, **newest first**. Read when asked, not at
+ * load: a page opened after this one is often the one that matters.
  */
 export function otherPages(): KeptPage[] {
   return readKept().filter((page) => page.at !== startedAt).sort((a, b) => b.at - a.at);
 }
 
 /**
- * Keep this page's timeline for the next one to read, in its own slot.
- *
- * On `pagehide` and on going hidden, which between them cover backgrounded,
- * swiped away, reloaded and killed. Neither fires on a process the OS
- * terminates outright, so this is best effort.
+ * Keep this page's timeline for the next one, in its own slot. On `pagehide`
+ * and on going hidden; neither fires when the OS kills the process, so best
+ * effort.
  */
 function save(): void {
   try {
@@ -181,16 +166,10 @@ export function forget(): void {
 }
 
 /**
- * One line per event, fixed-width, **newest first**. Plain text because it is
- * read on a phone, pasted into a message and diffed against the next one; a
- * table that needs a viewer is one nobody sends.
- *
- * Newest first because the report is hundreds of lines and a phone pastes the
- * top of it: what just went wrong has to be in the part that survives. It
- * costs the one thing the start order bought — an enclosing span printed above
- * what it was blocking — and the timestamps still say which contains which, so
- * `timeline()` keeps ordering by when things *started* and only the printing
- * is turned round.
+ * One line per event, fixed-width, **newest first**. Plain text: read on a
+ * phone, pasted into a message. Newest first because a phone pastes the top of
+ * a long report; the timestamps still show containment, and `timeline()`
+ * keeps start order.
  */
 export function format(rows: readonly DiagEvent[] = timeline()): string {
   return [...rows]
@@ -206,9 +185,8 @@ export function format(rows: readonly DiagEvent[] = timeline()): string {
 /* ---- the home-screen hand-off ----------------------------------------- */
 
 /**
- * A URL with every group secret in its fragment masked: `#id.secret~id.secret`
- * becomes `#id.…~id.…`. The report is pasted into chats, and a secret there is
- * the group handed over; the ids and the shape are what the question needs.
+ * A URL with every group secret in its fragment masked:
+ * `#id.secret~id.secret` → `#id.…~id.…`. The report is pasted into chats.
  */
 export function hideSecrets(url: string): string {
   const hash = url.indexOf("#");
@@ -227,15 +205,12 @@ interface Arrival {
 }
 
 /**
- * Every page load's URL, written by an inline script before Next has run.
- *
- * It answers the one question iOS won't answer elsewhere: which URL did the
- * home-screen icon open (docs/ios.md, experiment A)? The app has moved on by
- * the time anyone opens /diag — `/install` hands off, the router rewrites the
- * address — so the URL is caught at the door. The first load in a storage is
- * kept apart and never overwritten: on iOS the home-screen app's storage is
- * its own, so its first load *is* the icon's first launch. Same mask as
- * `hideSecrets`, inlined because this runs before any bundle.
+ * Every page load's URL, written by an inline script before Next runs — to
+ * answer which URL the home-screen icon opened (docs/ios.md, experiment A),
+ * since the router rewrites the address before /diag is opened. The first load
+ * in a storage is kept apart: on iOS the home-screen app has its own storage,
+ * so that is the icon's first launch. `hideSecrets`'s mask, inlined because
+ * this runs before any bundle.
  */
 export const arrivalScript = `try{var l=location,n=performance.getEntriesByType&&performance.getEntriesByType("navigation")[0],e={at:Date.now(),url:l.pathname+l.search+l.hash.replace(/\\.[A-Za-z0-9_-]+/g,".…"),nav:n?n.type:"?",app:matchMedia("(display-mode: standalone)").matches||navigator.standalone===true},m=document.querySelector("link[rel=manifest]"),c=localStorage.getItem("bida.carry");e.mf=!m?"none":m.href.indexOf("blob:")===0?"carry:"+(c?c.split("~").length:"?"):"static";a=JSON.parse(localStorage.getItem("${ARRIVALS}")||"[]");a.push(e);localStorage.setItem("${ARRIVALS}",JSON.stringify(a.slice(-12)));if(!localStorage.getItem("${FIRST}"))localStorage.setItem("${FIRST}",JSON.stringify(e))}catch(x){}`;
 

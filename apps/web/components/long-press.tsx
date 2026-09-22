@@ -13,22 +13,18 @@ const HOLD_MS = 500;
  */
 const SLOP_PX = 10;
 /**
- * Once a touch hold has been answered, the finger still down owns the rest of
- * the gesture — and three things want it.
+ * Once a touch hold is answered, the finger still down owns the rest of the
+ * gesture — and three things want it.
  *
- * The browser wants its next movement as a scroll: pans are allowed everywhere
- * (`touch-action` on `html, body`), so sliding off the row hands the touch to
- * the scroller, which fires `pointercancel` and dispatches no click at all. But
- * that movement is the hand reaching for the menu the hold just opened, which
- * is how a phone's own long-press menus work and what the finger tries whether
- * or not we are listening. **So the scroll is refused** and the item under the
- * finger when it lifts is chosen — after `SLOP_PX` of travel, since the card is
- * only a few px clear of the row and a finger that never moved picked nothing.
+ * The browser wants its next move as a scroll (pans are allowed everywhere),
+ * which fires `pointercancel` and sends no click. But that move is the hand
+ * reaching for the menu, as with a phone's own long-press menus. **So the
+ * scroll is refused**, and the item under the finger at the lift is chosen —
+ * after `SLOP_PX` of travel, since a finger that never moved picked nothing.
  *
- * The other two are leftovers: Android's own `contextmenu`, and the click as
- * the finger lifts. Both outlive the finger and hit-test wherever it ended up,
- * so both are `clickGuard`'s (`lib/click-guard.ts`) — the half of this that
- * ends after the hand has gone.
+ * The other two, Android's `contextmenu` and the lift's click, outlive the
+ * finger and hit-test wherever it ended, so they are `clickGuard`'s
+ * (`lib/click-guard.ts`).
  */
 function heldFinger(from: { x: number; y: number } | null) {
   let hot: Element | null = null;
@@ -39,10 +35,9 @@ function heldFinger(from: { x: number; y: number } | null) {
       ? document.elementFromPoint(at.clientX, at.clientY)?.closest(".rowmenu-item") ?? null
       : null;
 
-  // The sliding finger gets the same wash a tapped one does, or it arrives at
-  // "Delete" with nothing having said which row it is over. Set on the node
-  // rather than through React: the menu does not re-render while a finger is
-  // crossing it, and this is already the part of the press that is hand-wired.
+  // A sliding finger gets the tap wash too, or it reaches "Delete" with nothing
+  // saying which row it is over. Set on the node: the menu doesn't re-render
+  // while a finger crosses it.
   const warm = (item: Element | null) => {
     if (item === hot) return;
     hot?.classList.remove("rowmenu-hot");
@@ -68,9 +63,8 @@ function heldFinger(from: { x: number; y: number } | null) {
 
   return {
     /**
-     * The finger has lifted at `at`, or been taken away (no point). Choosing
-     * is a real click on the item, so the menu answers a slide and a tap
-     * through the same handler.
+     * The finger lifted at `at`, or was taken away. Choosing is a real click on
+     * the item, so a slide and a tap share the handler.
      */
     lifted: (at?: { clientX: number; clientY: number }) => {
       const item = at ? itemAt(at) : null;
@@ -83,17 +77,13 @@ function heldFinger(from: { x: number; y: number } | null) {
 
 /**
  * Handlers that call `onHold` on a touch hold or a right click; spread them on
- * the element. `onHold` null means nothing to offer, and the press stays an
- * ordinary one.
+ * the element. `onHold` null leaves the press ordinary.
  *
- * A right click is a `contextmenu` event, and so is a touch hold on Android —
- * but **iOS never sends `contextmenu` for a touch**, in any browser, so a
- * touch hold is timed here from pointer events. Android then has both, so a
- * press answers once: whichever lands first, the other is swallowed. A scroll
- * taking the touch over is `pointercancel`; a second finger is a pinch.
- *
- * `NoLongPress` (components/no-long-press.tsx) swallows `contextmenu`
- * everywhere; `stopPropagation` keeps it off a press answered here.
+ * **iOS never sends `contextmenu` for a touch**, so a touch hold is timed here
+ * from pointer events. Android sends both, so whichever lands first wins and
+ * the other is swallowed. `pointercancel` is a scroll; a second finger is a
+ * pinch. `NoLongPress` swallows `contextmenu` everywhere; `stopPropagation`
+ * keeps it off a press answered here.
  */
 export function useHold(onHold: ((el: HTMLElement) => void) | null) {
   // The latest `onHold`, read when the timer fires rather than when it was set.
@@ -168,11 +158,9 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
 }
 
 /**
- * Opens a small menu of actions on a long press or a right click (`useHold`).
- * Spread `hold` on the row.
- *
- * What is remembered is the row, not the point pressed: `RowMenu` opens in the
- * same place for a given row however it was reached.
+ * A small menu of actions on a long press or right click (`useHold`); spread
+ * `hold` on the row. The row is remembered, not the point, so the menu always
+ * opens in the same place.
  */
 export function useLongPressMenu(actions: SheetAction[]) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);

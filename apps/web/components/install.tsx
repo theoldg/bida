@@ -31,9 +31,8 @@ export function CarryToHomeScreen() {
 
 /**
  * Off to `/install` with every group in its fragment, `first` leading — after
- * writing what the tutorial's head will build its manifest from, since the
- * live copy may not have caught up with a key saved a moment ago. Written in
- * `KeepCarried`'s own order, or the two would take turns rewriting it.
+ * writing the carry the tutorial's head is built from, since the live copy may
+ * lag a just-saved key. Same order as `KeepCarried`, or they'd keep rewriting it.
  */
 async function carryThenInstall(first?: string): Promise<void> {
   keepCarried(await heldInvites());
@@ -41,22 +40,14 @@ async function carryThenInstall(first?: string): Promise<void> {
 }
 
 /**
- * And when what it would bring changed after this page loaded, reloads it on
- * the first screen where that is harmless — Safari only reads the manifest at
- * load, and the share sheet can be opened on any page (`headIsStale`).
+ * When the carry changes after load, reload on the first harmless screen —
+ * Safari reads the manifest only at load, and the share sheet can open on any
+ * page (`headIsStale`). Wider than the update's reload (`mayReloadHere`): in
+ * an iOS tab a reload is a flash, not a relaunch.
  *
- * Wider than the update's own reload, which holds out for the groups list
- * (`mayReloadHere`, lib/update.ts): this is an iOS tab's, where a reload is a
- * flash rather than a relaunch, and the visit it fires on is a newcomer's
- * first, which never passes the list at all.
- *
- * **Harmless includes cheap.** Nothing on screen waits on this reload — its
- * only job is a head for a share sheet nobody has opened yet — and the visit it
- * fires on is the one minute the shell is being fetched over the phone's
- * connection, where it would go to the network and race the precache.
- * Deferring costs nothing: the effect runs again on every pathname change. If
- * the worker never lands, never reloading is the better trade — a stale head
- * costs a paste later, a blank first minute costs the app.
+ * **Harmless includes cheap**: not while the shell is still being fetched on a
+ * first visit, where it would race the precache. It retries on every pathname
+ * change; never reloading beats a blank first minute.
  */
 function KeepCarried() {
   const groups = useLive("carried", () => heldInvites(), []);
@@ -80,12 +71,9 @@ export function useBrowserName(): string | undefined {
 }
 
 /**
- * The card both offers are drawn in, so the two cannot drift apart in shape:
- * the title doubles as the disclosure, and the body is whatever the platform
- * is owed. **They fold, they do not dismiss** — the offer stands until the
- * phone installs, at which point `offer` stops being "ready" or "manual" and
- * the card stops rendering by itself. But having read it once you should be
- * able to put it away.
+ * The card both offers are drawn in. **They fold, they don't dismiss** — the
+ * offer stands until the phone installs, when `offer` changes and the card
+ * stops rendering.
  */
 function FoldedOffer(
   { title, open, onToggle, children }:
@@ -106,10 +94,8 @@ function FoldedOffer(
 
 /**
  * Chrome's own install prompt, one tap. **An offer, not a warning**: Android's
- * tab and its installed app are one origin and one IndexedDB, so installing
- * buys an icon, the browser bar gone and a reliable `persist()` — never a
- * group back. That is the whole difference between this card and the iOS
- * banner below, and it is in the words, not in where either one sits.
+ * tab and installed app share one IndexedDB, so installing buys an icon, no
+ * browser bar and a reliable `persist()` — never a group back.
  */
 function NudgeBody() {
   return (
@@ -126,11 +112,9 @@ function NudgeBody() {
 }
 
 /**
- * The iOS tab's warning: this browser will clear the groups it is holding, and
- * the home screen is the only exemption (docs/ios.md). Every group the tab
- * holds rides along to `/install`, and so onto the home screen — the tab is
- * what forgets, so leaving any behind just leaves a paste to do later.
- * `groupId` is only which one goes first.
+ * The iOS tab's warning: this browser will clear its groups, and the home
+ * screen is the only exemption (docs/ios.md). Every group rides along to
+ * `/install`; `groupId` only goes first.
  */
 function BannerBody({ groupId }: { groupId: string }) {
   const browser = useBrowserName();
@@ -143,15 +127,9 @@ function BannerBody({ groupId }: { groupId: string }) {
 }
 
 /**
- * The offer atop the groups list, whichever this browser is owed — Chrome's
- * prompt or the iOS tab's warning, never both (`offer` is one or the other).
- * Drawn only once the list holds a group: an empty home is someone looking
- * around, Quick split stores nothing to lose, and nobody installs an app
- * sight unseen.
- *
- * The fold is the device's and outlives the visit, because this is the screen
- * you can leave by scrolling past it. The ledger's copy of the same card takes
- * the opposite trade — see `LedgerInstall`.
+ * The offer atop the groups list — Chrome's prompt or the iOS warning, never
+ * both. Only once the list holds a group. The fold is the device's and
+ * persists; the ledger's copy doesn't — see `LedgerInstall`.
  */
 export function InstallOfferCard({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
@@ -172,22 +150,14 @@ export function InstallOfferCard({ groupId }: { groupId: string }) {
 }
 
 /**
- * The same card atop a group's ledger, above your balance, for whoever only
- * ever arrives by a group's link and never lingers on the list — which is
- * nearly everyone: a launch reopens the group you were last in and a join
- * pushes it over the list, so `lib/launch.ts` is built to route around the one
- * screen the card above sits on. Both platforms, because both are reached the
- * same way; the iOS one says more because it has more to say.
+ * The same card atop a group's ledger, for people who never linger on the
+ * list — nearly everyone, since launches and joins route around it
+ * (`lib/launch.ts`). Folded on every visit, remembering nothing; gone once
+ * installed.
  *
- * Folded on every visit and remembering nothing: the entries are what that
- * screen is for, so it offers itself as one line each time rather than taking
- * the list's fold. That line goes the moment the phone installs.
- *
- * **Never in the demo.** No key means no invite to carry, so the banner's
- * offer is empty there, and nothing the browser clears is lost — `/demo` lays
- * the story down again (docs/sync.md#the-demo-group-has-no-key). The mark
- * directly above says nothing here syncs; a card under it urging you to save
- * this group would take that back in the next line.
+ * **Never in the demo.** No key to carry, nothing lost when cleared (`/demo`
+ * re-seeds, docs/sync.md#the-demo-group-has-no-key), and the mark above says
+ * nothing here syncs.
  */
 export function LedgerInstall({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
@@ -212,13 +182,11 @@ export function LedgerInstall({ groupId }: { groupId: string }) {
 }
 
 /**
- * The banner's button on its own, for the about screen's "Works offline" in an
- * iOS tab — `/install` is where the how lives, so that section is a door rather
- * than a line restating it. `first` is the group to lead the carry, if any.
+ * The banner's button alone, for the about screen's "Works offline" in an iOS
+ * tab. `first` leads the carry.
  *
- * **`location.assign`, never a `<Link>`**: the fragment is the invites, and the
- * router drops it when it falls back to loading the page itself
- * (docs/ios.md#gotchas).
+ * **`location.assign`, never a `<Link>`**: the fragment is the invites, and
+ * the router drops it when it falls back to a page load (docs/ios.md#gotchas).
  */
 export function InstallButton({ first }: { first?: string }) {
   return (

@@ -12,15 +12,12 @@ import { setStasMode, stasMode } from "@/lib/scan/stas";
 import { VERSION } from "@/lib/version";
 
 /**
- * What this phone has been doing, as text you can send.
+ * What this phone has been doing, as text you can send. Linked from nowhere —
+ * long-press the wordmark on the groups list. lib/diag.ts is the recorder;
+ * this is the readout.
  *
- * Not linked from anywhere — long-press the wordmark on the groups list. A
- * diagnostics screen earns no room in an app this size, and this one is for
- * one question: when the ledger sits on its skeleton rows for ten seconds,
- * what was it waiting for? lib/diag.ts is the recorder; this is the readout.
- *
- * It refreshes on a timer rather than live, because a live read here would be
- * another line in the log it is printing.
+ * Refreshes on a timer rather than live: a live read would be another line in
+ * the log it prints.
  */
 export default function DiagPage() {
   const [report, setReport] = useState<string>();
@@ -53,32 +50,23 @@ export default function DiagPage() {
       <Body>
         <TopBar title={copy.diag.title} back={route.groups()} />
         <Scroll>
-          {/* Stuck to the top of the scroll rather than pinned in a `Foot`,
-              which is the one thing this screen cannot use: the bottom of an
-              installed app is where the system navigation bar sits, and
-              `env(safe-area-inset-bottom)` reads 0 on Android often enough
-              that a foot there is a button with its lower half cut off. The
-              top is also simply where it belongs — this screen is opened in
-              order to copy, and the report below it is hundreds of lines. */}
+          {/* Stuck to the top of the scroll, not a `Foot`: the bottom of an
+              installed app is the system bar, and `env(safe-area-inset-bottom)`
+              reads 0 on Android often enough to cut a foot button in half. */}
           <div className="diag-act">
             <button type="button" className="btn btn-p" disabled={!report}
               onClick={() => {
                 writeClipboardText(report ?? "").then(
                   () => setCopied(true),
-                  // The clipboard refuses on an insecure context or a denied
-                  // permission, and is missing outright in some in-app
-                  // browsers (lib/clipboard.ts). The whole report is already on
-                  // screen to be selected or photographed, so there is nothing
-                  // to recover.
+                  // The clipboard can refuse or be missing (lib/clipboard.ts); the report is
+                  // already on screen to select, so there is nothing to recover.
                   () => setCopied(false),
                 );
               }}>
               {copied ? copy.diag.copied : copy.diag.copyAll}
             </button>
-            {/* The one setting on the one screen that is not for a person
-                using the app — which is exactly why it lives here: it changes
-                how a scan talks to whoever took the photo, so it should cost
-                somebody a long-press on the wordmark to find
+            {/* Not a setting for a person using the app — it changes how a scan
+                talks to whoever took the photo, so it costs a long-press to find
                 (lib/scan/stas.ts). */}
             <div className="diag-stas">
               <div>
@@ -104,15 +92,13 @@ export default function DiagPage() {
 /**
  * How long the *whole report* may take before it prints what it has.
  *
- * **This screen must never wait on the database.** It is opened because the
- * database is not answering, so everything that can block is raced against
- * this, and the timeline, which needs no database at all, prints either way.
+ * **This screen must never wait on the database** — it is opened because the
+ * database isn't answering. Everything that can block races this; the
+ * timeline needs no database and prints either way.
  *
- * **One window for the report, not one per question.** Await a blocking line
- * before asking the next and the report grows slower every time a line is
- * added to it — and six seconds of "Reading…" is exactly the length of the
- * fault this screen exists to describe (PROBE_MS in lib/db/live.ts), so it
- * goes unnoticed. The sequence below is what keeps the window honest.
+ * **One window for the report, not one per question**: awaiting each in turn
+ * adds their waits up, and six seconds of "Reading…" is exactly the fault
+ * being described (PROBE_MS in lib/db/live.ts).
  */
 const PATIENCE_MS = 2000;
 
@@ -122,11 +108,8 @@ function patience(): Promise<void> {
 }
 
 /**
- * The answer, or what it means that there wasn't one.
- *
- * `until` is shared by every question in a report, so asking one more costs
- * nothing as long as it is *started* with the others rather than awaited in
- * turn — see `collect`.
+ * The answer, or what it means that there wasn't one. `until` is shared, so
+ * a question costs nothing if *started* with the others — see `collect`.
  */
 async function within<T>(promise: Promise<T>, otherwise: T, until: Promise<void>): Promise<T> {
   try {
@@ -137,12 +120,9 @@ async function within<T>(promise: Promise<T>, otherwise: T, until: Promise<void>
 }
 
 /**
- * The layout viewport, the visible one, and the shell drawn into them.
- *
- * `shell` is this screen's own `.app`, which is every screen's: if it is taller
- * than `visible`, its last strip is off the bottom of the phone with nothing
- * that can scroll to it. `safe` is what the browser admits the system bars
- * cover, which on Android is 0 more often than it is true.
+ * The layout viewport, the visible one, and the shell drawn into them. A
+ * `shell` taller than `visible` has its last strip off the phone. `safe` is
+ * what the browser admits the system bars cover — on Android, often 0 wrongly.
  */
 function screenLine(): string {
   const view = window.visualViewport;
@@ -160,14 +140,9 @@ function screenLine(): string {
 }
 
 /**
- * Which stores answer a read, one at a time.
- *
- * A lock is per store, and that is the whole diagnosis: the reads that hang
- * name the transaction holding it, which is the difference between "something
- * holds the database" and a single writer to point at.
- *
- * **Probed in parallel and separately**: one transaction over all of them
- * reports "no answer" and loses the shape, so one wedged store hides the rest.
+ * Which stores answer a read. Locks are per store, so the hanging reads name
+ * the transaction holding one. **Probed separately, in parallel**: one
+ * transaction over all would let one wedged store hide the rest.
  */
 async function stores(until: Promise<void>): Promise<string> {
   const d = db();
@@ -202,11 +177,8 @@ function copies(): Promise<string> {
 }
 
 /**
- * The report: what this phone holds, then what it has been doing.
- *
- * The counts come first because they are the scale the timings have to be read
- * against — 14s of `rebuild` means one thing over 200 ops and another over
- * 20,000.
+ * The report: what this phone holds, then what it has been doing. Counts
+ * first: 14s of `rebuild` means one thing over 200 ops, another over 20,000.
  */
 async function collect(): Promise<string> {
   const d = db();
@@ -220,11 +192,9 @@ async function collect(): Promise<string> {
   say("now", new Date().toISOString());
   say("up", `${((Date.now() - loadedAt()) / 1000).toFixed(0)}s`);
 
-  // **Every question that can block is asked here** and only read in printing
-  // order below: they share one window, and a window is shared only by
-  // questions already in flight when it opens. Await one before asking the next
-  // and the report takes their waits end to end (PATIENCE_MS) — so the next
-  // blocking line added to this report belongs up here too.
+  // **Every question that can block is started here** and read in printing
+  // order below, so they share one window (PATIENCE_MS). A new blocking line
+  // belongs up here too.
   const until = patience();
   const storeLine = stores(until);
   const countsLine = within(
@@ -263,10 +233,9 @@ async function collect(): Promise<string> {
     "no answer",
     until,
   );
-  // Which key this phone scans with — never the key itself, which is a
-  // credential and this report is pasted into chat threads. The line exists
-  // because it decides where a failed scan even went: ours, or Google
-  // directly (lib/scan/key.ts).
+  // Which key this phone scans with — never the key itself, a credential in a
+  // report pasted into chats. It decides where a failed scan went: ours, or
+  // Google directly (lib/scan/key.ts).
   const scanKeyLine = within(
     (async () => (await ownKey()) ? "own" : "shared")(),
     "no answer",
@@ -295,10 +264,9 @@ async function collect(): Promise<string> {
   say("stas", stasMode() ? "on" : "off");
   say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
-  // The screen the app is actually painted on, beside the one it was laid out
-  // for. The same number on a phone that is behaving; when they are not, the
-  // difference is the strip at the foot of every screen that a person reports
-  // as "the tabs are gone" (lib/viewport.ts).
+  // The screen actually painted beside the one laid out for; when they differ,
+  // that strip is what a person reports as "the tabs are gone"
+  // (lib/viewport.ts).
   say("screen", screenLine());
   say("online", String(navigator.onLine));
   say("worker", navigator.serviceWorker?.controller ? "controlling" : "none");
@@ -307,35 +275,25 @@ async function collect(): Promise<string> {
 
   const rows = timeline();
 
-  // Up here, not down in the timeline where they were written: this report is
-  // hundreds of lines and gets pasted into a chat, so the one block somebody
-  // is asked for has to survive being cut short. Every page's, because the
-  // press that went wrong was two pages ago as often as not. Menus and
-  // dialogs together — they are the same question asked of two overlays, and
-  // a menu item that opens a dialog is one story across both.
+  // Up here, not in the timeline: a pasted report gets cut short, and this is
+  // the block people get asked for. Every page's, since the bad press was often
+  // pages ago; menus and dialogs together, since one can open the other.
   const presses = [...otherPages().flatMap((page) => page.events), ...rows]
     .filter((e) => e.what === "menu.trace" || e.what === "dialog.trace")
     .slice(-6)
     .reverse()
     .map((e) => `${(e.at / 1000).toFixed(2)}s  ${e.what.replace(".trace", "")}  ${e.info ?? ""}`);
   if (presses.length) lines.push("", "menus and dialogs, newest first:", ...presses);
-  // Each page headed by the address it was on, secrets masked. Newest first,
-  // like everything below the head: the launch that hung is the launch you
-  // killed the app to get out of, and a paste that loads `/join` is a second
-  // page beside this one.
+  // Each page headed by its address, secrets masked, newest first: a paste that
+  // loads `/join` is a second page beside this one.
   const past = otherPages().map((page) =>
     `---- page ${new Date(page.at).toISOString()} ${page.url} (${page.events.length} events) ----\n\n`
     + `${format(page.events)}\n\n`).join("");
 
   /**
-   * **The head, then everything else newest first.**
-   *
-   * A phone pastes the top of this and stops — the report is hundreds of lines
-   * and a chat box is not. So the order is what a reader needs in that first
-   * screenful: the counts, because they are the scale every timing is read
-   * against, then this page's timeline with the most recent line at the top,
-   * then the pages before it, and last the home-screen hand-off, which
-   * describes an install rather than the thing that just went wrong
+   * **The head, then everything else newest first.** A phone pastes the top and
+   * stops, so the order is what the first screenful needs: counts, this page's
+   * timeline newest first, earlier pages, and last the home-screen hand-off
    * (docs/ios.md, experiment A). Secrets masked throughout.
    */
   return `${lines.join("\n")}\n\n---- this page (${rows.length} events) ----\n\n${format(rows)}\n\n`

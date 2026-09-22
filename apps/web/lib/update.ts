@@ -1,16 +1,13 @@
 /**
  * A new build, taken as soon as it is safe to.
  *
- * `public/sw.js` activates itself the moment a new build is fully precached,
- * and keeps a cache per open page, each serving the build that page is on.
- * This file is the other half: a page whose ground changed reloads onto the
- * new build — but not where it is standing, and not while somebody is looking
- * at it. See `mayReloadHere`.
+ * `public/sw.js` activates the moment a build is precached and serves each open
+ * page its own build. Here, a page whose build changed reloads onto the new
+ * one — but not where it is standing, nor while being looked at
+ * (`mayReloadHere`).
  *
- * **Never wait for every client to close.** On iOS that is close to never —
- * tabs and the browser live through what a person thinks of as quitting — so
- * a deploy arrives only after they kill Safari repeatedly. A page in use when
- * the update lands is offered the tap instead (`components/update.tsx`).
+ * **Never wait for every client to close** — on iOS that is nearly never. A
+ * page in use is offered the tap instead (`components/update.tsx`).
  */
 
 import { mark } from "./diag";
@@ -25,16 +22,10 @@ export type UpdateState =
   | "applying";
 
 /**
- * Screens a reload costs nothing on: nothing typed, no flow half way through.
- *
- * `/join`, `/g/claim`, `/install` and the quick split are flows — a reload
- * drops somebody back at a step they have already taken — and the entry form
- * and `/new` hold what is typed in memory and warn on unload, so a reload
- * there is a browser dialog in front of somebody who only resumed the app, and
- * a lost expense if they answer it wrong.
- *
- * Two things reload the page for reasons of their own, and both ask this: the
- * update below, and the iOS carry (`components/install.tsx`).
+ * Screens a reload costs nothing on. `/join`, `/g/claim`, `/install` and the
+ * quick split are flows; the entry form and `/new` hold typed work and warn on
+ * unload. Asked by the update below and by the iOS carry
+ * (`components/install.tsx`).
  */
 const NOTHING_TO_LOSE = new Set(["/", "/g", "/g/members", "/g/history", "/g/entry", "/about"]);
 
@@ -61,17 +52,11 @@ function announce(): void {
 }
 
 /**
- * May the app reload itself where it is standing? **The front door, and
- * nowhere else.**
- *
- * In the installed app a reload is a relaunch, splash screen and all: on the
- * groups list that is the launch it already looks like; on a ledger somebody
- * is reading it is indistinguishable from a crash, and on the two forms it
- * raises the browser's "leave site?".
- *
- * Nothing forces the update through sooner. `sw.js` keeps a cache per open
- * window for as long as that window is on it, so waiting for the front door
- * costs a stale screen and never a broken one.
+ * May the app reload itself where it is standing? **The front door only.** In
+ * the installed app a reload is a relaunch: on the groups list it looks like
+ * one; on a ledger it looks like a crash; on a form it raises "leave site?".
+ * Waiting costs a stale screen, never a broken one — `sw.js` keeps each
+ * window's cache.
  */
 function mayReloadHere(): boolean {
   return (location.pathname.replace(/\/$/, "") || FRONT_DOOR) === FRONT_DOOR;
@@ -79,15 +64,14 @@ function mayReloadHere(): boolean {
 
 /**
  * Register the app-shell worker and watch for its successor. Idempotent: the
- * component that calls it remounts, the listeners below must not stack up.
+ * caller remounts, and listeners must not stack.
  */
 export function registerServiceWorker(): void {
   if (started || typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
   started = true;
 
-  // Resolves the moment a worker for this scope is active — which on a first
-  // visit is the moment its precache finishes. Nothing waits on it; it only
-  // records that the shell is cached now (`shellIsWarm`).
+  // Resolves once a worker is active — on a first visit, once its precache
+  // finishes. Only records `shellIsWarm`.
   navigator.serviceWorker.ready.then(() => { warm = true; }).catch(() => {});
 
   const touch = () => {
@@ -128,13 +112,9 @@ export function registerServiceWorker(): void {
 /**
  * Reload the next time the app is opened somewhere it can afford to.
  *
- * **Never while hidden**: `beforeunload` can't put its question up, and a load
- * begun as the phone puts the app away is one it may not finish. Coming back
- * to the front is a resume, and a reload then is the launch it looks like.
- *
- * A resume onto a screen `mayReloadHere` refuses changes nothing and stays
- * armed. Armed once for the life of the page: a second build must not leave
- * two of these watching.
+ * **Never while hidden**: `beforeunload` can't ask, and a load begun as the app
+ * is put away may not finish. A resume onto a refused screen stays armed.
+ * Armed once per page, so a second build doesn't add another watcher.
  */
 function reloadWhenFree(): void {
   if (waiting) return;
@@ -149,15 +129,12 @@ function reloadWhenFree(): void {
 }
 
 /**
- * Whether a reload would be served out of the precache rather than off the
- * network. False through the first visit's first minute, while the worker
- * fetches the ~2.4 MB shell: a reload then competes with those fetches over
- * one phone connection — a blank screen where there should be a flash. Only
- * `KeepCarried` asks (components/install.tsx).
+ * Whether a reload would come from the precache. False through a first visit's
+ * first minute, while the ~2.4 MB shell downloads — a reload then races it.
+ * Only `KeepCarried` asks.
  *
- * **Never `navigator.serviceWorker.controller`**: `public/sw.js` never calls
- * `clients.claim()`, so the page that installs the worker stays uncontrolled
- * for life and would never see one.
+ * **Never `navigator.serviceWorker.controller`**: `sw.js` never calls
+ * `clients.claim()`, so the installing page stays uncontrolled for life.
  */
 export function shellIsWarm(): boolean {
   return warm;

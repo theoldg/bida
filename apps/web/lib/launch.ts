@@ -8,45 +8,30 @@ import { db, type DeviceRecord } from "./db/dexie";
 import { route } from "./group-link";
 
 /**
- * Launching the app puts you back in the group you were last in.
+ * Launching the app puts you back in the group you were last in (`/g` records
+ * it with `setLastOpenedGroup`) — unless the list is where you left off:
+ * backing out of a group records the list as this device's place
+ * (`setLeftOnList`), and a launch reopens whichever was last.
  *
- * Nearly everyone is in one group at a time, so the list is a screen passed
- * through on the way to the only thing you came for. `/g` records which group
- * that was (`setLastOpenedGroup`); this reads it back at the door.
- *
- * Unless the list is where you left off. Backing out of a group says you are
- * done with it, so the list records itself as this device's place
- * (`setLeftOnList`) exactly as a group does, and a launch reopens whichever
- * was last.
- *
- * **A launch, not every arrival at `/`.** The list is still where the back
- * arrow goes, and going back must not be turned around. That question has one
- * home — `arrival`, below.
+ * **A launch, not every arrival at `/`.** The list is where back arrows go, and
+ * going back must not be turned around. That question lives in `arrival`.
  */
 
 /**
  * What brought the app to the groups list, and so what the list owes it.
+ * **One value, not a flag per caller.** In the order the hook spends them:
  *
- * **One value, not a flag per caller.** Every screen that learns to send
- * somebody to the list would otherwise add another way to be wrong about it.
- * The answers, in the order the hook spends them:
- *
- * - **A group handed over** by `/join` (`handOverToGroup`). That screen has
- *   two things to do and can only do one: give its history entry back to the
- *   list, so the group opens with the list underneath it rather than the chat
- *   the invite was tapped in — and open the group. Asked in one tick the
- *   router folds them into the last, so `/join` takes the entry back and
- *   leaves the group here. The list picks it up on the way through and
- *   *pushes*, so Back climbs into the app rather than out of it.
+ * - **A group handed over** by `/join` (`handOverToGroup`). `/join` must give
+ *   its history entry back to the list *and* open the group, and the router
+ *   folds two calls in one tick into the last — so `/join` goes back, and the
+ *   list *pushes* the group, making Back climb into the app, not out of it.
  * - **A launch** the list was told about (`launchedOnto`), from `/install`
- *   alone: the iOS icon's `start_url` is `/install#<carry>`, so the document
- *   never loads on the list and `startedOnList` rightly says so. Without that
- *   word, every launch of the icon docs/ios.md exists to produce lands on the
- *   list with the last group unopened.
+ *   alone: the iOS icon's `start_url` is `/install#<carry>`, so
+ *   `startedOnList` rightly says no — and without this every icon launch
+ *   lands on the list with the last group unopened.
  * - **Nothing**, and the browser is asked instead (`isLaunch`).
  *
- * Spent on the first decision either way: the app has now been launched, and
- * coming back to the list later is a choice rather than a door to shut again.
+ * Spent on the first decision either way.
  */
 let arrival: { kind: "group"; groupId: string } | { kind: "launch" } | undefined;
 /** Set once the hook has spent `arrival`, so an in-app return is never a launch. */
@@ -63,13 +48,11 @@ export function launchedOnto(): void {
 }
 
 /**
- * Which group a launch should reopen, if any. Pure, and exported for its test:
- * reading the device record and the group is the hook's job below.
+ * Which group a launch should reopen, if any. Pure, exported for its test.
  *
- * Not a group this phone has forgotten (`leftGroups`), archived, or whose row
- * is gone — the id outlives the group it names, since nothing clears it on
- * forgetting. Nor one you left behind on the list (`leftOnList`): the id
- * outlives that too, because `/new` and `/quick` want it for their currency.
+ * Not one this phone forgot (`leftGroups`), archived, or whose row is gone —
+ * the id outlives all of those. Nor one left for the list (`leftOnList`); the
+ * id stays because `/new` and `/quick` want its currency.
  */
 export function resumeGroupId(
   device: Pick<DeviceRecord, "lastOpenedGroupId" | "leftGroups" | "leftOnList"> | undefined,
@@ -83,10 +66,9 @@ export function resumeGroupId(
 }
 
 /**
- * True while a fresh load of `/` is still deciding whether to reopen a group,
- * so the caller draws its loading frame rather than a list that is about to be
- * replaced. Answers `false` — and stays there — on every arrival that isn't a
- * launch.
+ * True while a fresh load of `/` is deciding whether to reopen a group, so the
+ * caller draws its loading frame rather than a list about to be replaced.
+ * `false`, for good, on every non-launch arrival.
  */
 export function useResumeLastGroup(): boolean {
   const router = useRouter();
@@ -125,10 +107,9 @@ export function useResumeLastGroup(): boolean {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [deciding, came, router]);
 
-  // Settled on the list — a launch that found nowhere to go, an in-app return,
-  // a reload — and so the list is this device's place until a group takes it
-  // back. Written on the way in rather than on the way out, because a phone
-  // gives no reliable word before the app is killed.
+  // Settled on the list, so the list is this device's place until a group takes
+  // it back. Written on the way in: a phone gives no reliable word before the
+  // app is killed.
   useEffect(() => {
     if (deciding) return;
     void setLeftOnList();
@@ -138,16 +119,13 @@ export function useResumeLastGroup(): boolean {
 }
 
 /**
- * Did the document itself load on the groups list?
+ * Did the document itself load on the groups list? The navigation type
+ * describes that one load for the app's whole life. **Only a copy that
+ * started on the list has a launch to spend**; one started on an invite link
+ * already spent it, and the first Back out of that group would otherwise walk
+ * straight back in. An unreadable address counts as the list.
  *
- * The app is one document for its whole life, so the navigation type says how
- * *that* load happened and never changes, however many screens follow. **Only
- * a copy that started on the list has a launch to spend on reopening a
- * group**; one that started on an invite link already spent it on the link,
- * and without this the first Back out of that group reads as a launch and
- * walks straight back in. An unreadable address is taken for the list.
- *
- * Pure, and exported for its test: reading the timing entry is the caller's.
+ * Pure, and exported for its test.
  */
 export function startedOnList(url: string | undefined): boolean {
   if (!url) return true;
@@ -161,13 +139,9 @@ export function startedOnList(url: string | undefined): boolean {
 }
 
 /**
- * Is this arrival the app being started, as the browser tells it?
- *
- * `navigate` covers the home-screen icon, a bookmark and a typed URL; a reload
- * and a back/forward traversal are excluded, because both mean this list is
- * the screen already being looked at.
- *
- * Pure, and exported for its test: reading the timing entry is the caller's.
+ * Is this arrival the app being started? `navigate` covers the icon, a
+ * bookmark and a typed URL; reload and back/forward mean the list is already
+ * being looked at. Pure, and exported for its test.
  */
 export function isLaunchFrom(navType: string | undefined, url: string | undefined): boolean {
   if (navType !== undefined && navType !== "navigate") return false;
@@ -175,10 +149,8 @@ export function isLaunchFrom(navType: string | undefined, url: string | undefine
 }
 
 /**
- * The same question, of the browser this is running in. During the static
- * export's build-time prerender there is no window, and the answer is no — the
- * first client render then matches the server's, which is the same skeleton
- * either way.
+ * The same question of this browser. No window during the static prerender,
+ * so no — the first client render matches the same skeleton either way.
  */
 function isLaunch(): boolean {
   if (resumed || typeof window === "undefined") return false;

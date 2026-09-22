@@ -23,9 +23,8 @@ export class ScanRejectedError extends Error {}
 export class ScanUnavailableError extends Error {}
 
 /**
- * The photo was fine and the model answered, but what came back doesn't
- * reconcile — see `checkScan`. Carries which of the four it is, so the app can
- * say the one true thing rather than a shrug that covers all of them.
+ * The model answered, but the bill doesn't reconcile — see `checkScan`.
+ * Carries which of the four, so the app can say the one true thing.
  */
 export class ScanUnreliableError extends Error {
   constructor(readonly problem: ScanProblem) {
@@ -34,18 +33,16 @@ export class ScanUnreliableError extends Error {
 }
 
 /**
- * The phone can't reach anything. Scanning is the one act in the app that needs
- * a network, so it is the one place "couldn't read that receipt" would be a lie
- * about the photo when the truth is about the signal.
+ * The phone can't reach anything. Scanning is the one act that needs a
+ * network, so "couldn't read that receipt" would be a lie about the photo.
  */
 export class ScanOfflineError extends Error {}
 
 /**
- * The budget for this scan is spent — ours, not Gemini's, and a different
- * thing from `ScanUnavailableError` because waiting a minute will not fix it.
- * Carries which bucket it came out of: a person who has scanned ten bills this
- * hour is told something quite different from one who arrived at a shared
- * daily cap somebody else spent. See docs/receipt-scanning.md#what-the-scan-costs.
+ * Our scan budget is spent — not Gemini's, and unlike `ScanUnavailableError`
+ * waiting a minute won't fix it. Carries the bucket: your own ten an hour and
+ * a shared daily cap are different sentences.
+ * See docs/receipt-scanning.md#what-the-scan-costs.
  */
 export class ScanLimitError extends Error {
   constructor(readonly scope: ScanLimitScope) {
@@ -54,12 +51,9 @@ export class ScanLimitError extends Error {
 }
 
 /**
- * The key this phone brought is not usable — the one refusal the shared path
- * can never produce, since on that path there is no key of the person's to be
- * wrong. `refused` is Google saying no to the key itself; `spent` is the key
- * working and being out of quota, which is theirs to wait out and nothing to
- * do with our budget. Both point at `/advanced`, where the key can be replaced
- * or removed to fall back to the shared one.
+ * The phone's own key is unusable — impossible on the shared path. `refused`
+ * is Google rejecting the key; `spent` is it out of quota, theirs to wait out.
+ * Both point at `/advanced`.
  */
 export class ScanKeyError extends Error {
   constructor(readonly why: "refused" | "spent") {
@@ -78,15 +72,13 @@ async function refusalScope(res: Response): Promise<ScanLimitScope | "turnstile"
 
 /**
  * Photographs → `ScanResult`. One request per scan, no automatic retry — a
- * retry doubles both our requests and the shared daily Gemini quota; the scan
- * buttons stay enabled and the person decides. See docs/receipt-scanning.md.
+ * retry doubles our requests and the shared Gemini quota; the person decides.
+ * See docs/receipt-scanning.md.
  *
- * **Two ways out of the phone, and only one of them is ours.** With a key of
- * their own (`/advanced`) the person calls Google directly and this function
- * is the only place that knows it — the two paths meet again at the answer,
- * which is read, checked and returned identically either way. What differs is
- * everything guarding a key that isn't in play: the bearer, the Turnstile
- * token and all three budgets belong to the shared path alone.
+ * **Two ways out of the phone.** With a key of their own (`/advanced`) the
+ * phone calls Google directly; the paths meet again at the answer, read and
+ * checked identically. The bearer, Turnstile token and budgets belong to the
+ * shared path alone.
  */
 export async function scanReceipt(
   photo: File | Blob,
@@ -102,16 +94,11 @@ export async function scanReceipt(
 }
 
 /**
- * The same reading, of a bill somebody typed instead of photographed.
- *
- * Everything but the bytes is shared with `scanReceipt`: the same envelope with
- * one `mimeType` changed, the same bearer, the same Turnstile token, the same
- * three budgets, and the same `checkScan` at the end. A typed bill is not a
- * cheaper act — it asks the same model the same question — so it is not a
- * cheaper one to us either (docs/receipt-scanning.md#typing-a-bill-in).
- *
- * The caller has already capped and cleaned the text (`./text.ts`); this
- * encodes it and sends it.
+ * The same reading, of a typed bill. Everything but the bytes is shared with
+ * `scanReceipt` — envelope, bearer, Turnstile, budgets, `checkScan` — since it
+ * asks the same model the same question
+ * (docs/receipt-scanning.md#typing-a-bill-in). The text arrives capped and
+ * cleaned (`./text.ts`).
  */
 export async function parseBillText(
   text: string,
@@ -123,10 +110,8 @@ export async function parseBillText(
 }
 
 /**
- * One door for every bill, whichever medium it arrived in and whoever's key
- * paid for it: parse, honour the model's own refusal, then hold the answer to
- * `checkScan`. Everything downstream of here may assume the bill it holds adds
- * up.
+ * One door for every bill: parse, honour the model's own refusal, then hold
+ * the answer to `checkScan`. Everything downstream may assume it adds up.
  */
 async function readBill(
   /** The bill as base64, run inside the round trip so a slow resize hides
@@ -159,14 +144,10 @@ async function readBill(
 }
 
 /**
- * The scan nobody pays us for: phone → Google, with the key this phone holds.
- *
- * The envelope is core's, the same one the Worker streams
- * (`buildScanRequestBody`), so a brought key buys a different payer and not a
- * different reading. Nothing here is authenticated by us, budgeted by us, or
- * visible to us — which is the whole of the feature, and the reason there is
- * no fallback through the Worker when it fails: a key that has gone somewhere
- * else once is a key that went somewhere else.
+ * The scan on the phone's own key: phone → Google. Core's envelope, the same
+ * the Worker streams (`buildScanRequestBody`), so only the payer differs.
+ * Nothing here passes through us, which is the feature — and why there is no
+ * fallback through the Worker on failure.
  */
 async function readOnOwnKey(
   encode: () => Promise<string>,
@@ -186,10 +167,9 @@ async function readOnOwnKey(
       ),
     });
   } catch (err) {
-    // Same reading as the shared path: fetch rejects only when the request
-    // reached no server. A browser extension refusing googleapis.com lands
-    // here too, which is why `/advanced` makes this call once at the moment
-    // the key is pasted, where it can be said plainly (./key.ts).
+    // fetch rejects only when no server answered. A browser extension blocking
+    // googleapis.com lands here too, which is why `/advanced` tests the key once
+    // when it is pasted (./key.ts).
     throw new ScanOfflineError(err instanceof Error ? err.message : "offline");
   }
   // Google's own statuses, and there is no cap of ours mixed in with them to
@@ -206,9 +186,8 @@ async function readOnOwnKey(
 }
 
 /**
- * The scan on the key the deployment holds: through our Worker, which owns the
- * envelope, counts what it costs and will not send anything for a browser it
- * could not verify.
+ * The scan on the deployment's key, through our Worker, which owns the
+ * envelope, counts the cost and refuses an unverified browser.
  */
 async function readOnSharedKey(
   encode: () => Promise<string>,
@@ -221,10 +200,8 @@ async function readOnSharedKey(
   // to send. The Worker asks again — this copy is advice (./budget.ts).
   if (await overCallerBudget(groupId)) throw new ScanLimitError("caller");
 
-  // Started together, not one after the other: encoding the bill is CPU and
-  // the challenge is a round trip to Cloudflare, so in sequence they add up.
-  // `turnstileToken` usually has a warmed one to hand over (`warmTurnstile`),
-  // and where it doesn't the challenge hides behind the resize.
+  // Together, not in sequence: encoding is CPU, the challenge is a round trip.
+  // `turnstileToken` usually has a warmed token (`warmTurnstile`).
   const [billBase64, token, turnstile] = await Promise.all([
     encode(),
     groupToken(groupId, secret),

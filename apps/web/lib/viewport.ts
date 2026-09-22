@@ -2,20 +2,18 @@
  * Reading the visual viewport: what the keyboard covers, and what nothing can
  * account for.
  *
- * The shell is `100dvh` and never scrolls (globals.css). The visual viewport is
- * what is *actually* on screen, and the two disagree for two very different
- * reasons:
+ * The shell is `100dvh` and never scrolls (globals.css). The visual viewport
+ * disagrees with it for two reasons:
  *
- * - **A keyboard.** On iOS it and its accessory bar are drawn over the layout
- *   viewport rather than shortening it, so `dvh` doesn't move and the foot of
- *   `.scroll` ends up behind them. That difference is owed as `--kb`.
- * - **A browser that is wrong.** The same difference with nothing focused is
- *   not a keyboard: it is a layout viewport taller than the screen it is being
- *   painted on, which is a shell whose last strip — the bottom nav, the about
- *   line — is off the bottom with no way to scroll to it.
+ * - **A keyboard.** On iOS it and its accessory bar overlay the layout viewport
+ *   rather than shortening it, so the foot of `.scroll` sits behind them. Owed
+ *   as `--kb`.
+ * - **A browser that is wrong.** The same gap with nothing focused is a layout
+ *   viewport taller than the screen: the shell's last strip (bottom nav, about
+ *   line) is off the bottom, unreachable.
  *
- * **A gap is a keyboard only while something is being typed into.** Paying the
- * second case as `--kb` is permanent padding nobody asked for.
+ * **A gap is a keyboard only while something is being typed into**, or it
+ * becomes permanent padding.
  */
 
 /** One look at the two viewports, and who has the caret. */
@@ -57,20 +55,16 @@ export function gapOf(v: ViewportReading): ViewportGap {
 }
 
 /**
- * What a press on a control beside a field has to do about the caret
- * (`keepsFocus`, components/bits.tsx). The middle case is the whole reason this
- * is a function rather than a boolean:
+ * What a press on a control beside a field does about the caret (`keepsFocus`,
+ * components/bits.tsx):
  *
- * - **hold** — a keyboard is up, so the press must not blur the field: the
- *   blur retracts it, the page reflows, and the `click` misses the button.
- * - **blur** — no keyboard, but a field still has the caret. That is what the
- *   OS back button leaves behind on Android: it closes the keyboard without
- *   taking the focus, and a press that holds that focus tells the browser
- *   someone tapped with a text field focused, which opens the keyboard again.
- *   So the field is put down, by hand rather than by trusting the press to do
- *   it — whether a `mousedown` moves focus at all depends on the browser and
- *   on whether what was pressed can take it.
- * - **free** — nothing has the caret, so there is nothing to protect or undo.
+ * - **hold** — a keyboard is up, so don't blur: the keyboard would retract,
+ *   the page reflow, and the `click` miss the button.
+ * - **blur** — no keyboard, but a field has the caret: Android's back button
+ *   closes the keyboard without taking focus, and a press holding that focus
+ *   reopens it. So the field is blurred by hand — whether `mousedown` moves
+ *   focus varies by browser and target.
+ * - **free** — nothing has the caret.
  */
 type CaretAction = "hold" | "blur" | "free";
 
@@ -94,25 +88,20 @@ interface ReachReading {
 
 /**
  * How much further a scroller must go for a field *and the room it asks for*
- * to be clear of the keys.
+ * to clear the keys. `scrollIntoView`'s `nearest` judges by the field's own
+ * box, so a field already parked above the keyboard counts as done and what
+ * sits under it stays hidden.
  *
- * The browser will not always spend that room itself: `scrollIntoView`'s
- * `nearest` reads "already in view" off the field's own box, so a field the
- * browser has just parked above the keyboard is done as far as it is concerned
- * and whatever sits under it stays behind the keys.
- *
- * Never negative, because this only ever scrolls **up**: a field already high
- * enough is left alone, and a keyboard closing must not drag the list down to
- * re-hang it at the bottom of the screen.
+ * Never negative — only ever scrolls **up**, so a closing keyboard doesn't
+ * drag the list down.
  */
 export function reachOf(r: ReachReading): number {
   return Math.max(0, Math.round(r.bottom + r.room - r.stop));
 }
 
 /**
- * Whether this element is one a keyboard opens for. Buttons and checkboxes are
- * inputs too and open nothing, which is why the types are named rather than the
- * tag alone.
+ * Whether a keyboard opens for this element. Buttons and checkboxes are inputs
+ * too, so types are named rather than the tag alone.
  */
 const NO_KEYBOARD = new Set([
   "button", "checkbox", "color", "file", "hidden", "image", "radio", "range", "reset", "submit",
@@ -127,18 +116,14 @@ export function isTyping(el: Element | null): boolean {
 
 /**
  * **What the confirm key does to the field it was pressed in**: hand the caret
- * to the next field, or fold the keyboard away.
+ * to the next field, or fold the keyboard.
  *
- * A phone keyboard's bottom-right key is whatever `enterKeyHint` says it is,
- * and the word it wears is a promise: a field drawn with "next" has to leave
- * the caret in the field below it, or the key is a lie under the thumb. Every
- * other field is the end of its chain, and the end of a chain folds the
- * keyboard — which is what a thumb means by the press, and what keeps a column
- * of figures from spilling into whatever field happens to be drawn after it.
+ * The key wears whatever `enterKeyHint` says, and that word is a promise: a
+ * field drawn with "next" must move the caret on. Every other field ends its
+ * chain and folds the keyboard, so a column of figures doesn't spill into the
+ * next field drawn.
  *
- * Two presses wear the same key and mean something else: a chord, and the Enter
- * that picks an IME candidate — a composition is a word being chosen, not a
- * field being finished.
+ * A chord, and the Enter that picks an IME candidate, mean something else.
  */
 export type ConfirmAct = "next" | "fold" | "none";
 

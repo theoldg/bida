@@ -1,46 +1,33 @@
 /**
- * Proof that a real browser is asking for a scan.
+ * Proof that a real browser is asking for a scan. The scan credential is free
+ * to mint by design (ADR-0035), so everything else can be dodged by minting a
+ * new one; Turnstile can't be opted out of.
  *
- * Everything else in front of the scan endpoint counts a caller who agrees to
- * be counted: the credential is free to mint by design (ADR-0035), so a script
- * simply brings a new one. Turnstile is the check that cannot be opted out of,
- * and it is what lets the cheap credential stay cheap.
+ * **Fail closed.** No token, no scan, named as such
+ * (`copy.scan.unverified.browser`). Failing open makes the check optional for
+ * exactly the people it targets.
  *
- * **Fail closed.** A blocked script means no token and no scan, named as such
- * (`copy.scan.unverified.browser`) rather than dressed up as a failed photo. Failing
- * open would make the check optional for exactly the people who want it to be.
- *
- * **One token is spent per scan**, which is not the same as minting one at the
- * press. A token is single-use and good for a few minutes, so the challenge
- * can run while a scan button is merely on screen and be waiting by the time
- * anybody photographs anything — `warmTurnstile`. What must not happen is two
- * scans sharing one: `turnstileToken` *takes* the warmed token, so the slot is
- * empty behind it and the next scan mints again.
+ * **One token per scan**, not minted at the press: a token is single-use and
+ * lasts minutes, so it is warmed while a scan button is on screen
+ * (`warmTurnstile`). `turnstileToken` *takes* it, so two scans never share one.
  */
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 const SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
 /**
- * How long a warmed token may sit before it is thrown away unspent.
- *
- * Cloudflare gives a token 300s, and it has to be valid when the *Worker*
- * verifies it — after the press, the upload and the queue behind it. Half the
- * real life is the margin; an older one is dropped and minted again at press.
+ * How long a warmed token may sit unspent. Cloudflare gives 300s, and it must
+ * still be valid when the Worker verifies it after the upload — half is the
+ * margin.
  */
 const WARM_TTL_MS = 120_000;
 
 /**
- * No token, or a token the Worker would not accept.
- *
- * `side` is which end refused, because the two have nothing in common but the
- * outcome: `"browser"` is a script that never loaded or a widget that never
- * answered — the person's own network, and their retry might work. `"server"`
- * is a token this browser minted and the Worker's `siteverify` rejected, which
- * is a deployment whose secret and site key disagree
- * (docs/receipt-scanning.md#what-the-scan-costs) and no amount of retrying
- * fixes. Said as one sentence, the second reads as the first and sends the
- * wrong person looking.
+ * No token, or one the Worker rejected. `side` says which end: `"browser"` is
+ * a script or widget that never answered — their network, and a retry may
+ * work. `"server"` is `siteverify` rejecting our token: a deployment whose
+ * secret and site key disagree (docs/receipt-scanning.md#what-the-scan-costs),
+ * which no retry fixes. One sentence for both sends the wrong person looking.
  */
 export class TurnstileBlockedError extends Error {
   constructor(message: string, readonly side: "browser" | "server" = "browser") {
@@ -80,15 +67,12 @@ function loadScript(): Promise<void> {
 /**
  * Run the widget once and resolve with what it says.
  *
- * **Rendered into a fixed host at the foot of the screen, never off-screen.**
- * `interaction-only` draws nothing in the ordinary case, but a challenge that
- * *does* need a tap must be somewhere a thumb can reach, or the scan waits out
- * its timeout for a checkbox nobody can see.
+ * **In a fixed host at the foot of the screen, never off-screen**:
+ * `interaction-only` normally draws nothing, but a challenge needing a tap must
+ * be reachable or the scan times out.
  *
- * Hence `interactive`. A warm runs false and gives up the moment Cloudflare
- * wants a tap — a checkbox floating over the Items tab, asked for by nobody,
- * is worse than the second it saves. The press runs true, where the challenge
- * answers something the person just asked for.
+ * A warm runs `interactive` false and gives up if Cloudflare wants a tap — an
+ * unasked-for checkbox is worse than the second saved. The press runs true.
  */
 async function mint(interactive: boolean): Promise<string> {
   await loadScript();
@@ -143,12 +127,9 @@ function takeWarmed(): string | null {
 }
 
 /**
- * One challenge, shared by whoever asks while it runs.
- *
- * The token is filed into the slot *in the continuation that resolves this
- * promise*, so anybody awaiting it sees a filled slot rather than racing the
- * filing — which is what stops `turnstileToken` handing back a token still
- * sitting in `warmed`, to be spent twice.
+ * One challenge, shared by whoever asks while it runs. The token is filed
+ * *in the continuation that resolves this promise*, so awaiters see the filled
+ * slot — or `turnstileToken` could return a token still sitting in `warmed`.
  */
 function startMint(): Promise<string> {
   if (minting) return minting;
@@ -161,13 +142,9 @@ function startMint(): Promise<string> {
 }
 
 /**
- * Start the challenge now, so pressing a scan button doesn't wait for it.
- *
- * Called wherever a scan control is on screen and ready to press (`ScanPair`).
- *
- * **It never throws and never reports.** A failed warm costs nobody anything:
- * the token is minted again at the press, and that is where a blocked browser
- * is named, in front of somebody who actually asked for a scan.
+ * Start the challenge now, wherever a scan control is ready (`ScanPair`).
+ * **Never throws or reports**: a failed warm costs nothing, and the press
+ * names a blocked browser to somebody who asked.
  */
 export function warmTurnstile(): void {
   if (!SITE_KEY || typeof document === "undefined") return;
@@ -176,13 +153,9 @@ export function warmTurnstile(): void {
 }
 
 /**
- * A fresh token, or null where Turnstile isn't configured — a self-hosted
- * deployment with no site key, whose Worker has no secret either and so is not
- * checking (SELFHOSTING.md). Never null on a deployment that has one.
- *
- * Takes what `warmTurnstile` left, joins a warm still in flight, and otherwise
- * mints one here. Only the last path can throw, which is the one the person is
- * actually waiting on.
+ * A fresh token, or null where Turnstile isn't configured (a self-hosted
+ * deployment with no site key, whose Worker isn't checking — SELFHOSTING.md).
+ * Takes a warm token, joins a warm in flight, or mints — only the last throws.
  */
 export async function turnstileToken(): Promise<string | null> {
   if (!SITE_KEY) return null;

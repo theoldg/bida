@@ -1,31 +1,24 @@
 /**
  * Going up, not going back.
  *
- * Every screen's back arrow names its parent (`route.group(...)`, not
- * "whatever was before"), but a plain `<Link>` *pushes*, so the browser's own
- * back replays where you had been: group → expense → back to group → device
- * back → that expense again.
+ * Every back arrow names its parent, but a plain `<Link>` *pushes*, so the
+ * device's back replays where you had been: group → expense → up to group →
+ * device back → that expense again.
  *
- * So an up-link doesn't navigate, it *unwinds*: where the parent is already
- * behind us we go back to it, however many entries that is, and what we leave
- * stops being behind us. The stack that remains is the path from the groups
- * list down to here, which is what makes the device back button climb the
- * hierarchy one level per press.
+ * So an up-link *unwinds*: where the parent is already behind us we go back
+ * to it, however many entries that is. What remains is the path from the
+ * groups list down to here, so device back climbs one level per press.
  *
- * The Navigation API is what makes this knowable — `history` alone can't say
- * what its entries are. Where it is missing (iOS before 18.4) an up-link
- * replaces the current entry: never the wrong screen, just a back button that
- * can need one extra press.
+ * The Navigation API makes this knowable. Without it (iOS before 18.4) an
+ * up-link replaces the current entry: never the wrong screen, at worst one
+ * extra press.
  *
- * **Read the entries and go back over them; never name one by key for
- * `traverseTo`.** WebKit folds a `traverseTo` into one still pending for the
- * same key and never settles one it dropped, so telling a late traversal from
- * a lost one takes a timeout — which fires on a slow phone while the traversal
- * is merely late, replacing the entry underneath it and leaving the parent on
- * the stack twice. A count is read and spent in the same tick, outside any
- * event, and the one place the browser's idea of "here" is not this screen —
- * inside a cancelled back press — never counts at all
- * ([back-button.ts](./back-button.ts)).
+ * **Read the entries and go back over them; never `traverseTo` a key.** WebKit
+ * folds a `traverseTo` into one pending for the same key and never settles the
+ * dropped one, so only a timeout can tell late from lost — and on a slow phone
+ * it fires while the traversal is merely late, leaving the parent on the stack
+ * twice. A count is read and spent in one tick, and never inside a cancelled
+ * back press ([back-button.ts](./back-button.ts)).
  */
 
 /** Only what's needed here; TypeScript's DOM lib has no Navigation API yet. */
@@ -40,9 +33,8 @@ function navigation(): NavigationLike | undefined {
 }
 
 /**
- * Two URLs are the same screen when path and query agree — query *order*
- * doesn't count, and neither does a trailing slash, because a link the app
- * built and one a person pasted have to compare equal.
+ * Two URLs are the same screen when path and query agree, ignoring query order
+ * and a trailing slash — a built link and a pasted one must compare equal.
  */
 export function sameScreen(a: string, b: string): boolean {
   return screenKey(a) === screenKey(b);
@@ -71,19 +63,11 @@ export function stepsBackTo(entries: (string | null)[], here: number, target: st
 }
 
 /**
- * **Leaving takes any open dialog with it, before the going rather than with
- * the screen.**
- *
- * A modal `<dialog>` is in the top layer with a close watcher registered on it,
- * and a traversal begun underneath one is a traversal Android does not deliver:
- * `history.go` is called from the act's own tap, returns, and nothing moves —
- * the card is still there and the screen has not left. Discard on `/new` was
- * dead for exactly this reason, and every other act that navigates out of a
- * dialog sits on the same hazard.
- *
- * `close()` empties the top layer synchronously, and the element's own `close`
- * listener is what tells the state still drawing it (components/dialog.tsx), so
- * the card is down before the first line of the navigation runs.
+ * **Leaving closes any open dialog first, not with the screen.** A modal
+ * `<dialog>` holds a close watcher, and Android doesn't deliver a traversal
+ * begun underneath one: `history.go` returns and nothing moves. `close()`
+ * empties the top layer synchronously, and the element's `close` listener
+ * updates the state drawing it (components/dialog.tsx).
  */
 function closeDialogs(): void {
   if (typeof document === "undefined") return;
@@ -95,39 +79,29 @@ function closeDialogs(): void {
 /**
  * **A traversal Android can swallow whole, and the act happening anyway.**
  *
- * A back press this app *refused* — cancelled, so the dialog could ask
- * ([back-button.ts](./back-button.ts)) — leaves Android holding a traversal it
- * will not deliver again. The `history.go` that Discard then asks for returns
- * and nothing moves: no `navigate` event, no error, the card gone and the
- * screen still there. It is only ever after a refused press; the same tap from
- * the back arrow, on the same screen, goes.
+ * A back press this app *refused* (cancelled so the dialog could ask,
+ * [back-button.ts](./back-button.ts)) leaves Android holding a traversal it
+ * won't deliver again: the next `history.go` returns, no `navigate`, no error,
+ * the screen still there. Only ever after a refused press.
  *
- * So the traversal is asked for and then *checked*: still on the same entry a
- * beat later is one that was swallowed, and the destination is put in this
- * screen's place instead — the same landing by the other door, and a push
- * rather than a traversal, which is not the queue that is stuck.
+ * So the traversal is *checked*: still on the same entry a beat later means
+ * swallowed, and the destination replaces this screen instead — a push, not
+ * the stuck traversal queue.
  *
- * **A wrong guess costs an entry, never the act.** A traversal that was merely
- * late arrives after the replace and spends itself on an entry that is already
- * the destination — the screen is right either way. That is the opposite trade
- * from the one `traverseTo` forced (see this file's head), which is why a clock
- * is allowed to decide this and not that — and why it is short. A delivered
- * traversal lands in about ten milliseconds; the wait is time somebody spends
- * looking at the screen they just asked to leave, so the margin buys nothing a
- * person wants. What a phone slow enough to overrun it pays is one duplicate
- * entry, which is a back press, not a wrong screen (docs/testing.md).
+ * **A wrong guess costs an entry, never the act**: a late traversal lands on
+ * an entry that is already the destination. That is the opposite trade from
+ * `traverseTo` (see the head), which is why a clock may decide this. A
+ * delivered traversal lands in ~10ms; a phone slow enough to overrun this
+ * pays one duplicate entry (docs/testing.md).
  */
 const SWALLOWED_MS = 150;
 
 /**
  * Go, and put the destination here if the going is swallowed.
  *
- * **Every exit in this app names somewhere to land**, which is the whole of
- * why one check can cover them all: `goUp` names the parent it counted back
- * to, and `goBack` reads the entry it is stepping onto off the stack. An exit
- * with no destination is the one thing no check can rescue, and that is what
- * Discard on the entry form was for three rounds — the traversal swallowed,
- * nothing to put in its place, and the screen left believing it had gone.
+ * **Every exit names somewhere to land**, which is why one check covers them
+ * all: `goUp` names the parent, `goBack` reads the entry behind it. An exit
+ * with no destination is the one thing this can't rescue.
  */
 function leaveTo(to: string | undefined, traverse: () => void, replace: (to: string) => void): void {
   closeDialogs();
@@ -147,9 +121,8 @@ function leaveTo(to: string | undefined, traverse: () => void, replace: (to: str
 }
 
 /**
- * Move to `href` as an ancestor: back out to it if we came through it, and
- * otherwise take its place. Either way nothing that was below it stays behind
- * us, so the next press of the device's back button leaves the parent too.
+ * Move to `href` as an ancestor: back out to it if we came through it,
+ * otherwise take its place. Nothing below it stays behind us.
  */
 export function goUp(href: string, replace: (href: string) => void): void {
   const nav = navigation();
@@ -164,13 +137,11 @@ export function goUp(href: string, replace: (href: string) => void): void {
 
 /**
  * A plain back, as the app's own: the arrow on a screen reached only from
- * below, Done, Discard. Anything in the app that goes back goes through here or
- * `goUp`, never `router.back()` directly — see `takeOwnTraversal`.
+ * below, Done, Discard. Everything that goes back uses this or `goUp`, never
+ * `router.back()` — see `takeOwnTraversal`.
  *
- * **It names no parent, so it reads one.** The entry behind us is where
- * `back()` is going by definition, so it can be taken off the stack rather
- * than decided at each call — correct by construction, and nothing for a
- * caller to get wrong. That is what gives this door the swallow check too.
+ * **It reads its destination** off the stack (the entry behind us), which
+ * gives it the swallow check too.
  */
 export function goBack(back: () => void, replace: (to: string) => void): void {
   const nav = navigation();
@@ -183,36 +154,25 @@ export function goBack(back: () => void, replace: (to: string) => void): void {
 /**
  * The app's own traversal, told apart from the device's back button.
  *
- * **Never trust `NavigateEvent.userInitiated`.** Chrome says which is which;
- * WebKit sets it whenever a tap is being handled, so the app's own back inside
- * a tap reads as a device press and the guard asks "discard?" of the Done
- * keeping the edits. The app says so itself instead, just before it traverses.
+ * **Never trust `NavigateEvent.userInitiated`**: WebKit sets it whenever a tap
+ * is being handled, so the app's own back reads as a device press and the
+ * guard asks "discard?" of Done. The app flags it itself, just before.
  *
- * **A latch spent by the one `navigate` it explains, never a window of time.**
- * A clock says "the app went back within the last second", which a phone slow
- * enough to deliver the event later answers wrongly. Armed only where a
- * traversal is actually coming, since one left armed swallows a real press.
+ * **A latch spent by the one `navigate` it explains, never a time window** —
+ * a slow phone delivers late. Armed only where a traversal is coming.
  */
 let ownTraversal = false;
 
 /**
- * **And spent by the next thing the hand does, because a traversal that never
- * arrives leaves it armed and an armed latch swallows a real press.**
+ * **And spent by the next press or keystroke**, because a traversal that
+ * never arrives (`history.go` can simply not move) leaves it armed — and the
+ * next device back is then waved through unguarded, losing typed work with no
+ * dialog.
  *
- * That is not hypothetical and it is not cheap: `history.go` can be called and
- * simply not move — the traversal is never delivered and no `navigate` comes to
- * spend this. The next press of the device's button is then read as the app's
- * own, waved through with no guard, and the screen that was holding typed work
- * loses it with no dialog and no warning. That is the whole of what `/new` was
- * doing, and the trace said so: `back.press ours` on a press whose own
- * `userInitiated` was `true`.
- *
- * So the latch also ends at the next press or keystroke anywhere. The app's
- * traversal arrives long before a hand can move again; a hand that *has* moved
- * is proof it is not coming. Still not a clock — the same reasoning the click
- * guard is built on (lib/click-guard.ts), and it fails the safe way: a latch
- * dropped too early costs a "discard?" nobody needed, where one held too long
- * costs the work.
+ * The app's traversal arrives long before a hand can move again, so a moved
+ * hand proves it isn't coming. Not a clock (same reasoning as
+ * lib/click-guard.ts), and it fails safe: dropped early costs an unneeded
+ * "discard?", held too long costs the work.
  */
 function disarmOwnTraversal(): void {
   ownTraversal = false;

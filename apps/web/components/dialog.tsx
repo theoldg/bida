@@ -8,18 +8,13 @@ import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 
 /**
- * The app's own popup, in place of `prompt()` and `confirm()`.
+ * The app's own popup, in place of `prompt()` and `confirm()`, which arrive in
+ * the browser's typeface with no room for the sentence naming what will
+ * change ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)).
  *
- * The browser's dialogs drop another app's typeface and buttons over this one,
- * announcing themselves as the browser asking, with a single line of text and
- * no room for the sentence naming what is about to change. This is drawn from
- * the same vocabulary as everything else — a scrim, a hairline card, the app's
- * buttons ([ADR-0008](docs/decisions/0008-hand-rolled-interface.md)).
- *
- * A real `<dialog>` opened with `showModal()`, so focus, Escape and the
- * inertness of the screen behind are the platform's job. The element fills the
- * viewport and carries the scrim itself, which makes "did they tap outside the
- * card" a plain target check.
+ * A real `<dialog>` opened with `showModal()`, so focus, Escape and the inert
+ * screen behind are the platform's job. The element fills the viewport and
+ * carries the scrim, so "tapped outside the card" is a plain target check.
  */
 export function Dialog({ title, onClose, children }: {
   title: string; onClose: () => void; children: ReactNode;
@@ -35,28 +30,18 @@ export function Dialog({ title, onClose, children }: {
     const el = frame.current;
     if (!el || el.open) return;
     /**
-     * **First, so the recorder is listening before anything below can be what
-     * it has to explain** — `showModal()` moves focus, and moving focus off a
-     * field folds the keyboard, which changes where this card is drawn
-     * (`--kb`, globals.css).
-     *
-     * A dialog that refuses a run of taps is the report this exists for, and
-     * it is the report a phone gives and a build machine never does. Every way
-     * out notes itself, so a card that went away with no press behind it is
-     * the trace with no reason at the end of it (lib/press-trace.ts).
+     * **First, so the recorder is listening before anything it must explain** —
+     * `showModal()` moves focus, which folds the keyboard and moves the card
+     * (`--kb`, globals.css). Every way out notes itself, so a card that vanished
+     * with no press behind it shows in the trace (lib/press-trace.ts).
      */
     const stop = tracePress("dialog.trace", title, () => {
       /**
-       * **Where the card was when the finger landed, against what was on
-       * screen.** A modal `<dialog>` is laid out in the *layout* viewport, and
-       * the strip a keyboard covers is paid out of it as padding (`--kb`,
-       * globals.css) — so a card drawn while that payment is wrong is centred
-       * over the keys, and a tap aimed at its buttons never reaches the page at
-       * all. No event says that happened; these four numbers do.
-       *
-       * The payment is wrong for as long as it takes a blurred field's keyboard
-       * to retract, because `--kb` goes to zero the moment focus leaves the
-       * field and `showModal()` moves focus off it (lib/viewport.ts).
+       * **Where the card was when the finger landed, against what was on screen.**
+       * The card is laid out in the layout viewport with the keyboard paid as
+       * padding (`--kb`); while that payment is wrong the card sits over the keys
+       * and taps never reach the page. It is wrong while a blurred field's keyboard
+       * retracts, since `--kb` drops the moment focus leaves (lib/viewport.ts).
        */
       const box = card.current?.getBoundingClientRect();
       const view = window.visualViewport;
@@ -68,48 +53,34 @@ export function Dialog({ title, onClose, children }: {
     /**
      * **Whoever shuts this element, the state drawing it hears about it.**
      *
-     * `showModal()` registers a close watcher, and a close request the browser
-     * will not let us refuse fires no `cancel` at all — the dialog simply
-     * closes, and `onCancel` below never runs. Only a document holding
-     * history-action activation may refuse one, and on Android the back press
-     * that *opened* this dialog spent exactly that: the very next press shuts
-     * it silently.
-     *
-     * Without this the element stays mounted and shut — invisible, while the
-     * screen still believes its dialog is up. On `/new` that belief is the
-     * answer every further back press gets (`ask` is already `"discard"`, so
-     * setting it changes nothing and re-renders nothing) and the screen stops
-     * answering the back button at all.
+     * A close request the browser won't let us refuse fires no `cancel`, so
+     * `onCancel` never runs. Only a document with history-action activation may
+     * refuse one, and on Android the back press that *opened* this dialog spent
+     * it: the next press shuts it silently. Without this the screen still thinks
+     * its dialog is up — on `/new`, every further back press is then ignored.
      */
     const heard = () => { note("close event"); closed.current(); };
     el.addEventListener("close", heard);
     mark("dialog.open", title);
     el.showModal();
-    // A prompt opens on its field, with the old value selected — the one habit
-    // worth keeping from prompt(). So does a box asking for several lines, where
-    // the box *is* the dialog. **Every other dialog opens on nothing**: its
-    // buttons are one Tab away and neither should fire on a stray Enter.
+    // A prompt opens on its field, old value selected, and so does a box asking
+    // for several lines. **Every other dialog opens on nothing**, so a stray
+    // Enter fires neither button.
     //
-    // That second half has to be said out loud: `showModal()` does not open on
-    // nothing. With no `autofocus` in the card it focuses the first focusable
-    // descendant, which in a dialog whose first control is a field is the field
-    // — so the rate editor opens with the keyboard up over the line saying how
-    // many entries saving re-values. Focus lands on the card instead, which is
-    // inside the dialog (Escape and the tab ring still belong to it) and is not
-    // something you can type into.
+    // `showModal()` doesn't do that by itself: with no `autofocus` it focuses
+    // the first focusable descendant — the rate editor would open with the
+    // keyboard over the line saying what saving re-values. Focus goes to the
+    // card instead, which keeps Escape and the tab ring.
     const field = el.querySelector<HTMLInputElement | HTMLTextAreaElement>(
       "input[data-autofocus], textarea[data-autofocus]",
     );
-    // Selected in a field of one line, where the old value is a word to type
-    // over. Never in a box of several: a bill somebody typed is reopened to be
-    // corrected, and the first keystroke would take the whole of it.
+    // Selected in a one-line field, to type over. Never in a multi-line box: a
+    // typed bill is reopened to be corrected, not replaced.
     if (field) { field.focus(); if (field instanceof HTMLInputElement) field.select(); }
     else card.current?.focus();
     return () => {
-      // **How it ended, which is the whole question on a phone.** Still open
-      // as it goes is the app closing it — a tap on Cancel or the scrim, or a
-      // close request we were allowed to refuse. Already shut is the platform
-      // having taken it, which is the failure this listener exists for.
+      // **How it ended.** Still open as it goes is the app closing it; already
+      // shut is the platform having taken it — the failure this listener is for.
       const how = el.open ? "dismissed" : "SHUT BY THE PLATFORM";
       mark("dialog.gone", `${title}  ${how}`);
       el.removeEventListener("close", heard);
@@ -214,16 +185,10 @@ export function PromptDialog({
 }
 
 /**
- * Pick one of a handful of things — the third dialog, in place of a `<select>`.
- *
- * A native picker is the same intrusion `prompt()` is (ADR-0008): on a phone a
- * full-height wheel or sheet in the OS's typeface, showing a name and nothing
- * else. Ours is the rows the rest of the app is made of, so a row can say what
- * the caller needs to say about it.
- *
- * `note` is that sentence — what picking this one does, when it isn't simply
- * "this one now". The current choice carries a check and closes the dialog
- * without calling back.
+ * Pick one of a handful of things, in place of a `<select>` — whose native
+ * picker is the same intrusion as `prompt()` (ADR-0008). Ours is the app's
+ * rows, so each can carry a `note`: what picking it does. The current choice
+ * has a check and closes without calling back.
  */
 export function ChoiceDialog<T extends string>({ title, options, value, onPick, onClose }: {
   title: string;

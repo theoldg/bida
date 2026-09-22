@@ -14,12 +14,10 @@ import { billLabels, receiptTotalMinor, type MemberLine } from "./scan/items";
  * A quick split: a bill divided among people who are not a group
  * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
  *
- * It appends no op, so there is no actor, no identity to claim and nothing to
- * sync. The bill itself is an ordinary `EntryDraft` — the same one the scan
- * fills for a group, and the same one the who-had-what grid edits — which is
- * what lets the whole flow reuse those two without either of them learning a
- * second mode. What lives here is the part a draft has no room for: who is
- * splitting, and what this phone scans with.
+ * No op, so no actor, no identity and nothing to sync. The bill is an ordinary
+ * `EntryDraft`, so the scan and the who-had-what grid are reused unchanged.
+ * What lives here is what a draft has no room for: who is splitting, and what
+ * this phone scans with.
  */
 
 /** Somebody at the table. Keyed like a member, by their name (ADR-0034). */
@@ -29,16 +27,14 @@ export interface QuickPerson {
 }
 
 /**
- * What this phone scans with when it is not in a group — or is in one the
- * server has never heard of, which is the demo
+ * What this phone scans with outside a group — or in the demo, which the
+ * server has never heard of
  * ([sync.md](../../../docs/sync.md#the-demo-group-has-no-key)).
  *
- * `/api/groups/:id/scan` authenticates a bearer token against a row in D1 and
- * refuses an id it has never seen, because the alternative is an open proxy
- * to our Gemini key. So a quick split brings a credential shaped exactly like
- * a group's. It is one per *phone* rather than one per split — a stable
- * caller is the unit anything we ever throttle would want to count, and the
- * alternative writes a fresh row for every bill anybody photographs.
+ * The scan endpoint authenticates a bearer against a D1 row and refuses
+ * unknown ids (or it would be an open proxy to our Gemini key), so this is a
+ * credential shaped like a group's. One per *phone*, not per split: a stable
+ * caller is what throttling counts, and one per bill would be a row per photo.
  */
 interface ScanCredential {
   id: string;
@@ -46,9 +42,8 @@ interface ScanCredential {
 }
 
 /**
- * A credential with whatever has to happen before the first photo is sent —
- * introducing it to the server, where the server has not met it. What every
- * scan in the app is sent under, group or no group.
+ * A credential plus whatever must happen before the first photo — introducing
+ * it to the server. What every scan is sent under.
  */
 export interface ScanAs extends ScanCredential {
   /** Run once the photo is in hand and before anything is sent. Never throws. */
@@ -65,10 +60,8 @@ async function scanCredential(): Promise<ScanCredential> {
 }
 
 /**
- * The credential, once Dexie has answered. Undefined for the first frame.
- *
- * `when` is false on a screen that will not need one: reading it mints it, and
- * a phone that never scans off its own credential should not be carrying one.
+ * The credential, once Dexie has answered. `when` false on a screen that won't
+ * scan with it: reading it mints it.
  */
 export function useScanCredential(when = true): ScanCredential | undefined {
   const [cred, setCred] = useState<ScanCredential>();
@@ -82,21 +75,16 @@ export function useScanCredential(when = true): ScanCredential | undefined {
 }
 
 /**
- * Introduce the credential to the server, so the scan endpoint knows the id.
+ * Introduce the credential to the server so the scan endpoint knows the id —
+ * the ops endpoint's first-sight registration (`ensureGroup`) with no ops.
+ * **No op is ever pushed under it**, so the server learns less than about a
+ * group.
  *
- * The ops endpoint registers an id and a token hash on first sight
- * (`ensureGroup`), and this is that call with nothing in it: the row it leaves
- * holds an id, a hash and a timestamp, and **no op is ever pushed under it**,
- * so the server learns strictly less about a quick split than about a group.
+ * **Run before every scan, never once and remembered**: it is cheap, and it
+ * is the only version that survives the row going missing — otherwise the
+ * phone could never scan again, with nothing saying why.
  *
- * **Run before every scan, never once and remembered.** It is one small request
- * beside a photo upload and one D1 read when the row is already there, and it
- * is the only version that survives the row *not* being there: a phone holding
- * a credential the server has no record of could otherwise never scan again,
- * with nothing on screen to say why.
- *
- * It never throws. A phone that cannot reach us cannot scan either, and the
- * scan says *that* far better than a registration failure could.
+ * Never throws: an unreachable server fails the scan with a better sentence.
  */
 export async function registerScanCredential(cred: ScanCredential): Promise<void> {
   try {
@@ -112,18 +100,13 @@ export async function registerScanCredential(cred: ScanCredential): Promise<void
 }
 
 /**
- * What a scan started inside a group is sent under.
- *
- * Usually the group itself: the id the server registered on its first push,
- * and the secret its bearer is derived from. **The demo is the exception** —
- * it holds no key and never will, and its id must never reach the server at
- * all, so it scans the way a quick split does, on this phone's own credential.
- * The bill comes back into the demo's own draft; what crosses the network is a
- * photo under an id that belongs to nobody's group
+ * What a scan inside a group is sent under: usually the group's id and
+ * derived bearer. **The demo is the exception** — no key, and its id must
+ * never reach the server — so it scans on this phone's own credential
  * ([sync.md](../../../docs/sync.md#the-demo-group-has-no-key)).
  *
- * Undefined until there is something to scan with, which is what leaves the
- * camera disabled rather than failing at the shutter.
+ * Undefined until there is something to scan with, which disables the camera
+ * rather than failing at the shutter.
  */
 export function useScanAs(groupId: string | undefined): ScanAs | undefined {
   const demo = isDemo(groupId);
@@ -148,11 +131,8 @@ function emit(): void {
 }
 
 /**
- * Who is splitting, live.
- *
- * Outside React and outside Dexie, exactly like the draft it travels with:
- * three screens share it, and a quick split is no more a fact about the world
- * than a half-typed expense is. Leaving throws it away (ADR-0035).
+ * Who is splitting, live. Outside React and Dexie like the draft it travels
+ * with: three screens share it, and leaving throws it away (ADR-0035).
  */
 export function useQuickPeople(): readonly QuickPerson[] {
   return useSyncExternalStore(
@@ -190,16 +170,10 @@ interface QuickShare {
 }
 
 /**
- * What the grid comes to: one figure per person who was at the table, and the
- * bill's own total.
- *
- * The figures are `receiptBill`'s weights read as money. Inside a group those
- * weights are ratios, because a group converts the total through a rate first;
- * a quick split converts nothing, so they are already the answer — and they
- * add to the total by construction, which `quick.test.ts` holds us to.
- *
- * Somebody who was there and ordered nothing stays on the list at zero: they
- * were at the table, and a name that vanishes reads as a mistake.
+ * What the grid comes to: one figure per person at the table, and the bill's
+ * total. `receiptBill`'s weights read as money — a group converts through a
+ * rate first, a quick split doesn't — and they add to the total by
+ * construction (`quick.test.ts`). Somebody who ordered nothing stays at zero.
  */
 export function quickShares(
   draft: EntryDraft,
@@ -227,12 +201,9 @@ export function quickShares(
 }
 
 /**
- * The whole answer as text, for the clipboard.
- *
- * Plain lines, no columns: this is read in a chat app, where nothing is
- * monospaced and a table drawn with spaces arrives as a mess. Figures are
- * bare — a quick split converts nothing, so a currency here would be a label,
- * and a label read off a photograph is worse than none (ADR-0035).
+ * The whole answer as text, for the clipboard. Plain lines, no columns — chat
+ * apps aren't monospaced. Bare figures: a currency read off a photo is worse
+ * than none (ADR-0035).
  */
 export function quickSummaryText(
   title: string,

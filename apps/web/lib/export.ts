@@ -4,25 +4,18 @@ import { iosHomeScreenApp } from "./install";
 import type { GroupData } from "./hooks";
 
 /**
- * Getting a group off the phone.
- *
- * The file itself is `core/export.ts`; this is the part with a platform in it —
- * what to call it, and how to hand it to somebody.
+ * Getting a group off the phone. The file is `core/export.ts`; this is the
+ * platform part — its name, and how to hand it over.
  */
 
 /**
- * The group as one CSV, in the group's base currency at the registry's
- * current rates.
+ * The group as one CSV, in the base currency at current rates.
  *
- * Built from `memberById` rather than `members`, because that map is the one
- * that keeps tombstones: a removed member still named on a live entry still
- * carries a balance, and needs the column that makes the file add up.
- * `core`'s `alive()` filters the rest back out.
+ * From `memberById`, which keeps tombstones: a removed member named on a live
+ * entry still carries a balance and needs a column for the file to add up.
  *
- * The rate registry is deliberately not passed along. `useGroupData` has
- * already repriced every entry it hands over (`atCurrentRates`), so the
- * figures here are the ones on screen — and a second repricing is the way one
- * screen ends up disagreeing with another (ADR-0005).
+ * No rate registry: `useGroupData` has already repriced every entry
+ * (`atCurrentRates`), and repricing twice is how screens disagree (ADR-0005).
  */
 export function groupCsv(data: GroupData): string {
   const state: GroupState = {
@@ -45,11 +38,9 @@ export function exportFilename(groupName: string, now: number): string {
 }
 
 /**
- * What became of the file.
- *
- * `cancelled` is not a failure and must not be treated as one: it is somebody
- * closing the share sheet, and answering that with a fallback screen is the
- * app insisting. Only `unavailable` means nothing was handed over.
+ * What became of the file. `cancelled` is somebody closing the share sheet,
+ * not a failure — never answer it with a fallback. Only `unavailable` means
+ * nothing was handed over.
  */
 type Handoff = "shared" | "downloaded" | "cancelled" | "unavailable";
 
@@ -59,20 +50,15 @@ export type HandoffPlan = "share" | "download" | "text";
 /**
  * Which rung of the ladder this browser is on.
  *
- * 1. **The share sheet** (`navigator.share` with a file). The only way to save
- *    a file out of an iOS home-screen app, and the nicest way anywhere: the
- *    sheet holds Save to Files, Mail and every messaging app, and comes back
- *    to bida afterwards. `text/csv` is on the permitted list for a shared
- *    file and `application/json` is not, which is one reason the export is a
- *    CSV and nothing else.
- * 2. **A download** — **never in an iOS home-screen app**, where as of iOS
- *    18.4 it replaces the app with a full-screen "Open in …" that has no way
- *    back, losing the app rather than gaining a file (docs/ios.md). An iOS
- *    *tab* is fine, so the gate is `iosHomeScreenApp` and not "is this an
- *    iPhone".
+ * 1. **The share sheet** (`navigator.share` with a file) — the only way out of
+ *    an iOS home-screen app, and the nicest anywhere. `text/csv` is allowed as
+ *    a shared file; `application/json` isn't.
+ * 2. **A download** — **never in an iOS home-screen app**, where (iOS 18.4)
+ *    it replaces the app with an "Open in …" screen with no way back
+ *    (docs/ios.md). An iOS *tab* is fine, hence `iosHomeScreenApp`.
  * 3. **The text**, on a screen (`/g/export`).
  *
- * Taken as facts rather than read here, like `offerFrom`'s.
+ * Takes facts as arguments, like `offerFrom`.
  */
 export function handoffPlan({ canShare, iosApp }: {
   canShare: boolean; iosApp: boolean;
@@ -82,11 +68,8 @@ export function handoffPlan({ canShare, iosApp }: {
 }
 
 /**
- * Which rung this browser is on, without building a file to find out.
- *
- * `/g/export` asks, being an ordinary route a browser that could have taken a
- * file may arrive at — and telling that person their browser can't save one
- * is simply wrong.
+ * Which rung this browser is on, without building a file. `/g/export` asks,
+ * since a browser that could take a file can still land there.
  */
 export function fileHandoff(): HandoffPlan {
   const probe = new File([""], "probe.csv", { type: "text/csv" });
@@ -97,12 +80,11 @@ export function fileHandoff(): HandoffPlan {
 }
 
 /**
- * Hand the file over by the best means this browser actually has.
+ * Hand the file over by the best means this browser has.
  *
  * **A rung is tried when the one above is unavailable, never as a retry after
- * it failed**: on iOS, dropping to the download after a failed share strands
- * somebody outside the app with no way back. The exception is a share never
- * delivered at all (below), which leaves us where an absent sheet would have.
+ * it failed**: on iOS a download after a failed share strands somebody outside
+ * the app. The exception is a share never delivered at all (below).
  */
 export async function handOffCsv(filename: string, csv: string): Promise<Handoff> {
   const file = new File([csv], filename, { type: "text/csv" });

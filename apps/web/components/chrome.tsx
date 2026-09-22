@@ -31,12 +31,9 @@ export function Screen({ children, className }: { children: ReactNode; className
 }
 
 /**
- * A read of this phone's database that has stopped answering.
- *
- * It draws over whatever the screen was showing while it waited — a skeleton,
- * which without this stands there forever looking like a slow phone.
- * `lib/db/live.ts` says why a read dies and what re-arming it means; this is
- * only the part a person sees.
+ * A read of this phone's database that has stopped answering, drawn over the
+ * skeleton that would otherwise look like a slow phone forever. The why is in
+ * `lib/db/live.ts`.
  */
 function StallNotice() {
   const { stalled, blocked } = useStalled();
@@ -57,14 +54,12 @@ export function Body({ children }: { children: ReactNode }) {
 }
 
 /**
- * The one scrolling middle of a screen — and the only scroller in the app the
- * browser would otherwise forget, since it is a div rather than the document.
- * `lib/scroll-memory.ts` is what puts it back where you left it.
+ * The one scrolling middle of a screen — a div, so the browser won't restore
+ * its position; `lib/scroll-memory.ts` does.
  *
- * It is also the scope the confirm key walks: a screen's fields in the order
- * they are laid out, from whichever of them was drawn promising "next"
- * (`walkFields`, components/viewport.tsx). A dialog is deliberately not one —
- * its Enter submits the card, which is the answer it was already giving.
+ * Also the scope the confirm key walks, in layout order (`walkFields`,
+ * components/viewport.tsx). A dialog is deliberately not one: its Enter
+ * submits the card.
  */
 export function Scroll({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -115,10 +110,9 @@ export function TopBar({ title, sub, back, mid, right }: {
         <h3>{title}</h3>
         {sub ? <div className="sub">{sub}</div> : null}
       </div>
-      {/* Centred on the bar itself, not between its neighbours: a control that
-          belongs to the whole screen rather than to the title or the arrow.
-          It is out of the flow, so the title is capped short of it
-          (`.capped`) rather than trusted to be brief. */}
+      {/* Centred on the bar itself: a control that belongs to the whole
+          screen. Out of the flow, so the title is capped short of it
+          (`.capped`). */}
       {mid ? <div className="topbar-mid">{mid}</div> : null}
       {right ? <div className="spacer" style={{ display: "flex", gap: 8, alignItems: "center" }}>{right}</div> : null}
     </div>
@@ -126,9 +120,9 @@ export function TopBar({ title, sub, back, mid, right }: {
 }
 
 /**
- * The app's ONE navigation. **No top tab strip to go with it** — two navigations
- * disagree about which section you are in. A screen needing more destinations
- * than fit here puts them on the group options screen, never in a second row.
+ * The app's ONE navigation. **No top tab strip to go with it** — two
+ * navigations disagree about where you are. More destinations go on the group
+ * options screen, never a second row.
  */
 export function BottomNav({ items }: {
   items: { label: string; icon: IconName; href: string; on?: boolean }[];
@@ -152,12 +146,9 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
 }
 
 /**
- * The second way an expense starts: photograph the bill.
- *
- * It sits beside the "+", the same size, and is outlined where the "+" is a
- * solid ink block — two equal destinations, one of which is still the primary
- * (ADR-0023: the "+" is the only figure-ground inversion on the screen, and a
- * second one would spend that twice).
+ * The second way an expense starts: photograph the bill. Beside the "+", the
+ * same size, outlined — the "+" stays the only figure-ground inversion
+ * (ADR-0023).
  */
 export function ScanFab({ href }: { href: string }) {
   return (
@@ -169,13 +160,8 @@ export function ScanFab({ href }: { href: string }) {
 
 /**
  * The balances tab's own button: what a scan costs, and where to chip in
- * (app/g/tip).
- *
- * Outlined rather than inked — the "+" is the app's one figure-ground
- * inversion (ADR-0023), and this screen spends its contrast on the numbers —
- * and the only FAB with a word in it, because a "+" and a camera are guessable
- * where an ask is not. It has the corner to itself: the ledger's two never
- * appear on this tab.
+ * (app/g/tip). Outlined (ADR-0023), and the only FAB with a word, because an
+ * ask isn't guessable. The ledger's two never appear on this tab.
  */
 export function SupportFab({ href }: { href: string }) {
   return (
@@ -195,9 +181,8 @@ export function Banner({ children, icon }: { children: ReactNode; icon?: IconNam
 }
 
 /**
- * The ledger's own shape, drawn while the ledger is still coming out of
- * IndexedDB. Widths are a fixed cycle, not random: the static export renders
- * this markup at build time and a random width would differ from the browser's.
+ * The ledger's shape, drawn while it comes out of IndexedDB. Fixed widths, not
+ * random: the static export renders this at build time and must match.
  */
 const SKELETON_WIDTHS = ["62%", "44%", "78%", "51%", "69%", "38%"];
 
@@ -225,33 +210,29 @@ export function Empty({ title, children }: { title: string; children?: ReactNode
 }
 
 /**
- * Something the app tried and couldn't do, said next to the thing that was
- * tried. Not an `alert()`: that one covers the form you would need to look at
- * to understand it, and has to be dismissed before you can.
+ * Something the app tried and couldn't do, said next to what was tried. Not an
+ * `alert()`, which covers the form you'd need to read to understand it.
  */
 export function Failure({ children }: { children: ReactNode }) {
   return <p className="failure" role="alert">{children}</p>;
 }
 
 /**
- * The frame, with nothing in it yet — a screen whose group hasn't come out of
- * IndexedDB. Every screen has this moment, so none of them draws it by hand.
- * The title is blank unless the screen knows it without the ledger.
+ * The frame with nothing in it yet — a screen whose group hasn't come out of
+ * IndexedDB. The title is blank unless the screen knows it without the ledger.
  *
- * **`back` has to be the parent the *loaded* screen will name**, not the
- * default: it is the device back button's behaviour too (lib/back-button.ts),
- * so a press during the load otherwise lands somewhere the arrow never goes.
+ * **`back` has to be the parent the *loaded* screen will name**: it drives the
+ * device back button too (lib/back-button.ts), so a press during the load
+ * would otherwise land somewhere the arrow never goes.
  */
 export function Blank({ title = " ", back = true }: { title?: string; back?: Back }) {
   return <Screen><Body><TopBar title={title} back={back} /></Body></Screen>;
 }
 
 /**
- * A link that names a group this phone doesn't have. Every screen under `/g`
- * needs one — they all read the group out of the query string, and a stale
- * bookmark otherwise leaves them holding a back arrow and nothing else. It
- * offers the way out (the group list) rather than only saying no, and carries
- * no title: the page's own heading already says what is wrong.
+ * A link naming a group this phone doesn't have — every `/g` screen needs one,
+ * or a stale bookmark leaves just a back arrow. Offers the group list; no
+ * title, since the heading says what's wrong.
  */
 export function BadLink() {
   return (
@@ -272,13 +253,9 @@ export function Foot({ children }: { children: ReactNode }) {
 }
 
 /**
- * Every screen reads its group id from the query string, and Next needs the
- * hook that does that to sit behind a Suspense boundary in a static export.
- * One wrapper, used by every page.
- *
- * Errors are not its job — `Suspense` is not an error boundary, and
- * `ReadErrorBoundary` below sits in the root layout so the two screens with no
- * query string to read are covered too.
+ * Every screen reads its group id from the query string, and Next needs that
+ * hook behind a Suspense boundary in a static export. Not an error boundary:
+ * `ReadErrorBoundary` sits in the root layout for that.
  */
 export function QueryBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={<div className="app" />}>{children}</Suspense>;
@@ -286,12 +263,9 @@ export function QueryBoundary({ children }: { children: ReactNode }) {
 
 /**
  * `dexie-react-hooks` reports a failed read by **throwing during render**, so
- * every Dexie error `liveQuery` does not swallow (lib/db/live.ts has the two it
- * does) would unmount the whole tree to a white screen. Here it is a sentence
- * and a button. Wrapped around the whole app in app/layout.tsx, once.
- *
- * The one class in the app: catching a render error requires
- * `componentDidCatch`/`getDerivedStateFromError`, and React has no hook for it.
+ * any Dexie error `liveQuery` doesn't swallow (lib/db/live.ts) would white-
+ * screen the tree. Here it is a sentence and a button, around the whole app
+ * in app/layout.tsx. A class because React has no hook for error boundaries.
  */
 export class ReadErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   override state = { failed: false };
