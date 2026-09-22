@@ -232,7 +232,9 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
   for (const item of result.lineItems) {
     const minor = lineMinor(item, currency);
     if (minor !== null && minor < 0) {
-      discounts.push({ label: item.labelEn ?? item.label, amount: minorToDecimalString(-minor, currency) });
+      discounts.push({
+        label: item.label, labelEn: item.labelEn, amount: minorToDecimalString(-minor, currency),
+      });
       continue;
     }
     items.push({
@@ -252,7 +254,8 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     // printed minus, and that turns a deduction into a silent surcharge.
     if (minor === null || minor === 0) continue;
     discounts.push({
-      label: printed.labelEn ?? printed.label,
+      label: printed.label,
+      labelEn: printed.labelEn,
       amount: minorToDecimalString(Math.abs(minor), currency),
     });
   }

@@ -19,9 +19,9 @@ import { useLive } from "@/lib/db/live";
 import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
 import { money, plural, rateText, whenLabel } from "@/lib/format";
-import { receiptBreakdown } from "@/lib/scan/items";
+import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
-import { useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
+import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
  * The type a title is set in, largest first, ending at the size it wraps at.
@@ -165,6 +165,10 @@ function EntryScreen() {
 function ExpenseDetail({ expense, kind, group, data }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
 }) {
+  // Which language this phone reads a scanned bill in — the toggle on the
+  // who-had-what bar, which the expense's own copy of the bill obeys too
+  // (`billLabel`).
+  const english = useBillEnglish();
   const payer = data.memberById.get(expense.paidBy);
   const coSponsored = isCoSponsored(expense);
   // What each payer put in, in the base currency — the figure that actually
@@ -182,9 +186,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
   // with — so these lines are those weights, itemised, not a second opinion.
   const bill = expense.split.mode === "receipt" && expense.receiptItems?.length
     ? receiptBreakdown(
-      expense.receiptItems,
+      billLabels(expense.receiptItems, english),
       (expense.receiptAssignments ?? []).map((row) => new Set(row)),
-      receiptExtras(expense),
+      billExtrasIn(receiptExtras(expense), english),
       new Set(expense.receiptInvolved ?? []),
       expense.currency,
       expense.id,

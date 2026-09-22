@@ -275,7 +275,7 @@ async function main() {
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
       process.stdout.write(`${theme}/who-had-what `);
-      await page.getByRole("button", { name: /^Split Moroccan salad/ }).click();
+      await page.getByRole("button", { name: /^Split Salade marocaine/ }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);

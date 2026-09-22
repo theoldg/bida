@@ -156,8 +156,10 @@ export function useReceiptScan(
       // a negative line belongs in the discount, not in the grid as something
       // to tick, and a line priced per unit is multiplied out (`readBill`).
       const bill = readBill(result, currency);
+      // Both labels travel: a bill is shown in the language it was printed in,
+      // and the translation is one tap away on the grid (`billLabel`).
       const receiptItems = bill.items.map((li) => (
-        { label: li.labelEn ?? li.label, amount: li.amount, quantity: li.quantity }
+        { label: li.label, labelEn: li.labelEn, amount: li.amount, quantity: li.quantity }
       ));
       // Read fresh: the round trip is long enough to have been typed through,
       // and long enough to have been abandoned. A draft that is gone was

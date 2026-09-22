@@ -141,6 +141,13 @@ export interface Expense {
 export interface ReceiptDiscount {
   label: string;
   amount: string;
+  /**
+   * The English of `label`, when the bill was not printed in it. Kept beside
+   * the original rather than replacing it: the grid and the expense read one
+   * or the other, and which is a device's preference (`billLabel`). Absent on
+   * an English bill, and on every expense saved before the toggle existed.
+   */
+  labelEn?: string | null;
 }
 
 /**
@@ -149,7 +156,10 @@ export interface ReceiptDiscount {
  * shown and never used as a multiplier. ADR-0016.
  */
 export interface ReceiptItem {
+  /** As the bill printed it, in the bill's own language. */
   label: string;
+  /** The English of `label`, or absent when the bill is already English. `ReceiptDiscount.labelEn`. */
+  labelEn?: string | null;
   amount: string;
   /** The count printed on the receipt, or null when none was. Display only. */
   quantity?: number | null;

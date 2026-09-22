@@ -117,6 +117,11 @@ export async function setInstallNudgeCollapsed(collapsed: boolean): Promise<void
   await updateDevice({ installNudgeCollapsed: collapsed });
 }
 
+/** Read a scanned bill in English, or back in the language it was printed in. */
+export async function setBillEnglish(english: boolean): Promise<void> {
+  await updateDevice({ billEnglish: english ? true : undefined });
+}
+
 /**
  * Point this phone's scans at a key its owner brought, or back at the shared
  * one. Device-local and never an op — see `DeviceRecord.geminiKey`.

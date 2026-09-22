@@ -21,6 +21,48 @@ interface Count { n: number; d: number }
 /** What a bill's line has to say for itself here. `ReceiptItem` satisfies it. */
 interface BillLine { amount: string; label?: string; quantity?: number | null; portionOf?: number | null }
 
+/** Anything the model read a label off: an item, or a deduction. */
+interface Labelled { label: string; labelEn?: string | null }
+
+/**
+ * A line's label in the language the bill is being read in.
+ *
+ * **The original is the default**, everywhere and always: the person holding
+ * the receipt is reading those same words, and a screen that silently renames
+ * "Tagine" to "Lamb stew" cannot be checked against the paper. English is a
+ * tap on the who-had-what bar (components/who-had-what.tsx), device-local and
+ * remembered, and it reaches the saved expense's copy of the bill too.
+ *
+ * Falls back to the original for a line the model gave no English for — a bill
+ * half in one language and half in the other is one the scan already read
+ * right, and a blank label would be the only real loss on this screen.
+ */
+export function billLabel(line: Labelled, english: boolean): string {
+  return english ? line.labelEn || line.label : line.label;
+}
+
+/** The same lines, relabelled. The array itself is untouched when it isn't needed. */
+export function billLabels<T extends Labelled>(lines: readonly T[], english: boolean): readonly T[] {
+  return english ? lines.map((line) => ({ ...line, label: billLabel(line, true) })) : lines;
+}
+
+/** The extras, with every deduction's printed name relabelled the same way. */
+export function billExtrasIn(extras: BillExtras, english: boolean): BillExtras {
+  return english ? { ...extras, discounts: [...billLabels(extras.discounts, true)] } : extras;
+}
+
+/**
+ * Whether anything on this bill reads differently in English — which is what
+ * decides whether the toggle is drawn at all. A receipt printed in English
+ * comes back with no translation on any line, and a control that does nothing
+ * is worse than no control.
+ */
+export function hasTranslation<T extends Labelled>(
+  ...lines: readonly (readonly T[] | null | undefined)[]
+): boolean {
+  return lines.some((set) => set?.some((line) => !!line.labelEn && line.labelEn !== line.label));
+}
+
 function gcd(a: number, b: number): number { return b === 0 ? a : gcd(b, a % b); }
 
 function count(n: number, d: number): Count {
@@ -168,7 +210,7 @@ export function weightsFromItems(
  * caller leaves the amount alone rather than overwriting it with zero.
  */
 export function receiptTotalMinor(
-  items: { amount: string }[],
+  items: readonly { amount: string }[],
   extras: BillExtras | null,
   currency: string,
 ): number | null {
@@ -281,6 +323,7 @@ export function unfoldItem(
   const remainder = minor - each * count;
   const parts: ReceiptItem[] = Array.from({ length: count }, (_, i) => ({
     label: item.label,
+    labelEn: item.labelEn,
     amount: minorToDecimalString(each + (i < remainder ? 1 : 0), currency),
     // The printed count belongs to the line that's gone; a portion is one of.
     quantity: null,
@@ -315,6 +358,7 @@ export function foldedLine(
   }
   return {
     label: head.label,
+    labelEn: head.labelEn,
     amount: minorToDecimalString(minor, currency),
     quantity: rows.reduce((n, row) => n + (row.quantity ?? 1), 0),
     portionOf: null,

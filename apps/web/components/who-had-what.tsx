@@ -14,8 +14,11 @@ import { glide } from "../lib/seek";
 import { bare, distinctInitials, priced } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
-  foldedLine, portions, receiptTotalMinor, runAssignment, unfoldItem, unfoldableInto,
+  billLabel, foldedLine, hasTranslation, portions, receiptTotalMinor, runAssignment,
+  unfoldItem, unfoldableInto,
 } from "../lib/scan/items";
+import { useBillEnglish } from "../lib/hooks";
+import { setBillEnglish } from "../lib/db/device";
 
 /**
  * The floor under how long the pointed column stays faint. The scroll is
@@ -69,6 +72,12 @@ export function WhoHadWhat({
   onBack: () => void;
 }) {
   const items = draft.receiptItems ?? [];
+  // Which language the bill's own words are read in. Device-local and
+  // remembered, so the expense this grid saves reads the same way afterwards
+  // (`billLabel`). **Never applied to `items` itself** — the labels on the
+  // draft are the bill's, and splitting a line writes them back.
+  const english = useBillEnglish();
+  const said = (line: { label: string; labelEn?: string | null }) => billLabel(line, english);
   const [involved, setInvolved] = useState<Set<string>>(new Set());
   const [assignments, setAssignments] = useState<Set<string>[]>([]);
   const seeded = useRef(false);
@@ -357,7 +366,7 @@ export function WhoHadWhat({
   };
   const discounts = (draft.receiptDiscounts ?? []).flatMap((d) => {
     const minor = minorOf(d.amount);
-    return minor === null || minor <= 0 ? [] : [{ label: d.label, minor: -minor }];
+    return minor === null || minor <= 0 ? [] : [{ label: said(d), minor: -minor }];
   });
   const taxMinor = draft.receiptTax ? minorOf(draft.receiptTax) : null;
   // Several deductions collapse into one row the way repeated items do, and
@@ -474,6 +483,19 @@ export function WhoHadWhat({
   // identical animations, so a second one replays.
   const pointClass = point ? (point.n % 2 === 1 ? " point-a" : " point-b") : "";
 
+  // The bar's one control: the bill in its own words, or in English. Drawn
+  // only where the model had something to translate — a receipt printed in
+  // English comes back with no second label on any line, and a button that
+  // changes nothing is worse than no button (`hasTranslation`).
+  const translate = hasTranslation(items, draft.receiptDiscounts) ? (
+    <button type="button" className={`iconbtn${english ? " lit" : ""}`}
+      onClick={() => void setBillEnglish(!english)} {...keepsFocus}
+      aria-pressed={english} title={copy.items.translate[english ? "off" : "on"]}
+      aria-label={copy.items.translate[english ? "off" : "on"]}>
+      <Icon name="translate" size={17} />
+    </button>
+  ) : null;
+
   const note = told && !everyItemAssigned ? (
     <div className="footnote bad">{copy.items.needsSomeone}</div>
   ) : canUnfoldSomething && runs.every((r) => r === null) ? (
@@ -485,7 +507,7 @@ export function WhoHadWhat({
   return (
     <Screen>
       <Body>
-        <TopBar title={title} back={{ ask: mayLeave }} />
+        <TopBar title={title} back={{ ask: mayLeave }} right={translate} />
 
         {/* One scroller: who was there, the grid and the running totals pass
             through it together. Eight people used to freeze more than half a
@@ -563,9 +585,9 @@ export function WhoHadWhat({
                             ground together. */}
                         <button type="button" className="itemtext" {...keepsFocus}
                           onClick={() => toggleEveryone(line.start, folded ? line.count : 1)}
-                          aria-label={copy.items.everyone(shown.label)}>
+                          aria-label={copy.items.everyone(said(shown))}>
                           <span className="itemname">
-                            {shown.label}
+                            {said(shown)}
                             {/* The printed count, but only where the button
                                 below isn't already carrying it. */}
                             {!folded && !part && into === null && item.quantity && item.quantity > 1 ? (
@@ -587,20 +609,20 @@ export function WhoHadWhat({
                         {folded ? (
                           <button className="itemfold" onClick={() => showPortions(line.start)} {...keepsFocus}
                             title={copy.items.showPortions(line.count)}
-                            aria-label={copy.items.openItem(item.label, line.count)}
+                            aria-label={copy.items.openItem(said(item), line.count)}
                             aria-expanded={false}>
                             ×{line.count}<Icon name="split" size={12} />
                           </button>
                         ) : into !== null ? (
                           <button className="itemfold" onClick={() => unfold(line.start)} {...keepsFocus}
                             title={copy.items.splitInto(into)}
-                            aria-label={copy.items.splitItem(item.label, into)}>
+                            aria-label={copy.items.splitItem(said(item), into)}>
                             ×{into}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
                           <button className="itemfold on" onClick={() => showAsOneLine(part.start)} {...keepsFocus}
                             title={copy.items.mergeBack}
-                            aria-label={copy.items.mergeItem(item.label, part.of)}
+                            aria-label={copy.items.mergeItem(said(item), part.of)}
                             aria-expanded={true}>
                             ×{part.of}<Icon name="merge" size={12} />
                           </button>
@@ -636,11 +658,11 @@ export function WhoHadWhat({
                             aria-pressed={mark === "some" ? "mixed" : mark === "all"}
                             aria-label={folded
                               ? (run?.detailed
-                                ? copy.items.hadSome(m.name, item.label, line.count)
-                                : copy.items.hadAll(m.name, item.label, line.count))
+                                ? copy.items.hadSome(m.name, said(item), line.count)
+                                : copy.items.hadAll(m.name, said(item), line.count))
                               : part
-                                ? copy.items.hadPortion(m.name, item.label, part.index, part.of)
-                                : copy.items.had(m.name, item.label)}>
+                                ? copy.items.hadPortion(m.name, said(item), part.index, part.of)
+                                : copy.items.had(m.name, said(item))}>
                             {/* The empty cells carry a dot too, invisible until
                                 something points at this column: what a person
                                 is being shown is where their answer would go,

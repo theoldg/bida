@@ -114,6 +114,15 @@ whole-bill loyalty deduction follows, and a whole-bill deduction spread this
 way moves nobody relative to anybody — only the total changes. One rule, both
 scopes.
 
+**A bill is shown in the language it was printed in**, with English one tap
+away on the bar (`billLabel`). The scan returns both, so this costs a field and
+no second call. Printed-by-default is the whole ruling: the person tapping the
+grid is holding the paper, and a screen that silently renames "Tajine" to "Lamb
+stew" cannot be checked against it — the translation is for reading a bill you
+can't, which is a choice and not the resting state. The choice is the phone's
+and not the group's, and it reaches every reading of that bill: the grid, each
+person's lines on the entry screen, and a quick split's text.
+
 **The grid's initials are `distinctInitials()`**, growing each prefix until it
 is unique ("John"/"Jane") but **never past three graphemes** — they are the
 column headings, so they set the column width, and "Bartholomew" beside

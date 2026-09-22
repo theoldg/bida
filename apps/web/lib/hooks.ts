@@ -75,6 +75,15 @@ export function useDevice(): DeviceRecord | undefined {
 }
 
 /**
+ * Whether this phone is reading scanned bills in English. False until Dexie
+ * answers, which is also the default, so a bill is never drawn in a language
+ * it then leaves (`DeviceRecord.billEnglish`).
+ */
+export function useBillEnglish(): boolean {
+  return useDevice()?.billEnglish ?? false;
+}
+
+/**
  * The invite secret for a group, if this device holds it (creator or a device
  * that joined).
  *

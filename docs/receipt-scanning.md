@@ -412,6 +412,18 @@ ROTI" → "Poulet roti", keeping the casing a brand owns ("IKEA", "H&M",
 the words, their language and their spelling are the receipt's, or the person
 checking the grid against the paper is comparing two different bills.
 
+**Both labels are kept**, `label` and `labelEn` together, all the way onto the
+expense. The bill reads as printed everywhere by default, and the translation
+icon in the who-had-what bar switches every line to English — the grid, each
+person's copy of the bill on the entry screen, and the text a quick split is
+handed over as. It is drawn only where the model gave a translation on some
+line (`hasTranslation`), and remembered per phone and not per group
+(`DeviceRecord.billEnglish`): it is how one person reads, not a fact about the
+bill. A line the model left untranslated keeps its printed label rather than
+going blank. `billLabel` (`web/lib/scan/items.ts`) is the only place either is
+chosen; the draft's own labels are never overwritten, or splitting a line would
+write the translation back as the bill's own words.
+
 `normalizeScan` uses none of `lineItems`, `tip`, `tax` or `discounts`. `/g/entry/items` does —
 reached by tapping the Items tab's button — "Assign who had what" on a bill
 nobody has been given a line of, "Edit who-had-what" once somebody has —

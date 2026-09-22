@@ -232,11 +232,13 @@ describe("readBill", () => {
     expect(bill.extras).toEqual({ tip: "3.00", tax: null, discounts: [] });
   });
 
-  it("moves a negative line out of the items and into the discounts, name and all", () => {
+  it("moves a negative line out of the items and into the discounts, both names and all", () => {
     const credit = { label: "Remise", labelEn: "Discount", amount: "-5.00", unitAmount: null, quantity: null };
     const bill = readBill({ ...blank, lineItems: [line("30.00"), credit] }, "EUR");
     expect(bill.items.map((i) => i.amount)).toEqual(["30.00"]);
-    expect(bill.extras.discounts).toEqual([{ label: "Discount", amount: "5.00" }]);
+    // Both, because which one is read is the reader's choice and not the
+    // scan's (`billLabel`, apps/web/lib/scan/items.ts).
+    expect(bill.extras.discounts).toEqual([{ label: "Remise", labelEn: "Discount", amount: "5.00" }]);
   });
 
   it("gathers every deduction, wherever it arrived, and keeps them apart", () => {
@@ -255,7 +257,7 @@ describe("readBill", () => {
   it("reads a discount as a magnitude whichever way the sign arrives", () => {
     for (const amount of ["8.00", "-8.00"]) {
       expect(readBill({ ...blank, discounts: [off(amount)] }, "EUR").extras.discounts)
-        .toEqual([{ label: "", amount: "8.00" }]);
+        .toEqual([{ label: "", labelEn: null, amount: "8.00" }]);
     }
   });
 
@@ -348,7 +350,7 @@ describe("readBill, on a bill priced per unit", () => {
   it("pools a per-unit deduction with the rest of them", () => {
     const bill = readBill({ ...blank, lineItems: [line("30.00"), each("-2.50", 2)] }, "EUR");
     expect(bill.items).toHaveLength(1);
-    expect(bill.extras.discounts).toEqual([{ label: "x", amount: "5.00" }]);
+    expect(bill.extras.discounts).toEqual([{ label: "x", labelEn: null, amount: "5.00" }]);
   });
 
   // `checkScan` is what refuses a line like this, and it can only do that if

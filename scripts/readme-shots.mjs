@@ -234,16 +234,16 @@ async function main() {
     // each, and the water Sam alone drank. Enough taps that the grid in the
     // shot is a filled-in bill rather than an empty one, and not so many that
     // every column looks the same.
-    await tap(page, "Theo", "Moroccan salad");
-    await tap(page, "Marie", "Moroccan salad");
+    await tap(page, "Theo", "Salade marocaine");
+    await tap(page, "Marie", "Salade marocaine");
     await tap(page, "Theo", "Chicken tagine");
     await tap(page, "Marie", "Lamb couscous");
     await tap(page, "Sam", "Lamb couscous");
     await tap(page, "Theo", "Mint tea");
     await tap(page, "Marie", "Mint tea");
     await tap(page, "Sam", "Mint tea");
-    await tap(page, "Theo", "Flatbread");
-    await tap(page, "Sam", "Flatbread");
+    await tap(page, "Theo", "Msemen");
+    await tap(page, "Sam", "Msemen");
     await tap(page, "Sam", "Olives");
     await tap(page, "Sam", "Bottled water");
     await tap(page, "Theo", "Orange juice");

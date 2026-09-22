@@ -1307,6 +1307,13 @@ export const copy = {
     /** The one affordance a person misses: the tip is a field, not a printed line. */
     tipHint: "tap to edit",
     /**
+     * The bar's translation toggle, named for what a press would do rather
+     * than for the state it is in — the same rule the theme switch follows.
+     * "As printed" and not "original": what the button offers is the words on
+     * the paper in your hand.
+     */
+    translate: { on: "Show the bill in English", off: "Show the bill as printed" },
+    /**
      * Which portion of a split line this row is, on the amount line beside the
      * figure. Written short because that line is the narrowest thing on the
      * screen — the name column is fixed, and on the first portion of an open

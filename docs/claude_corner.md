@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "stuff should always be in the original language by default",
+  sent mid-build. The code's own default was the opposite; I had inherited it
+  without asking whose it was.
 - *2026-09-22* — "anything we should be doing about this warning?" pasted over
   a CI log. Not a question about the warning: the fix, asked politely. Two
   lines of YAML, one turn.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "the lock and messenger link are resolved": two watches closed
   on a phone I cannot see, and one of them hid a line still marked unfixed. Ask
   what resolved covers before deleting it.
-- *2026-09-21* — "hide the install banner in the demo": the card's own comment
-  already carried the rule — draw it only once there is a group to lose. The
-  demo was an instance of one written down.

@@ -392,6 +392,10 @@ a { color: inherit; text-decoration: none }
    ignoring the press — the add row's plus, empty and on a name already taken
    alike (components/name-adder.tsx). */
 .iconbtn:disabled { background: transparent; border-color: transparent; color: var(--muted) }
+/* A top-bar icon that is a switch rather than a destination, lit while it is
+   on — the who-had-what bar's translation toggle. The same highlight the
+   keyless bar uses, so "on" looks the same wherever it appears. */
+.iconbtn.lit { background: var(--hl); border-color: var(--hl-edge); color: var(--hl-ink) }
 /* The top bar's icons are destinations, not row affordances: they are the only
    way to reach People, History and the invite link, and they are pressed with a
    thumb reaching across the phone. Bigger circle, bigger glyph. */

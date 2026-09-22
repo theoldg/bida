@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  demoOps, foldOps, parseMinor, receiptExtras, DEMO_GROUP_ID, type BillExtras,
+  demoOps, foldOps, parseMinor, receiptExtras, DEMO_GROUP_ID, type BillExtras, type ReceiptItem,
 } from "@bida/core";
 import {
-  billCharges, foldedLine, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
+  billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
   unfoldItem,
   unfoldableInto, weightsFromItems,
@@ -214,6 +214,45 @@ describe("foldedLine", () => {
     expect(foldedLine([{ label: "Soup", amount: "3.00" }], 0, 1, "EUR")).toBeNull();
     expect(foldedLine([{ label: "A", amount: "1.00" }, { label: "A", amount: "??" }], 0, 2, "EUR")).toBeNull();
     expect(foldedLine([], 0, 2, "EUR")).toBeNull();
+  });
+});
+
+describe("which language a bill is read in", () => {
+  const tagine: ReceiptItem = { label: "Tajine", labelEn: "Lamb stew", amount: "14.50" };
+  const tea: ReceiptItem = { label: "The a la menthe", labelEn: null, amount: "6.50" };
+
+  it("shows the bill as printed by default", () => {
+    expect(billLabel(tagine, false)).toBe("Tajine");
+    expect(billLabels([tagine, tea], false)).toEqual([tagine, tea]);
+  });
+
+  it("shows the English where the model had some", () => {
+    expect(billLabel(tagine, true)).toBe("Lamb stew");
+    expect(billLabels([tagine, tea], true).map((l) => l.label)).toEqual(["Lamb stew", "The a la menthe"]);
+  });
+
+  // A line the model left untranslated would otherwise come back blank, which
+  // is the one way this could lose something the receipt actually said.
+  it("falls back to the printed label rather than showing a gap", () => {
+    expect(billLabel({ label: "Cafe", labelEn: "" }, true)).toBe("Cafe");
+    expect(billLabel({ label: "Cafe" }, true)).toBe("Cafe");
+  });
+
+  it("relabels a deduction without touching the tip or the tax", () => {
+    const some = extras({ tip: "3.00", tax: "1.00", discounts: [{ label: "2 pour 1", labelEn: "2 for 1", amount: "4.00" }] });
+    const shown = billExtrasIn(some, true);
+    expect(shown.discounts.map((d) => d.label)).toEqual(["2 for 1"]);
+    expect(shown.tip).toBe("3.00");
+    expect(shown.tax).toBe("1.00");
+  });
+
+  // What decides whether the toggle is drawn at all: a bill already in English
+  // has nothing to switch to, and the control would do nothing.
+  it("knows when there is nothing to translate", () => {
+    expect(hasTranslation([tea], null)).toBe(false);
+    expect(hasTranslation<ReceiptItem>([{ label: "Beer", labelEn: "Beer", amount: "5.00" }])).toBe(false);
+    expect(hasTranslation([tea], [{ label: "Remise", labelEn: "Discount", amount: "4.00" }])).toBe(true);
+    expect(hasTranslation([tea, tagine])).toBe(true);
   });
 });
 

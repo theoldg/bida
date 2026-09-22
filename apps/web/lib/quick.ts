@@ -8,7 +8,7 @@ import { getDevice, updateDevice } from "./db/device";
 import { useGroupSecret } from "./hooks";
 import { receiptBill, type EntryDraft } from "./draft";
 import { bare, countText } from "./format";
-import { receiptTotalMinor, type MemberLine } from "./scan/items";
+import { billLabels, receiptTotalMinor, type MemberLine } from "./scan/items";
 
 /**
  * A quick split: a bill divided among people who are not a group
@@ -204,11 +204,18 @@ interface QuickShare {
 export function quickShares(
   draft: EntryDraft,
   who: readonly QuickPerson[],
+  /** Read the bill's own words in English rather than as printed (`billLabel`). */
+  english = false,
 ): { totalMinor: number; shares: QuickShare[] } {
-  const items = draft.receiptItems ?? [];
+  // Only the labels move: the arithmetic below reads amounts, and the text
+  // this ends on is the same bill in whichever language it is being read.
+  const items = billLabels(draft.receiptItems ?? [], english);
   const assignments = (draft.receiptAssignments ?? []).map((row) => new Set(row));
   const involved = new Set(draft.receiptInvolved ?? []);
-  const { weights, lines } = receiptBill(draft, items, assignments, involved);
+  const { weights, lines } = receiptBill(
+    { ...draft, receiptDiscounts: [...billLabels(draft.receiptDiscounts ?? [], english)] },
+    items, assignments, involved,
+  );
   return {
     totalMinor: receiptTotalMinor(items, receiptExtras(draft), draft.currency) ?? 0,
     shares: who.filter((p) => involved.has(p.id)).map((p) => ({

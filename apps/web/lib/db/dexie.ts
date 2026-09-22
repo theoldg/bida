@@ -64,6 +64,16 @@ export interface DeviceRecord {
    */
   installNudgeCollapsed?: boolean;
   /**
+   * True while a scanned bill's lines are read in English rather than in the
+   * language the receipt was printed in. Absent reads as the original, which
+   * is the default everywhere — see `billLabel` (lib/scan/items.ts).
+   *
+   * Device-local because it is how one person reads, not a fact about the
+   * bill: the expense keeps both labels and two phones at the same table may
+   * want different ones.
+   */
+  billEnglish?: boolean;
+  /**
    * What this phone scans with when it is not in a group — a quick split
    * ([ADR-0035](../../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)).
    *
