@@ -151,6 +151,55 @@ describe("syncGroup", () => {
     expect((await getDevice()).hlcPhysical).toBeLessThan(10 ** 14);
   });
 
+  it("holds back a stamp more than a day ahead, and takes it once the wall catches up", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const start = Date.now();
+    const twoDaysAhead = start + 2 * 24 * 3600_000;
+    const ops = await serverOps(groupId, [{
+      id: "op-1", groupId, entity: "expense", entityId: "e-1", kind: "create",
+      patch: {
+        description: "Riad", occurredAt: 1, amountMinor: 1000, currency: "EUR",
+        rateToBase: "1", baseAmountMinor: 1000, paidBy: theo,
+        split: { mode: "equal", members: [theo] },
+      },
+      hlc: formatHlc(createHlcState("fast", twoDaysAhead, 0)),
+      actor: theo, note: null, createdAt: start, seq: 1,
+    }]);
+    const asked: number[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[]; since: number };
+      asked.push(body.since);
+      const assigned = Object.fromEntries(body.ops.map((op, i) => [op.id, 2 + i]));
+      const latestSeq = 1 + body.ops.length;
+      return new Response(JSON.stringify({ assigned, ops: body.since < 1 ? ops : [], latestSeq }));
+    }));
+
+    await syncGroup(groupId);
+    // Not folded, and not adopted: this phone's clock is still its own.
+    expect(await db().expenses.get("e-1")).toBeUndefined();
+    expect((await getDevice()).hlcPhysical).toBeLessThan(start + 24 * 3600_000);
+    const held = (await db().groupKeys.get(groupId))?.unreadable;
+    expect(held).toMatchObject({ count: 1, fromSeq: 1, retryAt: twoDaysAhead - 24 * 3600_000 });
+
+    // Before then, the cursor stays where it is.
+    await syncGroup(groupId);
+    expect(asked.at(-1)).toBeGreaterThanOrEqual(1);
+
+    // Three days on, it is a day behind the wall: wound back for, and taken.
+    vi.useFakeTimers({ toFake: ["Date"], now: start + 3 * 24 * 3600_000 });
+    try {
+      await syncGroup(groupId);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(asked.at(-1)).toBe(0);
+    expect(await db().expenses.get("e-1")).toBeDefined();
+    expect((await db().groupKeys.get(groupId))?.unreadable).toBeUndefined();
+  });
+
   it("winds back to what it skipped, once, on a build that did not skip it", async () => {
     const { groupId, memberId: theo } = await createGroup({
       name: "Marrakech", baseCurrency: "EUR", myName: "Theo",

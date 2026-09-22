@@ -1,5 +1,6 @@
 import {
-  SealError, createHlcState, hlcReceive, openOp, sealOp, type Op, type SealedOp,
+  MAX_DRIFT_MS, SealError, createHlcState, hlcReceive, isAhead, openOp, parseHlc, sealOp,
+  type Op, type SealedOp,
 } from "@bida/core";
 import { started } from "../diag";
 import { groupCrypto } from "../seal";
@@ -43,6 +44,15 @@ interface PushPullResponse {
   latestSeq: number;
 }
 
+interface PushPullResult {
+  response: PushPullResponse;
+  pulled: Op[];
+  /** Seqs of the ops held back: unreadable to this build, or stamped too far ahead. */
+  unreadable: number[];
+  /** When the earliest op held back for its stamp stops being too far ahead. */
+  retryAt?: number;
+}
+
 /**
  * Push this group's unsynced ops and pull what's new, sealed both ways.
  *
@@ -55,7 +65,7 @@ async function pushPullGroup(
   secret: string,
   since: number,
   pending: readonly StoredOp[],
-): Promise<{ response: PushPullResponse; pulled: Op[]; unreadable: number[] }> {
+): Promise<PushPullResult> {
   const crypto = await groupCrypto(groupId, secret);
   const ops = await Promise.all(pending.map((op) => sealOp(crypto, {
     id: op.id,
@@ -88,17 +98,32 @@ async function pushPullGroup(
   // to mint one is a newer build: an entity or op kind this one has never
   // heard of, or a second seal format. A stamp no clock could have written is
   // the other, and the one a peer can mint on purpose.
+  //
+  // A stamp more than a day ahead of this phone is held back the same way
+  // (`isAhead`), with the moment it stops being ahead: a fast clock's op is
+  // late, not lost, and `retryAt` is when the cursor winds back for it.
+  const now = Date.now();
   const pulled: Op[] = [];
   const unreadable: number[] = [];
+  let retryAt: number | undefined;
   for (const op of response.ops) {
+    let opened: Op;
     try {
-      pulled.push(await openOp(crypto, op));
+      opened = await openOp(crypto, op);
     } catch (err) {
       if (!(err instanceof SealError)) throw err;
       unreadable.push(op.seq ?? 0);
+      continue;
     }
+    if (isAhead(opened.hlc, now)) {
+      unreadable.push(op.seq ?? 0);
+      const ready = parseHlc(opened.hlc).physical - MAX_DRIFT_MS;
+      retryAt = Math.min(retryAt ?? Infinity, ready);
+      continue;
+    }
+    pulled.push(opened);
   }
-  return { response, pulled, unreadable };
+  return { response, pulled, unreadable, retryAt };
 }
 
 /**
@@ -173,14 +198,28 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
  * A round that skipped nothing leaves the record alone rather than clearing
  * it: the ops it could not read are still unread.
  */
-function skipped(before: Unreadable | undefined, seqs: readonly number[]): Unreadable | undefined {
+function skipped(
+  before: Unreadable | undefined, seqs: readonly number[], retryAt: number | undefined,
+): Unreadable | undefined {
   if (seqs.length === 0) return before;
+  const earliest = Math.min(before?.retryAt ?? Infinity, retryAt ?? Infinity);
   return {
     count: (before?.count ?? 0) + seqs.length,
     fromSeq: Math.min(before?.fromSeq ?? Infinity, ...seqs),
     at: Date.now(),
     build: VERSION,
+    ...(Number.isFinite(earliest) ? { retryAt: earliest } : {}),
   };
+}
+
+/**
+ * Whether the ops a record holds back may read differently now: to a build
+ * other than the one that skipped them, or — for one held back for its stamp —
+ * once the wall has caught up with it.
+ */
+function worthAnotherLook(record: Unreadable | undefined, now: number): record is Unreadable {
+  if (!record) return false;
+  return record.build !== VERSION || (record.retryAt !== undefined && now >= record.retryAt);
 }
 
 /** One run per group at a time — see `syncGroup`. */
@@ -236,11 +275,12 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // phone has written nothing since it last synced, which is most of them.
   const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
   // Skipping an op is only safe because it is still on the server. The first
-  // run of any build but the one that skipped it pulls again from the earliest
+  // run of any build but the one that skipped it — or the first once a stamp
+  // held back has stopped being too far ahead — pulls again from the earliest
   // one, and starts the record afresh: whatever still will not open is written
-  // down again, and what now opens lands. Once per build, not per run, so a
-  // row nothing can read costs one re-pull per deploy rather than one a minute.
-  let rewinding = key.unreadable !== undefined && key.unreadable.build !== VERSION;
+  // down again, and what now opens lands. Not every run, so a row nothing can
+  // read costs one re-pull per deploy rather than one a minute.
+  let rewinding = worthAnotherLook(key.unreadable, Date.now());
   let since = rewinding
     ? Math.max(0, Math.min(key.lastSeq, key.unreadable!.fromSeq - 1))
     : key.lastSeq;
@@ -248,7 +288,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   let pulledCount = 0;
 
   for (const pending of rounds) {
-    let sealed: { response: PushPullResponse; pulled: Op[]; unreadable: number[] };
+    let sealed: PushPullResult;
     // The one step here that waits on a network rather than on this phone.
     const sent = started("sync.pushpull");
     try {
@@ -267,7 +307,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       await recordFailure(groupId, err);
       throw err;
     }
-    const { response: { assigned, latestSeq }, pulled, unreadable } = sealed;
+    const { response: { assigned, latestSeq }, pulled, unreadable, retryAt } = sealed;
     sent(`${pending.length} up, ${pulled.length} down`
       + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 
@@ -308,7 +348,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
         lastSyncedAt: Date.now(),
         failure: undefined,
-        unreadable: skipped(rewinding ? undefined : current?.unreadable, unreadable),
+        unreadable: skipped(rewinding ? undefined : current?.unreadable, unreadable, retryAt),
       });
     }).then(() => committed(), (err: unknown) => {
       committed("failed");

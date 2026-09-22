@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, isHlc, maxHlc, parseHlc,
+  MAX_DRIFT_MS, compareHlc, createHlcState, formatHlc, hlcReceive, hlcSend, isAhead, isHlc,
+  maxHlc, parseHlc,
 } from "./hlc.js";
 
 describe("hlc", () => {
@@ -47,15 +48,31 @@ describe("hlc", () => {
     expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
   });
 
-  // There is no time limit on an update. Refusing a far-future stamp lost
-  // somebody's expense to protect an ordering guarantee that adopting it
-  // provides anyway.
-  it("adopts a clock absurdly far in the future rather than refusing it", () => {
-    const state = createHlcState("aaa", 0, 0);
-    const remote = formatHlc(createHlcState("bbb", 10 ** 12, 0));
-    const next = hlcReceive(state, remote, 1000);
-    expect(next.physical).toBe(10 ** 12);
-    expect(compareHlc(hlcSend(next, 1000).hlc, remote)).toBe(1);
+  // A fast phone is somebody's expense and is adopted; a phone in 2099 would
+  // pin every clock it met to 2099, so it is not.
+  it("adopts a stamp up to a day ahead and not one past it", () => {
+    const now = 1_756_300_000_000;
+    const state = createHlcState("aaa", now, 0);
+    const fast = formatHlc(createHlcState("bbb", now + MAX_DRIFT_MS, 0));
+    const future = formatHlc(createHlcState("bbb", 4_100_000_000_000, 0));
+
+    expect(isAhead(fast, now)).toBe(false);
+    expect(hlcReceive(state, fast, now).physical).toBe(now + MAX_DRIFT_MS);
+
+    expect(isAhead(future, now)).toBe(true);
+    expect(hlcReceive(state, future, now)).toEqual(state);
+    // And a stamp stops being ahead once the wall has caught up with it.
+    expect(isAhead(future, 4_100_000_000_000 - MAX_DRIFT_MS)).toBe(false);
+  });
+
+  // Adopted before the bound existed, or this phone's own wall clock set wrong
+  // and then fixed: either way peers would refuse every op it stamped.
+  it("brings its own clock back from beyond the bound to the wall", () => {
+    const now = 1_756_300_000_000;
+    const pinned = createHlcState("aaa", 4_100_000_000_000, 42);
+    expect(hlcSend(pinned, now).state.physical).toBe(now);
+    const remote = formatHlc(createHlcState("bbb", now - 5, 0));
+    expect(hlcReceive(pinned, remote, now).physical).toBe(now);
   });
 
   // A peer pinned far ahead means the wall clock never catches up, so every op
@@ -75,7 +92,8 @@ describe("hlc", () => {
 
   it("knows a stamp it can adopt from one it cannot", () => {
     expect(isHlc(formatHlc(createHlcState("abc", 1756300000000, 7)))).toBe(true);
-    // Far ahead is still a clock — somebody's phone set to 2099.
+    // Shape and range only: whether 2099 is too far ahead depends on when you
+    // ask, which is `isAhead`'s question.
     expect(isHlc(formatHlc(createHlcState("abc", 4_100_000_000_000, 0)))).toBe(true);
     expect(isHlc(formatHlc(createHlcState("abc", 10 ** 14 - 1, 0)))).toBe(true);
     // Past the year 5138 it is not, and adopting it would run out of digits.

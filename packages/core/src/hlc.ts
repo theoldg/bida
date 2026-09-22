@@ -28,6 +28,16 @@ const MAX_COUNTER = 10 ** COUNTER_DIGITS - 1;
 const MAX_PHYSICAL = 10 ** 14 - 1;
 const HLC_PATTERN = /^(\d{15})-(\d{5})-([0-9a-z]{1,16})$/;
 
+/**
+ * How far ahead of this phone's wall clock a stamp may read and still be
+ * taken. A day: well past any honest skew — a clock set by hand, a time zone
+ * applied twice, a phone off the network for a week — and short enough that a
+ * phone set to 2099 cannot pin every clock it meets. A stamp past it is not
+ * taken now (`isAhead`); it is taken once the wall has caught up to within a
+ * day of it, which for a clock merely fast is soon and for 2099 is never.
+ */
+export const MAX_DRIFT_MS = 24 * 3600_000;
+
 export interface HlcState {
   physical: number;
   counter: number;
@@ -66,6 +76,26 @@ export function isHlc(value: string): boolean {
   return m !== null && Number(m[1]) <= MAX_PHYSICAL;
 }
 
+/**
+ * Whether a stamp reads further ahead of `now` than `MAX_DRIFT_MS`, and so must
+ * be neither folded nor adopted yet. Checked where ops arrive from a peer, not
+ * in `validateOp`: whether a stamp is too far ahead depends on when it is asked.
+ */
+export function isAhead(hlc: Hlc, now: number): boolean {
+  return parseHlc(hlc).physical > Math.trunc(now) + MAX_DRIFT_MS;
+}
+
+/**
+ * This phone's own clock, brought back from beyond the drift bound. A state
+ * that far ahead came from a stamp adopted before the bound existed, or from
+ * this phone's wall clock having been wrong and since corrected; either way
+ * every op it stamped would now be refused by every peer, so it starts again
+ * from the wall.
+ */
+function reined(state: HlcState, wall: number): HlcState {
+  return state.physical > wall + MAX_DRIFT_MS ? { physical: wall, counter: 0, node: state.node } : state;
+}
+
 /** Total order. Lexicographic on the string form, which is the point of it. */
 export function compareHlc(a: Hlc, b: Hlc): number {
   return a < b ? -1 : a > b ? 1 : 0;
@@ -80,9 +110,8 @@ export function maxHlc(a: Hlc | undefined, b: Hlc | undefined): Hlc | undefined 
 /**
  * A full counter carries into the millisecond rather than throwing: `(p + 1, 0)`
  * still sorts after every `(p, n)`, so ordering is untouched. A throw was a
- * phone that could never write again — once a far-ahead peer pins `physical`
- * the wall clock never catches up, and every op sent or received spends one of
- * the counter's hundred thousand.
+ * phone that could never write again — while `physical` sits ahead of the wall
+ * every op sent or received spends one of the counter's hundred thousand.
  */
 function tick(physical: number, counter: number, node: string): HlcState {
   return counter > MAX_COUNTER
@@ -91,7 +120,8 @@ function tick(physical: number, counter: number, node: string): HlcState {
 }
 
 /** Stamp a locally-created op. Returns the new state and the stamp. */
-export function hlcSend(state: HlcState, now: number): { state: HlcState; hlc: Hlc } {
+export function hlcSend(current: HlcState, now: number): { state: HlcState; hlc: Hlc } {
+  const state = reined(current, Math.trunc(now));
   const physical = Math.max(state.physical, Math.trunc(now));
   const counter = physical === state.physical ? state.counter + 1 : 0;
   const next = tick(physical, counter, state.node);
@@ -101,14 +131,16 @@ export function hlcSend(state: HlcState, now: number): { state: HlcState; hlc: H
 /**
  * Advance the local clock on receiving a remote stamp.
  *
- * **Adopt every stamp, however far ahead it reads.** Refusing a far-future one
- * protects ordering by throwing away somebody's expense, and buys nothing:
- * adopting is itself the guarantee that a device stamps after what it has seen.
- * The one limit is `isHlc`'s, checked before a stamp gets here.
+ * Adopting is the guarantee that a device stamps after what it has seen, so a
+ * stamp within `MAX_DRIFT_MS` is adopted however fast the phone that wrote it.
+ * One past it should never get here — the caller holds it back (`isAhead`) —
+ * and if one does, it is not adopted: the clock stays within a day of the wall.
  */
-export function hlcReceive(state: HlcState, remote: Hlc, now: number): HlcState {
-  const r = parseHlc(remote);
+export function hlcReceive(current: HlcState, remote: Hlc, now: number): HlcState {
   const wall = Math.trunc(now);
+  const state = reined(current, wall);
+  if (isAhead(remote, wall)) return state;
+  const r = parseHlc(remote);
   const physical = Math.max(state.physical, r.physical, wall);
   let counter: number;
   if (physical === state.physical && physical === r.physical) {

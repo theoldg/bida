@@ -136,6 +136,8 @@ export interface Unreadable {
   at: number;
   /** The `VERSION` that skipped them. Any other build rewinds once (`sync.ts`). */
   build?: string;
+  /** When the earliest op held back for a stamp too far ahead stops being so. */
+  retryAt?: number;
 }
 
 /**

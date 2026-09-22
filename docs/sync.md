@@ -86,13 +86,16 @@ peer whose phone runs three hours fast wins every conflict, because the
 correction you type after reading their op stamps *before* it and the fold
 throws it away.
 
-**Any stamp is adopted, however far ahead it reads.** There is no time limit on
-an update: a late or far-future op is still somebody's expense, and refusing it
-loses that expense to protect a guarantee adopting it already provides. What
-that costs is a clock pinned ahead that the wall never catches, so a full
-counter carries into the millisecond rather than throwing. The one refusal is a
-stamp no clock writes — the wrong shape, or past the year 5138 (`isHlc`, from
-`validateOp`) — which is skipped like any op this build cannot read.
+**A stamp up to a day ahead is adopted; one further ahead waits.** A fast phone
+is still somebody's expense, but one set to 2099 would pin every clock it met
+to 2099. So an op stamped more than `MAX_DRIFT_MS` past this phone's wall is
+held back like an unreadable one (`isAhead`), neither folded nor adopted, with
+the moment it stops being ahead as `unreadable.retryAt` — a clock merely fast
+is late, not lost. A phone's own clock found beyond the bound starts again from
+the wall, since every peer would refuse what it stamped. A stamp no clock
+writes at all — the wrong shape, or past the year 5138 — is refused by
+`validateOp` (`isHlc`), and a full counter carries into the millisecond rather
+than throwing.
 
 **Order by HLC, never by `seq` and never by `createdAt`.** `seq` orders arrival
 at the server and answers only "what have I not pulled yet".
@@ -215,8 +218,8 @@ the group for good. What mints one is a newer build — a new entity or op kind,
 or a second seal format — so `openOp` turns anything wrong with an opened row
 into a `SealError`, the one error the pull skips. The cursor moves past a
 skipped op, so the record carries `fromSeq` and the build that skipped it, and
-the first run of any other build pulls again from `fromSeq - 1`: once per
-build, so a row nothing can read costs a re-pull per deploy. A single-flight loop triggered by a local write
+the first run of any other build — or the first past `retryAt` — pulls again
+from `fromSeq - 1`: a row nothing can read costs a re-pull per deploy. A single-flight loop triggered by a local write
 (debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
 while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the

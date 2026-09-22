@@ -105,8 +105,8 @@ otherwise have to read the whole suite to learn:
   is what caught the search missing pieces that held two people owing the same;
   keep all four shapes if you touch it.
 - **HLCs are totally ordered by string comparison**, and a peer's stamp is
-  absorbed on receive however far ahead it reads — so a reply to their op
-  always sorts after it.
+  absorbed on receive up to a day ahead — so a reply to their op always sorts
+  after it — and held back past that, until the wall catches up.
 - **Payer and consumer sides both sum to `baseAmountMinor` exactly**, including
   a payer who isn't a participant.
 - **An income is exactly the negation of the same entry as an expense**, member
