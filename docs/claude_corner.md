@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — Sent to snoop blind, I filed a 1,016.459 BHD bug that was my
+  own keystroke. Driving a screen is not reading it: redo the gesture before
+  believing what it shows you.
 - *2026-09-22* — "make the kebab menus friendlier. propose screenshots." The
   ask named its own proof: the same menu photographed before and after. No
   description of the change could have answered it.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — Asked to animate one button, its neighbour's comment said the
   two confirm "the same way". Doing only the one named would have quietly made
   that sentence false.
-- *2026-09-21* — "drop the minus, it's already red and says you owe". The same
-  reason took the plus with it. Ask whether the argument is symmetric before
-  fixing only the half you were handed.
