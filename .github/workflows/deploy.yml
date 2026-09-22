@@ -23,11 +23,11 @@ jobs:
     env:
       TARGET: ${{ inputs.target || (github.ref == 'refs/heads/main' && 'production' || 'dev') }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref || github.sha }}
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm

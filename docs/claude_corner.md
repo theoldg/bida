@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "anything we should be doing about this warning?" pasted over
+  a CI log. Not a question about the warning: the fix, asked politely. Two
+  lines of YAML, one turn.
 - *2026-09-22* — "i thought gemini is supposed to reinterpret the casing." It
   never was: the never-shout rule named the title only. A prompt rule covers
   the field it names and no neighbour.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-21* — "hide the install banner in the demo": the card's own comment
   already carried the rule — draw it only once there is a group to lose. The
   demo was an instance of one written down.
-- *2026-09-21* — A phone in hand closed four watches in one message. The
-  clipboard retry I had reasoned out so carefully was three extra taps: a
-  retry the person has to approve is not a retry.
