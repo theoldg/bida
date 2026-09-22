@@ -1,27 +1,20 @@
 #!/bin/sh
 # Point this session's branch at `dev`, wherever the harness dropped it.
 #
-# Sessions work in a worktree of their own (CLAUDE.md), so there are two shapes
-# to settle and this script handles whichever it finds:
+# **In a worktree** (CLAUDE.md: sessions get one) the branch stays the
+# worktree's own — `dev` is checked out in the main clone and git will not lend
+# a branch to two working trees. So it gets a base and an upstream instead,
+# both `origin/dev`: the harness branches from `origin/main` or from the main
+# clone's HEAD, and neither is what a push lands on, which would leave
+# `pnpm bump` comparing against the wrong tree. The push says where it goes:
+# `git push origin HEAD:dev`.
 #
-# **In a worktree** — the branch is the worktree's own, and it stays that way:
-# `dev` is checked out in the main clone, and git refuses to have one branch in
-# two working trees. What it needs instead is a base and an upstream, both
-# `origin/dev`: the harness branches a new worktree from `origin/main` or from
-# whatever the main clone's HEAD happened to be, neither of which is what a push
-# lands on. Fast-forwarding to `origin/dev` first is what makes `pnpm bump`
-# honest and the push a fast-forward. Because the branch is not named `dev`,
-# the push has to say where it goes: **`git push origin HEAD:dev`**.
-#
-# **In the main clone** — the owner's own checkout, and an agent that skipped
-# the worktree. Move to `dev` and carry over any commits already made on the
+# **In the main clone**, move to `dev` and carry over any commits made on the
 # assigned branch. `main` is a release pointer the owner fast-forwards by hand;
-# nothing is ever committed to it, so being *on* main is also a branch to leave,
-# and commits found there were a mistake — carried onto `dev`, then rewound off
-# main, so the pointer goes on meaning "what production is serving".
+# commits found on it were a mistake, so they are carried onto `dev` and then
+# rewound off main, and the pointer goes on meaning "what production serves".
 #
-# Safe to re-run, in either shape. Commits already made are carried over, never
-# discarded.
+# Safe to re-run, either shape. Commits are carried over, never discarded.
 set -e
 
 # Every question below is about ancestry, and a shallow clone cannot answer one:
