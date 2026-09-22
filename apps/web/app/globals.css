@@ -1,9 +1,7 @@
 /* ============================================================
-   RESET — the browser defaults these screens were written against.
-   Tailwind's preflight did this, from a dependency whose utilities the app
-   never used once. What is here is preflight's rules for the elements the app
-   actually renders, and nothing for the ones it doesn't: rendering a <small>,
-   a <summary> or an <optgroup> means reading its defaults first.
+   RESET — preflight's rules for the elements the app renders, and nothing
+   for the ones it doesn't: rendering a <small>, a <summary> or an
+   <optgroup> means reading its defaults first.
    ============================================================ */
 *, ::before, ::after, ::backdrop {
   box-sizing: border-box;
@@ -79,10 +77,8 @@ textarea { resize: vertical }
 
 /* ============================================================
    TOKENS — terminal neutrals, one monospace face, and exactly two
-   colours: a green and a red, spent only on balances. Lifted verbatim
-   from design/mockups/index.html. If you change a value here, change
-   it there too: the mockup is the design's source of truth and a
-   drifted mockup is a lying one.
+   colours: a green and a red, spent only on balances. Mirrored in
+   design/mockups/index.html — change a value in both.
    ============================================================ */
 :root {
   --paper:#F1F1EF; --paper-2:#E8E8E5;
@@ -115,10 +111,8 @@ textarea { resize: vertical }
      place in the app that is a picture, and a picture has to sit further off
      its ground than text does — at palette values it went to mush in dark. */
   --draw-bg:var(--card-2); --draw-rule:var(--rule); --draw-ink:var(--muted);
-  /* The bill half only. With no outline left on it, the torn strip has nothing
-     but its fill to hold its shape, so it sits further off the ground than the
-     form beside it does. It goes *down* in light, not up: white paper on this
-     near-white ground is a receipt that vanishes, teeth and all. */
+  /* The bill half only: with no outline, the torn strip has only its fill to hold
+     its shape. It goes *down* in light — white paper on this ground vanishes. */
   --draw-paper:var(--card-3);
   /* The dev Worker's top bar, so a test phone never passes for production.
      Only ever read under [data-env="dev"], which the dev Worker alone stamps
@@ -134,10 +128,8 @@ textarea { resize: vertical }
   --kb: 0px;
   --kb-gap: 0px;
 
-  /* One face for everything. next/font sets --font-mono on <html>, which is
-     :root, so the fallback stack only bites if the font fails to load. The
-     three role names survive because the rules below still speak in roles —
-     display is weight, not family. */
+  /* One face for everything. next/font sets --font-mono on <html>; the fallback
+     stack only bites if the font fails to load. */
   --f-mono: var(--font-mono, "JetBrains Mono"), ui-monospace, "SF Mono", Menlo, monospace;
   --f-display: var(--f-mono);
   --f-body: var(--f-mono);
@@ -256,18 +248,12 @@ input, textarea, .selectable {
 
 /* ============================================================
    TAP FEEDBACK
-   A screen that hasn't repainted yet and a screen that didn't hear you look
-   identical, and the ledger is a list of things you press. Every control
-   darkens under the thumb the moment it's touched and releases over ~.2s.
-   It is a wash laid over whatever the control already sits on — a row on
-   paper, a highlighted row, the inverted FAB — so one value covers all of
-   them and nothing's resting appearance changes. Nothing moves and nothing
-   scales: this design doesn't float.
-
-   The browser's own tap highlight goes with it. It arrives on a delay of its
-   own, disagrees with these colours, and on iOS boxes the whole row in blue.
-   `touch-action: manipulation` drops the 300ms double-tap-to-zoom wait that
-   sits in front of every tap along with it.
+   Every control darkens under the thumb the moment it's touched and
+   releases over ~.2s: a screen that hasn't repainted and one that didn't
+   hear you otherwise look identical. A wash over whatever the control sits
+   on, so one value covers all of them. Nothing moves or scales.
+   The browser's tap highlight is off (it lags and boxes rows in blue on
+   iOS), and `touch-action: manipulation` drops the 300ms double-tap wait.
    ============================================================ */
 a, button, label, select, .seg button, .itemcell {
   -webkit-tap-highlight-color: transparent;
@@ -290,10 +276,7 @@ a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active
 }
 
 /* ============================================================
-   The app's own components, ported from design/mockups/index.html.
-   Kept as plain CSS rather than Tailwind soup because these are the
-   ledger's vocabulary — rows, rules, columns — and they belong in one
-   place where they can be compared against the mockup line by line.
+   The app's own components, mirroring design/mockups/index.html.
    ============================================================ */
 
 h1, h2, h3, h4 {
@@ -308,25 +291,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 a { color: inherit; text-decoration: none }
 
 /* ---- the shell: header, scrolling middle, fixed footer ---- */
-/* The shell owns the viewport exactly: `height`, not `min-height`. With
-   min-height the shell grew with its content, the document scrolled instead of
-   .scroll, and the bottom bar sat at the foot of a long page — only visible
-   once you had scrolled to the end of the expenses. `dvh` rather than `vh`
-   because iOS Safari's collapsing toolbar otherwise eats the bar.
-   And `max-height: 100%` because the shell must never outgrow the box that
-   clips it: `body` is `height: 100%; overflow: hidden`, so a `dvh` reported
-   taller than that — a browser being wrong, which is what a screen missing its
-   bottom nav or its about line looks like — would put the shell's last strip
-   below the fold with nothing that can scroll to it. Right browsers report the
-   two the same, so the cap costs them nothing. */
-/* The strip iOS paints behind the status bar in a home-screen app is the page's
-   own backdrop — body's background, not `theme-color`, which reaches Android and
-   not this. At phone width the shell fills the screen, so that strip is the only
-   place body is ever seen, and paper under a card-coloured bar drew a seam
-   exactly where iOS 26 lays its status-bar scrim: the gradient had an edge to
-   reveal, and the dev build's green bar made a band of it. Matched, the scrim
-   has one surface to dim and reads as a vignette. Above 560px the gutters beside
-   the shell are the paper the card floats on, and keep it. */
+/* The shell owns the viewport exactly: `height`, not `min-height`, or the
+   document scrolls instead of .scroll and the bottom bar sinks to the foot of
+   the page. `dvh` because iOS Safari's collapsing toolbar eats `vh`.
+   `max-height: 100%` because `body` clips: a browser reporting `dvh` taller
+   than that would put the shell's last strip below the fold, unreachable. */
+/* The strip iOS paints behind the status bar in a home-screen app is body's
+   background (not `theme-color`, which is Android's). Paper under a
+   card-coloured bar draws a seam where iOS 26 lays its status-bar scrim, so at
+   phone width body matches the bar. Above 560px the gutters stay paper. */
 @media (max-width: 560px) {
   body { background: var(--card) }
   [data-env="dev"] body { background: var(--dev-bar) }
@@ -356,14 +329,9 @@ a { color: inherit; text-decoration: none }
 [data-env="dev"] .topbar { background: var(--dev-bar) }
 .topbar h3 { font-size: 17px; letter-spacing: -.03em; line-height: 1.15 }
 .topbar-title { min-width: 0 }
-/* The bar is furniture, and furniture keeps its shape whatever is typed into
-   the app. Two lines is what a 40-character group name takes here; past that
-   the bar would grow and strand its own buttons in the middle of a paragraph,
-   which is what a sentence typed into an expense's title used to do. Anything
-   with more to say than this says it in the screen — `.entrytitle`. The
-   sub-line gets one line, not two: every one of them is a caption on the title
-   above it — a name, a date, a figure — and a caption that runs to a second
-   line is the thing it captions, in the wrong place. */
+/* The bar is furniture: at most two lines of title (a 40-character group
+   name), one of sub-line. Past that it would strand its own buttons; anything
+   longer belongs in the screen — `.entrytitle`. */
 .topbar h3, .topbar .sub { display: -webkit-box; -webkit-box-orient: vertical;
   overflow: hidden; overflow-wrap: anywhere }
 .topbar h3 { -webkit-line-clamp: 2 }
@@ -428,28 +396,15 @@ a { color: inherit; text-decoration: none }
 .ghostrow + .ghostrow { padding-top: 11px }
 
 /* The two ways to start: a group, or a bill with people who are not one. Two
-   squares rather than a box cut in two: these are two different jobs, not one
-   act with two doors, and the ledger already says that shape in its two FABs
-   — an ink block and an outline beside it. So this is that pair grown up: big
-   enough to carry a word as well as the icon, and off the list rather than in
-   it, because neither is a group and the dashed square said they were.
-   `margin-top: auto` still settles it at the *foot* of a short list, within
-   reach of a thumb; `position: sticky; bottom: 0` is what a long one needs —
-   pinned to the bottom of `.scroll` (its containing block, per `.diag-act`
-   below) once scrolling would otherwise carry it past the last row and out of
-   reach, rather than only after that row is in view. It floats over those rows
-   with no ground and no hairline, exactly as the FABs it echoes do: each tile
-   is opaque on its own — an ink block and an outline on paper — so the pair
-   reads as two figures over the list rather than a dock cutting the screen in
-   two. The extra bottom padding is what holds them clear of the edge now that
-   there is no band under them doing it. */
+   separate jobs, so two squares echoing the ledger's two FABs rather than one
+   box cut in two. `margin-top: auto` settles it at the foot of a short list;
+   `position: sticky; bottom: 0` pins it over a long one (`.scroll` is the
+   containing block). No ground behind it — each tile is opaque — and the
+   bottom padding holds them clear of the edge. */
 .homepair { padding: 16px 16px max(28px, calc(env(safe-area-inset-bottom) + 12px));
   margin-top: auto; position: sticky; bottom: 0; z-index: 1 }
-/* Centred rather than full-bleed: a square that stretched to half the screen
-   would be a 170px tile, which outweighs the list it sits under. The gap is
-   the ledger FABs' 10px at double the tile — close enough that the two read as
-   one pair, which is what the margin around them is for; air measured against
-   that margin instead pushed them into opposite corners. */
+/* Centred rather than full-bleed: a half-screen square would outweigh the list.
+   The gap keeps the two reading as one pair. */
 .starttiles { display: flex; justify-content: center; gap: 20px }
 /* Square, like the FABs, and stacked icon-over-word because that is the only
    way a word fits inside a square without turning it into a row. */
@@ -479,27 +434,19 @@ a { color: inherit; text-decoration: none }
   color: var(--ink) }
 
 /* The screen behind that line (app/about/page.tsx), and `/advanced` with it:
-   prose, which is the one thing this app otherwise never shows. So it is set as
-   prose — a column with air between its claims, measured rather than
-   full-bleed, and no cards: a box per section would have made a settings list
-   out of four paragraphs read once, top to bottom. `/advanced` borrows it
-   because it is asking for trust rather than offering switches, and that is a
-   thing said in paragraphs. */
-/* Centred, not flush left: the measure is narrower than the 560px shell, so
-   on anything wider than a phone the column hugged the left edge and left a
-   finger of empty card down the right of every paragraph. */
+   prose, set as prose — a measured column with air between claims, no cards. */
+/* Centred: the measure is narrower than the 560px shell. */
 .about { display: flex; flex-direction: column; gap: 22px;
   max-width: 34em; margin-inline: auto; padding-top: 6px; padding-bottom: 34px }
 .aboutsect h4 { font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em;
   text-transform: uppercase; color: var(--ink-2); margin-bottom: 7px }
-/* Plain wrapping, not `text-wrap: pretty`: Safari evens a paragraph's lines by
-   breaking early, and in a monospace column on a small iPhone that left a
-   ragged fifth of the width empty down the right of every claim. */
+/* Plain wrapping, not `text-wrap: pretty`: Safari breaks early to even the
+   lines, which in a monospace column on a small iPhone leaves a ragged fifth
+   of the width empty. */
 .aboutsect p { font-size: 13px; line-height: 1.55; color: var(--ink-2) }
 .aboutsect p + p { margin-top: 9px }
-/* A refusal inside an `.aboutsect` is still a refusal: the section's own
-   paragraph rule outweighs `.failure`, which quietly greyed the one line on
-   the import screen that has to be read (app/import/page.tsx). */
+/* A refusal inside an `.aboutsect` is still a refusal: the section's paragraph
+   rule outweighs `.failure` and would grey it (app/import/page.tsx). */
 .aboutsect p.failure { font-size: 12px; color: var(--debit) }
 .aboutsect p strong { color: var(--ink); font-weight: 600 }
 /* A link set mid-sentence rather than in its own `.aboutlink` row: the
@@ -563,14 +510,10 @@ a { color: inherit; text-decoration: none }
 .linkbox.on { border-color: var(--ink-2) }
 .linkbox.on .linkboxstate { color: var(--ink) }
 .linkbox:active { transform: scale(.99) }
-/* One stored row, shown because the claim above it can be shown. Everything on
-   this screen is already monospace, so the block earns its separateness with a
-   card ground and a size step down rather than a typeface. An actual table,
-   field across the top and values below, rather than four stacked label/value
-   lines — the same four fields read in one line instead of four. Each value is
-   already the short end of a truncation, not a wrap candidate, so a real one
-   would look invented; these are cut to match. Centred in the column: it is
-   an exhibit, not a line of the paragraph, and flush left it read as one. */
+/* One stored row, shown because the claim above it can be shown: an actual
+   table, fields across the top, on a card ground a size step down. The values
+   are cut to match real truncations. Centred: it is an exhibit, not a line of
+   the paragraph. */
 .aboutrow { margin: 13px auto 0; border-collapse: separate; border-spacing: 0;
   background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-m);
   font-size: 11.5px; line-height: 1.5; overflow: hidden }
@@ -581,9 +524,7 @@ a { color: inherit; text-decoration: none }
 /* Bringing your own Gemini key (app/advanced/page.tsx). The screen borrows
    /about's prose column and the ledger's add-a-name row, so what is here is
    only what neither of those already says. */
-/* A settings section is titled, not labelled: `/about`'s eyebrow is a mono
-   caption over a paragraph you are already reading, and this is the name of
-   the one thing the screen does. */
+/* A settings section is titled, not labelled like `/about`'s eyebrow. */
 .advanced .aboutsect h4 { font-family: inherit; font-size: 16px; font-weight: 650;
   letter-spacing: -.02em; text-transform: none; color: var(--ink); margin-bottom: 9px }
 /* The key's own row. `.addrow.editing` draws the box; this puts the key in the
@@ -592,9 +533,7 @@ a { color: inherit; text-decoration: none }
    a class rather than by `!important`: the row is the width of the column here,
    not an inset row in a list. */
 .advanced .addrow.keyrow { margin: 16px 0 0; width: 100% }
-/* Set down from the paragraph it follows, which /install's fold is not: there
-   the fold is an aside to the steps above it, here it is the next thing on the
-   screen, and hard against the lede it read as that paragraph's last line. */
+/* Set down from the lede, or the fold reads as that paragraph's last line. */
 .advanced .installfold { margin-top: 16px }
 .keyinput { font-family: var(--f-mono); font-size: 12.5px; font-weight: 500 }
 /* Locked: the field stays exactly where it was and stops being a field. Muted
@@ -606,9 +545,7 @@ a { color: inherit; text-decoration: none }
    colours the last of the three; this is only the placement they share. */
 .keynote { font-size: 12px; line-height: 1.5; color: var(--muted); margin: 9px 2px 0 }
 
-/* Email and source, the two ways out of the app, side by side above the
-   claims: both read as one short word now (`Email`, `GitHub`), which is what
-   lets the pair sit on one line where the raw address used to force a wrap. */
+/* Email and source, side by side above the claims. */
 .aboutcontact { display: flex; align-items: center; gap: 22px }
 /* Elsewhere a list of one: stacked rather than side by side, since an address
    or a sentence-length link is long and a phone is narrow. Underlined because
@@ -629,38 +566,24 @@ a { color: inherit; text-decoration: none }
 .addname { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0 }
 .addname::placeholder { color: var(--muted); font-weight: 500 }
-/* The plus is what files a name, and 32px — the size every `.iconbtn` draws
-   at — is under the ~44px a thumb reliably lands on. The row around it has
-   room to spare (16px of its own padding, 12px of gap to the field), so the
-   pseudo-element borrows from that instead of growing the button and
-   throwing off every other row that shares its size. `position: relative`
-   here, not on `.iconbtn` generally, is what keeps the enlarged box anchored
-   to the button rather than to the row (`.row` is already positioned) — and
-   disabled swallows the press same as ever, since a disabled control takes
-   none of it, pseudo-element included. */
+/* The plus is 32px, under the ~44px a thumb lands on, so a pseudo-element
+   borrows the row's spare padding rather than growing the button.
+   `position: relative` here, not on `.iconbtn` generally, anchors that box to
+   the button (`.row` is already positioned). Disabled still swallows the press. */
 .addrow .iconbtn { position: relative }
 .addrow .iconbtn::before { content: ""; position: absolute; inset: -8px }
-/* Every list of names ends on the act it was typed for — Create, "Continue as
-   …", the scan pair, "Change who you are" — and that act sits *below* the add
-   row, on the scroll rather than in a pinned foot (design-system). A field
-   lifted to the top of the keyboard leaves it behind one: you can add the sixth
-   person and not see what to do next. So this field asks for room under itself,
-   and `components/viewport.tsx` is what spends it — the browser keeps the
-   margin for scrolls it was making anyway and ignores it for a field it has
-   already parked above the keys, which is this case exactly.
-   One value for four screens, cut for the tallest of them: the quick split's
-   scan pair, 101px below the field while the row is drawn as a box. The other
-   three buy a few pixels of air above the keys with it. A screen whose act
-   outgrows this raises it on its own scroller; `pnpm keyboard` is what says so
-   (docs/testing.md). */
+/* Every list of names ends on the act it was typed for, *below* the add row on
+   the scroll. A field lifted above the keyboard leaves that act behind it, so
+   the field asks for this much room under itself and components/viewport.tsx
+   spends it. Cut for the tallest case, the quick split's scan pair (101px below
+   the field). A screen whose act outgrows it raises it on its own scroller;
+   `pnpm keyboard` catches that (docs/testing.md). */
 :root { --act-below: 104px }
 .addname { scroll-margin-bottom: var(--act-below) }
 /* A name in the field is *not* on the list: nothing files it but the plus. So
-   the moment there is one the row stops being a row and becomes a box — lifted
-   off the list on its own ground, ringed in the hard rule rather than the
-   hairline that separates rows, and no longer sharing their bottom edge. The
-   inset is one pixel of border and eight of margin, so the name and the plus
-   stay on the columns they were on: the box moves, the writing doesn't. */
+   while there is one, the row becomes a box on its own ground, ringed in the
+   hard rule. One pixel of border plus eight of margin keeps the name and the
+   plus on the columns they were on. */
 .addrow.editing { margin: 6px 8px 10px; padding: 10px 7px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
 /* The name that field would repeat, said under it and aligned with the names
@@ -683,15 +606,11 @@ a { color: inherit; text-decoration: none }
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }
 .ramt .sm { font-family: var(--f-mono); font-size: 10.5px; color: var(--muted);
   font-variant-numeric: tabular-nums; margin-top: 1px }
-/* Copying a group's link off its row answers in the row's own figure: the
-   amount turns away on its X axis and the check comes up behind it, the
-   transfer arrow's "these traded places" read (`.tside .who`) applied to one
-   cell. Two differences from that one. The check is laid over the figure
-   rather than beside it, so the column keeps the width its digits gave it and
-   the list doesn't shuffle. And it is a transition, not keyframes: this
-   reverses itself 1.6s later (`useInviteLink`) and a class going away replays
-   no animation — the delays carry the order, whichever way it runs, so the
-   face leaving is always half gone before the one arriving starts. */
+/* Copying a group's link off its row flips its figure on the X axis to a check
+   laid over it, so the column keeps its width. A transition, not keyframes: it
+   reverses 1.6s later (`useInviteLink`) and removing a class replays no
+   animation — the delays keep the leaving face half gone before the next one
+   starts, in either direction. */
 .grouprow .ramt { position: relative; perspective: 260px }
 .grouprow .ramt .amtface, .grouprow .ramt .copiedface {
   transition: transform .2s ease, opacity .2s ease; backface-visibility: hidden }
@@ -703,12 +622,8 @@ a { color: inherit; text-decoration: none }
 .grouprow .ramt.copied .copiedface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
 @media (prefers-reduced-motion: reduce) {
   .grouprow .ramt .amtface, .grouprow .ramt .copiedface { transition: none } }
-/* The same flip at the size of one glyph, for the two icon buttons that copy
-   the link where a whole figure cannot: the group's kebab and People's top bar
-   (`FlipCheck`). Same .2s/.16s pair as above, so the gesture reads the same
-   whichever of the three places it is made in. Shallower perspective because
-   the box is 18px, not a column of digits: 260px across that little barely
-   bends. */
+/* The same flip at glyph size, for the two icon buttons that copy the link
+   (`FlipCheck`). Same timings; shallower perspective for an 18px box. */
 .flipcheck { position: relative; display: block; perspective: 120px }
 .flipcheck .flipface, .flipcheck .checkface {
   display: block; transition: transform .2s ease, opacity .2s ease; backface-visibility: hidden }
@@ -719,38 +634,25 @@ a { color: inherit; text-decoration: none }
 .flipcheck.on .checkface { transform: rotateX(0); opacity: 1; transition-delay: .16s }
 @media (prefers-reduced-motion: reduce) {
   .flipcheck .flipface, .flipcheck .checkface { transition: none } }
-/* And once more across a whole line, for the one copy in the app whose button
-   carries words rather than a glyph: the quick split ends by handing the bill
-   over as text (ADR-0035), so what turns is the label, with the check coming up
-   beside the word behind it. The box is a button's width now, so the
-   perspective opens up — 120px across that bows the ends of a line — and the
-   check drops the brand colour, which on a filled primary button would print it
-   in the background's own ink. */
+/* And across a whole button label, for the quick split's copy (ADR-0035).
+   Wider perspective for a line; the check drops the brand colour, which on a
+   filled primary button would vanish into its ground. */
 .flipcheck.line { flex: 1; perspective: 400px }
 .flipcheck.line .flipface, .flipcheck.line .checkface {
   display: flex; align-items: center; justify-content: center; gap: 8px; color: inherit }
-/* A ledger row's height must not depend on what is in it. Only some entries
-   carry a second figure — the sum as it was spent, before the group's currency
-   — and a row that grew a line for it broke the rhythm of the list wherever one
-   landed. So the row is held to the height of the three-figure case and the
-   column is centred in it: a row with two figures keeps them together and takes
-   the slack as air above and below, rather than opening a gap between the sum
-   and your share. The tighter leading is what keeps that height near the old
-   two-line row's, so the ledger holds as many entries per screen as before.
-   The groups list and the skeleton drawn for both are held to the same height,
-   so a row is a row everywhere and loading doesn't resize the list. */
+/* A ledger row's height must not depend on what is in it: rows are held to the
+   three-figure case and the column is centred, so a second figure (the sum as
+   spent) doesn't break the list's rhythm. The groups list and the skeleton
+   share the height, so loading doesn't resize the list. */
 .entryrow, .grouprow, .skelrow { min-height: 68px }
 .entryrow .ramt { line-height: 1.25 }
 .credit { color: var(--credit) } .debit { color: var(--debit) }
 
 /* ---- your own money, pulled out of the group's ---- */
 /* A ledger row says which way it moved you on its own figure — a sign and a
-   colour, which survives colour-blindness together and a phone in the sun.
-   Green is money coming back to you, red is money you owe. The row itself
-   stays the plain row of the groups list: nearly every entry is one of yours,
-   so the wash and the coloured edge that used to mark them lit the whole
-   screen and marked nothing. What is *not* yours is still the exception, so
-   that is what the list dims — lightly, since the figure says it too. */
+   colour. Green is money coming back to you, red is money you owe. Nearly
+   every entry is yours, so no row wash here; what is *not* yours is dimmed,
+   lightly, since the figure says it too. */
 .share { display: block; font-weight: 700; color: var(--muted) }
 .share.credit { color: var(--credit) }
 .share.debit { color: var(--debit) }
@@ -773,30 +675,20 @@ a { color: inherit; text-decoration: none }
 /* ---- receipt item assignment ---- */
 .itemchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   padding: 4px 10px 4px 4px; border-radius: var(--r-s); border: 1px solid var(--rule); background: var(--card-2) }
-/* One scroller, not three bands. Who was there, the grid and the running totals
-   all live in here and scroll as one: at eight people the two bands that are not
-   the grid used to freeze 351px of a 640px phone, leaving 230px — three and a
-   half lines of a twelve-line bill — for the only part of the screen anybody
-   touches. What genuinely has to stay put is what you work against — the row of
-   initials and the column of names — and each earns that on its own below.
-   It scrolls both ways on purpose: `position: sticky` resolves against the
-   nearest scroll container, so splitting the axes across two nested scrollers —
-   the outer one down, an inner one sideways — would leave the header nothing to
-   stick to. Which makes `.itemwide` below the price of keeping them together. */
+/* One scroller: who was there, the grid and the totals scroll as one, so the
+   frozen parts are only what you work against — the initials row and the name
+   column. Both axes on purpose: `position: sticky` resolves against the
+   nearest scroll container, so nested scrollers would leave the header nothing
+   to stick to. `.itemwide` below is the price of that. */
 .itemscroll { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rule-soft) }
-/* The blocks in the scroller that are prose rather than grid — the chips, the
-   caption under the rows nobody ordered, the totals. They belong to the screen,
-   not to a column, so they must not travel sideways with the table or widen the
-   scroll it has already earned. `width: 100%` inside a scroll container is the
-   *visible* width — a block child's containing block is the scroller's content
-   box, not its scrollWidth — so this is one screenful however wide the table is,
-   and `left: 0` holds it there while the columns pass under the table's own. */
+/* The prose blocks in the scroller — the chips, the note, the totals — must not
+   travel sideways with the table. `width: 100%` inside a scroll container is the
+   *visible* width, so this is one screenful however wide the table, and
+   `left: 0` holds it there. */
 .itemwide { position: sticky; left: 0; width: 100%; box-sizing: border-box }
 .itemhead { padding: 10px 16px 12px }
-/* Wrapped, not a line that scrolls sideways: height is cheap now that this band
-   scrolls away, and a second sideways scroller stacked on the grid's was one too
-   many. Eight people wrap to three rows you read at a glance instead of five
-   chips and a hidden three. */
+/* Wrapped, not a sideways strip: a second sideways scroller on top of the grid's
+   is one too many. */
 .whostrip { display: flex; flex-wrap: wrap; gap: 6px }
 /* Pays `--kb` like `.foot` does: the tip is typed a row above this band, and
    the keyboard overlays the shell rather than shortening it, so without it the
@@ -808,11 +700,8 @@ a { color: inherit; text-decoration: none }
 .footnote { font-size: 11.5px; color: var(--muted); margin-bottom: 7px }
 .footnote.bad { color: var(--debit); font-weight: 600 }
 .footnote b { font-family: var(--f-mono); font-weight: 500; color: var(--ink-2) }
-/* A column, not a sideways strip: a total you have to scroll to find is a total
-   you don't read, and stacked rows put every figure on one right edge. It sits
-   under the grid inside the one scroller, so it is uncapped and never scrolls
-   inside itself — the 26dvh cap it used to wear was 166 frozen pixels showing
-   six of eight people, which is the worst of both. */
+/* A column, not a sideways strip, so every figure is on one right edge.
+   Uncapped: it scrolls with the grid, never inside itself. */
 .itemtotals { padding: 10px 16px 14px }
 .totalstrip { display: flex; flex-direction: column }
 .tot { display: flex; align-items: center; gap: 8px; padding: 5px 0;
@@ -823,31 +712,20 @@ a { color: inherit; text-decoration: none }
 .tot .amt { font-family: var(--f-mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
   font-weight: 600 }
 
-/* `separate`, not `collapse`: a collapsed border belongs to the table, so it
-   scrolls away from under a sticky header cell instead of travelling with it.
-
-   `fixed`, because widths that are computed from content are widths that move:
-   under `auto` the browser measures every cell and works backwards, so opening
-   one run — which adds "· 1/2" to an amount, swaps the ×N button and indents
-   the row — re-measured the whole table and shifted the name column 3px with
-   every dot on the screen following it. Here the widths are declared once in the
-   `<colgroup>` and no row can touch them. The columns still scroll sideways;
-   they just scroll a width they agreed on in advance.
-
-   `--cols` is set on the element: the table has to overflow the scroller rather
-   than squash its columns to fit it, and only the render knows how many there
-   are. It was squashing them — at 390px wide the person columns came out 35px,
-   narrower than the 40px cell inside them, which overflowed its own `<td>`. */
+/* `separate`, not `collapse`: a collapsed border belongs to the table and
+   scrolls away from under a sticky header cell.
+   `fixed`: under `auto` opening a run (which adds "· 1/2" and indents the row)
+   re-measures the table and shifts every column. The widths are declared once
+   in the `<colgroup>`.
+   `--cols` is set on the element so the table overflows the scroller rather
+   than squashing its columns narrower than the 40px cells inside them. */
 .itemtable { border-collapse: separate; border-spacing: 0; font-size: 12.5px;
   table-layout: fixed; width: 100%;
   --label-w: 152px; --who-w: 44px;
   min-width: calc(var(--label-w) + var(--cols, 0) * var(--who-w)) }
-/* Both columns declare a width, so a table with room to spare widens all of
-   them in proportion rather than spending every spare pixel on the names — two
-   people and an auto label column put the dots against the right edge, half a
-   screen from the line they belong to. Below the floor `min-width` sets, these
-   are the widths; above it they are the ratio. Either way they are a function of
-   how many people are at the table and nothing else, which is the point. */
+/* Both columns declare a width, so spare room widens them in proportion rather
+   than all going to the names (which put the dots half a screen from their
+   line). The widths depend only on how many people there are. */
 .itemtable .collabel { width: var(--label-w) }
 .itemtable .colwho { width: var(--who-w) }
 .itemtable th, .itemtable td { border-bottom: 1px solid var(--rule-soft); padding: 6px 3px; text-align: center }
@@ -856,23 +734,15 @@ a { color: inherit; text-decoration: none }
 /* Freezes the initials row: on a twenty-line bill the columns are otherwise
    anonymous by the time you've scrolled to the last item. */
 .itemtable thead th { position: sticky; top: 0; z-index: 2; border-bottom-color: var(--rule) }
-/* And freezes the names, for the same reason in the other direction: eight
-   people do not fit across a phone at any width worth having, so this table is
-   read sideways — and a row whose name has scrolled off is a row of anonymous
-   dots. The corner cell is in both sticky rows at once and has to outrank each
-   of them, or the column scrolls over the initials it is headed by. */
+/* And freezes the names: the table is read sideways, and a row whose name has
+   scrolled off is anonymous. The corner cell is in both sticky rows and must
+   outrank each, or the column scrolls over its own initials. */
 .itemtable thead th:first-child { left: 0; z-index: 3 }
-/* An avatar is a grid, so it is block-level and the cell's `text-align` does
-   nothing to it: it sat against the column's left edge, a whole cell-padding
-   away from the dots under it. Centred the same way `.itemcell` is below, so
-   the column — initials, dots, and the faint ones on the rows nobody ordered —
-   is one axis all the way down. */
+/* An avatar is a grid, so the cell's `text-align` doesn't centre it; centred
+   like `.itemcell` so initials and dots share one axis. */
 .itemtable th .avatar { margin-inline: auto }
-/* Beats `.itemtable td { text-align: center }`, which this column never wanted.
-   Sticky against the left edge with the initials above it, and opaque: the dots
-   pass underneath, so a cell that let them through would read as a name with
-   somebody else's answer written across it. `--card` is the shell's own
-   background — the table has none of its own to inherit. */
+/* Beats `.itemtable td { text-align: center }`. Sticky and opaque: the dots
+   pass underneath. `--card` because the table has no background to inherit. */
 .itemtable .itemlabel { text-align: left; position: sticky; left: 0; z-index: 1;
   background: var(--card); padding-left: 12px; padding-right: 8px }
 .itemrow { display: flex; align-items: center; justify-content: space-between; gap: 8px }
@@ -897,31 +767,22 @@ a { color: inherit; text-decoration: none }
 /* A highlighter band across the portions of one printed line, capped by a rule
    down its left edge: they read as one dish shared out, not as two lines the
    receipt happened to print. */
-/* The caption under the rows nobody ordered. It used to be the table's own last
-   row, to scroll with the rows it is about; now that the whole screen scrolls
-   together it can sit under the table and still do that — and as a block rather
-   than a cell it reads even less like a fourth charge. Out of the table because
-   a sentence in a `colSpan` cell wraps at the table's width, not the screen's,
-   so half of it would have been off to the right. */
+/* The caption under the rows nobody ordered. Outside the table because a
+   sentence in a `colSpan` cell wraps at the table's width, not the screen's. */
 .itemnote { font-size: 11px; line-height: 1.35; color: var(--muted);
   padding: 9px 16px 0 12px }
 .itemtable tr.part td { background: var(--hl-row) }
-/* The same band, once, and over something opaque. Two things have to be said
-   here rather than inherited. The image, because the sticky column needs a
-   background the dots cannot pass through and `--hl` is translucent — mixed into
-   the card it lands at 72% alpha and lets them through, so the band is laid
-   *over* the card instead. And the colour, because `tr.part td` above is the
-   more specific selector and would otherwise replace that opaque card with the
-   band itself — painting it twice down the name column and once across the
-   cells, which is two greys in one row. */
+/* The same band, over something opaque. The image, because the sticky column
+   needs a solid background and `--hl` is translucent, so the band is laid over
+   the card. The colour, because `tr.part td` above is more specific and would
+   otherwise paint the band twice down the name column. */
 .itemtable tr.part .itemlabel { padding-left: 15px; box-shadow: inset 3px 0 0 var(--hl-edge);
   background-color: var(--card);
   background-image: linear-gradient(var(--hl-row), var(--hl-row)) }
 .itemtable tr.part .itemname { font-weight: 400 }
-/* The tip is the one figure on this screen you type rather than read, and it
-   wore the same borderless mono as the printed amounts above it — so it read
-   as another line off the bill and nobody tried tapping it. A field's outline,
-   a pencil beside it, and a word underneath while it's empty. */
+/* The tip is the one figure here you type rather than read, so it wears a
+   field's outline, a pencil, and a word underneath while empty — in the
+   printed amounts' mono nobody tried tapping it. */
 .tipfield { display: flex; align-items: center; gap: 5px; margin-top: 3px }
 .itemamountin { width: 72px; font-family: var(--f-mono); font-size: 11px; color: var(--ink);
   background: var(--card-2); border: 1px solid var(--rule); border-radius: var(--r-s);
@@ -929,25 +790,17 @@ a { color: inherit; text-decoration: none }
 .itemamountin:focus { border-color: var(--brand) }
 .itemamountin::placeholder { color: var(--muted) }
 .tipedit { color: var(--muted); flex: none }
-/* Fills its `<td>` rather than sitting in it as a 40px island: the column went
-   from 56px to 44px, and a cell that takes the whole of it is the larger tap
-   target of the two — the full column width by the row's own height. It also
-   retires a `margin-inline: auto` that was there to centre the island in a
-   column the table had made wider, which under `table-layout: fixed` above it
-   no longer can. `place-items` centres the dot on the header's initials. */
+/* Fills its `<td>`, so the tap target is the whole column by the row's height.
+   `place-items` centres the dot on the header's initials. */
 .itemcell { width: 100%; height: 34px; display: grid; place-items: center }
 .itemcell .dot { width: 10px; height: 10px }
-/* The rows nobody ordered wear the same cell, minus the button: their faint dot
-   was a bare span centred by the cell's `text-align`, while every dot above it
-   rides a 40px grid box that ignores that — which left the two columns of dots
-   a few pixels out of line with each other, visibly so down a long bill. */
+/* The rows nobody ordered wear the same cell minus the button, so both columns
+   of dots stay in line down a long bill. */
 .itemcell.ghost { opacity: .35 }
 .itemcell.ghost .dot { width: 6px; height: 6px }
-/* The split mark: two smaller squares, overlapping on the diagonal. A run of
-   portions handed out unevenly can't be drawn as a dot — that would say "all of
-   it" — and it can't be drawn as nothing either, so it gets the dot broken in
-   two. The card-coloured edge on the lower square is what keeps the overlap
-   readable; without it the pair is one blob at 10px. */
+/* The split mark: two smaller squares overlapping on the diagonal, for a run
+   handed out unevenly — a dot would say "all of it". The card-coloured edge on
+   the lower square keeps the pair from blurring into one blob at 10px. */
 .itemcell .dot.some { background: none; position: relative }
 .itemcell .dot.some::before, .itemcell .dot.some::after {
   content: ""; position: absolute; width: 6.5px; height: 6.5px; border-radius: 1px;
@@ -958,20 +811,12 @@ a { color: inherit; text-decoration: none }
    shape of an answer to point at when the grid says "here". */
 .itemcell .dot.off { opacity: 0 }
 
-/* Pointing at a column: the run a tap just opened, in the tapper's own column.
-   Not a refusal — nothing is wrong and nothing is being asked for — so no
-   `--debit` and no going darker: **the column meets in the middle**. Every cell
-   in it, the assigned and the empty alike, holds at the `.35` the rows nobody
-   ordered wear, so what the opened run shows first is the places an answer
-   could go; when it has stopped moving the hold is released and each dot eases
-   back to what it really is. Fading is also the only half of this that can be
-   *seen* on an assigned dot: `--ink-2` has nowhere darker to go.
-
-   The hold is a plain state and not an animation, because it starts on rows
-   that are being painted for the first time: dots that appear at full strength
-   and are dimmed a beat later flicker, and nothing eases *into* a row that did
-   not exist a frame ago. Last of the three `.dot` rules on purpose — it has to
-   beat `.off`, and they weigh the same. */
+/* Pointing at a column: the run a tap just opened, in the tapper's column. Not
+   a refusal, so no `--debit`: every cell in it holds at `.35`, showing where an
+   answer could go, then the hold is released and each dot eases back.
+   A plain state and not an animation, because it starts on rows painted for
+   the first time: dimming them a beat later flickers. Last of the three `.dot`
+   rules on purpose — it has to beat `.off`, and they weigh the same. */
 .itemcell.point-hold .dot { opacity: .35 }
 /* The release. One keyframe pair for both kinds of dot: with only a `from`,
    each eases to its own resting value — the assigned back to full, the empty
@@ -991,33 +836,23 @@ a { color: inherit; text-decoration: none }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
-/* A screen's question when the bar is spent naming where you are (`/g/claim`,
-   where the bar says which group you were invited to). It is the screen's
-   title, and the first thing a new joiner reads, so it is set above the bar's
-   own 17px and centred: left-aligned at list size it read as a label on the
-   rows under it rather than the thing being asked. Balanced rather than
-   wrapped, so a narrow phone breaks it into two even lines. */
+/* A screen's question when the bar is spent naming where you are (`/g/claim`).
+   It is the screen's title, so set above the bar's 17px, centred and balanced. */
 .question { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2;
   text-align: center; text-wrap: balance; padding: 18px 16px 16px }
 .card { background: var(--card-2); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 13px 14px }
 .hairline { height: 1px; background: var(--rule-soft); margin: 12px 0 }
-/* The head of an entry's own screen (app/g/entry/page.tsx): what it is called,
-   and under it what it cost. The title sat in the top bar until a sentence
-   typed into one wrapped the bar to six lines and left its clock and bin
-   floating in the middle of a paragraph.
-
-   Its size is not in this rule: `FitTitle` measures the words and takes the
-   largest step that says them in one line, so "Dinner" is a heading and a
-   sentence is a paragraph. `ENTRY_TITLE_SIZES` in the screen is the ladder,
-   and this is everything that holds at any rung on it. `anywhere`, because a
-   pasted URL is one word and there is no hyphenation to fall back on. */
+/* The head of an entry's own screen (app/g/entry/page.tsx): its title, and
+   under it what it cost. Not in the top bar, which a typed sentence would
+   wrap to six lines.
+   Its size is not in this rule: `FitTitle` takes the largest step of
+   `ENTRY_TITLE_SIZES` that fits one line. `anywhere`, because a pasted URL is
+   one word. */
 .entrytitle { letter-spacing: -.03em; line-height: 1.3; padding-top: 4px;
   overflow-wrap: anywhere; text-wrap: pretty }
-/* The sum as it was spent sits beside the one that moves the balance, on its
-   baseline, and wraps under it where neither the figure nor the phone gives
-   way. Both hang off the left margin the title does: the head reads down one
-   edge, and a figure pushed to the other one left the short titles stranded. */
+/* The sum as spent sits beside the one that moves the balance, on its baseline,
+   and wraps under it when it must. Both hang off the title's left margin. */
 .entryfig { display: flex; align-items: baseline; gap: 9px; margin-top: 7px; flex-wrap: wrap }
 .entryfig .bignum { font-size: 32px }
 .entryfig .num { font-size: 13px; color: var(--muted) }
@@ -1033,27 +868,19 @@ a { color: inherit; text-decoration: none }
    doesn't restack when one is pressed; only the chevron turns. */
 button.kv { width: 100%; background: none; border: 0; font: inherit; text-align: left }
 button.kv:active { background: var(--press) }
-/* The name and its chevron are one line, laid out rather than left to flow:
-   Tailwind's preflight makes every `svg` a block, so an icon written inline
-   after a word lands under it instead of beside it. */
+/* Laid out rather than left to flow: the reset makes every `svg` a block, so an
+   inline icon after a word lands under it. */
 button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .kvchev { color: var(--muted); flex: none; transition: transform .12s ease }
 .kvchev.on { transform: rotate(90deg) }
-/* A list of people, each opening onto their own bill. Nothing is drawn between
-   them and nothing is drawn under the open one: a wash was tried and dropped
-   (on a quick split's answer every row is open at once, ADR-0035, and three
-   washes in a row pick nobody out), and so were the hairlines that replaced it
-   — a name, a figure and the indented lines under them already separate one
-   person from the next. What is left is the same list on both screens, which
-   differ only in whether the rows start open. The group bleeds to the card's
-   edges (`.card` pads 14px) so a pressed row fills the row rather than the
-   column of text inside it. */
+/* A list of people, each opening onto their own bill. Nothing drawn between
+   them or under the open one — a name, a figure and the indented lines already
+   separate them, and with every row open (quick split, ADR-0035) a wash picks
+   nobody out. Bleeds to the card's edges (`.card` pads 14px) so a pressed row
+   fills the row. */
 .billgroup { margin: 0 -14px; padding: 0 14px }
-/* The pressed row fills the row, not the column of text inside it: at 100% of
-   `.billgroup`'s content box the wash stopped 14px short of the card's padding
-   at both ends, which read as a misaligned box rather than as this row
-   answering the tap. It carries the 14px itself instead, so the text stays
-   where the `.kv` rows above it are. */
+/* The pressed row fills the card's width, carrying the 14px itself so the text
+   stays in line with the `.kv` rows above. */
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
   padding: 5px 14px; border-radius: var(--r-s) }
 /* The open row is the heading of what is under it, so it stops being one more
@@ -1076,15 +903,10 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 .billline .amt { font-family: var(--f-mono); font-variant-numeric: tabular-nums;
   color: var(--ink-2); flex: none }
 /* What the bill charged for rather than what they ordered — a discount, the
-   tax, the tip — set below the things they had. Muted, and a breath of air
-   above the first of them; no rule, on the same grounds as the ones that went
-   from between the people (above). The gap belongs to the *block*, so only the
-   first of them wears it: a bill with two deductions and a tax on it opened
-   four sections rather than the foot of one bill.
-
-   `billextra`, not `tip`: `.tip` is the tip jar's own screen, a centred
-   column with 22px of gap and a `min-height`, and a compound selector does
-   not stop a bare class name from landing on the same element. */
+   tax, the tip — muted, below the things they had. Only the first of them gets
+   the gap, so they read as the foot of one bill.
+   `billextra`, not `tip`: `.tip` is the tip jar's screen, and a compound
+   selector doesn't stop a bare class name from matching. */
 .billline.billextra { color: var(--muted); margin-top: 5px }
 .billline.billextra + .billline.billextra { margin-top: 0 }
 .billline.billextra .amt { color: var(--muted) }
@@ -1095,11 +917,9 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
   background: var(--card-3); color: var(--muted); font-size: 10.5px;
   font-variant-numeric: tabular-nums; white-space: nowrap }
 
-/* A transfer's two sides, with the direction between them. The side is labelled
-   above the person, so "From"/"To" is read before the name it qualifies rather
-   than after it; tapping either half opens our own picker; tapping the arrow —
-   which points the way the money goes — reverses them, because getting the
-   direction backwards is the mistake this control exists to make cheap to fix. */
+/* A transfer's two sides, with the direction between them. Each side is
+   labelled above the name; tapping a half opens our picker; tapping the arrow
+   reverses them, because a backwards transfer is the mistake to make cheap. */
 .transfer { display: flex; align-items: stretch; padding: 0; overflow: hidden }
 .tside { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center;
   gap: 5px; padding: 13px 8px; position: relative }
@@ -1108,11 +928,9 @@ button.tside:active { background: var(--press) }
 .tside .who { font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap }
 .tside .eyebrow { font-size: 9.5px; margin-bottom: 2px }
-/* A swap changes both names in place: rather than cross-fade the old into the
-   new, each sinks out of sight and the (already-swapped) text re-emerges from
-   below on the way back up, so the read is "these two traded places" and not
-   "this text changed". Two names, two animation-names — see lib/refusal.ts's
-   `n`-parity note for why an unchanged class name would not restart it. */
+/* A swap sinks each name out of sight and brings the swapped text back up, so
+   it reads "these traded places", not "this text changed". Two animation-names
+   — see lib/refusal.ts's `n`-parity note. */
 .tside .who.swap-a { animation: swapdip .22s ease-in }
 .tside .who.swap-b { animation: swapdip2 .22s ease-in }
 @keyframes swapdip { 0% { opacity: 1; transform: translateY(0) }
@@ -1120,40 +938,23 @@ button.tside:active { background: var(--press) }
 @keyframes swapdip2 { 0% { opacity: 1; transform: translateY(0) }
   45%, 55% { opacity: 0; transform: translateY(7px) } 100% { opacity: 1; transform: translateY(0) } }
 @media (prefers-reduced-motion: reduce) { .tside .who.swap-a, .tside .who.swap-b { animation: none } }
-/* On the detail screen the arrow is only a glyph between the two names, on the
-   card's own ground: ruled off into a column of its own, it read as a box. */
+/* On the detail screen the arrow is only a glyph between the two names. */
 .tswap { flex: none; width: 48px; display: grid; place-items: center; color: var(--muted) }
-/* The editable arrow is a control, not the glyph the detail screen's is: an
-   inked square centred in the row, so it reads as something to press rather
-   than as a third column the size of the two people beside it — on the card's
-   own grey it all but disappeared. */
+/* The editable arrow is a control: an inked square centred in the row. */
 button.tswap { align-self: center; width: 36px; height: 36px; margin: 0 6px; border-radius: var(--r-s);
   background: var(--brand); color: var(--brand-ink) }
 button.tswap:active { background-image: linear-gradient(var(--press-i), var(--press-i)) }
 
 /* ---- the tip jar (app/g/tip) ----
-   One screen, one claim: a line, a figure, and what the figure comes to here.
-   Wide gaps and short centred lines — everything on it is read once and acted
-   on, so nothing is set at reading-column width. */
-/* Centred in what is left under the top bar, not parked at the top of it.
-   There are five short things on this screen and no sixth coming, so the
-   scroll's own height is the frame: `min-height: 100%` makes the block as tall
-   as the viewport it sits in, and `justify-content` does the rest. It still
-   scrolls if a long group name or a large text size overflows it.
-
-   The extra padding at the foot is what lifts it: dead centre of the scroll is
-   below centre of the *screen*, because the top bar is above the scroll and
-   nothing is below it. The uneven pair puts the block back where the eye
-   looks for it. */
+   One screen, one claim: a line, a figure, and what it comes to here. */
+/* Centred in the scroll (`min-height: 100%` + `justify-content`); still scrolls
+   if a long name or large text overflows. The extra foot padding lifts it to
+   the centre of the *screen*, since the top bar sits above the scroll. */
 .tip { display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 22px; min-height: 100%; padding-top: 24px; padding-bottom: 76px; text-align: center }
-/* No `max-width` on any of these three: each is written to fit a phone's
-   width on one line, and a measure that wraps them at 20em turns a sentence
-   somebody reads at a glance into a stack. The screen is narrow enough to be
-   its own measure. */
+/* No `max-width`: each line is written to fit a phone on one line. */
 .tiplede { margin: 0; font-size: 14px; line-height: 1.5; text-wrap: balance }
-/* Body size, like the lede above it — only the colour steps back. A smaller
-   type size here made the one sentence that justifies the ask read as its
+/* Body size, like the lede — only the colour steps back; smaller, it read as a
    disclaimer. */
 .tipwhy { margin: -12px 0 0; font-size: 14px; line-height: 1.5; color: var(--muted);
   text-wrap: balance }
@@ -1166,9 +967,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 
 /* ---- nav, fab, buttons ---- */
 .bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none }
-/* The dock's padding lives on the tabs, not on the dock: a press tints the
-   element it is on, and padding held by the parent would leave the tint a
-   short band floating inside the dock instead of the full height you touched. */
+/* The dock's padding lives on the tabs, so a press tints the full height. */
 /* The dock's foot grows with the home indicator, so anything floating above
    the dock rises by the same `--nav-foot` rather than a fixed height. */
 :root { --nav-foot: max(11px, env(safe-area-inset-bottom)) }
@@ -1181,30 +980,22 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: calc(var(--nav-foot) + 67px); width: 50px; height: 50px;
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
-/* Beside the "+", at its size, and outlined rather than inverted: the same
-   destination, half the voice. The border is ink and the fill is paper —
-   `--card-2` on `--rule` vanished into the ledger rows it floats over, which
-   are that colour every other row. */
+/* Beside the "+", at its size, outlined rather than inverted: the same
+   destination, half the voice. Ink border on paper — `--card-2` vanishes into
+   the ledger rows. */
 .fab-2 { right: calc(max(16px, 50vw - 264px) + 60px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
-/* The balances tab's one button (app/g/tip). It wears `.fab-2`'s outline —
-   nothing on this screen may take the ink, which balances spends on the
-   numbers — and it is the only FAB that carries a word, because "+" and a
-   camera are guessable and an ask is not. Wider than it is tall, so the shape
-   itself says it is a different kind of thing from the ledger's two squares.
-
-   It takes back the "+"'s own `right`, which `.fab-2` had shifted left to sit
-   beside it: there is nothing beside this one. Every floating button in the
-   app ends against the same edge, under the same thumb, whichever tab is
-   open. */
+/* The balances tab's one button (app/g/tip), in `.fab-2`'s outline — ink on
+   this screen belongs to the numbers. The only FAB with a word, because an ask
+   isn't guessable. Takes back the "+"'s `right`: every floating button ends on
+   the same edge. */
 .fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
   right: max(16px, calc(50vw - 264px));
   font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
-  /* Opacity joins the shared press transition here because a button greys and
-     un-greys: a refused Save is spent for the length of the field's flash, and
-     it comes back the way the flash does — off instantly, back on eased. */
+  /* Opacity joins the press transition because a refused Save greys for the
+     field's flash and comes back eased (lib/refusal.ts). */
   transition: background-image .2s ease, opacity .3s ease }
 .btn-p { background: var(--brand); color: var(--brand-ink) }
 /* An inverted control presses in paper, not in ink — see `--press-i`. Later
@@ -1216,27 +1007,18 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* The one place a hue is spent on something other than money: destructive is
    worth a signal, and it gets an outline rather than a filled block. */
 .btn-d { background: transparent; color: var(--debit); border: 1px solid var(--debit) }
-/* The one act a screen exists for, given the whole width of the screen and a
-   figure to match: taller, and set in the display weight rather than the
-   body's. Still square and still flat — bigger is the only thing it spends
-   (ADR-0008). */
+/* The one act a screen exists for: taller, in the display weight. Still square
+   and flat (ADR-0008). */
 .btn-lg { padding: 16px; font-size: 15px; font-weight: 700; letter-spacing: -.02em }
 .btn:disabled { opacity: .45; transition-duration: 0s }
 
 /* ---- a button cut in three ----
-   One act, three doors. Whether the bill is photographed now, picked from the
-   library or typed is a detail of the same job, and buttons side by side is the
-   vocabulary for separate jobs — which is how the scan pair read, and why the two
-   screens that scan drifted into two different sets of words for it. So: one
-   bordered box with hairlines between the doors. The box owns the border and
-   the doors give theirs up, the same rule `.splitbox` follows.
-   Each door is `flex: 1`, so they share the width and the labels are what has
-   to fit. The third one is what set the sizes here: at the chip register it says
-   "Type it in", and everywhere else it is one word, because a third of a 360px
-   phone holds ten characters or a glyph and not both (`copy.scan.typeIn`).
-   Deliberately not `.seg`: that is the mode switch sitting directly above this
-   on the Items tab, and a track with a selected pill underneath it would
-   read as "which of these am I in" rather than "do this". */
+   Camera, library or typed: one act, three doors, so one bordered box with
+   hairlines between them rather than separate buttons. The box owns the
+   border (same rule as `.splitbox`). Doors are `flex: 1`, so the labels have
+   to fit a third of a 360px phone (`copy.scan.typeIn`).
+   Not `.seg`: that is the mode switch directly above on the Items tab, and a
+   track would read as "which am I in" rather than "do this". */
 .btn-pair { display: flex; border: 1px solid var(--rule); border-radius: var(--r-s);
   background: var(--card-2); overflow: hidden }
 .btn-pair .btn { width: auto; flex: 1; border-radius: 0; min-width: 0; gap: 6px;
@@ -1248,31 +1030,20 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .btn-pair.pair-p .btn + .btn { border-left-color: color-mix(in srgb, var(--brand-ink) 26%, transparent) }
 .btn-pair.pair-p .btn:active:not(:disabled) {
   background-image: linear-gradient(var(--press-i), var(--press-i)) }
-/* Chip scale, for replacing a bill that is already assigned: the same control
-   at the size of the chips it stands among, so it shrinks to a footnote
-   without becoming a second kind of thing. */
+/* Chip scale, for replacing a bill that is already assigned. */
 .btn-pair.pair-xs { display: inline-flex }
-/* Content-sized, not equal thirds: the box is `inline-flex` here, so it takes
-   the width its three chips need rather than handing each of them a third of a
-   width nobody set. Equal thirds squeezed the glyph out of the longest one —
-   and the longest one is the point, since this is the register with room for
-   "Type it in" in full. */
+/* Content-sized, not equal thirds: equal thirds squeeze the glyph out of the
+   longest label, which is the one with room for "Type it in" in full. */
 .btn-pair.pair-xs .btn { flex: 0 0 auto; font-size: 10.5px; font-weight: 500;
   padding: 4.5px 7px; gap: 4px; color: var(--ink-2) }
 .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor;
   border-top-color: transparent; opacity: .6; animation: spin .7s linear infinite; flex: none }
 @keyframes spin { to { transform: rotate(360deg) } }
-/* The two seconds a scan takes, drawn.
-   The wash fills the box left to right over about as long as the model
-   usually needs, and the spinner only appears if it is slower than that — so
-   the common scan is a bar that finishes rather than a spinner that says
-   nothing. It is the press wash sweeping across the control itself, not a
-   track with a fill inside it: the control is already the shape, and a second
-   bordered thing inside a bordered box is a widget this design doesn't own
-   (ADR-0008). `.btn-pair` already clips to its own radius.
-   No exemption from the reduced-motion clamp, unlike the refusal flash: this
-   one really is movement, and clamped to .01ms it lands straight on the
-   spinner — the state it was standing in front of. */
+/* The two seconds a scan takes, drawn: the press wash fills the box left to
+   right over the model's usual time, and the spinner appears only if it's
+   slower. `.btn-pair` clips to its radius.
+   Not exempt from the reduced-motion clamp: this is movement, and clamped it
+   goes straight to the spinner. */
 .pair-busy { position: relative }
 /* Positioned, so the label paints over the wash rather than under it. */
 .pair-busy .btn { position: relative }
@@ -1286,64 +1057,41 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .action:disabled { color: var(--muted); text-decoration-color: var(--rule) }
 
 /* ---- the scan screen ----
-   One act and nothing else, so the screen is one block in the middle of it:
-   the picture of what a photo becomes, and directly under it the control that
-   takes one. This is the exception to "the act is the last row of the scroll"
-   — with nothing else on the screen, a control at the foot is a control
-   stranded a long way from the only thing explaining it. `min-height: 100%`
-   is what gives the column the room to centre in. */
-/* The gap between the two is wide on purpose: the picture and its one line
-   explain, the control acts, and at a normal gap the drawing read as a
-   caption on the button rather than as the thing the button leads to. Adding
-   the line pushed them closer again, so the gap grew to keep them apart. */
-/* Centred on the screen, not on the scroll below the top bar. `min-height:100%`
-   is the scroll area, which starts under the bar, so centring in it alone put
-   the block half a bar-height low — read as a gap above. The extra bottom
-   padding is that bar (its own `max(10px, safe-area)` plus a 37px control and
-   12px under it), and centring inside the shorter box lifts the block by half
-   of it, which is the offset exactly. */
+   One act, so one block in the middle: the picture of what a photo becomes,
+   and under it the control — the exception to "the act is the last row of the
+   scroll". `min-height: 100%` gives it room to centre in. */
+/* The wide gap keeps the drawing from reading as a caption on the button. */
+/* Centred on the screen, not on the scroll under the top bar: the extra bottom
+   padding is the bar's height (`max(10px, safe-area)` + 37px + 12px), which
+   lifts the block by exactly half of it. */
 .scanpage { min-height: 100%; display: flex; flex-direction: column;
   justify-content: center; gap: 56px;
   padding-bottom: calc(14px + max(10px, env(safe-area-inset-top)) + 49px) }
 /* Picture and caption are one thing, so they sit close; the screen's wide gap
    falls below them, not between them. */
 .scanshow { display: flex; flex-direction: column; gap: 14px }
-/* The same drawing at the head of a quick split, where it is not the whole
-   screen but the thing the screen leads to. Line and picture sit close, the
-   way they do on `/g/scan` — reversed, line first, so the screen opens on a
-   sentence rather than a picture with nothing said about it yet; the generous
-   space is around the pair, so the list of people below reads as the next
-   step rather than as the picture's own caption, and the drawing gets room
-   off the top bar to read as a picture. */
+/* The same drawing at the head of a quick split, line first so the screen
+   opens on a sentence. The generous space is around the pair, so the list of
+   people below reads as the next step, not a caption. */
 .quickshow { display: flex; flex-direction: column; gap: 14px;
   padding-top: 22px; padding-bottom: 34px }
 /* The sentence beside the drawing — under it on `/g/scan`, over it on
-   `/quick`, where it reads as the screen's opening line rather than a caption
-   on a picture it hasn't seen the control for yet. Either way, the width of
-   the drawing it explains, and centred on it, so it reads as part of the
-   picture rather than as a heading over the control. */
+   `/quick` — the drawing's width and centred on it. */
 .scanlede { margin: 0; text-align: center; text-wrap: balance;
   font-size: 13px; line-height: 1.45; color: var(--ink-2) }
-/* The screen's one sentence, drawn: a bill, and the expense it comes back as,
-   split by that bill between three of this group's own members. Both halves
-   are the app's own card — same square corner, same two columns, the same
-   hairline under a total — at half the type size and on `--draw-*`, so the
-   picture is made of the interface it explains and still reads as a picture —
-   except for the bill's torn ends, below.
-   Each is half as wide as the control below, so the three line up. */
+/* The screen's one sentence, drawn: a bill, and the expense it comes back as.
+   Both halves are the app's own card at half size on `--draw-*`, except the
+   bill's torn ends. Each is half the control's width, so the three line up. */
 .scandiagram { display: flex; align-items: stretch; gap: 10px }
 .scanpaper, .scanform { flex: 1; min-width: 0; padding: 11px; font-size: 9.5px;
   line-height: 1.25; color: var(--draw-ink); background: var(--draw-bg);
   border: 1px solid var(--draw-rule); border-radius: var(--r-s) }
 .scanpaper, .scanform { display: flex; flex-direction: column; gap: 5px }
 .scanform { justify-content: center }
-/* The left half is a till roll, so it is torn off at both ends: the one place
-   the drawing stops borrowing the interface's shape, because a square card is
-   the thing it would otherwise be mistaken for — the form beside it. The teeth
-   are cut out of the card with a mask (two rows of triangles, the body between
-   them), which is why this half loses the radius and the rules along the top
-   and bottom: a torn edge has no outline to draw. `--tooth` is the height cut
-   away, so the padding carries it to keep the printed lines off the teeth. */
+/* The till roll is torn at both ends, so it isn't mistaken for a card like the
+   form beside it. The teeth are a mask (two rows of triangles), which is why
+   it loses the radius and top/bottom rules. `--tooth` is the height cut away;
+   the padding carries it. */
 .scanpaper { --tooth: 8px; border-radius: 0; border: 0;
   background: var(--draw-paper);
   padding-block: calc(11px + var(--tooth));
@@ -1356,7 +1104,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 /* Every row of both cards is a label and a number, the ledger's own shape. */
 .scanpaper span, .scanform span { display: flex; justify-content: space-between;
   align-items: baseline; gap: 8px }
-/* Preflight italicises a bare `i`; these are a label and a price, not emphasis. */
+/* The reset italicises a bare `i`; these are a label and a price. */
 .scanpaper i, .scanform i { font-style: normal; font-variant-numeric: tabular-nums }
 /* A member's name is the one thing here we don't choose the length of. */
 .scanform .who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
@@ -1372,34 +1120,25 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .scanterms { font-size: 11px; color: var(--muted); text-align: center; margin: 5px 0 0 }
 
 /* ---- dialogs ----
-   Our own, in place of prompt() and confirm(): those arrive in another app's
-   typeface and have nowhere to put the sentence naming what is about to change
-   (ADR-0008). A scrim, a hairline card, the app's own buttons. It fades in and
-   nothing slides: the design still doesn't float. */
-/* A real <dialog>, so focus, Escape and the inert screen behind are the
-   platform's job. It fills the viewport and paints the scrim itself rather than
-   leaving it to ::backdrop, which doesn't reliably inherit our tokens — and
-   which would make "tapped outside the card" the harder question. */
-/* The keyboard overlays the viewport without shortening it, so a card centred
-   in `100dvh` is centred behind one: a dialog that asks for a number (the rate
-   pair, any prompt) had its own field and its Save button under the keys. The
-   covered strip is paid as bottom padding, which shrinks the box the card is
-   centred in — so "centred" means centred in what is still visible, and the
-   card rises as the keyboard opens (components/viewport.tsx). */
+   Our own, in place of prompt() and confirm(), which use another typeface and
+   have nowhere for the sentence naming what will change (ADR-0008). Fades in;
+   nothing slides. */
+/* A real <dialog>, so focus, Escape and the inert screen are the platform's.
+   It paints the scrim itself rather than via ::backdrop, which doesn't
+   reliably inherit our tokens and makes "tapped outside" harder to detect. */
+/* The keyboard overlays the viewport without shortening it, so the covered
+   strip is paid as bottom padding and the card centres in what is still
+   visible (components/viewport.tsx). */
 dialog.scrim { inset: 0; width: 100%; height: 100%; max-width: 100%; max-height: 100%;
   margin: 0; border: 0; padding: 22px; padding-bottom: calc(22px + var(--kb)); color: var(--ink);
   background: color-mix(in srgb, var(--ink) 42%, transparent); animation: fadein .12s ease-out }
 dialog.scrim[open] { display: flex; align-items: center; justify-content: center }
 dialog.scrim::backdrop { background: transparent }
-/* Matches the scrim's content box, keyboard included, so a card too tall for
-   what is left scrolls inside itself rather than under the keys. `100%` of the
-   scrim, not `100dvh` minus its padding, which is the same number until `dvh`
-   is the one that is wrong — and then the card is taller than the screen, the
-   way the shell was (`.app`). */
-/* 380, not 340: a picker's rows carry a sentence under the name now, and at
-   340 the scrim's 22px either side left no phone a line that fitted. Wider
-   than the widest of them is pointless — the card is already full width on a
-   phone; this is what the room is for where there is any. */
+/* Matches the scrim's content box, keyboard included, so a tall card scrolls
+   inside itself. `100%`, not `100dvh` minus padding, which is wrong whenever
+   `dvh` is (see `.app`). */
+/* 380px: a picker's rows carry a sentence under the name, and at 340 they no
+   longer fit a phone line. */
 .dialog { width: 100%; max-width: 380px; background: var(--card); border: 1px solid var(--rule);
   border-radius: var(--r-m); padding: 15px 15px 13px; animation: fadein .12s ease-out;
   max-height: 100%; overflow-y: auto }
@@ -1430,28 +1169,18 @@ dialog.scrim::backdrop { background: transparent }
 .dinput:focus { border-color: var(--ink-2) }
 .dinput::placeholder { color: var(--muted); font-weight: 500 }
 /* A bill typed in rather than photographed: `.dinput`'s box with room for
-   several lines, set smaller and lighter than that one because fifteen-pixel
-   semibold over eight rows is a wall rather than a field. It inherits the app's
-   type like everything else, which is already monospaced — and on a pasted
-   receipt that happens to earn its keep, since the amounts line up.
-   No resize handle: dragged, the card grows past the scrim on a phone, and
-   eight rows with a scroll after them is the shape that fits every screen. */
+   several lines, smaller and lighter so eight rows don't read as a wall. No
+   resize handle: dragged, the card grows past the scrim on a phone. */
 .dtext { width: 100%; margin-top: 12px; background: var(--card-2);
   border: 1px solid var(--rule); border-radius: var(--r-s); padding: 10px 12px;
   font: inherit; font-size: 12.5px; line-height: 1.55; color: var(--ink);
   outline: none; resize: none; display: block; max-height: 40dvh }
 .dtext:focus { border-color: var(--ink-2) }
 .dtext::placeholder { color: var(--muted) }
-/* Cancel is the wider-reaching of the two only in the sense that it's free:
-   equal halves, the act on the right where the thumb already is.
-   Columns and not flex, because "equal" has to survive a child that isn't a
-   `.btn`: flexing two full-width children shares the overflow out in
-   proportion to each one's own padding and border, so the halves came out
-   170/182 the moment `ScanBusy` — which stands in for the act while the model
-   reads rather than sitting beside it — took the right-hand one, and the
-   button appeared to resize under the thumb. A column doesn't care what is in
-   it. `minmax(0, …)` so a long label wraps inside its half instead of pushing
-   the row wider than the card. */
+/* Equal halves, the act on the right. Grid columns, not flex: flex shares the
+   overflow by each child's padding, so when `ScanBusy` stands in for the right
+   button the halves drift (170/182) and it resizes under the thumb.
+   `minmax(0, …)` lets a long label wrap inside its half. */
 .drow { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
   gap: 8px; margin-top: 14px }
 /* The same stand-in, vertically: the busy box carries a border the button it
@@ -1465,36 +1194,25 @@ dialog.scrim::backdrop { background: transparent }
   padding: 11px 15px; border-top: 1px solid var(--rule-soft) }
 .drow-pick:active { background: var(--press) }
 .drow-pick .rtitle, .drow-pick .rmeta { display: block }
-/* A picker's note is a sentence explaining the choice, not the one-word tag a
-   ledger row's is — so it wraps rather than being cut off with an ellipsis,
-   which is the one place a row would rather be two lines tall than lie. */
+/* A picker's note is a sentence, so it wraps rather than being elided. */
 .drow-pick .rmeta { white-space: normal; overflow: visible; line-height: 1.35 }
 .drow-pick[aria-selected="true"] .rtitle { font-weight: 700 }
 
 /* ---- row menu ----
-   A long press or a right click's own small popup. Unlike `.dialog`, nothing
-   dims behind it — this is a menu, not a decision with a sentence to say
-   about it (ADR-0008's "revisit" case: a popover with its own positioning,
-   not the scrim family). The veil is invisible and only there to catch the
-   tap that closes it. `left`/`top` are set from JS: the card hangs off the
-   pressed row's bottom right corner, not off the point pressed. */
+   A long press or right click's small popup. Nothing dims behind it — a menu,
+   not a decision (ADR-0008's "revisit" case). The veil is invisible and only
+   catches the closing tap. `left`/`top` come from JS: the card hangs off the
+   pressed row's bottom right corner. */
 .rowmenu-veil { position: fixed; inset: 0; z-index: 5 }
 .rowmenu { position: fixed; z-index: 6; min-width: 188px; max-width: calc(100vw - 24px);
   background: var(--card);
   border: 1px solid var(--rule); border-radius: var(--r-m); box-shadow: var(--shadow-s);
   padding: 5px; animation: fadein .1s ease-out }
-/* 13px of vertical padding over 14.5px text: the row is ~48px, clear of the
-   44px a finger is measured against. It was 12 over 13.5 — which cleared it by
-   a hair and read as a list squeezed into a card, next to the phone's own
-   menus. This is a handful of items opened one at a time, not a list to
-   scroll: the room costs nothing and the labels are the whole point. */
+/* ~48px rows, clear of the 44px a finger needs. */
 .rowmenu-item { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
   padding: 13px 12px; border-radius: var(--r-s); font-size: 14.5px; font-weight: 600 }
-/* A hairline between items, inset by the card's padding so it reads as a fold
-   in the card rather than a line drawn across it. `--rule-soft`, not `--rule`:
-   it is there to keep a finger from reading six labels as one block, not to
-   fence them off — and the last of them is usually the destructive one, which
-   this gives its own edge for free. */
+/* A hairline between items, inset by the card's padding. `--rule-soft`: it is
+   there to separate labels, not fence them off. */
 .rowmenu-item + .rowmenu-item { border-top: 1px solid var(--rule-soft) }
 /* `.rowmenu-hot` is the same wash under a finger that slid onto the item from
    the hold that opened the card without lifting (components/long-press.tsx) —
@@ -1511,10 +1229,8 @@ dialog.scrim::backdrop { background: transparent }
   background: var(--card-2); border: 1px solid var(--rule-soft); color: var(--ink-2); margin-bottom: 16px }
 .keyless h2 { font-size: 16px; letter-spacing: -.02em; line-height: 1.3; font-weight: 700; color: var(--ink);
   text-wrap: balance }
-/* Centred prose strands its last word without help — these are the screens
-   that carry the most of it, and every one of them is read at the moment
-   something has gone wrong. `balance` is for a line or two, `pretty` for a
-   paragraph; both are ignored where they aren't supported. */
+/* Centred prose strands its last word without help. `balance` is for a line or
+   two, `pretty` for a paragraph; both are ignored where unsupported. */
 .keyless p { margin-top: 8px; max-width: 30em; font-size: 13px; line-height: 1.55; color: var(--muted);
   text-wrap: pretty }
 /* `/paste`'s one act, under its sentence rather than in a foot: the screen is
@@ -1550,44 +1266,36 @@ dialog.scrim::backdrop { background: transparent }
 .keyless-bar .iconbtn.keyless-lit { background: var(--hl); border-color: var(--hl-edge); color: var(--hl-ink) }
 @media (prefers-reduced-motion: reduce) { .rowmenu { animation: none } }
 
-/* The act of a screen that exists to be copied off — diagnostics, and the
-   export's last-rung readout (app/g/export) — held at the top of the scroll
-   while the text runs on underneath it. `.scroll` is the containing block —
-   it is `position: relative` — so `top: 0` is the top of the text, not of the
-   page. Opaque, or the text slides under it and is read through it. It cannot
-   be a `Foot`: the bottom of an installed app is where the system's own bar
-   sits, and `env(safe-area-inset-bottom)` reads 0 on Android often enough
-   that a button there is one with its lower half cut off. */
+/* The act of a screen that exists to be copied off — diagnostics and the
+   export's readout — held at the top of the scroll. `.scroll` is
+   `position: relative`, so `top: 0` is the top of the text. Opaque, or the text
+   shows through. Not a `Foot`: `env(safe-area-inset-bottom)` reads 0 on
+   Android often enough that a bottom button gets cut off. */
 .diag-act { position: sticky; top: 0; z-index: 1; padding: 10px 16px;
   background: var(--card); border-bottom: 1px solid var(--rule) }
 /* A sentence above the button, saying why this screen is in front of you.
    Its own top margin is for a paragraph following something. */
 .diag-act .hint:first-child { margin-top: 0; margin-bottom: 9px }
 
-/* Staś mode, under the copy button: a label, what it does to a scan, and the
-   switch. The switch is a `.btn` rather than a checkbox because it is the only
-   control in the app that is one, and a lone checkbox would need a style of
-   its own to look like it belongs (app/diag/page.tsx). */
+/* Staś mode, under the copy button. A `.btn` rather than a checkbox, which
+   would be the app's only one (app/diag/page.tsx). */
 .diag-stas { display: flex; align-items: center; justify-content: space-between; gap: 12px;
   margin-top: 10px }
 .diag-stas .btn { width: auto; flex: none; padding: 7px 16px; font-size: 12.5px }
 .diag-stas-name { font-size: 13px; font-weight: 600; color: var(--ink) }
 .diag-stas-note { font-size: 11.5px; color: var(--ink-2); margin-top: 1px }
 
-/* A readout: one block of preformatted text, scrolling sideways on its own
-   rather than widening the screen behind it. Small and mono because it is a
-   log (app/diag/page.tsx) or a spreadsheet (app/g/export/page.tsx) — text to
-   be selected and pasted somewhere else, never laid out to be read here. */
+/* A readout: preformatted text that scrolls sideways on its own. Small and mono
+   because it is a log (app/diag/page.tsx) or a spreadsheet
+   (app/g/export/page.tsx), meant to be pasted elsewhere. */
 .diag { font-family: var(--f-mono); font-size: 10.5px; line-height: 1.55; white-space: pre;
   overflow-x: auto; padding: 12px 16px; color: var(--ink) }
 
 .banner { display: flex; align-items: center; gap: 9px; padding: 9px 16px; font-size: 12.5px; flex: none;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge); font-weight: 500 }
-/* A read of this phone's own database that stopped answering
-   (components/chrome.tsx). It reads like `.banner` because it is the same
-   kind of news, and sits above the screen's own head rather than inside its
-   body: the screen underneath is a skeleton, and the one thing it must not
-   look like is part of the layout that is still loading. */
+/* A read of this phone's database that stopped answering
+   (components/chrome.tsx). Styled like `.banner` and set above the screen's
+   head, so it doesn't look like part of the skeleton still loading. */
 .stall { display: flex; align-items: center; gap: 9px; padding: 9px 16px; flex: none;
   font-size: 12.5px; font-weight: 500;
   background: var(--hl); color: var(--hl-ink); border-bottom: 1px solid var(--hl-edge) }
@@ -1623,9 +1331,8 @@ dialog.scrim::backdrop { background: transparent }
   padding: 0;
   min-width: 1ch;
   max-width: 100%;
-  /* Right-aligned so the caret sits after the figure rather than on top of the
-     "0" placeholder, which read as a struck-through zero when centred. The row
-     itself is centred, so the field still looks centred on the screen. */
+  /* Right-aligned so the caret sits after the figure, not on the "0"
+     placeholder. The row is centred, so the field still looks centred. */
   text-align: right;
   caret-color: var(--brand);
 }
@@ -1633,10 +1340,8 @@ dialog.scrim::backdrop { background: transparent }
    sized to hug its own text, reads as a box drawn round a single digit. */
 .amount:focus-visible { outline: none }
 .amount::placeholder { color: var(--muted); opacity: .35 }
-/* Refusal is a flash now, not a held state — see "save refusal" below. */
-/* An empty centred field draws its caret exactly where the placeholder's "0"
-   is, which reads as a struck-through zero. Once you're in the field the caret
-   is signal enough. */
+/* An empty centred field's caret lands on the placeholder's "0" and reads as a
+   struck-through zero. */
 .amount:focus::placeholder { color: transparent }
 
 /* ---- segmented control ---- */
@@ -1646,23 +1351,17 @@ dialog.scrim::backdrop { background: transparent }
 .seg button.on { background: var(--card); color: var(--ink); box-shadow: var(--shadow-s); font-weight: 600 }
 
 /* ---- the split editor, inline on the expense form ---- */
-/* It is a list inside a card rather than full-bleed `.row`s: it sits between
-   two fields on a form, and a full-width list there reads as a different
-   screen rather than as one more answer to the same question. */
-/* Tabs and the tab they opened are one box. The mode buttons choose what the
-   list below shows and nothing else, so a floating segmented control with air
-   under it read as a second, unrelated control; attached, it reads as the
-   lid of the thing it governs. The border lives here, once, and the parts
-   inside give theirs up. */
+/* A list inside a card rather than full-bleed `.row`s: between two fields a
+   full-width list reads as a different screen. */
+/* Tabs and the tab they opened are one box: attached, the mode buttons read as
+   the lid of the list they govern. The border lives here, once. */
 .splitbox { background: var(--card-2); border: 1px solid var(--rule-soft);
   border-radius: var(--r-s); overflow: hidden }
 .splitbox .seg { border-radius: 0; border-bottom: 1px solid var(--rule-soft) }
 .splitlist { padding: 0; overflow: hidden }
 /* The tabs' soft rule is invisible against a `.mine` wash, so a first row that
-   is yours reads as joined to the control above it — the same swallowing two
-   stacked highlighted rows suffer (see `.mine` under the ledger). The lid's own
-   line takes the stronger colour, rather than the row growing a border:
-   `.splitlist` clips, so a border pulled up under the tabs is never drawn. */
+   is yours gets the stronger colour on the lid's line. Not a border on the row:
+   `.splitlist` clips it. */
 .splitbox:has(.splitlist > .splitrow.mine:first-child) .seg {
   border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
@@ -1680,11 +1379,9 @@ dialog.scrim::backdrop { background: transparent }
 .splitfoot.alone { border-top: 0; border-radius: var(--r-m) }
 
 /* ---- money fields ----
-   Every field you type money into is wrapped in one of these. On a screen with
-   no boxes round anything, the underline is the only thing that says "you can
-   type here", and it takes the brand colour while you are in it — the caret
-   alone turned out not to be enough of a signal
-   (owner, 2026-08-28: "there's no caret and i have no idea what's going on"). */
+   Every money field is wrapped in one of these. The underline is the only
+   thing saying "you can type here", and it takes the brand colour while
+   focused — the caret alone is not enough of a signal. */
 .amountfield { display: inline-flex; align-items: baseline; position: relative;
   border-bottom: 1.5px solid var(--rule); transition: border-color .12s ease, background .12s ease }
 .amountfield:focus-within { border-bottom-color: var(--brand) }
@@ -1692,20 +1389,14 @@ dialog.scrim::backdrop { background: transparent }
 .amountfield.bad, .amountfield.bad input { border-bottom-color: var(--debit); color: var(--debit) }
 .amountfield.big { border-bottom-width: 2px; padding: 0 9px 2px; border-radius: var(--r-s) var(--r-s) 0 0 }
 .amountfield.big:focus-within { background: var(--card-2) }
-/* An auto-sized field takes its width from a hidden copy of its own text
-   stacked in the same grid cell, not from the input's `size` attribute. `size`
-   is characters times the *font's* average advance, which for JetBrains Mono at
-   42px overshot a digit's real width by ~78px — three digits of dead space to
-   the left of a right-aligned figure — and another ~12px per thousands mark,
-   until a seven-figure amount was wider than the phone. The mirror is the same
-   glyphs in the same class, so it is exactly right at every length.
-   `minmax(0, max-content)` lets it give up and scroll instead of overflowing
-   once a number is genuinely wider than the screen. */
+/* An auto-sized field takes its width from a hidden copy of its own text in the
+   same grid cell, not from the input's `size` attribute — `size` uses the
+   font's average advance, which overshoots JetBrains Mono digits badly (a
+   seven-figure amount came out wider than the phone). `minmax(0, max-content)`
+   lets a genuinely too-wide number scroll instead of overflowing. */
 .amountfield.autosize { display: inline-grid; grid-template-columns: minmax(0, max-content); min-width: 0 }
 .amountfield.autosize > * { grid-area: 1 / 1 }
-/* 2px of it is the caret's room: the input's own padding keeps the caret from
-   being clipped at the right edge, and the mirror carries the same padding so
-   the two boxes still agree. */
+/* 2px of caret room, carried by the mirror too so the boxes agree. */
 .amountfield.autosize > .amount { padding-right: 2px }
 /* The input must contribute *no* width of its own, or the column sizes to an
    <input>'s default 20-character intrinsic width instead of to the mirror. */
@@ -1743,20 +1434,15 @@ dialog.scrim::backdrop { background: transparent }
   justify-content: center; align-items: center; column-gap: 7px; row-gap: 4px }
 .amtgrid > :nth-child(odd) { justify-self: end }
 .amtgrid > :nth-child(even) { justify-self: start }
-/* The entry form's rate line. It reads as the note it always was, but it is a
-   button now: the number belongs to the group, and this opens where it lives.
-   Right-padded to match the big amount's own inset (9px wrapper + 2px caret
-   room) so the two figures' last digits land on the same edge, not just the
-   two boxes. */
+/* The entry form's rate line: a button opening where the group's rate lives.
+   Right-padded to the big amount's inset (9px wrapper + 2px caret room) so the
+   last digits line up. */
 .ratelink { font-family: var(--f-mono); font-size: 12.5px; color: var(--muted);
   border: 0; background: none; padding: 0 11px 0 0 }
 .ratelink .bad { color: var(--debit) }
-/* Under the amount: where it came from, when it did — the scan that typed it.
-   A third row of `.amtgrid` rather than a centred line below it, so it ends on
-   the amount's last digit instead of on the middle of the figure — the same
-   right edge `.ratelink` lines up on, and for the same reason. `justify-self`
-   comes from the grid's odd/even rule; the right padding is the big amount's
-   own inset (9px wrapper + 2px caret room). */
+/* Under the amount: where it came from — the scan that typed it. A third row of
+   `.amtgrid`, so it ends on the amount's last digit like `.ratelink`.
+   `justify-self` comes from the grid's odd/even rule. */
 .amtnotes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
   gap: 6px; margin-top: 3px; padding-right: 11px }
 .amtnote { font-size: 11px; color: var(--hl-ink); background: var(--hl);
@@ -1768,27 +1454,21 @@ button.amtnote:active { background: var(--hl-edge) }
 .field { display: flex; align-items: center; gap: 10px; background: var(--card-2);
   border: 1px solid var(--rule-soft); border-radius: var(--r-s); padding: 10px 12px }
 .field label { font-size: 13px; color: var(--muted); width: 62px; flex: none }
-/* "Received by" is the longest of the three headings over the payer picker and
-   wraps at the default width. One width for all of them, so the row doesn't
-   jump as the kind chip changes the entry's kind. */
+/* "Received by" is the longest payer heading and wraps at the default width.
+   One width for all, so the row doesn't jump as the kind changes. */
 .field label.fieldlabel, .fieldlabel {
   font-size: 13px; color: var(--muted); width: 92px; flex: none; white-space: nowrap }
 .field input, .field .pick { flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
   font: inherit; font-size: 14px; font-weight: 600; color: var(--ink) }
 .field input::placeholder { color: var(--muted); font-weight: 500 }
-/* Refusal is a flash now, not a held state — see "save refusal" below. */
-/* A value that is picked rather than typed. The whole line is the button — a
-   <select> at least gave you the row; ours has to say so itself — and the
-   chevron is the only mark that it opens something (ADR-0008). */
+/* A value that is picked rather than typed. The whole line is the button, and
+   the chevron is the only mark that it opens something (ADR-0008). */
 .field .pick { display: flex; align-items: center; gap: 8px; text-align: left }
 .field .pick .ptext { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .field .pick .pchev { color: var(--muted); flex: none }
-/* The payer field, single-payer state: who paid and the door to more than one
-   payer share one row. One payer is the common case, so it costs one row; only
-   the multi-payer Card below takes two, because it has chips to show. Each
-   control carries the card's padding itself rather than taking it from
-   `.field`, so a press lights exactly that control — the card's own press
-   feedback (`.field:has(> .pick)`, above) lit the whole row for either. */
+/* The payer field, single-payer state: who paid and the door to more payers
+   share one row. Each control carries the padding itself rather than `.field`,
+   so a press lights only that control. */
 .field.field-row { padding: 0; gap: 0 }
 .field-row .pick, .field-row .pick-sub {
   display: flex; align-items: center; padding: 10px 12px;
@@ -1802,49 +1482,30 @@ button.amtnote:active { background: var(--hl-edge) }
   font-size: 12px; font-weight: 500; color: var(--muted) }
 
 /* ---- save refusal ----
-   A tap on Save that can't go through blooms the offending field red and lets
-   it settle back — **the whole of it**, ground included: a field whose edge
-   went red around unchanged grey writing was the quietest thing in the app,
-   and the one the eye missed. The title's box fills like an ink block, the
-   amount takes a red plate under its figure, and a row of a bill nobody has
-   been given washes end to end. No keyframe names 0% or 100%, so both ends are
-   taken from the element's own computed style — the field fades back to
-   whatever it actually was, which keeps this correct in both themes and while
-   the field is focused (`.amountfield:focus-within` is brand, not `--rule`).
-
-   The shape is deliberately lopsided: red in ~90ms, held ~180ms, then ~330ms
-   easing back out. An answer to a tap has to arrive fast enough to read as
-   caused by it, but a symmetric flash of the same length snaps back as hard as
-   it arrived and reads as a scold. Arriving quickly and leaving slowly says
-   the same thing without raising its voice.
-
-   Two names for one animation because that is the restart mechanism. A second
-   tap of Save while the first flash is still running would change nothing in
-   the class list, so the animation would not replay; the form alternates
-   -a/-b per refusal, which changes `animation-name` and guarantees it does. A
-   React `key` would also restart it, by remounting the <input> and taking the
-   caret, the focus and any IME composition with it.
-
-   The form takes the class off again when the flash ends, and that is not
-   tidiness: the class is also what says the refusal is still on screen, and
-   the button that was pressed is spent for exactly that long
-   (`lib/refusal.ts`). Left on, Save stays greyed for good. */
+   A tap on Save that can't go through blooms the offending field red — **the
+   whole of it**, ground included; a red edge around grey writing gets missed.
+   No keyframe names 0% or 100%, so both ends come from the element's computed
+   style and it fades back to whatever the field was, in both themes and while
+   focused.
+   Lopsided on purpose: red in ~90ms, held ~180ms, ~330ms easing out. Fast
+   enough to read as caused by the tap; a symmetric flash reads as a scold.
+   Two names (-a/-b, alternated per refusal) are the restart mechanism: an
+   unchanged class list wouldn't replay it, and a React `key` would remount the
+   <input> and take focus and IME composition with it.
+   The form removes the class when the flash ends, and must: the class is also
+   what keeps the pressed button spent (`lib/refusal.ts`). Left on, Save stays
+   greyed for good. */
 /* Text and, through `currentColor`, the icons beside it — the words on a row
    the grid is pointing at, or the label on a control that is what's missing. */
 @keyframes refuse-text-a { 15%, 45% { color: var(--debit) } }
 @keyframes refuse-text-b { 15%, 45% { color: var(--debit) } }
-/* The same, for writing that is riding on a ground which has itself just gone
-   `--debit`: the label and the text inside a filled field. `--brand-ink` is
-   the one ink token that stays readable on it in both themes (see the fill
-   below), so a filled field's words take that rather than the red. */
+/* For writing on a ground that has itself gone `--debit`: `--brand-ink` is the
+   one ink token readable on it in both themes. */
 @keyframes refuse-ink-a { 15%, 45% { color: var(--brand-ink) } }
 @keyframes refuse-ink-b { 15%, 45% { color: var(--brand-ink) } }
-/* Where a solid `--debit` would swallow what sits on it, the ground takes
-   `--debit-wash` instead and the ink on top goes red rather than inverting: a
-   bill's row, which carries the assignment dots and the ×N control, and the
-   plate under the amount, which carries the biggest figure on any screen. It
-   is still the whole block going red, which is the point — a line of red text
-   in an unchanged row was a refusal you had to be looking for. */
+/* Where a solid `--debit` would swallow what sits on it — a bill's row with its
+   dots and ×N, the plate under the amount — the ground takes `--debit-wash`
+   and the ink goes red instead. */
 @keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash) } }
 @keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash) } }
 /* The amount is a field, so its rule goes with its plate: the figure ends up
@@ -1854,102 +1515,63 @@ button.amtnote:active { background: var(--hl-edge) }
 @keyframes refuse-plate-b { 15%, 45% {
   background-color: var(--debit-wash); border-bottom-color: var(--debit) } }
 
-/* **The fill**: the whole box goes red at once, ground, border and label. It
-   is what a control with no edge to bloom has to do — the "Assign who had
-   what" door and the scan pair are `--brand` on `--brand`, and the rate badge
-   under the amount is 11px of ink on a wash — and it is what a field does too,
-   because a red edge around unchanged writing is the smallest signal in the
-   app for the biggest thing it has to say. `--debit` runs with `--brand`'s
-   polarity in both themes — dark on the light ground, light on the dark one —
-   so `--brand-ink` is the one ink token that stays readable on top of it,
-   which is why an ink block's labels need no animation of their own: they are
-   that token already, and the divider between the pair's halves is mixed from
-   it. A field's do (`refuse-ink`), since they start as `--ink` and `--muted`.
-   `border-color` goes with the fill wherever there is one: a `--brand` or
-   `--rule-soft` frame left around a red block reads as a half-refusal. */
+/* **The fill**: ground, border and label all go red at once. For controls with
+   no edge to bloom (the ink-block doors, the rate badge) and for fields.
+   `--debit` has `--brand`'s polarity in both themes, so `--brand-ink` reads on
+   top of it — ink blocks' labels need no animation of their own; a field's do
+   (`refuse-ink`). `border-color` goes too: a leftover frame reads as a
+   half-refusal. */
 @keyframes refuse-fill-a { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 @keyframes refuse-fill-b { 15%, 45% {
   background: var(--debit); border-color: var(--debit); color: var(--brand-ink) } }
 
-/* The amount: the plate, the rule under it and the figure on top. The plate is
-   what carries this one — the "0" a refused amount usually shows is a
-   `::placeholder`, and **a `::placeholder` cannot be animated at all** (see
-   below), so the faint nought sits there through the flash while the block
-   under it goes red. The input's own colour is named for the other case: a
-   nought typed in by hand is refused too, and unchanged ink over a red plate
-   reads as a field that half-refused. */
+/* The amount: plate, rule and figure. The plate carries it, since the usual
+   "0" is a `::placeholder`, which **cannot be animated** (below). The input's
+   colour is for a typed nought, which is refused too. */
 .amountfield.flash-a { animation: refuse-plate-a .6s ease-in-out }
 .amountfield.flash-b { animation: refuse-plate-b .6s ease-in-out }
 .amountfield.flash-a input { animation: refuse-text-a .6s ease-in-out }
 .amountfield.flash-b input { animation: refuse-text-b .6s ease-in-out }
-/* A field fills whole, the way the ink blocks below do: ground, border, label
-   and whatever is written in it, all in one. The label goes because "What:" is
-   the one word that says *which* field was refused; the input because a
-   refusal can land on a field with writing in it — the note beside a transfer
-   needn't be empty — and grey text on a red ground is the same half-refusal a
-   `--brand` frame around a red block would be. `--brand-ink` on `--debit` is
-   the pair that reads in both themes (`refuse-fill`, below). */
+/* A field fills whole: ground, border, label ("What:" says *which* field) and
+   any writing in it (`refuse-fill`, below). */
 .field.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .field.flash-b { animation: refuse-fill-b .6s ease-in-out }
 .field.flash-a label, .field.flash-a input { animation: refuse-ink-a .6s ease-in-out }
 .field.flash-b label, .field.flash-b input { animation: refuse-ink-b .6s ease-in-out }
-/* The Items tab fills too, because what is missing there is a step and not a
-   figure: the control that takes it blooms. Both controls that take one are
-   ink blocks — the scan pair and the door to the grid — and a control is more
-   than its edge: ground, border, labels and their icons (`currentColor`) all
-   go at once. */
-/* The last of them is the add row's plus, refused: a quick split's scan pair
-   pressed over a name still sitting unfiled in the field points at the plus,
-   which is the whole of the fix (components/name-adder.tsx). It fills like the
-   rest — 15px of glyph in a 32px box is far too little ink for a colour change
-   to carry a refusal, and the ground is the only part of it big enough to be
-   seen going red. The glyph rides along in `--brand-ink`, as it does on the
-   other three. */
+/* On the Items tab what is missing is a step, so the control that takes it —
+   the scan pair or the door to the grid — fills, labels and icons with it. */
+/* The add row's plus, when a name is still unfiled in the field
+   (components/name-adder.tsx). It fills: 15px of glyph is too little ink for a
+   colour change to carry a refusal. */
 .btn-pair.flash-a, .btn.flash-a, .amtnote.flash-a, .iconbtn.flash-a { animation: refuse-fill-a .6s ease-in-out }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
-/* The other half of that refusal: the plus is the fix only while a good name
-   sits unfiled in the row, and when the field itself is what's wrong the row
-   blooms instead — "Add someone" on an empty field, the typed name on one the
-   list already holds (components/name-adder.tsx). A row is not a box — it is a
-   line of writing between two controls, with no ground of its own to fill — so
-   this is the one refusal that is text alone: the placeholder carries the
-   empty case and the input's own colour the typed one.
-   Both are named, and the input's is load-bearing beyond the ink — a
-   `::placeholder` animation ends as a pseudo-element event, which every
-   refusal handler here ignores on purpose, so the element's own animation is
-   what tells a screen its flash is over. */
+/* When the name field itself is what's wrong — empty, or a name already on the
+   list — the row blooms instead (components/name-adder.tsx). A row has no
+   ground, so this is the one text-only refusal: the placeholder for empty, the
+   input's colour for typed.
+   The input's animation is load-bearing: a `::placeholder` animation ends as a
+   pseudo-element event, which refusal handlers ignore, so the element's own
+   animation is what tells the screen the flash is over. */
 .addrow.flash-a .addname { animation: refuse-text-a .6s ease-in-out }
 .addrow.flash-b .addname { animation: refuse-text-b .6s ease-in-out }
 
-/* **A `::placeholder` cannot be animated.** Blink drops any animation declared
-   on one — the rule parses, the class lands, and nothing whatsoever happens —
-   so the word an empty field shows has to ride on the ink that *can* animate:
-   mixed from `currentColor`, which is the input's own colour mid-flash. 47% of
-   it is `--muted` to the pixel on a light ground, so the swap as the class
-   lands and leaves is invisible; at the peak it is 47% of whatever the refusal
-   made the field, which is a pink light enough to read "Title" through a fill
-   and a red faint enough to read "Add someone" through a bloom. The amount's
-   own "0" keeps its `--muted` and leaves the job to the plate: it sits at .35
-   opacity by design, and no fixed share of `currentColor` can be both that
-   faint at rest and bolder than it at the peak. */
+/* **A `::placeholder` cannot be animated.** Blink silently drops the animation,
+   so the placeholder is mixed from `currentColor` instead, which the input's
+   animation moves. 47% of it matches `--muted` at rest on a light ground. The
+   amount's "0" keeps `--muted` and leaves it to the plate: at .35 opacity no
+   fixed share of `currentColor` is both that faint at rest and visible at peak. */
 .field.flash-a input::placeholder, .field.flash-b input::placeholder,
 .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
   color: color-mix(in srgb, currentColor 47%, transparent) }
 
-/* A refused Done on the who-had-what grid blooms the button and, with it, every
-   line nobody has been given — which is what is actually missing, and the only
-   way to find it again in twenty rows of bill. **The whole row goes**, right
-   across the columns of dots: most of a row is empty space, and reddening the
-   two lines of text at its left end was a signal you had to be looking for. It
-   washes rather than fills, because the dots and the ×N have to stay legible
-   through it, and its own words still go `--debit` on top. All three are named,
-   because the two quiet ones carry their own `--muted` and would not take a
-   colour inherited from the line.
-   The class is on the row, not on the name — the name is a button and only
-   half the row — so the cells' own pointer animation has to stop on the way up
-   or it would end the refusal early (components/who-had-what.tsx). */
+/* A refused Done on the who-had-what grid blooms the button and every line
+   nobody has been given, **the whole row** across the dots. It washes rather
+   than fills so the dots and ×N stay legible; all three text parts are named
+   because two carry their own `--muted`.
+   The class is on the row, so the cells' pointer animation must stop
+   propagating or it ends the refusal early (components/who-had-what.tsx). */
 .itemtable tr.flash-a > td { animation: refuse-wash-a .6s ease-in-out }
 .itemtable tr.flash-b > td { animation: refuse-wash-b .6s ease-in-out }
 .itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
@@ -1957,15 +1579,10 @@ button.amtnote:active { background: var(--hl-edge) }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
 .itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
 
-/* The one exemption from the global reduced-motion clamp, and it is deliberate:
-   that query is about movement — transforms, parallax, anything with a vector
-   that can trigger vestibular symptoms. This has none; it is a colour settling,
-   which is what the guidance recommends you fall back *to* when you strip
-   motion out. Clamped to .01ms it isn't a calmer signal, it is no signal.
-   It wins on specificity: the clamp's selector is `*`, at (0,0,0).
-   Scoped to `animation-duration` on purpose — `.amountfield` also transitions
-   border-color for focus, and un-clamping that here would hand reduced-motion
-   users an animation they did not ask for. */
+/* The one exemption from the reduced-motion clamp, deliberately: that query is
+   about movement, and this is a colour settling — clamped, it is no signal.
+   Wins on specificity over the clamp's `*`. Scoped to `animation-duration`:
+   `.amountfield` also transitions border-color for focus, which stays clamped. */
 @media (prefers-reduced-motion: reduce) {
   .amountfield.flash-a, .amountfield.flash-b,
   .field.flash-a, .field.flash-b,
@@ -2012,10 +1629,8 @@ button.amtnote:active { background: var(--hl-edge) }
   flex-direction: column; gap: 2px }
 .was { color: var(--debit); text-decoration: line-through; text-decoration-thickness: 1px; opacity: .8 }
 .now2 { color: var(--credit) }
-/* The rest of what one revision changed. An entry is saved whole, so a
-   revision routinely moves several fields; the sentence above covers the first
-   and these carry the others, since an amount that moved must never be the
-   line that goes missing. */
+/* The rest of what one revision changed: an entry is saved whole, so a revision
+   often moves several fields, and a moved amount must never go missing. */
 .also { margin-top: 5px; display: flex; flex-direction: column; gap: 2px }
 .alsoi { font-family: var(--f-mono); font-size: 11px; display: flex; flex-wrap: wrap;
   align-items: baseline; gap: 6px }
@@ -2033,20 +1648,16 @@ button.amtnote:active { background: var(--hl-edge) }
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
 
 /* ---- the demo's mark (components/demo.tsx) ----
-   The one card in the app that never folds and never dismisses: every screen
-   in the demo works, so "this is not yours" has to stay put. Set apart from
-   the install offer it sits above by a left rule rather than a colour, because
-   colour in this app is spent on money and nothing else (ADR-0023). */
+   The one card that never folds or dismisses: every demo screen works, so
+   "this is not yours" has to stay put. A left rule sets it apart, since colour
+   is spent on money (ADR-0023). */
 .demomark { border-left: 2px solid var(--muted); border-radius: var(--r-s) }
 .demomarkhead { display: flex; align-items: center; gap: 6px; color: var(--ink) }
 
 /* ---- skeletons ----
-   A screen waiting on IndexedDB used to render its top bar over nothing: the
-   frame appeared, the page sat empty, then a ledger dropped in. These hold the
-   shape instead — same row height, same three columns — so arrival changes the
-   text and not the layout. The widths are fixed rather than random so the
-   export and the browser agree, and the pulse is staggered a row at a time
-   because a block of them breathing in unison reads as a broken screen. */
+   Hold the shape of the rows to come — same height, same columns — so arrival
+   changes text, not layout. Fixed widths so the export and the browser agree;
+   the pulse is staggered, since rows breathing in unison look broken. */
 .skel { background: var(--card-3); border-radius: 2px;
   animation: skelpulse 1.4s ease-in-out infinite; animation-delay: var(--d, 0s) }
 @keyframes skelpulse { 0%, 100% { opacity: 1 } 50% { opacity: .42 } }
@@ -2062,41 +1673,29 @@ button.amtnote:active { background: var(--hl-edge) }
 .empty b { display: block; font-size: 14px; color: var(--ink); letter-spacing: -.02em;
   margin-bottom: 4px; font-weight: 700 }
 /* ---- import ----
-   The Tricount link, which is the one thing typed on that screen: one line,
-   nothing to drag, and monospaced, because the only thing anybody looks for in
-   a pasted link is whether it came over whole. (`components/copy-link.tsx`
-   spells its own box the same, above — both rules land on both elements, so a
-   property added here is added there too.) */
+   The Tricount link: one line, monospaced, so you can see it came over whole.
+   `components/copy-link.tsx`'s box is spelled the same above — both rules land
+   on both elements, so a property added here lands there too. */
 .linkbox { display: block; width: 100%; margin-top: 6px; background: var(--card-2);
   color: var(--ink); border: 1px solid var(--rule-soft); border-radius: var(--r-s);
   padding: 9px 11px; font-family: var(--f-mono); font-size: 11.5px; line-height: 1.5;
   text-overflow: ellipsis; outline: none }
 .linkbox::placeholder { color: var(--muted) }
-/* What a fetch costs, under the button that starts one (app/import/page.tsx).
-   Qualified by the section the way a refusal there has to be, since
-   `.aboutsect p` would otherwise set the size. Centred under the button it
-   belongs to rather than ranged left with the prose, and balanced rather than
-   left to wrap — on a narrow phone two even lines read as a remark where a
-   line and a stray word read as a mistake. */
+/* What a fetch costs, under its button (app/import/page.tsx). Qualified by the
+   section, since `.aboutsect p` would otherwise set the size. Centred and
+   balanced under the button. */
 .aboutsect p.fineprint { margin: 9px 2px 0; font-size: 11px; line-height: 1.45;
   color: var(--muted); text-align: center; text-wrap: balance }
 
-/* Turnstile's widget — the one third-party pixel in the app, and normally no
-   pixel at all: `interaction-only` draws nothing unless a challenge actually
-   needs a tap. This is where it lands when it does, which is why it is on
-   screen rather than parked off it — a checkbox nobody can reach is a scan
-   that waits out its own timeout. Above the bottom bar and over everything,
-   since it is the only thing being asked for at that moment. */
+/* Turnstile's widget — normally no pixel at all (`interaction-only`). When a
+   challenge does need a tap it must be reachable, or the scan waits out its
+   timeout: above the bottom bar, over everything. */
 .turnstile { position: fixed; left: 50%; z-index: 7;
   bottom: calc(env(safe-area-inset-bottom) + 76px); transform: translateX(-50%) }
 
 /* ---- settling up, in a dialog
-   Tapping a suggested payment used to open the entry form with both sides and
-   the amount filled in — a whole screen asking you to confirm figures the app
-   worked out and you cannot improve. It asks in a card instead: nothing here
-   is a field, because nothing here is yours to change. Two names, the row's own
-   arrow and the figure — no avatars, because initials say less than the name
-   already beside them and two squares turn one sentence into a diagram. */
+   A suggested payment is confirmed in a card, not the entry form: nothing here
+   is yours to change. Two names, the arrow and the figure — no avatars. */
 .settle { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 5px 0 1px }
 .settleflow { display: flex; align-items: center; justify-content: center; gap: 11px;
   max-width: 100% }

@@ -39,26 +39,18 @@ import {
 } from "@/lib/draft";
 
 /**
- * One form for all three kinds of entry.
- *
- * Expense, income and transfer are one thought with one shape — an amount, a
- * date, some words, and who it moves between — so they are one screen with a
- * kind chip at the top rather than three routes that lose what you typed when
- * you realise you picked the wrong one (ADR-0010). Switching kinds keeps the
- * amount, the currency, the date and the description; only the middle of the
- * form is swapped.
+ * One form for all three kinds of entry (ADR-0010): a kind chip rather than
+ * three routes, so picking the wrong kind loses nothing. Switching keeps the
+ * amount, currency, date and description; only the middle of the form swaps.
  */
 export default function EditEntryPage() {
   return <QueryBoundary><EditEntryScreen /></QueryBoundary>;
 }
 
 /**
- * What a refused Save can bloom. Two fields, a step and a number that isn't
- * on this form: the Items tab is short of a photograph or of a who-had-what
- * grid, and the control that takes whichever it is flashes exactly as the
- * amount's underline does; a currency the group has no rate for blooms the
- * badge that opens where the rate is set, because that is the whole of the
- * fix and there is no field here to point at.
+ * What a refused Save can bloom: two fields, the Items tab's step (a photo or
+ * the who-had-what grid), and the rate badge when the group has no rate for
+ * the currency — that badge is the whole fix, with no field here to point at.
  */
 const REFUSABLE = ["amount", "title", "receipt", "rate"] as const;
 type Refusable = typeof REFUSABLE[number];
@@ -74,10 +66,8 @@ function EditEntryScreen() {
   // "can't remove this yet" list. Saving goes back there (lib/group-link.ts).
   const via = parseEntrySource(params.get("via"));
   const saveTo = groupId ? formParent(groupId, entryId, via) : "/";
-  // A link may hand a new entry its name — the tip screen does, and settle-up
-  // did until it stopped opening this form at all (app/g/page.tsx). Nothing
-  // else is seeded from a query: a figure arriving by link is a figure nobody
-  // typed, which is exactly what settle-up's card is for.
+  // A link may hand a new entry its name (the tip screen does). Nothing else is
+  // seeded from a query: a figure arriving by link is a figure nobody typed.
   const prefill = { title: params.get("title") ?? undefined };
 
   const data = useGroupData(groupId);
@@ -91,26 +81,20 @@ function EditEntryScreen() {
   /**
    * A save in flight. **Every button that writes needs one** (`ConfirmDialog`,
    * `RateDialog`, `NameAdder`, `WhoPicker` all hold it): two taps on Save land
-   * before `router.replace` does and both pass `ready`, which asks about the
-   * form and not about whether a press is already spending it — a transfer
-   * written twice, for twice the money.
+   * before `router.replace` does and both pass `ready` — a transfer written
+   * twice, for twice the money.
    *
-   * Cleared only on failure: a save that worked is navigating away, and the
-   * press that lands during that must still find the button spent.
+   * Cleared only on failure: a save that worked is navigating away, and a press
+   * during that must still find the button spent.
    */
   const [saving, setSaving] = useState(false);
-  // Save is always tappable; a tap while invalid flips this instead of doing
-  // nothing. It is what puts the blocker sentence on screen — an untouched
-  // form shows no errors just for being empty. What is *missing* rather than
-  // wrong says so by blooming its own control instead, and needs no flag: the
-  // flash is the event.
+  // Save is always tappable; a tap while invalid flips this, which puts the
+  // blocker sentence on screen — an untouched form shows no errors. What is
+  // *missing* rather than wrong blooms its own control instead, with no flag.
   const [attemptedSave, setAttemptedSave] = useState(false);
   /**
-   * The refusal flash, per field (`lib/refusal.ts`). A refusal blooms the
-   * field that caused it red and lets it settle back — the amount's
-   * underline, the title's box, the placeholder in either (see "save refusal"
-   * in globals.css). Per field rather than once for the form, so a field that
-   * wasn't the problem this time stays quiet.
+   * The refusal flash, per field (`lib/refusal.ts`), so a field that wasn't the
+   * problem this time stays quiet.
    */
   const [refusedFields, setRefused] = useState<Record<Refusable, Refusal>>({
     amount: NOT_REFUSED, title: NOT_REFUSED, receipt: NOT_REFUSED, rate: NOT_REFUSED,
@@ -122,25 +106,21 @@ function EditEntryScreen() {
       return next;
     });
   /**
-   * What is missing as of the latest render, written once `checkEntry` has
-   * run below. A refusal that travels first reads it when the scroll lands,
-   * not when Save was pressed: a field fixed mid-scroll has nothing left to
-   * bloom, and a flash on it would lock Save for nothing.
+   * What is missing as of the latest render. A refusal that scrolls first reads
+   * it when the scroll lands: a field fixed mid-scroll has nothing to bloom, and
+   * a flash on it would lock Save for nothing.
    */
   const missingNow = useRef<Partial<Record<Refusable, boolean>>>({});
   /**
-   * Scrolling to what a refusal points at. Save is spent for the travel as
-   * well as the flash, the who-had-what grid's rule: a second press mid-scroll
-   * would start a second journey over the first.
+   * Scrolling to what a refusal points at. Save is spent for the travel as well
+   * as the flash, or a second press would start a second journey.
    */
   const [seeking, setSeeking] = useState(false);
   /**
-   * A flash whose field stopped being missing ends here, by hand. The flash
-   * can leave with its element — the Items tab switched away, a currency put
-   * back to the group's own takes "set rate" off the form — and an animation
-   * removed mid-flight never fires `animationend`, so Save would stay spent
-   * for good (design-system.md's Gotchas). Every render, after `missingNow`
-   * has caught up with it.
+   * A flash whose field stopped being missing ends here, by hand. The flash can
+   * leave with its element (the Items tab switched away, "set rate" gone), and
+   * an animation removed mid-flight never fires `animationend`, so Save would
+   * stay spent for good (design-system.md's Gotchas).
    */
   useEffect(() => {
     const stale = staleFlashes(refusedFields, missingNow.current);
@@ -152,9 +132,7 @@ function EditEntryScreen() {
     });
   });
   /**
-   * A refusal is still on screen. Save is spent for exactly as long: a press
-   * that can't go through has to look like it landed, and a button that stays
-   * live while the form is busy saying no invites the same press again. Read
+   * A refusal is still on screen, and Save is spent for exactly as long. Read
    * off the flash rather than a timer of its own, so the two can't drift.
    */
   const refusing = REFUSABLE.some((f) => refusedFields[f].live);
@@ -170,15 +148,13 @@ function EditEntryScreen() {
 
   /**
    * **The rate dialog opens for whatever currency the draft is *in*, never for
-   * the act of picking one** — a scan picks one too, and `/g/scan` fills a
-   * draft on a screen that is already navigating here. Tied to the picker, a
-   * photographed Moroccan receipt arrives looking complete and wrong: MAD, at
-   * whatever rate the draft had.
+   * the act of picking one** — a scan picks one too (`/g/scan` fills the draft
+   * before navigating here), and a photographed MAD receipt would otherwise
+   * arrive at the draft's old rate.
    *
-   * The ref is what keeps it to one ask: dismissing the dialog leaves the
-   * currency exactly as it was, and without it the effect would reopen what
-   * was just closed. `pickCurrency` sets it for the same reason, and clears
-   * its own claim, so picking the same currency again does ask again.
+   * The ref keeps it to one ask: dismissing leaves the currency as it was, and
+   * the effect would reopen it. `pickCurrency` clears it, so picking the same
+   * currency again does ask again.
    */
   const rateAsked = useRef<string | null>(null);
   useEffect(() => {
@@ -190,11 +166,9 @@ function EditEntryScreen() {
   }, [draft, data.group, data.rates]);
 
   // What this screen was opened *on*: an entry's id, or — creating — everything
-  // the link asked for. Coming back from the payers editor or the who-had-what
-  // grid re-mounts the form with the same key, so the draft survives; arriving
-  // from a different link doesn't, so a leftover draft is replaced rather than
-  // handed over — settle up must not land on the blank expense an abandoned
-  // "+" left behind.
+  // the link asked for. Returning from the payers editor or the grid re-mounts
+  // with the same key, so the draft survives; a different link replaces a
+  // leftover draft rather than inheriting it.
   const seedKey = entryId ?? newEntryKey(wantedKind, prefill);
 
   // Seed the draft once the group is loaded: from the entry being edited —
@@ -287,35 +261,26 @@ function EditEntryScreen() {
   }, [groupId]);
 
   /**
-   * This screen has answered for its draft and is on its way out, so it has
-   * stopped guarding the way — the same flag `/new` keeps for the same reason
-   * (app/new/page.tsx), and the reason the draft is no longer thrown away
-   * before the going.
+   * This screen has answered for its draft and is leaving, so it has stopped
+   * guarding the way — the same flag `/new` keeps (app/new/page.tsx).
    */
   const leaving = useRef(false);
   /**
-   * **The draft goes when the screen does, not before.**
+   * **The draft goes when the screen does, not before.** Leaving isn't instant:
+   * a traversal Android swallows is repaired a breath later (`SWALLOWED_MS`,
+   * lib/nav.ts), and with the draft already cleared that gap draws
+   * `<Blank title="New" />` — a screen that failed to leave reads as a fresh
+   * blank entry (docs/frontend.md#gotchas).
    *
-   * Discard and Save used to clear it and then leave, which is fine only if
-   * the leaving is instant. It is not: a traversal Android swallows is
-   * repaired a breath later (`SWALLOWED_MS`, lib/nav.ts), and with the draft
-   * already gone those milliseconds are spent drawing `<Blank title="New" />`
-   * — the render below, once `draft` is undefined. That is what made a screen
-   * which failed to leave read as a fresh blank entry instead, and it is what
-   * sent three rounds of this bug after the wrong thing
-   * (docs/frontend.md#gotchas).
-   *
-   * Guarded by the flag, because the payers editor and the who-had-what grid
-   * unmount this screen too and the draft is not theirs to throw away.
+   * Guarded by the flag, because the payers editor and the grid unmount this
+   * screen too and the draft is not theirs to throw away.
    */
   useEffect(() => () => { if (leaving.current && groupId) clearDraft(groupId); }, [groupId]);
 
   const title = entryId ? copy.form.editTitle : copy.form.newTitle;
-  // No members means the draft can't be seeded — no payer to name — and
-  // without this the screen is a titled blank forever, with nothing saying
-  // People is where the fix is. It is reachable: a group pulled from the
-  // server before its members arrive, or opened by its own link on a phone
-  // that hasn't claimed anybody.
+  // No members means no payer to seed a draft with, and without this the screen
+  // is a titled blank forever. Reachable: a group pulled before its members
+  // arrive, or opened on a phone that hasn't claimed anybody.
   if (groupId && !data.loading && data.group && data.members.length === 0) {
     return (
       <Screen><Body>
@@ -329,10 +294,8 @@ function EditEntryScreen() {
       </Body></Screen>
     );
   }
-  // An `e` naming nothing in either table is the same dead end one step on: the
-  // seeding effect has nothing to seed from and gives up, leaving a titled
-  // blank forever. A link to a deleted entry is the ordinary way here, so it
-  // gets the sentence the entry screen already says for one.
+  // An `e` naming nothing in either table is the same dead end; a link to a
+  // deleted entry is the ordinary way here.
   if (groupId && entryId && !data.loading && data.group
     && !data.expenses.some((e) => e.id === entryId)
     && !data.settlements.some((s) => s.id === entryId)) {
@@ -356,20 +319,17 @@ function EditEntryScreen() {
   // don't, that's the conversion (`convertToSettlement`/`convertToExpense`).
   const originalKind = draft.entryTable;
 
-  // Merges against the latest saved draft, not the `draft` this render closed
-  // over — some interactions (switching split tabs) call patch() twice in one
-  // handler, and merging against a stale closure would let the first patch's
-  // change be clobbered by the second.
+  // Merges against the latest saved draft, not this render's `draft`: some
+  // handlers (switching split tabs) call patch() twice, and a stale closure
+  // would let the second clobber the first.
   const patch = (change: Partial<EntryDraft>) =>
     saveDraft(groupId, clipAmountToCurrency({ ...(getDraft(groupId) ?? draft), ...change }));
 
   /**
    * Change the entry's currency, and ask for its rate when the group has none.
-   *
-   * This is the "introducing a new currency" moment. Without it, picking MAD in
-   * a EUR group leaves the rate at "1", passes validation, and banks a 500 MAD
-   * dinner as €500 — so the dialog opens on the spot with today's rate ready,
-   * and Save is held until the group has a number either way.
+   * Otherwise a MAD pick in a EUR group keeps rate "1", passes validation, and
+   * banks a 500 MAD dinner as €500 — so the dialog opens on the spot, and Save
+   * is held until the group has a number.
    */
   function pickCurrency(currency: string) {
     patch({ currency });
@@ -396,12 +356,10 @@ function EditEntryScreen() {
   };
 
   /**
-   * A refusal, once what it points at can be seen — the grid's `reveal`, on the
-   * form's own scroll. With the keyboard up the form is a strip of a few rows,
-   * and Save at its foot is a long way from an empty amount at its head: a
-   * flash spent up there is a press that did nothing. Unless one of the refused
-   * controls is wholly in view, the nearest is scrolled to and only then does
-   * it bloom, off a fresh reading of what is still missing.
+   * A refusal, once what it points at can be seen. With the keyboard up the form
+   * is a strip of a few rows, and a flash out of view is a press that did
+   * nothing: unless a refused control is wholly in view, the nearest is scrolled
+   * to, and then it blooms off a fresh reading of what is still missing.
    */
   const refuseInView = (fields: Partial<Record<Refusable, boolean>>) => {
     const box = document.querySelector<HTMLElement>(".scroll");
@@ -431,12 +389,10 @@ function EditEntryScreen() {
   };
 
   /**
-   * Switching tabs. Two handoffs, each made once and only into a tab that has
-   * nothing of its own yet: `openSplitTab` gives a first-time tab a split to
-   * start from, and `handOffReceiptTotal` gives the amount field back the
-   * total Receipt was deriving — without which the amount has nowhere to go
-   * and the expense silently becomes worth zero (ADR-0016). A tab already
-   * holding an answer keeps it, whatever the others now say.
+   * Switching tabs. Two handoffs, each only into a tab with nothing of its own
+   * yet: `openSplitTab` gives it a split to start from, and `handOffReceiptTotal`
+   * gives the amount field Receipt's derived total — without it the expense
+   * silently becomes worth zero (ADR-0016). A tab holding an answer keeps it.
    */
   const changeTab = (splitTab: SplitTab) => {
     const handoff = handOffReceiptTotal(
@@ -450,10 +406,8 @@ function EditEntryScreen() {
   };
 
   /**
-   * Change which of the three this is, keeping everything the new kind can
-   * still use. Leaving Receipt behind takes the same handoff as an ordinary
-   * tab switch does — an income's amount would otherwise be derived from a
-   * bill it no longer shows.
+   * Change which of the three this is, keeping what the new kind can use.
+   * Leaving Receipt takes the same handoff as a tab switch.
    */
   const changeKind = (next: EntryKind) => {
     if (next === kind) return;
@@ -461,10 +415,8 @@ function EditEntryScreen() {
     const handoff = leavingReceipt
       ? handOffReceiptTotal(activeTab, "equal", draft.receiptItems, receiptExtras(draft), draft.currency)
       : null;
-    // "Reimbursement" is only ever written by settle up's card, never by
-    // switching kind here. Leaving a transfer that still carries it hands the
-    // next kind an empty field rather than a word about a transfer it no
-    // longer is.
+    // "Reimbursement" is only written by settle up's card. A transfer leaving that
+    // kind hands on an empty field rather than a word that no longer fits.
     const note = next !== "transfer" && draft.description === copy.form.reimbursement
       ? "" : draft.description;
     patch({
@@ -548,8 +500,8 @@ function EditEntryScreen() {
           kind,
           description: draft.description.trim(),
           occurredAt: draft.occurredAt,
-          // Written only when it is true (`only`/`wholeEntity`): a typed entry
-          // is the absence of this field, like every entry before it existed.
+          // Written only when true (`only`/`wholeEntity`): a timed entry is the absence
+          // of this field.
           dateOnly: draft.dateOnly ? true : null,
           amountMinor,
           currency: draft.currency,
@@ -597,14 +549,10 @@ function EditEntryScreen() {
           title={draft.entryId ? copy.form.editTitle : copy.form.newTitle}
           sub={group.name}
           back={{ ask: mayLeave }}
-          /* The kind sits up here, on the row that already names what this
-             screen is, rather than as a lone chip floating over the amount.
-             All three kinds are always reachable: expense ↔ income is one
-             field on the same entity, expense/income ↔ transfer costs a
-             convert instead of an edit (`convertToSettlement`/
-             `convertToExpense`, commands/entries.ts) — but the chip doesn't
-             need to know which, and the draft carries the amount, currency,
-             date and words across any of the six pairs. */
+          /* The kind sits on the row that already names the screen. All three kinds are
+             always reachable: expense ↔ income is one field, ↔ transfer is a convert
+             (`convertToSettlement`/`convertToExpense`, commands/entries.ts) — but the
+             chip doesn't need to know which. */
           right={
             <button type="button" className="chip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")} {...keepsFocus}>
@@ -617,13 +565,10 @@ function EditEntryScreen() {
           {scan.inputs}
 
           <div className="pad" style={{ textAlign: "center", paddingTop: 16, paddingBottom: 10 }}>
-            {/* Rows of a grid, not centred lines: the typed amount, its
-                converted figure and the scan's badge share a right edge, and
-                the currency chip and the rate control share a left edge
-                between them. The refusal flash runs on `.amountfield`, which
-                `AmountInput` renders itself, so the grid listens for it on the
-                way up rather than the component growing a prop for one
-                screen's animation. */}
+            {/* Grid rows, not centred lines: the typed amount, its converted figure
+                and the scan's badge share a right edge; the currency chip and rate
+                control share a left one. `.amountfield` is rendered by `AmountInput`,
+                so the refusal's `animationend` is caught here on the way up. */}
             <div className="amtgrid" data-refuse="amount" onAnimationEnd={settled("amount")}>
               <AmountInput
                 className="amount"
@@ -643,12 +588,9 @@ function EditEntryScreen() {
                 {draft.currency} <Icon name="chev" size={10} />
               </button>
 
-              {/* The rate is no longer a field on this form, and no longer a
-                  figure on it either: what this line is for is what the entry
-                  is worth in the group's currency. The number belongs to the
-                  group, and both controls on this row open the registry's own
-                  dialog to change it — where changing it also says how much
-                  of the ledger moves. */}
+              {/* What the entry is worth in the group's currency. The rate belongs to
+                  the group: both controls open the registry's dialog, which also says
+                  how much of the ledger moves. */}
               {foreign ? (
                 <>
                   <button type="button" className="ratelink"
@@ -667,10 +609,8 @@ function EditEntryScreen() {
                 </>
               ) : null}
 
-              {/* Where the amount came from, when it did: the scan that typed
-                  it. A row of this grid rather than a line under it, so it
-                  ends on the amount's last digit — the grid's odd children are
-                  the right-hand column, and this is one. */}
+              {/* The scan that typed the amount — a grid row, so it ends on the
+                  amount's last digit (odd children are the right-hand column). */}
               {receiptLocksAmount ? (
                 <div className="amtnotes">
                   <div className="amtnote">{copy.form.fromReceipt}</div>
@@ -691,10 +631,9 @@ function EditEntryScreen() {
 
             <div className={`field${flashClass(refusedFields.title)}`} data-refuse="title" onAnimationEnd={settled("title")}>
               {transfer ? null : <label htmlFor="what">{copy.form.what}</label>}
-              {/* The end of this chain, whatever tab is showing underneath:
-                  the split's column of figures is a chain of its own, and a
-                  press here folds the keyboard rather than diving into it
-                  (`walkFields`, components/viewport.tsx). */}
+              {/* The end of the field chain: the split's figures are a chain of their
+                  own, so a press here folds the keyboard (`walkFields`,
+                  components/viewport.tsx). */}
               <input id="what" value={draft.description}
                 enterKeyHint="done"
                 aria-label={transfer ? copy.form.note : copy.form.what}
@@ -735,11 +674,8 @@ function EditEntryScreen() {
                     one payer is the common case and costs one row. */}
                 <button type="button" className="pick-sub" {...keepsFocus}
                   onClick={() => {
-                    // The same refusal, asked for by a door rather than by
-                    // Save: the payers screen divides the amount between
-                    // people, so opening it with no amount hands it a zero to
-                    // split. The tap doesn't travel — it flashes the amount
-                    // field, which is where the fix is.
+                    // The payers screen divides the amount, so with none it would split a
+                    // zero. The tap doesn't travel — it flashes the amount field.
                     if (amountMissing) { if (!seeking) refuseInView({ amount: true }); return; }
                     router.push(route.payers(groupId));
                   }}>
@@ -784,13 +720,9 @@ function EditEntryScreen() {
 
           </div>
 
-          {/* One button, the width of the form, as its last row rather than a
-              bar pinned to the bottom: pinned, it fought the phone keyboard,
-              which overlays the shell instead of shortening it. Scrolling with
-              the fields costs a swipe on a long form and nothing else — it
-              stays pressable when the entry isn't ready, because `save`
-              answers with the refusal flash on whichever field is missing,
-              which is more use than a dead button saying nothing. */}
+          {/* The form's last row, not a bar pinned to the bottom, which fights the
+              keyboard (it overlays the shell). Always pressable: `save` answers
+              with the refusal flash on whatever is missing. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {failed ? (
               <p className="failure" role="alert" style={{ margin: "0 2px 9px" }}>

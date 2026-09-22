@@ -4,21 +4,13 @@ import type {
 import type { EntryKind } from "./entry-kind";
 
 /**
- * Every word the app says to a person, in one place.
+ * Every word the app says to a person, in one place — for translation (a
+ * second language is a second copy of this object, ADR-0033) and for tone.
  *
- * Two reasons it is one file rather than a string beside each screen:
- * translation — a second language is a second copy of this object and nothing
- * else (ADR-0033) — and tone, which is only legible when the sentences sit next
- * to each other.
- *
- * **Rules.**
- * - Screens read `copy`; they never hold a literal a person can read.
- *   `scripts/rules-check.mjs` fails a build that puts one back.
- * - A string that needs a value is a function here, not a template at the call
- *   site — word order is the first thing a translation changes.
+ * - Screens never hold a readable literal; `scripts/rules-check.mjs` enforces it.
+ * - A string needing a value is a function here: translations reorder words.
  * - Plurals go through `plural()` with a `{ one, many }` noun, never `${n}s`.
- * - Say it once, short. What the screen already shows is not text.
- *   ([standing-instructions](../../../docs/standing-instructions.md#interface)).
+ * - Say it once, short ([standing-instructions](../../../docs/standing-instructions.md#interface)).
  */
 
 export interface Noun {
@@ -35,20 +27,11 @@ interface RefusalFact {
   detail?: string;
 }
 
-/**
- * Said one way for an expense and the other for an income — money going out
- * is *paid*, money coming in is *received*, and a screen that mixes the two
- * describes the entry the person is not looking at. A transfer has no payer
- * side of its own, so it is not asked for here.
- */
+/** Money out is *paid*, money in is *received*. A transfer has no payer side. */
 export type Voice = "expense" | "income";
 type Voiced<T> = Record<Voice, T>;
 
-/**
- * How each of the bill's own charges is named inside a sentence, as against
- * the row labels in `copy.items.extra` — mid-sentence, lower case, and bare:
- * the caption they go in has one line to fit three of them and the verb.
- */
+/** The bill's charges mid-sentence, lower case — one caption line fits three and a verb. */
 const extraSubject: Record<ExtraKind, string> = {
   discount: "discount", tax: "tax", tip: "tip",
 };
@@ -60,9 +43,7 @@ const lower = (browser: string | undefined) => browser ?? "this browser";
 export const copy = {
   app: {
     name: "bida",
-    /** Not shown in the app at all: this is the page description, so it is
-        the line under the wordmark when somebody pastes a link into a chat
-        — where the title is only "bida" and means nothing yet. */
+    /** The page description: the line under "bida" in a pasted-link preview. Never shown in-app. */
     description: "No-nonsense expense splitter.",
   },
 
@@ -85,11 +66,7 @@ export const copy = {
     reload: "Reload",
   },
 
-  /**
-   * When reading this phone's own database goes wrong. Rare, and without these
-   * it is silent: the screen simply stays on its skeleton rows.
-   * See lib/db/live.ts.
-   */
+  /** Reading this phone's database failed; without these the screen just stays on skeletons. lib/db/live.ts. */
   db: {
     /** A read that has stopped answering — the app is asking again. */
     stalled: "Still reading this phone’s data…",
@@ -102,38 +79,23 @@ export const copy = {
     },
   },
 
-  /**
-   * `/diag`, which is not linked from anywhere — long-press the wordmark on
-   * the groups list. Four words, because the screen itself is one block of
-   * preformatted text and nothing there is translated.
-   */
+  /** `/diag` (long-press the wordmark on the groups list). Untranslated preformatted text. */
   diag: {
     title: "Diagnostics",
     reading: "Reading…",
     copyAll: "Copy the report",
     copied: "Copied",
-    /** The one switch on this screen — see lib/scan/stas.ts. The line under it
-     *  is the warning: what it changes is the tone of a refusal, and the
-     *  refusals get personal. */
+    /** The switch in lib/scan/stas.ts; the line under it warns the refusals get personal. */
     stas: "Staś mode",
     stasNote: "Send a bad photo, get insulted.",
     on: "On",
     off: "Off",
   },
 
-  /**
-   * The group as a spreadsheet. The subtitle names the two apps somebody is
-   * actually leaving for, because "CSV" answers a question nobody asked and
-   * those two words are what tell you whether this button is the one you want.
-   */
+  /** Names Splitwise and Tricount, since "CSV" doesn't tell you it's the right button. */
   export: {
     title: "Export data",
-    /**
-     * Why you are looking at text instead of holding a file — but only where
-     * that is true. This is an ordinary route, so it can be opened by a
-     * browser that would have taken the file happily, and telling that person
-     * their browser can't save one is just wrong (`fileHandoff`).
-     */
+    /** Only where the browser really can't save a file (`fileHandoff`). */
     body: "This browser can’t save a file. Copy the text below into a"
       + " spreadsheet, or into Splitwise or Tricount.",
     /** The same screen, reached by a browser that could have saved it. */
@@ -146,21 +108,12 @@ export const copy = {
   },
 
   /**
-   * The other direction (`app/import/page.tsx`): somebody else's spreadsheet
-   * as a group of ours.
+   * `app/import/page.tsx`: a Splitwise export (or ours) as a new group. Nothing
+   * existing changes, and the file is read out before any op is written.
    *
-   * Written for a person who is leaving Splitwise, which is the only reason
-   * this screen is ever opened — so it names that app, says what it will make,
-   * and says up front that nothing already on the phone changes. The rest of
-   * the screen is a readout of the file before a single op is written, because
-   * the one question a person has here is "is it going to get my trip right",
-   * and the only honest answer is to show them the count.
-   *
-   * **The refusals are the most-read words in this block.** A file that is
-   * refused is refused whole, which is only bearable if the sentence says
-   * which line and what to change — so every one of them names the fix, in the
-   * file, where the fix has to happen. `ImportRefusalCode` in
-   * `core/import.ts` is the list; `detail` is the fact each sentence needs.
+   * **The refusals are the most-read words here**: a file is refused whole, so
+   * each names the line and the fix. `ImportRefusalCode` in `core/import.ts` is
+   * the list; `detail` is the fact each needs.
    */
   importData: {
     title: "Import a group",
@@ -170,21 +123,14 @@ export const copy = {
     /** Back to the two ways in, once a plan is on screen and is not the one wanted. */
     again: "Start again",
 
-    /**
-     * The second way in, and the shortest one: a tricount is fetched from its
-     * own link rather than exported first, so this is the only source here
-     * that asks nothing of the other app.
-     */
+    /** Fetched from its link, so it asks nothing of the other app. */
     orTricount: "Or paste a Tricount link:",
     tricountPlaceholder: "https://tricount.com/…",
     fetch: "Fetch it",
     fetching: "Fetching…",
     /**
-     * What a fetch costs, under the button that starts one rather than after
-     * it: the link goes to our Worker because the browser cannot call bunq
-     * itself, so this is the one thing in the app that leaves the phone
-     * readable (`apps/api/src/index.ts`). Said the way /about says it of a
-     * scan, and in the same two words the rest of the app is not.
+     * Under the button: the link goes through our Worker (the browser can't call
+     * bunq), the one thing that leaves the phone readable (`apps/api/src/index.ts`).
      */
     fineprint: "Sent through bida’s server, unencrypted. Not stored.",
     /** Pasted something with no tricount key in it, before anything is sent. */
@@ -204,10 +150,8 @@ export const copy = {
     entries: "Entries",
     transfers: "Transfers",
     /**
-     * Rows that say a thing cost money and nothing about who — which is what
-     * bida's own export writes for an expense it could not apportion. Named
-     * rather than silently skipped: they are the one thing the import loses,
-     * and a count that doesn't match the spreadsheet is worth a sentence.
+     * All-zero rows (what bida's export writes for an unapportionable expense).
+     * Named, since they're the only thing lost and the count would differ.
      */
     dropped: (rows: string) => `${rows} left out, carrying no money`,
     /** Over the picker at the end — the same question joining a group asks. */
@@ -238,20 +182,10 @@ export const copy = {
       "row-not-zero": (f) => `Line ${f.line} doesn’t add up: the people’s columns should come to zero, and they come to ${f.detail}.`,
       overpaid: (f) => `Line ${f.line} says more was paid than the thing cost (${f.detail}).`,
       "no-entries": () => "There is nothing to import: nothing in it carries any money.",
-      /**
-       * The check that makes the whole feature trustworthy, so the sentence
-       * says the file was left alone rather than apologising: bida read the
-       * rows, added them up, and got something other than the file's own
-       * total.
-       */
+      /** Says the file was left alone: bida's sums didn't match the file's own total. */
       checksum: (f) => `The balances bida read don’t match the ones it was given (${f.detail}). Nothing was imported.`,
 
-      /**
-       * The four a tricount can raise. They name the entry rather than a line,
-       * since that is what a person sees when they open the tricount, and the
-       * first of them is the one that is nobody's mistake: the API behind a
-       * Tricount link is not one Tricount publishes.
-       */
+      /** Name the entry, not a line. The first is nobody's fault: Tricount's API is unofficial. */
       "not-tricount": () => "That link doesn’t open a Tricount. Check that it is the link Tricount’s own Share gives you, and that the tricount still exists.",
       "tricount-amount": (f) => `One entry (${f.detail}) has an amount bida can’t read.`,
       "tricount-date": (f) => `One entry (${f.detail}) has no date bida can read, and filing a whole trip under today isn’t a guess worth making.`,
@@ -298,20 +232,15 @@ export const copy = {
       body: "A trip, a flat, a dinner: anything several people pay for.",
     },
     /**
-     * Keys this phone holds whose groups have not arrived from the server yet
-     * — a freshly installed icon carrying its invites, most of all. Not the
-     * empty state: "No groups yet" on the first launch of an icon someone just
-     * added to keep their groups is the app saying it lost them.
+     * Keys held whose groups haven't arrived yet — a new home-screen icon carrying
+     * its invites. Not "No groups yet", which would read as losing them.
      */
     arriving: {
       title: "Getting your groups",
       body: "Finishes by itself once they sync.",
     },
     newGroup: "New group",
-    /** The kebab's row, above About. What it makes is a group, which is why it
-        is on this screen and not in a group's own menu, and the menu is the
-        whole of it: a screen whose one act is "new group" does not need a
-        second pitch on it. */
+    /** Kebab row above About; on this screen because what it makes is a group. */
     importGroup: "Import a group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */
@@ -322,16 +251,12 @@ export const copy = {
       body: (host: string) => `That group lives on ${host}, so this app can’t open it. Open the link there, or ask for one made on this app.`,
     },
     about: "About bida",
-    /** Last in the kebab, and named for what is behind it rather than for who
-        it is for: a screen of settings most people never need, holding one
-        thing today. */
+    /** Last in the kebab, named for what's behind it. */
     advanced: "Advanced",
-    /** The kebab in the bar: the phone's own switches and the two screens the
-        app spends on itself. */
+    /** The bar's kebab: the phone's switches and the app's own screens. */
     menu: "Menu",
     whoAreYou: "who are you?",
-    /** In place of the figure for a moment, under the check that says the
-        row's link is on the clipboard — lower case, like the words it stands in for. */
+    /** Replaces the figure for a moment after copying a row's link; lower case like it. */
     copied: "copied",
     youOwe: "you owe",
     youreOwed: "you’re owed",
@@ -341,24 +266,17 @@ export const copy = {
 
   install: {
     /**
-     * Chrome's card: an **offer**, because on Android the tab and the installed
-     * app are one storage and installing loses you nothing by being declined.
-     * Its own button says just "Add" (`act.add`) — it opens the OS sheet where
-     * it stands, so the card above it is the sentence.
+     * Chrome's card: an **offer** — on Android the tab and the app share storage.
+     * Its button is just "Add" (`act.add`); the card is the sentence.
      */
     title: "Keep bida on your home screen",
     body: "Own icon, no browser bar, works offline.",
-    /**
-     * The long form, for the two buttons that leave the screen they are on:
-     * `/install` on iOS, and `/about`'s, which has no card over it to lean on.
-     */
+    /** The long form, for `/install` on iOS and `/about`, which have no card above. */
     act: "Add bida to home screen",
     /**
-     * The iOS tab's card, once it holds a group (docs/ios.md). The same shape
-     * and the same places as Chrome's, and a **warning** rather than an offer —
-     * this browser really does clear the groups it is holding. Still a title
-     * that says what you get rather than what goes wrong: it stands until the
-     * phone installs, and a standing alarm reads as nagging.
+     * The iOS tab's card once it holds a group (docs/ios.md): a **warning**, as
+     * Safari really does clear groups — but titled with the gain, since it stands
+     * until installed and a standing alarm nags.
      */
     banner: {
       title: "Keep your groups on this phone",
@@ -373,23 +291,17 @@ export const copy = {
       keepBold: "add bida to your home screen.",
       clipAlt: "In Safari: the menu, Share, View More, Add to Home Screen, then Add.",
       /**
-       * The same walk the recording shows, in words above it. The clip settles
-       * which button is meant faster than prose can, but it cannot be read in
-       * a glance, cannot be searched, and says nothing at all to a screen
-       * reader — so the steps lead and the clip confirms them.
-       *
-       * Two, naming the two buttons and nothing else: the taps between them —
-       * scrolling the sheet, the Add that ends it — are what the clip is for,
-       * and a step per tap turned two buttons to find into a procedure.
+       * The walk the recording shows, in words above it: the clip can't be read at
+       * a glance, searched, or heard by a screen reader. Two steps, naming the two
+       * buttons; the taps between are what the clip is for.
        */
       steps: [
         { icon: "share", text: "Tap the Share button" },
         { icon: "plus", text: "Select Add to home screen" },
       ],
       /**
-       * Under the recording, for whoever installed and still meets the banner:
-       * a tab cannot see the home-screen app, and the two keep their storage
-       * apart (docs/ios.md). The owner's wording.
+       * For whoever installed and still sees the banner: a tab can't see the
+       * home-screen app, and they don't share storage (docs/ios.md).
        */
       after: {
         ask: "Still seeing this after adding bida?",
@@ -400,30 +312,23 @@ export const copy = {
   },
 
   /**
-   * The way out of an in-app browser, which is the whole app in one
-   * (`components/embedded.tsx`). Two sentences and a link: what this place is,
-   * and the two ways out of it — the app's own menu, or the link in a browser.
-   *
-   * It names the app where its webview says so, because "use the menu at the
-   * top" is a different menu in each, and a person who is told which app they
-   * are in stops looking for a bida setting they did the wrong thing to.
+   * The in-app-browser screen (`components/embedded.tsx`): what this is, and the
+   * ways out. Names the host app where known, since "the menu" differs per app.
    */
   embedded: {
     title: "Open bida in your browser",
     why: (app: string | undefined) =>
       `${app ?? "This app"} opens links in a browser of its own. Nothing you do here is kept.`,
     /**
-     * Written twice rather than assembled, because both halves differ: the
-     * menu is an ellipsis on iOS and a kebab on Android, and the item under it
-     * names Safari on one and says "external browser" on the other. Naming the
-     * button is the whole value of the line. Where it sits is left out:
-     * Instagram puts it at the top and Facebook at the bottom.
+     * Written twice: the menu is an ellipsis on iOS and a kebab on Android, and
+     * the item names Safari or "external browser". Position is omitted —
+     * Instagram and Facebook differ.
      */
     how: {
       ios: "Tap the ⋯ menu, then “Open in Safari”.",
       android: "Tap the ⋮ menu, then “Open in external browser”.",
     },
-    /** Wordings drift between versions of these apps, so the link is the floor. */
+    /** App wordings drift between versions, so the link is the fallback. */
     orPaste: "Can’t find it? Copy this link and paste it into your browser.",
   },
 
@@ -436,22 +341,15 @@ export const copy = {
   // ----------------------------------------------------------------- about
 
   /**
-   * The one screen the app spends on itself (app/about/page.tsx). It answers
-   * the three questions someone asks of an app with no sign-up: who can edit
-   * this, does it work on a train, and who can read what I typed.
-   *
-   * The privacy section is a claim about the code, not a promise: op bodies are
-   * sealed on the phone under a key the server never sees
-   * ([ADR-0036](../../../docs/decisions/0036-the-server-cannot-read-a-group.md)),
-   * which is why the sample below is a real `SealedOp` and not a drawing. If
-   * either ever stops being true, this changes in the same commit.
+   * The app's one screen about itself (app/about/page.tsx): who can edit, does
+   * it work offline, who can read it. The privacy section is a claim about the
+   * code — bodies are sealed under a key the server never sees (ADR-0036),
+   * which is why the sample is a real `SealedOp`. Change it in the same commit
+   * if that stops being true.
    */
   /**
-   * The screen for things most people never open, and the first of them.
-   *
-   * Short on purpose: three paragraphs about the budget, the billing and where
-   * the key is stored read as a disclaimer rather than an offer. Two facts
-   * decide it — the phone calls Google itself, and Google bills the key.
+   * The screen for rarely needed settings, starting with bringing your own key.
+   * Short: the phone calls Google itself, and Google bills the key.
    */
   advanced: {
     title: "Advanced",
@@ -460,12 +358,9 @@ export const copy = {
       lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
-      /** The free tier's own terms, not ours — worth re-checking before
-          editing (docs/receipt-scanning.md#trust-and-what-were-accepting). */
+      /** Google's terms, not ours — re-check before editing (docs/receipt-scanning.md#trust-and-what-were-accepting). */
       freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
-      /** Split around the link, the way /about's warning rows are: the door out
-          is a word in the sentence that dates the terms, not a row of its own
-          repeating the line that opened the fold. */
+      /** Split around the inline link. */
       site: { lede: "Check their ", link: "website", tail: "." },
       placeholder: "Paste a Gemini API key",
       /** The plus files the key, the way the plus on a name files a name. */
@@ -476,10 +371,8 @@ export const copy = {
       /** Under the locked field: the one line that says the paste worked. */
       accepted: "This phone scans with your key.",
       /**
-       * The two refusals, which ask for different things. `refused` is the
-       * key; `blocked` is this browser, and it is the one worth catching at
-       * the moment of pasting, since a scan on a brought key is a call this
-       * browser makes itself.
+       * `refused` is the key's fault; `blocked` is this browser's, worth catching
+       * on paste since a brought-key scan is a call the browser makes itself.
        */
       refused: "Google wouldn’t accept that key.",
       blocked: "This browser couldn’t reach Google. Something is blocking generativelanguage.googleapis.com.",
@@ -488,9 +381,7 @@ export const copy = {
 
   about: {
     title: "About bida",
-    /** The prefix on the number in the bar's corner, which is the build's and
-     *  not copy's (lib/version.ts). It sticks to the digits — `v0.1.3` — so it
-     *  is a mark rather than a label, and the corner stays quiet. */
+    /** Prefix on the build number (lib/version.ts): `v0.1.3`. */
     version: "v",
     noAccounts: {
       title: "No account",
@@ -499,35 +390,24 @@ export const copy = {
     offline: {
       title: "Works offline",
       body: "Add bida to your home screen and it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
-      /** Once it already is: the claim's premise is already true, so the
-       * sentence says that instead of repeating the offer under it. */
+      /** When already installed, so it states the fact instead of the offer. */
       bodyInstalled: "Because bida is added to your home screen, it keeps working with no signal at all. Expenses you write offline sync when you’re back online.",
     },
     privacy: {
       title: "Privacy",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
-      /** Points at `/advanced` rather than repeating it — what's true of a
-          brought key (no cap, but a free-tier one trains on what it reads)
-          is said once, there, and not again here. Ends right before the link
-          itself, set inline mid-sentence (`app/about/page.tsx`). */
+      /** Points at `/advanced` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
       /**
-       * The second exception, and the last: these two are the whole of what
-       * leaves the phone readable, which is what makes "the rest" below a
-       * sentence and not a hope. Said on the import screen first
-       * (`importData.fineprint`), under the button that does it; repeated
-       * here because this is where somebody comes to ask.
+       * The second of the two things that leave the phone readable. Also said under
+       * the import button (`importData.fineprint`); repeated where people come to ask.
        */
       importTitle: "Importing a Tricount leaves your phone.",
       import: "Your browser can’t fetch a tricount, so bida’s server does it for you. It’s not encrypted, but nothing is stored.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
-      /**
-       * One row of D1: a `SealedOp` (core/seal.ts). The labels are plain
-       * English because the reader is not a developer, and the values are the
-       * real four fields because the whole point is that there are only four.
-       */
+      /** One D1 row: a `SealedOp` (core/seal.ts). Plain-English labels; the point is there are only four fields. */
       sealed: [
         { k: "group", v: "c9f0f8…" },
         { k: "edit", v: "8f14e4…" },
@@ -538,28 +418,19 @@ export const copy = {
       shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
     },
     /**
-     * The hosted service's one disclaimer, and the counterweight to the four
-     * claims above it: they are all promises, and this is the sentence saying
-     * who is behind them. MIT covers the code, not bida.bid, whose users are
-     * strangers rather than friends who would ask (hosting.md).
-     *
-     * It reads after Privacy on purpose. Losing an invite link with nobody
-     * left holding a copy is a consequence of the sealed row a paragraph
-     * above, not an excuse — read before it, it would sound like one.
+     * The hosted service's one disclaimer: MIT covers the code, not bida.bid, whose
+     * users are strangers (hosting.md). After Privacy on purpose — losing a link is
+     * a consequence of the sealing above, and before it would read as an excuse.
      */
     guarantees: {
       title: "No guarantees",
       lede: "Please back up anything important and use at your own risk.",
-      /** The first and last of the three ways this can go wrong. The middle
-          one links out mid-sentence, so it is `scanBreaks` below and not a
-          fourth string here — see `app/about/page.tsx`. */
+      /** The first and last warnings; the middle links out mid-sentence, so it's `scanBreaks` (`app/about/page.tsx`). */
       warnings: [
         "The server runs on its own, for free, so your data is not going anywhere… unless Cloudflare changes their free-plan policy.",
         "If you manage to remove a group from every device and then lose the invite link, there’s no way to bring it back.",
       ],
-      /** Split around the words that link to `/tip`, so the link lands on
-          "tip jar" itself and not a row underneath it. Rendered between the
-          two `warnings` above. */
+      /** Split around the words linking to `/tip`; rendered between the two `warnings`. */
       scanBreaks: { lede: "Receipt scanning will break if I stop paying for it. The ", link: "tip jar", tail: " helps!" },
     },
     feedback: {
@@ -575,25 +446,14 @@ export const copy = {
   // --------------------------------------------------- deleting a group
 
   /**
-   * `/delete-my-data`: the hosted service's answer to "take my data off your
-   * server", and the only screen in the app that destroys anything
-   * (docs/frontend.md#deleting-a-group).
-   *
-   * It is written to be read slowly, which is the opposite of everything else
-   * here. Two reasons: the act is irreversible and there is no backup to
-   * restore from, and it is not personal, so somebody deleting "their" data is
-   * deleting a trip four other people are still using. Every warning below
-   * says one of those two things, and the screen makes you type the group's
-   * name because reading them is optional and typing is not.
+   * `/delete-my-data` (docs/frontend.md#deleting-a-group), the only screen that
+   * destroys anything. Written to be read slowly: it's irreversible with no
+   * backup, and the group is shared, so "your" data is others' trip too. Typing
+   * the name is required because reading is optional.
    */
   deleteData: {
     title: "Delete a group",
-    /**
-     * On `/about`, its own short section, and the only mention of this screen
-     * anywhere in the app. The address is spelled out rather than linked: a
-     * link is one tap from a group four other people are still using, and
-     * typing it yourself is the first of this screen's frictions.
-     */
+    /** Its section on `/about`, the only mention. The address is spelled out, not linked: typing it is the first friction. */
     fromAbout: {
       title: "Delete your data",
       body: (address: string) => `You can request data deletion by visiting ${address}.`,
@@ -624,22 +484,19 @@ export const copy = {
       unreadable: "That link opened nothing this app can read.",
       offline: "Couldn’t reach the server. Check your connection and try again.",
     },
-    /** The group, opened and folded, so the person can see what they are about
-     *  to lose before they are allowed to lose it. */
+    /** The folded group, shown before it can be deleted. */
     found: {
       title: "This is what will be deleted",
-      /** Labels, so the card reads as a description of a group rather than as
-       *  three figures somebody has to interpret. */
+      /** Labels, so the card reads as a group rather than bare figures. */
       rows: { people: "People", entries: "Entries", edits: "Edits", started: "Started" },
-      /** The friction. A button alone is one tap from a group that was somebody’s trip. */
+      /** The friction: a button alone is one tap from somebody's trip. */
       confirm: (name: string) => `Type ${name} below to confirm.`,
       placeholder: "Group name",
       mismatch: "That is not this group’s name.",
       act: "Delete this group",
       other: "Delete a different group",
     },
-    /** The last stop, with the group named in the title so the dialog cannot
-     *  be answered without reading which group it is about. */
+    /** The group named in the title, so the dialog can't be answered unread. */
     sure: {
       title: (name: string) => `Delete ${name}?`,
       body: "This is the point of no return. The server’s copy goes now, for everyone in the group, and cannot be restored.",
@@ -658,66 +515,37 @@ export const copy = {
   // ------------------------------------------------------------- tip jar
 
   /**
-   * The one screen in the app that asks for money, reached from the foot of
-   * the balances tab.
-   *
-   * The ask is deliberately narrow: not "love this app", but the one thing in
-   * it that is not free to run. A number the reader can check beats a plea
-   * they cannot — and it is the same number the ceiling in `SCAN_LIMITS` is
-   * set from (core/scan.ts, docs/receipt-scanning.md#what-the-scan-costs).
+   * The only screen asking for money, from the foot of the balances tab. It asks
+   * for the one thing not free to run, with the figure `SCAN_LIMITS` is set from
+   * (core/scan.ts, docs/receipt-scanning.md#what-the-scan-costs).
    */
   tip: {
     title: "Support bida",
-    /** The balances tab's FAB, which says the whole thing: it is the only
-     *  floating button in the app with a word in it, and half an ask is
-     *  worse than none. */
+    /** The balances tab's FAB — the only one with a word in it. */
     fab: "Support bida",
     lede: "Enjoying bida? Consider donating a few bucks.",
     /** Why there is an ask at all, in one line, above the figure it explains. */
     why: "Scanning is the only part of bida that costs money to run. I pay for it.",
-    /**
-     * The claim, as a figure and the thing it buys. The figure is the same one
-     * the day cap is set from (`SCAN_LIMITS`, core/scan.ts) — if the price
-     * moves, both move.
-     */
+    /** The same figure as `SCAN_LIMITS`' day cap (core/scan.ts); if the price moves, both move. */
     rate: "$5 ≈ 4,000 receipt scans",
-    /**
-     * The same $5, cut the way this group cuts everything else — and the
-     * offer, said before the button that takes it. Splitting is the thing
-     * this app is for, so the ask gets to be a thing five people share rather
-     * than a thing one person pays.
-     */
+    /** The $5 split the way this group splits things. */
     each: (share: string) => `You can split it! In this group, that’s ${share} each.`,
-    /** The same line, for the one group that can't actually split anything —
-        a solo group still gets the whole ask, so the joke owns that instead
-        of pretending the math works. */
+    /** For a solo group, where the joke owns that the math doesn't work. */
     eachSolo: (share: string) => `You can split it! In this group, that’s ${share} each. `
       + "Okay, that doesn’t really land when it’s just you here, but you get the point.",
-    /**
-     * The joke that lets the screen stop asking. Everything above it is a
-     * number and a claim about a number; one line that is obviously neither
-     * is what keeps four earnest sentences from reading as a pitch.
-     */
+    /** The joke that stops four earnest lines reading as a pitch. */
     yacht: "If there’s any money left over, I’ll buy a yacht.",
     donate: {
       cta: "Donate",
       url: "https://buymeacoffee.com/theoldg",
     },
     /**
-     * A donation split is an ordinary expense — one person paid, everyone
-     * shares ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)),
-     * so this needs no new kind of entry and no new op. It opens the form
-     * rather than writing itself: it is a row in everyone else's ledger, and
-     * how much you gave is a thing only you know.
+     * A donation split is an ordinary expense (ADR-0010). It opens the form rather
+     * than writing itself: it lands in everyone's ledger, and only you know the amount.
      */
     split: {
       cta: "Add as a group expense",
-      /**
-       * What the prefilled expense calls itself, in the ledger, forever. It
-       * is written in the first person plural because by the time it is saved
-       * it is the group's row and not the giver's — and it is a sentence
-       * somebody will read months later next to a restaurant and a taxi.
-       */
+      /** The expense's title in the ledger, forever. "We": once saved it's the group's row. */
       entryTitle: "We liked bida",
     },
   },
@@ -746,11 +574,9 @@ export const copy = {
     /** Over the link a failed screen prints (`FailedLink`). */
     linkUsed: "Link used",
     /**
-     * A link to a group with no password in it — nearly always the address
-     * bar copied off a group screen, which names the group and nothing more
-     * (group-link.ts). Said wherever that lands: `/join` with a group id and no
-     * secret, and any `/g` screen for a group this phone doesn't hold — "bad
-     * link" there would send the same address straight back.
+     * A group link with no secret — usually the address bar copied off a group
+     * screen (group-link.ts). Shown on `/join` with no secret and on `/g` for a
+     * group this phone doesn't hold; "bad link" would send the same address back.
      */
     keyless: {
       empty: "This link is missing its password",
@@ -763,11 +589,8 @@ export const copy = {
       body: "Finishes by itself once the other phone syncs.",
     },
     /**
-     * The group is not there any more: somebody deleted it for everybody
-     * (app/delete-my-data/page.tsx). Said on `/join`, where an old invite link
-     * would otherwise sit on "Joining…" forever, and on `/g`, where a phone
-     * that was in the group finds its copy gone. One sentence for both: the
-     * news is the same and neither has anything to do next.
+     * The group was deleted for everybody (app/delete-my-data/page.tsx). Shown on
+     * `/join`, which would otherwise sit on "Joining…", and on `/g`.
      */
     deleted: {
       title: "This group was deleted",
@@ -776,10 +599,8 @@ export const copy = {
   },
 
   /**
-   * Paste link read nothing, so the box asks for the link by hand
-   * (components/paste-link.tsx). The title is the whole of it: a field and the
-   * word Paste say what to do, and "Nothing to paste" would often be a lie —
-   * iOS can withhold the pasteboard from a read with the link on it.
+   * Paste link read nothing, so the box asks by hand (components/paste-link.tsx).
+   * Not "Nothing to paste": iOS can withhold a pasteboard that has the link.
    */
   paste: {
     title: "Paste the link here",
@@ -787,22 +608,18 @@ export const copy = {
     open: "Open",
   },
 
-  /**
-   * The demo group (app/demo/page.tsx). Reached only by its address, and the
-   * group itself is the demonstration — so the words say the one thing looking
-   * around cannot show you, which is that nothing here leaves the phone.
-   */
+  /** The demo (app/demo/page.tsx): the words say the one thing looking can't — nothing leaves the phone. */
   demo: {
     opening: "Opening the demo",
-    /** The card at the head of its ledger. It stays put; it is not a toast. */
+    /** The card at the head of its ledger; it stays, not a toast. */
     title: "Demo group: not synced",
     /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
-    /** Not "brings it back": the seed is deterministic, so what the address
-     *  lays down is the story as shipped, not the one you played with. It is
-     *  written out rather than linked, and the caller passes the host, because
-     *  nothing in the app links to `/demo` and a static export cannot know
-     *  which server it is being read from (`useHost`). */
+    /**
+     * Not "brings it back": the seed is deterministic, so it restores the story as
+     * shipped. The address is written out because nothing links to `/demo`, and
+     * the caller passes the host since a static export can't know it (`useHost`).
+     */
     clearBody: (address: string) =>
       `This wipes the demo off the phone, along with anything you did in it. Visit ${address} to create a fresh one.`,
     /** The one genuinely broken thing: no key, so no invite link to hand over. */
@@ -819,15 +636,13 @@ export const copy = {
     addPlaceholder: "Add your name",
     continueAs: (name: string) => `Continue as ${name}`,
     pickFirst: "Pick your name",
-    /** Under the list, in an iOS tab: a tapped link always opens the browser,
-     *  so someone with bida on the home screen has to hand it the link. */
+    /** In an iOS tab, a tapped link opens the browser, so a home-screen user must paste it. */
     inApp: {
       title: "Have the app?",
       body: (browser: string | undefined) => `Links always open in ${lower(browser)}. Paste this there instead.`,
       copyLink: "Copy",
       copied: "Copied",
-      /** No clipboard to write to at all, which some in-app browsers are
-          (lib/clipboard.ts): the link is still there to be taken by hand. */
+      /** No clipboard at all (some in-app browsers, lib/clipboard.ts). */
       hold: "Hold to copy",
     },
   },
@@ -839,9 +654,8 @@ export const copy = {
     /** Three ways to be out of step, in the order of how badly you need to know. */
     offlineIdle: "Offline: you may not have everyone’s latest.",
     offlinePending: (waiting: string) => `Offline: ${waiting} waiting.`,
-    // Not "ask for a fresh one": there is no secret rotation, so a fresh link
-    // is byte-identical. Opening the invite link again is what actually clears
-    // this — `saveGroupKey` unsets the failure.
+    // There is no secret rotation, so a "fresh" link is identical; reopening the
+    // invite link clears this (`saveGroupKey` unsets the failure).
     rejected: "This phone’s link doesn’t open this group. Open the invite link again.",
     unreachableIdle: "Can’t reach the server: you may not have everyone’s latest.",
     unreachablePending: (waiting: string) => `Can’t reach the server: ${waiting} stuck on this phone.`,
@@ -857,8 +671,7 @@ export const copy = {
     export: "Export data",
     /** The top bar's one button: everything the group can be asked for. */
     menu: "Group menu",
-    /** The clipboard can refuse — an insecure context, a denied permission —
-        and the link is shown nowhere else, so it is shown here. */
+    /** The clipboard can refuse, and the link is shown nowhere else. */
     linkTitle: "The invite link",
     linkBody: "Copying didn’t work: hold the link to copy it.",
     addEntry: "Add an entry",
@@ -874,11 +687,7 @@ export const copy = {
     /** "Marie paid" · "Marie + 1 other received". */
     payers: (who: string, others: string | null, verb: string) =>
       (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
-    /**
-     * The same fact for a row with no room for "+ 1 other". Dropping the
-     * co-payers instead would make the line say something untrue, so this is
-     * how the ladder in `lib/row-meta.ts` shortens them.
-     */
+    /** For a row with no room for "+ 1 other" (the ladder in `lib/row-meta.ts`); dropping co-payers would be untrue. */
     payersTight: (who: string, others: number, verb: string) => `${who} +${others} ${verb}`,
     sharedWays: (n: string) => `shared ${n}`,
     splitWays: (n: string) => `split ${n}`,
@@ -902,17 +711,10 @@ export const copy = {
   members: {
     title: "People",
     addPlaceholder: "Add someone",
-    /**
-     * Two people with one name are two people nothing on screen tells apart —
-     * and, since the name is the member's key, one row they would both write
-     * to. The name is right there on the list above the field, so saying so is
-     * the whole message: what to do about it is the typist's business.
-     */
+    /** The name is the member's key, so a duplicate would be one row both write to. */
     taken: (name: string) => `${name} is already here.`,
     removeLabel: (name: string) => `Remove ${name}`,
-    /** Which of these names this phone signs with — a decision, so a dialog
-        rather than a tap on a row that also removes and invites. The list's
-        check mark already answers *which*; this only has to offer the change. */
+    /** A dialog, since the row also removes and invites; the check mark already shows *which*. */
     whoChange: "Change who you are",
     whoTitle: "Which one are you?",
     removeTitle: (name: string) => `Remove ${name}?`,
@@ -927,18 +729,12 @@ export const copy = {
 
   // ------------------------------------------------------------- quick split
 
-  /**
-   * A bill split with people who are not a group (ADR-0035). It ends by
-   * handing you text, so half of this is words that leave the app.
-   */
+  /** A bill split with people who aren't a group (ADR-0035). It ends by handing you text. */
   quick: {
     title: "Quick split",
     /**
-     * Under the screen's drawing, the two things it can't show: the tap
-     * between the photo and the figures, and that this flow keeps nothing.
-     * Not `copy.scan.lede` — that one promises an expense form, which is what
-     * a group's scan comes back as and what a quick split never becomes
-     * (ADR-0035).
+     * Under the drawing: the tap between photo and figures, and that nothing is
+     * kept. Not `copy.scan.lede`, which promises an expense form (ADR-0035).
      */
     lede: "Take a photo of the bill, then tap who had what. It ends in text to paste, and nothing is kept.",
     who: "Who’s splitting",
@@ -955,10 +751,8 @@ export const copy = {
     fallbackTitle: "Copy it from here",
     fallbackBody: "This phone wouldn’t take it to the clipboard.",
     /**
-     * The text itself. Plain lines with an em dash, because it is read in a
-     * chat app: nothing there is monospaced, so a table drawn with spaces
-     * arrives as a mess. Figures are bare — nothing in a quick split converts
-     * (ADR-0035).
+     * Plain lines with an em dash: chat apps aren't monospaced, so space-aligned
+     * tables arrive mangled. Figures are bare — nothing converts (ADR-0035).
      */
     summary: {
       line: (label: string, amount: string) => `${label}: ${amount}`,
@@ -988,19 +782,13 @@ export const copy = {
   /** The three kinds, and every word the app uses about them (ADR-0010). */
   entryKind: {
     label: { expense: "Expense", income: "Income", transfer: "Transfer" } as Record<EntryKind, string>,
-    /** The verb in "Marie paid". Only the two kinds that have a payer side: a
-        transfer's row is titled `group.paidTo` ("Alice paid Bob") and never
-        reaches this. */
+    /** Only expense and income: a transfer's row is `group.paidTo` ("Alice paid Bob"). */
     verb: { expense: "paid", income: "received" } as Voiced<string>,
     /** Over the payer picker: who put it in, or who took it in. */
     payer: { expense: "Paid by", income: "Received by", transfer: "From" } as Record<EntryKind, string>,
-    /** Over the split. Same word for an expense and an income — both answer
-        "split how", not "spent on" vs "belongs to", and a reader flips
-        between the two often enough that the label shouldn't. */
+    /** One word for expense and income: both answer "split how", and readers switch often. */
     split: { expense: "Split", income: "Split", transfer: "To" } as Record<EntryKind, string>,
-    /** Under each kind in the form's picker. Three words nobody has to already
-        know the app to tell apart — "transfer" against "expense" is the pair
-        that actually gets picked wrong, so each says where the money goes. */
+    /** "Transfer" versus "expense" is the pair picked wrong, so each says where the money goes. */
     blurb: {
       expense: "Money the group spent",
       income: "Money the group took in",
@@ -1022,10 +810,10 @@ export const copy = {
     what: "What",
     whatPlaceholder: "Title",
     note: "Note (optional)",
-    /** What a transfer prefilled from settle up is nine times out of ten:
-        paying somebody back. Seeded only by that prefill (`edit/page.tsx`),
-        never by a blank "+" or a mid-edit kind switch, and cleared if the
-        entry turns out not to be a transfer after all (`changeKind`). */
+    /**
+     * Seeded only when settle-up prefills a transfer (`edit/page.tsx`), never by
+     * a blank "+" or a kind switch, and cleared if it stops being a transfer (`changeKind`).
+     */
     reimbursement: "Reimbursement",
     when: "When",
     multiPayer: {
@@ -1048,10 +836,8 @@ export const copy = {
   },
 
   /**
-   * The screen that says who put the money in — or, on an income, who took it
-   * in. Every sentence about a person on it is `Voiced`: the title alone used
-   * to switch, so an income asked "Who received it" and then said "Ana didn't
-   * pay" under her name.
+   * Who put the money in — or took it in, on an income. Every sentence is
+   * `Voiced`, or an income would say "Ana didn't pay" under "Who received it".
    */
   payers: {
     title: {
@@ -1082,12 +868,11 @@ export const copy = {
   // ------------------------------------------------------------- the split
 
   split: {
-    /** What each mode is called wherever a split is named — the ledger row,
-        the entry, the history. A receipt is one of them (ADR-0016): no screen
-        has a second rule for spotting one. It is named "By items" and not
-        "From receipt" because a receipt is how the items got typed in — an
-        input modality — and these five words name how the money divides. The
-        photograph has its own badge under the amount (`form.fromReceipt`). */
+    /**
+     * Each mode's name wherever a split is named. A receipt is one (ADR-0016).
+     * "By items", not "From receipt": these name how money divides, not how it
+     * was typed; the photo has its own badge (`form.fromReceipt`).
+     */
     mode: {
       equal: "Evenly",
       shares: "As parts",
@@ -1095,8 +880,7 @@ export const copy = {
       percent: "By percent",
       receipt: "By items",
     } as Record<SplitSpec["mode"], string>,
-    /** The tab's own label — the mode's name without the preposition, which a
-        quarter of the width has no room for. */
+    /** The tab label, without the preposition — a quarter width has no room. */
     receipt: "Items",
     include: (name: string) => `Include ${name}`,
     leaveOut: (name: string) => `Leave ${name} out`,
@@ -1120,19 +904,12 @@ export const copy = {
     /** The scan-first screen: its title and what it promises. */
     title: "Scan a receipt",
     /**
-     * The screen's one picture, drawn rather than written: a bill, and the
-     * expense it comes back as. These words are the *contents* of that
-     * picture — a plausible dinner and the three fields a scan fills — not a
-     * caption. `alt` is the sentence they replaced, kept for whoever can't
-     * see the drawing.
+     * The screen's drawing: a bill and the expense it becomes. These are its
+     * contents, not a caption; `alt` describes it for whoever can't see it.
      */
     diagram: {
       alt: "Photograph the bill and the expense fills itself in: what it cost, what it’s called, and when.",
-      /**
-       * The bill on the left. Its lines add up to `amount`, which is also the
-       * number the form on the right comes back with — the drawing's whole
-       * claim, so `copy.test.ts` adds them up rather than trusting the eye.
-       */
+      /** The lines add up to `amount`, the form's figure — `copy.test.ts` checks the sum. */
       lines: [
         ["Tagine", "18.00"],
         ["Couscous", "14.50"],
@@ -1143,27 +920,12 @@ export const copy = {
       title: "Dinner",
       amount: "48.20",
       date: "12 Sep",
-      /**
-       * Stand-ins for the drawing's right-hand side, which splits the bill
-       * between three of the group's own members — a group with fewer than
-       * three borrows from here, in order, to fill the picture out.
-       */
+      /** Fills the drawing's three people when the group has fewer. */
       people: ["Ana", "Ben", "Cleo"],
     },
-    /**
-     * Under the drawing, the two things the drawing can only imply: that the
-     * whole form comes back filled, and that the lines on the bill are a way
-     * to split it. It sits with the picture, not with the control — the gap
-     * below it is what keeps the two apart.
-     */
+    /** Under the drawing: the form comes back filled, and the lines are a way to split. */
     lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
-    /**
-     * The two halves of the one control that scans (`ScanPair`), naming the
-     * two doors into the same act and not the act itself: what is being
-     * scanned is said by the screen — the top bar on `/g/scan`, and on the
-     * form the line under this control — so the halves that used to repeat it
-     * don't.
-     */
+    /** The two halves of `ScanPair`: two doors to one act. What's scanned is said by the screen. */
     snap: "Scan",
     rescan: "Rescan",
     upload: "Upload",
@@ -1171,66 +933,43 @@ export const copy = {
     camera: "Take a photo of a receipt",
     library: "Upload a receipt photo",
     /**
-     * The third way a bill gets in, offered on the Items tab alone: the same
-     * reading, of words instead of a photograph. It stands apart from the pair
-     * above rather than inside it, because those two are one act with two doors
-     * — a camera now or a camera earlier — and this is the answer to not having
-     * used one (docs/receipt-scanning.md#typing-a-bill-in).
-     *
-     * The label is the invitation and not the noun: "Bill text" would name a
-     * field nobody asked for, and what the tap actually offers is doing it the
-     * other way.
+     * The third way in, on the Items tab only: words instead of a photo
+     * (docs/receipt-scanning.md#typing-a-bill-in). Apart from the pair, which is
+     * one act with two doors. An invitation, not a noun like "Bill text".
      */
     typeIn: {
-      /**
-       * Two labels for one door, the way the camera's has two (`snap`,
-       * `rescan`): three doors share the width of a phone, and "Type it in" in
-       * a third of 360 pixels leaves nothing for the glyph beside it. The chip
-       * register is sized by its own content and standing among a bill's
-       * figures, so there it says the whole thing.
-       */
+      /** Short, as three doors share a phone's width; the chip register fits the whole phrase. */
       open: "Type",
       openLong: "Type it in",
       title: "Type the bill in",
       /**
-       * What to put in the box: the things bought, because that is what the
-       * Items tab is for — a total alone leaves nothing to assign.
-       *
-       * It asks for nothing else, and in particular for no shape. The reading
-       * wants neither one line each nor a total: prices each or per line both
-       * work, and a bill with no total is the ordinary case rather than a
-       * refused one. Every clause that named a format was a clause teaching
-       * people to tidy a bill up for the app, so the sentence keeps none.
+       * Asks for items (the Items tab needs lines) and no format: per-unit or
+       * per-line prices and no total all work. Naming a format teaches people to
+       * tidy bills for the app.
        */
       lede: "The items and prices, in any format.",
       placeholder: "3 chicken skewers at 13\nand 10 beef at 15\nlarge cola 10\ntip 10",
       field: "The bill, as text",
       confirm: "Read it",
-      /** Only near the cap: a counter nobody is close to is fat. */
+      /** Only near the cap. */
       left: (n: number) => `${n} characters left`,
       full: "That’s the longest bill this will read. Trim it, or photograph it instead.",
     },
     /** The same screen, named for the step left: nobody assigned yet, or a change to one. */
     assignWhoHadWhat: "Assign who had what",
     editWhoHadWhat: "Edit who-had-what",
-    /** A consequence the screen can't show. It stays. Says only what is true
-        of both paths: this line cannot tell whether the reader brought a key,
-        and ours is read by a Vertex that does not train on it while a free
-        brought one is not. The difference is `/about`'s to draw. */
-    /** Under the control, so it names what the control sends — a photograph of
-        the bill or the text of it, whichever door was used. */
+    /**
+     * True of both paths: this line can't tell whether a key was brought, and
+     * only a brought free-tier key trains on the bill. `/about` draws the difference.
+     */
+    /** Names what the control sends: a photo or the text. */
     terms: "The bill is sent to Google",
     failed: "Couldn’t read that receipt.",
     keptOld: "The old one is still assigned.",
     /**
-     * The app's own three refusals, one per way a reading can fail to add up
-     * (`checkScan`). Each says which it is, because each asks for something
-     * different back: another photo, a straighter one, or the form instead.
-     *
-     * Twice over, because two of the three name the fix and the fix depends on
-     * how the bill arrived — "try a flatter, square-on photo" is no help at all
-     * to somebody who typed it. The verdict is the same either way; only the
-     * ask moves.
+     * One refusal per way `checkScan` fails, each asking for something different
+     * back. Two sets, because the fix depends on the medium: "a flatter photo" is
+     * no help to somebody who typed it.
      */
     problem: {
       photo: {
@@ -1239,52 +978,34 @@ export const copy = {
         mismatch: "The lines don’t add up to the total. Try a flatter, square-on photo.",
       },
       text: {
-        // Not "I can't find the total": a typed bill needn't have one. This
-        // fires where there is nothing to price at all, or where a total is
-        // there and won't parse.
+        // Not "can't find the total": a typed bill needn't have one. Fires when there
+        // is nothing to price, or a total that won't parse.
         "no-total": "I can’t work out what that comes to.",
         "unreadable-line": "I can’t read an amount for every line in that.",
-        // And this one's advice is now true — leaving the total out really does
-        // leave the lines to speak for themselves (`checkScan`).
+        // True advice: leaving the total out lets the lines stand (`checkScan`).
         mismatch: "The lines don’t add up to the total. Check the figures, or leave the total out.",
       },
     } satisfies Record<ScanMedium, Record<ScanProblem, string>>,
     offline: "You’re offline: scanning needs a connection.",
     busy: "Gemini’s busy. Try again in a minute.",
     /**
-     * Our own cap, which is a different thing from `busy` above: waiting a
-     * minute fixes Gemini being overloaded and does nothing at all about a
-     * spent budget. Two sentences and not three, because "you" and "this
-     * address" are one fact to the person reading it — what genuinely differs
-     * is a budget somebody else spent.
-     *
-     * They are the only place the cap is ever mentioned: a counter nobody is
-     * near is fat, and the refusal says the whole of it when it matters.
-     * "Type this one in", meaning *into the form, by hand*.
-     * There is a button of that name on this very tab now, and pressing it
-     * spends the budget that has just refused — so they say the field instead.
+     * Our cap, unlike `busy`: waiting doesn't help a spent budget. The only place
+     * the cap is mentioned. "Type this one in" means into the form by hand — the
+     * Type button would spend the same refused budget.
      */
     limit: {
       you: "That’s your readings for now: reading a bill is capped. Fill the form in by hand, or come back later.",
       global: "The shared reading budget is spent. Fill the form in by hand, or try later.",
     },
     /**
-     * Fail-closed, and named: a blocked script is not a bad photograph. Two
-     * sentences because the two failures ask different people to act —
-     * `browser` is this phone's network, where retrying on another one is the
-     * fix, and `server` is the deployment's own key, where retrying is the one
-     * thing that cannot help.
+     * Fail-closed and named. `browser` is this phone's network (try another);
+     * `server` is the deployment's key (retrying can't help).
      */
     unverified: {
       browser: "Couldn’t check this browser: scanning needs challenges.cloudflare.com.",
       server: "This browser check was refused: scanning is misconfigured here. Fill the form in by hand.",
     },
-    /**
-     * The two ways a key somebody brought themselves stops working. Neither is
-     * about the photograph, and neither is fixed by trying again — so both name
-     * the screen the key lives on, which is the only place anything can be done
-     * about it.
-     */
+    /** A brought key stops working; neither is fixed by retrying, so both name the screen the key lives on. */
     key: {
       refused: "Google refused your key. Check it under Advanced.",
       spent: "Your key is out of quota for now. Try later, or remove it under Advanced to use the shared one.",
@@ -1297,38 +1018,23 @@ export const copy = {
     whoWasThere: "Who was there",
     wasThere: (name: string) => `${name} was there`,
     wasntThere: (name: string) => `${name} wasn’t there`,
-    /**
-     * The three lines nobody ordered (`BillExtras`). "Discounts", plural,
-     * because the row is everything the bill took off, pooled — one loyalty
-     * card and one two-for-one read as one figure here.
-     */
+    /** Charges nobody ordered (`BillExtras`). "Discounts" plural: every deduction pooled. */
     extra: { tip: "Tip + service", tax: "Tax", discount: "Discounts" } satisfies Record<ExtraKind, string>,
     tipPercent: (percent: number) => `${percent}%`,
     /** `null` where the screen prints no currency at all — a quick split (ADR-0035). */
     tipLabel: (currency: string | null) =>
       currency ? `Tip and service, in ${currency}` : "Tip and service",
-    /**
-     * The bar's translation toggle, named for what a press would do rather
-     * than for the state it is in — the same rule the theme switch follows.
-     * "As printed" and not "original": what the button offers is the words on
-     * the paper in your hand.
-     */
+    /** Named for what a press does, like the theme switch. "As printed": the words on the paper. */
     translate: { on: "Show the bill in English", off: "Show the bill as printed" },
     /**
-     * Which portion of a split line this row is, on the amount line beside the
-     * figure. Written short because that line is the narrowest thing on the
-     * screen — the name column is fixed, and on the first portion of an open
-     * run it shares its width with the ×N — and "4.50 · 1 of 2" wrapped there,
-     * leaving one portion of a pair taller than the other. `hadPortion` below
-     * is what a screen reader gets, and it still says it in full.
+     * Which portion of a split line this is. Short: that line is the narrowest on
+     * screen, and "1 of 2" wrapped, making portions uneven. `hadPortion` is the
+     * screen-reader version.
      */
     portion: (index: number, of: number) => `${index}/${of}`,
     /**
-     * ×N says one thing on this screen: show the portions, or show them as the
-     * line they came from. Only the very first press also *splits* the bill —
-     * there have to be rows before there is anything to assign — and after
-     * that the same button only opens and closes a view, which is why folding
-     * is never described as merging anything back.
+     * ×N toggles the portions view. Only the first press splits the line (rows
+     * must exist to assign), so folding is never called merging.
      */
     splitInto: (n: number) => `Split into ${n} lines`,
     splitItem: (label: string, n: number) => `Split ${label} into ${n} lines`,
@@ -1350,11 +1056,8 @@ export const copy = {
     share: (name: string) => `${name}’s share`,
     needsSomeone: "Every item needs at least one person.",
     /**
-     * Why the rows under the items have no cells to tap. Said once, beneath
-     * them rather than in the footer: it explains rows, so it belongs with
-     * them, and the footer's other two lines are things still to be done.
-     * Named for what this bill actually has — a receipt with no tax should
-     * not explain one — so the kinds arrive in the order the rows print.
+     * Why the rows under the items have no cells: said once, beneath them. Names
+     * only the kinds this bill has, in print order.
      */
     extraNote: (kinds: ExtraKind[]) => {
       const names = kinds.map((k) => extraSubject[k]);
@@ -1380,11 +1083,7 @@ export const copy = {
     untitled: "Untitled entry",
     more: (rest: string) => `Show ${rest} more`,
 
-    /**
-     * The name of a field on a secondary line — the rest of what one revision
-     * changed, under the sentence for the first of them. Short, because the
-     * sentence above has already said who and what kind of edit it was.
-     */
+    /** A field name on a secondary line of one revision; the sentence above said who. */
     field: {
       kind: "Kind",
       involved: "Who’s involved",
@@ -1419,8 +1118,7 @@ export const copy = {
     shareOf: (name: string, value: string) => `${name} ${value}`,
     parts: (n: number) => `×${n}`,
     percent: (n: number) => `${n}%`,
-    /** Same people, same shares, a spec written another way — which is only
-        worth a line because the entry screen prints the mode. */
+    /** Only worth a line because the entry screen prints the mode. */
     rewroteSplit: (who: string) => `${who} changed how the split is written`,
     addedReceipt: (who: string) => `${who} added a receipt`,
     changedReceipt: (who: string) => `${who} changed the receipt`,
@@ -1429,11 +1127,7 @@ export const copy = {
     changedAmount: (who: string) => `${who} changed the amount`,
     changedCurrency: (who: string) => `${who} changed the currency`,
     changedRate: (who: string) => `${who} changed the rate`,
-    /**
-     * The payer side asks the split's two questions over again — who put money
-     * in, then how much each of them did — and an income asks both the other
-     * way round, the way the entry form does (`entryKind.payer`).
-     */
+    /** Who paid in, then how much — the other way round on an income (`entryKind.payer`). */
     payerWho: {
       expense: (who: string) => `${who} changed who paid`,
       income: (who: string) => `${who} changed who received it`,
@@ -1448,8 +1142,7 @@ export const copy = {
     changedPhotos: (who: string, added: boolean, photos: string) =>
       `${who} ${added ? "added" : "removed"} ${photos}`,
     newDevice: (who: string) => `${who} started editing from a new device`,
-    /** A phone changing hands is only ever read as a change of person:
-        "Teo became Seppi", not a sentence about the device it happened on. */
+    /** A phone changing hands reads as a change of person. */
     became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,
     deletedTransfer: (who: string) => `${who} deleted a transfer`,
@@ -1459,8 +1152,7 @@ export const copy = {
     joined: (them: string) => `${them} joined the group`,
     added: (who: string, them: string) => `${who} added ${them}`,
     removed: (who: string, them: string) => `${who} removed ${them}`,
-    /** Nobody asked for this one, so it names the cause rather than the actor:
-        a removal the group had already contradicted, undone. */
+    /** A healer's repair: names the cause, not an actor. */
     readded: (them: string) => `${them} was removed, but an entry still names them: added back`,
     /** The rate half of the same repair. Names the cause, not the actor. */
     restoredRate: (code: string) =>
@@ -1530,10 +1222,9 @@ export const copy = {
     /** Save is held until there is a number to save. */
     invalid: "That isn’t a rate.",
     failed: (why: string) => `Couldn’t save the rate: ${why}`,
-    /** The badge beside the entry form's converted figure. The rate itself is
-        not printed there — this is the way to the number, not the number. */
+    /** The badge by the form's converted figure: the way to the rate, not the rate. */
     setRate: () => `set rate`,
-    /** That row is a button, and what it opens is not what the fields inside it are. */
+    /** The row is a button that opens something other than its fields. */
     openFor: (code: string) => `Set the ${code} rate`,
   },
 } as const;

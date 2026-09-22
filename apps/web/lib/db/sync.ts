@@ -13,16 +13,13 @@ import { whenVisible } from "./visible";
 
 /**
  * The sync engine (docs/sync.md). A single-flight push+pull per group over
- * the two `/api/groups/:id/ops` endpoints, triggered by local writes,
- * visibility, connectivity, and a slow foreground interval. Never blocks the
- * UI — every write already lands in Dexie synchronously via commands.ts;
- * this only ships the log to the server and pulls what's new.
+ * `/api/groups/:id/ops`, triggered by local writes, visibility, connectivity
+ * and a slow foreground interval. Never blocks the UI — writes already land
+ * in Dexie via commands.ts.
  *
- * **This is the boundary the plaintext stops at.** Ops are plain in Dexie and
- * plain in every screen; the two lines below that seal and open them are the
- * whole of why the server holds ciphertext (ADR-0036). Anything that adds a
- * second path to the server has to come through here, or the guarantee the
- * about screen makes stops being true.
+ * **This is the boundary the plaintext stops at** (ADR-0036). Anything that
+ * adds a second path to the server has to come through here, or the about
+ * screen's guarantee stops being true.
  */
 
 /**
@@ -54,11 +51,9 @@ interface PushPullResult {
 }
 
 /**
- * Push this group's unsynced ops and pull what's new, sealed both ways.
- *
- * The bearer is the derived token, not the secret in the link — handing the
- * secret over would let the server derive the key that opens everything it is
- * storing, which is the whole point of the exercise.
+ * Push this group's unsynced ops and pull what's new, sealed both ways. The
+ * bearer is the derived token, never the link secret — that would let the
+ * server derive the key to everything it stores.
  */
 async function pushPullGroup(
   groupId: string,
@@ -90,18 +85,14 @@ async function pushPullGroup(
     throw new SyncHttpError(res.status, await res.text().catch(() => ""));
   }
   const response = (await res.json()) as PushPullResponse;
-  // Opened before anything is stored, so a half-applied pull is not a state
-  // this can reach. A *wrong key* never gets here — the token derived beside it
-  // would have been a 403 — so a `SealError` means one row this build cannot
-  // read. **Skip it and keep the rest**: failing the pull means the same row
-  // comes back on every retry and sync never succeeds again. The likeliest way
-  // to mint one is a newer build: an entity or op kind this one has never
-  // heard of, or a second seal format. A stamp no clock could have written is
-  // the other, and the one a peer can mint on purpose.
+  // Opened before anything is stored, so a half-applied pull can't happen. A
+  // *wrong key* never gets here (its token would be a 403), so a `SealError` is
+  // one row this build can't read — a newer build's kind or seal format, or an
+  // impossible stamp a peer can mint on purpose. **Skip it and keep the rest**:
+  // failing the pull would refetch it forever and sync would never succeed.
   //
-  // A stamp more than a day ahead of this phone is held back the same way
-  // (`isAhead`), with the moment it stops being ahead: a fast clock's op is
-  // late, not lost, and `retryAt` is when the cursor winds back for it.
+  // A stamp more than a day ahead is held back the same way (`isAhead`): a fast
+  // clock's op is late, not lost, and `retryAt` is when the cursor winds back.
   const now = Date.now();
   const pulled: Op[] = [];
   const unreadable: number[] = [];
@@ -127,16 +118,14 @@ async function pushPullGroup(
 }
 
 /**
- * Everything the server holds for one group, opened and handed back without a
- * byte of it being stored. What `/delete-my-data` shows before it deletes.
+ * Everything the server holds for one group, opened and returned without
+ * storing a byte — what `/delete-my-data` shows before it deletes. Read-only;
+ * may be a group this phone never held.
  *
- * **Keep every key derivation in this file.** It is the boundary the plaintext
- * stops at, and a second place opening ops is how that guarantee stops being
- * one thing you can check. Read-only, and it may be a group this phone has
- * never held.
+ * **Keep every key derivation in this file**, so the plaintext boundary stays
+ * one thing you can check.
  *
- * Rejects with `SyncHttpError` — 404 is a group this server never had, 410 one
- * that was deleted, 403 a link whose secret is wrong.
+ * Rejects with `SyncHttpError`: 404 never had it, 410 deleted, 403 wrong secret.
  */
 export async function pullWholeGroup(groupId: string, secret: string): Promise<Op[]> {
   const crypto = await groupCrypto(groupId, secret);
@@ -149,14 +138,10 @@ export async function pullWholeGroup(groupId: string, secret: string): Promise<O
 }
 
 /**
- * Delete a group from the server: every op, and the id along with them
- * (`DELETE /api/groups/:id`, docs/sync.md#deleting-a-group).
- *
- * The one request this app makes that destroys something, and it is
- * authenticated like every other one: by the token derived from the link
- * secret, which is the whole of authority here (ADR-0003). It does nothing
- * about this phone's own copy. That is `eraseGroupLocally`, and the screen
- * that asks for both is `/delete-my-data`.
+ * Delete a group from the server: every op and the id
+ * (`DELETE /api/groups/:id`, docs/sync.md#deleting-a-group). Authenticated by
+ * the derived token like every request (ADR-0003). Leaves this phone's copy
+ * alone — that is `eraseGroupLocally`; `/delete-my-data` asks for both.
  */
 export async function deleteGroupOnServer(groupId: string, secret: string): Promise<void> {
   const crypto = await groupCrypto(groupId, secret);
@@ -192,11 +177,10 @@ async function recordFailure(groupId: string, err: unknown): Promise<void> {
 }
 
 /**
- * Fold what this round had to skip into what earlier rounds did. The count
- * accumulates and `fromSeq` only ever goes down, because the earliest skipped
- * op is what a later, cleverer build would have to wind the cursor back to.
- * A round that skipped nothing leaves the record alone rather than clearing
- * it: the ops it could not read are still unread.
+ * Fold what this round skipped into earlier rounds' record. The count
+ * accumulates and `fromSeq` only goes down: the earliest skipped op is where
+ * a later build must wind back to. A round that skipped nothing leaves the
+ * record alone — those ops are still unread.
  */
 function skipped(
   before: Unreadable | undefined, seqs: readonly number[], retryAt: number | undefined,
@@ -226,14 +210,10 @@ function worthAnotherLook(record: Unreadable | undefined, now: number): record i
 const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
 
 /**
- * How many queued ops one push carries.
- *
- * Not what keeps the request legal — the server cuts a large push up for D1
- * itself and its `413` ceilings sit a hundredfold above this
- * (`apps/api/src/push-limits.ts`). This keeps the request *small*: a phone back
- * from a fortnight offline has hundreds of ops waiting, and as one body the
- * whole fortnight rides on a single request surviving a tunnel's worth of
- * signal. In rounds, what got through stays through.
+ * How many queued ops one push carries. Not what keeps the request legal (the
+ * server's `413` ceilings are far above this, `apps/api/src/push-limits.ts`) —
+ * what keeps it *small*: a phone back from a fortnight offline shouldn't bet
+ * it all on one request surviving a tunnel. In rounds, what got through stays.
  */
 const PUSH_CHUNK = 50;
 
@@ -244,18 +224,16 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Push this device's unsynced ops for one group and pull whatever the server
- * has that this device hasn't seen. A no-op (returns `undefined`) if this
- * device doesn't hold that group's secret.
+ * Push this device's unsynced ops for one group and pull what it hasn't seen.
+ * Returns `undefined` if this device doesn't hold the group's secret.
  *
  * Rejects on failure, having recorded it on the group's key first — callers
- * are free to ignore the rejection, and the UI reads the record instead.
+ * may ignore the rejection; the UI reads the record.
  *
- * Single-flight per group: a second call joins the run already going rather
- * than starting another. `syncAll` has a guard of its own, but opening a group
- * calls this directly (app/g/page.tsx) and would otherwise race the loop's run
- * for the same group — every op pushed and pulled twice, and two `rebuild()`s
- * taking the readwrite lock on every table just as the screen waits to read.
+ * Single-flight per group: opening a group calls this directly
+ * (app/g/page.tsx) and would otherwise race `syncAll` — every op pushed and
+ * pulled twice, and two `rebuild()`s holding the write lock as the screen
+ * waits to read.
  */
 export function syncGroup(groupId: string): Promise<SyncOutcome | undefined> {
   const already = inFlight.get(groupId);
@@ -274,12 +252,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // One round with nothing to push is the plain pull — the case where this
   // phone has written nothing since it last synced, which is most of them.
   const rounds = queued.length > 0 ? chunk(queued, PUSH_CHUNK) : [[] as StoredOp[]];
-  // Skipping an op is only safe because it is still on the server. The first
-  // run of any build but the one that skipped it — or the first once a stamp
-  // held back has stopped being too far ahead — pulls again from the earliest
-  // one, and starts the record afresh: whatever still will not open is written
-  // down again, and what now opens lands. Not every run, so a row nothing can
-  // read costs one re-pull per deploy rather than one a minute.
+  // Skipping is only safe because the op is still on the server. The first run
+  // of a different build — or once a held-back stamp stops being ahead — pulls
+  // again from the earliest skipped op and starts the record afresh. Not every
+  // run: an unreadable row costs one re-pull per deploy, not one a minute.
   let rewinding = worthAnotherLook(key.unreadable, Date.now());
   let since = rewinding
     ? Math.max(0, Math.min(key.lastSeq, key.unreadable!.fromSeq - 1))
@@ -295,11 +271,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       sealed = await pushPullGroup(groupId, key.secret, since, pending);
     } catch (err) {
       sent("failed");
-      // 410: somebody deleted this group (docs/sync.md#deleting-a-group). There
-      // is nothing to retry and nothing to sync with ever again, so this phone's
-      // copy goes too. That is what "deleted for everybody" has to mean, and a
-      // group left sitting on the list syncing against a tombstone would be the
-      // one place the app disagreed with itself.
+      // 410: somebody deleted this group (docs/sync.md#deleting-a-group). Nothing
+      // to retry, ever, so this phone's copy goes too — that is what "deleted for
+      // everybody" means.
       if (err instanceof SyncHttpError && err.status === 410) {
         await eraseGroupLocally(groupId);
         return undefined;
@@ -311,10 +285,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     sent(`${pending.length} up, ${pulled.length} down`
       + (unreadable.length > 0 ? `, ${unreadable.length} unreadable` : ""));
 
-    // The answer can land after the app has gone to the background — the
-    // network after a resume is slow, and people leave. Nothing is lost by
-    // waiting for the front: the response is held here, and a run killed while
-    // parked is simply pulled again. See ./visible.ts for why it waits.
+    // The answer can land after the app has gone to the background. The response
+    // is held here, and a run killed while parked is pulled again. See
+    // ./visible.ts for why it waits.
     await whenVisible("sync.commit");
     const committed = started("sync.commit");
     await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
@@ -324,14 +297,11 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       }
       if (pulled.length > 0) {
         await d.ops.bulkPut(pulled.map((op): StoredOp => ({ ...op, pending: 0 })));
-        // Adopt every stamp we've just stored, so this device's next op sorts
-        // after the ops it has seen. Without it the clock only moves on send:
-        // correcting a peer's expense stamps the correction *before* the create
-        // when that peer's phone runs fast, and the fold discards it — the
-        // amount changes, then snaps back. In the same transaction as the ops
-        // themselves, for the same reason `appendOps` advances it in its own: a
-        // tab that dies here must not leave the clock trailing an op the log
-        // already holds.
+        // Adopt every stamp just stored, so this device's next op sorts after them.
+        // Otherwise correcting a fast-clocked peer's expense stamps the correction
+        // *before* the create and the fold discards it — the amount snaps back. Same
+        // transaction as the ops, like `appendOps`: a tab dying here must not leave
+        // the clock behind the log.
         const device = await getDevice();
         const now = Date.now();
         let clock = createHlcState(device.nodeId, device.hlcPhysical, device.hlcCounter);
@@ -361,19 +331,15 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     pulledCount += pulled.length;
   }
 
-  // A pulled op can slot in earlier than ops already folded locally — refold
-  // the whole group rather than risk applying out of HLC order. See
-  // docs/sync.md#gotchas. Once for the run, not once per round: it folds the
-  // whole log, and a phone emptying a fortnight's queue would otherwise do
-  // that on every fiftieth op.
+  // A pulled op can slot in before ops already folded — refold the whole group
+  // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
+  // per round: it folds the whole log.
   if (pulledCount > 0) {
     await rebuild(groupId);
-    // A merge is the only thing that can produce an illegal state — every
-    // local write is refused before it lands — so this is where healing
-    // belongs, not on a screen somebody may never open. It writes ops of its
-    // own, which the next run pushes. Imported lazily because the command
-    // layer imports this file (`appendOps` schedules a sync); a static import
-    // would close the cycle.
+    // A merge is the only thing that can produce an illegal state (local writes
+    // are refused first), so healing belongs here. It writes ops the next run
+    // pushes. Imported lazily: the command layer imports this file, and a static
+    // import would close the cycle.
     const { healGroup } = await import("./commands/groups");
     // Up to eight passes, each folding the whole log — worth its own line.
     const healed = started("heal");
@@ -391,20 +357,13 @@ const BACKOFF_MAX_MS = 60000;
 
 /**
  * Runs every group's sync once, sequentially. **Single-flight across the whole
- * run, not per group**: an overlapping call joins the run in flight instead of
- * starting a second one.
- *
- * Five things trigger this — a local write, visibility, `online`, the 60s
- * interval, and the backoff timer itself. Per group, the second caller skips
- * the groups already in flight, finishes with nothing attempted, then clears
- * the pending retry and resets the backoff to 2s: against a dead server it
- * never grows past its first step.
+ * run, not per group**: an overlapping call joins the run in flight. Per group,
+ * a second caller would find everything in flight, attempt nothing, and reset
+ * the backoff to 2s — against a dead server it would never grow.
  */
 export function syncAll(): Promise<void> {
-  // Not while hidden, for the reason `whenVisible` gives. The debounce after a
-  // write, `online` and the backoff can all fire in the background; coming
-  // back to the front runs a sync anyway (`startSyncLoop`), so skipping here
-  // only moves the attempt to the moment it is safe.
+  // Not while hidden (see `whenVisible`). Coming to the front runs a sync anyway
+  // (`startSyncLoop`), so this only moves the attempt to when it is safe.
   if (typeof document !== "undefined" && document.visibilityState === "hidden") {
     return running ?? Promise.resolve();
   }

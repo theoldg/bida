@@ -5,25 +5,21 @@ import {
 import { copy, type Noun, type Voice } from "./copy";
 
 /**
- * Display helpers. Money formatting itself lives in core — this file only
- * decides *which* of core's formats a given bit of chrome wants; the words
- * around the figures come from `lib/copy.ts`.
+ * Display helpers: which of core's money formats a bit of chrome wants. The
+ * words around the figures come from `lib/copy.ts`.
  */
 
 /**
- * The mark between thousands wherever this app writes a figure itself rather
- * than handing it to `Intl`: a narrow no-break space. A comma and a point are
- * each somebody's decimal separator and this app accepts both; a space is
- * nobody's, so stripping it on parse cannot eat a character the typist meant.
+ * The thousands mark wherever this app writes a figure itself: a narrow
+ * no-break space. A comma and a point are each somebody's decimal separator;
+ * a space is nobody's, so stripping it on parse can't eat a meant character.
  */
 export const GROUP = "\u202f";
 
 /**
- * "4800.5" -> "4\u202f800.5". Display only; never stored, never parsed.
- *
- * For the figures this app formats itself and `Intl` does not: what you are
- * typing into an amount field, and a rate. Amounts already read are `money()`
- * and `bare()` below, which are `Intl`-grouped.
+ * "4800.5" -> "4 800.5". Display only; never stored, never parsed. For
+ * what you are typing into an amount field, and rates; read amounts are
+ * `money()` and `bare()`, which are `Intl`-grouped.
  */
 export function groupDigits(canonical: string): string {
   const [whole = "", frac] = canonical.split(".");
@@ -32,10 +28,8 @@ export function groupDigits(canonical: string): string {
 }
 
 /**
- * A rate, as every screen shows one — exact decimal text, thousands grouped
- * the way the field you typed it into groups them. A group based on a weak
- * currency has rates in the thousands ("1 EUR = 13 000 UZS"), which is
- * unreadable as one long digit string.
+ * A rate as every screen shows one: exact decimal text, thousands grouped
+ * ("1 EUR = 13 000 UZS").
  */
 export function rateText(rate: Rate, digits?: number): string {
   return groupDigits(digits === undefined ? formatRate(rate) : formatRate(rate, digits));
@@ -46,10 +40,8 @@ export function money(minor: number, currency: CurrencyCode, signed = false): st
 }
 
 /**
- * The tip screen's dollars, and nothing else's. `money()` hands `Intl` the
- * reader's locale, which is right for the group's money and wrong here:
- * outside the US it renders USD as "US$1.25", one line under a `$5` the copy
- * writes by hand. Pinned to en-US so the cut matches the price it is cut of.
+ * The tip screen's dollars only. `money()` uses the reader's locale, which
+ * outside the US renders "US$1.25" under a hand-written `$5`; pinned to en-US.
  */
 export function usd(minor: number): string {
   return formatMinor(minor, "USD", { locale: "en-US" });
@@ -68,25 +60,20 @@ export function bare(minor: number, currency: CurrencyCode): string {
 }
 
 /**
- * A bill line's figure, as the grid prints it beside the label.
+ * A bill line's figure, as the grid prints it.
  *
- * **What arrives here is the model's own string, not a number.** `readBill`
- * keeps it verbatim for the line a bill priced outright, because `checkScan`
- * refuses an unreadable one and has to show what came back — only a
- * multiplied line is written out (`core/scan.ts`). So a model answering "10"
- * where the rest of the bill says "39.00" used to put an unformatted figure
- * in a column of money. Reading it and writing it again is this file's job,
- * and the string survives exactly where it still isn't a figure.
+ * **What arrives is the model's own string, not a number** — `readBill` keeps
+ * it verbatim so `checkScan` can show an unreadable one (`core/scan.ts`). So
+ * "10" beside "39.00" is reformatted here; a string that isn't a figure
+ * survives as it is.
  */
 export function priced(amount: string, currency: CurrencyCode): string {
   try { return bare(parseMinor(amount, currency), currency); } catch { return amount; }
 }
 
 /**
- * The "this doesn't add up" sentence for the split and payer editors, in real
- * money. Core hands back minor units and a problem code rather than a
- * sentence, because it doesn't know the currency; the screen supplies the
- * wording around the figure.
+ * The "this doesn't add up" sentence for the split and payer editors. Core
+ * returns minor units and a code, not knowing the currency.
  */
 function shortfallText(
   check: { problem?: string; diffMinor?: number; message?: string },
@@ -100,15 +87,12 @@ function shortfallText(
 }
 
 /**
- * The split editor's bottom line. `shortfallText` handles the ordinary "some
- * of it is missing" case; this wraps it with the two verdicts that need the
- * total itself rather than the shortfall:
+ * The split editor's bottom line: `shortfallText`, plus two verdicts that need
+ * the total itself:
  *
- * - **Nobody included yet.** A figure would be beside the point; say the thing.
- * - **Nothing to divide.** `validateSplit` scores 0 of 0 allocated as a
- *   satisfied split — arithmetically true, and nonsense under an expense whose
- *   amount is still blank. Made unreachable here rather than guarded at each
- *   call site that can reach a zero total.
+ * - **Nobody included yet** — say that, not a figure.
+ * - **Nothing to divide** — `validateSplit` calls 0 of 0 satisfied, which is
+ *   nonsense under a blank amount. Caught here once rather than at each call.
  */
 export function splitFooter(
   check: SplitValidation,
@@ -132,10 +116,8 @@ export function splitFooter(
 }
 
 /**
- * Why the payer side can't be saved, in the entry's own currency — or `null`
- * when it can. The payers screen shows it under its table and the entry form
- * beside the payer field: the same sentence either way, because a person
- * moving between the two screens is looking at one thing.
+ * Why the payer side can't be saved, or `null` when it can. The same sentence
+ * on the payers screen and beside the form's payer field.
  */
 export function payerProblemText(
   check: PayerValidation, currency: CurrencyCode, voice: Voice = "expense",
@@ -148,20 +130,17 @@ export function payerProblemText(
 }
 
 /**
- * What a rejected promise says to a person. Anything thrown that isn't an
- * `Error` is stringified rather than dropped — a bare string thrown by a
- * dependency still beats a screen that silently does nothing.
+ * What a rejected promise says to a person. A non-`Error` is stringified
+ * rather than dropped.
  */
 export function errorText(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
 /**
- * What a person *sees* as one character. **Never `slice(0, 1)`**: it counts
- * UTF-16 code units, so a name starting with an emoji keeps half a surrogate
- * pair and draws the replacement box, and a flag or a family is longer still.
- * `Intl.Segmenter` counts what the font draws; code points are the fallback
- * where it is missing, wrong only for sequences no avatar has room for.
+ * What a person *sees* as one character. **Never `slice(0, 1)`**: UTF-16 code
+ * units split an emoji's surrogate pair into a replacement box.
+ * `Intl.Segmenter` counts what the font draws; code points are the fallback.
  */
 const graphemer = typeof Intl !== "undefined" && "Segmenter" in Intl
   ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
@@ -187,20 +166,13 @@ export function initials(name: string): string {
 const CODE_MAX = 3;
 
 /**
- * The shortest prefix of each name that tells everyone apart — "John" and
- * "Jane" become "Jo"/"Ja" rather than colliding on "J". Grows a grapheme at a
- * time, but never past three: whoever still collides there is numbered
- * instead, so "Bartholomew" and "Bartholomew Junior" are "Ba1" and "Ba2"
- * rather than two headings as wide as the grid.
+ * The shortest prefix of each name that tells everyone apart ("Jo"/"Ja", not
+ * "J"/"J"), never past three graphemes: whoever still collides is numbered
+ * ("Ba1", "Ba2"). The number restarts per shared prefix: "Ma1 Ma2 Ju1 Ju2".
  *
- * The number counts the people sharing that prefix, so it starts again at 1
- * for each set of them: "Ma1 Ma2 Ju1 Ju2", never "Ma1 Ma2 Ju3 Ju4".
- *
- * The numbering is why no name may already contain a digit: "ba1" as a name is
- * indistinguishable from "Ba" numbered 1, so a group holding one gives up on
- * unique codes and takes the bare three-grapheme prefixes, repeats and all.
- * Three characters cannot be injective over arbitrary names. The chips under
- * "Who was there" carry the full names, which is where a repeat is read.
+ * So no name may contain a digit: "ba1" would equal "Ba" numbered 1, and a
+ * group holding one takes the bare prefixes, repeats and all. The "Who was
+ * there" chips carry the full names.
  */
 export function distinctInitials(members: readonly { id: string; name: string }[]): Map<string, string> {
   const out = new Map<string, string>();
@@ -230,11 +202,9 @@ export function distinctInitials(members: readonly { id: string; name: string }[
     const room = CODE_MAX - n.length;
     return (room > 0 ? prefix(id, room) : "") + n;
   };
-  // Numbered within each run of leftovers that will *print* the same prefix —
-  // two graphemes, the width a single-digit code leaves, rather than the three
-  // that made them collide. So "Martin"/"Marta" and "Matteo"/"Matilda" number
-  // as one "Ma" run (Ma1..Ma4), which is the only way four headings reading
-  // "Ma" can be told apart, while a "Ju" run beside them starts over at Ju1.
+  // Numbered within each run that will *print* the same prefix — two
+  // graphemes, the width a one-digit code leaves. So "Martin"/"Marta" and
+  // "Matteo"/"Matilda" number as one "Ma" run (Ma1..Ma4), and "Ju" restarts.
   const runs = new Map<string, string[]>();
   for (const m of left) {
     const key = prefix(m.id, CODE_MAX - 1);
@@ -242,11 +212,9 @@ export function distinctInitials(members: readonly { id: string; name: string }[
   }
   const codes = new Map<string, string>();
   for (const ids of runs.values()) ids.forEach((id, i) => codes.set(id, code(id, i)));
-  // Ten in one run needs two digits, which costs the prefix a grapheme — and
-  // cut that short it can equal another run's, so the restart is what breaks.
-  // Numbering across every leftover instead cannot: a code ends in exactly as
-  // many digits as its number has (no name holds one), so if no two share a
-  // number no two share a code, however their prefixes were cut.
+  // Ten in one run needs two digits, which cuts the prefix short enough to equal
+  // another run's. Numbering across every leftover can't collide: no name holds
+  // a digit, so distinct numbers mean distinct codes.
   if (new Set(codes.values()).size < codes.size) {
     left.forEach((m, i) => codes.set(m.id, code(m.id, i)));
   }
@@ -286,9 +254,8 @@ export function clockTime(ts: number): string {
 }
 
 /**
- * "Today · 18:22" — or the day alone for an entry whose stamp is a day and
- * nothing more (`dateOnly`), where a clock would be printing 00:00 as though
- * somebody had read it off a receipt.
+ * "Today · 18:22" — or the day alone for a `dateOnly` entry, where a clock
+ * would print a 00:00 nobody read off a receipt.
  */
 export function whenLabel(entry: Whenever, now = Date.now()): string {
   return entry.dateOnly
@@ -304,14 +271,10 @@ interface Whenever {
 }
 
 /**
- * The ledger's order: newest day first; inside a day, the entries whose stamp
- * is a day and nothing more, then the rest by time, latest first.
- *
- * A `dateOnly` entry heads its day rather than sinking to the bottom where its
- * midnight stamp would put it: the time is missing, not early. `createdAt`
- * then breaks ties, so two entries backdated to the same day have a stable
- * order rather than whatever IndexedDB handed back; where it is absent,
- * `occurredAt` stands in — a wash, but never crashes.
+ * The ledger's order: newest day first; inside a day, `dateOnly` entries (the
+ * time is missing, not early), then by time, latest first. `createdAt` breaks
+ * ties so backdated entries keep a stable order; `occurredAt` stands in where
+ * it is absent.
  */
 export function byWhen(a: Whenever, b: Whenever): number {
   const day = startOfLocalDay(b.occurredAt) - startOfLocalDay(a.occurredAt);
@@ -329,9 +292,8 @@ export function stamp(ts: number): string {
 }
 
 /**
- * "3 changes". The noun is a `{ one, many }` pair from `lib/copy.ts` rather
- * than a word plus an "s" — the plural of a word is the translation's business,
- * not this function's.
+ * "3 changes". The noun is a `{ one, many }` pair from `lib/copy.ts` — plurals
+ * are the translation's business.
  */
 export function plural(n: number, noun: Noun): string {
   return `${n} ${n === 1 ? noun.one : noun.many}`;
@@ -345,12 +307,9 @@ export function dateInputValue(ts: number): string {
 }
 
 /**
- * The inverse of `dateInputValue`: local midnight of a `YYYY-MM-DD` day. What
- * an imported row's `occurredAt` becomes, and what a backdated scan already
- * uses (docs/data-model.md).
- *
- * **Never `Date.parse`**: it reads a bare date as UTC, which lands the day
- * before for anyone west of Greenwich.
+ * The inverse of `dateInputValue`: local midnight of a `YYYY-MM-DD` day
+ * (docs/data-model.md). **Never `Date.parse`**: it reads a bare date as UTC,
+ * the day before for anyone west of Greenwich.
  */
 export function dayStart(day: string): number {
   const [y, m, d] = day.split("-").map(Number);
@@ -369,11 +328,8 @@ export function withDate(ts: number, value: string): number {
 
 /**
  * How many of something somebody had: "2", "1/2", "1 1/2" — or null for
- * exactly one, the ordinary case, which says nothing worth printing.
- *
- * A count is a fraction because sharing makes it one: a plate split three ways
- * is a third each. Written with a slash rather than as ½ ⅓ ¼, whose glyphs are
- * drawn at a fraction of the line's size and unreadable at this text size.
+ * exactly one. A slash rather than ½ ⅓ ¼, whose glyphs are unreadable at this
+ * size.
  */
 export function countText(count: { n: number; d: number }): string | null {
   if (count.d <= 0 || count.n <= 0) return null;

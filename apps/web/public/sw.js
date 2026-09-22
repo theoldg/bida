@@ -42,44 +42,32 @@ function routeWithQuery(url) {
 }
 
 /**
- * **Never `caches.match`** — it searches *every* cache in the origin, and this
- * worker may read only its own. `controllerchange` fires before `activate`, so
- * a page reloaded onto this build is fetched while the previous build's cache
- * is still there to be matched, oldest first: unscoped, the reload is answered
- * with an old shell or an old `/g.txt` whose client references name chunks this
- * build doesn't have, and the screen draws with pieces missing — the bottom nav
- * among them — until the app is launched again, because the router holds the
- * payload it was given. Scoped, a miss is a fetch for a file this build serves.
+ * **Never `caches.match`** — it searches *every* cache in the origin.
+ * `controllerchange` fires before `activate`, so a page reloaded onto this
+ * build would be answered from the previous build's cache: an old shell or
+ * `/g.txt` naming chunks this build doesn't have, and a screen drawn with
+ * pieces missing (the bottom nav among them) until relaunch.
  *
- * The one exception is a page still open from the previous build
- * (`previousFor`): it is served out of *that* build's cache, the only place its
- * chunks and payloads still exist.
+ * The exception is a page still open on the previous build (`previousFor`):
+ * it is served from *that* build's cache, the only place its files exist.
  */
 function lookup(key, cacheName = CACHE_NAME) {
   return caches.open(cacheName).then((cache) => cache.match(key, { ignoreSearch: true }));
 }
 
 /**
- * This worker activates by itself (see `install`), so pages that booted on an
- * earlier build are still on screen when it takes them over. Their next tap
- * asks for that build's payload and lazily for that build's chunks — neither in
- * this cache nor on the server any more — and a new build's payload handed to
- * an old router is a group screen that turns into "No group". So `activate`
- * writes down which build each open page is running and keeps every cache still
- * spoken for; until they reload (lib/update.ts sees to that) they are served
- * from their own.
+ * This worker activates by itself (see `install`), so pages booted on earlier
+ * builds are still on screen when it takes over. Their next tap asks for that
+ * build's payload and chunks, gone from this cache and the server — and a new
+ * payload handed to an old router turns a group into "No group". So
+ * `activate` records which build each open page runs and keeps those caches
+ * until they reload (lib/update.ts).
  *
- * **Record which build each page is on, never just "the previous one".** Keep
- * one cache — the newest other — and hand it to every open page, and it is
- * right exactly once: at the deploy after, a page running the build before last
- * has its cache deleted under it and is pointed at a build it never ran. Chunk
- * names are content-hashed and simply miss, but `/g` and `/g.txt` are not, so
- * it is served a stranger's payload and cannot finish drawing. Carrying the
- * record forward costs at most one kept cache per window left open, and a
- * window that closes takes its cache with it at the next activate.
+ * **Record each page's build, never just "the previous one"**: at the deploy
+ * after, a page two builds back would be pointed at a build it never ran and
+ * served a stranger's `/g.txt`. The cost is one kept cache per open window.
  *
- * Kept in a cache as well as in memory: the browser stops an idle worker
- * whenever it likes, and a page open across that must not lose its build.
+ * Kept in a cache as well as memory: an idle worker can be stopped any time.
  */
 const LEGACY = "bida-legacy";
 /** `{ builds: { [clientId]: cacheName } }` — every open page not on this build. */
@@ -120,22 +108,17 @@ async function previousFor(clientId) {
 /**
  * A payload, for a page that may not be on this build.
  *
- * Next reads the build id out of every payload it is handed, and when it is not
- * its own it stops routing and hard-navigates — to **`res.url`**, to take the
- * new build. For anything out of a cache that URL is the cache key, and
- * payloads are keyed by path (the query on one is only ever app state, so one
- * file answers every `?id=`). So the group the screen was of is gone before the
- * browser sees it: what loads is a bare `/g/...`, every screen under `/g` reads
- * its group out of the query, and all any of them can say is that the link is
- * missing its password.
+ * Next reads the build id out of every payload, and when it isn't its own it
+ * hard-navigates to **`res.url`**. From a cache that is the key, which is the
+ * path alone — so the query, and with it the group, is lost, and the screen
+ * says the link is missing its password.
  *
- * A page on an earlier build is served that build's payload. Where that cache
- * has gone, **fail rather than fall through and hand it this build's**. Of the
- * three ways the router gives up, its `catch` is the only one that falls back to
- * the URL *it asked for* rather than the one it was answered from
- * (`fetch-server-response.js`) — so the query survives, and the navigate branch
- * below turns that `.txt` back into the route. A redirect cannot do the same
- * job: `fetch` follows it, onto another cache key with no query on it either.
+ * So an earlier build is served its own payload, and where that cache has
+ * gone, **fail rather than hand it this build's**: the router's `catch` is the
+ * only give-up path that falls back to the URL *it asked for*
+ * (`fetch-server-response.js`), keeping the query, and the navigate branch
+ * below turns that `.txt` back into the route. A redirect can't: `fetch`
+ * follows it onto another query-less key.
  */
 async function payloadFor(url, request, clientId) {
   const previous = await previousFor(clientId);
@@ -164,12 +147,9 @@ async function cacheFirst(cacheKey, request, clientId) {
 
 /**
  * **All-or-nothing**, because this worker activates the moment it installs: a
- * precache with holes replaces a complete one, and the installed app is then a
- * build that can't finish painting itself. Which is the likely case — the update
- * runs on whatever mobile data the phone had when it was last opened. So:
- * batches (a few hundred parallel requests shouldn't stall the phone), one retry
- * for the stragglers, then throw. A failed install leaves the running worker and
- * its intact cache alone, and the browser tries again later.
+ * precache with holes replaces a complete one and the app can't paint. Likely,
+ * on mobile data. So: batches, one retry for stragglers, then throw — a failed
+ * install leaves the running worker and its cache alone.
  */
 async function addAll(cache, urls) {
   const failed = [];
@@ -196,11 +176,9 @@ self.addEventListener("install", (event) => {
     })(),
   );
   // **Activate as soon as the whole build is cached**, never waiting for the
-  // last client of the origin to close: one forgotten tab pins a phone on an old
-  // build indefinitely, and iOS Safari keeps tabs, and itself, alive across what
-  // a person thinks of as closing it. What made waiting necessary — a page open
-  // across activation losing its build — is answered by `previousFor`, and the
-  // page reloads onto the new build once that is harmless (lib/update.ts).
+  // last client to close: one forgotten tab (and iOS keeps them alive) pins a
+  // phone on an old build indefinitely. Open pages keep their build through
+  // `previousFor` and reload once harmless (lib/update.ts).
 });
 
 /**
@@ -216,12 +194,9 @@ self.addEventListener("message", (event) => {
 });
 
 /**
- * Every copy of the app open on this origin, for /diag.
- *
- * Another copy is the one thing a page cannot see from inside, and it is the
- * prime suspect for a database that stops answering: a tab or window frozen in
- * the background half way through a transaction keeps its lock, and every read
- * everywhere else queues behind it (docs/frontend.md#a-live-read-can-die).
+ * Every copy of the app open on this origin, for /diag. Another copy is the
+ * prime suspect for a database that stops answering: a background tab frozen
+ * mid-transaction keeps its lock (docs/frontend.md#a-live-read-can-die).
  * Paths only — a join link's secret is in the fragment, and this report is
  * pasted into messages.
  */
@@ -243,13 +218,9 @@ async function describeClients(source, port) {
 /**
  * Pages this worker's predecessor controlled are now this worker's (no
  * `clients.claim`: a first visit stays uncontrolled until its next launch).
- * Note which build each open page is running and keep those caches; everything
- * nothing is running goes.
- *
- * **A page met before keeps the build it was already known by**, however many
- * deploys ago — carrying the record forward is the whole point. Only a page met
- * for the first time is assumed to be on the build immediately before, which is
- * the best guess there is.
+ * Record which build each open page runs and keep those caches; delete the
+ * rest. **A page met before keeps the build it was known by**; only a new one
+ * is assumed to be on the build immediately before.
  */
 self.addEventListener("activate", (event) => {
   event.waitUntil(
@@ -263,14 +234,10 @@ self.addEventListener("activate", (event) => {
       // is the build a page we have not seen before is most likely running.
       const newest = keys.filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME).pop() ?? null;
       const builds = {};
-      // Every window open *now* booted before this worker did, so none is on
-      // this build — that much is certain, where *which* build is a guess. So
-      // all of them are written down, and **`null` is the honest answer where
-      // the guess has nothing to point at**: a cache that has gone, or a first
-      // build with nothing before it. Drop those and `cacheFirst` falls through
-      // and hands the page this build's payload, the one answer worse than none
-      // (`payloadFor`). A page loaded after this runs is not here, is on this
-      // build, and is served normally.
+      // Every window open *now* booted before this worker, so none is on this
+      // build. **`null` is the honest answer where the guess has nothing to point
+      // at** (cache gone, or no earlier build): dropped, `cacheFirst` would hand
+      // the page this build's payload, the one answer worse than none.
       for (const client of open) {
         const cache = before.builds[client.id] ?? newest;
         builds[client.id] = cache && cache !== CACHE_NAME && keys.includes(cache) ? cache : null;
@@ -294,20 +261,14 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return; // never the API — Dexie owns offline data
 
   /**
-   * Offline — or on a payload this worker refused (`payloadFor`) — Next's router
-   * gives up and hands the *payload* URL to the browser as a navigation. Served
-   * literally that is a screenful of `1:"$Sreact.fragment"`. **A document
-   * request for a payload is always a mistake: send it to the route.**
+   * Offline — or on a payload refused by `payloadFor` — Next's router hands the
+   * *payload* URL to the browser as a navigation, which served literally is a
+   * screenful of `1:"$Sreact.fragment"`. **Redirect a document request for a
+   * payload to its route**, never serve the shell in place: back arrows
+   * (lib/nav.ts) and `reloadCostsNothing` (lib/update.ts) read the address.
    *
-   * **A redirect, never the route's shell served in its place**: the address the
-   * app then runs at is the address it was asked for, and `/g.txt` is not a
-   * route. Every screen's back arrow is a path (lib/nav.ts),
-   * `reloadCostsNothing` is a list of them (lib/update.ts), and both read the
-   * one the app is standing on.
-   *
-   * This worker only ever sees a page it controls, and it claims no first
-   * visit — so the Worker holds the same rule for the phones with no worker
-   * yet (`apps/api/src/payload.ts`). Change one and change the other.
+   * The Worker holds the same rule for phones with no worker yet
+   * (`apps/api/src/payload.ts`). Change one and change the other.
    */
   if (request.mode === "navigate" && isPayload(url)) {
     // The query is not decoration: `?id=` is which group the screen is of, so
@@ -317,12 +278,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything an installed app needs is precached under a revision that
-  // changes with the build, so it is all cache-first: a launch and every tap
-  // after it paint without waiting on the network, online or off. A new deploy
-  // arrives when the new worker installs — the browser revalidates sw.js on
-  // navigation, and lib/update.ts asks again on every resume — not by making
-  // every screen pay a round trip on the chance there is one.
+  // Everything is precached under a per-build revision, so it is all
+  // cache-first: every paint skips the network. A deploy arrives when the new
+  // worker installs (sw.js is revalidated on navigation, and lib/update.ts asks
+  // on every resume).
   if (isPayload(url)) {
     event.respondWith(payloadFor(url, request, event.clientId));
     return;

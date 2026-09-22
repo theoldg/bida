@@ -46,13 +46,9 @@ export interface ReceiptScan {
   /** The scan in flight or last refused, straight off the store. Undefined while idle. */
   live: LiveScan | undefined;
   /**
-   * The refusal **this screen** says under its control, in words, or null.
-   *
-   * Not the same thing as `live.error`: a typed bill's refusal is said in the
-   * box it was typed into and nowhere else, so it is null here. The screen
-   * behind that box never rang — the sentence there would be the same one
-   * twice, and still standing after the box is shut. Every screen reads this
-   * rather than the store, so there is one answer to *whose refusal is it*.
+   * The refusal **this screen** says under its control, or null. Not
+   * `live.error`: a typed bill's refusal is said only in the box it was typed
+   * into. Every screen reads this, so there is one answer to *whose refusal*.
    */
   refusal: string | null;
   /** Nothing can be sent without the group's secret, so the control asks this. */
@@ -71,28 +67,21 @@ export interface ReceiptScan {
 }
 
 /**
- * Photograph a bill; the draft comes back filled in.
+ * Photograph a bill; the draft comes back filled in. Shared by the Items tab
+ * and `/g/scan` so they cannot drift: one downscale, one prompt, one set of
+ * failure words, one rule about what a scan may overwrite.
  *
- * Two screens scan — the expense form's Items tab and `/g/scan`, the same act
- * reached before there is a form — and share this so they cannot drift: one
- * downscale, one prompt, one set of words for a failure, one rule about what a
- * scan may overwrite.
+ * **A scan never navigates.** It fills the draft and stops: the grid is one
+ * tap away on the Items tab (ADR-0016), and it lets the rate dialog simply
+ * open when needed.
  *
- * **A scan never navigates.** It fills the draft and stops there: pushing to
- * the who-had-what grid whenever the bill has lines makes every scan a
- * commitment to itemise, and the grid is one tap away on the Items tab
- * (ADR-0016). Nothing else wants the screen after a scan either, which is what
- * lets the rate dialog simply open when it is needed.
+ * `onScanned` is the one follow-up (`/g/scan` hands over to the form).
+ * **Skipped when the scan outlived its screen**: the draft still takes the
+ * result, but nothing yanks anybody back.
  *
- * `onScanned` is the one thing a caller may do afterwards — `/g/scan` uses it
- * to hand over to the form. **Skipped when the scan outlived the screen that
- * started it**: a scan is a network round trip and people put the phone down,
- * so the draft still takes the result, but nothing yanks anybody back.
- *
- * **Nor does a scan take the tab back.** Where it is *up to* lives in the store
- * beside the draft (`lib/scan/live.ts`), never in this hook's state, so neither
- * leaving the Items tab nor leaving the form for the payers editor is mistaken
- * for the scan ending — see `tabAtStart` below.
+ * **Nor does a scan take the tab back.** Its progress lives in the store
+ * (`lib/scan/live.ts`), not this hook, so leaving the tab or the form isn't
+ * mistaken for the scan ending — see `tabAtStart`.
  */
 export function useReceiptScan(
   /** The draft this fills, and the screen the scan's state belongs to. */
@@ -112,10 +101,8 @@ export function useReceiptScan(
   const onScreen = useRef(true);
   useEffect(() => () => { onScreen.current = false; }, []);
 
-  // The callback is read at the end of a round trip, so it is held in a ref
-  // rather than closed over: a caller that rebuilds it every render would
-  // otherwise have `onPhoto` running the version from whichever render
-  // started the scan.
+  // Read at the end of a round trip, so held in a ref: a caller rebuilding it
+  // every render would otherwise run the version from the render that started.
   const scanned = useRef(onScanned);
   scanned.current = onScanned;
   // Read at the start of the round trip, and held for the same reason.
@@ -123,12 +110,8 @@ export function useReceiptScan(
   before.current = scanAs;
 
   /**
-   * One reading, whichever medium it arrived in.
-   *
-   * Everything below the `send` argument is the same for a photograph and for a
-   * bill somebody typed: what a scan may overwrite, which tab it may claim, and
-   * what it resets. **Two copies would be two rules** about renaming an expense
-   * somebody had named.
+   * One reading, photographed or typed. What it may overwrite, which tab it may
+   * claim and what it resets are shared — **two copies would be two rules**.
    */
   const read = useCallback(async (
     medium: ScanMedium,
@@ -231,24 +214,17 @@ export function useReceiptScan(
   }, [read]);
 
   /**
-   * Whether the typing box is open, held **here and never in the control that
-   * opens it**.
-   *
-   * The control comes and goes: the Items tab draws one shape when there is no
-   * bill and another when there is, and a typed bill's own answer moves it from
-   * the first to the second. Held there, the box changes position in the tree
-   * the moment its own reading lands — React unmounts it and mounts a fresh one
-   * holding what was just read, over a bill that has just arrived. This hook
-   * sits at the screen's root, where nothing a reading does can move it.
+   * Whether the typing box is open, held **here, never in the control that
+   * opens it**: that control changes shape once a bill lands, which would
+   * remount the box over the bill just read. This hook sits at the screen's
+   * root, where no reading can move it.
    */
   const [typing, setTyping] = useState(false);
 
   /**
-   * Whose refusal it is, decided in one place: the surface the reading was
-   * started from says it, and the other says nothing at all. A bill typed into
-   * the box is fixed in the box, so that is where the sentence goes; a
-   * photograph belongs to the screen that took it, which is also the only
-   * surface still standing afterwards.
+   * Whose refusal it is: the surface the reading started from says it, the
+   * other says nothing. A typed bill is fixed in the box; a photograph belongs
+   * to the screen that took it.
    */
   const said = live?.state === "error" ? live.error ?? copy.scan.failed : null;
   const typed = live?.medium === "text";
@@ -281,33 +257,22 @@ export function useReceiptScan(
 }
 
 /**
- * The control every scanning screen wears: one button cut in three.
- *
- * Getting this bill into the form is **one act**, and the doors are the ways in
- * — photograph it now, pick the photograph you already took, or type it. So it
- * is one bordered box with hairlines between them (`.btn-pair`), never buttons
- * standing side by side, which is the vocabulary for separate jobs. A door
- * outside the box would say typing is a different act, and everything after the
- * bytes is shared (`useReceiptScan`).
+ * The control every scanning screen wears: one button cut in three —
+ * photograph now, pick a photo, or type it — one act with three doors, so one
+ * box (`.btn-pair`), never buttons side by side.
  *
  * **Cut in two where the tap that got here was the camera** (`typeIn={false}`):
- * the ledger's scan FAB is a camera, and a screen reached by pressing one is
- * asking for the photograph it drew, not offering a box to write in. Typing
- * stays where the bill might already be words — the quick split, and the Items
- * tab of a form somebody is filling in anyway.
+ * the ledger's scan FAB asks for the photograph it drew. Typing stays where the
+ * bill might already be words — the quick split, and the Items tab.
  *
- * While a reading is in flight the doors go and the box holds one strip saying
- * "Reading…" — there is only ever one act in it, so nothing needs to know which
- * door should spin.
+ * In flight, the doors give way to one "Reading…" strip.
  *
- * Three registers of the same control, so where it sits changes its size and
- * almost nothing else: `lg` where the screen exists for it, `s` on the Items
- * tab, `xs` for replacing a bill already assigned. The first two are ink
- * blocks, each being the one act of its surface; only the chip is on paper.
+ * Registers: `lg` where the screen exists for it, `s` on the Items tab, `xs`
+ * for replacing an assigned bill. The first two are ink blocks; only the chip
+ * is on paper.
  *
- * `flash` is the entry form's refusal: a Save tapped on an Items tab with no
- * bill behind it fills this box red and lets it settle, as the amount and the
- * title do. **The box carries it, not a half** — neither half was the wrong one.
+ * `flash` is the entry form's refusal on an Items tab with no bill. **The box
+ * carries it, not a half.**
  */
 export function ScanPair({
   scan, register, typeIn = true, flash = "", onFlashEnd, disabled: held = false, refuse,
@@ -322,32 +287,25 @@ export function ScanPair({
       refusal flash, same as Save on the entry form. */
   disabled?: boolean;
   /**
-   * The screen's own veto on the press, for what it can only know at the
-   * moment of pressing: a quick split with a name still unfiled in the add
-   * row, or fewer than two people on the list, refuses the photograph rather
-   * than taking one nobody can actually divide. Returns true when it
-   * refused, and neither door opens.
+   * The screen's own veto at the moment of pressing: a quick split with a name
+   * still unfiled, or fewer than two people, refuses the photograph. Returns
+   * true when it refused, and no door opens.
    */
   refuse?: () => boolean;
 }) {
   const { live } = scan;
   const disabled = scan.disabled || held;
   const busy = live?.state === "scanning";
-  // Run the challenge while the button is merely sitting there, so pressing it
-  // doesn't wait for a round trip to Cloudflare (`warmTurnstile`). Every screen
-  // that scans wears this control, so warming here is what "wherever a scan
-  // button appears" actually means — including the Items tab, which mounts one
-  // the moment that tab is picked. Keyed on `busy` as well as mount: a scan
-  // spends the token, and the button coming back is the next scan's cue.
+  // Run the challenge while the button sits there, so pressing doesn't wait on
+  // Cloudflare (`warmTurnstile`). Every scanning screen wears this control, so
+  // this covers them all. Keyed on `busy`: a scan spends the token.
   useEffect(() => { if (!disabled && !busy) warmTurnstile(); }, [disabled, busy]);
   // Three doors share the width, so the glyphs give back a couple of points and
   // the padding between them narrows. The box keeps its height.
   const icon = register === "xs" ? 12 : 14;
   const half = `btn${register === "lg" ? " btn-lg" : ""}`;
-  // Inverted at both sizes that act: on `/g/scan` it is the screen's one act,
-  // and on the Items tab it is the only thing to do on an empty tab. Only
-  // the chip register stays on paper — it stands beside a bill already
-  // assigned, where an ink block would outweigh the thing it replaces.
+  // Inverted at both acting sizes; only the chip stays on paper, beside a bill
+  // already assigned, where an ink block would outweigh what it replaces.
   const box = `btn-pair${register === "xs" ? " pair-xs" : " pair-p"}${flash}`;
   const open = (door: () => void) => () => { if (!refuse?.()) door(); };
 
@@ -370,9 +328,7 @@ export function ScanPair({
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
-      {/* The third door, and the reason this is usually no longer a pair: the
-          box is the act, and typing the bill is a way into it rather than a
-          thing beside it. The pencil, because what is behind this one is a
+      {/* The third door: typing the bill. The pencil, because behind it is a
           field. */}
       {typeIn ? (
         <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}
