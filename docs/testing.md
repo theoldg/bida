@@ -652,11 +652,11 @@ a link at all, a link that opens nothing, tricount not answering, two
 currencies, and an entry whose shares miss by a cent.
 
 **`/api/tricount` is stubbed and everything else is real** — the bargain
-`stubScan` makes about Gemini. Tricount publishes no API and answers no
-preflight, so the half that talks to bunq (`apps/api/src/tricount.ts`) is the
-half no check can hold: a real link is the only thing that proves it, and one
-did (2026-09-21). Try one by hand after touching those constants, since nothing
-here will go red when bunq moves.
+`stubScan` makes about Gemini. Tricount publishes no API, so the half that
+talks to bunq (`apps/api/src/tricount.ts`) is the half no check can hold: a
+real link is the only thing that proves it, and one did (2026-09-21). Try one
+by hand after touching those constants, since nothing here will go red when
+bunq moves.
 
 ## What only a phone can check
 

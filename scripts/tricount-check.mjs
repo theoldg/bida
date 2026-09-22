@@ -11,7 +11,8 @@
  *
  * **The endpoint is stubbed and the rest is real** — the same bargain
  * `stubScan` makes about Gemini (`lib/receipts.mjs`). Tricount has no
- * documented API and answers no preflight, so the one thing no check can hold
+ * documented API, and a browser is not allowed to read what it answers, so the
+ * one thing no check can hold
  * is bunq itself; `apps/api/src/tricount.ts` is the half that talks to it and
  * the half a session has to try by hand. Everything on this side of that
  * request is under test here, including the refusals, which is where a reader

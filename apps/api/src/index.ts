@@ -207,9 +207,9 @@ app.post("/api/groups/:id/scan", async (c) => {
  * The JSON behind a tricount link, so **Import a group** can read somebody's
  * tricount the way it reads a Splitwise CSV (docs/data-model.md#reading-a-tricount-back).
  *
- * Behind our own endpoint because the browser cannot make this call —
- * `api.tricount.bunq.com` answers no preflight — and the handshake it needs is
- * in `tricount.ts`. Unauthenticated for the reasons `/api/rates` is: the input
+ * Behind our own endpoint because a page cannot read what
+ * `api.tricount.bunq.com` answers — no `Access-Control-Allow-Origin` on it —
+ * and the handshake it needs is in `tricount.ts`. Unauthenticated for the reasons `/api/rates` is: the input
  * is a token the caller already holds, it spends no key of ours, and there is
  * no group here to belong to yet. What it is not is a general proxy — the two
  * fields are checked into a shape before either call is made, and the only

@@ -8,8 +8,12 @@
  * what comes back, and neither knows about the other.
  *
  * **It sits on the Worker for the reason `/api/rates` does**: a browser cannot
- * call `api.tricount.bunq.com` — it answers no preflight — and a passthrough
- * of ours is also the one place that changes if bunq moves the endpoint. What
+ * call `api.tricount.bunq.com` — its reply carries no `Access-Control-Allow-Origin`,
+ * so Chrome withholds the answer from any page that asks (checked from
+ * bida.bid, 2026-09-22) — and a passthrough of ours is also the one place that
+ * changes if bunq moves the endpoint. Nothing is being got around: that header
+ * is a browser protecting its own user from the page it is showing them, and
+ * the Worker is not a browser, any more than the Tricount app is. What
  * it is *not* is a place the group is read: the body is streamed back to the
  * phone untouched and nothing is stored, which is the same promise
  * [ADR-0036](../../../docs/decisions/0036-the-server-cannot-read-a-group.md)

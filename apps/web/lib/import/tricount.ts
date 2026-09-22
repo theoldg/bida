@@ -6,10 +6,11 @@ import { ImportError } from "@bida/core";
  * lives — this file is the link, the key pair and one request, and nothing
  * else (docs/frontend.md#bringing-a-group-onto-the-phone).
  *
- * It goes through our Worker because the browser cannot make the call itself:
- * `api.tricount.bunq.com` answers no preflight, so a fetch from this origin
- * never leaves. `apps/api/src/tricount.ts` is the other half and says what the
- * handshake is.
+ * It goes through our Worker because a page cannot read that answer: bunq's
+ * reply carries no `Access-Control-Allow-Origin`, so the browser withholds it
+ * from whatever asked, however the request was made (checked from bida.bid,
+ * 2026-09-22). `apps/api/src/tricount.ts` is the other half, and says why a
+ * Worker is allowed what this file is not.
  */
 
 /** Our Worker could not reach tricount, or tricount would not talk to it. */
