@@ -65,8 +65,6 @@ export default function AboutPage() {
                 sealed. Said after the rest, it would read like a footnote. */}
             <Section title={privacy.title} under={
               <>
-                <p>{privacy.ownKeyPointer}{" "}
-                  <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.</p>
                 <p><strong>{privacy.importTitle}</strong> {privacy.import}</p>
                 <p> <strong> {privacy.e2eTitle} </strong> {privacy.body}</p>
                 <SealedRow />
@@ -75,7 +73,13 @@ export default function AboutPage() {
               </>
             }>
               <>
-                <strong>{privacy.scanTitle}</strong> {privacy.scan}
+                <strong>{privacy.scanTitle}</strong> {privacy.scan}{" "}
+                {/* The way out of the rate limits is the last clause of the
+                    paragraph it belongs to, not a paragraph of its own: it is
+                    an aside about scanning, and set apart it read as a second
+                    claim. */}
+                {privacy.ownKeyPointer}{" "}
+                <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.
               </>
             </Section>
 
