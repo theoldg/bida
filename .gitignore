@@ -14,3 +14,5 @@ coverage/
 shots/
 # Throwaway measurement rigs: probe scripts, perf harnesses.
 *.tmp.*
+# Sessions work in a worktree of their own (CLAUDE.md); they live here.
+.claude/worktrees/

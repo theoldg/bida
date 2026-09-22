@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "always use a worktree (and use one right now)." The rule and
+  its first obeying in one breath. They are in the main clone while you work;
+  take a copy and leave them their files.
 - *2026-09-22* — "remove the help texts." The strings were a third of it: a CSS
   class and a boolean computed only to gate them died with them. Pull the whole
   thread, not the words.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — "stuff should always be in the original language by default",
   sent mid-build. The code's own default was the opposite; I had inherited it
   without asking whose it was.
-- *2026-09-22* — "anything we should be doing about this warning?" pasted over
-  a CI log. Not a question about the warning: the fix, asked politely. Two
-  lines of YAML, one turn.

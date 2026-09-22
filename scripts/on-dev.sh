@@ -1,18 +1,27 @@
 #!/bin/sh
-# Put this session on `dev`, whatever branch the harness dropped you on.
+# Point this session's branch at `dev`, wherever the harness dropped it.
 #
-# Agent harnesses assign a feature branch and then nag about "unpushed commits"
-# on it, because it has no remote counterpart — this project pushes to `dev`
-# (CLAUDE.md). Run this once at the start of a session, before you commit, and
-# the nagging stops because there is nothing left to nag about.
+# Sessions work in a worktree of their own (CLAUDE.md), so there are two shapes
+# to settle and this script handles whichever it finds:
 #
-# `main` is a release pointer the owner fast-forwards by hand; nothing is ever
-# committed to it. So being *on* main is also a branch to leave — and commits
-# found there were a mistake, carried onto `dev` and then rewound off main, so
-# the pointer goes on meaning "what production is serving".
+# **In a worktree** — the branch is the worktree's own, and it stays that way:
+# `dev` is checked out in the main clone, and git refuses to have one branch in
+# two working trees. What it needs instead is a base and an upstream, both
+# `origin/dev`: the harness branches a new worktree from `origin/main` or from
+# whatever the main clone's HEAD happened to be, neither of which is what a push
+# lands on. Fast-forwarding to `origin/dev` first is what makes `pnpm bump`
+# honest and the push a fast-forward. Because the branch is not named `dev`,
+# the push has to say where it goes: **`git push origin HEAD:dev`**.
 #
-# Safe to re-run. Commits already made on the assigned branch are carried over,
-# never discarded.
+# **In the main clone** — the owner's own checkout, and an agent that skipped
+# the worktree. Move to `dev` and carry over any commits already made on the
+# assigned branch. `main` is a release pointer the owner fast-forwards by hand;
+# nothing is ever committed to it, so being *on* main is also a branch to leave,
+# and commits found there were a mistake — carried onto `dev`, then rewound off
+# main, so the pointer goes on meaning "what production is serving".
+#
+# Safe to re-run, in either shape. Commits already made are carried over, never
+# discarded.
 set -e
 
 # Every question below is about ancestry, and a shallow clone cannot answer one:
@@ -30,6 +39,22 @@ if ! git show-ref --quiet refs/remotes/origin/dev; then
   echo "origin/dev does not exist — create it before running this (docs/hosting.md#dev-and-production)" >&2
   exit 1
 fi
+
+# A linked worktree has its own gitdir inside the clone's shared one.
+if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]; then
+  git branch --set-upstream-to=origin/dev "$work" >/dev/null 2>&1 || true
+  if git merge --ff-only origin/dev --quiet 2>/dev/null; then
+    :
+  elif git merge-base --is-ancestor origin/dev HEAD; then
+    : # already ahead of dev — this session's own commits, nothing to rebase.
+  else
+    echo "note: $work and origin/dev have both moved; rebase before pushing" >&2
+  fi
+  echo "worktree on $work, tracking origin/dev — push with: git push origin HEAD:dev"
+  exit 0
+fi
+
+echo "note: not in a worktree — sessions get one of their own (CLAUDE.md)" >&2
 
 if [ "$work" = "dev" ]; then
   git branch --set-upstream-to=origin/dev dev >/dev/null 2>&1 || true
@@ -55,9 +80,6 @@ git merge --ff-only "$work" --quiet 2>/dev/null ||
   echo "note: $work has commits that don't fast-forward onto origin/dev; it is left in place" >&2
 
 if [ "$work" = "main" ]; then
-  # Whatever was on main is on dev now (or was already there). Put the pointer
-  # back where production is, so a later `merge --ff-only dev` is the only way
-  # main ever moves.
   if git merge-base --is-ancestor main dev 2>/dev/null; then
     git branch -f main origin/main
     echo "moved from main to dev; local main reset to origin/main"

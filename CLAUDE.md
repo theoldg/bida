@@ -5,18 +5,27 @@ hosted for free. Read this, then the doc your task points at.
 
 ## Non-negotiables
 
-1. **Run `pnpm session` first thing, every session.** It is `pnpm install`
-   plus `scripts/on-dev.sh`, and it settles both of the things that go wrong
-   before a single line is written:
-   - **Install.** A fresh clone has no `node_modules` and no `core.hooksPath`,
-     so the `pre-push` hook that runs `pnpm check` cannot fire — a push before
-     then leaves with zero local verification and no error telling you so.
-     Installing is what wires the hook up (`postinstall`).
+1. **Work in a worktree of your own, then run `pnpm session`.** In that order,
+   first thing, every session — three things go wrong before a single line is
+   written, and this settles all of them:
+   - **Worktree.** Your harness's worktree tool, before anything else. The
+     owner keeps working in the main clone while you work, and one clone shared
+     by two hands means their half-finished edits land in your `pnpm check` and
+     your branch switches move the files under them. A worktree is a second
+     working tree on the same repo: your own files, their own `node_modules`,
+     one shared history. `.claude/worktrees/` is where they go and is ignored.
+   - **Install.** A fresh worktree has no `node_modules` and a fresh clone has
+     no `core.hooksPath`, so the `pre-push` hook that runs `pnpm check` cannot
+     fire — a push before then leaves with zero local verification and no error
+     telling you so. Installing is what wires the hook up (`postinstall`).
    - **Branch.** This project pushes directly to `dev`; there are no pull
-     requests. `main` is the owner's, moved only by their hand. If your harness
-     assigned a feature branch, `on-dev.sh` moves you to `dev` and carries over
-     anything already committed. Run it before you commit; noticing later still
-     works, as it fast-forwards `dev` and deletes the stray branch.
+     requests. `main` is the owner's, moved only by their hand. `dev` itself is
+     checked out in the main clone and git will not lend it to a second working
+     tree, so your worktree keeps its own branch and `on-dev.sh` fast-forwards
+     it to `origin/dev` and tracks it. **Push with `git push origin HEAD:dev`**
+     — the branch name is not `dev`, so the push has to say where it lands.
+     Outside a worktree the script still does the old thing: moves you to `dev`
+     and carries over anything already committed.
 2. **Commit and push at every checkpoint**, not once at the end.
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).
 4. **Money is never a float.** Integer minor units everywhere, and always
