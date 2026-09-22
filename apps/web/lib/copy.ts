@@ -511,6 +511,15 @@ export const copy = {
           is said once, there, and not again here. Ends right before the link
           itself, set inline mid-sentence (`app/about/page.tsx`). */
       ownKeyPointer: "If you want to send your own requests to Google directly, see",
+      /**
+       * The second exception, and the last: these two are the whole of what
+       * leaves the phone readable, which is what makes "the rest" below a
+       * sentence and not a hope. Said on the import screen first
+       * (`importData.fineprint`), under the button that does it; repeated
+       * here because this is where somebody comes to ask.
+       */
+      importTitle: "Importing a Tricount leaves your phone.",
+      import: "Your browser can’t fetch a tricount, so bida’s server does it for you. It’s not encrypted, but nothing is stored.",
       e2eTitle: "The rest is encrypted end-to-end.",
       body: "When you save an expense, the server (and I, the developer) can see something like this:",
       /**

@@ -2053,11 +2053,12 @@ button.amtnote:active { background: var(--hl-edge) }
 .linkbox::placeholder { color: var(--muted) }
 /* What a fetch costs, under the button that starts one (app/import/page.tsx).
    Qualified by the section the way a refusal there has to be, since
-   `.aboutsect p` would otherwise set the size. Balanced rather than left to
-   wrap: it is two lines on a phone either way, and two even ones read as a
-   remark where a line and a stray word read as a mistake. */
+   `.aboutsect p` would otherwise set the size. Centred under the button it
+   belongs to rather than ranged left with the prose, and balanced rather than
+   left to wrap — on a narrow phone two even lines read as a remark where a
+   line and a stray word read as a mistake. */
 .aboutsect p.fineprint { margin: 9px 2px 0; font-size: 11px; line-height: 1.45;
-  color: var(--muted); text-wrap: balance }
+  color: var(--muted); text-align: center; text-wrap: balance }
 
 /* Turnstile's widget — the one third-party pixel in the app, and normally no
    pixel at all: `interaction-only` draws nothing unless a challenge actually

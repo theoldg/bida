@@ -67,6 +67,7 @@ export default function AboutPage() {
               <>
                 <p>{privacy.ownKeyPointer}{" "}
                   <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.</p>
+                <p><strong>{privacy.importTitle}</strong> {privacy.import}</p>
                 <p> <strong> {privacy.e2eTitle} </strong> {privacy.body}</p>
                 <SealedRow />
                 <p>{privacy.key}</p>
