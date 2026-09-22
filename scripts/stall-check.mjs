@@ -1,27 +1,21 @@
 #!/usr/bin/env node
 /**
  * `pnpm stall` — what the app does when reading this phone's database stops
- * working. The defect it was written for: an installed Android PWA that hung
- * on its skeleton rows, indefinitely, with nothing in the console.
+ * working: without lib/db/live.ts, an installed PWA hangs on skeleton rows
+ * with nothing in the console.
  *
- * Three ways for a read to die, all of them silent before lib/db/live.ts:
+ * Three ways for a read to die:
  *
- *  1. **It never answers.** Dexie's `liveQuery` swallows the two error names
- *     the browser uses when it kills a query under a frozen or evicted page
- *     (see the tests in apps/web/lib/db/live.test.ts), so the subscription
- *     goes quiet and a screen reads that as "still loading" forever. Here the
- *     open itself is stubbed to never settle, which produces the same thing by
- *     the shortest route.
+ *  1. **It never answers.** Dexie's `liveQuery` swallows the errors a browser
+ *     raises when it kills a query under a frozen or evicted page
+ *     (apps/web/lib/db/live.test.ts), so the screen reads silence as loading.
+ *     Here the open is stubbed never to settle — the same thing, shortest way.
  *  2. **The connection is closed under it.** Deleting the database from
- *     another connection is what a browser reclaiming storage looks like from
- *     inside the page: `versionchange`, then Dexie closing the connection.
- *     Nothing re-queries on its own afterwards, so the screen went on showing
- *     rows that were no longer there.
- *  3. **Another copy holds the lock.** Every read waits, and keeps waiting —
- *     see section 3.
+ *     another connection is what reclaimed storage looks like from inside:
+ *     `versionchange`, then Dexie closes. Nothing re-queries on its own.
+ *  3. **Another copy holds the lock.** Every read waits — see section 3.
  *
- * And section 4 is the other side of that third one: what this copy does so
- * that it is never the copy holding it.
+ * Section 4 is the other side of the third: this copy never holds the lock.
  */
 import { ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, reporter, serveExport }
   from "./lib/harness.mjs";
@@ -29,17 +23,11 @@ import { ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, repo
 ensureBuild();
 
 /**
- * The /diag report, once it has been built rather than while it is being built.
- *
- * The screen draws `Reading…` and replaces it when `collect()` returns, and on
- * the phone this check is about that costs one patience window per question it
- * asks the database — several seconds deep, before a machine running the rest
- * of `pnpm verify` beside it is taken into account. Read after a fixed pause,
- * the placeholder came back and every assertion about the report failed on an
- * app that was working. Its last line is the tail of the timeline, so that is
- * what says the report is whole; a report that never comes is returned as
- * whatever is on screen, so the assertion below says so rather than a timeout
- * taking the whole check out.
+ * The /diag report once built, not while building. It draws `Reading…` until
+ * `collect()` returns, which on a stalled phone costs a patience window per
+ * question. Its last line is the timeline's tail, so that says it is whole;
+ * a report that never comes is returned as whatever is on screen, so the
+ * assertion fails rather than a timeout.
  */
 async function diagReport(page) {
   await page.waitForSelector(".diag");
@@ -110,13 +98,10 @@ const { report, finish } = reporter();
   await page.waitForSelector(".row .rmain");
   report(true, "the groups list draws its group");
 
-  // What a browser reclaiming storage does to the page holding it: the app's
-  // connection gets `versionchange`, Dexie closes it, and the rows are gone.
-  // A smoke test rather than a regression one — measured against the app with
-  // the `close` handler taken out, this still passes, because re-opening an
-  // absent database happens to wake the reads by itself. It is here for the
-  // property, not the mechanism: a forced close must not strand the app on
-  // rows that no longer exist.
+  // What reclaimed storage does to the page holding it: `versionchange`, Dexie
+  // closes, rows gone. A smoke test, not a regression one — re-opening an absent
+  // database wakes the reads by itself, so this passes without the `close`
+  // handler. It holds the property: a forced close must not strand stale rows.
   await page.evaluate(() => new Promise((resolve) => {
     const req = window.indexedDB.deleteDatabase("hajsik");
     req.onsuccess = req.onerror = req.onblocked = () => resolve();
@@ -131,12 +116,10 @@ const { report, finish } = reporter();
 }
 
 // ---- 3. another copy holding the database ------------------------------
-// What the owner's phone recorded: every read hanging at once, and all of them
-// clearing together a minute later. A copy of the app frozen half way through
-// a readwrite transaction keeps its lock, and every read on the origin queues
-// behind it. No page can break another's lock, so what is held here is what
-// this copy does meanwhile: show what it last read, say it is waiting, and
-// come back by itself once the lock goes.
+// Every read hangs at once, then clears together a minute later: a copy
+// frozen mid-readwrite keeps its lock, and every read on the origin queues
+// behind it. No page can break another's lock, so this copy must show what it
+// last read, say it is waiting, and recover by itself when the lock goes.
 {
   const ctx = await newPhone(browser);
   const page = await ctx.newPage();
@@ -200,18 +183,13 @@ const { report, finish } = reporter();
 }
 
 // ---- 4. and this copy never becomes the one holding it -----------------
-// The other half of section 3, and the half that was missing: a lock nobody
-// takes in the background is a lock nobody waits on. `updateDevice` is the
-// app's smallest write and takes the one store — `device` — that every list
-// and group screen reads, so a page frozen inside it hangs every other copy
-// while the op log it is not holding reads perfectly well. That is what the
-// owner's Brave report showed, down to the `copies:` line naming a hidden
-// `/join` beside the list. So the write waits for the front.
+// A lock nobody takes in the background is a lock nobody waits on.
+// `updateDevice` takes `device`, which every screen reads, so a page frozen
+// inside it hangs every other copy. So the write waits for the front.
 //
-// Headless Chromium reports every page as visible however the tabs are
-// arranged, so `visibilityState` is overridden here rather than a second tab
-// brought forward. It is a stub of the one thing the app reads — that property
-// and the event beside it — and the navigation it lies to is a real one.
+// Headless Chromium reports every page visible, so `visibilityState` (and its
+// event) is overridden rather than a second tab brought forward — a stub of
+// the one thing the app reads; the navigation it lies to is real.
 {
   const ctx = await newPhone(browser);
   const page = await ctx.newPage();
@@ -236,12 +214,9 @@ const { report, finish } = reporter();
     };
   }));
 
-  // Being on the list is itself written down (`leftOnList`), so this is the
-  // state a background navigation has to leave exactly as it is — and that
-  // write lands from an effect once the launch decision is spent
-  // (lib/launch.ts), which is after the list has drawn. Snapshot the row
-  // before it settles and the list's own write shows up in the next read as a
-  // move the hidden page made: this check's flakiest failure, and a lie.
+  // Being on the list is itself written (`leftOnList`), from an effect after
+  // the list draws (lib/launch.ts). Snapshot before that settles and the list's
+  // own write looks like a move the hidden page made.
   await page.waitForFunction(() => new Promise((resolve) => {
     const req = window.indexedDB.open("hajsik");
     req.onsuccess = () => {

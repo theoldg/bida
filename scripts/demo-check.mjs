@@ -3,20 +3,15 @@
  * `pnpm demo` — `bida.bid/demo` lands on a group somebody already used, and
  * that group holds no key.
  *
- * Three of the four things worth checking here are invisible to a unit test.
- * The seed's arithmetic is core's own (`packages/core/src/demo.test.ts`); what
- * this asks is whether the group a person actually walks into is populated,
- * whether it says what it is, and — the one that matters most — whether the
- * key table stayed empty. That last one is the whole hinge: a key row is what
- * `runSyncAll` iterates, so a demo with one would push a tourist's ops into a
- * D1 that gets no further resets (docs/sync.md#the-demo-group-has-no-key). It
- * is also exactly the kind of regression nothing else would notice, because
- * the demo would carry on looking perfect.
+ * The seed's arithmetic is core's (`packages/core/src/demo.test.ts`). This
+ * asks whether the group a person walks into is populated, says what it is,
+ * and — the hinge — left the key table empty: `runSyncAll` iterates key rows,
+ * so a demo with one would push tourists into D1
+ * (docs/sync.md#the-demo-group-has-no-key), and the demo would still look
+ * perfect.
  *
- * Then the two ends of it: Invite has to refuse out loud rather than go
- * missing, and clearing has to take the group off the phone — the entries you
- * added along with the seed's — while leaving the address able to lay a fresh
- * demo down.
+ * Then: Invite refuses out loud, and clearing takes the group (and your
+ * additions) off the phone while leaving `/demo` able to lay a fresh one.
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter } from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
@@ -161,10 +156,9 @@ report(await page.getByText("No invite link").count() === 1,
 await page.getByRole("button", { name: "Close" }).click();
 
 // ---- and the way out ----------------------------------------------------
-// Play with it first. A demo nobody touched would clear and reopen identically
-// whether the address re-seeds or merely un-hides what was there, so the only
-// version of this worth checking is one carrying a change of the person's own
-// — which is also the one the dialog makes a promise about.
+// Play with it first: an untouched demo clears and reopens identically
+// whether the address re-seeds or merely un-hides, so only a changed one
+// tests anything — and it is what the dialog promises about.
 await page.goto(`${base}/g/entry/edit?id=${groupId}`);
 await page.locator("input.amount").fill("12");
 await page.locator("#what").fill("Droid oil");
@@ -217,11 +211,10 @@ report(await page.getByText("Still reading this phone").count() === 0,
   "and no read gives up on it: no stall notice, a watchdog later");
 
 // ---- a new build lays its demo down over the old one -------------------
-// The demo is this version's pitch, not a group somebody keeps, and `/demo`
-// being idempotent by id meant a phone that had opened it once kept whatever
-// story it was given forever. `demoStamp` is the hinge: say this phone holds
-// an older build's seed, and the address has to throw that group away and
-// write this one (lib/db/commands/demo.ts).
+// The demo is this version's pitch; without `demoStamp`, `/demo` being
+// idempotent by id would keep a phone on its first story forever. Given an
+// older build's seed, the address must replace the group
+// (lib/db/commands/demo.ts).
 const before = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await stampAs(page, "some-older-build");
 await page.goto(`${base}/demo`);

@@ -2,18 +2,13 @@
 /**
  * `pnpm verify` — every browser check, against one real build, at once.
  *
- * These are the checks `pnpm check` cannot afford: they drive the built app in
- * a real browser, and run one after another they cost two minutes. Nothing
- * gates them, so the only thing keeping them honest is how cheap they are to
- * run — and two minutes is not cheap enough, which is how three of them came to
- * sit red for weeks (docs/testing.md). Together they cost the slowest one.
+ * The checks `pnpm check` can't afford: run in series they take minutes, and
+ * with nothing gating them only cheapness keeps them run (docs/testing.md).
+ * Together they cost the slowest one.
  *
- * They share nothing to collide over: each serves the export on port 0 and
- * drives its own browser. The one thing they would have raced on is the
- * build — six `ensureBuild()`s deciding at the same moment that `out/` is
- * stale, and six `next build`s writing over each other. So the build happens
- * here, once, before any of them starts; each then finds it current and skips
- * it.
+ * Each serves on port 0 with its own browser, so the only race is the build:
+ * six `ensureBuild()`s finding `out/` stale at once would run six `next
+ * build`s over each other. So the build happens here, once, first.
  */
 import { ensureBuild } from "./lib/harness.mjs";
 import { runTogether } from "./lib/together.mjs";

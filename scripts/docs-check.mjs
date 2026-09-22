@@ -2,24 +2,18 @@
 /**
  * `pnpm run docs` — do the docs still point at things that exist?
  *
- * These docs exist so a cold agent is useful in five minutes, and the way that
- * decays is quiet: a heading gets reworded, an ADR is folded into another, and
- * every link into it now lands on the top of a file with no hint of what it was
- * meant to show. Nothing else in the repo notices. This does, in about 30ms, so
- * it runs as part of `pnpm check`.
+ * Docs decay quietly: a heading is reworded, an ADR folded away, and every
+ * link into it lands on a file's top. This catches it in ~30ms, in
+ * `pnpm check`.
  *
- * Checked: every relative markdown link resolves to a file; every `#anchor`
- * into a markdown file matches a heading there, by GitHub's slug rules since
- * that is where these get clicked; the ADR index names every ADR on disk and
- * nothing else, so a folded-away decision can't leave a row behind; no doc
- * states a test count, which is a number that is wrong by the next commit and
- * tells a reader nothing they wanted to know; and claude_corner.md keeps to the
- * three numbers its own house rules name.
+ * Checked: every relative markdown link resolves; every `#anchor` matches a
+ * heading by GitHub's slug rules (where they get clicked); the ADR index names
+ * exactly the ADRs on disk; no doc states a test count; claude_corner.md
+ * keeps to its own three limits.
  *
- * Whether any other doc has grown too long, or whether it should have gained an
- * ADR or a standing instruction at all, is a judgement — CLAUDE.md and the head
- * of each of those two files carry the bar. Deliberately not counted here. The
- * corner is the exception because it fixed its own limits in writing.
+ * Doc length, and whether something deserved an ADR or standing instruction,
+ * are judgements (CLAUDE.md and those files' heads), not counted here. The
+ * corner is the exception because it fixed its limits in writing.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, dirname, relative, resolve, normalize } from "node:path";
@@ -88,10 +82,8 @@ for (const f of listed) {
 }
 
 /**
- * A count of tests is stale the moment somebody writes one, and re-stating it
- * says nothing `pnpm check` doesn't say out loud on every run. The owner's
- * call, 2026-09-06: "useless and always stale". Say what the suite covers
- * instead — that is what a reader came for and it survives a commit.
+ * A test count is stale the moment someone writes a test, and `pnpm check`
+ * reports it anyway. Say what the suite covers instead.
  */
 for (const file of markdownFiles(ROOT)) {
   for (const [said] of readFileSync(file, "utf8").matchAll(/\b\d[\d,]*\s+tests\b/gi)) {
@@ -100,11 +92,9 @@ for (const file of markdownFiles(ROOT)) {
 }
 
 /**
- * Claude's corner is the one doc every session is asked to add to, and it grew
- * to thirteen postcards under a rule saying ten — nobody decided that, it is
- * just what "add a line" does when the eviction is somebody else's problem.
- * So the numbers it states about itself are enforced here, and the file says
- * they are. Room is made by cutting, in the same edit as the addition.
+ * Claude's corner is the one doc every session adds to, so without a check it
+ * grows past its stated limits. The numbers it states about itself are
+ * enforced here; room is made by cutting in the same edit.
  */
 const CORNER = { lines: 100, postcards: 12, chars: 300 };
 const cornerFile = join(ROOT, "docs", "claude_corner.md");

@@ -2,21 +2,15 @@
 /**
  * `pnpm tricount` — a Tricount link, pasted, all the way to a balanced group.
  *
- * `core/tricount.ts` is tested exhaustively against the shape, and none of
- * those tests can prove the *wiring*: that the link field is on the screen,
- * that the key comes out of what was pasted, that WebCrypto makes a key the
- * request carries, that what the endpoint answers reaches the reader, and that
- * the plan it hands back builds the same group the CSV path builds. This walks
- * that, against the real export in a real browser.
+ * `core/tricount.ts` is tested against the shape; this proves the *wiring* —
+ * the link field, the key pulled from the paste, the WebCrypto key in the
+ * request, the answer reaching the reader, and the plan building the same
+ * group the CSV path builds — against the real export in a real browser.
  *
- * **The endpoint is stubbed and the rest is real** — the same bargain
- * `stubScan` makes about Gemini (`lib/receipts.mjs`). Tricount has no
- * documented API, and a browser is not allowed to read what it answers, so the
- * one thing no check can hold
- * is bunq itself; `apps/api/src/tricount.ts` is the half that talks to it and
- * the half a session has to try by hand. Everything on this side of that
- * request is under test here, including the refusals, which is where a reader
- * this liberal is most likely to be wrong.
+ * **The endpoint is stubbed and the rest is real**, the bargain `stubScan`
+ * makes about Gemini (`lib/receipts.mjs`). Tricount's API is undocumented and
+ * unreadable from a browser, so `apps/api/src/tricount.ts` is the half tried
+ * by hand. Everything on this side is under test, refusals included.
  */
 import { ensureBuild, launch, newPhone, PATIENCE, reporter, serveExport }
   from "./lib/harness.mjs";

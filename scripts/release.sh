@@ -1,27 +1,21 @@
 #!/bin/sh
 # `pnpm release` — make production whatever `dev` is at, from a laptop.
 #
-# The same act as github.com → Actions → "Release dev to main"
-# (.github/workflows/release.yml), for when you'd rather not open GitHub. It is
-# the owner's (docs/standing-instructions.md#workflow); nothing else moves
-# `main`.
+# The same act as GitHub Actions → "Release dev to main"
+# (.github/workflows/release.yml). It is the owner's
+# (docs/standing-instructions.md#workflow); nothing else moves `main`.
 #
-# The whole release is one push: `origin/dev` onto `main`, refspec, no `--force`.
-# A plain push is refused unless it fast-forwards, which is the same rail the
-# workflow's `--ff-only` is — it fails, loudly and without moving anything, if
-# `main` holds a commit `dev` does not. That can only happen if someone
-# committed straight to `main`, and the fix is `git merge main` from `dev` once.
+# One push: `origin/dev` onto `main` by refspec, no `--force`. It is refused
+# unless it fast-forwards — the same rail as the workflow's `--ff-only`. If
+# `main` holds a commit `dev` lacks, `git merge main` from `dev` once.
 #
-# Pushing a *remote* ref means nothing is checked out and the working tree is
-# never touched, so uncommitted work is none of this script's business. What is
-# released is exactly what `origin/dev` holds — what the dev Worker has been
-# serving — so local commits that were never pushed are not in it, and the
-# script says so rather than quietly shipping without them.
+# Pushing a remote ref touches no working tree. What ships is exactly
+# `origin/dev` — what the dev Worker serves — so unpushed local commits are
+# not in it, and the script says so.
 #
-# That push is made with your credentials, so it triggers deploy.yml the
-# ordinary way (`on: push: branches: [main, dev]`) and production deploys
-# itself. The workflow has to ask for the deploy by hand only because its own
-# push uses GITHUB_TOKEN, which deliberately triggers nothing.
+# Pushed with your credentials, so it triggers deploy.yml normally. (The
+# workflow has to request the deploy by hand because its GITHUB_TOKEN push
+# triggers nothing.)
 set -e
 
 yes=

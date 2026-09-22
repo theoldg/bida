@@ -2,27 +2,20 @@
 /**
  * `pnpm keyboard` — the act a list of names is typed for survives the keyboard.
  *
- * Four screens ask for people in the same add row, and each ends on the act
- * those people are for: `/new`'s Create, the picker's "Continue as …", the
- * quick split's scan pair, the people menu's "Change who you are". All four put
- * that act *below* the row, on the scroll rather than in a pinned foot
- * (design-system) — so the scroll that lifts the field over the keyboard is the
- * same one that can leave the act under it. What keeps them together is one
- * number, `--act-below`, and nothing else here would notice it going stale: a
- * button gains a line, a row gains padding, and the fix is quietly a few pixels
- * short on a phone nobody in this repo is holding.
+ * Four screens ask for people in the same add row and end on an act below it,
+ * on the scroll rather than a pinned foot: `/new`'s Create, the picker's
+ * "Continue as …", the quick split's scan pair, the people menu's "Change who
+ * you are". The scroll that lifts the field over the keyboard can leave the
+ * act under it; one number, `--act-below`, keeps them together, and nothing
+ * else notices it going stale.
  *
- * It also holds the other thing a phone keyboard does to a form: the confirm
- * key, which on a field drawn promising "next" has to leave the caret in the
- * field below it (`walkFields`, components/viewport.tsx). That half needs no
- * faking — a headless browser presses Enter like any other.
+ * Also the confirm key: on a field promising "next" it must move the caret to
+ * the field below (`walkFields`, components/viewport.tsx).
  *
- * There is no keyboard in a headless browser, so one is faked where the app
- * reads it — `visualViewport.height` — and the app answers as it would on a
- * phone: `gapOf` calls the gap a keyboard, `--kb` is paid, and the scroll that
- * follows is the app's own (components/viewport.tsx). Nothing here reaches past
- * that into the fix itself. The assertion is what a thumb cares about: the
- * field *and* the act still above the top of the keys.
+ * Headless browsers have no keyboard, so one is faked where the app reads it
+ * — `visualViewport.height` — and the app answers as on a phone (`gapOf`,
+ * `--kb`, its own scroll). The assertion is what a thumb cares about: field
+ * *and* act above the keys.
  */
 import { ensureBuild, serveExport, launch, newPhone, newGroup, PATIENCE, reporter, settle }
   from "./lib/harness.mjs";
@@ -60,13 +53,10 @@ async function openKeyboard() {
     });
     view.dispatchEvent(new Event("resize"));
   }, KB);
-  // The app answers a resize a frame later and scrolls the frame after that,
-  // on purpose: the scroll has to read the padding that measurement pays for,
-  // not the one before it (components/viewport.tsx). So wait for the measure
-  // to have landed — `--kb` is the app saying there is a keyboard — and then
-  // for the scroll it starts to stop moving. A pause in place of either was a
-  // measurement taken before the app had answered, which reads as an act
-  // behind the keys on a machine that is merely busy.
+  // The app measures a resize a frame later and scrolls the frame after, so
+  // the scroll reads the padding it paid for (components/viewport.tsx). Wait
+  // for `--kb` to land, then for the scroll to stop — a fixed pause measures
+  // before the app has answered.
   await page.waitForFunction(
     () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--kb")) > 0,
     null, { timeout: PATIENCE },

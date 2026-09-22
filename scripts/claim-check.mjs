@@ -3,24 +3,17 @@
  * `pnpm claim` — a name typed into the add row is filed by its plus and by
  * nothing else.
  *
- * Everything here is about the gap between typed and filed, which is the state
- * the add row exists to make ordinary (components/name-adder.tsx) and the one
- * nothing else can check: not arithmetic, not a command — a blur that must do
- * nothing, a plus that must refuse a name the list already holds, and a screen
- * whose button must not read intent out of a field nobody has pressed anything
- * on. All of it looks perfect in jsdom.
+ * The gap between typed and filed (components/name-adder.tsx) is what only a
+ * browser can check: a blur that must do nothing, a plus that refuses a name
+ * already listed, a button that mustn't read intent from an unpressed field.
+ * All of it looks perfect in jsdom.
  *
- * Both doors are walked, because their add rows differ where it matters: on
- * `/new` the list is state and grows in the same tick, on `/g/claim` it is a
- * Dexie write and the row arrives whenever it arrives.
+ * Both doors are walked: on `/new` the list is state and grows in the same
+ * tick; on `/g/claim` it is a Dexie write that arrives when it arrives.
  *
- * Alongside it: the two screens whose one act — Create, a quick split's scan
- * pair — refuses instead of going through with too short a list, tappable the
- * whole time rather than held shut.
- *
- * It ends on the other half of the same question: once a phone has answered
- * it, nothing may ask again — not the invite link opened a second time, and
- * not the app being launched.
+ * Also: Create and the quick split's scan pair refuse a too-short list while
+ * staying tappable. And once a phone has answered "who are you", nothing asks
+ * again — not a second opening of the invite, not a launch.
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, settle } from "./lib/harness.mjs";
 
@@ -36,12 +29,10 @@ const field = (label = "Add someone") => page.getByLabel(label);
 const plus = () => page.getByRole("button", { name: "Add", exact: true });
 
 /**
- * Press a button by hand and **hold it**, the way a thumb does.
- *
- * Both halves are the check. `locator.click()` re-resolves the button and
- * quietly retries a press that missed, and an instant down-up is over before
- * React has re-rendered — so either one on its own reports a green on a build
- * where the press and the screen disagree about what is under the finger.
+ * Press a button by hand and **hold it**, as a thumb does. `locator.click()`
+ * re-resolves and retries a missed press, and an instant down-up ends before
+ * React re-renders — either would pass a build where press and screen
+ * disagree about what's under the finger.
  */
 async function press(button) {
   const box = await button.boundingBox();
@@ -54,12 +45,8 @@ async function press(button) {
 const arrived = () => page.waitForURL(/\/g\?id=/, { timeout: PATIENCE }).then(() => true, () => false);
 
 /**
- * The refusal's bloom, gone.
- *
- * Every "and it comes back when the flash settles" below is about an animation
- * the app times itself, and the pause that used to stand in for it was a
- * number long enough on one machine. The class going is the event; waiting for
- * it is also what the assertion after each of these means by "settles".
+ * The refusal's bloom, gone — the class going is the event "settles" means
+ * below. Never a fixed pause.
  */
 const flashOver = () => page.waitForFunction(
   () => document.querySelectorAll("[class*=flash]").length === 0, null, { timeout: PATIENCE });
@@ -312,10 +299,9 @@ report(await arrived(), "and opening it again makes the next launch reopen it");
 // than acting on the list without them (apps/web/app/quick/page.tsx).
 await page.goto(`${base}/quick`);
 
-// The pair stays tappable with nobody on the list at all — same mechanics as
-// Create above — and a press refuses rather than opening the camera on a
-// bill nobody could divide. Wait out the scan credential's own round trip
-// first: the pair is legitimately disabled until it has one.
+// The pair stays tappable with an empty list and a press refuses rather than
+// opening the camera. Wait for the scan credential first: the pair is
+// legitimately disabled until it has one.
 await page.waitForFunction(() => {
   const btn = [...document.querySelectorAll("button")].find((b) => b.textContent?.includes("Upload"));
   return btn && !btn.disabled;

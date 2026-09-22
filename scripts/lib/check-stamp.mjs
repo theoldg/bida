@@ -1,27 +1,19 @@
 /**
- * The gate's memory: what tree did `pnpm check` last pass over?
+ * The gate's memory: what tree did `pnpm check` last pass over? Each push runs
+ * it twice (session, then `pre-push`), and the second run's thirty seconds is
+ * what tempts `--no-verify`. So a pass is stamped, and a run over the same
+ * tree exits.
  *
- * `pnpm check` is run twice for every push — once by the session, once by the
- * `pre-push` hook — and the second run is thirty seconds spent proving what the
- * first one just proved. Worse, it is thirty seconds of *pressure*: the way
- * that ends is somebody reaching for `--no-verify`, and then nothing gates the
- * push at all. So a pass is stamped, and a run over the same tree says so and
- * exits.
+ * The fingerprint is **contents, not mtimes**: `git checkout` moves contents
+ * backwards while moving mtimes forwards, and being wrong here is an
+ * unchecked deploy. Hashing costs milliseconds.
  *
- * The fingerprint is **contents, not mtimes**. `ensureBuild()` may compare
- * mtimes because the cost of being wrong there is a stale screenshot; the cost
- * of being wrong here is an unchecked deploy, and `git checkout` moves file
- * contents backwards while moving mtimes forwards. Hashing 274 files costs a
- * few milliseconds against the thirty seconds it saves.
+ * Covers every file git tracks or would track (so a new file counts and
+ * `pnpm-lock.yaml` catches dependency changes), plus the git-ignored env files
+ * `next build` still reads.
  *
- * What it covers: every file git tracks or would track — so a new file counts,
- * an ignored build artefact does not, and `pnpm-lock.yaml` being tracked is
- * what makes a dependency change invalidate the stamp. Plus the env files git
- * is told to ignore but `next build` still reads, which are the one thing that
- * could change the build without changing a tracked byte.
- *
- * What it cannot cover: `node_modules` edited by hand, a different Node. Both
- * are `pnpm check --force`.
+ * Can't cover: hand-edited `node_modules`, a different Node. Both are
+ * `pnpm check --force`.
  */
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";

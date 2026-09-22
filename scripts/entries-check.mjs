@@ -2,14 +2,13 @@
 /**
  * `pnpm entries` — can you add, edit and read back all three kinds of entry?
  *
- * The command layer's own tests prove an income's sign reaches the balances and
- * that a transfer edit writes only what changed. What they structurally cannot
- * prove is that the *form* is wired to them: a Save button stuck disabled, a
- * segmented control that writes the wrong field, a detail screen that can't
- * find a settlement by id. This walks that wiring against the real export.
+ * The command tests prove the arithmetic; they can't prove the *form* is
+ * wired to it — a stuck Save, a control writing the wrong field, a detail
+ * screen that can't find a settlement. This walks that wiring against the
+ * real export.
  *
- * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts —
- * `pnpm entries` builds first if it has to. ADR-0010.
+ * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts; it
+ * builds first if it has to. ADR-0010.
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, pick, newGroup, openGroupsList, settle }
   from "./lib/harness.mjs";
@@ -23,9 +22,8 @@ const page = await ctx.newPage();
 const { report, finish } = reporter(page);
 
 /**
- * Save, then wait for the ledger to have redrawn from Dexie. `waitForURL`
- * alone lands on the previous render, which is what makes a check like this
- * flaky if you let it.
+ * Save, then wait for the ledger to redraw from Dexie. `waitForURL` alone
+ * lands on the previous render — the source of flakiness here.
  */
 async function save(expectRows) {
   await page.getByRole("button", { name: "Save" }).click();
@@ -70,10 +68,9 @@ await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("9000");
 await page.locator("#what").fill("Dinner");
 
-// The currency and the payer are the same dialog the transfer's sides use.
-// Introducing a currency the group has no rate for asks for one on the spot —
-// this is the whole point of the registry, and the state that used to sail
-// through with rateToBase stuck at "1" (ADR-0005).
+// Currency and payer use the transfer's side dialog. A currency with no rate
+// asks for one on the spot — or `rateToBase` silently sticks at "1"
+// (ADR-0005).
 await pick(page, '[aria-label="Currency"]', "USD");
 report((await page.locator('[aria-label="Currency"]').innerText()).includes("USD"),
   "the currency picker sets the currency");
@@ -139,9 +136,8 @@ await page.locator("#what").fill("Deposit back");
 report(await page.getByText("Received by").count() > 0, "an income relabels the payer picker");
 report(await page.getByRole("button", { name: "Receipt" }).count() === 0, "an income offers no Receipt tab");
 
-// Who put the money in is a different question on an income, and the screen
-// that asks it has to be asked in the same voice throughout: the title used to
-// switch on its own, so "Who received it" was followed by "didn't pay".
+// On an income the payer question is "who received it", and every line of
+// the screen must stay in that voice (never "didn't pay").
 await page.getByRole("button", { name: "Multi-recipient" }).click();
 await page.waitForURL(/\/g\/payers/);
 const payerScreen = await page.locator(".rows").innerText();
@@ -157,9 +153,8 @@ report((await page.locator(".ramt .big").first().innerText()).includes("+"), "th
 report(await page.locator(".avatar").count() === 0, "no screen of the ledger draws a person's initials");
 
 // ---- settling up, which is a card and not a form -----------------------
-// Tapping a suggested payment used to open the transfer form with both sides
-// and the amount filled in. It opens a dialog stating the same three facts,
-// and nothing in it can be typed into: the figures are the app's, not yours.
+// A suggested payment opens a dialog stating the three facts; nothing in it
+// can be typed into — the figures are the app's.
 await page.goto(`${base}/g?id=${g}&tab=balances`);
 await page.waitForSelector("button.card");
 report(await page.locator("button.card").count() === 2, "settle-up suggests the payments");
@@ -227,9 +222,8 @@ await page.getByText("Dinner").first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForURL(/entry\/edit/);
-// The chip opens the dialog; every kind is in it now, transfer included —
-// switching to it costs a convert rather than an edit (ADR-0010), but the
-// chip doesn't hide the option over that.
+// The chip offers every kind, transfer included — switching to it is a
+// convert rather than an edit (ADR-0010), but it isn't hidden.
 await page.locator('[aria-label="What kind of entry"]').click();
 await page.waitForSelector(".dlist");
 // `.rtitle`, not the row: each row carries its blurb underneath as well.
@@ -318,11 +312,9 @@ await hold(dinnerRow(), { drift: 30 });
 report(await menus() === 0 && page.url() === ledger,
   "a finger that moves is a scroll: no menu when it has rested long enough");
 
-// The finger that opened the menu can choose from it without lifting first —
-// an iPhone's own menus work that way, so a thumb slides onto the item it
-// wants. It used to do nothing at all: past the pan slop the scroller took the
-// touch, `pointercancel` came instead of a lift, and no click was ever
-// dispatched, so the card sat there until you let go and tapped it again.
+// The finger that opened the menu can choose from it without lifting, as
+// iPhone menus work. Past the pan slop the scroller can steal the touch
+// (`pointercancel` instead of a lift, no click) — this catches that.
 await hold(dinnerRow(), {
   slideTo: async () => {
     const b = await page.getByRole("menuitem", { name: "Delete" }).boundingBox();
@@ -382,14 +374,12 @@ report(await menus() === 1 && await page.locator("dialog[open]").count() === 0,
   "a finger that comes down on a menu item and lifts off it chooses nothing");
 await closeMenu();
 
-// And the press every other phone sends: a whole tap, click and all. Chromium
-// is Android's engine, so this is the Android case exactly — the lift, then
-// `touchend`, then the compatibility `mousedown`/`mouseup`/`click`. Answering
-// the lift outright made the last three leftovers, delivered onto whatever the
-// action had drawn in the meantime: the `mousedown` landed on the confirm
-// dialog's own scrim and dismissed it 6ms after it opened, so Delete did
-// nothing at all. Held above the fold, because a menu item over the middle of
-// the screen lands on the dialog's card instead and the press survives by luck.
+// The press every other phone sends: a whole tap, click and all — Android's
+// exact sequence (lift, `touchend`, then compat `mousedown`/`mouseup`/
+// `click`). Answering the lift outright lets those leftovers land on what the
+// action drew: the `mousedown` hits the confirm dialog's scrim and dismisses
+// it. Held above the fold, since a mid-screen item lands on the dialog's card
+// and passes by luck.
 async function tap(item) {
   const b = await item.boundingBox();
   const x = b.x + b.width / 2, y = b.y + b.height / 2;
@@ -461,8 +451,7 @@ await page.goto(ledger);
 await page.waitForSelector(".rows a.row");
 
 // ---- and a transfer's row answers a long press, as an expense's does ---
-// It didn't: the delete menu was on the expense row only, so the one entry
-// with no other way to remove it from the ledger was the transfer.
+// The long press is the only way to remove a transfer from the ledger.
 const transferRows = async () =>
   (await page.locator(".rmeta").allInnerTexts()).filter((t) => t.startsWith("Transfer")).length;
 // Two of them reach the ledger — the card's on the balances tab wrote one and
@@ -509,7 +498,7 @@ const cabBefore = await page.locator("a.row").filter({ hasText: "Cab" })
   .locator(".ramt .big").innerText();
 report(cabBefore.includes("80"), "and banks it in the group's currency");
 
-// Rates is in the group's top-bar menu now, not an icon of its own.
+// Rates is in the group's top-bar menu.
 await page.locator(".topbar .iconbtn[aria-label='Group menu']").click();
 await page.getByRole("menuitem", { name: "Rates" }).click();
 await page.waitForURL(/\/g\/rates/);
@@ -533,12 +522,9 @@ report(cabAfter.includes("40"),
   "correcting the rate re-values an entry that was already written");
 
 // ---- the cent the form quotes is the cent the ledger keeps -------------
-// A total that doesn't divide hands its leftover minor unit to somebody by
-// `tiebreakSeed`, which is the entry's id. A form pricing its rows under a
-// placeholder therefore showed the cent on one person's row and wrote it to
-// another's — an arithmetic that was right both times and still disagreed with
-// the screen that asked. The draft now carries the id it will be written
-// under, so these two readings are the same reading.
+// A leftover minor unit goes by `tiebreakSeed`, the entry's id. The draft
+// carries the id it will be written under, so the form's cent and the
+// ledger's land on the same person.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("10");
 await page.locator("#what").fill("Coffee");
@@ -576,12 +562,10 @@ const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
 
 // ---- one press on Save is one entry ------------------------------------
-// Save asked `ready`, which is a question about the form, not about whether a
-// press is already spending it — so two taps landing before `router.replace`
-// did both went through. A transfer was written twice, for twice the money,
-// and an expense picked up a second create op that said nothing. Sent from the
-// keyboard because two `click()`s are two waits with a settled screen between
-// them; this is the one press arriving twice, which is what a thumb does.
+// `ready` is about the form, not whether a press is already spending it, so
+// two taps before `router.replace` could write twice (a transfer for double
+// the money). Sent from the keyboard: two `click()`s wait for a settled screen
+// between them; this is one press arriving twice, as a thumb does.
 async function pressSaveTwice() {
   await page.getByRole("button", { name: "Save" }).focus();
   await page.keyboard.press("Enter");
@@ -628,9 +612,8 @@ report(creates === 1, `one press creates the entry once — ${creates} create(s)
 // ---- an expense and a transfer really do convert into each other -------
 // Not an edit: a transfer is a different entity (`Settlement`), so Save
 // tombstones the old row and creates the new one (`convertToSettlement` /
-// `convertToExpense`, commands/entries.ts). The kind chip doesn't need the
-// two to agree, and the words and the amount survive either way — switched
-// and saved, or switched back before Save ever ran.
+// `convertToExpense`, commands/entries.ts). The words and amount survive
+// either way — switched and saved, or switched back before Save.
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("7");
 await page.locator("#what").fill("Convert me");
@@ -747,13 +730,10 @@ report(await page.locator(".itemtable tbody tr[class*='flash-']").count() === 0,
   "and that flash ends too, so Done comes back");
 
 // ---- a screen whose draft is gone hands back -------------------------
-// The entry draft lives in memory only (lib/draft.ts), so every way of
-// arriving at one of its later steps without passing through the form — a
-// reload, a back-forward restore, a link kept from yesterday, an installed app
-// killed between two taps — arrives with no draft at all. These screens used
-// to render their empty frame and wait for one that is never coming: a title,
-// a back arrow, and nothing under it, forever. There is nothing to ask a
-// person here, so they are put back on the ledger they started from.
+// The entry draft lives in memory only (lib/draft.ts), so a reload, a
+// back-forward restore, an old link or a killed app arrives at a later step
+// with no draft. There is nothing to ask, so these screens put the person
+// back on the ledger rather than render an empty frame forever.
 for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/items"]]) {
   await page.goto(`${base}${path}?id=${g}`);
   const back = await page.waitForURL((url) => url.pathname === "/g", { timeout: 8000 })
@@ -763,13 +743,10 @@ for (const [name, path] of [["payers", "/g/payers"], ["who had what", "/g/entry/
 }
 
 // ---- and a link naming a group this phone hasn't got says so ----------
-// `pnpm rules` holds every screen under `/g` to rendering a `BadLink`; this is
-// the half of it a grep cannot see — that an unknown id reaches that branch
-// rather than the blank frame it shares the file with, which is a title, a
-// back arrow and nothing under it for as long as anybody waits. What it says
-// there is the keyless sentence, not "bad link": a `/g` address without its
-// fragment is what a group id on its own nearly always is, and telling
-// somebody their link is bad sent the same address straight back (lib/copy.ts).
+// `pnpm rules` holds every `/g` screen to rendering a `BadLink`; this checks
+// what a grep can't — that an unknown id reaches that branch, not the blank
+// frame. It says the keyless sentence, not "bad link": a bare `/g` address is
+// nearly always a link missing its fragment (lib/copy.ts).
 for (const path of ["/g/payers", "/g/entry/items", "/g/entry/edit", "/g/claim"]) {
   await page.goto(`${base}${path}?id=nosuchgroup`);
   const said = await page.getByText("This link is missing its password")

@@ -4,16 +4,12 @@
  * against what dev is serving, typecheck, tests and the static export build,
  * all at once (scripts/lib/together.mjs).
  *
- * It is the only thing standing between an edit and production
- * (docs/testing.md), and it is also the command a session runs most: once by
- * hand, and again inside `pre-push`. The second of those is thirty seconds
- * spent proving what the first just proved, and the way that habit ends is
- * somebody reaching for `--no-verify` — so a pass is stamped against the tree
- * it passed over, and a run over that same tree says so and exits.
+ * The only thing between an edit and production (docs/testing.md). Run by
+ * hand and again by `pre-push`, so a pass is stamped against its tree and a
+ * rerun over the same tree exits at once.
  *
- * Adding a stage: a line in STAGES. It belongs here if it would otherwise fail
- * on `main` with nothing to catch it, and nowhere else if it takes minutes —
- * the browser checks are `pnpm verify` for exactly that reason.
+ * Adding a stage: a line in STAGES — if it would otherwise fail on `main`
+ * uncaught, and it doesn't take minutes (those belong in `pnpm verify`).
  */
 import { runTogether } from "./lib/together.mjs";
 import { fingerprint, stampMatches, writeStamp } from "./lib/check-stamp.mjs";

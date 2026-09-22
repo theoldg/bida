@@ -2,19 +2,16 @@
 /**
  * `pnpm shots` — photograph every screen in one browser launch.
  *
- * The owner asked for this loop and asked us not to lean on it: use it after
- * building or changing a screen, or when something looks wrong. Not after every
- * edit. See docs/standing-instructions.md.
+ * Use it after building or changing a screen, or when something looks wrong —
+ * not after every edit (docs/standing-instructions.md).
  *
- * What it does, in order:
  *   0. builds the static export if it is missing or stale;
- *   1. serves it over http — not `next dev`, because the export is what
- *      actually ships and it has its own quirks;
- *   2. drives the real UI to seed a group, members and expenses, so the shots
- *      show a populated ledger rather than eight empty states. Seeding through
- *      the UI rather than by poking IndexedDB means the harness also fails when
- *      a screen it isn't photographing is broken;
- *   3. walks every route in both themes and writes one PNG each into shots/.
+ *   1. serves it over http — not `next dev`, whose quirks differ from what
+ *      ships;
+ *   2. seeds a group, members and expenses through the real UI, so the shots
+ *      show a populated ledger and the harness fails when an unphotographed
+ *      screen breaks;
+ *   3. walks every route in both themes, one PNG each into shots/.
  *
  * Chromium comes from PLAYWRIGHT_BROWSERS_PATH (already on disk in the agent
  * environment). Never run `playwright install`.
@@ -94,8 +91,8 @@ async function addEntry(
   await page.locator("input.amount").fill(amount);
   await page.locator("#what").fill(what);
   if (paidBy) await pick(page, "#paidby", paidBy);
-  // The split editor is on this form now (ADR-0010), so leaving somebody out
-  // is a tap here rather than a trip to a screen and back.
+  // The split editor is on this form (ADR-0010), so leaving someone out is a
+  // tap here.
   if (exclude) await page.getByRole("button", { name: `Leave ${exclude} out` }).click();
   if (coSponsor) {
     await page.getByRole("button", { name: "Multi-payer" }).click();
@@ -124,7 +121,7 @@ async function addTransfer(page, base, groupId, { amount, from, to }) {
   await page.waitForURL(/\/g\?id=/);
 }
 
-/** Each side of a transfer opens our own picker now, not a <select> (ADR-0008). */
+/** Each side of a transfer opens our own picker, not a <select> (ADR-0008). */
 const pickSide = (page, label, name) => pick(page, `[aria-label="${label}"]`, name);
 
 /**
@@ -232,7 +229,7 @@ async function main() {
       await page.locator("#what").fill("Hammam");
       await page.getByRole("button", { name: "As amounts" }).click();
       // 25 of the 120, deliberately: the shot is there to catch the shortfall
-      // line, which is the sentence that used to say "9500 minor units".
+      // line reading in money, not "9500 minor units".
       await page.getByLabel(/Marie.s amount/).fill("25");
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-expense-split-amounts.png`) });
@@ -251,13 +248,11 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-payers.png`) });
       process.stdout.write(`${theme}/payers `);
 
-      // Who had what — the one screen only a scan leads to. The draft is in
-      // memory, so it is reached by really uploading a photo, with the model's
-      // answer stubbed from the same canned bill `pnpm drive` uses
-      // (`lib/receipts.mjs`). It is long on purpose: the header of initials
-      // freezing over a bill that outruns the screen is what the shot shows.
-      // Shot twice: the bill as printed, then with its "×2" salad unfolded
-      // into two separately assignable portions.
+      // Who had what — reached only by a scan, since the draft is in memory: a
+      // real photo upload with the model's answer stubbed from `pnpm drive`'s
+      // canned bill (`lib/receipts.mjs`). Long on purpose, to show the initials
+      // header freezing over a bill taller than the screen. Shot twice: as printed,
+      // then with its "×2" salad unfolded into two portions.
       await stubScan(page, "cafe-clock");
 
       // Scan first: the whole screen behind the camera above the ledger's "+".
@@ -317,11 +312,9 @@ async function main() {
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-result.png`) });
       process.stdout.write(`${theme}/quick-result `);
 
-      // The import, past its first screen (which is in `routes` above): the
-      // plan a file is read into before anything is written, the same screen
-      // refused, and the question it ends on. The picker is the OS's, so the
-      // file goes straight to the input it opens — which is the real path, and
-      // the only one now that the paste box is gone.
+      // The import past its first screen: the plan a file is read into, the same
+      // screen refused, and the question it ends on. The OS picker can't be
+      // driven, so the file goes straight to its input — the real path.
       await page.goto(`${base}/import`);
       await page.setInputFiles('input[type="file"]', {
         name: "Marrakech.csv", mimeType: "text/csv", buffer: Buffer.from(CSV),

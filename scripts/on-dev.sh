@@ -1,18 +1,15 @@
 #!/bin/sh
 # Point this session's branch at `dev`, wherever the harness dropped it.
 #
-# **In a worktree** (CLAUDE.md: sessions get one) the branch stays the
-# worktree's own — `dev` is checked out in the main clone and git will not lend
-# a branch to two working trees. So it gets a base and an upstream instead,
-# both `origin/dev`: the harness branches from `origin/main` or from the main
-# clone's HEAD, and neither is what a push lands on, which would leave
-# `pnpm bump` comparing against the wrong tree. The push says where it goes:
-# `git push origin HEAD:dev`.
+# **In a worktree** the branch stays the worktree's own — `dev` is checked out
+# in the main clone, and git won't lend a branch to two working trees. It gets
+# `origin/dev` as base and upstream instead (the harness branches from
+# elsewhere, which would leave `pnpm bump` comparing against the wrong tree).
+# Push with `git push origin HEAD:dev`.
 #
 # **In the main clone**, move to `dev` and carry over any commits made on the
-# assigned branch. `main` is a release pointer the owner fast-forwards by hand;
-# commits found on it were a mistake, so they are carried onto `dev` and then
-# rewound off main, and the pointer goes on meaning "what production serves".
+# assigned branch. `main` is a release pointer the owner fast-forwards by hand,
+# so commits found on it are carried onto `dev` and rewound off `main`.
 #
 # Safe to re-run, either shape. Commits are carried over, never discarded.
 set -e

@@ -1,24 +1,16 @@
 /**
- * Run a handful of commands at once and report them as one gate.
+ * Run a handful of independent commands at once and report them as one gate
+ * — the shape `pnpm check` and `pnpm verify` share. Unlike `&&`:
  *
- * Both `pnpm check` and `pnpm verify` are a list of independent commands that
- * used to be joined with `&&`: serial for no reason, stopping at the first
- * failure, and printing everything every command had to say whether it mattered
- * or not. This is the shape they share.
- *
- * What it does that `&&` does not:
- *
- * - **Runs them together.** Nothing in either gate reads what another writes,
- *   so the gate costs its slowest job rather than the sum.
- * - **Runs all of them.** One run says everything that is broken, not the first
- *   thing.
- * - **Keeps the output.** A pass prints a line and a digest per job; only a
- *   failure spills, and only the jobs that failed.
+ * - **Runs them together**, so the gate costs its slowest job.
+ * - **Runs all of them**, so one run says everything that is broken.
+ * - **Keeps the output**: a pass prints a line and a digest per job; only
+ *   failed jobs spill.
  *
  * A job is `{ name, run: [cmd, ...args], rerun, digest }`. `digest(output)`
  * returns the lines worth printing on a pass — keep it to what a reader would
- * have scrolled to find, and prefer something that is *absent* when the job did
- * nothing, since a silent no-op is the failure neither gate can otherwise see.
+ * have scrolled to find, and prefer something *absent* when the job did
+ * nothing, since a silent no-op is the failure neither gate otherwise sees.
  */
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";

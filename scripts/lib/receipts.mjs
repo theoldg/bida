@@ -1,18 +1,14 @@
 /**
  * Canned receipts, for driving the scan without a camera or a model.
  *
- * The scan is the one act in the app that needs a network *and* a photo, so
- * every screen behind it — the who-had-what grid above all — is unreachable to
- * a check that can only press buttons. These fixtures stand in for the model's
- * answer: the client still decodes and downscales a real image, still parses
- * the envelope, still runs `checkScan`; only the round trip to Gemini is faked.
+ * Every screen behind a scan — the who-had-what grid above all — is otherwise
+ * unreachable to a button-pressing check. The client still decodes and
+ * downscales a real image, parses the envelope and runs `checkScan`; only the
+ * Gemini round trip is faked.
  *
- * Each file in `fixtures/receipts/` is one bill, and `exercises` says what it
- * is for — the verdict `checkScan` must reach on it. That claim is not prose:
- * `apps/web/lib/scan/fixtures.test.ts` asserts it against the real code every
- * `pnpm check`, which is what keeps a fixture from quietly rotting into a
- * receipt that no longer says anything (the last inline one grew a field
- * `ScanResult` never had, and nothing noticed).
+ * Each file in `fixtures/receipts/` is one bill, and `exercises` names the
+ * verdict `checkScan` must reach on it — asserted every `pnpm check` by
+ * `apps/web/lib/scan/fixtures.test.ts`, so a fixture can't quietly rot.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -45,12 +41,9 @@ export const PHOTO = Buffer.from(
 );
 
 /**
- * Answer this page's next scans with `name`, in Gemini's own envelope — the
- * client's `parseScanResponse` is the thing under test, so what goes over the
- * wire has to be shaped the way Gemini shapes it.
- *
- * A fixture with a `status` and no payload is the other kind of failure: the
- * phone and the photo are fine and the service is not.
+ * Answer this page's next scans with `name`, in Gemini's own envelope, since
+ * the client's `parseScanResponse` is under test. A fixture with a `status`
+ * and no payload is the service failing, not the photo.
  */
 export async function stubScan(page, name) {
   const fixture = receipts().get(name);

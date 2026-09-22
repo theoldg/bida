@@ -3,9 +3,7 @@
  * `pnpm bump` — the number the app calls itself, and the gate that says when it
  * has to move.
  *
- * **`major.semi.minor`, and only the owner moves the first one.** The three
- * places mean three different sizes of change, and they are bumped by three
- * different people:
+ * **`major.semi.minor`, and only the owner moves the first one.**
  *
  * | | Who | When |
  * |---|---|---|
@@ -13,16 +11,12 @@
  * | **semi** | Whoever is working | When the app is meaningfully a different thing than it was. `pnpm bump semi` |
  * | **minor** | Every push to `dev` | A push deploys (docs/hosting.md#versions), so a deploy always shows a new number. `pnpm bump` |
  *
- * The version lives in the root `package.json`, which is the only copy —
- * `apps/*` are private packages and carry none. The web build reads it there
- * (`apps/web/next.config.mjs`) and the app shows it on `/about` and prints it
- * as the first line of `/diag`, which is the whole point: a pasted report says
- * which build it came from.
+ * The only copy is the root `package.json` (`apps/*` carry none). The web
+ * build reads it (`apps/web/next.config.mjs`); `/about` shows it and `/diag`
+ * prints it first, so a pasted report names its build.
  *
- * Nobody is expected to remember any of this, which is why `--check` is a stage
- * of `pnpm check` (scripts/check.mjs): a tree that differs from what `dev` is
- * serving and still calls itself the same number fails the gate before it can
- * be pushed.
+ * `--check` is a stage of `pnpm check` (scripts/check.mjs): a tree that
+ * differs from what `dev` serves under the same number fails the gate.
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -83,10 +77,9 @@ function write(parts) {
 }
 
 /**
- * Is there anything here that `dev` is not already serving? Committed *or* not:
- * uncommitted work is what the push about to happen will carry, and asking only
- * about commits would let the bump be forgotten until after `pnpm check` had
- * already stamped the tree as passing.
+ * Is there anything here `dev` isn't already serving? Committed *or* not —
+ * the push will carry uncommitted work too, and checking commits alone would
+ * let `pnpm check` stamp the tree before the bump.
  */
 function undeployed() {
   const ahead = git("rev-list", "--count", `${DEPLOYED}..HEAD`)?.trim();
@@ -149,8 +142,8 @@ const [, , arg] = process.argv;
 
 if (arg === "--check") process.exit(check());
 if (arg === "major") {
-  // The one number no session decides. The owner said it in as many words:
-  // bumping it is "a bigger decision that always involves me".
+  // The one number no session decides: bumping it is "a bigger decision that
+  // always involves me" (the owner).
   console.error("version: the major is the owner's call, in a session, in their words — never a script's");
   process.exit(1);
 }

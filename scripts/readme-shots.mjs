@@ -2,29 +2,20 @@
 /**
  * `pnpm readme-shots` — the six pictures in README.md.
  *
- * Separate from `pnpm shots`, which photographs every screen for us and leans
- * on states worth catching: a split that doesn't add up, a payer who overpaid,
- * a server that can't be reached. Those are the right shots for an agent
- * checking its work and the wrong ones for a stranger deciding whether to open
- * the app, so this walks the same UI to a deliberately unremarkable place and
- * writes only what the README shows.
+ * Separate from `pnpm shots`, which catches states worth checking (a split
+ * that doesn't add up, a server that can't be reached) — wrong for a stranger
+ * deciding whether to open the app. This walks the same UI to an unremarkable
+ * place and writes only what the README shows.
  *
- * Two rows of three, and the rows are the pitch: the top one is the app a
- * Tricount user already expects (a ledger, who owes whom, adding an expense)
- * and the bottom one is the part they came for (photograph the bill, tap who
- * had what, read it back line by line).
+ * Two rows of three: the top is what a Tricount user expects (ledger, who owes
+ * whom, adding an expense), the bottom what they came for (photograph the
+ * bill, tap who had what, read it back line by line).
  *
- * **The group in the pictures is the demo** (`core/src/demo.ts`) — the same
- * one `/demo` lays down for a visitor. It was written to have something for
- * every screen to say, which is exactly what six screenshots need, and using
- * it means the README shows what the button on the front page opens rather
- * than a trip invented here and kept in step with the app by hand. It also
- * costs nothing to reach: a demo holds no key, so nothing syncs, so there is
- * no Worker to boot and no push queue to wait on.
- *
- * The one thing the demo has that a made-up trip could not: the cantina tab is
- * written in its own tongue with the English beside it, so the who-had-what
- * shot carries the translation icon (ADR-0016).
+ * **The group is the demo** (`core/src/demo.ts`), which has something for
+ * every screen to say and is what the front page's button opens. It holds no
+ * key, so no Worker boots and no push queue is waited on. Its cantina tab is
+ * written in its own tongue with English beside it, so the who-had-what shot
+ * carries the translation icon (ADR-0016).
  *
  * Output is committed (shots/ is gitignored; docs/media/ is not), so run this
  * when a photographed screen changes and commit what moves.
@@ -41,14 +32,11 @@ const GROUP = "demodemodemo";
 const CANTINA = "demo-cantina";
 
 /**
- * Stop the scan's progress bar partway across, and hold it there.
- *
- * The bar is a CSS animation on a wall clock (`components/receipt-scan.tsx`),
- * so photographing it means catching a moment — and a moment caught by
- * `waitForTimeout` is a different fraction on every machine. Pausing the
- * animation and setting its own time is the same picture every run. The
- * negative delay the component uses to resume a sweep is part of the sum: the
- * local time that renders progress `p` is `p · duration + delay`.
+ * Stop the scan's progress bar partway across, and hold it there. It is a CSS
+ * animation on a wall clock (`components/receipt-scan.tsx`), so pausing it and
+ * setting its time gives the same picture every run. The component's negative
+ * delay is part of the sum: progress `p` renders at local time
+ * `p · duration + delay`.
  */
 async function freezeScanBar(page, p) {
   const bar = page.locator(".scanbar");
@@ -64,16 +52,9 @@ async function freezeScanBar(page, p) {
 }
 
 /**
- * Take the demo's own mark off the ledger, for the photograph only.
- *
- * `DemoCard` sits above the ledger saying "Demo group: not synced", and it is
- * right to: in the demo, nothing syncs, and the card never dismisses because
- * that stays true however long you look around. In the README it would say
- * something else — that *bida* does not sync — which is the opposite of the
- * pitch two bullets below the picture. The fact belongs to the demo, not to
- * the app, so the shot is of the app.
- *
- * Removed rather than hidden: `display: none` leaves the gap it was sitting in.
+ * Take the demo's own mark off the ledger, for the photograph only. In the
+ * README "Demo group: not synced" would read as *bida* not syncing — the
+ * opposite of the pitch. Removed, not hidden: `display: none` leaves its gap.
  */
 async function dropDemoMark(page) {
   await page.evaluate(() => {
@@ -88,21 +69,16 @@ async function main() {
   const browser = await launch();
   try {
     /**
-     * A European phone, at dinner time.
-     *
-     * Both are costume, and the clock was wrong before anyone looked: left at
-     * Playwright's default, the tab was stamped 00:11 — the hour the container
-     * happened to be at, which is a different silly hour every run. The app is
-     * right to follow the phone's clock (`lib/format.ts`); the phone in the
-     * photograph is the thing to set.
+     * A European phone, at dinner time — costume. Playwright's default clock
+     * stamps whatever hour the container is at; the app rightly follows the
+     * phone's clock (`lib/format.ts`), so the phone is what's set.
      */
     const context = await newPhone(browser, {
       deviceScaleFactor: 2, colorScheme: "light",
       locale: "en-GB", timezoneId: "Europe/Paris",
     });
-    // Resumed immediately: a frozen clock would stop the scan's bar dead, and
-    // the demo dates itself in offsets from now (`demoOps`), so a clock that
-    // does not advance is fine to start from and wrong to stay at.
+    // Resumed immediately: a frozen clock stops the scan's bar, and the demo
+    // dates itself in offsets from now (`demoOps`), so it only needs the start.
     await context.clock.install({ time: new Date("2026-09-12T20:34:00+02:00") });
     await context.clock.resume();
     const page = await context.newPage();
@@ -126,12 +102,9 @@ async function main() {
     await settle(page, 250);
     await shot("balances");
 
-    // Adding an expense, typed rather than scanned: an amount, what it was,
-    // who paid, and the split underneath adding up. `pnpm shots` photographs
-    // the shortfall instead, because that is the line worth catching; this one
-    // is the happy path, which is what the form is in almost all of the time.
-    // Never saved — the shot is the form, and the ledger above it was already
-    // taken.
+    // Adding an expense, typed: amount, title, payer, and a split that adds up —
+    // the happy path (`pnpm shots` shoots the shortfall). Never saved; the shot
+    // is the form.
     await page.goto(`${base}/g/entry/edit?id=${GROUP}`);
     await page.locator("input.amount").fill("320");
     await page.locator("#what").fill("Hyperdrive coolant");

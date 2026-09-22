@@ -2,12 +2,10 @@
  * Publish the brand mark: the master SVG for the app to show, and the three
  * raster icons the platforms insist on.
  *
- * `design/brand/logo.svg` is the master — vector, square, and carrying its own
- * near-black ground, which is what lets the same artwork serve as both the
- * plain and the maskable icon. Committing the PNGs it produces rather than the
- * SVG alone is deliberate: Android and iOS both want raster files named in the
- * manifest, and the alternative is a build step every deploy pays for to
- * produce three files that change once a year.
+ * `design/brand/logo.svg` is the master — square, with its own near-black
+ * ground, so one artwork serves as plain and maskable icon. The PNGs are
+ * committed: Android and iOS want raster files in the manifest, and a build
+ * step every deploy would regenerate files that change once a year.
  *
  * Run `pnpm icons` after editing the logo. Chromium comes from the same place
  * the browser checks take it — never run `playwright install`.

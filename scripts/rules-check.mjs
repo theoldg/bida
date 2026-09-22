@@ -2,16 +2,15 @@
 /**
  * `pnpm rules` — the rules the docs state, checked against the code.
  *
- * Five of this project's decisions are one careless line away from being
- * quietly reversed, and each would be found months later by a person rather
- * than by a test: core stops being pure, a screen decides for itself what to
- * refuse, a browser dialog creeps back in, a live read skips its watchdog, or a sentence is typed into a screen
- * instead of into lib/copy.ts. Cheap to check, expensive to rediscover — so
- * they run in `pnpm check`.
+ * Each is a decision one careless line could quietly reverse, found months
+ * later by a person rather than a test: core stops being pure, a screen
+ * decides for itself what to refuse, a browser dialog creeps back, a live read
+ * skips its watchdog, a sentence is typed into a screen instead of
+ * lib/copy.ts. Cheap to check, so they run in `pnpm check`.
  *
- * The bar for adding one: it is written down as a decision, a single line
- * reverses it, and no test would notice. Style is not on this list — there is
- * no linter here on purpose.
+ * The bar for adding one: written down as a decision, reversible by a single
+ * line, and no test would notice. Style is not on this list — no linter, on
+ * purpose.
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -63,11 +62,11 @@ for (const file of sources(join(ROOT, "packages/core/src"))) {
   }
 }
 
-// docs/invariants.md: a guard and its healer must be one declaration. Every
-// defect of that class so far was a refusal whose repair was never written, so
-// a screen must take its verdict from the registry (`data.guard`), which cannot
-// be declared without a repair. `entriesInvolving` stays allowed: a screen may
-// ask what to *name*, never whether to refuse.
+// docs/invariants.md: a guard and its healer must be one declaration — every
+// defect of that class was a refusal whose repair was never written. So a
+// screen takes its verdict from the registry (`data.guard`), which can't be
+// declared without a repair. `entriesInvolving` is allowed: a screen may ask
+// what to *name*, never whether to refuse.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
   if (/\bmemberInvolved\b/.test(src)) {
@@ -77,9 +76,8 @@ for (const file of sources(join(ROOT, "apps/web"))) {
 }
 
 // docs/frontend.md#a-live-read-can-die: every live read goes through `useLive`.
-// A direct `useLiveQuery` has no watchdog, no reconnect and no remembered
-// answer, so it is the one screen left on skeleton rows when the database
-// stalls — four of them had drifted back before this check existed.
+// A direct `useLiveQuery` has no watchdog, reconnect or remembered answer, so
+// it is the screen left on skeleton rows when the database stalls.
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "db", "live.ts"))) continue;
   if (/\buseLiveQuery\b/.test(code(readFileSync(file, "utf8")))) {
@@ -102,17 +100,15 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 }
 
 /**
- * docs/sync.md#the-demo-group-has-no-key: the demo group is a real group that
- * cannot reach the server, and the whole of that mechanism is one absence —
- * it is never given a `groupKeys` row. `runSyncAll` iterates that table and
- * `syncGroupOnce` returns early without a row, so one `groupKeys.put` for the
- * demo id turns every tourist into a writer of a D1 that gets no further
- * resets. Nothing would notice: the demo would simply start working harder.
+ * docs/sync.md#the-demo-group-has-no-key: the demo can't reach the server
+ * only because it never gets a `groupKeys` row — `runSyncAll` iterates that
+ * table and `syncGroupOnce` returns early without one. A single
+ * `groupKeys.put` for the demo id would make every tourist a D1 writer, and
+ * nothing would notice.
  *
  * So exactly one file may *create* a key row, and it refuses the demo id.
- * `lib/db/sync.ts` writes the table too and is allowed: both of its writes
- * update a row it has just read, so neither can bring one into being. Both
- * halves are checked, because either alone is reversible by a line.
+ * `lib/db/sync.ts` also writes the table, but only updates rows it has just
+ * read. Both halves are checked; either alone is reversible by a line.
  */
 {
   const KEY_WRITER = join(ROOT, "apps/web/lib/db/commands/groups.ts");
@@ -131,12 +127,10 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 }
 
 /**
- * docs/frontend.md#routing: every screen under `/g` reads its group out of the
- * query string, and a link naming a group this phone doesn't have — a stale
- * bookmark, a URL shared to somebody who never joined — has to say so. Left to
- * the loading branch, `data.group` is `undefined` for "still reading" and for
- * "there is no such group" alike, and the screen is a back arrow over nothing,
- * forever. Two of them had drifted back to that before this check existed.
+ * docs/frontend.md#routing: every `/g` screen reads its group from the query
+ * string, and a link naming a group this phone lacks must say so. `data.group`
+ * is `undefined` both while reading and when absent, so a screen left to its
+ * loading branch is a back arrow over nothing, forever.
  */
 for (const file of sources(join(ROOT, "apps/web/app/g"))) {
   if (!file.endsWith(join("page.tsx"))) continue;
@@ -148,14 +142,12 @@ for (const file of sources(join(ROOT, "apps/web/app/g"))) {
 }
 
 // ADR-0007: the app goes back through `goBack` or `goUp` (lib/nav.ts), which
-// mark the traversal as the app's own. Safari reports any back taken inside a
-// tap as the device's button, so a bare one is answered by the press guard —
-// Done on payers asked to discard what it was keeping.
+// mark the traversal as the app's own. Safari reports any back inside a tap as
+// the device's button, so a bare one gets answered by the press guard.
 //
-// `goBack` takes the replace as well as the back, and only that shape is
-// spelt out here: a traversal Android swallows is repaired by putting the
-// destination in this screen's place, and an exit that handed over no way to
-// do that is one the repair cannot reach (docs/frontend.md#gotchas).
+// `goBack` takes the replace as well as the back: a traversal Android
+// swallows is repaired by putting the destination in this screen's place,
+// which needs that replace (docs/frontend.md#gotchas).
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "nav.ts"))) continue;
   const src = code(readFileSync(file, "utf8"))
@@ -169,18 +161,14 @@ for (const file of sources(join(ROOT, "apps/web"))) {
 }
 
 /**
- * docs/frontend.md#the-clipboard: `navigator.clipboard` is `undefined` in a
- * browser that ships without one, so a bare `navigator.clipboard.writeText(…)`
- * throws where every caller was written to expect a rejection — and the one
- * screen that copies unprompted, the way out of an in-app browser, renders
- * outside the error boundary, so the throw took the whole page down to Next's
- * "Application error". Which is what people actually saw, on the only screen
- * an in-app browser ever gets.
+ * docs/frontend.md#the-clipboard: `navigator.clipboard` can be `undefined`,
+ * so a bare `navigator.clipboard.writeText(…)` throws where callers expect a
+ * rejection — and the in-app-browser escape screen, which copies unprompted,
+ * renders outside the error boundary, so the throw is Next's "Application
+ * error" on the only screen an in-app browser gets.
  *
  * One door for writing (`lib/clipboard.ts`) and one for reading
- * (`lib/paste.ts`, whose every call is already inside the `try` that awaits
- * it). Named here because it costs a line to lose and is invisible until it is
- * somebody else's phone.
+ * (`lib/paste.ts`, every call already inside an awaited `try`).
  */
 {
   const DOORS = ["apps/web/lib/clipboard.ts", "apps/web/lib/paste.ts"].map((p) => join(ROOT, p));
@@ -194,7 +182,7 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
-// ADR-0008, and the owner said it three times: asking is components/dialog.tsx.
+// ADR-0008: asking is components/dialog.tsx, never a browser dialog.
 for (const file of sources(join(ROOT, "apps/web"))) {
   const src = code(readFileSync(file, "utf8"));
   // A call, not a declaration: `prompt(): Promise<void>` in a DOM interface is
@@ -206,14 +194,14 @@ for (const file of sources(join(ROOT, "apps/web"))) {
 }
 
 /**
- * Every word a person reads lives in `apps/web/lib/copy.ts` (ADR-0033). One
- * literal typed straight into a screen is invisible until the day someone asks
- * for a second language, so it is caught here instead.
+ * Every word a person reads lives in `apps/web/lib/copy.ts` (ADR-0033); a
+ * literal typed into a screen stays invisible until a second language is
+ * wanted.
  *
- * Two shapes are findable without a parser and cover what actually slips in:
- * text sitting between JSX tags, and the three attributes that are read aloud
- * or shown in a blank field. Everything else — a string handed to a prop — is
- * left to review; this is a fence, not a type system.
+ * Two shapes are findable without a parser and cover what slips in: text
+ * between JSX tags, and the three attributes read aloud or shown in a blank
+ * field. A string passed to a prop is left to review — a fence, not a type
+ * system.
  */
 const COPY_FILE = join(ROOT, "apps/web/lib/copy.ts");
 const SPEAKING_ATTRS = /\b(aria-label|placeholder|title)=(["'])([^"'{}]*[A-Za-z]{2}[^"'{}]*)\2/g;
@@ -250,8 +238,8 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   }
 }
 
-// The owner, 2026-09-17: "keep em dashes out of the copy permanently. they
-// stink of llm." Comments may keep theirs; a person never reads those. A
+// No em dashes in the copy, permanently — the owner's call: they read as
+// LLM-written. Comments may keep theirs; nobody reads those in the app. A
 // literal that is only the dash is `copy.none`, a blank figure, not prose.
 {
   const src = readFileSync(COPY_FILE, "utf8")

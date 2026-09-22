@@ -2,17 +2,12 @@
 /**
  * `pnpm homescreen` — the invite that rides onto the home screen (docs/ios.md).
  *
- * One thing iOS does with a tapped "Add to Home Screen" cannot be checked
- * anywhere but an iPhone: which URL WebKit writes into the bookmark. Everything
- * *around* it can, and all of it is the kind that looks fine in jsdom — a
- * fragment that has to survive a navigation, a `<link rel="manifest">` swapped
- * on one platform and left alone on the other, and a launch that has to tell a
- * group it already holds from one it doesn't.
- *
- * So this check drives both ends of the trick in a phone-shaped browser wearing
- * an iPhone's user agent: the tab that prepares the icon, and the app launched
- * as that icon. What is left for the owner's phone is the one question in the
- * middle.
+ * Only an iPhone can say which URL WebKit writes into an "Add to Home Screen"
+ * bookmark. Everything around it is checked here, all of it the kind that
+ * looks fine in jsdom: a fragment surviving a navigation, a manifest link
+ * swapped on one platform only, a launch telling a held group from a new one.
+ * Both ends run in a phone-shaped browser with an iPhone user agent: the tab
+ * that prepares the icon, and the app launched as that icon.
  */
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
@@ -29,19 +24,14 @@ const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebK
 const iphone = (opts) => newPhone(browser, { userAgent: IPHONE, ...opts });
 
 /**
- * The join screen once the secret is written. Its *title* is in the prerendered
- * HTML now — `/join` is only ever reached by an invite, so it says "Joining…"
- * before a byte of the bundle has run — so the title proves nothing. The body
- * is a promise about this particular link and waits for the key.
+ * The join screen once the secret is written. Its title is prerendered, so it
+ * proves nothing; the body is a promise about this link and waits for the key.
  */
 const joined = (page) => page.getByText("Finishes by itself once the other phone syncs.");
 
 /**
- * The group secrets this phone holds, read straight out of IndexedDB.
- *
- * The only assertion here that cannot be made from a screen: this check serves
- * the static export with no sync API behind it, so a group whose key has just
- * arrived has no ops to draw a row with.
+ * The group secrets this phone holds, read from IndexedDB — no sync API is
+ * behind this check, so a newly keyed group has no ops to draw a row with.
  */
 const secretsHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
   const open = indexedDB.open("hajsik");
@@ -78,17 +68,14 @@ const manifestOf = (page) => page.evaluate(async () => {
 });
 
 /**
- * Wait for the blob manifest before reading it. The head's script writes it at
- * load, but `waitForURL` can return before that page has parsed its head.
+ * Wait for the blob manifest before reading it: `waitForURL` can return
+ * before the head's script has run.
  *
- * `state: "attached"` because a `<link>` in the head is never *visible*, which
- * is what `waitForSelector` waits for by default — without it every one of
- * these times out and the check goes red on a green app, which is the same
- * flake wearing the other hat.
+ * `state: "attached"` — a head `<link>` is never *visible*, the default wait,
+ * so without it the check times out on a green app.
  *
- * A swap that never comes resolves empty rather than throwing: the assertion
- * below it is the one that should say so, and a rejection here would take the
- * whole check out with a stack trace instead.
+ * A swap that never comes resolves empty: the assertion below should say so,
+ * not a stack trace.
  */
 const blobManifest = (page) =>
   page.waitForSelector('link[rel="manifest"][href^="blob:"]', { state: "attached", timeout: PATIENCE })
@@ -107,8 +94,8 @@ const fragment = new URL(invite).hash;
 const tab = await iphone({ permissions: ["clipboard-read", "clipboard-write"] });
 const tabPage = await tab.newPage();
 await tabPage.goto(`${base}/join${fragment}`);
-// No sync API stands behind this check, so the join waits here for ever — and
-// that is the point: an iOS tab is no longer stopped to be asked to install.
+// No sync API behind this check, so the join waits forever — the point is
+// that an iOS tab isn't stopped to be asked to install.
 await joined(tabPage).waitFor({ timeout: PATIENCE });
 report(await tabPage.getByRole("button", { name: "Add bida to home screen" }).count() === 0,
   "an iOS tab joins without being asked to install first");
@@ -238,16 +225,14 @@ for (const path of ["/", `/g?id=${flatId}`, `/g/members?id=${flatId}`]) {
 
 // ---- a name picked after the page loaded --------------------------------
 // Safari never re-reads a manifest, so a head built before a group was joined
-// or named would put an icon on the home screen without it: the owner's phone
-// arrived with two groups and one name. There is no sync API here to finish a
-// real claim against, so the stale head is made by hand — as if it had been
-// built before the second name — and a client-side move to a screen that can
-// be reloaded is what must bring it up to date.
+// or named would put an icon on the home screen without it. With no sync API
+// to finish a real claim, the stale head is made by hand, and a client-side
+// move to a reloadable screen must bring it up to date.
 //
-// A row tap on the list, not the back arrow: the arrow *traverses* (lib/nav.ts)
-// and a traversal to an entry from an earlier document is a fresh load, which
-// rebuilds the head by itself — leaving this green whether the reload ran or
-// not. Counting document requests is the other half of saying so.
+// A row tap on the list, not the back arrow: the arrow *traverses*
+// (lib/nav.ts), and a traversal to an earlier document is a fresh load that
+// rebuilds the head anyway — green either way. Counting document requests is
+// the other half.
 /** Stamp the head as built before a change, and mark the page that did it. */
 const stampStale = (page) => page.evaluate(() => {
   window.__samePage = true;
@@ -282,12 +267,11 @@ await heldPage.waitForTimeout(1500);
 report(await heldPage.evaluate(() => !!window.__afterTheReload), "once — the rebuilt head is not stale");
 
 // ---- but never before the shell is cached --------------------------------
-// The same reload on the visit where it costs the most: a newcomer's first,
-// whose document load was `/join` with an empty carry, and whose worker is
-// still fetching 2.4 MB of shell. Served from the network, it races the
-// precache for one phone connection — and nothing on screen is waiting on it,
-// so it waits for the next reloadable screen instead (`shellIsWarm` in
-// lib/update.ts). A context with no worker at all is that minute held still.
+// The same reload on a newcomer's first visit — document `/join`, empty carry,
+// worker still fetching 2.4 MB of shell — would race the precache for one
+// phone connection with nothing on screen waiting on it. So it waits for the
+// next reloadable screen (`shellIsWarm` in lib/update.ts). A context with no
+// worker holds that minute still.
 const cold = await iphone({ serviceWorkers: "block" });
 const coldPage = await cold.newPage();
 await newGroup(coldPage, base, { name: "Cold", me: "Gil", members: ["Hana"] });
@@ -317,12 +301,10 @@ report(folded && await heldPage.getByRole("button", { name: "Add bida to home sc
   "a group's ledger asks an iOS tab too, folded");
 
 // ---- but never about the demo ---------------------------------------------
-// The demo holds no key, so it is not among what an icon would carry and there
-// is nothing here for this tab to lose — `/demo` lays the story down again
-// (docs/sync.md#the-demo-group-has-no-key). The mark at the head of its ledger
-// says nothing here syncs; a banner under it offering to rescue the group
-// would take that back one line later. A phone of its own, because the demo
-// joins whatever list it is opened on, and the checks above read that list.
+// The demo holds no key, so an icon carries nothing for it
+// (docs/sync.md#the-demo-group-has-no-key), and a rescue banner would
+// contradict its "nothing here syncs" mark. Its own phone, because the demo
+// joins whatever list it opens on.
 const tourist = await iphone();
 const touristPage = await tourist.newPage();
 await touristPage.goto(`${base}/demo`);
@@ -362,11 +344,9 @@ report(androidManifest.href === "/manifest.webmanifest" && androidManifest.count
   "a browser that installs by itself gets the one static manifest, starting at /");
 
 // ---- ...but it is asked in the same two places ----------------------------
-// The carry is iOS's alone; *where the offer is drawn* is not. Chrome only
-// fires `beforeinstallprompt` on its own engagement heuristics, so the page is
-// handed one — all the app keeps of it is that there is a prompt to spend.
-// Fired until it lands: the listener goes on at module load, so before the
-// bundle has run there is nothing there to catch it.
+// The carry is iOS's alone; *where the offer is drawn* is not. Chrome fires
+// `beforeinstallprompt` on its own heuristics, so the page is handed one —
+// repeatedly until it lands, since the listener attaches at module load.
 const androidOffer = (page) => page.getByRole("button", { name: "Keep bida on your home screen" });
 async function offerInstall(page) {
   for (let attempt = 0; attempt < 24; attempt++) {
@@ -420,15 +400,12 @@ report(new URL(freshPage.url()).pathname !== "/install",
   "and does not sit on the tutorial", freshPage.url());
 
 // ---- and a launch is a launch --------------------------------------------
-// `start_url` is `/install` for the life of the bookmark, so the document never
-// loads on the list and nothing about the address says this was a start:
-// `/install` has to say so itself (`launchedOnto`, lib/launch.ts). Without it
-// this install alone — the one docs/ios.md exists to produce — landed on the
-// list every time with the group you were last in unopened.
+// `start_url` is `/install` for the bookmark's life, so nothing in the address
+// says this was a start: `/install` must say so itself (`launchedOnto`,
+// lib/launch.ts), or this install lands on the list every time.
 //
-// The group is made here rather than carried: nothing syncs behind this check,
-// so a group the fragment brought never arrives and there is nowhere to be put
-// back into. A group made on the phone is a row like any other.
+// The group is made here, not carried: nothing syncs behind this check, so a
+// carried group never arrives.
 const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members: ["Bo"] });
 // Which group this phone was last in is written by an effect on the ledger, so
 // relaunching the moment the URL changes races it — and the launch then finds
