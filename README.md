@@ -46,24 +46,21 @@ The usual stuff, plus:
 
 - **No accounts.** A group is a secret link. Anyone with the link can edit.
 
-- **Online, or installable PWA.** Click the link and you're in.
-You can also add bida to your Android or iOS device, no app store required.
+- **Online, or installable PWA.** Click the link and you're in. You can also add bida to your Android or iOS device, no app store required.
 
 - **Works offline.** Append-only data model prevents merge conflicts.
 
 - **End-to-end encrypted.** Decryption happens locally via the URL hash. The server only ever sees scrambled ciphertext.
 
-- **Receipt parsing and itemized splitting.** Extracts line items from receipt photos.
-Grid-like UI for assigning who-had-what.
+- **Receipt parsing and itemized splitting.** Extracts line items from receipt photos. Grid-like UI for assigning who-had-what.
 
 - **Quick split.** Run a scan and assign items without creating a group. Screenshot the summary or copy a text version.
-  
+
 - **Auditable edit history.** If you don't trust your friends.
 
-- **Splitwise/Triount import and export.** Bring groups in and out via CSV or Tricount link.
-  
+- **Splitwise/Tricount import and export.** Bring groups in and out via CSV or Tricount link.
+
 - **Dark mode.**
-  
 
 ## Vibe-coded... carefully
 
@@ -83,13 +80,13 @@ receipt scanning is very cheap and funded by a tip jar.
 
 ## Self-hosting
 
-If you want even more privacy, or you'd like to hook up your own Gemini API key for
+If you'd rather run it yourself, or want to hook up your own Gemini API key for
 unlimited scans, bida is relatively easy to [self-host](SELFHOSTING.md).
 
 ## Feedback welcome (and needed)
 
 bida is very young and only tested on a couple of devices. Drop me a bug report, a PR, or an [email](mailto:teodor.lamort@gmail.com)!
 
-## Licence
+## License
 
 [MIT](LICENSE)

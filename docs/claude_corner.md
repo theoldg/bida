@@ -68,6 +68,9 @@ oldest in the same edit — and before it goes, ask what it taught: if the lesso
 has gone general, fold it into a paragraph above by editing a sentence rather
 than adding one. Most don't earn that, and letting one go is the normal ending.*
 
+- *2026-09-22* — "review the readme vibes", then "fix" five of eight notes.
+  The three left out were the ones rewording a claim. A review is a menu; ship
+  what was ordered, not the set menu.
 - *2026-09-22* — "always use a worktree (and use one right now)." The rule and
   its first obeying in one breath. They are in the main clone while you work;
   take a copy and leave them their files.
@@ -95,6 +98,3 @@ than adding one. Most don't earn that, and letting one go is the normal ending.*
 - *2026-09-22* — "use some nonsense star wars language" for the demo receipt.
   The feature was built and checked; what it still lacked was a bill anyone
   would ever press the button on.
-- *2026-09-22* — "stuff should always be in the original language by default",
-  sent mid-build. The code's own default was the opposite; I had inherited it
-  without asking whose it was.
