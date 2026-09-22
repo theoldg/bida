@@ -13,11 +13,9 @@ import { useScanAs } from "@/lib/quick";
 import { clearScan, getLiveScan } from "@/lib/scan/live";
 
 /**
- * The scan, before there is a form — photographing the bill is how an expense
- * most often starts, so it is one tap rather than four down inside the split
- * editor. What comes back is an ordinary expense form, filled in, which you are
- * free to split evenly: **the scan reads what is printed, it does not decide how
- * the money divides** (ADR-0016).
+ * The scan, before there is a form — one tap, since a photo is how an expense
+ * most often starts. What comes back is an ordinary filled-in form: **the scan
+ * reads what is printed, it doesn't decide how the money divides** (ADR-0016).
  */
 export default function ScanPage() {
   return <QueryBoundary><ScanScreen /></QueryBoundary>;
@@ -42,13 +40,9 @@ function ScanScreen() {
   });
 
   /**
-   * The draft the scan writes into.
-   *
-   * Seeded under the key the form uses for a blank expense, so the form adopts
-   * this draft instead of re-seeding over it on arrival. An existing draft
-   * under that key is left alone — somebody who typed half an expense, came
-   * back out and reached for the camera keeps what they typed, and the scan's
-   * own rule about not renaming an expense you named does the rest.
+   * The draft the scan writes into, seeded under the form's blank-expense key so
+   * the form adopts it. An existing draft there is left alone, so half-typed
+   * work survives reaching for the camera.
    */
   useEffect(() => {
     if (!groupId || data.loading || !data.group) return;
@@ -61,12 +55,9 @@ function ScanScreen() {
   }, [groupId, data.loading, data.group, data.me, data.members]);
 
   /**
-   * This screen shows a refusal once. Leaving it any way but a scan landing
-   * (`onScanned`, which clears the error itself) means it has been read and
-   * moved on from — most often to the ordinary "+", which seeds under this same
-   * key and so would inherit the error too, putting a refusal nobody caused
-   * under a scan button that never rang. **A scan still in flight is untouched**
-   * — it belongs to the draft, not to this screen (`lib/scan/live.ts`).
+   * Leaving by any way but a scan landing clears the refusal — otherwise the
+   * ordinary "+", seeding under this same key, would inherit it. **A scan still
+   * in flight is untouched**: it belongs to the draft (`lib/scan/live.ts`).
    */
   useEffect(() => () => {
     if (groupId && getLiveScan(groupId)?.state === "error") clearScan(groupId);
@@ -83,33 +74,23 @@ function ScanScreen() {
         <Scroll>
           {scan.inputs}
           <div className="pad scanpage">
-            {/* The one thing this screen can't show: where the photo goes.
-                So it draws it — a bill, and the expense that comes back from
-                it — and the control sits under the drawing rather than at the
-                foot, so the picture and the act it explains are one block in
-                the middle of the screen. The sentence this replaced is its
-                `alt`. */}
+            {/* Drawn, not described: a bill and the expense it becomes, with the
+                control under it so picture and act are one block. Its `alt` says
+                it in words. */}
             <div className="scanshow">
               <ScanDiagram names={data.members.map((m) => m.name)} seed={groupId} />
 
-              {/* What the drawing can only imply, said once: the whole form
-                  comes back filled, and the bill's own lines are a way to
-                  split it. It belongs to the picture — hence inside the same
-                  block, a line under it — and the screen's wide gap still
-                  falls between that block and the control. */}
+              {/* What the drawing can only imply: the whole form comes back filled.
+                  Inside the picture's block, so the wide gap still falls before the
+                  control. */}
               <p className="scanlede">{copy.scan.lede}</p>
             </div>
 
             <div className="scanact">
-              {/* This screen exists for this one act, so the control takes the
-                  full width at `.btn-lg` and the primary register — the same
-                  emphasis the entry form's Save gets, size being the only
-                  emphasis this palette has left.
+              {/* Full width at `.btn-lg`, the emphasis of the form's Save.
 
-                  Two doors and not three: the tap that got here was a camera,
-                  and the picture above promises a photograph. A bill that
-                  arrived as words is typed into the form's Items tab, where the
-                  form it fills is already open. */}
+                  Two doors, not three: the picture promises a photograph, and a typed
+                  bill goes into the form's Items tab. */}
               <ScanPair scan={scan} register="lg" typeIn={false} />
 
               {/* No "try again" beside the message: the control above it is

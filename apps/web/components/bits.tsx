@@ -7,14 +7,10 @@ import { initials } from "../lib/format";
 import { caretOnPress, isTyping } from "../lib/viewport";
 
 /**
- * Initials in a square — for a *group*, in the list of them, where a row has no
- * other mark.
- *
- * **People don't get one.** A name is already the shortest way to say who
- * someone is, and a square beside it just repeats the word's first letter
+ * Initials in a square — for a *group*, in the list of them. **People don't
+ * get one**: beside a name it only repeats its first letter
  * ([ADR-0023](../../../docs/decisions/0023-monospace-monochrome.md)). The
- * exception is the who-had-what grid, which uses initials as column headings
- * and draws its own.
+ * who-had-what grid draws its own for column headings.
  */
 export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
   return (
@@ -26,12 +22,9 @@ export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
 }
 
 /**
- * A row that *does* something rather than being something in the list — add a
- * member, start a group, leave one. The dashed square holds the icon, and marks
- * the row as a thing to press rather than a thing that is there.
- *
- * `.ghostrow` carries the air above the first one, so a page never has to pass
- * a padding to say "this is where the list ends and the actions begin".
+ * A row that *does* something — add a member, start a group, leave one. The
+ * dashed square marks it as a thing to press. `.ghostrow` carries the air
+ * above the first one, so pages pass no padding.
  */
 export function GhostRow({ icon, label, href, onClick, danger }: {
   icon: IconName;
@@ -83,26 +76,18 @@ export function signClass(minor: number): string {
 }
 
 /**
- * Props for a control that may be pressed while a field on the same screen
- * still has the caret: it keeps that focus instead of taking it.
+ * Props for a control pressed while a field still has the caret: it keeps
+ * that focus. Otherwise the press blurs the field on `mousedown`, the keyboard
+ * retracts, the page reflows, and the `click` lands where the button no
+ * longer is.
  *
- * Without this the first press is spent closing the keyboard — the field blurs
- * on `mousedown`, the keyboard retracts, the viewport grows, the page reflows
- * under a thumb that hasn't lifted, and the `click` lands where the button no
- * longer is. Preventing the default on `mousedown` stops the blur, so nothing
- * moves and the press goes through the first time.
+ * **Only the pointer is held off** — Tab and Enter still focus and fire.
  *
- * **Only the pointer is held off** — Tab and Enter still focus and fire; a
- * keyboard never moves the layout out from under itself.
- *
- * **And only while there is a keyboard to hold off.** Android's back button
- * closes the keyboard without taking the caret out of the field; holding that
- * focus through the next press tells Chrome somebody tapped with a text field
- * focused, and the keyboard comes back up over the answer. So in that state
- * the field is put down by hand — `blur()` rather than letting the press do
- * it, since whether a `mousedown` moves focus depends on the browser and on
- * whether what was pressed can take focus. `data-kb` is the one place that
- * knows whether a keyboard is up (components/viewport.tsx).
+ * **And only while a keyboard is up.** Android's back closes the keyboard but
+ * leaves the caret; holding focus through the next press makes Chrome reopen
+ * the keyboard over the answer. So then the field is `blur()`ed by hand
+ * (whether `mousedown` moves focus varies by browser and target). `data-kb`
+ * says whether a keyboard is up (components/viewport.tsx).
  */
 export const keepsFocus = {
   onMouseDown: (e: React.MouseEvent) => {

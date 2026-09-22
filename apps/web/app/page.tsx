@@ -29,10 +29,8 @@ export default function GroupsPage() {
   // Keys held whose groups haven't landed yet — the freshly installed icon,
   // which saved its carried invites a moment ago (lib/hooks.ts).
   const arriving = useArrivingGroups();
-  // Launching the app reopens the group you were last in (lib/launch.ts), so
-  // this screen may be on its way out before it has drawn anything. Until that
-  // is settled the list is "not answered yet" — the frame it already draws
-  // while Dexie is thinking — rather than a list that flashes and is replaced.
+  // A launch may reopen the last group (lib/launch.ts), so until that settles
+  // the list stays "not answered yet" rather than flashing and being replaced.
   const resuming = useResumeLastGroup();
   const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
@@ -49,14 +47,10 @@ export default function GroupsPage() {
         {/* The app says its own name once, on the screen you land on. The
             name is the whole bar: a sub-line under it described the screen you
             could already see. */}
-        {/* The name is also the door to /diag, on a long press. Hidden
-            rather than listed: a diagnostics screen is for the two minutes
-            after something went wrong on a phone with no devtools attached,
-            and it has no business in a menu a person reads. */}
-        {/* One kebab, not two glyphs: the theme switch and the only door to
-            the screen the app spends on itself (app/about) are both words in
-            a menu now — a sun and an ⓘ were two guesses. It is the one
-            control that belongs to the phone, not to a group (ADR-0007). */}
+        {/* The name is also the door to /diag, on a long press — for a phone with
+            no devtools, kept out of any menu a person reads. */}
+        {/* One kebab holds the theme switch and the door to app/about — the one
+            control that belongs to the phone, not a group (ADR-0007). */}
         <TopBar
           title={
             <span className="brand" {...diagHold}>
@@ -67,21 +61,16 @@ export default function GroupsPage() {
 
         <Scroll>
           <div className="homescroll">
-            {/* undefined is "Dexie hasn't answered yet", not "no groups" — the
-              two used to look the same, and the blank was the one you saw. */}
+            {/* undefined is "Dexie hasn't answered yet", not "no groups". */}
             {groups === undefined ? <SkeletonRows count={4} /> : null}
 
-            {/* An install offer goes first, and only once there is a group to
-              lose: an iOS tab's warning, or Chrome's own install prompt
-              (components/install.tsx). One card, one of two bodies. The group
-              it names is only which one leads the iOS carry — the top row,
-              the most recently active and the one the app would reopen by
-              itself (lib/launch.ts).
+            {/* An install offer goes first, once there is a group to lose: an iOS
+              tab's warning or Chrome's prompt (components/install.tsx). The group it
+              names leads the iOS carry — the top row, which the app would reopen
+              (lib/launch.ts).
 
-              The demo is not a group to lose, and not one to lead with: it has
-              no key, so it is not among what an icon would carry, and `/demo`
-              lays it down again anyway (docs/sync.md#the-demo-group-has-no-key).
-              A list holding only the demo is still somebody looking around. */}
+              The demo doesn't count: it has no key, so no icon would carry it, and
+              `/demo` lays it down again anyway (docs/sync.md#the-demo-group-has-no-key). */}
             {lead ? <InstallOfferCard groupId={lead.group.id} /> : null}
 
             {/* An empty list is only empty once nothing is on its way: an icon
@@ -104,10 +93,8 @@ export default function GroupsPage() {
               which draw only outside it. */}
             <UpdateNudge />
 
-            {/* The act this screen exists for, at the bottom of it: under the
-              list however short the list is, and where a thumb already rests
-              on a phone. It carries the column's `margin-top: auto`, so it
-              falls to the foot of the screen however short the list is. */}
+            {/* The act this screen exists for, under the list where a thumb rests; its
+              `margin-top: auto` drops it to the foot however short the list is. */}
             <StartTiles />
           </div>
         </Scroll>
@@ -118,18 +105,12 @@ export default function GroupsPage() {
 
 /**
  * Starting something: a group, or a bill split with people who are not one.
- * Two different jobs, so two figures rather than one box cut in two — the
- * ledger's two FABs at a size that can carry a word as well as an icon.
+ * Two jobs, two figures. "New group" is inked and on the right, under the
+ * thumb. "Quick split" writes nothing
+ * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md))
+ * so it is outlined. An iOS home-screen app gets a third, `PasteLinkTile`.
  *
- * "New group" is the inked one and takes the right, where a thumb rests. The
- * left writes no op and leaves nothing behind
- * ([ADR-0035](../../../docs/decisions/0035-a-quick-split-is-a-bill-with-no-group.md)),
- * so it wears the scan FAB's outline. An iOS home-screen app gets a third,
- * outlined too, on the far left: `PasteLinkTile`.
- *
- * **Sticky (`.homepair`), not merely last-in-flow**: a group list long enough
- * to scroll otherwise carries this off the bottom, which the FABs it echoes
- * never do. It floats over the rows rather than docking above them.
+ * **Sticky (`.homepair`)**, or a long list scrolls it off the bottom.
  */
 function StartTiles() {
   return (
@@ -153,9 +134,8 @@ const never = () => () => {};
 
 /**
  * The way into a group on an iOS home-screen app, which a tapped invite never
- * reaches (`iosHomeScreenApp`). Everywhere else the link itself is the door,
- * so this draws nothing. Outlined, like "Quick split": neither is the primary.
- * What pasting does is `usePasteLink`'s.
+ * reaches (`iosHomeScreenApp`); elsewhere it draws nothing. Outlined: not the
+ * primary. Pasting is `usePasteLink`'s.
  */
 function PasteLinkTile() {
   // Standalone or not is fixed for the life of the page; nothing to subscribe to.
@@ -178,10 +158,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity } = summary;
   const [asking, setAsking] = useState(false);
   const invite = useInviteLink(group.id);
-  // The demo sits on this list like any other group once it has been opened —
-  // it *is* one. Only the two things it cannot do differ: it has no invite
-  // link to copy, and forgetting it would hide a group with no link to bring
-  // it back, so the same row clears it instead (lib/db/commands/demo.ts).
+  // The demo is a group like any other here, except it has no invite link, and
+  // forgetting would hide it with no way back — so the same row clears it
+  // (lib/db/commands/demo.ts).
   const demo = isDemo(group.id);
   const [noLink, setNoLink] = useState(false);
   // As in the group's own menu: the fresh demo's address is the browser's to
@@ -216,11 +195,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
             {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
           </div>
         </div>
-        {/* The figure is also where copying the row's link answers: it flips
-            away and a check turns up in its place for as long as
-            `invite.copied` holds. The menu that started the copy has closed by
-            then and the clipboard says nothing, so without this a long press
-            ends in silence — and the eye is already on this row. */}
+        {/* Copying the row's link answers here: the figure flips to a check while
+            `invite.copied` holds. The menu has closed and the clipboard says
+            nothing, so without this a long press ends in silence. */}
         <div className={`ramt${invite.copied ? " copied" : ""}`}>
           <div className="amtface">
             {netMinor === undefined ? (

@@ -21,15 +21,11 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
 /**
  * The group's exchange-rate registry: one rate per currency it spends in.
  *
- * A screen rather than a dialog because it is a list that grows — the same
- * shape as People, reached the same way, from the icon next to it. Each row is
- * one currency and what the group says it is worth; tapping one opens the
- * editor, which is a dialog because a rate is one decision with one sentence
- * to say about it (ADR-0008).
+ * A screen because it is a growing list, like People; each row opens a dialog
+ * editor, a rate being one decision (ADR-0008).
  *
- * There is nothing to "save" on this screen. A rate is a shared fact, so
- * setting one is an op and takes effect for everybody the moment it syncs —
- * and every entry already written in that currency is read at the new number
+ * Nothing to "save": setting a rate is an op, effective for everybody on sync,
+ * and every entry in that currency is read at the new number
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 export default function RatesPage() {
@@ -84,10 +80,8 @@ function RatesScreen() {
     setAsk(null);
   }
 
-  // **A rate comes out on the same terms a person does: only when nothing is
-  // left leaning on it.** Clearing one otherwise re-prices every entry written
-  // in it back to whatever rate each was saved at — a different number on every
-  // row, and no screen says so.
+  // **A rate is removed on the same terms as a person: only when nothing leans
+  // on it.** Otherwise every entry in it silently re-prices to its saved rate.
   function askRemove(currency: string) {
     const blocking: BlockingEntry[] = [
       ...data.expenses.filter((e) => e.currency === currency).map((e) => ({
@@ -212,10 +206,9 @@ function RatesScreen() {
 }
 
 /**
- * One currency and what the group says it is worth. Tapping opens the editor;
- * a long press offers to delete the rate, which is where deleting an entry
- * lives too — so the editor is only ever about the number in it. Nothing to
- * delete until a rate has been set, and an empty menu doesn't open.
+ * One currency and its rate. Tap opens the editor; long press offers delete,
+ * as for entries, so the editor is only about the number. An unset rate has
+ * nothing to delete, and an empty menu doesn't open.
  */
 function RateRow({ row, base, onOpen, onDelete }: {
   row: CurrencyInUse; base: string; onOpen: () => void; onDelete: () => void;

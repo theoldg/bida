@@ -1,16 +1,13 @@
 import { ImportError } from "@bida/core";
 
 /**
- * A tricount link, fetched. The JSON that comes back goes to
- * `core/readTricount`, which is where every decision about what it *means*
- * lives — this file is the link, the key pair and one request, and nothing
- * else (docs/frontend.md#bringing-a-group-onto-the-phone).
+ * A tricount link, fetched. What the JSON *means* is `core/readTricount`'s
+ * job; this file is the link, the key pair and one request
+ * (docs/frontend.md#bringing-a-group-onto-the-phone).
  *
- * It goes through our Worker because a page cannot read that answer: bunq's
- * reply carries no `Access-Control-Allow-Origin`, so the browser withholds it
- * from whatever asked, however the request was made (checked from bida.bid,
- * 2026-09-22). `apps/api/src/tricount.ts` is the other half, and says why a
- * Worker is allowed what this file is not.
+ * It goes through our Worker because bunq's reply carries no
+ * `Access-Control-Allow-Origin`, so a page can't read it.
+ * `apps/api/src/tricount.ts` is the other half.
  */
 
 /** Our Worker could not reach tricount, or tricount would not talk to it. */
@@ -20,13 +17,9 @@ export class TricountDownError extends Error {}
 export class TricountOfflineError extends Error {}
 
 /**
- * The key out of whatever was pasted: a link, a link with tracking on the end,
- * or the key on its own for somebody who has one.
- *
- * The last path segment, because that is where tricount puts it and because a
- * reader that goes hunting for a pattern anywhere in the string will find one
- * in the host. Returns null for anything that is not a key, and the screen
- * says so rather than sending it (`copy.importData.notTricount`).
+ * The key out of whatever was pasted: a link, a link with tracking, or a bare
+ * key. The last path segment — hunting for a pattern anywhere would match the
+ * host. Null for anything else (`copy.importData.notTricount`).
  */
 export function tricountKey(pasted: string): string | null {
   const text = pasted.trim();
@@ -38,12 +31,9 @@ export function tricountKey(pasted: string): string | null {
 }
 
 /**
- * The public half of a throwaway RSA key.
- *
- * The handshake wants one and nothing ever signs with it, so the private half
- * is dropped on the floor here — which is also why it is made on the phone
- * rather than on the Worker: a key nobody keeps costs a phone nothing and
- * costs the Worker CPU on every import.
+ * The public half of a throwaway RSA key. The handshake wants one and nothing
+ * signs with it, so the private half is dropped; made on the phone so the
+ * Worker doesn't spend CPU on it every import.
  */
 async function clientKey(): Promise<string> {
   const pair = await crypto.subtle.generateKey(
@@ -65,12 +55,9 @@ async function clientKey(): Promise<string> {
 }
 
 /**
- * Ask for the tricount behind a key. Writes nothing and holds nothing: what
- * comes back is handed straight to the reader, which hands back a plan.
- *
- * The three ways it fails are three different sentences, because they are
- * three different things to do about it: the link is wrong, the phone is off
- * the network, or an API nobody documents has moved.
+ * Ask for the tricount behind a key; writes and holds nothing. Three failures,
+ * three messages, because each needs a different fix: wrong link, offline, or
+ * an undocumented API that moved.
  */
 export async function fetchTricount(key: string): Promise<unknown> {
   if (typeof navigator !== "undefined" && navigator.onLine === false) {

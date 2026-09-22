@@ -17,17 +17,12 @@ import { draftAmountMinor, saveDraft, useDraft } from "@/lib/draft";
 
 /**
  * Who put the money in. The mirror of the split editor's "as amounts" tab,
- * and deliberately simpler than the editor as a whole: there are no other
- * modes here, because nobody pays "30% of the bill" — they hand over a number
- * the receipt knows. Amounts are in the expense's own currency for the same
- * reason (ADR-0010).
+ * with no other modes — nobody pays "30% of the bill". Amounts are in the
+ * expense's own currency (ADR-0010).
  *
- * Every row's field is open from the start and a typed zero or blank drops
- * that person, rather than a tap toggling them out — the field *is* the
- * statement, as in `SplitEditor`'s exact mode. Nobody typed in at all collapses
- * the draft to a plain single payer (`payers: null`) rather than sitting on a
- * degenerate all-zero map, so clearing the fields is "back to one payer" and
- * no button has to be.
+ * Every field is open from the start; a zero or blank drops that person. With
+ * nobody typed in, the draft collapses to a single payer (`payers: null`), so
+ * clearing the fields is "back to one payer" without a button.
  */
 export default function PayersPage() {
   return <QueryBoundary><PayersScreen /></QueryBoundary>;
@@ -47,11 +42,9 @@ function PayersScreen() {
   const opened = useRef<{ payers: Record<string, number> | null; paidBy: string } | null>(null);
   if (draft && !opened.current) opened.current = { payers: draft.payers, paidBy: draft.paidBy };
 
-  // No draft at all: a reload, a bookmark, or a forward press onto an entry
-  // that has since been saved. The draft this screen edits one side of lives in
-  // memory (lib/draft.ts), so there is nothing to put back and nothing for the
-  // arrow to return to — without this the screen is a titled blank forever. The
-  // grid one route over does the same, and so does app/quick/result.
+  // No draft (a reload, a bookmark, a forward press onto a saved entry): the
+  // draft lives in memory (lib/draft.ts), so there is nothing to show. Without
+  // this the screen is blank forever. The grid and app/quick/result do the same.
   useEffect(() => {
     if (groupId && !data.loading && data.group && !unclaimed && !draft) {
       router.replace(route.group(groupId));
@@ -80,12 +73,9 @@ function PayersScreen() {
   const check = validatePayers(amountMinor, spec);
 
   /**
-   * The figure *is* the statement, same as the split editor's "as amounts"
-   * tab: typing a positive amount puts someone in, clearing it to nothing
-   * takes them out. Nobody left with anything typed in is not a payers list
-   * of zero people, it's the single-payer case this screen started from —
-   * so that's where it goes back to, `paidBy` unchanged, rather than stranding
-   * the form on a map every entry with money has to have at least one of.
+   * The figure *is* the statement: a positive amount puts someone in, clearing
+   * it takes them out. Nobody left is the single-payer case this screen started
+   * from, `paidBy` unchanged — never an all-zero map.
    */
   function setAmount(memberId: string, minor: number) {
     const next = { ...spec };

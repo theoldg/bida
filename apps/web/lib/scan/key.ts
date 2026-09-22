@@ -1,12 +1,9 @@
 import { getDevice } from "../db/device";
 
 /**
- * The key this phone scans with, when it is not ours.
- *
- * Bringing one changes where the scan goes, not what it says: same envelope
- * (`@bida/core`), same model, so everything downstream is untouched. What it
- * drops is what exists to protect a *shared* key — the bearer token,
- * Turnstile, all three budget buckets — none of which guards anything here
+ * The key this phone scans with, when it is not ours. Same envelope
+ * (`@bida/core`) and model, so everything downstream is untouched; it skips
+ * what protects the *shared* key — bearer token, Turnstile, budget buckets
  * (docs/receipt-scanning.md#a-key-of-your-own).
  */
 
@@ -19,27 +16,24 @@ export async function ownKey(): Promise<string | undefined> {
 }
 
 /**
- * A key for showing: enough of it to recognise which one is pasted, never
- * enough to use. Short input is masked whole rather than mostly revealed —
- * what is too short to be a key is usually the wrong thing off a clipboard.
+ * A key for showing: enough to recognise, never enough to use. Short input is
+ * masked whole — too short for a key usually means the wrong clipboard.
  */
 export function maskKey(key: string): string {
   return key.length < 16 ? "•".repeat(key.length) : `${key.slice(0, 6)}…${key.slice(-4)}`;
 }
 
 /**
- * Why a key was not accepted. Two answers, because they need two different
- * things done about them. `blocked` is the one worth naming: a brought key is
- * a call this browser makes itself, so a content blocker or a network refusing
- * `googleapis.com` makes the feature impossible here — better found at the
- * paste than three days later over a real receipt.
+ * Why a key was not accepted. `blocked` matters: a brought key is called by
+ * this browser, so a content blocker refusing `googleapis.com` makes the
+ * feature impossible here — better found at paste than over a real receipt.
  */
 export type KeyRefusal = "refused" | "blocked";
 
 /**
- * Ask Google whether this key works — one free request, and the reason
- * `/advanced` will not store a key it has not seen answer. Proves two things:
- * that the key is a key, and that this browser can reach Google at all.
+ * Ask Google whether this key works (one free request); `/advanced` won't
+ * store a key it hasn't seen answer. Proves it is a key, and that this
+ * browser can reach Google.
  */
 export async function checkGeminiKey(key: string): Promise<{ ok: true } | { ok: false; why: KeyRefusal }> {
   let res: Response;

@@ -4,17 +4,13 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";
 
 /**
- * One line that would rather say less than be cut off.
+ * One line that would rather say less than be cut off: given wordings longest
+ * first, it renders the longest that fits. Why: [`lib/fit.ts`](../lib/fit.ts);
+ * which wordings: [`lib/row-meta.ts`](../lib/row-meta.ts).
  *
- * Give it the same line written several ways, longest first; it renders the
- * longest one that fits its own box. Why, and why measured on a canvas:
- * [`lib/fit.ts`](../lib/fit.ts). Which wordings, and in what order:
- * [`lib/row-meta.ts`](../lib/row-meta.ts).
- *
- * It renders `options[0]` on the server and on the first client paint, then
- * narrows in a layout effect — before paint, so nothing is ever seen being
- * shortened. Keep the ellipsis on the element's class anyway: the shortest
- * rung still has a name in it, and a name can be any length at all.
+ * Renders `options[0]` on the server and first paint, then narrows in a layout
+ * effect, before paint. Keep the ellipsis class anyway: the shortest rung
+ * still holds a name of any length.
  */
 export function FitLine({ options, className }: {
   options: readonly string[];
@@ -52,23 +48,16 @@ export function FitLine({ options, className }: {
 }
 
 /**
- * A title at the largest size that still says it in one line.
+ * A title at the largest size that fits on one line: given a ladder of sizes,
+ * largest first, it renders the largest that fits, else the last rung (the
+ * size a title wraps at).
  *
- * "Dinner" and a sentence somebody typed into the same field want different
- * type: one is a heading, the other is a paragraph, and a size picked for
- * either is wrong for the other. So the screen hands over a ladder of sizes,
- * largest first, and this renders the largest that measures under the box —
- * or the last rung, which is the size a title wraps at.
+ * Measured once and scaled: width is linear in font size, and `.entrytitle`'s
+ * tracking is in `em`. The element is a block, so no feedback loop.
  *
- * Measured once, at whatever size it is currently rendered, and scaled: width
- * is linear in the font size, and `.entrytitle`'s tracking is in `em`, so it
- * scales with it. No feedback loop to guard against, either — the element is a
- * block, so its width is the container's whatever the type does.
- *
- * It renders the **last** rung on the server and on the first client paint,
- * then grows in a layout effect. The other way round is the one a person can
- * see: the static export paints before hydration, so a long title would land
- * as a wrapped heading and then shrink.
+ * Renders the **last** rung on the server and first paint, then grows. The
+ * reverse would be visible: the static export paints before hydration, so a
+ * long title would land as a wrapped heading and then shrink.
  */
 export function FitTitle({ text, sizes, className }: {
   text: string;

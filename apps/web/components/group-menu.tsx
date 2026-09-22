@@ -14,19 +14,16 @@ import { InviteFallback } from "./invite";
 import { MenuButton, type SheetAction } from "./row-menu";
 
 /**
- * Everything a group can be asked for that isn't the ledger, behind one button
- * — **not a row of icons in the top bar**, where unlabelled glyphs are guesses
- * and the group's name gets squeezed to fit them. Same card a long press opens
- * on a row (`RowMenu`), so the app has one menu, not two.
+ * Everything a group can be asked for besides the ledger, behind one button —
+ * **not a row of icons in the top bar**, where glyphs are guesses and squeeze
+ * the name. The same card as a row's long press (`RowMenu`).
  *
- * Forgetting is here too, the only place inside a group that offers it; the
- * groups list offers the same pair from outside (app/page.tsx). **It does not
- * wait for a claim**: a group this phone never said who it was in is the one it
- * most wants off the list, and `forgetGroup` is purely local.
+ * Forgetting is here too (and on the groups list, app/page.tsx). **It doesn't
+ * wait for a claim**: an unclaimed group is the one most wanted off the list,
+ * and `forgetGroup` is purely local.
  *
- * `data` comes from the screen, not a hook of this component's own — exporting
- * needs the whole ledger, `/g` is already holding it, and a second
- * `useGroupData` would be a second live subscription to the rows on screen.
+ * `data` comes from the screen: export needs the whole ledger, `/g` already
+ * holds it, and a second `useGroupData` would be a second live subscription.
  */
 export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData }) {
   const router = useRouter();
@@ -43,11 +40,8 @@ export function GroupMenu({ groupId, data }: { groupId: string; data: GroupData 
 
   /**
    * Export: build the file, then hand it over by whatever this browser has.
-   *
-   * Nothing is said on success, because nothing here can honestly say what
-   * happened — the share sheet doesn't report which destination was picked and
-   * a download has no completion event. A browser with neither is the only
-   * outcome that has anything to add, and it gets a screen.
+   * Silent on success — neither the share sheet nor a download reports an
+   * outcome. Only a browser with neither gets a screen.
    */
   async function exportData() {
     if (!data.group) return;

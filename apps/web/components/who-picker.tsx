@@ -15,28 +15,18 @@ export interface Who {
 }
 
 /**
- * "Which one are you?" — the last step of both ways into a group. Joining asks
- * because a link hands a device a group full of strangers; creating asks
- * because you typed all these names, so which is yours is one tap.
+ * "Which one are you?" — the last step of both joining and creating a group,
+ * one screen so the question reads the same either way. **Picking is a
+ * selection, never a claim**: creating writes the group with this actor,
+ * joining writes the claim op (ADR-0003), both on the button.
  *
- * One screen for both, so the question reads the same whichever door you came
- * through — and **picking here is a selection, never a claim**. Creating writes
- * the group with this name as its actor; joining writes the claim op
- * (ADR-0003). Both happen on the button, not on the tap.
+ * **The button answers to the tick and nothing else** — never to a name
+ * half-typed in the add row. Filing that name is the plus's job
+ * (components/name-adder.tsx), and the filed row is then ticked.
  *
- * **The button answers to the tick and nothing else.** A name half-typed in the
- * add row is not an answer, and a button that rewrites itself with every
- * keystroke is reading intent out of a field nobody has pressed anything on.
- * Filing that name is the plus's job (components/name-adder.tsx); this screen
- * ticks the row that arrives, because a name you typed into the list you are
- * picking yourself out of is the pick.
- *
- * **Under the list, not in a `Foot`** — it is the next thing you do after
- * tapping your name, and pinned to the bottom of a short list it reads as
- * unrelated to the tap that just lit it up. `.whodock` is sticky for the list
- * too long to fit: the button stops at the foot of the scroller and the names
- * scroll under it. Same `.btn-lg` register as Create and Save
- * (docs/design-system.md).
+ * **Under the list, not in a `Foot`**, so it sits by the tap that lit it;
+ * `.whodock` is sticky for lists too long to fit. `.btn-lg`, like Create and
+ * Save (docs/design-system.md).
  */
 export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onContinue }: {
   people: readonly Who[];
@@ -47,22 +37,18 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   addPlaceholder?: string;
   onPick: (id: string) => void;
   /**
-   * Adds the name and answers to what it added, which is then the selection:
-   * you typed your own name, so making it one more tap asks twice.
+   * Adds the name and returns it, which becomes the selection — you typed your
+   * own name, so don't ask twice.
    *
-   * Left out where the list is not ours to add to. An import's list is the
-   * columns of somebody else's file (`app/import/page.tsx`), and a name with
-   * no column in it has no balance to be, so that screen asks which of these
-   * you are and offers no way to be a fourth.
+   * Omitted where the list isn't ours: an import's people are the file's
+   * columns (`app/import/page.tsx`), and a name outside them has no balance.
    */
   onAdd?: (name: string) => Who | Promise<Who>;
   onContinue: (id: string) => void | Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
-  // Whoever the add row just filed. A row of the list is what it becomes, but
-  // on `/g/claim` that is a Dexie write arriving on its own schedule, and the
-  // button must not sit blank in the meantime saying to pick a name that has
-  // just been picked.
+  // Whoever the add row just filed. On `/g/claim` the row arrives via a Dexie
+  // write on its own schedule, and the button must not sit blank meanwhile.
   const [added, setAdded] = useState<Who | null>(null);
   const adder = useRef<AddNameHandle | null>(null);
   const chosen = people.find((p) => p.id === picked)
@@ -99,10 +85,8 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           </button>
         ))}
 
-        {/* Filing a name here is picking it: you typed your own name into the
-            list you are picking yourself out of, so asking again would be
-            asking twice. A name the list already holds cannot be filed — it is
-            a row a tap away, and that tap is the same answer. */}
+        {/* Filing a name here is picking it. A name already on the list can't be
+            filed — its row is the same answer. */}
         {onAdd ? (
           <AddName placeholder={addPlaceholder ?? ""} taken={people.map((p) => p.name)} handle={adder}
             onAdd={async (name) => {
@@ -113,14 +97,10 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
         ) : null}
       </div>
 
-      {/* Under the list, and sticky once the list is longer than the screen:
-          it is the next thing you do after tapping your name, so on a short
-          list it sits right under the tap that lit it up — pinned to the
-          bottom there, it read as unrelated to it. On a group of twenty it
-          would be off the bottom instead, so it stops at the foot of the
-          scroller and the names pass underneath. Opaque, or they'd show
-          through it. `bottom: 0` is the scroller's own foot, which on
-          `/g/claim` is above the "Have the app?" dock, never over it. */}
+      {/* Sticky once the list outgrows the screen: stops at the scroller's
+          foot with names passing under. Opaque, or they'd show through.
+          `bottom: 0` is the scroller's foot, which on `/g/claim` is above the
+          "Have the app?" dock. */}
       <div className="pad whodock">
         <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}
           {...keepsFocus}>

@@ -46,9 +46,8 @@ function HistoryScreen() {
 
   const ops = useLive("historyOps", async () => (groupId ? opsForGroup(groupId) : []), [groupId]) ?? [];
 
-  // Every expense the group has ever had, deleted ones included: the feed links
-  // to what a revision was about, and half the reason to open history is an
-  // expense that isn't there any more.
+  // Every expense ever, deleted ones included: a deleted expense is half the
+  // reason to open history.
   const allExpenses = useLive(
     "historyExpenses",
     async () => (groupId ? db().expenses.where("groupId").equals(groupId).toArray() : []),
@@ -63,21 +62,17 @@ function HistoryScreen() {
   ) ?? [];
   const settlementById = new Map(allSettlements.map((s) => [s.id, s]));
 
-  // One id parameter, both tables: history is per-entry, and a transfer has as
-  // much of it as an expense does (ADR-0010). **Looked up in the maps that keep
-  // the deleted ones** — half the reason to open this screen is an entry that
-  // is not there any more, and the alive-only lists title every one of those
-  // "Transfer", the branch a missing subject falls through to.
+  // One id, both tables (ADR-0010). **Looked up in the maps that keep the
+  // deleted ones** — the alive-only lists would title every deleted entry
+  // "Transfer", the fallback branch.
   const subject = entryId
     ? expenseById.get(entryId) ?? settlementById.get(entryId)
     : undefined;
   const subjectName = !subject ? undefined
     : "description" in subject
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
-  // The feed is whole and the page grows into it: **rendering is what is paged,
-  // never the list**. Slice it to 200 and the count taken after the slice tells
-  // a longer group it has exactly 200 revisions — the one number on this
-  // screen, and wrong.
+  // **Rendering is paged, never the list**: slicing it would make the count
+  // report the slice size as the group's revision total.
   const revisions = !groupId ? [] : entryId ? entityHistory(ops, entryId) : activityFeed(ops);
   const visible = revisions.slice(0, shown);
   const rest = revisions.length - visible.length;
@@ -91,12 +86,9 @@ function HistoryScreen() {
   const currency = group.baseCurrency;
 
   /**
-   * Where a revision in the whole-group feed leads. Entries only — they are
-   * the only thing with a screen of their own, and "You changed the amount" is
-   * not much use in a group feed without saying of what.
-   *
-   * A deleted entry has no detail screen, so it points at its own history,
-   * which is where you would be going next anyway.
+   * Where a revision in the group feed leads — entries only, since "you changed
+   * the amount" needs to say of what. A deleted entry points at its own
+   * history.
    */
   function subjectOf(rev: Revision): { href: string; label: string } | undefined {
     if (!groupId) return undefined;

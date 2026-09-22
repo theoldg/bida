@@ -1,32 +1,28 @@
 /**
  * The in-app browser: the webview Instagram, Messenger and the rest open a
- * tapped link in, instead of handing it to the phone's browser.
+ * tapped link in.
  *
- * A dead end rather than a slower road to the same place. Its storage is its
- * own, there is no Add to Home Screen in it, and a group joined there is
- * claimed a *second* time when the person opens the link properly — the
- * duplicate claim [docs/ios.md](../../../docs/ios.md) exists to prevent. So
- * the app refuses to run in one (`components/embedded.tsx`).
+ * A dead end: its storage is its own, it has no Add to Home Screen, and a
+ * group joined there gets claimed a *second* time when the link is opened
+ * properly ([docs/ios.md](../../../docs/ios.md)). So the app refuses to run in
+ * one (`components/embedded.tsx`).
  *
  * **The bar is proof, not suspicion.** A false positive locks somebody out of
- * a real browser, which is far worse than letting a webview through, so a
- * browser that names itself is believed before anything else here is read.
+ * a real browser, so a browser that names itself is believed first.
  */
 
 /**
- * Browsers that say who they are. Checked first and alone: several are WebKit
- * builds whose user agent is otherwise Safari's to the character (Brave,
- * DuckDuckGo). A webview spoofing one would get in — the direction to be
- * wrong in.
+ * Browsers that say who they are, checked first and alone: some are WebKit
+ * builds whose user agent is otherwise Safari's exactly (Brave, DuckDuckGo).
+ * A webview spoofing one gets in — the right direction to be wrong in.
  */
 const NAMED_BROWSER =
   /(?:CriOS|FxiOS|EdgiOS|OPiOS|OPT|OPR|Edg|Firefox|SamsungBrowser|YaBrowser|Vivaldi|Brave|DuckDuckGo|UCBrowser|HuaweiBrowser|MiuiBrowser|QQBrowser)\//;
 
 /**
- * Apps whose webview names itself, which lets the screen say "Instagram"
- * rather than "this app". Not the backbone — the two structural signals below
- * catch these and everything else — but a token is proof on its own, and
- * covers a host that puts `Safari/` back.
+ * Apps whose webview names itself, so the screen can say "Instagram". The
+ * structural signals below catch these anyway; a token also covers a host
+ * that puts `Safari/` back.
  */
 const IN_APP: [RegExp, string][] = [
   // `Orca` is Messenger's own name for itself on Android, and it rides in the
@@ -53,22 +49,18 @@ export function embeddedApp(ua: string): string | undefined {
 }
 
 /**
- * Is this an in-app browser?
- *
- * Three signals, any of which is conclusive, and all of which a named browser
- * overrides:
+ * Is this an in-app browser? Any one signal is conclusive, and a named
+ * browser overrides all of them:
  *
  * 1. **A token above** — the app said so.
- * 2. **`; wv)`** — Android's WebView writes it into the platform token, and
- *    Chrome, Samsung Internet and the rest do not. Chrome Custom Tabs is real
- *    Chrome and carries no `wv`, so an app that uses it is rightly let through:
- *    it shares Chrome's storage and its menus.
- * 3. **An iOS page with no `Safari/` token** — WKWebView drops it and every
- *    shipping iOS browser keeps it, Brave and DuckDuckGo included.
+ * 2. **`; wv)`** — Android WebView writes it; Chrome and the rest don't.
+ *    Chrome Custom Tabs carries no `wv` and is rightly let through: it shares
+ *    Chrome's storage.
+ * 3. **An iOS page with no `Safari/` token** — WKWebView drops it, every
+ *    shipping iOS browser keeps it.
  *
- * `standalone` is not a nicety: **an iOS home-screen web app has no `Safari/`
- * token either**, so without this gate the app would lock itself out of the
- * very place it spends its time asking people to go.
+ * **An iOS home-screen web app has no `Safari/` token either**, so without the
+ * `standalone` gate the app would lock itself out of its own install.
  */
 export function looksEmbedded(
   { ua, ios, standalone }: { ua: string; ios: boolean; standalone: boolean },

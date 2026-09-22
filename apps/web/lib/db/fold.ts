@@ -36,28 +36,21 @@ function rowFor(kind: EntityKind, state: ReturnType<typeof foldOps>, id: string)
 }
 
 /**
- * The whole group as one folded state.
- *
- * Folded from the log rather than assembled from the materialised tables: the
- * invariant detectors are pure functions of the state the log means, and a
- * healer reading a half-written cache would repair the wrong thing. The same
- * fold `rebuild` does on every pull.
+ * The whole group as one folded state, from the log rather than the
+ * materialised tables: invariant healers must read what the log means, not a
+ * half-written cache. The same fold `rebuild` does on every pull.
  */
 export async function groupState(groupId: string): Promise<GroupState> {
   return foldOps(await db().ops.where("groupId").equals(groupId).toArray());
 }
 
 /**
- * Re-fold one entity from its own ops and write the result.
+ * Re-fold one entity from its own ops and write the result. Safe because an
+ * op only touches the entity it names; and one row written means a member
+ * rename doesn't re-render the expense list.
  *
- * Entity-scoped is safe because an op only ever touches the entity it names,
- * whichever way that entity merges. It also means a write touches one row,
- * so a live query over the expense list doesn't re-render on a member rename.
- *
- * Scoped to the group as well as the entity, which matters for exactly one
- * entity: a `rate`'s id is its currency code, so two groups on this phone both
- * spending in MAD have ops under the same entity id. Every other entity has a
- * random id and the filter costs it nothing.
+ * Scoped to the group too, for `rate`: its id is the currency code, so two
+ * groups spending MAD share an entity id.
  */
 export async function materialise(
   groupId: string, kind: EntityKind, entityId: string,
@@ -70,11 +63,9 @@ export async function materialise(
 }
 
 /**
- * Throw away every materialised row for a group and fold the whole log again.
- *
- * Needed whenever ops arrive out of order — a sync pull carrying an op older
- * than something already applied can't be folded forward without risking a
- * later write being clobbered by an earlier one.
+ * Throw away a group's materialised rows and fold the whole log again. Needed
+ * when ops arrive out of order — folding an older op forward could let an
+ * earlier write clobber a later one.
  */
 export async function rebuild(groupId: string): Promise<void> {
   const d = db();

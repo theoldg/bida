@@ -1,20 +1,17 @@
 import type { Expense, Settlement } from "@bida/core";
 
 /**
- * The three things a person can add to a group. One file, because two of the
- * three are the same entity underneath — this vocabulary is the only place the
- * distinction is visible at all.
+ * The three things a person can add to a group. Two share an entity
+ * underneath, so this vocabulary is the only place the distinction shows.
  *
- * - **Expense** — money went out, shared between the people it was spent on.
- * - **Income** — money came in, shared between the people it belongs to. An
+ * - **Expense** — money went out, shared by the people it was spent on.
+ * - **Income** — money came in, shared by the people it belongs to. An
  *   `Expense` with `kind: "income"`; the sign lives in `computeBalances`.
- * - **Transfer** — money moved from one person to another and the group is no
- *   poorer for it. A `Settlement`. Paying somebody back is *a* transfer, so
- *   "reimbursement" is not a kind: it survives only as the title settle-up
- *   prefills into the form (`copy.form.reimbursement`).
+ * - **Transfer** — money moved between two people. A `Settlement`.
+ *   "Reimbursement" is not a kind, only the title settle-up prefills
+ *   (`copy.form.reimbursement`).
  *
- * What they are *called* is `copy.entryKind` (lib/copy.ts), like every other
- * word the app says. ADR-0010.
+ * The words are `copy.entryKind` (lib/copy.ts). ADR-0010.
  */
 export type EntryKind = "expense" | "income" | "transfer";
 
@@ -26,10 +23,9 @@ export function kindOf(expense: Expense): "expense" | "income" {
 }
 
 /**
- * How one entry moves *your* balance: what you put in for it minus what you
- * owe for it, signed, in base minor units. The ledger's whole job
- * ([standing-instructions](../../../docs/standing-instructions.md#product)),
- * and the same subtraction for all three kinds — hence one home, not three.
+ * How one entry moves *your* balance: what you put in minus what you owe,
+ * signed, in base minor units — the same subtraction for all three kinds
+ * ([standing-instructions](../../../docs/standing-instructions.md#product)).
  */
 export function myEffect(
   me: string | undefined,

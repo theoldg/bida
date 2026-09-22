@@ -11,16 +11,12 @@ import { Icon } from "./icons";
  */
 
 /**
- * The mark: a thin card above the ledger, in the shape of the install offer
- * that sits in the same place (`LedgerInstall`).
+ * The mark: a thin card above the ledger, shaped like the install offer in
+ * the same place (`LedgerInstall`).
  *
- * **It does not fold and it does not dismiss** — a toast would be exactly that.
- * Every screen in the demo works, so "this is not yours" is not news that can
- * be delivered once and cleared; it stays put and says the one fact looking
- * around cannot: nothing here syncs. The way out is Clear the demo, in the
- * group menu.
- *
- * Renders nothing for every other group, so the ledger can mount it unasked.
+ * **It doesn't fold or dismiss** — the one fact looking around can't reveal,
+ * that nothing here syncs, stays true the whole visit. The way out is Clear
+ * the demo, in the group menu. Renders nothing for other groups.
  */
 export function DemoCard({ groupId }: { groupId: string }) {
   if (!isDemo(groupId)) return null;
@@ -37,13 +33,9 @@ export function DemoCard({ groupId }: { groupId: string }) {
 }
 
 /**
- * The one thing the demo genuinely cannot do.
- *
- * A group is a secret link, and the demo has no secret — created without
- * `saveGroupKey`, which is the whole of why it never reaches the server. So the
- * invite link is absent, not withheld, and **Invite says so out loud**: the
- * rendering-nothing an absent link gets elsewhere would read here as a button
- * that does nothing.
+ * The one thing the demo can't do: it has no secret (no `saveGroupKey`), so
+ * no invite link. **Invite says so out loud** — rendering nothing, as an
+ * absent link does elsewhere, would read here as a dead button.
  */
 export function DemoNoLink({ onClose }: { onClose: () => void }) {
   return (

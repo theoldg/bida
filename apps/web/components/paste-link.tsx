@@ -12,21 +12,19 @@ import { readClipboardText } from "../lib/paste";
 /**
  * Reading the clipboard as an invite, for the Paste link tile.
  *
- * What was pasted decides where it goes (`readPastedLink`): a link of ours
- * joins, or opens the group if this phone already holds it; one for another server says so, naming it, since "Bad link" would
- * send the person back for the same link; one with no password opens the
- * group's screen, which is the group if this phone holds it and "missing its
- * password" if not; anything else lands on the join screen's "Bad link". Those
- * show what was pasted (`lib/failed-link.ts`). A refused read is the person
- * dismissing iOS's paste prompt: a no, not an error.
+ * What was pasted decides where it goes (`readPastedLink`):
+ * - a link of ours joins, or opens the group if held;
+ * - one for another server says so by name ("Bad link" would send them back
+ *   for the same link);
+ * - one with no password opens the group screen (the group, or "missing its
+ *   password");
+ * - anything else is the join screen's "Bad link".
+ * Failures show what was pasted (`lib/failed-link.ts`). A refused read is a
+ * dismissed paste prompt: a no, not an error.
  *
- * **An empty read opens a box to paste into**, at once and never a screen
- * saying the clipboard was empty: iOS hands the pasteboard over on its own
- * terms, so an empty read is not an empty clipboard — but a field is a place
- * the person can put the link whatever iOS decided. Touch and hold, Paste, and
- * the same routing runs on what lands there. It goes straight there because
- * asking the clipboard again is not a retry, it is another Paste prompt to tap
- * (`lib/paste.ts`).
+ * **An empty read opens a box to paste into**, at once — iOS may withhold the
+ * pasteboard, and re-reading is another prompt, not a retry (`lib/paste.ts`).
+ * What lands in the box is routed the same way.
  */
 export function usePasteLink(): { paste: () => Promise<void>; dialog: ReactNode } {
   const router = useRouter();

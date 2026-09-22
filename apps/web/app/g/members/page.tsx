@@ -18,16 +18,13 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
 /**
  * People: who is in the group, and which of them this phone is.
  *
- * **Who this phone is is a button of its own below the list, never a tap on
- * somebody's name.** A list whose rows rewrite your identity cannot say so
- * before it happens, and the same rows carry a trash button — one miss and you
- * have signed the group's log as someone else. So it is asked, with the same
- * weight as "Edit" on an entry: the button opens the list as a `ChoiceDialog`
- * (ADR-0008), and picking writes the claim op (ADR-0003).
+ * **Who this phone is is its own button below the list, never a tap on a
+ * name** — rows that also carry a trash button are one miss from signing the
+ * log as someone else. The button opens a `ChoiceDialog` (ADR-0008), and
+ * picking writes the claim op (ADR-0003).
  *
- * Adding is the last row of the list rather than a dialog — a group is filled
- * in one burst of typing (components/name-adder.tsx). Removing keeps its
- * dialog: one decision, with a consequence to state (ADR-0008).
+ * Adding is the last row of the list (components/name-adder.tsx); removing
+ * keeps its dialog, having a consequence to state (ADR-0008).
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
@@ -72,20 +69,15 @@ function MembersScreen() {
     setAsk(null);
   }
 
-  // A tombstoned member's past entries stay exactly as they were
-  // (removeMember's whole point), but "past" means past: someone still named on
-  // a live one — a payer, a name in the split, a side of a transfer — is an
-  // open balance, not a stray one. Removing them leaves the entry untouched and
-  // un-editable by anyone who can no longer pick them.
+  // A removed member's past entries stay as they were, but someone still named
+  // on a live one — payer, split, either side of a transfer — is an open
+  // balance, and removing them makes that entry un-editable.
   //
-  // **Both kinds, via core.** Ask about expenses alone and a transfer's
-  // counterparty can be removed, leaving the payer +50 on screen with nothing
-  // balancing them and a settle-up row with a dead id behind it.
+  // **Both kinds, via core.** Checking expenses alone lets a transfer's
+  // counterparty go, leaving an unbalanced +50 and a settle-up row with a dead id.
   function askRemove(memberId: string, name: string) {
-    // A group with nobody in it is a screen with nothing to do on it: the
-    // entry form can't seed a payer and gives up, silently. Your own row has
-    // no trash button, so the last one standing can only be somebody else's —
-    // which happens when everyone but you has already gone.
+    // A group with nobody in it breaks the entry form (no payer to seed). Your own
+    // row has no trash button, so this is the last *other* member going.
     if (data.members.length <= 1) {
       setAsk({ kind: "blocked", name, body: copy.members.lastBody, entries: [] });
       return;
@@ -154,11 +146,9 @@ function MembersScreen() {
             <AddName placeholder={copy.members.addPlaceholder} taken={names} onAdd={add} />
           </div>
 
-          {/* Its own button below the list, not a row in it — the same weight
-              as "Edit" on an entry (app/g/entry/page.tsx), because rewriting
-              whose name every future entry is signed with is a bigger act
-              than the taps above it. Which name is yours is already on the
-              list, as the check mark. */}
+          {/* Its own button, with the weight of "Edit" on an entry: it rewrites
+              whose name every future entry is signed with. Your current name is the
+              check mark in the list. */}
           <div className="pad" style={{ paddingTop: 4 }}>
             <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
               {copy.members.whoChange}

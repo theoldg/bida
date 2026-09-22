@@ -1,19 +1,14 @@
 /**
  * Say less rather than be cut off.
  *
- * A row's second line is a stack of facts — who paid, how many ways, in what
- * mode — and on a 360px phone with a long name in it the stack does not fit.
- * `text-overflow: ellipsis` is the browser's answer and it is the wrong one:
- * it cuts mid-word, always at the end, so the line loses whatever happened to
- * be last rather than whatever mattered least ("Alice + 1 other paid · 5 peo…").
+ * A row's second line is a stack of facts, and on a 360px phone it may not
+ * fit. `text-overflow: ellipsis` cuts mid-word at the end, losing whatever is
+ * last rather than what matters least. So the screen passes several wordings,
+ * richest first (`lib/row-meta.ts` owns the ladder), and this picks the
+ * richest that fits.
  *
- * So the screen hands over *several* wordings of the same line, richest first,
- * and this picks the richest that fits. The ladder is the editorial decision
- * and lives with the copy (`lib/row-meta.ts`); everything here is measurement.
- *
- * Measured on a canvas rather than by rendering and reading `scrollWidth`:
- * one pass, no layout thrash, and no chance of a feedback loop where the text
- * that fits changes the box that decides whether it fits.
+ * Measured on a canvas, not by rendering and reading `scrollWidth`: one pass,
+ * no layout thrash, no feedback loop between text and box.
  */
 
 /** First width that fits, else the leanest. Widths are richest-first. */

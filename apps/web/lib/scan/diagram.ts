@@ -4,12 +4,10 @@ import { copy } from "../copy";
 /**
  * The bill drawn on `/g/scan`, split the way a scan leaves one.
  *
- * The right-hand card in that drawing is a expense summary split by receipt,
- * so it has to hold real arithmetic even though nobody will ever save it: the
- * screen's whole claim is that a photograph turns into *that*, and a picture
- * whose shares don't add to its own total is the one thing this screen can't
- * be caught showing. So the shares are summed here from the same lines the
- * left-hand card prints, rather than typed into `copy.ts` beside them.
+ * The right-hand card must hold real arithmetic even though nobody saves it:
+ * a picture whose shares don't add to its own total is the one thing this
+ * screen can't show. So the shares are summed from the lines the left card
+ * prints, not typed into `copy.ts`.
  */
 
 /** The drawing shows no symbol, so the currency decides only the decimals: two. */
@@ -19,14 +17,10 @@ const SHOWN: CurrencyCode = "EUR";
 interface DrawnShare { name: string; amount: string }
 
 /**
- * Who the drawing splits its bill between: three of this group's members,
- * padded from `copy.scan.diagram.people` where a group holds fewer.
- *
- * The three are picked by the group's id rather than taken off the front of
- * the list — two groups shouldn't open the same screen and see the same two
- * names — but by the id and nothing else, so one group sees the same picture
- * every time it comes back. A member who is one of the stand-ins by name is
- * still only listed once.
+ * Three of this group's members to split the drawing between, padded from
+ * `copy.scan.diagram.people` where there are fewer. Picked by the group's id,
+ * so different groups see different names and one group always the same. A
+ * member sharing a stand-in's name is listed once.
  */
 export function drawnNames(members: readonly string[], seed: string): string[] {
   const named = members.filter((n) => n.trim().length > 0);
@@ -40,10 +34,8 @@ export function drawnNames(members: readonly string[], seed: string): string[] {
 }
 
 /**
- * The drawn bill's lines shared out: one line each, and whatever is left over
- * to the last of them — which is how a real bill lands when one person had
- * two of the dishes. The shares add to `copy.scan.diagram.amount`, and
- * `diagram.test.ts` is what keeps that true.
+ * The drawn lines shared out: one each, and the remainder to the last. The
+ * shares add to `copy.scan.diagram.amount`; `diagram.test.ts` keeps it true.
  */
 export function drawnShares(members: readonly string[], seed: string): DrawnShare[] {
   const names = drawnNames(members, seed);

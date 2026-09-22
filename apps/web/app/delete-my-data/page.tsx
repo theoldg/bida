@@ -13,27 +13,20 @@ import { readClipboardText } from "@/lib/paste";
 
 /**
  * `/delete-my-data` — the hosted service's way to ask for a group to be
- * deleted, and the only screen in bida that destroys anything
+ * deleted, and the only screen that destroys anything
  * (docs/frontend.md#deleting-a-group).
  *
- * **Not linked from the app's navigation.** It is reached from `/about`, under
- * the privacy section that makes the promises this screen honours, and its
- * address is meant to be typeable by somebody who read one. Nothing about a
- * group leads here: a screen whose whole job is deleting other people's data
- * has no business being one tap from a ledger.
+ * **Not in the app's navigation.** Reached from `/about`'s privacy section,
+ * with a typeable address; nothing in a group leads here.
  *
- * **It asks for the invite link, not for a group.** Holding the link is the
- * whole of authority in this app (ADR-0003), so it is also the whole of
- * authority to end a group, and asking for it means the screen works from a
- * phone that was never in the group. The link is then used to pull the group
- * and open it, so what is on screen when the button is pressed is the real
- * group, named, counted and dated, rather than an id nobody can read.
+ * **It asks for the invite link, not a group.** The link is the whole of
+ * authority (ADR-0003), so it works from a phone that was never in the group;
+ * the link then opens the group so the button is pressed over the real thing,
+ * named, counted and dated.
  *
- * **Three deliberate frictions**, in a codebase that spends its effort
- * removing them everywhere else: finding the link, typing the group's name,
- * and a last dialog that names the group again. The act is irreversible, it
- * has no backup behind it, and it is taken by one person on behalf of
- * everybody in the group.
+ * **Three deliberate frictions** — finding the link, typing the name, a final
+ * dialog — because the act is irreversible, unbacked, and taken by one person
+ * for everybody.
  */
 export default function DeleteMyDataPage() {
   const c = copy.deleteData;
@@ -175,12 +168,8 @@ export default function DeleteMyDataPage() {
 }
 
 /**
- * The group, as the server holds it and this phone has just opened it: the
- * name to type, what is in it, and when it started.
- *
- * Counts rather than a list of expenses. What the person needs is enough to
- * recognise the group and to feel its size; the ledger itself is not something
- * to page through on the way to deleting it.
+ * The group as the server holds it: the name to type, counts of what is in
+ * it, and when it started — enough to recognise it and feel its size.
  */
 function Found({ found, name, setName, onAsk, onOther }: {
   found: { link: JoinLink; preview: GroupPreview };
@@ -197,10 +186,8 @@ function Found({ found, name, setName, onAsk, onOther }: {
   return (
     <section className="aboutsect">
       <h4>{c.title}</h4>
-      {/* The name first and in the app's voice for a group's name, because it
-          is the one line here somebody recognises a group by, and the one they
-          are about to type. The rest is labelled: three bare figures would
-          have to be worked out at exactly the wrong moment. */}
+      {/* The name first, as the line somebody recognises and is about to type.
+          The figures are labelled: no working things out at this moment. */}
       <p><strong>{preview.name}</strong></p>
       <div className="card">
         {/* Counted, not listed: what this screen is for is recognising the

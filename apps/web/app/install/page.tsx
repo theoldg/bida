@@ -16,16 +16,13 @@ import { formatJoinLink, parseInvites, route, type CarriedGroup } from "@/lib/gr
 
 /**
  * Putting bida on an iOS home screen, and what that does and doesn't bring
- * along (docs/ios.md). One page whoever sends here — the groups list's banner
- * or a join's "Add to home screen" — so back is a plain back to either.
+ * along (docs/ios.md). One page for every sender, so back is a plain back. No
+ * button onward: the way forward is out of the browser.
  *
- * Prose in `/about`'s register. There is no button onward: the way forward is
- * out of the browser, so back is the only exit.
- *
- * In a tab it is only a page like any other: every page's manifest already
- * carries the tab's groups (`manifestScript`), and its fragment carries them
- * again for an iOS that bookmarks the URL instead. Launched *as* the icon,
- * this is where they land — `start_url` is always `/install#…`.
+ * In a tab it is an ordinary page: every page's manifest carries the tab's
+ * groups (`manifestScript`), and the fragment carries them again for an iOS
+ * that bookmarks the URL instead. Launched *as* the icon, this is where they
+ * land — `start_url` is always `/install#…`.
  */
 export default function InstallPage() {
   // Parsed on the client only — there is no window during the export's
@@ -47,25 +44,20 @@ export default function InstallPage() {
 /**
  * The icon's first launch: the groups the tab held, and who it was in each.
  *
- * A group this phone does not hold yet has its key saved. One the tab had
- * named has that member claimed here too — a claim of this app's own, since it
- * is a device of its own ("Ana started editing from a new device") — before the
- * group has synced, since the claim is an op and rides the next push.
+ * Keys are saved for groups this phone doesn't hold. A member the tab had
+ * named is claimed here too — the icon is a device of its own — before sync,
+ * since the claim is an op riding the next push.
  *
- * One group, unnamed, is the newcomer who added the icon before picking a name,
- * so `/join` says it best. Anything else lands on the list, filling as each
- * group syncs.
+ * One unnamed group is a newcomer who added the icon before picking a name,
+ * so it goes to `/join`. Anything else lands on the list.
  *
- * A spent fragment is still a launch, and **that is `lib/launch.ts`'s to answer,
- * not this screen's** — say `launchedOnto` and let the list decide. The icon's
- * `start_url` is this route, so the document never loads on the list and
- * nothing else can tell a launch from a navigation.
+ * A spent fragment is still a launch, and **`lib/launch.ts` answers it, not
+ * this screen** — set `launchedOnto` and let the list decide.
  *
- * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`, and an
- * icon must not walk back into a group this phone said it was done with.
+ * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`.
  *
  * **`location.replace`, not the router**, for the hand-off to `/join`: Next's
- * router drops the fragment when it gives up and loads the page itself
+ * router drops the fragment when it falls back to a full load
  * (docs/ios.md#gotchas).
  */
 function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
@@ -117,11 +109,9 @@ function Tutorial() {
               <AlreadyAdded browser={browser} />
             </section>
             <section className="aboutsect">
-              {/* The two buttons in words, then the recording of the walk. The
-                  clip alone settles which button is meant faster than prose
-                  can — the share sheet has moved between iOS versions — but it
-                  is silent to a screen reader and slow to a glance, so the
-                  steps lead and it confirms them. */}
+              {/* Steps in words first, then the recording: the clip settles which
+                  button is meant (the share sheet moves between iOS versions), but is
+                  silent to a screen reader. */}
               <ol className="installsteps">
                 {page.steps.map((step) => (
                   <li key={step.text}>
@@ -141,9 +131,8 @@ function Tutorial() {
 }
 
 /**
- * For whoever added bida and still meets the banner, so it sits above the
- * recording rather than under it; folded, since most readers haven't added it
- * yet and the clip is what they came for.
+ * For whoever added bida and still sees the banner; above the recording, and
+ * folded, since most readers haven't added it yet.
  */
 function AlreadyAdded({ browser }: { browser: string | undefined }) {
   const [open, setOpen] = useState(false);

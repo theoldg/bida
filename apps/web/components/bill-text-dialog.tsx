@@ -11,20 +11,18 @@ import { billTextLeft, cleanBillText } from "../lib/scan/text";
 import type { LiveScan } from "../lib/scan/live";
 
 /**
- * Type the bill in — the scan control's third door, for a receipt nobody
- * photographed, one a camera has failed on, or one that arrived as text
- * (docs/receipt-scanning.md#typing-a-bill-in). What it sends goes through the
- * same reading as a photograph and comes back as the same filled draft, so
- * there is nothing here about bills, lines or totals: the box and the cap.
+ * Type the bill in — the scan control's third door, for a receipt with no
+ * usable photo or one that arrived as text
+ * (docs/receipt-scanning.md#typing-a-bill-in). It goes through the same
+ * reading as a photo and returns the same filled draft, so this is only the
+ * box and the cap.
  *
- * **It takes its state from the reading, not from itself.** `live` is the one
- * `LiveScan` the screen behind it is also watching, so the bar is a clock on the
- * reading: close it mid-read and the draft still fills, reopen it and the bar is
- * where the reading actually is. A refusal keeps the dialog standing with the
- * text intact — unlike a bad photograph, a bad bill is fixed where it was typed,
- * which is also why this is the one place it is said.
+ * **State comes from the reading, not the dialog**: `live` is the screen's own
+ * `LiveScan`, so closing mid-read still fills the draft and reopening shows the
+ * bar where the reading is. A refusal keeps the dialog up with the text, since
+ * a bad typed bill is fixed where it was typed.
  *
- * **Rendered by `useReceiptScan`, never by a screen**: a dialog whose own answer
+ * **Rendered by `useReceiptScan`, never by a screen** — a dialog whose answer
  * moves the panel around it gets unmounted mid-sentence.
  */
 export function BillTextDialog({ live, refusal, initial = "", onRead, onClose }: {
@@ -38,9 +36,8 @@ export function BillTextDialog({ live, refusal, initial = "", onRead, onClose }:
 }) {
   const [value, setValue] = useState(initial);
   const reading = live?.state === "scanning";
-  // Only this dialog's own reading closes it. A photograph started before it
-  // was opened is still a reading, and watching it end is no reason to take the
-  // box away from somebody who is typing.
+  // Only this dialog's own reading closes it; a photo scan started earlier
+  // ending is no reason to take the box from someone typing.
   const mine = useRef(false);
   useEffect(() => {
     if (mine.current && live === undefined) onClose();
@@ -75,12 +72,9 @@ export function BillTextDialog({ live, refusal, initial = "", onRead, onClose }:
             {left <= 0 ? copy.scan.typeIn.full : copy.scan.typeIn.left(left)}
           </div>
         ) : null}
-        {/* A typed bill's refusal, said where the fix is — and said **only**
-            here: the screen behind never rang this reading, so it does not
-            carry the sentence (`ReceiptScan.refusal`). Shut the box and the
-            message goes with the text it was about. A photograph refused
-            before the box was opened is the screen's, and is not repeated
-            over it. */}
+        {/* A typed bill's refusal is said **only** here, where the fix is; the
+            screen behind never carries it (`ReceiptScan.refusal`). A photo
+            refused before the box opened is the screen's, not repeated here. */}
         {refusal ? <Failure>{refusal}</Failure> : null}
         <div className="drow">
           {/* Enabled while the model reads, and it only closes the box: the

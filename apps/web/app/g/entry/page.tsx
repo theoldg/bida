@@ -24,18 +24,15 @@ import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
- * The type a title is set in, largest first, ending at the size it wraps at.
- * A one-word expense is a heading; a sentence is a paragraph — and the step
- * between them is what stops the short ones looking like a caption on the
- * figure. Nothing here reaches the amount's 32px: the money still leads.
+ * The title's type sizes, largest first, ending at the size it wraps at: a
+ * one-word title is a heading, a sentence a paragraph. All below the amount's
+ * 32px — the money leads.
  */
 const ENTRY_TITLE_SIZES = [26, 22, 17] as const;
 
 /**
- * One entry, whichever of the three it is. The id in the query string is looked
- * up in both tables — expense ids and settlement ids are both random and can't
- * collide — so every row in the ledger has a screen, a transfer included
- * (ADR-0010).
+ * One entry, whichever of the three it is. The id is looked up in both tables
+ * (random ids, can't collide), so every ledger row has a screen (ADR-0010).
  */
 export default function EntryPage() {
   return <QueryBoundary><EntryScreen /></QueryBoundary>;
@@ -95,10 +92,8 @@ function EntryScreen() {
   return (
     <Screen>
       <Body>
-        {/* The bar names which of the three this is and when it happened —
-            two bounded strings, so it is the same height on every entry in
-            every group. What the entry is *called* is the one thing here
-            nobody has a length for, and it is in the screen below
+        {/* The bar holds the kind and the date — two bounded strings, so it is
+            the same height everywhere. The title, of unknown length, is below
             (`.entrytitle`). */}
         <TopBar
           title={copy.entryKind.label[kind]}
@@ -116,10 +111,8 @@ function EntryScreen() {
 
         <Scroll>
           <div className="pad" style={{ paddingTop: 2 }}>
-            {/* Nothing at all when there is nothing: an expense saved without
-                a title is already named "Expense" by the bar, and a line
-                reading "Untitled" under it only says so again. A transfer has
-                never had one — its words are the note, under the two sides. */}
+            {/* Nothing when there is no title: the bar already says "Expense". A
+                transfer has none — its words are the note. */}
             {title ? (
               <FitTitle className="entrytitle selectable" text={title} sizes={ENTRY_TITLE_SIZES} />
             ) : null}
@@ -180,10 +173,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
   try {
     shares = resolveSplit(expense.baseAmountMinor, expense.split, { tiebreakSeed: expense.id }).shares;
   } catch { /* a broken split still deserves a readable screen */ }
-  // A receipt expense keeps the grid it was built from (ADR-0016), so each
-  // person's row can be opened onto their own copy of the bill. Read with the
-  // entry's id as the seed — the same one the saved weights were rounded
-  // with — so these lines are those weights, itemised, not a second opinion.
+  // A receipt expense keeps its grid (ADR-0016), so each person's row opens
+  // onto their copy of the bill. Seeded with the entry's id, the seed the saved
+  // weights were rounded with, so these lines are those weights itemised.
   const bill = expense.split.mode === "receipt" && expense.receiptItems?.length
     ? receiptBreakdown(
       billLabels(expense.receiptItems, english),

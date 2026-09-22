@@ -21,14 +21,12 @@ import {
 /**
  * What the bill came to, per person — the end of a quick split (ADR-0035).
  *
- * The figures are the grid's own, read off `receiptBill` under the same seed,
- * so the totals somebody watched add up while tapping are the totals here.
- * Each row opens onto that person's own lines, which is the concrete reading
- * of a figure, exactly as a scanned expense's rows do inside a group.
+ * The figures are the grid's own (`receiptBill`, same seed), so the totals
+ * watched while tapping are the totals here. Each row opens onto that
+ * person's lines.
  *
- * It ends by handing the whole thing over as text. No link and no image: a
- * link has to carry the bill somewhere, and this is the one flow that puts
- * nothing anywhere.
+ * It ends by handing everything over as text — no link, no image: this flow
+ * puts nothing anywhere.
  */
 export default function QuickResultPage() {
   const router = useRouter();
@@ -73,11 +71,9 @@ export default function QuickResultPage() {
       await writeClipboardText(text);
       setCopied(true);
     } catch {
-      // The clipboard is refused on an insecure context or a denied
-      // permission, and absent altogether in some in-app browsers
-      // (lib/clipboard.ts). A button that looks inert is worse than no button:
-      // put the text on screen to be read instead (`components/invite.tsx`
-      // does the same for the one other string this app hands over).
+      // The clipboard can be refused or absent (lib/clipboard.ts). An inert-looking
+      // button is worse than none, so show the text instead, as
+      // `components/invite.tsx` does.
       setFailed(true);
     }
   }
@@ -86,8 +82,8 @@ export default function QuickResultPage() {
     leaving.current = true;
     if (cred) clearDraft(cred.id);
     clearQuickPeople();
-    // Unwind rather than push: the three screens behind this one are a flow
-    // that is now over, and nothing in them survives the clearing above.
+    // Unwind rather than push: the flow behind this screen is over, and nothing
+    // in it survives the clearing above.
     goUp(route.groups(), (to) => router.replace(to));
   }
 
@@ -114,10 +110,8 @@ export default function QuickResultPage() {
 
           {/* The one act this screen exists for, and then the way out. */}
           <div className="pad" style={{ paddingTop: 18 }}>
-            {/* The label turns away and the check comes up behind it, the flip
-                every other copy in the app answers with (`FlipLabel`) — here
-                on the button itself, because this screen has nothing else on
-                it to say the clipboard took the bill. */}
+            {/* The label flips to a check (`FlipLabel`), on the button itself —
+                nothing else here can say the clipboard took it. */}
             <button type="button" className="btn btn-p btn-lg" onClick={() => void hand()}>
               <FlipLabel label={copy.quick.copy} done={copy.quick.copied} on={copied} />
             </button>

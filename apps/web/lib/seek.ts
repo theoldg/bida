@@ -1,14 +1,12 @@
 /**
  * The DOM half of a refusal that has to travel before it flashes — the scroll
- * and the wait for it — beside the geometry in `lib/reveal.ts`, which decides
- * whether to go and how far. Shared by the who-had-what grid and the entry
- * form, which both learned the same two things: a bloom spent while the rows
- * are still moving is a bloom nobody saw, and whatever was refused may have
- * been fixed by the time the scroll lands.
+ * and the wait — beside the geometry in `lib/reveal.ts`. Shared by the
+ * who-had-what grid and the entry form: a bloom spent mid-scroll is one nobody
+ * sees, and the refused thing may be fixed by the time the scroll lands.
  *
- * **Never `scrollTo({ behavior: "smooth" })`** — iOS glides with it and Android
- * jumps, and there is no end event every browser here agrees on. Driving the
- * scroll frame by frame moves the same everywhere and knows when it arrived.
+ * **Never `scrollTo({ behavior: "smooth" })`** — iOS glides, Android jumps,
+ * and no end event is reliable. Driving it frame by frame moves the same
+ * everywhere and knows when it arrived.
  */
 
 /** The shortest and longest a glide takes; distance decides in between. */
@@ -33,14 +31,11 @@ export function ease(t: number): number {
 const SLACK = 2;
 
 /**
- * Scroll `box` to `target`, then call `done` — once, on a later frame, never
- * in the tick it was asked. A finger or a wheel on the list mid-way ends the
- * glide where it stands and answers straight away: whoever took the list over
- * is owed the refusal more than a tidy arrival. Returns a cancel that stops the
- * glide without answering, for a caller that is going away.
- *
- * With reduced motion asked for, the list is put in place at once and the
- * answer still comes on the next frame (`calmly`).
+ * Scroll `box` to `target`, then call `done` once, on a later frame — never in
+ * the same tick. A finger or wheel mid-way ends the glide and answers at once.
+ * Returns a cancel that stops without answering, for a caller going away.
+ * Under reduced motion the jump is instant and the answer still comes next
+ * frame (`calmly`).
  */
 export function glide(box: HTMLElement, target: number, done: () => void): () => void {
   const from = box.scrollTop;
@@ -81,9 +76,7 @@ export function glide(box: HTMLElement, target: number, done: () => void): () =>
 }
 
 /**
- * Whether to travel at all. The flash itself is exempt from reduced motion —
- * a colour settling is what that guidance asks for (globals.css) — but this is
- * movement, and movement is exactly what it asks to be spared: the row is put
- * in place at once instead.
+ * Whether to travel at all. The flash is exempt from reduced motion (a colour
+ * settling, globals.css), but scrolling is movement, so it becomes a jump.
  */
 export const calmly = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;

@@ -5,29 +5,22 @@ import { copy } from "../lib/copy";
 import type { LiveScan } from "../lib/scan/live";
 
 /**
- * How a reading in flight is drawn, wherever it is drawn.
- *
- * Its own file because two things wear it — the control on every scanning
- * screen, and the dialog a bill is typed into — and the control is what renders
- * that dialog, so leaving these beside it would be a cycle.
+ * How a reading in flight is drawn. Its own file because the scan control and
+ * the type-a-bill dialog both use it, and the control renders that dialog —
+ * beside the control it would be a cycle.
  */
 
 /**
- * The wash sweeping across the control while the model reads.
+ * The wash sweeping across the control while the model reads, at the pace a
+ * scan usually takes; `onFull` hands over to a spinner if this one is slower.
+ * It promises the *usual* scan, so it is `aria-hidden` — screen readers get
+ * the "Reading…" beside it.
  *
- * A scan is about three seconds of network, challenge and model — long enough
- * that a spinner alone says only "no idea" — so the control fills at the pace
- * a scan usually takes, and `onFull` hands over to the spinner if this one is
- * slower. The bar promises the *usual* scan and not this one, which is why it is
- * `aria-hidden`: what a screen reader is owed is the "Reading…" beside it.
- *
- * Three details it cannot do without. The duration is inline, being a different
- * number every sweep while the class holds only the shape. The **negative**
- * delay makes the bar a clock on the scan rather than on itself: one mounting
- * onto a scan already a second old starts a second in, so leaving the Items tab
- * and coming back resumes the sweep. And **`animationend` must be stopped** —
- * `.btn-pair` listens on the way up for the refusal flash (`onFlashEnd`), and
- * reads a loose one as a flash that has settled.
+ * - The duration is inline: a different number every sweep.
+ * - The **negative** delay makes it a clock on the scan, not itself, so a bar
+ *   remounted a second into a scan starts a second in.
+ * - **`animationend` must be stopped** — `.btn-pair` listens for the refusal
+ *   flash's end (`onFlashEnd`) and would take a loose one for it.
  */
 function ScanBar({ startedAt, seconds, onFull }: {
   startedAt: number;
@@ -45,13 +38,10 @@ function ScanBar({ startedAt, seconds, onFull }: {
 }
 
 /**
- * "Reading…", with the bar sweeping across it — what every surface that starts
- * a reading shows while one is in flight.
- *
- * **Shared, never copied**: it is a clock on the *scan*, not on whatever draws
- * it, and the Items tab's pair and the type-a-bill dialog both watch one
- * `LiveScan` — two implementations would be two estimates of one wait. `box` is
- * the caller's own class, since the strip is the same and where it sits is not.
+ * "Reading…", with the bar sweeping across it, wherever a reading is in flight.
+ * **Shared, never copied**: the Items tab and the type-a-bill dialog watch one
+ * `LiveScan`, and two implementations would be two estimates of one wait.
+ * `box` is the caller's class, for placement.
  */
 export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
   live: LiveScan;
@@ -61,13 +51,10 @@ export function ScanBusy({ live, box, button = "btn", onFlashEnd }: {
   onFlashEnd?: (e: React.AnimationEvent) => void;
 }) {
   /**
-   * The sweep has run out and the scan is still going, so the spinner takes
-   * over. Reset the moment the scan ends — the next is a fresh sweep of its own.
-   *
-   * **Two ways to be past it**, because this control can mount onto a scan
-   * already in flight: the sweep finished under us (`setFull`), or it finished
-   * before we rendered at all — a bar starting beyond its own end never fires
-   * `animationend`.
+   * The sweep ran out with the scan still going, so the spinner takes over;
+   * reset when the scan ends. **Two ways to be past it**, since this can mount
+   * mid-scan: the sweep ended under us (`setFull`), or before we rendered — a
+   * bar starting beyond its end never fires `animationend`.
    */
   const [full, setFull] = useState(false);
   const overrun = Date.now() - live.startedAt >= live.seconds * 1000;

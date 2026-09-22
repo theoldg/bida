@@ -9,38 +9,29 @@ import { eraseGroupLocally } from "./groups";
 /**
  * The demo group: open it, and clear it.
  *
- * A real group made of real ops, created exactly as `createGroup` creates one,
- * with a single thing left out — `saveGroupKey` is never called. That is the
- * whole mechanism: `runSyncAll` drives off `groupKeys.toArray()`, so a group
- * with no key cannot reach the server. `POST /ops` registers any unseen group
- * id into a D1 that gets no further resets, and a syncing demo would be a
- * one-tap door for every tourist (docs/sync.md#the-demo-group-has-no-key).
+ * A real group, created as `createGroup` creates one, except `saveGroupKey` is
+ * never called. `runSyncAll` drives off `groupKeys`, so a group with no key
+ * cannot reach the server — and a syncing demo would register every tourist
+ * into D1 (docs/sync.md#the-demo-group-has-no-key).
  *
  * **Nothing else in the app may write a `groupKeys` row for this id.**
- * `scripts/rules-check.mjs` holds that — it is the invariant here whose quiet
- * breakage starts writing tourists into the log.
+ * `scripts/rules-check.mjs` holds that.
  */
 
 /**
- * Create the demo, or reopen the one that is already here.
+ * Create the demo, or reopen the one already here. Idempotent because the id
+ * is a constant; one `appendOps` batch, so history reads as one arrival.
  *
- * Idempotent because the id is a constant. The whole trip goes in one
- * `appendOps` batch, as `createGroup` does, so the log — and the history
- * screen — reads as one arrival rather than a dozen.
- *
- * One exception, and the reason `demoStamp` exists: **a build whose seed has
- * changed throws the old demo away and lays down the new one.** The demo is
- * this version's pitch, not a group somebody keeps, so idempotence across
- * releases would leave every phone showing a story we stopped telling.
+ * Except: **a build whose seed changed throws the old demo away** (`demoStamp`)
+ * — the demo is this version's pitch, not a group anyone keeps.
  */
 export async function openDemo(now = Date.now()): Promise<Id> {
   const me = memberIdFor(DEMO_GROUP_ID, DEMO_ME);
   const stamp = demoStamp();
 
   if ((await getDevice()).demoSeed !== stamp && await db().groups.get(DEMO_GROUP_ID)) {
-    // Erase rather than fold the new ops over the old: the seed's entity ids
-    // move between versions, so anything the last story had and this one does
-    // not would survive as a stray row nobody wrote.
+    // Erase rather than fold over the old: seed entity ids move between versions,
+    // so anything the last story had would survive as a stray row.
     await clearDemo();
   }
   if (!(await db().groups.get(DEMO_GROUP_ID))) {
@@ -68,13 +59,10 @@ export async function openDemo(now = Date.now()): Promise<Id> {
 }
 
 /**
- * Take the demo off the phone: its ops, every table folded from them, and the
- * device's memory of it.
- *
- * **`eraseGroupLocally`, never `forgetGroup`** — forgetting only hides, and a
- * hidden demo is off the list, still on disk, with no link anywhere to bring
- * it back. The seed being deterministic, *reset* is this call and `openDemo`
- * in a row.
+ * Take the demo off the phone: its ops, its folded tables and the device's
+ * memory of it. **`eraseGroupLocally`, never `forgetGroup`** — forgetting only
+ * hides, leaving it on disk with no link to bring it back. Reset is this then
+ * `openDemo`.
  */
 export async function clearDemo(): Promise<void> {
   await eraseGroupLocally(DEMO_GROUP_ID);

@@ -4,27 +4,20 @@ import { eraseGroupLocally } from "./commands/groups";
 import { deleteGroupOnServer, pullWholeGroup, SyncHttpError } from "./sync";
 
 /**
- * Deleting a group for good: what `/delete-my-data` reads, and what it then
- * destroys. The only code in the app that removes anything rather than
- * appending an op saying it was removed (ADR-0002), which is the point of it —
- * "delete my data" cannot be answered by writing one more row.
+ * Deleting a group for good: what `/delete-my-data` reads, then destroys. The
+ * only code that removes rather than appends a removal op (ADR-0002) — "delete
+ * my data" can't be answered with one more row.
  *
- * Two halves, and the screen does both: the server's copy
- * (`deleteGroupOnServer`, which takes every op with it and leaves a tombstone
- * so no phone can push the group back) and this phone's
- * (`eraseGroupLocally`). Any *other* phone still holding the link keeps what
- * is in its own IndexedDB until somebody deletes it there, and stops syncing
- * the moment it next tries. The screen says so; nothing here can reach it.
+ * Two halves, both run by the screen: the server's copy (`deleteGroupOnServer`,
+ * which leaves a tombstone so no phone can push it back) and this phone's
+ * (`eraseGroupLocally`). Other phones keep their IndexedDB copy and stop
+ * syncing on their next try; nothing here can reach them.
  */
 
 /**
- * What the server holds for a link, opened on this phone so a person can check
- * they are deleting the group they meant.
- *
- * Deleting on an id alone would be a promise nobody could verify, and group ids
- * are unreadable by design. So the ops are pulled and folded — the same fold
- * every screen uses — and the screen shows the group's name, when it started,
- * and how much is in it.
+ * What the server holds for a link, so a person can check they are deleting
+ * the group they meant — ids are unreadable by design. The ops are pulled and
+ * folded as every screen folds them, to show name, start and size.
  */
 export interface GroupPreview {
   name: string;
@@ -53,14 +46,12 @@ export async function previewGroup(link: JoinLink): Promise<PreviewResult> {
       if (err.status === 403) return { ok: false, problem: "refused" };
       return { ok: false, problem: "offline" };
     }
-    // `openOp` throwing here is a link whose secret opens nothing: the token
-    // derived beside it was accepted, so this is a group sealed under some
-    // other key, not a wrong link. Either way there is nothing to show.
+    // `openOp` throwing here: the derived token was accepted, so the group is
+    // sealed under some other key. Either way there is nothing to show.
     return { ok: false, problem: err instanceof TypeError ? "offline" : "unreadable" };
   }
 
-  // The whole log of one group, folded the way every screen folds it. An
-  // entity the group deleted is not in what is being deleted now, so the
+  // Folded as every screen folds, so deleted entities aren't counted — the
   // counts are of what is still there to lose.
   const state: GroupState = foldOps(ops);
   const group = state.group;

@@ -11,27 +11,17 @@ import { useDevice } from "@/lib/hooks";
 import { checkGeminiKey, maskKey, type KeyRefusal } from "@/lib/scan/key";
 
 /**
- * Settings nobody needs by default, and the first of them: a Gemini key of
- * your own.
+ * Settings nobody needs by default, starting with a Gemini key of your own.
  *
- * **One row, which locks.** Pasting a key and holding one are the same screen
- * with the same field in the same place — typed into before, disabled and
- * masked after, with a bin where the plus was. **Nothing moves but the button
- * and the line under it**: swapping the section out on success throws the
- * screen into a shape nobody asked for at the moment they are reading it.
- *
- * The row is the app's add-a-name row (`components/name-adder.tsx`), not a
- * field with a Save under it: a plus on the right of what you typed is how this
- * app files a thing.
+ * **One row, which locks** — the add-a-name row (`components/name-adder.tsx`).
+ * Before, you type into it; after, it is disabled and masked with a bin where
+ * the plus was. **Nothing moves but the button and the line under it.**
  *
  * **A key is never stored unchecked.** The plus asks Google once
- * (`checkGeminiKey`), settling two questions: whether the key is good, and
- * whether this browser can reach Google at all. The second has no other moment
- * to be found in — a scan on a brought key is a call this browser makes itself,
- * so a blocker defeats the feature however good the key is, and that is better
- * said here than over a receipt. **No fallback through our Worker**: the promise
- * is that the key does not leave the phone
- * (docs/receipt-scanning.md#a-key-of-your-own).
+ * (`checkGeminiKey`): is the key good, and can this browser reach Google at
+ * all — a brought-key scan is called from the browser, so a blocker defeats
+ * it. **No fallback through our Worker**: the promise is that the key never
+ * leaves the phone (docs/receipt-scanning.md#a-key-of-your-own).
  */
 export default function AdvancedPage() {
   const device = useDevice();
@@ -123,14 +113,8 @@ export default function AdvancedPage() {
 }
 
 /**
- * Where to get a key, folded shut: most readers already have a key in mind
- * or don't care where one comes from, and the free tier's own fine print
- * (a request cap, and training on what it reads) is a footnote next to the
- * row above it, not a reason to hold this screen open longer.
- *
- * Set down from the paragraph above it rather than trailing off the end of it,
- * so the shut fold reads as the next thing on the screen and not as that
- * paragraph's last line.
+ * Where to get a key, folded shut: most readers don't need it. Set apart from
+ * the paragraph above so the fold reads as the next thing, not its last line.
  */
 function FreeKeyFold() {
   const [open, setOpen] = useState(false);
@@ -142,9 +126,8 @@ function FreeKeyFold() {
         {key.where}
       </button>
       {open ? (
-        // One paragraph, the link set in its last sentence: an `.aboutlink`
-        // row under a fold whose own button already says where to go was the
-        // same sentence twice, once as a heading (app/about/page.tsx).
+        // One paragraph with the link in its last sentence; a separate link row
+        // would repeat the fold's own button.
         <p>
           {key.freeTier}{" "}
           {key.site.lede}

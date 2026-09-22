@@ -19,37 +19,31 @@ function embedded(): boolean {
 }
 
 /**
- * The app, or the way out of the in-app browser it has been opened in — never
- * both (`lib/embedded.ts`).
+ * The app, or the way out of the in-app browser it was opened in — never both
+ * (`lib/embedded.ts`).
  *
- * **Everything is behind this**, sync and the service worker included, not just
- * the screens: a webview is a storage nobody can get back to, so a group joined
- * in one is a key that dies with the app switcher and a claim made again the
- * moment the link is opened properly. Joining twice from one invite is the
- * failure docs/ios.md is built around.
+ * **Everything is behind this**, sync and service worker included: a webview's
+ * storage is unreachable later, so a group joined there is a key that dies
+ * and a claim made twice (docs/ios.md).
  *
- * **Refusing is the whole design** — there is nothing to offer in here: no Add
- * to Home Screen in a webview, and no way for a page to send itself to a real
- * browser (Android's `intent://` is the only scheme, and Android's alone). So
+ * **Refusing is the whole design**: a webview has no Add to Home Screen and a
+ * page can't send itself to a real browser (`intent://` is Android-only). So
  * the screen names the app, says what to press, and hands over the link.
  *
- * Nothing renders it on the server and it is false through hydration, so the
- * export stays one HTML file and the first client render decides.
+ * False on the server and through hydration, so the export stays one HTML
+ * file and the first client render decides.
  */
 export function EmbeddedGate({ children }: { children: ReactNode }) {
   return useSyncExternalStore(never, embedded, () => false) ? <Escape /> : <>{children}</>;
 }
 
 /**
- * Set like `BadLinkNotice` — badge, heading, prose — because it is the same
- * kind of screen: the app cannot do the thing, and this is the fix. The bar
- * carries the name and no arrow: there is nowhere back to.
+ * Set like `BadLinkNotice` — the app can't do it, here's the fix. No back
+ * arrow: there is nowhere back to.
  *
- * The badge is the menu the line below it says to tap, turned on its side for
- * iOS: one symbol, and it always matches the glyph in the sentence rather than
- * sending someone after a button shaped the other way. The instruction is the
- * one line here set in ink — the rest is why, and the link under it is what
- * to do when an app has moved the item or renamed it.
+ * The badge is the menu glyph the line below says to tap, turned on its side
+ * for iOS, so it always matches the sentence. Only the instruction is in ink;
+ * the link below covers an app that moved or renamed the item.
  */
 function Escape() {
   const { embedded: page } = copy;

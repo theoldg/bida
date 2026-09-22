@@ -5,24 +5,19 @@ import { useEffect, type RefObject } from "react";
 /**
  * Where you were on each screen, for as long as the app is open.
  *
- * The app scrolls inside a div — `.scroll` in `components/chrome.tsx`, one per
- * screen — and not the document, so the browser's own restoration, which knows
- * only about the document, restores nothing.
+ * The app scrolls inside a div (`.scroll`, components/chrome.tsx), not the
+ * document, so the browser's own restoration restores nothing.
  *
- * Held in memory rather than in `sessionStorage`. A reload refolds the whole
- * app out of Dexie anyway, and an offset into a list that is about to be
- * rebuilt is not worth persisting — nor worth a `try` around a storage call
- * that can refuse.
+ * In memory, not `sessionStorage`: a reload refolds everything from Dexie, and
+ * an offset into a list about to be rebuilt isn't worth persisting.
  */
 
 const positions = new Map<string, number>();
 
 /**
- * A screen is a route ([ADR-0007](../../../docs/decisions/0007-a-screen-is-a-route.md)),
- * so the route is the key — the query included, since `?id=` is which group
- * and `?tab=` is which of a group's two lists. Read once when a `.scroll`
- * mounts: each one belongs to a single screen, and the two tabs are different
- * components, so a tab switch is a fresh mount with a key of its own.
+ * The route is the key ([ADR-0007](../../../docs/decisions/0007-a-screen-is-a-route.md)),
+ * query included — `?id=` is the group, `?tab=` which list. Read once on
+ * mount; the two tabs are different components, so each gets its own key.
  */
 function scrollKey(): string {
   return `${location.pathname}${location.search}`;
@@ -42,15 +37,11 @@ export function forgetScrolls(): void {
 }
 
 /**
- * One attempt at putting a screen back where it was, against the height the
- * content has reached so far.
- *
- * A list comes out of Dexie after its frame draws, so at the moment of restore
- * there is usually nothing to scroll yet. Aiming at the furthest point that
- * exists, and staying unfinished until the real one does, walks the screen down
- * as the rows arrive instead of jumping it once they have all landed — and it
- * settles at the closest reachable place when the list is genuinely shorter
- * than it was, which is what a deleted entry leaves behind.
+ * One attempt at restoring a position against the height reached so far.
+ * A list arrives from Dexie after its first frame, so aim at the furthest
+ * point that exists and stay unfinished until the real one does: the screen
+ * walks down as rows land, and settles at the closest reachable place if the
+ * list got shorter.
  */
 export function restoreStep(target: number, maxTop: number): { top: number; done: boolean } {
   if (maxTop >= target) return { top: target, done: true };
@@ -63,12 +54,10 @@ const RESTORE_WINDOW_MS = 1200;
 /**
  * Remember this scroller's position, and put it back on the way in.
  *
- * **Nothing is recorded while a restore is in flight.** The positions passed
- * through on the way to the target are all shorter than it, and recording one
- * would overwrite the target with it — the list would creep towards the top
- * every time you came back to it. Recording starts when the restore lands, when
- * the person takes the scroll over, or when the window closes: whichever is
- * first.
+ * **Nothing is recorded while a restore is in flight** — the positions passed
+ * on the way are shorter than the target, and the list would creep up every
+ * visit. Recording starts when the restore lands, the person scrolls, or the
+ * window closes, whichever is first.
  */
 export function useScrollMemory(ref: RefObject<HTMLDivElement | null>): void {
   useEffect(() => {

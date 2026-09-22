@@ -5,18 +5,14 @@ import { plural } from "./format";
 /**
  * A ledger row's second line, written several ways, longest first.
  *
- * `FitLine` renders the longest one that fits, so **this order is the
- * editorial decision** about what a narrow phone loses first — the measuring
- * is just arithmetic ([`lib/fit.ts`](./fit.ts)). Two rules set it:
+ * `FitLine` renders the longest that fits, so **this order is the editorial
+ * decision** about what a narrow phone loses first ([`lib/fit.ts`](./fit.ts)):
  *
- * - **Shortening must not lie.** "Alice paid" is false when Bob paid too, so
- *   the co-payers are abbreviated ("Alice +1 paid") and never dropped.
- * - **Drop what the entry's own screen says better,** cheapest first. The
- *   split mode is one tap away and names itself there (ADR-0016); the share
- *   count is a detail; who paid is what the row is for, and is last to go.
- *
- * There is no rung that drops the payer, because there is nothing left to say
- * after it. Past the bottom of the ladder the name itself gets the ellipsis.
+ * - **Shortening must not lie.** Co-payers are abbreviated ("Alice +1 paid"),
+ *   never dropped.
+ * - **Drop what the entry's own screen says better**, cheapest first: split
+ *   mode (ADR-0016), then share count; the payer is last and never dropped —
+ *   past the ladder the name itself gets the ellipsis.
  */
 
 const joined = (a: string, b: string) => copy.group.metaLine(a, b);
@@ -58,9 +54,8 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
 }
 
 /**
- * A transfer's line. The row's *title* is already "Alice paid Bob", so the
- * word "Transfer" is a label on something the row has said — which makes it
- * the one thing here worth dropping for a long note.
+ * A transfer's line. The title already says "Alice paid Bob", so "Transfer"
+ * is what gets dropped for a long note.
  */
 export function transferMeta(note: string | null | undefined): string[] {
   const trimmed = note?.trim();

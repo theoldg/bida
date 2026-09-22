@@ -10,21 +10,14 @@ import { getDevice, setMe } from "../device";
 /**
  * A plan from `core/import.ts`, written as a group.
  *
- * **One batch, one HLC run**, the way `createGroup` writes a group with its
- * people already in it: a hundred rows off a CSV are not a hundred things
- * somebody did a millisecond apart, and the history reads as an import rather
- * than as an afternoon of typing. It is also the only shape that is atomic —
- * a tab dying halfway through cannot leave half a ledger.
+ * **One batch, one HLC run**, like `createGroup`: the history reads as one
+ * import, and it is atomic — a tab dying halfway can't leave half a ledger.
  *
- * **Nothing here is a new idea about sync.** Every row becomes an ordinary
- * `create` op under one actor, so there is no import op kind, nothing for the
- * merge rules to learn, and a second phone joining the link sees exactly what
- * it would see for a group typed in by hand.
+ * **Nothing new for sync.** Every row is an ordinary `create` under one actor;
+ * there is no import op kind for the merge rules to learn.
  *
- * **Into a new group only.** Merging a file into a group that already has
- * entries means deciding which rows are the same entry as which, and the file
- * carries no ids to decide it with — so v1 does not offer it, and the entry
- * point is on the groups list rather than in a group's own menu.
+ * **Into a new group only.** Merging into an existing group would mean
+ * matching rows to entries, and the file carries no ids to match with.
  */
 
 export interface ImportGroupInput {
@@ -35,11 +28,9 @@ export interface ImportGroupInput {
 }
 
 /**
- * Names to member ids, the same derivation every other write uses.
- *
- * `memberIdFor` is a hash of the group id and the name, so two phones adding
- * "Ana" write the same entity — and here it means the ids are settled before
- * a single op is built, which is what lets the whole import be one batch.
+ * Names to member ids by `memberIdFor` (a hash of group id and name), the same
+ * derivation every write uses — so the ids are settled before any op is built
+ * and the import can be one batch.
  */
 function idsFor(groupId: Id, names: readonly string[]): Map<string, Id> {
   return new Map(names.map((name) => [name, memberIdFor(groupId, name)]));
@@ -71,10 +62,8 @@ export async function importGroup(
         archivedAt: null,
       },
     },
-    // Everyone the file had a column for, current members all: the shape gives
-    // a departed member a plain column like anybody else, with nothing to say
-    // they have left, so there is no way to bring that back and the screen
-    // says so rather than guessing.
+    // Everyone the file had a column for, all as current members: the shape
+    // has no way to say someone left.
     ...plan.members.map((name): OpDraft => ({
       entity: "member",
       entityId: ids.get(name)!,
@@ -97,16 +86,11 @@ export async function importGroup(
 }
 
 /**
- * One row as an expense op.
+ * One row as an expense op. `rateToBase` is `"1"`: the file is single-currency
+ * in the group's base (mixed files are refused upstream).
  *
- * `rateToBase` is `"1"` and `baseAmountMinor` is the amount: the file is
- * single-currency and that currency is the group's base, so there is nothing
- * to convert and no registry to consult. A mixed-currency file is refused
- * upstream precisely because there would be.
- *
- * The split is `exact`. Every other mode is a rule for deriving amounts, and
- * what the file hands over is the amounts themselves — `equal` would be a
- * claim about the original that a re-export could contradict by a cent.
+ * The split is `exact` — the file hands over amounts, and `equal` would be a
+ * claim about the original a re-export could contradict by a cent.
  */
 function expenseDraft(
   e: PlannedEntry,

@@ -13,27 +13,18 @@ import { fetchRate, RateOfflineError } from "../lib/rates";
 import { plural } from "../lib/format";
 
 /**
- * What one currency is worth to this group, edited from either end.
+ * What one currency is worth to this group, edited from either end — "1 EUR =
+ * 4.5 PLN" or "1 PLN = 0.22 EUR", since which way is natural depends on the
+ * pair. Typing in either updates the other; only the typed field keeps its
+ * text verbatim, so "4." isn't reformatted under the caret.
  *
- * The two fields are the same number said the two ways people think in — "1
- * EUR = 4.5 PLN" going one way, "1 PLN = 0.22 EUR" the other — because which
- * way round a rate is natural depends entirely on the pair, and having to do
- * the division in your head to use the app's chosen direction is the reason
- * this dialog has two fields instead of one. Typing in either moves the other
- * on every keystroke; only the field being typed in keeps its text verbatim,
- * so a half-typed "4." isn't reformatted out from under the caret.
+ * One direction is stored (foreign to base, what `convertMinor` takes); the
+ * reciprocal is computed at `RATE_DIGITS` and shown at `RATE_SHOWN_DIGITS`, so
+ * "4.5" reads back as "4.5" (see `invertRate`).
  *
- * One direction is stored — foreign to base, which is what `convertMinor`
- * takes — so the reciprocal is computed at `RATE_DIGITS` and shown at
- * `RATE_SHOWN_DIGITS`, which is what makes "4.5" read back as "4.5" rather
- * than "4.500000001" (see `invertRate`).
- *
- * It opens on a fetched number when it can get one, and says which it is
- * showing: today's rate, or yours. It opens on neither field: with two of them
- * the caret would have to guess a direction, and a keyboard covering the half
- * of the dialog that says what saving moves is a poor trade for a tap.
- * Nothing is written until Save — a rate moves every balance in the group, so
- * it is never a background write
+ * Opens on a fetched rate when it can, saying which it shows. Focuses neither
+ * field: the caret would have to guess a direction, and the keyboard would
+ * cover what saving moves. Nothing is written until Save
  * ([ADR-0005](../../../docs/decisions/0005-money-and-currency.md)).
  */
 
@@ -74,9 +65,8 @@ function pairOf(rate: Rate): Pair {
 }
 
 /**
- * One side typed; the other derived. The typed text is kept exactly as typed —
- * "0." and "4.50" are both mid-thought and reformatting either is how a field
- * fights the person using it.
+ * One side typed, the other derived. The typed text is kept verbatim — "0."
+ * and "4.50" are both mid-thought.
  */
 function pairFrom(typed: string, side: "forward" | "inverse"): Pair {
   const other = isValidRate(typed)

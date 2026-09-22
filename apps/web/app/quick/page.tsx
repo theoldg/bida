@@ -23,17 +23,12 @@ import {
 
 /**
  * A bill split with people who are not a group (ADR-0035): who is splitting,
- * and the camera.
+ * and the camera. Naming people first makes the grid ready the moment the
+ * model answers. Opens on `/g/scan`'s drawing, split between the people named
+ * here so it fills in as they are added.
  *
- * Both halves of one act — the inputs — so they share a screen: naming people
- * before the photo is also what makes the grid ready the moment the model
- * answers. It opens on the same drawing `/g/scan` opens on, for the same
- * reason — what a scan becomes lands on another screen — except that here the
- * drawing splits its bill between the people on this list, so it fills in as
- * they are named.
- *
- * Nothing here is written anywhere. The names live beside the draft, in
- * memory, and leaving throws both away.
+ * Nothing here is written anywhere; names and draft live in memory, and
+ * leaving throws both away.
  */
 export default function QuickPage() {
   const router = useRouter();
@@ -48,24 +43,16 @@ export default function QuickPage() {
   // leaving with work unsaved (components/name-adder.tsx).
   const [typing, setTyping] = useState<string | null>(null);
   /**
-   * A scan refused, for either of two reasons: a name still unfiled in the
-   * add row, or fewer than two people on the list to divide a bill between.
-   * The photograph is the end of this screen — the grid it opens is the
-   * people on the list and nobody else — so a scan taken over either one is
-   * the one way to end up with a bill nobody can actually split. The add
-   * row's plus is the fix for both, so the plus is what blooms, and the pair
-   * is spent for the length of the flash: exactly the entry form's refusal
-   * (lib/refusal.ts).
+   * A scan refused: a name still unfiled, or fewer than two people. The grid it
+   * opens holds only the listed people, so either would give a bill nobody can
+   * split. The add row's plus fixes both, so it blooms (lib/refusal.ts).
    */
   const refusal = useRefusal();
 
   /**
-   * What the bill is counted in, until a scan says otherwise.
-   *
-   * Nothing here converts and no symbol is ever printed (ADR-0035), so this
-   * is only the minor-unit exponent: two decimals for most of the world, none
-   * for a yen. The phone's last group is the best guess available, since it is
-   * usually the currency the phone is standing in.
+   * What the bill is counted in until a scan says otherwise. Nothing converts
+   * and no symbol is printed (ADR-0035), so this is only the minor-unit
+   * exponent; the phone's last group is the best guess.
    */
   const [currency, setCurrency] = useState<string>();
   useEffect(() => {
@@ -79,10 +66,9 @@ export default function QuickPage() {
     return () => { live = false; };
   }, [device]);
 
-  // One blank bill per visit, under the credential's id — which is what the
-  // scan hook keys everything by, so a quick split needs no group id anywhere
-  // (lib/quick.ts). Seeded once: a scan fills this same draft, and re-seeding
-  // when somebody is added would throw the bill away.
+  // One blank bill per visit, under the credential's id, which the scan hook
+  // keys by — so no group id is needed (lib/quick.ts). Seeded once: a scan
+  // fills this draft, and re-seeding on an added name would throw it away.
   useEffect(() => {
     if (!cred || !currency || getDraft(cred.id)) return;
     seedDraft(cred.id, blankDraft("expense", "", currency, []), "quick");
@@ -103,10 +89,8 @@ export default function QuickPage() {
   const typed = people.length > 0 || typing !== null || (draft?.receiptItems?.length ?? 0) > 0;
 
   /**
-   * Discard was answered, so this screen has stopped guarding the way out.
-   * `typed` reads state the clearing below doesn't reach until the next render,
-   * and a guard still saying no answers the going itself — see the same ref on
-   * `/new` for the whole of why.
+   * Discard was answered, so this screen has stopped guarding the way out —
+   * see the same ref on `/new` for why.
    */
   const leaving = useRef(false);
 
@@ -130,14 +114,10 @@ export default function QuickPage() {
         <TopBar title={copy.quick.title} back={{ ask: mayLeave, up: route.groups() }} />
         {scan.inputs}
         <Scroll>
-          {/* What this screen leads to, drawn rather than described — the same
-              picture `/g/scan` opens on (components/scan-diagram.tsx), with
-              its own line over it, since what a quick split comes back as is
-              not the expense form `copy.scan.lede` promises. It is divided
-              between the people below it, so adding somebody is visible in it.
-              Line and picture are one block, and the air around that block is
-              what keeps the eyebrow under it reading as the next step rather
-              than as its caption. */}
+          {/* The same picture `/g/scan` opens on (components/scan-diagram.tsx), with
+              its own line, since a quick split doesn't end in the expense form. The
+              space around this block keeps the eyebrow below from reading as its
+              caption. */}
           <div className="pad quickshow">
             <p className="scanlede">{copy.quick.lede}</p>
             <ScanDiagram names={people.map((p) => p.name)} seed={cred?.id ?? ""} />
@@ -163,11 +143,8 @@ export default function QuickPage() {
 
           {/* The act the screen ends on, under the people it needs first. */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {/* Always tappable, like the entry form's Save: a press that
-                can't go through refuses instead of doing nothing, whether the
-                add row has a name still unfiled or the list has fewer than
-                two people on it — either way the fix is the plus beside
-                "Add someone", so that's what blooms. */}
+            {/* Always tappable: an unfiled name or fewer than two people blooms the
+                plus beside "Add someone" instead. */}
             <ScanPair scan={scan} register="lg"
               disabled={refusal.live}
               refuse={() => {
