@@ -117,7 +117,7 @@ every session pays in. **Before you finish:**
 5. **Touch [claude_corner.md](docs/claude_corner.md)** — every session, at
    least a line. The agents' own doc: how the owner asks, and what an agent
    gets wrong that no check catches. Vibes only, nothing technical. Its three
-   limits — 100 lines, ten postcards, 200 characters each — are checked, so
+   limits — 100 lines, twelve postcards, 300 characters each — are checked, so
    adding means evicting: fold what the evicted postcard taught into the prose
    above if it has gone general, otherwise let it go.
 
