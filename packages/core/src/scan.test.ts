@@ -9,7 +9,7 @@ const NOW = new Date(2026, 8, 5, 14, 30, 7, 123).getTime();
 
 const blank: ScanResult = {
   title: null, total: null, tip: null, tax: null, discounts: [],
-  currency: null, date: null, lineItems: [], error: null,
+  currency: null, date: null, lineItems: [], english: false, error: null,
 };
 
 describe("normalizeScan", () => {
@@ -229,6 +229,19 @@ describe("readBill", () => {
     expect(bill.items.map((i) => i.amount)).toEqual(["30.00"]);
     // Which label is read is the reader's choice (`billLabel`, apps/web/lib/scan/items.ts).
     expect(bill.extras.discounts).toEqual([{ label: "Remise", labelEn: "Discount", amount: "5.00" }]);
+  });
+
+  // Asked line by line, the model expands an English bill's shorthand, and the
+  // translate toggle turns up on a bill with nothing to translate.
+  it("keeps no English for a bill already in English", () => {
+    const wrap = { label: "Chkn wrap", labelEn: "Chicken wrap", amount: "8.00", unitAmount: null, quantity: null };
+    const credit = { ...wrap, label: "Loyalty", labelEn: "Loyalty discount", amount: "-1.00" };
+    const printed = { label: "Staff", labelEn: "Staff discount", amount: "2.00" };
+    const result = { ...blank, lineItems: [wrap, credit], discounts: [printed] };
+    const bill = readBill({ ...result, english: true }, "EUR");
+    expect(bill.items.map((i) => i.labelEn)).toEqual([null]);
+    expect(bill.extras.discounts.map((d) => d.labelEn)).toEqual([null, null]);
+    expect(readBill(result, "EUR").items[0]!.labelEn).toBe("Chicken wrap");
   });
 
   it("gathers every deduction, wherever it arrived, and keeps them apart", () => {

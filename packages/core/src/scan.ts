@@ -67,6 +67,12 @@ export interface ScanResult {
   /** Every line the bill lists. `readBill` resolves each one's figure. */
   lineItems: ScanLineItem[];
   /**
+   * The bill is written in English, which clears every `labelEn` in `readBill`:
+   * asked line by line, the model "translates" an English bill's shorthand
+   * ("Chkn wrap" → "Chicken wrap") and the translate toggle turns up on it.
+   */
+  english: boolean;
+  /**
    * Why the model couldn't read a receipt ("This doesn't look like a receipt"),
    * shown verbatim; null when it did. Set instead of guessing the other fields.
    */
@@ -189,6 +195,9 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     return null;
   };
 
+  /** No English for a bill already in English, whatever the lines came back with. */
+  const en = (labelEn: string | null) => (result.english ? null : labelEn);
+
   const tip = keep(result.tip, "");
   const tax = keep(result.tax, "");
   const items: BillItem[] = [];
@@ -196,13 +205,13 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     const minor = lineMinor(item, currency);
     if (minor !== null && minor < 0) {
       discounts.push({
-        label: item.label, labelEn: item.labelEn, amount: minorToDecimalString(-minor, currency),
+        label: item.label, labelEn: en(item.labelEn), amount: minorToDecimalString(-minor, currency),
       });
       continue;
     }
     items.push({
       label: item.label,
-      labelEn: item.labelEn,
+      labelEn: en(item.labelEn),
       // A line priced outright keeps the model's own string, unreadable or not,
       // for `checkScan` to refuse. No usable figure becomes "" (unreadable).
       amount: item.amount ?? (minor === null ? "" : minorToDecimalString(minor, currency)),
@@ -216,7 +225,7 @@ export function readBill(result: ScanResult, currency: CurrencyCode): Bill {
     if (minor === null || minor === 0) continue;
     discounts.push({
       label: printed.label,
-      labelEn: printed.labelEn,
+      labelEn: en(printed.labelEn),
       amount: minorToDecimalString(Math.abs(minor), currency),
     });
   }

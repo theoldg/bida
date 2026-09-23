@@ -9,6 +9,7 @@
     "discounts": [],
     "currency": null,
     "date": null,
+    "english": false,
     "error": "Too blurry — I've read tea leaves with better odds.",
     "lineItems": []
   }

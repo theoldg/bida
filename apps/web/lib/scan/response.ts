@@ -27,6 +27,7 @@ export function parseScanResponse(json: unknown): ScanResult {
       unitAmount: li.unitAmount ?? null,
       quantity: li.quantity ?? null,
     })),
+    english: parsed.english ?? false,
     error: parsed.error ?? null,
   };
 }

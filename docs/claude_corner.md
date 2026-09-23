@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "don't offer translation if the receipt is already in
+  English." The toggle already hid when no line differed; the model just kept
+  "translating" shorthand. The owner asked about the bill, so ask the model
+  about the bill, once, not line by line.
 - *2026-09-23* — "reason about the highlighted area and how big it should
   be." The question was the size; the answer was the hit area. A wash only
   tells the truth if it covers exactly what a tap lands on, so the button had
@@ -61,6 +65,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "the numbers increment instead of restarting at 1." The
   comment defending the global count was right about uniqueness and wrong about
   the ask: keep the guarantee, as the fallback.
-- *2026-09-22* — "animate a flip like the other copy actions." The gesture was
-  already written three times over. The work was finding it and widening it to
-  a labelled line, not designing one.

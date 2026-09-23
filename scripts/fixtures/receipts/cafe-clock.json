@@ -9,6 +9,7 @@
     "discounts": [],
     "currency": null,
     "date": null,
+    "english": false,
     "error": null,
     "lineItems": [
       {

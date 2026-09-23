@@ -20,6 +20,7 @@
     ],
     "currency": "USD",
     "date": "2026-09-05",
+    "english": true,
     "error": null,
     "lineItems": [
       {

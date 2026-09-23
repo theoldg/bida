@@ -100,6 +100,16 @@ const PHOTO_CASING =
   + "Re-case only: the words themselves, their language and their spelling stay "
   + "exactly as the receipt prints them. ";
 
+/**
+ * One question for the whole bill, since per line the model "translates" an
+ * English bill's shorthand and the toggle turns up for nothing. `readBill`.
+ */
+const ENGLISH =
+  "Set english to true when the bill is written in English, and false otherwise. An "
+  + "English bill has nothing to translate: leave every labelEn on it null, even where "
+  + "a label is abbreviated, misspelled or terse — expanding \"Chkn wrap\" is not a "
+  + "translation. ";
+
 /** A photograph can shear its own columns, which is the whole of this paragraph. */
 const PHOTO_LAYOUT =
   "Read the columns as the printer laid them out, not as the photo happens to line "
@@ -307,15 +317,15 @@ const TEXT_REFUSAL: Record<ScanTone, string> = {
 const PROMPT: Record<ScanMedium, Record<ScanTone, string>> = {
   photo: {
     kind: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-      + PHOTO_REFUSAL.kind + PHOTO_TAIL,
+      + ENGLISH + PHOTO_REFUSAL.kind + PHOTO_TAIL,
     stas: PHOTO_LEAD + PHOTO_FIELDS_HEAD + PHOTO_CASING + PHOTO_LAYOUT + PHOTO_FIELDS_TAIL
-      + PHOTO_REFUSAL.stas + PHOTO_TAIL,
+      + ENGLISH + PHOTO_REFUSAL.stas + PHOTO_TAIL,
   },
   text: {
     kind: TEXT_LEAD + TEXT_ITEMS + TEXT_TOTAL + TEXT_EXTRAS + TEXT_TITLE + TEXT_NUMBERS
-      + TEXT_REFUSAL.kind,
+      + ENGLISH + TEXT_REFUSAL.kind,
     stas: TEXT_LEAD + TEXT_ITEMS + TEXT_TOTAL + TEXT_EXTRAS + TEXT_TITLE + TEXT_NUMBERS
-      + TEXT_REFUSAL.stas,
+      + ENGLISH + TEXT_REFUSAL.stas,
   },
 };
 
@@ -384,10 +394,12 @@ export function buildScanRequestBody(
               required: ["label", "labelEn", "amount", "unitAmount", "quantity"],
             },
           },
+          english: { type: "BOOLEAN" },
           error: { type: "STRING", nullable: true },
         },
         required: [
-          "title", "total", "tip", "tax", "discounts", "currency", "date", "lineItems", "error",
+          "title", "total", "tip", "tax", "discounts", "currency", "date", "lineItems", "english",
+          "error",
         ],
       },
     },

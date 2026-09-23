@@ -9,6 +9,7 @@
     "discounts": [],
     "currency": "EUR",
     "date": "2026-07-18",
+    "english": false,
     "error": null,
     "lineItems": [
       {
