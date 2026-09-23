@@ -106,7 +106,8 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
           ))}
           {shown.length > CAP ? (
             <Link href={route.history(groupId)} className="tlink neweditsmore">
-              <span>{copy.group.moreChanges(shown.length - CAP)}</span>
+              <Icon name="clock" size={13} />
+              <span>{copy.group.moreChanges}</span>
               <Icon name="chev" size={13} />
             </Link>
           ) : null}

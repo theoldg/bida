@@ -681,7 +681,7 @@ export const copy = {
     untitled: "Untitled",
     notYours: "not yours",
     /** The foot of the new-changes fold past its cap; History has the rest. */
-    moreChanges: (n: number) => `${n} more in History`,
+    moreChanges: "More in history",
     you: {
       owe: "You owe",
       owed: "You’re owed",
