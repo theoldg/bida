@@ -65,8 +65,9 @@ describe("expenseMeta", () => {
 });
 
 describe("transferMeta", () => {
-  it("drops the label, never the note", () => {
-    expect(transferMeta("Airport taxi")).toEqual(["Transfer · Airport taxi", "Airport taxi"]);
+  it("says the note alone when there is one", () => {
+    expect(transferMeta("Airport taxi")).toEqual(["Airport taxi"]);
+    expect(transferMeta("  Airport taxi ")).toEqual(["Airport taxi"]);
   });
 
   it("says the label when there is no note", () => {

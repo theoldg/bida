@@ -695,7 +695,6 @@ export const copy = {
     /** Two facts on one line: "Marie paid · split 3 ways". */
     metaLine: (a: string, b: string) => `${a} · ${b}`,
     transfer: "Transfer",
-    transferNote: (note: string) => `Transfer · ${note}`,
     paidTo: (from: string, to: string) => `${from} paid ${to}`,
 
     unsplittable: (n: string) => `${n} couldn’t be split`,

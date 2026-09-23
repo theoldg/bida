@@ -54,10 +54,10 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
 }
 
 /**
- * A transfer's line. The title already says "Alice paid Bob", so "Transfer"
- * is what gets dropped for a long note.
+ * A transfer's line: its note, or "Transfer" when it has none. The title
+ * already says "Alice paid Bob", so a note leaves the label nothing to add.
  */
 export function transferMeta(note: string | null | undefined): string[] {
   const trimmed = note?.trim();
-  return trimmed ? [copy.group.transferNote(trimmed), trimmed] : [copy.group.transfer];
+  return [trimmed || copy.group.transfer];
 }
