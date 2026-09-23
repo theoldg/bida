@@ -316,6 +316,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
         groupId,
         secret: key.secret,
         lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
+        // A group this phone never showed edits for starts with none to show:
+        // what it pulls on joining is the group's past, not news.
+        seenSeq: current?.seenSeq ?? Math.max(latestSeq, current?.lastSeq ?? 0),
         lastSyncedAt: Date.now(),
         failure: undefined,
         unreadable: skipped(rewinding ? undefined : current?.unreadable, unreadable, retryAt),

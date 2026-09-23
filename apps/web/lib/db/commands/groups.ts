@@ -342,3 +342,16 @@ export async function healGroup(groupId: Id): Promise<number> {
   }
   return written;
 }
+
+/**
+ * The ledger's new-edits line has shown everything up to `seq`. Device-local,
+ * like the sync cursor beside it, so it is no op. Only ever forward: a screen
+ * leaving with a stale count must not bring old edits back.
+ */
+export async function markEditsSeen(groupId: Id, seq: number): Promise<void> {
+  const d = db();
+  await d.transaction("rw", d.groupKeys, async () => {
+    const key = await d.groupKeys.get(groupId);
+    if (key && seq > (key.seenSeq ?? 0)) await d.groupKeys.update(groupId, { seenSeq: seq });
+  });
+}

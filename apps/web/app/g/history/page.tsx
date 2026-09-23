@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { activityFeed, entityHistory, type Revision } from "@bida/core";
+import { activityFeed, entityHistory } from "@bida/core";
 import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
+import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { db } from "@/lib/db/dexie";
 import { useLive } from "@/lib/db/live";
 import { opsForGroup } from "@/lib/db/fold";
 import { copy } from "@/lib/copy";
-import { plural, stamp } from "@/lib/format";
-import { describe } from "@/lib/history-copy";
+import { plural } from "@/lib/format";
 import { historyParent, parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
@@ -90,31 +90,9 @@ function HistoryScreen() {
   const group = data.group;
   const currency = group.baseCurrency;
 
-  /**
-   * Where a revision in the group feed leads — entries only, since "you changed
-   * the amount" needs to say of what. A deleted entry points at its own
-   * history.
-   */
-  function subjectOf(rev: Revision): { href: string; label: string } | undefined {
-    if (!groupId) return undefined;
-    if (rev.entity === "expense") {
-      const e = expenseById.get(rev.entityId);
-      const label = e?.description?.trim() || copy.history.untitled;
-      return e?.deletedAt
-        ? { href: route.history(groupId, rev.entityId, "history"), label: copy.history.deleted(label) }
-        : { href: route.entry(groupId, rev.entityId, "history"), label };
-    }
-    if (rev.entity === "settlement") {
-      const s = settlementById.get(rev.entityId);
-      const from = memberById.get(s?.fromMember ?? "")?.name ?? copy.unknown;
-      const to = memberById.get(s?.toMember ?? "")?.name ?? copy.unknown;
-      const label = `${from} → ${to}`;
-      return s?.deletedAt
-        ? { href: route.history(groupId, rev.entityId, "history"), label: copy.history.deleted(label) }
-        : { href: route.entry(groupId, rev.entityId, "history"), label };
-    }
-    return undefined;
-  }
+  const context: RevisionContext = {
+    groupId: group.id, currency, memberById, expenseById, settlementById, via: "history",
+  };
 
   return (
     <Screen>
@@ -133,40 +111,10 @@ function HistoryScreen() {
               <Empty title={copy.history.empty} />
             ) : (
               <div className="tl">
-                {visible.map((rev, i) => {
-                  const who = memberById.get(rev.op.actor)?.name ?? copy.someone;
-                  const d = describe(rev, who, memberById, currency);
-                  const subject = entryId ? undefined : subjectOf(rev);
-                  return (
-                    <div key={rev.op.id} className={`tle${i === 0 ? " now" : ""}`}>
-                      <div className="when">{stamp(rev.op.createdAt)} · {who.toUpperCase()}</div>
-                      <div className="what">{d.what}</div>
-                      {d.diff ? (
-                        <div className="diff">
-                          {d.diff.was !== undefined ? <span className="was">{d.diff.was}</span> : null}
-                          <span className="now2">{d.diff.now}</span>
-                        </div>
-                      ) : null}
-                      {d.also?.length ? (
-                        <div className="also">
-                          {d.also.map((a) => (
-                            <div key={a.label} className="alsoi">
-                              <span className="lbl">{a.label}</span>
-                              {a.was !== undefined ? <span className="was">{a.was}</span> : null}
-                              {a.now !== undefined ? <span className="now2">{a.now}</span> : null}
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                      {rev.op.note ? <div className="note">&ldquo;{rev.op.note}&rdquo;</div> : null}
-                      {subject ? (
-                        <Link className="tlink" href={subject.href}>
-                          <span>{subject.label}</span><Icon name="chev" size={13} />
-                        </Link>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                {visible.map((rev, i) => (
+                  <RevisionEntry key={rev.op.id} rev={rev} first={i === 0} context={context}
+                    linked={!entryId} />
+                ))}
               </div>
             )}
 

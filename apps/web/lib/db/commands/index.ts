@@ -16,7 +16,7 @@
 
 export {
   createGroup, saveGroupKey, heldInvites, forgetGroup, claimIdentity, publishExistingClaims,
-  addMember, renameMember, removeMember, healGroup, type NewGroupInput,
+  addMember, renameMember, removeMember, healGroup, markEditsSeen, type NewGroupInput,
 } from "./groups";
 export { importGroup, type ImportGroupInput } from "./import";
 export { openDemo, clearDemo } from "./demo";

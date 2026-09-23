@@ -18,6 +18,7 @@ import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
 import { DemoCard } from "@/components/demo";
 import { LedgerInstall } from "@/components/install";
+import { NewEdits } from "@/components/new-edits";
 import { Icon } from "@/components/icons";
 import { useLongPressMenu } from "@/components/long-press";
 import { copy } from "@/lib/copy";
@@ -187,6 +188,8 @@ function LedgerTab({ data }: { data: GroupData }) {
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
       {me ? <MySummary net={net} base={base} /> : null}
+      {/* Between where you stand and the rows, since it is why either moved. */}
+      <NewEdits groupId={gid} currency={base} />
 
       {entries.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>

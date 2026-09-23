@@ -129,6 +129,12 @@ interface GroupKey {
   secret: string;
   /** Highest server seq pulled. The sync cursor. */
   lastSeq: number;
+  /**
+   * Highest seq this phone has shown on the ledger's new-edits line
+   * (components/new-edits.tsx). Set to the cursor by the first pull that finds
+   * it absent, so a group joins with nothing new; never synced.
+   */
+  seenSeq?: number;
   /** When a push+pull last completed. Absent until this device's first one. */
   lastSyncedAt?: number;
   /**

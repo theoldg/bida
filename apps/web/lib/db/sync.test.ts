@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveGroupCrypto, foldOps, openOp, sealOp, type Op, type SealedOp } from "@bida/core";
 import { db } from "./dexie";
 import { formatHlc, createHlcState } from "@bida/core";
-import { addExpense, addMember, createGroup, forgetGroup, saveGroupKey } from "./commands";
+import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
 import { getDevice } from "./device";
 import { syncAll, syncGroup } from "./sync";
 import { VERSION } from "../version";
@@ -636,5 +636,48 @@ describe("syncAll", () => {
     await Promise.all([first, second]);
 
     expect(overlapped).toBe(false);
+  });
+});
+
+describe("seenSeq", () => {
+  beforeEach(wipe);
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("starts at the first pull's cursor, stays behind later ones, and only moves forward", async () => {
+    const { groupId, memberId: theo } = await createGroup({
+      name: "Marrakech", baseCurrency: "EUR", myName: "Theo",
+    });
+    await db().groupKeys.put({ groupId, secret: "shh", lastSeq: 0 });
+    const peer = (seq: number) => ({
+      id: `op-${seq}`, groupId, entity: "expense" as const, entityId: `e-${seq}`,
+      kind: "create" as const,
+      patch: {
+        description: `e${seq}`, occurredAt: 1, amountMinor: 1000, currency: "EUR", rateToBase: "1",
+        baseAmountMinor: 1000, paidBy: theo, split: { mode: "equal", members: [theo] },
+      },
+      hlc: formatHlc(createHlcState("peer", Date.now(), seq)),
+      actor: theo, note: null, createdAt: Date.now(), seq,
+    });
+    let batch: Op[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      const { ops: pushed } = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      const assigned = Object.fromEntries(pushed.map((op, i) => [op.id, 100 + i]));
+      const ops = await serverOps(groupId, batch);
+      return new Response(JSON.stringify({ assigned, ops, latestSeq: Math.max(0, ...batch.map((o) => o.seq!)) }));
+    }));
+
+    // Joining: everything the first pull brings is the group's past.
+    batch = [peer(1), peer(2)];
+    await syncGroup(groupId);
+    expect((await db().groupKeys.get(groupId))?.seenSeq).toBe(2);
+
+    // After that, a pull is news until something shows it.
+    batch = [peer(3)];
+    await syncGroup(groupId);
+    expect((await db().groupKeys.get(groupId))?.seenSeq).toBe(2);
+
+    await markEditsSeen(groupId, 3);
+    await markEditsSeen(groupId, 1);
+    expect((await db().groupKeys.get(groupId))?.seenSeq).toBe(3);
   });
 });
