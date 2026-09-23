@@ -260,12 +260,12 @@ a, button, label, select, .seg button, .itemcell {
   touch-action: manipulation;
 }
 
-a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card,
+a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
 .itemfold, a.chip, button.chip, .action, .starttile, .field:not(.field-row):has(> .pick) {
   transition: background-image .2s ease;
 }
 a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
-.tlink:active, .seg button:active, a.card:active, .itemfold:active,
+.tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:not(.field-row):has(> .pick:active), .action:active:not(:disabled) {
   /* A gradient, not a background-color: it composites over the element's own

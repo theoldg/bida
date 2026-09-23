@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "make sure the correct area lights up." The press rule
+  named `a.card`; the settle rows are buttons. Held a real press and
+  photographed it rather than trusting the selector: whole card, nothing in
+  the gaps, edge bar still on top.
 - *2026-09-23* — "don't offer translation if the receipt is already in
   English." The toggle already hid when no line differed; the model just kept
   "translating" shorthand. The owner asked about the bill, so ask the model
@@ -62,6 +66,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "design it and show me a draft." Built it in the real app and
   photographed it. Every note back was a subtraction: the sentence, the
   avatars. Draw less than the card seems to need.
-- *2026-09-22* — "the numbers increment instead of restarting at 1." The
-  comment defending the global count was right about uniqueness and wrong about
-  the ask: keep the guarantee, as the fallback.
