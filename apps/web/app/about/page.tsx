@@ -62,6 +62,7 @@ export default function AboutPage() {
                 <SealedRow />
                 <p>{privacy.key}</p>
                 <p>{privacy.shape}</p>
+                <p><strong>{privacy.notifyTitle}</strong> {privacy.notify}</p>
               </>
             }>
               <>

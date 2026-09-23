@@ -45,8 +45,10 @@ server is now what holds confidentiality rather than just access.
   is in D1 now is data
   ([standing-instructions.md](../standing-instructions.md#product)).
 - **Shape still leaks.** The server sees how many ops a group has, when each
-  arrived, roughly how long each is, and the IP that pushed it. Metadata is the
-  price of a server that can route at all.
+  arrived, roughly how long each is, and the IP that pushed it — and, relaying
+  a notification, the endpoint it goes to, never stored
+  ([0037](0037-a-notification-is-sealed-by-the-phone-that-caused-it.md)).
+  Metadata is the price of a server that can route at all.
 - **A receipt still leaves in the clear** — the scan is a passthrough to Gemini
   and the photograph is the thing being read
   ([receipt-scanning.md](../receipt-scanning.md)). The about screen says so.

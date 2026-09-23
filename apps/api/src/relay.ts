@@ -2,7 +2,7 @@ import { fromBase64, vapidAuthorization, type VapidKeys } from "@bida/core";
 import { MAX_ENDPOINT_CHARS, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH } from "./push-limits";
 
 /**
- * The relay that forgets (docs/notifications.md#the-decision): notifications
+ * The relay that forgets (ADR-0037): notifications
  * the sending phone already encrypted end to end are signed with our VAPID key
  * and forwarded. Nothing here is stored or logged — an endpoint lives for the
  * length of the request.

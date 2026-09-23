@@ -705,6 +705,12 @@ refuses push registration outright, permission granted or not.
   `/diag` carries a `push` with an Apple or Google endpoint.
 - **Refuse the prompt.** The card goes and never comes back; turning it on in
   Settings, then relaunching, writes the subscription with no tap.
+- **Receive.** Another phone adds an entry this one's member is in: within
+  seconds of its sync, the group's name over "Ana added …" and the share. A tap
+  opens the entry; deleting it opens the group. An edit that moved only the
+  title says nothing.
+- **Forget the group** on the listening phone, then add another entry: nothing
+  arrives.
 
 **The camera** ([receipt-scanning.md](receipt-scanning.md)) — a phone is the
 only thing that has one.

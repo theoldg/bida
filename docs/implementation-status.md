@@ -37,11 +37,11 @@ design waiting to be built.
   ([frontend.md](frontend.md#a-live-read-can-die)). Nothing catches it:
   `rules-check` enforces `useLive` and `goBack`, not `whenVisible`.
 
-- **Push notifications are half-built** — the decision, the wording and an
-  eight-step plan are in [notifications.md](notifications.md). Steps 1–7 (core: `push` on identity,
-  `webpush.ts`, `notify.ts`; the Worker's relay; subscribing, offered by the
-  installed app's card; sending; leaving) are in, unproven on a phone. Its
-  VAPID keys are set on both Workers. Next is step 8, the docs and ADR-0037.
+- **Push notifications are built, unproven on a phone**
+  ([notifications.md](notifications.md), ADR-0037) — the phone checklist in
+  [testing.md](testing.md#what-only-a-phone-can-check) is the next thing to
+  run. VAPID keys are set on both Workers. Open: a screen for "everything"
+  rather than "entries I'm in".
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

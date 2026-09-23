@@ -472,6 +472,9 @@ export const copy = {
       ],
       key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
       shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
+      /** ADR-0037: the one third party in the sync path, named where people come to ask. */
+      notifyTitle: "Notifications go through Google or Apple.",
+      notify: "If you turn them on, each is encrypted by the phone that sends it, and my server passes it on without keeping it. Nobody in between can read one, but Google or Apple can see which phones get one at the same moment.",
     },
     /**
      * The hosted service's one disclaimer: MIT covers the code, not bida.bid, whose

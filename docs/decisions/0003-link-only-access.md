@@ -58,7 +58,8 @@ was always possible. The claim makes an existing signal legible.
   for friends splitting a holiday; wrong for a product with strangers in it.
 - A claim cannot be retracted; clearing site data no longer erases the record.
   That is the point — an attribution you can quietly erase is not one.
-- Push notifications become awkward (no stable identity to target). Deferred.
+- Push notifications target a device, not a person: the subscription rides on
+  the identity claim ([0037](0037-a-notification-is-sealed-by-the-phone-that-caused-it.md)).
 
 ## Rejected
 
@@ -70,5 +71,5 @@ was always possible. The claim makes an existing signal legible.
   identity as a fact about a phone, when it is what makes every other op
   readable, and the privacy it protected was already in the log.
 
-**Revisit if** strangers enter a group or push notifications become required.
-Both point at real identity, and both are a new ADR.
+**Revisit if** strangers enter a group. That points at real identity, and a
+new ADR.

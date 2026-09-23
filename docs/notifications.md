@@ -1,83 +1,10 @@
 # Notifications
 
-*For: whoever builds push notifications. **Status: designed, not built**
-(2026-09-23); the plan is being built step by step, each marked when done. [The decision](#the-decision) is written as the ADR it becomes
-once shipped — ADRs record built things ([decisions/](decisions/README.md)), so
-it lives here until then, with [the plan](#the-plan) under it.*
-
-## The decision
-
-*Becomes ADR-0037, "A notification is sealed by the phone that caused it".*
-
-**Context.** A group is only as current as the last time somebody opened it,
-and "Ana added the dinner" is the one piece of news worth a buzz. Web Push needs
-no process alive on the phone: the OS keeps one connection to Google's or
-Apple's push service and wakes the service worker on a message. iOS allows it
-from 16.4, **only in a home-screen app**, which is where [ios.md](ios.md)
-already steers everybody. The obvious shape — a table of subscriptions per
-group on the server, the server writing the text — is ruled out by
-[ADR-0036](decisions/0036-the-server-cannot-read-a-group.md) twice: it cannot
-write text it cannot read, and a table of endpoints per group is a stored map
-of which groups share a phone.
-
-**Decision.**
-
-- **A device's subscription is a field on its `identity`.** `push: { endpoint,
-  p256dh, auth } | null`, next to `memberId` — the device→member map
-  [ADR-0003](decisions/0003-link-only-access.md) already publishes, merged per
-  field like any identity op. No new entity kind, and it lives in the sealed
-  log, so the server stores nothing about who is subscribed.
-- **The phone that caused the change writes the notification, one per
-  recipient.** It holds the fold, so it knows each recipient's member and their
-  share; it encrypts each text to that recipient's subscription (RFC 8291,
-  `aes128gcm`) and hands the server `(endpoint, ciphertext)` pairs once the
-  ops that caused them have landed. That encryption is end to end between two phones, so no
-  inner seal under the group key is needed.
-- **The server is a relay that forgets.** On `POST /notify`, in batches of 40
-  so a group of any size fits the per-request subrequest cap, it signs a VAPID
-  header and forwards each ciphertext. It never stores
-  an endpoint, returns each endpoint's status, and the sender clears a dead
-  one (`404`/`410`) with an ordinary identity op.
-- **How much a phone hears is the phone's setting**: nothing, entries its
-  member is in (in the split, among the payers, a side of a transfer), or
-  everything. It rides on the subscription as `scope`, so the sender filters
-  (`wantsNotice`); "nothing" is no subscription. Default "own", and not in the
-  UI yet (the owner's call, 2026-09-23).
-- **Only a person's own command notifies**, never a sync push by itself — heals
-  and re-offered logs go through the same pipe and are nobody's news.
-
-**Consequences.**
-
-- **Google and Apple learn who uses bida together.** Payloads are opaque to
-  them, but pushes fanned out in the same instant to three devices say those
-  three share a group, and they know whose devices those are. No delay is
-  added to blur it (the owner's call, 2026-09-23). This is the first third
-  party in the sync path; `/about` says so.
-- **Every endpoint a phone ever had is readable by every link holder, for
-  ever** — the log is append-only. Useless without our VAPID private key, and
-  the relay only forwards to push services' own hosts.
-- **The server sees endpoints in transit**, like IPs. Nothing logs them.
-- **A notification leaves the seal on the lock screen** — the OS stores it,
-  shows it, may mirror it to a watch.
-- **Nothing reaches a Safari tab or an in-app browser**, and delivery is
-  best-effort (Android's doze can delay it).
-- **Rotating the VAPID key silences every phone** until each re-subscribes on
-  its next start.
-
-**Rejected.**
-
-- **Subscriptions in D1, server fans out.** Simplest, and the server could
-  filter and clean up by itself — at the cost of a stored cross-group device
-  graph, the one thing a D1 leak or subpoena would then yield.
-- **A content-free tickle; the service worker pulls and writes the text.**
-  Receiver-side text needs the fold, the copy and the claim inside `sw.js`, and
-  both platforms demand a visible notification for every push, so it cannot
-  decide to stay quiet about an entry you are not in.
-- **Random delay per recipient.** Blurs the timing Google and Apple see, never
-  hides it, and makes the notification late for everyone.
-- **Accounts, or a per-member key exchange** — the identity
-  [ADR-0003](decisions/0003-link-only-access.md) declines. Push turns out to
-  need a device→group map, not a person.
+*For: whoever touches push notifications. Why they work this way is
+[ADR-0037](decisions/0037-a-notification-is-sealed-by-the-phone-that-caused-it.md):
+the phone that made a change encrypts one notification per listening device,
+and the Worker relays them without keeping anything. Unproven on a real phone
+until the [checklist](testing.md#what-only-a-phone-can-check) has been run.*
 
 ## What is said
 
@@ -108,81 +35,52 @@ edited "Dinner"" — the share line carries the meaning. A person removed from t
 split reads "Your share €10.00 → none".
 
 **One push, one notification per phone.** Five entries added offline arrive as
-"Ana added 5 entries" over the sum of the shares in the group's currency. Each
+"Ana added 5 entries" over the sum of the shares in the group's currency; any
+other mix is "Ana changed 3 entries", and one entry's several commands read as
+its latest. Each
 notification is `tag`ged with the group id, so a group's latest replaces its
 last. Tapping opens `/g/entry?id=&e=` for one entry, `/g?id=` for several or a
 delete, where the new-edits line already folds what changed.
 
-## The plan
+## How it works
 
-Each step is one commit and leaves `pnpm check` green. Nothing sends anything
-until step 6.
+- **Subscribing** (`lib/push.ts`). The installed app offers it where the install
+  card stood, on the groups list and each ledger
+  ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)); the tap asks
+  permission before any await, which iOS requires. The subscription is written
+  as `push` on this phone's identity in every held, claimed group. The VAPID
+  public key comes from `GET /api/push/key`, since one build serves both
+  Workers. Every start and every claim runs `reconcilePush`, which rewrites a
+  rotated or new-key subscription, writes `null` for a revoked permission,
+  keeps what is there when offline, and writes nothing when the log agrees.
+- **Keeping** (`appendOps`'s `notify`, passed only by `commands/entries.ts`).
+  core's `notices` runs against the log just before and after the command and
+  what it finds goes in the Dexie `notices` table with the op ids, in the same
+  transaction. Skipped when nobody else in the group has a subscription, since
+  it folds the log twice.
+- **Sending** (`sendNotices`, `lib/db/sync.ts`), after a sync's rounds, for
+  every record whose ops have all landed: `lib/notify-copy.ts` words one
+  payload per subscribed device but this one, `encryptPush` seals each, and
+  `/notify` takes them 40 at a time ([sync.md](sync.md)). Records go once every
+  batch is answered; a network error or a 5xx keeps them for the next run. A
+  `404`/`410` endpoint the log still holds gets `push: null`, written by the
+  sender. A failure is a `/diag` line, never a failed sync.
+- **The relay** (`apps/api/src/relay.ts`) forwards only to push services' own
+  hosts, signs one VAPID JWT per service with the request's origin as subject,
+  and gives up after 1 s. `0` in its answer means not delivered for a reason
+  that isn't the subscription's — never a reason to clear one.
+- **Showing** (`public/sw.js`) — always something, as both platforms demand;
+  `renotify`, so a group's latest replaces its last and still buzzes; a tap
+  focuses or opens the url, kept same-origin.
+- **Leaving** (`forgetGroup`) writes `push: null` first, and `syncAll` keeps
+  syncing a left group until its pending ops are out. That sync heals nothing:
+  forgetting drops the claim. Rejoining puts the subscription back.
+- **Not built:** a screen for `scope` ("everything" is readable, never written).
 
-1. **core: `push` on identity.** *Built.* Accept the field in `validateOp` and the fold;
-   `history.ts` and `history-copy.ts` skip a revision that moved only `push`,
-   and so does the new-edits line (`components/new-edits.tsx`). Check
-   [invariants.md](invariants.md) — nothing there should read it. Tests: fold
-   merges `push` and `memberId` independently.
-2. **core: `webpush.ts`.** *Built.* RFC 8291 `aes128gcm` encryption (ECDH P-256, HKDF,
-   AES-GCM) on `globalThis.crypto` like `seal.ts`, and VAPID's ES256 JWT for
-   the Worker. Tests against the RFC 8291 appendix vectors. No dependency.
-3. **core: who hears what.** *Built* — `notify.ts`. A pure
-   `notices(before, after, ops, me)` over the two folds a command sees and its
-   own ops → one `Notice` per member but `me`, flagged `involved`: facts, not words — the
-   change, the entry before and after at today's rates, that member's share
-   and what they paid (both base minor units, cent placed as `computeBalances`
-   places it), and which money fields moved. Words and the url are step 6's,
-   from `copy.notify`, so core stays copy-free. A mode swap meaning the same
-   split, or a rate the same command moved, is no news.
-4. **api: the relay.** *Built* — `apps/api/src/relay.ts`, behind its own
-   `POST /api/groups/:id/notify` so a group of any size is several batches
-   rather than one oversized push. Takes `{ notifications: [{ endpoint, body
-   }] }` (base64, one 4 KiB record each, at most 40 a batch: the free plan
-   allows 50 external subrequests per request, and D1 counts against a
-   separate allowance — from memory, Cloudflare's page was unreachable
-   2026-09-23; confirm before raising it) and forwards them in parallel, only
-   to push services' own hosts, one JWT per service, 1 s timeout. Answers
-   `notified: { [endpoint]: status }`; `0` is a skipped host, timeout or
-   missing key — never a reason to clear a subscription. Needs an existing
-   group and its token; never registers one. The VAPID subject is the
-   request's origin.
-5. **web: subscribe.** *Built* — `lib/push.ts`. The installed app's install
-   card offers it instead, on the groups list and each ledger, same shell
-   ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)); the tap asks
-   permission before any await (iOS requires it), subscribes and writes `push`
-   to every held, claimed group's identity. It stands until the prompt is
-   answered. The VAPID public key is fetched from `GET /api/push/key`, not
-   built in: one build serves both Workers. On every start and after a first
-   claim, `reconcilePush` rewrites a rotated or new-key subscription, and `null`
-   for a revoked permission — offline keeps what is there. No `scope` is
-   written, which reads as "own"; the setting waits for a screen. `sw.js`
-   shows each push (`{ title, body, url, tag }`, the url kept same-origin) and
-   focuses or opens the url on a tap.
-6. **web: send.** *Built.* The commands in `lib/db/commands/entries.ts` pass
-   `notify` to `appendOps`, which runs `notices` against the log just before
-   and after and keeps what it finds in the Dexie `notices` table with the op
-   ids, in the same transaction — skipped when nobody else in the group has a
-   subscription, since it folds the log twice. After its rounds, `syncGroup`
-   sends every record whose ops have all landed (`sendNotices`, `sync.ts`):
-   `lib/notify-copy.ts` words one payload per subscribed device but this one,
-   `encryptPush` seals each, and `/notify` gets them 40 at a time. Records go
-   once every batch is answered; a network error or a 5xx keeps them for the
-   next run, a repeat the `tag` absorbs (`sw.js` sets `renotify`, so a
-   replacement still buzzes). A `404`/`410` endpoint that the log still holds
-   gets an identity op setting `push: null`. A failure is a `/diag` line,
-   never a failed sync.
-7. **web: leaving.** *Built.* `forgetGroup` writes `push: null` before
-   hiding, and `syncAll` still syncs a left group while it has pending ops —
-   the key outlives forgetting — then leaves it be. That sync heals nothing:
-   forgetting drops the claim. A push that arrives before the op lands is
-   still shown — both platforms demand it, and iOS revokes a subscription
-   that stays silent. Rejoining puts it back: every claim runs
-   `reconcilePush`, which writes nothing when the log already agrees.
-8. **docs.** Move [the decision](#the-decision) to `decisions/0037-…`, edit
-   [ADR-0003](decisions/0003-link-only-access.md)'s "awkward, deferred" and
-   "Revisit if" lines and ADR-0036's "Shape still leaks", add the Google/Apple
-   sentence to the privacy section of `/about`, add receiving to the phone
-   checklist in [testing.md](testing.md#what-only-a-phone-can-check) (a
-   headless browser cannot subscribe), and cut this file down to what was built.
+## Gotchas
 
-**Next:** step 8, the docs.
+- **Headless Chromium cannot subscribe**, permission granted or not — the
+  browser checks stop at the card; the rest is the phone checklist.
+- **The free plan's 50 subrequests per invocation** is from memory (Cloudflare's
+  page was unreachable 2026-09-23). The batch of 40 sits under it; confirm
+  before raising it.

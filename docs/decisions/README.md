@@ -7,7 +7,7 @@ probably in its "Rejected" section, which is the half worth keeping.
 ## Adding one: the default is no
 
 **Most sessions add none, and a session that adds two is documenting its work
-rather than deciding anything.** There are fifteen, and that number should move
+rather than deciding anything.** There are sixteen, and that number should move
 about as often as the architecture does. All four of these must hold:
 
 1. **It is built and shipped**, not proposed. An ADR records a decision the
@@ -29,7 +29,7 @@ opposed to why it is this and not that; a dependency you decided **not** to add,
 which is the default rather than a decision.
 
 If all four hold, write it — and say in your summary that the set grew, so the
-owner sees a fifteenth arrive rather than finding it later.
+owner sees a new one arrive rather than finding it later.
 
 **Changing one:** edit it. An ADR records where we stand and why, not the order
 we got here — if a later session refines a decision, fold it in and move the
@@ -60,3 +60,4 @@ the decision, or a rejected option nobody would propose, is a line to cut.
 | [0034](0034-a-member-is-their-name.md) | A member is their name, and a name cannot be changed |
 | [0035](0035-a-quick-split-is-a-bill-with-no-group.md) | A quick split is a bill with no group |
 | [0036](0036-the-server-cannot-read-a-group.md) | The server cannot read a group: op bodies are sealed under the link secret |
+| [0037](0037-a-notification-is-sealed-by-the-phone-that-caused-it.md) | A notification is sealed by the phone that caused it; the server relays and forgets |
