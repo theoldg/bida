@@ -14,7 +14,7 @@ tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | [sync.md](sync.md) | Touching the op log, offline behaviour, or history |
 | [frontend.md](frontend.md) | Writing UI, routing, or PWA code |
 | [ios.md](ios.md) | Touching joining, installing or storage on iPhone |
-| [notifications.md](notifications.md) | Building push notifications — designed, not built |
+| [notifications.md](notifications.md) | Push notifications: what is said, and how it is kept, sent and shown |
 | [receipt-scanning.md](receipt-scanning.md) | Touching the receipt scan or its Gemini call |
 | [design-system.md](design-system.md) | Writing anything a person will look at |
 | [hosting.md](hosting.md) | Deploying, or worrying about cost |
