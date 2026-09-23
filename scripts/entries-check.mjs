@@ -560,6 +560,11 @@ await page.getByRole("link", { name: /Coffee/ }).first().click();
 await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
+// And back from it is the feed that linked in: the entry screen it used to name
+// could only say the entry is gone.
+await page.getByRole("link", { name: "Back" }).first().click();
+await page.waitForURL((u) => u.pathname.startsWith("/g/history") && !u.searchParams.has("e"));
+report(true, "back from a deleted entry's history is the feed, not its gone screen");
 
 // ---- one press on Save is one entry ------------------------------------
 // `ready` is about the form, not whether a press is already spending it, so

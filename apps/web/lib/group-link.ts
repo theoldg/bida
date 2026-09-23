@@ -262,3 +262,14 @@ export function formParent(
 ): string {
   return entryId ? route.entry(groupId, entryId, via) : entryParent(groupId, via);
 }
+
+/**
+ * Where an entry's own history goes back to: the entry, unless it has been
+ * deleted — then the entry's own parent, since the entry screen would only say
+ * it is gone.
+ */
+export function historyParent(
+  groupId: string, entryId: string, via: EntrySource | undefined, deleted: boolean,
+): string {
+  return deleted ? entryParent(groupId, via) : route.entry(groupId, entryId, via);
+}

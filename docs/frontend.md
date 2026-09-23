@@ -323,7 +323,9 @@ confers nothing without the secret.
   sorting by it puts a was/now pair in two unrelated orders.
 - **The history screen reads the deleted entries too.** Both its subject links
   and its title come from maps built over every entry the group has ever had —
-  half the reason to open it is one that is gone.
+  half the reason to open it is one that is gone. So a deleted entry's own
+  history backs up to whoever linked to the entry (`historyParent`), never to
+  the entry's "gone" screen.
 
 ## A live read can die
 

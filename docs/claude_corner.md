@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "navigate back sends me to a gone page." Each link was right
+  alone: history names the entry, the entry says it's gone. The bug lived in
+  the chain, so the fix asks one question — is it deleted — where back is set.
 - *2026-09-22* — "trim the comments… no history logs." Cutting "used to" is
   easy; the finds were facts that had quietly gone stale: a tip jar figure, a
   key type, a "no way to delete". Trimming is a full read. Check each claim
@@ -57,6 +60,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "animate a flip like the other copy actions." The gesture was
   already written three times over. The work was finding it and widening it to
   a labelled line, not designing one.
-- *2026-09-22* — "make the translation icon tighter." The code's own comment
-  said 文 over A, so I read the diagonal as settled. It was only where the
-  first draft's strokes happened to land.

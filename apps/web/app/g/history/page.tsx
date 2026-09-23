@@ -12,7 +12,7 @@ import { opsForGroup } from "@/lib/db/fold";
 import { copy } from "@/lib/copy";
 import { plural, stamp } from "@/lib/format";
 import { describe } from "@/lib/history-copy";
-import { parseEntrySource, route } from "@/lib/group-link";
+import { historyParent, parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
@@ -68,6 +68,11 @@ function HistoryScreen() {
   const subject = entryId
     ? expenseById.get(entryId) ?? settlementById.get(entryId)
     : undefined;
+  // A deleted entry's back skips its "gone" screen for whoever linked to it —
+  // the feed, when it was the feed's deleted-entry link that brought us here.
+  const back = !groupId ? "/" : entryId
+    ? historyParent(groupId, entryId, via, !!subject?.deletedAt)
+    : route.group(groupId);
   const subjectName = !subject ? undefined
     : "description" in subject
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;
@@ -79,7 +84,7 @@ function HistoryScreen() {
 
   if (!groupId) return <BadLink />;
   if (data.loading || unclaimed) {
-    return <Blank back={entryId ? route.entry(groupId, entryId, via) : route.group(groupId)} />;
+    return <Blank back={back} />;
   }
   if (!data.group) return <BadLink />;
   const group = data.group;
@@ -119,7 +124,7 @@ function HistoryScreen() {
           sub={copy.history.subject(
             entryId ? subjectName ?? copy.history.entry : group.name,
             plural(revisions.length, copy.noun.revision))}
-          back={entryId ? route.entry(groupId, entryId, via) : route.group(groupId)}
+          back={back}
         />
 
         <Scroll>
