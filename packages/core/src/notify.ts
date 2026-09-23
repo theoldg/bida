@@ -3,7 +3,7 @@ import type { Op } from "./ops.js";
 import { atCurrentRates } from "./rates.js";
 import { canonicalSplit, resolveSplit, splitParticipants } from "./split.js";
 import type { CurrencyCode } from "./money.js";
-import type { Expense, GroupState, Id, Settlement, SplitSpec } from "./types.js";
+import { alive, type DevicePush, type Expense, type GroupState, type Id, type Settlement, type SplitSpec } from "./types.js";
 
 /**
  * Who hears about a command, and what about (docs/notifications.md#what-is-said).
@@ -48,6 +48,11 @@ export type MovedField = "amount" | "currency" | "split" | "payers" | "kind" | "
 export interface Notice {
   /** The member told. Never the author. */
   to: Id;
+  /**
+   * In the entry before or after. A device whose scope is "own" hears only
+   * these; the rest are for "all" (`wantsNotice`).
+   */
+  involved: boolean;
   /** The author, whose command this is. */
   by: Id;
   change: NoticeChange;
@@ -145,9 +150,11 @@ function seen(entry: Entry, to: Id): NoticeEntry {
 }
 
 /**
- * The notices one command causes. `before` and `after` are the group folded
- * without and with `ops`, the command's own; `me` is its author. A convert is
- * one command writing a delete and a create, so it pairs them.
+ * The notices one command causes: one per live member but `me`, its author,
+ * flagged `involved` or not — who hears which is the recipient phone's
+ * setting, applied at send time. `before` and `after` are the group folded
+ * without and with `ops`, the command's own. A convert is one command writing
+ * a delete and a create, so it pairs them.
  */
 export function notices(before: GroupState, after: GroupState, ops: readonly Op[], me: Id): Notice[] {
   const baseCurrency = after.group?.baseCurrency ?? before.group?.baseCurrency;
@@ -179,13 +186,11 @@ export function notices(before: GroupState, after: GroupState, ops: readonly Op[
     const movedFields = c.change === "edited" ? moved(c.before!, c.after!) : [];
     if (c.change === "edited" && movedFields.length === 0) continue;
     const people = new Set([...involved(c.before), ...involved(c.after)]);
-    people.delete(me);
-    for (const to of [...people].sort()) {
-      // Somebody removed from the group since is nobody to tell.
-      const member = now.members[to];
-      if (!member || member.deletedAt) continue;
+    // Everyone alive but the author; somebody removed since is nobody to tell.
+    const everyone = alive(now.members).map((m) => m.id).filter((id) => id !== me).sort();
+    for (const to of everyone) {
       out.push({
-        to, by: me, change: c.change,
+        to, involved: people.has(to), by: me, change: c.change,
         ...(c.before ? { before: seen(c.before, to) } : {}),
         ...(c.after ? { after: seen(c.after, to) } : {}),
         moved: movedFields,
@@ -194,4 +199,9 @@ export function notices(before: GroupState, after: GroupState, ops: readonly Op[
     }
   }
   return out;
+}
+
+/** Whether a device subscribed at `push` wants this notice. */
+export function wantsNotice(push: DevicePush, notice: Notice): boolean {
+  return notice.involved || push.scope === "all";
 }

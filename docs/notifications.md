@@ -37,9 +37,11 @@ of which groups share a phone.
   now, then signs a VAPID header and forwards each ciphertext. It never stores
   an endpoint, returns each endpoint's status, and the sender clears a dead
   one (`404`/`410`) with an ordinary identity op.
-- **A person is told only about entries they are in**: in the split, among the
-  payers, or a side of a transfer. That is what lets every notification carry
-  *their* share.
+- **How much a phone hears is the phone's setting**: nothing, entries its
+  member is in (in the split, among the payers, a side of a transfer), or
+  everything. It rides on the subscription as `scope`, so the sender filters
+  (`wantsNotice`); "nothing" is no subscription. Default "own", and not in the
+  UI yet (the owner's call, 2026-09-23).
 - **Only a person's own command notifies**, never a sync push by itself — heals
   and re-offered logs go through the same pipe and are nobody's news.
 
@@ -95,6 +97,10 @@ is the app's. Strings live in `copy.notify`
 | `convertTo*` | As an edit | Ana turned "Dinner" into a transfer |
 | Heals, members, rates, identity, group rename | Nobody | — |
 
+A payer gets both halves: "You paid €200.00 · your share €19.00", the share
+being what of it was spent on them (none when they aren't in the split). Of
+an entry you aren't in, a phone set to everything gets the first line alone.
+
 "Money moved" is `describe()`'s own question: amount, currency, split, payers
 or kind among the changed fields. One field gets its sentence, several get "Ana
 edited "Dinner"" — the share line carries the meaning. A person removed from the
@@ -121,7 +127,7 @@ until step 6.
    the Worker. Tests against the RFC 8291 appendix vectors. No dependency.
 3. **core: who hears what.** *Built* — `notify.ts`. A pure
    `notices(before, after, ops, me)` over the two folds a command sees and its
-   own ops → one `Notice` per involved member but `me`: facts, not words — the
+   own ops → one `Notice` per member but `me`, flagged `involved`: facts, not words — the
    change, the entry before and after at today's rates, that member's share
    and what they paid (both base minor units, cent placed as `computeBalances`
    places it), and which money fields moved. Words and the url are step 6's,
@@ -138,7 +144,8 @@ until step 6.
    timeout so a slow push service costs the sync a second at most. VAPID keys
    are Worker secrets per environment; the public half reaches the build as an
    env var. Caps belong in `push-limits.ts`.
-5. **web: subscribe.** A "Notifications" row in the group menu: asks
+5. **web: subscribe.** One setting per phone (`device`), default "own",
+   written as `scope` into every held group's identity `push`. Asks
    permission from the tap (iOS requires it), `pushManager.subscribe`, writes
    the identity's `push`. Hidden where it cannot work — a Safari tab on iPhone
    says to add to home screen. On every start, compare `getSubscription()`
@@ -164,6 +171,5 @@ until step 6.
    [testing.md](testing.md#what-only-a-phone-can-check) (a headless browser
    cannot receive a push), and cut this file down to what was built.
 
-**Open for the owner:** whether a notification is per group (the menu row) or
-one switch for the phone; and whether "only entries you are in" should ever be
-widened to everything in the group.
+**Open for the owner:** how a phone first asks permission while the setting
+isn't in the UI — iOS allows the prompt only from a tap.

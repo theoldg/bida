@@ -50,7 +50,7 @@ Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
              uploadState: 'local'|'uploading'|'uploaded', createdAt }
 Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt,
-             push? /* { endpoint, p256dh, auth } | null */ }
+             push? /* { endpoint, p256dh, auth, scope? } | null */ }
 ExchangeRate { id /* the ISO 4217 code — the currency IS the entity */, groupId,
              rate /* 1 unit of `id` = `rate` units of the group's base */,
              source: 'fetched'|'typed', asOf, deletedAt? }

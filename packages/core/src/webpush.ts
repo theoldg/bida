@@ -1,5 +1,5 @@
 import { fromBase64Url, toBase64Url } from "./bytes.js";
-import type { PushSubscriptionKeys } from "./types.js";
+import type { DevicePush } from "./types.js";
 
 /**
  * Web Push's two pieces of cryptography, on WebCrypto and nothing else
@@ -124,7 +124,7 @@ export async function importSenderKeys(
  * record with no padding. What comes back is the whole request body.
  */
 export async function encryptPush(
-  to: PushSubscriptionKeys,
+  to: Pick<DevicePush, "p256dh" | "auth">,
   plaintext: Uint8Array,
   sender?: PushSenderKeys,
 ): Promise<Uint8Array> {

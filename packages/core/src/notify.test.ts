@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeBalances } from "./balance.js";
 import { foldOps } from "./fold.js";
 import { convertMinor } from "./money.js";
-import { notices, type Notice } from "./notify.js";
+import { notices, wantsNotice, type Notice } from "./notify.js";
 import type { Op } from "./ops.js";
 import { ADA, GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
 import type { SplitSpec } from "./types.js";
@@ -51,7 +51,13 @@ function expensePatch(seed: ExpenseSeed, base = "EUR") {
 }
 
 /** Run `command` on top of `b`'s ops and return what `me` would send. */
+/** Run `command` on top of `b`'s ops and return what `me` would send to people in it. */
 function run(b: OpBuilder, command: (b: OpBuilder) => void, me = THEO): Notice[] {
+  return runAll(b, command, me).filter((n) => n.involved);
+}
+
+/** The same, including the members an "all" phone would hear about too. */
+function runAll(b: OpBuilder, command: (b: OpBuilder) => void, me = THEO): Notice[] {
   const before = foldOps(b.ops);
   const start = b.ops.length;
   command(b);
@@ -258,7 +264,7 @@ describe("notices: transfers", () => {
     const b = group();
     const list = run(b, (b) => b.push("settlement", "s1", "create", transfer(THEO, MARIE, 2000)));
     expect(list).toEqual([{
-      to: MARIE, by: THEO, change: "added", moved: [], baseCurrency: "EUR",
+      to: MARIE, involved: true, by: THEO, change: "added", moved: [], baseCurrency: "EUR",
       after: {
         kind: "transfer", id: "s1", fromMember: THEO, toMember: MARIE,
         amountMinor: 2000, currency: "EUR", baseAmountMinor: 2000,
@@ -322,10 +328,35 @@ describe("notices: converting", () => {
   });
 });
 
+describe("notices: a phone that wants everything", () => {
+  const sub = { endpoint: "https://fcm.googleapis.com/x", p256dh: "p", auth: "a" };
+
+  it("gets the entries it isn't in, with no share and nothing paid", () => {
+    const b = group();
+    const list = runAll(b, (b) => b.push("expense", "e1", "create", expensePatch({
+      amount: 1000, split: { mode: "equal", members: [MARIE, THEO] },
+    })));
+    expect(to(list)).toEqual([ADA, MARIE, SAM]);
+    const ada = list.find((n) => n.to === ADA)!;
+    expect(ada).toMatchObject({ involved: false, after: { share: null, paid: null } });
+    expect(wantsNotice(sub, ada)).toBe(false);
+    expect(wantsNotice({ ...sub, scope: "own" }, ada)).toBe(false);
+    expect(wantsNotice({ ...sub, scope: "all" }, ada)).toBe(true);
+    expect(wantsNotice(sub, list.find((n) => n.to === MARIE)!)).toBe(true);
+  });
+
+  it("still hears nothing about an edit that moved no money, nor the author about their own", () => {
+    const b = group();
+    b.push("expense", "e1", "create", expensePatch({ amount: 1000 }));
+    expect(runAll(b, (b) => b.push("expense", "e1", "update", { description: "Supper" }))).toEqual([]);
+    expect(to(runAll(b, (b) => b.push("expense", "e1", "delete", {})))).not.toContain(THEO);
+  });
+});
+
 describe("notices: nothing else is news", () => {
   it("members, rates, identity and a group rename tell nobody", () => {
     const b = group();
-    const list = run(b, (b) => {
+    const list = runAll(b, (b) => {
       b.push("member", "zed", "create", { name: "zed", colorSeed: 9 });
       b.push("rate", "USD", "create", { rate: "0.9", source: "typed", asOf: 1 });
       b.push("identity", "node1", "update", { push: null });

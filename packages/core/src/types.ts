@@ -175,16 +175,24 @@ export interface Identity {
    * This device's Web Push subscription, or null once it stopped listening.
    * Absent on a device that never asked. docs/notifications.md.
    */
-  push?: PushSubscriptionKeys | null;
+  push?: DevicePush | null;
 }
 
-/** What a sender needs to encrypt to one device (RFC 8291) and address it. */
-export interface PushSubscriptionKeys {
+/**
+ * How much a phone wants to hear. A setting of the phone, not of a group, so
+ * every group's identity carries the same one. "Nothing" is no subscription.
+ */
+export type NotifyScope = "own" | "all";
+
+/** What a sender needs to encrypt to one device (RFC 8291), address it, and filter for it. */
+export interface DevicePush {
   endpoint: string;
   /** The device's P-256 public key, base64url, uncompressed. */
   p256dh: string;
   /** The 16-byte auth secret, base64url. */
   auth: string;
+  /** Entries this device's member is in, or everything. Absent reads as "own". */
+  scope?: NotifyScope;
 }
 
 /** Where a rate came from — the only provenance the app can honestly show. */
