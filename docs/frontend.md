@@ -328,7 +328,7 @@ confers nothing without the secret.
   the entry's "gone" screen. Its line is `components/revision.tsx`, shared with the ledger.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
-  at four with "More in history" under them. New is `unseenRevisions`
+  at four, with "Group history" always under them. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.
   **The catch-up is optional, so only unfolding marks it seen** — opening the

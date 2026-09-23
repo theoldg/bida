@@ -14,7 +14,7 @@ import { useLive } from "@/lib/db/live";
 import { plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 
-/** Past this many the line hands over to the history screen. */
+/** Past this many the line leaves the rest to the history screen. */
 const CAP = 4;
 
 /**
@@ -100,13 +100,11 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
           {shown.slice(0, CAP).map((rev, i) => (
             <RevisionEntry key={rev.op.id} rev={rev} first={i === 0} context={context} />
           ))}
-          {shown.length > CAP ? (
-            <Link href={route.history(groupId)} className="tlink neweditsmore">
-              <Icon name="clock" size={13} />
-              <span>{copy.group.moreChanges}</span>
-              <Icon name="chev" size={13} />
-            </Link>
-          ) : null}
+          <Link href={route.history(groupId)} className="tlink neweditsmore">
+            <Icon name="clock" size={13} />
+            <span>{copy.group.groupHistory}</span>
+            <Icon name="chev" size={13} />
+          </Link>
         </div>
       ) : null}
     </div>

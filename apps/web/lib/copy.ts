@@ -738,8 +738,8 @@ export const copy = {
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
     untitled: "Untitled",
     notYours: "not yours",
-    /** The foot of the new-changes fold past its cap; History has the rest. */
-    moreChanges: "More in history",
+    /** The foot of the new-changes fold, always: History has the rest. */
+    groupHistory: "Group history",
     you: {
       owe: "You owe",
       owed: "You’re owed",

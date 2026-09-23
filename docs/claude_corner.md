@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "should always be present… what do you think?" Asked for a
+  view, so gave one and built it: "Group history", since the rows above it each
+  open an entry's own. A question inside an ask wants an answer, not a menu.
 - *2026-09-23* — "clicking a notification lands on gone for a while." The
   screen was right about this phone; the phone just hadn't heard yet. Missing
   and not-yet-arrived look the same until a sync answers, so wait for one.
@@ -65,6 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   be." The question was the size; the answer was the hit area. A wash only
   tells the truth if it covers exactly what a tap lands on, so the button had
   to grow before the tint could.
-- *2026-09-23* — "navigate back sends me to a gone page." Each link was right
-  alone: history names the entry, the entry says it's gone. The bug lived in
-  the chain, so the fix asks one question — is it deleted — where back is set.
