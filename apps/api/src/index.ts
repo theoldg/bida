@@ -7,7 +7,7 @@ import {
   MAX_BYTES, NotBase64Error, type ScanMedium, type ScanTone, wrapPayload,
 } from "./scan-body";
 import { clientKey, countScans, overLimit, recordScan, turnstileOk } from "./scan-limits";
-import { declaredTooLarge, pushTooLarge } from "./push-limits";
+import { MAX_NOTIFY_BODY_BYTES, declaredTooLarge, pushTooLarge } from "./push-limits";
 import { devAsset } from "./dev-env";
 import { pageForPayload } from "./payload";
 import {
@@ -240,7 +240,7 @@ app.post("/api/groups/:id/ops", async (c) => {
   const oversized = declaredTooLarge(c.req.header("content-length") ?? null);
   if (oversized) return c.json({ error: oversized.error }, oversized.status);
 
-  let body: { ops?: unknown; since?: unknown; notify?: unknown };
+  let body: { ops?: unknown; since?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -266,27 +266,48 @@ app.post("/api/groups/:id/ops", async (c) => {
   const tooLarge = pushTooLarge(incoming);
   if (tooLarge) return c.json({ error: tooLarge.error }, tooLarge.status);
 
-  // Checked with the ops, so a bad one refuses the push before anything commits.
-  // Notifications ride on the ops that caused them, so none travel alone.
-  const notify = parseNotify(body.notify);
-  if (!Array.isArray(notify)) return c.json({ error: notify.error }, notify.status);
-  if (notify.length > 0 && incoming.length === 0) {
-    return c.json({ error: "notifications ride on the ops that caused them" }, 400);
-  }
-
   const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, now);
   const pushedIds = new Set(incoming.map((op) => op.id));
-  // After the commit: a notification never announces an op the log refused.
-  // Awaited rather than `waitUntil`, because the sender needs the statuses.
+  const pulled = (await opsSince(c.env.DB, groupId, since)).filter((op) => !pushedIds.has(op.id));
+
+  return c.json({ assigned, ops: pulled, latestSeq });
+});
+
+/**
+ * Relay notifications the sending phone encrypted to other phones
+ * (docs/notifications.md, `relay.ts`). Its own route so a group of any size is
+ * batches of `MAX_NOTIFY_PER_BATCH`, each with its own subrequest budget. Sent
+ * after the push that caused them has landed, so none announces an op the log
+ * lacks. **Never registers a group**, unlike `POST /ops`: an unknown one is 404.
+ */
+app.post("/api/groups/:id/notify", async (c) => {
+  const groupId = c.req.param("id");
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
+
+  const group = await getGroup(c.env.DB, groupId);
+  if (!group) return c.json({ error: "unknown group" }, 404);
+  if (isDeleted(group)) return c.json(GONE, 410);
+  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+
+  const oversized = declaredTooLarge(c.req.header("content-length") ?? null, MAX_NOTIFY_BODY_BYTES);
+  if (oversized) return c.json({ error: oversized.error }, oversized.status);
+
+  let body: { notifications?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+  const notifications = parseNotify(body.notifications);
+  if (!Array.isArray(notifications)) return c.json({ error: notifications.error }, notifications.status);
+
   const vapid = c.env.VAPID_PUBLIC_KEY && c.env.VAPID_PRIVATE_KEY
     ? { publicKey: c.env.VAPID_PUBLIC_KEY, privateKey: c.env.VAPID_PRIVATE_KEY }
     : null;
-  const [pulled, notified] = await Promise.all([
-    opsSince(c.env.DB, groupId, since).then((ops) => ops.filter((op) => !pushedIds.has(op.id))),
-    notify.length > 0 ? relay(notify, vapid, new URL(c.req.url).origin, now) : null,
-  ]);
-
-  return c.json({ assigned, ops: pulled, latestSeq, ...(notified ? { notified } : {}) });
+  // Awaited rather than `waitUntil`: the sender needs the statuses.
+  const notified = await relay(notifications, vapid, new URL(c.req.url).origin, Date.now());
+  return c.json({ notified });
 });
 
 app.get("/api/groups/:id/ops", async (c) => {

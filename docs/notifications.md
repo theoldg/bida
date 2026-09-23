@@ -30,11 +30,12 @@ of which groups share a phone.
 - **The phone that caused the change writes the notification, one per
   recipient.** It holds the fold, so it knows each recipient's member and their
   share; it encrypts each text to that recipient's subscription (RFC 8291,
-  `aes128gcm`) and hands the server `(endpoint, ciphertext)` pairs alongside the
-  ops that caused them. That encryption is end to end between two phones, so no
+  `aes128gcm`) and hands the server `(endpoint, ciphertext)` pairs once the
+  ops that caused them have landed. That encryption is end to end between two phones, so no
   inner seal under the group key is needed.
-- **The server is a relay that forgets.** On `POST /ops` it stores the ops as
-  now, then signs a VAPID header and forwards each ciphertext. It never stores
+- **The server is a relay that forgets.** On `POST /notify`, in batches of 40
+  so a group of any size fits the per-request subrequest cap, it signs a VAPID
+  header and forwards each ciphertext. It never stores
   an endpoint, returns each endpoint's status, and the sender clears a dead
   one (`404`/`410`) with an ordinary identity op.
 - **How much a phone hears is the phone's setting**: nothing, entries its
@@ -133,15 +134,18 @@ until step 6.
    places it), and which money fields moved. Words and the url are step 6's,
    from `copy.notify`, so core stays copy-free. A mode swap meaning the same
    split, or a rate the same command moved, is no news.
-4. **api: the relay.** *Built* — `apps/api/src/relay.ts`. `POST /ops` takes
-   `notify: [{ endpoint, body }]` (base64, one 4 KiB record each, at most 40:
-   the free plan allows 50 external subrequests, and D1 counts against a
+4. **api: the relay.** *Built* — `apps/api/src/relay.ts`, behind its own
+   `POST /api/groups/:id/notify` so a group of any size is several batches
+   rather than one oversized push. Takes `{ notifications: [{ endpoint, body
+   }] }` (base64, one 4 KiB record each, at most 40 a batch: the free plan
+   allows 50 external subrequests per request, and D1 counts against a
    separate allowance — from memory, Cloudflare's page was unreachable
-   2026-09-23; confirm before raising it) and forwards them in parallel after the commit, only to
-   push services' own hosts, one JWT per service, 1 s timeout. Answers
+   2026-09-23; confirm before raising it) and forwards them in parallel, only
+   to push services' own hosts, one JWT per service, 1 s timeout. Answers
    `notified: { [endpoint]: status }`; `0` is a skipped host, timeout or
-   missing key — never a reason to clear a subscription. Notifications without
-   ops are refused. The VAPID subject is the request's origin.
+   missing key — never a reason to clear a subscription. Needs an existing
+   group and its token; never registers one. The VAPID subject is the
+   request's origin.
 5. **web: subscribe.** One setting per phone (`device`), default "own",
    written as `scope` into every held group's identity `push`. Asks
    permission from the tap (iOS requires it), `pushManager.subscribe`, writes
@@ -152,9 +156,10 @@ until step 6.
    `notificationclick` (focus or open the url).
 6. **web: send.** The commands in the table store their notices in a Dexie
    `notices` table keyed by the op ids that caused them, in the same
-   transaction as `appendOps`. `syncGroupOnce` attaches a round's notices to
-   its push, encrypts at send time against the subscriptions the fold holds
-   then, and deletes them on a 2xx. A `404`/`410` endpoint gets an identity
+   transaction as `appendOps`. Once a round's push has landed,
+   `syncGroupOnce` encrypts its notices against the subscriptions the fold
+   holds then, sends them to `/notify` in batches of 40, and deletes them on
+   a 2xx. A failed batch never fails the sync — the ops are in. A `404`/`410` endpoint gets an identity
    op setting `push: null`. A healed or pulled op never has a notice, so it
    never sends one.
 7. **web: leaving.** `forgetGroup` writes `push: null` before hiding, and

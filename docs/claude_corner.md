@@ -28,10 +28,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "it disappears after I open and collapse it." One state
   meant both "unfolded" and "held"; folding dropped the hold, and seen was
   already marked. When a flag answers two questions, closing one closes both.
-- *2026-09-23* — "carry on with notifications.md." The plan said re-check
-  the subrequest cap; Cloudflare's docs were blocked from here. Built under it
-  with room to spare and wrote down that the number is from memory, rather
-  than stall or pretend it was checked.
+- *2026-09-23* — "what happens when there's over 40 subscribers?" A 413 on
+  the ops push: a sync jammed for good. The file I added the cap to warned
+  against exactly that. "Can we not batch it?" — a limit per request is a
+  reason to split the request, not to drop what doesn't fit.
 - *2026-09-23* — "why didn't you run pnpm session?" The task was keys, not
   code, and the harness named another branch, so it felt skippable. It never
   is, and CLAUDE.md now says it outranks the harness on purpose. When two

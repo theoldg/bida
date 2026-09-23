@@ -38,9 +38,9 @@ interface PushRefusal {
  * and requiring one would break proxies for nothing. An unlabelled body is
  * buffered first, capped by the Worker's 100 MB limit.
  */
-export function declaredTooLarge(header: string | null): PushRefusal | null {
+export function declaredTooLarge(header: string | null, max = MAX_PUSH_BYTES): PushRefusal | null {
   const declared = Number(header ?? NaN);
-  if (!Number.isFinite(declared) || declared <= MAX_PUSH_BYTES) return null;
+  if (!Number.isFinite(declared) || declared <= max) return null;
   return { error: "push too large", status: 413 };
 }
 
@@ -61,15 +61,19 @@ export function pushTooLarge(ops: readonly SealedOp[]): PushRefusal | null {
 }
 
 /**
- * Notifications one push may carry (docs/notifications.md). Each is one fetch,
- * and the free plan allows 50 external subrequests per invocation — D1 calls
- * count against Cloudflare's own, separate allowance. The sender writes one per
- * subscribed phone but its own, so a group needs 41 of them to reach this.
+ * Notifications one `POST /api/groups/:id/notify` may carry
+ * (docs/notifications.md). Each is one fetch, and the free plan allows 50
+ * external subrequests per invocation — D1 calls count against Cloudflare's
+ * own, separate allowance. A group with more subscribed phones is sent in
+ * batches, so an honest client never meets this.
  */
-export const MAX_NOTIFY_PER_PUSH = 40;
+export const MAX_NOTIFY_PER_BATCH = 40;
 
 /** One `aes128gcm` message is one 4096-byte record (`core/webpush.ts`). */
 export const MAX_NOTIFY_BYTES = 4096;
 
 /** Endpoints run to ~200 characters; this only bounds what gets parsed. */
 export const MAX_ENDPOINT_CHARS = 2048;
+
+/** A full batch at the caps above, as base64 and JSON, is ~300 KB. */
+export const MAX_NOTIFY_BODY_BYTES = 512_000;

@@ -1,5 +1,5 @@
 import { fromBase64, vapidAuthorization, type VapidKeys } from "@bida/core";
-import { MAX_ENDPOINT_CHARS, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_PUSH } from "./push-limits";
+import { MAX_ENDPOINT_CHARS, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH } from "./push-limits";
 
 /**
  * The relay that forgets (docs/notifications.md#the-decision): notifications
@@ -34,23 +34,22 @@ export function pushServiceAllowed(endpoint: string): boolean {
   return EXACT_HOSTS.has(host) || HOST_SUFFIXES.some((s) => host.endsWith(s));
 }
 
-/** A refused `notify` refuses the push whole, before any op is accepted. */
+/** A refused batch is refused whole; nothing in it is forwarded. */
 export interface NotifyRefusal {
   error: string;
   status: 400 | 413;
 }
 
 /**
- * Shape-check `notify: [{ endpoint, body }]`; absent is none. A host off the
- * list is *not* a refusal — a phone may hold a subscription from a push service
- * we don't know, and a refusal would stall its sync for ever — it is only not
- * forwarded (`relay` answers 0).
+ * Shape-check `notifications: [{ endpoint, body }]`. A host off the list is
+ * *not* a refusal — a phone may hold a subscription from a push service we
+ * don't know, and a refusal would lose the whole batch every time — it is only
+ * not forwarded (`relay` answers 0).
  */
 export function parseNotify(raw: unknown): Notification[] | NotifyRefusal {
-  if (raw === undefined) return [];
-  if (!Array.isArray(raw)) return { error: "notify must be an array", status: 400 };
-  if (raw.length > MAX_NOTIFY_PER_PUSH) {
-    return { error: `a push carries at most ${MAX_NOTIFY_PER_PUSH} notifications`, status: 413 };
+  if (!Array.isArray(raw)) return { error: "notifications must be an array", status: 400 };
+  if (raw.length > MAX_NOTIFY_PER_BATCH) {
+    return { error: `a batch carries at most ${MAX_NOTIFY_PER_BATCH} notifications`, status: 413 };
   }
   const out: Notification[] = [];
   for (const item of raw) {

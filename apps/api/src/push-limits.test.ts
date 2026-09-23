@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { SealedOp } from "@bida/core";
 import {
+  MAX_ENDPOINT_CHARS, MAX_NOTIFY_BODY_BYTES, MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH,
   MAX_OPS_PER_PUSH, MAX_PUSH_BYTES, MAX_SEALED_BYTES,
   declaredTooLarge, pushTooLarge,
 } from "./push-limits";
@@ -22,10 +23,23 @@ describe("declaredTooLarge", () => {
     });
   });
 
+  it("takes a tighter cap for the notify route", () => {
+    expect(declaredTooLarge(String(MAX_NOTIFY_BODY_BYTES), MAX_NOTIFY_BODY_BYTES)).toBeNull();
+    expect(declaredTooLarge(String(MAX_NOTIFY_BODY_BYTES + 1), MAX_NOTIFY_BODY_BYTES)?.status).toBe(413);
+  });
+
   // Unlike the scan: this route buffers, so `pushTooLarge` bounds it anyway.
   it("lets a missing or unparseable header through rather than 411", () => {
     expect(declaredTooLarge(null)).toBeNull();
     expect(declaredTooLarge("chunked")).toBeNull();
+  });
+});
+
+describe("the notify batch", () => {
+  // Base64 grows 4/3, JSON adds quotes and keys; a full batch must fit.
+  it("holds a full batch at every cap", () => {
+    const perNote = Math.ceil(MAX_NOTIFY_BYTES / 3) * 4 + MAX_ENDPOINT_CHARS + 40;
+    expect(MAX_NOTIFY_PER_BATCH * perNote).toBeLessThan(MAX_NOTIFY_BODY_BYTES);
   });
 });
 

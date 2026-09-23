@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fromBase64Url, toBase64, toBase64Url, type VapidKeys } from "@bida/core";
-import { MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_PUSH } from "./push-limits";
+import { MAX_NOTIFY_BYTES, MAX_NOTIFY_PER_BATCH } from "./push-limits";
 import { parseNotify, pushServiceAllowed, relay, type Notification } from "./relay";
 
 /** The relay (docs/notifications.md, plan step 4): where it forwards, and what it answers. */
@@ -67,27 +67,27 @@ describe("pushServiceAllowed", () => {
 describe("parseNotify", () => {
   const body = toBase64(new Uint8Array(200));
 
-  it("reads absent as none, and decodes each body", () => {
-    expect(parseNotify(undefined)).toEqual([]);
+  it("reads an empty batch as none, and decodes each body", () => {
+    expect(parseNotify([])).toEqual([]);
     const [n] = parseNotify([{ endpoint: FCM, body }]) as Notification[];
     expect(n!.endpoint).toBe(FCM);
     expect(n!.body.length).toBe(200);
   });
 
-  // A phone may hold a subscription from a service we don't know; refusing would stall its sync.
-  it("keeps an unknown host rather than refusing the push", () => {
+  // A phone may hold a subscription from a service we don't know; refusing would lose the batch every time.
+  it("keeps an unknown host rather than refusing the batch", () => {
     expect(parseNotify([{ endpoint: "https://push.example/x", body }])).toHaveLength(1);
   });
 
-  it("refuses a malformed shape with 400", () => {
-    for (const raw of [{}, [null], [{ endpoint: 1, body }], [{ endpoint: FCM }], [{ endpoint: FCM, body: "!!" }], [{ endpoint: FCM, body: "" }]]) {
+  it("refuses a missing or malformed batch with 400", () => {
+    for (const raw of [undefined, {}, [null], [{ endpoint: 1, body }], [{ endpoint: FCM }], [{ endpoint: FCM, body: "!!" }], [{ endpoint: FCM, body: "" }]]) {
       expect((parseNotify(raw) as { status: number }).status, JSON.stringify(raw)).toBe(400);
     }
   });
 
   it("passes the caps exactly and refuses one over with 413", () => {
-    const at = [...Array(MAX_NOTIFY_PER_PUSH)].map(() => ({ endpoint: FCM, body }));
-    expect(parseNotify(at)).toHaveLength(MAX_NOTIFY_PER_PUSH);
+    const at = [...Array(MAX_NOTIFY_PER_BATCH)].map(() => ({ endpoint: FCM, body }));
+    expect(parseNotify(at)).toHaveLength(MAX_NOTIFY_PER_BATCH);
     expect((parseNotify([...at, at[0]]) as { status: number }).status).toBe(413);
 
     const full = toBase64(new Uint8Array(MAX_NOTIFY_BYTES));
@@ -99,7 +99,7 @@ describe("parseNotify", () => {
   it("sits above the largest honest message and under the free plan's 50 subrequests", () => {
     // One aes128gcm record is the most `encryptPush` ever writes.
     expect(MAX_NOTIFY_BYTES).toBe(4096);
-    expect(MAX_NOTIFY_PER_PUSH).toBeLessThan(50);
+    expect(MAX_NOTIFY_PER_BATCH).toBeLessThan(50);
   });
 });
 

@@ -116,8 +116,8 @@ later. Don't throw on out-of-order ops.
 
 ## The protocol
 
-Two endpoints — `apps/api/src/index.ts` (routes), `store.ts` (D1), `auth.ts`
-(bearer check). Both authenticate with a **token derived from the group secret**
+The group endpoints — `apps/api/src/index.ts` (routes), `store.ts` (D1), `auth.ts`
+(bearer check). All authenticate with a **token derived from the group secret**
 ([ADR-0003](decisions/0003-link-only-access.md),
 [ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)); the secret itself
 never leaves the phone.
@@ -146,14 +146,16 @@ and every later request is checked against it. A `GET` on a never-pushed group
 returns 404 — the creating device must sync once before an invite link is
 pullable.
 
-A push may also carry `notify: [{ endpoint, body }]` — notifications the
-sending phone encrypted to other phones, relayed after the ops commit and
-answered as `notified: { [endpoint]: status }`, `0` meaning not delivered for a
-reason that isn't the subscription's (`apps/api/src/relay.ts`,
-[notifications.md](notifications.md)). A malformed one refuses the push whole,
-at most 40 of 4 KiB each; a host that isn't a push service is skipped, not refused.
-
 **`GET /api/groups/:id/ops?since=N`** — the same pull, without a push.
+
+**`POST /api/groups/:id/notify`** — `{ notifications: [{ endpoint, body }] }`,
+at most 40 of 4 KiB each, which the sending phone encrypted to other phones and
+sends once the push that caused them has landed; a bigger group is several
+batches. Relayed and answered as `notified: { [endpoint]: status }`, `0`
+meaning not delivered for a reason that isn't the subscription's
+(`apps/api/src/relay.ts`, [notifications.md](notifications.md)). Unlike a push
+it never registers a group. A malformed batch is refused whole; a host that
+isn't a push service is skipped, not refused.
 
 ### The push has a ceiling
 
