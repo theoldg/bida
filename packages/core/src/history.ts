@@ -36,6 +36,14 @@ export interface Revision {
   isDelete: boolean;
 }
 
+/**
+ * Fields that are plumbing, not news: a device subscribing to notifications
+ * moves nobody's money or name, so a revision that moved only these is dropped.
+ */
+const QUIET_FIELDS: Partial<Record<Op["entity"], ReadonlySet<string>>> = {
+  identity: new Set(["push"]),
+};
+
 function equalish(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   // Absent and `null` both mean unset: a create omits unset fields, so an edit
@@ -57,6 +65,7 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
     const changes: FieldChange[] = [];
     const isDelete = op.kind === "delete";
     const before: Record<string, unknown> = { ...running };
+    const quiet = QUIET_FIELDS[op.entity];
 
     if (isDelete) {
       changes.push({ field: "deletedAt", before: running["deletedAt"] ?? null, after: op.createdAt });
@@ -65,7 +74,7 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       // Diff the folds; a whole-entity patch names every field and moves almost none.
       applyPatch(running, op.patch);
       for (const field of Object.keys(op.patch)) {
-        if (IMMUTABLE_FIELDS.has(field)) continue;
+        if (IMMUTABLE_FIELDS.has(field) || quiet?.has(field)) continue;
         // The fold ignores it on an entity that already has one.
         if (WRITE_ONCE_FIELDS.has(field) && before[field] !== undefined
           && before[field] !== null) continue;

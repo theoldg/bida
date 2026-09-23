@@ -80,4 +80,41 @@ describe("identity ops", () => {
     const feed = activityFeed([claim(1000, "create", SAM, SAM)]);
     expect(feed.map((r) => r.entity)).toEqual(["identity"]);
   });
+
+  describe("push", () => {
+    const SUB = { endpoint: "https://fcm.googleapis.com/fcm/send/abc", p256dh: "BP", auth: "au" };
+    const subscribe = (ms: number, push: typeof SUB | null, node = PHONE): Op =>
+      validateOp({
+        id: `push-${node}-${ms}`,
+        groupId: GROUP,
+        entity: "identity",
+        entityId: node,
+        kind: "update",
+        patch: { push },
+        hlc: formatHlc(createHlcState("aaa", ms, 0)),
+        actor: SAM,
+        createdAt: ms,
+      });
+
+    it("merges independently of the claim, whichever lands first", () => {
+      // A subscription written before a switch of member, stamped earlier or later.
+      const ops = [claim(1000, "create", SAM, SAM), subscribe(3000, SUB), claim(2000, "update", MARIE, SAM)];
+      for (const order of [ops, [...ops].reverse(), [ops[1]!, ops[0]!, ops[2]!]]) {
+        expect(foldOps(order).identities[PHONE]).toMatchObject({ memberId: MARIE, push: SUB });
+      }
+      const later = [...ops, claim(4000, "update", SAM, MARIE)];
+      expect(foldOps(later).identities[PHONE]).toMatchObject({ memberId: SAM, push: SUB });
+    });
+
+    it("clears with null", () => {
+      const state = foldOps([claim(1000, "create", SAM, SAM), subscribe(2000, SUB), subscribe(3000, null)]);
+      expect(state.identities[PHONE]?.push).toBeNull();
+    });
+
+    it("is not history: a revision that moved only push is dropped", () => {
+      const ops = [claim(1000, "create", SAM, SAM), subscribe(2000, SUB), subscribe(3000, null)];
+      expect(entityHistory(ops, PHONE)).toHaveLength(1);
+      expect(activityFeed(ops)).toHaveLength(1);
+    });
+  });
 });

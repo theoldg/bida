@@ -171,6 +171,20 @@ export interface Identity {
   /** The member this device claims to be, as of `claimedAt`. */
   memberId: Id;
   claimedAt: number;
+  /**
+   * This device's Web Push subscription, or null once it stopped listening.
+   * Absent on a device that never asked. docs/notifications.md.
+   */
+  push?: PushSubscriptionKeys | null;
+}
+
+/** What a sender needs to encrypt to one device (RFC 8291) and address it. */
+export interface PushSubscriptionKeys {
+  endpoint: string;
+  /** The device's P-256 public key, base64url, uncompressed. */
+  p256dh: string;
+  /** The 16-byte auth secret, base64url. */
+  auth: string;
 }
 
 /** Where a rate came from — the only provenance the app can honestly show. */

@@ -1,7 +1,7 @@
 # Notifications
 
 *For: whoever builds push notifications. **Status: designed, not built**
-(2026-09-23). [The decision](#the-decision) is written as the ADR it becomes
+(2026-09-23); the plan is being built step by step, each marked when done. [The decision](#the-decision) is written as the ADR it becomes
 once shipped — ADRs record built things ([decisions/](decisions/README.md)), so
 it lives here until then, with [the plan](#the-plan) under it.*
 
@@ -111,7 +111,7 @@ delete, where the new-edits line already folds what changed.
 Each step is one commit and leaves `pnpm check` green. Nothing sends anything
 until step 6.
 
-1. **core: `push` on identity.** Accept the field in `validateOp` and the fold;
+1. **core: `push` on identity.** *Built.* Accept the field in `validateOp` and the fold;
    `history.ts` and `history-copy.ts` skip a revision that moved only `push`,
    and so does the new-edits line (`components/new-edits.tsx`). Check
    [invariants.md](invariants.md) — nothing there should read it. Tests: fold

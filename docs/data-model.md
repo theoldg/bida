@@ -49,7 +49,8 @@ Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
              rateToBase, baseAmountMinor, occurredAt, createdAt?, note?, deletedAt? }
 Attachment { id, groupId, expenseId, r2Key, mime, bytes, width, height,
              uploadState: 'local'|'uploading'|'uploaded', createdAt }
-Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt }
+Identity   { id /* the device's HLC node id */, groupId, memberId, claimedAt,
+             push? /* { endpoint, p256dh, auth } | null */ }
 ExchangeRate { id /* the ISO 4217 code — the currency IS the entity */, groupId,
              rate /* 1 unit of `id` = `rate` units of the group's base */,
              source: 'fetched'|'typed', asOf, deletedAt? }
@@ -173,6 +174,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   device stamped. Claims are ops
   ([ADR-0003](decisions/0003-link-only-access.md)); the device's own
   pointer stays in `device.meByGroup`, unsynced — changing it appends the op.
+  `push` is the device's Web Push subscription, read only by the phone
+  sending a notification ([notifications.md](notifications.md)); history drops
+  a revision that moved nothing else.
 
 ### A day without a time
 
