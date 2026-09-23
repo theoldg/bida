@@ -116,7 +116,7 @@ until step 6.
    and so does the new-edits line (`components/new-edits.tsx`). Check
    [invariants.md](invariants.md) — nothing there should read it. Tests: fold
    merges `push` and `memberId` independently.
-2. **core: `webpush.ts`.** RFC 8291 `aes128gcm` encryption (ECDH P-256, HKDF,
+2. **core: `webpush.ts`.** *Built.* RFC 8291 `aes128gcm` encryption (ECDH P-256, HKDF,
    AES-GCM) on `globalThis.crypto` like `seal.ts`, and VAPID's ES256 JWT for
    the Worker. Tests against the RFC 8291 appendix vectors. No dependency.
 3. **core: who hears what.** A pure `notices(before, after, recipients, me)`

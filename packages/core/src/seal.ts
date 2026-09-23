@@ -1,3 +1,4 @@
+import { fromBase64, toBase64 } from "./bytes.js";
 import { validateOp, type Op } from "./ops.js";
 import type { Id } from "./types.js";
 
@@ -135,6 +136,7 @@ export async function sealOp(crypto: GroupCrypto, op: Op): Promise<SealedOp> {
 export async function openOp(crypto: GroupCrypto, input: SealedOp): Promise<Op> {
   const sealed = validateSealedOp(input);
   const packed = fromBase64(sealed.sealed);
+  if (!packed) throw new SealError("sealed op isn't base64");
   if (packed.length <= 1 + IV_BYTES) throw new SealError("sealed op is too short to be one");
   if (packed[0] !== VERSION) throw new SealError(`unknown seal version: ${packed[0]}`);
   let plain: ArrayBuffer;
@@ -201,38 +203,6 @@ export function validateSealedOp(input: unknown): SealedOp {
 }
 
 // --------------------------------------------------------------- bytes
-
-const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-/** Hand-rolled, because `btoa` wants a binary string and isn't typed without DOM. */
-function toBase64(bytes: Uint8Array): string {
-  let out = "";
-  for (let i = 0; i < bytes.length; i += 3) {
-    const a = bytes[i]!, b = bytes[i + 1], c = bytes[i + 2];
-    const n = (a << 16) | ((b ?? 0) << 8) | (c ?? 0);
-    out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]!
-      + (b === undefined ? "=" : B64[(n >> 6) & 63]!)
-      + (c === undefined ? "=" : B64[n & 63]!);
-  }
-  return out;
-}
-
-function fromBase64(text: string): Uint8Array {
-  const clean = text.replace(/=+$/, "");
-  const bytes = new Uint8Array((clean.length * 3) >> 2);
-  let bits = 0, acc = 0, out = 0;
-  for (const ch of clean) {
-    const v = B64.indexOf(ch);
-    if (v < 0) throw new SealError("sealed op isn't base64");
-    acc = (acc << 6) | v;
-    bits += 6;
-    if (bits >= 8) {
-      bits -= 8;
-      bytes[out++] = (acc >> bits) & 255;
-    }
-  }
-  return bytes.subarray(0, out);
-}
 
 function hex(bytes: Uint8Array): string {
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
