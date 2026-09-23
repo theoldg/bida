@@ -41,7 +41,10 @@ other mix is "Ana changed 3 entries", and one entry's several commands read as
 its latest. Each
 notification is `tag`ged with the group id, so a group's latest replaces its
 last. Tapping opens `/g/entry?id=&e=` for one entry, `/g?id=` for several or a
-delete, where the new-edits line already folds what changed.
+delete, where the new-edits line already folds what changed. The tap usually
+beats the sync that brings the entry in, so an entry screen missing its entry
+shows "Fetching the latest…" through one sync of the group, and says "Gone"
+only if it is still missing after.
 
 ## How it works
 

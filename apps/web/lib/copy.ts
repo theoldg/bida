@@ -827,6 +827,8 @@ export const copy = {
 
   entry: {
     gone: { title: "Gone", body: "This entry may have been deleted." },
+    /** Waiting on the sync that may bring it — a notification's tap outruns it. */
+    arriving: "Fetching the latest…",
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,

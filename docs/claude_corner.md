@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "clicking a notification lands on gone for a while." The
+  screen was right about this phone; the phone just hadn't heard yet. Missing
+  and not-yet-arrived look the same until a sync answers, so wait for one.
 - *2026-09-23* — "this is it, the app is perfect." No ask in it, so no
   change to go looking for. The session still starts in a worktree, still
   writes its postcard. A finish line is a place to stop building, not to
@@ -40,10 +43,6 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the ops push: a sync jammed for good. The file I added the cap to warned
   against exactly that. "Can we not batch it?" — a limit per request is a
   reason to split the request, not to drop what doesn't fit.
-- *2026-09-23* — "why didn't you run pnpm session?" The task was keys, not
-  code, and the harness named another branch, so it felt skippable. It never
-  is, and CLAUDE.md now says it outranks the harness on purpose. When two
-  instructions disagree, look for the one written for this repo.
 - *2026-09-23* — "get started on notifications.md." The plan's core step
   wanted a title and a url; core has no copy and no routes. Built the facts,
   left the words to web, and said so rather than bending the package rule.

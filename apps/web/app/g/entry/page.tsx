@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit, splitParticipants,
   type Expense, type Group, type Settlement,
@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
+import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
@@ -38,6 +39,33 @@ export default function EntryPage() {
   return <QueryBoundary><EntryScreen /></QueryBoundary>;
 }
 
+/**
+ * Whether an entry this phone doesn't have may still be on its way. A
+ * notification's tap lands here before the sync that brings the entry in —
+ * the push outran the pull — so "Gone" waits for one sync of the group (joining
+ * the one opening the app started) and a read of what it wrote. Only a row
+ * still missing or tombstoned after that is gone; so is one a failed sync
+ * didn't bring, since nothing more comes until the next.
+ */
+function useArriving(groupId: string | undefined, entryId: string | undefined, found: boolean): boolean {
+  const [looked, setLooked] = useState<string>();
+  const key = `${groupId}/${entryId}`;
+  useEffect(() => {
+    if (found || !groupId || !entryId) return;
+    let live = true;
+    void (async () => {
+      await syncGroup(groupId).catch(() => {});
+      // The live read catches up a beat after the sync resolves; a row that is
+      // there now will be `found` then, so only an absent one ends the wait.
+      const d = db();
+      const row = (await d.expenses.get(entryId)) ?? (await d.settlements.get(entryId));
+      if (live && (!row || row.deletedAt)) setLooked(key);
+    })();
+    return () => { live = false; };
+  }, [found, groupId, entryId, key]);
+  return !found && looked !== key;
+}
+
 function EntryScreen() {
   const router = useRouter();
   const params = useSearchParams();
@@ -53,6 +81,7 @@ function EntryScreen() {
   const expense = data.expenses.find((e) => e.id === entryId);
   const settlement = expense ? undefined : data.settlements.find((s) => s.id === entryId);
   const [asking, setAsking] = useState(false);
+  const arriving = useArriving(groupId, entryId, !!(expense ?? settlement));
 
   // "edited ×3" comes from the log itself: revisions are ops, not a counter
   // somebody has to remember to increment.
@@ -68,6 +97,16 @@ function EntryScreen() {
   const group = data.group;
   const entry = expense ?? settlement;
 
+  if (!entry && arriving) {
+    return (
+      <Screen><Body>
+        <TopBar title=" " back={parent} />
+        <div className="empty arriving" role="status">
+          <span className="spinner" aria-hidden="true" />{copy.entry.arriving}
+        </div>
+      </Body></Screen>
+    );
+  }
   if (!entry) {
     return (
       <Screen><Body>
