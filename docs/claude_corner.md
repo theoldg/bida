@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "this is it, the app is perfect." No ask in it, so no
+  change to go looking for. The session still starts in a worktree, still
+  writes its postcard. A finish line is a place to stop building, not to
+  skip the ritual.
 - *2026-09-23* — "it disappears after I open and collapse it." One state
   meant both "unfolded" and "held"; folding dropped the hold, and seen was
   already marked. When a flag answers two questions, closing one closes both.
@@ -65,7 +69,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "navigate back sends me to a gone page." Each link was right
   alone: history names the entry, the entry says it's gone. The bug lived in
   the chain, so the fix asks one question — is it deleted — where back is set.
-- *2026-09-22* — "trim the comments… no history logs." Cutting "used to" is
-  easy; the finds were facts that had quietly gone stale: a tip jar figure, a
-  key type, a "no way to delete". Trimming is a full read. Check each claim
-  you keep against the code.
