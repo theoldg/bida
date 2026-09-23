@@ -330,7 +330,8 @@ confers nothing without the secret.
   you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
   at four with "More in history" under them. New is an op numbered past `groupKeys.seenSeq`
   whose stamp is another phone's, your own laptop included. Unfolding marks
-  them seen and keeps them up; so does leaving the ledger by any route. The
+  them seen and keeps the line up, folded again or not, until the ledger is
+  left by any route, which marks them seen too. The
   first pull sets the mark at the cursor, so a joined group opens with nothing
   new, and the mark is device-local, never an op.
 

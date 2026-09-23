@@ -28,8 +28,8 @@ const nodeOf = (hlc: string): string | undefined => {
  * **New** is an op the server numbered past `seenSeq` whose stamp is another
  * phone's — your own laptop included, since this phone never showed it. Two
  * things mark it seen: unfolding it, and leaving the ledger. Unfolding keeps
- * the list up until then, and anything arriving meanwhile joins it rather than
- * the list being swapped under a thumb.
+ * the line up until then, folded again or not, and anything arriving meanwhile
+ * joins it rather than the list being swapped under a thumb.
  */
 export function NewEdits({ groupId, currency }: { groupId: string; currency: string }) {
   const fresh = useLive("newEdits", async () => {
@@ -62,7 +62,9 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
   }, [groupId]);
 
   // What unfolding showed, held so marking it seen doesn't empty the list.
+  // Folding it again keeps the hold: the line stays until the ledger is left.
   const [held, setHeld] = useState<Revision[] | null>(null);
+  const [open, setOpen] = useState(false);
   const live = fresh?.revisions ?? [];
   const shown = held
     ? [...held, ...live.filter((r) => !held.some((h) => h.op.id === r.op.id))]
@@ -84,11 +86,12 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
   if (fresh) names.current = fresh;
 
   if (shown.length === 0 || !names.current) return null;
-  const open = held !== null;
   const context: RevisionContext = { groupId, currency, ...names.current };
 
   function toggle() {
-    if (open) { setHeld(null); return; }
+    if (open) { setOpen(false); return; }
+    setOpen(true);
+    if (held) return;
     setHeld(live);
     void markEditsSeen(groupId, top);
   }

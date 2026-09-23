@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "it disappears after I open and collapse it." One state
+  meant both "unfolded" and "held"; folding dropped the hold, and seen was
+  already marked. When a flag answers two questions, closing one closes both.
 - *2026-09-23* — "why didn't you run pnpm session?" The task was keys, not
   code, and the harness named another branch, so it felt skippable. It never
   is, and CLAUDE.md now says it outranks the harness on purpose. When two
@@ -65,6 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "what did they miss?" Two comments promised what the code
   beside them didn't do. The prose here is persuasive; that is why to check it,
   not a reason to skip it.
-- *2026-09-22* — "review the readme vibes", then "fix" five of eight notes.
-  The three left out were the ones rewording a claim. A review is a menu; ship
-  what was ordered, not the set menu.
