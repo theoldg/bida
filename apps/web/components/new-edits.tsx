@@ -15,7 +15,7 @@ import { plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 
 /** Past this many the line hands over to the history screen. */
-const CAP = 8;
+const CAP = 4;
 
 const nodeOf = (hlc: string): string | undefined => {
   try { return parseHlc(hlc).node; } catch { return undefined; }
@@ -96,7 +96,7 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
   return (
     <div className={`newedits${open ? " on" : ""}`}>
       <button type="button" className="daylabel neweditsbar" aria-expanded={open} onClick={toggle}>
-        <span>{plural(shown.length, copy.noun.newEdit)}</span>
+        <span>{plural(shown.length, copy.noun.newChange)}</span>
         <Icon name="chev" size={13} className="neweditschev" />
       </button>
       {open ? (
@@ -105,8 +105,8 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
             <RevisionEntry key={rev.op.id} rev={rev} first={i === 0} context={context} />
           ))}
           {shown.length > CAP ? (
-            <Link href={route.history(groupId)} className="tlink">
-              <span>{copy.group.moreEdits(shown.length - CAP)}</span>
+            <Link href={route.history(groupId)} className="tlink neweditsmore">
+              <span>{copy.group.moreChanges(shown.length - CAP)}</span>
               <Icon name="chev" size={13} />
             </Link>
           ) : null}

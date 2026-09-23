@@ -209,7 +209,7 @@ export const copy = {
     person: { one: "person", many: "people" } as Noun,
     photo: { one: "photo", many: "photos" } as Noun,
     revision: { one: "revision", many: "revisions" } as Noun,
-    newEdit: { one: "new edit", many: "new edits" } as Noun,
+    newChange: { one: "new change", many: "new changes" } as Noun,
     /** A line of somebody else's spreadsheet — only the import counts these. */
     row: { one: "row", many: "rows" } as Noun,
     way: { one: "way", many: "ways" } as Noun,
@@ -680,8 +680,8 @@ export const copy = {
     empty: { title: "Nothing here yet", body: "Tap + to add the first thing." },
     untitled: "Untitled",
     notYours: "not yours",
-    /** The foot of the new-edits line past its cap; History has the rest. */
-    moreEdits: (n: number) => `${n} more in History`,
+    /** The foot of the new-changes fold past its cap; History has the rest. */
+    moreChanges: (n: number) => `${n} more in History`,
     you: {
       owe: "You owe",
       owed: "You’re owed",

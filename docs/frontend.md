@@ -326,9 +326,9 @@ confers nothing without the secret.
   half the reason to open it is one that is gone. So a deleted entry's own
   history backs up to whoever linked to the entry (`historyParent`), never to
   the entry's "gone" screen. Its line is `components/revision.tsx`, shared with the ledger.
-- **The ledger's new-edits line** (`components/new-edits.tsx`) sits under the
-  you-owe card, drawn as a date line: "4 new edits", unfolding onto those revisions, capped at
-  eight with a link to History. New is an op numbered past `groupKeys.seenSeq`
+- **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
+  you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
+  at four with a link to History. New is an op numbered past `groupKeys.seenSeq`
   whose stamp is another phone's, your own laptop included. Unfolding marks
   them seen and keeps them up; so does leaving the ledger by any route. The
   first pull sets the mark at the cursor, so a joined group opens with nothing
