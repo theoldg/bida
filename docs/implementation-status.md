@@ -37,9 +37,11 @@ design waiting to be built.
   ([frontend.md](frontend.md#a-live-read-can-die)). Nothing catches it:
   `rules-check` enforces `useLive` and `goBack`, not `whenVisible`.
 
-- **Push notifications are designed, not built** — the decision, the wording
-  and an eight-step plan are in [notifications.md](notifications.md), with two
-  questions for the owner at its foot.
+- **Push notifications are half-built** — the decision, the wording and an
+  eight-step plan are in [notifications.md](notifications.md), with two
+  questions for the owner at its foot. Steps 1–3 (core: `push` on identity,
+  `webpush.ts`, `notify.ts`) are in; nothing sends yet. Next is step 4, the
+  relay.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

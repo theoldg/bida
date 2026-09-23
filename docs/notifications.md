@@ -119,12 +119,14 @@ until step 6.
 2. **core: `webpush.ts`.** *Built.* RFC 8291 `aes128gcm` encryption (ECDH P-256, HKDF,
    AES-GCM) on `globalThis.crypto` like `seal.ts`, and VAPID's ES256 JWT for
    the Worker. Tests against the RFC 8291 appendix vectors. No dependency.
-3. **core: who hears what.** A pure `notices(before, after, recipients, me)`
-   over the two folds a command sees → one `{ memberId, title, body, url }`
-   per involved recipient but `me`, with the share from `resolveSplit`.
-   Exhaustive tests: every command in the table, income, multi-payer,
-   0- and 3-decimal currencies, a person added to and dropped from a split.
-   Text comes in as functions so core stays copy-free.
+3. **core: who hears what.** *Built* — `notify.ts`. A pure
+   `notices(before, after, ops, me)` over the two folds a command sees and its
+   own ops → one `Notice` per involved member but `me`: facts, not words — the
+   change, the entry before and after at today's rates, that member's share
+   and what they paid (both base minor units, cent placed as `computeBalances`
+   places it), and which money fields moved. Words and the url are step 6's,
+   from `copy.notify`, so core stays copy-free. A mode swap meaning the same
+   split, or a rate the same command moved, is no news.
 4. **api: the relay.** `POST /ops` takes an optional `notify: [{ endpoint,
    body }]` (base64 ciphertext, ≤ 4 KiB each, a count under the free plan's
    subrequest cap — re-check it, D1 calls may count). After the ops commit it

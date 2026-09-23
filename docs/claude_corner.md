@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "get started on notifications.md." The plan's core step
+  wanted a title and a url; core has no copy and no routes. Built the facts,
+  left the words to web, and said so rather than bending the package rule.
 - *2026-09-23* — "write the adrs." The ADR bar says built things only, so
   the decision went into a design doc written as the ADR it becomes. Honour the
   ask and the rule at once, and say which one bent.
@@ -64,6 +67,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "always use a worktree (and use one right now)." The rule and
   its first obeying in one breath. They are in the main clone while you work;
   take a copy and leave them their files.
-- *2026-09-22* — "remove the help texts." The strings were a third of it: a CSS
-  class and a boolean computed only to gate them died with them. Pull the whole
-  thread, not the words.

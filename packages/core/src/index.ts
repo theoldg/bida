@@ -21,3 +21,4 @@ export * from "./seal.js";
 export * from "./when.js";
 export * from "./demo.js";
 export * from "./webpush.js";
+export * from "./notify.js";
