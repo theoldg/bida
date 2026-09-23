@@ -1,0 +1,40 @@
+name: VAPID keys (one-off)
+
+# Runs once, on the push that adds this file, and is deleted by the next push.
+# Makes a VAPID pair per Worker and pipes each private half straight into
+# `wrangler secret put`, so it is never printed anywhere; only the public
+# halves are logged, for wrangler.toml (docs/hosting.md#deploying). Kept off a
+# re-run on purpose: a new pair silences every subscribed phone.
+on:
+  push:
+    branches: [dev]
+    paths: [.github/workflows/vapid-keys.yml]
+
+jobs:
+  keys:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generate and set VAPID_PRIVATE_KEY on both Workers
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -eu
+          mkdir -p ../web/out # wrangler.toml's [assets] directory, unbuilt here
+          for target in dev production; do
+            pair=$(node -e "crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign']).then(async k=>{const pub=Buffer.from(await crypto.subtle.exportKey('raw',k.publicKey)).toString('base64url');const d=(await crypto.subtle.exportKey('jwk',k.privateKey)).d;console.log(pub+' '+d)})")
+            pub=${pair% *}
+            priv=${pair#* }
+            echo "::add-mask::$priv"
+            if [ "$target" = dev ]; then flag="--env dev"; else flag=""; fi
+            printf %s "$priv" | pnpm exec wrangler secret put VAPID_PRIVATE_KEY $flag
+            echo "VAPID_PUBLIC_KEY $target $pub"
+            echo "- \`$target\`: \`$pub\`" >> "$GITHUB_STEP_SUMMARY"
+          done
