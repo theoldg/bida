@@ -133,17 +133,15 @@ until step 6.
    places it), and which money fields moved. Words and the url are step 6's,
    from `copy.notify`, so core stays copy-free. A mode swap meaning the same
    split, or a rate the same command moved, is no news.
-4. **api: the relay.** `POST /ops` takes an optional `notify: [{ endpoint,
-   body }]` (base64 ciphertext, ≤ 4 KiB each, a count under the free plan's
-   subrequest cap — re-check it, D1 calls may count). After the ops commit it
-   forwards them in parallel, only to push services' own hosts
-   (`fcm.googleapis.com`, `*.push.apple.com`,
-   `updates.push.services.mozilla.com`, `*.notify.windows.com`), and answers
-   with `notified: { [endpoint]: status }` — awaited rather than
-   `ctx.waitUntil`, because the sender needs the statuses, with a short
-   timeout so a slow push service costs the sync a second at most. VAPID keys
-   are Worker secrets per environment, *set on both* (2026-09-23); the public
-   half, already in `wrangler.toml`, reaches the build as an env var. Caps belong in `push-limits.ts`.
+4. **api: the relay.** *Built* — `apps/api/src/relay.ts`. `POST /ops` takes
+   `notify: [{ endpoint, body }]` (base64, one 4 KiB record each, at most 40:
+   the free plan allows 50 external subrequests, and D1 counts against a
+   separate allowance — from memory, Cloudflare's page was unreachable
+   2026-09-23; confirm before raising it) and forwards them in parallel after the commit, only to
+   push services' own hosts, one JWT per service, 1 s timeout. Answers
+   `notified: { [endpoint]: status }`; `0` is a skipped host, timeout or
+   missing key — never a reason to clear a subscription. Notifications without
+   ops are refused. The VAPID subject is the request's origin.
 5. **web: subscribe.** One setting per phone (`device`), default "own",
    written as `scope` into every held group's identity `push`. Asks
    permission from the tap (iOS requires it), `pushManager.subscribe`, writes
@@ -171,9 +169,9 @@ until step 6.
    [testing.md](testing.md#what-only-a-phone-can-check) (a headless browser
    cannot receive a push), and cut this file down to what was built.
 
-**Next:** step 4, the relay. Its keys are in place on both Workers
-(2026-09-23): `VAPID_PRIVATE_KEY` a secret, `VAPID_PUBLIC_KEY` in
-`wrangler.toml` — [hosting.md](hosting.md#deploying).
+**Next:** step 5, subscribing. The web build needs `VAPID_PUBLIC_KEY` from
+`wrangler.toml` as an env var for `pushManager.subscribe`, and the sender
+writes `body` with core's `toBase64`.
 
 **Open for the owner:** how a phone first asks permission while the setting
 isn't in the UI — iOS allows the prompt only from a tap.

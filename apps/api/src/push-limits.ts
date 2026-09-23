@@ -59,3 +59,17 @@ export function pushTooLarge(ops: readonly SealedOp[]): PushRefusal | null {
   }
   return null;
 }
+
+/**
+ * Notifications one push may carry (docs/notifications.md). Each is one fetch,
+ * and the free plan allows 50 external subrequests per invocation — D1 calls
+ * count against Cloudflare's own, separate allowance. The sender writes one per
+ * subscribed phone but its own, so a group needs 41 of them to reach this.
+ */
+export const MAX_NOTIFY_PER_PUSH = 40;
+
+/** One `aes128gcm` message is one 4096-byte record (`core/webpush.ts`). */
+export const MAX_NOTIFY_BYTES = 4096;
+
+/** Endpoints run to ~200 characters; this only bounds what gets parsed. */
+export const MAX_ENDPOINT_CHARS = 2048;

@@ -14,6 +14,7 @@ import {
   fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
 } from "./tricount";
 import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
+import { parseNotify, relay } from "./relay";
 
 /**
  * The one Worker: static app plus the sync API (docs/hosting.md, docs/sync.md).
@@ -29,6 +30,9 @@ const app = new Hono<{
     SCAN_IP_SALT?: string;
     /** `"dev"` on the dev Worker only (wrangler.toml) — see dev-env.ts. */
     BIDA_ENV?: string;
+    /** wrangler.toml; the private half is a secret. Without it nothing is relayed — docs/hosting.md#deploying. */
+    VAPID_PUBLIC_KEY?: string;
+    VAPID_PRIVATE_KEY?: string;
   };
 }>();
 
@@ -236,7 +240,7 @@ app.post("/api/groups/:id/ops", async (c) => {
   const oversized = declaredTooLarge(c.req.header("content-length") ?? null);
   if (oversized) return c.json({ error: oversized.error }, oversized.status);
 
-  let body: { ops?: unknown; since?: unknown };
+  let body: { ops?: unknown; since?: unknown; notify?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -262,11 +266,27 @@ app.post("/api/groups/:id/ops", async (c) => {
   const tooLarge = pushTooLarge(incoming);
   if (tooLarge) return c.json({ error: tooLarge.error }, tooLarge.status);
 
+  // Checked with the ops, so a bad one refuses the push before anything commits.
+  // Notifications ride on the ops that caused them, so none travel alone.
+  const notify = parseNotify(body.notify);
+  if (!Array.isArray(notify)) return c.json({ error: notify.error }, notify.status);
+  if (notify.length > 0 && incoming.length === 0) {
+    return c.json({ error: "notifications ride on the ops that caused them" }, 400);
+  }
+
   const { assigned, latestSeq } = await acceptOps(c.env.DB, groupId, incoming, now);
   const pushedIds = new Set(incoming.map((op) => op.id));
-  const pulled = (await opsSince(c.env.DB, groupId, since)).filter((op) => !pushedIds.has(op.id));
+  // After the commit: a notification never announces an op the log refused.
+  // Awaited rather than `waitUntil`, because the sender needs the statuses.
+  const vapid = c.env.VAPID_PUBLIC_KEY && c.env.VAPID_PRIVATE_KEY
+    ? { publicKey: c.env.VAPID_PUBLIC_KEY, privateKey: c.env.VAPID_PRIVATE_KEY }
+    : null;
+  const [pulled, notified] = await Promise.all([
+    opsSince(c.env.DB, groupId, since).then((ops) => ops.filter((op) => !pushedIds.has(op.id))),
+    notify.length > 0 ? relay(notify, vapid, new URL(c.req.url).origin, now) : null,
+  ]);
 
-  return c.json({ assigned, ops: pulled, latestSeq });
+  return c.json({ assigned, ops: pulled, latestSeq, ...(notified ? { notified } : {}) });
 });
 
 app.get("/api/groups/:id/ops", async (c) => {
