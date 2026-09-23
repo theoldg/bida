@@ -582,7 +582,7 @@ export function WhoHadWhat({
                       const held = inColumn(pending, line.start, m.id);
                       const aimed = inColumn(point, line.start, m.id);
                       return (
-                        <td key={m.id}>
+                        <td key={m.id} className="itemwho">
                           <button className={`itemcell${held ? " point-hold" : aimed ? pointClass : ""}`}
                             // Stopped here: the refusal listens for its flash on the row, and a
                             // pointer settling inside would read as that flash ending — handing

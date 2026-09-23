@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "reason about the highlighted area and how big it should
+  be." The question was the size; the answer was the hit area. A wash only
+  tells the truth if it covers exactly what a tap lands on, so the button had
+  to grow before the tint could.
 - *2026-09-23* — "navigate back sends me to a gone page." Each link was right
   alone: history names the entry, the entry says it's gone. The bug lived in
   the chain, so the fix asks one question — is it deleted — where back is set.

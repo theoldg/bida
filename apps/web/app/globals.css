@@ -790,9 +790,20 @@ a { color: inherit; text-decoration: none }
 .itemamountin:focus { border-color: var(--brand) }
 .itemamountin::placeholder { color: var(--muted) }
 .tipedit { color: var(--muted); flex: none }
-/* Fills its `<td>`, so the tap target is the whole column by the row's height.
-   `place-items` centres the dot on the header's initials. */
+/* `place-items` centres the dot on the header's initials. */
 .itemcell { width: 100%; height: 34px; display: grid; place-items: center }
+/* The tappable one fills its `<td>` to the rules, padding and all: `height` on
+   the cell is its floor, the row's tallest label its ceiling, and the button
+   is laid over whatever that comes to — so a tap anywhere between the rules
+   lands, and the press washes exactly that rectangle. Square, not rounded:
+   a rounded tile between straight rules reads as a chip floating on the grid,
+   not as the cell answering. Adjacent cells share no rule, so a wash spans
+   the column's full width and meets the next one's edge. */
+.itemtable td.itemwho { position: relative; height: 46px }
+.itemwho > .itemcell { position: absolute; inset: 0; width: auto; height: auto;
+  transition: background-image .2s ease }
+.itemwho > .itemcell:active { background-image: linear-gradient(var(--press), var(--press));
+  transition-duration: 0s }
 .itemcell .dot { width: 10px; height: 10px }
 /* The rows nobody ordered wear the same cell minus the button, so both columns
    of dots stay in line down a long bill. */
