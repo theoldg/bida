@@ -20,6 +20,11 @@ database_name = "hajsik"
 database_id = "809ab9d2-f6b3-4183-a9b1-8204848655f3"
 migrations_dir = "migrations"
 
+# Not a secret: the private half is `VAPID_PRIVATE_KEY`. Never rotate casually —
+# a new pair silences every subscribed phone. docs/hosting.md#deploying.
+[vars]
+VAPID_PUBLIC_KEY = "BGRSigc1ntb1JLy-ofHZ7aI7D7KKMiwYSPwteG1M3b4dGkpK6Z1xhbz8g1uEK-jpx58r10_INma_-im1fTCD_CA"
+
 # The dev Worker: own hostname and D1, deployed from `dev`. Environments inherit
 # nothing, so [assets] and the binding are restated. Group links are
 # same-origin, so dev can't reach production's data.
@@ -37,6 +42,7 @@ run_worker_first = true
 
 [env.dev.vars]
 BIDA_ENV = "dev"
+VAPID_PUBLIC_KEY = "BMU7v98iYPZXWTlYT0LV6ncbLuWa1Nd4cTKCfIqhNkcngTgHhDGF9Py7MJwV0K6JFKJlDmMy9E3orKu7leTaqVc"
 
 # Disposable, unlike production — try schema changes here.
 [[env.dev.d1_databases]]

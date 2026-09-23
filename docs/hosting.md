@@ -122,8 +122,8 @@ yet refuses every scan. Rotating `SCAN_IP_SALT` is free — it resets buckets
 that live a day.
 
 **Push notifications need a VAPID key pair per environment**
-([notifications.md](notifications.md)) — nothing reads it until the relay
-ships, so setting it early is harmless. The private half is a secret; the
+([notifications.md](notifications.md)); both of bida's Workers have theirs
+(2026-09-23), so the commands below are for a new instance. The private half is a secret; the
 public half is not, and goes in `wrangler.toml` as `VAPID_PUBLIC_KEY` under
 that environment's `vars`, where the Worker signs with it and the app fetches
 it to subscribe:
