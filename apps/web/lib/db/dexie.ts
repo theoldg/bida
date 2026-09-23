@@ -7,6 +7,7 @@ import type {
   Group,
   Identity,
   Member,
+  Notice,
   Op,
   Settlement,
 } from "@bida/core";
@@ -156,6 +157,21 @@ interface GroupKey {
 }
 
 /**
+ * What one command of this phone's owes the rest of the group
+ * (docs/notifications.md), kept until the ops that caused it have landed —
+ * a notification about an entry nobody can pull yet would open to nothing.
+ * Facts, not words: they are written at send time, with the names of then.
+ */
+export interface PendingNotices {
+  id: string;
+  groupId: string;
+  /** The command's ops. Sent once every one is on the server. */
+  opIds: string[];
+  notices: Notice[];
+  createdAt: number;
+}
+
+/**
  * **Never rename the database.** `hajsik` is where every phone's groups
  * already live; a new name opens an empty database and every install
  * launches with no groups.
@@ -180,6 +196,8 @@ class BidaDb extends Dexie {
    * the currency code: two groups spending MAD are two rows.
    */
   rates!: Table<ExchangeRate, [string, string]>;
+  /** Device-local like `groupKeys`: never folded, never synced. */
+  notices!: Table<PendingNotices, string>;
 
   constructor() {
     super("hajsik"); // deliberately not "bida" — see above
@@ -202,6 +220,9 @@ class BidaDb extends Dexie {
       await tx.table("ops").toCollection().modify({ pending: 1, seq: null });
       await tx.table("groupKeys").toCollection().modify({ lastSeq: 0 });
     });
+    // Adds a table and nothing else, so it carries no upgrade; 8 keeps its own
+    // for a phone that skips straight here.
+    this.version(9).stores({ notices: "id, groupId" });
   }
 }
 

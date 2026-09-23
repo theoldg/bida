@@ -150,8 +150,8 @@ pullable.
 
 **`POST /api/groups/:id/notify`** — `{ notifications: [{ endpoint, body }] }`,
 at most 40 of 4 KiB each, which the sending phone encrypted to other phones and
-sends once the push that caused them has landed; a bigger group is several
-batches. Relayed and answered as `notified: { [endpoint]: status }`, `0`
+sends once the push that caused them has landed (`sendNotices`, after a
+run's rounds); a bigger group is several batches. Relayed and answered as `notified: { [endpoint]: status }`, `0`
 meaning not delivered for a reason that isn't the subscription's
 (`apps/api/src/relay.ts`, [notifications.md](notifications.md)). Unlike a push
 it never registers a group. A malformed batch is refused whole; a host that

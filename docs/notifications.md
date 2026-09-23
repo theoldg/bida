@@ -158,14 +158,19 @@ until step 6.
    written, which reads as "own"; the setting waits for a screen. `sw.js`
    shows each push (`{ title, body, url, tag }`, the url kept same-origin) and
    focuses or opens the url on a tap.
-6. **web: send.** The commands in the table store their notices in a Dexie
-   `notices` table keyed by the op ids that caused them, in the same
-   transaction as `appendOps`. Once a round's push has landed,
-   `syncGroupOnce` encrypts its notices against the subscriptions the fold
-   holds then, sends them to `/notify` in batches of 40, and deletes them on
-   a 2xx. A failed batch never fails the sync — the ops are in. A `404`/`410` endpoint gets an identity
-   op setting `push: null`. A healed or pulled op never has a notice, so it
-   never sends one.
+6. **web: send.** *Built.* The commands in `lib/db/commands/entries.ts` pass
+   `notify` to `appendOps`, which runs `notices` against the log just before
+   and after and keeps what it finds in the Dexie `notices` table with the op
+   ids, in the same transaction — skipped when nobody else in the group has a
+   subscription, since it folds the log twice. After its rounds, `syncGroup`
+   sends every record whose ops have all landed (`sendNotices`, `sync.ts`):
+   `lib/notify-copy.ts` words one payload per subscribed device but this one,
+   `encryptPush` seals each, and `/notify` gets them 40 at a time. Records go
+   once every batch is answered; a network error or a 5xx keeps them for the
+   next run, a repeat the `tag` absorbs (`sw.js` sets `renotify`, so a
+   replacement still buzzes). A `404`/`410` endpoint that the log still holds
+   gets an identity op setting `push: null`. A failure is a `/diag` line,
+   never a failed sync.
 7. **web: leaving.** `forgetGroup` writes `push: null` before hiding, and
    `syncAll` pushes a left group's pending ops once (today it skips them) —
    the key outlives forgetting, so this is possible. A push that arrives
@@ -178,5 +183,4 @@ until step 6.
    checklist in [testing.md](testing.md#what-only-a-phone-can-check) (a
    headless browser cannot subscribe), and cut this file down to what was built.
 
-**Next:** step 6, sending — `copy.notify` gains the words, and the payload is
-the JSON `sw.js` already reads.
+**Next:** step 7, leaving.

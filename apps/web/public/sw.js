@@ -267,10 +267,14 @@ self.addEventListener("push", (event) => {
     // Not ours to read; the title alone still honours the rule above.
   }
   const title = typeof data.title === "string" && data.title ? data.title : "bida";
+  const tag = typeof data.tag === "string" && data.tag ? data.tag : undefined;
   event.waitUntil(
     self.registration.showNotification(title, {
       body: typeof data.body === "string" ? data.body : "",
-      tag: typeof data.tag === "string" ? data.tag : undefined,
+      tag,
+      // A replaced notification buzzes again: it is news, not a correction.
+      // Chrome refuses `renotify` without a tag.
+      renotify: !!tag,
       icon: "/icon-192.png",
       data: { url: sameOriginPath(data.url) },
     }),

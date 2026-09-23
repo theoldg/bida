@@ -1,14 +1,16 @@
 import {
-  MAX_DRIFT_MS, SealError, createHlcState, hlcReceive, isAhead, openOp, parseHlc, sealOp,
+  MAX_DRIFT_MS, SealError, createHlcState, encryptPush, hlcReceive, isAhead, openOp, parseHlc,
+  sealOp, toBase64,
   type Op, type SealedOp,
 } from "@bida/core";
-import { started } from "../diag";
+import { note, started } from "../diag";
+import { pushMessages } from "../notify-copy";
 import { groupCrypto } from "../seal";
 import { eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
 import { db, type StoredOp, type Unreadable } from "./dexie";
 import { VERSION } from "../version";
-import { rebuild } from "./fold";
+import { groupState, rebuild } from "./fold";
 import { whenVisible } from "./visible";
 
 /**
@@ -334,6 +336,10 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     pulledCount += pulled.length;
   }
 
+  // Only now: a notification about an op still on this phone would open to
+  // nothing on the phone it reaches. Its own failures are its own.
+  await sendNotices(groupId, key.secret).catch((err: unknown) => note("notify", errorOf(err)));
+
   // A pulled op can slot in before ops already folded — refold the whole group
   // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
   // per round: it folds the whole log.
@@ -350,6 +356,85 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   }
 
   return { pushed, pulled: pulledCount };
+}
+
+const errorOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
+
+/** `/notify`'s cap per request — the Worker's `MAX_NOTIFY_PER_BATCH`. */
+const NOTIFY_BATCH = 40;
+
+/** A push service's verdict that a subscription is gone for good (RFC 8030). */
+const DEAD = new Set([404, 410]);
+
+/**
+ * Send what this phone's commands owe the group, once their ops are on the
+ * server (docs/notifications.md): each device's notification encrypted to its
+ * own subscription (RFC 8291), so the Worker relays ciphertext it cannot read,
+ * in batches it can fit under its subrequest cap.
+ *
+ * Never fails the sync — the ops are in. The notices are dropped once every
+ * batch is answered; a network error or a 5xx keeps them for the next run, at
+ * the cost of a repeat on the batches that did go, which the group's `tag`
+ * folds into one notification. A device whose push service says it is gone
+ * gets `push: null`, written by this phone for it.
+ */
+async function sendNotices(groupId: string, secret: string): Promise<void> {
+  const d = db();
+  const records = await d.notices.where("groupId").equals(groupId).toArray();
+  if (records.length === 0) return;
+  const ready = [];
+  for (const record of records) {
+    const ops = await d.ops.bulkGet(record.opIds);
+    if (ops.every((op) => !op || op.pending === 0)) ready.push(record);
+  }
+  if (ready.length === 0) return;
+
+  const done = started("notify");
+  const [state, device] = await Promise.all([groupState(groupId), getDevice()]);
+  const messages = pushMessages(state, ready.flatMap((r) => r.notices), groupId, device.nodeId);
+  const utf8 = new TextEncoder();
+  const sealed = (await Promise.all(messages.map(async (m) => {
+    try {
+      const body = await encryptPush(m.push, utf8.encode(JSON.stringify(m.payload)));
+      return { message: m, endpoint: m.push.endpoint, body: toBase64(body) };
+    } catch {
+      // Anyone with the link can write a subscription; a broken one is skipped.
+      return undefined;
+    }
+  }))).filter((s) => s !== undefined);
+
+  const crypto = await groupCrypto(groupId, secret);
+  const statuses: Record<string, number> = {};
+  let answered = true;
+  for (let i = 0; i < sealed.length; i += NOTIFY_BATCH) {
+    const batch = sealed.slice(i, i + NOTIFY_BATCH);
+    try {
+      const res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${crypto.token}` },
+        body: JSON.stringify({ notifications: batch.map(({ endpoint, body }) => ({ endpoint, body })) }),
+      });
+      if (res.status >= 500) answered = false;
+      if (res.ok) Object.assign(statuses, ((await res.json()) as { notified: Record<string, number> }).notified);
+    } catch {
+      answered = false;
+    }
+  }
+  if (answered) await d.notices.bulkDelete(ready.map((r) => r.id));
+  done(`${sealed.length} sent${answered ? "" : ", kept"}`);
+
+  // Only a subscription the log still holds: a phone that re-subscribed since
+  // has a new endpoint, which this must not wipe.
+  const me = device.meByGroup[groupId];
+  const dead = sealed.filter((s) => DEAD.has(statuses[s.endpoint] ?? 0)
+    && state.identities[s.message.identity.id]?.push?.endpoint === s.endpoint);
+  if (me && dead.length > 0) {
+    const { appendOps } = await import("./commands/append");
+    await appendOps(groupId, me, dead.map((s) => ({
+      entity: "identity" as const, entityId: s.message.identity.id, kind: "update" as const,
+      patch: { push: null },
+    })));
+  }
 }
 
 let running: Promise<void> | undefined;

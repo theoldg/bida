@@ -155,7 +155,7 @@ export async function eraseGroupLocally(groupId: Id): Promise<void> {
   const d = db();
   await d.transaction("rw", [
     d.ops, d.groups, d.members, d.expenses, d.settlements,
-    d.attachments, d.identities, d.rates, d.groupKeys,
+    d.attachments, d.identities, d.rates, d.groupKeys, d.notices,
   ], async () => {
     await Promise.all([
       d.ops.where("groupId").equals(groupId).delete(),
@@ -167,6 +167,7 @@ export async function eraseGroupLocally(groupId: Id): Promise<void> {
       d.rates.where("groupId").equals(groupId).delete(),
       d.groups.delete(groupId),
       d.groupKeys.delete(groupId),
+      d.notices.where("groupId").equals(groupId).delete(),
     ]);
   });
 

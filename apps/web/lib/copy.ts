@@ -275,6 +275,49 @@ export const copy = {
       body: "A notification when someone adds, changes or deletes an entry you’re in.",
       act: "Turn on",
     },
+
+    /**
+     * What another phone shows (lib/notify-copy.ts): the group's name over
+     * these. `what` arrives quoted already; `who` is a member's name.
+     */
+    added: (who: string, what: string, amount: string) => `${who} added ${what} · ${amount}`,
+    deleted: (who: string, what: string, amount: string) => `${who} deleted ${what} · ${amount}`,
+    edited: (who: string, what: string) => `${who} edited ${what}`,
+    changedAmount: (who: string, what: string, was: string, now: string) =>
+      `${who} changed the amount of ${what}: ${was} → ${now}`,
+    changedSplit: (who: string, what: string) => `${who} changed how ${what} is split`,
+    changedPayers: (who: string, what: string) => `${who} changed who paid for ${what}`,
+    toIncome: (who: string, what: string) => `${who} turned ${what} into an income`,
+    toExpense: (who: string, what: string) => `${who} turned ${what} into an expense`,
+    toTransfer: (who: string, what: string) => `${who} turned ${what} into a transfer`,
+    /** Several entries in one push: the share line under it is their sum. */
+    addedMany: (who: string, entries: string) => `${who} added ${entries}`,
+    changedMany: (who: string, entries: string) => `${who} changed ${entries}`,
+    quoted: (description: string) => `“${description}”`,
+    untitled: "an entry",
+
+    /** A transfer, from where the reader stands. */
+    paidYou: (who: string, amount: string) => `${who} paid you ${amount}`,
+    recordedPaidYou: (who: string, from: string, amount: string) =>
+      `${who} recorded that ${from} paid you ${amount}`,
+    recordedYouPaid: (who: string, to: string, amount: string) =>
+      `${who} recorded that you paid ${to} ${amount}`,
+    recordedPaid: (who: string, from: string, to: string, amount: string) =>
+      `${who} recorded that ${from} paid ${to} ${amount}`,
+    /** A transfer's name in the sentences above: "Bo → you". */
+    transfer: (from: string, to: string) => `${from} → ${to}`,
+    you: "you",
+    them: "them",
+
+    /** The second line: the reader's side of it. */
+    share: (share: string) => `Your share ${share}`,
+    shareMoved: (was: string, now: string) => `Your share ${was} → ${now}`,
+    shareWas: (share: string) => `Your share was ${share}`,
+    paid: (paid: string) => `You paid ${paid}`,
+    received: (paid: string) => `You received ${paid}`,
+    paidAndShare: (paid: string, share: string) => `You paid ${paid} · your share ${share}`,
+    receivedAndShare: (paid: string, share: string) => `You received ${paid} · your share ${share}`,
+    none: "none",
   },
 
   install: {

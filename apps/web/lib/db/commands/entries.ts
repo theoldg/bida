@@ -1,7 +1,7 @@
 import {
   canonicalSplit, newId, primaryPayer,
-  type CurrencyCode, type ExchangeRate, type ExpenseKind, type Id, type Rate, type ReceiptDiscount,
-  type ReceiptItem, type SplitSpec,
+  type CurrencyCode, type ExchangeRate, type ExpenseKind, type Id, type OpDraft, type Rate,
+  type ReceiptDiscount, type ReceiptItem, type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
 import { appendOps } from "./append";
@@ -63,6 +63,14 @@ function normalisePayers(input: ExpenseInput): { paidBy: Id; payers: Record<Id, 
 }
 
 /**
+ * Every write in this file: a person's own command about an entry, so the rest
+ * of the group may hear of it (`appendOps`'s `notify`).
+ */
+function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.now()) {
+  return appendOps(groupId, actor, drafts, now, { notify: true });
+}
+
+/**
  * The `create` patch for an expense, shared by `addExpense` and
  * `convertToExpense` so the two can't describe it differently.
  */
@@ -117,7 +125,7 @@ export async function addExpense(
   expenseId: Id = newId(),
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
-  await appendOps(
+  await write(
     groupId,
     actor,
     [{ entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) }],
@@ -181,7 +189,7 @@ export async function editExpense(
 
   // A save that moved nothing is a revision saying nothing happened.
   if (!movesAnything(before, patch)) return;
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "update", patch, note: note ?? null },
   ]);
 }
@@ -192,7 +200,7 @@ export async function deleteExpense(
   expenseId: Id,
   note?: string,
 ): Promise<void> {
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "delete", patch: {}, note: note ?? null },
   ]);
 }
@@ -237,7 +245,7 @@ export async function recordSettlement(
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
   const settlementId = newId();
-  await appendOps(
+  await write(
     groupId,
     actor,
     [{
@@ -280,7 +288,7 @@ export async function editSettlement(
   });
 
   if (!movesAnything(existing, patch)) return;
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "update", patch, note: note ?? null },
   ]);
 }
@@ -290,7 +298,7 @@ export async function deleteSettlement(
   actor: Id,
   settlementId: Id,
 ): Promise<void> {
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
   ]);
 }
@@ -311,7 +319,7 @@ export async function convertToSettlement(
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
   const settlementId = newId();
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "expense", entityId: expenseId, kind: "delete", patch: {} },
     { entity: "settlement", entityId: settlementId, kind: "create", patch: settlementCreatePatch(input, base, rates, now) },
   ], now);
@@ -328,7 +336,7 @@ export async function convertToExpense(
   expenseId: Id = newId(),
 ): Promise<Id> {
   const { base, rates } = await valuationOf(groupId);
-  await appendOps(groupId, actor, [
+  await write(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
     { entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) },
   ], now);
