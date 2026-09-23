@@ -121,6 +121,24 @@ works on its own domains): a Worker checking for a token the app isn't sending
 yet refuses every scan. Rotating `SCAN_IP_SALT` is free — it resets buckets
 that live a day.
 
+**Push notifications need a VAPID key pair per environment**
+([notifications.md](notifications.md)) — nothing reads it until the relay
+ships, so setting it early is harmless. The private half is a secret; the
+public half is not, and goes in `wrangler.toml` as `VAPID_PUBLIC_KEY` under
+that environment's `vars`, where the Worker signs with it and the app fetches
+it to subscribe:
+
+```bash
+# prints `public …` and `private …`; once for dev, once for production
+node -e "crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign']).then(async k=>{console.log('public ',Buffer.from(await crypto.subtle.exportKey('raw',k.publicKey)).toString('base64url'));console.log('private',(await crypto.subtle.exportKey('jwk',k.privateKey)).d)})"
+pnpm --filter @bida/api exec wrangler secret put VAPID_PRIVATE_KEY --env dev   # dev's private half
+pnpm --filter @bida/api exec wrangler secret put VAPID_PRIVATE_KEY             # production's
+```
+
+**Never rotate a VAPID key casually**: every subscription is bound to the
+public key it was made with, so a new pair silences every phone until each
+re-subscribes on its next start.
+
 `wrangler.toml` binds `[assets] directory = "../web/out"` with
 `not_found_handling = "404-page"` (**not** `single-page-application`: the export
 is a real multi-page site, one HTML file per route), and a `[[d1_databases]]`

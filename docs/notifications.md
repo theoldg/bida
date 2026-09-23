@@ -171,5 +171,9 @@ until step 6.
    [testing.md](testing.md#what-only-a-phone-can-check) (a headless browser
    cannot receive a push), and cut this file down to what was built.
 
+**Next:** step 4, the relay. Its keys are set up by hand once per
+environment — [hosting.md](hosting.md#deploying) has the commands — and the
+two public halves land in `wrangler.toml` with it.
+
 **Open for the owner:** how a phone first asks permission while the setting
 isn't in the UI — iOS allows the prompt only from a tap.
