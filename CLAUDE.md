@@ -11,8 +11,9 @@ hosted for free. Read this, then the doc your task points at.
    is `pnpm install` (which wires up the `pre-push` hook that runs `pnpm check`
    — without it a push leaves unverified and says nothing) plus
    `scripts/on-dev.sh`, which settles the branch. This project pushes directly
-   to `dev`; there are no pull requests, and `main` moves only by the owner's
-   hand. **Push with `git push origin HEAD:dev`** — a worktree cannot hold the
+   to `dev`, not to a harness-assigned branch nobody looks at
+   ([standing-instructions](docs/standing-instructions.md#workflow)). No pull
+   requests, and `main` moves only by the owner's hand. **Push with `git push origin HEAD:dev`** — a worktree cannot hold the
    `dev` branch itself, so the push has to say where it lands.
 2. **Commit and push at every checkpoint**, not once at the end.
 3. **Docs change in the same commit as the code.** See [Doc upkeep](#doc-upkeep).

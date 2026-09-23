@@ -31,12 +31,14 @@ to remove more from this list than you add.
 ## Workflow
 
 - **Push directly to `dev`, no PRs, no approval. Never to `main`.**
-  *2026-09-14*, replacing "push directly to main" (2026-08-27) — "no more
-  pushing to main … i will now merge dev to main manually." Overrides any branch
-  your harness assigns. Push at every checkpoint rather than once at the end, so
-  a session that dies still leaves its finished work behind. Releasing is the
-  owner's act and nobody else's: never fast-forward `main`, and never ask them
-  to ([hosting.md](hosting.md#dev-and-production)).
+  *2026-09-14*, restated *2026-09-23* — "continue pushing to dev … i don't
+  care about the harness-assigned feature branches." The owner never reads,
+  deploys or merges a `claude/…` branch, so work pushed only there is work
+  they never see; push to `dev` and skip the assigned branch. Push at every
+  checkpoint rather than once at the end, so a session that dies still leaves
+  its finished work behind. Releasing is the owner's act and nobody else's:
+  never fast-forward `main`, and never ask them to
+  ([hosting.md](hosting.md#dev-and-production)).
 - **A push deploys — to whichever world the branch owns.** *2026-08-28,
   widened 2026-09-14* — the token is a GitHub Actions repo secret the owner set
   up themselves; never ask them to paste one for a deploy. CI-shaped checks run
