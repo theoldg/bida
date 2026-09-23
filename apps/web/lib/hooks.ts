@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
+  CATCH_UP_MS, atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
   unseenRevisions, wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
@@ -328,13 +328,14 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
       d.rates.toArray(),
       d.groupKeys.toArray(),
     ]);
-    // The log is read only for a group pulled past what its ledger last
-    // showed — rare, since leaving the ledger marks through the cursor.
+    // The log is read only for a group pulled past its mark: one with changes
+    // waiting, or pulled since its ledger was last open.
     const newCount = async (groupId: string): Promise<number> => {
       const key = keys.find((k) => k.groupId === groupId);
       if (!device || key?.seenSeq === undefined || key.lastSeq <= key.seenSeq) return 0;
       const ops = await d.ops.where("groupId").equals(groupId).toArray();
-      return unseenRevisions(ops, key.seenSeq, device.nodeId).revisions.length;
+      return unseenRevisions(ops, key.seenSeq, device.nodeId, Date.now() - CATCH_UP_MS)
+        .revisions.length;
     };
     const byGroup = <T extends { groupId: string; deletedAt?: number | null }>(rows: T[]) => {
       const map = new Map<string, T[]>();

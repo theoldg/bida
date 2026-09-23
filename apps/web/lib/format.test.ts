@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
   bare, byWhen, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
-  initials, priced, rateText, splitFooter, usd, whenLabel,
+  initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
 } from "./format";
 
 describe("groupDigits", () => {
@@ -242,6 +242,19 @@ describe("countText", () => {
 
   it("has nothing to say about nothing", () => {
     expect(countText({ n: 0, d: 3 })).toBe(null);
+  });
+});
+
+describe("stamp", () => {
+  const now = new Date(2026, 3, 4, 12, 0).getTime();
+
+  it("says today and yesterday as the ledger's day rule does, a date before that", () => {
+    const today = new Date(2026, 3, 4, 7, 35).getTime();
+    const yesterday = new Date(2026, 3, 3, 23, 50).getTime();
+    const earlier = new Date(2026, 3, 1, 9, 0).getTime();
+    expect(stamp(today, now)).toBe(`TODAY · ${clockTime(today)}`);
+    expect(stamp(yesterday, now)).toBe(`YESTERDAY · ${clockTime(yesterday)}`);
+    expect(stamp(earlier, now)).not.toMatch(/TODAY|YESTERDAY/);
   });
 });
 

@@ -136,32 +136,42 @@ const nodeOf = (hlc: string): string | undefined => {
   try { return parseHlc(hlc).node; } catch { return undefined; }
 };
 
+/** How long a change waits in the catch-up for someone to unfold it. */
+export const CATCH_UP_MS = 7 * 86_400_000;
+
 /**
  * What changed on other phones since this one last showed it: revisions of ops
  * the server numbered past `seenSeq` whose stamp is another node's — your own
  * laptop included — newest first. The ledger's line and the groups list both
  * count from this, so they can't disagree.
  *
+ * Not news: a device claiming a name (plumbing, not the group's money), and a
+ * change stamped before `notBefore` — the catch-up is optional, so what nobody
+ * unfolds ages out rather than waiting on the groups list for good.
+ *
  * `through` is the highest seq in the log, this node's and quiet ones included:
- * what a screen that showed the result may mark seen. Marking only the
- * revisions' highest would leave a quiet op (a device subscribing) past the
- * mark for good.
+ * what unfolding the result may mark seen. `settled` stops short of the oldest
+ * change still unseen: what merely opening the group may mark, so this node's
+ * own ops don't hold the mark back while nothing unread is skipped.
  */
 export function unseenRevisions(
-  ops: readonly Op[], seenSeq: number, node: string,
-): { revisions: Revision[]; through: number } {
+  ops: readonly Op[], seenSeq: number, node: string, notBefore = 0,
+): { revisions: Revision[]; through: number; settled: number } {
   let through = seenSeq;
   const news = new Set<Id>();
   for (const op of ops) {
     const seq = op.seq ?? 0;
     if (seq > through) through = seq;
-    if (seq > seenSeq && nodeOf(op.hlc) !== node) news.add(op.id);
+    if (seq > seenSeq && op.entity !== "identity" && op.createdAt >= notBefore
+      && nodeOf(op.hlc) !== node) news.add(op.id);
   }
-  if (news.size === 0) return { revisions: [], through };
+  if (news.size === 0) return { revisions: [], through, settled: through };
   // A revision's diff needs its entity's earlier ops, so the feed is folded
   // over every op of the touched entities, then cut down to the new ones.
   const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
   const revisions = activityFeed(ops.filter((o) => touched.has(o.entityId)))
     .filter((r) => news.has(r.op.id));
-  return { revisions, through };
+  const settled = revisions.length === 0 ? through
+    : Math.min(...revisions.map((r) => r.op.seq ?? 0)) - 1;
+  return { revisions, through, settled };
 }

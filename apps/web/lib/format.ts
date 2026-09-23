@@ -284,10 +284,15 @@ export function byWhen(a: Whenever, b: Whenever): number {
   return time || ((b.createdAt ?? b.occurredAt) - (a.createdAt ?? a.occurredAt));
 }
 
-/** "FRI 4 APRIL · 18:22" — the history timeline's stamp. */
-export function stamp(ts: number): string {
-  const d = new Date(ts);
-  const date = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(d);
+/**
+ * "FRI 4 APRIL · 18:22" — the history timeline's stamp. "TODAY" and
+ * "YESTERDAY" as the ledger's day rule says them, since the two sit together.
+ */
+export function stamp(ts: number, now = Date.now()): string {
+  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(ts)) / DAY);
+  const date = days === 0 ? copy.time.today
+    : days === 1 ? copy.time.yesterday
+    : new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(new Date(ts));
   return `${date.toUpperCase()} · ${clockTime(ts)}`;
 }
 

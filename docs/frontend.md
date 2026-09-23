@@ -330,14 +330,17 @@ confers nothing without the secret.
   you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
   at four with "More in history" under them. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
-  another phone's, your own laptop included. Unfolding marks them seen and
-  keeps the line up, folded again or not, until the ledger is left by any
-  route, which marks them seen too — through the highest seq held, not the
-  highest shown, so this phone's own ops and quiet ones don't linger past the
-  mark. The groups list leads a row's meta with the same count, reading the
-  log only for a group whose cursor is past its mark. The first pull sets the
-  mark at the cursor, so a joined group opens with nothing new, and the mark is
-  device-local, never an op.
+  another phone's, your own laptop included, less a device claiming a name.
+  **The catch-up is optional, so only unfolding marks it seen** — opening the
+  group doesn't, or it would be lost on whoever wanted it, and what nobody
+  unfolds ages out after a week (`CATCH_UP_MS`) rather than waiting forever.
+  Unfolded, the line stays up, folded again or not, until the ledger is left.
+  Leaving moves the mark only up to the oldest change still unseen (`settled`),
+  which is enough to put this phone's own ops behind it. The groups list leads
+  a row's meta with the same count, reading the log only for a group whose
+  cursor is past its mark. The first pull sets the mark at the cursor, so a
+  joined group opens with nothing new, and the mark is device-local, never an
+  op.
 
 ## A live read can die
 

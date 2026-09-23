@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { compareHlc, unseenRevisions, type Revision } from "@bida/core";
+import { CATCH_UP_MS, compareHlc, unseenRevisions, type Revision } from "@bida/core";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
@@ -22,19 +22,21 @@ const CAP = 4;
  * under the you-owe card, opening onto those edits as history draws them.
  *
  * **New** is `unseenRevisions` (core/history.ts), which the groups list counts
- * too. Two things mark it seen: unfolding it, and leaving the ledger.
- * Unfolding keeps the line up until then, folded again or not, and anything
- * arriving meanwhile joins it rather than the list being swapped under a thumb.
+ * too. **Only unfolding marks it seen** — the catch-up is optional, so opening
+ * the group leaves it for whoever wants it, and what nobody unfolds ages out
+ * after `CATCH_UP_MS`. Unfolding keeps the line up until the ledger is left,
+ * folded again or not, and anything arriving meanwhile joins it rather than the
+ * list being swapped under a thumb.
  */
 export function NewEdits({ groupId, currency }: { groupId: string; currency: string }) {
   const fresh = useLive("newEdits", async () => {
     const key = await db().groupKeys.get(groupId);
     // No key is the demo; no mark is a group whose first pull hasn't landed.
     if (key?.seenSeq === undefined) return null;
-    const { revisions, through } = unseenRevisions(
-      await opsForGroup(groupId), key.seenSeq, (await getDevice()).nodeId);
+    const { revisions, through, settled } = unseenRevisions(await opsForGroup(groupId),
+      key.seenSeq, (await getDevice()).nodeId, Date.now() - CATCH_UP_MS);
     // Nothing to name, but still a mark to move: this phone's own ops.
-    if (revisions.length === 0) return { through };
+    if (revisions.length === 0) return { through, settled };
     const [members, expenses, settlements] = await Promise.all([
       db().members.where("groupId").equals(groupId).toArray(),
       db().expenses.where("groupId").equals(groupId).toArray(),
@@ -42,6 +44,7 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
     ]);
     return {
       through,
+      settled,
       revisions,
       memberById: new Map(members.map((m) => [m.id, m])),
       expenseById: new Map(expenses.map((e) => [e.id, e])),
@@ -59,13 +62,14 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
       .sort((a, b) => compareHlc(b.op.hlc, a.op.hlc))
     : live;
 
-  // Leaving the ledger — another tab, an entry, the groups list — is the other
-  // way to have seen them. Read through a ref: the cleanup outlives the render.
+  // Leaving the ledger — another tab, an entry, the groups list — marks what
+  // it can without skipping an unread change: this phone's own ops, and all of
+  // it if the line is open. Read through a ref: the cleanup outlives the render.
   const top = fresh?.through ?? 0;
-  const last = useRef(top);
-  last.current = top;
+  const leave = useRef(0);
+  leave.current = open ? top : fresh?.settled ?? 0;
   useEffect(() => () => {
-    if (last.current > 0) void markEditsSeen(groupId, last.current);
+    if (leave.current > 0) void markEditsSeen(groupId, leave.current);
   }, [groupId]);
 
   // The names outlive the read: once marked seen, the query finds nothing new
@@ -80,8 +84,8 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
   function toggle() {
     if (open) { setOpen(false); return; }
     setOpen(true);
-    if (held) return;
-    setHeld(live);
+    // What arrived since an earlier unfold is seen by this one.
+    setHeld(shown);
     void markEditsSeen(groupId, top);
   }
 
