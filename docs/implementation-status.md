@@ -40,8 +40,8 @@ design waiting to be built.
 - **Push notifications are half-built** — the decision, the wording and an
   eight-step plan are in [notifications.md](notifications.md), with two
   questions for the owner at its foot. Steps 1–3 (core: `push` on identity,
-  `webpush.ts`, `notify.ts`) are in; nothing sends yet. Next is step 4, the
-  relay.
+  `webpush.ts`, `notify.ts`) are in; nothing sends yet. Its VAPID keys are set on
+  both Workers. Next is step 4, the relay.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

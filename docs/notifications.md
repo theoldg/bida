@@ -142,8 +142,8 @@ until step 6.
    with `notified: { [endpoint]: status }` — awaited rather than
    `ctx.waitUntil`, because the sender needs the statuses, with a short
    timeout so a slow push service costs the sync a second at most. VAPID keys
-   are Worker secrets per environment; the public half reaches the build as an
-   env var. Caps belong in `push-limits.ts`.
+   are Worker secrets per environment, *set on both* (2026-09-23); the public
+   half, already in `wrangler.toml`, reaches the build as an env var. Caps belong in `push-limits.ts`.
 5. **web: subscribe.** One setting per phone (`device`), default "own",
    written as `scope` into every held group's identity `push`. Asks
    permission from the tap (iOS requires it), `pushManager.subscribe`, writes
