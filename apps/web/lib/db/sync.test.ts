@@ -591,15 +591,22 @@ describe("syncAll", () => {
   beforeEach(wipe);
   afterEach(() => vi.unstubAllGlobals());
 
-  it("leaves a forgotten group alone", async () => {
+  it("leaves a forgotten group alone once its last ops are out", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     await forgetGroup(groupId);
-    const fetchMock = vi.fn();
+    let seq = 0;
+    const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      const assigned = Object.fromEntries(body.ops.map((op) => [op.id, ++seq]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: seq }));
+    });
     vi.stubGlobal("fetch", fetchMock);
 
+    // What it wrote before leaving still goes — a `push: null` among it.
     await syncAll();
-
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await syncAll();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("picks a forgotten group back up once its invite link is opened again", async () => {

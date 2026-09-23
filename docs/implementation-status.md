@@ -38,10 +38,10 @@ design waiting to be built.
   `rules-check` enforces `useLive` and `goBack`, not `whenVisible`.
 
 - **Push notifications are half-built** — the decision, the wording and an
-  eight-step plan are in [notifications.md](notifications.md). Steps 1–6 (core: `push` on identity,
+  eight-step plan are in [notifications.md](notifications.md). Steps 1–7 (core: `push` on identity,
   `webpush.ts`, `notify.ts`; the Worker's relay; subscribing, offered by the
-  installed app's card; sending) are in, unproven on a phone. Its VAPID keys
-  are set on both Workers. Next is step 7, leaving a group.
+  installed app's card; sending; leaving) are in, unproven on a phone. Its
+  VAPID keys are set on both Workers. Next is step 8, the docs and ADR-0037.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

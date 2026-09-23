@@ -463,11 +463,12 @@ async function runSyncAll(): Promise<void> {
   const keys = await db().groupKeys.toArray();
   // A forgotten group keeps its secret — reopening the invite link un-forgets
   // it — but it stops costing cellular data in the meantime. Without this,
-  // `forgetGroup` hides the row while its ops go on flowing in forever.
+  // `forgetGroup` hides the row while its ops go on flowing in forever. Bar
+  // its last ops: the `push: null` that stops it buzzing this phone.
   const left = new Set((await getDevice()).leftGroups ?? []);
   let anyFailure = false;
   for (const key of keys) {
-    if (left.has(key.groupId)) continue;
+    if (left.has(key.groupId) && !(await hasPending(key.groupId))) continue;
     try {
       await syncGroup(key.groupId);
     } catch {
@@ -486,6 +487,10 @@ async function runSyncAll(): Promise<void> {
   } else {
     backoffMs = 2000;
   }
+}
+
+async function hasPending(groupId: string): Promise<boolean> {
+  return (await db().ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count()) > 0;
 }
 
 /** Debounced trigger for "a local write just happened". ~1s, per docs/sync.md. */

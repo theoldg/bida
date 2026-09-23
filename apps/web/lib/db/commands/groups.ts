@@ -134,12 +134,20 @@ export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
 
 /**
  * Forget a group on this phone: hide it from this device's list and drop
- * which member this phone is. Purely local — no op, so invisible to the group.
- * Opening the invite link again (`saveGroupKey`) un-forgets it, and the claim
- * gate asks who holds the phone, since that may have changed. The identity row
- * stays until that answer overwrites it.
+ * which member this phone is. Local but for one op: a subscribed phone writes
+ * `push: null` first, or the group goes on buzzing it (docs/notifications.md) —
+ * `syncAll` pushes a left group's last ops. Opening the invite link again
+ * (`saveGroupKey`) un-forgets it, and the claim gate asks who holds the phone,
+ * since that may have changed; the claim puts the subscription back.
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
+  const device = await getDevice();
+  const identity = await db().identities.get([groupId, device.nodeId]);
+  if (identity?.push) {
+    await appendOps(groupId, device.meByGroup[groupId] ?? identity.memberId, [{
+      entity: "identity", entityId: device.nodeId, kind: "update", patch: { push: null },
+    }]);
+  }
   await hideGroup(groupId);
 }
 
@@ -208,22 +216,24 @@ export async function claimIdentity(
     ?? (await db().identities.get([groupId, device.nodeId]))?.memberId;
 
   await setMe(groupId, memberId);
-  if (previous === memberId) return;
-  await appendOps(
-    groupId,
-    // The member who was here a moment ago is who made this change. On a
-    // first claim there is nobody else it could be.
-    previous ?? memberId,
-    [{
-      entity: "identity",
-      entityId: device.nodeId,
-      kind: previous === undefined ? "create" : "update",
-      patch: { memberId, claimedAt: now },
-    }],
-    now,
-  );
-  // A first claim has no subscription on it yet; a subscribed phone adds it.
-  if (previous === undefined) void reconcilePush();
+  if (previous !== memberId) {
+    await appendOps(
+      groupId,
+      // The member who was here a moment ago is who made this change. On a
+      // first claim there is nobody else it could be.
+      previous ?? memberId,
+      [{
+        entity: "identity",
+        entityId: device.nodeId,
+        kind: previous === undefined ? "create" : "update",
+        patch: { memberId, claimedAt: now },
+      }],
+      now,
+    );
+  }
+  // A first claim has no subscription on it, nor a rejoin (`forgetGroup`
+  // cleared it); a subscribed phone adds it, and writes nothing if it's there.
+  void reconcilePush();
 }
 
 /**

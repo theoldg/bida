@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toBase64Url, type DevicePush } from "@bida/core";
 import { db } from "./dexie";
-import { addExpense, addMember, createGroup, deleteExpense, saveGroupKey } from "./commands";
+import { addExpense, addMember, createGroup, deleteExpense, forgetGroup, saveGroupKey } from "./commands";
+import { getDevice } from "./device";
 import { appendOps } from "./commands/append";
 import { groupState } from "./fold";
 import { syncGroup } from "./sync";
@@ -118,5 +119,22 @@ describe("sending notices", () => {
     // Nor is anything in a group nobody listens to.
     await deleteExpense(groupId, theo, id);
     expect(await db().notices.count()).toBe(0);
+  });
+});
+
+describe("leaving", () => {
+  beforeEach(wipe);
+
+  it("clears this phone's subscription before the group is hidden", async () => {
+    const { groupId, memberId: theo } = await createGroup({ name: "Trip", baseCurrency: "EUR", myName: "Theo" });
+    const { nodeId } = await getDevice();
+    const push = await subscription("https://web.push.apple.com/theo");
+    await appendOps(groupId, theo, [{ entity: "identity", entityId: nodeId, kind: "update", patch: { push } }]);
+
+    await forgetGroup(groupId);
+
+    const state = await groupState(groupId);
+    expect(state.identities[nodeId]?.push).toBeNull();
+    expect((await getDevice()).leftGroups).toContain(groupId);
   });
 });

@@ -97,8 +97,9 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   thing that tombstones one, People never puts a trash button on your own row,
   and there is no un-claim — so the actor on a member delete is never its
   subject, and history has no sentence for it.
-- Forgetting a group (`device.leftGroups`) is purely local — no op, no
-  tombstone, nobody else sees it — so it drops off *your* list without
+- Forgetting a group (`device.leftGroups`) is local — no tombstone, and no
+  op but a subscribed phone's `push: null`
+  ([notifications.md](notifications.md)) — so it drops off *your* list without
   touching membership or the group itself, and **needs no claim**: a group this
   phone never said who it was in is the one it most wants off the list, and
   there is nothing an unclaimed phone lacks to do it. Groups are never deleted. It also

@@ -171,11 +171,13 @@ until step 6.
    replacement still buzzes). A `404`/`410` endpoint that the log still holds
    gets an identity op setting `push: null`. A failure is a `/diag` line,
    never a failed sync.
-7. **web: leaving.** `forgetGroup` writes `push: null` before hiding, and
-   `syncAll` pushes a left group's pending ops once (today it skips them) —
-   the key outlives forgetting, so this is possible. A push that arrives
-   before that op lands is still shown — both platforms demand it, and iOS
-   revokes a subscription that stays silent.
+7. **web: leaving.** *Built.* `forgetGroup` writes `push: null` before
+   hiding, and `syncAll` still syncs a left group while it has pending ops —
+   the key outlives forgetting — then leaves it be. That sync heals nothing:
+   forgetting drops the claim. A push that arrives before the op lands is
+   still shown — both platforms demand it, and iOS revokes a subscription
+   that stays silent. Rejoining puts it back: every claim runs
+   `reconcilePush`, which writes nothing when the log already agrees.
 8. **docs.** Move [the decision](#the-decision) to `decisions/0037-…`, edit
    [ADR-0003](decisions/0003-link-only-access.md)'s "awkward, deferred" and
    "Revisit if" lines and ADR-0036's "Shape still leaks", add the Google/Apple
@@ -183,4 +185,4 @@ until step 6.
    checklist in [testing.md](testing.md#what-only-a-phone-can-check) (a
    headless browser cannot subscribe), and cut this file down to what was built.
 
-**Next:** step 7, leaving.
+**Next:** step 8, the docs.
