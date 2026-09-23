@@ -77,7 +77,7 @@ Leave the seam. Build none of it.
 |---|---|
 | Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds. A scan already reads them and the who-had-what grid already assigns them, into a `receipt` split that the expense stores and can reopen ([ADR-0016](decisions/0016-receipts.md)) — what is missing is editing a line as a thing in its own right |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
-| Push notifications | Needs a member→device map, awkward under link-only access |
+| Push notifications | Designed, not built: a subscription on each device's identity, text sealed by the phone that caused it, a server that relays and forgets ([notifications.md](notifications.md)) |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
 | Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add an R2 bucket and the upload behind `uploadState` ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)) |

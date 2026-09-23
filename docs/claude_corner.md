@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "write the adrs." The ADR bar says built things only, so
+  the decision went into a design doc written as the ADR it becomes. Honour the
+  ask and the rule at once, and say which one bent.
 - *2026-09-23* — "make sure it looks good for long and short numbers." A
   mono font makes width arithmetic: the figure's size is a CSS formula of its
   length, no measuring. Photographed 320 to 430 wide with 1,500,120.50 UZS
@@ -64,6 +67,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "remove the help texts." The strings were a third of it: a CSS
   class and a boolean computed only to gate them died with them. Pull the whole
   thread, not the words.
-- *2026-09-22* — "just make it a gif." I called it full resolution; a -90
-  rotation flag meant ffprobe's numbers were sideways and the gif was half
-  size. The readout is not the picture.

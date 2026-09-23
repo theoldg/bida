@@ -27,7 +27,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-One thing, and it is a gap found by reading the code rather than a report.
+Two things: a gap found by reading the code rather than a report, and a
+design waiting to be built.
 
 - **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
   erased across nine stores before reaching the gate the success path waits on,
@@ -35,6 +36,10 @@ One thing, and it is a gap found by reading the code rather than a report.
   one write left that can strand a lock the whole origin then queues behind
   ([frontend.md](frontend.md#a-live-read-can-die)). Nothing catches it:
   `rules-check` enforces `useLive` and `goBack`, not `whenVisible`.
+
+- **Push notifications are designed, not built** — the decision, the wording
+  and an eight-step plan are in [notifications.md](notifications.md), with two
+  questions for the owner at its foot.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:
