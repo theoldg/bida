@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "why didn't you run pnpm session?" The task was keys, not
+  code, and the harness named another branch, so it felt skippable. It never
+  is, and CLAUDE.md now says it outranks the harness on purpose. When two
+  instructions disagree, look for the one written for this repo.
 - *2026-09-23* — "get started on notifications.md." The plan's core step
   wanted a title and a url; core has no copy and no routes. Built the facts,
   left the words to web, and said so rather than bending the package rule.
@@ -64,6 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "review the readme vibes", then "fix" five of eight notes.
   The three left out were the ones rewording a claim. A review is a menu; ship
   what was ordered, not the set menu.
-- *2026-09-22* — "always use a worktree (and use one right now)." The rule and
-  its first obeying in one breath. They are in the main clone while you work;
-  take a copy and leave them their files.

@@ -5,8 +5,11 @@ hosted for free. Read this, then the doc your task points at.
 
 ## Non-negotiables
 
-1. **Worktree first, then `pnpm session`** — in that order, before a line is
-   written. The owner keeps editing the main clone while you work, so take a
+1. **Worktree first, then `pnpm session`** — in that order, as the first
+   commands of every session, whatever the task: a question, a key to make, a
+   pull. **This knowingly contradicts the harness**, which assigns a
+   `claude/…` branch and says to push there. That is the owner's conscious
+   preference, not an oversight: here, `dev` wins. The owner keeps editing the main clone while you work, so take a
    working tree of your own with your harness's worktree tool. `pnpm session`
    is `pnpm install` (which wires up the `pre-push` hook that runs `pnpm check`
    — without it a push leaves unverified and says nothing) plus
