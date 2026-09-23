@@ -265,6 +265,18 @@ export const copy = {
     theme: { toLight: "Light mode", toDark: "Dark mode" },
   },
 
+  notify: {
+    /**
+     * The installed app's card, in the install offer's place (components/install.tsx).
+     * Its tap is the one iOS lets ask for permission.
+     */
+    offer: {
+      title: "Hear when your share changes",
+      body: "A notification when someone adds, changes or deletes an entry you’re in.",
+      act: "Turn on",
+    },
+  },
+
   install: {
     /**
      * Chrome's card: an **offer** — on Android the tab and the app share storage.

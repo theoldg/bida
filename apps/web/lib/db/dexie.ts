@@ -59,6 +59,12 @@ export interface DeviceRecord {
    */
   installNudgeCollapsed?: boolean;
   /**
+   * The same for the notifications offer, which stands where the install offer
+   * did once the app is installed. Its own field: on Android the tab and the
+   * app share this row, and folding one offer isn't folding the other.
+   */
+  notifyNudgeCollapsed?: boolean;
+  /**
    * True while scanned bills are read in English rather than as printed.
    * Absent is the original — see `billLabel` (lib/scan/items.ts). Device-local:
    * the expense keeps both labels, and two phones may want different ones.

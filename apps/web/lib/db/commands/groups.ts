@@ -6,6 +6,7 @@ import { db } from "../dexie";
 import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup, updateDevice } from "../device";
 import { requestPersistence } from "../../persist";
+import { reconcilePush } from "../../push";
 import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
 
@@ -220,6 +221,8 @@ export async function claimIdentity(
     }],
     now,
   );
+  // A first claim has no subscription on it yet; a subscribed phone adds it.
+  if (previous === undefined) void reconcilePush();
 }
 
 /**

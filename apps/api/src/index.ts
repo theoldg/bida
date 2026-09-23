@@ -39,6 +39,16 @@ const app = new Hono<{
 app.get("/api/health", (c) => c.json({ ok: true }));
 
 /**
+ * The VAPID public key a phone subscribes with. Asked at runtime, not built in:
+ * one static build serves both Workers, and each has its own pair
+ * (docs/hosting.md#deploying). 404 on a Worker with none, which hides the offer.
+ */
+app.get("/api/push/key", (c) => {
+  if (!c.env.VAPID_PUBLIC_KEY) return c.json({ error: "no push on this server" }, 404);
+  return c.json({ publicKey: c.env.VAPID_PUBLIC_KEY });
+});
+
+/**
  * 410 for a group deleted on request (`/delete-my-data`), checked *before* the
  * token: the tombstone keeps none, and a 403 would send somebody hunting for a
  * new invite. `scope` lets the phone say "deleted" rather than "sync failing".

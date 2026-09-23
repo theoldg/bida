@@ -6,7 +6,7 @@ import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
-import { setInstallNudgeCollapsed } from "../lib/db/device";
+import { setInstallNudgeCollapsed, setNotifyNudgeCollapsed } from "../lib/db/device";
 import { route } from "../lib/group-link";
 import { useDevice } from "../lib/hooks";
 import { useLive } from "../lib/db/live";
@@ -15,9 +15,14 @@ import {
   headIsStale, installOffer, iosBrowser, keepCarried, promptInstall, subscribeInstall,
   type InstallOffer,
 } from "../lib/install";
+import { pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
+}
+
+export function usePushState(): PushState {
+  return useSyncExternalStore(subscribePushState, pushState, () => "unsupported" as const);
 }
 
 /**
@@ -71,9 +76,9 @@ export function useBrowserName(): string | undefined {
 }
 
 /**
- * The card both offers are drawn in. **They fold, they don't dismiss** — the
- * offer stands until the phone installs, when `offer` changes and the card
- * stops rendering.
+ * The card every offer is drawn in. **They fold, they don't dismiss** — an
+ * install offer stands until the phone installs, the notifications offer
+ * until the permission prompt is answered.
  */
 function FoldedOffer(
   { title, open, onToggle, children }:
@@ -112,6 +117,28 @@ function NudgeBody() {
 }
 
 /**
+ * Once installed, the card offers notifications instead (docs/notifications.md).
+ * **The button calls `turnOnNotifications` in the tap's own turn** — iOS shows
+ * the permission prompt from nowhere else. It stands until answered: yes turns
+ * them on, no can't be asked again, and either way the card goes.
+ */
+function NotifyBody() {
+  const [busy, setBusy] = useState(false);
+  const turnOn = () => {
+    setBusy(true);
+    void turnOnNotifications().finally(() => setBusy(false));
+  };
+  return (
+    <>
+      <p className="hint" style={{ marginTop: 4 }}>{copy.notify.offer.body}</p>
+      <button className="btn btn-s" style={{ marginTop: 11 }} disabled={busy} onClick={turnOn}>
+        {copy.notify.offer.act}
+      </button>
+    </>
+  );
+}
+
+/**
  * The iOS tab's warning: this browser will clear its groups, and the home
  * screen is the only exemption (docs/ios.md). Every group rides along to
  * `/install`; `groupId` only goes first.
@@ -128,16 +155,28 @@ function BannerBody({ groupId }: { groupId: string }) {
 
 /**
  * The offer atop the groups list — Chrome's prompt or the iOS warning, never
- * both. Only once the list holds a group. The fold is the device's and
+ * both, and in the installed app the notifications offer. Only once the list
+ * holds a group. The fold is the device's and
  * persists; the ledger's copy doesn't — see `LedgerInstall`.
  */
 export function InstallOfferCard({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
+  const push = usePushState();
   const device = useDevice();
-  if (offer !== "ready" && offer !== "manual") return null;
+  const asking = offer === "installed" && push === "ask";
+  if (offer !== "ready" && offer !== "manual" && !asking) return null;
   // undefined is "Dexie hasn't answered yet", and drawing the card open before
   // it does would snap it shut a frame later on a phone that folded it.
   if (!device) return null;
+  if (asking) {
+    const open = !device.notifyNudgeCollapsed;
+    return (
+      <FoldedOffer title={copy.notify.offer.title} open={open}
+        onToggle={() => void setNotifyNudgeCollapsed(open)}>
+        <NotifyBody />
+      </FoldedOffer>
+    );
+  }
   const open = !device.installNudgeCollapsed;
   const toggle = () => void setInstallNudgeCollapsed(open);
   return offer === "manual"
@@ -152,8 +191,8 @@ export function InstallOfferCard({ groupId }: { groupId: string }) {
 /**
  * The same card atop a group's ledger, for people who never linger on the
  * list — nearly everyone, since launches and joins route around it
- * (`lib/launch.ts`). Folded on every visit, remembering nothing; gone once
- * installed.
+ * (`lib/launch.ts`). Folded on every visit, remembering nothing; once
+ * installed, the notifications offer instead.
  *
  * **Never in the demo.** No key to carry, nothing lost when cleared (`/demo`
  * re-seeds, docs/sync.md#the-demo-group-has-no-key), and the mark above says
@@ -161,9 +200,17 @@ export function InstallOfferCard({ groupId }: { groupId: string }) {
  */
 export function LedgerInstall({ groupId }: { groupId: string }) {
   const offer = useInstallOffer();
+  const push = usePushState();
   const [open, setOpen] = useState(false);
   const toggle = () => setOpen(!open);
   if (isDemo(groupId)) return null;
+  if (offer === "installed" && push === "ask") {
+    return (
+      <FoldedOffer title={copy.notify.offer.title} open={open} onToggle={toggle}>
+        <NotifyBody />
+      </FoldedOffer>
+    );
+  }
   if (offer === "manual") {
     return (
       <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>

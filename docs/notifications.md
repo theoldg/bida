@@ -146,14 +146,18 @@ until step 6.
    missing key — never a reason to clear a subscription. Needs an existing
    group and its token; never registers one. The VAPID subject is the
    request's origin.
-5. **web: subscribe.** One setting per phone (`device`), default "own",
-   written as `scope` into every held group's identity `push`. Asks
-   permission from the tap (iOS requires it), `pushManager.subscribe`, writes
-   the identity's `push`. Hidden where it cannot work — a Safari tab on iPhone
-   says to add to home screen. On every start, compare `getSubscription()`
-   with each held group's identity and rewrite on a change, since Safari
-   rotates without saying. `sw.js` gains `push` (show) and
-   `notificationclick` (focus or open the url).
+5. **web: subscribe.** *Built* — `lib/push.ts`. The installed app's install
+   card offers it instead, on the groups list and each ledger, same shell
+   ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)); the tap asks
+   permission before any await (iOS requires it), subscribes and writes `push`
+   to every held, claimed group's identity. It stands until the prompt is
+   answered. The VAPID public key is fetched from `GET /api/push/key`, not
+   built in: one build serves both Workers. On every start and after a first
+   claim, `reconcilePush` rewrites a rotated or new-key subscription, and `null`
+   for a revoked permission — offline keeps what is there. No `scope` is
+   written, which reads as "own"; the setting waits for a screen. `sw.js`
+   shows each push (`{ title, body, url, tag }`, the url kept same-origin) and
+   focuses or opens the url on a tap.
 6. **web: send.** The commands in the table store their notices in a Dexie
    `notices` table keyed by the op ids that caused them, in the same
    transaction as `appendOps`. Once a round's push has landed,
@@ -170,13 +174,9 @@ until step 6.
 8. **docs.** Move [the decision](#the-decision) to `decisions/0037-…`, edit
    [ADR-0003](decisions/0003-link-only-access.md)'s "awkward, deferred" and
    "Revisit if" lines and ADR-0036's "Shape still leaks", add the Google/Apple
-   sentence to the privacy section of `/about`, a phone-checklist entry in
-   [testing.md](testing.md#what-only-a-phone-can-check) (a headless browser
-   cannot receive a push), and cut this file down to what was built.
+   sentence to the privacy section of `/about`, add receiving to the phone
+   checklist in [testing.md](testing.md#what-only-a-phone-can-check) (a
+   headless browser cannot subscribe), and cut this file down to what was built.
 
-**Next:** step 5, subscribing. The web build needs `VAPID_PUBLIC_KEY` from
-`wrangler.toml` as an env var for `pushManager.subscribe`, and the sender
-writes `body` with core's `toBase64`.
-
-**Open for the owner:** how a phone first asks permission while the setting
-isn't in the UI — iOS allows the prompt only from a tap.
+**Next:** step 6, sending — `copy.notify` gains the words, and the payload is
+the JSON `sw.js` already reads.

@@ -109,6 +109,12 @@ export async function setInstallNudgeCollapsed(collapsed: boolean): Promise<void
   await updateDevice({ installNudgeCollapsed: collapsed });
 }
 
+export async function setNotifyNudgeCollapsed(collapsed: boolean): Promise<void> {
+  const device = await getDevice();
+  if ((device.notifyNudgeCollapsed ?? false) === collapsed) return;
+  await updateDevice({ notifyNudgeCollapsed: collapsed });
+}
+
 /** Read a scanned bill in English, or back in the language it was printed in. */
 export async function setBillEnglish(english: boolean): Promise<void> {
   await updateDevice({ billEnglish: english ? true : undefined });

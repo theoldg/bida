@@ -252,6 +252,60 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+/**
+ * A notification another phone wrote (docs/notifications.md): the browser has
+ * already decrypted it, so `data` is the sender's JSON — `{ title, body, url,
+ * tag }`, every word from its `copy.notify`. **Something is always shown**:
+ * both platforms demand it, and iOS revokes a subscription that stays silent.
+ * `tag` is the group id, so a group's latest replaces its last.
+ */
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    // Not ours to read; the title alone still honours the rule above.
+  }
+  const title = typeof data.title === "string" && data.title ? data.title : "bida";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof data.body === "string" ? data.body : "",
+      tag: typeof data.tag === "string" ? data.tag : undefined,
+      icon: "/icon-192.png",
+      data: { url: sameOriginPath(data.url) },
+    }),
+  );
+});
+
+/** Only a path of this app — a notification must not open somewhere else. */
+function sameOriginPath(url) {
+  if (typeof url !== "string") return "/";
+  try {
+    const parsed = new URL(url, self.location.origin);
+    return parsed.origin === self.location.origin ? parsed.pathname + parsed.search : "/";
+  } catch {
+    return "/";
+  }
+}
+
+/** A tap: the app if it is open, taken to the url; otherwise opened there. */
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    (async () => {
+      const open = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const client = open.find((c) => "focus" in c);
+      if (client) {
+        await client.focus();
+        if ("navigate" in client) await client.navigate(url).catch(() => undefined);
+        return;
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;

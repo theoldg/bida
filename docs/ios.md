@@ -234,6 +234,13 @@ user — joined by a link, launching straight into their group — would be offe
 the install nowhere at all. It goes the moment the phone installs, since `offer`
 stops being `ready`.
 
+**Installed, the same card offers notifications** in the same two places
+([notifications.md](notifications.md)) — *Hear when your share changes*, with
+**Turn on**. The installed app is the only place iOS allows push, and its tap is
+the only thing iOS lets ask for the permission. It stands until the prompt is
+answered, since a refusal can't be asked again; the list's fold is its own
+device field, as a tab and an installed app share one row on Android.
+
 `/about`'s *Works offline* carries the same button on both, with no group
 preferred first — `/install` says the how on iOS, and on Android the tap is the
 install.

@@ -6,6 +6,7 @@ import { db } from "../lib/db/dexie";
 import { getDevice } from "../lib/db/device";
 import { startSyncLoop } from "../lib/db/sync";
 import { requestPersistence } from "../lib/persist";
+import { reconcilePush } from "../lib/push";
 
 /** Wires the background sync triggers once, for the life of the app. */
 export function StartSync() {
@@ -21,6 +22,9 @@ export function StartSync() {
     // the app looks to it, so a phone refused before install is granted after.
     // Only once there is a group to lose — see lib/persist.ts.
     void db().groupKeys.count().then((n) => { if (n > 0) return requestPersistence(); });
+    // Safari rotates a subscription without saying, and a revoked permission
+    // should reach the senders as null (lib/push.ts).
+    void reconcilePush();
     return startSyncLoop();
   }, []);
   return null;

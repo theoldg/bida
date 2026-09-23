@@ -697,6 +697,15 @@ screen` block says which manifest each load got and which URL the icon opened.
   Chrome, Brave and DuckDuckGo on iOS are *not*, their agents being Safari's
   but for a token.
 
+**Notifications** ([notifications.md](notifications.md)) — headless Chromium
+refuses push registration outright, permission granted or not.
+
+- **Turn on from the card, in the installed app.** iOS must show its prompt;
+  once allowed, the card goes, and the group's identity on another phone's
+  `/diag` carries a `push` with an Apple or Google endpoint.
+- **Refuse the prompt.** The card goes and never comes back; turning it on in
+  Settings, then relaunching, writes the subscription with no tap.
+
 **The camera** ([receipt-scanning.md](receipt-scanning.md)) — a phone is the
 only thing that has one.
 

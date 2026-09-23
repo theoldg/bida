@@ -180,7 +180,8 @@ function LedgerTab({ data }: { data: GroupData }) {
     <Scroll>
       {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
           third of the way down. */}
-      {/* Either platform's install offer, folded to one line (docs/ios.md).
+      {/* Either platform's install offer, folded to one line (docs/ios.md),
+          or once installed the notifications offer (docs/notifications.md).
           Here because launches and joins both land on this screen. */}
       {/* Above the install offer, because it outranks it: what group you are
           standing in comes before what to do with this browser. It draws

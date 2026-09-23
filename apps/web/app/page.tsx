@@ -65,7 +65,8 @@ export default function GroupsPage() {
             {groups === undefined ? <SkeletonRows count={4} /> : null}
 
             {/* An install offer goes first, once there is a group to lose: an iOS
-              tab's warning or Chrome's prompt (components/install.tsx). The group it
+              tab's warning or Chrome's prompt (components/install.tsx), and in the
+              installed app the notifications offer in its place. The group it
               names leads the iOS carry — the top row, which the app would reopen
               (lib/launch.ts).
 
@@ -90,7 +91,8 @@ export default function GroupsPage() {
 
             {/* The update offer, at the foot: it draws only in the installed
               app, so it never appears alongside the install cards above,
-              which draw only outside it. */}
+              which draw only outside it — the notifications card is the one
+              it can share the screen with. */}
             <UpdateNudge />
 
             {/* The act this screen exists for, under the list where a thumb rests; its
