@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
-  wouldViolate,
+  unseenRevisions, wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
   type Settlement, type Transfer,
@@ -287,6 +287,8 @@ export interface GroupSummary {
   lastActivity: number;
   /** The member this device is, in this group — same undefined-until-claimed as `GroupData.me`. */
   me: string | undefined;
+  /** What the ledger's new-changes line would count (`components/new-edits.tsx`). */
+  newCount: number;
 }
 
 /**
@@ -317,14 +319,23 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
     const d = db();
     // Five reads, not three per group: fetching each table whole and bucketing
     // here is a constant number of IndexedDB round trips.
-    const [groups, device, members, expenses, settlements, rates] = await Promise.all([
+    const [groups, device, members, expenses, settlements, rates, keys] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),
       d.members.toArray(),
       d.expenses.toArray(),
       d.settlements.toArray(),
       d.rates.toArray(),
+      d.groupKeys.toArray(),
     ]);
+    // The log is read only for a group pulled past what its ledger last
+    // showed — rare, since leaving the ledger marks through the cursor.
+    const newCount = async (groupId: string): Promise<number> => {
+      const key = keys.find((k) => k.groupId === groupId);
+      if (!device || key?.seenSeq === undefined || key.lastSeq <= key.seenSeq) return 0;
+      const ops = await d.ops.where("groupId").equals(groupId).toArray();
+      return unseenRevisions(ops, key.seenSeq, device.nodeId).revisions.length;
+    };
     const byGroup = <T extends { groupId: string; deletedAt?: number | null }>(rows: T[]) => {
       const map = new Map<string, T[]>();
       for (const row of rows) {
@@ -356,6 +367,7 @@ export function useGroupSummaries(): GroupSummary[] | undefined {
         entryCount: live.e.length + live.s.length,
         netMinor: me ? balances.byMember[me] ?? 0 : undefined,
         me,
+        newCount: await newCount(group.id),
         lastActivity: Math.max(
           group.createdAt,
           ...live.e.map((x) => x.occurredAt),

@@ -157,7 +157,7 @@ function PasteLinkTile() {
 }
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
-  const { group, memberCount, entryCount, netMinor, lastActivity } = summary;
+  const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
   const [asking, setAsking] = useState(false);
   const invite = useInviteLink(group.id);
   // The demo is a group like any other here, except it has no invite link, and
@@ -194,6 +194,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
         <div className="rmain">
           <div className="rtitle">{group.name}</div>
           <div className="rmeta">
+            {/* First, where the ellipsis can't reach it. The ledger's line says
+                the same count, and opening the group is what clears both. */}
+            {newCount > 0 ? <><b className="rnew">{plural(newCount, copy.noun.newChange)}</b> · </> : null}
             {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
           </div>
         </div>

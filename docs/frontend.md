@@ -328,12 +328,16 @@ confers nothing without the secret.
   the entry's "gone" screen. Its line is `components/revision.tsx`, shared with the ledger.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
   you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
-  at four with "More in history" under them. New is an op numbered past `groupKeys.seenSeq`
-  whose stamp is another phone's, your own laptop included. Unfolding marks
-  them seen and keeps the line up, folded again or not, until the ledger is
-  left by any route, which marks them seen too. The
-  first pull sets the mark at the cursor, so a joined group opens with nothing
-  new, and the mark is device-local, never an op.
+  at four with "More in history" under them. New is `unseenRevisions`
+  (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
+  another phone's, your own laptop included. Unfolding marks them seen and
+  keeps the line up, folded again or not, until the ledger is left by any
+  route, which marks them seen too — through the highest seq held, not the
+  highest shown, so this phone's own ops and quiet ones don't linger past the
+  mark. The groups list leads a row's meta with the same count, reading the
+  log only for a group whose cursor is past its mark. The first pull sets the
+  mark at the cursor, so a joined group opens with nothing new, and the mark is
+  device-local, never an op.
 
 ## A live read can die
 

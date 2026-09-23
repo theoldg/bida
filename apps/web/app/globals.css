@@ -601,6 +601,8 @@ a { color: inherit; text-decoration: none }
   text-overflow: ellipsis }
 .rmeta { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; margin-top: 1px }
+/* A group row's new-changes count: ink, not colour — green and red are money's. */
+.rmeta .rnew { color: var(--ink); font-weight: 600 }
 .ramt { text-align: right; flex: none }
 .ramt .big { font-family: var(--f-mono); font-size: 14px; font-weight: 600;
   font-variant-numeric: tabular-nums; letter-spacing: -.02em }

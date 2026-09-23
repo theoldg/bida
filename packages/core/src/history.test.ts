@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, entityHistory } from "./history.js";
+import { activityFeed, entityHistory, unseenRevisions } from "./history.js";
 import { foldOps } from "./fold.js";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
 
@@ -159,6 +159,45 @@ describe("activityFeed", () => {
     expect(feed[0]?.entityId).toBe("e2");
     expect(feed[2]?.entityId).toBe("m1");
     expect(activityFeed(b.ops, 2)).toHaveLength(2);
+  });
+});
+
+describe("unseenRevisions", () => {
+  /** Two phones' ops, numbered in the order the server took them. */
+  function twoPhones() {
+    const mine = new OpBuilder("mine");
+    const theirs = new OpBuilder("theirs", 1_743_600_000_500);
+    const log = [
+      mine.push("expense", "e1", "create", { description: "Dinner", amountMinor: 4200 }),
+      theirs.push("expense", "e1", "update", { amountMinor: 4500 }, MARIE),
+      theirs.push("identity", "d1", "create", { nodeId: "theirs", memberId: MARIE }, MARIE),
+      theirs.push("identity", "d1", "update", { push: { endpoint: "x" } }, MARIE),
+      mine.push("expense", "e2", "create", { description: "Taxi" }),
+    ];
+    // Each builder counts its own ids from one, so both would say `op-001`.
+    return log.map((op, i) => ({ ...op, id: `op-${i + 1}`, seq: i + 1 }));
+  }
+
+  it("is another node's ops past the mark, diffed against the ones before it", () => {
+    const { revisions, through } = unseenRevisions(twoPhones(), 1, "mine");
+    expect(revisions.map((r) => r.op.seq)).toEqual([3, 2]);
+    // The earlier create, though seen, is what makes seq 2 read as a change.
+    expect(revisions[1]?.changes).toEqual([
+      expect.objectContaining({ field: "amountMinor", before: 4200, after: 4500 }),
+    ]);
+    // Past this node's op and the quiet push, so neither lingers after marking.
+    expect(through).toBe(5);
+  });
+
+  it("finds nothing once marked through, nor in a quiet op alone", () => {
+    const ops = twoPhones();
+    expect(unseenRevisions(ops, 5, "mine")).toEqual({ revisions: [], through: 5 });
+    expect(unseenRevisions(ops, 3, "mine").revisions).toEqual([]);
+  });
+
+  it("ignores ops not numbered yet, and never marks backwards", () => {
+    const ops = twoPhones().map((o) => ({ ...o, seq: null }));
+    expect(unseenRevisions(ops, 7, "mine")).toEqual({ revisions: [], through: 7 });
   });
 });
 

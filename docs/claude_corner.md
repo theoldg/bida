@@ -28,6 +28,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "it disappears after I open and collapse it." One state
   meant both "unfolded" and "held"; folding dropped the hold, and seen was
   already marked. When a flag answers two questions, closing one closes both.
+- *2026-09-23* — "review the recent changes ux… is it useful?" Reading the
+  code said yes. Two phones in the driver said the fold repeats the rows just
+  under it, and counts a join as a change. Ask whether it's useful on a screen,
+  not in the source.
 - *2026-09-23* — "what happens when there's over 40 subscribers?" A 413 on
   the ops push: a sync jammed for good. The file I added the cap to warned
   against exactly that. "Can we not batch it?" — a limit per request is a
@@ -65,7 +69,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   easy; the finds were facts that had quietly gone stale: a tip jar figure, a
   key type, a "no way to delete". Trimming is a full read. Check each claim
   you keep against the code.
-- *2026-09-22* — "most of the file seems unnecessary, but the postcard system
-  is great." Cut the essays to two short paragraphs and gave the cards more
-  room. The concrete story teaches; the generalisation drawn from it mostly
-  repeated what the stories already said.

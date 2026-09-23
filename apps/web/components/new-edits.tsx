@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { activityFeed, compareHlc, parseHlc, type Revision } from "@bida/core";
+import { compareHlc, unseenRevisions, type Revision } from "@bida/core";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
@@ -17,43 +17,31 @@ import { route } from "@/lib/group-link";
 /** Past this many the line hands over to the history screen. */
 const CAP = 4;
 
-const nodeOf = (hlc: string): string | undefined => {
-  try { return parseHlc(hlc).node; } catch { return undefined; }
-};
-
 /**
  * What changed on other phones since this one last showed it: a folded line
  * under the you-owe card, opening onto those edits as history draws them.
  *
- * **New** is an op the server numbered past `seenSeq` whose stamp is another
- * phone's — your own laptop included, since this phone never showed it. Two
- * things mark it seen: unfolding it, and leaving the ledger. Unfolding keeps
- * the line up until then, folded again or not, and anything arriving meanwhile
- * joins it rather than the list being swapped under a thumb.
+ * **New** is `unseenRevisions` (core/history.ts), which the groups list counts
+ * too. Two things mark it seen: unfolding it, and leaving the ledger.
+ * Unfolding keeps the line up until then, folded again or not, and anything
+ * arriving meanwhile joins it rather than the list being swapped under a thumb.
  */
 export function NewEdits({ groupId, currency }: { groupId: string; currency: string }) {
   const fresh = useLive("newEdits", async () => {
     const key = await db().groupKeys.get(groupId);
     // No key is the demo; no mark is a group whose first pull hasn't landed.
     if (key?.seenSeq === undefined) return null;
-    const seen = key.seenSeq;
-    const mine = (await getDevice()).nodeId;
-    const ops = await opsForGroup(groupId);
-    const news = new Set(ops
-      .filter((o) => (o.seq ?? 0) > seen && nodeOf(o.hlc) !== mine)
-      .map((o) => o.id));
-    if (news.size === 0) return null;
-    // A revision's diff needs its entity's earlier ops, so the feed is folded
-    // over every op of the touched entities, then cut down to the new ones.
-    const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
-    const revisions = activityFeed(ops.filter((o) => touched.has(o.entityId)))
-      .filter((r) => news.has(r.op.id));
+    const { revisions, through } = unseenRevisions(
+      await opsForGroup(groupId), key.seenSeq, (await getDevice()).nodeId);
+    // Nothing to name, but still a mark to move: this phone's own ops.
+    if (revisions.length === 0) return { through };
     const [members, expenses, settlements] = await Promise.all([
       db().members.where("groupId").equals(groupId).toArray(),
       db().expenses.where("groupId").equals(groupId).toArray(),
       db().settlements.where("groupId").equals(groupId).toArray(),
     ]);
     return {
+      through,
       revisions,
       memberById: new Map(members.map((m) => [m.id, m])),
       expenseById: new Map(expenses.map((e) => [e.id, e])),
@@ -73,7 +61,7 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
 
   // Leaving the ledger — another tab, an entry, the groups list — is the other
   // way to have seen them. Read through a ref: the cleanup outlives the render.
-  const top = Math.max(0, ...shown.map((r) => r.op.seq ?? 0));
+  const top = fresh?.through ?? 0;
   const last = useRef(top);
   last.current = top;
   useEffect(() => () => {
@@ -83,10 +71,11 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
   // The names outlive the read: once marked seen, the query finds nothing new
   // and returns none, while the held list still has to say who did what.
   const names = useRef(fresh);
-  if (fresh) names.current = fresh;
+  if (fresh?.revisions) names.current = fresh;
 
-  if (shown.length === 0 || !names.current) return null;
-  const context: RevisionContext = { groupId, currency, ...names.current };
+  if (shown.length === 0 || !names.current?.revisions) return null;
+  const { memberById, expenseById, settlementById } = names.current;
+  const context: RevisionContext = { groupId, currency, memberById, expenseById, settlementById };
 
   function toggle() {
     if (open) { setOpen(false); return; }

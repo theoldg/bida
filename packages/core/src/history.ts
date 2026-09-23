@@ -1,4 +1,4 @@
-import { compareHlc } from "./hlc.js";
+import { compareHlc, parseHlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import { applyPatch, sortOps } from "./fold.js";
 import type { Id } from "./types.js";
@@ -130,4 +130,38 @@ export function activityFeed(ops: readonly Op[], limit?: number): Revision[] {
   }
   all.sort((a, b) => compareHlc(b.op.hlc, a.op.hlc));
   return limit === undefined ? all : all.slice(0, limit);
+}
+
+const nodeOf = (hlc: string): string | undefined => {
+  try { return parseHlc(hlc).node; } catch { return undefined; }
+};
+
+/**
+ * What changed on other phones since this one last showed it: revisions of ops
+ * the server numbered past `seenSeq` whose stamp is another node's — your own
+ * laptop included — newest first. The ledger's line and the groups list both
+ * count from this, so they can't disagree.
+ *
+ * `through` is the highest seq in the log, this node's and quiet ones included:
+ * what a screen that showed the result may mark seen. Marking only the
+ * revisions' highest would leave a quiet op (a device subscribing) past the
+ * mark for good.
+ */
+export function unseenRevisions(
+  ops: readonly Op[], seenSeq: number, node: string,
+): { revisions: Revision[]; through: number } {
+  let through = seenSeq;
+  const news = new Set<Id>();
+  for (const op of ops) {
+    const seq = op.seq ?? 0;
+    if (seq > through) through = seq;
+    if (seq > seenSeq && nodeOf(op.hlc) !== node) news.add(op.id);
+  }
+  if (news.size === 0) return { revisions: [], through };
+  // A revision's diff needs its entity's earlier ops, so the feed is folded
+  // over every op of the touched entities, then cut down to the new ones.
+  const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
+  const revisions = activityFeed(ops.filter((o) => touched.has(o.entityId)))
+    .filter((r) => news.has(r.op.id));
+  return { revisions, through };
 }
