@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-23* — "make sure it looks good for long and short numbers." A
+  mono font makes width arithmetic: the figure's size is a CSS formula of its
+  length, no measuring. Photographed 320 to 430 wide with 1,500,120.50 UZS
+  before believing the formula.
 - *2026-09-23* — "make sure the correct area lights up." The press rule
   named `a.card`; the settle rows are buttons. Held a real press and
   photographed it rather than trusting the selector: whole card, nothing in
@@ -63,6 +67,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-22* — "just make it a gif." I called it full resolution; a -90
   rotation flag meant ffprobe's numbers were sideways and the gif was half
   size. The readout is not the picture.
-- *2026-09-22* — "design it and show me a draft." Built it in the real app and
-  photographed it. Every note back was a subtraction: the sentence, the
-  avatars. Draw less than the card seems to need.

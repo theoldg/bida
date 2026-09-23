@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement, type Transfer,
@@ -186,24 +186,7 @@ function LedgerTab({ data }: { data: GroupData }) {
           nothing for every other group. */}
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
-      {me ? (
-        <div className="mysummary pad">
-          {/* Neutral tint on purpose: the eyebrow and figure already carry the
-              colour. */}
-          <Card style={{ flex: 1, padding: "10px 12px" }}>
-            <div className="eyebrow" style={{ color: net === 0 ? "var(--muted)" : "inherit" }}>
-              <span className={signClass(net)}>
-                {net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square}
-              </span>
-            </div>
-            {/* Unsigned, unlike every other figure: "You owe" above already says
-                the direction, and a "-" reads as arithmetic rather than debt. */}
-            <div className={`bignum ${signClass(net)}`} style={{ fontSize: 24, marginTop: 1 }}>
-              {money(Math.abs(net), group.baseCurrency)}
-            </div>
-          </Card>
-        </div>
-      ) : null}
+      {me ? <MySummary net={net} base={base} /> : null}
 
       {entries.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>
@@ -225,6 +208,28 @@ function LedgerTab({ data }: { data: GroupData }) {
       </div>
       <div style={{ height: 88 }} />
     </Scroll>
+  );
+}
+
+/**
+ * Where you stand, on one line: the words on the left, the figure on the right.
+ * The figure is sized to its own length (`.mysummary` in globals.css), so a
+ * six-digit sum shrinks to fit rather than wrapping under the words.
+ */
+function MySummary({ net, base }: { net: number; base: string }) {
+  const label = net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square;
+  // Unsigned, unlike every other figure: "You owe" already says the direction,
+  // and a "-" reads as arithmetic rather than debt.
+  const figure = money(Math.abs(net), base);
+  return (
+    <div className="mysummary pad">
+      {/* Neutral tint on purpose: the words and figure already carry the colour. */}
+      <Card className={`mysum ${signClass(net)}`}
+        style={{ "--label": label.length, "--chars": figure.length } as CSSProperties}>
+        <span className="eyebrow">{label}</span>
+        <span className="bignum">{figure}</span>
+      </Card>
+    </div>
   );
 }
 
