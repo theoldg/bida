@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expenseMeta, transferMeta } from "./row-meta";
+import { expenseMeta, groupMeta, transferMeta } from "./row-meta";
 
 const base = { payer: "Alice", coPayers: 0, kind: "expense" as const, ways: 5, mode: "equal" as const };
 
@@ -74,5 +74,20 @@ describe("transferMeta", () => {
     expect(transferMeta(undefined)).toEqual(["Transfer"]);
     expect(transferMeta("   ")).toEqual(["Transfer"]);
     expect(transferMeta(null)).toEqual(["Transfer"]);
+  });
+});
+
+describe("groupMeta", () => {
+  it("drops people, then entries, and keeps the time", () => {
+    expect(groupMeta({ people: 9, entries: 61, when: "2d ago" })).toEqual([
+      "9 people · 61 entries · 2d ago",
+      "61 entries · 2d ago",
+      "2d ago",
+    ]);
+  });
+
+  it("counts one the singular way", () => {
+    expect(groupMeta({ people: 1, entries: 1, when: "just now" })[0])
+      .toBe("1 person · 1 entry · just now");
   });
 });

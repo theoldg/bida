@@ -226,7 +226,10 @@ set the order, and they live with the copy in `lib/row-meta.ts`: **shortening
 must not lie** (co-payers get abbreviated, "Alice +1 paid", never dropped), and
 **drop what the entry's own screen says better** — the split mode first, the
 share count next, the payer never. `.rmeta` keeps its ellipsis for the last
-rung, because a name can be any length at all.
+rung, because a name can be any length at all. A group list row's line is the
+same ladder with a fixed bold lead: "N new changes" is never dropped, then
+people go, then entries, and the time is last standing — the lead and the time
+say whether to open the group, the counts only what is in it.
 
 A ledger row is always the same height, whether or not it carries a second
 figure — the sum as it was spent, before the group's currency. The row is held

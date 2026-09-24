@@ -913,7 +913,9 @@ measuring (`fitIndex` is pure and tested); `lib/row-meta.ts` is the editorial
 order, which is the part worth arguing about
 ([design-system.md](design-system.md#a-row-says-less-rather-than-being-cut-off)).
 It renders the longest rung when it cannot measure — no canvas, no layout yet —
-so the static export ships the full line and the browser narrows it.
+so the static export ships the full line and the browser narrows it. A `lead`
+(the group list's bold "N new changes") rides ahead of every rung, and the
+rungs fit in the width it leaves.
 
 ## Gotchas
 

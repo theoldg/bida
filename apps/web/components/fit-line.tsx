@@ -2,24 +2,34 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";
+import { copy } from "../lib/copy";
+
+/** Between `lead` and the rung — the separator `copy.group.metaLine` puts between facts. */
+const SEP = copy.group.metaLine("", "");
 
 /**
  * One line that would rather say less than be cut off: given wordings longest
  * first, it renders the longest that fits. Why: [`lib/fit.ts`](../lib/fit.ts);
  * which wordings: [`lib/row-meta.ts`](../lib/row-meta.ts).
  *
+ * `lead` is never dropped: it goes first, in bold, and the rungs fit in what
+ * it leaves.
+ *
  * Renders `options[0]` on the server and first paint, then narrows in a layout
  * effect, before paint. Keep the ellipsis class anyway: the shortest rung
  * still holds a name of any length.
  */
-export function FitLine({ options, className }: {
+export function FitLine({ options, className, lead, leadClassName }: {
   options: readonly string[];
   className?: string;
+  lead?: string;
+  leadClassName?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const leadRef = useRef<HTMLElement>(null);
   const [at, setAt] = useState(0);
   // The array is rebuilt every render; its contents are what changes rarely.
-  const key = options.join(" ");
+  const key = `${lead ?? ""}\n${options.join("\n")}`;
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -28,7 +38,14 @@ export function FitLine({ options, className }: {
     const pick = () => {
       if (!live) return;
       const style = styleOf(el);
-      setAt(fitIndex(options.map((o) => textWidth(o, style)), el.clientWidth));
+      const box = el.clientWidth;
+      const taken = leadRef.current && lead
+        ? textWidth(lead, styleOf(leadRef.current)) + textWidth(SEP, style)
+        : 0;
+      // Unmeasured stays 0 ("show everything"); a lead that fills the box
+      // leaves 1px, so the leanest rung, not the richest.
+      const room = box <= 0 ? 0 : Math.max(1, box - taken);
+      setAt(fitIndex(options.map((o) => textWidth(o, style)), room));
     };
     pick();
     const watch = new ResizeObserver(pick);
@@ -42,6 +59,7 @@ export function FitLine({ options, className }: {
 
   return (
     <div ref={ref} className={className}>
+      {lead ? <><b ref={leadRef} className={leadClassName}>{lead}</b>{SEP}</> : null}
       {options[Math.min(at, options.length - 1)] ?? ""}
     </div>
   );

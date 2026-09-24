@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "similar to the one in the ledger… new changes and time ago
+  are the most important." The ledger's ladder already existed, so the list
+  got a rung list and a bold lead, not a second mechanism. Their ranking set
+  the order; mine only broke the tie between people and entries.
 - *2026-09-24* — "perfectly above." Measured the chevron centres in the
   browser rather than eyeballing a screenshot: 4.5px off, then 0. Five
   variants, one sheet; the owner took D, lived with it a minute, then
@@ -65,7 +69,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "it disappears after I open and collapse it." One state
   meant both "unfolded" and "held"; folding dropped the hold, and seen was
   already marked. When a flag answers two questions, closing one closes both.
-- *2026-09-23* — "review the recent changes ux… is it useful?" Reading the
-  code said yes. Two phones in the driver said the fold repeats the rows just
-  under it, and counts a join as a change. Ask whether it's useful on a screen,
-  not in the source.

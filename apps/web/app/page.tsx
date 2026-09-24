@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
+import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -19,6 +20,7 @@ import { copy } from "@/lib/copy";
 import { clearDemo, forgetGroup } from "@/lib/db/commands";
 import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
+import { groupMeta } from "@/lib/row-meta";
 import { iosHomeScreenApp } from "@/lib/install";
 import { useResumeLastGroup } from "@/lib/launch";
 import { useArrivingGroups, useGroupSummaries, useHost, useInviteLink, type GroupSummary } from "@/lib/hooks";
@@ -193,12 +195,12 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
         <Avatar name={group.name} />
         <div className="rmain">
           <div className="rtitle">{group.name}</div>
-          <div className="rmeta">
-            {/* First, where the ellipsis can't reach it. The ledger's line says
-                the same count, and opening the group is what clears both. */}
-            {newCount > 0 ? <><b className="rnew">{plural(newCount, copy.noun.newChange)}</b> · </> : null}
-            {plural(memberCount, copy.noun.person)} · {plural(entryCount, copy.noun.entry)} · {ago(lastActivity)}
-          </div>
+          {/* The new count leads, where neither the ladder nor the ellipsis
+              reaches it. The ledger's line says the same count, and opening
+              the group is what clears both. */}
+          <FitLine className="rmeta" leadClassName="rnew"
+            lead={newCount > 0 ? plural(newCount, copy.noun.newChange) : undefined}
+            options={groupMeta({ people: memberCount, entries: entryCount, when: ago(lastActivity) })} />
         </div>
         {/* Copying the row's link answers here: the figure flips to a check while
             `invite.copied` holds. The menu has closed and the clipboard says

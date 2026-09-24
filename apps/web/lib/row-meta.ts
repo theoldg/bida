@@ -3,7 +3,7 @@ import { copy } from "./copy";
 import { plural } from "./format";
 
 /**
- * A ledger row's second line, written several ways, longest first.
+ * A row's second line, written several ways, longest first.
  *
  * `FitLine` renders the longest that fits, so **this order is the editorial
  * decision** about what a narrow phone loses first ([`lib/fit.ts`](./fit.ts)):
@@ -60,4 +60,20 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
 export function transferMeta(note: string | null | undefined): string[] {
   const trimmed = note?.trim();
   return [trimmed || copy.group.transfer];
+}
+
+/**
+ * A group list row's line. "N new changes" rides ahead of it as `FitLine`'s
+ * `lead`, on every rung, and the time is the last thing standing: both say
+ * whether to open the group, the counts only what is inside it. People go
+ * before entries — the roster barely moves; the entry count is the activity.
+ */
+export function groupMeta({ people, entries, when }: {
+  people: number;
+  entries: number;
+  /** Already worded, `ago(lastActivity)`. */
+  when: string;
+}): string[] {
+  const count = plural(entries, copy.noun.entry);
+  return [joined(joined(plural(people, copy.noun.person), count), when), joined(count, when), when];
 }
