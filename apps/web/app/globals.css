@@ -682,7 +682,7 @@ a { color: inherit; text-decoration: none }
    the figure takes the room the chevron leaves, up to 32px, with no measuring.
    --chars is its length (app/g/page.tsx); 60px is the padding, border, gap and
    chevron. */
-.mysummary { container-type: inline-size }
+.mysummary { container-type: inline-size; --mysum-max: 32px }
 /* Straight under the bar, whose own 12px foot plus `.pad` would be a gap wider
    than the gutter; 4px makes it the gutter's 16. */
 .mysummary:first-child { padding-top: 4px }
@@ -693,7 +693,7 @@ a { color: inherit; text-decoration: none }
 .mysum .eyebrow { font-size: 13px; color: inherit }
 .mysum:not(.credit, .debit) .eyebrow { color: var(--muted) }
 .mysum .bignum { line-height: 1.1;
-  font-size: min(32px, (100cqi - 60px) / (var(--chars) * .6)) }
+  font-size: min(var(--mysum-max), (100cqi - 60px) / (var(--chars) * .6)) }
 .mysumchev { color: var(--ink); flex: none }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
@@ -1026,16 +1026,16 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 
 /* ---- nav, fab, buttons ---- */
 /* The floating buttons' foot rises with the home indicator. */
-:root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)) }
+:root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)); --fab: 50px }
 /* A solid ink block, not a floating pill: the one thing on the screen that is
    pure figure-ground inversion, which is signal enough without a shadow. */
-.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: var(--fab-foot); width: 50px; height: 50px;
+.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: var(--fab-foot); width: var(--fab); height: var(--fab);
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
 /* Beside the "+", at its size, outlined rather than inverted: the same
    destination, half the voice. Ink border on paper — `--card-2` vanishes into
    the ledger rows. */
-.fab-2 { right: calc(max(16px, 50vw - 264px) + 60px); background: var(--card); color: var(--ink);
+.fab-2 { right: calc(max(16px, 50vw - 264px) + var(--fab) + 10px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
 /* The balances' one button (app/g/tip), in `.fab-2`'s outline — ink on
    this screen belongs to the numbers. The only FAB with a word, because an ask
