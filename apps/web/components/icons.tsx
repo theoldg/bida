@@ -6,7 +6,7 @@
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
   | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
-  | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more" | "info"
+  | "image" | "split" | "merge" | "share" | "import" | "sun" | "moon" | "fx" | "more" | "info"
   | "mail" | "dollar" | "sliders" | "translate";
 
 const S = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" } as const;
@@ -91,6 +91,13 @@ export function IconSprite() {
         </symbol>
         <symbol id="i-share" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <path d="M12 3.5v11" /><path d="M8.5 7l3.5-3.5L15.5 7" />
+          <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
+        </symbol>
+        {/* Share turned over: the same tray, the arrow landing in it instead
+            of leaving. A file coming in, for the import screen — not "merge",
+            which is rows folding together and says nothing about a file. */}
+        <symbol id="i-import" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
+          <path d="M12 3.5v11" /><path d="M8.5 11l3.5 3.5 3.5-3.5" />
           <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
         </symbol>
         {/* The one everybody's phone already taught them: 文 beside A, the

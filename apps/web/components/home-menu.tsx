@@ -61,7 +61,7 @@ export function HomeMenu() {
     // Above About and Advanced: it is an act, and those two are readouts.
     {
       label: copy.groups.importGroup,
-      icon: "merge",
+      icon: "import",
       onSelect: () => router.push(route.import()),
     },
     { label: copy.groups.advanced, icon: "sliders", onSelect: () => router.push(route.advanced()) },

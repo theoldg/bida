@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "something more appropriate" for import. The menu borrowed
+  "merge", a glyph drawn for rows folding together. Drew share's tray with
+  the arrow turned inward. When a borrowed icon is wrong, read what the donor
+  was drawn for; a sibling glyph is often one path away.
+
 - *2026-09-24* — "smaller number, bigger fabs… I'll decide." Four
   variants on one sheet per width, each a step further; the owner took B's
   number with C's FABs. A sheet's columns are also a menu of halves, so
@@ -67,7 +72,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   A musing, so answered it rather than scaffolding one. Cost was never the
   case — ~$1 a month; privacy and offline are. Said so, and named the cheap
   first step: measure before training anything.
-- *2026-09-24* — "spliit is not a pwa, the scan does not have itemized
-  split." I'd trusted its README's feature list; its source said total-only
-  scan, assets-only worker. The owner had used the rival, not read about it.
-  When the code is one clone away, read it before ranking the threat.
