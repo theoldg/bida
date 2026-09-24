@@ -268,12 +268,13 @@ export const copy = {
   notify: {
     /**
      * The installed app's card, in the install offer's place (components/install.tsx).
-     * Its tap is the one iOS lets ask for permission.
+     * Its tap is the one iOS lets ask for permission. Worded as a choice, not a
+     * pitch: either answer clears the card, so the tap is also how it goes away.
      */
     offer: {
-      title: "Hear when your share changes",
-      body: "A notification when someone adds, changes or deletes an entry you’re in.",
-      act: "Turn on",
+      title: "Notifications?",
+      body: "Only sent for entries that affect you. Answer yes or no to hide this card.",
+      act: "Choose",
     },
 
     /**

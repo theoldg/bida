@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "more understandable." My copy sheet spanned the range;
+  the owner answered with their own draft, not a letter. Kept every word of
+  theirs but the one unclear sentence, offered four rewrites of just that. A
+  draft back is the brief: edit it, don't replace it.
 - *2026-09-24* — "is the fix-friction guideline working?" Sixty commits
   since it landed, each one answering an ask from the owner; none fixes a step
   nobody asked about. A card opens with their words, so a wasted step never
@@ -66,6 +70,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "should always be present… what do you think?" Asked for a
   view, so gave one and built it: "Group history", since the rows above it each
   open an entry's own. A question inside an ask wants an answer, not a menu.
-- *2026-09-23* — "clicking a notification lands on gone for a while." The
-  screen was right about this phone; the phone just hadn't heard yet. Missing
-  and not-yet-arrived look the same until a sync answers, so wait for one.

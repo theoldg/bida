@@ -235,8 +235,8 @@ the install nowhere at all. It goes the moment the phone installs, since `offer`
 stops being `ready`.
 
 **Installed, the same card offers notifications** in the same two places
-([notifications.md](notifications.md)) — *Hear when your share changes*, with
-**Turn on**. The installed app is the only place iOS allows push, and its tap is
+([notifications.md](notifications.md)) — *Notifications?*, with
+**Choose**, since either answer clears it. The installed app is the only place iOS allows push, and its tap is
 the only thing iOS lets ask for the permission. It stands until the prompt is
 answered, since a refusal can't be asked again; the list's fold is its own
 device field, as a tab and an installed app share one row on Android.
