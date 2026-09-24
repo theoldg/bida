@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "perfectly above." Measured the chevron centres in the
+  browser rather than eyeballing a screenshot: 4.5px off, then 0. Five
+  variants, one sheet, and the owner picked the quiet one I hadn't
+  recommended. The recommendation is a start, not the answer.
 - *2026-09-24* — "the margin under the banner is slightly too big." The
   gap under the card was the smaller one; the one under the bar, above it,
   was the big one. Measured both and asked which before moving either.
@@ -65,7 +69,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   code said yes. Two phones in the driver said the fold repeats the rows just
   under it, and counts a join as a change. Ask whether it's useful on a screen,
   not in the source.
-- *2026-09-23* — "what happens when there's over 40 subscribers?" A 413 on
-  the ops push: a sync jammed for good. The file I added the cap to warned
-  against exactly that. "Can we not batch it?" — a limit per request is a
-  reason to split the request, not to drop what doesn't fit.

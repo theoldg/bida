@@ -328,7 +328,7 @@ confers nothing without the secret.
   history backs up to whoever linked to the entry (`historyParent`), never to
   the entry's "gone" screen. Its line is `components/revision.tsx`, shared with the ledger.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
-  you-owe card, drawn as a date line: "4 new changes", unfolding onto those revisions, capped
+  you-owe card, drawn as a date line in darker text and with no chevron: "4 new changes", unfolding onto those revisions, capped
   at four, with "Group history" always under them. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.

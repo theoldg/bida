@@ -443,6 +443,9 @@ a { color: inherit; text-decoration: none }
 .nudgehead { display: flex; align-items: center; justify-content: space-between;
   gap: 10px; width: 100%; text-align: left; font-size: 14px; font-weight: 600;
   color: var(--ink) }
+/* Its 11px chevron centred on the 20px one of the you-owe card under it
+   (`.mysumchev`): same card padding, so in by half the difference. */
+.nudgehead .kvchev { margin-right: 4.5px }
 
 /* The screen behind that line (app/about/page.tsx), and `/advanced` with it:
    prose, set as prose — a measured column with air between claims, no cards. */
@@ -694,11 +697,11 @@ a { color: inherit; text-decoration: none }
 .mysumchev { color: var(--ink); flex: none }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
-   line, since it is furniture of the list until pressed. */
+   line, since it is furniture of the list until pressed. No chevron: one at
+   the row's edge sat in no column with the cards' above it, and the text a
+   step darker than a date's is what says it can be pressed. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
-  border-top: 1px solid var(--rule-soft) }
-.neweditschev { margin-left: auto; transition: transform .15s }
-.newedits.on .neweditschev { transform: rotate(90deg) }
+  border-top: 1px solid var(--rule-soft); color: var(--ink-2) }
 .tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
 .tl.neweditslist::before { left: 24.5px; top: 20px }
 /* Clear of the date line under it, which the timeline's own 15px can't give. */

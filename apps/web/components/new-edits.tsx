@@ -93,7 +93,6 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
     <div className={`newedits${open ? " on" : ""}`}>
       <button type="button" className="daylabel neweditsbar" aria-expanded={open} onClick={toggle}>
         <span>{plural(shown.length, copy.noun.newChange)}</span>
-        <Icon name="chev" size={13} className="neweditschev" />
       </button>
       {open ? (
         <div className="tl neweditslist">
