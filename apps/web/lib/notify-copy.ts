@@ -75,6 +75,9 @@ function headline(n: Notice, name: Names): string {
   if (n.change === "deleted" && before) {
     return copy.notify.deleted(who, label(before, name, n.to), amountOf(before));
   }
+  if (n.change === "restored" && after) {
+    return copy.notify.restored(who, label(after, name, n.to), amountOf(after));
+  }
   if (!before || !after) return copy.notify.edited(who, copy.notify.untitled);
   const was = label(before, name, n.to);
   if (n.moved.includes("kind")) {
@@ -133,7 +136,8 @@ export function pushPayload(groupId: Id, groupName: string, told: readonly Notic
     // One entry, however many commands: its latest word stands.
     const n = told[told.length - 1]!;
     const lines = [headline(n, name), sideLine(n)].filter((l): l is string => !!l);
-    const url = n.after ? `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(n.after.id)}` : group;
+    // A deleted entry has a screen too: it is where Restore is.
+    const url = `/g/entry?id=${encodeURIComponent(groupId)}&e=${encodeURIComponent(entryId(n))}`;
     return { title: groupName, body: lines.join("\n"), url, tag };
   }
   const who = name(told[0]!.by);

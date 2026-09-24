@@ -13,6 +13,7 @@ export * from "./export.js";
 export * from "./import.js";
 export * from "./tricount.js";
 export * from "./invariants.js";
+export * from "./restore.js";
 export * from "./settle.js";
 export * from "./scan.js";
 export * from "./scan-body.js";

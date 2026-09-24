@@ -65,10 +65,17 @@ describe("pushPayload: one entry", () => {
     })).body.split("\n")[0]).toBe("Ana edited “Dinner”");
   });
 
-  it("opens the group on a delete, where the entry is gone", () => {
+  it("opens the deleted entry on a delete, where Restore is", () => {
     expect(payload(notice({ change: "deleted", before: dinner() }))).toMatchObject({
       body: `Ana deleted “Dinner” · ${eur(4200)}\nYour share was ${eur(1050)}`,
-      url: "/g?id=g1",
+      url: "/g/entry?id=g1&e=e1",
+    });
+  });
+
+  it("says restored, with the share as it is again", () => {
+    expect(payload(notice({ change: "restored", after: dinner() }))).toMatchObject({
+      body: `Ana restored “Dinner” · ${eur(4200)}\nYour share ${eur(1050)}`,
+      url: "/g/entry?id=g1&e=e1",
     });
   });
 

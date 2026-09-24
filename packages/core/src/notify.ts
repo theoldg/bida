@@ -40,7 +40,7 @@ export type NoticeEntry =
     baseAmountMinor: number;
   };
 
-export type NoticeChange = "added" | "edited" | "deleted";
+export type NoticeChange = "added" | "edited" | "deleted" | "restored";
 
 /** The fields whose change is news — `describe()`'s "money moved". */
 export type MovedField = "amount" | "currency" | "split" | "payers" | "kind" | "sides";
@@ -153,8 +153,7 @@ function seen(entry: Entry, to: Id): NoticeEntry {
  * The notices one command causes: one per live member but `me`, its author,
  * flagged `involved` or not — who hears which is the recipient phone's
  * setting, applied at send time. `before` and `after` are the group folded
- * without and with `ops`, the command's own. A convert is one command writing
- * a delete and a create, so it pairs them.
+ * without and with `ops`, the command's own.
  */
 export function notices(before: GroupState, after: GroupState, ops: readonly Op[], me: Id): Notice[] {
   const baseCurrency = after.group?.baseCurrency ?? before.group?.baseCurrency;
@@ -170,7 +169,10 @@ export function notices(before: GroupState, after: GroupState, ops: readonly Op[
     seenIds.add(op.entityId);
     const a = entryOf(was, op);
     const b = entryOf(now, op);
-    if (!a && b) changes.push({ change: "added", after: b });
+    // A row that was there, tombstoned, is being put back rather than added.
+    const tombstone = op.entity === "expense" ? was.expenses[op.entityId]
+      : op.entity === "settlement" ? was.settlements[op.entityId] : undefined;
+    if (!a && b) changes.push({ change: tombstone ? "restored" : "added", after: b });
     else if (a && !b) changes.push({ change: "deleted", before: a });
     else if (a && b) changes.push({ change: "edited", before: a, after: b });
   }

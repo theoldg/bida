@@ -283,6 +283,7 @@ export const copy = {
      */
     added: (who: string, what: string, amount: string) => `${who} added ${what} · ${amount}`,
     deleted: (who: string, what: string, amount: string) => `${who} deleted ${what} · ${amount}`,
+    restored: (who: string, what: string, amount: string) => `${who} restored ${what} · ${amount}`,
     edited: (who: string, what: string) => `${who} edited ${what}`,
     changedAmount: (who: string, what: string, was: string, now: string) =>
       `${who} changed the amount of ${what}: ${was} → ${now}`,

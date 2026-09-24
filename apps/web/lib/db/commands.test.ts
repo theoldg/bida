@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp } from "@bida/core";
+import { atCurrentRates, computeBalances, entityHistory, foldOps, settleUp, sortOps } from "@bida/core";
 import { db } from "./dexie";
 import { rebuild } from "./fold";
 import { getDevice, getMe, updateDevice } from "./device";
@@ -17,6 +17,7 @@ import {
   healGroup,
   recordSettlement,
   removeMember,
+  restoreEntry,
   saveGroupKey,
   setRate,
 } from "./commands";
@@ -542,6 +543,38 @@ describe("commands", () => {
     expect(row?.deletedAt).toBeTruthy();
     // The row itself is untouched under the tombstone — nothing is erased.
     expect(row?.description).toBe("Hammam");
+    await assertMaterialisedMatchesLog(groupId);
+  });
+
+  // ADR-0031: the whole entry back, and whoever it names with it — the
+  // entry wins over a removal made since, as it does after a merge.
+  it("restores a deleted entry and the person removed since, in one append", async () => {
+    const { groupId, theo, marie } = await trip();
+    const expenseId = await addExpense(groupId, theo, {
+      description: "Hammam",
+      occurredAt: 1,
+      amountMinor: 6000,
+      currency: "EUR",
+      rateToBase: "1",
+      paidBy: theo,
+      split: { mode: "equal", members: [theo, marie] },
+    });
+    await deleteExpense(groupId, theo, expenseId);
+    await removeMember(groupId, theo, marie);
+    const before = await db().ops.count();
+
+    await restoreEntry(groupId, theo, "expense", expenseId);
+
+    expect(await db().ops.count()).toBe(before + 2);
+    const written = sortOps(await db().ops.toArray()).slice(-2);
+    expect(written.map((o) => o.entity)).toEqual(["expense", "member"]);
+    expect(new Set(written.map((o) => o.createdAt)).size).toBe(1);
+    expect((await db().expenses.get(expenseId))?.deletedAt).toBeNull();
+    expect((await db().members.get(marie))?.deletedAt).toBeNull();
+    expect(computeBalances(foldOps(await db().ops.toArray())).byMember[marie]).toBe(-3000);
+    // Pressed again, it has nothing left to do.
+    await restoreEntry(groupId, theo, "expense", expenseId);
+    expect(await db().ops.count()).toBe(before + 2);
     await assertMaterialisedMatchesLog(groupId);
   });
 

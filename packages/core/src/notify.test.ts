@@ -238,6 +238,15 @@ describe("notices: deleting", () => {
     expect(list[0]!.after).toBeUndefined();
   });
 
+  it("putting a deleted one back is a restore, not an add", () => {
+    const b = group();
+    b.push("expense", "e1", "create", expensePatch({ amount: 4200 }));
+    b.push("expense", "e1", "delete", {});
+    const list = run(b, (b) => b.push("expense", "e1", "update", { deletedAt: null }));
+    expect(to(list)).toEqual([ADA, MARIE, SAM]);
+    expect(list[0]).toMatchObject({ change: "restored", after: { share: 1050 } });
+  });
+
   it("deleting what was already gone, or never there, tells nobody", () => {
     const b = group();
     b.push("expense", "e1", "create", expensePatch({ amount: 4200 }));

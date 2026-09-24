@@ -1,15 +1,16 @@
 import {
-  canonicalSplit, newId, primaryPayer,
-  type CurrencyCode, type ExchangeRate, type ExpenseKind, type Id, type OpDraft, type Rate,
+  canonicalSplit, newId, primaryPayer, restoreEntryDrafts,
+  type CurrencyCode, type EntryEntity, type ExchangeRate, type ExpenseKind, type Id, type OpDraft, type Rate,
   type ReceiptDiscount, type ReceiptItem, type SplitSpec,
 } from "@bida/core";
 import { db } from "../dexie";
+import { groupState } from "../fold";
 import { appendOps } from "./append";
 import { movesAnything, only, wholeEntity } from "./patch";
 import { rateToWrite, toBase, valuationOf } from "./rates";
 
 /**
- * The three kinds of entry (ADR-0010) — added, edited and tombstoned.
+ * The three kinds of entry (ADR-0010) — added, edited, tombstoned and put back.
  * Everything that moves money lands here. Both editors diff the form against
  * what is stored (`patch.ts`), then let the registry re-derive what the
  * change is worth (`rates.ts`).
@@ -298,4 +299,17 @@ export async function deleteSettlement(
   await write(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
   ]);
+}
+
+// ------------------------------------------------------------ restoring
+
+/**
+ * A deleted entry, back whole (ADR-0031), with anybody or any rate it names
+ * that was removed since — the entry wins, as it does after a merge
+ * (`restoreEntryDrafts`). One append, so the group is never left holding a
+ * live entry that names nobody.
+ */
+export async function restoreEntry(groupId: Id, actor: Id, entity: EntryEntity, entryId: Id): Promise<void> {
+  const drafts = restoreEntryDrafts(await groupState(groupId), entity, entryId);
+  if (drafts.length > 0) await write(groupId, actor, drafts);
 }
