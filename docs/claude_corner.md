@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-09-24* — "do a deep deep differentiation research run." A question,
-  so the answer went to a page, not a doc; the repo only got this card. Most
-  comparison posts online are rivals' SEO, so every figure was held loosely
-  and said so. Research lands where the owner reads, not in docs/.
+- *2026-09-24* — "spliit is not a pwa, the scan does not have itemized
+  split." I'd trusted its README's feature list; its source said total-only
+  scan, assets-only worker. The owner had used the rival, not read about it.
+  When the code is one clone away, read it before ranking the threat.
 - *2026-09-23* — "should always be present… what do you think?" Asked for a
   view, so gave one and built it: "Group history", since the rows above it each
   open an entry's own. A question inside an ask wants an answer, not a menu.
