@@ -451,6 +451,18 @@ export const copy = {
     },
     privacy: {
       title: "Privacy",
+      /** Leads the section: the rule first, then its two exceptions. */
+      e2eTitle: "Nearly everything is encrypted end to end.",
+      body: "That includes notifications, if you turn them on. When you save an expense, the server (and I, the developer) can see something like this:",
+      /** One D1 row: a `SealedOp` (core/seal.ts). Plain-English labels; the point is there are only four fields. */
+      sealed: [
+        { k: "group", v: "c9f0f8…" },
+        { k: "edit", v: "8f14e4…" },
+        { k: "number", v: "42" },
+        { k: "contents", v: "AQz8k…w==" },
+      ],
+      /** One paragraph: the key, then what that leaves visible. */
+      key: "The key that decodes the contents is part of the secret link, and it never reaches the server. I can see how many groups there are, and how many edits each one has had. That’s it.",
       scanTitle: "Receipt scanning leaves your phone.",
       scan: "Receipt photos are sent to Google’s Vertex AI to be read. Google doesn’t use them to train its models. For a day afterwards, the server remembers that this group scanned something, and a salted hash of your IP address: never the photo, never the raw address, only enough to keep the rate limits fair.",
       /** Points at `/advanced` instead of repeating it; ends before the inline link (`app/about/page.tsx`). */
@@ -461,20 +473,6 @@ export const copy = {
        */
       importTitle: "Importing a Tricount leaves your phone.",
       import: "Your browser can’t fetch a tricount, so bida’s server does it for you. It’s not encrypted, but nothing is stored.",
-      e2eTitle: "The rest is encrypted end-to-end.",
-      body: "When you save an expense, the server (and I, the developer) can see something like this:",
-      /** One D1 row: a `SealedOp` (core/seal.ts). Plain-English labels; the point is there are only four fields. */
-      sealed: [
-        { k: "group", v: "c9f0f8…" },
-        { k: "edit", v: "8f14e4…" },
-        { k: "number", v: "42" },
-        { k: "contents", v: "AQz8k…w==" },
-      ],
-      key: "The key that decodes the contents is part of the secret link, and it never reaches the server.",
-      shape: "I can see how many groups there are, and how many edits each one has had. That’s it.",
-      /** ADR-0037: the one third party in the sync path, named where people come to ask. */
-      notifyTitle: "Notifications go through Google or Apple.",
-      notify: "If you turn them on, each is encrypted by the phone that sends it, and my server passes it on without keeping it. Nobody in between can read one, but Google or Apple can see which phones get one at the same moment.",
     },
     /**
      * The hosted service's one disclaimer: MIT covers the code, not bida.bid, whose

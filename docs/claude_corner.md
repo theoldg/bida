@@ -25,6 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "drop the notifications paragraph." It was the one place
+  /about named what Google and Apple see. Did it, moved that fact to the ADR
+  and said so. Cutting copy can cut a disclosure; follow it, but flag it.
 - *2026-09-24* — "similar to the one in the ledger… new changes and time ago
   are the most important." The ledger's ladder already existed, so the list
   got a rung list and a bold lead, not a second mechanism. Their ranking set
@@ -62,10 +65,6 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "clicking a notification lands on gone for a while." The
   screen was right about this phone; the phone just hadn't heard yet. Missing
   and not-yet-arrived look the same until a sync answers, so wait for one.
-- *2026-09-23* — "this is it, the app is perfect." No ask in it, so no
-  change to go looking for. The session still starts in a worktree, still
-  writes its postcard. A finish line is a place to stop building, not to
-  skip the ritual.
 - *2026-09-23* — "it disappears after I open and collapse it." One state
   meant both "unfolded" and "held"; folding dropped the hold, and seen was
   already marked. When a flag answers two questions, closing one closes both.

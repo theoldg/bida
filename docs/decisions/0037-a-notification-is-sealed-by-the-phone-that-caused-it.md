@@ -44,7 +44,8 @@ share a phone.
 - **Google and Apple learn who uses bida together.** Payloads are opaque to
   them, but pushes fanned out in the same instant to three devices say those
   three share a group, and they know whose devices those are. No delay blurs
-  it. The first third party in the sync path; `/about` says so.
+  it. The first third party in the sync path. `/about` only says notifications
+  are sealed too; this metadata is written down here, not there.
 - **Every endpoint a phone ever had is readable by every link holder, for
   ever** — the log is append-only. Useless without our VAPID private key, and
   the relay only forwards to push services' own hosts.

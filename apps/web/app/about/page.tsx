@@ -52,26 +52,23 @@ export default function AboutPage() {
                 it would have sent. */}
             <Section title={feedback.title}>{feedback.body}</Section>
 
-            {/* Led by its own bold sentence: the photograph leaves for somebody
-                else's server, the one thing that isn't sealed. After the rest it
-                would read like a footnote. */}
+            {/* The rule leads and the two exceptions follow it, each under its
+                own bold sentence, so neither reads like a footnote. */}
             <Section title={privacy.title} under={
               <>
-                <p><strong>{privacy.importTitle}</strong> {privacy.import}</p>
-                <p> <strong> {privacy.e2eTitle} </strong> {privacy.body}</p>
                 <SealedRow />
                 <p>{privacy.key}</p>
-                <p>{privacy.shape}</p>
-                <p><strong>{privacy.notifyTitle}</strong> {privacy.notify}</p>
+                <p>
+                  <strong>{privacy.scanTitle}</strong> {privacy.scan}{" "}
+                  {/* The own-key pointer is the paragraph's last clause, an aside about
+                      scanning, not a claim of its own. */}
+                  {privacy.ownKeyPointer}{" "}
+                  <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.
+                </p>
+                <p><strong>{privacy.importTitle}</strong> {privacy.import}</p>
               </>
             }>
-              <>
-                <strong>{privacy.scanTitle}</strong> {privacy.scan}{" "}
-                {/* The own-key pointer is the paragraph's last clause, an aside about
-                    scanning, not a claim of its own. */}
-                {privacy.ownKeyPointer}{" "}
-                <Link href={route.advanced()}>{copy.advanced.key.title}</Link>.
-              </>
+              <><strong>{privacy.e2eTitle}</strong> {privacy.body}</>
             </Section>
 
             {/* After the sealed row, because the sentence that matters here
