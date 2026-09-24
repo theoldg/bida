@@ -91,7 +91,7 @@ describe("the Marrakech trip, as a spreadsheet", () => {
     everyRowSumsToZero(csv);
   });
 
-  it("foots to the balances the Balances tab shows, to the cent", () => {
+  it("foots to the balances the Balances screen shows, to the cent", () => {
     expect(footMinor(csv)).toEqual(computeBalances(state).byMember);
   });
 

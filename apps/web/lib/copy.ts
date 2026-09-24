@@ -574,13 +574,13 @@ export const copy = {
   // ------------------------------------------------------------- tip jar
 
   /**
-   * The only screen asking for money, from the foot of the balances tab. It asks
+   * The only screen asking for money, from the foot of the balances. It asks
    * for the one thing not free to run, with the figure `SCAN_LIMITS` is set from
    * (core/scan.ts, docs/receipt-scanning.md#what-the-scan-costs).
    */
   tip: {
     title: "Support bida",
-    /** The balances tab's FAB — the only one with a word in it. */
+    /** The balances' FAB — the only one with a word in it. */
     fab: "Support bida",
     lede: "Enjoying bida? Consider donating a few bucks.",
     /** Why there is an ask at all, in one line, above the figure it explains. */
@@ -722,6 +722,8 @@ export const copy = {
     /** Marks a balance row for somebody who is no longer in the group. */
     hasLeft: "removed",
 
+    /** The balances screen's title, over the group's name. */
+    balances: "Balances",
     history: "History",
     people: "People",
     copyLink: "Copy invite link",

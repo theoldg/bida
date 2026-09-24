@@ -265,7 +265,7 @@ async function collect(): Promise<string> {
   say("scan key", await scanKeyLine);
   say("display", matchMedia("(display-mode: standalone)").matches ? "installed" : "browser");
   // The screen actually painted beside the one laid out for; when they differ,
-  // that strip is what a person reports as "the tabs are gone"
+  // that strip is what a person reports as "the bottom is cut off"
   // (lib/viewport.ts).
   say("screen", screenLine());
   say("online", String(navigator.onLine));

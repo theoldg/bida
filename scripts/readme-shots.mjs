@@ -98,7 +98,7 @@ async function main() {
     await dropDemoMark(page);
     await shot("ledger");
 
-    await page.goto(`${base}/g?id=${GROUP}&tab=balances`);
+    await page.goto(`${base}/g/balances?id=${GROUP}`);
     await settle(page, 250);
     await shot("balances");
 

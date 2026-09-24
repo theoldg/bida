@@ -8,7 +8,7 @@ import { reloadCostsNothing } from "./update";
  */
 describe("reloadCostsNothing", () => {
   it("is every screen there is nothing on to lose", () => {
-    for (const path of ["/", "/g", "/g/members", "/g/history", "/g/entry", "/about"]) {
+    for (const path of ["/", "/g", "/g/balances", "/g/members", "/g/history", "/g/entry", "/about"]) {
       expect(reloadCostsNothing(path)).toBe(true);
     }
   });

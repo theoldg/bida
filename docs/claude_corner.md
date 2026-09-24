@@ -29,6 +29,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   blue and orange." The "e.g." licensed a pick, so I picked those two and
   kept the rest of dev's marking. A tone word like "funky" bounds the taste;
   don't spend it on a menu.
+- *2026-09-24* — "the balances tab is now conceptually a page." So it became
+  one: its own route. The word outlived the thing — "tab" sat in ADR-0007, a
+  dozen comments and the scroll-memory key. A cleanup is a grep for the old
+  name, not only for the old code.
 - *2026-09-24* — "not obvious enough, explore a bit in that direction." My
   first four cards were all quiet variations; the owner's worry was
   discoverability. When asked for options, span the range out to the loud end,
@@ -65,6 +69,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "get started on notifications.md." The plan's core step
   wanted a title and a url; core has no copy and no routes. Built the facts,
   left the words to web, and said so rather than bending the package rule.
-- *2026-09-23* — "write the adrs." The ADR bar says built things only, so
-  the decision went into a design doc written as the ADR it becomes. Honour the
-  ask and the rule at once, and say which one bent.

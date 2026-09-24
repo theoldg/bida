@@ -137,9 +137,9 @@ export function ScanFab({ href }: { href: string }) {
 }
 
 /**
- * The balances tab's own button: what a scan costs, and where to chip in
+ * The balances' own button: what a scan costs, and where to chip in
  * (app/g/tip). Outlined (ADR-0023), and the only FAB with a word, because an
- * ask isn't guessable. The ledger's two never appear on this tab.
+ * ask isn't guessable. The ledger's two never appear there.
  */
 export function SupportFab({ href }: { href: string }) {
   return (

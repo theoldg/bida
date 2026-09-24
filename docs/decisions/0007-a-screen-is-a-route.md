@@ -23,9 +23,10 @@ expenses you'd looked at rather than climbing out.
   it. A split is half of what an entry *is*, so the split editor is a component
   on the form. *Who put money in* is a genuinely different and rare question, so
   `/g/payers` stays a screen.
-- **Two bottom tabs — Ledger · Balances — and one top-bar menu** holding the
-  invite link, People, Rates, History and "Forget group"
-  (`components/group-menu.tsx`). Three icons is the ceiling for a top bar and
+- **No tab bar: the ledger is the group's screen, and everything else is
+  pressed into from it** — the balances (`/g/balances`) from the "you owe" card
+  at its head, and the invite link, People, Rates, History and "Forget group"
+  from one top-bar menu (`components/group-menu.tsx`). Three icons is the ceiling for a top bar and
   the group outgrew it. There is no settings or options screen: the two
   device-wide preferences were a taste you set once (light/dark, one button on
   the groups list) and a way of reading the ledger the app simply does (the
@@ -40,7 +41,7 @@ expenses you'd looked at rather than climbing out.
   who-had-what and the entry form are only reached from below.
 - **An entry's parent is whoever linked to it.** Four screens link in from
   *beside* an entry rather than above it — the history feed, the two "can't
-  remove this yet" lists on People and Rates, and the balances tab, whose tip
+  remove this yet" lists on People and Rates, and the balances screen, whose tip
   jar records what you gave as an expense — and climbing to the group from
   there threw away the list you were working through. So those links name
   themselves (`via=history|members|rates|balances`, `lib/group-link.ts`) and the

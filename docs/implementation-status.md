@@ -18,7 +18,7 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 | **Sealed**      | The server cannot read a group ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)). The D1 log is finished data: a schema change from here is a new numbered migration ([hosting.md](hosting.md#a-schema-change-from-here-on))                                                                                                                                                                     |
 | **Scanning**    | The Worker composes the request, so a caller picks one of four envelopes it holds and never a word of one, and the scan has a budget — three buckets, a global daily cap, and Turnstile in front of every call ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). Staś mode, off and hidden on `/diag`, swaps the refusal wording for the vicious one ([receipt-scanning.md](receipt-scanning.md#staś-mode)). **A bill reads in the language it was printed in**, with the translation icon on the who-had-what bar switching every line — grid, entry screen and quick-split text — to the English the scan already returned, and absent on a bill printed in English; remembered per phone ([ADR-0016](decisions/0016-receipts.md)). A phone that pastes its own Gemini key under **Advanced** skips all of that and calls Google directly ([receipt-scanning.md](receipt-scanning.md#a-key-of-your-own)). **A bill can be typed instead of photographed** — "Type it in" on the Items tab, capped at 4,000 characters, kept on the expense, counted against the same budget and read by **its own prompt**: free form, a price per unit or per line, a total only where the bill states one, and almost never a title; that is also the one place a caller's own words reach the shared key, which the owner ruled on knowingly ([receipt-scanning.md](receipt-scanning.md#typing-a-bill-in)). The shared path runs on `gemini-3.1-flash-lite` **via Vertex**, which is where Cloud credit can be spent and which does not train on what it reads; a brought key is an AI Studio one, whose free tier does |
 | **Versioned**   | `major.semi.minor` in the root `package.json`, in the corner of the `/about` top bar and the first line of `/diag`. Every push to `dev` deploys, so every push bumps the minor and `pnpm check` insists on it; the major is the owner's alone ([hosting.md](hosting.md#versions))                                                                                                                             |
-| **The tip jar** | A FAB on the balances tab opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp)). `/tip` is the same jar with no group behind it, linked from `/about`'s guarantees section                                                                                                                                    |
+| **The tip jar** | A FAB on the balances screen opens `/g/tip`, which prices the only paid part of the app and offers to split a donation like any other expense ([product.md](product.md#the-mvp)). `/tip` is the same jar with no group behind it, linked from `/about`'s guarantees section                                                                                                                                    |
 | **Deletable**   | `/delete-my-data` takes an invite link, shows the group it opens, and deletes it from D1 for everybody in it, leaving a tombstone no phone can push past ([frontend.md](frontend.md#deleting-a-group), [sync.md](sync.md#deleting-a-group)). |
 | **Installable** | An iPhone joins in the home-screen app rather than a Safari tab that forgets after a week: `/install`, the card on the groups list and on each real group's ledger, the claim screen's link to paste, and an invite whose two halves ride the icon. Android is offered in the same two places, and an in-app browser — a third storage — is refused outright ([ios.md](ios.md)). Install and join both work on a real iPhone, from any page, names included. An invite pasted into Messenger arrives whole as long as the layout carries no `og:url` ([frontend.md](frontend.md#pwa)) |
 | **Demoable**    | `bida.bid/demo` is a real group of real ops that cannot sync, because it is created without a key ([sync.md](sync.md#the-demo-group-has-no-key)). Linked from nowhere in the app; the URL is the whole door. Four travellers haggling over passage off Tatooine: six entries, one of them split off the bill it was itemised from. A build whose seed reads differently re-seeds the phone rather than reopening the story it was given, since the demo is the pitch and not a group anybody keeps ([frontend.md](frontend.md#routing)). Scanning works there, under this phone's own scan credential rather than the key it has not got. Its one broken thing, Copy invite link, refuses out loud, and **Clear the demo** erases it ([product.md](product.md#the-mvp), [frontend.md](frontend.md#routing)) |
@@ -27,8 +27,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Three things: a gap found by reading the code rather than a report, a
-design waiting to be built, and a cleanup the owner has claimed.
+Two things: a gap found by reading the code rather than a report, and a
+design waiting to be built.
 
 - **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
   erased across nine stores before reaching the gate the success path waits on,
@@ -43,10 +43,6 @@ design waiting to be built, and a cleanup the owner has claimed.
   checklist in [testing.md](testing.md#what-only-a-phone-can-check) is unrun.
   VAPID keys are set on both Workers. Open: a screen for "everything"
   rather than "entries I'm in".
-
-- **Balances is still `?tab=balances` on `/g`**, reached only from the
-  ledger's balance card now the tab bar is gone. Making it a route of its own
-  is the owner's cleanup to do, not a session's.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

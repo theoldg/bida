@@ -723,7 +723,7 @@ describe("commands", () => {
   });
 
   // The defect this exists for: a departed member kept whatever balance they
-  // left with, the balances tab offered the settle-up row that would square
+  // left with, the balances screen offered the settle-up row that would square
   // them off, and the form that row opened refused the name it opened with.
   it("gives a stranded member's balance a way out again", async () => {
     const { groupId, theo, marie, sam } = await trip();

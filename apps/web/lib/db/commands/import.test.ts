@@ -45,7 +45,7 @@ const FILE = [
   "",
 ].join("\n");
 
-/** The group this phone now holds, as the balances tab would compute them. */
+/** The group this phone now holds, as the balances screen would compute them. */
 async function balances(groupId: string): Promise<Record<string, number>> {
   const ops = await db().ops.where("groupId").equals(groupId).toArray();
   return computeBalances(foldOps(ops)).byMember;

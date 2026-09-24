@@ -16,7 +16,7 @@ describe("stepsBackTo", () => {
   });
 
   it("ignores query order and a trailing slash", () => {
-    expect(stepsBackTo(["http://app.invalid/g/?tab=balances&id=g1", EXPENSE], 1, "/g?id=g1&tab=balances")).toBe(-1);
+    expect(stepsBackTo(["http://app.invalid/g/entry/?e=x1&id=g1", EXPENSE], 1, "/g/entry?id=g1&e=x1")).toBe(-1);
   });
 
   it("is null when the parent is only ahead of us", () => {
@@ -50,12 +50,7 @@ describe("stepsBackTo", () => {
 describe("sameScreen", () => {
   it("ignores query order and a trailing slash", () => {
     expect(sameScreen("https://h.app/g/history/?id=g1", "/g/history?id=g1")).toBe(true);
-    expect(sameScreen("https://h.app/g?id=g1&tab=balances", "/g?tab=balances&id=g1")).toBe(true);
-  });
-
-  it("counts a tab as part of the screen's name", () => {
-    // The ledger is not the balances tab, even though they share a route.
-    expect(sameScreen("https://h.app/g?id=g1&tab=balances", "/g?id=g1")).toBe(false);
+    expect(sameScreen("https://h.app/g/entry?e=x1&id=g1", "/g/entry?id=g1&e=x1")).toBe(true);
   });
 
   it("doesn't confuse two groups, or two entries", () => {

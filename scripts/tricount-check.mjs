@@ -132,7 +132,7 @@ report(ledger.some((r) => r.includes("Tram passes")), "with their own descriptio
 // and handed 3 over: −14. They come to zero, which is the only way an import
 // is ever right.
 const groupId = new URL(page.url()).searchParams.get("id") ?? "";
-await page.goto(`${base}/g?id=${groupId}&tab=balances`);
+await page.goto(`${base}/g/balances?id=${groupId}`);
 await page.waitForSelector(".balrow", { timeout: PATIENCE });
 const owed = await page.locator(".balrow").evaluateAll(
   (rows) => rows.map((r) => [

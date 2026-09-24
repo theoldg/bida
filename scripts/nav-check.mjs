@@ -91,10 +91,10 @@ const group = await (async () => {
 
   // The balance card is pressed into, so balances is pushed over the ledger
   // and its arrow goes back to it, leaving balances forward.
-  await page.locator("a[href*='tab=balances']").first().click();
-  await is(page, "the balance card pushes balances", { i: 2, urls: ["/", "/g?id=G", "/g?id=G&tab=balances"] });
+  await page.locator("a[href^='/g/balances']").first().click();
+  await is(page, "the balance card pushes balances", { i: 2, urls: ["/", "/g?id=G", "/g/balances?id=G"] });
   await arrow(page);
-  await is(page, "balances' arrow goes back to the ledger", { i: 1, urls: ["/", "/g?id=G", "/g?id=G&tab=balances"] });
+  await is(page, "balances' arrow goes back to the ledger", { i: 1, urls: ["/", "/g?id=G", "/g/balances?id=G"] });
   const id = new URL(page.url()).searchParams.get("id");
   await page.close();
   return id;
@@ -139,8 +139,8 @@ async function onLedger() {
   await openGroupsList(page, base);
   await page.locator(".grouprow").first().click();
   await page.waitForURL(/\/g\?id=/);
-  await page.locator("a[href*='tab=balances']").first().click();
-  await page.waitForURL(/tab=balances/);
+  await page.locator("a[href^='/g/balances']").first().click();
+  await page.waitForURL(/\/g\/balances/);
   await page.locator(".fab").last().click();
   await page.waitForURL(/\/g\/tip/);
   await page.locator("a[href*='/g/entry/edit']").first().click();
@@ -148,11 +148,11 @@ async function onLedger() {
   await page.locator(".amountfield input, input.amount").first().fill("5");
   const before = await stack(page);
   await page.getByRole("button", { name: "Save" }).click();
-  await page.waitForURL(/tab=balances/);
+  await page.waitForURL(/\/g\/balances/);
   const after = await stack(page);
   const landed = after.urls[after.i];
-  report(landed === "/g?id=G&tab=balances", "the tip's Save lands on balances",
-    landed === "/g?id=G&tab=balances" ? "" : `on ${landed}`);
+  report(landed === "/g/balances?id=G", "the tip's Save lands on balances",
+    landed === "/g/balances?id=G" ? "" : `on ${landed}`);
   report(after.i === before.i - 2, "past the tip screen as well as the form",
     after.i === before.i - 2 ? "" : `i went ${before.i} -> ${after.i}`);
   const kept = JSON.stringify(after.urls) === JSON.stringify(before.urls);

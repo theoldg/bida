@@ -114,7 +114,7 @@ describe("checkEntry", () => {
     });
 
     it("holds Save on a transfer to them — the settle-up row that offered it", () => {
-      // The balances tab still lists a departed member's balance and offers to
+      // The balances screen still lists a departed member's balance and offers to
       // square it off. Following that row must not open a saveable transfer.
       const c = check({
         ...blankDraft("transfer", THEO, "EUR", MEMBERS),

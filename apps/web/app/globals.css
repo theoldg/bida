@@ -1030,7 +1030,7 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
    the ledger rows. */
 .fab-2 { right: calc(max(16px, 50vw - 264px) + 60px); background: var(--card); color: var(--ink);
   border: 1.5px solid var(--ink) }
-/* The balances tab's one button (app/g/tip), in `.fab-2`'s outline — ink on
+/* The balances' one button (app/g/tip), in `.fab-2`'s outline — ink on
    this screen belongs to the numbers. The only FAB with a word, because an ask
    isn't guessable. Takes back the "+"'s `right`: every floating button ends on
    the same edge. */

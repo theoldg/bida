@@ -16,8 +16,8 @@ const positions = new Map<string, number>();
 
 /**
  * The route is the key ([ADR-0007](../../../docs/decisions/0007-a-screen-is-a-route.md)),
- * query included — `?id=` is the group, `?tab=` which list. Read once on
- * mount; the two tabs are different components, so each gets its own key.
+ * query included — `?id=` is the group, `?e=` which entry. Read once on
+ * mount.
  */
 function scrollKey(): string {
   return `${location.pathname}${location.search}`;

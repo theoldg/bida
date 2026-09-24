@@ -27,7 +27,7 @@ export type UpdateState =
  * unload. Asked by the update below and by the iOS carry
  * (`components/install.tsx`).
  */
-const NOTHING_TO_LOSE = new Set(["/", "/g", "/g/members", "/g/history", "/g/entry", "/about"]);
+const NOTHING_TO_LOSE = new Set(["/", "/g", "/g/balances", "/g/members", "/g/history", "/g/entry", "/about"]);
 
 export function reloadCostsNothing(pathname: string): boolean {
   return NOTHING_TO_LOSE.has(pathname.replace(/\/$/, "") || "/");

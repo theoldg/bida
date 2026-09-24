@@ -120,7 +120,7 @@ describe("demoOps", () => {
   it("leaves balances that settle-up has to work on, and clears them", () => {
     const report = computeBalances(foldOps(stamp()));
     const owing = Object.values(report.byMember).filter((n) => n !== 0);
-    // Not "all square": the whole point of showing somebody the balances tab.
+    // Not "all square": the whole point of showing somebody the balances screen.
     expect(owing.length).toBeGreaterThanOrEqual(3);
     const transfers = settleUp(report.byMember);
     expect(transfers.length).toBeGreaterThanOrEqual(2);

@@ -20,12 +20,13 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
-| `/g?id=[&tab=]` | The group: the ledger, and `&tab=balances` pushed over it by the balance card at its head — back from balances is the ledger, not the groups list. Settling lives under the balances, and a suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`, `app/g/page.tsx`); the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
+| `/g?id=` | The group: its ledger, the only screen that leaves it. The invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
+| `/g/balances?id=` | Who is up, who is down, and settling, pushed over the ledger by the balance card at its head, so back is the ledger. A suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
 | `/g/scan?id=` | Scan first, decide after: a drawing of what a photo becomes, and the control that takes one, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
 | `/g/entry/items?id=[&e=]` | The who-had-what grid: who was there across the top, the bill's lines down the side, running totals below. Writes a `receipt` split ([ADR-0016](decisions/0016-receipts.md)), and is reached from the form's Items tab — never navigated to by a scan ([receipt-scanning.md](receipt-scanning.md)) |
-| `/g/tip?id=` | The tip jar, off a FAB on the balances tab: what a scan costs, Buy Me a Coffee, and an ordinary expense to record what you gave ([product.md](product.md#the-mvp)) |
+| `/g/tip?id=` | The tip jar, off a FAB on the balances screen: what a scan costs, Buy Me a Coffee, and an ordinary expense to record what you gave ([product.md](product.md#the-mvp)) |
 | `/g/payers?id=` | Who *put the money in* (or took it in), for co-sponsored entries ([ADR-0010](decisions/0010-what-an-entry-is.md)) |
 | `/g/history?id=[&e=][&via=]` | Version history, whole-group or per-entry. Per-entry carries the entry's own `via` so the chain back stays exact |
 | `/g/rates?id=` | The group's exchange registry: one row per currency it spends in, each opening the rate dialog — which only ever edits the number, since deleting a rate is on the row's long-press menu, as it is for an entry. Adding a currency here is the same dialog the entry form opens by itself ([ADR-0005](decisions/0005-money-and-currency.md)) |
@@ -92,7 +93,7 @@ fix**: on `/new` and `/quick` it costs what was typed, and a page that could
 refuse indefinitely is the trap the metering exists to prevent. Any tap in the
 page refills it. An
 entry is the one screen whose parent isn't fixed: the history feed, the two
-"can't remove this yet" lists and the balances tab's tip jar link in from
+"can't remove this yet" lists and the balances screen's tip jar link in from
 beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back
 there instead of to the group. The entry form carries the same `via` — through
 who-had-what and back — so **saving** unwinds to wherever the form was opened
@@ -607,7 +608,7 @@ A `screen:` line sits above the timeline: the layout viewport, the visible one,
 the height the shell actually took, and what the browser admits the system bars
 cover. They are one number on a phone that is behaving, and when they are not,
 the difference is the strip at the foot of every screen that gets reported as
-"the tabs are gone" (see [Gotchas](#gotchas)).
+"the bottom is cut off" (see [Gotchas](#gotchas)).
 
 A **`menus and dialogs`** block sits in the head, not down in the timeline
 where its lines are written: one per overlay that has closed, from every page
@@ -718,7 +719,7 @@ them behind a top-bar icon, not a second row — three icons is the ceiling.
 The app scrolls inside a div — one `.scroll` per screen — so the browser's own
 restoration, which knows only about the document, restores nothing.
 `lib/scroll-memory.ts` keeps one offset per route in memory (the query
-included: `?id=` is which group, `?tab=` is which list), and `Scroll` puts it
+included: `?id=` is which group, `?e=` which entry), and `Scroll` puts it
 back on the way in. It aims at the furthest point the content has reached and
 stays unfinished until the real one exists, because the rows arrive from Dexie
 after the frame draws; it records nothing until that lands, the finger takes
@@ -889,7 +890,7 @@ exponent. The grouping itself is `groupDigits` in `lib/format.ts`, with
 `rateText` for the rates we *print*; both are pure and tested.
 
 The other place with real logic is the **balance bar** (around a centre axis,
-debit left, credit right), drawn inline on `/g`'s Balances tab. Everything else
+debit left, credit right), drawn inline on `/g/balances`. Everything else
 is ordinary markup; what more than one screen draws lives in
 `components/chrome.tsx` (the frame, plus `Blank` for a screen still waiting on
 Dexie, `Foot` for its one pinned act, `Banner`, `Failure`) and

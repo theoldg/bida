@@ -152,7 +152,7 @@ const routes = (g) => [
   ["new", "/new"],
   ["import", "/import"],
   ["group-ledger", `/g?id=${g}`],
-  ["group-balances", `/g?id=${g}&tab=balances`],
+  ["group-balances", `/g/balances?id=${g}`],
   ["members", `/g/members?id=${g}`],
   ["claim", `/g/claim?id=${g}`],
   ["history", `/g/history?id=${g}`],
@@ -192,7 +192,7 @@ async function main() {
       // Settling up asks in a card rather than on a form: tapping a suggested
       // payment states the payment and offers to record it, with nothing in it
       // to type into. It has no URL of its own, so this is the only shot of it.
-      await page.goto(`${base}/g?id=${groupId}&tab=balances`);
+      await page.goto(`${base}/g/balances?id=${groupId}`);
       await page.locator("button.card").first().click();
       await page.waitForSelector("dialog.scrim .settle");
       await page.waitForTimeout(250);

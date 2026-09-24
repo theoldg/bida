@@ -303,14 +303,14 @@ way — by saying what is true rather than inventing a column:
   there is no way to say a row is in MAD while the balance below it is in
   euros. The caller hands over a state already repriced at the registry and
   the column is constant — which is also the only way the foot agrees with
-  the Balances tab ([ADR-0005](decisions/0005-money-and-currency.md)).
+  the Balances screen ([ADR-0005](decisions/0005-money-and-currency.md)).
 - **Income.** No such concept there, so `Cost` is negative and the member
   cells carry the flipped sign `computeBalances` applies. An importer that
   refuses a negative refuses the row, which beats silently booking a cost.
 - **An entry nothing can apportion.** Kept, with every member cell zero.
   Dropping it would lose money somebody typed; apportioning the payers alone
   would break both the row's zero and the foot. It is already named on the
-  balances tab, out of the same `problems`.
+  balances screen, out of the same `problems`.
 
 A **removed** member still named on a live entry gets a column, under their
 plain name: without it nothing sums to zero, and "Bruno (removed)" would

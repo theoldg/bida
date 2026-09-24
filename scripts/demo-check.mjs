@@ -139,7 +139,7 @@ report((await keysHeld(page)).length === 0,
   JSON.stringify(await keysHeld(page)));
 
 // ---- a real group: the balances are real too ----------------------------
-await page.goto(`${base}/g?id=${groupId}&tab=balances`);
+await page.goto(`${base}/g/balances?id=${groupId}`);
 await page.waitForSelector(".bignum");
 const figures = await page.locator(".bignum").allInnerTexts();
 const nonZero = figures.filter((text) => /[1-9]/.test(text));

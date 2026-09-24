@@ -15,7 +15,7 @@ describe("where an entry goes back to", () => {
     expect(entryParent("g1", "history")).toBe(route.history("g1"));
     expect(entryParent("g1", "members")).toBe(route.members("g1"));
     expect(entryParent("g1", "rates")).toBe(route.rates("g1"));
-    expect(entryParent("g1", "balances")).toBe(route.group("g1", "balances"));
+    expect(entryParent("g1", "balances")).toBe(route.balances("g1"));
   });
 
   it("ignores a via nobody wrote — a hand-edited URL is still the group", () => {
@@ -48,8 +48,8 @@ describe("where saving the entry form goes", () => {
     expect(formParent("g1", "x1", undefined)).toBe(route.entry("g1", "x1"));
   });
 
-  it("is the balances tab for a form the balances tab opened", () => {
-    expect(formParent("g1", undefined, "balances")).toBe(route.group("g1", "balances"));
+  it("is the balances screen for a form the balances screen opened", () => {
+    expect(formParent("g1", undefined, "balances")).toBe(route.balances("g1"));
   });
 
   it("is the ledger for a new entry the ledger's + asked for", () => {

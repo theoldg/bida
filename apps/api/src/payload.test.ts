@@ -16,8 +16,8 @@ describe("pageForPayload", () => {
 
   it("keeps which group the screen is of, and drops the router's cache-buster", () => {
     expect(pageForPayload(get("/g/claim.txt?id=abc&_rsc=1h2x3", NAV))).toBe("/g/claim?id=abc");
-    expect(pageForPayload(get("/g.txt?id=abc&tab=balances&_rsc=1h2x3", NAV)))
-      .toBe("/g?id=abc&tab=balances");
+    expect(pageForPayload(get("/g/entry.txt?id=abc&e=x1&_rsc=1h2x3", NAV)))
+      .toBe("/g/entry?id=abc&e=x1");
     expect(pageForPayload(get("/g.txt?_rsc=1h2x3", NAV))).toBe("/g");
   });
 

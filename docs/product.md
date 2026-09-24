@@ -55,7 +55,7 @@ it** — the URL is the whole door ([frontend.md](frontend.md#routing)) — and 
 is a pitch rather than a group somebody keeps, so a build that tells a
 different story lays it down over the old one.
 
-**The tip jar.** One screen (`/g/tip`, off a FAB on the balances tab), and the
+**The tip jar.** One screen (`/g/tip`, off a FAB on the balances screen), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two
 buttons — `$5 ≈ 4,000 receipt scans`
 ([what a scan costs](receipt-scanning.md#what-the-scan-costs)), cut by the

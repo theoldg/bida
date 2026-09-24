@@ -33,7 +33,7 @@ function TipScreen() {
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;
   if (unclaimed || !data.group) {
-    return <Blank title={copy.tip.title} back={route.group(groupId, "balances")} />;
+    return <Blank title={copy.tip.title} back={route.balances(groupId)} />;
   }
 
   const each = tipShareMinor(data.members.map((m) => m.id));
@@ -44,7 +44,7 @@ function TipScreen() {
     <Screen>
       <Body>
         <TopBar title={copy.tip.title} sub={data.group.name}
-          back={route.group(groupId, "balances")} />
+          back={route.balances(groupId)} />
         <Scroll>
           <div className="pad tip">
             <p className="tiplede">{copy.tip.lede}</p>

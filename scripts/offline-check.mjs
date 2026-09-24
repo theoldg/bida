@@ -88,7 +88,7 @@ await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel
 await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bignum");
 await tap("in-app Back to the group",
   () => page.locator(".iconbtn[aria-label='Back']").first().click(), ".daylabel");
-await tap("balances tab", () => page.locator("a[href*='tab=balances']").first().click(), ".bar");
+await tap("the balance card", () => page.locator("a[href^='/g/balances']").first().click(), ".bar");
 await tap("tap a suggested transfer", () => page.locator("button.card").first().click(), ".settle");
 await page.keyboard.press("Escape");
 await tap("history", () => page.goto(`${base}/g/history?id=${g}`), ".tle");
@@ -263,13 +263,12 @@ report(await fresh.evaluate(() => !!window.__beforeTheUpdate),
 const legacyAnswer = await straggler.evaluate(() =>
   fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
 report(legacyAnswer === "OLD", "a page still on the old build is served from that build's cache", legacyAnswer);
-await straggler.locator("a[href*='tab=balances']").first().click().catch(() => {});
+await straggler.locator("a[href^='/g/balances']").first().click().catch(() => {});
 try {
   // Wait for the address to say the tap landed. A `waitForSelector` alone can
   // pass before it changes (both views draw a floating button), and every later step
   // would then be taken on a page still arriving.
-  await straggler.waitForURL((url) => url.searchParams.get("tab") === "balances",
-    { timeout: PATIENCE });
+  await straggler.waitForURL((url) => url.pathname === "/g/balances", { timeout: PATIENCE });
   await straggler.waitForSelector(".fab", { timeout: PATIENCE });
   const kept = new URL(straggler.url()).searchParams.get("id") === g;
   report(kept && await straggler.locator(".fab").count() > 0,
@@ -284,10 +283,10 @@ report(await straggler.evaluate(() => !!window.__beforeTheUpdate),
 // The front door is. Walked to in-app — a `goto` would be a document load, and
 // would take the new build by itself and prove nothing.
 // Two taps, because back from balances is the ledger and only the ledger
-// leaves the group (app/g/page.tsx) — each waited out by the address it lands
+// leaves the group (app/g/balances) — each waited out by the address it lands
 // on rather than by a pause that was long enough on one machine.
 for (const landed of [
-  (url) => url.pathname === "/g" && !url.searchParams.get("tab"),
+  (url) => url.pathname === "/g",
   (url) => url.pathname === "/",
 ]) {
   await straggler.locator(".topbar a.iconbtn").first().click().catch(() => {});
@@ -359,9 +358,9 @@ report(after.length === 3, "one cache per build a window is on, and no more", af
 const stillOld = await fresh.evaluate(() =>
   fetch("/legacy-probe.txt").then((r) => r.text()).catch(() => "failed"));
 report(stillOld === "OLD", "that page is still served its own build", stillOld);
-await fresh.locator("a[href*='tab=balances']").first().click().catch(() => {});
+await fresh.locator("a[href^='/g/balances']").first().click().catch(() => {});
 try {
-  await fresh.waitForURL((url) => url.searchParams.get("tab") === "balances", { timeout: PATIENCE });
+  await fresh.waitForURL((url) => url.pathname === "/g/balances", { timeout: PATIENCE });
   await fresh.waitForSelector(".fab", { timeout: PATIENCE });
   report(new URL(fresh.url()).searchParams.get("id") === g && await fresh.locator(".fab").count() > 0,
     "and can still draw a screen it taps to", fresh.url().replace(base, ""));
@@ -390,7 +389,7 @@ report(refused === "refused", "a payload it cannot be served is refused, not ans
 await fresh.locator(`.topbar a[aria-label="Back"]`).click().catch(() => {});
 try {
   // Back to the ledger, tapped from balances: again the address is what lands.
-  await fresh.waitForURL((url) => !url.searchParams.get("tab"), { timeout: PATIENCE });
+  await fresh.waitForURL((url) => url.pathname === "/g", { timeout: PATIENCE });
   await fresh.waitForSelector(".fab", { timeout: PATIENCE });
   const kept = new URL(fresh.url()).searchParams.get("id") === g;
   report(kept && await fresh.locator(".keyless").count() === 0,

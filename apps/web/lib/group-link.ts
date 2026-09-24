@@ -113,7 +113,7 @@ import type { EntryKind } from "./entry-kind";
 
 /**
  * Where an entry was opened from, when that wasn't the ledger: the history
- * feed, the two "can't remove this yet" dialogs, the balances tab. Back
+ * feed, the two "can't remove this yet" dialogs, the balances screen. Back
  * unwinds to that screen (`entryParent`, ADR-0007).
  *
  * **In the URL, never in memory**: a reload or a killed app must not change
@@ -165,8 +165,10 @@ export const route = {
   demo: () => "/demo",
   /** Bare, it is the "Bad link" screen; a real one is `formatJoinLink`. */
   join: () => "/join",
-  group: (groupId: string, tab?: "ledger" | "balances") =>
-    `/g?id=${encodeURIComponent(groupId)}${tab && tab !== "ledger" ? `&tab=${tab}` : ""}`,
+  /** The ledger: where a group opens, and the only screen that leaves it. */
+  group: (groupId: string) => `/g?id=${encodeURIComponent(groupId)}`,
+  /** Who is up, who is down, and settling. Pressed into from the ledger's balance card. */
+  balances: (groupId: string) => `/g/balances?id=${encodeURIComponent(groupId)}`,
   /**
    * The one form. `kind` picks which of the three an entry starts as
    * ([ADR-0010](../../../docs/decisions/0010-what-an-entry-is.md)).
@@ -202,7 +204,7 @@ export const route = {
     + (via ? `&via=${via}` : ""),
   /**
    * What a scan costs, where to chip in, and the offer to split what you gave.
-   * Off the foot of the balances tab, not a FAB.
+   * Off the foot of the balances screen, not a FAB.
    */
   tip: (groupId: string) => `/g/tip?id=${encodeURIComponent(groupId)}`,
   /**
@@ -248,7 +250,7 @@ export function entryParent(groupId: string, via: EntrySource | undefined): stri
   return via === "history" ? route.history(groupId)
     : via === "members" ? route.members(groupId)
       : via === "rates" ? route.rates(groupId)
-        : via === "balances" ? route.group(groupId, "balances")
+        : via === "balances" ? route.balances(groupId)
           : route.group(groupId);
 }
 

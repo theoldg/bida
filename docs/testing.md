@@ -620,7 +620,7 @@ back builds the group the CSV path would
 
 So the fixture is one trip holding both readings that are rules rather than
 recoveries — an expense split three ways and a repayment as a `BALANCE` — and
-the assertion at the end is the **balances tab**, to the cent, because a
+the assertion at the end is the **balances screen**, to the cent, because a
 transfer read backwards or an income unflipped shows nowhere else. Then five
 refusals, which is where a reader this liberal is most likely to be wrong: not
 a link at all, a link that opens nothing, tricount not answering, two

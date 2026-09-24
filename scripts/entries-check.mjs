@@ -155,7 +155,7 @@ report(await page.locator(".avatar").count() === 0, "no screen of the ledger dra
 // ---- settling up, which is a card and not a form -----------------------
 // A suggested payment opens a dialog stating the three facts; nothing in it
 // can be typed into — the figures are the app's.
-await page.goto(`${base}/g?id=${g}&tab=balances`);
+await page.goto(`${base}/g/balances?id=${g}`);
 await page.waitForSelector("button.card");
 report(await page.locator("button.card").count() === 2, "settle-up suggests the payments");
 await page.locator("button.card").first().click();
@@ -454,7 +454,7 @@ await page.waitForSelector(".rows a.row");
 // The long press is the only way to remove a transfer from the ledger.
 const transferRows = async () =>
   (await page.locator(".rmeta").allInnerTexts()).filter((t) => t.startsWith("Transfer")).length;
-// Two of them reach the ledger — the card's on the balances tab wrote one and
+// Two of them reach the ledger — the card's on the balances wrote one and
 // the form wrote the other — so this deletes one and counts, rather than
 // asking whether any are left.
 const before = await transferRows();
