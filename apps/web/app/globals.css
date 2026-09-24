@@ -698,10 +698,10 @@ a { color: inherit; text-decoration: none }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
    line, since it is furniture of the list until pressed. No chevron: one at
-   the row's edge sat in no column with the cards' above it, and the text a
-   step darker than a date's is what says it can be pressed. */
+   the row's edge sat in no column with the cards' above it, and its text
+   in full ink, not a date's muted, is what says it can be pressed. */
 .neweditsbar { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left;
-  border-top: 1px solid var(--rule-soft); color: var(--ink-2) }
+  border-top: 1px solid var(--rule-soft); color: var(--ink) }
 .tl.neweditslist { margin: 0; padding: 14px 16px 0 42px; border-bottom: 1px solid var(--rule-soft) }
 .tl.neweditslist::before { left: 24.5px; top: 20px }
 /* Clear of the date line under it, which the timeline's own 15px can't give. */

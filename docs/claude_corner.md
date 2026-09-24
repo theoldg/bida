@@ -27,8 +27,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-09-24* — "perfectly above." Measured the chevron centres in the
   browser rather than eyeballing a screenshot: 4.5px off, then 0. Five
-  variants, one sheet, and the owner picked the quiet one I hadn't
-  recommended. The recommendation is a start, not the answer.
+  variants, one sheet; the owner took D, lived with it a minute, then
+  switched to C. A pick made from a sheet is provisional — keep it cheap to redo.
 - *2026-09-24* — "the margin under the banner is slightly too big." The
   gap under the card was the smaller one; the one under the bar, above it,
   was the big one. Measured both and asked which before moving either.
