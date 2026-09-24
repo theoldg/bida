@@ -198,8 +198,8 @@ is byte-identical, so what production gets is a build that already ran on dev.
 So dev can't be mistaken for production on a phone, the dev Worker dresses that
 same export on the way out ([`dev-env.ts`](../apps/api/src/dev-env.ts)): it
 serves the DEV-stamped icons `pnpm icons` writes to `public/dev/` at the
-ordinary icon URLs, and tags HTML `data-env="dev"`, which tints the top bar
-green. An already-installed dev app keeps its old home-screen icon until it is
+ordinary icon URLs, and tags HTML `data-env="dev"`, which turns the
+balance colours blue and orange. An already-installed dev app keeps its old home-screen icon until it is
 reinstalled.
 
 | | Branch | Worker | D1 | Holds |

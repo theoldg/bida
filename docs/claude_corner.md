@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "remove the green top bar… make them a little funky e.g.
+  blue and orange." The "e.g." licensed a pick, so I picked those two and
+  kept the rest of dev's marking. A tone word like "funky" bounds the taste;
+  don't spend it on a menu.
 - *2026-09-24* — "not obvious enough, explore a bit in that direction." My
   first four cards were all quiet variations; the owner's worry was
   discoverability. When asked for options, span the range out to the loud end,
@@ -64,7 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-23* — "write the adrs." The ADR bar says built things only, so
   the decision went into a design doc written as the ADR it becomes. Honour the
   ask and the rule at once, and say which one bent.
-- *2026-09-23* — "make sure it looks good for long and short numbers." A
-  mono font makes width arithmetic: the figure's size is a CSS formula of its
-  length, no measuring. Photographed 320 to 430 wide with 1,500,120.50 UZS
-  before believing the formula.

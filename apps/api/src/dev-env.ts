@@ -13,8 +13,8 @@ export function devAssetPath(pathname: string): string {
 }
 
 /**
- * An asset, dressed for dev: HTML gets `data-env="dev"`, which tints the top
- * bar. The service worker precaches through here, so it stays tinted offline.
+ * An asset, dressed for dev: HTML gets `data-env="dev"`, which swaps the
+ * balance colours. The service worker precaches through here, so it stays so offline.
  */
 export async function devAsset(assets: Fetcher, request: Request): Promise<Response> {
   const url = new URL(request.url);
