@@ -97,7 +97,7 @@ export function IconSprite() {
             of leaving. A file coming in, for the import screen — not "merge",
             which is rows folding together and says nothing about a file. */}
         <symbol id="i-import" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
-          <path d="M12 3.5v11" /><path d="M8.5 11l3.5 3.5 3.5-3.5" />
+          <path d="M12 6v11" /><path d="M8.5 13.5l3.5 3.5 3.5-3.5" />
           <path d="M6.5 11H5.5a1.5 1.5 0 00-1.5 1.5v6.5A1.5 1.5 0 005.5 20.5h13a1.5 1.5 0 001.5-1.5v-6.5a1.5 1.5 0 00-1.5-1.5h-1" />
         </symbol>
         {/* The one everybody's phone already taught them: 文 beside A, the
