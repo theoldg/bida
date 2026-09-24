@@ -120,7 +120,7 @@ export function TopBar({ title, sub, back, mid, right }: {
 }
 
 export function Fab({ href, label = copy.group.addEntry }: { href: string; label?: string }) {
-  return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={24} /></Link>;
+  return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={29} /></Link>;
 }
 
 /**
@@ -131,7 +131,7 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
 export function ScanFab({ href }: { href: string }) {
   return (
     <Link href={href} className="fab fab-2" aria-label={copy.scan.scan}>
-      <Icon name="cam" size={23} />
+      <Icon name="cam" size={28} />
     </Link>
   );
 }
