@@ -87,8 +87,6 @@ describe("pushPayload: one entry", () => {
     expect(payload(notice({ after: t("bo", "cy") })).body).toBe(`Ana recorded that you paid Cy ${eur(2000)}`);
     expect(payload(notice({ change: "deleted", before: t("bo", "cy") })).body)
       .toBe(`Ana deleted “you → Cy” · ${eur(2000)}`);
-    expect(payload(notice({ change: "converted", before: dinner(), after: t("bo", "cy") })).body)
-      .toBe("Ana turned “Dinner” into a transfer");
   });
 
   it("cuts a long description, and quotes nothing for a blank one", () => {

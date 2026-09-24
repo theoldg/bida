@@ -1,7 +1,7 @@
 # 0010 — Three kinds of entry, and several people may have paid
 
 **Status:** Accepted · 2026-08-27 · kinds 2026-08-30 · kind chip 2026-09-11 ·
-expense ↔ transfer 2026-09-20
+no expense ↔ transfer 2026-09-24
 
 **Context.** Two asks, a month apart, about the same record. First, expenses
 several people chip in on — *"Bob paid 400 and Alice paid 100 for these 500
@@ -33,25 +33,23 @@ contributor so older clients and list rows still read. `resolvePayers`
 apportions `baseAmountMinor` with the same seeded largest-remainder rule a
 `shares` split uses, so the payer side sums to the base total exactly.
 
-**One form, one detail screen, everything editable, all three kinds always
-reachable.** `/g/entry/edit` is one chip naming the kind, centred on the top
-bar, and swaps only the middle of the form; the amount, currency, date and
-words survive a change of mind, whichever pair of kinds it is. A chip rather
-than three buttons because nothing opens this form asking for an income, and
-settling up doesn't open it at all — it records the transfer from a card on the
-balances screen. The kind is already right on nearly every entry, so it is worth one tap on the rare one and none on the rest. The split
-editor is inline on it, in three modes — Evenly · As parts · As amounts
-(`equal`, `shares`, `exact`).
+**One form, one detail screen, everything editable.** `/g/entry/edit` is one
+chip naming the kind, centred on the top bar — a picker of those still
+reachable — and swaps only the middle of the form; the amount, currency, date
+and words survive a change of mind. A chip rather than three buttons because
+nothing opens this form asking for an income, and settling up doesn't open it
+at all — it records the transfer from a card on the balances screen. The kind
+is already right on nearly every entry, so it is worth one tap on the rare one
+and none on the rest. The split editor is inline on it, in three modes —
+Evenly · As parts · As amounts (`equal`, `shares`, `exact`).
 
-**Expense ↔ transfer is a conversion, not an edit.** They are different
-entities — an `Expense` row and a `Settlement` row — so Save tombstones the
-one and creates the other, in the same append (`convertToSettlement` /
-`convertToExpense`, `commands/entries.ts`); a partial write must never leave
-the money recorded as neither. The draft doesn't know or care which pair of
-kinds it's crossing: `entryTable` (`lib/draft.ts`) is the one fact that says
-whether the id it was opened on still names what `kind` is now, and both the
-save path and the split's rounding seed (`splitSeed`) read it to decide
-whether they're still looking at the same entity.
+**A saved entry never crosses between expense and transfer.** A new entry can
+be any of the three. Once saved, an expense or income offers only those two,
+which differ by one field, and a transfer offers no chip at all. They are
+different entities, so a crossing could only be a delete and an unrelated
+create: one entry's history ending in "deleted" and another's starting from
+nothing, with nothing joining them, and a tombstone that must never be
+restored while its successor lives. Wrong kind is fixed by deleting and adding.
 
 **Each split tab holds its own input** (`SplitInputs`, `lib/draft.ts`). One
 `SplitSpec` converted on every switch made the tabs edit each other: leaving
@@ -76,9 +74,9 @@ away for good.
   (`settledMinor`) included: `byMember` = paid − owed − received + income share
   + settled. A screen showing some of the terms beside the balance can only be
   honest if the whole identity is available to it.
-- Expense ↔ income is an edit of one field. Expense ↔ transfer is offered too,
-  but costs a delete-and-add under the hood rather than an in-place edit — see
-  above.
+- Expense ↔ income is an edit of one field. Expense ↔ transfer is not offered.
+  Logs keep the delete-and-create pairs the conversion wrote while it existed
+  (2026-09-20 to 09-24); they fold as the two ordinary ops they are.
 - A payer need not be a participant — paying for a dinner you weren't at is the
   point — so balances credit payers and debit participants independently. They
   still sum to zero; `payers.test.ts` asserts it over randomised groups.
@@ -88,6 +86,11 @@ away for good.
 
 ## Rejected
 
+- **Converting a saved entry between expense and transfer** — built
+  2026-09-20 as a tombstone and a create in one append, removed four days later:
+  *"It was good design to forbid it."* The two halves share no id, so history,
+  notifications and any future restore each had to rediscover that they were
+  one act.
 - **A separate `income` entity, or a negative `amountMinor`** — the first
   duplicates `payers`, `split`, `receiptItems` and every validation in core for
   two things that differ by a sign; the second spreads that sign across every

@@ -237,28 +237,6 @@ describe("what rounding ties break by", () => {
     expect(splitSeed(d)).toBe("e-dinner");
   });
 
-  // A transfer switched to an expense on the kind chip is not an edit — Save
-  // converts, tombstoning the transfer and writing the expense under
-  // `newEntryId` (`convertToExpense`, commands/entries.ts) — so pricing the
-  // form's rows under `entryId` here would show a cent on a row it never
-  // lands on once saved.
-  it("is the new id, not the entry's, once the kind chip has switched entity", () => {
-    const editingTransfer = {
-      ...blankDraft("transfer", A, "EUR", MEMBERS), entryId: "s-refund", entryTable: "settlement" as const,
-    };
-    expect(splitSeed({ ...editingTransfer, kind: "expense" })).toBe(editingTransfer.newEntryId);
-    // Switched back before saving: same entity again, same seed as ever.
-    expect(splitSeed({ ...editingTransfer, kind: "transfer" })).toBe("s-refund");
-  });
-
-  it("is the new id, not the entry's, when an expense switches to a transfer", () => {
-    const editingExpense = {
-      ...blankDraft("expense", A, "EUR", MEMBERS), entryId: "e-dinner", entryTable: "expense" as const,
-    };
-    expect(splitSeed({ ...editingExpense, kind: "transfer" })).toBe(editingExpense.newEntryId);
-    expect(splitSeed({ ...editingExpense, kind: "expense" })).toBe("e-dinner");
-  });
-
   it("prices the form's rows exactly as the saved entry is priced", () => {
     // 10.00 three ways: two get 3.33 and one gets 3.34. Which one is the whole
     // question — the form and the ledger have to answer it the same way.

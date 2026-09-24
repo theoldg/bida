@@ -296,38 +296,6 @@ describe("notices: transfers", () => {
   });
 });
 
-describe("notices: converting", () => {
-  it("an expense turned into a transfer is one notice per person, in either", () => {
-    const b = group();
-    b.push("expense", "e1", "create", expensePatch({ amount: 2000, split: { mode: "equal", members: [ADA, THEO] } }));
-    const list = run(b, (b) => {
-      b.push("expense", "e1", "delete", {});
-      b.push("settlement", "s1", "create", {
-        fromMember: THEO, toMember: MARIE, amountMinor: 2000, currency: "EUR", rateToBase: "1",
-        baseAmountMinor: 2000, occurredAt: 1000, createdAt: 1000,
-      });
-    });
-    expect(to(list)).toEqual([ADA, MARIE]);
-    expect(list.find((n) => n.to === ADA)).toMatchObject({
-      change: "converted", before: { kind: "expense", share: 1000 }, after: { kind: "transfer" },
-    });
-  });
-
-  it("and back", () => {
-    const b = group();
-    b.push("settlement", "s1", "create", {
-      fromMember: THEO, toMember: MARIE, amountMinor: 2000, currency: "EUR", rateToBase: "1",
-      baseAmountMinor: 2000, occurredAt: 1000, createdAt: 1000,
-    });
-    const list = run(b, (b) => {
-      b.push("settlement", "s1", "delete", {});
-      b.push("expense", "e1", "create", expensePatch({ amount: 2000, split: { mode: "equal", members: [MARIE, THEO] } }));
-    });
-    expect(list).toHaveLength(1);
-    expect(list[0]).toMatchObject({ to: MARIE, change: "converted", before: { kind: "transfer" }, after: { share: 1000 } });
-  });
-});
-
 describe("notices: a phone that wants everything", () => {
   const sub = { endpoint: "https://fcm.googleapis.com/x", p256dh: "p", auth: "a" };
 

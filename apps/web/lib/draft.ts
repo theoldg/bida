@@ -36,13 +36,11 @@ export interface EntryDraft {
   /** Which of the three this is. The form's kind chip writes it. */
   kind: EntryKind;
   /**
-   * Present when editing: the id the screen was opened on. Its table is fixed
-   * for the draft's life even if the kind chip changes; Save converts when
-   * `kind` and `entryTable` disagree (commands/entries.ts).
+   * Present when editing rather than creating: an expense id when `kind` is
+   * expense or income, a settlement id when it's a transfer. An edit never
+   * crosses between the two (ADR-0010).
    */
   entryId?: string;
-  /** Which table `entryId` names. Set once, at seeding, alongside it. */
-  entryTable?: "expense" | "settlement";
   /**
    * The id a create will be written under. The leftover cent goes by the
    * entry's id (`tiebreakSeed`), so the split must be quoted under the id that
@@ -122,16 +120,11 @@ export function legacyPercent(draft: EntryDraft): SplitSpec | null {
 }
 
 /**
- * The id rounding ties break by: the id the saved expense will carry, so the
- * cent quoted is the cent kept. That is `entryId` for a plain edit, and
- * `newEntryId` once the kind chip makes Save convert (commands/entries.ts).
+ * The id rounding ties break by: the entry being edited, or the one a create
+ * will be written under — so the cent the form quotes is the cent kept.
  */
 export function splitSeed(draft: EntryDraft): string {
-  if (!draft.entryId) return draft.newEntryId;
-  const sameEntity = draft.kind === "transfer"
-    ? draft.entryTable === "settlement"
-    : draft.entryTable !== "settlement";
-  return sameEntity ? draft.entryId : draft.newEntryId;
+  return draft.entryId ?? draft.newEntryId;
 }
 
 /** A tab nothing has been typed into yet: everybody out, nothing allocated. */

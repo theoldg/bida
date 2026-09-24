@@ -211,8 +211,8 @@ report((await page.locator(".topbar h3").innerText()) === "Transfer", "a transfe
 await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForURL(/entry\/edit/);
 await page.waitForSelector(".transfer");
-report(await page.locator('[aria-label="What kind of entry"]').count() === 1,
-  "editing a transfer offers a kind control too");
+report(await page.locator('[aria-label="What kind of entry"]').count() === 0,
+  "editing a transfer offers no kind control");
 await page.locator("input.amount").fill("12");
 await saveAndList(3);
 report((await page.locator(".ramt .big").allInnerTexts()).some((t) => t.includes("12")),
@@ -222,14 +222,15 @@ await page.getByText("Dinner").first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForURL(/entry\/edit/);
-// The chip offers every kind, transfer included — switching to it is a
-// convert rather than an edit (ADR-0010), but it isn't hidden.
+// The chip opens the dialog; what is *in* it is the claim — a transfer is
+// not reachable from an expense, since the two are different entities
+// (ADR-0010).
 await page.locator('[aria-label="What kind of entry"]').click();
 await page.waitForSelector(".dlist");
 // `.rtitle`, not the row: each row carries its blurb underneath as well.
 const kinds = (await page.locator(".drow-pick .rtitle").allInnerTexts()).map((t) => t.trim());
-report(kinds.join(",") === "Expense,Income,Transfer",
-  "editing an expense offers all three kinds, transfer included");
+report(kinds.join(",") === "Expense,Income",
+  "editing an expense offers expense and income only");
 await page.locator(".drow-pick").filter({ hasText: "Income" }).first().click();
 await settle(page, 120);
 await saveAndList(3);
@@ -614,11 +615,9 @@ const creates = (await page.locator(".what").allInnerTexts())
   .filter((t) => /created this expense/i.test(t)).length;
 report(creates === 1, `one press creates the entry once — ${creates} create(s) in its history`);
 
-// ---- an expense and a transfer really do convert into each other -------
-// Not an edit: a transfer is a different entity (`Settlement`), so Save
-// tombstones the old row and creates the new one (`convertToSettlement` /
-// `convertToExpense`, commands/entries.ts). The words and amount survive
-// either way — switched and saved, or switched back before Save.
+// ---- a new entry keeps its words across a change of kind ----------------
+// Only while it is new: once saved, an expense and a transfer are different
+// entities and the chip stops offering the crossing (ADR-0010).
 await page.goto(`${base}/g/entry/edit?id=${g}`);
 await page.locator("input.amount").fill("7");
 await page.locator("#what").fill("Convert me");
@@ -641,36 +640,6 @@ await page.waitForFunction(
   () => [...document.querySelectorAll(".rows a.row")].some((r) => r.innerText.includes("Convert me")),
   null, { timeout: PATIENCE },
 );
-
-// The real conversion: this entry already has an id, so switching kind and
-// saving has to delete the expense and write a fresh transfer, not edit one
-// that was never a transfer to begin with.
-await page.locator("a.row").filter({ hasText: "Convert me" }).click();
-await page.waitForURL(/\/g\/entry\?/);
-await page.getByRole("link", { name: "Edit" }).click();
-await page.waitForURL(/entry\/edit/);
-await pick(page, '[aria-label="What kind of entry"]', "Transfer");
-await page.waitForSelector(".transfer");
-await page.getByRole("button", { name: "Save" }).click();
-await page.waitForURL(/\/g\/entry\?/);
-await settle(page, 150);
-report((await page.locator(".topbar h3").innerText()) === "Transfer",
-  "saving an expense as a transfer converts it, rather than editing it in place");
-report(await page.getByText("Convert me").count() > 0,
-  "and its words carried over, from the title it had as an expense to the transfer's note");
-
-// And back, to see the round trip holds.
-await page.getByRole("link", { name: "Edit" }).click();
-await page.waitForURL(/entry\/edit/);
-await settle(page, 120);
-await pick(page, '[aria-label="What kind of entry"]', "Expense");
-report((await page.locator("#what").inputValue()) === "Convert me",
-  "converting back to an expense keeps the words it carried as the transfer's note");
-await page.getByRole("button", { name: "Save" }).click();
-await page.waitForURL(/\/g\/entry\?/);
-await settle(page, 150);
-report((await page.locator(".entrytitle").innerText()) === "Convert me",
-  "and the round trip lands back on an ordinary expense");
 
 // ---- a refused Save points at the field, once -------------------------
 // The flash has to end and take its class with it: the class is also what

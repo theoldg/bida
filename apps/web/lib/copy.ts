@@ -290,7 +290,6 @@ export const copy = {
     changedPayers: (who: string, what: string) => `${who} changed who paid for ${what}`,
     toIncome: (who: string, what: string) => `${who} turned ${what} into an income`,
     toExpense: (who: string, what: string) => `${who} turned ${what} into an expense`,
-    toTransfer: (who: string, what: string) => `${who} turned ${what} into a transfer`,
     /** Several entries in one push: the share line under it is their sum. */
     addedMany: (who: string, entries: string) => `${who} added ${entries}`,
     changedMany: (who: string, entries: string) => `${who} changed ${entries}`,
@@ -863,6 +862,8 @@ export const copy = {
   form: {
     newTitle: "New",
     editTitle: "Edit",
+    /** The title when the kind can't change: editing a transfer. */
+    editKind: (kind: string) => `Edit ${kind}`,
     /** The kind chip's label, and the title of the dialog it opens. */
     kindTitle: "What kind of entry",
     amount: (currency: string) => `Amount in ${currency}`,

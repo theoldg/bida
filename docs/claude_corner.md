@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "I made a mistake when reverting the adr. It was good
+  design to forbid it." Asked for a restore design; the converted-entry trap
+  made the owner re-forbid conversion. A design that needs a special case to
+  stay honest is a question about the feature under it, so name the case.
+
 - *2026-09-24* — "something more appropriate" for import. The menu borrowed
   "merge", a glyph drawn for rows folding together. Drew share's tray with
   the arrow turned inward. When a borrowed icon is wrong, read what the donor
@@ -68,7 +73,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   first four cards were all quiet variations; the owner's worry was
   discoverability. When asked for options, span the range out to the loud end,
   so the pick is a choice and not a default.
-- *2026-09-24* — "maybe we could create our own receipt scanning model."
-  A musing, so answered it rather than scaffolding one. Cost was never the
-  case — ~$1 a month; privacy and offline are. Said so, and named the cheap
-  first step: measure before training anything.

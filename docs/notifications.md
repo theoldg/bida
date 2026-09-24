@@ -23,7 +23,6 @@ is the app's. Strings live in `copy.notify`
 | `editExpense`, only title, date, category, note or photos | Nobody | — |
 | `deleteExpense` | Everyone who was in it | Ana deleted "Dinner" · €42.00<br>Your share was €10.50 |
 | `recordSettlement`, `editSettlement`, `deleteSettlement` | The two sides | Bo paid you €20.00 · Bo recorded that you paid them €20.00 |
-| `convertTo*` | As an edit | Ana turned "Dinner" into a transfer |
 | Heals, members, rates, identity, group rename | Nobody | — |
 
 A payer gets both halves: "You paid €200.00 · your share €19.00", the share

@@ -77,10 +77,8 @@ function headline(n: Notice, name: Names): string {
   }
   if (!before || !after) return copy.notify.edited(who, copy.notify.untitled);
   const was = label(before, name, n.to);
-  if (n.change === "converted" || n.moved.includes("kind")) {
-    return after.kind === "transfer" ? copy.notify.toTransfer(who, was)
-      : after.kind === "income" ? copy.notify.toIncome(who, was)
-      : copy.notify.toExpense(who, was);
+  if (n.moved.includes("kind")) {
+    return after.kind === "income" ? copy.notify.toIncome(who, was) : copy.notify.toExpense(who, was);
   }
   const now = label(after, name, n.to);
   const moved = new Set(n.moved);

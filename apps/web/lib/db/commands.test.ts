@@ -8,8 +8,6 @@ import {
   addMember,
   claimIdentity,
   clearRate,
-  convertToExpense,
-  convertToSettlement,
   createGroup,
   deleteExpense,
   editExpense,
@@ -842,62 +840,6 @@ describe("commands", () => {
     expect(update?.patch["kind"]).toBe("income");
     expect(update?.patch["description"]).toBe("Ferry refund");
     expect(computeBalances(foldOps(await db().ops.toArray())).byMember[theo]).toBe(-2000);
-  });
-
-  // The kind chip lets an expense/income become a transfer and back — a
-  // different entity, so Save converts rather than edits (ADR-0010). Both
-  // directions have to land as one append: a partial write must never leave
-  // the money recorded as neither.
-  it("converts an expense into a transfer, as one append that tombstones the old row", async () => {
-    const { groupId, theo, marie } = await trip();
-    const expenseId = await addExpense(groupId, theo, {
-      description: "Taxi to the riad",
-      occurredAt: 1,
-      amountMinor: 4000,
-      currency: "EUR",
-      rateToBase: "1",
-      paidBy: theo,
-      split: { mode: "equal", members: [theo, marie] },
-    });
-    const before = await db().ops.count();
-
-    const settlementId = await convertToSettlement(groupId, theo, expenseId, {
-      fromMember: marie, toMember: theo, amountMinor: 2000, currency: "EUR", rateToBase: "1", occurredAt: 5,
-    }, 5);
-
-    expect(await db().ops.count()).toBe(before + 2);
-    expect((await db().expenses.get(expenseId))?.deletedAt).toBeTruthy();
-    expect(await db().settlements.get(settlementId)).toMatchObject({
-      fromMember: marie, toMember: theo, amountMinor: 2000, baseAmountMinor: 2000,
-    });
-    // Both ops the conversion wrote landed in the same append.
-    const written = (await db().ops.toArray()).filter((o) => o.createdAt === 5);
-    expect(written.map((o) => o.entity).sort()).toEqual(["expense", "settlement"]);
-    await assertMaterialisedMatchesLog(groupId);
-  });
-
-  it("converts a transfer into an expense, seeding its split under the new id", async () => {
-    const { groupId, theo, marie, sam } = await trip();
-    const settlementId = await recordSettlement(groupId, theo, {
-      fromMember: marie, toMember: theo, amountMinor: 3000, currency: "EUR", rateToBase: "1", occurredAt: 1,
-    });
-
-    const expenseId = await convertToExpense(groupId, theo, settlementId, {
-      description: "Hammam, split three ways",
-      occurredAt: 5,
-      amountMinor: 3000,
-      currency: "EUR",
-      rateToBase: "1",
-      paidBy: theo,
-      split: { mode: "equal", members: [theo, marie, sam] },
-    }, 5, "new-hammam-id");
-
-    expect(expenseId).toBe("new-hammam-id");
-    expect((await db().settlements.get(settlementId))?.deletedAt).toBeTruthy();
-    expect(await db().expenses.get(expenseId)).toMatchObject({
-      description: "Hammam, split three ways", amountMinor: 3000, paidBy: theo,
-    });
-    await assertMaterialisedMatchesLog(groupId);
   });
 
   it("edits a transfer, writing it whole and only when something moved", async () => {

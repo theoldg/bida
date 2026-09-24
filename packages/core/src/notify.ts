@@ -40,7 +40,7 @@ export type NoticeEntry =
     baseAmountMinor: number;
   };
 
-export type NoticeChange = "added" | "edited" | "deleted" | "converted";
+export type NoticeChange = "added" | "edited" | "deleted";
 
 /** The fields whose change is news — `describe()`'s "money moved". */
 export type MovedField = "amount" | "currency" | "split" | "payers" | "kind" | "sides";
@@ -173,12 +173,6 @@ export function notices(before: GroupState, after: GroupState, ops: readonly Op[
     if (!a && b) changes.push({ change: "added", after: b });
     else if (a && !b) changes.push({ change: "deleted", before: a });
     else if (a && b) changes.push({ change: "edited", before: a, after: b });
-  }
-  const gone = changes.filter((c) => c.change === "deleted");
-  const born = changes.filter((c) => c.change === "added");
-  if (changes.length === 2 && gone.length === 1 && born.length === 1
-    && gone[0]!.before!.kind !== born[0]!.after!.kind) {
-    changes.splice(0, 2, { change: "converted", before: gone[0]!.before, after: born[0]!.after });
   }
 
   const out: Notice[] = [];

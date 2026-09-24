@@ -70,10 +70,7 @@ function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.no
   return appendOps(groupId, actor, drafts, now, { notify: true });
 }
 
-/**
- * The `create` patch for an expense, shared by `addExpense` and
- * `convertToExpense` so the two can't describe it differently.
- */
+/** The `create` patch for an expense. */
 function expenseCreatePatch(
   input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
 ) {
@@ -219,7 +216,7 @@ export interface SettlementInput {
   note?: string | null;
 }
 
-/** The `create` patch for a transfer — shared with `convertToSettlement`. */
+/** The `create` patch for a transfer. */
 function settlementCreatePatch(
   input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
 ) {
@@ -301,44 +298,4 @@ export async function deleteSettlement(
   await write(groupId, actor, [
     { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
   ]);
-}
-
-// ------------------------------------------------------ kind conversion
-
-/**
- * An expense or income becoming a transfer — a different entity (ADR-0010),
- * so the expense is tombstoned and the transfer created in one append: a
- * partial write must never leave the money recorded as neither.
- */
-export async function convertToSettlement(
-  groupId: Id,
-  actor: Id,
-  expenseId: Id,
-  input: SettlementInput,
-  now = Date.now(),
-): Promise<Id> {
-  const { base, rates } = await valuationOf(groupId);
-  const settlementId = newId();
-  await write(groupId, actor, [
-    { entity: "expense", entityId: expenseId, kind: "delete", patch: {} },
-    { entity: "settlement", entityId: settlementId, kind: "create", patch: settlementCreatePatch(input, base, rates, now) },
-  ], now);
-  return settlementId;
-}
-
-/** The other direction of `convertToSettlement`. */
-export async function convertToExpense(
-  groupId: Id,
-  actor: Id,
-  settlementId: Id,
-  input: ExpenseInput,
-  now = Date.now(),
-  expenseId: Id = newId(),
-): Promise<Id> {
-  const { base, rates } = await valuationOf(groupId);
-  await write(groupId, actor, [
-    { entity: "settlement", entityId: settlementId, kind: "delete", patch: {} },
-    { entity: "expense", entityId: expenseId, kind: "create", patch: expenseCreatePatch(input, base, rates, now) },
-  ], now);
-  return expenseId;
 }
