@@ -20,7 +20,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | Route | Purpose |
 |---|---|
 | `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
-| `/g?id=[&tab=]` | The group: ledger / balances tabs — back from balances is the ledger, not the groups list, since the two tabs are one screen. Settling lives under the balances, and a suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`, `app/g/page.tsx`); the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
+| `/g?id=[&tab=]` | The group: the ledger, and `&tab=balances` pushed over it by the balance card at its head — back from balances is the ledger, not the groups list. Settling lives under the balances, and a suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`, `app/g/page.tsx`); the invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`) |
 | `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names |
 | `/g/scan?id=` | Scan first, decide after: a drawing of what a photo becomes, and the control that takes one, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
@@ -692,8 +692,9 @@ describes the entry the person is not looking at. Every sentence on
 
 ## One navigation
 
-At most one nav bar, at the bottom: **Ledger · Balances** inside a group, and
-none outside one. The groups list carries its starts below the list instead
+No nav bar. Inside a group the ledger's balance card is the way to the
+balances — the whole card is the button, stacked words over figure with a
+chevron — and a push, so Back returns to the ledger. The groups list carries its starts below the list instead
 of in it: **New group** and **Quick split** as two centred `.starttile`
 squares — with **Paste link** a third on an iOS home-screen app, which iOS
 never hands a tapped invite (it opens in Safari, whose storage is not the
@@ -730,9 +731,10 @@ Always on, not a setting ([ADR-0007](decisions/0007-a-screen-is-a-route.md)),
 and it changes rendering only — never data or what syncs. Every row carries a
 signed, coloured effect: what you put in for that entry minus what you owe for
 it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
-The column adds up to the net printed above the list, on one line — words
-left, figure right, the figure sized to its own length in CSS alone (`.mysum`
-in `globals.css`), so a seven-digit sum shrinks rather than wraps. Rows involving neither
+The column adds up to the net printed above the list, on the balance card —
+words over figure, the figure sized to its own length in CSS alone (`.mysum`
+in `globals.css`), so a seven-digit sum shrinks rather than runs under the
+chevron. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
 no wash or coloured edge. What it looks like and why:
 [design-system.md](design-system.md#your-own-rows-are-highlighted).
@@ -1009,7 +1011,7 @@ so the static export ships the full line and the browser narrows it.
 - **A page left on the old build breaks on its next tap.** It fetches the new
   build's `/g.txt`, Next refuses a payload from a build it didn't boot with and
   navigates to the bare route, dropping the query string — where the group id
-  lives. The screen lands on "No group" with no bottom nav. So `sw.js` serves
+  lives. The screen lands on "No group". So `sw.js` serves
   such a page its own build's cache until it reloads (`previousFor`), and
   `offline-check` taps through a group on one across a deploy.
 - **An installed Android app's status bar is the manifest's `theme_color`, and
@@ -1023,8 +1025,8 @@ so the static export ships the full line and the browser narrows it.
   reinstall, and read the screen — splash is `background_color`, status bar is
   `theme_color`.
 - **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
-- **Anything floating above the dock rises with `--nav-foot`**, never a fixed `bottom`. The dock's foot is the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed offset that looks right in every check sits on the tabs of the iOS PWA.
-- `100dvh`, not `100vh`, or iOS Safari's toolbar eats the bottom nav.
+- **A FAB sits on `--fab-foot`**, never a fixed `bottom`. It grows with the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed offset that looks right in every check sits on the indicator of the iOS PWA.
+- `100dvh`, not `100vh`, or iOS Safari's toolbar eats the foot of the screen.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,
   and the bottom bar sits at the foot of a long page — invisible until you
@@ -1036,7 +1038,7 @@ so the static export ships the full line and the browser narrows it.
   have to agree about how tall the screen is — and they are two different
   measurements, `dvh` and a percentage of the initial containing block. A `dvh`
   reported larger than the ICB puts the bottom of the shell below the fold,
-  where nothing scrolls: the bottom nav on a group, the about line under the
+  where nothing scrolls: the about line under the
   groups list. Seen on an installed phone after Reload onto a new build; no
   browser check reproduces it. **How to recognise it:** everything else is right, the FAB is exactly
   where it belongs, and the groups list's start pair has slid *lower* than

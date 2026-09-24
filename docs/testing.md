@@ -582,8 +582,8 @@ here reads `navigation.entries()` rather than `location`
 
 Six shapes, each the one a thumb makes: the walk in from the list, where every
 door into a group is pushed from `/` so the list stays underneath the ledger;
-the two tabs, which replace rather than deepen, and the arrow on balances that
-swaps the ledger back in; an entry opened off the ledger, and the Save that
+the balance card, which pushes balances over the ledger, and the arrow on
+balances that goes back to it; an entry opened off the ledger, and the Save that
 returns to it; the tip jar, whose form has to unwind past the tip screen as
 well as itself; a cold load with nothing behind it, where the arrow puts the
 parent in this screen's place — the degradation, and the ordinary case of it;
@@ -682,7 +682,7 @@ screen` block says which manifest each load got and which URL the icon opened.
 
 - The strip above the page under iOS 26's scrim: a band with an edge means the
   body's background and the bar under it have come apart.
-- The FAB and anything else over the dock clears the home indicator.
+- The FABs clear the home indicator.
 - **Tap Reload for a new build, then look at the bottom strip.** The FAB in
   place with the start pair slid lower is `dvh` disagreeing with the ICB;
   `screen:` and `viewport.gap` say so.

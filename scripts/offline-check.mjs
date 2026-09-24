@@ -231,7 +231,7 @@ await mark(doorstep);
 
 const straggler = await ctx.newPage();
 await straggler.goto(`${base}/g?id=${g}`);
-await straggler.waitForSelector(".bottomnav a");
+await straggler.waitForSelector(".fab");
 await mark(straggler);
 await touch(straggler);
 // A file only the old build's cache holds: which build answers is then visible.
@@ -241,7 +241,7 @@ await straggler.evaluate((name) =>
 // Opened by URL, not by `openGroupsList`: its Back tap would count as a touch.
 const fresh = await ctx.newPage();
 await fresh.goto(`${base}/g?id=${g}`);
-await fresh.waitForSelector(".bottomnav a");
+await fresh.waitForSelector(".fab");
 await mark(fresh);
 
 const reload = page.getByRole("button", { name: "Reload" });
@@ -266,13 +266,13 @@ report(legacyAnswer === "OLD", "a page still on the old build is served from tha
 await straggler.locator("a[href*='tab=balances']").first().click().catch(() => {});
 try {
   // Wait for the address to say the tap landed. A `waitForSelector` alone can
-  // pass before it changes (both tabs draw the same nav), and every later step
+  // pass before it changes (both views draw a floating button), and every later step
   // would then be taken on a page still arriving.
   await straggler.waitForURL((url) => url.searchParams.get("tab") === "balances",
     { timeout: PATIENCE });
-  await straggler.waitForSelector(".bottomnav a", { timeout: PATIENCE });
+  await straggler.waitForSelector(".fab", { timeout: PATIENCE });
   const kept = new URL(straggler.url()).searchParams.get("id") === g;
-  report(kept && await straggler.locator(".bottomnav a").count() === 2,
+  report(kept && await straggler.locator(".fab").count() > 0,
     "and still knows which group it is on", straggler.url().replace(base, ""));
 } catch {
   report(false, "and still knows which group it is on", straggler.url().replace(base, ""));
@@ -362,8 +362,8 @@ report(stillOld === "OLD", "that page is still served its own build", stillOld);
 await fresh.locator("a[href*='tab=balances']").first().click().catch(() => {});
 try {
   await fresh.waitForURL((url) => url.searchParams.get("tab") === "balances", { timeout: PATIENCE });
-  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
-  report(new URL(fresh.url()).searchParams.get("id") === g && await fresh.locator(".bottomnav a").count() === 2,
+  await fresh.waitForSelector(".fab", { timeout: PATIENCE });
+  report(new URL(fresh.url()).searchParams.get("id") === g && await fresh.locator(".fab").count() > 0,
     "and can still draw a screen it taps to", fresh.url().replace(base, ""));
 } catch {
   report(false, "and can still draw a screen it taps to", fresh.url().replace(base, ""));
@@ -387,11 +387,11 @@ const refused = await fresh.evaluate((id) =>
 report(refused === "refused", "a payload it cannot be served is refused, not answered from this build", refused);
 
 // And none of it must be felt: the app still navigates as it did.
-await fresh.locator(".bottomnav a").first().click().catch(() => {});
+await fresh.locator(`.topbar a[aria-label="Back"]`).click().catch(() => {});
 try {
-  // The ledger tab, tapped from balances: again the address is what lands.
+  // Back to the ledger, tapped from balances: again the address is what lands.
   await fresh.waitForURL((url) => !url.searchParams.get("tab"), { timeout: PATIENCE });
-  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
+  await fresh.waitForSelector(".fab", { timeout: PATIENCE });
   const kept = new URL(fresh.url()).searchParams.get("id") === g;
   report(kept && await fresh.locator(".keyless").count() === 0,
     "and a tap still lands on the group, not on \"missing its password\"", fresh.url().replace(base, ""));
@@ -411,7 +411,7 @@ try {
   // into the route, and a slow one taking the whole check out with a stack
   // trace loses every assertion above it as well as this one.
   await fresh.goto(`${base}/g.txt?id=${g}&_rsc=probe`);
-  await fresh.waitForSelector(".bottomnav a", { timeout: PATIENCE });
+  await fresh.waitForSelector(".fab", { timeout: PATIENCE });
   report(fresh.url() === `${base}/g?id=${g}` && await fresh.locator(".keyless").count() === 0,
     "and a navigation to a payload lands on the group, at its own address",
     fresh.url().replace(base, ""));

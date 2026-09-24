@@ -85,7 +85,7 @@ numbers. Five rules separate it from dumping `innerText`:
   asked after the scrim, not before it**, or a row below the screen keeps its
   number with the menu open.
 - **A phone is 844px tall.** What is below the fold is marked a scroll away.
-- **Something on top covers a point, not a control.** The tab bar crosses the
+- **Something on top covers a point, not a control.** A FAB crosses the
   last ledger row; the row is pressable everywhere it isn't. So the hit test
   asks about the middle and the four edges, a press is aimed at whichever
   answered, and only a control with no point left is out of reach.

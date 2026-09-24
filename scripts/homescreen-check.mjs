@@ -412,7 +412,7 @@ const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members
 // nowhere to go, which is a pass for the wrong reason half the time. So wait
 // for the write itself: a pause long enough on one machine is exactly the kind
 // of race this comment is about.
-await freshPage.waitForSelector(".bottomnav a");
+await freshPage.waitForSelector(".fab");
 await freshPage.waitForFunction((id) => new Promise((resolve) => {
   const req = indexedDB.open("hajsik");
   req.onsuccess = () => {

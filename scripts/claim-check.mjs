@@ -237,7 +237,7 @@ report(reopened, "re-opening the invite link opens the group, not the question")
 // the device's back button left for the chat rather than climbing this app.
 // `/join` gives the entry to the list and pushes the group onto it
 // (apps/web/lib/launch.ts).
-await page.waitForSelector(".bottomnav a");
+await page.waitForSelector(".fab");
 // The entry directly under this one, not the whole stack: a page that has
 // walked around first brings its own, where a tapped link brings none.
 report(await page.evaluate(() => {
@@ -265,7 +265,7 @@ await page.goto(`${base}/g?id=${g}`);
 // records in an effect once it has drawn — so the launch waits for the write,
 // not merely for the URL `arrived()` saw. Without this the check raced it and
 // failed about a third of the time.
-await page.waitForSelector(".bottomnav a");
+await page.waitForSelector(".fab");
 await page.waitForFunction((id) => new Promise((resolve) => {
   const req = indexedDB.open("hajsik");
   req.onsuccess = () => {
@@ -287,7 +287,7 @@ await page.waitForTimeout(800);
 report(new URL(page.url()).pathname === "/", "a launch after that lands on the list, not the group");
 // Opening the group again makes it the place to come back to once more.
 await page.goto(`${base}/g?id=${g}`);
-await page.waitForSelector(".bottomnav a");
+await page.waitForSelector(".fab");
 await page.goto(`${base}/`);
 report(await arrived(), "and opening it again makes the next launch reopen it");
 

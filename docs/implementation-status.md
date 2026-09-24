@@ -27,8 +27,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Two things: a gap found by reading the code rather than a report, and a
-design waiting to be built.
+Three things: a gap found by reading the code rather than a report, a
+design waiting to be built, and a cleanup the owner has claimed.
 
 - **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
   erased across nine stores before reaching the gate the success path waits on,
@@ -43,6 +43,10 @@ design waiting to be built.
   checklist in [testing.md](testing.md#what-only-a-phone-can-check) is unrun.
   VAPID keys are set on both Workers. Open: a screen for "everything"
   rather than "entries I'm in".
+
+- **Balances is still `?tab=balances` on `/g`**, reached only from the
+  ledger's balance card now the tab bar is gone. Making it a route of its own
+  is the owner's cleanup to do, not a session's.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

@@ -9,7 +9,7 @@
  *   rather than shortening it, so the foot of `.scroll` sits behind them. Owed
  *   as `--kb`.
  * - **A browser that is wrong.** The same gap with nothing focused is a layout
- *   viewport taller than the screen: the shell's last strip (bottom nav, about
+ *   viewport taller than the screen: the shell's last strip (the about
  *   line) is off the bottom, unreachable.
  *
  * **A gap is a keyboard only while something is being typed into**, or it

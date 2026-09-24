@@ -5,7 +5,7 @@
  */
 export type IconName =
   | "chev" | "back" | "plus" | "cam" | "off" | "check" | "clock"
-  | "users" | "list" | "seesaw" | "arrow" | "sync" | "trash" | "edit" | "link"
+  | "users" | "arrow" | "sync" | "trash" | "edit" | "link"
   | "image" | "split" | "merge" | "share" | "sun" | "moon" | "fx" | "more" | "info"
   | "mail" | "dollar" | "sliders" | "translate";
 
@@ -44,21 +44,6 @@ export function IconSprite() {
         <symbol id="i-users" viewBox="0 0 24 24" {...S} strokeWidth="1.8">
           <circle cx="9" cy="8" r="3.4" />
           <path d="M2.5 19.5a6.5 6.5 0 0113 0M16 5.2a3.4 3.4 0 010 5.6M18 14.4a6.5 6.5 0 013.5 5.1" />
-        </symbol>
-        {/* The ledger tab: three bare rules, no bullets — fewer marks to resolve
-            at 19px. */}
-        <symbol id="i-list" viewBox="0 0 24 24" {...S} strokeWidth="2">
-          <path d="M3.6 7h16.8M3.6 12h16.8M3.6 17h16.8" />
-        </symbol>
-        {/* The balances tab: a seesaw, where a balance scale was drawn first.
-            The scale's pans were two triangles and two arcs that filled into
-            blobs at 19px — and a *level* scale draws the one state this tab is
-            least worth opening for. The plank is off level because that is what
-            the screen under it says: who is up, who is down. The apex sits on
-            the plank rather than under it (both are at x=12, y=7.15). */}
-        <symbol id="i-seesaw" viewBox="0 0 24 24" {...S} strokeWidth="2">
-          <path d="M2.8 9l18.4-3.7" />
-          <path d="M12 7.15L6.2 18.8h11.6z" />
         </symbol>
         {/* One-sided on purpose: a two-headed arrow reads as "square with each
             other", the opposite of a settle-up row. */}

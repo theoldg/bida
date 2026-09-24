@@ -10,7 +10,7 @@ import {
 import { kindOf, myEffect } from "@/lib/entry-kind";
 import { Card, Eyebrow, signClass } from "@/components/bits";
 import {
-  BadLink, Banner, Blank, Body, BottomNav, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
+  BadLink, Banner, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows,
   SupportFab, TopBar,
 } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -66,8 +66,8 @@ function GroupScreen() {
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
 
-  // The two tabs are one screen, and the ledger is the one you arrive on — so
-  // back from balances is the ledger, and only the ledger leaves the group.
+  // Balances is pressed into from the ledger's card, so back from it is the
+  // ledger, and only the ledger leaves the group.
   const back = tab === "balances" ? route.group(groupId) : route.groups();
   // **Draw the whole frame while loading** — a bare top bar looks like a tap
   // that didn't land. It also covers the redirect above, rather than flashing
@@ -82,11 +82,6 @@ function GroupScreen() {
         {tab === "ledger"
           ? <><ScanFab href={route.scan(groupId)} /><Fab href={route.addEntry(groupId)} /></>
           : <SupportFab href={route.tip(groupId)} />}
-        <BottomNav items={[
-          { label: copy.group.tabs.ledger, icon: "list", href: route.group(groupId), on: tab === "ledger" },
-          { label: copy.group.tabs.balances, icon: "seesaw", href: route.group(groupId, "balances"),
-            on: tab === "balances" },
-        ]} />
       </Screen>
     );
   }
@@ -146,15 +141,6 @@ function GroupScreen() {
           <Fab href={route.addEntry(group.id)} />
         </>
       ) : <SupportFab href={route.tip(group.id)} />}
-
-      {/* One navigation, only what a group is: what moved through it, and who
-          is up or down. "Ledger", not "Expenses", because two of its three
-          kinds aren't expenses (ADR-0010). */}
-      <BottomNav items={[
-        { label: copy.group.tabs.ledger, icon: "list", href: route.group(group.id), on: tab === "ledger" },
-        { label: copy.group.tabs.balances, icon: "seesaw", href: route.group(group.id, "balances"),
-          on: tab === "balances" },
-      ]} />
     </Screen>
   );
 }
@@ -188,7 +174,7 @@ function LedgerTab({ data }: { data: GroupData }) {
           nothing for every other group. */}
       <DemoCard groupId={gid} />
       <LedgerInstall groupId={gid} />
-      {me ? <MySummary net={net} base={base} /> : null}
+      {me ? <MySummary net={net} base={base} gid={gid} /> : null}
       {/* Between where you stand and the rows, since it is why either moved. */}
       <NewEdits groupId={gid} currency={base} />
 
@@ -216,23 +202,26 @@ function LedgerTab({ data }: { data: GroupData }) {
 }
 
 /**
- * Where you stand, on one line: the words on the left, the figure on the right.
- * The figure is sized to its own length (`.mysummary` in globals.css), so a
- * six-digit sum shrinks to fit rather than wrapping under the words.
+ * Where you stand, and the way to the balances: the whole card is the button
+ * (there is no tab bar), so it wears a chevron and the press wash of `a.card`.
+ * The figure is sized to its own length (`.mysum` in globals.css), so a long
+ * sum shrinks to fit rather than running under the chevron.
  */
-function MySummary({ net, base }: { net: number; base: string }) {
+function MySummary({ net, base, gid }: { net: number; base: string; gid: string }) {
   const label = net < 0 ? copy.group.you.owe : net > 0 ? copy.group.you.owed : copy.group.you.square;
   // Unsigned, unlike every other figure: "You owe" already says the direction,
   // and a "-" reads as arithmetic rather than debt.
   const figure = money(Math.abs(net), base);
   return (
     <div className="mysummary pad">
-      {/* Neutral tint on purpose: the words and figure already carry the colour. */}
-      <Card className={`mysum ${signClass(net)}`}
-        style={{ "--label": label.length, "--chars": figure.length } as CSSProperties}>
-        <span className="eyebrow">{label}</span>
-        <span className="bignum">{figure}</span>
-      </Card>
+      <Link href={route.group(gid, "balances")} className={`card mysum ${signClass(net)}`}
+        style={{ "--chars": figure.length } as CSSProperties}>
+        <span className="mysumtext">
+          <span className="eyebrow">{label}</span>
+          <span className="bignum">{figure}</span>
+        </span>
+        <Icon name="chev" size={20} className="mysumchev" />
+      </Link>
     </div>
   );
 }

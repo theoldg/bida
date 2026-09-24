@@ -89,12 +89,12 @@ const group = await (async () => {
   await page.waitForURL(/\/g\?id=/);
   await is(page, "/new replaces itself with the ledger, over the list", { i: 1, urls: ["/", "/g?id=G"] });
 
-  // The two tabs are one screen: switching doesn't deepen the history, and the
-  // arrow on balances puts the ledger back in its place rather than going back.
+  // The balance card is pressed into, so balances is pushed over the ledger
+  // and its arrow goes back to it, leaving balances forward.
   await page.locator("a[href*='tab=balances']").first().click();
-  await is(page, "the balances tab replaces the ledger", { i: 1, urls: ["/", "/g?id=G&tab=balances"] });
+  await is(page, "the balance card pushes balances", { i: 2, urls: ["/", "/g?id=G", "/g?id=G&tab=balances"] });
   await arrow(page);
-  await is(page, "balances' arrow swaps the ledger back in", { i: 1, urls: ["/", "/g?id=G"] });
+  await is(page, "balances' arrow goes back to the ledger", { i: 1, urls: ["/", "/g?id=G", "/g?id=G&tab=balances"] });
   const id = new URL(page.url()).searchParams.get("id");
   await page.close();
   return id;

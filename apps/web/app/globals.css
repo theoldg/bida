@@ -260,11 +260,11 @@ a, button, label, select, .seg button, .itemcell {
   touch-action: manipulation;
 }
 
-a.row, button.row, .nav, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
+a.row, button.row, .fab, .btn, .iconbtn, .tlink, .seg button, a.card, button.card,
 .itemfold, a.chip, button.chip, .action, .starttile, .field:not(.field-row):has(> .pick) {
   transition: background-image .2s ease;
 }
-a.row:active, button.row:active, .nav:active, .fab:active, .iconbtn:active,
+a.row:active, button.row:active, .fab:active, .iconbtn:active,
 .tlink:active, .seg button:active, a.card:active, button.card:active, .itemfold:active,
 a.chip:active, button.chip:active, .btn:active:not(:disabled), .starttile:active,
 .field:not(.field-row):has(> .pick:active), .action:active:not(:disabled) {
@@ -663,17 +663,24 @@ a { color: inherit; text-decoration: none }
 .mine { border-bottom-color: color-mix(in srgb, var(--ink) 14%, transparent) }
 .notmine { opacity: .58 }
 .notmine .rtitle { font-weight: 500 }
-/* The ledger's "you owe" card, one line. JetBrains Mono advances 0.6em a
-   glyph, so a string's width is its length times a constant: the figure takes
-   the room the words leave, up to 26px, with no measuring. --label and --chars
-   are the two lengths (app/g/page.tsx); 26px is the card's padding and border. */
+/* The ledger's "you owe" card, and the way to the balances. JetBrains Mono
+   advances 0.6em a glyph, so a string's width is its length times a constant:
+   the figure takes the room the chevron leaves, up to 32px, with no measuring.
+   --chars is its length (app/g/page.tsx); 60px is the padding, border, gap and
+   chevron. */
 .mysummary { container-type: inline-size }
-.mysum { display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  padding: 9px 12px; white-space: nowrap }
-.mysum:not(.credit, .debit) .eyebrow { color: var(--muted) }
+/* Straight under the bar, whose own 12px foot plus `.pad` would be a gap wider
+   than the gutter; 4px makes it the gutter's 16. */
+.mysummary:first-child { padding-top: 4px }
+.mysum { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  color: inherit; white-space: nowrap }
+.mysum.credit { color: var(--credit) } .mysum.debit { color: var(--debit) }
+.mysumtext { display: flex; flex-direction: column; gap: 2px; min-width: 0 }
 .mysum .eyebrow { font-size: 13px; color: inherit }
-.mysum .bignum { line-height: 1.15;
-  font-size: min(26px, (100cqi - 26px - 12px - var(--label) * 13px * .72) / (var(--chars) * .57)) }
+.mysum:not(.credit, .debit) .eyebrow { color: var(--muted) }
+.mysum .bignum { line-height: 1.1;
+  font-size: min(32px, (100cqi - 60px) / (var(--chars) * .6)) }
+.mysumchev { color: var(--ink); flex: none }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
    line, since it is furniture of the list until pressed. */
@@ -1000,18 +1007,11 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .tipacts { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px }
 
 /* ---- nav, fab, buttons ---- */
-.bottomnav { display: flex; border-top: 1px solid var(--rule); background: var(--card-2); flex: none }
-/* The dock's padding lives on the tabs, so a press tints the full height. */
-/* The dock's foot grows with the home indicator, so anything floating above
-   the dock rises by the same `--nav-foot` rather than a fixed height. */
-:root { --nav-foot: max(11px, env(safe-area-inset-bottom)) }
-.nav { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px;
-  padding: 7px 0 var(--nav-foot);
-  color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase }
-.nav.on { color: var(--ink); font-weight: 700 }
+/* The floating buttons' foot rises with the home indicator. */
+:root { --fab-foot: max(20px, calc(env(safe-area-inset-bottom) + 8px)) }
 /* A solid ink block, not a floating pill: the one thing on the screen that is
    pure figure-ground inversion, which is signal enough without a shadow. */
-.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: calc(var(--nav-foot) + 67px); width: 50px; height: 50px;
+.fab { position: fixed; right: max(16px, calc(50vw - 264px)); bottom: var(--fab-foot); width: 50px; height: 50px;
   border-radius: var(--r-s); background: var(--brand); color: var(--brand-ink); display: grid;
   place-items: center; z-index: 4 }
 /* Beside the "+", at its size, outlined rather than inverted: the same

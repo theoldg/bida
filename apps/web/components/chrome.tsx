@@ -119,28 +119,6 @@ export function TopBar({ title, sub, back, mid, right }: {
   );
 }
 
-/**
- * The app's ONE navigation. **No top tab strip to go with it** — two
- * navigations disagree about where you are. More destinations go on the group
- * options screen, never a second row.
- */
-export function BottomNav({ items }: {
-  items: { label: string; icon: IconName; href: string; on?: boolean }[];
-}) {
-  return (
-    <nav className="bottomnav">
-      {/* `replace`: the tabs are two halves of one screen, not two places you
-          travelled through, so switching them doesn't deepen the history. */}
-      {items.map((i) => (
-        <Link key={i.href} href={i.href} replace className={`nav${i.on ? " on" : ""}`}
-          aria-current={i.on ? "page" : undefined}>
-          <Icon name={i.icon} size={19} />{i.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
 export function Fab({ href, label = copy.group.addEntry }: { href: string; label?: string }) {
   return <Link href={href} className="fab" aria-label={label}><Icon name="plus" size={24} /></Link>;
 }

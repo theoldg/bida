@@ -36,8 +36,7 @@ expenses you'd looked at rather than climbing out.
   query, never a saved count, which would be wrong the moment the browser
   trimmed the stack — and it then goes back *over* those entries
   (`history.go`) rather than naming the one it wants (see Rejected). Without
-  the Navigation API (iOS before 18.4) an up-link replaces the current entry. The two tabs `replace`, being halves of one
-  screen; `router.back()` stays where "back" is the truth — payers,
+  the Navigation API (iOS before 18.4) an up-link replaces the current entry. `router.back()` stays where "back" is the truth — payers,
   who-had-what and the entry form are only reached from below.
 - **An entry's parent is whoever linked to it.** Four screens link in from
   *beside* an entry rather than above it — the history feed, the two "can't

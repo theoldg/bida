@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "not obvious enough, explore a bit in that direction." My
+  first four cards were all quiet variations; the owner's worry was
+  discoverability. When asked for options, span the range out to the loud end,
+  so the pick is a choice and not a default.
 - *2026-09-24* — "maybe we could create our own receipt scanning model."
   A musing, so answered it rather than scaffolding one. Cost was never the
   case — ~$1 a month; privacy and offline are. Said so, and named the cheap
@@ -64,7 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   mono font makes width arithmetic: the figure's size is a CSS formula of its
   length, no measuring. Photographed 320 to 430 wide with 1,500,120.50 UZS
   before believing the formula.
-- *2026-09-23* — "make sure the correct area lights up." The press rule
-  named `a.card`; the settle rows are buttons. Held a real press and
-  photographed it rather than trusting the selector: whole card, nothing in
-  the gaps, edge bar still on top.

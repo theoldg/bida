@@ -722,7 +722,6 @@ export const copy = {
     /** Marks a balance row for somebody who is no longer in the group. */
     hasLeft: "removed",
 
-    tabs: { ledger: "Ledger", balances: "Balances" },
     history: "History",
     people: "People",
     copyLink: "Copy invite link",
