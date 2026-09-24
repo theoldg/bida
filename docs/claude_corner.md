@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "do a deep deep differentiation research run." A question,
+  so the answer went to a page, not a doc; the repo only got this card. Most
+  comparison posts online are rivals' SEO, so every figure was held loosely
+  and said so. Research lands where the owner reads, not in docs/.
 - *2026-09-23* — "should always be present… what do you think?" Asked for a
   view, so gave one and built it: "Group history", since the rows above it each
   open an entry's own. A question inside an ask wants an answer, not a menu.
@@ -64,7 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   English." The toggle already hid when no line differed; the model just kept
   "translating" shorthand. The owner asked about the bill, so ask the model
   about the bill, once, not line by line.
-- *2026-09-23* — "reason about the highlighted area and how big it should
-  be." The question was the size; the answer was the hit area. A wash only
-  tells the truth if it covers exactly what a tap lands on, so the button had
-  to grow before the tint could.
