@@ -21,7 +21,7 @@ import { Icon } from "./icons";
 export function DemoCard({ groupId }: { groupId: string }) {
   if (!isDemo(groupId)) return null;
   return (
-    <div className="pad" style={{ paddingBottom: 4 }}>
+    <div className="padtop">
       <div className="card demomark">
         <div className="eyebrow demomarkhead">
           <Icon name="info" size={13} />

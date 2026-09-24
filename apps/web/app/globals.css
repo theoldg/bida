@@ -888,6 +888,10 @@ a { color: inherit; text-decoration: none }
 
 /* ---- cards ---- */
 .pad { padding: 14px 16px }
+/* A thin card atop a screen (install offer, demo mark). 4px on top makes the
+   gutter's 16 under the bar's own 12px foot, as `.mysummary:first-child` does;
+   4px below, since the next block brings its own 14. */
+.padtop { padding: 4px 16px }
 /* A screen's question when the bar is spent naming where you are (`/g/claim`).
    It is the screen's title, so set above the bar's 17px, centred and balanced. */
 .question { font-size: 20px; font-weight: 700; letter-spacing: -.03em; line-height: 1.2;

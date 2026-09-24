@@ -58,7 +58,7 @@ async function freezeScanBar(page, p) {
  */
 async function dropDemoMark(page) {
   await page.evaluate(() => {
-    document.querySelector(".demomark")?.closest(".pad")?.remove();
+    document.querySelector(".demomark")?.closest(".padtop")?.remove();
   });
 }
 

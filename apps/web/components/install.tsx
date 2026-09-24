@@ -85,7 +85,7 @@ function FoldedOffer(
   { title: string; open: boolean; onToggle: () => void; children: ReactNode },
 ) {
   return (
-    <div className="pad" style={{ paddingBottom: 4 }}>
+    <div className="padtop">
       <div className="card">
         <button type="button" className="nudgehead" aria-expanded={open} onClick={onToggle}>
           {title}
