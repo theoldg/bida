@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-24* — "maybe we could create our own receipt scanning model."
+  A musing, so answered it rather than scaffolding one. Cost was never the
+  case — ~$1 a month; privacy and offline are. Said so, and named the cheap
+  first step: measure before training anything.
 - *2026-09-24* — "spliit is not a pwa, the scan does not have itemized
   split." I'd trusted its README's feature list; its source said total-only
   scan, assets-only worker. The owner had used the rival, not read about it.
@@ -64,7 +68,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   named `a.card`; the settle rows are buttons. Held a real press and
   photographed it rather than trusting the selector: whole card, nothing in
   the gaps, edge bar still on top.
-- *2026-09-23* — "don't offer translation if the receipt is already in
-  English." The toggle already hid when no line differed; the model just kept
-  "translating" shorthand. The owner asked about the bill, so ask the model
-  about the bill, once, not line by line.
