@@ -410,12 +410,15 @@ red when bunq moves.
   the assertion, **record it instead of sampling it**: §10 hangs a
   `MutationObserver` before the tap and reads the flag afterwards, because the
   repair is quicker than a round trip to ask.
-- **Two flakes are still open** (about one run in six on a four-core
-  container, each green alone). `pnpm offline` "tap a suggested transfer":
-  the page reaches balances, then is found back on the ledger; the cause is not
-  yet known (a late Back was ruled out). `pnpm entries` "Record settles it":
-  counts the cards the moment the dialog detaches, before the list redraws —
-  wait for the count instead.
+- **A check that hangs fails after five minutes** (`HUNG_MS`, the harness's
+  reporter), naming the last thing it reported. Playwright's `close` and
+  `bringToFront` take no timeout, and `pnpm offline` under load has hung in its
+  teardown for good — before the watchdog, that stalled `pnpm verify` with it.
+- **One flake is still open**, rare (none in the last dozen `pnpm verify`s on a
+  four-core container), green alone: `pnpm offline` "tap a suggested
+  transfer" — the page reaches balances, then is found back on the ledger. Not
+  a late Back (the check waits for that now); its failure prints the history
+  stack, which is the next clue.
 - **Don't edit `apps/web` while `pnpm verify` runs.** Each check calls
   `ensureBuild()` itself, so the ones still queued see stale sources and
   rebuild `out/` under the ones running: a run of red that is none of theirs.
@@ -428,7 +431,8 @@ red when bunq moves.
   section (a forged revision, a blocked asset) is read by an install nobody
   asked for, which then finishes against the server as it is *later*. Put the
   lever back before the navigation that could ask, not when the section reads
-  as over.
+  as over — and a forged revision is served once (`swOnce`), since the page's
+  own update checks ask too, and under load one lands mid-section.
 - **`copy.ts` types its apostrophes.** `getByLabel("Marie's amount")` matches
   nothing against `Marie’s amount` and hangs until the check times out; match
   with a regex (`/Marie.s amount/`) or paste the real character.

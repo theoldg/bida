@@ -19,6 +19,13 @@ ensureBuild();
 // Levers for the "a deploy installed over a dying signal" case at the end: one
 // asset goes missing, and the worker comes back claiming to be a new build.
 let swRevision = null;
+/**
+ * Serve `swRevision` to one fetch of `sw.js` and then put it back. The page's
+ * own update checks fetch `sw.js` too, and a second install of a forged build
+ * races the check: it recreates that build's cache mid-read, or — fetched while
+ * the lever is up, installing after the asset is unblocked — succeeds.
+ */
+let swOnce = false;
 const blocked = new Set();
 
 const { base, close } = await serveExport({
@@ -28,6 +35,7 @@ const { base, close } = await serveExport({
       const src = await readFile(join(OUT, "sw.js"), "utf8");
       res.writeHead(200, { "content-type": "text/javascript" });
       res.end(src.replace(/const REVISION = "[^"]*"/, `const REVISION = "${swRevision}"`));
+      if (swOnce) { swRevision = null; swOnce = false; }
       return true;
     }
     return false;
@@ -144,6 +152,7 @@ await ctx.setOffline(false);
 const cacheBefore = (await page.evaluate(() => caches.keys())).find((k) => k.startsWith("bida-shell-"));
 blocked.add(ASSET_TO_DROP);
 swRevision = "flakydeploy01";
+swOnce = true;
 /**
  * `update()` resolves when the script is fetched, not when install finishes,
  * and on a loaded machine the worker isn't even `installing` yet — so "nothing

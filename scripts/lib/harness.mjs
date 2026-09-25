@@ -217,15 +217,29 @@ export async function newPhone(browser, opts = {}) {
 /* ---- reporting ---------------------------------------------------------- */
 
 /**
+ * How long a whole check may run before it is called hung. The slowest takes
+ * ~90s under `pnpm verify`; playwright's `close` and `bringToFront` have no
+ * timeout of their own, and a starved chromium has left one waiting for good.
+ */
+const HUNG_MS = 5 * 60_000;
+
+/**
  * A pass/fail tally that owns the exit code — a check that reports failures and
- * exits 0 is a check nothing is watching.
+ * exits 0 is a check nothing is watching. It also owns the watchdog: a hung
+ * check fails, naming the last thing it reported, instead of stalling verify.
  */
 export function reporter(page) {
   let failures = 0;
+  let last = "(nothing reported yet)";
   const report = (ok, label, detail) => {
     if (!ok) failures++;
+    last = label;
     console.log(`${ok ? "  ok  " : "FAIL  "}${label}${detail ? `\n        ${detail}` : ""}`);
   };
+  setTimeout(() => {
+    console.log(`FAIL  hung: no verdict after ${HUNG_MS / 60_000} minutes\n        last reported: ${last}`);
+    process.exit(1);
+  }, HUNG_MS).unref();
   page?.on("pageerror", (e) => report(false, "uncaught page error", e.message));
   return {
     report,
