@@ -1009,17 +1009,20 @@ export const copy = {
      */
     diagram: {
       alt: "Photograph the bill and the expense fills itself in: what it cost, what it’s called, and when.",
-      /** The lines add up to `amount`, the form's figure — `copy.test.ts` checks the sum. */
+      /**
+       * A cantina tab, to go with the stand-ins below. The lines add up to
+       * `amount`, the form's figure — `lib/scan/diagram.test.ts` checks the sum.
+       */
       lines: [
-        ["Tagine", "18.00"],
-        ["Couscous", "14.50"],
-        ["Salad", "9.40"],
-        ["Mint tea", "6.30"],
+        ["Bantha steak", "18.00"],
+        ["Nerf nuggets", "14.50"],
+        ["Jawa juice", "9.40"],
+        ["Blue milk", "6.30"],
       ],
       total: "Total",
-      title: "Dinner",
+      title: "Cantina",
       amount: "48.20",
-      date: "12 Sep",
+      date: "4 May",
       /** Fills the drawing's three people when the group has fewer. */
       people: ["Chewie", "Obi-Wan", "Leia"],
     },

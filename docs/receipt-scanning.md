@@ -27,7 +27,7 @@ the photograph you already took, or [type it in](#typing-a-bill-in).
 `/g/scan` and `/quick` both have to promise something they can't show, since a
 scan's result is on another screen, so they draw it — one drawing,
 `components/scan-diagram.tsx`, shared rather than copied: a bill of four lines
-and a total — torn off at both ends, outlineless, so it reads as paper and not
+and a total — a cantina tab, like the stand-in names — — torn off at both ends, outlineless, so it reads as paper and not
 as a second card — an arrow, and the expense that comes back — a title, that
 same total, a date, and under them what the bill came to for three of the
 people splitting it, which is what the Items tab would leave.
