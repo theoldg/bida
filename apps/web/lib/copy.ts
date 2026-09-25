@@ -770,14 +770,17 @@ export const copy = {
      * stranger. Worded as their objection, with the example from their seat.
      */
     notWho: {
+      /** Then the term, in bold so it can be searched for, then the case's example. */
+      lead: "It doesn’t have to be. bida uses",
+      term: "debt simplification",
       owe: {
         ask: "That’s not who paid for me",
-        answer: "It doesn’t have to be. If you owe Ana 10 and Ana owes Ben 10, "
+        answer: ": if you owe Ana 10 and Ana owes Ben 10, "
           + "paying Ben directly saves Ana a payment. Either way, you pay what you owe.",
       },
       owed: {
         ask: "That’s not who I paid for",
-        answer: "It doesn’t have to be. If Ana owes Ben 10 and Ben owes you 10, "
+        answer: ": if Ana owes Ben 10 and Ben owes you 10, "
           + "Ana paying you directly saves Ben a payment. Either way, you get what you’re owed.",
       },
     },

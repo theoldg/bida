@@ -180,7 +180,9 @@ function NotWho({ net }: { net: number }) {
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {ask}
       </button>
-      {open ? <p>{answer}</p> : null}
+      {open ? (
+        <p>{copy.group.notWho.lead} <strong>{copy.group.notWho.term}</strong>{answer}</p>
+      ) : null}
     </div>
   );
 }
