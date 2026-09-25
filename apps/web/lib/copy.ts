@@ -765,6 +765,22 @@ export const copy = {
     allSquare: "Everyone’s square",
     /** The card a suggested payment opens: it states, it doesn’t ask. */
     recordTitle: "Record this reimbursement",
+    /**
+     * Under the suggestions, folded, for whoever the list sends to or from a
+     * stranger. Worded as their objection, with the example from their seat.
+     */
+    notWho: {
+      owe: {
+        ask: "That’s not who paid for me",
+        answer: "It doesn’t have to be. If you owe Ana 10 and Ana owes Ben 10, "
+          + "paying Ben directly saves Ana a payment. Either way, you pay what you owe.",
+      },
+      owed: {
+        ask: "That’s not who I paid for",
+        answer: "It doesn’t have to be. If Ana owes Ben 10 and Ben owes you 10, "
+          + "Ana paying you directly saves Ben a payment. Either way, you get what you’re owed.",
+      },
+    },
   },
 
   // ------------------------------------------------------------- people

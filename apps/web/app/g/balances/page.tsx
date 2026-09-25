@@ -152,6 +152,7 @@ function Balances({ data }: { data: GroupData }) {
             );
           })}
         </div>
+        {me ? <NotWho net={balances.byMember[me] ?? 0} /> : null}
       </div>
       <div className="fabclear" />
 
@@ -160,6 +161,27 @@ function Balances({ data }: { data: GroupData }) {
           nameOf={nameOf} onClose={() => setSettling(undefined)} />
       ) : null}
     </Scroll>
+  );
+}
+
+/**
+ * Why the list may send you to someone who never paid for you: the one thing
+ * about settle-up a first-timer reads as a bug. Folded, in the install page's
+ * idiom, so it costs one quiet line to those who already know; absent when you
+ * are square, since then no row is yours to object to.
+ */
+function NotWho({ net }: { net: number }) {
+  const [open, setOpen] = useState(false);
+  if (net === 0) return null;
+  const { ask, answer } = net < 0 ? copy.group.notWho.owe : copy.group.notWho.owed;
+  return (
+    <div className="installfold notwho">
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
+        {ask}
+      </button>
+      {open ? <p>{answer}</p> : null}
+    </div>
   );
 }
 

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Propose options" for a settle-up explainer. Four layouts
+  photographed, then the owner wrote the copy and asked to workshop it. The
+  fix that landed was seat, not words: put the reader where the example's
+  stranger is. Push throwaways off dev; the gate still read them.
+
 - *2026-09-25* — "Explore the demo as Luke, a first-timer who just wants
   to know why they owe X." No build asked, so none made: walked it blind and
   reported the feel. The arithmetic was fine; what read wrong was who the
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   first join, five screens numbered. Each screen was right alone; the flicker
   lived in the handovers. Walk the whole path a stranger takes, not the one
   screen the ticket names.
-
-- *2026-09-25* — Four small asks in one message, one a screenshot of
-  ragged bars. The photo showed the symptom, not the cause: each row was its
-  own grid. Edit in the menu also needed a place for save to land. A small ask
-  still has a second step; find it before calling it done.
