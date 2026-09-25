@@ -39,12 +39,21 @@ const runJob = (job) => new Promise((done) => {
   });
 });
 
-/** Run them all, print the report, and hand back whatever failed. */
-export async function runTogether(label, jobs) {
+/**
+ * Run them all, print the report, and hand back whatever failed. `limit` caps
+ * how many run at once — the rest queue, in the order given.
+ */
+export async function runTogether(label, jobs, { limit = jobs.length } = {}) {
   const started = Date.now();
-  console.log(`${label}  ${jobs.map((j) => j.name).join(" ")} — together\n`);
+  const how = limit < jobs.length ? `${limit} at a time` : "together";
+  console.log(`${label}  ${jobs.map((j) => j.name).join(" ")} — ${how}\n`);
 
-  const results = await Promise.all(jobs.map(runJob));
+  const results = new Array(jobs.length);
+  let next = 0;
+  const lane = async () => {
+    while (next < jobs.length) { const i = next++; results[i] = await runJob(jobs[i]); }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, limit) }, lane));
   const failed = results.filter((r) => !r.ok);
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 

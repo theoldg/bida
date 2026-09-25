@@ -79,15 +79,26 @@ async function tap(label, act, expect) {
   } catch (e) {
     const url = page.url().replace(base, "");
     const body = (await page.evaluate(() => document.body.innerText).catch(() => "")).slice(0, 100);
-    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}`);
+    // The stack, because a page that ends up somewhere it wasn't sent is
+    // usually a traversal that landed late.
+    const stack = await page.evaluate(() => navigation.entries().map((e, i) =>
+      `${i === navigation.currentEntry.index ? "*" : ""}${new URL(e.url).pathname}`).join(" ")).catch(() => "");
+    report(false, label, `at ${url} — ${body.replace(/\s+/g, " ")}\n        stack: ${stack}`);
   }
 }
 
 await tap("groups list loads", () => openGroupsList(page, base), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
 await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bignum");
-await tap("in-app Back to the group",
-  () => page.locator(".iconbtn[aria-label='Back']").first().click(), ".daylabel");
+// Waits for the traversal itself, not just the ledger: one later than
+// `SWALLOWED_MS` is repaired by a replace that draws `.daylabel` first, and if
+// the next tap pushes before the late traversal lands, that traversal takes
+// the page back off the screen it pushed (docs/testing.md#gotchas).
+await tap("in-app Back to the group", async () => {
+  const from = await page.evaluate(() => navigation.currentEntry.index);
+  await page.locator(".iconbtn[aria-label='Back']").first().click();
+  await page.waitForFunction((i) => navigation.currentEntry.index < i, from, { timeout: PATIENCE });
+}, ".daylabel");
 await tap("the balance card", () => page.locator("a[href^='/g/balances']").first().click(), ".bar");
 await tap("tap a suggested transfer", () => page.locator("button.card").first().click(), ".settle");
 await page.keyboard.press("Escape");
@@ -334,8 +345,10 @@ swRevision = "gooddeploy02";
 await page.evaluate(() => navigator.serviceWorker.getRegistration().then((r) => r.update()));
 
 // The new cache appears at `install`; `activate` deletes on its own schedule
-// after. So wait for the list to hold the new build *and stop changing* —
-// sampling on arrival alone would pass before the deletion happens.
+// after. So wait for the set the assertions expect — the new build, the old
+// page's, three in all — with `PATIENCE` as the ceiling. Waiting for the list
+// to stop changing was quiescence, not the answer: two samples could agree
+// before `activate`'s deletion had run, and a loaded machine failed there.
 // Asked of `fresh`, not `page`: `page` is on the list and navigates the moment
 // the build lands, and evaluating on a navigating page throws.
 const after = await (async () => {
@@ -344,9 +357,10 @@ const after = await (async () => {
   do {
     const now = (await fresh.evaluate(() => caches.keys()))
       .filter((k) => k.startsWith("bida-shell-")).sort().join(",");
-    if (now === last && now.includes(`bida-shell-${swRevision}`)) break;
     last = now;
-    await fresh.waitForTimeout(500);
+    const keys = now.split(",");
+    if (keys.length === 3 && keys.includes(oldShell) && keys.includes(`bida-shell-${swRevision}`)) break;
+    await fresh.waitForTimeout(250);
   } while (Date.now() < deadline);
   return last ? last.split(",") : [];
 })();

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Sort out the flaky browser tests… maybe timeouts? Idk."
+  Timeouts were never short; each flake was a pause or a quiet moment standing
+  in for the thing, plus nine chromiums on four cores. Ran verify five times
+  before touching anything: a flake has to be caught red before it is fixed.
+
 - *2026-09-25* — "Do a doc staleness pass." The docs each commit touches
   were current; the rot sat where no commit looks: a deferred table listing a
   shipped feature, "seven browsers", a renamed constant, a comment older than
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   change the app. One didn't survive a closer read: each device setter's
   early return decides "unchanged" its own way. Report the one that fell and
   why; forcing it would have broken the promise the list was made under.
-
-- *2026-09-25* — "scroll down a bit lower so the tip jar FAB isn't in the
-  way." The spacer was a fixed 24px; the ledger's is a fixed 88, both blind to
-  the home indicator. Sized it off the FAB's own variables. A gap with a
-  number in it usually belongs to something else's size.

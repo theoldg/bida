@@ -157,8 +157,10 @@ const { report, finish } = reporter();
   await page.bringToFront();
   await page.locator(".grouprow").first().click();
   await page.waitForURL(/\/g\?id=/);
-  await page.waitForTimeout(800);
-  const drawn = await page.locator(".skelrow").count() === 0;
+  // Waited for, not paused on: a copy that never read the group stays on
+  // skeleton rows for good, so the ceiling is the failure.
+  const drawn = await page.waitForFunction(() => !document.querySelector(".skelrow"), null,
+    { timeout: PATIENCE }).then(() => true, () => false);
   report(drawn, "a screen read before shows what it read while the database is held elsewhere",
     drawn ? undefined : "skeleton rows over a group this copy had already drawn");
 

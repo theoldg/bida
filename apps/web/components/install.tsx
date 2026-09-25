@@ -53,7 +53,12 @@ async function carryThenInstall(first?: string): Promise<void> {
  * **Harmless includes cheap**: not while the shell is still being fetched on a
  * first visit, where it would race the precache. It retries on every pathname
  * change; never reloading beats a blank first minute.
+ *
+ * **Once per document.** The effect can run again — `groups` re-emitted —
+ * before a starved page has unloaded, and a second `replace` is a second
+ * document request for the same reload.
  */
+let reloading = false;
 function KeepCarried() {
   const groups = useLive("carried", () => heldInvites(), []);
   const pathname = usePathname();
@@ -62,7 +67,8 @@ function KeepCarried() {
     keepCarried(groups);
     if (!headIsStale() || !reloadCostsNothing(pathname) || !shellIsWarm()) return;
     const typing = document.activeElement?.matches("input, textarea, [contenteditable]");
-    if (typing || document.visibilityState !== "visible") return;
+    if (typing || document.visibilityState !== "visible" || reloading) return;
+    reloading = true;
     location.replace(location.href);
   }, [groups, pathname]);
   return null;

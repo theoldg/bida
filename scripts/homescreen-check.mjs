@@ -513,8 +513,9 @@ await dryPage.addInitScript(() => {
   Object.defineProperty(navigator, "clipboard", { get: () => undefined, configurable: true });
 });
 await dryPage.goto(`${base}/join${fragment}`);
-await dryPage.waitForTimeout(600);
-report(await dryPage.getByText("Open bida in your browser").count() > 0 && crashes.length === 0,
+const escaped = await dryPage.getByText("Open bida in your browser").first()
+  .waitFor({ timeout: PATIENCE }).then(() => true, () => false);
+report(escaped && crashes.length === 0,
   "a webview with no clipboard still gets the way out, not an error page", crashes.join(" "));
 report(await dryPage.locator(".escapelink .linkbox .selectable").textContent()
   .catch(() => null) === `${base}/join${fragment}`,

@@ -167,7 +167,10 @@ report(await page.locator("dialog.scrim input, dialog.scrim textarea").count() =
   "nothing in the card is a field");
 await page.getByRole("button", { name: "Record" }).click();
 await page.waitForSelector("dialog.scrim", { state: "detached", timeout: PATIENCE });
-report(await page.locator("button.card").count() < 2, "Record settles it, so the list is shorter");
+// The list redraws off the write, after the dialog has gone — wait for it.
+const shorter = await page.waitForFunction(() => document.querySelectorAll("button.card").length < 2,
+  null, { timeout: PATIENCE }).then(() => true, () => false);
+report(shorter, "Record settles it, so the list is shorter");
 
 // ---- the transfer form, reached the way any entry is -------------------
 await page.goto(`${base}/g/entry/edit?id=${g}&kind=transfer`);
@@ -304,6 +307,9 @@ report(await menus() === 1 && page.url() === ledger,
 await closeMenu();
 
 await hold(dinnerRow(), { ms: 250 });
+// `hold`'s 250ms after the lift is the window a *wrong* navigation lands in;
+// the right one can land later than that on a loaded machine, so wait for it.
+await page.waitForURL(/\/g\/entry\?/, { timeout: PATIENCE }).catch(() => {});
 report(await menus() === 0 && /\/g\/entry\?/.test(page.url()),
   "a short touch is still a tap: no menu, and the row opens");
 await page.goto(ledger);

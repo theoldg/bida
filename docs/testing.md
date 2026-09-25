@@ -4,7 +4,7 @@
 
 ```bash
 pnpm check        # links · rules · version · typecheck · tests · export build — pre-push, ~30s
-pnpm verify       # every browser check against a real build, together, ~50s
+pnpm verify       # every browser check against a real build, ~50s (~90s on a 4-core container)
 pnpm entries      # just the three kinds of entry, end to end
 pnpm claim        # a name still being typed, and the button that acts on it
 pnpm keyboard     # what a phone keyboard does to a form: the act under it, the confirm key
@@ -26,18 +26,19 @@ pnpm bump         # the number this deploy will show — [hosting.md](hosting.md
 and `packages/core` against `apps/web/out` and runs the build only when it is
 missing or stale — so none of them needs a build step in front of it, and none
 of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
-build once and then runs them all together (`scripts/verify.mjs`): they share
+build once and then runs them together (`scripts/verify.mjs`): they share
 nothing to collide over, each serving the export on its own port 0, and the
-build is the one thing all of them starting at once would have raced on.
+build is the one thing nine of them starting at once would have raced on.
 
-**What they do share is the machine**, and nine headless browsers on a loaded
-one is how a check times out at a wait it makes in a tenth of the time alone.
-A suite whose failing check moves between runs — offline, then homescreen, then
-claim — is saying that, so run the named one on its own: a check that fails
-alone is a real failure, every time. One that only fails under the others is
-not noise either, and quieter machinery is not the fix — it is that check
-betting on how fast the machine is, and the bet is the bug (*A pause is not a
-wait*, below).
+**What they do share is the machine.** Each check wants about a core, so
+`verify` runs as many at once as the machine has cores (`VERIFY_JOBS`
+overrides), slowest first: a laptop runs all nine together, a four-core cloud
+container four at a time. Nine chromiums on four cores starve the pages past
+the app's own timers, and that is where every flake this suite has had came
+from. The cap is load-shedding, not the fix: a check that only fails under load
+is still betting on how fast the machine is, and the bet is the bug (*A pause
+is not a wait*, below). A check that fails alone is a real failure, every time,
+so rerun the named one on its own before believing anything else.
 
 `pnpm check` is the gate — nothing else stands between an edit and production,
 so the three things that gate nothing else are in it. The build, because `next
@@ -306,12 +307,16 @@ Two things worth knowing:
 - **The app has its own clock, and a starved machine can overrun it.**
   `SWALLOWED_MS` (150ms, `lib/nav.ts`) is how long a going waits before
   deciding its traversal was swallowed and putting the destination in this
-  screen's place. On a box running nine headless browsers a traversal that is
-  merely late can land after that, and the repair has already replaced: the
-  cost is **one duplicate entry, never a wrong screen** — which is why the
-  clock is allowed at all. So a check asserting where a repair *landed* is
-  safe, and one asserting the **shape of the stack** across a repair is the one
-  that can go red on a busy machine and green alone. Say which you are writing.
+  screen's place. On a starved box a traversal that is merely late can land
+  after that, and the repair has already replaced: the cost is **one duplicate
+  entry, never a wrong screen** — which is why the clock is allowed at all. So
+  a check asserting where a repair *landed* is safe, and one asserting the
+  **shape of the stack** across a repair is the one that can go red on a busy
+  machine and green alone. Say which you are writing. **Nor tap on straight
+  away**: a check, unlike a thumb, can push the next screen before the late
+  traversal lands, and then it lands on top of that push, taking the page back.
+  After a Back that traverses, wait for `navigation.currentEntry.index` to
+  drop, as `pnpm offline` does.
 - **And a check must not bet on that window either** — a pause sampling the
   "still stuck" moment breaks whenever `SWALLOWED_MS` changes. The stuck moment
   is not worth asserting anyway — in `pnpm nav` §9 `history.go` is stubbed to a no-op, so a traversal
@@ -320,13 +325,19 @@ Two things worth knowing:
   the assertion, **record it instead of sampling it**: §10 hangs a
   `MutationObserver` before the tap and reads the flag afterwards, because the
   repair is quicker than a round trip to ask.
-- **`pnpm offline` flakes under `pnpm verify` on a slow machine** (a cloud
-  container more than a laptop) and passes alone. The bet is the settle loop
-  that reads the shell caches once `gooddeploy02` installs: it stops when two
-  samples 500ms apart agree *and* the new revision is there, which is
-  quiescence rather than the answer — `activate`'s deletion may not have run,
-  leaving `flakydeploy01` in the list. Waiting for the set the check expects,
-  with `PATIENCE` as the ceiling, is the fix; nothing about the app is wrong.
+- **Two flakes are still open** (about one run in six on a four-core
+  container, each green alone). `pnpm offline` "tap a suggested transfer":
+  the page reaches balances, then is found back on the ledger; the cause is not
+  yet known (a late Back was ruled out). `pnpm entries` "Record settles it":
+  counts the cards the moment the dialog detaches, before the list redraws —
+  wait for the count instead.
+- **Don't edit `apps/web` while `pnpm verify` runs.** Each check calls
+  `ensureBuild()` itself, so the ones still queued see stale sources and
+  rebuild `out/` under the ones running: a run of red that is none of theirs.
+- **Quiet is not done.** A loop that stops when two samples agree has waited
+  for quiescence, not the answer: `pnpm offline` read the shell caches that
+  way and, on a loaded box, stopped before `activate` had deleted the old one.
+  Poll for the state the assertions expect, `PATIENCE` as the ceiling.
 - **`setOffline` is the page's network, not the browser's.** The update check
   for `sw.js` goes out anyway — so a lever `offline-check` holds up for one
   section (a forged revision, a blocked asset) is read by an install nobody
