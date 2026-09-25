@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Says paid by 2 people twice. Maybe 'payers'? What do you
+  suggest?" Counter-offered "Paid by" alone, matching the sibling eyebrow's
+  phrase style; "Just PAID BY is ok." When asked for a suggestion, give one
+  answer with its reasons, and let their word lose gracefully.
+
 - *2026-09-25* — "Propose options" for a settle-up explainer. Four layouts
   photographed, then the owner wrote the copy and asked to workshop it. The
   fix that landed was seat, not words: put the reader where the example's
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Answered no to the ask as put and pitched the redirect. That fixed the
   copied link from every screen, where /demo would only fix one. "Do your
   version." When asked to explain, say which half of the ask does the work.
-
-- *2026-09-25* — "Could we have 1 straight to 5?" A screen recording of a
-  first join, five screens numbered. Each screen was right alone; the flicker
-  lived in the handovers. Walk the whole path a stranger takes, not the one
-  screen the ticket names.

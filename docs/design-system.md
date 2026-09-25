@@ -276,9 +276,10 @@ On an expense or income a `--rule` hairline closes the figure off and one line
 under it says who — "paid by **Adaś**", the "edited ×N" chip flushed right on
 it — so the card below is only the split, whose rows already count the ways.
 Several payers keep their card rows, which carry what each put in, and the
-line just counts them. A transfer has no line: its card is nothing but who,
-and its chip stands alone. The card's eyebrows read as phrases ("Split by
-items", "Paid by 2 people"), not a label, a dot and a value.
+line just counts them, so their eyebrow is a bare "Paid by" — never the count
+twice. A transfer has no line: its card is nothing but who, and its chip
+stands alone. The card's eyebrows read as phrases ("Split by items", "Paid
+by"), not a label, a dot and a value.
 
 ## An arrow points one way, and an income says so twice
 

@@ -363,8 +363,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
         {coSponsored ? (
           <>
             <Eyebrow style={{ marginBottom: 4 }}>
-              {copy.entry.payerCount(copy.entryKind.payer[kind],
-                plural(payerList(expense).length, copy.noun.person))}
+              {copy.entryKind.payer[kind] /* the head already counts them */}
             </Eyebrow>
             {payerList(expense).map((id) => {
               const m = data.memberById.get(id);

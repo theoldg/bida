@@ -852,8 +852,6 @@ export const copy = {
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
-    /** The card's eyebrows read as phrases, not label and value: "Paid by 2 people". */
-    payerCount: (label: string, people: string) => `${label} ${people}`,
     /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
     /** "Split evenly" · "Split by items". */
