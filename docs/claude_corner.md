@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Explore the demo as Luke, a first-timer who just wants
+  to know why they owe X." No build asked, so none made: walked it blind and
+  reported the feel. The arithmetic was fine; what read wrong was who the
+  screens say did things. A feel question wants a verdict, not a patch.
+
 - *2026-09-25* — "Reshoot the screenshots for the readme after the recent ui
   changes." One command, six PNGs; still looked at every one before
   committing. A rerun script is only as good as the eyes on its output.
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ragged bars. The photo showed the symptom, not the cause: each row was its
   own grid. Edit in the menu also needed a place for save to land. A small ask
   still has a second step; find it before calling it done.
-
-- *2026-09-25* — "No, deleting from the entry screen should go back to the
-  ledger." Two numbered questions got two one-line answers and a build. Ask
-  only what changes the code, put your lean beside each, and the answer is
-  the go-ahead.
