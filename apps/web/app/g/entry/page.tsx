@@ -266,13 +266,14 @@ function EntryScreen() {
 }
 
 /**
- * The head's figure: the code small, the whole part large, the fraction at
- * half its size — so the digits that matter carry the weight. `--chars` lets
+ * The head's figure: the whole part large, the code and the fraction at half
+ * its size — so the digits that matter carry the weight. A lone symbol is
+ * `.sym`, sized up: one glyph at a code's size reads as a speck. `--chars` lets
  * the CSS shrink a sum too long for a narrow phone to its width (`.entryamt`).
  */
 function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCode }) {
   const p = moneyParts(minor, currency);
-  const code = <span className="ccy">{p.currency}</span>;
+  const code = <span className={[...p.currency].length === 1 ? "ccy sym" : "ccy"}>{p.currency}</span>;
   return (
     <span className="bignum entryamt" style={{ "--chars": p.whole.length } as CSSProperties}>
       {p.currencyFirst ? code : null}

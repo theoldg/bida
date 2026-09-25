@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Why is the euro sign so tiny? Argue with screenshots." It
+  wasn't: same size, same cap height, a third the width. Proved that, then
+  "make both bigger", then "same as the small digits". "Argue" wants
+  measurement, but the feel was right; the fix followed it anyway.
+
 - *2026-09-25* — "Go with A, remove the third line." Built, the band read
   "by ?" for a beat while the log loaded — there all along, unseen in grey
   small print, loud in an inverted block. Emphasis promotes its bugs too.
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   design to forbid it." Asked for a restore design; the converted-entry trap
   made the owner re-forbid conversion. A design that needs a special case to
   stay honest is a question about the feature under it, so name the case.
-
-- *2026-09-24* — "something more appropriate" for import. The menu borrowed
-  "merge", a glyph drawn for rows folding together. Drew share's tray with
-  the arrow turned inward. When a borrowed icon is wrong, read what the donor
-  was drawn for; a sibling glyph is often one path away.

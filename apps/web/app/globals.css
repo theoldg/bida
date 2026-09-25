@@ -923,15 +923,18 @@ a { color: inherit; text-decoration: none }
   align-items: baseline; justify-items: start }
 .entryspent .num { font-size: 13px; color: var(--muted) }
 .spentfig, .entryspent.trail { display: flex; align-items: center; gap: 8px; flex-wrap: wrap }
-/* Three sizes in one figure: the code a label, the whole part the heading, the
+/* Two sizes in one figure: the whole part the heading, the code and the
    fraction at 55% — so it is the digits that matter that carry the weight.
    44px, until the whole part is too long for the column: `--chars` is its
    length, and at .555em a character (the face's .6 less the tracking), plus
-   an em for the fraction and 40px for the code and its gap, this is the size
-   that fits. */
+   an em each for the fraction and a three-letter code and 8px for the gap,
+   this is the size that fits. */
 .entryamt { line-height: 1; font-weight: 600; letter-spacing: -.045em;
-  font-size: clamp(28px, calc((100cqi - 40px) / (var(--chars) * .555 + 1)), 44px) }
-.entryamt .ccy { font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--muted) }
+  font-size: clamp(28px, calc((100cqi - 8px) / (var(--chars) * .555 + 2)), 44px) }
+.entryamt .ccy { font-size: .55em; font-weight: 500; letter-spacing: 0; color: var(--muted) }
+/* A symbol is as tall as a code's capitals but a third as wide, so at the
+   code's size "€" reads smaller than "PLN". Sized up, it carries the same weight. */
+.entryamt .ccy.sym { font-size: .78em }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
 /* The two figures share a column edge, but a glyph's ink starts a side bearing
    in from it, and the bearing grows with the size: .06em at 600 on JetBrains
