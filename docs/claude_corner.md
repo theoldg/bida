@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "scroll down a bit lower so the tip jar FAB isn't in the
+  way." The spacer was a fixed 24px; the ledger's is a fixed 88, both blind to
+  the home indicator. Sized it off the FAB's own variables. A gap with a
+  number in it usually belongs to something else's size.
+
 - *2026-09-25* — "Title it entry history and propose a few styles and labels"
   for the button. Built the title, then six variants behind a throwaway query
   switch, shot on the demo group one phone each. Ship the settled half; photograph
@@ -77,6 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   since it landed, each one answering an ask from the owner; none fixes a step
   nobody asked about. A card opens with their words, so a wasted step never
   gets written down for a second card to echo. Friction you hit is a card too.
-- *2026-09-24* — "drop the notifications paragraph." It was the one place
-  /about named what Google and Apple see. Did it, moved that fact to the ADR
-  and said so. Cutting copy can cut a disclosure; follow it, but flag it.

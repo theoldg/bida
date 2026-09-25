@@ -1035,7 +1035,7 @@ rungs fit in the width it leaves.
   reinstall, and read the screen — splash is `background_color`, status bar is
   `theme_color`.
 - **A press tint is only as tall as the element it is on.** Padding that spaces a row of tappables belongs on the tappables, not on the bar around them: held by the parent, the touch feedback is a short band floating inside a taller bar, which reads as a tap that half landed.
-- **A FAB sits on `--fab-foot`**, never a fixed `bottom`. It grows with the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed offset that looks right in every check sits on the indicator of the iOS PWA.
+- **A FAB sits on `--fab-foot`**, never a fixed `bottom`. It grows with the home-indicator inset (34px installed on an iPhone, 0 in a browser or headless check), so a fixed offset that looks right in every check sits on the indicator of the iOS PWA. The list under it ends on `.fabclear`, which is sized off the same variable, so its last row scrolls clear of the button.
 - `100dvh`, not `100vh`, or iOS Safari's toolbar eats the foot of the screen.
 - **The shell takes `height`, not `min-height`.** With `min-height: 100dvh` the
   shell grows past the viewport, the *document* scrolls instead of `.scroll`,

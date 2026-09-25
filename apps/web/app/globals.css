@@ -1074,6 +1074,10 @@ button.tswap:active { background-image: linear-gradient(var(--press-i), var(--pr
 .fab-w { width: auto; gap: 7px; padding: 0 14px; grid-auto-flow: column;
   right: max(16px, calc(50vw - 264px));
   font-size: 12.5px; font-weight: 600; letter-spacing: -.01em }
+/* The tail of a list under a FAB: scrolls the last row up past the button's
+   top, on the same `--fab-foot` it rises by, so it clears the home indicator
+   too. */
+.fabclear { height: calc(var(--fab-foot) + var(--fab) + 16px) }
 .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--r-s);
   padding: 12px; font-weight: 600; font-size: 13.5px; letter-spacing: -.01em; width: 100%;
   /* Opacity joins the press transition because a refused Save greys for the

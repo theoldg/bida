@@ -153,7 +153,7 @@ function Balances({ data }: { data: GroupData }) {
           })}
         </div>
       </div>
-      <div style={{ height: 24 }} />
+      <div className="fabclear" />
 
       {settling && me ? (
         <SettleDialog t={settling} groupId={group.id} actor={me} base={group.baseCurrency}
