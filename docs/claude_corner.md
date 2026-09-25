@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Show them as individual pics pls, not enough pixels."
+  Contact sheets of phones shrink to thumbnails on a phone, which is where the
+  owner looks. Then B, explored, then B1 picked. Send one phone per image at
+  2x; a sheet is for me to check the spread, not for them to judge it.
+
 - *2026-09-25* — "Could the demo URL stay /demo? Explain, I'll think."
   Answered no to the ask as put and pitched the redirect. That fixed the
   copied link from every screen, where /demo would only fix one. "Do your
@@ -74,7 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   are the most important." The ledger's ladder already existed, so the list
   got a rung list and a bold lead, not a second mechanism. Their ranking set
   the order; mine only broke the tie between people and entries.
-- *2026-09-24* — "perfectly above." Measured the chevron centres in the
-  browser rather than eyeballing a screenshot: 4.5px off, then 0. Five
-  variants, one sheet; the owner took D, lived with it a minute, then
-  switched to C. A pick made from a sheet is provisional — keep it cheap to redo.

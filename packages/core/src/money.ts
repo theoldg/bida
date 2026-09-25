@@ -98,19 +98,37 @@ export function formatMinor(
   currency: CurrencyCode,
   options: FormatOptions = {},
 ): string {
+  return minorFormatter(currency, options).format(minorValue(minor, currency));
+}
+
+/**
+ * The same string as `formatMinor`, cut into `Intl`'s typed pieces — for a
+ * screen that sets the currency, the whole part and the fraction at different
+ * sizes. Joining every part's `value` gives `formatMinor` back exactly.
+ */
+export function formatMinorParts(
+  minor: number,
+  currency: CurrencyCode,
+  options: FormatOptions = {},
+): Intl.NumberFormatPart[] {
+  return minorFormatter(currency, options).formatToParts(minorValue(minor, currency));
+}
+
+// Intl takes a Number; we hand it an exactly-representable decimal built from
+// the integer, so no precision is invented along the way.
+const minorValue = (minor: number, currency: CurrencyCode) =>
+  Number(minorToDecimalString(minor, currency));
+
+function minorFormatter(currency: CurrencyCode, options: FormatOptions): Intl.NumberFormat {
   const { locale, showCurrency = true, signDisplay = "auto" } = options;
   const exp = exponentOf(currency);
-  // Intl takes a Number; we hand it an exactly-representable decimal built from
-  // the integer, so no precision is invented along the way.
-  const value = Number(minorToDecimalString(minor, currency));
-  const fmt = new Intl.NumberFormat(locale, {
+  return new Intl.NumberFormat(locale, {
     style: showCurrency ? "currency" : "decimal",
     currency: showCurrency ? currency : undefined,
     minimumFractionDigits: exp,
     maximumFractionDigits: exp,
     signDisplay: signDisplay === "always" ? "exceptZero" : signDisplay,
   });
-  return fmt.format(value);
 }
 
 /**

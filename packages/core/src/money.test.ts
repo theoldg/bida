@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertMinor, exponentOf, formatMinor, isCurrencyCode, minorToDecimalString,
+  convertMinor, exponentOf, formatMinor, formatMinorParts, isCurrencyCode, minorToDecimalString,
   parseMinor, isValidRate, sanitizeRate, sumMinor,
   formatRate, invertRate, rateFromNumber, RATE_DIGITS, RATE_SHOWN_DIGITS,
 } from "./money.js";
@@ -87,6 +87,27 @@ describe("formatMinor", () => {
   it("can force a sign, which balances need", () => {
     expect(formatMinor(4116, "EUR", { locale: "en-IE", signDisplay: "always" })).toContain("+");
     expect(formatMinor(0, "EUR", { locale: "en-IE", signDisplay: "always" })).not.toContain("+");
+  });
+});
+
+describe("formatMinorParts", () => {
+  it("joins back into formatMinor exactly, in every exponent and locale", () => {
+    for (const [minor, currency] of [[15077927, "UZS"], [1200, "JPY"], [150279, "KWD"], [-10563, "EUR"], [0, "EUR"]] as const) {
+      for (const locale of ["en-US", "pl-PL", "de-CH", "fr-FR", "ja-JP"]) {
+        for (const signDisplay of ["auto", "always"] as const) {
+          const parts = formatMinorParts(minor, currency, { locale, signDisplay });
+          expect(parts.map((p) => p.value).join("")).toBe(formatMinor(minor, currency, { locale, signDisplay }));
+        }
+      }
+    }
+  });
+
+  it("types the fraction, so a screen can set it apart", () => {
+    const parts = formatMinorParts(15077927, "UZS", { locale: "en-US" });
+    expect(parts.find((p) => p.type === "fraction")?.value).toBe("27");
+    expect(parts.find((p) => p.type === "currency")?.value).toBe("UZS");
+    expect(formatMinorParts(1200, "JPY", { locale: "en-US" }).some((p) => p.type === "fraction")).toBe(false);
+    expect(formatMinorParts(150279, "KWD", { locale: "en-US" }).find((p) => p.type === "fraction")?.value).toBe("279");
   });
 });
 

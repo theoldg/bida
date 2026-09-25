@@ -1,5 +1,5 @@
 import {
-  formatMinor, formatRate, parseMinor, startOfLocalDay,
+  formatMinor, formatMinorParts, formatRate, parseMinor, startOfLocalDay,
   type CurrencyCode, type PayerValidation, type Rate, type SplitValidation,
 } from "@bida/core";
 import { copy, type Noun, type Voice } from "./copy";
@@ -37,6 +37,28 @@ export function rateText(rate: Rate, digits?: number): string {
 
 export function money(minor: number, currency: CurrencyCode, signed = false): string {
   return formatMinor(minor, currency, { signDisplay: signed ? "always" : "auto" });
+}
+
+/**
+ * `money()` in three pieces, for a figure set at three sizes (`/g/entry`'s
+ * head): the currency, the whole part with its sign and grouping, and the
+ * fraction with its decimal mark ("" where the currency has none). The spaces
+ * between are dropped — the screen spaces them — and `currencyFirst` keeps the
+ * code on the side the reader's locale puts it ("UZS 150,779.27" but
+ * "150 779,27 UZS").
+ */
+export interface MoneyParts { currency: string; whole: string; fraction: string; currencyFirst: boolean }
+
+export function moneyParts(minor: number, currency: CurrencyCode, locale?: string): MoneyParts {
+  const out: MoneyParts = { currency: "", whole: "", fraction: "", currencyFirst: false };
+  for (const { type, value } of formatMinorParts(minor, currency, { locale })) {
+    if (type === "currency") {
+      out.currency = value;
+      out.currencyFirst = out.whole === "";
+    } else if (type === "decimal" || type === "fraction") out.fraction += value;
+    else if (type !== "literal") out.whole += value;
+  }
+  return out;
 }
 
 /**

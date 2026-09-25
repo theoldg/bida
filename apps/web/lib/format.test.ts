@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { minorToDecimalString, parseMinor, validateSplit } from "@bida/core";
 import {
-  bare, byWhen, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
+  bare, byWhen, moneyParts, clockTime, countText, dayLabel, distinctInitials, graphemes, groupDigits,
   initials, priced, rateText, splitFooter, stamp, usd, whenLabel,
 } from "./format";
 
@@ -329,5 +329,36 @@ describe("byWhen", () => {
       { id: "b", occurredAt: day(4, 9), createdAt: day(4, 10) },
     ];
     expect(ids([...rows].sort(byWhen))).toEqual(["b", "a"]);
+  });
+});
+
+describe("moneyParts", () => {
+  it("cuts the figure into code, whole part and fraction", () => {
+    expect(moneyParts(15077927, "UZS", "en-US"))
+      .toEqual({ currency: "UZS", whole: "150,779", fraction: ".27", currencyFirst: true });
+  });
+
+  it("keeps the code where the locale puts it, and its marks", () => {
+    expect(moneyParts(15077927, "UZS", "pl-PL"))
+      .toEqual({ currency: "UZS", whole: "150\u00a0779", fraction: ",27", currencyFirst: false });
+  });
+
+  it("has no fraction where the currency has none, and three where it has three", () => {
+    expect(moneyParts(1200, "JPY", "en-US")).toMatchObject({ whole: "1,200", fraction: "" });
+    expect(moneyParts(150279, "KWD", "en-US").fraction).toBe(".279");
+  });
+
+  it("carries a sign on the whole part", () => {
+    expect(moneyParts(-10563, "EUR", "en-IE")).toMatchObject({ currency: "€", whole: "-105", fraction: ".63" });
+  });
+
+  it("loses nothing but spacing", () => {
+    const strip = (s: string) => s.replace(/[\s\u00a0\u202f]/g, "");
+    for (const locale of ["en-US", "pl-PL", "de-CH", "fr-FR"]) {
+      const p = moneyParts(1248000000, "UZS", locale);
+      const joined = p.currencyFirst ? p.currency + p.whole + p.fraction : p.whole + p.fraction + p.currency;
+      expect(strip(joined)).toBe(strip(new Intl.NumberFormat(locale, {
+        style: "currency", currency: "UZS", minimumFractionDigits: 2 }).format(12480000)));
+    }
   });
 });

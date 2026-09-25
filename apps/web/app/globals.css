@@ -911,10 +911,25 @@ a { color: inherit; text-decoration: none }
 .entrytitle { letter-spacing: -.03em; line-height: 1.3; padding-top: 4px;
   overflow-wrap: anywhere; text-wrap: pretty }
 /* The sum as spent sits beside the one that moves the balance, on its baseline,
-   and wraps under it when it must. Both hang off the title's left margin. */
-.entryfig { display: flex; align-items: baseline; gap: 9px; margin-top: 7px; flex-wrap: wrap }
-.entryfig .bignum { font-size: 32px }
+   and wraps under it when it must. Both hang off the title's left margin. An
+   expense's figure is ruled off from the line saying who and how many. */
+.entryhead { container-type: inline-size }
+.entryfig { display: flex; align-items: baseline; gap: 9px; margin-top: 10px; flex-wrap: wrap }
+.entryfig.ruled { border-bottom: 1px solid var(--rule); padding-bottom: 10px }
 .entryfig .num { font-size: 13px; color: var(--muted) }
+/* Three sizes in one figure: the code a label, the whole part the heading, the
+   fraction at 55% — so it is the digits that matter that carry the weight.
+   44px, until the whole part is too long for the column: `--chars` is its
+   length, and at .555em a character (the face's .6 less the tracking), plus
+   an em for the fraction and 40px for the code and its gap, this is the size
+   that fits. */
+.entryamt { display: inline-flex; align-items: baseline; gap: 8px; line-height: 1; font-weight: 600;
+  letter-spacing: -.045em;
+  font-size: clamp(28px, calc((100cqi - 40px) / (var(--chars) * .555 + 1)), 44px) }
+.entryamt .ccy { font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--muted) }
+.entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
+.entryby { margin-top: 10px; font-size: 13px; color: var(--muted) }
+.entryby b { color: var(--ink); font-weight: 600 }
 .entrychips { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }

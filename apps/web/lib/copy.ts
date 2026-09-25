@@ -834,6 +834,8 @@ export const copy = {
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
     payerCount: (label: string, people: string) => `${label} · ${people}`,
+    /** The head's line under the figure: "paid by **Adaś** · split 2 ways". */
+    byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
     /** "Split · evenly" · "Split · by items" · "To · as parts". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,

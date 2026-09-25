@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   isCoSponsored, liveReplacement, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
-  type Expense, type Group, type Op, type Settlement,
+  type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "@/components/bits";
 import { FitTitle } from "@/components/fit-line";
@@ -20,15 +20,15 @@ import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
-import { money, plural, rateText, whenLabel } from "@/lib/format";
+import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
 import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
  * The title's type sizes, largest first, ending at the size it wraps at: a
- * one-word title is a heading, a sentence a paragraph. All below the amount's
- * 32px — the money leads.
+ * one-word title is a heading, a sentence a paragraph. All below the amount,
+ * which never drops under 28px — the money leads.
  */
 const ENTRY_TITLE_SIZES = [26, 22, 17] as const;
 
@@ -189,18 +189,21 @@ function EntryScreen() {
         />
 
         <Scroll>
-          <div className="pad" style={{ paddingTop: 2 }}>
+          <div className="pad entryhead" style={{ paddingTop: 2 }}>
             {/* Nothing when there is no title: the bar already says "Expense". A
                 transfer has none — its words are the note. */}
             {title ? (
               <FitTitle className="entrytitle selectable" text={title} sizes={ENTRY_TITLE_SIZES} />
             ) : null}
-            <div className="entryfig">
-              <span className="bignum">{money(entry.baseAmountMinor, group.baseCurrency)}</span>
+            <div className={`entryfig${expense ? " ruled" : ""}`}>
+              <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
               {foreign ? (
                 <span className="num">{money(entry.amountMinor, entry.currency)}</span>
               ) : null}
             </div>
+            {/* Who and how many, under the rule. A transfer's card is nothing
+                but who, so it has no line here. */}
+            {expense && kind !== "transfer" ? <EntryBy expense={expense} kind={kind} data={data} /> : null}
             <div className="entrychips">
               {foreign ? <span className="chip">{copy.entry.rate(rateText(entry.rateToBase))}</span> : null}
               {edits > 0 ? (
@@ -252,6 +255,42 @@ function EntryScreen() {
   );
 }
 
+/**
+ * The head's figure: the code small, the whole part large, the fraction at
+ * half its size — so the digits that matter carry the weight. `--chars` lets
+ * the CSS shrink a sum too long for a narrow phone to its width (`.entryamt`).
+ */
+function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCode }) {
+  const p = moneyParts(minor, currency);
+  const code = <span className="ccy">{p.currency}</span>;
+  return (
+    <span className="bignum entryamt" style={{ "--chars": p.whole.length } as CSSProperties}>
+      {p.currencyFirst ? code : null}
+      <span>{p.whole}<span className="frac">{p.fraction}</span></span>
+      {p.currencyFirst ? null : code}
+    </span>
+  );
+}
+
+/**
+ * "paid by Adaś · split 2 ways". One payer is named here and nowhere else on
+ * the screen; several keep their card rows, which carry what each put in, so
+ * this line only counts them.
+ */
+function EntryBy({ expense, kind, data }: { expense: Expense; kind: "expense" | "income"; data: GroupData }) {
+  const payers = payerList(expense);
+  const who = isCoSponsored(expense)
+    ? plural(payers.length, copy.noun.person)
+    : data.memberById.get(expense.paidBy)?.name ?? copy.someone;
+  const ways = plural(splitParticipants(expense.split).length, copy.noun.way);
+  return (
+    <p className="entryby">
+      {copy.entry.byLead[kind]} <b>{who}</b>
+      {" · "}{(kind === "income" ? copy.group.sharedWays : copy.group.splitWays)(ways)}
+    </p>
+  );
+}
+
 /** Who put the money in, and how it was shared out. Same card either way. */
 function ExpenseDetail({ expense, kind, group, data }: {
   expense: Expense; kind: EntryKind; group: Group; data: GroupData;
@@ -260,7 +299,6 @@ function ExpenseDetail({ expense, kind, group, data }: {
   // who-had-what bar, which the expense's own copy of the bill obeys too
   // (`billLabel`).
   const english = useBillEnglish();
-  const payer = data.memberById.get(expense.paidBy);
   const coSponsored = isCoSponsored(expense);
   // What each payer put in, in the base currency — the figure that actually
   // moves their balance, so it is the one worth showing next to their name.
@@ -308,13 +346,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
                   </>} />
               );
             })}
+            <div className="hairline" />
           </>
-        ) : (
-          <KV k={copy.entryKind.payer[kind]} v={<span style={{ fontFamily: "var(--f-body)", fontWeight: 600 }}>
-            {payer?.name ?? copy.someone}
-          </span>} />
-        )}
-        <div className="hairline" />
+        ) : null /* one payer is named in the head (`EntryBy`) */}
         <Eyebrow style={{ marginBottom: 4 }}>
           {copy.entry.splitMode(copy.entryKind.split[kind],
             copy.split.mode[expense.split.mode].toLowerCase())}

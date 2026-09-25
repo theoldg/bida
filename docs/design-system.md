@@ -254,9 +254,21 @@ the kind and the date, both bounded. The title's size is measured rather than
 set (`FitTitle`, on `lib/fit.ts` like `.rmeta`'s wording ladder): it takes the
 largest step that says the words in one line and falls to the wrapping size
 when none does, so "Dinner" is a heading and a sentence is a paragraph. Nothing
-on that ladder reaches the amount's 32px — the money still leads, and it keeps
+on that ladder reaches the amount — the money still leads, and it keeps
 the same left margin as the title, since a figure pushed to the other edge
 strands the short ones.
+
+The figure is set at three sizes (`.entryamt`, cut by `moneyParts`): the
+currency code a 14px muted label, the whole part 44px, the fraction at 55% in
+`--muted` — "UZS 150,779.27" read as one weight made the code and the cents as
+loud as the thousands. The code stays on whichever side the reader's locale
+puts it. A sum too long for the column shrinks to fit it (a container-query
+size off the whole part's length, never under 28px) rather than wrapping
+mid-number. On an expense or income a `--rule` hairline closes the figure off
+and one line under it says who and how many — "paid by **Adaś** · split 2
+ways" — so the card below is only the split; several payers keep their card
+rows, which carry what each put in, and the line just counts them. A transfer
+has no line: its card is nothing but who.
 
 ## An arrow points one way, and an income says so twice
 
