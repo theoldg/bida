@@ -775,13 +775,13 @@ export const copy = {
       term: "debt simplification",
       owe: {
         ask: "That’s not who paid for me",
-        answer: ": if you owe Ana 10 and Ana owes Ben 10, "
-          + "paying Ben directly saves Ana a payment. Either way, you pay what you owe.",
+        answer: ": if you owe Chewie 10 and Chewie owes Leia 10, "
+          + "paying Leia directly saves Chewie a payment. Either way, you pay what you owe.",
       },
       owed: {
         ask: "That’s not who I paid for",
-        answer: ": if Ana owes Ben 10 and Ben owes you 10, "
-          + "Ana paying you directly saves Ben a payment. Either way, you get what you’re owed.",
+        answer: ": if Obi-Wan owes Leia 10 and Leia owes you 10, "
+          + "Obi-Wan paying you directly saves Leia a payment. Either way, you get what you’re owed.",
       },
     },
   },
@@ -1021,7 +1021,7 @@ export const copy = {
       amount: "48.20",
       date: "12 Sep",
       /** Fills the drawing's three people when the group has fewer. */
-      people: ["Ana", "Ben", "Cleo"],
+      people: ["Chewie", "Obi-Wan", "Leia"],
     },
     /** Under the drawing: the form comes back filled, and the lines are a way to split. */
     lede: "Take a photo to fill in the expense. Split it evenly, or line by line.",
