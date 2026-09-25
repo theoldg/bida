@@ -259,6 +259,30 @@ export function emptyGroupState(): GroupState {
 }
 
 /** Entities that are alive: not tombstoned. */
+/**
+ * A state from row arrays, keyed by id. The one builder for readers holding
+ * rows rather than a log: a hand-built state missing a field is wrong in a way
+ * nothing catches. Unpriced, tombstones kept — filter and reprice outside.
+ */
+export function stateFromRows(rows: {
+  group: Group | undefined;
+  members?: readonly Member[];
+  expenses?: readonly Expense[];
+  settlements?: readonly Settlement[];
+  rates?: readonly ExchangeRate[];
+}): GroupState {
+  const byId = <T extends { id: string }>(list: readonly T[] = []) =>
+    Object.fromEntries(list.map((row) => [row.id, row]));
+  return {
+    ...emptyGroupState(),
+    group: rows.group,
+    members: byId(rows.members),
+    expenses: byId(rows.expenses),
+    settlements: byId(rows.settlements),
+    rates: byId(rows.rates),
+  };
+}
+
 export function alive<T extends { deletedAt?: number | null }>(
   record: Record<string, T>,
 ): T[] {
