@@ -1,8 +1,8 @@
 import {
-  at, checkStated, ImportError,
+  at, checkMemberNames, checkStated, ImportError, isRealDay, oneCurrency, strictMinor,
   type ImportPlan, type PlannedEntry, type PlannedTransfer,
 } from "./import.js";
-import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
+import { exponentOf, minorToDecimalString, type CurrencyCode } from "./money.js";
 
 /**
  * A tricount read into the same **plan** `import.ts` returns from a CSV.
@@ -231,23 +231,9 @@ function readEntries(registry: unknown): RawEntry[] {
  * aren't given, so a mixed tricount is refused like a mixed CSV.
  */
 function readCurrency(raw: readonly RawEntry[]): CurrencyCode {
-  const found = new Set<string>();
-  for (const entry of raw) {
-    for (const code of [entry.currency, ...entry.allocations.map((a) => a.currency)]) {
-      if (code === "") continue;
-      const upper = code.toUpperCase();
-      if (!isCurrencyCode(upper)) {
-        throw new ImportError("unknown-currency", `${upper} is not a currency`, undefined, upper);
-      }
-      found.add(upper);
-    }
-  }
-  const codes = [...found].sort();
-  if (codes.length === 0) throw new ImportError("unknown-currency", "nothing states a currency");
-  if (codes.length > 1) {
-    throw new ImportError("mixed-currency", `mixes ${codes.join(",")}`, undefined, codes.join(", "));
-  }
-  return codes[0]!;
+  return oneCurrency(raw.flatMap((entry) =>
+    [entry.currency, ...entry.allocations.map((a) => a.currency)]
+      .map((code) => ({ code: code.toUpperCase() }))));
 }
 
 /**
@@ -266,24 +252,7 @@ function readMembers(registry: unknown, raw: readonly RawEntry[]): string[] {
     }
   }
 
-  if (names.length === 0) throw new ImportError("no-members", "no memberships");
-  if (names.some((n) => n === "")) {
-    throw new ImportError("blank-member", "a membership has no name");
-  }
-  // Refused as in a CSV header (`readHeader`): `__proto__` vanishes, and two
-  // people of one name share one balance.
-  const reserved = names.find((n) => n === "__proto__");
-  if (reserved !== undefined) {
-    throw new ImportError("bad-member-name", `a member is called ${reserved}`, undefined, reserved);
-  }
-  const seen = new Set<string>();
-  for (const name of names) {
-    const key = name.toLocaleLowerCase();
-    if (seen.has(key)) {
-      throw new ImportError("duplicate-member", `two members called ${name}`, undefined, name);
-    }
-    seen.add(key);
-  }
+  checkMemberNames(names);
   return names;
 }
 
@@ -294,21 +263,11 @@ function named(entry: RawEntry): string {
 
 /** One figure. Absent is zero; anything else unreadable refuses the tricount. */
 function amount(entry: RawEntry, value: string, currency: CurrencyCode, exp: number): number {
-  if (value === "") return 0;
-  let minor: number;
-  try {
-    minor = parseMinor(value, currency);
-  } catch {
-    throw new ImportError("tricount-amount", `entry ${entry.line}: ${value} is not an amount`,
-      undefined, `${named(entry)} — ${value}`);
-  }
-  // As in `import.ts`: extra decimals mean the wrong currency, and rounding hides it.
-  const frac = value.replace(/\s/g, "").replace(",", ".").split(".")[1] ?? "";
-  if (frac.length > exp) {
-    throw new ImportError("tricount-amount", `entry ${entry.line}: ${value} is finer than ${currency}`,
-      undefined, `${named(entry)} — ${value} in ${currency}`);
-  }
-  return minor;
+  return strictMinor(value, currency, exp, (why) => why === "unreadable"
+    ? new ImportError("tricount-amount", `entry ${entry.line}: ${value} is not an amount`,
+      undefined, `${named(entry)} — ${value}`)
+    : new ImportError("tricount-amount", `entry ${entry.line}: ${value} is finer than ${currency}`,
+      undefined, `${named(entry)} — ${value} in ${currency}`));
 }
 
 /**
@@ -322,10 +281,4 @@ function readDay(entry: RawEntry): string {
       undefined, `${named(entry)} — ${entry.date || "no date"}`);
   }
   return head;
-}
-
-/** `2026-02-30` parses as a date and is not one. */
-function isRealDay(day: string): boolean {
-  const d = new Date(`${day}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === day;
 }

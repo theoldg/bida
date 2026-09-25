@@ -459,7 +459,7 @@ Five pieces, each in the layer that owns it:
 
 | | |
 | --- | --- |
-| `core/import.ts` | Rows to a plan, and every refusal. Pure, and takes `dayToTimestamp` the way `export.ts` takes `formatDay`. `checkStated` is the plan-against-stated-balances check, shared with the reader below |
+| `core/import.ts` | Rows to a plan, and every refusal. Pure, and takes `dayToTimestamp` the way `export.ts` takes `formatDay`. `checkStated` (the plan against the stated balances) and the member, currency, figure and day checks are shared with the reader below |
 | `core/tricount.ts` | A tricount's JSON to the same plan ([data-model.md](data-model.md#reading-a-tricount-back)). Pure for the same reason, and it fetches nothing |
 | `lib/import/csv.ts` | The bytes: an RFC 4180 state machine, the size guard, and the group name off the filename. A dialect is a parsing decision about somebody else's file, not domain arithmetic, so it is not in core — and it is not a dependency, since a library that auto-detects the delimiter is working against a reader whose whole rule is to refuse rather than guess. `parseCsv` is one swappable function if that changes |
 | `lib/import/tricount.ts` | The link: the key out of whatever was pasted, a throwaway RSA public key the handshake wants, and one POST to `/api/tricount`. The private half is dropped where it is made, since nothing in that protocol signs anything |
