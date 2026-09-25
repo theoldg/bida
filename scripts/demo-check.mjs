@@ -187,6 +187,27 @@ await page.waitForFunction(() => !document.querySelector(".skelrow"), null, { ti
 report(await page.getByText("Passage to Alderaan").count() === 0,
   "clearing takes it off the phone, not merely off the list");
 
+// ---- a copied address is a door too ------------------------------------
+// What a friend gets sent is the address bar, not `/demo`, and from any screen.
+// On a phone that never had the demo it must lay one down rather than say "bad
+// link" (`BadLink`) — and land in the ledger, `/demo`'s own way out, whose
+// skeleton is `.rows .row` too, hence the real rows back on `/g`.
+const friend = await (await newPhone(browser)).newPage();
+await friend.goto(`${base}/g/balances?id=demodemodemo`);
+await friend.waitForFunction(
+  () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
+  null, { timeout: PATIENCE },
+);
+report(await friend.locator(".rows .row").count() === rows && (await keysHeld(friend)).length === 0,
+  "a demo address copied off another phone opens the demo, still with no key");
+await friend.close();
+// Not on the phone that cleared it, though: the screen draws "no group" there
+// before the menu has left, and re-seeding on that would undo the clear.
+await page.goto(`${base}/g?id=demodemodemo`);
+await page.waitForTimeout(1500);
+report(new URL(page.url()).pathname === "/g" && await page.getByText("Passage to Alderaan").count() === 0,
+  "while the phone that cleared it is not handed it back unasked", page.url());
+
 // Deterministic seed, so the address is also the reset: reopening builds the
 // story as shipped, rather than the one that was played with or a second copy
 // beside it. This is what the clear dialog promises, in as many words.

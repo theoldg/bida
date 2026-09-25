@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Component, Suspense, useRef, type ErrorInfo, type ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Component, Suspense, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
+import { wantsDemo } from "../lib/db/commands";
+import { route } from "../lib/group-link";
 import { useBackButton } from "../lib/back-button";
 import { retryLive, useStalled } from "../lib/db/live";
 import { useScrollMemory } from "../lib/scroll-memory";
@@ -211,8 +214,31 @@ export function Blank({ title = " ", back = true }: { title?: string; back?: Bac
  * A link naming a group this phone doesn't have — every `/g` screen needs one,
  * or a stale bookmark leaves just a back arrow. Offers the group list; no
  * title, since the heading says what's wrong.
+ *
+ * **Except the demo's id, which goes to `/demo`.** An address copied off
+ * somebody's demo names a group the next phone hasn't got and can't join —
+ * the demo has no key — but its id is a constant, so it can only be asking
+ * for the demo. `/demo` lays one down and comes back to the ledger, from
+ * whichever `/g` screen was copied: a first visit is too early to learn that
+ * only one address works. `wantsDemo` says when, and why not on the screen's
+ * own read.
  */
 export function BadLink() {
+  const router = useRouter();
+  const demo = isDemo(useSearchParams().get("id") ?? undefined);
+  // Undecided while the read runs, so neither screen flashes past.
+  const [going, setGoing] = useState<boolean>();
+  useEffect(() => {
+    if (!demo) return;
+    let live = true;
+    void wantsDemo().then((wants) => {
+      if (!live) return;
+      setGoing(wants);
+      if (wants) router.replace(route.demo());
+    }, () => live && setGoing(false));
+    return () => { live = false; };
+  }, [demo, router]);
+  if (demo && going !== false) return <Blank back={route.groups()} />;
   return (
     <Screen><Body>
         <TopBar title=" " back={"/"} />

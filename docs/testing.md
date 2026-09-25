@@ -489,7 +489,9 @@ state, that the balances do not cancel, that the mark is at its head, that the
 cantina tab opens onto the bill it was itemised from, that **Copy invite link**
 refuses out loud, and that clearing a demo somebody has added an entry to
 takes the whole group off the phone while the address lays the shipped story
-down again — entry for entry, and without the one that was added. The dialog
+down again — entry for entry, and without the one that was added. A demo
+address copied from any `/g` screen opens the demo on a second, fresh phone
+rather than "bad link", and does not re-seed it on the phone that cleared it. The dialog
 that offers it has to name this server's own `/demo`, host and all: the host is
 the browser's to supply, so an unwired one would read as a bare path.
 

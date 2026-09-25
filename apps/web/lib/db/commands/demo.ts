@@ -59,6 +59,19 @@ export async function openDemo(now = Date.now()): Promise<Id> {
 }
 
 /**
+ * Whether a demo address reaching this phone should go to `/demo`: it has no
+ * demo, and never cleared one. **Read here, not off the screen's live read**,
+ * which answers with the last value it had while the new one runs — "no group"
+ * on the way back from `/demo`, and a loop. And not after a clear, whose
+ * `eraseGroupLocally` leaves the ledger drawing no group before the menu has
+ * navigated away; that phone has been told the address already.
+ */
+export async function wantsDemo(): Promise<boolean> {
+  if (await db().groups.get(DEMO_GROUP_ID)) return false;
+  return !(await getDevice()).deletedGroups?.includes(DEMO_GROUP_ID);
+}
+
+/**
  * Take the demo off the phone: its ops, its folded tables and the device's
  * memory of it. **`eraseGroupLocally`, never `forgetGroup`** — forgetting only
  * hides, leaving it on disk with no link to bring it back. Reset is this then

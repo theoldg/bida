@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Could the demo URL stay /demo? Explain, I'll think."
+  Answered no to the ask as put and pitched the redirect. That fixed the
+  copied link from every screen, where /demo would only fix one. "Do your
+  version." When asked to explain, say which half of the ask does the work.
+
 - *2026-09-25* — "Could we have 1 straight to 5?" A screen recording of a
   first join, five screens numbered. Each screen was right alone; the flicker
   lived in the handovers. Walk the whole path a stranger takes, not the one
@@ -73,6 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   browser rather than eyeballing a screenshot: 4.5px off, then 0. Five
   variants, one sheet; the owner took D, lived with it a minute, then
   switched to C. A pick made from a sheet is provisional — keep it cheap to redo.
-- *2026-09-24* — "the margin under the banner is slightly too big." The
-  gap under the card was the smaller one; the one under the bar, above it,
-  was the big one. Measured both and asked which before moving either.

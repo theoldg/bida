@@ -19,7 +19,7 @@ export {
   addMember, renameMember, removeMember, healGroup, markEditsSeen, type NewGroupInput,
 } from "./groups";
 export { importGroup, type ImportGroupInput } from "./import";
-export { openDemo, clearDemo } from "./demo";
+export { openDemo, clearDemo, wantsDemo } from "./demo";
 export { setRate, clearRate } from "./rates";
 export {
   addExpense, editExpense, deleteExpense, type ExpenseInput,
