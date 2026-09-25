@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Reorder the demo, I don't care about the chronology."
+  The ledger sorts by date, so the order is the dates: re-dated the seed.
+  Dates don't move the seed's stamp, so the ops were reordered too, or old
+  phones would keep the old tour. Check what a cosmetic ask invalidates.
+
 - *2026-09-25* — "Says paid by 2 people twice. Maybe 'payers'? What do you
   suggest?" Counter-offered "Paid by" alone, matching the sibling eyebrow's
   phrase style; "Just PAID BY is ok." When asked for a suggestion, give one
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Contact sheets of phones shrink to thumbnails on a phone, which is where the
   owner looks. Then B, explored, then B1 picked. Send one phone per image at
   2x; a sheet is for me to check the spread, not for them to judge it.
-
-- *2026-09-25* — "Could the demo URL stay /demo? Explain, I'll think."
-  Answered no to the ask as put and pitched the redirect. That fixed the
-  copied link from every screen, where /demo would only fix one. "Do your
-  version." When asked to explain, say which half of the ask does the work.

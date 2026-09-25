@@ -107,7 +107,9 @@ function billWeights(ids: Record<DemoName, Id>): Record<Id, number> {
  * The whole evening as drafts, deterministic in `cast` and `now`. Chosen so
  * every screen has something: two payers with an itemised bill, local coin, a
  * partial split, an income, a transfer, an edit and a delete. Balances don't
- * cancel, so settle-up has transfers to propose.
+ * cancel, so settle-up has transfers to propose. Dates follow the tour, not
+ * the story: the ledger is newest first, so the cantina is the latest day
+ * and the passage the day before, as the features a visitor sees first.
  */
 export function demoOps(cast: DemoCast, now: number): OpDraft[] {
   const { ids } = cast;
@@ -162,46 +164,6 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       },
     },
 
-    // Fronted by somebody else, leaving Han and Chewie (being paid) out.
-    {
-      entity: "expense",
-      entityId: ENTRY.passage,
-      kind: "create",
-      patch: {
-        description: "Passage to Alderaan",
-        occurredAt: dayBefore(now, 8),
-        dateOnly: true,
-        createdAt: dayBefore(now, 8),
-        ...inCredits(1_500_000),
-        paidBy: ids.Ben,
-        split: equal([ids.Ben, ids.Luke]),
-      },
-    },
-    // Two payers (`paidBy` is the larger) and itemised, so each person's split is
-    // what they ordered (ADR-0016).
-    {
-      entity: "expense",
-      entityId: ENTRY.cantina,
-      kind: "create",
-      patch: {
-        description: "Chalmun’s cantina",
-        occurredAt: dayBefore(now, 7),
-        dateOnly: true,
-        createdAt: dayBefore(now, 7),
-        ...inCredits(8_100),
-        paidBy: ids.Luke,
-        payers: { [ids.Luke]: 5_000, [ids.Han]: 3_100 },
-        split: { mode: "receipt", weights: billWeights(ids) },
-        receiptItems: DEMO_BILL.map(({ label, labelEn, minor, quantity }) => ({
-          label,
-          labelEn,
-          amount: minorToDecimalString(minor, DEMO_CURRENCY),
-          ...(quantity ? { quantity } : {}),
-        })),
-        receiptInvolved: all,
-        receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
-      },
-    },
     // Priced by the registry above.
     {
       entity: "expense",
@@ -240,9 +202,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       patch: {
         kind: "income",
         description: "Sold the landspeeder",
-        occurredAt: dayBefore(now, 3),
+        occurredAt: dayBefore(now, 4),
         dateOnly: true,
-        createdAt: dayBefore(now, 3),
+        createdAt: dayBefore(now, 4),
         ...inCredits(200_000),
         paidBy: ids.Luke,
         split: equal(all),
@@ -257,11 +219,51 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
         fromMember: ids.Luke,
         toMember: ids.Han,
         ...inCredits(200_000),
+        occurredAt: dayBefore(now, 3),
+        dateOnly: true,
+        createdAt: dayBefore(now, 3),
+        note: "Two thousand now, at the booth",
+        deletedAt: null,
+      },
+    },
+    // Fronted by somebody else, leaving Han and Chewie (being paid) out.
+    {
+      entity: "expense",
+      entityId: ENTRY.passage,
+      kind: "create",
+      patch: {
+        description: "Passage to Alderaan",
         occurredAt: dayBefore(now, 2),
         dateOnly: true,
         createdAt: dayBefore(now, 2),
-        note: "Two thousand now, at the booth",
-        deletedAt: null,
+        ...inCredits(1_500_000),
+        paidBy: ids.Ben,
+        split: equal([ids.Ben, ids.Luke]),
+      },
+    },
+    // Two payers (`paidBy` is the larger) and itemised, so each person's split is
+    // what they ordered (ADR-0016).
+    {
+      entity: "expense",
+      entityId: ENTRY.cantina,
+      kind: "create",
+      patch: {
+        description: "Chalmun’s cantina",
+        occurredAt: dayBefore(now, 1),
+        dateOnly: true,
+        createdAt: dayBefore(now, 1),
+        ...inCredits(8_100),
+        paidBy: ids.Luke,
+        payers: { [ids.Luke]: 5_000, [ids.Han]: 3_100 },
+        split: { mode: "receipt", weights: billWeights(ids) },
+        receiptItems: DEMO_BILL.map(({ label, labelEn, minor, quantity }) => ({
+          label,
+          labelEn,
+          amount: minorToDecimalString(minor, DEMO_CURRENCY),
+          ...(quantity ? { quantity } : {}),
+        })),
+        receiptInvolved: all,
+        receiptAssignments: DEMO_BILL.map(({ who }) => who.map((name) => ids[name])),
       },
     },
 
@@ -296,9 +298,9 @@ export function demoOps(cast: DemoCast, now: number): OpDraft[] {
       kind: "update",
       patch: {
         description: "Passage to Alderaan, no questions",
-        occurredAt: dayBefore(now, 8),
+        occurredAt: dayBefore(now, 2),
         dateOnly: true,
-        createdAt: dayBefore(now, 8),
+        createdAt: dayBefore(now, 2),
         ...inCredits(1_700_000),
         paidBy: ids.Ben,
         split: equal([ids.Ben, ids.Luke]),
