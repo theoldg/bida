@@ -1,10 +1,10 @@
 import {
-  canonicalSplit, colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId, primaryPayer,
-  type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer,
+  colorSeedFor, memberIdFor, newGroupId, newGroupSecret, newId,
+  type CurrencyCode, type Id, type ImportPlan, type OpDraft, type PlannedEntry, type PlannedTransfer,
 } from "@bida/core";
 import { appendOps } from "./append";
+import { expenseCreatePatch, settlementCreatePatch } from "./entries";
 import { saveGroupKey } from "./groups";
-import { only } from "./patch";
 import { getDevice, setMe } from "../device";
 
 /**
@@ -86,8 +86,9 @@ export async function importGroup(
 }
 
 /**
- * One row as an expense op. `rateToBase` is `"1"`: the file is single-currency
- * in the group's base (mixed files are refused upstream).
+ * One row as an expense op, built by the same `create` patch the form writes.
+ * `rateToBase` is `"1"`: the file is single-currency in the group's base
+ * (mixed files are refused upstream), so there is no registry to consult.
  *
  * The split is `exact` — the file hands over amounts, and `equal` would be a
  * claim about the original a re-export could contradict by a cent.
@@ -95,7 +96,7 @@ export async function importGroup(
 function expenseDraft(
   e: PlannedEntry,
   ids: Map<string, Id>,
-  currency: string,
+  currency: CurrencyCode,
   now: number,
 ): OpDraft {
   const amounts: Record<Id, number> = {};
@@ -103,59 +104,48 @@ function expenseDraft(
 
   const payers: Record<Id, number> = {};
   for (const [name, minor] of Object.entries(e.paid)) payers[ids.get(name)!] = minor;
-  const payerIds = Object.keys(payers);
-  // A single payer is stored as `paidBy` alone, the way `normalisePayers` does
-  // it: the common case never carries a redundant field, and the overwhelming
-  // majority of imported rows are that case.
-  const single = payerIds.length === 1;
 
   return {
     entity: "expense",
     entityId: newId(),
     kind: "create",
-    patch: {
-      ...(e.kind === "income" ? { kind: "income" } : {}),
+    patch: expenseCreatePatch({
+      kind: e.kind,
       description: e.description,
       occurredAt: e.occurredAt,
       // The row's own day, not the day it was imported: the ledger is the
-      // trip, and `createdAt` below is where "this arrived today" lives.
+      // trip, and `createdAt` is where "this arrived today" lives.
       dateOnly: true,
-      createdAt: now,
       amountMinor: e.amountMinor,
       currency,
       rateToBase: "1",
-      baseAmountMinor: e.amountMinor,
-      paidBy: single ? payerIds[0]! : primaryPayer(payers, payerIds[0]!),
-      split: canonicalSplit({ mode: "exact", amounts }),
-      ...only({
-        categoryId: e.categoryId,
-        payers: single ? null : payers,
-      }),
-    },
+      paidBy: Object.keys(payers)[0]!,
+      payers,
+      split: { mode: "exact", amounts },
+      categoryId: e.categoryId,
+    }, currency, {}, now),
   };
 }
 
 function transferDraft(
   t: PlannedTransfer,
   ids: Map<string, Id>,
-  currency: string,
+  currency: CurrencyCode,
   now: number,
 ): OpDraft {
   return {
     entity: "settlement",
     entityId: newId(),
     kind: "create",
-    patch: {
+    patch: settlementCreatePatch({
       fromMember: ids.get(t.from)!,
       toMember: ids.get(t.to)!,
       amountMinor: t.amountMinor,
       currency,
       rateToBase: "1",
-      baseAmountMinor: t.amountMinor,
       occurredAt: t.occurredAt,
       dateOnly: true,
-      createdAt: now,
-      ...only({ note: t.note }),
-    },
+      note: t.note,
+    }, currency, {}, now),
   };
 }

@@ -71,8 +71,8 @@ function write(groupId: Id, actor: Id, drafts: readonly OpDraft[], now = Date.no
   return appendOps(groupId, actor, drafts, now, { notify: true });
 }
 
-/** The `create` patch for an expense. */
-function expenseCreatePatch(
+/** The `create` patch for an expense — the form's and the importer's. */
+export function expenseCreatePatch(
   input: ExpenseInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
 ) {
   const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
@@ -217,8 +217,8 @@ export interface SettlementInput {
   note?: string | null;
 }
 
-/** The `create` patch for a transfer. */
-function settlementCreatePatch(
+/** The `create` patch for a transfer — the form's and the importer's. */
+export function settlementCreatePatch(
   input: SettlementInput, base: CurrencyCode, rates: Record<CurrencyCode, ExchangeRate>, now: number,
 ) {
   const rateToBase = rateToWrite(input.currency, input.rateToBase, base, rates);
