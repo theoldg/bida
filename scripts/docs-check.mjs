@@ -6,8 +6,9 @@
  * link into it lands on a file's top. This catches it in ~30ms, in
  * `pnpm check`.
  *
- * Checked: every relative markdown link resolves; every `#anchor` matches a
- * heading by GitHub's slug rules (where they get clicked); the ADR index names
+ * Checked: every relative markdown link resolves, and so does every
+ * `docs/….md` a code comment names; every `#anchor` — a bare one included —
+ * matches a heading by GitHub's slug rules (where they get clicked); the ADR index names
  * exactly the ADRs on disk; no doc states a test count; claude_corner.md
  * keeps to its own three limits.
  *
@@ -53,9 +54,10 @@ for (const file of markdownFiles(ROOT)) {
   const source = readFileSync(file, "utf8");
   // Links only — an image or a bare URL has nothing to go stale against a heading.
   for (const [, text, target] of source.matchAll(/\[([^\]]*)\]\(([^)\s]+)\)/g)) {
-    if (/^(https?:|mailto:|#)/.test(target)) continue;
+    if (/^(https?:|mailto:)/.test(target)) continue;
     const [path, fragment] = target.split("#");
-    const to = normalize(join(dirname(file), path));
+    // A bare `#anchor` is this file: the one link a split moves out from under.
+    const to = path ? normalize(join(dirname(file), path)) : file;
     const where = `${relative(ROOT, file)}: [${text}](${target})`;
     if (!existsSync(to) || !statSync(to).isFile()) {
       problems.push(`${where}\n        no such file`);
@@ -65,6 +67,37 @@ for (const file of markdownFiles(ROOT)) {
     if (!anchors.has(to)) anchors.set(to, anchorsOf(to));
     if (!anchors.get(to).has(fragment.toLowerCase())) {
       problems.push(`${where}\n        no heading "#${fragment}" in ${relative(ROOT, to)}`);
+    }
+  }
+}
+
+/**
+ * Code comments point into the docs too (`docs/navigation.md#routing`), and
+ * nothing clicks those, so nothing else notices when a doc is split or a
+ * heading reworded under them.
+ */
+const CODE = /\.(ts|tsx|mjs|js|css|yml)$/;
+function codeFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    if (SKIP.has(e.name) || (e.name.startsWith(".") && e.name !== ".github")) return [];
+    const path = join(dir, e.name);
+    if (e.isDirectory()) return codeFiles(path);
+    return CODE.test(e.name) ? [path] : [];
+  });
+}
+for (const file of codeFiles(ROOT)) {
+  const source = readFileSync(file, "utf8");
+  for (const [said, path, fragment] of source.matchAll(/\b(docs\/[\w./-]+?\.md)(?:#([\p{L}\p{N}_-]+))?/gu)) {
+    const to = join(ROOT, path);
+    const where = `${relative(ROOT, file)}: ${said}`;
+    if (!existsSync(to)) {
+      problems.push(`${where}\n        no such file`);
+      continue;
+    }
+    if (!fragment) continue;
+    if (!anchors.has(to)) anchors.set(to, anchorsOf(to));
+    if (!anchors.get(to).has(fragment.toLowerCase())) {
+      problems.push(`${where}\n        no heading "#${fragment}" in ${path}`);
     }
   }
 }
