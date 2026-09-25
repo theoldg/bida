@@ -18,7 +18,7 @@ pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
 pnpm run docs     # links resolve, ADRs indexed, claude_corner within size, ~30ms
-pnpm run rules    # core is still pure, no browser dialogs crept back, ~30ms
+pnpm run rules    # the decisions one line could reverse, checked against the code, ~30ms
 pnpm bump         # the number this deploy will show — [hosting.md](hosting.md#versions)
 ```
 
@@ -28,13 +28,13 @@ missing or stale — so none of them needs a build step in front of it, and none
 of them wastes 25 seconds when nothing has changed. `pnpm verify` does that
 build once and then runs them all together (`scripts/verify.mjs`): they share
 nothing to collide over, each serving the export on its own port 0, and the
-build is the one thing six of them starting at once would have raced on.
+build is the one thing all of them starting at once would have raced on.
 
-**What they do share is the machine**, and seven headless browsers on a loaded
+**What they do share is the machine**, and nine headless browsers on a loaded
 one is how a check times out at a wait it makes in a tenth of the time alone.
 A suite whose failing check moves between runs — offline, then homescreen, then
 claim — is saying that, so run the named one on its own: a check that fails
-alone is a real failure, every time. One that only fails under the other six is
+alone is a real failure, every time. One that only fails under the others is
 not noise either, and quieter machinery is not the fix — it is that check
 betting on how fast the machine is, and the bet is the bug (*A pause is not a
 wait*, below).
@@ -45,10 +45,11 @@ build` catches what `tsc` cannot (a prerender touching `window`, a
 client-boundary mistake, a `precache.mjs` that throws) and the deploy workflow
 only rebuilds and ships, so a build that fails there fails on `main`. And
 `pnpm run rules`, because a decision in an ADR is one careless import away
-from being reversed by someone who never read it: it fails on an import or a
-`Date.now()` in `packages/core`, and on a `prompt`/`confirm`/`alert`/`<select>`
-in `apps/web` ([ADR-0008](decisions/0008-hand-rolled-interface.md)). The bar for
-a fourth rule is in the script: written down as a decision, reversible in one
+from being reversed by someone who never read it — an import or a
+`Date.now()` in `packages/core`, a browser dialog in `apps/web`
+([ADR-0008](decisions/0008-hand-rolled-interface.md)), a live read without its
+watchdog; each rule in `scripts/rules-check.mjs` names the doc it holds. The bar
+for another is in the script: written down as a decision, reversible in one
 line, invisible to every test. Style isn't on the list — there is no linter here
 on purpose. And the version, because a push to `dev` deploys and a deploy has to
 show a new number: the stage fails a tree that differs from what `dev` is serving
@@ -169,7 +170,7 @@ every picker in the app is one ([ADR-0008](decisions/0008-hand-rolled-interface.
 
 Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
 playwright's default, and it is the ceiling these checks give their own waits
-too: `pnpm verify` runs seven browsers at once, so the machine is never the one
+too: `pnpm verify` runs nine browsers at once, so the machine is never the one
 a smaller number was written on. Nothing reaches that ceiling on a machine that
 is keeping up. `settle(page, ms)` is the other half — a pause the *page* keeps,
 for the few places that have to out-wait one of the app's own timers.
@@ -305,7 +306,7 @@ Two things worth knowing:
 - **The app has its own clock, and a starved machine can overrun it.**
   `SWALLOWED_MS` (150ms, `lib/nav.ts`) is how long a going waits before
   deciding its traversal was swallowed and putting the destination in this
-  screen's place. On a box running seven headless browsers a traversal that is
+  screen's place. On a box running nine headless browsers a traversal that is
   merely late can land after that, and the repair has already replaced: the
   cost is **one duplicate entry, never a wrong screen** — which is why the
   clock is allowed at all. So a check asserting where a repair *landed* is

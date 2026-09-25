@@ -433,7 +433,7 @@ There is no `attachments` table: attachments are not built
 ([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one
 would want its own columns.
 
-## IndexedDB (Dexie), schema v8
+## IndexedDB (Dexie)
 
 | Store | Key | Notes |
 |---|---|---|
@@ -443,9 +443,10 @@ would want its own columns.
 | `identities` | `[groupId+id]` | one row per device per group, `id` being the device's node id |
 | `device` | key | who "you" are, theme, HLC state, whether the install nudge is folded, and the ids of groups known to be deleted |
 | `groupKeys` | `groupId` | the invite secret and sync cursor. Never an op, and never derived-from on disk — [ADR-0003](decisions/0003-link-only-access.md) |
+| `notices` | `id` | push notifications waiting for their ops to land, device-local like `groupKeys` — [notifications.md](notifications.md#how-it-works) |
 
-**One version declares all of it.** Earlier versions are collapsed away. The
-v8 upgrade does one thing — re-arm every op as pending and reset each sync
+**v8 declares all of it but `notices`**, which v9 adds with no upgrade;
+earlier versions are collapsed away. The v8 upgrade does one thing — re-arm every op as pending and reset each sync
 cursor — so a phone's log refills a server copy that was wiped for sealing
 ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)).
 

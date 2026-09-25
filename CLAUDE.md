@@ -33,13 +33,13 @@ Obey them; adding one is rare and has a bar at the head of that file.
 
 | Path | What |
 |---|---|
-| `packages/core/` | Pure domain logic: money, HLC, ops, folding, splits, payers, balances, settle-up, history |
+| `packages/core/` | Pure domain logic: money, HLC, ops, folding, splits, payers, balances, settle-up, history, invariants, sealing, import/export, the scan prompt, notifications |
 | `apps/web/` | Next.js App Router, static export — every screen |
 | `apps/api/` | Cloudflare Worker: static assets + Hono sync API + D1 |
 | `docs/` | Start at [docs/README.md](docs/README.md) |
 | `docs/decisions/` | ADRs. Read before arguing with an architectural choice |
 | `docs/invariants.md` | Which invariants survive a merge, and what holds each — read before adding a check that reads other entities |
-| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`, `demo`, `nav`) and `shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `version`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
+| `scripts/` | The two runners (`check`, `verify`), the browser checks the second drives (`entries`, `claim`, `keyboard`, `offline`, `stall`, `homescreen`, `demo`, `nav`, `tricount`) and `shots`/`readme-shots` on a shared harness, plus `drive` (the app as text), `icons`, `docs-check`, `rules-check`, `version`, `on-dev`, `release` — [testing.md](docs/testing.md) lists them all |
 
 ## Stack
 

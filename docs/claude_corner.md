@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Do a doc staleness pass." The docs each commit touches
+  were current; the rot sat where no commit looks: a deferred table listing a
+  shipped feature, "seven browsers", a renamed constant, a comment older than
+  its rule. Grep the docs' names against the code first.
+
 - *2026-09-25* — "Maybe just load them as split from the get go?" A fold
   that wrote "6 items → 7 items". Took the suggestion, then asked what it left:
   bills already saved. The owner's fix is the direction; the old data is on
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   way." The spacer was a fixed 24px; the ledger's is a fixed 88, both blind to
   the home indicator. Sized it off the FAB's own variables. A gap with a
   number in it usually belongs to something else's size.
-
-- *2026-09-25* — "Title it entry history and propose a few styles and labels"
-  for the button. Built the title, then six variants behind a throwaway query
-  switch, shot on the demo group one phone each. Ship the settled half; photograph
-  the open half rather than listing it.

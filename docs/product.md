@@ -41,7 +41,7 @@ op and keeps nothing — the one thing here that is not a ledger
 
 **A group somebody already used.** The demo, at `bida.bid/demo` and nowhere
 else: a real group of real ops — four travellers haggling over
-passage off Tatooine, six kinds of entry, one split off the bill it was
+passage off Tatooine, six entries, one split off the bill it was
 itemised from, one edited and one deleted — created
 through `appendOps` and folded by
 `foldOps` like any other, so the ledger, balances, settle-up, history, rates
@@ -65,7 +65,9 @@ site; this writes no entry on its own, and the split opens the normal form
 because it is a row in everyone else's ledger.
 
 **Platform.** Installable PWA, fully usable offline for reads *and* writes.
-Shared, not solo — sync is part of the MVP. Multi-currency, with one rate per
+Shared, not solo — sync is part of the MVP, and so are push notifications of
+the entries you are in, worded and sealed by the phone that made the change
+([notifications.md](notifications.md)). Multi-currency, with one rate per
 currency held by the group and corrected in one place
 ([ADR-0005](decisions/0005-money-and-currency.md)).
 
@@ -77,7 +79,6 @@ Leave the seam. Build none of it.
 |---|---|
 | Restaurant bill splitting as a real entity | Line items become a new entity with its own op kinds. A scan already reads them and the who-had-what grid already assigns them, into a `receipt` split that the expense stores and can reopen ([ADR-0016](decisions/0016-receipts.md)) — what is missing is editing a line as a thing in its own right |
 | Recurring expenses | A generator that appends ops on a schedule; no schema change |
-| Push notifications | Designed, not built: a subscription on each device's identity, text sealed by the phone that caused it, a server that relays and forgets ([notifications.md](notifications.md)) |
 | Real-time collaboration | Swap polling for a Durable Object; the op log is already the wire format |
 | Spend analytics | All derivable from the fold |
 | Storing receipt photos | `attachment` is a real entity with its own op kind, folded and materialised, and `attachmentIds` is on the expense — nothing appends one. Add an R2 bucket and the upload behind `uploadState` ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)) |

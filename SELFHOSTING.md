@@ -127,6 +127,15 @@ daily cap, which is the one that bounds your bill.
 The same door writes ops into D1 with no cap, which matters more on a public
 instance than on the numbers in [docs/hosting.md](docs/hosting.md#how-full-can-it-get).
 
+## Push notifications
+
+`wrangler.toml` carries **this** instance's `VAPID_PUBLIC_KEY` under `[vars]`
+and `[env.dev.vars]`, and its private half is nobody's but ours. Either delete
+those lines — a Worker with no public key answers `/api/push/key` with 404 and
+the app never offers notifications — or make a pair of your own and put
+`VAPID_PRIVATE_KEY` as a Worker secret; the one-line generator is in
+[docs/hosting.md](docs/hosting.md#deploying).
+
 ## Local development
 
 ```bash

@@ -26,13 +26,17 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
                             POST /groups/:id/ops        append + assign seq
                             GET  /groups/:id/ops?since=N
                               └─ D1 (the sealed op log)
+                            DELETE /groups/:id          ops gone, a tombstone
+                            POST /groups/:id/notify     relay sealed pushes
                             POST /groups/:id/scan       the one endpoint that
                               └─ D1 (scan_hits)         spends money
                             GET  /rates/:from/:to       a rate suggestion
                             POST /tricount             somebody else's ledger
 ```
 
-The two op endpoints are [sync.md](sync.md#the-protocol); the scan is
+The group endpoints are [sync.md](sync.md#the-protocol); `notify`
+forwards what the sending phone already encrypted
+([notifications.md](notifications.md)); the scan is
 [receipt-scanning.md](receipt-scanning.md), and it is the one route that never
 parses its body — the photo is streamed between the halves of a prompt the
 Worker owns, to stay inside 10 ms of CPU. The last two are passthroughs to

@@ -22,8 +22,9 @@ export interface Op {
   entity: EntityKind;
   entityId: Id;
   kind: OpKind;
-  /** Changed fields ONLY. Never the whole entity — that is what makes
-   *  concurrent edits to different fields merge instead of clobber. */
+  /** An entry (expense, settlement): the whole entity as its saver saw it.
+   *  Anything else: changed fields only, so concurrent edits to different
+   *  fields merge instead of clobber (docs/sync.md#the-operation). */
   patch: Record<string, unknown>;
   hlc: Hlc;
   /** memberId that made the change. */

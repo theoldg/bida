@@ -45,7 +45,7 @@ in the old shape are upgraded in one place, `upgradeReceiptSplit`, where ops
 become state (`applyPatch`, so the fold and the history read it alike). The
 Dexie migration that carried the materialised cache over has been collapsed
 away with the rest of the chain
-([data-model.md](../data-model.md#indexeddb-dexie-schema-v8)); the fold is what
+([data-model.md](../data-model.md#indexeddb-dexie)); the fold is what
 holds it now.
 
 **The receipt split is the fourth tab on the split editor** — labelled

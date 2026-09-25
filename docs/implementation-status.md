@@ -31,7 +31,7 @@ Two things: a gap found by reading the code rather than a report, and a
 design waiting to be built.
 
 - **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
-  erased across nine stores before reaching the gate the success path waits on,
+  erased across ten stores before reaching the gate the success path waits on,
   and a 410 lands off the same slow network the gate exists for — so it is the
   one write left that can strand a lock the whole origin then queues behind
   ([frontend.md](frontend.md#a-live-read-can-die)). Nothing catches it:
