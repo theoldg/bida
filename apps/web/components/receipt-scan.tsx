@@ -6,9 +6,9 @@ import { copy } from "../lib/copy";
 import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft";
-import { readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
+import { normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
 import {
-  normalizeScan, parseBillText, scanReceipt,
+  parseBillText, scanReceipt,
   ScanKeyError, ScanLimitError, ScanOfflineError, ScanRejectedError, ScanUnavailableError,
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";

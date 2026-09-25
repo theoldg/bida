@@ -13,9 +13,6 @@ import { TurnstileBlockedError, turnstileToken } from "./turnstile";
 
 export { TurnstileBlockedError } from "./turnstile";
 
-export { normalizeScan } from "@bida/core";
-export type { ScanResult, ScanPatch } from "@bida/core";
-
 /** The model read the photo fine but declined it — not a receipt, too blurry, etc. Message is model-written, shown verbatim. */
 export class ScanRejectedError extends Error {}
 
