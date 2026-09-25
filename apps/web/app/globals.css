@@ -932,6 +932,11 @@ a { color: inherit; text-decoration: none }
   font-size: clamp(28px, calc((100cqi - 40px) / (var(--chars) * .555 + 1)), 44px) }
 .entryamt .ccy { font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--muted) }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
+/* The two figures share a column edge, but a glyph's ink starts a side bearing
+   in from it, and the bearing grows with the size: .06em at 600 on JetBrains
+   Mono's digits, .07em at the spent line's 400. Unpulled, the 44px figure
+   starts ~1.7px right of the 13px one under it. */
+.entryamt .whole { margin-left: calc(13px * .07 - .06em) }
 /* The edit count ends the line, on its centre: a chip is taller than the words. */
 .entryby { display: flex; justify-content: space-between; align-items: center; gap: 10px;
   margin-top: 10px; font-size: 13px; color: var(--muted) }

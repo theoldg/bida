@@ -267,7 +267,7 @@ function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCod
   return (
     <span className="bignum entryamt" style={{ "--chars": p.whole.length } as CSSProperties}>
       {p.currencyFirst ? code : null}
-      <span>{p.whole}<span className="frac">{p.fraction}</span></span>
+      <span className="whole">{p.whole}<span className="frac">{p.fraction}</span></span>
       {p.currencyFirst ? null : code}
     </span>
   );

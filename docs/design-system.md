@@ -268,7 +268,8 @@ mid-number. The sum as spent, when it was spent in another currency, is a
 13px muted line under it, not beside it — beside, it read as a third part of
 the same figure — with the rate chip that made it the figure above at its end.
 The two share columns (a subgrid), so their digits start at one edge and the
-codes stack.
+codes stack — the ink's edge, not the box's: a side bearing grows with the
+size, so the big figure is pulled left by the difference (`.entryamt .whole`).
 
 On an expense or income a `--rule` hairline closes the figure off and one line
 under it says who — "paid by **Adaś**", the "edited ×N" chip flushed right on
