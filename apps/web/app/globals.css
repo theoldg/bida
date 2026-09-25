@@ -933,8 +933,8 @@ a { color: inherit; text-decoration: none }
   font-size: clamp(28px, calc((100cqi - 8px) / (var(--chars) * .555 + 2)), 44px) }
 .entryamt .ccy { font-size: .55em; font-weight: 500; letter-spacing: 0; color: var(--muted) }
 /* A symbol is as tall as a code's capitals but a third as wide, so at the
-   code's size "€" reads smaller than "PLN". Sized up, it carries the same weight. */
-.entryamt .ccy.sym { font-size: .78em }
+   code's size "€" reads smaller than "PLN". It takes the whole part's size. */
+.entryamt .ccy.sym { font-size: 1em }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
 /* The two figures share a column edge, but a glyph's ink starts a side bearing
    in from it, and the bearing grows with the size: .06em at 600 on JetBrains

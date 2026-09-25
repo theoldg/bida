@@ -261,7 +261,7 @@ strands the short ones.
 The figure is set at two sizes (`.entryamt`, cut by `moneyParts`): the whole
 part 44px, the currency code and the fraction at 55% in `--muted` — "UZS
 150,779.27" read as one weight made the code and the cents as loud as the
-thousands. A lone symbol (`€`, `$`) is set at 78%: at a code's size one glyph
+thousands. A lone symbol (`€`, `$`) is set at the whole part's size: at a code's size one glyph
 read smaller than three letters. The code stays on whichever side the reader's locale
 puts it. A sum too long for the column shrinks to fit it (a container-query
 size off the whole part's length, never under 28px) rather than wrapping
