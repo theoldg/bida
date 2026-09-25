@@ -19,6 +19,7 @@ export * from "./scan.js";
 export * from "./scan-body.js";
 export * from "./names.js";
 export * from "./bytes.js";
+export * from "./chunk.js";
 export * from "./seal.js";
 export * from "./when.js";
 export * from "./demo.js";

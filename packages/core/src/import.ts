@@ -256,17 +256,24 @@ function readHeader({ line, cells }: Line): string[] {
   }
 
   const names = trimmed.slice(HEADER.length).map((c) => text(c));
-  if (names.length === 0) {
-    throw new ImportError("no-members", "no member columns", line);
-  }
+  checkMemberNames(names, line);
+  return names;
+}
+
+/**
+ * The people a source names, refused if any can't be told apart or held.
+ * `line` is the CSV header's; a tricount has none. Shared with `tricount.ts`.
+ */
+export function checkMemberNames(names: readonly string[], line?: number): void {
+  if (names.length === 0) throw new ImportError("no-members", "no members", line);
   if (names.some((n) => n === "")) {
-    throw new ImportError("blank-member", "a member column has no name", line);
+    throw new ImportError("blank-member", "a member has no name", line);
   }
   // Assigning `__proto__` on a plain object stores nothing, so the figures would
   // vanish and surface as a baffling checksum mismatch later.
   const reserved = names.find((n) => n === "__proto__");
   if (reserved !== undefined) {
-    throw new ImportError("bad-member-name", `member column named ${reserved}`, line, reserved);
+    throw new ImportError("bad-member-name", `a member is called ${reserved}`, line, reserved);
   }
   // Would merge two people's balances. `export.ts` emits this for a group
   // holding two members of one name.
@@ -274,56 +281,74 @@ function readHeader({ line, cells }: Line): string[] {
   for (const name of names) {
     const key = name.toLocaleLowerCase();
     if (seen.has(key)) {
-      throw new ImportError("duplicate-member",
-        `two columns named ${name}`, line, name);
+      throw new ImportError("duplicate-member", `two members called ${name}`, line, name);
     }
     seen.add(key);
   }
-  return names;
 }
 
-/** The file's one currency. More than one is refused by name; v1 has no rate to bridge them. */
+/** The file's one currency. */
 function readCurrency(body: readonly Line[]): CurrencyCode {
+  return oneCurrency(body.map((row) => ({
+    code: text(row.cells[HEADER.length - 1]).toLocaleUpperCase(),
+    line: row.line,
+  })));
+}
+
+/**
+ * A source's one currency, from every code it states, already upper-cased;
+ * blanks say nothing. More than one is refused by name: v1 has no rate to
+ * bridge them, and the stated balances sum across them, so the checksum would
+ * be meaningless. Shared with `tricount.ts`.
+ */
+export function oneCurrency(stated: Iterable<{ code: string; line?: number }>): CurrencyCode {
   const found = new Set<string>();
-  for (const row of body) {
-    const code = text(row.cells[HEADER.length - 1]).toLocaleUpperCase();
+  for (const { code, line } of stated) {
     if (code === "") continue;
     if (!isCurrencyCode(code)) {
-      throw new ImportError("unknown-currency", `line ${row.line}: ${code} is not a currency`,
-        row.line, code);
+      throw new ImportError("unknown-currency",
+        `${line === undefined ? "" : `line ${line}: `}${code} is not a currency`, line, code);
     }
     found.add(code);
   }
   const codes = [...found].sort();
-  if (codes.length === 0) {
-    throw new ImportError("unknown-currency", "no row states a currency");
-  }
+  if (codes.length === 0) throw new ImportError("unknown-currency", "nothing states a currency");
   if (codes.length > 1) {
-    // The foot sums across currencies, so the checksum is meaningless.
-    throw new ImportError("mixed-currency", `mixes ${codes.join(",")}`, undefined,
-      codes.join(", "));
+    throw new ImportError("mixed-currency", `mixes ${codes.join(",")}`, undefined, codes.join(", "));
   }
   return codes[0]!;
 }
 
-/** One money cell. Empty is zero; anything unparseable refuses the file. */
+/** One money cell. */
 function amount(row: Line, index: number, currency: CurrencyCode, exp: number): number {
   const raw = text(row.cells[index]);
+  return strictMinor(raw, currency, exp, (why) => why === "unreadable"
+    ? new ImportError("bad-amount", `line ${row.line}: ${raw} is not an amount`, row.line, raw)
+    : new ImportError("too-precise", `line ${row.line}: ${raw} is finer than ${currency}`,
+      row.line, `${raw} — ${currency}`));
+}
+
+/**
+ * One figure, strictly. Empty is zero; anything unparseable is refused, and so
+ * is excess precision — `parseMinor` rounds it, right for a keyboard but wrong
+ * here: extra decimals mean the wrong currency or column. `refuse` names the
+ * source's own refusal. Shared with `tricount.ts`.
+ */
+export function strictMinor(
+  raw: string,
+  currency: CurrencyCode,
+  exp: number,
+  refuse: (why: "unreadable" | "too-fine") => ImportError,
+): number {
   if (raw === "") return 0;
   let minor: number;
   try {
     minor = parseMinor(raw, currency);
   } catch {
-    throw new ImportError("bad-amount", `line ${row.line}: ${raw} is not an amount`,
-      row.line, raw);
+    throw refuse("unreadable");
   }
-  // `parseMinor` rounds excess precision, right for a keyboard but wrong here:
-  // extra decimals mean the wrong currency or column.
   const frac = raw.replace(/\s/g, "").replace(",", ".").split(".")[1] ?? "";
-  if (frac.length > exp) {
-    throw new ImportError("too-precise", `line ${row.line}: ${raw} is finer than ${currency}`,
-      row.line, `${raw} — ${currency}`);
-  }
+  if (frac.length > exp) throw refuse("too-fine");
   return minor;
 }
 
@@ -462,8 +487,8 @@ function payersOf(
   }).shares;
 }
 
-/** `2026-02-30` parses as a date and is not one. */
-function isRealDay(day: string): boolean {
+/** `2026-02-30` parses as a date and is not one. Shared with `tricount.ts`. */
+export function isRealDay(day: string): boolean {
   const d = new Date(`${day}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === day;
 }

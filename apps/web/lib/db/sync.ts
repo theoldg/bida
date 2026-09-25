@@ -1,9 +1,10 @@
 import {
   MAX_DRIFT_MS, SealError, createHlcState, encryptPush, hlcReceive, isAhead, openOp, parseHlc,
-  sealOp, toBase64,
+  chunk, sealOp, toBase64,
   type Op, type SealedOp,
 } from "@bida/core";
 import { note, started } from "../diag";
+import { errorText } from "../format";
 import { pushMessages } from "../notify-copy";
 import { groupCrypto } from "../seal";
 import { eraseGroupLocally } from "./commands/groups";
@@ -219,12 +220,6 @@ const inFlight = new Map<string, Promise<SyncOutcome | undefined>>();
  */
 const PUSH_CHUNK = 50;
 
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
-}
-
 /**
  * Push this device's unsynced ops for one group and pull what it hasn't seen.
  * Returns `undefined` if this device doesn't hold the group's secret.
@@ -338,7 +333,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   // Only now: a notification about an op still on this phone would open to
   // nothing on the phone it reaches. Its own failures are its own.
-  await sendNotices(groupId, key.secret).catch((err: unknown) => note("notify", errorOf(err)));
+  await sendNotices(groupId, key.secret).catch((err: unknown) => note("notify", errorText(err)));
 
   // A pulled op can slot in before ops already folded — refold the whole group
   // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
@@ -358,7 +353,6 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   return { pushed, pulled: pulledCount };
 }
 
-const errorOf = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 /** `/notify`'s cap per request — the Worker's `MAX_NOTIFY_PER_BATCH`. */
 const NOTIFY_BATCH = 40;

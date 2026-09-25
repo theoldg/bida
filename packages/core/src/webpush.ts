@@ -1,5 +1,6 @@
 import { fromBase64Url, toBase64Url } from "./bytes.js";
 import type { DevicePush } from "./types.js";
+import { webCrypto } from "./webcrypto.js";
 
 /**
  * Web Push's two pieces of cryptography, on WebCrypto and nothing else
@@ -31,13 +32,7 @@ interface CryptoLike {
   getRandomValues<T extends ArrayBufferView>(array: T): T;
 }
 
-function getCrypto(): CryptoLike {
-  const c = (globalThis as { crypto?: Partial<CryptoLike> }).crypto;
-  if (!c?.subtle || typeof c.getRandomValues !== "function") {
-    throw new Error("WebCrypto is unavailable; refusing to write a notification");
-  }
-  return c as CryptoLike;
-}
+const getCrypto = () => webCrypto<CryptoLike>("refusing to write a notification");
 
 export class WebPushError extends Error {}
 

@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { keep, mark, started } from "../diag";
 import { db } from "./dexie";
+import { signal } from "../signal";
 
 /**
  * Reading from Dexie, and noticing when the read never comes back.
@@ -64,16 +65,8 @@ function isHidden(): boolean {
 }
 
 const health: Health = { epoch: 0, blocked: false, stalls: 0, hidden: isHidden() };
-const listeners = new Set<() => void>();
-
-function announce(): void {
-  for (const listener of listeners) listener();
-}
-
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => void listeners.delete(listener);
-}
+const changes = signal();
+const { emit: announce, subscribe } = changes;
 
 /**
  * Re-subscribe every live read. Clears `blocked`: if the block persists, the
@@ -299,7 +292,7 @@ export const testing = {
     health.blocked = false;
     health.stalls = 0;
     health.hidden = isHidden();
-    listeners.clear();
+    changes.clear();
     remembered.clear();
     lastReopen = -Infinity;
   },

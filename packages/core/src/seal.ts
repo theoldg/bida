@@ -1,6 +1,7 @@
 import { fromBase64, toBase64 } from "./bytes.js";
 import { validateOp, type Op } from "./ops.js";
 import type { Id } from "./types.js";
+import { webCrypto } from "./webcrypto.js";
 
 /**
  * End-to-end encryption of the op log (ADR-0036). The link secret never leaves
@@ -32,13 +33,7 @@ interface CryptoLike {
   getRandomValues<T extends ArrayBufferView>(array: T): T;
 }
 
-function getCrypto(): CryptoLike {
-  const c = (globalThis as { crypto?: Partial<CryptoLike> }).crypto;
-  if (!c?.subtle || typeof c.getRandomValues !== "function") {
-    throw new Error("WebCrypto is unavailable; refusing to sync in the clear");
-  }
-  return c as CryptoLike;
-}
+const getCrypto = () => webCrypto<CryptoLike>("refusing to sync in the clear");
 
 /** What a device needs to talk to the server about one group, and nothing more. */
 export interface GroupCrypto {

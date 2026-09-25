@@ -8,6 +8,7 @@ import {
 import type { EntryKind } from "./entry-kind";
 import { receiptBreakdown, receiptTotalMinor, type MemberLine } from "./scan/items";
 import { clearScan } from "./scan/live";
+import { signal } from "./signal";
 
 /**
  * Which split-editor tab is showing: a `SplitMode` minus `percent`, which has
@@ -268,16 +269,12 @@ export function draftAmountMinor(draft: EntryDraft): number {
   }
 }
 
-const listeners = new Set<() => void>();
+const { emit, subscribe } = signal();
 const drafts = new Map<string, EntryDraft | undefined>();
 /** What the draft looked like when the screen seeded it, to tell edits from nothing. */
 const baselines = new Map<string, string>();
 /** Which entry the draft was seeded *for* — see `draftSeedKey`. */
 const seedKeys = new Map<string, string>();
-
-function emit(): void {
-  for (const l of listeners) l();
-}
 
 /**
  * The entry's time once a day is picked. The form has no time field, so the
@@ -350,7 +347,7 @@ export function getDraft(groupId: string): EntryDraft | undefined {
 /** Reactive read. Returns undefined until a draft is started. */
 export function useDraft(groupId: string | undefined): EntryDraft | undefined {
   return useSyncExternalStore(
-    (onChange) => { listeners.add(onChange); return () => listeners.delete(onChange); },
+    subscribe,
     () => (groupId ? drafts.get(groupId) : undefined),
     () => undefined,
   );

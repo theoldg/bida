@@ -30,6 +30,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the plainest. I sent contact sheets though a postcard below says phones
   one per image. Read the postcards before shooting, not after.
 
+- *2026-09-25* — "Fix all", after a list of simplifications promised not to
+  change the app. One didn't survive a closer read: each device setter's
+  early return decides "unchanged" its own way. Report the one that fell and
+  why; forcing it would have broken the promise the list was made under.
+
 - *2026-09-25* — "scroll down a bit lower so the tip jar FAB isn't in the
   way." The spacer was a fixed 24px; the ledger's is a fixed 88, both blind to
   the home indicator. Sized it off the FAB's own variables. A gap with a
@@ -79,7 +84,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   variants on one sheet per width, each a step further; the owner took B's
   number with C's FABs. A sheet's columns are also a menu of halves, so
   name each size, not just each letter, and the mix costs no reshoot.
-- *2026-09-24* — "more understandable." My copy sheet spanned the range;
-  the owner answered with their own draft, not a letter. Kept every word of
-  theirs but the one unclear sentence, offered four rewrites of just that. A
-  draft back is the brief: edit it, don't replace it.

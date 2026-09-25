@@ -1,4 +1,4 @@
-import { emptyGroupState, groupToCsv, type GroupState } from "@bida/core";
+import { groupToCsv, stateFromRows } from "@bida/core";
 import { dateInputValue } from "./format";
 import { iosHomeScreenApp } from "./install";
 import type { GroupData } from "./hooks";
@@ -18,13 +18,12 @@ import type { GroupData } from "./hooks";
  * (`atCurrentRates`), and repricing twice is how screens disagree (ADR-0005).
  */
 export function groupCsv(data: GroupData): string {
-  const state: GroupState = {
-    ...emptyGroupState(),
+  const state = stateFromRows({
     group: data.group,
-    members: Object.fromEntries([...data.memberById.values()].map((m) => [m.id, m])),
-    expenses: Object.fromEntries(data.expenses.map((e) => [e.id, e])),
-    settlements: Object.fromEntries(data.settlements.map((s) => [s.id, s])),
-  };
+    members: [...data.memberById.values()],
+    expenses: data.expenses,
+    settlements: data.settlements,
+  });
   // The local day, the only honest one: an expense added at 23:00 must not
   // export as tomorrow. Same function the date field shows. The clock is read
   // here rather than passed in because it only dates the foot.

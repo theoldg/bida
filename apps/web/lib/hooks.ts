@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   CATCH_UP_MS, atCurrentRates, computeBalances, currenciesInUse, settleUp, emptyGroupState,
-  unseenRevisions, wouldViolate,
+  stateFromRows, unseenRevisions, wouldViolate,
   type BalanceReport, type CurrencyInUse, type ExchangeRate, type Expense, type Group,
   type GroupState, type Member, type OpDraft, type RegisteredInvariant,
   type Settlement, type Transfer,
@@ -34,10 +34,9 @@ function living<T extends { deletedAt?: number | null }>(rows: T[] | undefined):
 
 /**
  * The keyed shape core's readers want, from Dexie's arrays — **valued at the
- * group's current rates**. One builder, because a hand-built state missing a
- * field is wrong in a way nothing catches, and one screen reading the stored
- * `baseAmountMinor` while the rest read the registry is the disagreement
- * ADR-0005 removes.
+ * group's current rates**. One builder (core's `stateFromRows`), because one
+ * screen reading the stored `baseAmountMinor` while the rest read the registry
+ * is the disagreement ADR-0005 removes.
  */
 function stateOf(
   group: Group | undefined,
@@ -46,14 +45,7 @@ function stateOf(
   settlements: Settlement[],
   rates: ExchangeRate[] = [],
 ): GroupState {
-  return atCurrentRates({
-    ...emptyGroupState(),
-    group,
-    members: Object.fromEntries(members.map((m) => [m.id, m])),
-    expenses: Object.fromEntries(expenses.map((e) => [e.id, e])),
-    settlements: Object.fromEntries(settlements.map((s) => [s.id, s])),
-    rates: Object.fromEntries(rates.map((r) => [r.id, r])),
-  });
+  return atCurrentRates(stateFromRows({ group, members, expenses, settlements, rates }));
 }
 
 export function useDevice(): DeviceRecord | undefined {
@@ -193,15 +185,15 @@ export function useGroupData(groupId: string | undefined): GroupData {
   const rows = useLive("groupData", async () => {
     if (!groupId) return undefined;
     const d = db();
-    const [group, members, expenses, settlements, pending, device] = await Promise.all([
+    const [group, members, expenses, settlements, pending, device, rates] = await Promise.all([
       d.groups.get(groupId),
       d.members.where("groupId").equals(groupId).toArray(),
       d.expenses.where("groupId").equals(groupId).toArray(),
       d.settlements.where("groupId").equals(groupId).toArray(),
       d.ops.where("[groupId+hlc]").between([groupId, ""], [groupId, "￿"]).filter((o) => o.pending === 1).count(),
       d.device.get("device"),
+      d.rates.where("groupId").equals(groupId).toArray(),
     ]);
-    const rates = await d.rates.where("groupId").equals(groupId).toArray();
     return { group, members, expenses, settlements, rates, pending, device };
   }, [groupId]);
 
@@ -216,34 +208,25 @@ export function useGroupData(groupId: string | undefined): GroupData {
       };
     }
     const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
+    const sortedExpenses = living(rows.expenses).sort(byWhen);
+    const sortedSettlements = living(rows.settlements).sort(byWhen);
     const state = stateOf(
-      rows.group, members,
-      living(rows.expenses).sort(byWhen),
-      living(rows.settlements).sort(byWhen),
-      living(rows.rates),
+      rows.group, members, sortedExpenses, sortedSettlements, living(rows.rates),
     );
     // Back out of the repriced state, in the order they went in — `stateOf`
     // keys them and loses the sort. Every screen reads these two arrays, so
     // none of them can be left looking at a stale conversion.
     const bySortOrder = <T extends { id: string }>(rows: T[], keyed: Record<string, T>) =>
       rows.map((row) => keyed[row.id] ?? row);
-    const expenses = bySortOrder(living(rows.expenses).sort(byWhen), state.expenses);
-    const settlements = bySortOrder(
-      living(rows.settlements).sort(byWhen), state.settlements);
+    const expenses = bySortOrder(sortedExpenses, state.expenses);
+    const settlements = bySortOrder(sortedSettlements, state.settlements);
 
     const balances = computeBalances(state);
     const memberById = new Map((rows.members ?? []).map((m) => [m.id, m]));
     // Detection needs the tombstones `state` filtered out — a removed member on a
     // live entry is the point. Folded from raw rows and handed to the registry,
     // never re-derived here.
-    const withTombstones: GroupState = {
-      ...emptyGroupState(),
-      group: rows.group,
-      members: Object.fromEntries((rows.members ?? []).map((m) => [m.id, m])),
-      expenses: Object.fromEntries((rows.expenses ?? []).map((e) => [e.id, e])),
-      settlements: Object.fromEntries((rows.settlements ?? []).map((s) => [s.id, s])),
-      rates: Object.fromEntries((rows.rates ?? []).map((r) => [r.id, r])),
-    };
+    const withTombstones = stateFromRows(rows);
     return {
       group: rows.group,
       members,
@@ -324,8 +307,8 @@ export function useArrivingGroups(): number | undefined {
 export function useGroupSummaries(): GroupSummary[] | undefined {
   return useLive("groupSummaries", async () => {
     const d = db();
-    // Five reads, not three per group: fetching each table whole and bucketing
-    // here is a constant number of IndexedDB round trips.
+    // Each table whole and bucketed here, not a read per group: a constant
+    // number of IndexedDB round trips.
     const [groups, device, members, expenses, settlements, rates, keys] = await Promise.all([
       d.groups.toArray(),
       d.device.get("device"),

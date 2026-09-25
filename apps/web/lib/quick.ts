@@ -9,6 +9,7 @@ import { useGroupSecret } from "./hooks";
 import { receiptBill, type EntryDraft } from "./draft";
 import { bare, countText } from "./format";
 import { billLabels, receiptTotalMinor, type MemberLine } from "./scan/items";
+import { signal } from "./signal";
 
 /**
  * A quick split: a bill divided among people who are not a group
@@ -123,12 +124,8 @@ export function useScanAs(groupId: string | undefined): ScanAs | undefined {
 // ------------------------------------------------------------- who is here
 
 const EMPTY: readonly QuickPerson[] = Object.freeze([]);
-const listeners = new Set<() => void>();
+const { emit, subscribe } = signal();
 let people: readonly QuickPerson[] = EMPTY;
-
-function emit(): void {
-  for (const l of listeners) l();
-}
 
 /**
  * Who is splitting, live. Outside React and Dexie like the draft it travels
@@ -136,7 +133,7 @@ function emit(): void {
  */
 export function useQuickPeople(): readonly QuickPerson[] {
   return useSyncExternalStore(
-    (onChange) => { listeners.add(onChange); return () => listeners.delete(onChange); },
+    subscribe,
     () => people,
     () => EMPTY,
   );

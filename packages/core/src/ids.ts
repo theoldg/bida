@@ -1,18 +1,15 @@
 /** Id generation. Client-side, because ops are created offline. */
 
+import { webCrypto } from "./webcrypto.js";
+
 /** The slice of WebCrypto we need, so core stays free of DOM lib types. */
 interface CryptoLike {
   getRandomValues<T extends ArrayBufferView>(array: T): T;
   randomUUID?: () => string;
 }
 
-function getCrypto(): CryptoLike {
-  const c = (globalThis as { crypto?: CryptoLike }).crypto;
-  if (!c || typeof c.getRandomValues !== "function") {
-    throw new Error("WebCrypto is unavailable; refusing to generate weak ids");
-  }
-  return c;
-}
+const getCrypto = () =>
+  webCrypto<CryptoLike>("refusing to generate weak ids", { subtle: false });
 
 export function newId(): string {
   const c = getCrypto();
