@@ -1820,3 +1820,6 @@ button.amtnote:active { background: var(--hl-edge) }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .settlearrow { color: var(--muted); flex: none }
 .settleamt { font-size: 26px; color: var(--ink) }
+
+/* THROWAWAY: the settle-up explainer variants (app/g/balances, ?x=). */
+.explain { font-size: 12px; line-height: 1.55; color: var(--ink-2) }

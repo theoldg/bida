@@ -64,6 +64,9 @@ function BalancesScreen() {
  */
 function Balances({ data }: { data: GroupData }) {
   const { group, members, balances, nameOf, me, transfers } = data;
+  // THROWAWAY: which explainer variant to draw.
+  const x = useSearchParams().get("x") ?? "";
+  const [open, setOpen] = useState(false);
   // Which suggested payment is being confirmed, if any — the card is the only
   // thing standing between a tap here and a write.
   const [settling, setSettling] = useState<Transfer | undefined>(undefined);
@@ -127,7 +130,18 @@ function Balances({ data }: { data: GroupData }) {
       ) : null}
 
       <div className="pad" style={{ paddingTop: 10 }}>
-        <Eyebrow style={{ marginBottom: 9 }}>{copy.group.suggestedReimbursements}</Eyebrow>
+        {x === "b" && transfers.length > 0 ? (
+          <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
+            style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 9 }}>
+            <Eyebrow>{copy.group.suggestedReimbursements}</Eyebrow>
+            <Icon name="info" size={14} style={{ color: open ? "var(--ink)" : "var(--muted)" }} />
+          </button>
+        ) : (
+          <Eyebrow style={{ marginBottom: 9 }}>{copy.group.suggestedReimbursements}</Eyebrow>
+        )}
+        {x === "b" && open ? (
+          <p className="explain" style={{ marginBottom: 12 }}>{copy.group.explain.body}</p>
+        ) : null}
 
         {transfers.length === 0 ? (
           <Empty title={copy.group.allSquare} />
@@ -152,12 +166,29 @@ function Balances({ data }: { data: GroupData }) {
             );
           })}
         </div>
+        {x === "a" && transfers.length > 0 ? (
+          <div className="installfold" style={{ marginTop: 14 }}>
+            <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+              <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
+              {copy.group.explain.ask}
+            </button>
+            {open ? <p className="explain" style={{ marginTop: 6, paddingLeft: 16 }}>
+              {copy.group.explain.body}</p> : null}
+          </div>
+        ) : null}
+        {x === "c" && me && (balances.byMember[me] ?? 0) !== 0 ? (
+          <p className="explain" style={{ marginTop: 14 }}>
+            {(balances.byMember[me] ?? 0) < 0
+              ? copy.group.explain.youOwe(money(-(balances.byMember[me] ?? 0), group.baseCurrency))
+              : copy.group.explain.youGet(money(balances.byMember[me] ?? 0, group.baseCurrency))}
+          </p>
+        ) : null}
       </div>
       <div className="fabclear" />
 
       {settling && me ? (
         <SettleDialog t={settling} groupId={group.id} actor={me} base={group.baseCurrency}
-          nameOf={nameOf} onClose={() => setSettling(undefined)} />
+          nameOf={nameOf} hint={x === "d" && settling.from === me} onClose={() => setSettling(undefined)} />
       ) : null}
     </Scroll>
   );
@@ -169,8 +200,8 @@ function Balances({ data }: { data: GroupData }) {
  * writes, and the only question is whether it happened. A different payment
  * is an ordinary entry, or an edit afterwards.
  */
-function SettleDialog({ t, groupId, actor, base, nameOf, onClose }: {
-  t: Transfer;
+function SettleDialog({ t, groupId, actor, base, nameOf, onClose, hint }: {
+  t: Transfer; hint?: boolean;
   groupId: string; actor: string; base: string;
   nameOf: (id: string) => string;
   onClose: () => void;
@@ -201,6 +232,7 @@ function SettleDialog({ t, groupId, actor, base, nameOf, onClose }: {
           <span className="settlename">{to}</span>
         </div>
         <div className="bignum settleamt">{money(t.amountMinor, base)}</div>
+        {hint ? <p className="explain" style={{ textAlign: "center" }}>{copy.group.explain.dialog(to)}</p> : null}
       </div>
     </ConfirmDialog>
   );

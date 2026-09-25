@@ -765,6 +765,21 @@ export const copy = {
     allSquare: "Everyone’s square",
     /** The card a suggested payment opens: it states, it doesn’t ask. */
     recordTitle: "Record this reimbursement",
+    /** THROWAWAY: explainer variants for suggested reimbursements (?x=). */
+    explain: {
+      ask: "Not who paid for you?",
+      askInfo: "Why these payments?",
+      body: "It doesn’t have to be. These payments settle totals, not single "
+        + "expenses: if Ana owes you 10 and you owe Ben 10, Ana can pay Ben "
+        + "directly — one payment instead of two. Everyone ends at zero, and "
+        + "nobody pays more than they owe.",
+      youOwe: (total: string) =>
+        `You owe ${total} in all. Who you pay doesn’t change that — this is just the fewest payments that square everyone.`,
+      youGet: (total: string) =>
+        `You’re owed ${total} in all. It may come from people you never paid for — this is just the fewest payments that square everyone.`,
+      dialog: (to: string) =>
+        `${to} didn’t pay for you? It evens out: every balance is a total, so paying ${to} squares the group just the same.`,
+    },
   },
 
   // ------------------------------------------------------------- people
