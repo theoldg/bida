@@ -5,7 +5,7 @@ import {
 import {
   billCharges, billExtrasIn, billLabel, billLabels, foldedLine, hasTranslation, handOffReceiptTotal, portions, receiptBreakdown, receiptTotalMinor,
   runAssignment,
-  unfoldItem,
+  printedBill, printedCount, unfoldAll, unfoldItem,
   unfoldableInto, weightsFromItems,
 } from "./items";
 
@@ -214,6 +214,46 @@ describe("foldedLine", () => {
     expect(foldedLine([{ label: "Soup", amount: "3.00" }], 0, 1, "EUR")).toBeNull();
     expect(foldedLine([{ label: "A", amount: "1.00" }, { label: "A", amount: "??" }], 0, 2, "EUR")).toBeNull();
     expect(foldedLine([], 0, 2, "EUR")).toBeNull();
+  });
+});
+
+describe("unfoldAll", () => {
+  it("splits every line of several, and says where each row came from", () => {
+    const out = unfoldAll([
+      { label: "Soup", amount: "3.00" },
+      { label: "Beer", amount: "9.01", quantity: 3 },
+      { label: "Bread", amount: "2.00", quantity: 1.5 },
+    ], "EUR");
+    expect(out.items.map((i) => [i.label, i.amount, i.portionOf ?? null]))
+      .toEqual([["Soup", "3.00", null], ["Beer", "3.01", 3], ["Beer", "3.00", 3], ["Beer", "3.00", 3], ["Bread", "2.00", null]]);
+    expect(out.from).toEqual([0, 1, 1, 1, 2]);
+    expect(receiptTotalMinor(out.items, null, "EUR")).toBe(1401);
+  });
+
+  it("leaves a bill already in portions as it is", () => {
+    const once = unfoldAll([{ label: "Salad", amount: "9.00", quantity: 2 }], "EUR").items;
+    expect(unfoldAll(once, "EUR").items).toEqual(once);
+  });
+});
+
+describe("printedBill", () => {
+  const whole = [{ label: "Soup", amount: "3" }, { label: "Salad", amount: "9.00", quantity: 2 }];
+  const split = unfoldAll(whole, "EUR").items;
+
+  it("reads a bill in portions as the bill it was printed as", () => {
+    expect(printedBill(split, null, "EUR").lines).toEqual(printedBill(whole, null, "EUR").lines);
+    expect(printedBill(split, null, "EUR").lines).toHaveLength(2);
+    expect(printedCount(split)).toBe(2);
+  });
+
+  it("reads a run everybody shares alike as one row of eaters", () => {
+    expect(printedBill(split, [["a"], ["b", "a"], ["a", "b"]], "EUR").eaters)
+      .toEqual(printedBill(whole, [["a"], ["a", "b"]], "EUR").eaters);
+  });
+
+  it("keeps a run whose portions went to different people apart", () => {
+    expect(printedBill(split, [["a"], ["a"], ["b"]], "EUR").eaters)
+      .not.toEqual(printedBill(whole, [["a"], ["a", "b"]], "EUR").eaters);
   });
 });
 

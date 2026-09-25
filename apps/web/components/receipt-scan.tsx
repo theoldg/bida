@@ -13,6 +13,7 @@ import {
   ScanUnreliableError, TurnstileBlockedError,
 } from "../lib/scan";
 import { beginScan, clearScan, failScan, useLiveScan, type LiveScan } from "../lib/scan/live";
+import { unfoldAll } from "../lib/scan/items";
 import { BillTextDialog } from "./bill-text-dialog";
 import { ScanBusy } from "./scan-bar";
 import type { ScanAs } from "../lib/quick";
@@ -141,9 +142,11 @@ export function useReceiptScan(
       const bill = readBill(result, currency);
       // Both labels travel: a bill is shown in the language it was printed in,
       // and the translation is one tap away on the grid (`billLabel`).
-      const receiptItems = bill.items.map((li) => (
+      // A line of several arrives already split into portions (`unfoldAll`),
+      // so folding it on the grid is a view and never an edit to the bill.
+      const receiptItems = unfoldAll(bill.items.map((li) => (
         { label: li.label, labelEn: li.labelEn, amount: li.amount, quantity: li.quantity }
-      ));
+      )), currency).items;
       // Read fresh: the round trip is long enough to have been typed through,
       // and long enough to have been abandoned. A draft that is gone was
       // discarded on the way out of the form, and there is nothing to fill.

@@ -88,12 +88,13 @@ first-time tab is handed (`openSplitTab`) — two handoffs made in the handler
 that switched tabs, not mirrors anything later resyncs.
 
 **A "×2" line unfolds into portions, and a portion is an ordinary line.**
-Tapping the count replaces the row with N rows, each carrying its share of the
-printed amount and its own eaters; tapping again merges them back, and
-`weightsFromItems` learns nothing new. Portions are marked (`portionOf`), never
+A bill arrives with such a line already as N rows, each carrying its share of
+the printed amount and its own eaters; tapping the count only folds and opens
+them as a view, so it is never an edit, and `weightsFromItems` learns nothing
+new. Portions are marked (`portionOf`), never
 inferred from equal labels, and sum to the printed line exactly, because a
-display control must not move the bill's total. Unfolding is offered only where
-the receipt printed a count: deciding a line was really three is data entry.
+display control must not move the bill's total. Only a count the receipt
+printed is unfolded: deciding a line was really three is data entry.
 
 **A discount is shared in proportion to what each person ordered**, and so are
 the tip and any tax charged on top: they are one family (`BillExtras`), the

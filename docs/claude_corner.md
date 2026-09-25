@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Maybe just load them as split from the get go?" A fold
+  that wrote "6 items → 7 items". Took the suggestion, then asked what it left:
+  bills already saved. The owner's fix is the direction; the old data is on
+  me. Split on arrival, on grid open, and history reads bills as printed.
+
 - *2026-09-25* — "Reorder the demo, I don't care about the chronology."
   The ledger sorts by date, so the order is the dates: re-dated the seed.
   Dates don't move the seed's stamp, so the ops were reordered too, or old
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   for the button. Built the title, then six variants behind a throwaway query
   switch, shot on the demo group one phone each. Ship the settled half; photograph
   the open half rather than listing it.
-
-- *2026-09-25* — "Show them as individual pics pls, not enough pixels."
-  Contact sheets of phones shrink to thumbnails on a phone, which is where the
-  owner looks. Then B, explored, then B1 picked. Send one phone per image at
-  2x; a sheet is for me to check the spread, not for them to judge it.

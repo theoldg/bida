@@ -1,8 +1,9 @@
 import {
   isValidRate, resolveSplit, splitParticipants,
-  type CurrencyCode, type Id, type Member, type Revision, type SplitSpec,
+  type CurrencyCode, type Id, type Member, type ReceiptItem, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
+import { printedBill } from "./scan/items";
 import { dayLabel, money, plural, rateText } from "./format";
 
 /**
@@ -235,15 +236,26 @@ export function describe(
     // The scan behind the split, and the grid that assigned it. Both move
     // fields no sentence above names, so without this a save that reopened the
     // receipt and moved a salad from one person to another says nothing.
-    const lines = (state: State) =>
-      (Array.isArray(state["receiptItems"]) ? state["receiptItems"].length : 0);
+    // **Read as printed** (`printedBill`): a line split into portions is the
+    // same bill, and at most a change of who had what.
+    // Loose fields, so shaped before they are read: this must not throw.
+    const printed = (state: State) => printedBill(
+      (Array.isArray(state["receiptItems"]) ? state["receiptItems"] as unknown[] : [])
+        .filter((i): i is ReceiptItem => !!i && typeof i === "object"
+          && typeof (i as ReceiptItem).amount === "string" && typeof (i as ReceiptItem).label === "string"),
+      (Array.isArray(state["receiptAssignments"]) ? state["receiptAssignments"] as unknown[] : [])
+        .map((row) => (Array.isArray(row) ? row.filter((id): id is string => typeof id === "string") : [])),
+      ownCurrency(state),
+    );
+    const bill = { was: printed(rev.before), now: printed(rev.after) };
+    const reshaped = JSON.stringify(bill.was.lines) === JSON.stringify(bill.now.lines);
     // `receiptDiscounts` and `receiptText`, both plural-and-spelled-out. There
     // is no singular `receiptDiscount` field — ask for one and a save that only
     // moved a bill's deductions says nothing.
-    if (field("receiptItems") ?? field("receiptTip") ?? field("receiptTax")
-      ?? field("receiptDiscounts") ?? field("receiptText")) {
-      const wasLines = lines(rev.before);
-      const nowLines = lines(rev.after);
+    if ((field("receiptItems") && !reshaped) || field("receiptTip") || field("receiptTax")
+      || field("receiptDiscounts") || field("receiptText")) {
+      const wasLines = bill.was.lines.length;
+      const nowLines = bill.now.lines.length;
       parts.push({
         what: nowLines === 0 ? said.removedReceipt(who)
           : wasLines === 0 ? said.addedReceipt(who) : said.changedReceipt(who),
@@ -253,7 +265,8 @@ export function describe(
           now: nowLines ? plural(nowLines, copy.noun.item) : copy.none,
         },
       });
-    } else if (field("receiptInvolved") ?? field("receiptAssignments")) {
+    } else if (field("receiptInvolved")
+      || (field("receiptAssignments") && JSON.stringify(bill.was.eaters) !== JSON.stringify(bill.now.eaters))) {
       parts.push({ what: said.changedWhoHadWhat(who), label: named.whoHadWhat });
     }
     // Only the amount fields that actually changed reach here: a currency switch

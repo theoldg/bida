@@ -15,7 +15,7 @@ import { bare, distinctInitials, priced } from "../lib/format";
 import { receiptWeights, type EntryDraft } from "../lib/draft";
 import {
   billLabel, foldedLine, hasTranslation, portions, receiptTotalMinor, runAssignment,
-  unfoldItem, unfoldableInto,
+  unfoldAll,
 } from "../lib/scan/items";
 import { useBillEnglish } from "../lib/hooks";
 import { setBillEnglish } from "../lib/db/device";
@@ -79,10 +79,9 @@ export function WhoHadWhat({
   // Whether the deductions are showing one by one or as one figure. Display
   // only — it changes nothing the bill is worth, so nothing is written down.
   const [openDiscounts, setOpenDiscounts] = useState(false);
-  // Splitting and merging lines are written to the draft as they happen — the
-  // grid's rows and the bill's lines are one list, and the seeding effect
-  // trusts them to match. **So keep what was found and put it back on the way
-  // out**, or trying ×N is a change you can't undo.
+  // The grid's rows and the bill's lines are one list, and an older bill's
+  // lines are split into portions on the draft as the grid opens (the seeding
+  // effect). **So keep what was found and put it back on the way out.**
   const opened = useRef<Pick<EntryDraft,
     "receiptItems" | "receiptTip" | "receiptTax" | "receiptDiscounts"
     | "receiptInvolved" | "receiptAssignments" | "splitTab"> | null>(null);
@@ -99,9 +98,9 @@ export function WhoHadWhat({
   const rowEl = useRef<(HTMLTableRowElement | null)[]>([]);
   const [told, setTold] = useState(false);
   // Which runs of portions are drawn open, by the item index they start at.
-  // Folding is only a view (`foldedLine`): the bill keeps its portions once a
-  // line is split, so which portion was whose is never thrown away. A restored
-  // draft starts with every run folded.
+  // Folding is only a view (`foldedLine`): the bill holds its portions from the
+  // start (`unfoldAll`), so which portion was whose is never thrown away. A
+  // restored draft starts with every run folded.
   const [open, setOpen] = useState<Set<number>>(new Set());
   // A run just opened by tapping a cell in it, and the column that tap was in:
   // it is scrolled to whole and only then does that column flash (`follow`).
@@ -123,15 +122,25 @@ export function WhoHadWhat({
   useEffect(() => {
     if (seeded.current || items.length === 0 || people.length === 0) return;
     seeded.current = true;
-    const all = new Set(people.map((m) => m.id));
-    if (draft.receiptInvolved && draft.receiptAssignments?.length === items.length) {
-      setInvolved(new Set(draft.receiptInvolved));
-      setAssignments(draft.receiptAssignments.map((row) => new Set(row)));
-    } else {
-      setInvolved(all);
-      setAssignments(items.map(() => new Set<string>()));
-    }
-  }, [people, items, draft.receiptInvolved, draft.receiptAssignments]);
+    const saved = draft.receiptInvolved && draft.receiptAssignments?.length === items.length
+      ? draft.receiptAssignments : null;
+    setInvolved(new Set(saved ? draft.receiptInvolved : people.map((m) => m.id)));
+    const rows = saved ? saved.map((row) => new Set(row)) : items.map(() => new Set<string>());
+    // A bill arrives with its lines of several already in portions
+    // (`unfoldAll`); one saved before that did not is split here, each portion
+    // starting with whoever had the line. Written straight away, since the
+    // grid's rows and the bill's lines are one list — and the history reads it
+    // as the same bill (`printedBill`), so it is no edit anybody sees.
+    const split = unfoldAll(items, draft.currency);
+    if (split.items.length === items.length) { setAssignments(rows); return; }
+    const widened = split.from.map((i) => new Set(rows[i]));
+    setAssignments(widened);
+    save({
+      ...draft,
+      receiptItems: split.items,
+      ...(saved ? { receiptAssignments: widened.map((row) => [...row]) } : {}),
+    });
+  }, [people, items, draft, save]);
 
   const labels = distinctInitials(people);
   const runs = portions(items);
@@ -151,43 +160,6 @@ export function WhoHadWhat({
       next.delete(memberId);
       return next;
     }));
-  }
-
-  // Unfolding and merging change the bill's shape, so rows and assignments are
-  // written together, keeping one assignment row per item even if the screen is
-  // left without Done.
-  function commitRows(nextItems: typeof items, nextAssignments: Set<string>[]) {
-    if (!draft) return;
-    setTouched(true);
-    setAssignments(nextAssignments);
-    save({
-      ...draft,
-      receiptItems: nextItems,
-      receiptInvolved: [...involved],
-      receiptAssignments: nextAssignments.map((row) => [...row]),
-    });
-  }
-
-  /**
-   * "Salad ×2" becomes two salads, each starting with whoever had the line —
-   * the one press here that changes the bill. After it, pressing only opens and
-   * closes the view.
-   */
-  function unfold(index: number) {
-    if (!draft) return;
-    const next = unfoldItem(items, index, draft.currency);
-    if (!next) return;
-    // The rows below shift down by what the line grew, and any run already
-    // open down there has to travel with them.
-    const grew = next.count - 1;
-    setOpen((was) => {
-      const now = new Set<number>();
-      for (const start of was) now.add(start > index ? start + grew : start);
-      now.add(index);
-      return now;
-    });
-    commitRows(next.items, assignments.flatMap((row, i) =>
-      i === index ? Array.from({ length: next.count }, () => new Set(row)) : [row]));
   }
 
   /** Closed and opened again — a view, so nothing is written down either way. */
@@ -514,7 +486,6 @@ export function WhoHadWhat({
                 const run = folded
                   ? runAssignment(assignments.slice(line.start, line.start + line.count)) : null;
                 const part = folded ? null : runs[line.start] ?? null;
-                const into = folded || part ? null : unfoldableInto(item, draft.currency);
                 // A line nobody has been given blooms whole, across every column
                 // (globals.css). The listener is on the row because the animation runs
                 // on the cells and `animationend` bubbles up.
@@ -531,9 +502,9 @@ export function WhoHadWhat({
                           aria-label={copy.items.everyone(said(shown))}>
                           <span className="itemname">
                             {said(shown)}
-                            {/* The printed count, but only where the button
-                                below isn't already carrying it. */}
-                            {!folded && !part && into === null && item.quantity && item.quantity > 1 ? (
+                            {/* The printed count, where no fold button below is
+                                carrying it: a count that can't be portioned. */}
+                            {!folded && !part && item.quantity && item.quantity > 1 ? (
                               <span className="itemqty"> ×{item.quantity}</span>
                             ) : null}
                           </span>
@@ -545,20 +516,14 @@ export function WhoHadWhat({
                             {part ? <span className="itemqty"> · {copy.items.portion(part.index, part.of)}</span> : null}
                           </span>
                         </button>
-                        {/* Show the portions, or show them as one line. Only the very first
-                            press on a counted line also splits the bill into rows. */}
+                        {/* Show the portions, or show them as one line — a view
+                            either way, since the bill holds them split. */}
                         {folded ? (
                           <button className="itemfold" onClick={() => showPortions(line.start)} {...keepsFocus}
                             title={copy.items.showPortions(line.count)}
                             aria-label={copy.items.openItem(said(item), line.count)}
                             aria-expanded={false}>
                             ×{line.count}<Icon name="split" size={12} />
-                          </button>
-                        ) : into !== null ? (
-                          <button className="itemfold" onClick={() => unfold(line.start)} {...keepsFocus}
-                            title={copy.items.splitInto(into)}
-                            aria-label={copy.items.splitItem(said(item), into)}>
-                            ×{into}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
                           <button className="itemfold on" onClick={() => showAsOneLine(part.start)} {...keepsFocus}

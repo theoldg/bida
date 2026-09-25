@@ -1133,11 +1133,9 @@ export const copy = {
      */
     portion: (index: number, of: number) => `${index}/${of}`,
     /**
-     * ×N toggles the portions view. Only the first press splits the line (rows
-     * must exist to assign), so folding is never called merging.
+     * ×N toggles the portions view. The bill holds them split from the start,
+     * so folding is never called merging.
      */
-    splitInto: (n: number) => `Split into ${n} lines`,
-    splitItem: (label: string, n: number) => `Split ${label} into ${n} lines`,
     showPortions: (n: number) => `Show the ${n} portions one by one`,
     openItem: (label: string, n: number) => `Show the ${n} ${label} portions one by one`,
     mergeBack: "Show as one line",

@@ -262,6 +262,11 @@ export function portions(items: readonly ReceiptItem[]): (Portion | null)[] {
   return out;
 }
 
+/** How many lines the bill printed: a run of portions is one of them. */
+export function printedCount(items: readonly ReceiptItem[]): number {
+  return portions(items).filter((p) => !p || p.index === 1).length;
+}
+
 /** The count a printed line can be unfolded into, or null if it can't be. */
 export function unfoldableInto(item: ReceiptItem, currency: string): number | null {
   const count = item.quantity ?? 0;
@@ -298,6 +303,54 @@ export function unfoldItem(
     portionOf: count,
   }));
   return { items: [...items.slice(0, index), ...parts, ...items.slice(index + 1)], at: index, count };
+}
+
+/**
+ * Every line that can be unfolded, unfolded — how a bill is kept from the
+ * moment it arrives, so that folding a run on the grid is only ever a view and
+ * never an edit to the bill. `from[i]` is the line row `i` came from, for
+ * widening a grid's assignment rows in step.
+ */
+export function unfoldAll(
+  items: readonly ReceiptItem[],
+  currency: string,
+): { items: ReceiptItem[]; from: number[] } {
+  const out: ReceiptItem[] = [];
+  const from: number[] = [];
+  items.forEach((item, i) => {
+    const parts = unfoldItem([item], 0, currency)?.items ?? [item];
+    for (const part of parts) { out.push(part); from.push(i); }
+  });
+  return { items: out, from };
+}
+
+/**
+ * The bill as printed: every run of portions read as its one line, and each
+ * run's rows of eaters as one row where they all agree. What the history
+ * compares, so splitting a line into portions — a change of shape, not of
+ * the bill — never reads as "6 items → 7 items".
+ */
+export function printedBill(
+  items: readonly ReceiptItem[],
+  assignments: readonly (readonly string[])[] | null | undefined,
+  currency: string,
+): { lines: { label: string; labelEn: string | null; amount: string; quantity: number }[]; eaters: string[][][] } {
+  const runs = portions(items);
+  const lines: { label: string; labelEn: string | null; amount: string; quantity: number }[] = [];
+  const eaters: string[][][] = [];
+  for (let i = 0; i < items.length; ) {
+    const run = runs[i];
+    const count = run && run.start === i ? run.of : 1;
+    const item = (count > 1 && foldedLine(items, i, count, currency)) || items[i]!;
+    let amount = item.amount;
+    try { amount = minorToDecimalString(parseMinor(item.amount, currency), currency); } catch { /* kept as typed */ }
+    lines.push({ label: item.label, labelEn: item.labelEn ?? null, amount, quantity: item.quantity ?? 1 });
+    const rows = Array.from({ length: count }, (_, k) => [...(assignments?.[i + k] ?? [])].sort());
+    const same = rows.every((row) => row.join() === rows[0]!.join());
+    eaters.push(same ? rows.slice(0, 1) : rows);
+    i += count;
+  }
+  return { lines, eaters };
 }
 
 /**

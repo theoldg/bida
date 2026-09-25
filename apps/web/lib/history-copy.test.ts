@@ -432,6 +432,33 @@ suite("describe", () => {
     expect(latest!.said).toBe("Theo changed who had what");
   });
 
+  // Splitting "Salad ×2" into portions is a change of shape, not of the bill:
+  // "6 items → 7 items" for a fold and unfold is the failure.
+  it("reads a line split into portions as the same receipt", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: [{ label: "Soup", amount: "3.00" }, { label: "Salad", amount: "9.00", quantity: 2 }],
+      receiptInvolved: [theo, marie],
+      receiptAssignments: [[theo], [theo, marie]],
+    });
+    const split = [
+      { label: "Soup", amount: "3.00" },
+      { label: "Salad", amount: "4.50", quantity: null, portionOf: 2 },
+      { label: "Salad", amount: "4.50", quantity: null, portionOf: 2 },
+    ];
+    await editExpense(groupId, theo, expenseId, {
+      receiptItems: split, receiptAssignments: [[theo], [theo, marie], [marie, theo]],
+    });
+    const [same] = await described(groupId);
+    expect(same!.said).not.toContain("receipt");
+    expect(same!.said).not.toContain("who had what");
+
+    // The portions then going to different people is a change of who had what.
+    await editExpense(groupId, theo, expenseId, { receiptAssignments: [[theo], [theo], [marie]] });
+    const [moved] = await described(groupId);
+    expect(moved!.said).toBe("Theo changed who had what");
+  });
+
   // A receipt's weights are minor units, not parts a person chose, so the
   // sentence names the mode and the bill ("×3943 parts" is the failure).
   it("names the mode and the bill, and never counts the weights as parts", async () => {

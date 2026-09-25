@@ -444,10 +444,12 @@ does the sentence under the grid appear, until the last line has somebody
 arrival nothing is assigned yet, and a red line printed then scolds a grid for
 being untouched.
 
-**×N stops editing the bill after the first press.** That press really does
-split a printed "Salad ×2" into portions — there have to be rows before there
-is anything to assign — but from then on the same button only opens and closes
-a *view* of them (`foldedLine`), and the portions stay in the draft. So folding
+**×N never edits the bill.** A printed "Salad ×2" is split into portions as
+the bill arrives (`unfoldAll`) — there have to be rows before there is anything
+to assign — and a bill saved before that is split as the grid opens. The
+button only opens and closes a *view* of them (`foldedLine`), and the history
+reads a bill as printed (`printedBill`), so a split line is never "6 items → 7
+items". So folding
 never throws away which portion was whose, and cannot move a cent
 either: three portions of 5.67/5.67/5.66 shared two ways do not round like one
 17.00 line. A folded run whose portions went to different people wears the
@@ -476,8 +478,7 @@ it, because it explains those rows and the footer's line is what to do next.
 way, so this is for the reader: "Discounts −9.25" cannot tell a two-for-one
 from a loyalty card. Several of them collapse into one row wearing the same
 `×N` the repeated items wear, and open into the names the bill printed —
-display only, since the rows aren't assignable either way, so unlike an item's
-unfold it writes nothing to the draft. Each person's own copy of the bill names
+display only, since the rows aren't assignable either way. Each person's own copy of the bill names
 them one by one too (`billCharges`, `receiptBreakdown`).
 
 Proportional is the reading [ADR-0016](decisions/0016-receipts.md) settles on,
@@ -491,7 +492,7 @@ this way, leaves every ratio between people exactly where the items put them —
 it is only the total that moves.
 
 `quantity` never multiplies anything — `amount` is already the line's printed
-total. It says how many rows that line **unfolds** into on the grid, and — with
+total. It says how many portions that line is **unfolded** into, and — with
 the number of people on the row — how much of it each of them had.
 
 The grid is kept on the expense, so the entry screen can read it back:
@@ -814,6 +815,9 @@ and the draft it fills are all the app's own.
   and then fails `600010` when nothing clicks it — so neither outcome says
   anything about whether real people get through, and neither means the
   deployment is broken. **If you change the widget, a human has to test it.**
+- **`receiptItems.length` is not how many items the bill has.** A line of
+  several is kept as portions, so "Salad ×2" is two rows; say a count with
+  `printedCount` (or `printedBill`), never the array's length.
 - **A driven scan spends the budget too.** `pnpm drive`'s `receipt <name>`
   stubs the round trip to Gemini, not `lib/scan/budget.ts`, so an eleventh scan
   on one phone is refused by the app itself with `copy.scan.limit.you`. That is

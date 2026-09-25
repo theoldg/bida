@@ -252,7 +252,7 @@ async function main() {
       // real photo upload with the model's answer stubbed from `pnpm drive`'s
       // canned bill (`lib/receipts.mjs`). Long on purpose, to show the initials
       // header freezing over a bill taller than the screen. Shot twice: as printed,
-      // then with its "×2" salad unfolded into two portions.
+      // then with its "×2" salad opened onto its two portions.
       await stubScan(page, "cafe-clock");
 
       // Scan first: the whole screen behind the camera above the ledger's "+".
@@ -273,7 +273,7 @@ async function main() {
       await page.waitForTimeout(250);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what.png`) });
       process.stdout.write(`${theme}/who-had-what `);
-      await page.getByRole("button", { name: /^Split Salade marocaine/ }).click();
+      await page.getByRole("button", { name: /^Show the \d+ Salade marocaine portions/ }).click();
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS, `${theme}-who-had-what-unfolded.png`) });
       process.stdout.write(`${theme}/who-had-what-unfolded `);
@@ -298,8 +298,8 @@ async function main() {
       // Everybody had the knots and the soda; a pizza each for the other two.
       for (const label of [
         /^Ana had Ham pizza/, /^Bo had Cheese pizza/,
-        /^Ana had Garlic knots/, /^Bo had Garlic knots/, /^Cy had Garlic knots/,
-        /^Ana had Soda/, /^Bo had Soda/, /^Cy had Soda/,
+        /^Ana had (all \d+ )?Garlic knots/, /^Bo had (all \d+ )?Garlic knots/, /^Cy had (all \d+ )?Garlic knots/,
+        /^Ana had (all \d+ )?Soda/, /^Bo had (all \d+ )?Soda/, /^Cy had (all \d+ )?Soda/,
       ]) await page.getByRole("button", { name: label }).click();
       await page.waitForTimeout(150);
       await page.screenshot({ path: join(SHOTS, `${theme}-quick-items.png`) });

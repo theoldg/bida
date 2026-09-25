@@ -11,6 +11,7 @@ import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
 import { keepsFocus } from "./bits";
 import { copy } from "../lib/copy";
+import { printedCount } from "../lib/scan/items";
 import { bare, money, plural, splitFooter } from "../lib/format";
 import type { SplitTab } from "../lib/draft";
 
@@ -346,7 +347,7 @@ function ReceiptPanel({
             {included.size === 0 ? copy.scan.assignWhoHadWhat : copy.scan.editWhoHadWhat}
           </span>
           <span style={{ display: "flex", alignItems: "center", gap: 5, fontWeight: 500, opacity: .85 }}>
-            {plural(items.length, copy.noun.item)}
+            {plural(printedCount(items), copy.noun.item)}
             <Icon name="chev" size={14} />
           </span>
         </Link>
