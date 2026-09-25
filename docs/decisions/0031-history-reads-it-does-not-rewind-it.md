@@ -20,8 +20,8 @@ phone silently undo somebody else's edit two revisions deep.
   form — a wrong amount is fixed by typing the right one, which is also what the
   log then says happened.
 - **A deleted entry comes back whole.** Not a revision: the entry as it was
-  when deleted, from its own screen, which keeps drawing it with Restore where
-  Edit was. It writes `update { deletedAt: null }`, the lift the healers
+  when deleted, from its own screen, which keeps drawing it under a band saying
+  it is deleted, with Restore in it. It writes `update { deletedAt: null }`, the lift the healers
   already write, so it merges per field and nothing new reaches the fold or
   the wire. The entry wins over a removal made since, as it does after a
   merge: a person or rate it names comes back in the same append

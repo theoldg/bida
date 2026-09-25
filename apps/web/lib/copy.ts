@@ -841,8 +841,11 @@ export const copy = {
     splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
     deleteBody: "It can be restored from the history.",
-    /** Where Edit is, on a deleted entry's screen. */
-    deletedBy: (who: string, when: string) => `${who} deleted this · ${when}`,
+    /** A deleted entry's bar: "Deleted expense". */
+    deletedTitle: (kind: string) => `Deleted ${kind.toLowerCase()}`,
+    /** The band at the head of a deleted entry's screen, beside Restore. */
+    deleted: "Deleted",
+    deletedBy: (who: string | undefined, when: string) => (who ? `by ${who} · ${when}` : when),
     restore: "Restore",
     /** What else Restore puts back: people removed since, a cleared rate. */
     restoreBrings: (things: string[]) => {

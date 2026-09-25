@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Go with A, remove the third line." Built, the band read
+  "by ?" for a beat while the log loaded — there all along, unseen in grey
+  small print, loud in an inverted block. Emphasis promotes its bugs too.
+
 - *2026-09-25* — "give some attention to the start/bottom" of the history
   line. Four variants from a plain stop to a captioned start; the owner took
   the plainest. I sent contact sheets though a postcard below says phones
@@ -79,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "merge", a glyph drawn for rows folding together. Drew share's tray with
   the arrow turned inward. When a borrowed icon is wrong, read what the donor
   was drawn for; a sibling glyph is often one path away.
-
-- *2026-09-24* — "smaller number, bigger fabs… I'll decide." Four
-  variants on one sheet per width, each a step further; the owner took B's
-  number with C's FABs. A sheet's columns are also a menu of halves, so
-  name each size, not just each letter, and the mix costs no reshoot.

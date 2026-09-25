@@ -81,8 +81,8 @@ function EntryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const live = data.expenses.find((e) => e.id === entryId)
     ?? data.settlements.find((s) => s.id === entryId);
-  // Deleted, it is drawn as it was, at the rates it was saved at, with Restore
-  // where Edit would be (ADR-0031).
+  // Deleted, it is drawn as it was, at the rates it was saved at, under a band
+  // that says so and holds Restore (ADR-0031).
   const tombstoned = !live && entryId
     ? [data.withTombstones.expenses[entryId], data.withTombstones.settlements[entryId]]
       .find((row) => !!row?.deletedAt)
@@ -178,7 +178,7 @@ function EntryScreen() {
             the same height everywhere. The title, of unknown length, is below
             (`.entrytitle`). */}
         <TopBar
-          title={copy.entryKind.label[kind]}
+          title={deleted ? copy.entry.deletedTitle(copy.entryKind.label[kind]) : copy.entryKind.label[kind]}
           sub={whenLabel(entry)}
           back={parent}
           right={<>
@@ -194,6 +194,32 @@ function EntryScreen() {
         />
 
         <Scroll>
+          {/* Deleted, it says so before anything else on the screen, and Restore
+              is in the same strip: drawn as it was, the rest reads exactly like
+              a live entry. */}
+          {deleted ? (
+            <div className="pad" style={{ paddingTop: 2, paddingBottom: 8 }}>
+              <div className="deletedband" role="status">
+                <p>
+                  <b><Icon name="trash" size={14} /> {copy.entry.deleted}</b>
+                  {/* Who comes from the log, a read behind the row: until it lands, when. */}
+                  <span>{copy.entry.deletedBy(log?.lastDelete && data.nameOf(log.lastDelete.actor),
+                    whenLabel({ occurredAt: entry.deletedAt! }))}</span>
+                </p>
+                {/* A conversion's other half is still counting this money: putting
+                    this back would count it twice (`liveReplacement`). */}
+                {replacement ? (
+                  <Link href={route.entry(groupId, replacement.id, via)} className="btn">
+                    {copy.entry.became[replacement.entity === "settlement" ? "transfer"
+                      : kindOf(data.withTombstones.expenses[replacement.id]!)]}
+                  </Link>
+                ) : (
+                  <button className="btn" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
+                )}
+              </div>
+              {brings.length > 0 ? <p className="hint">{copy.entry.restoreBrings(brings)}</p> : null}
+            </div>
+          ) : null}
           <div className="pad entryhead" style={{ paddingTop: 2 }}>
             {/* Nothing when there is no title: the bar already says "Expense". A
                 transfer has none — its words are the note. */}
@@ -219,24 +245,7 @@ function EntryScreen() {
             ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
             : <TransferDetail settlement={settlement!} data={data} />}
 
-          {deleted ? (
-            <div className="pad" style={{ paddingTop: 4 }}>
-              <p className="hint deletedby">
-                {copy.entry.deletedBy(data.nameOf(log?.lastDelete?.actor ?? ""), whenLabel({ occurredAt: entry.deletedAt! }))}
-              </p>
-              {/* A conversion's other half is still counting this money: putting
-                  this back would count it twice (`liveReplacement`). */}
-              {replacement ? (
-                <Link href={route.entry(groupId, replacement.id, via)} className="btn btn-s">
-                  {copy.entry.became[replacement.entity === "settlement" ? "transfer"
-                    : kindOf(data.withTombstones.expenses[replacement.id]!)]}
-                </Link>
-              ) : (
-                <button className="btn btn-s" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
-              )}
-              {brings.length > 0 ? <p className="hint">{copy.entry.restoreBrings(brings)}</p> : null}
-            </div>
-          ) : (
+          {deleted ? null : (
             <div className="pad" style={{ paddingTop: 4 }}>
               <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
             </div>

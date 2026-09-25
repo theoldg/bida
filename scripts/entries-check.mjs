@@ -564,7 +564,10 @@ await page.getByRole("button", { name: "Restore" }).waitFor({ timeout: PATIENCE 
 report(await page.getByRole("link", { name: "Edit" }).count() === 0
   && await page.getByRole("button", { name: "Delete" }).count() === 0,
   "a deleted entry's screen offers Restore, and neither Edit nor Delete");
-report(/deleted this/.test(await page.locator(".deletedby").innerText()), "and says who deleted it");
+await page.locator(".deletedband").getByText(/^by \S/).waitFor({ timeout: PATIENCE });
+const band = await page.locator(".deletedband").innerText();
+report(/deleted/i.test(band) && /by \S/.test(band), `and says at its head who deleted it — ${band.replace(/\s+/g, " ")}`);
+report(/^Deleted /.test(await page.locator(".topbar h3").innerText()), "and its bar says it is deleted");
 await page.getByRole("link", { name: "History" }).first().click();
 await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();

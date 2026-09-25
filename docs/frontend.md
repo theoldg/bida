@@ -22,7 +22,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/` · `/new` | Groups list, unless a **launch** reopens the group you were last in (`lib/launch.ts`, whose `arrival` is the one answer to what brought you here) — the app's name, the light/dark toggle ([ADR-0007](decisions/0007-a-screen-is-a-route.md)), and a row menu holding the invite link and "Forget group" · name, currency and everyone in the group, then which of them you are |
 | `/g?id=` | The group: its ledger, the only screen that leaves it. The invite link, People, Rates, History and "Forget group" are one top-bar menu (`components/group-menu.tsx`). A row's long press offers Edit and Delete; Edit opens the form with `via=ledger`, so saving lands back on the ledger rather than on the entry |
 | `/g/balances?id=` | Who is up, who is down, and settling, pushed over the ledger by the balance card at its head, so back is the ledger. Figures share one column as wide as the longest (a subgrid), so every bar ends in the same place. The suggested reimbursements you are in come first. A suggested payment opens a card, not a form — two names, the arrow, the figure, `Cancel`/`Record` — because every figure on it is the app's (`SettleDialog`) |
-| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. Deleted, it is the same screen with Restore where Edit was ([below](#state)). On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
+| `/g/entry?id=&e=[&via=]` | One entry — expense, income or transfer. The id is looked up in both tables ([ADR-0010](decisions/0010-what-an-entry-is.md)). The bar carries the kind and the date; under it the entry's own title, sized to the largest step that says it in one line (`FitTitle`), and the figure ([design-system.md](design-system.md#the-bar-is-furniture)), so the kind needs no chip of its own. `via=history\|members\|rates\|balances` is the screen that linked in from beside it, and is where back goes. The split card lists only the people in the split — an outsider's absence is the whole message. Deleted, it is the same screen under a band that says so and holds Restore ([below](#state)). On a scanned expense each person's row opens onto what they had (`receiptBreakdown`) |
 | `/g/entry/edit?id=[&e=][&kind=][&via=][&from=&to=&amount=&title=]` | Add or edit any of the three: one form, a kind chip, and the split inline ([ADR-0010](decisions/0010-what-an-entry-is.md)). Settle-up is the only caller that sends `title` — "Reimbursement" — so a blank transfer stays untitled. Saving unwinds to `formParent`: the entry it was editing, or the screen `via` names — `via=ledger` skips the entry for the ledger |
 | `/g/scan?id=` | Scan first, decide after: a drawing of what a photo becomes, and the control that takes one, reached from the camera above the ledger's "+". Fills a blank expense draft and hands it to `/g/entry/edit` with `replace`, so back from the form is the ledger ([receipt-scanning.md](receipt-scanning.md)) |
 | `/g/entry/items?id=[&e=]` | The who-had-what grid: who was there across the top, the bill's lines down the side, running totals below. Writes a `receipt` split ([ADR-0016](decisions/0016-receipts.md)), and is reached from the form's Items tab — never navigated to by a scan ([receipt-scanning.md](receipt-scanning.md)) |
@@ -328,10 +328,12 @@ confers nothing without the secret.
   · deleted") opens the entry itself, and its own history backs up to it. Its
   line is `components/revision.tsx`, shared with the ledger.
 - **A deleted entry keeps its screen** (ADR-0031): drawn as it was, at the rates
-  it was saved at, from `useGroupData`'s `withTombstones`. The trash and Edit
-  give way to "Ana deleted this" and **Restore**, which asks nothing and turns
-  the screen back into the live entry in place. What else it brings back, a
-  removed person or a cleared rate, is named under the button before the press
+  it was saved at, from `useGroupData`'s `withTombstones`. Drawn as it was, it
+  read as live, so the state leads: the bar says "Deleted expense", and an
+  inverted band above the title says who deleted it and when, and holds
+  **Restore** — which asks nothing and turns the screen back into the live
+  entry in place. The trash and Edit are gone. What else it brings back, a
+  removed person or a cleared rate, is named under the band before the press
   (`restoreEntryDrafts`). Deleting still leaves for the ledger. "Gone" is only
   an id this phone has never had.
 - **The ledger's new-changes line** (`components/new-edits.tsx`) sits under the
