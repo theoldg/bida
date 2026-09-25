@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Report on line counts… what can you say about those
+  numbers?" Counted, then read what the counts point at: ratios per area, the
+  biggest and quietest files. A number question wants a reading, not a table;
+  and a regex count of comments is an estimate, so say so.
+
 - *2026-09-25* — "Sort out the flaky browser tests… maybe timeouts? Idk."
   Timeouts were never short; each flake was a pause or a quiet moment standing
   in for the thing, plus nine chromiums on four cores. Ran verify five times
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   line. Four variants from a plain stop to a captioned start; the owner took
   the plainest. I sent contact sheets though a postcard below says phones
   one per image. Read the postcards before shooting, not after.
-
-- *2026-09-25* — "Fix all", after a list of simplifications promised not to
-  change the app. One didn't survive a closer read: each device setter's
-  early return decides "unchanged" its own way. Report the one that fell and
-  why; forcing it would have broken the promise the list was made under.
