@@ -5,7 +5,7 @@ import type { SealedOp } from "@bida/core";
  * never folds (ADR-0002) and can't, since ops are sealed (ADR-0036).
  */
 
-interface GroupRow {
+export interface GroupRow {
   id: string;
   token_hash: string;
   created_at: number;

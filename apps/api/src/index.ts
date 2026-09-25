@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import {
   VERTEX_URL, isCurrencyCode, rateFromNumber, validateSealedOp, SealError, type SealedOp,
 } from "@bida/core";
@@ -13,14 +13,16 @@ import { pageForPayload } from "./payload";
 import {
   fetchRegistry, isClientKey, isTricountKey, MAX_REGISTRY_BYTES, openSession,
 } from "./tricount";
-import { acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince } from "./store";
+import {
+  acceptOps, deleteGroup, ensureGroup, getGroup, isDeleted, opsSince, type GroupRow,
+} from "./store";
 import { parseNotify, relay } from "./relay";
 
 /**
  * The one Worker: static app plus the sync API (docs/hosting.md, docs/sync.md).
  * Ops arrive and leave sealed; nothing here can read one (ADR-0036).
  */
-const app = new Hono<{
+type Env = {
   Bindings: {
     ASSETS: Fetcher;
     DB: D1Database;
@@ -34,7 +36,9 @@ const app = new Hono<{
     VAPID_PUBLIC_KEY?: string;
     VAPID_PRIVATE_KEY?: string;
   };
-}>();
+};
+
+const app = new Hono<Env>();
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
@@ -54,6 +58,30 @@ app.get("/api/push/key", (c) => {
  * new invite. `scope` lets the phone say "deleted" rather than "sync failing".
  */
 const GONE = { error: "this group was deleted", scope: "deleted" } as const;
+
+/**
+ * The group a bearer may act on, or the refusal to send. For every route but
+ * `POST /ops`, which registers an unknown group rather than refusing it.
+ */
+async function authorizedGroup(c: Context<Env>, groupId: string): Promise<GroupRow | Response> {
+  const token = bearerToken(c.req.header("Authorization") ?? null);
+  if (!token) return c.json({ error: "missing bearer token" }, 401);
+
+  const group = await getGroup(c.env.DB, groupId);
+  if (!group) return c.json({ error: "unknown group" }, 404);
+  if (isDeleted(group)) return c.json(GONE, 410);
+  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+  return group;
+}
+
+/** The request's JSON body, or the 400 to send. */
+async function jsonBody<T extends object>(c: Context<Env>): Promise<T | Response> {
+  try {
+    return await c.req.json<T>();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
+  }
+}
 
 /**
  * Today's rate for one currency pair, for the rate registry.
@@ -119,13 +147,8 @@ app.get("/api/rates/:from/:to", async (c) => {
  */
 app.post("/api/groups/:id/scan", async (c) => {
   const groupId = c.req.param("id");
-  const token = bearerToken(c.req.header("Authorization") ?? null);
-  if (!token) return c.json({ error: "missing bearer token" }, 401);
-
-  const group = await getGroup(c.env.DB, groupId);
-  if (!group) return c.json({ error: "unknown group" }, 404);
-  if (isDeleted(group)) return c.json(GONE, 410);
-  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+  const group = await authorizedGroup(c, groupId);
+  if (group instanceof Response) return group;
 
   const ip = c.req.header("cf-connecting-ip") ?? "";
 
@@ -194,12 +217,8 @@ app.post("/api/groups/:id/scan", async (c) => {
  * The ledger is streamed back unread.
  */
 app.post("/api/tricount", async (c) => {
-  let body: { key?: unknown; clientKey?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid JSON body" }, 400);
-  }
+  const body = await jsonBody<{ key?: unknown; clientKey?: unknown }>(c);
+  if (body instanceof Response) return body;
   if (!isTricountKey(body.key)) return c.json({ error: "not a tricount link" }, 400);
   if (!isClientKey(body.clientKey)) return c.json({ error: "not a client key" }, 400);
 
@@ -250,12 +269,8 @@ app.post("/api/groups/:id/ops", async (c) => {
   const oversized = declaredTooLarge(c.req.header("content-length") ?? null);
   if (oversized) return c.json({ error: oversized.error }, oversized.status);
 
-  let body: { ops?: unknown; since?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid JSON body" }, 400);
-  }
+  const body = await jsonBody<{ ops?: unknown; since?: unknown }>(c);
+  if (body instanceof Response) return body;
   if (!Array.isArray(body.ops)) return c.json({ error: "ops must be an array" }, 400);
   const since = typeof body.since === "number" ? body.since : 0;
 
@@ -292,23 +307,14 @@ app.post("/api/groups/:id/ops", async (c) => {
  */
 app.post("/api/groups/:id/notify", async (c) => {
   const groupId = c.req.param("id");
-  const token = bearerToken(c.req.header("Authorization") ?? null);
-  if (!token) return c.json({ error: "missing bearer token" }, 401);
-
-  const group = await getGroup(c.env.DB, groupId);
-  if (!group) return c.json({ error: "unknown group" }, 404);
-  if (isDeleted(group)) return c.json(GONE, 410);
-  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+  const group = await authorizedGroup(c, groupId);
+  if (group instanceof Response) return group;
 
   const oversized = declaredTooLarge(c.req.header("content-length") ?? null, MAX_NOTIFY_BODY_BYTES);
   if (oversized) return c.json({ error: oversized.error }, oversized.status);
 
-  let body: { notifications?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
-    return c.json({ error: "invalid JSON body" }, 400);
-  }
+  const body = await jsonBody<{ notifications?: unknown }>(c);
+  if (body instanceof Response) return body;
   const notifications = parseNotify(body.notifications);
   if (!Array.isArray(notifications)) return c.json({ error: notifications.error }, notifications.status);
 
@@ -322,13 +328,8 @@ app.post("/api/groups/:id/notify", async (c) => {
 
 app.get("/api/groups/:id/ops", async (c) => {
   const groupId = c.req.param("id");
-  const token = bearerToken(c.req.header("Authorization") ?? null);
-  if (!token) return c.json({ error: "missing bearer token" }, 401);
-
-  const group = await getGroup(c.env.DB, groupId);
-  if (!group) return c.json({ error: "unknown group" }, 404);
-  if (isDeleted(group)) return c.json(GONE, 410);
-  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+  const group = await authorizedGroup(c, groupId);
+  if (group instanceof Response) return group;
 
   const since = Number(c.req.query("since") ?? "0") || 0;
   const ops = await opsSince(c.env.DB, groupId, since);
@@ -343,13 +344,8 @@ app.get("/api/groups/:id/ops", async (c) => {
  */
 app.delete("/api/groups/:id", async (c) => {
   const groupId = c.req.param("id");
-  const token = bearerToken(c.req.header("Authorization") ?? null);
-  if (!token) return c.json({ error: "missing bearer token" }, 401);
-
-  const group = await getGroup(c.env.DB, groupId);
-  if (!group) return c.json({ error: "unknown group" }, 404);
-  if (isDeleted(group)) return c.json(GONE, 410);
-  if (group.token_hash !== (await sha256Hex(token))) return c.json({ error: "wrong token" }, 403);
+  const group = await authorizedGroup(c, groupId);
+  if (group instanceof Response) return group;
 
   await deleteGroup(c.env.DB, groupId, Date.now());
   return c.json({ deleted: true });
