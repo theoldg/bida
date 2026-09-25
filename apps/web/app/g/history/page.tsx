@@ -96,7 +96,7 @@ function HistoryScreen() {
     <Screen>
       <Body>
         <TopBar
-          title={copy.history.title}
+          title={entryId ? copy.history.entryTitle : copy.history.title}
           sub={copy.history.subject(
             entryId ? subjectName ?? copy.history.entry : group.name,
             plural(revisions.length, copy.noun.revision))}

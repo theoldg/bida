@@ -1155,6 +1155,7 @@ export const copy = {
 
   history: {
     title: "History",
+    entryTitle: "Entry history",
     entry: "Entry",
     empty: "Nothing here yet",
     wholeGroup: "The whole group",
