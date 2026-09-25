@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   isCoSponsored, liveReplacement, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
@@ -165,6 +165,11 @@ function EntryScreen() {
     else await deleteSettlement(groupId, actor, entry.id);
     router.replace(route.group(groupId));
   }
+  const editedChip = edits > 0 ? (
+    <Link href={route.history(groupId, entry.id, via)} className="chip">
+      <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
+    </Link>
+  ) : null;
 
   return (
     <Screen>
@@ -198,20 +203,16 @@ function EntryScreen() {
             <div className={`entryfig${expense ? " ruled" : ""}`}>
               <EntryFigure minor={entry.baseAmountMinor} currency={group.baseCurrency} />
               {foreign ? (
-                <span className="num">{money(entry.amountMinor, entry.currency)}</span>
+                <EntrySpent minor={entry.amountMinor} currency={entry.currency}
+                  rate={copy.entry.rate(rateText(entry.rateToBase))} />
               ) : null}
             </div>
-            {/* Who and how many, under the rule. A transfer's card is nothing
-                but who, so it has no line here. */}
-            {expense && kind !== "transfer" ? <EntryBy expense={expense} kind={kind} data={data} /> : null}
-            <div className="entrychips">
-              {foreign ? <span className="chip">{copy.entry.rate(rateText(entry.rateToBase))}</span> : null}
-              {edits > 0 ? (
-                <Link href={route.history(groupId, entry.id, via)} className="chip">
-                  <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
-                </Link>
-              ) : null}
-            </div>
+            {/* Who and how many, under the rule, with the edit count at its end.
+                A transfer's card is nothing but who, so it has no line here and
+                the count stands alone. */}
+            {expense && kind !== "transfer"
+              ? <EntryBy expense={expense} kind={kind} data={data} aside={editedChip} />
+              : editedChip ? <div className="entrychips">{editedChip}</div> : null}
           </div>
 
           {expense
@@ -273,21 +274,44 @@ function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCod
 }
 
 /**
- * "paid by Adaś · split 2 ways". One payer is named here and nowhere else on
- * the screen; several keep their card rows, which carry what each put in, so
- * this line only counts them.
+ * The sum as spent, and the rate that made it the figure above. Its code and
+ * digits sit in the figure's two columns (`.entryfig`), so the digits of both
+ * start at one edge. Where the locale puts the code last the digits already
+ * start at the margin, so it is one run of text.
  */
-function EntryBy({ expense, kind, data }: { expense: Expense; kind: "expense" | "income"; data: GroupData }) {
+function EntrySpent({ minor, currency, rate }: { minor: number; currency: CurrencyCode; rate: string }) {
+  const p = moneyParts(minor, currency);
+  const figure = <span className="num">{p.whole}{p.fraction}</span>;
+  const chip = <span className="chip">{rate}</span>;
+  if (!p.currencyFirst) {
+    return <span className="entryspent trail">{figure}<span className="num">{p.currency}</span>{chip}</span>;
+  }
+  return (
+    <span className="entryspent">
+      <span className="num">{p.currency}</span>
+      <span className="spentfig">{figure}{chip}</span>
+    </span>
+  );
+}
+
+/**
+ * "paid by Adaś". One payer is named here and nowhere else on the screen;
+ * several keep their card rows, which carry what each put in, so this line
+ * only counts them. How many ways it was split is the card's rows. `aside` is
+ * flushed to its right edge.
+ */
+function EntryBy({ expense, kind, data, aside }: {
+  expense: Expense; kind: "expense" | "income"; data: GroupData; aside?: ReactNode;
+}) {
   const payers = payerList(expense);
   const who = isCoSponsored(expense)
     ? plural(payers.length, copy.noun.person)
     : data.memberById.get(expense.paidBy)?.name ?? copy.someone;
-  const ways = plural(splitParticipants(expense.split).length, copy.noun.way);
   return (
-    <p className="entryby">
-      {copy.entry.byLead[kind]} <b>{who}</b>
-      {" · "}{(kind === "income" ? copy.group.sharedWays : copy.group.splitWays)(ways)}
-    </p>
+    <div className="entryby">
+      <p>{copy.entry.byLead[kind]} <b>{who}</b></p>
+      {aside}
+    </div>
   );
 }
 

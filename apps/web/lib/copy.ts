@@ -833,11 +833,12 @@ export const copy = {
     history: "History",
     editedTimes: (n: number) => `edited ×${n}`,
     rate: (rate: string) => `@ ${rate}`,
-    payerCount: (label: string, people: string) => `${label} · ${people}`,
-    /** The head's line under the figure: "paid by **Adaś** · split 2 ways". */
+    /** The card's eyebrows read as phrases, not label and value: "Paid by 2 people". */
+    payerCount: (label: string, people: string) => `${label} ${people}`,
+    /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
-    /** "Split · evenly" · "Split · by items" · "To · as parts". */
-    splitMode: (label: string, mode: string) => `${label} · ${mode}`,
+    /** "Split evenly" · "Split by items". */
+    splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
     deleteBody: "It can be restored from the history.",
     /** Where Edit is, on a deleted entry's screen. */

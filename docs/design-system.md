@@ -264,11 +264,19 @@ currency code a 14px muted label, the whole part 44px, the fraction at 55% in
 loud as the thousands. The code stays on whichever side the reader's locale
 puts it. A sum too long for the column shrinks to fit it (a container-query
 size off the whole part's length, never under 28px) rather than wrapping
-mid-number. On an expense or income a `--rule` hairline closes the figure off
-and one line under it says who and how many — "paid by **Adaś** · split 2
-ways" — so the card below is only the split; several payers keep their card
-rows, which carry what each put in, and the line just counts them. A transfer
-has no line: its card is nothing but who.
+mid-number. The sum as spent, when it was spent in another currency, is a
+13px muted line under it, not beside it — beside, it read as a third part of
+the same figure — with the rate chip that made it the figure above at its end.
+The two share columns (a subgrid), so their digits start at one edge and the
+codes stack.
+
+On an expense or income a `--rule` hairline closes the figure off and one line
+under it says who — "paid by **Adaś**", the "edited ×N" chip flushed right on
+it — so the card below is only the split, whose rows already count the ways.
+Several payers keep their card rows, which carry what each put in, and the
+line just counts them. A transfer has no line: its card is nothing but who,
+and its chip stands alone. The card's eyebrows read as phrases ("Split by
+items", "Paid by 2 people"), not a label, a dot and a value.
 
 ## An arrow points one way, and an income says so twice
 
