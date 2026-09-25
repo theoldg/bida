@@ -1,6 +1,4 @@
-import { sortOps } from "./fold.js";
 import { healDrafts, type OpDraft } from "./invariants.js";
-import type { Op } from "./ops.js";
 import type { GroupState, Id } from "./types.js";
 
 /**
@@ -33,26 +31,4 @@ export function restoreEntryDrafts(state: GroupState, entity: EntryEntity, id: I
     { entity, entityId: id, kind: "update", patch: { deletedAt: null } },
     ...healDrafts(lifted).filter((d) => !owed.has(`${d.entity}/${d.entityId}`)),
   ];
-}
-
-/**
- * The live entry that took this one's place, if any. From 2026-09-20 to 09-24
- * saving an expense as a transfer (or back) deleted it and created the other
- * kind in one append (ADR-0010). Restoring that half while the other lives
- * would count the money twice, so the deleted screen links to it instead.
- *
- * Nothing marked those writes, so they are recognised by what one append
- * shares: the actor and the wall clock, to the millisecond.
- */
-export function liveReplacement(
-  ops: readonly Op[], state: GroupState, id: Id,
-): { entity: EntryEntity; id: Id } | undefined {
-  const del = sortOps(ops).filter((o) => o.entityId === id && o.kind === "delete").at(-1);
-  if (!del || (del.entity !== "expense" && del.entity !== "settlement")) return undefined;
-  const other: EntryEntity = del.entity === "expense" ? "settlement" : "expense";
-  const twin = ops.find((o) => o.entity === other && o.kind === "create"
-    && o.actor === del.actor && o.createdAt === del.createdAt);
-  if (!twin) return undefined;
-  const row = (other === "expense" ? state.expenses : state.settlements)[twin.entityId];
-  return row && !row.deletedAt ? { entity: other, id: twin.entityId } : undefined;
 }

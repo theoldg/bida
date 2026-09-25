@@ -25,9 +25,11 @@ phone silently undo somebody else's edit two revisions deep.
   already write, so it merges per field and nothing new reaches the fold or
   the wire. The entry wins over a removal made since, as it does after a
   merge: a person or rate it names comes back in the same append
-  (`restoreEntryDrafts`), said under the button before the press. An old
-  conversion's deleted half is not restorable while its replacement lives —
-  that would count the money twice (`liveReplacement`, ADR-0010).
+  (`restoreEntryDrafts`), said under the button before the press. Any
+  deleted entry can be restored, including a half of the short-lived
+  expense↔transfer conversion (ADR-0010): spotting those by a shared clock
+  also caught ordinary appends, and pointed a deleted expense at an unrelated
+  transfer.
 - **`restore` stays a valid `OpKind` and still folds like an update.** Groups in
   production hold restore ops already; refusing to fold them would rewrite the
   past to remove a feature. Nothing emits one: the old ones are field patches,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
-  isCoSponsored, liveReplacement, payerList, receiptExtras, resolvePayers, resolveSplit,
+  isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
@@ -97,21 +97,15 @@ function EntryScreen() {
 
   // "edited ×3" comes from the log itself: revisions are ops, not a counter
   // somebody has to remember to increment. A delete or a restore is not an
-  // edit of what the entry says. The last delete names who deleted it, and
-  // the ops written beside it whether it was a conversion's.
+  // edit of what the entry says. The last delete names who deleted it.
   const log = useLive("entryLog", async () => {
-    if (!entryId || !groupId) return { count: 0, ops: [] };
-    const d = db();
-    const ops = await d.ops.where("entityId").equals(entryId).toArray();
+    if (!entryId) return { count: 0 };
+    const ops = await db().ops.where("entityId").equals(entryId).toArray();
     const lifecycle = (o: Op) => o.kind === "delete"
       || (Object.keys(o.patch).length === 1 && "deletedAt" in o.patch);
     const lastDelete = sortOps(ops).filter((o) => o.kind === "delete").at(-1);
-    const beside = lastDelete
-      ? await d.ops.where("groupId").equals(groupId)
-        .filter((o) => o.createdAt === lastDelete.createdAt && o.entityId !== entryId).toArray()
-      : [];
-    return { count: ops.filter((o) => !lifecycle(o)).length, lastDelete, ops: [...ops, ...beside] };
-  }, [entryId, groupId]);
+    return { count: ops.filter((o) => !lifecycle(o)).length, lastDelete };
+  }, [entryId]);
 
   if (!groupId) return <BadLink />;
   if (data.loading || unclaimed) return <Blank back={parent} />;
@@ -143,9 +137,8 @@ function EntryScreen() {
   const title = expense?.description.trim();
   const edits = Math.max(0, (log?.count ?? 0) - 1);
   const entity = expense ? "expense" as const : "settlement" as const;
-  const replacement = deleted ? liveReplacement(log?.ops ?? [], data.withTombstones, entry.id) : undefined;
   // What pressing Restore also brings back, named before the press.
-  const brings = deleted && !replacement
+  const brings = deleted
     ? restoreEntryDrafts(data.withTombstones, entity, entry.id).slice(1)
       .map((d) => (d.entity === "member" ? data.nameOf(d.entityId) : copy.entry.theRate(d.entityId)))
     : [];
@@ -206,16 +199,7 @@ function EntryScreen() {
                   <span>{copy.entry.deletedBy(log?.lastDelete && data.nameOf(log.lastDelete.actor),
                     whenLabel({ occurredAt: entry.deletedAt! }))}</span>
                 </p>
-                {/* A conversion's other half is still counting this money: putting
-                    this back would count it twice (`liveReplacement`). */}
-                {replacement ? (
-                  <Link href={route.entry(groupId, replacement.id, via)} className="btn">
-                    {copy.entry.became[replacement.entity === "settlement" ? "transfer"
-                      : kindOf(data.withTombstones.expenses[replacement.id]!)]}
-                  </Link>
-                ) : (
-                  <button className="btn" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
-                )}
+                <button className="btn" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
               </div>
               {brings.length > 0 ? <p className="hint">{copy.entry.restoreBrings(brings)}</p> : null}
             </div>

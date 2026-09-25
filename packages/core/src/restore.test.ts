@@ -3,7 +3,7 @@ import { computeBalances } from "./balance.js";
 import { foldOps } from "./fold.js";
 import { ADA, EXPENSES, MARIE, OpBuilder, SAM, THEO, marrakechOps } from "./fixtures.test-helper.js";
 import type { OpDraft } from "./invariants.js";
-import { liveReplacement, restoreEntryDrafts } from "./restore.js";
+import { restoreEntryDrafts } from "./restore.js";
 
 /** The Marrakech log, carried on by one more phone. */
 function trip() {
@@ -83,46 +83,5 @@ describe("restoring an entry", () => {
     apply(restoreEntryDrafts(foldOps(all()), "expense", "e-hammam"));
     b.push("expense", "e-hammam", "delete", {}, ADA);
     expect(foldOps(all()).expenses["e-hammam"]!.deletedAt).toBeTruthy();
-  });
-});
-
-describe("an entry another took the place of", () => {
-  const transfer = { fromMember: SAM, toMember: THEO, amountMinor: 4000, currency: "EUR", rateToBase: "1", baseAmountMinor: 4000, occurredAt: 1 };
-
-  /** What `convertToSettlement` wrote while it existed: one append, one clock. */
-  function converted() {
-    const ops = marrakechOps();
-    const at = 1_744_000_000_000;
-    const stamp = (n: number) => `${at}-000${n}-conv`;
-    ops.push(
-      { id: "c1", groupId: ops[0]!.groupId, entity: "expense", entityId: "e-taxi", kind: "delete", patch: {}, hlc: stamp(0), actor: SAM, note: null, createdAt: at, seq: null },
-      { id: "c2", groupId: ops[0]!.groupId, entity: "settlement", entityId: "s-taxi", kind: "create", patch: transfer, hlc: stamp(1), actor: SAM, note: null, createdAt: at, seq: null },
-    );
-    return ops;
-  }
-
-  it("is found from the append that deleted it", () => {
-    const ops = converted();
-    expect(liveReplacement(ops, foldOps(ops), "e-taxi")).toEqual({ entity: "settlement", id: "s-taxi" });
-  });
-
-  it("stops counting once the replacement is deleted too", () => {
-    const b = new OpBuilder("x", 1_745_000_000_000);
-    const ops = converted();
-    b.push("settlement", "s-taxi", "delete", {}, SAM);
-    const all = [...ops, ...b.ops];
-    expect(liveReplacement(all, foldOps(all), "e-taxi")).toBeUndefined();
-  });
-
-  it("is nothing for an ordinary delete, even one beside an unrelated add", () => {
-    const { b, all } = trip();
-    b.push("expense", "e-taxi", "delete", {}, SAM);
-    b.push("settlement", "s-other", "create", transfer, SAM);
-    expect(liveReplacement(all(), foldOps(all()), "e-taxi")).toBeUndefined();
-  });
-
-  it("is nothing for an entry never deleted", () => {
-    const ops = marrakechOps();
-    expect(liveReplacement(ops, foldOps(ops), "e-taxi")).toBeUndefined();
   });
 });

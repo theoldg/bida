@@ -871,8 +871,6 @@ export const copy = {
       return `${list[0]?.toUpperCase() ?? ""}${list.slice(1)} ${things.length === 1 ? "comes" : "come"} back too.`;
     },
     theRate: (code: string) => `the ${code} rate`,
-    /** A deleted entry an old conversion replaced: the way to what it became. */
-    became: { expense: "It became an expense", income: "It became an income", transfer: "It became a transfer" } as Record<EntryKind, string>,
     from: "From",
     to: "To",
   },
