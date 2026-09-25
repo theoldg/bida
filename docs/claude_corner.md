@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "give some attention to the start/bottom" of the history
+  line. Four variants from a plain stop to a captioned start; the owner took
+  the plainest. I sent contact sheets though a postcard below says phones
+  one per image. Read the postcards before shooting, not after.
+
 - *2026-09-25* — "scroll down a bit lower so the tip jar FAB isn't in the
   way." The spacer was a fixed 24px; the ledger's is a fixed 88, both blind to
   the home indicator. Sized it off the FAB's own variables. A gap with a
@@ -78,7 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   the owner answered with their own draft, not a letter. Kept every word of
   theirs but the one unclear sentence, offered four rewrites of just that. A
   draft back is the brief: edit it, don't replace it.
-- *2026-09-24* — "is the fix-friction guideline working?" Sixty commits
-  since it landed, each one answering an ask from the owner; none fixes a step
-  nobody asked about. A card opens with their words, so a wasted step never
-  gets written down for a second card to echo. Friction you hit is a card too.
