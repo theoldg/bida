@@ -11,6 +11,7 @@
  */
 
 import { mark } from "./diag";
+import { signal } from "./signal";
 
 /** What, if anything, there is to offer. */
 export type UpdateState =
@@ -45,11 +46,7 @@ let warm = false;
 let touched = false;
 /** Whether the watch below is already armed; it is a singleton, like this module. */
 let waiting = false;
-const listeners = new Set<() => void>();
-
-function announce(): void {
-  for (const listener of listeners) listener();
-}
+const { emit: announce, subscribe } = signal();
 
 /**
  * May the app reload itself where it is standing? **The front door only.** In
@@ -140,10 +137,7 @@ export function shellIsWarm(): boolean {
   return warm;
 }
 
-export function subscribeUpdate(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => void listeners.delete(listener);
-}
+export const subscribeUpdate = subscribe;
 
 /** A string, not an object: `useSyncExternalStore` compares snapshots by identity. */
 export function updateState(): UpdateState {

@@ -9,6 +9,7 @@
 
 import { note } from "./diag";
 import { formatInvites, type CarriedGroup } from "./group-link";
+import { signal } from "./signal";
 
 /** What, if anything, this browser lets us offer. */
 export type InstallOffer =
@@ -57,11 +58,7 @@ export function iosBrowser(ua: string): "Safari" | "Chrome" | undefined {
 
 let captured: InstallPromptEvent | undefined;
 let installed = false;
-const listeners = new Set<() => void>();
-
-function announce(): void {
-  for (const listener of listeners) listener();
-}
+const { emit: announce, subscribe } = signal();
 
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", (event) => {
@@ -78,10 +75,7 @@ if (typeof window !== "undefined") {
   });
 }
 
-export function subscribeInstall(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => void listeners.delete(listener);
-}
+export const subscribeInstall = subscribe;
 
 /** A string, not an object: `useSyncExternalStore` compares snapshots by identity. */
 export function installOffer(): InstallOffer {

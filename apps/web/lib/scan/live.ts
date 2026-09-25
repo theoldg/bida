@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { ScanMedium } from "@bida/core";
+import { signal } from "../signal";
 
 /** Where a scan is: idle, in flight, or refused. */
 export type ScanState = "idle" | "scanning" | "error";
@@ -41,11 +42,7 @@ function sweepSeconds(medium: ScanMedium): number {
 }
 
 const scans = new Map<string, LiveScan>();
-const listeners = new Set<() => void>();
-
-function emit(): void {
-  for (const l of listeners) l();
-}
+const { emit, subscribe } = signal();
 
 /** A scan has just been sent. Clears whatever the last one refused with. */
 export function beginScan(groupId: string, medium: ScanMedium = "photo"): void {
@@ -82,7 +79,7 @@ export function getLiveScan(groupId: string): LiveScan | undefined {
 /** Reactive read. Undefined while nothing has been scanned. */
 export function useLiveScan(groupId: string | undefined): LiveScan | undefined {
   return useSyncExternalStore(
-    (onChange) => { listeners.add(onChange); return () => listeners.delete(onChange); },
+    subscribe,
     () => (groupId ? scans.get(groupId) : undefined),
     () => undefined,
   );
