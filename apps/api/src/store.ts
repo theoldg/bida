@@ -1,4 +1,4 @@
-import type { SealedOp } from "@bida/core";
+import { chunk, type SealedOp } from "@bida/core";
 
 /**
  * The D1 half of sync (docs/sync.md). The server appends and assigns seqs; it
@@ -96,12 +96,6 @@ export async function opsSince(
  */
 const IDS_PER_QUERY = 90;
 const OPS_PER_BATCH = 100;
-
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
-}
 
 /**
  * Accept sealed ops, idempotent on `SealedOp.id`: an op already stored keeps

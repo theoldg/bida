@@ -10,7 +10,7 @@ import { Dialog } from "./dialog";
 import { GroupedInput } from "./amount-input";
 import { copy } from "../lib/copy";
 import { fetchRate, RateOfflineError } from "../lib/rates";
-import { plural } from "../lib/format";
+import { errorText, plural } from "../lib/format";
 
 /**
  * What one currency is worth to this group, edited from either end — "1 EUR =
@@ -140,7 +140,7 @@ export function RateDialog({
       await onSave(rate, from.kind === "fetched" ? "fetched" : "typed", Date.now());
       onClose();
     } catch (err) {
-      if (live.current) setFailed(err instanceof Error ? err.message : String(err));
+      if (live.current) setFailed(errorText(err));
     } finally {
       if (live.current) setBusy(false);
     }
