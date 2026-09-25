@@ -33,13 +33,17 @@ import { route } from "./group-link";
  *
  * Spent on the first decision either way.
  */
-let arrival: { kind: "group"; groupId: string } | { kind: "launch" } | undefined;
+let arrival: { kind: "group"; href: string } | { kind: "launch" } | undefined;
 /** Set once the hook has spent `arrival`, so an in-app return is never a launch. */
 let resumed = false;
 
-/** Open this group from the groups list, one screen under it. See `arrival`. */
-export function handOverToGroup(groupId: string): void {
-  arrival = { kind: "group", groupId };
+/**
+ * Open this group from the groups list, one screen under it. See `arrival`.
+ * `claim` sends it to `/g/claim` rather than the ledger, which would only draw
+ * its skeleton before `useClaimGate` sent it there anyway.
+ */
+export function handOverToGroup(groupId: string, { claim = false } = {}): void {
+  arrival = { kind: "group", href: claim ? route.claim(groupId) : route.group(groupId) };
 }
 
 /** The arrival at the groups list this is about to cause is a launch. See `arrival`. */
@@ -66,11 +70,13 @@ export function resumeGroupId(
 }
 
 /**
- * True while a fresh load of `/` is deciding whether to reopen a group, so the
- * caller draws its loading frame rather than a list about to be replaced.
- * `false`, for good, on every non-launch arrival.
+ * `deciding` is true while a fresh load of `/` is deciding whether to reopen a
+ * group, so the caller draws its loading frame rather than a list about to be
+ * replaced — `false`, for good, on every non-launch arrival. `joining` says the
+ * group was handed over by `/join`, whose frame the list should keep drawing
+ * until the push lands: one "Joining…" from the link to the question.
  */
-export function useResumeLastGroup(): boolean {
+export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
   const router = useRouter();
   // Read rather than spent in the initialiser, which React may run twice.
   const [came] = useState(() => arrival);
@@ -87,7 +93,7 @@ export function useResumeLastGroup(): boolean {
     // underneath it. The same two-second backstop below covers a push that
     // never lands.
     if (came?.kind === "group") {
-      router.push(route.group(came.groupId));
+      router.push(came.href);
       timer = setTimeout(() => setDeciding(false), 2000);
       return () => clearTimeout(timer);
     }
@@ -115,7 +121,7 @@ export function useResumeLastGroup(): boolean {
     void setLeftOnList();
   }, [deciding]);
 
-  return deciding;
+  return { deciding, joining: deciding && came?.kind === "group" };
 }
 
 /**

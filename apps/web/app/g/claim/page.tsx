@@ -2,8 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { BadLink, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { useInstallOffer } from "@/components/install";
+import { JoiningFrame } from "@/components/joining";
 import { UseInApp } from "@/components/use-in-app";
 import { WhoPicker } from "@/components/who-picker";
 import { copy } from "@/lib/copy";
@@ -53,7 +54,9 @@ function ClaimScreen() {
   // the redirect above carries that one off (docs/frontend.md#routing).
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group && !deleted) return <BadLink />;
-  if (!data.group) return <Blank back={route.groups()} />;
+  // Still reading: this is the last step of joining, so it keeps the frame
+  // `/join` and the list drew on the way here (components/joining.tsx).
+  if (!data.group) return <JoiningFrame />;
   const group = data.group;
 
   async function add(name: string) {

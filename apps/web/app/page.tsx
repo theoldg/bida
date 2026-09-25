@@ -22,6 +22,7 @@ import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { groupMeta } from "@/lib/row-meta";
 import { iosHomeScreenApp } from "@/lib/install";
+import { JoiningFrame } from "@/components/joining";
 import { useResumeLastGroup } from "@/lib/launch";
 import { useArrivingGroups, useGroupSummaries, useHost, useInviteLink, type GroupSummary } from "@/lib/hooks";
 
@@ -33,7 +34,7 @@ export default function GroupsPage() {
   const arriving = useArrivingGroups();
   // A launch may reopen the last group (lib/launch.ts), so until that settles
   // the list stays "not answered yet" rather than flashing and being replaced.
-  const resuming = useResumeLastGroup();
+  const { deciding: resuming, joining } = useResumeLastGroup();
   const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
@@ -42,6 +43,10 @@ export default function GroupsPage() {
   // Which group the install offer draws for, and whether it draws at all: the
   // first that an icon would actually carry, so the demo is passed over.
   const lead = groups?.find((g) => !isDemo(g.group.id));
+
+  // Handed a group by `/join`, which this list is only passing through: its
+  // frame, not four skeletons, until the push lands (components/joining.tsx).
+  if (joining) return <JoiningFrame />;
 
   return (
     <Screen>

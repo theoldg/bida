@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Could we have 1 straight to 5?" A screen recording of a
+  first join, five screens numbered. Each screen was right alone; the flicker
+  lived in the handovers. Walk the whole path a stranger takes, not the one
+  screen the ticket names.
+
 - *2026-09-25* — Four small asks in one message, one a screenshot of
   ragged bars. The photo showed the symptom, not the cause: each row was its
   own grid. Edit in the menu also needed a place for save to land. A small ask
@@ -71,7 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-24* — "the margin under the banner is slightly too big." The
   gap under the card was the smaller one; the one under the bar, above it,
   was the big one. Measured both and asked which before moving either.
-- *2026-09-24* — "remove the green top bar… make them a little funky e.g.
-  blue and orange." The "e.g." licensed a pick, so I picked those two and
-  kept the rest of dev's marking. A tone word like "funky" bounds the taste;
-  don't spend it on a menu.

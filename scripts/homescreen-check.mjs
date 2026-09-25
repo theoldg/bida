@@ -25,9 +25,10 @@ const iphone = (opts) => newPhone(browser, { userAgent: IPHONE, ...opts });
 
 /**
  * The join screen once the secret is written. Its title is prerendered, so it
- * proves nothing; the body is a promise about this link and waits for the key.
+ * proves nothing; the body is a promise about this link, and waits for the key
+ * and then a few seconds more.
  */
-const joined = (page) => page.getByText("Finishes by itself once the other phone syncs.");
+const joined = (page) => page.getByText("Taking a while.");
 
 /**
  * The group secrets this phone holds, read from IndexedDB — no sync API is

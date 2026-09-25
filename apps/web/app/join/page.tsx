@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { JoiningFrame } from "@/components/joining";
 import { BadLinkNotice, KeylessLink } from "@/components/keyless-link";
 import { saveGroupKey } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
@@ -24,7 +25,10 @@ import { isKeylessFragment, parseJoinLink, route } from "@/lib/group-link";
  *
  * It moves on *by way of the groups list*: this entry goes to the list and the
  * group is pushed on top (`handOverToGroup`). A link tapped in a chat opens a
- * browser one entry deep, so otherwise back would leave for the chat.
+ * browser one entry deep, so otherwise back would leave for the chat. A phone
+ * that hasn't said who it is in this group is pushed straight to `/g/claim`,
+ * not the ledger `useClaimGate` would only bounce it off — and every screen on
+ * the way draws `JoiningFrame`, so a first join is one screen, then the question.
  *
  * **This screen is only ever up while joining**, so the prerendered HTML says
  * "Joining…" before the bundle arrives. Only the rare overrides (bad link,
@@ -47,6 +51,9 @@ function JoinScreen() {
   // worth a sentence of its own rather than "bad link" (`copy.join.keyless`).
   const [keyless, setKeyless] = useState(false);
   const [keySaved, setKeySaved] = useState(false);
+  // Most joins land in well under a second, so the sentence about waiting is
+  // held back until this one hasn't: shown at once, it flashes and is gone.
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     const read = () => {
@@ -66,6 +73,11 @@ function JoinScreen() {
     let cancelled = false;
     // A new link has not been saved yet, whatever the last one did.
     setKeySaved(false);
+    setSlow(false);
+    // Fetched while the pull runs, so the list and the question are drawn from
+    // cache rather than each waiting on its own chunk on a first visit.
+    router.prefetch(route.groups());
+    router.prefetch(route.claim(link.groupId));
     (async () => {
       await saveGroupKey(link.groupId, link.secret);
       if (cancelled) return;
@@ -76,7 +88,13 @@ function JoinScreen() {
       syncGroup(link.groupId).catch(() => {});
     })();
     return () => { cancelled = true; };
-  }, [link]);
+  }, [link, router]);
+
+  useEffect(() => {
+    if (!keySaved) return;
+    const timer = setTimeout(() => setSlow(true), 2500);
+    return () => clearTimeout(timer);
+  }, [keySaved]);
 
   // `null`, not `undefined`, for a group that hasn't arrived yet: waiting on
   // the network is an answer, and only a read that hasn't answered may be
@@ -93,13 +111,17 @@ function JoinScreen() {
   // An invite link to a group that was deleted. The key is saved and a sync is
   // attempted as usual; the 410 that comes back erases the group here too and
   // writes the id down, which is what this reads (lib/db/commands/groups.ts).
-  const gone = useDevice()?.deletedGroups?.includes(link?.groupId ?? "") ?? false;
+  const device = useDevice();
+  const gone = device?.deletedGroups?.includes(link?.groupId ?? "") ?? false;
+  // Read for where to hand over to, not to decide anything: `useClaimGate`
+  // still gates the ledger, so a stale answer here costs a redirect, not a claim.
+  const claimed = link && device ? !!device.meByGroup[link.groupId] : undefined;
 
   useEffect(() => {
-    if (!link || !group) return;
-    handOverToGroup(link.groupId);
+    if (!link || !group || claimed === undefined) return;
+    handOverToGroup(link.groupId, { claim: !claimed });
     router.replace(route.groups());
-  }, [link, group, router]);
+  }, [link, group, claimed, router]);
 
   // `null` is a fragment that has been read and is no link; `undefined` is one
   // that has not been read yet, and falls through to the joining screen below.
@@ -135,16 +157,6 @@ function JoinScreen() {
     );
   }
 
-  // The app's name, not "Join a group": this is where a stranger meets bida.
   // `group` means `handOverToGroup` is a frame away, so no promise of waiting.
-  return (
-    <Screen><Body>
-      <TopBar title={<span className="brand">{copy.app.name}</span>} back={route.groups()} />
-      <Scroll>
-        <Empty title={copy.join.joining.title}>
-          {keySaved && !group ? copy.join.joining.body : null}
-        </Empty>
-      </Scroll>
-    </Body></Screen>
-  );
+  return <JoiningFrame>{slow && !group ? copy.join.joining.body : null}</JoiningFrame>;
 }

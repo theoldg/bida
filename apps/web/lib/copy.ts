@@ -644,7 +644,8 @@ export const copy = {
     },
     joining: {
       title: "Joining…",
-      body: "Finishes by itself once the other phone syncs.",
+      /** After a few seconds with nothing: the pull failed, or found nothing yet. */
+      body: "Taking a while. Either this phone is offline, or whoever sent the link hasn’t been online since making the group. It carries on by itself.",
     },
     /**
      * The group was deleted for everybody (app/delete-my-data/page.tsx). Shown on

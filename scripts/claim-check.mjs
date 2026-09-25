@@ -13,7 +13,8 @@
  *
  * Also: Create and the quick split's scan pair refuse a too-short list while
  * staying tappable. And once a phone has answered "who are you", nothing asks
- * again — not a second opening of the invite, not a launch.
+ * again — not a second opening of the invite, not a launch. Until it has, the
+ * invite goes straight to the question, never by way of the ledger.
  */
 import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, settle } from "./lib/harness.mjs";
 
@@ -290,6 +291,40 @@ await page.goto(`${base}/g?id=${g}`);
 await page.waitForSelector(".fab");
 await page.goto(`${base}/`);
 report(await arrived(), "and opening it again makes the next launch reopen it");
+
+// ---- a first join goes straight to the question -------------------------
+// A phone that has never said who it is used to be pushed onto the ledger,
+// draw its skeletons, and be bounced off it by `useClaimGate`: four screens in
+// a second. `/join` now hands the list `/g/claim` itself (apps/web/lib/launch.ts).
+// No sync API here, so "never answered" is made by forgetting the answer.
+await page.evaluate((id) => new Promise((resolve) => {
+  const req = indexedDB.open("hajsik");
+  req.onsuccess = () => {
+    const store = req.result.transaction("device", "readwrite").objectStore("device");
+    const get = store.get("device");
+    get.onsuccess = () => {
+      delete get.result.meByGroup[id];
+      store.put(get.result).onsuccess = () => resolve();
+    };
+  };
+}), g);
+const joinVisits = [];
+const onJoinNav = (frame) => { if (!frame.parentFrame()) joinVisits.push(new URL(frame.url()).pathname); };
+page.on("framenavigated", onJoinNav);
+await page.goto(`${base}/join#${new URL(link).hash.slice(1)}`);
+const asked = await page.waitForURL(/\/g\/claim\?id=/, { timeout: PATIENCE }).then(() => true, () => false);
+page.off("framenavigated", onJoinNav);
+report(asked && !joinVisits.includes("/g"),
+  "an invite this phone hasn't answered opens on the question, not the ledger", joinVisits.join(" "));
+await page.waitForSelector(".rows button.row");
+report(await page.evaluate(() => {
+  const list = navigation.entries();
+  const here = navigation.currentEntry.index;
+  return here > 0 && new URL(list[here - 1].url).pathname === "/";
+}), "with the groups list under it, for the device's back button");
+await page.locator(".rows button.row", { hasText: "Ola" }).click();
+await press(page.getByRole("button", { name: "Continue as Ola" }));
+report(await arrived(), "and answering it opens the group");
 
 // ---- the one screen whose act refuses instead of ignoring ---------------
 // A quick split ends on the camera, and the grid a photograph opens is the
