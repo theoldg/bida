@@ -826,7 +826,7 @@ export const copy = {
   // ------------------------------------------------------------- one entry
 
   entry: {
-    gone: { title: "Gone", body: "This entry may have been deleted." },
+    gone: { title: "Gone", body: "There is no such entry in this group." },
     /** Waiting on the sync that may bring it — a notification's tap outruns it. */
     arriving: "Fetching the latest…",
     history: "History",
@@ -836,7 +836,19 @@ export const copy = {
     /** "Split · evenly" · "Split · by items" · "To · as parts". */
     splitMode: (label: string, mode: string) => `${label} · ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,
-    deleteBody: "The history keeps a record.",
+    deleteBody: "It can be restored from the history.",
+    /** Where Edit is, on a deleted entry's screen. */
+    deletedBy: (who: string, when: string) => `${who} deleted this · ${when}`,
+    restore: "Restore",
+    /** What else Restore puts back: people removed since, a cleared rate. */
+    restoreBrings: (things: string[]) => {
+      const list = things.length < 2 ? things.join("")
+        : `${things.slice(0, -1).join(", ")} and ${things[things.length - 1]}`;
+      return `${list[0]?.toUpperCase() ?? ""}${list.slice(1)} ${things.length === 1 ? "comes" : "come"} back too.`;
+    },
+    theRate: (code: string) => `the ${code} rate`,
+    /** A deleted entry an old conversion replaced: the way to what it became. */
+    became: { expense: "It became an expense", income: "It became an income", transfer: "It became a transfer" } as Record<EntryKind, string>,
     from: "From",
     to: "To",
   },

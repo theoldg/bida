@@ -314,8 +314,9 @@ Falls out of the log with no extra storage. **Per expense**: `ops` filtered by
 `entityId`, newest first, each revision being the **difference between the fold
 before the op and the fold after it** — never a reading of the patch's keys, or
 a whole-entity write would read as "changed everything". **Group feed**: all ops, same renderer. Both are read
-only: there is no restore-to-version, and undoing something is editing it
-([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
+only: there is no restore-to-version, and undoing an edit is editing it. A
+deleted entry comes back whole, from its own screen, as `update { deletedAt:
+null }` ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).
 
 The sentence for a revision lives in `apps/web/lib/history-copy.ts` — it is the
 app's vocabulary for the log, and it names the member a membership revision is

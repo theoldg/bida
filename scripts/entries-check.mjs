@@ -545,27 +545,42 @@ await page.getByRole("link", { name: "Edit" }).click();
 await page.waitForSelector(".splitrow");
 report(await rows() === quoted, "and it is the same person once the entry is written");
 
-// ---- an entry that isn't there any more still has a name ----------------
-// Half the reason to open history is an entry that has been deleted, and the
-// screen looked it up in the alive-only list — so every one of them was
-// titled "Transfer", the branch a missing subject fell through to.
+// ---- a deleted entry keeps its screen, and Restore is on it -------------
+// Half the reason to open history is an entry that has been deleted. Its feed
+// line leads to the entry drawn as it was, with Restore where Edit was
+// (ADR-0031); its own history is titled by what it was, not "Transfer".
 await page.goto(`${base}/g?id=${g}`);
 await page.locator("a.row").filter({ hasText: "Coffee" }).click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("button", { name: "Delete" }).first().click();
 await page.getByRole("button", { name: "Delete" }).last().click();
 await page.waitForURL(/\/g\?id=/);
+report(true, "deleting from the entry screen goes back to the ledger");
 await page.goto(`${base}/g/history?id=${g}`);
 await page.waitForSelector(".tle");
-await page.getByRole("link", { name: /Coffee/ }).first().click();
+await page.getByRole("link", { name: /Coffee · deleted/ }).first().click();
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("button", { name: "Restore" }).waitFor({ timeout: PATIENCE });
+report(await page.getByRole("link", { name: "Edit" }).count() === 0
+  && await page.getByRole("button", { name: "Delete" }).count() === 0,
+  "a deleted entry's screen offers Restore, and neither Edit nor Delete");
+report(/deleted this/.test(await page.locator(".deletedby").innerText()), "and says who deleted it");
+await page.getByRole("link", { name: "History" }).first().click();
 await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
-// And back from it is the feed that linked in: the entry screen it used to name
-// could only say the entry is gone.
 await page.getByRole("link", { name: "Back" }).first().click();
-await page.waitForURL((u) => u.pathname.startsWith("/g/history") && !u.searchParams.has("e"));
-report(true, "back from a deleted entry's history is the feed, not its gone screen");
+await page.waitForURL(/\/g\/entry\?/);
+await page.getByRole("button", { name: "Restore" }).click();
+await page.getByRole("link", { name: "Edit" }).waitFor({ timeout: PATIENCE });
+report(true, "Restore turns the screen back into the live entry, in place");
+await page.goto(`${base}/g/history?id=${g}`);
+await page.waitForSelector(".tle");
+report((await page.locator(".what").allInnerTexts()).some((t) => /restored this expense/.test(t)),
+  "and history says it was restored");
+await page.goto(`${base}/g?id=${g}`);
+await page.locator("a.row").filter({ hasText: "Coffee" }).first().waitFor({ timeout: PATIENCE });
+report(true, "and it is back on the ledger");
 
 // ---- one press on Save is one entry ------------------------------------
 // `ready` is about the form, not whether a press is already spending it, so

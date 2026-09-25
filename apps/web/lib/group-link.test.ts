@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  entryParent, formParent, historyParent, isKeylessFragment, parseInvites, parseJoinLink, readPastedLink,
+  entryParent, formParent, isKeylessFragment, parseInvites, parseJoinLink, readPastedLink,
   parseEntrySource, route,
 } from "./group-link";
 
@@ -27,17 +27,6 @@ describe("where an entry goes back to", () => {
   it("carries via down onto an entry's own history, so back is exact", () => {
     expect(route.history("g1", "x1", "members")).toBe("/g/history?id=g1&e=x1&via=members");
     expect(parseEntrySource("members")).toBe("members");
-  });
-});
-
-describe("where an entry's history goes back to", () => {
-  it("is the entry while it exists", () => {
-    expect(historyParent("g1", "x1", "members", false)).toBe(route.entry("g1", "x1", "members"));
-  });
-
-  it("is whoever linked to the entry once it is deleted, never its gone screen", () => {
-    expect(historyParent("g1", "x1", "history", true)).toBe(route.history("g1"));
-    expect(historyParent("g1", "x1", undefined, true)).toBe(route.group("g1"));
   });
 });
 

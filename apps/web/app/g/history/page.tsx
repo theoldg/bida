@@ -12,7 +12,7 @@ import { useLive } from "@/lib/db/live";
 import { opsForGroup } from "@/lib/db/fold";
 import { copy } from "@/lib/copy";
 import { plural } from "@/lib/format";
-import { historyParent, parseEntrySource, route } from "@/lib/group-link";
+import { parseEntrySource, route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
 /** How much of a long feed is drawn before asking. The rest comes in one tap,
@@ -68,11 +68,9 @@ function HistoryScreen() {
   const subject = entryId
     ? expenseById.get(entryId) ?? settlementById.get(entryId)
     : undefined;
-  // A deleted entry's back skips its "gone" screen for whoever linked to it —
-  // the feed, when it was the feed's deleted-entry link that brought us here.
-  const back = !groupId ? "/" : entryId
-    ? historyParent(groupId, entryId, via, !!subject?.deletedAt)
-    : route.group(groupId);
+  // An entry's history backs up to the entry, deleted or not: a deleted one's
+  // screen is where Restore is.
+  const back = !groupId ? "/" : entryId ? route.entry(groupId, entryId, via) : route.group(groupId);
   const subjectName = !subject ? undefined
     : "description" in subject
       ? (subject.description?.trim() || copy.history.untitled) : copy.group.transfer;

@@ -173,6 +173,12 @@ export interface GroupData {
    * `healGroup` is what makes the state legal when it loses.
    */
   guard: (draft: OpDraft) => RegisteredInvariant | undefined;
+  /**
+   * The group with its tombstones: every entry, member and rate it has ever
+   * had, unpriced. For the deleted entry's screen and what restoring it would
+   * bring back — everything else reads the live arrays above.
+   */
+  withTombstones: GroupState;
   pendingOps: number;
   loading: boolean;
 }
@@ -206,7 +212,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
         nameOf: () => copy.unknown, hasLeft: () => false,
         expenses: [], settlements: [], rates: {}, currencies: [],
         balances: EMPTY_REPORT, transfers: [], me: undefined,
-        guard: () => undefined, pendingOps: 0, loading: true,
+        guard: () => undefined, withTombstones: emptyGroupState(), pendingOps: 0, loading: true,
       };
     }
     const members = living(rows.members).sort((a, b) => a.name.localeCompare(b.name));
@@ -252,6 +258,7 @@ export function useGroupData(groupId: string | undefined): GroupData {
       transfers: settleUp(balances.byMember),
       me: groupId ? rows.device?.meByGroup[groupId] : undefined,
       guard: (draft) => wouldViolate(withTombstones, draft),
+      withTombstones,
       pendingOps: rows.pending,
       loading: false,
     };

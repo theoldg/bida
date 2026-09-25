@@ -75,6 +75,7 @@ Three things surprise people who assume otherwise:
   carries the entity as its saver saw it, so an amount can never sit beside
   another phone's split; `deletedAt` and `createdAt` are the exceptions that
   keep the healers working ([sync.md](sync.md#the-operation)).
-- **History is read, never rewound.** The `restore` op kind folds only
-  because production groups hold some
+- **History is read, never rewound; a deleted entry comes back whole.** Restore
+  is on the deleted entry's own screen and writes `deletedAt: null`, not the
+  `restore` op kind, which folds only because production groups hold some
   ([ADR-0031](decisions/0031-history-reads-it-does-not-rewind-it.md)).

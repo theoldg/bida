@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit, splitParticipants,
-  type Expense, type Group, type Settlement,
+  isCoSponsored, liveReplacement, payerList, receiptExtras, resolvePayers, resolveSplit,
+  restoreEntryDrafts, sortOps, splitParticipants,
+  type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "@/components/bits";
 import { FitTitle } from "@/components/fit-line";
@@ -13,7 +14,7 @@ import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
-import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
+import { deleteExpense, deleteSettlement, restoreEntry } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
@@ -44,8 +45,8 @@ export default function EntryPage() {
  * notification's tap lands here before the sync that brings the entry in —
  * the push outran the pull — so "Gone" waits for one sync of the group (joining
  * the one opening the app started) and a read of what it wrote. Only a row
- * still missing or tombstoned after that is gone; so is one a failed sync
- * didn't bring, since nothing more comes until the next.
+ * still missing after that is gone; so is one a failed sync didn't bring,
+ * since nothing more comes until the next. A deleted one has a screen.
  */
 function useArriving(groupId: string | undefined, entryId: string | undefined, found: boolean): boolean {
   const [looked, setLooked] = useState<string>();
@@ -78,24 +79,46 @@ function EntryScreen() {
   const parent = groupId ? entryParent(groupId, via) : "/";
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
-  const expense = data.expenses.find((e) => e.id === entryId);
-  const settlement = expense ? undefined : data.settlements.find((s) => s.id === entryId);
+  const live = data.expenses.find((e) => e.id === entryId)
+    ?? data.settlements.find((s) => s.id === entryId);
+  // Deleted, it is drawn as it was, at the rates it was saved at, with Restore
+  // where Edit would be (ADR-0031).
+  const tombstoned = !live && entryId
+    ? [data.withTombstones.expenses[entryId], data.withTombstones.settlements[entryId]]
+      .find((row) => !!row?.deletedAt)
+    : undefined;
+  const row = live ?? tombstoned;
+  // Ids are random, so the table it is in says which of the two it is.
+  const expense = row && row.id in data.withTombstones.expenses ? row as Expense : undefined;
+  const settlement = row && !expense ? row as Settlement : undefined;
   const [asking, setAsking] = useState(false);
-  const arriving = useArriving(groupId, entryId, !!(expense ?? settlement));
+  const [restoring, setRestoring] = useState(false);
+  const arriving = useArriving(groupId, entryId, !!row);
 
   // "edited ×3" comes from the log itself: revisions are ops, not a counter
-  // somebody has to remember to increment.
-  const opCount = useLive(
-    "entryOpCount",
-    async () => (entryId ? db().ops.where("entityId").equals(entryId).count() : 0),
-    [entryId],
-  ) ?? 0;
+  // somebody has to remember to increment. A delete or a restore is not an
+  // edit of what the entry says. The last delete names who deleted it, and
+  // the ops written beside it whether it was a conversion's.
+  const log = useLive("entryLog", async () => {
+    if (!entryId || !groupId) return { count: 0, ops: [] };
+    const d = db();
+    const ops = await d.ops.where("entityId").equals(entryId).toArray();
+    const lifecycle = (o: Op) => o.kind === "delete"
+      || (Object.keys(o.patch).length === 1 && "deletedAt" in o.patch);
+    const lastDelete = sortOps(ops).filter((o) => o.kind === "delete").at(-1);
+    const beside = lastDelete
+      ? await d.ops.where("groupId").equals(groupId)
+        .filter((o) => o.createdAt === lastDelete.createdAt && o.entityId !== entryId).toArray()
+      : [];
+    return { count: ops.filter((o) => !lifecycle(o)).length, lastDelete, ops: [...ops, ...beside] };
+  }, [entryId, groupId]);
 
   if (!groupId) return <BadLink />;
   if (data.loading || unclaimed) return <Blank back={parent} />;
   if (!data.group) return <BadLink />;
   const group = data.group;
   const entry = expense ?? settlement;
+  const deleted = !!entry && !live;
 
   if (!entry && arriving) {
     return (
@@ -118,7 +141,22 @@ function EntryScreen() {
 
   const kind: EntryKind = expense ? kindOf(expense) : "transfer";
   const title = expense?.description.trim();
-  const edits = Math.max(0, opCount - 1);
+  const edits = Math.max(0, (log?.count ?? 0) - 1);
+  const entity = expense ? "expense" as const : "settlement" as const;
+  const replacement = deleted ? liveReplacement(log?.ops ?? [], data.withTombstones, entry.id) : undefined;
+  // What pressing Restore also brings back, named before the press.
+  const brings = deleted && !replacement
+    ? restoreEntryDrafts(data.withTombstones, entity, entry.id).slice(1)
+      .map((d) => (d.entity === "member" ? data.nameOf(d.entityId) : copy.entry.theRate(d.entityId)))
+    : [];
+  async function restore() {
+    const actor = data.me;
+    if (!groupId || !entry || !actor || restoring) return;
+    setRestoring(true);
+    // The screen turns back into the live entry by itself: the row it reads
+    // is the one this writes.
+    try { await restoreEntry(groupId, actor, entity, entry.id); } finally { setRestoring(false); }
+  }
   const foreign = entry.currency !== group.baseCurrency;
   async function remove() {
     const actor = data.me;
@@ -142,9 +180,11 @@ function EntryScreen() {
             <Link className="iconbtn" href={route.history(groupId, entry.id, via)} aria-label={copy.entry.history}>
               <Icon name="clock" size={18} />
             </Link>
-            <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
-              <Icon name="trash" size={18} />
-            </button>
+            {deleted ? null : (
+              <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
+                <Icon name="trash" size={18} />
+              </button>
+            )}
           </>}
         />
 
@@ -175,9 +215,28 @@ function EntryScreen() {
             ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
             : <TransferDetail settlement={settlement!} data={data} />}
 
-          <div className="pad" style={{ paddingTop: 4 }}>
-            <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
-          </div>
+          {deleted ? (
+            <div className="pad" style={{ paddingTop: 4 }}>
+              <p className="hint deletedby">
+                {copy.entry.deletedBy(data.nameOf(log?.lastDelete?.actor ?? ""), whenLabel({ occurredAt: entry.deletedAt! }))}
+              </p>
+              {/* A conversion's other half is still counting this money: putting
+                  this back would count it twice (`liveReplacement`). */}
+              {replacement ? (
+                <Link href={route.entry(groupId, replacement.id, via)} className="btn btn-s">
+                  {copy.entry.became[replacement.entity === "settlement" ? "transfer"
+                    : kindOf(data.withTombstones.expenses[replacement.id]!)]}
+                </Link>
+              ) : (
+                <button className="btn btn-s" onClick={restore} disabled={restoring}>{copy.entry.restore}</button>
+              )}
+              {brings.length > 0 ? <p className="hint">{copy.entry.restoreBrings(brings)}</p> : null}
+            </div>
+          ) : (
+            <div className="pad" style={{ paddingTop: 4 }}>
+              <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
+            </div>
+          )}
           <div style={{ height: 24 }} />
         </Scroll>
       </Body>
@@ -263,7 +322,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
         {/* Only the people in the split. A row per outsider saying they owe
             nothing is the longest part of a two-person expense in a big group,
             and it says what their absence already says. */}
-        {data.members.filter((m) => participants.includes(m.id)).map((m) => {
+        {/* Removed members too: a deleted entry can name somebody gone since. */}
+        {[...data.memberById.values()].filter((m) => participants.includes(m.id))
+          .sort((a, b) => a.name.localeCompare(b.name)).map((m) => {
           // Parts are somebody's own number and worth printing; a receipt's
           // weights are the bill's arithmetic and are shown as the bill
           // instead, line by line, under the row (`MemberBill`).

@@ -1701,6 +1701,8 @@ button.amtnote:active { background: var(--hl-edge) }
 
 /* A note under a control, explaining what it does and how far it reaches. */
 .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 2px 0 }
+/* A deleted entry says who deleted it above Restore, where the hint would sit under Edit. */
+.hint.deletedby { margin: 0 2px 10px }
 
 /* ---- the demo's mark (components/demo.tsx) ----
    The one card that never folds or dismisses: every demo screen works, so

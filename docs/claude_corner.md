@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "No, deleting from the entry screen should go back to the
+  ledger." Two numbered questions got two one-line answers and a build. Ask
+  only what changes the code, put your lean beside each, and the answer is
+  the go-ahead.
+
 - *2026-09-24* — "I made a mistake when reverting the adr. It was good
   design to forbid it." Asked for a restore design; the converted-entry trap
   made the owner re-forbid conversion. A design that needs a special case to
@@ -69,7 +74,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   one: its own route. The word outlived the thing — "tab" sat in ADR-0007, a
   dozen comments and the scroll-memory key. A cleanup is a grep for the old
   name, not only for the old code.
-- *2026-09-24* — "not obvious enough, explore a bit in that direction." My
-  first four cards were all quiet variations; the owner's worry was
-  discoverability. When asked for options, span the range out to the loud end,
-  so the pick is a choice and not a default.

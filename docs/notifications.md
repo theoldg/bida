@@ -22,6 +22,7 @@ is the app's. Strings live in `copy.notify`
 | `editExpense`, money moved | Everyone in it before *or* after | Ana changed the amount of "Dinner": €40.00 → €42.00<br>Your share €10.00 → €10.50 |
 | `editExpense`, only title, date, category, note or photos | Nobody | — |
 | `deleteExpense` | Everyone who was in it | Ana deleted "Dinner" · €42.00<br>Your share was €10.50 |
+| `restoreEntry` | As an add | Ana restored "Dinner" · €42.00<br>Your share €10.50 |
 | `recordSettlement`, `editSettlement`, `deleteSettlement` | The two sides | Bo paid you €20.00 · Bo recorded that you paid them €20.00 |
 | Heals, members, rates, identity, group rename | Nobody | — |
 
@@ -39,8 +40,9 @@ split reads "Your share €10.00 → none".
 other mix is "Ana changed 3 entries", and one entry's several commands read as
 its latest. Each
 notification is `tag`ged with the group id, so a group's latest replaces its
-last. Tapping opens `/g/entry?id=&e=` for one entry, `/g?id=` for several or a
-delete, where the new-edits line already folds what changed. The tap usually
+last. Tapping opens `/g/entry?id=&e=` for one entry, deleted or not — a
+deleted one's screen is where Restore is — and `/g?id=` for several, where the
+new-edits line already folds what changed. The tap usually
 beats the sync that brings the entry in, so an entry screen missing its entry
 shows "Fetching the latest…" through one sync of the group, and says "Gone"
 only if it is still missing after.
