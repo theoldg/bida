@@ -1172,6 +1172,7 @@ export const copy = {
     /** One sentence per revision. `who` is the actor's own name. */
     createdEntry: (who: string, noun: string) => `${who} created this ${noun}`,
     deletedEntry: (who: string, noun: string) => `${who} deleted this ${noun}`,
+    restoredEntry: (who: string, noun: string) => `${who} restored this ${noun}`,
     editedEntry: (who: string, noun: string) => `${who} edited this ${noun}`,
     toIncome: (who: string) => `${who} turned this into an income`,
     toExpense: (who: string) => `${who} turned this back into an expense`,
@@ -1210,6 +1211,7 @@ export const copy = {
     became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,
     deletedTransfer: (who: string) => `${who} deleted a transfer`,
+    restoredTransfer: (who: string) => `${who} restored a transfer`,
     editedTransfer: (who: string) => `${who} edited a transfer`,
     changedSides: (who: string) => `${who} changed who it was between`,
     changedNote: (who: string) => `${who} changed the note`,

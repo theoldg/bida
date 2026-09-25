@@ -187,6 +187,8 @@ export function describe(
       };
     }
     if (rev.isDelete) return { what: said.deletedEntry(who, noun) };
+    // Put back whole (ADR-0031): the lift is all it carries.
+    if (field("deletedAt")?.after === null) return { what: said.restoredEntry(who, noun) };
 
     // Everything the revision moved, in screen order. Collected, since the first
     // field recognised must not be the only one mentioned.
@@ -383,6 +385,7 @@ export function describe(
       };
     }
     if (rev.isDelete) return { what: said.deletedTransfer(who) };
+    if (field("deletedAt")?.after === null) return { what: said.restoredTransfer(who) };
     // A transfer is saved whole too, so the same rule holds: one field moved
     // gets a sentence, several get a line each.
     const parts: Part[] = [];

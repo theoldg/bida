@@ -3,8 +3,8 @@ import { activityFeed, type Member, type Revision } from "@bida/core";
 import { db } from "./db/dexie";
 import { opsForGroup } from "./db/fold";
 import {
-  addExpense, addMember, clearRate, createGroup, editExpense, editSettlement,
-  healGroup, recordSettlement, removeMember, setRate,
+  addExpense, addMember, clearRate, createGroup, deleteExpense, deleteSettlement, editExpense,
+  editSettlement, healGroup, recordSettlement, removeMember, restoreEntry, setRate,
 } from "./db/commands";
 import { describe } from "./history-copy";
 
@@ -485,6 +485,21 @@ suite("describe", () => {
     const [latest] = await described(groupId);
     expect(latest!.said).toBe("Theo changed how the split is written");
     expect(latest!.diff).toEqual({ was: "Evenly", now: "As parts" });
+  });
+
+  it("says a deleted entry was restored, and a transfer too", async () => {
+    const { groupId, theo, marie, expenseId } = await sharedExpense();
+    const transferId = await recordSettlement(groupId, theo, {
+      fromMember: marie, toMember: theo, amountMinor: 500, currency: "EUR", rateToBase: "1", occurredAt: 1,
+    });
+    await deleteExpense(groupId, theo, expenseId);
+    await deleteSettlement(groupId, theo, transferId);
+    await restoreEntry(groupId, theo, "expense", expenseId);
+    await restoreEntry(groupId, theo, "settlement", transferId);
+    const said = (await described(groupId)).map((d) => d.said);
+    expect(said).toContain("Theo deleted this expense");
+    expect(said).toContain("Theo restored this expense");
+    expect(said).toContain("Theo restored a transfer");
   });
 
   it("puts both sides of a transfer on the line when they swap", async () => {

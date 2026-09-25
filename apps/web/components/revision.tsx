@@ -23,12 +23,14 @@ export interface RevisionContext {
 
 /**
  * Where a revision in the group feed leads — entries only, since "you changed
- * the amount" needs to say of what. A deleted entry points at its own history.
+ * the amount" needs to say of what. A deleted entry leads to its own screen
+ * too, which is where Restore is.
  */
 function subjectOf(rev: Revision, c: RevisionContext): { href: string; label: string } | undefined {
-  const link = (deleted: boolean, label: string) => deleted
-    ? { href: route.history(c.groupId, rev.entityId, c.via), label: copy.history.deleted(label) }
-    : { href: route.entry(c.groupId, rev.entityId, c.via), label };
+  const link = (deleted: boolean, label: string) => ({
+    href: route.entry(c.groupId, rev.entityId, c.via),
+    label: deleted ? copy.history.deleted(label) : label,
+  });
   if (rev.entity === "expense") {
     const e = c.expenseById.get(rev.entityId);
     return link(!!e?.deletedAt, e?.description?.trim() || copy.history.untitled);
