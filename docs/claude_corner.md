@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — "Reshoot the screenshots for the readme after the recent ui
+  changes." One command, six PNGs; still looked at every one before
+  committing. A rerun script is only as good as the eyes on its output.
+
 - *2026-09-25* — "Why is the euro sign so tiny? Argue with screenshots." It
   wasn't: same size, same cap height, a third the width. Proved that, then
   "make both bigger", then "same as the small digits". "Argue" wants
@@ -78,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   ledger." Two numbered questions got two one-line answers and a build. Ask
   only what changes the code, put your lean beside each, and the answer is
   the go-ahead.
-
-- *2026-09-24* — "I made a mistake when reverting the adr. It was good
-  design to forbid it." Asked for a restore design; the converted-entry trap
-  made the owner re-forbid conversion. A design that needs a special case to
-  stay honest is a question about the feature under it, so name the case.
