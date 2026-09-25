@@ -1158,7 +1158,6 @@ export const copy = {
     entryTitle: "Entry history",
     entry: "Entry",
     empty: "Nothing here yet",
-    wholeGroup: "The whole group",
     subject: (name: string, revisions: string) => `${name} · ${revisions}`,
     deleted: (label: string) => `${label} · deleted`,
     untitled: "Untitled entry",

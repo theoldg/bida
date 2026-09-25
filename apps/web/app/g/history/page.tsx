@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { activityFeed, entityHistory } from "@bida/core";
-import { BadLink, Blank, Body, Empty, Foot, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
+import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { db } from "@/lib/db/dexie";
@@ -122,17 +122,19 @@ function HistoryScreen() {
                 {copy.history.more(plural(rest, copy.noun.revision))}
               </button>
             ) : null}
+
+            {/* A step out, not an action: a link at the foot of the timeline
+                rather than a button in a bar, as under the ledger's new edits. */}
+            {entryId ? (
+              <Link href={route.history(groupId)} className="tlink entrygroup">
+                <Icon name="clock" size={13} />
+                <span>{copy.group.groupHistory}</span>
+                <Icon name="chev" size={13} />
+              </Link>
+            ) : null}
           </div>
         </Scroll>
       </Body>
-
-      {entryId ? (
-        <Foot>
-          <Link href={route.history(groupId)} className="btn btn-s">
-            <Icon name="clock" size={15} /> {copy.history.wholeGroup}
-          </Link>
-        </Foot>
-      ) : null}
     </Screen>
   );
 }
