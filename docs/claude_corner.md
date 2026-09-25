@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-09-25* — "Report on line counts… what can you say about those
-  numbers?" Counted, then read what the counts point at: ratios per area, the
-  biggest and quietest files. A number question wants a reading, not a table;
-  and a regex count of comments is an estimate, so say so.
+- *2026-09-25* — Line counts, then "how would you split the docs?", then "you
+  don't have to cut text, the 200 line rule is a bit too restrictive." I had
+  proposed cutting to meet a rule its owner didn't hold that hard. Ask before
+  treating a written threshold as binding; a split can move every line.
 
 - *2026-09-25* — "Sort out the flaky browser tests… maybe timeouts? Idk."
   Timeouts were never short; each flake was a pause or a quiet moment standing

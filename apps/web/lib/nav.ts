@@ -92,7 +92,7 @@ function closeDialogs(): void {
  * an entry that is already the destination. That is the opposite trade from
  * `traverseTo` (see the head), which is why a clock may decide this. A
  * delivered traversal lands in ~10ms; a phone slow enough to overrun this
- * pays one duplicate entry (docs/testing.md).
+ * pays one duplicate entry (docs/browser-checks.md).
  */
 const SWALLOWED_MS = 150;
 

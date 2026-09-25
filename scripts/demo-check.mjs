@@ -95,7 +95,7 @@ report(await page.getByText("By items").count() > 0,
 await page.locator(".billgroup .kv").filter({ hasText: "Ben" }).first().click();
 await page.waitForSelector(".billline");
 // In the cantina's own tongue, which is how a bill reads until the grid's
-// translation icon is pressed (docs/receipt-scanning.md).
+// translation icon is pressed (docs/scan-reading.md).
 report(await page.getByText("Bunta koosa").count() > 0,
   "and Ben's row opens onto what Ben ordered, as the cantina wrote it");
 await page.goBack();

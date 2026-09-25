@@ -75,14 +75,14 @@ for (const file of sources(join(ROOT, "apps/web"))) {
   }
 }
 
-// docs/frontend.md#a-live-read-can-die: every live read goes through `useLive`.
+// docs/live-reads.md#a-live-read-can-die: every live read goes through `useLive`.
 // A direct `useLiveQuery` has no watchdog, reconnect or remembered answer, so
 // it is the screen left on skeleton rows when the database stalls.
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "db", "live.ts"))) continue;
   if (/\buseLiveQuery\b/.test(code(readFileSync(file, "utf8")))) {
     fail(file, "calls `useLiveQuery` — read through `useLive`, which notices a read that "
-      + "never answers (docs/frontend.md#a-live-read-can-die)");
+      + "never answers (docs/live-reads.md#a-live-read-can-die)");
   }
 }
 
@@ -95,7 +95,7 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
   const src = code(readFileSync(file, "utf8"));
   if (/\bweightsFromItems\b/.test(src)) {
     fail(file, "calls `weightsFromItems` — a bill is priced through `receiptWeights`, "
-      + "which is the only thing that may name a tiebreak seed (docs/receipt-scanning.md)");
+      + "which is the only thing that may name a tiebreak seed (docs/who-had-what.md)");
   }
 }
 
@@ -127,7 +127,7 @@ for (const file of sources(join(ROOT, "apps/web/app")).concat(sources(join(ROOT,
 }
 
 /**
- * docs/frontend.md#routing: every `/g` screen reads its group from the query
+ * docs/navigation.md#routing: every `/g` screen reads its group from the query
  * string, and a link naming a group this phone lacks must say so. `data.group`
  * is `undefined` both while reading and when absent, so a screen left to its
  * loading branch is a back arrow over nothing, forever.
@@ -137,7 +137,7 @@ for (const file of sources(join(ROOT, "apps/web/app/g"))) {
   if (!/<BadLink\b/.test(code(readFileSync(file, "utf8")))) {
     fail(file, "renders no `BadLink` — every screen under `/g` validates its `id`, or a "
       + "link to a group this phone hasn't got is a blank that never fills "
-      + "(docs/frontend.md#routing)");
+      + "(docs/navigation.md#routing)");
   }
 }
 
@@ -147,7 +147,7 @@ for (const file of sources(join(ROOT, "apps/web/app/g"))) {
 //
 // `goBack` takes the replace as well as the back: a traversal Android
 // swallows is repaired by putting the destination in this screen's place,
-// which needs that replace (docs/frontend.md#gotchas).
+// which needs that replace (docs/navigation.md#gotchas).
 for (const file of sources(join(ROOT, "apps/web"))) {
   if (file.endsWith(join("lib", "nav.ts"))) continue;
   const src = code(readFileSync(file, "utf8"))
@@ -161,7 +161,7 @@ for (const file of sources(join(ROOT, "apps/web"))) {
 }
 
 /**
- * docs/frontend.md#the-clipboard: `navigator.clipboard` can be `undefined`,
+ * docs/import-export.md#the-clipboard: `navigator.clipboard` can be `undefined`,
  * so a bare `navigator.clipboard.writeText(…)` throws where callers expect a
  * rejection — and the in-app-browser escape screen, which copies unprompted,
  * renders outside the error boundary, so the throw is Next's "Application
@@ -177,7 +177,7 @@ for (const file of sources(join(ROOT, "apps/web"))) {
     if (/navigator\s*\.\s*clipboard/.test(code(readFileSync(file, "utf8")))) {
       fail(file, "reaches `navigator.clipboard` directly — write through "
         + "`writeClipboardText` (lib/clipboard.ts), or a browser without a clipboard "
-        + "throws where a refusal was expected (docs/frontend.md#the-clipboard)");
+        + "throws where a refusal was expected (docs/import-export.md#the-clipboard)");
     }
   }
 }

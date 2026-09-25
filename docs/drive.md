@@ -2,7 +2,7 @@
 
 *For: anyone reproducing a bug, stressing a screen, or watching two phones
 disagree, without a phone or a screenshot. It is the harness
-[testing.md](testing.md) describes, driven by hand.*
+[browser-checks.md](browser-checks.md#scriptslibharnessmjs--what-the-browser-checks-share) describes, driven by hand.*
 
 A live session you send one command at a time, and that answers with the screen
 written out in words. Stress-test any nontrivial behaviour here before calling

@@ -37,7 +37,7 @@ Cloudflare: ONE Worker ── static assets + Hono /api/*
 The group endpoints are [sync.md](sync.md#the-protocol); `notify`
 forwards what the sending phone already encrypted
 ([notifications.md](notifications.md)); the scan is
-[receipt-scanning.md](receipt-scanning.md), and it is the one route that never
+[scan-worker.md](scan-worker.md#minimal-cloudflare-quota-the-worker-still-never-touches-the-bytes), and it is the one route that never
 parses its body — the photo is streamed between the halves of a prompt the
 Worker owns, to stay inside 10 ms of CPU. The last two are passthroughs to
 somebody else's server, there because **a page is not allowed to read what

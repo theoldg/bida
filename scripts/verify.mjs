@@ -23,7 +23,7 @@ const CHECKS = ["entries", "homescreen", "offline", "stall", "nav", "demo", "cla
 /**
  * How many chromiums at once. Each check wants about a core; nine on a
  * four-core cloud container starve the pages past the app's own timers, which
- * is where this suite's flakes came from (docs/testing.md#gotchas). A laptop
+ * is where this suite's flakes came from (docs/browser-checks.md#gotchas). A laptop
  * with the cores runs them all together, as before. `VERIFY_JOBS` overrides.
  */
 const LIMIT = Number(process.env.VERIFY_JOBS) || Math.max(2, availableParallelism());

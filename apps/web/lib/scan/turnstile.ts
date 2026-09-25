@@ -26,7 +26,7 @@ const WARM_TTL_MS = 120_000;
  * No token, or one the Worker rejected. `side` says which end: `"browser"` is
  * a script or widget that never answered — their network, and a retry may
  * work. `"server"` is `siteverify` rejecting our token: a deployment whose
- * secret and site key disagree (docs/receipt-scanning.md#what-the-scan-costs),
+ * secret and site key disagree (docs/scan-worker.md#what-the-scan-costs),
  * which no retry fixes. One sentence for both sends the wrong person looking.
  */
 export class TurnstileBlockedError extends Error {

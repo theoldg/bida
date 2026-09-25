@@ -194,7 +194,7 @@ day; a table of who pushed what costs the promise.
 The one destructive endpoint, authenticated like the other two: whoever holds
 the link is the group, so whoever holds the link can end it
 ([ADR-0003](decisions/0003-link-only-access.md)). It is asked for from
-`/delete-my-data` ([frontend.md](frontend.md#deleting-a-group)) and from nowhere
+`/delete-my-data` ([import-export.md](import-export.md#deleting-a-group)) and from nowhere
 else.
 
 **What is left is a tombstone**, not an absent row: `groups.deleted_at` set, the
@@ -240,7 +240,7 @@ the app is hidden:** no run starts, and a response that lands after the app
 went to the background waits for it to come back before its transaction opens
 (`parked` on `/diag`) — a phone freezes a hidden app, and a transaction frozen
 half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
-([frontend.md](frontend.md#a-live-read-can-die)).
+([live-reads.md](live-reads.md#a-live-read-can-die)).
 
 ### The demo group has no key
 
@@ -263,7 +263,7 @@ updates a row it has just read.
 
 The cost is paid in one place and paid out loud: no key means no invite link,
 so **Copy invite link refuses** rather than disappearing
-([frontend.md](frontend.md#routing)).
+([navigation.md](navigation.md#routing)).
 
 Scanning is the one thing that would otherwise have been a second cost, since
 `/api/groups/:id/scan` authenticates a bearer against a row in D1. It is not:

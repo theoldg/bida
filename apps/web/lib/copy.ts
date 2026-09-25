@@ -415,7 +415,7 @@ export const copy = {
       lede: "Scans normally go through bida’s server, unencrypted and rate limited. You can use your own Gemini API key to avoid the rate limits and send your requests straight to Google.",
       where: "Get one free at Google AI Studio.",
       whereUrl: "https://aistudio.google.com/apikey",
-      /** Google's terms, not ours — re-check before editing (docs/receipt-scanning.md#trust-and-what-were-accepting). */
+      /** Google's terms, not ours — re-check before editing (docs/scan-worker.md#trust-and-what-were-accepting). */
       freeTier: "As of September 2026, the free plan allows 500 requests to Gemini 3.1 Flash Lite per day. Data may be used for model training.",
       /** Split around the inline link. */
       site: { lede: "Check their ", link: "website", tail: "." },
@@ -504,7 +504,7 @@ export const copy = {
   // --------------------------------------------------- deleting a group
 
   /**
-   * `/delete-my-data` (docs/frontend.md#deleting-a-group), the only screen that
+   * `/delete-my-data` (docs/import-export.md#deleting-a-group), the only screen that
    * destroys anything. Written to be read slowly: it's irreversible with no
    * backup, and the group is shared, so "your" data is others' trip too. Typing
    * the name is required because reading is optional.
@@ -575,7 +575,7 @@ export const copy = {
   /**
    * The only screen asking for money, from the foot of the balances. It asks
    * for the one thing not free to run, with the figure `SCAN_LIMITS` is set from
-   * (core/scan.ts, docs/receipt-scanning.md#what-the-scan-costs).
+   * (core/scan.ts, docs/scan-worker.md#what-the-scan-costs).
    */
   tip: {
     title: "Support bida",

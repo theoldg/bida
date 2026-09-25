@@ -389,7 +389,7 @@ sees when they open the tricount.
 **The fetch is not here.** `apps/api/src/tricount.ts` makes the two calls and
 `apps/web/lib/import/tricount.ts` makes the key pair they want, because core is
 pure and because an undocumented API is exactly the thing to keep one file wide
-([frontend.md](frontend.md#bringing-a-group-onto-the-phone)).
+([import-export.md](import-export.md#bringing-a-group-onto-the-phone)).
 
 ## D1 schema
 
@@ -427,7 +427,7 @@ CREATE INDEX scan_hits_at ON scan_hits(at);
 `scan_hits` is the one table here that is not a ledger: rows live a day,
 because every window it answers is an hour or a day, and nothing in it says
 what was photographed — only that somebody spent a call
-([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
+([scan-worker.md](scan-worker.md#what-the-scan-costs)).
 
 There is no `attachments` table: attachments are not built
 ([product.md](product.md#deliberately-not-in-the-mvp)), and an encrypted one

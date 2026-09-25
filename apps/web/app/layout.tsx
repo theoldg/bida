@@ -80,7 +80,7 @@ export const viewport: Viewport = {
   userScalable: false,
   // **One colour, never per-theme**, matching the manifest's theme_color: the
   // installed Android status bar is painted from the manifest and this tag only
-  // picks icon contrast. Per-theme tags give white on white. frontend.md#gotchas.
+  // picks icon contrast. Per-theme tags give white on white. docs/pwa.md#gotchas.
   themeColor: "#0E0F11",
 };
 

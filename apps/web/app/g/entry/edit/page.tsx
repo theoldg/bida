@@ -268,7 +268,7 @@ function EditEntryScreen() {
    * a traversal Android swallows is repaired a breath later (`SWALLOWED_MS`,
    * lib/nav.ts), and with the draft already cleared that gap draws
    * `<Blank title="New" />` — a screen that failed to leave reads as a fresh
-   * blank entry (docs/frontend.md#gotchas).
+   * blank entry (docs/navigation.md#gotchas).
    *
    * Guarded by the flag, because the payers editor and the grid unmount this
    * screen too and the draft is not theirs to throw away.

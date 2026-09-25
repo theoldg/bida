@@ -27,7 +27,7 @@ type Env = {
     ASSETS: Fetcher;
     DB: D1Database;
     GEMINI_API_KEY: string;
-    /** Both optional; without them scans are unlimited — docs/receipt-scanning.md#what-the-scan-costs, SELFHOSTING.md. */
+    /** Both optional; without them scans are unlimited — docs/scan-worker.md#what-the-scan-costs, SELFHOSTING.md. */
     TURNSTILE_SECRET_KEY?: string;
     SCAN_IP_SALT?: string;
     /** `"dev"` on the dev Worker only (wrangler.toml) — see dev-env.ts. */
@@ -338,7 +338,7 @@ app.get("/api/groups/:id/ops", async (c) => {
 
 /**
  * Delete a group: every sealed op, and the group to a tombstone. Reached from
- * `/delete-my-data` (docs/frontend.md#deleting-a-group); the link is the
+ * `/delete-my-data` (docs/import-export.md#deleting-a-group); the link is the
  * authority, so the phone holding it does it with its usual bearer. Not soft:
  * the ops are gone when this returns and the id can never be written again.
  */

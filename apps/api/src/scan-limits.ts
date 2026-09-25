@@ -2,7 +2,7 @@
  * Enforcing `SCAN_LIMITS` (core), plus the one-way client key and Turnstile.
  * The scan is the only endpoint that spends money, and its credential is cheap
  * — `ensureGroup` registers any unseen id (ADR-0035) — so the bearer is a speed
- * bump and these are the gates. docs/receipt-scanning.md#what-the-scan-costs.
+ * bump and these are the gates. docs/scan-worker.md#what-the-scan-costs.
  */
 
 import { SCAN_LIMITS, type ScanLimitScope } from "@bida/core";

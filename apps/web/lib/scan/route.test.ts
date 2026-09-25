@@ -9,7 +9,7 @@ import {
  * Which way a scan leaves the phone — the whole of bring-your-own-key, since
  * everything else is the same either way. The negatives are the point: with
  * their own key, nothing of ours is asked, spent or told
- * (docs/receipt-scanning.md#a-key-of-your-own).
+ * (docs/scan-worker.md#a-key-of-your-own).
  *
  * Downscaling is mocked: it is canvas work, and nothing here depends on the
  * bytes.

@@ -3,7 +3,7 @@
 *For: anyone touching joining, installing or storage on iPhone. **Status:
 [the design](#the-design) is built and [A](#a-in-detail) works on a real
 iPhone.** Not yet tried on a phone: the in-app browser refusal —
-[the phone checklist](testing.md#what-only-a-phone-can-check) is how to spend
+[the phone checklist](on-a-phone.md) is how to spend
 one.*
 
 ## The problem
@@ -41,7 +41,7 @@ that holds, and every iOS browser is WebKit, so none of it is Safari's alone:
    has taken since 15, and whose sheet holds Save to Files), so the export
    gates the download on `iosHomeScreenApp` rather than trying it first —
    dropping to it after a failed share is how somebody ends up stranded
-   ([frontend.md](frontend.md#getting-a-group-off-the-phone)). A tab is fine:
+   ([import-export.md](import-export.md#getting-a-group-off-the-phone)). A tab is fine:
    Safari has a real download manager.
 
 So a person who means to stay in a group has to end up in the home-screen app,
@@ -105,7 +105,7 @@ Safari won't read a swapped link. The link records what it was built with (`data
 longer matches, `CarryToHomeScreen` reloads the page — on the first screen where
 nothing can be lost (`reloadCostsNothing`: the list, a group, members, history,
 an entry, about), never mid-join or in a form, and never before the app shell is
-precached (`shellIsWarm`, [frontend.md](frontend.md#pwa)). Wider than the
+precached (`shellIsWarm`, [pwa.md](pwa.md)). Wider than the
 update's own reload, which holds out for the groups list: this one fires for a
 newcomer who never passes it. From cache it is a flash, once; before the shell
 is cached it would be a network load racing the worker's own fetches, so it
@@ -142,10 +142,10 @@ the list here, so nothing about the address could tell.
 **Reading a run**: `/diag` in the tab and in the app. Each load line says which
 manifest its head got (`static`, `carry:<n>`); the app's `first load` is the URL
 the icon opened, and `install.app` what it did with it
-([frontend.md](frontend.md#the-flight-recorder-and-diag)).
+([diag.md](diag.md)).
 
 `pnpm homescreen` covers everything around that step in the engine that is
-actually to hand ([testing.md](testing.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
+actually to hand ([browser-checks.md](browser-checks.md#pnpm-homescreen--the-invite-that-rides-onto-the-home-screen)),
 Android included: it must get the static `start_url: "/"`, since it shares
 storage and needs none of this.
 
@@ -319,7 +319,7 @@ is rightly let through: it is Chrome, storage and menus and all.
   lands the phone on the route's RSC payload, rendered as text — the whole
   screen a page of `1:"$Sreact.fragment"`. The service worker and the Worker
   both redirect it back to the route
-  ([frontend.md](frontend.md#pwa), `apps/api/src/payload.ts`); the Worker is
+  ([pwa.md](pwa.md), `apps/api/src/payload.ts`); the Worker is
   the half that covers a first visit, which has no service worker yet and is
   most of the invites this doc is about.
   Not `assign` either: the page it leaves goes into WebKit's page cache still

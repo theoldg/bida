@@ -17,7 +17,7 @@ expenses you'd looked at rather than climbing out.
   the group id (never the secret) as a query parameter. A static export can't
   pre-render a page per group, but it can pre-render one per screen and read
   `?id=` at runtime. `lib/group-link.ts`'s `route` object is the single place
-  URLs are built; the table lives in [frontend.md](../frontend.md#routing).
+  URLs are built; the table lives in [navigation.md](../navigation.md#routing).
 - **One screen per question.** Balances and settling are one scroll: the bars
   say a number is wrong and the transfers are the only thing you can do about
   it. A split is half of what an entry *is*, so the split editor is a component

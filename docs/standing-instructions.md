@@ -48,7 +48,7 @@ to remove more from this list than you add.
   [hosting.md](hosting.md#the-cloudflare_api_token).
 - **Keep a screenshot loop, and don't lean on it.** *2026-08-27* — "efficient
   and easy to run for you, but don't overuse it." `pnpm shots` after building or
-  changing a screen, not after every edit. [testing.md](testing.md).
+  changing a screen, not after every edit. [shots.md](shots.md).
 - **Drive nontrivial behaviour by hand before calling it done.** *2026-09-04* —
   "use the text driver to manually stress test features when nontrivial
   behaviour is introduced or modified … this can catch bugs and inform test
@@ -98,7 +98,7 @@ to remove more from this list than you add.
   llm can handle that, don't build useless stuff." The scan runs server-side on
   a free-tier Gemini key shared globally, with maximum trust and minimal
   Cloudflare quota — "something to figure out if we ever want to productionize."
-  [receipt-scanning.md](receipt-scanning.md).
+  [scan-worker.md](scan-worker.md).
 - **The receipt schema and UX stay minimal and flexible.** *2026-08-28* — "i
   have ideas for those", then "propose a ux and go for it without approval,
   we'll iterate later." [ADR-0016](decisions/0016-receipts.md).
@@ -125,7 +125,7 @@ to remove more from this list than you add.
   and the platform's own limits are the tools; a ledger of who did what is not.
   The scan's buckets are the exception that proves it: that endpoint spends real
   money per call, and even there the key is an HMAC that expires in a day
-  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)).
+  ([scan-worker.md](scan-worker.md#what-the-scan-costs)).
 
 ## Interface
 

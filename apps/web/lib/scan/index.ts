@@ -39,7 +39,7 @@ export class ScanOfflineError extends Error {}
  * Our scan budget is spent — not Gemini's, and unlike `ScanUnavailableError`
  * waiting a minute won't fix it. Carries the bucket: your own ten an hour and
  * a shared daily cap are different sentences.
- * See docs/receipt-scanning.md#what-the-scan-costs.
+ * See docs/scan-worker.md#what-the-scan-costs.
  */
 export class ScanLimitError extends Error {
   constructor(readonly scope: ScanLimitScope) {
@@ -211,7 +211,7 @@ async function readOnSharedKey(
   try {
     // The body is the bill and nothing else: the prompt and the response
     // schema are the Worker's, which is what stops our Gemini key from being
-    // an open one — docs/receipt-scanning.md#the-envelope-and-who-owns-it.
+    // an open one — docs/scan-worker.md#the-envelope-and-who-owns-it.
     res = await fetch(`/api/groups/${encodeURIComponent(groupId)}/scan`, {
       method: "POST",
       headers: {

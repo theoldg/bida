@@ -5,7 +5,7 @@
 the phone that made a change encrypts one notification per listening device,
 and the Worker relays them without keeping anything. Seen working on dev
 2026-09-23: an edit from an incognito tab reached the owner's installed app.
-The rest of the [checklist](testing.md#what-only-a-phone-can-check) is unrun.*
+The rest of the [checklist](on-a-phone.md) is unrun.*
 
 ## What is said
 

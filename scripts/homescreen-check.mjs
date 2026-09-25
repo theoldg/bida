@@ -504,7 +504,7 @@ report((await secretsHeld(webviewPage).catch(() => [])).length === 0,
 // arrival — a bare `writeText` throws there rather than rejecting, and the
 // screen renders outside `ReadErrorBoundary`, so the throw took the whole page
 // down to Next's "Application error". On the one screen those visitors get.
-// See docs/frontend.md#the-clipboard.
+// See docs/import-export.md#the-clipboard.
 const dry = await newPhone(browser, { userAgent: IN_APP_UA });
 const dryPage = await dry.newPage();
 const crashes = [];

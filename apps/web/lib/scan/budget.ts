@@ -9,7 +9,7 @@ import { getDevice, updateDevice } from "../db/device";
  * Advice, not enforcement — the Worker's count decides. It refuses an
  * over-budget scan before the photo is downscaled and sent. Wiping it only
  * reaches a bucket that was politeness anyway; the address and global caps
- * are the Worker's (docs/receipt-scanning.md#what-the-scan-costs).
+ * are the Worker's (docs/scan-worker.md#what-the-scan-costs).
  *
  * Per caller, not per phone: the server budgets each group's credential
  * separately, and one shared log here would refuse scans it allows.

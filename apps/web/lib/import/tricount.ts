@@ -3,7 +3,7 @@ import { ImportError } from "@bida/core";
 /**
  * A tricount link, fetched. What the JSON *means* is `core/readTricount`'s
  * job; this file is the link, the key pair and one request
- * (docs/frontend.md#bringing-a-group-onto-the-phone).
+ * (docs/import-export.md#bringing-a-group-onto-the-phone).
  *
  * It goes through our Worker because bunq's reply carries no
  * `Access-Control-Allow-Origin`, so a page can't read it.

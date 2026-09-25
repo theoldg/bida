@@ -49,7 +49,7 @@ function ItemsScreen() {
     }
   }, [groupId, data.loading, data.group, unclaimed, draft, router]);
 
-  // The id check every screen under `/g` makes (docs/frontend.md#routing):
+  // The id check every screen under `/g` makes (docs/navigation.md#routing):
   // `data.group` is `undefined` while the read is in flight and again when
   // there is no such group, and only the second of those is a bad link.
   if (!groupId) return <BadLink />;

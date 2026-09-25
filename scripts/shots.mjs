@@ -266,7 +266,7 @@ async function main() {
       await page.locator('input[aria-label="Upload a receipt photo"]')
         .setInputFiles({ name: "receipt.png", mimeType: "image/png", buffer: PHOTO });
       // A scan fills the form and stops there — the grid is the tap after it,
-      // never a place the scan sends you (docs/receipt-scanning.md). On a
+      // never a place the scan sends you (docs/scan-reading.md). On a
       // bill nobody has been assigned a line of, that tap says "Assign".
       await page.getByRole("link", { name: /(Assign|Edit) who.had.what/ }).click();
       await page.waitForURL(/entry\/items/);

@@ -307,7 +307,7 @@ async function onLedger() {
 // (lib/nav.ts). The latch not being left armed is `lib/nav.test.ts`'s.
 //
 // **The stuck moment in between is deliberately not asserted** — a read
-// after a fixed pause is a bet on the repair's window (docs/testing.md). With
+// after a fixed pause is a bet on the repair's window (docs/browser-checks.md). With
 // `history.go` stubbed, landing at the parent at all proves the repair did it.
 {
   const page = await (await phone()).newPage();

@@ -4,7 +4,7 @@ import { getDevice } from "../db/device";
  * The key this phone scans with, when it is not ours. Same envelope
  * (`@bida/core`) and model, so everything downstream is untouched; it skips
  * what protects the *shared* key — bearer token, Turnstile, budget buckets
- * (docs/receipt-scanning.md#a-key-of-your-own).
+ * (docs/scan-worker.md#a-key-of-your-own).
  */
 
 /** Where a key is checked. Listing models is free and needs no quota. */

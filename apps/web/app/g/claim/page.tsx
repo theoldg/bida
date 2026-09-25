@@ -51,7 +51,7 @@ function ClaimScreen() {
   // read has answered**: `data.group` is `undefined` for "still reading" and
   // "no such group" alike, so asking sooner leaves a link this phone is still
   // fetching sitting as a bad-link screen. Never over a group known deleted —
-  // the redirect above carries that one off (docs/frontend.md#routing).
+  // the redirect above carries that one off (docs/navigation.md#routing).
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group && !deleted) return <BadLink />;
   // Still reading: this is the last step of joining, so it keeps the frame

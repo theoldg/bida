@@ -15,7 +15,7 @@ const GEMINI_MODEL = "gemini-3.1-flash-lite";
 /**
  * Two hosts for one model, billed differently: `VERTEX_URL` takes our shared
  * key, billed to the Cloud project (where the credit is); `AI_STUDIO_URL` takes
- * a person's own key (docs/receipt-scanning.md#a-key-of-your-own). Same envelope.
+ * a person's own key (docs/scan-worker.md#a-key-of-your-own). Same envelope.
  */
 export const VERTEX_URL =
   `https://aiplatform.googleapis.com/v1/publishers/google/models/${GEMINI_MODEL}:generateContent`;
@@ -220,7 +220,7 @@ const TEXT_ITEMS =
 /**
  * A typed bill usually has no total; asked for one, the model makes one up,
  * and a derived total can't check the lines
- * (docs/receipt-scanning.md#what-a-reading-is-checked-against).
+ * (docs/scan-reading.md#what-a-reading-is-checked-against).
  */
 const TEXT_TOTAL =
   "Return total only where the text states one — a figure it calls the total, the sum, "

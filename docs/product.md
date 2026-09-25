@@ -51,14 +51,14 @@ group somebody already used*. The one thing it cannot do is be shared, and it
 is the same fact that keeps it off the server: it is created without a key, so
 there is no invite link and no path to sync
 ([sync.md](sync.md#the-demo-group-has-no-key)). **Nothing in the app links to
-it** — the URL is the whole door ([frontend.md](frontend.md#routing)) — and it
+it** — the URL is the whole door ([navigation.md](navigation.md#routing)) — and it
 is a pitch rather than a group somebody keeps, so a build that tells a
 different story lays it down over the old one.
 
 **The tip jar.** One screen (`/g/tip`, off a FAB on the balances screen), and the
 only ask in the app: no ads, no tier, nothing locked. It is a figure and two
 buttons — `$5 ≈ 4,000 receipt scans`
-([what a scan costs](receipt-scanning.md#what-the-scan-costs)), cut by the
+([what a scan costs](scan-worker.md#what-the-scan-costs)), cut by the
 group the way the group cuts everything else, then Buy Me a Coffee and an
 ordinary expense to record what you gave. Donating happens on somebody else's
 site; this writes no entry on its own, and the split opens the normal form

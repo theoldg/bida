@@ -18,7 +18,7 @@ receipt photos are not kept
 ([ADR-0001](decisions/0001-cloudflare-workers-and-d1.md)).
 
 The one endpoint that spends actual money is the scan, and its budget is
-[receipt-scanning.md](receipt-scanning.md#what-the-scan-costs).
+[scan-worker.md](scan-worker.md#what-the-scan-costs).
 
 **Treat this deployment as public.** The repo is public, bida.bid is being
 advertised to users online, and its traffic is strangers' — so every ceiling on
@@ -102,7 +102,7 @@ pnpm --filter @bida/api exec wrangler secret put TURNSTILE_SECRET_KEY
 
 `GEMINI_API_KEY` is an **Agent Platform key from the Cloud project**, not an AI
 Studio one: the shared path calls Vertex, and only the Vertex side can spend
-Google Cloud credit ([receipt-scanning.md](receipt-scanning.md#why-the-shared-key-sits-on-the-worker)).
+Google Cloud credit ([scan-worker.md](scan-worker.md#why-the-shared-key-sits-on-the-worker)).
 The two are not interchangeable and fail in opposite directions — an AI Studio
 key on Vertex is `PERMISSION_DENIED`, ours on AI Studio is *blocked*.
 
@@ -113,7 +113,7 @@ build breaks scanning there until the build catches up. Dev first, production
 when `main` moves.
 
 The last two are the scan budget
-([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) and both are
+([scan-worker.md](scan-worker.md#what-the-scan-costs)) and both are
 optional — without them the endpoint is unlimited. **Set
 `TURNSTILE_SECRET_KEY` last**, after a deploy carrying the matching site key
 (committed in `.github/workflows/deploy.yml`, since it is public and only
@@ -149,7 +149,7 @@ Assets are served from the edge without waking the Worker, except for the two
 paths `run_worker_first` names: `/api/*`, the sync API, and `/*.txt`, the RSC
 payloads — one navigated to as a page is redirected to its route rather than
 served as flight data
-([frontend.md](frontend.md#pwa), `apps/api/src/payload.ts`). That list is
+([pwa.md](pwa.md), `apps/api/src/payload.ts`). That list is
 exhaustive, not additive (Gotcha below). The dev Worker sets
 `run_worker_first = true` for its own reason — the DEV tint — and gets both
 rules along with it.
@@ -234,7 +234,7 @@ there, gate and budget included. One Turnstile widget
 serves both: its domain list names each hostname, which is why the same site key
 can ship in both builds. **Dev's scan budget is counted in dev's own database**,
 so the global daily cap — the one number bounding the Gemini bill
-([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)) — now exists
+([scan-worker.md](scan-worker.md#what-the-scan-costs)) — now exists
 twice, and the worst case is two of them.
 
 ### A schema change, from here on
@@ -295,7 +295,7 @@ Recognise these if you ever propose one:
 - Durable Objects for real-time — cheap, but not free-tier-free.
 - Raising `SCAN_LIMITS.global` without doing the arithmetic: it is the only
   number that bounds the Gemini bill, at roughly $0.001 a scan
-  ([receipt-scanning.md](receipt-scanning.md#what-the-scan-costs)). A hard
+  ([scan-worker.md](scan-worker.md#what-the-scan-costs)). A hard
   project quota under it was declined — the owner watches the spend with
   billing alerts of their own, so the counter is the brake and they are the
   watch on it. Don't re-propose the quota; do keep the arithmetic honest.

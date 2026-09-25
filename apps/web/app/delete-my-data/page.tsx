@@ -14,7 +14,7 @@ import { readClipboardText } from "@/lib/paste";
 /**
  * `/delete-my-data` — the hosted service's way to ask for a group to be
  * deleted, and the only screen that destroys anything
- * (docs/frontend.md#deleting-a-group).
+ * (docs/import-export.md#deleting-a-group).
  *
  * **Not in the app's navigation.** Reached from `/about`'s privacy section,
  * with a typeable address; nothing in a group leads here.

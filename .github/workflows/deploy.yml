@@ -40,7 +40,7 @@ jobs:
       # and the database id — and a variable someone forgets to set is a build
       # that ships no token to a Worker demanding one, which refuses every
       # scan. A fork changes it here, or exports the var to override it.
-      # docs/receipt-scanning.md#what-the-scan-costs.
+      # docs/scan-worker.md#what-the-scan-costs.
       - run: pnpm --filter @bida/web build
         env:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: 0x4AAAAAAEz1vIlldxKNntfQ

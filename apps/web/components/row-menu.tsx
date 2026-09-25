@@ -32,7 +32,7 @@ export interface SheetAction {
  * Acting on `pointerup` outright is worse: `touchend`, `mousedown` and
  * `mouseup` still follow, onto whatever the action drew — on Android that
  * `mousedown` dismissed the confirm dialog the item had just opened
- * (frontend.md's Gotchas; `lib/press-trace.ts`).
+ * (docs/touch-and-viewport.md; `lib/press-trace.ts`).
  *
  * An invisible veil catches the outside tap that closes it; Escape and a
  * scroll (captured on `document` — the scroller is `.scroll`) close it too, so

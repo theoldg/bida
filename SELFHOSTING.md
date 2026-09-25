@@ -93,13 +93,13 @@ Without it the scan button fails and the rest of the app is unaffected.
 You can also skip it entirely: each person can paste their own Gemini key under
 **Advanced**, and a phone that has one calls Google directly and never asks your
 Worker to scan anything
-([docs/receipt-scanning.md](docs/receipt-scanning.md#a-key-of-your-own)). A
+([docs/scan-worker.md](docs/scan-worker.md#a-key-of-your-own)). A
 deployment for a handful of people who each bring a key needs no `GEMINI_API_KEY`,
 no Turnstile and no budget at all.
 
 Scanning is the one thing here that costs money, so it has a budget — the
 numbers, and the reasoning, are in
-[docs/receipt-scanning.md](docs/receipt-scanning.md#what-the-scan-costs). Two
+[docs/scan-worker.md](docs/scan-worker.md#what-the-scan-costs). Two
 more secrets turn its two halves on, and **both are optional: without them the
 endpoint is unlimited**, which is what you want only behind an address you
 don't advertise.

@@ -1,7 +1,7 @@
 /**
  * App-shell precache — never the API. Dexie is the offline data layer; caching
  * `/api/*` here would be a second, disagreeing source of truth.
- * See docs/frontend.md#pwa.
+ * See docs/pwa.md.
  *
  * Both lists below are stamped in by `scripts/precache.mjs` after the export is
  * written, from the files actually on disk. **Don't edit them, and never add a
@@ -196,7 +196,7 @@ self.addEventListener("message", (event) => {
 /**
  * Every copy of the app open on this origin, for /diag. Another copy is the
  * prime suspect for a database that stops answering: a background tab frozen
- * mid-transaction keeps its lock (docs/frontend.md#a-live-read-can-die).
+ * mid-transaction keeps its lock (docs/live-reads.md#a-live-read-can-die).
  * Paths only — a join link's secret is in the fragment, and this report is
  * pasted into messages.
  */

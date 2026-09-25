@@ -141,4 +141,7 @@ what changed this session. Prefer editing a line to adding one, delete what the
 code says for itself, and cut narrative history: a doc records the state and the
 reasoning, not the sessions that got here. Real new behaviour may cost a
 paragraph; pay for it by cutting something that has stopped earning its place.
-A doc past ~200 lines, or covering two subjects, wants splitting or cutting.
+A doc covering two subjects wants splitting by subject, not cutting: children a
+task reads one of, and a parent whose table says which
+([docs/README.md](docs/README.md) shows the shape). Length is only the hint — past
+~400 lines, look for the second subject.

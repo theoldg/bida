@@ -51,7 +51,7 @@ server is now what holds confidentiality rather than just access.
   Metadata is the price of a server that can route at all.
 - **A receipt still leaves in the clear** — the scan is a passthrough to Gemini
   and the photograph is the thing being read
-  ([receipt-scanning.md](../receipt-scanning.md)). The about screen says so.
+  ([scan-worker.md](../scan-worker.md#trust-and-what-were-accepting)). The about screen says so.
 - **No rotation, no recovery.** There is no key to change without changing the
   link, and a link nobody kept was already an unrecoverable group
   ([0003](0003-link-only-access.md)).

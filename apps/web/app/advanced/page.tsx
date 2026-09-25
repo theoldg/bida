@@ -21,7 +21,7 @@ import { checkGeminiKey, maskKey, type KeyRefusal } from "@/lib/scan/key";
  * (`checkGeminiKey`): is the key good, and can this browser reach Google at
  * all — a brought-key scan is called from the browser, so a blocker defeats
  * it. **No fallback through our Worker**: the promise is that the key never
- * leaves the phone (docs/receipt-scanning.md#a-key-of-your-own).
+ * leaves the phone (docs/scan-worker.md#a-key-of-your-own).
  */
 export default function AdvancedPage() {
   const device = useDevice();

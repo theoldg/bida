@@ -43,7 +43,7 @@ cache-first** — so a launch and every tap after it paint without the network.
   essentially never closes, and people killed the browser repeatedly to get a
   deploy. Keeping one old cache (a few MB) is the price of taking updates
   eagerly; the page reloads itself onto the new build as soon as that is
-  harmless ([frontend.md](../frontend.md#pwa)).
+  harmless ([pwa.md](../pwa.md)).
 - The precache is all-or-nothing — one retry for stragglers, then the install
   fails and the old worker keeps running. A partial cache would strand an
   installed app on a build it can't paint, and a failed install deletes its own

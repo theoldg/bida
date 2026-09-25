@@ -82,7 +82,7 @@ export interface DeviceRecord {
   /**
    * A Gemini API key pasted on `/advanced`. While set, scans call Google
    * directly — no shared budget, no Turnstile, no record on our server
-   * (docs/receipt-scanning.md#a-key-of-your-own).
+   * (docs/scan-worker.md#a-key-of-your-own).
    *
    * **Never an op**: one person's credential, never leaves this phone. Stored in
    * the clear beside the group secrets, which `/advanced` says out loud.

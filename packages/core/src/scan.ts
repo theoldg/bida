@@ -1,7 +1,7 @@
 /**
  * A model's reading of a receipt, turned into an entry-draft patch. No
  * arithmetic or reformatting on top: the prompt fixes the shapes (plain
- * decimal, `YYYY-MM-DD`). docs/receipt-scanning.md.
+ * decimal, `YYYY-MM-DD`). docs/scan-reading.md.
  */
 
 import { isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
@@ -298,7 +298,7 @@ export function billTotalMinor(result: ScanResult, currency: CurrencyCode): numb
  *
  * Only a stated total is reconciled against. A photo with none is cropped; a
  * typed bill usually has none, and its lines are the bill
- * (docs/receipt-scanning.md#what-a-reading-is-checked-against).
+ * (docs/scan-reading.md#what-a-reading-is-checked-against).
  */
 export function checkScan(
   result: ScanResult,
@@ -343,7 +343,7 @@ function readAmount(text: string | null, currency: CurrencyCode): number | null 
 
 /**
  * The scan budget, shared so the phone refuses instantly and the Worker
- * enforces the same numbers. docs/receipt-scanning.md#what-the-scan-costs.
+ * enforces the same numbers. docs/scan-worker.md#what-the-scan-costs.
  */
 export const SCAN_LIMITS = {
   /** The `:id` a scan is billed to — a group, shared by everyone in it, or one phone's credential. */

@@ -595,7 +595,7 @@ a { color: inherit; text-decoration: none }
    the field asks for this much room under itself and components/viewport.tsx
    spends it. Cut for the tallest case, the quick split's scan pair (101px below
    the field). A screen whose act outgrows it raises it on its own scroller;
-   `pnpm keyboard` catches that (docs/testing.md). */
+   `pnpm keyboard` catches that (docs/browser-checks.md). */
 :root { --act-below: 104px }
 .addname { scroll-margin-bottom: var(--act-below) }
 /* A name in the field is *not* on the list: nothing files it but the plus. So
