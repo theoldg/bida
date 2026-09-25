@@ -760,7 +760,7 @@ export const copy = {
 
     unsplittable: (n: string) => `${n} couldn’t be split`,
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
-    settleUp: "Settle up",
+    suggestedReimbursements: "Suggested reimbursements",
     allSquare: "Everyone’s square",
     /** The card a suggested payment opens: it states, it doesn’t ask. */
     recordTitle: "Record this reimbursement",

@@ -1652,7 +1652,12 @@ button.amtnote:active { background: var(--hl-edge) }
 }
 
 /* ---- balance bars ---- */
-.balrow { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 11px;
+/* One grid for every row, each row a subgrid of it, so the figures share one
+   column as wide as the longest and every bar ends at the same place. Below
+   Chrome 117 `subgrid` is dropped and each row sizes its own, as before. */
+.balrows { display: grid; grid-template-columns: 1fr auto; column-gap: 11px; padding: 14px 0 4px }
+.balrow { position: relative; display: grid; grid-column: 1 / -1;
+  grid-template-columns: 1fr auto; grid-template-columns: subgrid; gap: 11px;
   align-items: center; padding: 9px 16px }
 /* A grid child won't shrink below its content without min-width: 0, and the
    40 characters maxLength allows can be one unbroken word. */

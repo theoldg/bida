@@ -79,11 +79,15 @@ function Balances({ data }: { data: GroupData }) {
       .map((id) => ({ id, name: nameOf(id), gone: true }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   ];
+  // Yours first — the payments you have to make or collect are what you came
+  // for. Stable, so the rest keep settle-up's own order.
+  const mineFirst = [...transfers].sort((a, b) =>
+    Number(b.from === me || b.to === me) - Number(a.from === me || a.to === me));
   const widest = Math.max(1, ...rows.map((r) => Math.abs(balances.byMember[r.id] ?? 0)));
 
   return (
     <Scroll>
-      <div style={{ padding: "14px 0 4px" }}>
+      <div className="balrows">
         {rows.map((m) => {
           const net = balances.byMember[m.id] ?? 0;
           const width = `${(Math.abs(net) / widest) * 50}%`;
@@ -123,14 +127,14 @@ function Balances({ data }: { data: GroupData }) {
       ) : null}
 
       <div className="pad" style={{ paddingTop: 10 }}>
-        <Eyebrow style={{ marginBottom: 9 }}>{copy.group.settleUp}</Eyebrow>
+        <Eyebrow style={{ marginBottom: 9 }}>{copy.group.suggestedReimbursements}</Eyebrow>
 
         {transfers.length === 0 ? (
           <Empty title={copy.group.allSquare} />
         ) : null}
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {transfers.map((t) => {
+          {mineFirst.map((t) => {
             const involvesMe = t.from === me || t.to === me;
             return (
               <button key={`${t.from}-${t.to}`} type="button"

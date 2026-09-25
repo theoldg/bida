@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
@@ -222,7 +222,9 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const foreign = expense.currency !== base;
   const [asking, setAsking] = useState(false);
 
+  const router = useRouter();
   const { hold, menu } = useLongPressMenu([
+    { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, expense.id, "ledger")) },
     { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ]);
 
@@ -285,7 +287,9 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   const myNet = myEffect(me, { kind: "transfer", settlement });
   const [asking, setAsking] = useState(false);
 
+  const router = useRouter();
   const { hold, menu } = useLongPressMenu([
+    { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, settlement.id, "ledger")) },
     { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
   ]);
 

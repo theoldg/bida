@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-25* — Four small asks in one message, one a screenshot of
+  ragged bars. The photo showed the symptom, not the cause: each row was its
+  own grid. Edit in the menu also needed a place for save to land. A small ask
+  still has a second step; find it before calling it done.
+
 - *2026-09-25* — "No, deleting from the entry screen should go back to the
   ledger." Two numbered questions got two one-line answers and a build. Ask
   only what changes the code, put your lean beside each, and the answer is
@@ -70,7 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   blue and orange." The "e.g." licensed a pick, so I picked those two and
   kept the rest of dev's marking. A tone word like "funky" bounds the taste;
   don't spend it on a menu.
-- *2026-09-24* — "the balances tab is now conceptually a page." So it became
-  one: its own route. The word outlived the thing — "tab" sat in ADR-0007, a
-  dozen comments and the scroll-memory key. A cleanup is a grep for the old
-  name, not only for the old code.

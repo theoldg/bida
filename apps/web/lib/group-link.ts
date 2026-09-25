@@ -114,13 +114,15 @@ import type { EntryKind } from "./entry-kind";
 /**
  * Where an entry was opened from, when that wasn't the ledger: the history
  * feed, the two "can't remove this yet" dialogs, the balances screen. Back
- * unwinds to that screen (`entryParent`, ADR-0007).
+ * unwinds to that screen (`entryParent`, ADR-0007). `ledger` is only for the
+ * form opened straight off a ledger row's long press, whose save should land
+ * back on the ledger rather than on the entry it never passed through.
  *
  * **In the URL, never in memory**: a reload or a killed app must not change
  * where back goes. `via`, not `from` — `/g/entry/edit` spends `from` on a
  * member id.
  */
-type EntrySource = "history" | "members" | "rates" | "balances";
+type EntrySource = "history" | "members" | "rates" | "balances" | "ledger";
 
 /**
  * Internal routes. The app is a static export, so every screen is a real page
@@ -242,7 +244,7 @@ export const route = {
 /** The `via=` of a URL, or `undefined` for anything the app didn't write. */
 export function parseEntrySource(value: string | null | undefined): EntrySource | undefined {
   return value === "history" || value === "members" || value === "rates" || value === "balances"
-    ? value : undefined;
+    || value === "ledger" ? value : undefined;
 }
 
 /** The screen an entry's back arrow names: whoever linked to it, or the group. */
@@ -262,6 +264,6 @@ export function entryParent(groupId: string, via: EntrySource | undefined): stri
 export function formParent(
   groupId: string, entryId: string | undefined, via: EntrySource | undefined,
 ): string {
-  return entryId ? route.entry(groupId, entryId, via) : entryParent(groupId, via);
+  return entryId && via !== "ledger" ? route.entry(groupId, entryId, via) : entryParent(groupId, via);
 }
 

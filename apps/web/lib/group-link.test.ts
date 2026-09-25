@@ -37,6 +37,10 @@ describe("where saving the entry form goes", () => {
     expect(formParent("g1", "x1", undefined)).toBe(route.entry("g1", "x1"));
   });
 
+  it("is the ledger for an edit a ledger row's long press opened", () => {
+    expect(formParent("g1", "x1", "ledger")).toBe(route.group("g1"));
+  });
+
   it("is the balances screen for a form the balances screen opened", () => {
     expect(formParent("g1", undefined, "balances")).toBe(route.balances("g1"));
   });
