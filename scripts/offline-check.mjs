@@ -97,7 +97,13 @@ async function tap(label, act, expect) {
 
 await tap("groups list loads", () => openGroupsList(page, base), ".rows a.row");
 await tap("tap a group", () => page.locator("a.row").first().click(), ".daylabel");
-await tap("tap an entry", () => page.getByText("Dinner").first().click(), ".bignum");
+// Waits for the address as well as the screen: the router commits the URL after
+// it draws, and the Back below reads the stack — read early, it counts from the
+// ledger, and can even press the ledger's own arrow.
+await tap("tap an entry", async () => {
+  await page.getByText("Dinner").first().click();
+  await page.waitForURL(/\/g\/entry\?/, { timeout: PATIENCE });
+}, ".bignum");
 // Waits for the traversal itself, not just the ledger: one later than
 // `SWALLOWED_MS` is repaired by a replace that draws `.daylabel` first, and if
 // the next tap pushes before the late traversal lands, that traversal takes

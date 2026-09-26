@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-26* — "How hard would it be?" about the back gesture, then "will
+  it flash?", then "go ahead". Each question wanted its own answer from the
+  code, not the build; the build waited for the word. The demo came along
+  because the owner said so, not because the pattern matched.
+
 - *2026-09-25* — "Make the example receipt star wars themed (cantina bill
   perhaps)?" The stand-ins were Chewie and Leia already; only the tagine was
   off-theme. Kept every price, so the test's shares held unchanged, and dated
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-25* — "Go with A, remove the third line." Built, the band read
   "by ?" for a beat while the log loaded — there all along, unseen in grey
   small print, loud in an inverted block. Emphasis promotes its bugs too.
-
-- *2026-09-25* — "It became a transfer" on Greedo's deleted fee, pointing at
-  an unrelated one. A guard for four days of old data, spotting by a shared
-  clock, misfired on the demo's one-append seed. The owner said never show
-  it; a heuristic guarding a gone feature costs more than it saves.

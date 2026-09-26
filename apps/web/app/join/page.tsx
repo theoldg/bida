@@ -119,7 +119,7 @@ function JoinScreen() {
 
   useEffect(() => {
     if (!link || !group || claimed === undefined) return;
-    handOverToGroup(link.groupId, { claim: !claimed });
+    handOverToGroup(link.groupId, { claim: !claimed, joining: true });
     router.replace(route.groups());
   }, [link, group, claimed, router]);
 
