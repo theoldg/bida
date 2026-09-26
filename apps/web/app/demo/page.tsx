@@ -6,7 +6,6 @@ import { Body, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome"
 import { copy } from "@/lib/copy";
 import { openDemo } from "@/lib/db/commands";
 import { route } from "@/lib/group-link";
-import { handOverToGroup } from "@/lib/launch";
 
 /**
  * `bida.bid/demo` — the whole door into the demo group. Creates it, or reopens
@@ -19,10 +18,8 @@ import { handOverToGroup } from "@/lib/launch";
  * to; a door inside the app would make it a feature of the app.
  *
  * A screen, not a router redirect, because opening it is a write: this waits on
- * Dexie and the skeleton is what the wait looks like. It moves on by way of
- * the groups list, as `/join` does (`handOverToGroup`): this entry becomes the
- * list and the ledger is pushed on top, so back out of the ledger lands on the
- * list — not on the seed again, nor out to wherever the link was tapped.
+ * Dexie and the skeleton is what the wait looks like. `replace`, so back out of
+ * the ledger leaves for the groups list instead of running the seed again.
  */
 export default function DemoPage() {
   const router = useRouter();
@@ -34,7 +31,7 @@ export default function DemoPage() {
     if (opening.current) return;
     opening.current = true;
     void openDemo().then(
-      (groupId) => { handOverToGroup(groupId); router.replace(route.groups()); },
+      (groupId) => router.replace(route.group(groupId)),
       // A demo that cannot be written is a browser with no usable storage,
       // which the groups list already knows how to say. Nothing here can add
       // to it, so it hands the person back rather than sitting on a skeleton.

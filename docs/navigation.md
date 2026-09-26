@@ -32,7 +32,7 @@ string ([ADR-0007](decisions/0007-a-screen-is-a-route.md)).
 | `/g/members?id=` | People: the member list, its check mark saying which of them this phone is, a trash button on everyone else. Adding is the last row of the list; changing identity is a button under it. Removing and changing identity each ask in a dialog ([ADR-0008](decisions/0008-hand-rolled-interface.md)) |
 | `/g/claim?id=` | The last step of joining: pick who you are, then a button into the group — the same picker `/new` ends on. In an iOS tab, a card under it holds the link to paste into the home-screen app (`UseInApp`, [ios.md](ios.md#gclaim--have-the-app)) |
 | `/quick` · `/quick/items` · `/quick/result` | A bill split with people who are **not** a group ([ADR-0035](decisions/0035-a-quick-split-is-a-bill-with-no-group.md)): the drawing of what a scan becomes, who is splitting, and the camera · the who-had-what grid · the answer, handed over as text. No group id anywhere — it appends no op, asks nobody who they are, and lives in the draft store until it is left |
-| `/demo` | The demo group: creates it, or reopens the one on the phone, and goes into its ledger by way of the groups list (`handOverToGroup`, as `/join` does), so back out of it lands on the list. Idempotent because its id is the constant `DEMO_GROUP_ID` (`core/demo.ts`); `demoStamp()` fingerprints the seed, so an older build's demo is erased and re-seeded. **Linked from nowhere in the app** — it is a group somebody sends you to. Since what gets sent is often the address bar, any `/g` screen naming the demo's id on a phone without it goes to `/demo` instead of the bad-link screen (`BadLink`) — unless this phone cleared one, whose ledger draws "no group" before the menu has left (`wantsDemo`). It differs from an ordinary group only where it has no key ([sync.md](sync.md#the-demo-group-has-no-key)): a permanent mark atop the ledger (`components/demo.tsx`), **no install offer** under it ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)), **Copy invite link** refusing out loud, and **Clear the demo** in place of Forget group — `eraseGroupLocally`, not `forgetGroup`, since a hidden demo with no link is dead data; its dialog prints the address (`useHost`) that re-seeds it. Scanning, export and the tip jar all work ([product.md](product.md#the-mvp)) — the camera on this phone's own scan credential (`useScanAs`) |
+| `/demo` | The demo group: creates it, or reopens the one on the phone, and `replace`s into its ledger. Idempotent because its id is the constant `DEMO_GROUP_ID` (`core/demo.ts`); `demoStamp()` fingerprints the seed, so an older build's demo is erased and re-seeded. **Linked from nowhere in the app** — it is a group somebody sends you to. Since what gets sent is often the address bar, any `/g` screen naming the demo's id on a phone without it goes to `/demo` instead of the bad-link screen (`BadLink`) — unless this phone cleared one, whose ledger draws "no group" before the menu has left (`wantsDemo`). It differs from an ordinary group only where it has no key ([sync.md](sync.md#the-demo-group-has-no-key)): a permanent mark atop the ledger (`components/demo.tsx`), **no install offer** under it ([ios.md](ios.md#the-card--the-groups-list-and-the-ledger)), **Copy invite link** refusing out loud, and **Clear the demo** in place of Forget group — `eraseGroupLocally`, not `forgetGroup`, since a hidden demo with no link is dead data; its dialog prints the address (`useHost`) that re-seeds it. Scanning, export and the tip jar all work ([product.md](product.md#the-mvp)) — the camera on this phone's own scan credential (`useScanAs`) |
 | `/about` | Source link, who can edit, offline, where to complain, what the server can see, and the hosted service's one disclaimer (a one-person project that cannot restore a lost link). Off the groups list's kebab (`HomeMenu`); no pitch. Its two client islands are "Works offline" (`AboutOffline`, reading `lib/install.ts`) and the delete address, which names this host (`AboutDelete`). Privacy *shows* one stored row, so it is only honest while op bodies reach the server sealed ([ADR-0036](decisions/0036-the-server-cannot-read-a-group.md)) — change it in the same commit as that. Its two exceptions (receipt photo, Tricount fetch) are repeated here, but the binding copy is `copy.scan.terms` and `copy.importData.fineprint`. The build's version sits in the top bar's corner ([hosting.md](hosting.md#versions)) |
 | `/g/export?id=` | The group as a spreadsheet, in text, for a browser that cannot hand over a file — `/diag`'s layout, because it is the same act. Reached only from the last rung of `lib/export.ts`; it rebuilds the CSV itself rather than being handed it, since a route cannot carry a file and a readout that empties on reload is the drawer state [ADR-0007](decisions/0007-a-screen-is-a-route.md) removed. Being an ordinary route it can also just be opened, so the sentence over the text asks `fileHandoff()` rather than asserting that this browser can't save one ([import-export.md](import-export.md#getting-a-group-off-the-phone)) |
 | `/import` | A Splitwise (or bida) CSV as a **new** group ([import-export.md](import-export.md#bringing-a-group-onto-the-phone)). Off the groups list's kebab, not from inside a group: what it makes *is* a group, and merging a file into one that already has entries would mean deciding which row is which entry, which the file carries no ids to decide. Pick a file or paste a Tricount link, read, look at the plan, then the `/g/claim` picker over the source's own people — with no add row, since a name with no column in the file has no balance to be |
@@ -141,14 +141,13 @@ shorter than the target and saving one would walk the list towards the top.
 
 ## Gotchas
 
-- **Chrome's back skips every entry until the page has been touched.** A
-  document that adds a history entry with no user activation has *all* its
-  same-document entries marked skippable, and the device's back — not
-  `history.back()` — skips them; on Android, with nothing left, the app closes.
-  The first tap un-marks them all. So a launch that resumes into a group puts
-  the list under it, but open-then-back leaves the app until something is
-  tapped. No push can avoid it: a launch has no activation to spend
-  ([Chromium's history manipulation intervention](https://github.com/chromium/chromium/blob/main/docs/history_manipulation_intervention.md)).
+- **A launch cannot put the list under the group it reopens.** Chrome marks
+  every same-document entry skippable once a document adds one with no user
+  activation, and the device's back (not `history.back()`) skips them; on
+  Android the app then closes. A launch has no activation to spend, so pushing
+  the group onto the list only worked after a first tap — tried in 1.1.31 and
+  removed, and the resume `replace`s
+  ([history manipulation intervention](https://github.com/chromium/chromium/blob/main/docs/history_manipulation_intervention.md)).
   Playwright's `goBack()` doesn't skip, so no check here can see it.
 
 - **Two navigations asked for in one tick are folded into the last one.** A
@@ -204,8 +203,8 @@ shorter than the target and saving one would walk the list towards the top.
   traversal it will not deliver again, so the `history.go` that follows returns
   with nothing moved and no `navigate` to say so. What decides whether it bites
   is **where the screen sits**, not which screen it is: the target has to be
-  index 0, which is what a ledger opened cold from its own address gives the
-  form pushed onto it. So the going *checks*: still on the entry it asked
+  index 0, which is what a phone that resumed into a group gives the form
+  pushed onto its ledger. So the going *checks*: still on the entry it asked
   from 150ms later is a traversal that was swallowed, and the destination takes
   this screen's place instead — a push, which is not the queue that is stuck.
   This is the one clock the file allows, because here it fails the cheap way: a

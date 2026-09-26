@@ -276,17 +276,8 @@ await page.waitForFunction((id) => new Promise((resolve) => {
 }), g, { timeout: PATIENCE });
 await page.goto(`${base}/`);
 report(await arrived(), "launching the app reopens the group last open");
-// Pushed onto the list, not in its place: a group at the bottom of the stack
-// leaves the app on the device's back gesture, which no press can take over.
-await page.waitForSelector(".fab");
-report(await page.evaluate(() => {
-  const here = navigation.currentEntry.index;
-  return here > 0 && new URL(navigation.entries()[here - 1].url).pathname === "/";
-}), "with the groups list under it");
 // Backing out of it is not a launch: the list stays put once it is asked for.
-// The device's back, which is what the push is for — the arrow above already
-// shows the app's own.
-await page.goBack();
+await page.locator(".iconbtn[aria-label='Back']").first().click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
 await page.waitForTimeout(500);
 report(new URL(page.url()).pathname === "/", "and Back out of it stays on the list");

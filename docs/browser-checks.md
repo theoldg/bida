@@ -116,8 +116,8 @@ left in the history entry under it, so the device's back button climbs the app
 rather than leaving for wherever the link was tapped. Backing out of *that*
 group must stay on the list: a document that loaded on `/join` never drew the
 list, and its first arrival there must not be read as a launch. Then the app is launched, which
-reopens the group last open *on top of* the list, so the device's back lands
-there rather than leaving the app — and must then leave the list alone — and must be remembered, so the launch after it lands on the list until
+reopens the group last open, while backing out of that one must leave the list
+alone — and must be remembered, so the launch after it lands on the list until
 the group is opened again (`apps/web/lib/launch.ts`).
 
 ## `pnpm keyboard` — a form under a phone keyboard
@@ -192,8 +192,8 @@ a real one.
 The seed's arithmetic is core's own (`demo.test.ts`: the balances clear to zero
 under `settle`, every amount is a positive integer minor unit, any permutation
 folds identically). What this check asks is what the seed cannot: that
-`/demo` lands on a populated ledger, with the groups list under it, rather
-than a claim gate or an empty state, that the balances do not cancel, that the mark is at its head, that the
+`/demo` lands on a populated ledger rather than a claim gate or an empty
+state, that the balances do not cancel, that the mark is at its head, that the
 cantina tab opens onto the bill it was itemised from, that **Copy invite link**
 refuses out loud, and that clearing a demo somebody has added an entry to
 takes the whole group off the phone while the address lays the shipped story
@@ -347,6 +347,7 @@ red when bunq moves.
 - **The router draws the next screen before it commits the URL.** A selector
   the new screen carries can match while the stack still says the old one, so
   a step that reads the stack or presses Back next waits for the URL too.
+
 - **A browser check that asks for a sentence will be rearranged under.** Copy
   is settled by ear here, one word at a time, so a selector naming the words is
   a selector with an expiry date — and nothing runs these on a push. Name what a control

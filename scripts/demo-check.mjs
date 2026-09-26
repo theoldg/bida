@@ -78,13 +78,6 @@ report(groupId === "demodemodemo", "/demo lands in the demo group's ledger", gro
 report(!page.url().includes("/g/claim"), "and is not stopped at the claim gate");
 
 await page.waitForSelector(".rows .row");
-// By way of the list, as `/join` goes (apps/web/lib/launch.ts): a sent link
-// opens a browser one entry deep, and the device's back must climb to the
-// list rather than leave for the chat.
-report(await page.evaluate(() => {
-  const here = navigation.currentEntry.index;
-  return here > 0 && new URL(navigation.entries()[here - 1].url).pathname === "/";
-}), "with the groups list under it, for the device's back to climb to");
 const rows = await page.locator(".rows .row").count();
 report(rows >= 6, `the ledger is populated, not an empty state (${rows} rows)`);
 report(await page.getByText("Passage to Alderaan").count() > 0, "and it is the cantina group");

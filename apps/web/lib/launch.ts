@@ -21,11 +21,10 @@ import { route } from "./group-link";
  * What brought the app to the groups list, and so what the list owes it.
  * **One value, not a flag per caller.** In the order the hook spends them:
  *
- * - **A group handed over** by `/join` or `/demo` (`handOverToGroup`). Each
- *   must give its history entry to the list *and* open the group, and the
- *   router folds two calls in one tick into the last — so it replaces itself
- *   with the list, and the list *pushes* the group, making Back climb into the
- *   app, not out of it.
+ * - **A group handed over** by `/join` (`handOverToGroup`). `/join` must give
+ *   its history entry back to the list *and* open the group, and the router
+ *   folds two calls in one tick into the last — so `/join` goes back, and the
+ *   list *pushes* the group, making Back climb into the app, not out of it.
  * - **A launch** the list was told about (`launchedOnto`), from `/install`
  *   alone: the iOS icon's `start_url` is `/install#<carry>`, so
  *   `startedOnList` rightly says no — and without this every icon launch
@@ -34,18 +33,17 @@ import { route } from "./group-link";
  *
  * Spent on the first decision either way.
  */
-let arrival: { kind: "group"; href: string; joining: boolean } | { kind: "launch" } | undefined;
+let arrival: { kind: "group"; href: string } | { kind: "launch" } | undefined;
 /** Set once the hook has spent `arrival`, so an in-app return is never a launch. */
 let resumed = false;
 
 /**
  * Open this group from the groups list, one screen under it. See `arrival`.
  * `claim` sends it to `/g/claim` rather than the ledger, which would only draw
- * its skeleton before `useClaimGate` sent it there anyway. `joining` has the
- * list keep drawing `/join`'s frame meanwhile; without it, its skeleton.
+ * its skeleton before `useClaimGate` sent it there anyway.
  */
-export function handOverToGroup(groupId: string, { claim = false, joining = false } = {}): void {
-  arrival = { kind: "group", href: claim ? route.claim(groupId) : route.group(groupId), joining };
+export function handOverToGroup(groupId: string, { claim = false } = {}): void {
+  arrival = { kind: "group", href: claim ? route.claim(groupId) : route.group(groupId) };
 }
 
 /** The arrival at the groups list this is about to cause is a launch. See `arrival`. */
@@ -106,13 +104,8 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
       if (cancelled) return;
       const id = resumeGroupId(device, group);
       if (!id) { setDeciding(false); return; }
-      // Pushed, like a group handed over: the list stays under it, so the
-      // device's back gesture climbs to the list. Replaced, the group would be
-      // the bottom entry, where no press reaches the app and back leaves it.
-      // Chrome still skips the list until the page has been tapped
-      // (docs/navigation.md#gotchas); nothing a launch does can change that.
-      router.push(route.group(id));
-      // Still here a moment later means the push didn't take. Whatever the
+      router.replace(route.group(id));
+      // Still here a moment later means the replace didn't take. Whatever the
       // cause, the answer is the list: a resume that quietly fails costs a
       // launch, and must not leave the app on a skeleton nothing will fill.
       timer = setTimeout(() => setDeciding(false), 2000);
@@ -128,7 +121,7 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
     void setLeftOnList();
   }, [deciding]);
 
-  return { deciding, joining: deciding && came?.kind === "group" && came.joining };
+  return { deciding, joining: deciding && came?.kind === "group" };
 }
 
 /**

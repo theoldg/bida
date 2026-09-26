@@ -50,9 +50,7 @@ API is reached with `fetch`.
   list, and so does one you backed out of: `/` records itself as this phone's
   place (`leftOnList`, cleared by the next `setLastOpenedGroup`), so a launch
   reopens whichever of list and group was last. `resumeGroupId` is that
-  decision, pure and tested. The group is *pushed* onto the list, so the
-  device's back gesture climbs to the list rather than leaving the app — once
-  anything has been tapped ([Chrome skips it before](navigation.md#gotchas)). A push that
+  decision, pure and tested. A replace that
   doesn't take releases the list after two seconds rather than leaving the app
   on a skeleton nothing will fill.
   *Changing* who you are is not device-local:

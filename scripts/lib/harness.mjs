@@ -311,7 +311,7 @@ export async function newGroup(page, base, { name, me, members = [], onForm }) {
  */
 export async function openGroupsList(page, base) {
   await page.goto(`${base}/`);
-  // The resume is a push a tick after load, so a URL read early would skip
+  // The resume is a `replace` a tick after load, so a URL read early would skip
   // the coming hop. The screen says when it's decided: `/` draws the skeleton
   // while deciding (app/page.tsx). Wait for that, never a fixed pause.
   await page.waitForFunction(
@@ -319,10 +319,7 @@ export async function openGroupsList(page, base) {
     null, { timeout: PATIENCE },
   );
   if (new URL(page.url()).pathname !== "/") {
-    // The list is under the group, so the device's back reaches it. Not the
-    // arrow: under load its traversal can outrun `SWALLOWED_MS`, and the
-    // repair's replace then lands on whatever the next tap pushed.
-    await page.goBack();
+    await page.locator(".iconbtn[aria-label='Back']").first().click();
     await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
   }
 }
