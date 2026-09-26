@@ -767,22 +767,18 @@ export const copy = {
     recordTitle: "Record this reimbursement",
     /**
      * Under the suggestions, folded, for whoever the list sends to or from a
-     * stranger. Worded as their objection, with the example from their seat.
+     * stranger. Asked neutrally and answered as the app's reasoning, so it
+     * never tells the reader they misread; only the example takes their seat.
      */
     notWho: {
+      ask: "How are these worked out?",
       /** Then the term, in bold so it can be searched for, then the case's example. */
-      lead: "It doesn’t have to be. bida uses",
+      lead: "They use as few payments as possible (",
       term: "debt simplification",
-      owe: {
-        ask: "That’s not who paid for me",
-        answer: ": if you owe Chewie 10 and Chewie owes Leia 10, "
-          + "paying Leia directly saves Chewie a payment. Either way, you pay what you owe.",
-      },
-      owed: {
-        ask: "That’s not who I paid for",
-        answer: ": if Obi-Wan owes Leia 10 and Leia owes you 10, "
-          + "Obi-Wan paying you directly saves Leia a payment. Either way, you get what you’re owed.",
-      },
+      owe: "). If you owe Luke 10 and Luke owes Leia 10, "
+        + "paying Leia directly settles both. Your total is the same.",
+      owed: "). If Luke owes Leia 10 and Leia owes you 10, "
+        + "Luke paying you directly settles both. Your total is the same.",
     },
   },
 

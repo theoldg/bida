@@ -173,7 +173,7 @@ function Balances({ data }: { data: GroupData }) {
 function NotWho({ net }: { net: number }) {
   const [open, setOpen] = useState(false);
   if (net === 0) return null;
-  const { ask, answer } = net < 0 ? copy.group.notWho.owe : copy.group.notWho.owed;
+  const { ask, lead, term, owe, owed } = copy.group.notWho;
   return (
     <div className="installfold notwho">
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -181,7 +181,7 @@ function NotWho({ net }: { net: number }) {
         {ask}
       </button>
       {open ? (
-        <p>{copy.group.notWho.lead} <strong>{copy.group.notWho.term}</strong>{answer}</p>
+        <p>{lead}<strong>{term}</strong>{net < 0 ? owe : owed}</p>
       ) : null}
     </div>
   );
