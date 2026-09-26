@@ -141,6 +141,16 @@ shorter than the target and saving one would walk the list towards the top.
 
 ## Gotchas
 
+- **Chrome's back skips every entry until the page has been touched.** A
+  document that adds a history entry with no user activation has *all* its
+  same-document entries marked skippable, and the device's back — not
+  `history.back()` — skips them; on Android, with nothing left, the app closes.
+  The first tap un-marks them all. So a launch that resumes into a group puts
+  the list under it, but open-then-back leaves the app until something is
+  tapped. No push can avoid it: a launch has no activation to spend
+  ([Chromium's history manipulation intervention](https://github.com/chromium/chromium/blob/main/docs/history_manipulation_intervention.md)).
+  Playwright's `goBack()` doesn't skip, so no check here can see it.
+
 - **Two navigations asked for in one tick are folded into the last one.** A
   screen that wants to both give its history entry away and push another on top
   cannot: `router.replace` then `router.push` leaves only the push, whatever it

@@ -109,6 +109,8 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
       // Pushed, like a group handed over: the list stays under it, so the
       // device's back gesture climbs to the list. Replaced, the group would be
       // the bottom entry, where no press reaches the app and back leaves it.
+      // Chrome still skips the list until the page has been tapped
+      // (docs/navigation.md#gotchas); nothing a launch does can change that.
       router.push(route.group(id));
       // Still here a moment later means the push didn't take. Whatever the
       // cause, the answer is the list: a resume that quietly fails costs a
