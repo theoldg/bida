@@ -4,7 +4,9 @@ import { db } from "./dexie";
 import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
 import { getDevice } from "./device";
-import { syncAll, syncGroup } from "./sync";
+import {
+  IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, startSyncLoop, syncAll, syncGroup,
+} from "./sync";
 import { VERSION } from "../version";
 
 /**
@@ -686,5 +688,107 @@ describe("seenSeq", () => {
     await markEditsSeen(groupId, 3);
     await markEditsSeen(groupId, 1);
     expect((await db().groupKeys.get(groupId))?.seenSeq).toBe(3);
+  });
+});
+
+describe("what the foreground timer asks for", () => {
+  const t0 = 1_000_000_000;
+
+  it("keeps the group on screen a minute fresh, and sweeps the rest less often", () => {
+    expect(planTick(t0, t0, t0, "a")).toEqual({ groupId: "a" });
+    expect(planTick(t0 + SWEEP_MS, t0 + SWEEP_MS, t0, "a")).toEqual({ all: true });
+    // Off a group, only the sweep.
+    expect(planTick(t0 + TICK_MS, t0, t0, null)).toBe(null);
+    expect(planTick(t0 + SWEEP_MS, t0 + SWEEP_MS, t0, null)).toEqual({ all: true });
+  });
+
+  it("asks for nothing once nobody has touched the app for a while", () => {
+    expect(planTick(t0 + IDLE_MS, t0, 0, "a")).toBe(null);
+  });
+
+  it("reads the group off every /g screen and no other", () => {
+    expect(groupOnScreen({ pathname: "/g", search: "?id=abc" })).toBe("abc");
+    expect(groupOnScreen({ pathname: "/g/entry/edit", search: "?id=abc&entry=x" })).toBe("abc");
+    expect(groupOnScreen({ pathname: "/", search: "" })).toBe(null);
+    expect(groupOnScreen({ pathname: "/join", search: "?id=abc" })).toBe(null);
+    expect(groupOnScreen({ pathname: "/gallery", search: "?id=abc" })).toBe(null);
+  });
+});
+
+describe("the sync loop's requests", () => {
+  beforeEach(wipe);
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  /** The page, as much of it as the loop reads: the address and the events. */
+  function onPage(pathname: string, search = "") {
+    const win = Object.assign(new EventTarget(), { location: { pathname, search } });
+    vi.stubGlobal("window", win);
+    vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+    return win;
+  }
+
+  /** Two groups, a fetch that counts requests per group. */
+  async function twoGroups() {
+    const a = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    const b = await createGroup({ name: "Lisbon", baseCurrency: "EUR", myName: "Theo" });
+    let seq = 0;
+    const asked: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      asked.push(decodeURIComponent(url.split("/")[3]!));
+      const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
+      const assigned = Object.fromEntries(body.ops.map((op) => [op.id, ++seq]));
+      return new Response(JSON.stringify({ assigned, ops: [], latestSeq: seq }));
+    }));
+    await syncAll();
+    asked.length = 0;
+    return { a: a.groupId, b: b.groupId, asked };
+  }
+
+  it("pushes a write to its own group, not to every group", async () => {
+    const { a, asked } = await twoGroups();
+    onPage("/");
+    const me = (await db().members.where("groupId").equals(a).toArray())[0]!;
+    await addExpense(a, me.id, {
+      description: "tagine", occurredAt: 1, amountMinor: 1200, currency: "EUR",
+      rateToBase: "1", paidBy: me.id, split: { mode: "equal", members: [me.id] },
+    });
+    await vi.waitFor(() => expect(asked).toEqual([a]), { timeout: 3000 });
+  });
+
+  it("polls the group on screen each tick, all of them each sweep, none when idle", async () => {
+    const { a, asked } = await twoGroups();
+    const win = onPage("/g", `?id=${a}`);
+    vi.useFakeTimers({ toFake: ["setInterval", "Date"] });
+    const stop = startSyncLoop();
+    await vi.waitFor(() => expect(asked).toHaveLength(2)); // the start sweeps
+    asked.length = 0;
+
+    vi.advanceTimersByTime(TICK_MS);
+    await vi.waitFor(() => expect(asked).toEqual([a]));
+
+    // Keep touching until the sweep comes round.
+    asked.length = 0;
+    for (let t = TICK_MS; t < SWEEP_MS; t += TICK_MS) {
+      win.dispatchEvent(new Event("pointerdown"));
+      vi.advanceTimersByTime(TICK_MS);
+    }
+    await vi.waitFor(() => expect(new Set(asked)).toEqual(new Set([a, expect.any(String)])));
+    expect(asked.filter((g) => g !== a).length).toBe(1);
+
+    // Hands off: once idle, the ticks ask for nothing.
+    vi.advanceTimersByTime(IDLE_MS);
+    await new Promise((r) => setTimeout(r, 50)); // the last active ticks' answers
+    asked.length = 0;
+    vi.advanceTimersByTime(3 * TICK_MS);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(asked).toEqual([]);
+
+    // And the first touch after catches everything up.
+    win.dispatchEvent(new Event("pointerdown"));
+    await vi.waitFor(() => expect(asked).toHaveLength(2));
+    stop();
   });
 });

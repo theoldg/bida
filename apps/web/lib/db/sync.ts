@@ -487,36 +487,97 @@ async function hasPending(groupId: string): Promise<boolean> {
   return (await db().ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count()) > 0;
 }
 
-/** Debounced trigger for "a local write just happened". ~1s, per docs/sync.md. */
-export function scheduleSync(): void {
+/** Groups written to since the debounce last fired. */
+const written = new Set<string>();
+
+/**
+ * Debounced trigger for "a local write just happened" (~1s, docs/sync.md) —
+ * **for that group only**: the others have nothing to push, and each is a
+ * request. A failure hands over to `syncAll`, whose backoff retries it. While
+ * hidden it does nothing; coming back runs `syncAll`, which pushes the queue.
+ */
+export function scheduleSync(groupId: string): void {
   if (typeof window === "undefined") return;
+  written.add(groupId);
   if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => { void syncAll(); }, 1000);
+  debounceTimer = setTimeout(() => {
+    if (document.visibilityState === "hidden") return;
+    const ids = [...written];
+    written.clear();
+    void Promise.all(ids.map((id) => syncGroup(id))).catch(() => syncAll());
+  }, 1000);
+}
+
+export const TICK_MS = 60_000;
+/** How often the timer sweeps every group, rather than the one on screen. */
+export const SWEEP_MS = 5 * 60_000;
+/** No tap or key for this long and the timer stops asking. */
+export const IDLE_MS = 5 * 60_000;
+
+/**
+ * What one foreground tick fetches. Each group is a request, and a phone holds
+ * several, so polling them all every minute is what made one person's day
+ * cost a thousand requests. The group on screen stays a minute fresh; the rest
+ * wait for the sweep, a resume or a write. Idle — a tab left open on a desk —
+ * polls nothing, and the first touch after sweeps at once (`startSyncLoop`).
+ */
+export function planTick(
+  now: number, lastInput: number, lastSweep: number, onScreen: string | null,
+): { all: true } | { groupId: string } | null {
+  if (now - lastInput >= IDLE_MS) return null;
+  if (now - lastSweep >= SWEEP_MS) return { all: true };
+  return onScreen ? { groupId: onScreen } : null;
+}
+
+/** The group every `/g` screen names in `?id=`, or null off them. */
+export function groupOnScreen(location: { pathname: string; search: string }): string | null {
+  return /^\/g(\/|$)/.test(location.pathname)
+    ? new URLSearchParams(location.search).get("id")
+    : null;
 }
 
 /**
- * Wires the background triggers: becoming visible, coming online, and a 60s
- * foreground interval. Call once from a client-only root component; returns
- * a cleanup function. No-ops on the server (no `window`).
+ * Wires the background triggers: becoming visible, coming online, the first
+ * touch after idling, and the tick (`planTick`). Call once from a client-only
+ * root component; returns a cleanup function. No-ops on the server.
  */
 export function startSyncLoop(): () => void {
   if (typeof window === "undefined") return () => {};
 
-  const onVisible = () => {
-    if (document.visibilityState === "visible") void syncAll();
+  let lastInput = Date.now();
+  let lastSweep = 0;
+  const sweep = () => {
+    lastSweep = Date.now();
+    void syncAll();
   };
-  const onOnline = () => void syncAll();
+  const onVisible = () => {
+    if (document.visibilityState !== "visible") return;
+    lastInput = Date.now();
+    sweep();
+  };
+  const onInput = () => {
+    const now = Date.now();
+    if (now - lastInput >= IDLE_MS) sweep();
+    lastInput = now;
+  };
   const interval = setInterval(() => {
-    if (document.visibilityState === "visible") void syncAll();
-  }, 60000);
+    if (document.visibilityState !== "visible") return;
+    const plan = planTick(Date.now(), lastInput, lastSweep, groupOnScreen(window.location));
+    if (!plan) return;
+    if ("all" in plan) sweep();
+    else void syncGroup(plan.groupId).catch(() => {});
+  }, TICK_MS);
 
+  const inputs = ["pointerdown", "keydown", "wheel"] as const;
   document.addEventListener("visibilitychange", onVisible);
-  window.addEventListener("online", onOnline);
-  void syncAll();
+  window.addEventListener("online", sweep);
+  for (const type of inputs) window.addEventListener(type, onInput, { capture: true, passive: true });
+  sweep();
 
   return () => {
     document.removeEventListener("visibilitychange", onVisible);
-    window.removeEventListener("online", onOnline);
+    window.removeEventListener("online", sweep);
+    for (const type of inputs) window.removeEventListener(type, onInput, { capture: true });
     clearInterval(interval);
   };
 }

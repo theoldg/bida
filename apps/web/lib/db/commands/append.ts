@@ -80,7 +80,7 @@ export async function appendOps(
     },
   ).then((written) => {
     done();
-    scheduleSync();
+    scheduleSync(groupId);
     return written;
   }, (err: unknown) => {
     done("failed");

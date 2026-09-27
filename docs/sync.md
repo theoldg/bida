@@ -228,8 +228,11 @@ into a `SealError`, the one error the pull skips. The cursor moves past a
 skipped op, so the record carries `fromSeq` and the build that skipped it, and
 the first run of any other build — or the first past `retryAt` — pulls again
 from `fromSeq - 1`: a row nothing can read costs a re-pull per deploy. A single-flight loop triggered by a local write
-(debounced ~1 s), `visibilitychange` → visible, `online`, and a 60 s interval
-while foregrounded. Backoff 2/4/8 s capped at 60 s, reset on success. Never
+(debounced ~1 s, that group only), `visibilitychange` → visible, `online`, and
+a foreground tick. **Each group is a request**, so the tick is thrifty
+(`planTick`): the group on screen every 60 s, every group every 5 min, nothing
+once nobody has touched the app for 5 min — and the first touch after that
+syncs everything. Backoff 2/4/8 s capped at 60 s, reset on success. Never
 block the UI; never let two runs overlap — `syncAll` is single-flight over the
 whole run and `syncGroup` over one group, and an overlapping call gets back the
 promise already in flight. Both guards are needed: opening a group syncs it
