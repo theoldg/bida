@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-27* — "I feel like we're making too many requests." I measured
+  production, called it fine, and filed dev's 12k a day under "worth knowing".
+  That was the complaint. Answer the number the owner felt, not the one the
+  design meant: every deploy re-precaching through the dev Worker.
+
 - *2026-09-27* — "use the BUSY system from ../thegrave." Five words naming a
   sibling repo. Read how it works there before porting it; the port is the
   ask, not a redesign. Worktree-always became worktree-when-busy.
@@ -78,7 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   to know why they owe X." No build asked, so none made: walked it blind and
   reported the feel. The arithmetic was fine; what read wrong was who the
   screens say did things. A feel question wants a verdict, not a patch.
-
-- *2026-09-25* — "Reshoot the screenshots for the readme after the recent ui
-  changes." One command, six PNGs; still looked at every one before
-  committing. A rerun script is only as good as the eyes on its output.

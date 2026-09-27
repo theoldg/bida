@@ -36,9 +36,11 @@ name = "hajsik-dev"
 directory = "../web/out"
 binding = "ASSETS"
 not_found_handling = "404-page"
-# Dev only: every asset passes through the Worker for the DEV icons and top-bar
-# tint (src/dev-env.ts).
-run_worker_first = true
+# Dev only: every asset but the hashed build output passes through the Worker,
+# for the DEV icons and top-bar tint (src/dev-env.ts). `/_next/static/` is half
+# of each precache and neither touches it; through the Worker it was a deploy's
+# cost in requests, on the account's shared daily quota.
+run_worker_first = ["/*", "!/_next/static/*"]
 
 [env.dev.vars]
 BIDA_ENV = "dev"

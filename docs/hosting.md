@@ -150,9 +150,11 @@ paths `run_worker_first` names: `/api/*`, the sync API, and `/*.txt`, the RSC
 payloads — one navigated to as a page is redirected to its route rather than
 served as flight data
 ([pwa.md](pwa.md), `apps/api/src/payload.ts`). That list is
-exhaustive, not additive (Gotcha below). The dev Worker sets
-`run_worker_first = true` for its own reason — the DEV tint — and gets both
-rules along with it.
+exhaustive, not additive (Gotcha below). The dev Worker takes
+everything but `/_next/static/*` for its own reason — the DEV tint — and gets
+both rules along with it. Keep the hashed build output out: it is half of every
+precache, and a deploy refetched through the Worker by each open tab is what
+once spent a fifth of the account's daily request quota in an afternoon.
 
 **One-time, per Cloudflare account** (a fresh instance on someone else's
 account is [SELFHOSTING.md](../SELFHOSTING.md)):
