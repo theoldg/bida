@@ -20,6 +20,8 @@ interface Sandbox {
   previousFor: (clientId: string) => Promise<string | null | undefined>;
   payloadFor: (url: URL, request: unknown, clientId: string) =>
     Promise<{ redirectedTo?: string; body?: string; failed?: boolean }>;
+  reuse: (cache: unknown, urls: string[]) => Promise<string[]>;
+  caches: { open: (name: string) => Promise<unknown> };
 }
 
 /** Every cache in the fake origin, as `{ [cacheName]: { [key]: body } }`. */
@@ -153,5 +155,38 @@ describe("which build a page is running", () => {
     expect(await previousFor("old")).toBe("bida-shell-old");
     // Never met, and so on this build: the page loaded after the worker did.
     expect(await previousFor("newcomer")).toBe(undefined);
+  });
+});
+
+describe("installing a build over an earlier one", () => {
+  async function install(stored: Caches, urls: string[]) {
+    const sw = load(stored);
+    const left = await sw.reuse(await sw.caches.open(CACHE_NAME), urls);
+    return { left, cached: stored[CACHE_NAME] };
+  }
+
+  it("copies a hashed file an earlier build holds, and fetches only the rest", async () => {
+    const { left, cached } = await install(
+      { "bida-shell-old": { "/_next/static/chunks/a1.js": "a" } },
+      ["/_next/static/chunks/a1.js", "/_next/static/chunks/b2.js"],
+    );
+    expect(cached).toEqual({ "/_next/static/chunks/a1.js": "a" });
+    expect(left).toEqual(["/_next/static/chunks/b2.js"]);
+  });
+
+  it("never reuses a route or a payload: they change under the same name", async () => {
+    const { left } = await install(
+      { "bida-shell-old": { "/g": "old page", "/g.txt": "old payload" } },
+      ["/g", "/g.txt"],
+    );
+    expect(left).toEqual(["/g", "/g.txt"]);
+  });
+
+  it("reads only shell caches, never the legacy record", async () => {
+    const { left } = await install(
+      { "bida-legacy": { "/_next/static/x.js": "not a file" } },
+      ["/_next/static/x.js"],
+    );
+    expect(left).toEqual(["/_next/static/x.js"]);
   });
 });

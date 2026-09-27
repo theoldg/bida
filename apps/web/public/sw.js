@@ -161,11 +161,38 @@ async function addAll(cache, urls) {
   return failed;
 }
 
+/**
+ * Copy what an earlier build already holds; return what is left to fetch.
+ *
+ * Only `/_next/static/`: every name there carries its content hash or the
+ * build id, so the same URL is the same bytes — never a route or a payload,
+ * which change under the same name. Without this a deploy refetched all of
+ * the ~120 files on every phone and every open tab, and on dev (where every
+ * file wakes the Worker) that is what spent the daily request quota.
+ */
+async function reuse(cache, urls) {
+  const earlier = await Promise.all(
+    (await caches.keys())
+      .filter((k) => k.startsWith("bida-shell-") && k !== CACHE_NAME)
+      .map((k) => caches.open(k)),
+  );
+  const left = [];
+  for (const url of urls) {
+    let hit;
+    if (url.startsWith("/_next/static/")) {
+      for (const old of earlier) if ((hit = await old.match(url))) break;
+    }
+    if (hit) await cache.put(url, hit);
+    else left.push(url);
+  }
+  return left;
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-      const missing = await addAll(cache, await addAll(cache, ASSETS));
+      const missing = await addAll(cache, await addAll(cache, await reuse(cache, ASSETS)));
       if (missing.length) {
         // Or the next `activate` takes this half-filled cache for the previous
         // build, and keeps it in place of the one pages are really running.

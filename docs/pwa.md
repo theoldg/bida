@@ -78,8 +78,10 @@ carve-out in both.
 Everything precached is served cache-first, so a launch and every tap after it
 paint without waiting on the network. The list and the cache name are stamped in
 after the build by `apps/web/scripts/precache.mjs` — nothing to drift, no
-`CACHE_VERSION` to bump — and the three things that make cache-first safe are
-[ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
+`CACHE_VERSION` to bump. A new build copies each `/_next/static/` file an
+earlier one already cached (the name is the content) and fetches only the rest:
+routes and payloads name the build, so they always are. The three things that
+make cache-first safe are [ADR-0004](decisions/0004-static-export-and-offline.md). Run `node
 scripts/offline-check.mjs` after touching either file: it walks every screen
 with the network cut, then installs a deploy over a half-dead network, and a good one
 across three open pages.

@@ -42,10 +42,14 @@ const { base, close } = await serveExport({
   },
 });
 
-/** Any one precached file will do; a hashed chunk is the realistic casualty. */
+/**
+ * A payload, never a hashed chunk: the forged build is this one renamed, so
+ * every chunk is one the install copies from the old cache and never fetches
+ * (`reuse` in public/sw.js). A payload is always fetched.
+ */
 const ASSET_TO_DROP = JSON.parse(
   (await readFile(join(OUT, "sw.js"), "utf8")).match(/const ASSETS = (\[[\s\S]*?\]);/)[1],
-).find((a) => a.startsWith("/_next/static/chunks/"));
+).find((a) => a.endsWith(".txt"));
 
 const browser = await launch();
 const ctx = await newPhone(browser);
