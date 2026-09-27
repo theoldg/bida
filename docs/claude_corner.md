@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-27* — "use the BUSY system from ../thegrave." Five words naming a
+  sibling repo. Read how it works there before porting it; the port is the
+  ask, not a redesign. Worktree-always became worktree-when-busy.
+
 - *2026-09-26* — A friend found the settle-up fold patronising. The sting was
   in the frame, not the facts: a toggle voicing the reader's mistake, then
   "It doesn't have to be." Options first, then "go with C, Luke and Leia".
@@ -78,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-25* — "Reshoot the screenshots for the readme after the recent ui
   changes." One command, six PNGs; still looked at every one before
   committing. A rerun script is only as good as the eyes on its output.
-
-- *2026-09-25* — "Why is the euro sign so tiny? Argue with screenshots." It
-  wasn't: same size, same cap height, a third the width. Proved that, then
-  "make both bigger", then "same as the small digits". "Argue" wants
-  measurement, but the feel was right; the fix followed it anyway.

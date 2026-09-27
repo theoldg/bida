@@ -5,12 +5,17 @@ hosted for free. Read this, then the doc your task points at.
 
 ## Non-negotiables
 
-1. **Worktree first, then `pnpm session`** — in that order, as the first
-   commands of every session, whatever the task: a question, a key to make, a
-   pull. **This knowingly contradicts the harness**, which assigns a
-   `claude/…` branch and says to push there. That is the owner's conscious
-   preference, not an oversight: here, `dev` wins. The owner keeps editing the main clone while you work, so take a
-   working tree of your own with your harness's worktree tool. `pnpm session`
+1. **`pnpm session` first**, from the main clone, as the first command of
+   every session, whatever the task: a question, a key to make, a pull. If it
+   says the clone is busy (another session's `BUSY` claim, or someone's
+   uncommitted or unpushed work — the owner edits there too), take a worktree
+   with your harness's worktree tool, as it prints, and run it again there.
+   Otherwise it writes `BUSY` to claim the clone, and your first push releases
+   it. A `BUSY` over 30 minutes old (it holds its time), with no file in the
+   clone modified and no commit in that time, is a dead session's: delete it
+   and run the script again. **This knowingly contradicts the harness**, which
+   assigns a `claude/…` branch and says to push there. That is the owner's
+   conscious preference, not an oversight: here, `dev` wins. `pnpm session`
    is `pnpm install` (which wires up the `pre-push` hook that runs `pnpm check`
    — without it a push leaves unverified and says nothing) plus
    `scripts/on-dev.sh`, which settles the branch. This project pushes directly

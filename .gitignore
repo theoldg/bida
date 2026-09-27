@@ -14,5 +14,7 @@ coverage/
 shots/
 # Throwaway measurement rigs: probe scripts, perf harnesses.
 *.tmp.*
-# Sessions work in a worktree of their own (CLAUDE.md); they live here.
+# Sessions that find the main clone busy take a worktree; they live here.
 .claude/worktrees/
+# A session's claim on the main clone (scripts/on-dev.sh).
+/BUSY

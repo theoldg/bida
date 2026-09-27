@@ -10,5 +10,9 @@
 #
 # Wired up by the root postinstall (`git config core.hooksPath .githooks`),
 # so `pnpm install` is all a fresh clone needs.
+#
+# A push that passes releases the main clone's claim (scripts/on-dev.sh); in a
+# worktree there is no BUSY to remove.
 set -e
 pnpm check
+rm -f BUSY

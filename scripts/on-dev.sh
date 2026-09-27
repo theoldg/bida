@@ -1,6 +1,15 @@
 #!/bin/sh
 # Point this session's branch at `dev`, wherever the harness dropped it.
 #
+# **The main clone is busy** while a session has claimed it (a `BUSY` file at
+# its root, removed by the pre-push hook), while it holds uncommitted changes
+# (the owner edits there too), or while local `dev` has unpushed commits. Then
+# this exits 3 without touching anything: take a worktree and run it there.
+# Otherwise it claims the clone by writing `BUSY`. A claim over 30 minutes old
+# with no sign of life (no file touched, no commit) is stale; any session may
+# delete it. Re-running in the clone you claimed reports your own claim as
+# busy; that is the one time to ignore it.
+#
 # **In a worktree** the branch stays the worktree's own — `dev` is checked out
 # in the main clone, and git won't lend a branch to two working trees. It gets
 # `origin/dev` as base and upstream instead (the harness branches from
@@ -44,7 +53,31 @@ if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ]; then
   exit 0
 fi
 
-echo "note: not in a worktree — sessions get one of their own (CLAUDE.md)" >&2
+top=$(git rev-parse --show-toplevel)
+busy=
+if [ -f "$top/BUSY" ]; then
+  busy="claimed by a session, $(cat "$top/BUSY")"
+elif [ -n "$(git status --porcelain)" ]; then
+  busy="uncommitted changes"
+elif git show-ref --quiet refs/heads/dev &&
+     [ -n "$(git rev-list origin/dev..dev)" ]; then
+  busy="unpushed commits on dev"
+fi
+if [ -n "$busy" ]; then
+  cat >&2 <<EOF
+the main clone is busy ($busy). Take a worktree of your own:
+  Claude Code: ToolSearch "select:EnterWorktree", then EnterWorktree with a
+  short name for the task (it lands in .claude/worktrees/<name>).
+  Anything else: git worktree add .claude/worktrees/<name> origin/dev, and cd there.
+Then run: pnpm session
+EOF
+  [ -f "$top/BUSY" ] && cat >&2 <<EOF
+(a BUSY over 30 minutes old, with nothing in the clone touched in that time
+and no new commit, was left by a dead session: delete it and run this again)
+EOF
+  exit 3
+fi
+date '+%Y-%m-%d %H:%M' > "$top/BUSY"
 
 if [ "$work" = "dev" ]; then
   git branch --set-upstream-to=origin/dev dev >/dev/null 2>&1 || true
