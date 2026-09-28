@@ -156,8 +156,8 @@ export const copy = {
      * Named, since they're the only thing lost and the count would differ.
      */
     dropped: (rows: string) => `${rows} left out, carrying no money`,
-    /** Over the picker at the end — the same question joining a group asks. */
-    who: "Which one are you?",
+    /** The picker's bar at the end, as joining's is; the question is `copy.claim`'s. */
+    named: (group: string) => `Import ${group}`,
     act: "Create the group",
     failed: (why: string) => `Couldn’t import that file: ${why}`,
 

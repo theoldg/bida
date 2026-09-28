@@ -15,8 +15,8 @@ export interface Who {
 }
 
 /**
- * "Which one are you?" — the last step of both joining and creating a group,
- * one screen so the question reads the same either way. **Picking is a
+ * "Which one are you?" — the last step of joining, creating or importing a group,
+ * one screen so the question reads the same every way. **Picking is a
  * selection, never a claim**: creating writes the group with this actor,
  * joining writes the claim op (ADR-0003), both on the button.
  *
@@ -33,17 +33,13 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
   /** Whoever is already selected — a group re-opened from its invite link
       preselects the name this phone last claimed. */
   picked?: string;
-  /** Only with `onAdd`: there is no row to place it over otherwise. */
-  addPlaceholder?: string;
+  addPlaceholder: string;
   onPick: (id: string) => void;
   /**
    * Adds the name and returns it, which becomes the selection — you typed your
    * own name, so don't ask twice.
-   *
-   * Omitted where the list isn't ours: an import's people are the file's
-   * columns (`app/import/page.tsx`), and a name outside them has no balance.
    */
-  onAdd?: (name: string) => Who | Promise<Who>;
+  onAdd: (name: string) => Who | Promise<Who>;
   onContinue: (id: string) => void | Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
@@ -87,14 +83,12 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
 
         {/* Filing a name here is picking it. A name already on the list can't be
             filed — its row is the same answer. */}
-        {onAdd ? (
-          <AddName placeholder={addPlaceholder ?? ""} taken={people.map((p) => p.name)} handle={adder}
-            onAdd={async (name) => {
-              const who = await onAdd(name);
-              setAdded(who);
-              onPick(who.id);
-            }} />
-        ) : null}
+        <AddName placeholder={addPlaceholder} taken={people.map((p) => p.name)} handle={adder}
+          onAdd={async (name) => {
+            const who = await onAdd(name);
+            setAdded(who);
+            onPick(who.id);
+          }} />
       </div>
 
       {/* Sticky once the list outgrows the screen: stops at the scroller's

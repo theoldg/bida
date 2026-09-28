@@ -35,8 +35,8 @@ import { useRefusal } from "@/lib/refusal";
  * something nobody can account for, so a refusal names what to change
  * (`copy.importData.refused`).
  *
- * **The who question has no add row**: a name not in the source has no
- * balance to be.
+ * **The who question is the join screen's**, add row included: a name the
+ * source doesn't hold joins the group owing nothing.
  */
 export default function ImportPage() {
   const router = useRouter();
@@ -156,13 +156,20 @@ export default function ImportPage() {
     return (
       <Screen>
         <Body>
-          <TopBar title={words.who} sub={name.trim()}
+          <TopBar title={words.named(name.trim())}
             back={{ ask: () => { setAsking(false); return false; } }} />
           <Scroll>
+            <h2 className="question">{copy.claim.title}</h2>
             <WhoPicker
               people={plan.members.map((who) => ({ id: who, name: who }))}
               picked={picked}
+              addPlaceholder={copy.claim.addPlaceholder}
               onPick={setPicked}
+              // Onto the plan, so the group is written with them as a member.
+              onAdd={(who) => {
+                setPlan({ ...plan, members: [...plan.members, who] });
+                return { id: who, name: who };
+              }}
               onContinue={(who) => save(who)} />
             {failed ? <div className="pad"><Failure>{words.failed(failed)}</Failure></div> : null}
           </Scroll>

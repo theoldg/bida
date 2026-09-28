@@ -23,7 +23,7 @@ import { getDevice, setMe } from "../device";
 export interface ImportGroupInput {
   /** What to call it. The shape has nowhere to say, so the screen asks. */
   name: string;
-  /** Which of the file's people is holding this phone. Must be one of `plan.members`. */
+  /** Who is holding this phone. Must be one of `plan.members`, which the screen's add row may have grown. */
   myName: string;
 }
 
@@ -62,8 +62,8 @@ export async function importGroup(
         archivedAt: null,
       },
     },
-    // Everyone the file had a column for, all as current members: the shape
-    // has no way to say someone left.
+    // Everyone on the plan, all as current members: the shape has no way to
+    // say someone left.
     ...plan.members.map((name): OpDraft => ({
       entity: "member",
       entityId: ids.get(name)!,

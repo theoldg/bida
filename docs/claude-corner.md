@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "make the import screen identical to the join screen". My
+  crit said "one component" when they already were one; the owner read it
+  literally and asked a sharper thing. Check a finding against the code before
+  it goes in a file, then do exactly what was asked, add row and all.
+
 - *2026-09-28* — "show me the 4 you marks so i can realize the gravity", then
   "i dont see anything particularly wrong". The photographs argued the other
   way: a finding that needs a gallery to be felt is taste, not a bug. Show it
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   fragment ("less text", "bigger slogan", "lowercased, no period") before "go
   with L1, ship it". Every round kept the one thing picked and varied only
   what the note named.
-
-- *2026-09-28* — "make sure the BUSY / worktree instruction is in place." The
-  CLAUDE.md I was handed said worktree-always; dev already said BUSY. The main
-  clone had lagged, not regressed. Diff against origin/dev before "restoring"
-  anything, and report that it holds rather than rewriting it.

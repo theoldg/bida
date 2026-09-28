@@ -11,10 +11,6 @@ a user.
 
 ## Inconsistent
 
-- **Two "Which one are you?" screens.** `/claim` has a centred heading, an "Add
-  your name" row and a filled button. Import's version has the question as the
-  page title, no add row, and a different disabled button. They should be one
-  component. *`claim`, `import-who`*
 - **Two disabled-button styles.** A disabled primary button is a solid grey
   block ("Done", "Pick your name"); "Fetch it" on Import is an outlined grey
   button. *`payers`, `import`*
