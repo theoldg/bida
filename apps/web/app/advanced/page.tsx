@@ -121,7 +121,7 @@ function FreeKeyFold() {
   const { key } = copy.advanced;
   return (
     <div className="installfold">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} {...keepsFocus}>
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {key.where}
       </button>
@@ -131,7 +131,7 @@ function FreeKeyFold() {
         <p>
           {key.freeTier}{" "}
           {key.site.lede}
-          <a href={key.whereUrl} target="_blank" rel="noreferrer noopener">{key.site.link}</a>
+          <a href={key.whereUrl} target="_blank" rel="noreferrer noopener" {...keepsFocus}>{key.site.link}</a>
           {key.site.tail}
         </p>
       ) : null}
