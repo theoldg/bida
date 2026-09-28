@@ -55,9 +55,7 @@ a user.
   *`expense-split-amounts`, `payers`, `rate`, `transfer-who`, `groups-menu`*
 - **Dollars in a euro group.** The Support page and its button use `$` ("$1.67
   each") in a euro group. This is deliberate (the donation is in USD) but
-  clashes. The header comment in `apps/web/app/g/tip/page.tsx` is also stale: it
-  says 10,000 scans and four ways, while the screen says 4,000 and the group's
-  own size. *`tip`, `group-balances`*
+  clashes. *`tip`, `group-balances`*
 
 ## Keep
 
