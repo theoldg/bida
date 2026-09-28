@@ -30,7 +30,8 @@ const { report, finish } = reporter(page);
 /** A phone keyboard, roughly: iOS with its accessory bar over a 844pt screen. */
 const KB = 336;
 
-const field = () => page.getByLabel("Add someone");
+// A list's add row, or the "Which one are you?" one, whichever is on screen.
+const field = () => page.getByLabel(/^Add (someone|your name)$/);
 
 /**
  * Enough people that the list outgrows the screen — which is the only state

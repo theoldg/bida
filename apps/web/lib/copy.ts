@@ -614,6 +614,8 @@ export const copy = {
 
   newGroup: {
     title: "New group",
+    /** The "Which one are you?" step's bar, as joining's is. */
+    named: (group: string) => `Create ${group}`,
     name: "Name",
     namePlaceholder: "Group name",
     currency: "Currency",

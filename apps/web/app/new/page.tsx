@@ -160,13 +160,14 @@ export default function NewGroupPage() {
     return (
       <Screen>
         <Body>
-          <TopBar title={copy.claim.title} sub={name.trim()}
+          <TopBar title={copy.newGroup.named(name.trim())}
             back={{ ask: () => { setAsking(false); return false; } }} />
           <Scroll>
+            <h2 className="question">{copy.claim.title}</h2>
             <WhoPicker
               people={people.map((who) => ({ id: who, name: who }))}
               picked={picked}
-              addPlaceholder={copy.members.addPlaceholder}
+              addPlaceholder={copy.claim.addPlaceholder}
               onPick={setPicked}
               // A name already on the list cannot be filed here either — it
               // is a row a tap above, and tapping it says the same thing.

@@ -163,7 +163,7 @@ report(await page.locator(".rows button.row").count() === 2, "Create asks which 
 
 // Nobody is ticked and a name is being typed, and the button must ignore it:
 // it answers to the list, and this name is not on the list.
-await field().fill("Nadia");
+await field("Add your name").fill("Nadia");
 await settle(page, 80);
 report(await page.getByRole("button", { name: "Pick your name" }).count() === 1,
   "the button ignores a name that has only been typed");
