@@ -2,7 +2,7 @@
 
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
-import { Dialog } from "./dialog";
+import { NoticeDialog } from "./dialog";
 import { Icon } from "./icons";
 
 /**
@@ -39,11 +39,8 @@ export function DemoCard({ groupId }: { groupId: string }) {
  */
 export function DemoNoLink({ onClose }: { onClose: () => void }) {
   return (
-    <Dialog title={copy.demo.noLink.title} onClose={onClose}>
-      <div className="dbody"><p>{copy.demo.noLink.body}</p></div>
-      <div className="drow">
-        <button className="btn btn-p" onClick={onClose}>{copy.act.close}</button>
-      </div>
-    </Dialog>
+    <NoticeDialog title={copy.demo.noLink.title} onClose={onClose}>
+      <p>{copy.demo.noLink.body}</p>
+    </NoticeDialog>
   );
 }

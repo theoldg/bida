@@ -3,28 +3,25 @@
 import { isDemo } from "@bida/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
 import { Body, Empty, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
-import { ConfirmDialog } from "@/components/dialog";
 import { InstallOfferCard } from "@/components/install";
-import { DemoNoLink } from "@/components/demo";
-import { InviteFallback } from "@/components/invite";
+import { useGroupActions } from "@/components/group-actions";
 import { usePasteLink } from "@/components/paste-link";
 import { useHold, useLongPressMenu } from "@/components/long-press";
 import { HomeMenu } from "@/components/home-menu";
 import { UpdateNudge } from "@/components/update";
 import { copy } from "@/lib/copy";
-import { clearDemo, forgetGroup } from "@/lib/db/commands";
 import { ago, money, plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { groupMeta } from "@/lib/row-meta";
 import { iosHomeScreenApp } from "@/lib/install";
 import { JoiningFrame } from "@/components/joining";
 import { useResumeLastGroup } from "@/lib/launch";
-import { useArrivingGroups, useGroupSummaries, useHost, useInviteLink, type GroupSummary } from "@/lib/hooks";
+import { useArrivingGroups, useGroupSummaries, type GroupSummary } from "@/lib/hooks";
 
 export default function GroupsPage() {
   const router = useRouter();
@@ -165,34 +162,9 @@ function PasteLinkTile() {
 
 function GroupRow({ summary }: { summary: GroupSummary }) {
   const { group, memberCount, entryCount, netMinor, lastActivity, newCount } = summary;
-  const [asking, setAsking] = useState(false);
-  const invite = useInviteLink(group.id);
-  // The demo is a group like any other here, except it has no invite link, and
-  // forgetting would hide it with no way back — so the same row clears it
-  // (lib/db/commands/demo.ts).
-  const demo = isDemo(group.id);
-  const [noLink, setNoLink] = useState(false);
-  // As in the group's own menu: the fresh demo's address is the browser's to
-  // know, not the build's (`useHost`).
-  const host = useHost();
-
-  const { hold, menu } = useLongPressMenu([
-    ...(demo
-      ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: () => setNoLink(true) }]
-      : invite.copy
-        ? [{ label: copy.group.copyLink, icon: "link" as const, onSelect: invite.copy }]
-        : []),
-    // Not gated on a claim: a group this phone never said who it was in is
-    // the one it most wants off the list, and forgetting is local only
-    // (`forgetGroup`).
-    { label: demo ? copy.demo.clear : copy.members.forget, icon: "trash", danger: true,
-      onSelect: () => setAsking(true) },
-  ]);
-
-  async function forget() {
-    if (demo) await clearDemo();
-    else await forgetGroup(group.id);
-  }
+  // The group menu's two that make sense from outside a group (`useGroupActions`).
+  const actions = useGroupActions(group.id);
+  const { hold, menu } = useLongPressMenu([...actions.copyLink, actions.forget]);
 
   return (
     <>
@@ -208,9 +180,9 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
             options={groupMeta({ people: memberCount, entries: entryCount, when: ago(lastActivity) })} />
         </div>
         {/* Copying the row's link answers here: the figure flips to a check while
-            `invite.copied` holds. The menu has closed and the clipboard says
+            `actions.copied` holds. The menu has closed and the clipboard says
             nothing, so without this a long press ends in silence. */}
-        <div className={`ramt${invite.copied ? " copied" : ""}`}>
+        <div className={`ramt${actions.copied ? " copied" : ""}`}>
           <div className="amtface">
             {netMinor === undefined ? (
               <>
@@ -232,7 +204,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
           </div>
           {/* Always drawn, because the flip back is a transition on a class
               going away — and hidden from a reader until it means something. */}
-          <div className="copiedface" aria-hidden={!invite.copied}>
+          <div className="copiedface" aria-hidden={!actions.copied}>
             <Icon name="check" size={18} />
             <div className="sm">{copy.groups.copied}</div>
           </div>
@@ -240,20 +212,7 @@ function GroupRow({ summary }: { summary: GroupSummary }) {
       </Link>
 
       {menu}
-
-      <InviteFallback invite={invite} />
-
-      {noLink ? <DemoNoLink onClose={() => setNoLink(false)} /> : null}
-
-      {asking ? (
-        <ConfirmDialog
-          title={demo ? copy.demo.clear : copy.members.forget}
-          confirm={demo ? copy.demo.clear : copy.members.forget}
-          danger={true}
-          onConfirm={forget} onClose={() => setAsking(false)}>
-          <p>{demo ? copy.demo.clearBody(`${host}${route.demo()}`) : copy.members.forgetBody}</p>
-        </ConfirmDialog>
-      ) : null}
+      {actions.dialogs}
     </>
   );
 }

@@ -1,18 +1,18 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@bida/core";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { keepsFocus } from "@/components/bits";
-import { ChoiceDialog, ConfirmDialog, Dialog } from "@/components/dialog";
+import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
+import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { InviteButton } from "@/components/invite";
 import { AddName } from "@/components/name-adder";
 import { copy } from "@/lib/copy";
 import { addMember, claimIdentity, removeMember } from "@/lib/db/commands";
-import { money, plural } from "@/lib/format";
+import { plural } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
@@ -29,13 +29,6 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
  */
 export default function MembersPage() {
   return <QueryBoundary><MembersScreen /></QueryBoundary>;
-}
-
-/** One thing still naming a member, of either kind — the dialog treats them alike. */
-interface BlockingEntry {
-  id: string;
-  label: string;
-  baseAmountMinor: number;
 }
 
 type Ask =
@@ -90,18 +83,7 @@ function MembersScreen() {
       entity: "member", entityId: memberId, kind: "delete", patch: {},
     });
     const involved = entriesInvolving(data, memberId);
-    const blocking: BlockingEntry[] = [
-      ...involved.expenses.map((e) => ({
-        id: e.id,
-        label: e.description || copy.group.untitled,
-        baseAmountMinor: e.baseAmountMinor,
-      })),
-      ...involved.settlements.map((s) => ({
-        id: s.id,
-        label: copy.group.paidTo(data.nameOf(s.fromMember), data.nameOf(s.toMember)),
-        baseAmountMinor: s.baseAmountMinor,
-      })),
-    ];
+    const blocking = blockingEntries(involved.expenses, involved.settlements, data.nameOf);
     setAsk(refused
       ? {
         kind: "blocked", name, entries: blocking,
@@ -172,22 +154,9 @@ function MembersScreen() {
       ) : null}
 
       {ask?.kind === "blocked" ? (
-        <Dialog title={copy.members.blockedTitle(ask.name)} onClose={() => setAsk(null)}>
-          <div className="dbody"><p>{ask.body}</p></div>
-          <div className="dlist">
-            {ask.entries.map((e) => (
-              <Link key={e.id} href={route.entry(groupId, e.id, "members")} className="drow-pick">
-                <span className="rmain">
-                  <span className="rtitle">{e.label}</span>
-                </span>
-                <span className="rmeta">{money(e.baseAmountMinor, group.baseCurrency)}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="drow">
-            <button className="btn btn-p" onClick={() => setAsk(null)}>{copy.act.close}</button>
-          </div>
-        </Dialog>
+        <BlockedDialog title={copy.members.blockedTitle(ask.name)} body={ask.body}
+          entries={ask.entries} groupId={groupId} via="members" base={group.baseCurrency}
+          onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
   );

@@ -121,7 +121,7 @@ API is reached with `fetch`.
   about the form, not whether a save is in flight; without the flag a double
   tap before `router.replace` records the entry twice. `pnpm entries` presses
   Save twice.
-- **The invite link is `components/invite.tsx`**, written once for the People
+- **The invite link is `components/invite.tsx`** (`useCopyLink`), written once for the People
   screen's top bar, the groups list's row menu and the group's own menu. `navigator.clipboard.writeText` rejects on an insecure
   context or a denied permission; a refusal puts the
   link on screen to be read (`InviteFallback`,
@@ -162,7 +162,8 @@ API is reached with `fetch`.
   columns — the split editor's "as amounts" and `/g/payers`. `pnpm keyboard`
   walks both columns ([browser-checks.md](browser-checks.md#pnpm-keyboard--a-form-under-a-phone-keyboard)).
 - **Asking is `components/dialog.tsx`, never `prompt()`/`confirm()`/`<select>`**
-  — `ConfirmDialog`, `PromptDialog` and `ChoiceDialog`, which is every picker in
+  — `ConfirmDialog`, `PromptDialog`, `NoticeDialog` (read, then Close) and
+  `ChoiceDialog`, which is every picker in
   the app, behind a `.field > .pick` button or a chip. `<input type="date">` is
   the one native control left
   ([ADR-0008](decisions/0008-hand-rolled-interface.md)).

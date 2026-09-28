@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/bits";
 import { Blank, Body, Screen, Scroll, TopBar } from "@/components/chrome";
-import { ConfirmDialog, Dialog } from "@/components/dialog";
+import { ConfirmDialog, NoticeDialog } from "@/components/dialog";
 import { FlipLabel } from "@/components/icons";
 import { MemberBill } from "@/components/member-bill";
 import { writeClipboardText } from "@/lib/clipboard";
@@ -134,17 +134,12 @@ export default function QuickResultPage() {
       ) : null}
 
       {failed ? (
-        <Dialog title={copy.quick.fallbackTitle} onClose={() => setFailed(false)}>
-          <div className="dbody">
-            <p>{copy.quick.fallbackBody}</p>
-            {/* `.selectable` because the app turns selection off everywhere
-                else — this is the text somebody has to be able to take. */}
-            <p className="selectable quicktext">{text}</p>
-          </div>
-          <div className="drow">
-            <button className="btn btn-p" onClick={() => setFailed(false)}>{copy.act.close}</button>
-          </div>
-        </Dialog>
+        <NoticeDialog title={copy.quick.fallbackTitle} onClose={() => setFailed(false)}>
+          <p>{copy.quick.fallbackBody}</p>
+          {/* `.selectable` because the app turns selection off everywhere
+              else — this is the text somebody has to be able to take. */}
+          <p className="selectable quicktext">{text}</p>
+        </NoticeDialog>
       ) : null}
     </Screen>
   );

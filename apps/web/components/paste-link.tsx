@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
-import { Dialog, PromptDialog } from "./dialog";
+import { NoticeDialog, PromptDialog } from "./dialog";
 import { copy } from "../lib/copy";
 import { db } from "../lib/db/dexie";
 import { notePasted } from "../lib/failed-link";
@@ -60,12 +60,9 @@ export function usePasteLink(): { paste: () => Promise<void>; dialog: ReactNode 
   }
 
   const dialog = elsewhere ? (
-    <Dialog title={copy.groups.elsewhere.title} onClose={() => setElsewhere(undefined)}>
-      <div className="dbody"><p>{copy.groups.elsewhere.body(elsewhere)}</p></div>
-      <div className="drow">
-        <button className="btn btn-p" onClick={() => setElsewhere(undefined)}>{copy.act.close}</button>
-      </div>
-    </Dialog>
+    <NoticeDialog title={copy.groups.elsewhere.title} onClose={() => setElsewhere(undefined)}>
+      <p>{copy.groups.elsewhere.body(elsewhere)}</p>
+    </NoticeDialog>
   ) : box ? (
     <PromptDialog title={copy.paste.title} confirm={copy.paste.open}
       placeholder={copy.paste.placeholder} autoCapitalize="none"

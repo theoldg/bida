@@ -136,6 +136,24 @@ export function ConfirmDialog({ title, confirm, danger, children, onConfirm, onC
   );
 }
 
+/**
+ * Something to read and a Close — no decision in it. `list` holds rows to
+ * follow a way out through, between the text and the button.
+ */
+export function NoticeDialog({ title, onClose, children, list }: {
+  title: string; onClose: () => void; children: ReactNode; list?: ReactNode;
+}) {
+  return (
+    <Dialog title={title} onClose={onClose}>
+      <div className="dbody">{children}</div>
+      {list === undefined ? null : <div className="dlist">{list}</div>}
+      <div className="drow">
+        <button className="btn btn-p" onClick={onClose}>{copy.act.close}</button>
+      </div>
+    </Dialog>
+  );
+}
+
 /** One field and a button. Enter submits; an empty or invalid value can't. */
 export function PromptDialog({
   title, placeholder, initial = "", confirm, hint, maxLength, autoCapitalize,

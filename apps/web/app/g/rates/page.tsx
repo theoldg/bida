@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
 import { GhostRow } from "@/components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
-import { ChoiceDialog, ConfirmDialog, Dialog, PromptDialog } from "@/components/dialog";
+import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
+import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
 import { useLongPressMenu } from "@/components/long-press";
 import { RateDialog } from "@/components/rate-dialog";
 import { clearRate, setRate } from "@/lib/db/commands";
@@ -14,7 +14,7 @@ import { copy } from "@/lib/copy";
 import {
   currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
 } from "@/lib/currencies";
-import { money, plural, rateText } from "@/lib/format";
+import { plural, rateText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
 
@@ -30,13 +30,6 @@ import { useClaimGate, useGroupData } from "@/lib/hooks";
  */
 export default function RatesPage() {
   return <QueryBoundary><RatesScreen /></QueryBoundary>;
-}
-
-/** One entry still written in a currency — the dialog treats both kinds alike. */
-interface BlockingEntry {
-  id: string;
-  label: string;
-  baseAmountMinor: number;
 }
 
 type Ask =
@@ -83,18 +76,11 @@ function RatesScreen() {
   // **A rate is removed on the same terms as a person: only when nothing leans
   // on it.** Otherwise every entry in it silently re-prices to its saved rate.
   function askRemove(currency: string) {
-    const blocking: BlockingEntry[] = [
-      ...data.expenses.filter((e) => e.currency === currency).map((e) => ({
-        id: e.id,
-        label: e.description || copy.group.untitled,
-        baseAmountMinor: e.baseAmountMinor,
-      })),
-      ...data.settlements.filter((t) => t.currency === currency).map((t) => ({
-        id: t.id,
-        label: copy.group.paidTo(data.nameOf(t.fromMember), data.nameOf(t.toMember)),
-        baseAmountMinor: t.baseAmountMinor,
-      })),
-    ];
+    const blocking = blockingEntries(
+      data.expenses.filter((e) => e.currency === currency),
+      data.settlements.filter((t) => t.currency === currency),
+      data.nameOf,
+    );
     setAsk(blocking.length > 0
       ? { kind: "blocked", currency, entries: blocking }
       : { kind: "remove", currency });
@@ -182,24 +168,10 @@ function RatesScreen() {
       ) : null}
 
       {ask?.kind === "blocked" ? (
-        <Dialog title={copy.rates.blockedTitle(ask.currency)} onClose={() => setAsk(null)}>
-          <div className="dbody">
-            <p>{copy.rates.blockedBody(plural(ask.entries.length, copy.noun.entry))}</p>
-          </div>
-          <div className="dlist">
-            {ask.entries.map((e) => (
-              <Link key={e.id} href={route.entry(groupId, e.id, "rates")} className="drow-pick">
-                <span className="rmain">
-                  <span className="rtitle">{e.label}</span>
-                </span>
-                <span className="rmeta">{money(e.baseAmountMinor, base)}</span>
-              </Link>
-            ))}
-          </div>
-          <div className="drow">
-            <button className="btn btn-p" onClick={() => setAsk(null)}>{copy.act.close}</button>
-          </div>
-        </Dialog>
+        <BlockedDialog title={copy.rates.blockedTitle(ask.currency)}
+          body={copy.rates.blockedBody(plural(ask.entries.length, copy.noun.entry))}
+          entries={ask.entries} groupId={groupId} via="rates" base={base}
+          onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
   );

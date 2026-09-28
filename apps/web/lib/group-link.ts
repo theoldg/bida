@@ -122,7 +122,7 @@ import type { EntryKind } from "./entry-kind";
  * where back goes. `via`, not `from` — `/g/entry/edit` spends `from` on a
  * member id.
  */
-type EntrySource = "history" | "members" | "rates" | "balances" | "ledger";
+export type EntrySource = "history" | "members" | "rates" | "balances" | "ledger";
 
 /**
  * Internal routes. The app is a static export, so every screen is a real page

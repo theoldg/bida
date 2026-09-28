@@ -20,7 +20,7 @@ wheel in the OS's typeface that can show a name and nothing else.
 - **No UI library.** Components are hand-rolled; `package.json` carries no
   shadcn, Radix or icon dependency. Tokens (`--paper`, `--ink`, …) are used
   verbatim, never remapped onto a component library's variable names.
-- **`components/dialog.tsx` is the app's dialog**: `Dialog`, `ConfirmDialog`,
+- **`components/dialog.tsx` is the app's dialog**: `Dialog`, `ConfirmDialog`, `NoticeDialog`,
   `PromptDialog`, `ChoiceDialog`. No `window.prompt`, `window.confirm` or
   `<select>` remains in `apps/web`, and `entries-check` asserts it so the next
   one can't land quietly.
