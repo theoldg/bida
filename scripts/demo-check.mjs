@@ -13,53 +13,19 @@
  * Then: Invite refuses out loud, and clearing takes the group (and your
  * additions) off the phone while leaving `/demo` able to lay a fresh one.
  */
-import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter } from "./lib/harness.mjs";
+import {
+  onePhone, newPhone, PATIENCE, readStore, readDevice, putDevice,
+} from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();
-const browser = await launch();
-const ctx = await newPhone(browser);
-const page = await ctx.newPage();
-const { report, finish } = reporter(page);
-
-/** One store, read whole, straight out of IndexedDB. */
-const readStore = (page, store) => page.evaluate((name) => new Promise((ok, fail) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => fail(open.error);
-  open.onsuccess = () => {
-    const rows = open.result.transaction(name).objectStore(name).getAll();
-    rows.onsuccess = () => ok(rows.result);
-    rows.onerror = () => fail(rows.error);
-  };
-}), store);
+const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
 /** Say this phone was given some older build's demo, without shipping one. */
-const stampAs = (page, seed) => page.evaluate((demoSeed) => new Promise((ok, fail) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => fail(open.error);
-  open.onsuccess = () => {
-    const store = open.result.transaction("device", "readwrite").objectStore("device");
-    const got = store.get("device");
-    got.onsuccess = () => {
-      const put = store.put({ ...got.result, demoSeed });
-      put.onsuccess = () => ok();
-      put.onerror = () => fail(put.error);
-    };
-    got.onerror = () => fail(got.error);
-  };
-}), seed);
+const stampAs = async (page, demoSeed) =>
+  putDevice(page, { ...await readDevice(page), demoSeed });
 
-/** Every group this phone holds a secret for, straight out of IndexedDB. */
-const keysHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => fail(open.error);
-  open.onsuccess = () => {
-    const rows = open.result.transaction("groupKeys").objectStore("groupKeys").getAll();
-    rows.onsuccess = () => ok(rows.result.map((row) => row.groupId));
-    rows.onerror = () => fail(rows.error);
-  };
-}));
+/** Every group this phone holds a secret for. */
+const keysHeld = async (page) => (await readStore(page, "groupKeys")).map((row) => row.groupId);
 
 /** The group menu is the same card a long press opens on a row (`RowMenu`). */
 const openMenu = async () => {

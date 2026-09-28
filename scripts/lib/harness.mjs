@@ -11,10 +11,12 @@ import { createServer } from "node:http";
 import { spawn, spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { existsSync, statSync, readdirSync, rmSync } from "node:fs";
-import { extname, join, resolve } from "node:path";
+import { extname, join } from "node:path";
 import { chromium } from "playwright-core";
 
-export const ROOT = resolve(import.meta.dirname, "../..");
+import { ROOT } from "./together.mjs";
+
+export { ROOT };
 export const OUT = join(ROOT, "apps/web/out");
 /**
  * The agent environment ships a chromium at a fixed path; a laptop has
@@ -249,6 +251,76 @@ export function reporter(page) {
       process.exit(failures ? 1 : 0);
     },
   };
+}
+
+/**
+ * How most checks start: the export built and served, one phone with one page,
+ * and a reporter watching it. `browser` is there for a second phone.
+ */
+export async function onePhone() {
+  ensureBuild();
+  const { base, close } = await serveExport();
+  const browser = await launch();
+  const ctx = await newPhone(browser);
+  const page = await ctx.newPage();
+  return { base, close, browser, ctx, page, ...reporter(page) };
+}
+
+/* ---- the phone's own store ---------------------------------------------- */
+
+/**
+ * Straight out of IndexedDB rather than through the app, for what no screen
+ * shows: keys held, a device flag, a write that has to land before a relaunch.
+ * The database keeps the name from before the rename (apps/web/lib/db/dexie.ts).
+ */
+const DB = "hajsik";
+
+/** Every row of one store. */
+export const readStore = (page, store) => page.evaluate(([db, name]) => new Promise((ok, fail) => {
+  const open = indexedDB.open(db);
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const rows = open.result.transaction(name).objectStore(name).getAll();
+    rows.onsuccess = () => ok(rows.result);
+    rows.onerror = () => fail(rows.error);
+  };
+}), [DB, store]);
+
+/** The device record, or null before the app has written one. */
+export const readDevice = (page) => page.evaluate((db) => new Promise((ok, fail) => {
+  const open = indexedDB.open(db);
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const row = open.result.transaction("device").objectStore("device").get("device");
+    row.onsuccess = () => ok(row.result ?? null);
+    row.onerror = () => fail(row.error);
+  };
+}), DB);
+
+/** Write the device record back whole — read it with `readDevice`, change it, put it. */
+export const putDevice = (page, row) => page.evaluate(([db, next]) => new Promise((ok, fail) => {
+  const open = indexedDB.open(db);
+  open.onerror = () => fail(open.error);
+  open.onsuccess = () => {
+    const put = open.result.transaction("device", "readwrite").objectStore("device").put(next);
+    put.onsuccess = () => ok();
+    put.onerror = () => fail(put.error);
+  };
+}), [DB, row]);
+
+/**
+ * Until the device record passes `test`, which runs here, in node. An app
+ * write that lands from an effect after a screen draws is waited for, never
+ * paused on. Rejects after `timeout`.
+ */
+export async function untilDevice(page, test, timeout = PATIENCE) {
+  const end = Date.now() + timeout;
+  for (;;) {
+    // A navigation mid-read destroys the context; that is a retry, not a failure.
+    if (test(await readDevice(page).catch(() => null))) return;
+    if (Date.now() > end) throw new Error("the device record never reached the state waited for");
+    await new Promise((ok) => setTimeout(ok, 50));
+  }
 }
 
 /* ---- driving the app ---------------------------------------------------- */

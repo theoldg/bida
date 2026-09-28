@@ -10,16 +10,11 @@
  * Run it after touching /g/entry, /g/entry/edit or lib/entry-kind.ts; it
  * builds first if it has to. ADR-0010.
  */
-import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, pick, newGroup, openGroupsList, settle }
+import { onePhone, PATIENCE, pick, newGroup, openGroupsList, settle }
   from "./lib/harness.mjs";
 import { PHOTO, stubScan } from "./lib/receipts.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();
-const browser = await launch();
-const ctx = await newPhone(browser);
-const page = await ctx.newPage();
-const { report, finish } = reporter(page);
+const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
 /**
  * Save, then wait for the ledger to redraw from Dexie. `waitForURL` alone

@@ -17,15 +17,10 @@
  * `--kb`, its own scroll). The assertion is what a thumb cares about: field
  * *and* act above the keys.
  */
-import { ensureBuild, serveExport, launch, newPhone, newGroup, PATIENCE, reporter, settle }
+import { onePhone, newGroup, PATIENCE, settle }
   from "./lib/harness.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();
-const browser = await launch();
-const ctx = await newPhone(browser);
-const page = await ctx.newPage();
-const { report, finish } = reporter(page);
+const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
 /** A phone keyboard, roughly: iOS with its accessory bar over a 844pt screen. */
 const KB = 336;

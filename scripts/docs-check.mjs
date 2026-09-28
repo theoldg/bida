@@ -17,9 +17,9 @@
  * corner is the exception because it fixed its limits in writing.
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
-import { join, dirname, relative, resolve, normalize } from "node:path";
+import { join, dirname, relative, normalize } from "node:path";
 
-const ROOT = resolve(import.meta.dirname, "..");
+import { ROOT } from "./lib/together.mjs";
 const SKIP = new Set(["node_modules", ".next", "out", ".git", "shots", ".wrangler"]);
 
 function markdownFiles(dir) {

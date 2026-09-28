@@ -12,15 +12,10 @@
  * unreadable from a browser, so `apps/api/src/tricount.ts` is the half tried
  * by hand. Everything on this side is under test, refusals included.
  */
-import { ensureBuild, launch, newPhone, PATIENCE, reporter, serveExport }
+import { onePhone, PATIENCE }
   from "./lib/harness.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();
-const browser = await launch();
-const ctx = await newPhone(browser);
-const page = await ctx.newPage();
-const { report, finish } = reporter(page);
+const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
 const LINK = "https://tricount.com/tltMJWkWWUUxhUlzFm";
 

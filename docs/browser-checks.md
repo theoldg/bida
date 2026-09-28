@@ -12,14 +12,10 @@ browser, a pass/fail tally that owns the exit code, and a seeded group, so the
 next check costs a dozen lines:
 
 ```js
-import { ensureBuild, serveExport, launch, newPhone, reporter, pick, newGroup }
-  from "./lib/harness.mjs";
+import { onePhone, newGroup } from "./lib/harness.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();   // port 0 — two checks can't collide
-const browser = await launch();
-const page = await (await newPhone(browser)).newPage();
-const { report, finish } = reporter(page);     // page errors count as failures
+// Built, served on port 0 (two checks can't collide), one phone; page errors fail.
+const { base, close, browser, page, report, finish } = await onePhone();
 
 const g = await newGroup(page, base, { name: "Trip", me: "Theo", members: ["Marie"] });
 report(await page.getByText("Trip").count() > 0, "the group exists");
@@ -36,6 +32,9 @@ costs ~10s of boot, so reach for it only when a check needs two phones to
 actually sync.  `pick(page,
 opener, row)` opens one of the app's own dialogs and takes a row out of it;
 every picker in the app is one ([ADR-0008](decisions/0008-hand-rolled-interface.md)).
+`readStore`, `readDevice`, `putDevice` and `untilDevice` read and write the
+phone's IndexedDB directly, for what no screen shows; wait on an app write with
+`untilDevice`, never a pause.
 
 Every context `newPhone` makes waits `PATIENCE` — 30s — rather than
 playwright's default, and it is the ceiling these checks give their own waits

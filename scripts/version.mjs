@@ -20,9 +20,9 @@
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
-const ROOT = resolve(import.meta.dirname, "..");
+import { ROOT } from "./lib/together.mjs";
 const MANIFEST = join(ROOT, "package.json");
 
 /** What a push deploys. `dev` is the branch sessions push to, and pushing it

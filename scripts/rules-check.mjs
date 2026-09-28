@@ -13,9 +13,9 @@
  * purpose.
  */
 import { readFileSync, readdirSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { join, relative } from "node:path";
 
-const ROOT = resolve(import.meta.dirname, "..");
+import { ROOT } from "./lib/together.mjs";
 const SKIP = new Set(["node_modules", ".next", "out", ".git", "dist"]);
 
 function sources(dir) {

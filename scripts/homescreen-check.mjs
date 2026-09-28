@@ -11,6 +11,7 @@
  */
 import {
   ensureBuild, serveExport, launch, newPhone, newGroup, openGroupsList, asInstalledApp, PATIENCE, reporter,
+  readStore, readDevice, untilDevice,
 } from "./lib/harness.mjs";
 
 ensureBuild();
@@ -34,26 +35,11 @@ const joined = (page) => page.getByText("Taking a while.");
  * The group secrets this phone holds, read from IndexedDB — no sync API is
  * behind this check, so a newly keyed group has no ops to draw a row with.
  */
-const secretsHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => fail(open.error);
-  open.onsuccess = () => {
-    const rows = open.result.transaction("groupKeys").objectStore("groupKeys").getAll();
-    rows.onsuccess = () => ok(rows.result.map((row) => `${row.groupId}.${row.secret}`));
-    rows.onerror = () => fail(rows.error);
-  };
-}));
+const secretsHeld = async (page) =>
+  (await readStore(page, "groupKeys")).map((row) => `${row.groupId}.${row.secret}`);
 
 /** Who this phone is in each group — the device record's `meByGroup`. */
-const namesHeld = (page) => page.evaluate(() => new Promise((ok, fail) => {
-  const open = indexedDB.open("hajsik");
-  open.onerror = () => fail(open.error);
-  open.onsuccess = () => {
-    const row = open.result.transaction("device").objectStore("device").get("device");
-    row.onsuccess = () => ok(row.result?.meByGroup ?? {});
-    row.onerror = () => fail(row.error);
-  };
-}));
+const namesHeld = async (page) => (await readDevice(page))?.meByGroup ?? {};
 
 /** The manifest this page would hand iOS, and whether it is the static one. */
 const manifestOf = (page) => page.evaluate(async () => {
@@ -414,13 +400,7 @@ const made = await newGroup(freshPage, base, { name: "Ferry", me: "Ana", members
 // for the write itself: a pause long enough on one machine is exactly the kind
 // of race this comment is about.
 await freshPage.waitForSelector(".fab");
-await freshPage.waitForFunction((id) => new Promise((resolve) => {
-  const req = indexedDB.open("hajsik");
-  req.onsuccess = () => {
-    const get = req.result.transaction("device").objectStore("device").get("device");
-    get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
-  };
-}), made, { timeout: PATIENCE });
+await untilDevice(freshPage, (d) => d?.lastOpenedGroupId === made);
 await freshPage.goto(`${base}/install${fragment}`);
 const reopened = await freshPage.waitForURL(
   (url) => url.pathname === "/g" && url.searchParams.get("id") === made, { timeout: PATIENCE },

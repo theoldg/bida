@@ -17,8 +17,9 @@
  *
  * Section 4 is the other side of the third: this copy never holds the lock.
  */
-import { ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, reporter, serveExport }
-  from "./lib/harness.mjs";
+import {
+  ensureBuild, launch, newPhone, newGroup, openGroupsList, PATIENCE, reporter, serveExport, readDevice, untilDevice,
+} from "./lib/harness.mjs";
 
 ensureBuild();
 
@@ -207,26 +208,11 @@ const { report, finish } = reporter();
   await openGroupsList(page, base);
   await page.waitForSelector(".grouprow");
 
-  /** The device row, read straight out of IndexedDB rather than through the app. */
-  const deviceRow = () => page.evaluate(() => new Promise((resolve) => {
-    const req = window.indexedDB.open("hajsik");
-    req.onsuccess = () => {
-      const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
-      get.onsuccess = () => resolve(get.result ?? null);
-    };
-  }));
-
   // Being on the list is itself written (`leftOnList`), from an effect after
   // the list draws (lib/launch.ts). Snapshot before that settles and the list's
   // own write looks like a move the hidden page made.
-  await page.waitForFunction(() => new Promise((resolve) => {
-    const req = window.indexedDB.open("hajsik");
-    req.onsuccess = () => {
-      const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
-      get.onsuccess = () => resolve(get.result?.leftOnList === true);
-    };
-  }), null, { timeout: PATIENCE });
-  const before = await deviceRow();
+  await untilDevice(page, (d) => d?.leftOnList === true);
+  const before = await readDevice(page);
 
   await page.evaluate(() => window.__setHidden(true));
   // Opening a group writes `lastOpenedGroupId`. In the background it must not.
@@ -237,24 +223,15 @@ const { report, finish } = reporter();
   // reads nothing (lib/db/live.ts), so the ledger it lands on is skeleton rows
   // that will never fill — there is no drawn screen to wait for either.
   await page.waitForTimeout(2000);
-  const during = await deviceRow();
+  const during = await readDevice(page);
   const held = during?.lastOpenedGroupId === before?.lastOpenedGroupId
     && during?.leftOnList === before?.leftOnList;
   report(held, "a background page opens no write on the store every screen reads",
     held ? undefined : `device row moved while hidden: ${JSON.stringify(during)}`);
 
   await page.evaluate(() => window.__setHidden(false));
-  const landed = await page.waitForFunction(
-    (id) => new Promise((resolve) => {
-      const req = window.indexedDB.open("hajsik");
-      req.onsuccess = () => {
-        const get = req.result.transaction(["device"], "readonly").objectStore("device").get("device");
-        get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
-      };
-    }),
-    groupId,
-    { timeout: PATIENCE },
-  ).then(() => true, () => false);
+  const landed = await untilDevice(page, (d) => d?.lastOpenedGroupId === groupId)
+    .then(() => true, () => false);
   report(landed, "and writes it the moment the page is seen again",
     landed ? undefined : "the parked write never landed");
 

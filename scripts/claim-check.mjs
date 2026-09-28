@@ -16,14 +16,11 @@
  * again — not a second opening of the invite, not a launch. Until it has, the
  * invite goes straight to the question, never by way of the ledger.
  */
-import { ensureBuild, serveExport, launch, newPhone, PATIENCE, reporter, settle } from "./lib/harness.mjs";
+import {
+  onePhone, PATIENCE, settle, readDevice, putDevice, untilDevice,
+} from "./lib/harness.mjs";
 
-ensureBuild();
-const { base, close } = await serveExport();
-const browser = await launch();
-const ctx = await newPhone(browser);
-const page = await ctx.newPage();
-const { report, finish } = reporter(page);
+const { base, close, browser, ctx, page, report, finish } = await onePhone();
 
 /** The add row. The two screens place it under different words. */
 const field = (label = "Add someone") => page.getByLabel(label);
@@ -267,13 +264,7 @@ await page.goto(`${base}/g?id=${g}`);
 // not merely for the URL `arrived()` saw. Without this the check raced it and
 // failed about a third of the time.
 await page.waitForSelector(".fab");
-await page.waitForFunction((id) => new Promise((resolve) => {
-  const req = indexedDB.open("hajsik");
-  req.onsuccess = () => {
-    const get = req.result.transaction("device").objectStore("device").get("device");
-    get.onsuccess = () => resolve(get.result?.lastOpenedGroupId === id);
-  };
-}), g, { timeout: PATIENCE });
+await untilDevice(page, (d) => d?.lastOpenedGroupId === g);
 await page.goto(`${base}/`);
 report(await arrived(), "launching the app reopens the group last open");
 // Backing out of it is not a launch: the list stays put once it is asked for.
@@ -297,17 +288,9 @@ report(await arrived(), "and opening it again makes the next launch reopen it");
 // draw its skeletons, and be bounced off it by `useClaimGate`: four screens in
 // a second. `/join` now hands the list `/g/claim` itself (apps/web/lib/launch.ts).
 // No sync API here, so "never answered" is made by forgetting the answer.
-await page.evaluate((id) => new Promise((resolve) => {
-  const req = indexedDB.open("hajsik");
-  req.onsuccess = () => {
-    const store = req.result.transaction("device", "readwrite").objectStore("device");
-    const get = store.get("device");
-    get.onsuccess = () => {
-      delete get.result.meByGroup[id];
-      store.put(get.result).onsuccess = () => resolve();
-    };
-  };
-}), g);
+const device = await readDevice(page);
+delete device.meByGroup[g];
+await putDevice(page, device);
 const joinVisits = [];
 const onJoinNav = (frame) => { if (!frame.parentFrame()) joinVisits.push(new URL(frame.url()).pathname); };
 page.on("framenavigated", onJoinNav);

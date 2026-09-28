@@ -18,9 +18,9 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
-const ROOT = resolve(import.meta.dirname, "../..");
+import { ROOT } from "./together.mjs";
 const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8", maxBuffer: 1 << 28 });
 
 /** Secrets and env, ignored by git and read by the build all the same. */
