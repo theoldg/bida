@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { keepsFocus } from "@/components/bits";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
@@ -136,13 +135,13 @@ export default function DeleteMyDataPage() {
                   autoComplete="off" enterKeyHint="go"
                   onChange={(e) => { setTyped(e.target.value); setProblem(undefined); }} />
                 <button type="button" className="iconbtn" aria-label={c.ask.paste}
-                  onClick={() => void paste()} {...keepsFocus}>
+                  onClick={() => void paste()}>
                   <Icon name="link" size={15} />
                 </button>
               </form>
               <div className="drow">
                 <button className="btn btn-s" disabled={!typed.trim() || looking}
-                  onClick={() => void look()} {...keepsFocus}>
+                  onClick={() => void look()}>
                   {looking ? <span className="spinner" /> : null}{c.ask.act}
                 </button>
               </div>
@@ -216,8 +215,8 @@ function Found({ found, name, setName, onAsk, onOther }: {
       {name.trim() && !matches ? <p className="failure">{c.mismatch}</p> : null}
 
       <div className="drow">
-        <button className="btn btn-s" onClick={onOther} {...keepsFocus}>{c.other}</button>
-        <button className="btn btn-d" disabled={!matches} onClick={onAsk} {...keepsFocus}>{c.act}</button>
+        <button className="btn btn-s" onClick={onOther}>{c.other}</button>
+        <button className="btn btn-d" disabled={!matches} onClick={onAsk}>{c.act}</button>
       </div>
     </section>
   );

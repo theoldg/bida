@@ -2,7 +2,6 @@
 
 import { isDemo } from "@bida/core";
 import { useState, type ReactNode } from "react";
-import { keepsFocus } from "./bits";
 import { DemoNoLink } from "./demo";
 import { NoticeDialog } from "./dialog";
 import { FlipCheck } from "./icons";
@@ -50,7 +49,7 @@ export function InviteButton({ groupId }: { groupId: string | undefined }) {
   return (
     <>
       <button className="iconbtn" aria-label={copy.group.copyLink}
-        onClick={link.copy} {...keepsFocus}>
+        onClick={link.copy}>
         <FlipCheck name="link" size={18} on={link.copied} />
       </button>
       {link.dialogs}

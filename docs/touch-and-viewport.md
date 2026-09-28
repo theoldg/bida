@@ -119,10 +119,11 @@ fake; [on-a-phone.md](on-a-phone.md) lists the rest.*
   tapped while a field has the caret blurs it on `mousedown`; the keyboard
   retracts, the visual viewport grows, the page reflows — and the `click` misses,
   because the button has moved out from under a thumb that hasn't lifted. It
-  reads as a button needing two taps. `keepsFocus`
-  (`components/bits.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
-  the field keeps focus and nothing moves. Spread it on anything pressable that
-  shares a screen with a field. Tab and Enter are untouched — a keyboard never
+  reads as a button needing two taps. `HoldCaret`
+  (`components/viewport.tsx`) is the whole fix: `preventDefault` on `mousedown`, so
+  the field keeps focus and nothing moves. It is one capture listener on
+  `document` for every pressable — a prop spread button by button was
+  forgotten on a screen at a time. Tab and Enter are untouched — a keyboard never
   moves the layout out from under itself. **It holds off only while `data-kb`
   says there is a keyboard**: Android's back button closes the keyboard and
   leaves the caret in the field, and holding that focus through the next press

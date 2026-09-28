@@ -8,7 +8,7 @@ import {
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
-import { Card, Chip, keepsFocus } from "@/components/bits";
+import { Card, Chip } from "@/components/bits";
 import { AmountInput, clipAmountToCurrency } from "@/components/amount-input";
 import { useReceiptScan } from "@/components/receipt-scan";
 import { useScanAs } from "@/lib/quick";
@@ -541,7 +541,7 @@ function EditEntryScreen() {
           /* The kind sits on the row that already names the screen. */
           right={reachable.length > 1 ? (
             <button type="button" className="chip kindchip" aria-label={copy.form.kindTitle}
-              onClick={() => setAsk("kind")} {...keepsFocus}>
+              onClick={() => setAsk("kind")}>
               {copy.entryKind.label[kind]} <Icon name="chev" size={11} />
             </button>
           ) : undefined}
@@ -570,7 +570,7 @@ function EditEntryScreen() {
                 disabled={receiptLocksAmount}
               />
               <button type="button" className="chip" aria-label={copy.form.currency}
-                onClick={() => setAsk("currency")} {...keepsFocus}>
+                onClick={() => setAsk("currency")}>
                 {draft.currency} <Icon name="chev" size={10} />
               </button>
 
@@ -581,14 +581,14 @@ function EditEntryScreen() {
                 <>
                   <button type="button" className="ratelink"
                     aria-label={copy.rates.openFor(draft.currency)}
-                    onClick={() => setAskRate(draft.currency)} {...keepsFocus}>
+                    onClick={() => setAskRate(draft.currency)}>
                     ={" "}
                     <span className={rateOk ? undefined : "bad"}>
                       {rateOk ? money(baseMinor, base) : copy.none}
                     </span>
                   </button>
                   <button type="button" data-refuse="rate" className={`amtnote${flashClass(refusedFields.rate)}`}
-                    onAnimationEnd={settled("rate")} {...keepsFocus}
+                    onAnimationEnd={settled("rate")}
                     onClick={() => setAskRate(draft.currency)}>
                     {copy.rates.setRate()}
                   </button>
@@ -629,7 +629,7 @@ function EditEntryScreen() {
 
             {transfer ? null : coPayers.length > 1 ? (
               <Card style={{ padding: "10px 12px" }}>
-                <Link href={route.payers(groupId)} {...keepsFocus} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <Link href={route.payers(groupId)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span style={{ fontSize: 14, fontWeight: 600 }}>
                     {plural(coPayers.length, copy.noun.person)}
@@ -651,14 +651,14 @@ function EditEntryScreen() {
                     is the row up to the quieter door beside it, so that much
                     lights on a press. */}
                 <button type="button" id="paidby" className="pick"
-                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")} {...keepsFocus}>
+                  aria-label={copy.entryKind.payer[kind]} onClick={() => setAsk("payer")}>
                   <span className="fieldlabel">{copy.entryKind.payer[kind]}</span>
                   <span className="ptext">{data.memberById.get(draft.paidBy)?.name ?? copy.none}</span>
                   <Icon name="chev" size={13} className="pchev" />
                 </button>
                 {/* A second, quieter door onto the same field, on the same row:
                     one payer is the common case and costs one row. */}
-                <button type="button" className="pick-sub" {...keepsFocus}
+                <button type="button" className="pick-sub"
                   onClick={() => {
                     // The payers screen divides the amount, so with none it would split a
                     // zero. The tap doesn't travel — it flashes the amount field.
@@ -716,7 +716,7 @@ function EditEntryScreen() {
               </p>
             ) : null}
             <button type="button" className="btn btn-p btn-lg" onClick={save}
-              disabled={saving || refusing || seeking} {...keepsFocus}>
+              disabled={saving || refusing || seeking}>
               {saving ? <span className="spinner" /> : null}{copy.act.save}
             </button>
           </div>

@@ -4,7 +4,6 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { entriesInvolving } from "@bida/core";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
-import { keepsFocus } from "@/components/bits";
 import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
 import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
@@ -119,7 +118,7 @@ function MembersScreen() {
                   </span>
                 ) : (
                   <button className="iconbtn" aria-label={copy.members.removeLabel(m.name)}
-                    onClick={() => askRemove(m.id, m.name)} {...keepsFocus}>
+                    onClick={() => askRemove(m.id, m.name)}>
                     <Icon name="trash" size={14} />
                   </button>
                 )}
@@ -133,7 +132,7 @@ function MembersScreen() {
               whose name every future entry is signed with. Your current name is the
               check mark in the list. */}
           <div className="pad" style={{ paddingTop: 4 }}>
-            <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })} {...keepsFocus}>
+            <button className="btn btn-s" onClick={() => setAsk({ kind: "who" })}>
               {copy.members.whoChange}
             </button>
           </div>

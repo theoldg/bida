@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { parseMinor, type ExtraKind } from "@bida/core";
 import { AmountInput } from "./amount-input";
-import { keepsFocus } from "./bits";
 import { Body, Screen, TopBar } from "./chrome";
 import { ConfirmDialog } from "./dialog";
 import { Icon } from "./icons";
@@ -418,7 +417,7 @@ export function WhoHadWhat({
   // the model had something to translate (`hasTranslation`).
   const translate = hasTranslation(items, draft.receiptDiscounts) ? (
     <button type="button" className={`iconbtn${english ? " lit" : ""}`}
-      onClick={() => void setBillEnglish(!english)} {...keepsFocus}
+      onClick={() => void setBillEnglish(!english)}
       aria-pressed={english} title={copy.items.translate[english ? "off" : "on"]}
       aria-label={copy.items.translate[english ? "off" : "on"]}>
       <Icon name="translate" size={17} />
@@ -442,7 +441,7 @@ export function WhoHadWhat({
             <div className="eyebrow" style={{ marginBottom: 8 }}>{copy.items.whoWasThere}</div>
             <div className="whostrip">
               {people.map((m) => (
-                <button key={m.id} onClick={() => toggleInvolved(m.id)} {...keepsFocus}
+                <button key={m.id} onClick={() => toggleInvolved(m.id)}
                   aria-pressed={involved.has(m.id)}
                   aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
                   className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
@@ -497,7 +496,7 @@ export function WhoHadWhat({
                       <div className="itemrow">
                         {/* "Everybody had this" / "nobody did" (`toggleEveryone`): the name is
                             the row's one target that isn't a person's column. */}
-                        <button type="button" className="itemtext" {...keepsFocus}
+                        <button type="button" className="itemtext"
                           onClick={() => toggleEveryone(line.start, folded ? line.count : 1)}
                           aria-label={copy.items.everyone(said(shown))}>
                           <span className="itemname">
@@ -519,14 +518,14 @@ export function WhoHadWhat({
                         {/* Show the portions, or show them as one line — a view
                             either way, since the bill holds them split. */}
                         {folded ? (
-                          <button className="itemfold" onClick={() => showPortions(line.start)} {...keepsFocus}
+                          <button className="itemfold" onClick={() => showPortions(line.start)}
                             title={copy.items.showPortions(line.count)}
                             aria-label={copy.items.openItem(said(item), line.count)}
                             aria-expanded={false}>
                             ×{line.count}<Icon name="split" size={12} />
                           </button>
                         ) : part && part.index === 1 ? (
-                          <button className="itemfold on" onClick={() => showAsOneLine(part.start)} {...keepsFocus}
+                          <button className="itemfold on" onClick={() => showAsOneLine(part.start)}
                             title={copy.items.mergeBack}
                             aria-label={copy.items.mergeItem(said(item), part.of)}
                             aria-expanded={true}>
@@ -553,7 +552,6 @@ export function WhoHadWhat({
                             // pointer settling inside would read as that flash ending — handing
                             // Done back mid-bloom (docs/design-system.md).
                             onAnimationEnd={(e) => { e.stopPropagation(); setPoint(null); }}
-                            {...keepsFocus}
                             onClick={() => (run?.detailed
                               ? openForEditing(line.start, line.count, m.id)
                               : folded
@@ -593,7 +591,7 @@ export function WhoHadWhat({
                           means one thing on this screen. */}
                       {row.of > 1 && (openDiscounts ? i === 0 : true) ? (
                         <button className={`itemfold${openDiscounts ? " on" : ""}`}
-                          onClick={() => setOpenDiscounts(!openDiscounts)} {...keepsFocus}
+                          onClick={() => setOpenDiscounts(!openDiscounts)}
                           title={openDiscounts
                             ? copy.items.mergeDiscounts(row.of) : copy.items.splitDiscounts(row.of)}
                           aria-label={openDiscounts
@@ -679,7 +677,7 @@ export function WhoHadWhat({
           {/* The one thing that doesn't scroll: the way out. Its band pays `--kb`
               for the tip being typed above it. */}
           <button type="button" className="btn btn-p btn-lg itemsave"
-            onClick={finish} disabled={refusal.live || seeking} {...keepsFocus}>
+            onClick={finish} disabled={refusal.live || seeking}>
             {copy.act.done}
           </button>
         </div>

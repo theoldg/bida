@@ -5,7 +5,6 @@ import { goBack } from "@/lib/nav";
 import { useEffect, useRef, useState } from "react";
 import { primaryPayer, validatePayers } from "@bida/core";
 import { MinorAmountInput } from "@/components/amount-input";
-import { keepsFocus } from "@/components/bits";
 import { BadLink, Blank, Body, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
@@ -151,7 +150,7 @@ function PayersScreen() {
                         hasn't typed an amount yet is exactly who you hand the
                         shortfall to. */}
                     {!check.ok ? (
-                      <button onClick={() => giveRest(m.id)} className="chip" {...keepsFocus}
+                      <button onClick={() => giveRest(m.id)} className="chip"
                         aria-label={copy.payers.giveRest(m.name)}>{copy.payers.rest}</button>
                     ) : null}
                     <MinorAmountInput id={fieldId} className="bignum splitin"
@@ -182,7 +181,7 @@ function PayersScreen() {
                   : payerProblemText(check, currency, voice)}
               </span>
             </div>
-            <button type="button" className="btn btn-p btn-lg" disabled={!check.ok} {...keepsFocus}
+            <button type="button" className="btn btn-p btn-lg" disabled={!check.ok}
               style={{ marginTop: 10 }}
               onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
               {copy.act.done}

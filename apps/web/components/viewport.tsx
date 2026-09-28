@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { mark } from "../lib/diag";
 import { note } from "../lib/press-trace";
-import { confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
+import { caretOnPress, confirmAct, gapOf, isTyping, landsOn, reachOf } from "../lib/viewport";
 
 /**
  * Bring a field into view, and whatever it says has to come up with it.
@@ -116,6 +116,42 @@ export function MeasureViewport() {
       root.style.removeProperty("--kb");
       root.removeAttribute("data-kb");
     };
+  }, []);
+  return null;
+}
+
+/** What a press can land on — a field is not one: pressing it moves the caret. */
+const PRESSABLE = "button, a[href], [role=button], [role=option], [role=menuitem], [role=tab]";
+
+/**
+ * **A press while a field has the caret keeps that focus** — for every
+ * pressable in the app, from one listener, so no button can be left out.
+ * Otherwise the press blurs the field on `mousedown`, the keyboard retracts,
+ * the page reflows, and the `click` lands where the button no longer is.
+ *
+ * **Only the pointer is held off** — Tab and Enter still focus and fire.
+ *
+ * **And only while a keyboard is up.** Android's back closes the keyboard but
+ * leaves the caret; holding focus through the next press makes Chrome reopen
+ * the keyboard over the answer. So then the field is `blur()`ed by hand
+ * (whether `mousedown` moves focus varies by browser and target). With nobody
+ * typing it does nothing (`caretOnPress`, lib/viewport.ts).
+ *
+ * Capture phase, so a handler that stops the event cannot opt a button out.
+ */
+export function HoldCaret() {
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (!(e.target instanceof Element) || !e.target.closest(PRESSABLE)) return;
+      const focused = document.activeElement;
+      switch (caretOnPress(document.documentElement.hasAttribute("data-kb"), isTyping(focused))) {
+        case "hold": e.preventDefault(); break;
+        case "blur": if (focused instanceof HTMLElement) focused.blur(); break;
+        case "free": break;
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown, true);
+    return () => document.removeEventListener("mousedown", onMouseDown, true);
   }, []);
   return null;
 }

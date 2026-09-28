@@ -41,7 +41,7 @@ screen` block says which manifest each load got and which URL the icon opened.
 
 - The four screens that ask for people (`/new`, claim, payers, the scan pair):
   the act under the add row has to be reachable with the keys up.
-- Every pressable beside a field acts on the **first** tap (`keepsFocus`).
+- Every pressable beside a field acts on the **first** tap (`HoldCaret`).
 - The rate editor's card sits above the keys, not behind them.
 - Fold the keyboard: no padding is left at the foot of the list.
 

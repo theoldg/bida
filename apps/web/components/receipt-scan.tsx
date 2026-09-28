@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { clipAmountToCurrency } from "./amount-input";
 import { copy } from "../lib/copy";
-import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { activeSplitTab, getDraft, saveDraft, tabAfterScan } from "../lib/draft";
 import { normalizeScan, readBill, scanCurrency, type ScanMedium, type ScanResult } from "@bida/core";
@@ -321,21 +320,18 @@ export function ScanPair({
 
   return (
     <div className={box} onAnimationEnd={onFlashEnd}>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}
-        {...keepsFocus}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openCamera)}>
         <Icon name="cam" size={icon} />
         {register === "xs" ? copy.scan.rescan : copy.scan.snap}
       </button>
-      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}
-        {...keepsFocus}>
+      <button type="button" className={half} disabled={disabled} onClick={open(scan.openLibrary)}>
         <Icon name="image" size={icon} />
         {copy.scan.upload}
       </button>
       {/* The third door: typing the bill. The pencil, because behind it is a
           field. */}
       {typeIn ? (
-        <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}
-          {...keepsFocus}>
+        <button type="button" className={half} disabled={disabled} onClick={open(scan.openTyping)}>
           <Icon name="edit" size={icon} />
           {register === "xs" ? copy.scan.typeIn.openLong : copy.scan.typeIn.open}
         </button>

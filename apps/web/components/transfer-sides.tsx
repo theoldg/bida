@@ -4,7 +4,6 @@ import { useState } from "react";
 import type { Member } from "@bida/core";
 import { ChoiceDialog } from "./dialog";
 import { Icon } from "./icons";
-import { keepsFocus } from "./bits";
 import { copy } from "../lib/copy";
 
 /**
@@ -42,7 +41,7 @@ export function TransferSides({ members, from, to, onChange }: {
   const side = (which: "from" | "to") => {
     const member = byId.get(which === "from" ? from : to);
     return (
-      <button type="button" className="tside" onClick={() => setPicking(which)} {...keepsFocus}
+      <button type="button" className="tside" onClick={() => setPicking(which)}
         aria-label={which === "from" ? copy.form.sentBy : copy.form.receivedBy}>
         <span className="eyebrow">{which === "from" ? copy.entry.from : copy.entry.to}</span>
         <span className={"who" + swapClass}>{member?.name ?? copy.none}</span>
@@ -63,7 +62,7 @@ export function TransferSides({ members, from, to, onChange }: {
     <div>
       <div className="card transfer">
         {side("from")}
-        <button type="button" className="tswap" aria-label={copy.form.swapSides} onClick={doSwap} {...keepsFocus}>
+        <button type="button" className="tswap" aria-label={copy.form.swapSides} onClick={doSwap}>
           <Icon name="arrow" size={18} />
         </button>
         {side("to")}

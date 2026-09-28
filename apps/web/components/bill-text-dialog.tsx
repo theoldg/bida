@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { BILL_TEXT_MAX } from "@bida/core";
 import { Dialog } from "./dialog";
 import { Failure } from "./chrome";
-import { keepsFocus } from "./bits";
 import { ScanBusy } from "./scan-bar";
 import { copy } from "../lib/copy";
 import { billTextLeft, cleanBillText } from "../lib/scan/text";
@@ -80,13 +79,11 @@ export function BillTextDialog({ live, refusal, initial = "", onRead, onClose }:
           {/* Enabled while the model reads, and it only closes the box: the
               reading outlives the dialog the way a scan outlives the tab that
               started it, and there is no request to take back. */}
-          <button type="button" className="btn btn-s" onClick={onClose}
-            {...keepsFocus}>{copy.act.cancel}</button>
+          <button type="button" className="btn btn-s" onClick={onClose}>{copy.act.cancel}</button>
           {reading && live
             ? <ScanBusy live={live} box="btn-pair pair-p" />
             : (
-              <button type="submit" className="btn btn-p" disabled={text.length === 0}
-                {...keepsFocus}>{copy.scan.typeIn.confirm}</button>
+              <button type="submit" className="btn btn-p" disabled={text.length === 0}>{copy.scan.typeIn.confirm}</button>
             )}
         </div>
       </form>

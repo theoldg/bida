@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { keepsFocus } from "@/components/bits";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
 import { copy } from "@/lib/copy";
@@ -88,11 +87,8 @@ export default function AdvancedPage() {
                     <Icon name="trash" size={15} />
                   </button>
                 ) : (
-                  // Keeps the field's focus, like the add-a-name plus: a
-                  // keyboard that shuts on the press and reopens after it is a
-                  // flinch under the thumb (components/bits.tsx).
                   <button type="submit" className="iconbtn" aria-label={key.use}
-                    disabled={checking} {...keepsFocus}>
+                    disabled={checking}>
                     <Icon name={checking ? "clock" : "plus"} size={15} />
                   </button>
                 )}
@@ -121,7 +117,7 @@ function FreeKeyFold() {
   const { key } = copy.advanced;
   return (
     <div className="installfold">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} {...keepsFocus}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
         <Icon name="chev" size={10} className={`kvchev${open ? " on" : ""}`} />
         {key.where}
       </button>
@@ -131,7 +127,7 @@ function FreeKeyFold() {
         <p>
           {key.freeTier}{" "}
           {key.site.lede}
-          <a href={key.whereUrl} target="_blank" rel="noreferrer noopener" {...keepsFocus}>{key.site.link}</a>
+          <a href={key.whereUrl} target="_blank" rel="noreferrer noopener">{key.site.link}</a>
           {key.site.tail}
         </p>
       ) : null}

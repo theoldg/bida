@@ -3,7 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ReadErrorBoundary } from "@/components/chrome";
 import { IconSprite } from "@/components/icons";
-import { MeasureViewport } from "@/components/viewport";
+import { HoldCaret, MeasureViewport } from "@/components/viewport";
 import { NoLongPress } from "@/components/no-long-press";
 import { NoPinchZoom } from "@/components/no-pinch-zoom";
 import { RegisterServiceWorker } from "@/components/register-sw";
@@ -107,6 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: arrivalScript }} />
         <IconSprite />
         <MeasureViewport />
+        <HoldCaret />
         <NoLongPress />
         <NoPinchZoom />
         {/* An in-app browser gets the way out of it and nothing else — the

@@ -31,9 +31,9 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   it from the code before defending it.
 
 - *2026-09-28* — "change who you are doesnt work while the keyboard is open",
-  with "fixed for most screens, i guess not this one". A fix that is a prop to
-  spread gets forgotten on the screen nobody re-reads: sweep every sibling
-  control when fixing one, not only the button that was named.
+  then "or just add keepFocus to every button everywhere?". I had swept screen
+  by screen and still missed one; the owner saw the real fix. A fix that has
+  to be remembered per button belongs in one listener.
 
 - *2026-09-28* — "make the import screen identical to the join screen". My
   crit said "one component" when they already were one; the owner read it

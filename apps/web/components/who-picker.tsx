@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import { AddName, type AddNameHandle } from "./name-adder";
-import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 
@@ -69,7 +68,7 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           // The check mark is a shape, and a shape says nothing to a screen
           // reader — without `aria-pressed` nothing on the row names the pick.
           <button key={p.id} className="row" aria-pressed={p.id === picked}
-            onClick={() => { adder.current?.clear(); onPick(p.id); }} {...keepsFocus}>
+            onClick={() => { adder.current?.clear(); onPick(p.id); }}>
             <div className="rmain">
               <div className="rtitle">{p.name}</div>
             </div>
@@ -96,8 +95,7 @@ export function WhoPicker({ people, picked, addPlaceholder, onPick, onAdd, onCon
           `bottom: 0` is the scroller's foot, which on `/g/claim` is above the
           "Have the app?" dock. */}
       <div className="pad whodock">
-        <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}
-          {...keepsFocus}>
+        <button className="btn btn-p btn-lg" onClick={() => void proceed()} disabled={busy || !chosen}>
           {chosen ? copy.claim.continueAs(chosen.name) : copy.claim.pickFirst}
         </button>
       </div>

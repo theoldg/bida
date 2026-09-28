@@ -55,8 +55,8 @@ export function gapOf(v: ViewportReading): ViewportGap {
 }
 
 /**
- * What a press on a control beside a field does about the caret (`keepsFocus`,
- * components/bits.tsx):
+ * What a press on a control beside a field does about the caret (`HoldCaret`,
+ * components/viewport.tsx):
  *
  * - **hold** — a keyboard is up, so don't blur: the keyboard would retract,
  *   the page reflow, and the `click` miss the button.

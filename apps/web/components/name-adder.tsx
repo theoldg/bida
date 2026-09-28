@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { keepsFocus } from "./bits";
 import { Icon } from "./icons";
 import { bringIntoView } from "./viewport";
 import { copy } from "../lib/copy";
@@ -145,12 +144,8 @@ export function AddName({
           aria-label={placeholder} maxLength={40} autoCapitalize="words" autoFocus={autoFocus}
           enterKeyHint="done" onChange={(e) => typed(e.target.value)} />
         {/* Labelled for what it does, not the field's name — two things called
-            "Add someone" is one too many for a screen reader or a test.
-            Keeps the field's focus (`keepsFocus`, components/bits.tsx): a
-            keyboard shutting and reopening on the press is a flinch, and can
-            swallow the press. */}
-        <button type="submit" className={`iconbtn${onField ? "" : blooming}`} aria-label={copy.act.add}
-          {...keepsFocus}>
+            "Add someone" is one too many for a screen reader or a test. */}
+        <button type="submit" className={`iconbtn${onField ? "" : blooming}`} aria-label={copy.act.add}>
           <Icon name="plus" size={15} />
         </button>
       </form>

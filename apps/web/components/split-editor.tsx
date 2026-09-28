@@ -9,7 +9,6 @@ import { MinorAmountInput } from "./amount-input";
 import { Failure } from "./chrome";
 import { ScanPair, type ReceiptScan } from "./receipt-scan";
 import { Icon } from "./icons";
-import { keepsFocus } from "./bits";
 import { copy } from "../lib/copy";
 import { printedCount } from "../lib/scan/items";
 import { bare, money, plural, splitFooter } from "../lib/format";
@@ -190,12 +189,12 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             const on = !showReceipt && !legacy && spec.mode === mode;
             return (
               <button key={mode} type="button" className={on ? "on" : ""} aria-pressed={on}
-                onClick={() => onTabChange(mode)} {...keepsFocus}>{copy.split.mode[mode]}</button>
+                onClick={() => onTabChange(mode)}>{copy.split.mode[mode]}</button>
             );
           })}
           {receipt ? (
             <button type="button" className={showReceipt ? "on" : ""} aria-pressed={showReceipt}
-              onClick={() => onTabChange("receipt")} {...keepsFocus}>
+              onClick={() => onTabChange("receipt")}>
               {copy.split.receipt}
             </button>
           ) : null}
@@ -217,13 +216,13 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
             const fieldId = `sp-${m.id}`;
             const end = spec.mode === "shares" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <button type="button" onClick={() => setWeight(m.id, -1)} {...keepsFocus} aria-label={copy.split.fewerParts(m.name)}
+                <button type="button" onClick={() => setWeight(m.id, -1)} aria-label={copy.split.fewerParts(m.name)}
                   style={{ fontSize: 18, color: on ? "var(--ink)" : "var(--muted)" }}>−</button>
                 <span className="bignum" style={{ fontSize: 15, width: 14, textAlign: "center",
                   color: on ? "var(--ink)" : "var(--muted)" }}>
                   {spec.weights[m.id] ?? 0}
                 </span>
-                <button type="button" onClick={() => setWeight(m.id, 1)} {...keepsFocus} aria-label={copy.split.moreParts(m.name)}
+                <button type="button" onClick={() => setWeight(m.id, 1)} aria-label={copy.split.moreParts(m.name)}
                   style={{ fontSize: 18 }}>+</button>
               </span>
             ) : spec.mode === "exact" ? (
@@ -231,7 +230,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 {/* Offered on a row with nothing in it too: somebody who has
                     typed no amount yet is exactly who you hand the rest to. */}
                 {check && !check.ok ? (
-                  <button type="button" className="chip" onClick={() => giveRest(m.id)} {...keepsFocus}
+                  <button type="button" className="chip" onClick={() => giveRest(m.id)}
                     aria-label={copy.split.giveRest(m.name)}>{copy.split.rest}</button>
                 ) : null}
                 {/* Never disabled. Every row can be typed into, whoever any
@@ -284,7 +283,7 @@ export function SplitEditor({ members, me, title, totalMinor, totalUnknown, curr
                 {typing ? (
                   <label htmlFor={fieldId} style={lead}>{name}</label>
                 ) : (
-                  <button type="button" onClick={() => toggle(m.id)} {...keepsFocus}
+                  <button type="button" onClick={() => toggle(m.id)}
                     aria-label={on ? copy.split.leaveOut(m.name) : copy.split.include(m.name)}
                     style={lead}>
                     {name}
@@ -337,7 +336,7 @@ function ReceiptPanel({
         {/* The step outstanding on a scanned bill is assigning it, so this is
             the control a refused Save blooms — an ink block, which takes the
             flash as a fill rather than a border. */}
-        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd} {...keepsFocus}
+        <Link href={editItemsHref} data-refuse="receipt" className={`btn btn-p${flash}`} onAnimationEnd={onFlashEnd}
           style={{ textDecoration: "none", justifyContent: "space-between" }}>
           <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Icon name="users" size={16} />

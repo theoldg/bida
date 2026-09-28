@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import {
   ImportError, plannedCount, readCsvGroup, readTricount, type ImportPlan,
 } from "@bida/core";
-import { keepsFocus } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
 import { copy } from "@/lib/copy";
@@ -163,7 +162,7 @@ export default function ImportPage() {
                   to them. What was typed is still there on return. */}
               {plan ? (
                 <button type="button" className="btn btn-s"
-                  onClick={() => { setPlan(undefined); setWhy(undefined); }} {...keepsFocus}>
+                  onClick={() => { setPlan(undefined); setWhy(undefined); }}>
                   {words.again}
                 </button>
               ) : (
@@ -171,8 +170,7 @@ export default function ImportPage() {
                   <p>{words.lede}</p>
 
                   <div style={{ paddingTop: 12 }}>
-                    <button type="button" className="btn btn-p" onClick={() => file.current?.click()}
-                      {...keepsFocus}>
+                    <button type="button" className="btn btn-p" onClick={() => file.current?.click()}>
                       {words.pick}
                     </button>
                   </div>
@@ -188,7 +186,7 @@ export default function ImportPage() {
                     onChange={(e) => setLink(e.target.value)} />
                   <button type="button" className="btn btn-s" style={{ marginTop: 8 }}
                     disabled={fetching || link.trim().length === 0}
-                    onClick={() => void fetchLink()} {...keepsFocus}>
+                    onClick={() => void fetchLink()}>
                     {fetching ? words.fetching : words.fetch}
                   </button>
                   {/* Under the button and not above the field: it is about
@@ -236,7 +234,7 @@ export default function ImportPage() {
 
                 <div style={{ paddingTop: 16 }}>
                   <button type="button" className="btn btn-p btn-lg" onClick={next}
-                    disabled={nameFlash.live || plannedCount(plan) === 0} {...keepsFocus}>
+                    disabled={nameFlash.live || plannedCount(plan) === 0}>
                     {words.act}
                   </button>
                 </div>
