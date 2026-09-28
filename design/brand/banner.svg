@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="JetBrains Mono, monospace">
+  <rect width="1200" height="630" fill="#e8e8e5"/>
+  <text x="600" y="134" font-size="120" font-weight="700" fill="#16171a" letter-spacing="-4" text-anchor="middle">bida</text>
+  <g font-size="48" fill="#5e6268" text-anchor="middle">
+    <text x="600" y="204">no-nonsense</text>
+    <text x="600" y="260">expense splitter</text>
+  </g>
+  <!-- The logo's receipt, rising from the bottom edge: the ÷ and two shares clear it. -->
+  <g transform="translate(384 322) scale(1.2)">
+    <path fill="#fbfbfa" stroke="#d6d6d2" stroke-width="1.5" d="M0,16 L15,0 L30,16 L45,0 L60,16 L75,0 L90,16 L105,0 L120,16 L135,0 L150,16 L165,0 L180,16 L195,0 L210,16 L225,0 L240,16 L255,0 L270,16 L285,0 L300,16 L315,0 L330,16 L345,0 L360,16 V544 L345,560 L330,544 L315,560 L300,544 L285,560 L270,544 L255,560 L240,544 L225,560 L210,544 L195,560 L180,544 L165,560 L150,544 L135,560 L120,544 L105,560 L90,544 L75,560 L60,544 L45,560 L30,544 L15,560 L0,544 Z"/>
+    <path fill="#16171a" d="M148,76 H212 V87 H148 Z M173,50 H187 V64 H173 Z M173,99 H187 V113 H173 Z"/>
+    <g font-size="26" fill="#16171a">
+      <text x="36" y="196">Ana</text><text x="324" y="196" text-anchor="end">31.50</text>
+      <line x1="96.8" y1="189" x2="232" y2="189" stroke="#b9bbb8" stroke-width="2" stroke-dasharray="1 6" stroke-linecap="round"/>
+      <text x="36" y="254">Ben</text><text x="324" y="254" text-anchor="end">24.00</text>
+      <line x1="96.8" y1="247" x2="232" y2="247" stroke="#b9bbb8" stroke-width="2" stroke-dasharray="1 6" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

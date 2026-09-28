@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — A link-preview banner in six rounds of mocks, each a
+  fragment ("less text", "bigger slogan", "lowercased, no period") before "go
+  with L1, ship it". Every round kept the one thing picked and varied only
+  what the note named.
+
 - *2026-09-28* — "Reshoot the screenshots." One shot had moved, and I read it
   as a diff, not a picture: the owner zoomed in and found "(you)" floating
   above its name. A reshoot is a look at the screen; read each moved shot at
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-27* — "use the BUSY system from ../thegrave." Five words naming a
   sibling repo. Read how it works there before porting it; the port is the
   ask, not a redesign. Worktree-always became worktree-when-busy.
-
-- *2026-09-26* — A friend found the settle-up fold patronising. The sting was
-  in the frame, not the facts: a toggle voicing the reader's mistake, then
-  "It doesn't have to be." Options first, then "go with C, Luke and Leia".
-  Explain as the app's reasoning; never correct the reader.

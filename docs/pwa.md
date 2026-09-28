@@ -14,7 +14,10 @@ three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons`, which
 also copies that file to `public/logo.svg` for the top-bar mark to point at —
 run it when the logo changes rather than editing any of the four; the maskable
 one draws the receipt at 72%, because a launcher crops to the central 80% and
-the artwork as drawn crowded that circle's rim. iOS ignores
+the artwork as drawn crowded that circle's rim. The same run draws
+`public/og.png`, the 1200×630 banner a pasted link shows, from
+`design/brand/banner.svg` in the export's own JetBrains Mono — so it builds the
+export first; the precache leaves the banner out. iOS ignores
 manifest `display` entirely; `appleWebApp.statusBarStyle` is its lever, and it
 is `"default"` so the page starts below the status bar (Gotcha below). The strip
 that leaves above the page is painted from **body's background**, so at phone

@@ -45,6 +45,8 @@ export const copy = {
     name: "bida",
     /** The page description: the line under "bida" in a pasted-link preview. Never shown in-app. */
     description: "No-nonsense expense splitter.",
+    /** Alt text for the preview banner, public/og.png — what the picture says. */
+    banner: "bida, no-nonsense expense splitter: a receipt split between Ana and Ben",
   },
 
   /** Buttons. One verb each — a button never says "OK". */

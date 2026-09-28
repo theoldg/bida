@@ -45,16 +45,18 @@ export const metadata: Metadata = {
     // **No `og:url`** — as a root default every route would claim to be
     // `https://bida.bid`, and Messenger on iOS then pastes an invite as that bare
     // origin, path and fragment gone. Without it a scraper uses the fetched URL.
-    // The 512 rather than the 192: Facebook drops images under 200px.
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: copy.app.name }],
+    //
+    // **A wide banner, not the square icon**: a square puts most chat apps in
+    // their compact card, a thumbnail the size of an emoji. The page cannot pick
+    // an image per app, so one 1200×630 keeps its point inside the centre square
+    // some crop to. Drawn by `pnpm icons` from design/brand/banner.svg.
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: copy.app.banner }],
   },
-  // "summary", not "summary_large_image": the icon is square, and a square
-  // stretched across a wide card is a logo with bars either side of it.
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: copy.app.name,
     description: copy.app.description,
-    images: ["/icon-512.png"],
+    images: [{ url: "/og.png", alt: copy.app.banner }],
   },
   // No `manifest`: `manifestScript` writes the link first in the head, because
   // an iOS tab needs a different one. **Name the icons**, or every cold load
