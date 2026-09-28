@@ -339,7 +339,8 @@ function YourBalance({ up, down, net, currency }: {
 }) {
   return (
     <div className="kv yourbal">
-      <span className="k">{copy.entry.yourBalance}</span>
+      {/* Set as the card's section heads are ("PAID BY"), since it is one. */}
+      <span className="k eyebrow">{copy.entry.yourBalance}</span>
       <span className="v">
         {up > 0 && down > 0 ? `${bare(up, currency)} − ${bare(down, currency)} = ` : null}
         <b className={signClass(net)}>{money(net, currency, net !== 0)}</b>
