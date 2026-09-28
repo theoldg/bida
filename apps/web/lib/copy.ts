@@ -845,8 +845,12 @@ export const copy = {
     gone: { title: "Gone", body: "There is no such entry in this group." },
     /** Waiting on the sync that may bring it — a notification's tap outruns it. */
     arriving: "Fetching the latest…",
+    /** The link above Edit, when there is no room to say who (`historyMeta`). */
     history: "History",
-    editedTimes: (n: number) => `edited ×${n}`,
+    createdBy: (who: string) => `Created by ${who}`,
+    edited: (n: number) => (n === 1 ? "Edited once" : `Edited ${n} times`),
+    /** After the count: one edit was by somebody, several were last by one. */
+    editedBy: (n: number, who: string) => (n === 1 ? `by ${who}` : `last by ${who}`),
     rate: (rate: string) => `@ ${rate}`,
     /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,

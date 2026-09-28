@@ -77,3 +77,21 @@ export function groupMeta({ people, entries, when }: {
   const count = plural(entries, copy.noun.entry);
   return [joined(joined(plural(people, copy.noun.person), count), when), joined(count, when), when];
 }
+
+/**
+ * The entry screen's link to its own history, above Edit: who created it, or
+ * how often it has changed and who changed it last. The name is what goes
+ * when the line runs short — the count is what says whether to press, and a
+ * name that doesn't fit is not worth an ellipsis. A creator with no room left
+ * leaves "History", which still says where the link goes.
+ */
+export function historyMeta({ edits, creator, lastEditor }: {
+  /** Revisions after the create; a delete or a restore is not one. */
+  edits: number;
+  creator: string;
+  lastEditor: string;
+}): string[] {
+  if (edits === 0) return [copy.entry.createdBy(creator), copy.entry.history];
+  const count = copy.entry.edited(edits);
+  return [joined(count, copy.entry.editedBy(edits, lastEditor)), count];
+}

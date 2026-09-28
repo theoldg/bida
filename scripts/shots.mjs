@@ -58,7 +58,7 @@ async function seed(page, base) {
   // should show the sentence *and* the line under it.
   await page.getByText("Riad Jnane").click();
   await page.waitForURL(/\/g\/entry\?/);
-  await page.getByRole("link", { name: "Edit" }).click();
+  await page.getByRole("link", { name: "Edit", exact: true }).click();
   await page.waitForURL(/entry\/edit/);
   await page.locator("input.amount").fill("5100");
   await page.locator("#what").fill("Riad Jnane, two nights");

@@ -274,13 +274,18 @@ codes stack — the ink's edge, not the box's: a side bearing grows with the
 size, so the big figure is pulled left by the difference (`.entryamt .whole`).
 
 On an expense or income a `--rule` hairline closes the figure off and one line
-under it says who — "paid by **Adaś**", the "edited ×N" chip flushed right on
-it — so the card below is only the split, whose rows already count the ways.
-Several payers keep their card rows, which carry what each put in, and the
-line just counts them, so their eyebrow is a bare "Paid by" — never the count
-twice. A transfer has no line: its card is nothing but who, and its chip
-stands alone. The card's eyebrows read as phrases ("Split by items", "Paid
+under it says who — "paid by **Adaś**" — so the card below is only the split,
+whose rows already count the ways. Several payers keep their card rows, which
+carry what each put in, and the line just counts them, so their eyebrow is a
+bare "Paid by" — never the count twice. A transfer has no line: its card is
+nothing but who. The card's eyebrows read as phrases ("Split by items", "Paid
 by"), not a label, a dot and a value.
+
+**History is one quiet link, above Edit** (`.entryhist`) — never a top-bar
+icon as well, which was two ways to the same screen. It says what is there:
+"Created by Luke", or "Edited 3 times · last by Han". The name is the first
+thing to go when the line is short (`historyMeta`); "Created by" with no room
+for the name says "History". A deleted entry keeps it where Edit was.
 
 ## An arrow points one way, and an income says so twice
 

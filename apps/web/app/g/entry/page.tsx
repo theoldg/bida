@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV } from "@/components/bits";
-import { FitTitle } from "@/components/fit-line";
+import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { ConfirmDialog } from "@/components/dialog";
@@ -23,6 +23,7 @@ import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
 import { entryParent, parseEntrySource, route } from "@/lib/group-link";
+import { historyMeta } from "@/lib/row-meta";
 import { useBillEnglish, useClaimGate, useGroupData, type GroupData } from "@/lib/hooks";
 
 /**
@@ -95,16 +96,22 @@ function EntryScreen() {
   const [restoring, setRestoring] = useState(false);
   const arriving = useArriving(groupId, entryId, !!row);
 
-  // "edited ×3" comes from the log itself: revisions are ops, not a counter
-  // somebody has to remember to increment. A delete or a restore is not an
-  // edit of what the entry says. The last delete names who deleted it.
+  // "Edited 3 times" comes from the log itself: revisions are ops, not a
+  // counter somebody has to remember to increment. A delete or a restore is
+  // not an edit of what the entry says. The first revision names who created
+  // it, the last who changed it last, and the last delete who deleted it.
   const log = useLive("entryLog", async () => {
     if (!entryId) return { count: 0 };
-    const ops = await db().ops.where("entityId").equals(entryId).toArray();
+    const ops = sortOps(await db().ops.where("entityId").equals(entryId).toArray());
     const lifecycle = (o: Op) => o.kind === "delete"
       || (Object.keys(o.patch).length === 1 && "deletedAt" in o.patch);
-    const lastDelete = sortOps(ops).filter((o) => o.kind === "delete").at(-1);
-    return { count: ops.filter((o) => !lifecycle(o)).length, lastDelete };
+    const revisions = ops.filter((o) => !lifecycle(o));
+    return {
+      count: revisions.length,
+      creator: revisions[0]?.actor,
+      lastEditor: revisions.at(-1)?.actor,
+      lastDelete: ops.filter((o) => o.kind === "delete").at(-1),
+    };
   }, [entryId]);
 
   if (!groupId) return <BadLink />;
@@ -158,11 +165,13 @@ function EntryScreen() {
     else await deleteSettlement(groupId, actor, entry.id);
     router.replace(route.group(groupId));
   }
-  const editedChip = edits > 0 ? (
-    <Link href={route.history(groupId, entry.id, via)} className="chip">
-      <Icon name="clock" size={11} /> {copy.entry.editedTimes(edits)}
-    </Link>
-  ) : null;
+  // Blank until the log lands, a beat behind the row: a wrong name for a frame
+  // is worse than none, and the link keeps its height either way.
+  const historyLine = log?.creator ? historyMeta({
+    edits,
+    creator: data.nameOf(log.creator),
+    lastEditor: data.nameOf(log.lastEditor ?? log.creator),
+  }) : [""];
 
   return (
     <Screen>
@@ -174,16 +183,11 @@ function EntryScreen() {
           title={deleted ? copy.entry.deletedTitle(copy.entryKind.label[kind]) : copy.entryKind.label[kind]}
           sub={whenLabel(entry)}
           back={parent}
-          right={<>
-            <Link className="iconbtn" href={route.history(groupId, entry.id, via)} aria-label={copy.entry.history}>
-              <Icon name="clock" size={18} />
-            </Link>
-            {deleted ? null : (
-              <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
-                <Icon name="trash" size={18} />
-              </button>
-            )}
-          </>}
+          right={deleted ? null : (
+            <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
+              <Icon name="trash" size={18} />
+            </button>
+          )}
         />
 
         <Scroll>
@@ -217,23 +221,27 @@ function EntryScreen() {
                   rate={copy.entry.rate(rateText(entry.rateToBase))} />
               ) : null}
             </div>
-            {/* Who and how many, under the rule, with the edit count at its end.
-                A transfer's card is nothing but who, so it has no line here and
-                the count stands alone. */}
-            {expense && kind !== "transfer"
-              ? <EntryBy expense={expense} kind={kind} data={data} aside={editedChip} />
-              : editedChip ? <div className="entrychips">{editedChip}</div> : null}
+            {/* Who, under the rule. A transfer's card is nothing but who, so it
+                has no line here. */}
+            {expense && kind !== "transfer" ? <EntryBy expense={expense} kind={kind} data={data} /> : null}
           </div>
 
           {expense
             ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
             : <TransferDetail settlement={settlement!} data={data} />}
 
-          {deleted ? null : (
-            <div className="pad" style={{ paddingTop: 4 }}>
+          {/* The one way into this entry's history: who made it, or how often
+              it changed and who last. Quiet, since it is read more than it is
+              pressed. A deleted entry keeps it where Edit would be. */}
+          <div className="pad" style={{ paddingTop: 0 }}>
+            <Link href={route.history(groupId, entry.id, via)} className="entryhist">
+              <FitLine className="entryhistline" options={historyLine} />
+              <Icon name="chev" size={14} />
+            </Link>
+            {deleted ? null : (
               <Link href={route.editEntry(groupId, entry.id, via)} className="btn btn-s">{copy.act.edit}</Link>
-            </div>
-          )}
+            )}
+          </div>
           <div style={{ height: 24 }} />
         </Scroll>
       </Body>
@@ -294,11 +302,10 @@ function EntrySpent({ minor, currency, rate }: { minor: number; currency: Curren
 /**
  * "paid by Adaś". One payer is named here and nowhere else on the screen;
  * several keep their card rows, which carry what each put in, so this line
- * only counts them. How many ways it was split is the card's rows. `aside` is
- * flushed to its right edge.
+ * only counts them. How many ways it was split is the card's rows.
  */
-function EntryBy({ expense, kind, data, aside }: {
-  expense: Expense; kind: "expense" | "income"; data: GroupData; aside?: ReactNode;
+function EntryBy({ expense, kind, data }: {
+  expense: Expense; kind: "expense" | "income"; data: GroupData;
 }) {
   const payers = payerList(expense);
   const who = isCoSponsored(expense)
@@ -307,7 +314,6 @@ function EntryBy({ expense, kind, data, aside }: {
   return (
     <div className="entryby">
       <p>{copy.entry.byLead[kind]} <b>{who}</b></p>
-      {aside}
     </div>
   );
 }

@@ -211,7 +211,7 @@ await page.locator("a.row").filter({ hasText: "paid" }).first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.waitForSelector(".transfer");
 report((await page.locator(".topbar h3").innerText()) === "Transfer", "a transfer has a detail screen");
-await page.getByRole("link", { name: "Edit" }).click();
+await page.getByRole("link", { name: "Edit", exact: true }).click();
 await page.waitForURL(/entry\/edit/);
 await page.waitForSelector(".transfer");
 report(await page.locator('[aria-label="What kind of entry"]').count() === 0,
@@ -223,7 +223,7 @@ report((await page.locator(".ramt .big").allInnerTexts()).some((t) => t.includes
 
 await page.getByText("Dinner").first().click();
 await page.waitForURL(/\/g\/entry\?/);
-await page.getByRole("link", { name: "Edit" }).click();
+await page.getByRole("link", { name: "Edit", exact: true }).click();
 await page.waitForURL(/entry\/edit/);
 // The chip opens the dialog; what is *in* it is the claim — a transfer is
 // not reachable from an expense, since the two are different entities
@@ -547,7 +547,7 @@ await page.waitForFunction(() => document.querySelectorAll(".rows a.row").length
   null, { timeout: PATIENCE });
 await page.locator("a.row").filter({ hasText: "Coffee" }).click();
 await page.waitForURL(/\/g\/entry\?/);
-await page.getByRole("link", { name: "Edit" }).click();
+await page.getByRole("link", { name: "Edit", exact: true }).click();
 await page.waitForSelector(".splitrow");
 report(await rows() === quoted, "and it is the same person once the entry is written");
 
@@ -567,21 +567,21 @@ await page.waitForSelector(".tle");
 await page.getByRole("link", { name: /Coffee · deleted/ }).first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("button", { name: "Restore" }).waitFor({ timeout: PATIENCE });
-report(await page.getByRole("link", { name: "Edit" }).count() === 0
+report(await page.getByRole("link", { name: "Edit", exact: true }).count() === 0
   && await page.getByRole("button", { name: "Delete" }).count() === 0,
   "a deleted entry's screen offers Restore, and neither Edit nor Delete");
 await page.locator(".deletedband").getByText(/^by \S/).waitFor({ timeout: PATIENCE });
 const band = await page.locator(".deletedband").innerText();
 report(/deleted/i.test(band) && /by \S/.test(band), `and says at its head who deleted it — ${band.replace(/\s+/g, " ")}`);
 report(/^Deleted /.test(await page.locator(".topbar h3").innerText()), "and its bar says it is deleted");
-await page.getByRole("link", { name: "History" }).first().click();
+await page.locator("a.entryhist").click();
 await page.waitForURL(/\/g\/history\?.*e=/);
 const titled = await page.locator(".sub").first().innerText();
 report(/coffee/i.test(titled), `a deleted entry's history is titled by what it was — ${titled}`);
 await page.getByRole("link", { name: "Back" }).first().click();
 await page.waitForURL(/\/g\/entry\?/);
 await page.getByRole("button", { name: "Restore" }).click();
-await page.getByRole("link", { name: "Edit" }).waitFor({ timeout: PATIENCE });
+await page.getByRole("link", { name: "Edit", exact: true }).waitFor({ timeout: PATIENCE });
 report(true, "Restore turns the screen back into the live entry, in place");
 await page.goto(`${base}/g/history?id=${g}`);
 await page.waitForSelector(".tle");
@@ -633,7 +633,7 @@ await page.waitForFunction(
 );
 await page.locator("a.row").filter({ hasText: "Twice" }).click();
 await page.waitForURL(/\/g\/entry\?/);
-await page.getByRole("link", { name: "History" }).click();
+await page.locator("a.entryhist").click();
 await page.waitForSelector(".tle");
 const creates = (await page.locator(".what").allInnerTexts())
   .filter((t) => /created this expense/i.test(t)).length;

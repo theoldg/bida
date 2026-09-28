@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expenseMeta, groupMeta, transferMeta } from "./row-meta";
+import { expenseMeta, groupMeta, historyMeta, transferMeta } from "./row-meta";
 
 const base = { payer: "Alice", coPayers: 0, kind: "expense" as const, ways: 5, mode: "equal" as const };
 
@@ -89,5 +89,19 @@ describe("groupMeta", () => {
   it("counts one the singular way", () => {
     expect(groupMeta({ people: 1, entries: 1, when: "just now" })[0])
       .toBe("1 person · 1 entry · just now");
+  });
+});
+
+describe("historyMeta", () => {
+  it("names the creator of an entry nobody edited, then falls back to History", () => {
+    expect(historyMeta({ edits: 0, creator: "Luke", lastEditor: "Luke" }))
+      .toEqual(["Created by Luke", "History"]);
+  });
+
+  it("counts the edits and names the last editor, then drops the name", () => {
+    expect(historyMeta({ edits: 1, creator: "Luke", lastEditor: "Han" }))
+      .toEqual(["Edited once · by Han", "Edited once"]);
+    expect(historyMeta({ edits: 3, creator: "Luke", lastEditor: "Han" }))
+      .toEqual(["Edited 3 times · last by Han", "Edited 3 times"]);
   });
 });

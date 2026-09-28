@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Two history buttons", from an audit I never saw: named what
+  it meant from the code, mocked five, then "iterate: a quiet link above Edit",
+  five more, then the spec in two lines. The second round was the owner's
+  sketch, not mine — mock wide, then narrow to what they point at.
+
 - *2026-09-28* — "Don't read any documentation… review the design." Cold eyes
   were the point, so the crit came from screenshots alone. Then three rounds of
   icon mocks, each answering one terse note ("4 and 5 teeth", "a division
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   that wrote "6 items → 7 items". Took the suggestion, then asked what it left:
   bills already saved. The owner's fix is the direction; the old data is on
   me. Split on arrival, on grid open, and history reads bills as printed.
-
-- *2026-09-25* — "Reorder the demo, I don't care about the chronology."
-  The ledger sorts by date, so the order is the dates: re-dated the seed.
-  Dates don't move the seed's stamp, so the ops were reordered too, or old
-  phones would keep the old tour. Check what a cosmetic ask invalidates.

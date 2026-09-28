@@ -366,6 +366,9 @@ red when bunq moves.
   violation from `getByLabel` is the driver saying what a screen reader would
   find: the same name twice. The add row's button says "Add", so the field
   keeps its own name and the button is reachable by role.
+- **A role's `name` is a substring match.** `{ name: "Edit" }` also finds the
+  entry's history link, "Edited once · by Luke". A one-word name takes
+  `exact: true`.
 - **Scope row-level clicks to the row.** `getByRole("button", { name: /the
   rest$/i }).first()` hits whichever row is first — filter `.rows .row` by the
   member's name. Getting this wrong seeds a "co-sponsored" expense that quietly

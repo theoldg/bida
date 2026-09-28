@@ -950,12 +950,18 @@ a { color: inherit; text-decoration: none }
    Mono's digits, .07em at the spent line's 400. Unpulled, the 44px figure
    starts ~1.7px right of the 13px one under it. */
 .entryamt .whole { margin-left: calc(13px * .07 - .06em) }
-/* The edit count ends the line, on its centre: a chip is taller than the words. */
-.entryby { display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  margin-top: 10px; font-size: 13px; color: var(--muted) }
-.entryby p { min-width: 0 }
+.entryby { margin-top: 10px; font-size: 13px; color: var(--muted) }
 .entryby b { color: var(--ink); font-weight: 600 }
-.entrychips { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap }
+/* The link to the entry's history, above Edit: quiet text, not a button — it
+   is read more often than pressed — but a thumb's height all the same.
+   `--ink-2`, not `--muted`: at 12px the muted grey is under 4.5:1 on paper.
+   `FitLine` picks the wording (`historyMeta`); the ellipsis is for a name
+   past its ladder. */
+.entryhist { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; padding: 0 2px; font-size: 12px; color: var(--ink-2) }
+.entryhist:active { background: var(--press) }
+.entryhistline { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.entryhist svg { flex: none; color: var(--muted) }
 /* A deleted entry's band: the one inverted block on any screen, so the state is
    read before the figure — which is drawn a step quieter under it, since it no
    longer counts. Ink, not colour: colour is spent on money (ADR-0023). */
