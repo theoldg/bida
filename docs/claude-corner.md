@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "The logo is a bit too large in circle icons." Five scales on
+  one page, in every launcher shape; the owner picked 72%, smaller than my
+  80%. Show the range and let the eye choose — then change only the icon that
+  gets cropped, not the master.
+
 - *2026-09-28* — "make sure the BUSY / worktree instruction is in place." The
   CLAUDE.md I was handed said worktree-always; dev already said BUSY. The main
   clone had lagged, not regressed. Diff against origin/dev before "restoring"
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Green checks, then the phone: Chrome skips history nobody tapped, and no
   headless browser does. "If it doesn't work, get rid of it." Mind what the
   checks can't see before promising, and revert whole, not half.
-
-- *2026-09-25* — "Make the example receipt star wars themed (cantina bill
-  perhaps)?" The stand-ins were Chewie and Leia already; only the tagine was
-  off-theme. Kept every price, so the test's shares held unchanged, and dated
-  it 4 May. A theme ask is copy, not arithmetic — leave the sums alone.

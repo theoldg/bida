@@ -27,15 +27,25 @@ console.log("logo.svg  (copied from design/brand)");
 
 /**
  * A maskable icon is cropped to whatever shape the launcher fancies — a circle
- * on most Androids — and only what lies outside the central 80% circle may be
- * eaten. The receipt's corners sit inside that circle by construction, so the
- * maskable copy is the artwork as drawn: an inset would only shrink the mark.
+ * on most Androids — down to about its central 80%. The artwork as drawn fits
+ * inside that circle but fills nearly all of it, crowding the rim, so the
+ * maskable copy draws the receipt at 72% about the centre. The uncropped icons
+ * (tabs, iOS, splash) keep the artwork as drawn.
  */
+const MASKABLE_SCALE = 0.72;
 const ICONS = [
-  { file: "icon-192.png", size: 192 },
-  { file: "icon-512.png", size: 512 },
-  { file: "icon-maskable-512.png", size: 512 },
+  { file: "icon-192.png", size: 192, scale: 1 },
+  { file: "icon-512.png", size: 512, scale: 1 },
+  { file: "icon-maskable-512.png", size: 512, scale: MASKABLE_SCALE },
 ];
+
+/** Everything after the ground <rect/> is the mark; scale it about the centre. */
+function scaled(art, scale) {
+  if (scale === 1) return art;
+  const ground = /(<rect [^>]*\/>)([\s\S]*)(<\/svg>)/;
+  if (!ground.test(art)) throw new Error("logo.svg must open with its ground <rect/>");
+  return art.replace(ground, `$1<g transform="translate(256 256) scale(${scale}) translate(-256 -256)">$2</g>$3`);
+}
 
 /**
  * The dev Worker's copies wear a blue receipt, so a home screen holding both
@@ -50,12 +60,12 @@ const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
 await mkdir(join(ROOT, "apps/web/public/dev"), { recursive: true });
 const browser = await launch();
 try {
-  for (const { file, size } of ICONS) {
+  for (const { file, size, scale } of ICONS) {
     for (const dev of [false, true]) {
       const page = await browser.newPage({ viewport: { width: size, height: size } });
       await page.setContent(
         `<style>html,body{margin:0;width:${size}px;height:${size}px;overflow:hidden}
-         svg{display:block;width:100%;height:100%}</style>${dev ? devSvg : svg}`,
+         svg{display:block;width:100%;height:100%}</style>${scaled(dev ? devSvg : svg, scale)}`,
       );
       const png = await page.screenshot({ omitBackground: false });
       const out = dev ? `dev/${file}` : file;
