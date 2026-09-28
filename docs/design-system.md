@@ -156,9 +156,9 @@ green, `−€14,28` red — and the exception is what the list marks: a row you
 no part of drops to 58% opacity rather than disappearing.
 
 **On an entry, your name carries "you" and the card ends in your balance.** A
-muted `(you)` follows your name wherever the entry prints it: the one
-payer on the paid-by line, a payer row, a split row, a transfer's side. The
-rows themselves stay uncoloured. Under them, unless you neither paid nor had
+small, faint `(you)` follows your name wherever the entry prints it: the one
+payer on the paid-by line, a payer row, a split row. A transfer gets neither;
+its two names and an arrow already say it. The rows themselves stay uncoloured. Under them, unless you neither paid nor had
 a share, is the ledger row's figure, signed and coloured as it is there:
 `Your balance +CRD 40.00`. When two of the card's numbers made it, it is
 written as their uncoloured difference first: `50.00 − 20.00 = +CRD 30.00`

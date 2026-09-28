@@ -351,10 +351,10 @@ words over figure, the figure sized to its own length in CSS alone (`.mysum`
 in `globals.css`), so a seven-digit sum shrinks rather than runs under the
 chevron. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
-no wash or coloured edge. The entry screen repeats a row's figure as
+no wash or coloured edge. An expense or income on the entry screen repeats its row's figure as
 its card's last line, "Your balance", written out as `effectSum` (the same
 subtraction) when you both paid and had a share, and marks your name with a
-muted `(you)`. What it looks like and why:
+faint `(you)`; a transfer shows neither. What it looks like and why:
 [design-system.md](design-system.md#your-own-rows-are-highlighted).
 
 ## Gotchas

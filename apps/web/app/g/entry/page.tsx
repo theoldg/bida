@@ -18,7 +18,7 @@ import { deleteExpense, deleteSettlement, restoreEntry } from "@/lib/db/commands
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
-import { effectSum, kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
+import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
@@ -228,7 +228,7 @@ function EntryScreen() {
 
           {expense
             ? <ExpenseDetail expense={expense} kind={kind} group={group} data={data} />
-            : <TransferDetail settlement={settlement!} group={group} data={data} />}
+            : <TransferDetail settlement={settlement!} data={data} />}
 
           {/* The one way into this entry's history: who made it, or how often
               it changed and who last. Quiet, since it is read more than it is
@@ -445,29 +445,22 @@ function ExpenseDetail({ expense, kind, group, data }: {
 }
 
 /** Two people and an arrow. There is nothing else to a transfer. */
-function TransferDetail({ settlement, group, data }: { settlement: Settlement; group: Group; data: GroupData }) {
+function TransferDetail({ settlement, data }: { settlement: Settlement; data: GroupData }) {
   const from = data.memberById.get(settlement.fromMember);
   const to = data.memberById.get(settlement.toMember);
-  const net = myEffect(data.me, { kind: "transfer", settlement });
   return (
     <div className="pad" style={{ paddingTop: 2 }}>
       <div className="card transfer">
         <span className="tside">
           <span className="eyebrow">{copy.entry.from}</span>
-          <span className="who">{from?.name ?? copy.none}{settlement.fromMember === data.me ? <You /> : null}</span>
+          <span className="who">{from?.name ?? copy.none}</span>
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
           <span className="eyebrow">{copy.entry.to}</span>
-          <span className="who">{to?.name ?? copy.none}{settlement.toMember === data.me ? <You /> : null}</span>
+          <span className="who">{to?.name ?? copy.none}</span>
         </span>
       </div>
-      {/* Handing money over moves you up by all of it; being paid, down. */}
-      {net !== 0 ? (
-        <div style={{ padding: "6px 2px 0" }}>
-          <YourBalance up={0} down={0} net={net} currency={group.baseCurrency} />
-        </div>
-      ) : null}
       {settlement.note ? (
         <p className="selectable" style={{ fontSize: 13, color: "var(--ink-2)", margin: "10px 2px 0" }}>
           {settlement.note}
