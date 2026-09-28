@@ -30,10 +30,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   icon mocks, each answering one terse note ("4 and 5 teeth", "a division
   symbol"), then "ship it". Keep the mock page; it becomes the spec.
 
-- *2026-09-28* — "How much of bida is stolen vs invented?" became a crit of
-  its looks, then "fix these two, show me, push". An honest verdict — most
-  features are Tricount's — landed fine; the owner wanted the eye, not praise.
-  A review question can turn into a to-do list in two turns.
+- *2026-09-28* — A stolen-vs-invented question turned into a crit, then
+  "make the names inked"; one push later, "actually quiet, to match the other
+  split modes and the payers box". I styled the one screen and never looked
+  at its siblings. Before changing a colour role, read where else it is worn.
 
 - *2026-09-27* — "I feel like we're making too many requests." I measured
   production, called it fine, and filed dev's 12k a day under "worth knowing".

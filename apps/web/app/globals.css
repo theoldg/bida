@@ -990,18 +990,15 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
 /* A list of people, each opening onto their own bill. Nothing drawn between
    them or under the open one — a name, a figure and the indented lines already
    separate them, and with every row open (quick split, ADR-0035) a wash picks
-   nobody out. Bleeds to the card's edges (`.card` pads 14px) so a pressed row
-   fills the row. */
+   nobody out. A name stays a muted key, open or shut, as the payer rows
+   above it and every other split mode's card write a person, so the turned
+   chevron alone marks an open row. Bleeds to the card's edges (`.card` pads
+   14px) so a pressed row fills the row. */
 .billgroup { margin: 0 -14px; padding: 0 14px }
 /* The pressed row fills the card's width, carrying the 14px itself so the text
    stays in line with the `.kv` rows above. */
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
   padding: 5px 14px; border-radius: var(--r-s) }
-/* Each row is a person, not one more muted key in the list, so the name is
-   inked open or shut: muted read as left out, which on the ledger it means.
-   Only the chevron says which rows are open. */
-.billgroup > .kv .k { color: var(--ink) }
-.billgroup.on > .kv .kvchev { color: var(--ink-2) }
 /* Indented under the row they belong to, and only as far as the chevron that
    opened it: the bill's own lines, not a second list of people. */
 .billlines { padding: 0 0 8px 10px; animation: billopen .13s ease-out }
