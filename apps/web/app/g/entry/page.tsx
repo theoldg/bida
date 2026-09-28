@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
@@ -360,7 +360,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
   const me = data.me;
   // One span, not a fragment: a scanned row's name sits in a flex box that
   // centres its children, which would float the smaller tag off the baseline.
-  const yours = (id: string, name: ReactNode) => (id === me ? <span>{name}<You /></span> : name);
+  // The tag goes on the name, before any detail: "Luke (you) · 2 parts".
+  const yours = (id: string, name: string, detail = "") =>
+    (id === me ? <span>{name}<You />{detail}</span> : `${name}${detail}`);
   // What each payer put in, in the base currency — the figure that actually
   // moves their balance, so it is the one worth showing next to their name.
   const putIn = resolvePayers(expense);
@@ -427,7 +429,7 @@ function ExpenseDetail({ expense, kind, group, data }: {
             : expense.split.mode === "percent"
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
-          const k = yours(m.id, `${m.name}${detail}`);
+          const k = yours(m.id, m.name, detail);
           const v = money(shares[m.id] ?? 0, group.baseCurrency);
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
