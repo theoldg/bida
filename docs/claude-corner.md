@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "give a chevron to the kind switch", then mid-edit "but show
+  me a few variants first". A one-line change still earned a look: stop, keep
+  the edit as one of the variants, and publish the lot before committing.
+
 - *2026-09-28* — "give it a good think and propose some designs", then "show
   me the tap feedback", then "ship it". Four variants, photographed in the app
   on the demo group so a row not yours was in frame. The press shot sold it:
@@ -67,11 +71,6 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   fragment ("less text", "bigger slogan", "lowercased, no period") before "go
   with L1, ship it". Every round kept the one thing picked and varied only
   what the note named.
-
-- *2026-09-28* — "The logo is a bit too large in circle icons." Five scales on
-  one page, in every launcher shape; the owner picked 72%, smaller than my
-  80%. Show the range and let the eye choose — then change only the icon that
-  gets cropped, not the master.
 
 - *2026-09-28* — "make sure the BUSY / worktree instruction is in place." The
   CLAUDE.md I was handed said worktree-always; dev already said BUSY. The main

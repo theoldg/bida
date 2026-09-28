@@ -542,7 +542,7 @@ function EditEntryScreen() {
           right={reachable.length > 1 ? (
             <button type="button" className="chip kindchip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")} {...keepsFocus}>
-              {copy.entryKind.label[kind]}
+              {copy.entryKind.label[kind]} <Icon name="chev" size={11} />
             </button>
           ) : undefined}
         />

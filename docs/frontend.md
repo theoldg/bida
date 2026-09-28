@@ -97,7 +97,7 @@ API is reached with `fetch`.
 - **Save is the last row of the form, and the kind is the top of it.** One
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
   screen has exactly one act; a save failure is said above it. The kind chip sits
-  at the top bar's right, a plain word in a box with no chevron: the box says it opens a choice.
+  at the top bar's right, a word and a chevron in a box, as the currency chip below it is.
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
   A grey button gives no reason, and a red line before any tap is unearned.
   Tapping

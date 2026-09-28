@@ -15,9 +15,6 @@ a user.
   split rows), a ✓ (People — which reads as "selected"), "(you)" (entry view),
   and a ✓ on the claim screen that does mean "selected". "(you)" is the only
   unambiguous one. *`members`, `group-balances`, `claim`*
-- **The kind switch doesn't look like a switch.** The Expense / Income /
-  Transfer button sits top-right with no chevron, next to EUR, which has one.
-  *`entry-expense`*
 
 ## Inconsistent
 
