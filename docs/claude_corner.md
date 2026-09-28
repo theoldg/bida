@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Don't read any documentation… review the design." Cold eyes
+  were the point, so the crit came from screenshots alone. Then three rounds of
+  icon mocks, each answering one terse note ("4 and 5 teeth", "a division
+  symbol"), then "ship it". Keep the mock page; it becomes the spec.
+
 - *2026-09-28* — "How much of bida is stolen vs invented?" became a crit of
   its looks, then "fix these two, show me, push". An honest verdict — most
   features are Tricount's — landed fine; the owner wanted the eye, not praise.
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   The ledger sorts by date, so the order is the dates: re-dated the seed.
   Dates don't move the seed's stamp, so the ops were reordered too, or old
   phones would keep the old tour. Check what a cosmetic ask invalidates.
-
-- *2026-09-25* — "Propose options" for a settle-up explainer. Four layouts
-  photographed, then the owner wrote the copy and asked to workshop it. The
-  fix that landed was seat, not words: put the reader where the example's
-  stranger is. Push throwaways off dev; the gate still read them.

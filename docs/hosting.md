@@ -199,7 +199,7 @@ Two Workers, two D1 databases, one repo. The differences are the name, the
 is byte-identical, so what production gets is a build that already ran on dev.
 So dev can't be mistaken for production on a phone, the dev Worker dresses that
 same export on the way out ([`dev-env.ts`](../apps/api/src/dev-env.ts)): it
-serves the DEV-stamped icons `pnpm icons` writes to `public/dev/` at the
+serves the blue-receipt icons `pnpm icons` writes to `public/dev/` at the
 ordinary icon URLs, and tags HTML `data-env="dev"`, which turns the
 balance colours blue and orange. An already-installed dev app keeps its old home-screen icon until it is
 reinstalled.

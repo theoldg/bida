@@ -27,40 +27,35 @@ console.log("logo.svg  (copied from design/brand)");
 
 /**
  * A maskable icon is cropped to whatever shape the launcher fancies — a circle
- * on most Androids — so the artwork is inset onto its own ground and only the
- * padding is allowed to be eaten. 72% is inside the 80% safe zone the spec
- * guarantees, with room for the mark's own asymmetry.
+ * on most Androids — and only what lies outside the central 80% circle may be
+ * eaten. The receipt's corners sit inside that circle by construction, so the
+ * maskable copy is the artwork as drawn: an inset would only shrink the mark.
  */
 const ICONS = [
-  { file: "icon-192.png", size: 192, scale: 1 },
-  { file: "icon-512.png", size: 512, scale: 1 },
-  { file: "icon-maskable-512.png", size: 512, scale: 0.72 },
+  { file: "icon-192.png", size: 192 },
+  { file: "icon-512.png", size: 512 },
+  { file: "icon-maskable-512.png", size: 512 },
 ];
 
-const GROUND = "#141517"; // the logo's own background, so the inset is invisible
-
 /**
- * The dev Worker's copies, stamped so a home screen holding both apps can tell
- * them apart. Ugly on purpose. They ship in every export, production's too, so
- * the build stays byte-identical; only the dev Worker ever serves them, at the
- * ordinary icon URLs (apps/api/src/dev-env.ts). The band sits inside the
- * artwork's box, so the maskable crop keeps it.
+ * The dev Worker's copies wear a blue receipt, so a home screen holding both
+ * apps can tell them apart with no word on the icon. They ship in every export,
+ * production's too, so the build stays byte-identical; only the dev Worker ever
+ * serves them, at the ordinary icon URLs (apps/api/src/dev-env.ts).
  */
-const STAMP = `<b style="position:absolute;left:-10%;right:-10%;top:50%;transform:translateY(-50%) rotate(-30deg);
-  background:#E0201B;color:#fff;font:900 22cqw/1.25 Arial Black,Arial,sans-serif;text-align:center;
-  letter-spacing:.06em;border-block:1.2cqw solid #fff">DEV</b>`;
+const PAPER = 'fill="#ececea"';
+if (svg.split(PAPER).length !== 2) throw new Error(`logo.svg must hold exactly one ${PAPER}: the receipt`);
+const devSvg = svg.replace(PAPER, 'fill="#86b4ea"');
 
 await mkdir(join(ROOT, "apps/web/public/dev"), { recursive: true });
 const browser = await launch();
 try {
-  for (const { file, size, scale } of ICONS) {
+  for (const { file, size } of ICONS) {
     for (const dev of [false, true]) {
       const page = await browser.newPage({ viewport: { width: size, height: size } });
       await page.setContent(
-        `<style>html,body{margin:0;width:${size}px;height:${size}px;background:${GROUND};overflow:hidden}
-         div{width:${scale * 100}%;height:${scale * 100}%;margin:${(1 - scale) * 50}% auto;
-           position:relative;container-type:size;overflow:hidden}
-         svg{display:block;width:100%;height:100%}</style><div>${svg}${dev ? STAMP : ""}</div>`,
+        `<style>html,body{margin:0;width:${size}px;height:${size}px;overflow:hidden}
+         svg{display:block;width:100%;height:100%}</style>${dev ? devSvg : svg}`,
       );
       const png = await page.screenshot({ omitBackground: false });
       const out = dev ? `dev/${file}` : file;

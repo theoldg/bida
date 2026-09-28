@@ -13,8 +13,8 @@ theme (Gotcha below). The
 three PNGs are rasterised from `design/brand/logo.svg` by `pnpm icons`, which
 also copies that file to `public/logo.svg` for the top-bar mark to point at —
 run it when the logo changes rather than editing any of the four; the maskable
-one insets the artwork to 72% on its own ground so a circular launcher crop
-can't clip it. iOS ignores
+one is the same artwork, because the receipt already sits inside the 80% circle
+a launcher crop may not eat. iOS ignores
 manifest `display` entirely; `appleWebApp.statusBarStyle` is its lever, and it
 is `"default"` so the page starts below the status bar (Gotcha below). The strip
 that leaves above the page is painted from **body's background**, so at phone

@@ -4,10 +4,10 @@
  * where `BIDA_ENV` is `"dev"` (`[env.dev]`).
  */
 
-/** The icons `pnpm icons` stamps with DEV, served at the ordinary URLs. */
+/** The blue-receipt icons `pnpm icons` writes to `public/dev/`, served at the ordinary URLs. */
 const DEV_ICONS = new Set(["/icon-192.png", "/icon-512.png", "/icon-maskable-512.png"]);
 
-/** The asset path to serve for a request path on dev: the stamped icon, or itself. */
+/** The asset path to serve for a request path on dev: the dev icon, or itself. */
 export function devAssetPath(pathname: string): string {
   return DEV_ICONS.has(pathname) ? `/dev${pathname}` : pathname;
 }
