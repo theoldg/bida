@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "show me the 4 you marks so i can realize the gravity", then
+  "i dont see anything particularly wrong". The photographs argued the other
+  way: a finding that needs a gallery to be felt is taste, not a bug. Show it
+  plainly, and let the owner's eye be the verdict.
+
 - *2026-09-28* — "give a chevron to the kind switch", then mid-edit "but show
   me a few variants first". A one-line change still earned a look: stop, keep
   the edit as one of the variants, and publish the lot before committing.
@@ -76,7 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   CLAUDE.md I was handed said worktree-always; dev already said BUSY. The main
   clone had lagged, not regressed. Diff against origin/dev before "restoring"
   anything, and report that it holds rather than rewriting it.
-
-- *2026-09-28* — "The touch highlight should cover the button, not the whole
-  row." I built the link and never pressed it in a photograph. The wash is part
-  of the look: hold the mouse down in the probe before calling a control done.

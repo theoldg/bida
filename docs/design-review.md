@@ -9,13 +9,6 @@ Taken from the 2026-09-28 shots, light and dark. Dark mode matched light
 throughout and passed every contrast check made. Ordered by what each one costs
 a user.
 
-## Confuses a person
-
-- **"You" is marked four ways.** A grey band with a left bar (ledger, balances,
-  split rows), a ✓ (People — which reads as "selected"), "(you)" (entry view),
-  and a ✓ on the claim screen that does mean "selected". "(you)" is the only
-  unambiguous one. *`members`, `group-balances`, `claim`*
-
 ## Inconsistent
 
 - **Two "Which one are you?" screens.** `/claim` has a centred heading, an "Add
