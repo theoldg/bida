@@ -17,7 +17,7 @@ import type { MemberLine } from "../lib/scan/items";
  * only `startOpen` and the figure format differ.
  */
 export function MemberBill({ name, total, lines, format, startOpen = false }: {
-  name: string;
+  name: React.ReactNode;
   total: React.ReactNode;
   lines: MemberLine[];
   format: (minor: number) => string;

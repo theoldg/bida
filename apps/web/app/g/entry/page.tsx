@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
-import { Card, Eyebrow, KV } from "@/components/bits";
+import { Card, Eyebrow, KV, signClass } from "@/components/bits";
 import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
@@ -18,7 +18,7 @@ import { deleteExpense, deleteSettlement, restoreEntry } from "@/lib/db/commands
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
-import { kindOf, type EntryKind } from "@/lib/entry-kind";
+import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
@@ -305,13 +305,60 @@ function EntryBy({ expense, kind, data }: {
   expense: Expense; kind: "expense" | "income"; data: GroupData;
 }) {
   const payers = payerList(expense);
-  const who = isCoSponsored(expense)
+  const several = isCoSponsored(expense);
+  const who = several
     ? plural(payers.length, copy.noun.person)
     : data.memberById.get(expense.paidBy)?.name ?? copy.someone;
+  // One payer has no row in the card, so when it is you this line is your row:
+  // the whole figure is what you put in, coloured as the card colours a payment.
+  const mine = !several && expense.paidBy === data.me;
   return (
     <div className="entryby">
-      <p>{copy.entry.byLead[kind]} <b>{who}</b></p>
+      <p>{copy.entry.byLead[kind]} <b>{who}</b>{mine ? <You /> : null}</p>
+      {mine ? (
+        <span className={kind === "income" ? "debit" : "credit"}>
+          {money(expense.baseAmountMinor, data.group?.baseCurrency ?? expense.currency)}
+        </span>
+      ) : null}
     </div>
+  );
+}
+
+/**
+ * Beside your own name. The colour on your amounts says which way they moved
+ * you, and this says whose they are — so colour is never the only signal.
+ */
+function You() {
+  return <span className="chip youtag">{copy.entry.you}</span>;
+}
+
+/** A figure with no currency code, for the middle of a sum that ends with one. */
+function bare(minor: number, currency: CurrencyCode): string {
+  const p = moneyParts(minor, currency);
+  return `${p.whole}${p.fraction}`;
+}
+
+/**
+ * The card's last line when you both paid and had a share, so your effect is
+ * two of the card's own numbers subtracted: "50.00 − 20.00 = CRD 30.00". With
+ * only one of them, that row is the effect already.
+ */
+function YourBalance({ kind, putIn, share, currency }: {
+  kind: "expense" | "income"; putIn: number; share: number; currency: CurrencyCode;
+}) {
+  const { up, down, net } = effectSum(kind, putIn, share);
+  return (
+    <>
+      <div className="hairline" />
+      <div className="kv yourbal">
+        <span className="k">{copy.entry.yourBalance}</span>
+        <span className="v">
+          <span className="credit">{bare(up, currency)}</span>{" − "}
+          <span className="debit">{bare(down, currency)}</span>{" = "}
+          <b className={signClass(net)}>{money(net, currency)}</b>
+        </span>
+      </div>
+    </>
   );
 }
 
@@ -324,6 +371,11 @@ function ExpenseDetail({ expense, kind, group, data }: {
   // (`billLabel`).
   const english = useBillEnglish();
   const coSponsored = isCoSponsored(expense);
+  const me = data.me;
+  // Your own rows, in the ledger's colours: green moved you up, red down. An
+  // expense's payment is up and its share down; an income's are the reverse.
+  const upOrDown = (paying: boolean) => ((kind === "income") === paying ? "debit" : "credit");
+  const yours = (id: string, name: ReactNode) => (id === me ? <>{name}<You /></> : name);
   // What each payer put in, in the base currency — the figure that actually
   // moves their balance, so it is the one worth showing next to their name.
   const putIn = resolvePayers(expense);
@@ -360,9 +412,11 @@ function ExpenseDetail({ expense, kind, group, data }: {
               const own = expense.payers?.[id] ?? 0;
               return (
                 <KV key={id}
-                  k={m?.name ?? copy.someone}
+                  k={yours(id, m?.name ?? copy.someone)}
                   v={<>
-                    {money(putIn[id] ?? 0, group.baseCurrency)}
+                    <span className={id === me ? upOrDown(true) : undefined}>
+                      {money(putIn[id] ?? 0, group.baseCurrency)}
+                    </span>
                     {foreign ? <span style={{ color: "var(--muted)" }}>
                       {" "}({money(own, expense.currency)})
                     </span> : null}
@@ -390,13 +444,21 @@ function ExpenseDetail({ expense, kind, group, data }: {
             : expense.split.mode === "percent"
               ? ` · ${(expense.split.bps[m.id] ?? 0) / 100}%`
               : "";
-          const k = `${m.name}${detail}`;
-          const v = money(shares[m.id] ?? 0, group.baseCurrency);
+          const k = yours(m.id, `${m.name}${detail}`);
+          const v = (
+            <span className={m.id === me ? upOrDown(false) : undefined}>
+              {money(shares[m.id] ?? 0, group.baseCurrency)}
+            </span>
+          );
           const lines = bill?.[m.id];
           if (!lines?.length) return <KV key={m.id} k={k} v={v} />;
           return <MemberBill key={m.id} name={k} total={v} lines={lines}
-            format={(minor) => money(minor, expense.currency)} startOpen={m.id === data.me} />;
+            format={(minor) => money(minor, expense.currency)} startOpen={m.id === me} />;
         })}
+        {me && (putIn[me] ?? 0) > 0 && participants.includes(me) && kind !== "transfer" ? (
+          <YourBalance kind={kind} putIn={putIn[me] ?? 0} share={shares[me] ?? 0}
+            currency={group.baseCurrency} />
+        ) : null}
       </Card>
     </div>
   );
@@ -412,11 +474,13 @@ function TransferDetail({ settlement, data }: { settlement: Settlement; data: Gr
         <span className="tside">
           <span className="eyebrow">{copy.entry.from}</span>
           <span className="who">{from?.name ?? copy.none}</span>
+          {settlement.fromMember === data.me ? <You /> : null}
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
           <span className="eyebrow">{copy.entry.to}</span>
           <span className="who">{to?.name ?? copy.none}</span>
+          {settlement.toMember === data.me ? <You /> : null}
         </span>
       </div>
       {settlement.note ? (

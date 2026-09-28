@@ -46,3 +46,14 @@ export function myEffect(
   const sign = entry.kind === "income" ? -1 : 1;
   return sign * (entry.putIn - entry.share);
 }
+
+/**
+ * `myEffect` written out as a sum, for the entry screen's "your balance" line:
+ * what moved you up, minus what moved you down, equals the effect. An
+ * expense's up is what you put in and its down your share; an income swaps
+ * them. Both parts are positive, so the one sign is the result's.
+ */
+export function effectSum(kind: "expense" | "income", putIn: number, share: number) {
+  const [up, down] = kind === "income" ? [share, putIn] : [putIn, share];
+  return { up, down, net: up - down };
+}

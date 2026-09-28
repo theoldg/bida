@@ -142,8 +142,8 @@ that is about you takes a translucent neutral wash laid *over* the list, plus a
 left-edge bar so it survives colour-blindness; the same wash marks pending sync,
 both meaning "this is about you, not the shared record". Neutral rather than
 tinted, so a row's own green or red stays the only colour on the line — and the
-*only* way you are marked, since a member is always printed by name, never as
-"You".
+*only* way you are marked, since a member is always printed by name, never
+replaced by "You".
 
 **The wash eats soft hairlines.** A `--rule-soft` line is invisible against it,
 so wherever a washed row abuts something — the row below it, or the split
@@ -154,6 +154,16 @@ one merged block.
 each would mark nothing: ledger rows are the plain rows of the groups list. What they did to your balance is said on the figure — `+€45,00`
 green, `−€14,28` red — and the exception is what the list marks: a row you are
 no part of drops to 58% opacity rather than disappearing.
+
+**On an entry, your amounts are coloured and your name carries "you".** A
+small `you` chip follows your name wherever the entry prints it: the one
+payer on the paid-by line, a payer row, a split row, a transfer's side. The
+amount beside it takes the ledger's colours unsigned: what moved you up is
+green, what moved you down red — an expense's payment and share, an income's
+the other way round. The chip is why this is not colour alone. When the one
+payer is you, the paid-by line is your payer row and carries the figure. When
+you both paid and had a share, the card ends in the sum that makes the
+ledger's figure: `your balance 50.00 − 20.00 = CRD 30.00` (`effectSum`).
 
 ## Nothing waits in silence
 

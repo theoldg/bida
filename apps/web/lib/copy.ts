@@ -854,6 +854,10 @@ export const copy = {
     rate: (rate: string) => `@ ${rate}`,
     /** The head's line under the figure: "paid by **Adaś**". */
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
+    /** Beside your own name, wherever the entry names you. */
+    you: "you",
+    /** Before the card's last line when you both paid and had a share. */
+    yourBalance: "your balance",
     /** "Split evenly" · "Split by items". */
     splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,

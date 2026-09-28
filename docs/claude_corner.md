@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — Six lens mocks drawn from memory, then "look at the
+  screenshots yourself and try a bit harder." The real screen had cases my
+  mocks never met: two payers, an income, a transfer. Prototype in the app
+  behind a switch and photograph every case before proposing.
+
 - *2026-09-28* — "I changed my mind because of edge cases, flush left the
   smaller line." Three days of subgrid and side-bearing pulls to line two
   figures' digits up, undone in one line. A clever alignment is a bet on
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   Timeouts were never short; each flake was a pause or a quiet moment standing
   in for the thing, plus nine chromiums on four cores. Ran verify five times
   before touching anything: a flake has to be caught red before it is fixed.
-
-- *2026-09-25* — "Do a doc staleness pass." The docs each commit touches
-  were current; the rot sat where no commit looks: a deferred table listing a
-  shipped feature, "seven browsers", a renamed constant, a comment older than
-  its rule. Grep the docs' names against the code first.

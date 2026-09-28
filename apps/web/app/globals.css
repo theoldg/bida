@@ -949,8 +949,13 @@ a { color: inherit; text-decoration: none }
 .entryamt .ccy.sym { font-size: 1em; margin-right: -.12em }
 .entryspent .sym { margin-right: -5px }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
-.entryby { margin-top: 10px; font-size: 13px; color: var(--muted) }
+.entryby { margin-top: 10px; font-size: 13px; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px }
+.entryby p { margin: 0 }
 .entryby b { color: var(--ink); font-weight: 600 }
+/* When the one payer is you, the line is your payer row, amount and all. */
+.entryby > .credit, .entryby > .debit { font-weight: 600; font-variant-numeric: tabular-nums;
+  white-space: nowrap }
 /* The link to the entry's history, above Edit: quiet text, not a button — it
    is read more often than pressed — but a thumb's height all the same.
    `--ink-2`, not `--muted`: at 12px the muted grey is under 4.5:1 on paper.
@@ -985,6 +990,14 @@ a { color: inherit; text-decoration: none }
   padding: 5px 0 }
 .kv .k { color: var(--muted) }
 .kv .v { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 13px }
+/* Your own amounts, coloured, beside a "you" that says whose they are. */
+.kv .v .credit, .kv .v .debit { font-weight: 600 }
+.youtag { margin-left: 6px; padding: 1px 5px; vertical-align: 1px }
+.tside .youtag { margin: 3px 0 0 }
+/* The sum under the card when you both paid and had a share. A long one drops
+   under its label rather than squeezing it. */
+.kv.yourbal { flex-wrap: wrap; row-gap: 2px }
+.kv.yourbal .v { margin-left: auto; white-space: nowrap }
 /* A person's row on a scanned expense opens onto what they had. It stays a
    `.kv` — same two columns, same baseline as the rows above it — so the card
    doesn't restack when one is pressed; only the chevron turns. */
