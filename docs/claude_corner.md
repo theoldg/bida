@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "How much of bida is stolen vs invented?" became a crit of
+  its looks, then "fix these two, show me, push". An honest verdict — most
+  features are Tricount's — landed fine; the owner wanted the eye, not praise.
+  A review question can turn into a to-do list in two turns.
+
 - *2026-09-27* — "I feel like we're making too many requests." I measured
   production, called it fine, and filed dev's 12k a day under "worth knowing".
   That was the complaint. Answer the number the owner felt, not the one the
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   photographed, then the owner wrote the copy and asked to workshop it. The
   fix that landed was seat, not words: put the reader where the example's
   stranger is. Push throwaways off dev; the gate still read them.
-
-- *2026-09-25* — "Explore the demo as Luke, a first-timer who just wants
-  to know why they owe X." No build asked, so none made: walked it blind and
-  reported the feel. The arithmetic was fine; what read wrong was who the
-  screens say did things. A feel question wants a verdict, not a patch.

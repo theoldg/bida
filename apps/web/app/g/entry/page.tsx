@@ -257,7 +257,7 @@ function EntryScreen() {
  */
 function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCode }) {
   const p = moneyParts(minor, currency);
-  const code = <span className={[...p.currency].length === 1 ? "ccy sym" : "ccy"}>{p.currency}</span>;
+  const code = <span className={isSymbol(p.currency) ? "ccy sym" : "ccy"}>{p.currency}</span>;
   return (
     <span className="bignum entryamt" style={{ "--chars": p.whole.length } as CSSProperties}>
       {p.currencyFirst ? code : null}
@@ -266,6 +266,9 @@ function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCod
     </span>
   );
 }
+
+/** "€" rather than "PLN": one glyph, which hugs its digits (`.entryamt .sym`). */
+const isSymbol = (currency: string) => [...currency].length === 1;
 
 /**
  * The sum as spent, and the rate that made it the figure above. Its code and
@@ -282,7 +285,7 @@ function EntrySpent({ minor, currency, rate }: { minor: number; currency: Curren
   }
   return (
     <span className="entryspent">
-      <span className="num">{p.currency}</span>
+      <span className={isSymbol(p.currency) ? "num sym" : "num"}>{p.currency}</span>
       <span className="spentfig">{figure}{chip}</span>
     </span>
   );
