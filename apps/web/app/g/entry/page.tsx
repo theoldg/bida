@@ -12,9 +12,9 @@ import { Card, Eyebrow, KV, signClass } from "@/components/bits";
 import { FitLine, FitTitle } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
-import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
-import { deleteExpense, deleteSettlement, restoreEntry } from "@/lib/db/commands";
+import { useDeleteEntry } from "@/components/delete-entry";
+import { restoreEntry } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
@@ -93,7 +93,10 @@ function EntryScreen() {
   // Ids are random, so the table it is in says which of the two it is.
   const expense = row && row.id in data.withTombstones.expenses ? row as Expense : undefined;
   const settlement = row && !expense ? row as Settlement : undefined;
-  const [asking, setAsking] = useState(false);
+  const del = useDeleteEntry({
+    groupId, me: data.me, kind: expense ? kindOf(expense) : "transfer", entryId: row?.id ?? "",
+    then: () => { if (groupId) router.replace(route.group(groupId)); },
+  });
   const [restoring, setRestoring] = useState(false);
   const arriving = useArriving(groupId, entryId, !!row);
 
@@ -159,13 +162,6 @@ function EntryScreen() {
     try { await restoreEntry(groupId, actor, entity, entry.id); } finally { setRestoring(false); }
   }
   const foreign = entry.currency !== group.baseCurrency;
-  async function remove() {
-    const actor = data.me;
-    if (!groupId || !entry || !actor) return;
-    if (expense) await deleteExpense(groupId, actor, expense.id);
-    else await deleteSettlement(groupId, actor, entry.id);
-    router.replace(route.group(groupId));
-  }
   // Blank until the log lands, a beat behind the row: a wrong name for a frame
   // is worse than none, and the link keeps its height either way.
   const historyLine = log?.creator ? historyMeta({
@@ -185,7 +181,7 @@ function EntryScreen() {
           sub={whenLabel(entry)}
           back={parent}
           right={deleted ? null : (
-            <button className="iconbtn" onClick={() => setAsking(true)} aria-label={copy.act.delete}>
+            <button className="iconbtn" onClick={del.ask} aria-label={copy.act.delete}>
               <Icon name="trash" size={18} />
             </button>
           )}
@@ -247,13 +243,7 @@ function EntryScreen() {
         </Scroll>
       </Body>
 
-      {asking ? (
-        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
-          confirm={copy.act.delete}
-          danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
-          <p>{copy.entry.deleteBody}</p>
-        </ConfirmDialog>
-      ) : null}
+      {del.dialog}
     </Screen>
   );
 }

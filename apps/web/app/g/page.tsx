@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
 } from "@bida/core";
-import { kindOf, myEffect } from "@/lib/entry-kind";
+import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
 import { signClass } from "@/components/bits";
 import {
   BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, TopBar,
 } from "@/components/chrome";
-import { ConfirmDialog } from "@/components/dialog";
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
 import { DemoCard } from "@/components/demo";
@@ -22,7 +21,7 @@ import { Icon } from "@/components/icons";
 import { useLongPressMenu } from "@/components/long-press";
 import { SyncBanner } from "@/components/sync-banner";
 import { copy } from "@/lib/copy";
-import { deleteExpense, deleteSettlement } from "@/lib/db/commands";
+import { useDeleteEntry } from "@/components/delete-entry";
 import { setLastOpenedGroup } from "@/lib/db/device";
 import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money } from "@/lib/format";
@@ -220,18 +219,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
   const mine = putIn !== 0 || involved;
   const participants = splitParticipants(expense.split).length;
   const foreign = expense.currency !== base;
-  const [asking, setAsking] = useState(false);
-
-  const router = useRouter();
-  const { hold, menu } = useLongPressMenu([
-    { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, expense.id, "ledger")) },
-    { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
-  ]);
-
-  async function remove() {
-    if (!me) return;
-    await deleteExpense(gid, me, expense.id);
-  }
+  const { hold, menu } = useEntryMenu(gid, me, kind, expense.id);
 
   return (
     <>
@@ -264,15 +252,22 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
       </Link>
 
       {menu}
-
-      {asking ? (
-        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label[kind].toLowerCase())}
-          confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
-          <p>{copy.entry.deleteBody}</p>
-        </ConfirmDialog>
-      ) : null}
     </>
   );
+}
+
+/**
+ * A ledger row's long press: edit, or delete after the question
+ * (`useDeleteEntry`). `menu` carries both the card and the question.
+ */
+function useEntryMenu(gid: string, me: string | undefined, kind: EntryKind, entryId: string) {
+  const router = useRouter();
+  const del = useDeleteEntry({ groupId: gid, me, kind, entryId });
+  const { hold, menu } = useLongPressMenu([
+    { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, entryId, "ledger")) },
+    { label: copy.act.delete, icon: "trash", danger: true, onSelect: del.ask },
+  ]);
+  return { hold, menu: <>{menu}{del.dialog}</> };
 }
 
 /**
@@ -285,18 +280,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
   const from = memberById.get(settlement.fromMember);
   const to = memberById.get(settlement.toMember);
   const myNet = myEffect(me, { kind: "transfer", settlement });
-  const [asking, setAsking] = useState(false);
-
-  const router = useRouter();
-  const { hold, menu } = useLongPressMenu([
-    { label: copy.act.edit, icon: "edit", onSelect: () => router.push(route.editEntry(gid, settlement.id, "ledger")) },
-    { label: copy.act.delete, icon: "trash", danger: true, onSelect: () => setAsking(true) },
-  ]);
-
-  async function remove() {
-    if (!me) return;
-    await deleteSettlement(gid, me, settlement.id);
-  }
+  const { hold, menu } = useEntryMenu(gid, me, "transfer", settlement.id);
 
   return (
     <>
@@ -319,13 +303,6 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
       </Link>
 
       {menu}
-
-      {asking ? (
-        <ConfirmDialog title={copy.entry.deleteTitle(copy.entryKind.label.transfer.toLowerCase())}
-          confirm={copy.act.delete} danger={true} onConfirm={remove} onClose={() => setAsking(false)}>
-          <p>{copy.entry.deleteBody}</p>
-        </ConfirmDialog>
-      ) : null}
     </>
   );
 }
