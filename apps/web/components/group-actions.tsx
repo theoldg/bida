@@ -17,8 +17,10 @@ import type { SheetAction } from "./row-menu";
  *
  * **Forgetting doesn't wait for a claim**: an unclaimed group is the one most
  * wanted off the list, and `forgetGroup` is purely local. The demo clears
- * instead: forgetting only hides, and a hidden demo with no link to reopen it is
- * a group that is gone and still on disk (lib/db/commands/demo.ts).
+ * instead: it has no link, so nothing it holds is anybody else's.
+ *
+ * **Leave first, then erase**: a ledger still on screen when its group goes
+ * would draw "bad link" for the one it was just told to forget.
  */
 export function useGroupActions(groupId: string, afterForget?: () => void): {
   copyLink: SheetAction[];
@@ -35,9 +37,9 @@ export function useGroupActions(groupId: string, afterForget?: () => void): {
   const label = demo ? copy.demo.clear : copy.members.forget;
 
   async function forget() {
+    afterForget?.();
     if (demo) await clearDemo();
     else await forgetGroup(groupId);
-    afterForget?.();
   }
 
   return {

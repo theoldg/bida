@@ -107,8 +107,8 @@ naming him is refused with nothing on screen saying why. On sync, a phone whose
 claimed member is tombstoned lifts it: *"Bruno came back"*.
 
 Unconditionally — not only where an entry contradicts the removal. **Forgetting
-is the exit that makes that safe**: a forgotten group is skipped by the sync
-loop (`sync.ts`) once its last ops are out, and forgetting drops the claim that
+is the exit that makes that safe**: a forgotten group is erased from the phone
+once its last ops are out ([sync.md](sync.md#a-forgotten-group-is-erased)), and forgetting drops the claim that
 heals, so a phone that accepts the removal stops syncing and stays gone, while a phone still using the ledger keeps its person. A removal the
 other side goes on refusing is not a removal, it is two people disagreeing, and
 a shared ledger is not where that gets settled.

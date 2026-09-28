@@ -7,7 +7,7 @@ import { keepNote, started } from "../diag";
 import { errorText } from "../format";
 import { pushMessages } from "../notify-copy";
 import { groupCrypto } from "../seal";
-import { eraseGroupLocally } from "./commands/groups";
+import { dropForgotten, eraseGroupLocally } from "./commands/groups";
 import { getDevice } from "./device";
 import { db, type StoredOp, type Unreadable } from "./dexie";
 import { VERSION } from "../version";
@@ -287,7 +287,11 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
     // ./visible.ts for why it waits.
     await whenVisible("sync.commit");
     const committed = started("sync.commit");
-    await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
+    const kept = await d.transaction("rw", [d.ops, d.groupKeys, d.device], async () => {
+      // Forgotten and erased while the request was out (`dropForgotten`):
+      // storing the answer would put back half a group with its key.
+      const current = await d.groupKeys.get(groupId);
+      if (!current) return false;
       for (const op of pending) {
         const seq = assigned[op.id];
         if (seq !== undefined) await d.ops.update(op.id, { seq, pending: 0 });
@@ -307,23 +311,24 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
           ...device, hlcPhysical: clock.physical, hlcCounter: clock.counter,
         });
       }
-      const current = await d.groupKeys.get(groupId);
       await d.groupKeys.put({
         ...current,
         groupId,
         secret: key.secret,
-        lastSeq: Math.max(latestSeq, current?.lastSeq ?? 0),
+        lastSeq: Math.max(latestSeq, current.lastSeq),
         // A group this phone never showed edits for starts with none to show:
         // what it pulls on joining is the group's past, not news.
-        seenSeq: current?.seenSeq ?? Math.max(latestSeq, current?.lastSeq ?? 0),
+        seenSeq: current.seenSeq ?? Math.max(latestSeq, current.lastSeq),
         lastSyncedAt: Date.now(),
         failure: undefined,
-        unreadable: skipped(rewinding ? undefined : current?.unreadable, unreadable, retryAt),
+        unreadable: skipped(rewinding ? undefined : current.unreadable, unreadable, retryAt),
       });
-    }).then(() => committed(), (err: unknown) => {
+      return true;
+    }).then((stored) => { committed(); return stored; }, (err: unknown) => {
       committed("failed");
       throw err;
     });
+    if (!kept) return undefined;
 
     since = Math.max(latestSeq, since);
     rewinding = false;
@@ -334,6 +339,12 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
   // Only now: a notification about an op still on this phone would open to
   // nothing on the phone it reaches. Its own failures are its own.
   await sendNotices(groupId, key.secret).catch((err: unknown) => keepNote("notify", errorText(err)));
+
+  // A forgotten group stays only until its last ops are out, and this run
+  // sent them. Nothing left to fold or heal.
+  if ((await getDevice()).leftGroups?.includes(groupId) && await dropForgotten(groupId)) {
+    return { pushed, pulled: pulledCount };
+  }
 
   // A pulled op can slot in before ops already folded — refold the whole group
   // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not
@@ -455,15 +466,18 @@ export function syncAll(): Promise<void> {
 
 async function runSyncAll(): Promise<void> {
   const keys = await db().groupKeys.toArray();
-  // A forgotten group keeps its secret — reopening the invite link un-forgets
-  // it — but it stops costing cellular data in the meantime. Without this,
-  // `forgetGroup` hides the row while its ops go on flowing in forever. Bar
-  // its last ops: the `push: null` that stops it buzzing this phone.
+  // A forgotten group still here has ops to push — the `push: null` that stops
+  // it buzzing this phone, or an edit made offline — and `syncGroup` erases it
+  // once they are out. One with none left is erased without asking the server:
+  // the one a phone forgot before erasing was what forgetting did.
   const left = new Set((await getDevice()).leftGroups ?? []);
   let anyFailure = false;
   for (const key of keys) {
-    if (left.has(key.groupId) && !(await hasPending(key.groupId))) continue;
     try {
+      if (left.has(key.groupId) && !(await hasPending(key.groupId))) {
+        await dropForgotten(key.groupId);
+        continue;
+      }
       await syncGroup(key.groupId);
     } catch {
       anyFailure = true;

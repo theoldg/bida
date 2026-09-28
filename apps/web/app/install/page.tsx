@@ -54,7 +54,8 @@ export default function InstallPage() {
  * A spent fragment is still a launch, and **`lib/launch.ts` answers it, not
  * this screen** — set `launchedOnto` and let the list decide.
  *
- * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`.
+ * **Nothing here un-forgets**: `saveGroupKey` would undo a `forgetGroup`, and
+ * a forgotten group's key is erased, so `leftGroups` is what says no.
  *
  * **`location.replace`, not the router**, for the hand-off to `/join`: Next's
  * router drops the fragment when it falls back to a full load
@@ -69,7 +70,7 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
       const [keys, device] = await Promise.all([db().groupKeys.toArray(), getDevice()]);
       const held = new Set(keys.map((key) => key.groupId));
       const left = new Set(device.leftGroups ?? []);
-      const fresh = invites.filter((invite) => !held.has(invite.groupId));
+      const fresh = invites.filter((invite) => !held.has(invite.groupId) && !left.has(invite.groupId));
       const naming = invites.filter((invite) => invite.me && !left.has(invite.groupId)
         && !(invite.groupId in device.meByGroup));
       if (cancelled) return;

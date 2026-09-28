@@ -51,7 +51,7 @@ heals right after it rebuilds: `healGroup` runs the registry to a fixed point
 and puts this phone's own member back if the merge removed them
 ([invariants.md](invariants.md)). It writes ordinary ops, which the next run
 pushes. A phone that hasn't claimed a member heals nothing — it has no honest
-name to sign with — and a forgotten group is never reached at all, which is
+name to sign with — and a forgotten group is erased rather than healed, which is
 what keeps a restored member from being an argument that runs forever.
 
 **A `create` writes no field it would only be defaulting.** The fold treats
@@ -212,7 +212,8 @@ copy of the group (`eraseGroupLocally`) and writes the id to
 the group was deleted rather than showing a group that quietly vanished. That is
 the only thing in this app that removes data instead of appending an op saying
 it was removed — [ADR-0002](decisions/0002-append-only-op-log.md) names it as
-its one exception.
+its one exception. Forgetting a group removes only this phone's copy of a log
+that lives on ([below](#a-forgotten-group-is-erased)).
 
 ## The sync engine
 
@@ -276,10 +277,6 @@ so the camera works there and the demo's id still reaches the server in
 nothing. `useScanAs` is the whole of that choice, and `pnpm demo` watches the
 requests to hold it.
 
-**A forgotten group is skipped**, not synced in the background forever. It
-keeps its secret, but not who this phone was in it: opening the invite link
-again un-forgets it and asks.
-
 **Every attempt is written down.** A success stamps `groupKeys.lastSyncedAt`
 and clears `failure`; a failure increments `failure.count` and keeps the HTTP
 status. `useSyncHealth` reads it back, and `/g` says so once `count` reaches 2
@@ -293,6 +290,19 @@ itself once the other phone syncs" up over a sync that never will.
 `navigator.onLine` answers a different question and only drives the "Offline"
 banner: it reports a link, not an answering server, so it is blind to exactly
 the outage that costs a trip its ledger.
+
+### A forgotten group is erased
+
+**Once its last ops are out** (`dropForgotten`): at once when nothing is
+pending, otherwise by the run that pushes them — the `push: null` that stops it
+buzzing this phone, or an edit made offline, which erasing first would lose for
+everybody. The check is inside the erase's own transaction, and a pull that
+lands after it stores nothing (the commit finds no key), so neither a write nor
+a sync in flight can be lost or half put back. **The id stays in
+`leftGroups`**: a home-screen icon carries every key its tab held
+([ios.md](ios.md#a-in-detail)), and without it the next launch would bring the
+group back. Opening the invite link again is a join, and asks who you are.
+A group an older build only hid is erased by the next `syncAll`.
 
 ## Conflicts
 

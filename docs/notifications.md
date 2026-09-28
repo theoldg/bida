@@ -77,9 +77,9 @@ only if it is still missing after.
 - **Showing** (`public/sw.js`) — always something, as both platforms demand;
   `renotify`, so a group's latest replaces its last and still buzzes; a tap
   focuses or opens the url, kept same-origin.
-- **Leaving** (`forgetGroup`) writes `push: null` first, and `syncAll` keeps
-  syncing a left group until its pending ops are out. That sync heals nothing:
-  forgetting drops the claim. Rejoining puts the subscription back.
+- **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept
+  on the phone until the sync that pushes it, then erased. That sync heals
+  nothing: forgetting drops the claim. Rejoining puts the subscription back.
 - **Not built:** a screen for `scope` ("everything" is readable, never written).
 
 ## Gotchas

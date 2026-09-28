@@ -120,7 +120,8 @@ One group nobody has named is the newcomer, and goes to `/join`, which names
 the group and waits out a first sync; everything else lands on the list. What
 the phone already holds is spent, so the icon is a door into the app rather
 than into one group forever, and nothing un-forgets: `saveGroupKey` would undo
-a `forgetGroup`. A launch the fragment has nothing left to give is an ordinary
+a `forgetGroup`, and a forgotten group's key is erased, so it is the id kept in
+`leftGroups` that turns the carried key away. A launch the fragment has nothing left to give is an ordinary
 one, so it says `launchedOnto` and the list reopens the group you were last in
 as it would for any other start (`lib/launch.ts`): the document never loads on
 the list here, so nothing about the address could tell.

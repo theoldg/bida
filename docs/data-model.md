@@ -97,15 +97,19 @@ and nowhere else ([ADR-0033](decisions/0033-every-word-in-one-file.md)).
   thing that tombstones one, People never puts a trash button on your own row,
   and there is no un-claim — so the actor on a member delete is never its
   subject, and history has no sentence for it.
-- Forgetting a group (`device.leftGroups`) is local — no tombstone, and no
-  op but a subscribed phone's `push: null`
-  ([notifications.md](notifications.md)) — so it drops off *your* list without
-  touching membership or the group itself, and **needs no claim**: a group this
-  phone never said who it was in is the one it most wants off the list, and
-  there is nothing an unclaimed phone lacks to do it. Groups are never deleted. It also
-  drops this phone's `meByGroup` entry, so opening the invite link again clears
-  the hide and asks who you are; answering writes an identity `update` over
-  the claim the log still holds.
+- Forgetting a group is local — no tombstone, and no op but a subscribed
+  phone's `push: null` ([notifications.md](notifications.md)) — so it takes the
+  group off *this phone* without touching membership or the group itself, and
+  **needs no claim**: a group this phone never said who it was in is the one it
+  most wants off the list, and there is nothing an unclaimed phone lacks to do
+  it. **It erases, not hides** — ops, folded tables, secret and claim — as soon
+  as nothing of the group is left to push; an offline edit or that `push: null`
+  keeps it, hidden, until the sync that sends them
+  ([sync.md](sync.md#a-forgotten-group-is-erased)). Keeping more bought nothing:
+  no screen lists forgotten groups, and the invite link that would bring one
+  back re-downloads it anyway. Only the bare id stays, in `device.leftGroups`.
+  Opening the link again is a join: it asks who you are, and answering writes
+  an identity `update` over the claim the log still holds.
 - The UI (not `removeMember` itself) refuses to remove someone else while
   `memberInvolved` (payers.ts) still finds them on a live entry of **either**
   kind — a payer or split participant on an expense, or a side of a transfer.

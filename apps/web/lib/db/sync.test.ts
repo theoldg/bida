@@ -3,7 +3,7 @@ import { deriveGroupCrypto, foldOps, openOp, sealOp, type Op, type SealedOp } fr
 import { db } from "./dexie";
 import { formatHlc, createHlcState } from "@bida/core";
 import { addExpense, addMember, createGroup, forgetGroup, markEditsSeen, saveGroupKey } from "./commands";
-import { getDevice } from "./device";
+import { getDevice, updateDevice } from "./device";
 import {
   IDLE_MS, SWEEP_MS, TICK_MS, groupOnScreen, planTick, startSyncLoop, syncAll, syncGroup,
 } from "./sync";
@@ -593,9 +593,11 @@ describe("syncAll", () => {
   beforeEach(wipe);
   afterEach(() => vi.unstubAllGlobals());
 
-  it("leaves a forgotten group alone once its last ops are out", async () => {
+  it("erases a forgotten group once its last ops are out", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     await forgetGroup(groupId);
+    // Still to push, so still here.
+    expect(await db().groupKeys.get(groupId)).toBeDefined();
     let seq = 0;
     const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
       const body = JSON.parse(init.body as string) as { ops: { id: string }[] };
@@ -607,8 +609,39 @@ describe("syncAll", () => {
     // What it wrote before leaving still goes — a `push: null` among it.
     await syncAll();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(await db().groupKeys.get(groupId)).toBeUndefined();
+    expect(await db().ops.where("groupId").equals(groupId).count()).toBe(0);
     await syncAll();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("erases a group forgotten before forgetting erased, without asking the server", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    await db().ops.toCollection().modify({ pending: 0 });
+    // What an older build's forget left: hidden, and everything still on disk.
+    await updateDevice({ leftGroups: [groupId] });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await syncAll();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(await db().groupKeys.get(groupId)).toBeUndefined();
+    expect(await db().groups.get(groupId)).toBeUndefined();
+  });
+
+  it("doesn't put back a group erased while its pull was out", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+    await db().ops.toCollection().modify({ pending: 0 });
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      // Forgotten while the request is in the air.
+      await forgetGroup(groupId);
+      return new Response(JSON.stringify({ assigned: {}, ops: [], latestSeq: 7 }), { status: 200 });
+    }));
+
+    expect(await syncGroup(groupId)).toBeUndefined();
+
+    expect(await db().groupKeys.get(groupId)).toBeUndefined();
   });
 
   it("picks a forgotten group back up once its invite link is opened again", async () => {

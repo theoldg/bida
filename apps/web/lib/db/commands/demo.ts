@@ -73,9 +73,9 @@ export async function wantsDemo(): Promise<boolean> {
 
 /**
  * Take the demo off the phone: its ops, its folded tables and the device's
- * memory of it. **`eraseGroupLocally`, never `forgetGroup`** — forgetting only
- * hides, leaving it on disk with no link to bring it back. Reset is this then
- * `openDemo`.
+ * memory of it. **`eraseGroupLocally`, never `forgetGroup`** — forgetting
+ * waits for the group's ops to reach the server, and the demo's never do.
+ * Reset is this then `openDemo`.
  */
 export async function clearDemo(): Promise<void> {
   await eraseGroupLocally(DEMO_GROUP_ID);

@@ -112,7 +112,8 @@ export async function saveGroupKey(groupId: Id, secret: string): Promise<void> {
  * to bring along (docs/ios.md).
  *
  * The secrets, not the groups: one just accepted has its key before its ops.
- * **Leave out forgotten groups** — the key outlives `forgetGroup`.
+ * **Leave out forgotten groups** — one with ops still to push keeps its key
+ * until the sync that sends them.
  *
  * `first` goes at the head. Reads only — no `getDevice`, which creates the
  * row — so a live query can run it.
@@ -133,12 +134,18 @@ export async function heldInvites(first?: Id): Promise<CarriedGroup[]> {
 }
 
 /**
- * Forget a group on this phone: hide it from this device's list and drop
- * which member this phone is. Local but for one op: a subscribed phone writes
- * `push: null` first, or the group goes on buzzing it (docs/notifications.md) —
- * `syncAll` pushes a left group's last ops. Opening the invite link again
- * (`saveGroupKey`) un-forgets it, and the claim gate asks who holds the phone,
- * since that may have changed; the claim puts the subscription back.
+ * Forget a group on this phone: take it off this device, ops, secret and all.
+ * Local but for one op: a subscribed phone writes `push: null` first, or the
+ * group goes on buzzing it (docs/notifications.md).
+ *
+ * **Erased only once nothing of it is left to push** — an offline edit, or
+ * that `push: null`, would otherwise never reach the others. Until then it is
+ * hidden (`leftGroups`) and the sync that sends its last ops erases it
+ * (`dropForgotten`). Its bare id stays in `leftGroups`, the one thing that
+ * keeps a home-screen icon's carried key from bringing it back
+ * (app/install/page.tsx). Opening the invite link again brings it back as a
+ * join does, and the claim gate asks who holds the phone, since that may have
+ * changed.
  */
 export async function forgetGroup(groupId: Id): Promise<void> {
   const device = await getDevice();
@@ -149,6 +156,17 @@ export async function forgetGroup(groupId: Id): Promise<void> {
     }]);
   }
   await hideGroup(groupId);
+  await dropForgotten(groupId);
+}
+
+/**
+ * Erase a forgotten group if nothing of it is left to push. Checked inside the
+ * erase's own transaction, so a write landing meanwhile keeps it for the next
+ * sync, and a link opened meanwhile (`unhideGroup`) keeps it for good.
+ * Whether it went.
+ */
+export function dropForgotten(groupId: Id): Promise<boolean> {
+  return erase(groupId, false);
 }
 
 /**
@@ -157,14 +175,26 @@ export async function forgetGroup(groupId: Id): Promise<void> {
  * `deletedGroups` so screens can say what happened.
  *
  * Runs only when the server deleted the group (`/delete-my-data`, or a 410 in
- * sync) — the one event that is not an op. Nothing is appended.
+ * sync) — the one event that is not an op — or to clear the demo. Nothing is
+ * appended.
  */
 export async function eraseGroupLocally(groupId: Id): Promise<void> {
+  await erase(groupId, true);
+}
+
+async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
   const d = db();
-  await d.transaction("rw", [
+  const gone = await d.transaction("rw", [
     d.ops, d.groups, d.members, d.expenses, d.settlements,
-    d.attachments, d.identities, d.rates, d.groupKeys, d.notices,
+    d.attachments, d.identities, d.rates, d.groupKeys, d.notices, d.device,
   ], async () => {
+    if (!deleted) {
+      const [device, queued] = await Promise.all([
+        d.device.get("device"),
+        d.ops.where("groupId").equals(groupId).and((op) => op.pending === 1).count(),
+      ]);
+      if (!device?.leftGroups?.includes(groupId) || queued > 0) return false;
+    }
     await Promise.all([
       d.ops.where("groupId").equals(groupId).delete(),
       d.members.where("groupId").equals(groupId).delete(),
@@ -177,18 +207,25 @@ export async function eraseGroupLocally(groupId: Id): Promise<void> {
       d.groupKeys.delete(groupId),
       d.notices.where("groupId").equals(groupId).delete(),
     ]);
+    return true;
   });
+  if (!gone) return false;
 
   // The device record has one writer (../device.ts), so it is patched after
-  // the transaction rather than inside it.
+  // the transaction rather than inside it — which only reads it.
   const device = await getDevice();
   const { [groupId]: _gone, ...meByGroup } = device.meByGroup;
   await updateDevice({
     meByGroup,
-    leftGroups: (device.leftGroups ?? []).filter((id) => id !== groupId),
-    deletedGroups: [...new Set([...(device.deletedGroups ?? []), groupId])],
+    // A forgotten id stays in `leftGroups`: a home-screen icon still carries
+    // the key, and would bring the group back on its next launch otherwise.
+    ...(deleted ? {
+      leftGroups: (device.leftGroups ?? []).filter((id) => id !== groupId),
+      deletedGroups: [...new Set([...(device.deletedGroups ?? []), groupId])],
+    } : {}),
     ...(device.lastOpenedGroupId === groupId ? { lastOpenedGroupId: undefined } : {}),
   });
+  return true;
 }
 
 // -------------------------------------------------------------- identity

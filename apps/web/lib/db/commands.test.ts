@@ -578,7 +578,31 @@ describe("commands", () => {
     await assertMaterialisedMatchesLog(groupId);
   });
 
-  it("forgetting a group only hides it on this phone — no op, membership untouched, claim dropped", async () => {
+  it("forgetting a group with nothing left to push erases it from this phone, and the link brings it back", async () => {
+    const { groupId } = await trip();
+    const secret = (await db().groupKeys.get(groupId))!.secret;
+    await db().ops.toCollection().modify({ pending: 0 });
+
+    await forgetGroup(groupId);
+
+    for (const table of [db().ops, db().members, db().expenses, db().identities] as const) {
+      expect(await table.where("groupId").equals(groupId).count()).toBe(0);
+    }
+    expect(await db().groups.get(groupId)).toBeUndefined();
+    expect(await db().groupKeys.get(groupId)).toBeUndefined();
+    expect(await getMe(groupId)).toBeUndefined();
+    // Only the bare id is kept, so a home-screen icon's carried key can't
+    // bring it back — and it is not "deleted", which is a different screen.
+    const device = await getDevice();
+    expect(device.leftGroups).toContain(groupId);
+    expect(device.deletedGroups ?? []).not.toContain(groupId);
+
+    await saveGroupKey(groupId, secret);
+    expect(await db().groupKeys.get(groupId)).toBeDefined();
+    expect((await getDevice()).leftGroups).not.toContain(groupId);
+  });
+
+  it("forgetting a group with ops still to push only hides it — no op, membership untouched, claim dropped", async () => {
     const { groupId, theo, marie } = await trip();
     const before = await db().ops.count();
 

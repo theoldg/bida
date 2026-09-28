@@ -294,8 +294,8 @@ export interface GroupSummary {
  * first sync. A home-screen icon arrives carrying its invites (docs/ios.md),
  * and without this its first launch shows the empty state.
  *
- * **Count keys against groups, minus `leftGroups`** — forgetting a group keeps
- * its key, so keys alone would wait forever.
+ * **Count keys against groups, minus `leftGroups`** — a forgotten group with
+ * ops still to push keeps its key until they go.
  */
 export function useArrivingGroups(): number | undefined {
   return useLive("arrivingGroups", async () => {
