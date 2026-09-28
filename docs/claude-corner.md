@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "scan the repo for things that are very similar", then "fix
+  everything". "Everything" meant my list minus what I had argued stays apart;
+  merging is where the bugs surface (an import failure never shown). Name what
+  was left separate, and why, in the summary.
+
 - *2026-09-28* — "fix the +1 other finding", then mid-turn "also remove the
   start again button". My crit had said move it; the owner said remove. The
   later, blunter word wins: take it, and drop the crit's item with it.
@@ -76,9 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-28* — "Go around the app and visually critique the screens", then
   "commit these to a file somewhere in docs." A crit said once in chat is
   lost at /clear; name each finding's shot so the next session can see it.
-
-- *2026-09-28* — A screenshot of the payers screen: "swap the quiet corner
-  Done for a large inked button, like other screens." One of the list the
-  design system names had been left out. Next round: "stick it like the
-  who-are-you screen." Copy the nearest sibling's whole behaviour, not its look.
-
