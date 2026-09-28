@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "I changed my mind because of edge cases, flush left the
+  smaller line." Three days of subgrid and side-bearing pulls to line two
+  figures' digits up, undone in one line. A clever alignment is a bet on
+  every locale and symbol; the margin never loses it.
+
 - *2026-09-28* — "Two history buttons", from an audit I never saw: named what
   it meant from the code, mocked five, then "iterate: a quiet link above Edit",
   five more, then the spec in two lines. The second round was the owner's
@@ -78,8 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   were current; the rot sat where no commit looks: a deferred table listing a
   shipped feature, "seven browsers", a renamed constant, a comment older than
   its rule. Grep the docs' names against the code first.
-
-- *2026-09-25* — "Maybe just load them as split from the get go?" A fold
-  that wrote "6 items → 7 items". Took the suggestion, then asked what it left:
-  bills already saved. The owner's fix is the direction; the old data is on
-  me. Split on arrival, on grid open, and history reads bills as printed.

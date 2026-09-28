@@ -269,9 +269,10 @@ size off the whole part's length, never under 28px) rather than wrapping
 mid-number. The sum as spent, when it was spent in another currency, is a
 13px muted line under it, not beside it — beside, it read as a third part of
 the same figure — with the rate chip that made it the figure above at its end.
-The two share columns (a subgrid), so their digits start at one edge and the
-codes stack — the ink's edge, not the box's: a side bearing grows with the
-size, so the big figure is pulled left by the difference (`.entryamt .whole`).
+It starts flush at the left margin, one run of text: sharing the figure's
+columns so the two sets of digits lined up broke on the edge cases (a symbol
+over a code, a code on the trailing side), and the margin is an edge every
+case has.
 
 On an expense or income a `--rule` hairline closes the figure off and one line
 under it says who — "paid by **Adaś**" — so the card below is only the split,

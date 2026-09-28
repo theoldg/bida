@@ -280,22 +280,18 @@ function EntryFigure({ minor, currency }: { minor: number; currency: CurrencyCod
 const isSymbol = (currency: string) => [...currency].length === 1;
 
 /**
- * The sum as spent, and the rate that made it the figure above. Its code and
- * digits sit in the figure's two columns (`.entryfig`), so the digits of both
- * start at one edge. Where the locale puts the code last the digits already
- * start at the margin, so it is one run of text.
+ * The sum as spent, and the rate that made it the figure above: one run of
+ * text from the left margin, the code on whichever side the locale puts it.
  */
 function EntrySpent({ minor, currency, rate }: { minor: number; currency: CurrencyCode; rate: string }) {
   const p = moneyParts(minor, currency);
-  const figure = <span className="num">{p.whole}{p.fraction}</span>;
-  const chip = <span className="chip">{rate}</span>;
-  if (!p.currencyFirst) {
-    return <span className="entryspent trail">{figure}<span className="num">{p.currency}</span>{chip}</span>;
-  }
+  const code = <span className={isSymbol(p.currency) ? "num sym" : "num"}>{p.currency}</span>;
   return (
     <span className="entryspent">
-      <span className={isSymbol(p.currency) ? "num sym" : "num"}>{p.currency}</span>
-      <span className="spentfig">{figure}{chip}</span>
+      {p.currencyFirst ? code : null}
+      <span className="num">{p.whole}{p.fraction}</span>
+      {p.currencyFirst ? null : code}
+      <span className="chip">{rate}</span>
     </span>
   );
 }
