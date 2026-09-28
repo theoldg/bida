@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "back should take me where i came from", then mid-work "if
+  the results are the same page as the picker, they probably shouldnt". I was
+  patching back inside one page; the owner saw it wanted to be two routes.
+  When back needs special handling, ask whether the step is a screen.
+
 - *2026-09-28* — "scan the repo for things that are very similar", then "fix
   everything". "Everything" meant my list minus what I had argued stays apart;
   merging is where the bugs surface (an import failure never shown). Name what
@@ -77,7 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   1px radii copied from nowhere; the owner caught it, then picked the pip I had
   argued for in words. Mock in the design system's own terms, and when asked
   "how do you like X", answer with a stance and its one catch.
-
-- *2026-09-28* — "Go around the app and visually critique the screens", then
-  "commit these to a file somewhere in docs." A crit said once in chat is
-  lost at /clear; name each finding's shot so the next session can see it.

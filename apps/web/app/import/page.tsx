@@ -1,66 +1,55 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import {
-  ImportError, plannedCount, readCsvGroup, readTricount, type ImportPlan,
-} from "@bida/core";
+import { ImportError, readCsvGroup, readTricount, type ImportPlan } from "@bida/core";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
-import { CreateAs } from "@/components/create-as";
 import { copy } from "@/lib/copy";
-import { currencyLabel } from "@/lib/currencies";
-import { importGroup } from "@/lib/db/commands";
-import { dayStart, errorText, plural } from "@/lib/format";
+import { dayStart, errorText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { groupNameFrom, looksLikeCsv, parseCsv, tooBig } from "@/lib/import/csv";
+import { keepLink, setPendingImport, typedLink } from "@/lib/import/pending";
 import {
   fetchTricount, TricountDownError, TricountOfflineError, tricountKey,
 } from "@/lib/import/tricount";
-import { useRefusal } from "@/lib/refusal";
 
 /**
  * Somebody else's ledger as a group of ours. Reached only from the groups
  * list's kebab, since what it makes is a group.
  *
- * **Three steps, and the source is read on the first**: pick or fetch, look at
- * what was found, say which person you are. Reading writes nothing, so the
- * entry count, currency and skipped rows are on screen before any op exists.
+ * **Three steps, and the source is read on the first**: pick or fetch here,
+ * then `/import/plan` shows what was found and asks which person you are.
+ * Reading writes nothing, so the entry count, currency and skipped rows are on
+ * screen before any op exists.
  *
  * **Two sources, one readout.** A file or a Tricount link both become an
- * `ImportPlan`, and past that the screen can't tell which it was
+ * `ImportPlan`, and past that the app can't tell which it was
  * (docs/data-model.md#reading-a-tricount-back).
  *
  * **Refused whole, or not at all.** A ledger missing one entry balances to
  * something nobody can account for, so a refusal names what to change
  * (`copy.importData.refused`).
- *
- * **The who question is the join screen's**, add row included: a name the
- * source doesn't hold joins the group owing nothing.
  */
 export default function ImportPage() {
+  const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
-  const [link, setLink] = useState("");
+  const [link, setLink] = useState(typedLink);
   const [fetching, setFetching] = useState(false);
-  const [plan, setPlan] = useState<ImportPlan>();
-  const [name, setName] = useState("");
   const [why, setWhy] = useState<string>();
-  const [asking, setAsking] = useState(false);
-  /** The name field, which is the one thing on this screen a person types. */
-  const nameFlash = useRefusal();
 
   const words = copy.importData;
 
-  /** A plan on screen, however it was read. `suggestion` is used when the source has no name of its own. */
+  /** A plan read, however: onto its own screen. `suggestion` is used when the source has no name of its own. */
   function adopt(found: ImportPlan, suggestion: string) {
     setWhy(undefined);
-    setPlan(found);
     // A tricount states its own title; a spreadsheet's is a guess off the
     // filename. Both land in the same editable field.
-    setName(found.title?.trim() || suggestion);
+    setPendingImport({ plan: found, name: found.title?.trim() || suggestion });
+    router.push(route.importPlan());
   }
 
   /** A refusal on screen, and no plan. */
   function refuse(err: unknown) {
-    setPlan(undefined);
     // Every refusal either reader raises carries a code, and the sentence for
     // it lives in copy.ts (ADR-0033). Anything else is a real fault.
     setWhy(err instanceof ImportError
@@ -84,24 +73,14 @@ export default function ImportPage() {
    */
   async function fetchLink() {
     const key = tricountKey(link);
-    if (!key) {
-      setPlan(undefined);
-      setWhy(words.notTricount);
-      return;
-    }
+    if (!key) return setWhy(words.notTricount);
     setFetching(true);
     try {
       adopt(readTricount(await fetchTricount(key), { dayToTimestamp: dayStart }), "");
     } catch (err) {
-      if (err instanceof TricountOfflineError) {
-        setPlan(undefined);
-        setWhy(words.tricountOffline);
-      } else if (err instanceof TricountDownError) {
-        setPlan(undefined);
-        setWhy(words.tricountDown);
-      } else {
-        refuse(err);
-      }
+      if (err instanceof TricountOfflineError) setWhy(words.tricountOffline);
+      else if (err instanceof TricountDownError) setWhy(words.tricountDown);
+      else refuse(err);
     } finally {
       setFetching(false);
     }
@@ -110,34 +89,11 @@ export default function ImportPage() {
   async function chosen(picked: FileList | null) {
     const one = picked?.[0];
     if (!one) return;
-    setPlan(undefined);
     if (!looksLikeCsv(one)) return setWhy(words.notFile);
     // Asked of the size and not of the read: a mis-picked video would
     // otherwise be decoded into a string first, on the phone, to be refused.
     if (tooBig(one.size)) return setWhy(words.tooBig);
     read(await one.text(), groupNameFrom(one.name));
-  }
-
-  /** The group's name is the one thing the file cannot tell us, so it is asked. */
-  function next() {
-    if (name.trim().length === 0) {
-      nameFlash.refuse();
-      return;
-    }
-    setAsking(true);
-  }
-
-  if (asking && plan) {
-    return (
-      <CreateAs title={words.named(name.trim())} names={plan.members}
-        // Asked even with one person: the answer is the actor on every op.
-        picked={plan.members.length === 1 ? plan.members[0] : undefined}
-        // Onto the plan, so the group is written with them as a member.
-        onAdd={(who) => setPlan({ ...plan, members: [...plan.members, who] })}
-        onBack={() => setAsking(false)}
-        create={async (me) => (await importGroup(plan, { name: name.trim(), myName: me })).groupId}
-        failedText={words.failed} />
-    );
   }
 
   return (
@@ -148,7 +104,7 @@ export default function ImportPage() {
           <div className="pad about">
             <section className="aboutsect">
               {/* The OS picker behind a button of ours — a bare file input can't be
-                  styled. Always mounted: it is how a second file is chosen. */}
+                  styled. */}
               <input ref={file} type="file" accept=".csv,text/csv,text/plain"
                 style={{ display: "none" }}
                 onChange={(e) => {
@@ -158,96 +114,38 @@ export default function ImportPage() {
                   e.target.value = "";
                 }} />
 
-              {/* Once a plan is on screen it is the screen: the ways in go,
-                  and the bar's back arrow is the way out of a plan not wanted. */}
-              {plan ? null : (
-                <>
-                  <p>{words.lede}</p>
+              <p>{words.lede}</p>
 
-                  <div style={{ paddingTop: 12 }}>
-                    <button type="button" className="btn btn-p" onClick={() => file.current?.click()}>
-                      {words.pick}
-                    </button>
-                  </div>
+              <div style={{ paddingTop: 12 }}>
+                <button type="button" className="btn btn-p" onClick={() => file.current?.click()}>
+                  {words.pick}
+                </button>
+              </div>
 
-                  {/* Tricount has no export button, so the link is the only way in from it.
-                      The link is full authority over that tricount, so it goes through our
-                      Worker in a POST body, never a URL (apps/api/src/tricount.ts). */}
-                  <p className="hint" style={{ marginTop: 14 }}>{words.orTricount}</p>
-                  <input className="linkbox selectable" type="url" value={link}
-                    aria-label={words.orTricount} placeholder={words.tricountPlaceholder}
-                    inputMode="url" enterKeyHint="go"
-                    autoCapitalize="none" autoCorrect="off" spellCheck={false}
-                    onChange={(e) => setLink(e.target.value)} />
-                  <button type="button" className="btn btn-s" style={{ marginTop: 8 }}
-                    disabled={fetching || link.trim().length === 0}
-                    onClick={() => void fetchLink()}>
-                    {fetching ? words.fetching : words.fetch}
-                  </button>
-                  {/* Under the button and not above the field: it is about
-                      what the press does, and a person who never presses it
-                      never had a link to give away. */}
-                  <p className="fineprint">{words.fineprint}</p>
-                </>
-              )}
+              {/* Tricount has no export button, so the link is the only way in from it.
+                  The link is full authority over that tricount, so it goes through our
+                  Worker in a POST body, never a URL (apps/api/src/tricount.ts). */}
+              <p className="hint" style={{ marginTop: 14 }}>{words.orTricount}</p>
+              <input className="linkbox selectable" type="url" value={link}
+                aria-label={words.orTricount} placeholder={words.tricountPlaceholder}
+                inputMode="url" enterKeyHint="go"
+                autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                onChange={(e) => { setLink(e.target.value); keepLink(e.target.value); }} />
+              <button type="button" className="btn btn-s" style={{ marginTop: 8 }}
+                disabled={fetching || link.trim().length === 0}
+                onClick={() => void fetchLink()}>
+                {fetching ? words.fetching : words.fetch}
+              </button>
+              {/* Under the button and not above the field: it is about
+                  what the press does, and a person who never presses it
+                  never had a link to give away. */}
+              <p className="fineprint">{words.fineprint}</p>
 
               {why ? <Failure>{why}</Failure> : null}
             </section>
-
-            {plan ? (
-              <section className="aboutsect">
-                <h4>{words.found}</h4>
-                {/* A readout, so it is rows and not a paragraph: these are
-                    four numbers to be checked against a spreadsheet, and a
-                    sentence makes them be read rather than compared. */}
-                <div className="rows">
-                  {/* A count, not the names: the row is labelled, the names
-                      are on the next screen, and a group of twelve wrapped
-                      into four lines of comma-separated text. */}
-                  <Fact label={words.people} value={String(plan.members.length)} />
-                  <Fact label={words.currency} value={currencyLabel(plan.currency)} />
-                  <Fact label={words.entries} value={String(plan.entries.length)} />
-                  {plan.transfers.length > 0
-                    ? <Fact label={words.transfers} value={String(plan.transfers.length)} />
-                    : null}
-                </div>
-                {plan.dropped.length > 0
-                  ? <p className="keynote">{words.dropped(plural(plan.dropped.length, copy.noun.row))}</p>
-                  : null}
-
-                <div className={`field${nameFlash.flash}`} style={{ marginTop: 14 }}
-                  onAnimationEnd={nameFlash.onFlashEnd}>
-                  <label htmlFor="i-name">{copy.newGroup.name}</label>
-                  {/* Prefilled off the filename, because Splitwise names the
-                      export after the group, and editable because a file a
-                      mail client renamed says nothing about the trip. */}
-                  <input id="i-name" value={name} maxLength={40}
-                    enterKeyHint="done"
-                    placeholder={copy.newGroup.namePlaceholder}
-                    onChange={(e) => setName(e.target.value)} />
-                </div>
-
-                <div style={{ paddingTop: 16 }}>
-                  <button type="button" className="btn btn-p btn-lg" onClick={next}
-                    disabled={nameFlash.live || plannedCount(plan) === 0}>
-                    {words.act}
-                  </button>
-                </div>
-              </section>
-            ) : null}
           </div>
         </Scroll>
       </Body>
     </Screen>
-  );
-}
-
-/** One line of the readout: what it is on the left, what the file says on the right. */
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="row">
-      <div className="rmain"><div className="rtitle">{label}</div></div>
-      <div className="ramt"><div className="sm">{value}</div></div>
-    </div>
   );
 }

@@ -22,8 +22,9 @@ paste CSV text into.
 what was found, say which of those people you are. Reading writes
 nothing — `core/import.ts` and `core/tricount.ts` both hand back a plan — so
 the people, the currency, the counts and the rows that will be left out are all
-on screen before an op exists. Once a plan is up it is the screen: the ways in
-go, and the bar's back arrow leaves a plan that isn't the one wanted.
+on screen before an op exists. The plan is its own screen, `/import/plan`,
+so back from it is an ordinary back to the picker, the pasted link still in
+place.
 
 **Fetching a link says what it costs, under the button.** *Sent through bida's
 server, unencrypted. Not stored.* — centred under the button, and one of the

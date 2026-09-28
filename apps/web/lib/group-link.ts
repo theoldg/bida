@@ -159,6 +159,8 @@ export const route = {
    * an existing group: the file has no ids to match rows to entries.
    */
   import: () => "/import",
+  /** What `/import` read, before it is written. Reloaded, it goes back to `/import`. */
+  importPlan: () => "/import/plan",
   /**
    * The demo group: real ops, never synced (app/demo/page.tsx). Creates or
    * reopens it, then redirects into its ledger. **Linked from nowhere on
