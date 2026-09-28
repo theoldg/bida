@@ -856,8 +856,8 @@ export const copy = {
     byLead: { expense: "paid by", income: "received by" } as Voiced<string>,
     /** Beside your own name, wherever the entry names you. */
     you: "you",
-    /** Before the card's last line when you both paid and had a share. */
-    yourBalance: "your balance",
+    /** The card's last line: what the entry did to you (`YourBalance`). */
+    yourBalance: "Your balance",
     /** "Split evenly" · "Split by items". */
     splitMode: (label: string, mode: string) => `${label} ${mode}`,
     deleteTitle: (kind: string) => `Delete this ${kind}?`,

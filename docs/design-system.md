@@ -155,15 +155,14 @@ each would mark nothing: ledger rows are the plain rows of the groups list. What
 green, `−€14,28` red — and the exception is what the list marks: a row you are
 no part of drops to 58% opacity rather than disappearing.
 
-**On an entry, your amounts are coloured and your name carries "you".** A
+**On an entry, your name carries "you" and the card ends in your balance.** A
 small `you` chip follows your name wherever the entry prints it: the one
 payer on the paid-by line, a payer row, a split row, a transfer's side. The
-amount beside it takes the ledger's colours unsigned: what moved you up is
-green, what moved you down red — an expense's payment and share, an income's
-the other way round. The chip is why this is not colour alone. When the one
-payer is you, the paid-by line is your payer row and carries the figure. When
-you both paid and had a share, the card ends in the sum that makes the
-ledger's figure: `your balance 50.00 − 20.00 = CRD 30.00` (`effectSum`).
+rows themselves stay uncoloured. Under them, unless you neither paid nor had
+a share, is the ledger row's figure, signed and coloured as it is there:
+`Your balance +CRD 40.00`. When two of the card's numbers made it, it is
+written as their uncoloured difference first: `50.00 − 20.00 = +CRD 30.00`
+(`effectSum` — an income's share comes first, since it is what moved you up).
 
 ## Nothing waits in silence
 
