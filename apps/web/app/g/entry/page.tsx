@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
@@ -19,6 +19,7 @@ import { db } from "@/lib/db/dexie";
 import { syncGroup } from "@/lib/db/sync";
 import { useLive } from "@/lib/db/live";
 import { effectSum, kindOf, type EntryKind } from "@/lib/entry-kind";
+import { fitIndex, styleOf, textWidth } from "@/lib/fit";
 import { copy } from "@/lib/copy";
 import { money, moneyParts, plural, rateText, whenLabel } from "@/lib/format";
 import { billExtrasIn, billLabels, receiptBreakdown } from "@/lib/scan/items";
@@ -327,23 +328,65 @@ function bare(minor: number, currency: CurrencyCode): string {
   return `${p.whole}${p.fraction}`;
 }
 
+/** Where the sum goes, widest first: beside its label, under it, or written out. */
+const SUM_FORMS = ["beside", "under", "column"] as const;
+
 /**
  * What this entry did to your balance — the ledger row's second figure,
  * signed and coloured as it is there. When two of the card's numbers made it
  * (you paid and had a share), it is written as their difference, uncoloured:
- * "50.00 − 20.00 = +CRD 30.00".
+ * "50.00 − 20.00 = +CRD 30.00" — beside the label, under it when it won't fit
+ * there, and when it won't fit a line at all, written out as at school: one
+ * number under the other and the result under a rule.
  */
 function YourBalance({ up, down, net, currency }: {
   up: number; down: number; net: number; currency: CurrencyCode;
 }) {
+  const both = up > 0 && down > 0;
+  const result = money(net, currency, net !== 0);
+  const line = both ? `${bare(up, currency)} − ${bare(down, currency)} = ` : "";
+  const row = useRef<HTMLDivElement>(null);
+  const label = useRef<HTMLSpanElement>(null);
+  const fig = useRef<HTMLElement>(null);
+  const [form, setForm] = useState<(typeof SUM_FORMS)[number]>("beside");
+
+  useLayoutEffect(() => {
+    const el = row.current;
+    if (!el || !both) return setForm("beside");
+    let live = true;
+    const pick = () => {
+      if (!live || !label.current || !fig.current) return;
+      // A mono face: the bold result advances like the regular sum.
+      const sum = textWidth(line + result, styleOf(fig.current));
+      // The `.kv` gap between label and figure; the column fits anything.
+      setForm(SUM_FORMS[fitIndex([label.current.offsetWidth + 12 + sum, sum, 0], el.clientWidth)]!);
+    };
+    pick();
+    const watch = new ResizeObserver(pick);
+    watch.observe(el);
+    // The web font arrives after first paint and every width under it moves.
+    void document.fonts?.ready.then(pick).catch(() => {});
+    return () => { live = false; watch.disconnect(); };
+  }, [line, result, both]);
+
+  // Whatever follows the last digit ("zł", or a code the locale puts after)
+  // is a column of its own, so the result's digits stand under the operands'.
+  const cut = result.search(/\d\D*$/) + 1;
+  // One root whatever the form, so the observer above keeps watching it.
   return (
-    <div className="kv yourbal">
+    <div ref={row} className={form === "column" ? "yourbal col" : "kv yourbal"}>
       {/* Set as the card's section heads are ("PAID BY"), since it is one. */}
-      <span className="k eyebrow">{copy.entry.yourBalance}</span>
-      <span className="v">
-        {up > 0 && down > 0 ? `${bare(up, currency)} − ${bare(down, currency)} = ` : null}
-        <b className={signClass(net)}>{money(net, currency, net !== 0)}</b>
-      </span>
+      <span ref={label} className="k eyebrow">{copy.entry.yourBalance}</span>
+      {form === "column" ? (
+        <div className="sumcol">
+          <span>{bare(up, currency)}</span><span />
+          <span>− {bare(down, currency)}</span><span />
+          <b ref={fig} className={`eq ${signClass(net)}`}>{result.slice(0, cut)}</b>
+          <b className={`eq ${signClass(net)}`}>{result.slice(cut)}</b>
+        </div>
+      ) : (
+        <span className="v">{line}<b ref={fig} className={signClass(net)}>{result}</b></span>
+      )}
     </div>
   );
 }

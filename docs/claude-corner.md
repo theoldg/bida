@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Show me variants", then "I don't understand the
+  differences, the top row looks good": the baseline I'd drawn for comparison
+  won over four that differed by where one line sat. Caption what each variant
+  changes, and always offer today's shape, extended, as one.
+
 - *2026-09-28* — A link-preview banner in six rounds of mocks, each a
   fragment ("less text", "bigger slogan", "lowercased, no period") before "go
   with L1, ship it". Every round kept the one thing picked and varied only
@@ -78,7 +83,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   production, called it fine, and filed dev's 12k a day under "worth knowing".
   That was the complaint. Answer the number the owner felt, not the one the
   design meant: every deploy re-precaching through the dev Worker.
-
-- *2026-09-27* — "use the BUSY system from ../thegrave." Five words naming a
-  sibling repo. Read how it works there before porting it; the port is the
-  ask, not a redesign. Worktree-always became worktree-when-busy.
