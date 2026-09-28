@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Go around the app and visually critique the screens", then
+  "commit these to a file somewhere in docs." A crit said once in chat is
+  lost at /clear; name each finding's shot so the next session can see it.
+
 - *2026-09-28* — A screenshot of the payers screen: "swap the quiet corner
   Done for a large inked button, like other screens." One of the list the
   design system names had been left out. Next round: "stick it like the
@@ -77,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   it meant from the code, mocked five, then "iterate: a quiet link above Edit",
   five more, then the spec in two lines. The second round was the owner's
   sketch, not mine — mock wide, then narrow to what they point at.
-
-- *2026-09-28* — "Don't read any documentation… review the design." Cold eyes
-  were the point, so the crit came from screenshots alone. Then three rounds of
-  icon mocks, each answering one terse note ("4 and 5 teeth", "a division
-  symbol"), then "ship it". Keep the mock page; it becomes the spec.
