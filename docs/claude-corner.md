@@ -30,6 +30,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   many; "comfortably" meant slack, not the exact pixel. Fewer shapes beats a
   ladder that covers every width.
 
+- *2026-09-28* — "Remember about the no round corners rule." My mocks carried
+  1px radii copied from nowhere; the owner caught it, then picked the pip I had
+  argued for in words. Mock in the design system's own terms, and when asked
+  "how do you like X", answer with a stance and its one catch.
+
 - *2026-09-28* — "Go around the app and visually critique the screens", then
   "commit these to a file somewhere in docs." A crit said once in chat is
   lost at /clear; name each finding's shot so the next session can see it.
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   screenshots yourself and try a bit harder." The real screen had cases my
   mocks never met: two payers, an income, a transfer. Prototype in the app
   behind a switch and photograph every case before proposing.
-
-- *2026-09-28* — "I changed my mind because of edge cases, flush left the
-  smaller line." Three days of subgrid and side-bearing pulls to line two
-  figures' digits up, undone in one line. A clever alignment is a bet on
-  every locale and symbol; the margin never loses it.

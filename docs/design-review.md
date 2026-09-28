@@ -11,10 +11,6 @@ a user.
 
 ## Confuses a person
 
-- **The who-had-what grid has no empty cells.** An unassigned item shows blank
-  person columns; only tip/tax/discount rows show the small grey squares. On a
-  freshly scanned bill, the screen whose job is tapping cells shows no target to
-  tap. *`who-had-what`*
 - **A transfer you receive shows in red.** "Sam paid Theo" shows −€800.00 in red
   on Theo's ledger, and "Deposit back" (an income Theo received) shows red
   −€1,000.00. Both are right as a balance effect, but they read as losing money.

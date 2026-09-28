@@ -403,9 +403,9 @@ painted, holds that way while they are scrolled into view whole, and is
 released once they have stopped moving, each dot easing back to what it really
 is. **The column meets in the middle**: assigned and empty cells alike sit at
 one faint ink, so what an opened run shows first is the places an answer could
-go. The empty ones carry a dot because that is what is being shown, and the
-pointer has to be the shape of one; the assigned ones fade rather than darken
-because `--ink-2` has nowhere darker to go. **A pointer starts held, not
+go. The empty ones take the assigned ink while held, because their resting
+square is `--card-3` and would vanish at that strength; the assigned ones fade
+rather than darken because `--ink-2` has nowhere darker to go. **A pointer starts held, not
 animated** — rows painted at full strength and dimmed a beat later flicker, and
 nothing can ease into a row that did not exist a frame ago. Never `--debit`:
 nothing is wrong and nothing is being asked for.
@@ -413,7 +413,11 @@ The same `-a`/`-b` pair restarts it, and it is exempt from the motion clamp on
 the same grounds. A cell that cannot be tapped like its neighbours doesn't look
 like them either — a run handed out unevenly wears the dot **broken into two
 overlapping squares** on everyone who had any of it, so no cell in that row
-reads as an ordinary assignment.
+reads as an ordinary assignment. **An empty cell shows its square**, pale in
+`--card-3`, so a fresh bill with nothing assigned still shows every place to
+tap, and a tap inks that same square in. The rows nobody ordered (tip, tax,
+discounts) wear a 4px `--rule` **pip** instead: ink, since everyone does carry a
+share, but too small to be a target and no heavier than an empty cell.
 
 ## Rules that are not negotiable
 
