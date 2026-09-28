@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — A screenshot of the payers screen: "swap the quiet corner
+  Done for a large inked button, like other screens." One of the list the
+  design system names had been left out. When one screen is the odd one,
+  add it to that list too.
+
 - *2026-09-28* — "Fold Ben's items in the screenshots and reshoot." A shot's
   script had pressed a row open to show the feature; the screen already opens
   the viewer's own. Let the photograph show what a person sees on arrival.
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   were the point, so the crit came from screenshots alone. Then three rounds of
   icon mocks, each answering one terse note ("4 and 5 teeth", "a division
   symbol"), then "ship it". Keep the mock page; it becomes the spec.
-
-- *2026-09-28* — A stolen-vs-invented question turned into a crit, then
-  "make the names inked"; one push later, "actually quiet, to match the other
-  split modes and the payers box". I styled the one screen and never looked
-  at its siblings. Before changing a colour role, read where else it is worn.

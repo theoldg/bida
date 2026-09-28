@@ -117,11 +117,7 @@ function PayersScreen() {
     <Screen>
       <Body>
         <TopBar title={copy.payers.title[voice]}
-          sub={money(amountMinor, currency)} back={{ ask: mayLeave }}
-          right={<button className="action" disabled={!check.ok} {...keepsFocus}
-            onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
-            {copy.act.done}
-          </button>} />
+          sub={money(amountMinor, currency)} back={{ ask: mayLeave }} />
 
         <Scroll>
           <div className="rows">
@@ -184,7 +180,14 @@ function PayersScreen() {
               </span>
             </div>
           </div>
-          <div style={{ height: 24 }} />
+
+          {/* The screen's last row, as on the entry form — not a corner link. */}
+          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
+            <button type="button" className="btn btn-p btn-lg" disabled={!check.ok} {...keepsFocus}
+              onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
+              {copy.act.done}
+            </button>
+          </div>
         </Scroll>
       </Body>
 
