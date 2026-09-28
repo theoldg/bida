@@ -246,11 +246,16 @@ export function distinctInitials(members: readonly { id: string; name: string }[
 
 const DAY = 86_400_000;
 
+/** "Today" or "Yesterday" by the local calendar, not by 24-hour spans — else null. */
+function nearDay(ts: number, now: number): string | null {
+  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(ts)) / DAY);
+  return days === 0 ? copy.time.today : days === 1 ? copy.time.yesterday : null;
+}
+
 /** "Today" / "Yesterday" / "Sat 5 April" — the ledger's day rule. */
 export function dayLabel(ts: number, now = Date.now()): string {
-  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(ts)) / DAY);
-  if (days === 0) return copy.time.today;
-  if (days === 1) return copy.time.yesterday;
+  const near = nearDay(ts, now);
+  if (near) return near;
   const d = new Date(ts);
   const opts: Intl.DateTimeFormatOptions =
     d.getFullYear() === new Date(now).getFullYear()
@@ -311,10 +316,8 @@ export function byWhen(a: Whenever, b: Whenever): number {
  * "YESTERDAY" as the ledger's day rule says them, since the two sit together.
  */
 export function stamp(ts: number, now = Date.now()): string {
-  const days = Math.round((startOfLocalDay(now) - startOfLocalDay(ts)) / DAY);
-  const date = days === 0 ? copy.time.today
-    : days === 1 ? copy.time.yesterday
-    : new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(new Date(ts));
+  const date = nearDay(ts, now)
+    ?? new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" }).format(new Date(ts));
   return `${date.toUpperCase()} · ${clockTime(ts)}`;
 }
 
@@ -339,17 +342,22 @@ export function dateInputValue(ts: number): string {
  * the day before for anyone west of Greenwich.
  */
 export function dayStart(day: string): number {
+  const ymd = parseDay(day);
+  return ymd ? new Date(ymd[0], ymd[1] - 1, ymd[2]).getTime() : Number.NaN;
+}
+
+/** A `YYYY-MM-DD` day as numbers, or null for anything that isn't one. */
+function parseDay(day: string): [number, number, number] | null {
   const [y, m, d] = day.split("-").map(Number);
-  if (!y || !m || !d) return Number.NaN;
-  return new Date(y, m - 1, d).getTime();
+  return y && m && d ? [y, m, d] : null;
 }
 
 /** Keep the time of day when the user only changes the date. */
 export function withDate(ts: number, value: string): number {
-  const [y, m, d] = value.split("-").map(Number);
-  if (!y || !m || !d) return ts;
+  const ymd = parseDay(value);
+  if (!ymd) return ts;
   const out = new Date(ts);
-  out.setFullYear(y, m - 1, d);
+  out.setFullYear(ymd[0], ymd[1] - 1, ymd[2]);
   return out.getTime();
 }
 
