@@ -96,8 +96,8 @@ API is reached with `fetch`.
   screen to mount. The form reads its answers and writes none of them.
 - **Save is the last row of the form, and the kind is the top of it.** One
   full-width `.btn-lg` ([design-system.md](design-system.md)), because the
-  screen has exactly one act; a save failure is said above it. The kind chip is
-  centred on the top bar (`TopBar`'s `mid` slot, beside a `capped` title).
+  screen has exactly one act; a save failure is said above it. The kind chip sits
+  at the top bar's right, a plain word in a box with no chevron: the box says it opens a choice.
 - **Save is never disabled, and nothing reads as wrong before a tap says so.**
   A grey button gives no reason, and a red line before any tap is unearned.
   Tapping

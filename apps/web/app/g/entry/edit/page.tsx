@@ -540,9 +540,9 @@ function EditEntryScreen() {
           back={{ ask: mayLeave }}
           /* The kind sits on the row that already names the screen. */
           right={reachable.length > 1 ? (
-            <button type="button" className="chip" aria-label={copy.form.kindTitle}
+            <button type="button" className="chip kindchip" aria-label={copy.form.kindTitle}
               onClick={() => setAsk("kind")} {...keepsFocus}>
-              {copy.entryKind.label[kind]} <Icon name="chev" size={10} />
+              {copy.entryKind.label[kind]}
             </button>
           ) : undefined}
         />

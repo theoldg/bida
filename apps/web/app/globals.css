@@ -721,6 +721,9 @@ a { color: inherit; text-decoration: none }
   border-radius: var(--r-s); border: 1px solid var(--rule); color: var(--ink-2); background: var(--card-2);
   font-weight: 500; white-space: nowrap }
 .chip.hl { border-color: var(--hl-edge); color: var(--hl-ink); background: var(--hl) }
+/* The entry form's kind: a chip a size up, being the only control on its bar
+   besides the arrow, and with no chevron — the box already says it opens. */
+.chip.kindchip { font-size: 12px; line-height: 1.3; padding: 4px 9px }
 .chip.pend { border-color: var(--hl-edge); color: var(--hl-ink); background: transparent }
 .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--ink-2); flex: none;
   display: inline-block }
