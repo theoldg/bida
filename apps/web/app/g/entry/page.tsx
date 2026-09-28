@@ -235,6 +235,7 @@ function EntryScreen() {
               pressed. A deleted entry keeps it where Edit would be. */}
           <div className="pad" style={{ paddingTop: 0 }}>
             <Link href={route.history(groupId, entry.id, via)} className="entryhist">
+              <Icon name="clock" size={14} />
               <FitLine className="entryhistline" options={historyLine}
                 trail={<Icon name="chev" size={13} />} />
             </Link>

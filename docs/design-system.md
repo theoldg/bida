@@ -282,8 +282,9 @@ nothing but who. The card's eyebrows read as phrases ("Split by items", "Paid
 by"), not a label, a dot and a value.
 
 **History is one quiet link, above Edit** (`.entryhist`) — never a top-bar
-icon as well, which was two ways to the same screen. It says what is there:
-"Created by Luke", or "Edited 3 times · last by Han". The name is the first
+icon as well, which was two ways to the same screen. A clock, then what is
+there — "Created by Luke", or "Edited 3 times · last by Han" — then a chevron
+right after the words, in grey, not underlined. The name is the first
 thing to go when the line is short (`historyMeta`); "Created by" with no room
 for the name says "History". A deleted entry keeps it where Edit was.
 
