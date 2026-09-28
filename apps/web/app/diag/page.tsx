@@ -7,6 +7,7 @@ import { copy } from "@/lib/copy";
 import { db } from "@/lib/db/dexie";
 import { format, handoff, loadedAt, otherPages, timeline } from "@/lib/diag";
 import { route } from "@/lib/group-link";
+import { useFlash } from "@/lib/hooks";
 import { ownKey } from "@/lib/scan/key";
 import { setStasMode, stasMode } from "@/lib/scan/stas";
 import { VERSION } from "@/lib/version";
@@ -21,7 +22,7 @@ import { VERSION } from "@/lib/version";
  */
 export default function DiagPage() {
   const [report, setReport] = useState<string>();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useFlash();
   // Read after mount, not during render: the app is a static export, so the
   // first render happens where there is no localStorage to ask.
   const [stas, setStas] = useState(false);
@@ -38,12 +39,6 @@ export default function DiagPage() {
     const timer = setInterval(build, 2000);
     return () => { alive = false; clearInterval(timer); };
   }, []);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1600);
-    return () => clearTimeout(timer);
-  }, [copied]);
 
   return (
     <Screen>

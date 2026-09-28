@@ -7,7 +7,7 @@ import { writeClipboardText } from "@/lib/clipboard";
 import { copy } from "@/lib/copy";
 import { fileHandoff, groupCsv, type HandoffPlan } from "@/lib/export";
 import { route } from "@/lib/group-link";
-import { useClaimGate, useGroupData } from "@/lib/hooks";
+import { useClaimGate, useFlash, useGroupData } from "@/lib/hooks";
 
 /**
  * The export as text, for a browser that can't hand over a file — reached only
@@ -28,18 +28,12 @@ function ExportScreen() {
   const groupId = params.get("id") ?? undefined;
   const data = useGroupData(groupId);
   const unclaimed = useClaimGate(groupId, data);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useFlash();
   // Asked after mount, not during render: this is a static export, so the
   // first render happens where there is no `navigator` to ask.
   const [plan, setPlan] = useState<HandoffPlan>();
 
   useEffect(() => { setPlan(fileHandoff()); }, []);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1600);
-    return () => clearTimeout(timer);
-  }, [copied]);
 
   if (!groupId) return <BadLink />;
   if (!data.loading && !data.group) return <BadLink />;

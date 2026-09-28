@@ -83,6 +83,20 @@ export function useGroupSecret(groupId: string | undefined): string | undefined 
 }
 
 /**
+ * A "done" that says so for a moment and then flips back by itself — Copied,
+ * and the like — so there is no dialog to dismiss.
+ */
+export function useFlash(ms = 1600): [boolean, (on: boolean) => void] {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    if (!on) return;
+    const timer = setTimeout(() => setOn(false), ms);
+    return () => clearTimeout(timer);
+  }, [on, ms]);
+  return [on, setOn];
+}
+
+/**
  * The invite link for a group, and a one-tap copy of it. Clipboard, not
  * `navigator.share` — the share sheet is a different detour on every phone.
  * `copied` flips back on its own, so no dialog to dismiss.
@@ -97,14 +111,8 @@ export function useInviteLink(groupId: string | undefined): {
   clearFailure: () => void;
 } {
   const secret = useGroupSecret(groupId);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useFlash();
   const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1600);
-    return () => clearTimeout(timer);
-  }, [copied]);
 
   const link = groupId && secret ? formatJoinLink({ groupId, secret }) : undefined;
 

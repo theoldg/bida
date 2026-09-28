@@ -12,7 +12,7 @@ import { copy } from "@/lib/copy";
 import { clearDraft, useDraft } from "@/lib/draft";
 import { bare } from "@/lib/format";
 import { route } from "@/lib/group-link";
-import { useBillEnglish } from "@/lib/hooks";
+import { useBillEnglish, useFlash } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
 import {
   clearQuickPeople, quickShares, quickSummaryText, useQuickPeople, useScanCredential,
@@ -36,18 +36,12 @@ export default function QuickResultPage() {
   // handed over as, read in whichever language the bill was left in.
   const english = useBillEnglish();
   const draft = useDraft(cred?.id);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useFlash();
   const [failed, setFailed] = useState(false);
   // Done is the end of the split and the end of the split is the end of the
   // bill: nothing here is written anywhere, so leaving without the text
   // copied loses the evening's arithmetic. Worth one question.
   const [asking, setAsking] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1600);
-    return () => clearTimeout(timer);
-  }, [copied]);
 
   const ready = draft !== undefined && (draft.receiptItems?.length ?? 0) > 0;
   // Leaving on purpose throws the split away too, and "left" and "arrived with
