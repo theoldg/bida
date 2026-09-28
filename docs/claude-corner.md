@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Reshoot the screenshots." Three words, no list: the README's
+  six, since only those are committed. Five came back byte-identical, one had
+  grown the balance line. Say which moved and why, so the owner sees the diff
+  without opening six images.
+
 - *2026-09-28* — "The logo is a bit too large in circle icons." Five scales on
   one page, in every launcher shape; the owner picked 72%, smaller than my
   80%. Show the range and let the eye choose — then change only the icon that
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   in the frame, not the facts: a toggle voicing the reader's mistake, then
   "It doesn't have to be." Options first, then "go with C, Luke and Leia".
   Explain as the app's reasoning; never correct the reader.
-
-- *2026-09-26* — "How hard would it be?" about the back gesture; I said easy.
-  Green checks, then the phone: Chrome skips history nobody tapped, and no
-  headless browser does. "If it doesn't work, get rid of it." Mind what the
-  checks can't see before promising, and revert whole, not half.
