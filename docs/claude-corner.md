@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Fold Ben's items in the screenshots and reshoot." A shot's
+  script had pressed a row open to show the feature; the screen already opens
+  the viewer's own. Let the photograph show what a person sees on arrival.
+
 - *2026-09-28* — "Show me variants", then "I don't understand the
   differences, the top row looks good": the baseline I'd drawn for comparison
   won over four that differed by where one line sat. Caption what each variant
@@ -78,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "make the names inked"; one push later, "actually quiet, to match the other
   split modes and the payers box". I styled the one screen and never looked
   at its siblings. Before changing a colour role, read where else it is worn.
-
-- *2026-09-27* — "I feel like we're making too many requests." I measured
-  production, called it fine, and filed dev's 12k a day under "worth knowing".
-  That was the complaint. Answer the number the owner felt, not the one the
-  design meant: every deploy re-precaching through the dev Worker.
