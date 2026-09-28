@@ -992,9 +992,10 @@ button.kv .k { display: flex; align-items: center; gap: 3px; min-width: 0 }
    stays in line with the `.kv` rows above. */
 .billgroup > button.kv { width: calc(100% + 28px); margin: 0 -14px;
   padding: 5px 14px; border-radius: var(--r-s) }
-/* The open row is the heading of what is under it, so it stops being one more
-   muted key in the list. */
-.billgroup.on > .kv .k { color: var(--ink-2) }
+/* Each row is a person, not one more muted key in the list, so the name is
+   inked open or shut: muted read as left out, which on the ledger it means.
+   Only the chevron says which rows are open. */
+.billgroup > .kv .k { color: var(--ink) }
 .billgroup.on > .kv .kvchev { color: var(--ink-2) }
 /* Indented under the row they belong to, and only as far as the chevron that
    opened it: the bill's own lines, not a second list of people. */
