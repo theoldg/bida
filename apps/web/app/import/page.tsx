@@ -1,13 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   ImportError, plannedCount, readCsvGroup, readTricount, type ImportPlan,
 } from "@bida/core";
 import { keepsFocus } from "@/components/bits";
 import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
-import { WhoPicker } from "@/components/who-picker";
+import { CreateAs } from "@/components/create-as";
 import { copy } from "@/lib/copy";
 import { currencyLabel } from "@/lib/currencies";
 import { importGroup } from "@/lib/db/commands";
@@ -39,7 +38,6 @@ import { useRefusal } from "@/lib/refusal";
  * source doesn't hold joins the group owing nothing.
  */
 export default function ImportPage() {
-  const router = useRouter();
   const file = useRef<HTMLInputElement>(null);
   const [link, setLink] = useState("");
   const [fetching, setFetching] = useState(false);
@@ -47,9 +45,6 @@ export default function ImportPage() {
   const [name, setName] = useState("");
   const [why, setWhy] = useState<string>();
   const [asking, setAsking] = useState(false);
-  const [picked, setPicked] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState<string>();
   /** The name field, which is the one thing on this screen a person types. */
   const nameFlash = useRefusal();
 
@@ -62,9 +57,6 @@ export default function ImportPage() {
     // A tricount states its own title; a spreadsheet's is a guess off the
     // filename. Both land in the same editable field.
     setName(found.title?.trim() || suggestion);
-    // Asked even with one person: the answer is the actor on every op, and the
-    // step is never skipped (as in app/new/page.tsx).
-    setPicked(found.members.length === 1 ? found.members[0] : undefined);
   }
 
   /** A refusal on screen, and no plan. */
@@ -79,7 +71,6 @@ export default function ImportPage() {
 
   /** Text in, a plan or a sentence out. Nothing is written either way. */
   function read(text: string, suggestion: string) {
-    setFailed(undefined);
     try {
       adopt(readCsvGroup(parseCsv(text), { dayToTimestamp: dayStart }), suggestion);
     } catch (err) {
@@ -99,7 +90,6 @@ export default function ImportPage() {
       setWhy(words.notTricount);
       return;
     }
-    setFailed(undefined);
     setFetching(true);
     try {
       adopt(readTricount(await fetchTricount(key), { dayToTimestamp: dayStart }), "");
@@ -129,20 +119,6 @@ export default function ImportPage() {
     read(await one.text(), groupNameFrom(one.name));
   }
 
-  async function save(me: string) {
-    if (!plan) return;
-    setBusy(true);
-    setFailed(undefined);
-    try {
-      const { groupId } = await importGroup(plan, { name: name.trim(), myName: me });
-      router.replace(route.group(groupId));
-    } catch (err) {
-      setBusy(false);
-      setAsking(false);
-      setFailed(errorText(err));
-    }
-  }
-
   /** The group's name is the one thing the file cannot tell us, so it is asked. */
   function next() {
     if (name.trim().length === 0) {
@@ -154,27 +130,14 @@ export default function ImportPage() {
 
   if (asking && plan) {
     return (
-      <Screen>
-        <Body>
-          <TopBar title={words.named(name.trim())}
-            back={{ ask: () => { setAsking(false); return false; } }} />
-          <Scroll>
-            <h2 className="question">{copy.claim.title}</h2>
-            <WhoPicker
-              people={plan.members.map((who) => ({ id: who, name: who }))}
-              picked={picked}
-              addPlaceholder={copy.claim.addPlaceholder}
-              onPick={setPicked}
-              // Onto the plan, so the group is written with them as a member.
-              onAdd={(who) => {
-                setPlan({ ...plan, members: [...plan.members, who] });
-                return { id: who, name: who };
-              }}
-              onContinue={(who) => save(who)} />
-            {failed ? <div className="pad"><Failure>{words.failed(failed)}</Failure></div> : null}
-          </Scroll>
-        </Body>
-      </Screen>
+      <CreateAs title={words.named(name.trim())} names={plan.members}
+        // Asked even with one person: the answer is the actor on every op.
+        picked={plan.members.length === 1 ? plan.members[0] : undefined}
+        // Onto the plan, so the group is written with them as a member.
+        onAdd={(who) => setPlan({ ...plan, members: [...plan.members, who] })}
+        onBack={() => setAsking(false)}
+        create={async (me) => (await importGroup(plan, { name: name.trim(), myName: me })).groupId}
+        failedText={words.failed} />
     );
   }
 
@@ -273,7 +236,7 @@ export default function ImportPage() {
 
                 <div style={{ paddingTop: 16 }}>
                   <button type="button" className="btn btn-p btn-lg" onClick={next}
-                    disabled={busy || nameFlash.live || plannedCount(plan) === 0} {...keepsFocus}>
+                    disabled={nameFlash.live || plannedCount(plan) === 0} {...keepsFocus}>
                     {words.act}
                   </button>
                 </div>

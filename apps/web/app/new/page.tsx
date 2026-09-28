@@ -4,16 +4,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { isCurrencyCode } from "@bida/core";
 import { Eyebrow, keepsFocus } from "@/components/bits";
-import { Body, Failure, Screen, Scroll, TopBar } from "@/components/chrome";
+import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
+import { CreateAs } from "@/components/create-as";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { AddName } from "@/components/name-adder";
-import { WhoPicker } from "@/components/who-picker";
 import { copy } from "@/lib/copy";
 import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import { createGroup } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
-import { errorText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useDevice } from "@/lib/hooks";
 import { goUp } from "@/lib/nav";
@@ -59,9 +58,6 @@ export default function NewGroupPage() {
     return () => { cancelled = true; };
   }, [device?.lastOpenedGroupId]);
   const [asking, setAsking] = useState(false);
-  const [picked, setPicked] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const [failed, setFailed] = useState<string>();
   const [ask, setAsk] = useState<null | "currency" | "other" | "discard">(null);
   // The name still in the add row. Nothing acts on it — only its own plus files
   // it (components/name-adder.tsx) — but it is something typed, so leaving with
@@ -120,13 +116,12 @@ export default function NewGroupPage() {
   /** May we leave? Not with names on the screen — ask, and stay put. */
   function mayLeave() {
     if (leaving.current) return true;
-    if (typed && !busy) { setAsk("discard"); return false; }
+    if (typed) { setAsk("discard"); return false; }
     return true;
   }
 
   /** Create: ask who you are — unless the form isn't ready to answer yet. */
   function next() {
-    if (busy) return;
     // A name still in the add row isn't filed, and an empty list isn't a group.
     // Both bloom their own control rather than greying the button.
     const nameMissing = name.trim().length === 0;
@@ -138,48 +133,24 @@ export default function NewGroupPage() {
     setAsking(true);
   }
 
-  async function save(me: string, all: readonly string[]) {
-    setBusy(true);
-    setFailed(undefined);
-    try {
-      const { groupId } = await createGroup({
-        name: name.trim(),
-        baseCurrency: currency,
-        myName: me,
-        otherNames: all.filter((who) => who !== me),
-      });
-      router.replace(route.group(groupId));
-    } catch (err) {
-      setBusy(false);
-      setAsking(false);
-      setFailed(errorText(err));
-    }
+  /** Writes the group, and puts this screen's guard down: what was typed is saved, not lost. */
+  async function create(me: string) {
+    const { groupId } = await createGroup({
+      name: name.trim(),
+      baseCurrency: currency,
+      myName: me,
+      otherNames: people.filter((who) => who !== me),
+    });
+    leaving.current = true;
+    return groupId;
   }
 
   if (asking) {
     return (
-      <Screen>
-        <Body>
-          <TopBar title={copy.newGroup.named(name.trim())}
-            back={{ ask: () => { setAsking(false); return false; } }} />
-          <Scroll>
-            <h2 className="question">{copy.claim.title}</h2>
-            <WhoPicker
-              people={people.map((who) => ({ id: who, name: who }))}
-              picked={picked}
-              addPlaceholder={copy.claim.addPlaceholder}
-              onPick={setPicked}
-              // A name already on the list cannot be filed here either — it
-              // is a row a tap above, and tapping it says the same thing.
-              onAdd={(who) => {
-                setPeople((list) => [...list, who]);
-                return { id: who, name: who };
-              }}
-              onContinue={(who) => save(who, people)}
-            />
-          </Scroll>
-        </Body>
-      </Screen>
+      <CreateAs title={copy.newGroup.named(name.trim())} names={people}
+        onAdd={(who) => setPeople((list) => [...list, who])}
+        onBack={() => setAsking(false)}
+        create={create} failedText={copy.newGroup.failed} />
     );
   }
 
@@ -230,9 +201,8 @@ export default function NewGroupPage() {
               fields so the keyboard never sits on it. Never grey: a blank name or
               empty list points at itself (design-system.md). */}
           <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
-            {failed ? <Failure>{copy.newGroup.failed(failed)}</Failure> : null}
             <button type="button" className="btn btn-p btn-lg" onClick={next}
-              disabled={busy || refusing} {...keepsFocus}>
+              disabled={refusing} {...keepsFocus}>
               {copy.act.create}
             </button>
           </div>

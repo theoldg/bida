@@ -213,7 +213,9 @@ API is reached with `fetch`.
   clear that the act the list ends on comes up with it, per the `--kb` Gotcha in
   [touch-and-viewport.md](touch-and-viewport.md#the-screen-and-the-keyboard-over-it). `pnpm claim` holds all of it ([browser-checks.md](browser-checks.md#pnpm-claim--the-name-that-has-not-been-filed-yet)).
 - **"Which one are you?" is one screen, `components/who-picker.tsx`**, ending
-  both ways into a group: joining, and creating one — including a group of one,
+  both ways into a group: joining, and creating one — including a group of one
+  (`/new` and `/import` share `components/create-as.tsx`, which keeps a failed
+  write on screen under the button that retries it),
   (the bar says "Join", "Create" or "Import {group}" and the question is the
   body's title — `.question`, centred and a size above the bar, because it is
   the first thing a new joiner reads),
