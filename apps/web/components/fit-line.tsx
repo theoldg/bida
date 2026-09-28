@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type DependencyList, type ReactNode, type RefObject } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";
 import { copy } from "../lib/copy";
 
@@ -41,33 +41,19 @@ export function FitLine({ options, className, lead, leadClassName, icon, trail, 
   // The array is rebuilt every render; its contents are what changes rarely.
   const key = `${lead ?? ""}\n${options.join("\n")}`;
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let live = true;
-    const pick = () => {
-      if (!live) return;
-      const style = styleOf(el);
-      // The content box: a line may pad itself to give a press wash room.
-      const pad = getComputedStyle(el);
-      const box = el.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
-      const taken = (leadRef.current && lead
-        ? textWidth(lead, styleOf(leadRef.current)) + textWidth(SEP, style)
-        : 0) + outerWidth(iconRef.current) + outerWidth(trailRef.current);
-      // Unmeasured stays 0 ("show everything"); a lead that fills the box
-      // leaves 1px, so the leanest rung, not the richest.
-      const room = box <= 0 ? 0 : Math.max(1, box - taken);
-      setAt(fitIndex(options.map((o) => textWidth(o, style)), room));
-    };
-    pick();
-    const watch = new ResizeObserver(pick);
-    watch.observe(el);
-    // The web font arrives after first paint and every width under it moves.
-    // `fonts` is absent in older Safari; there the first measurement stands.
-    void document.fonts?.ready.then(pick).catch(() => {});
-    return () => { live = false; watch.disconnect(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` is `options`
-  }, [key]);
+  useRefit(ref, (el) => {
+    const style = styleOf(el);
+    // The content box: a line may pad itself to give a press wash room.
+    const pad = getComputedStyle(el);
+    const box = el.clientWidth - parseFloat(pad.paddingLeft) - parseFloat(pad.paddingRight);
+    const taken = (leadRef.current && lead
+      ? textWidth(lead, styleOf(leadRef.current)) + textWidth(SEP, style)
+      : 0) + outerWidth(iconRef.current) + outerWidth(trailRef.current);
+    // Unmeasured stays 0 ("show everything"); a lead that fills the box
+    // leaves 1px, so the leanest rung, not the richest.
+    const room = box <= 0 ? 0 : Math.max(1, box - taken);
+    setAt(fitIndex(options.map((o) => textWidth(o, style)), room));
+  }, [key]); // `key` is `options`
 
   const shown = <>
     {icon ? <span ref={iconRef} className="fiticon">{icon}</span> : null}
@@ -80,6 +66,30 @@ export function FitLine({ options, className, lead, leadClassName, icon, trail, 
       {bodyClassName ? <span className={bodyClassName}>{shown}</span> : shown}
     </div>
   );
+}
+
+/**
+ * Measure before paint, and again whenever the box changes size or the web
+ * font lands — it arrives after first paint and every width under it moves.
+ * `deps` are what `measure` reads besides the element. Every fit in the app
+ * runs on this: the two here and `/g/entry`'s balance sum.
+ */
+export function useRefit<T extends HTMLElement>(
+  ref: RefObject<T | null>, measure: (el: T) => void, deps: DependencyList,
+) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let live = true;
+    const run = () => { if (live) measure(el); };
+    run();
+    const watch = new ResizeObserver(run);
+    watch.observe(el);
+    // `fonts` is absent in older Safari; there the first measurement stands.
+    void document.fonts?.ready.then(run).catch(() => {});
+    return () => { live = false; watch.disconnect(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the caller names what `measure` reads
+  }, deps);
 }
 
 /** Width with margins: an icon's gap to the words is its margin. */
@@ -111,28 +121,15 @@ export function FitTitle({ text, sizes, className }: {
   const smallest = sizes[sizes.length - 1] ?? 17;
   const [size, setSize] = useState(smallest);
 
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let live = true;
-    const pick = () => {
-      if (!live) return;
-      const at = parseFloat(getComputedStyle(el).fontSize);
-      const available = el.clientWidth;
-      const width = textWidth(text, styleOf(el));
-      // No canvas (a test runner) or no box yet: the last rung is the one that
-      // is right whatever the words are, so stay on it rather than guess big.
-      if (!width || !at || available <= 0) return setSize(smallest);
-      setSize(sizes.find((s) => (width * s) / at <= available) ?? smallest);
-    };
-    pick();
-    const watch = new ResizeObserver(pick);
-    watch.observe(el);
-    // The web font arrives after first paint and every width under it moves.
-    void document.fonts?.ready.then(pick).catch(() => {});
-    return () => { live = false; watch.disconnect(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `sizes` is a literal
-  }, [text, smallest]);
+  useRefit(ref, (el) => {
+    const at = parseFloat(getComputedStyle(el).fontSize);
+    const available = el.clientWidth;
+    const width = textWidth(text, styleOf(el));
+    // No canvas (a test runner) or no box yet: the last rung is the one that
+    // is right whatever the words are, so stay on it rather than guess big.
+    if (!width || !at || available <= 0) return setSize(smallest);
+    setSize(sizes.find((s) => (width * s) / at <= available) ?? smallest);
+  }, [text, smallest]); // `sizes` is a literal
 
   return <h2 ref={ref} className={className} style={{ fontSize: size }}>{text}</h2>;
 }

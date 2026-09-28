@@ -341,7 +341,8 @@ order, which is the part worth arguing about
 It renders the longest rung when it cannot measure — no canvas, no layout yet —
 so the static export ships the full line and the browser narrows it. A `lead`
 (the group list's bold "N new changes") rides ahead of every rung, and the
-rungs fit in the width it leaves.
+rungs fit in the width it leaves. Every fit re-measures on resize and when the
+web font lands, through one `useRefit`.
 
 ## Your own money, pulled out of the group's
 

@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
 import { Card, Eyebrow, KV, signClass } from "@/components/bits";
-import { FitLine, FitTitle } from "@/components/fit-line";
+import { FitLine, FitTitle, useRefit } from "@/components/fit-line";
 import { MemberBill } from "@/components/member-bill";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { Icon } from "@/components/icons";
@@ -343,23 +343,13 @@ function YourBalance({ up, down, net, currency }: {
   const fig = useRef<HTMLElement>(null);
   const [column, setColumn] = useState(false);
 
-  useLayoutEffect(() => {
-    const el = row.current;
-    if (!el || !both) return setColumn(false);
-    let live = true;
-    const pick = () => {
-      if (!live || !label.current || !fig.current) return;
-      // A mono face: the bold result advances like the regular sum.
-      const sum = textWidth(line + result, styleOf(fig.current));
-      // The `.kv` gap between label and figure, then the slack.
-      setColumn(fitIndex([label.current.offsetWidth + 12 + SUM_SLACK + sum, 0], el.clientWidth) === 1);
-    };
-    pick();
-    const watch = new ResizeObserver(pick);
-    watch.observe(el);
-    // The web font arrives after first paint and every width under it moves.
-    void document.fonts?.ready.then(pick).catch(() => {});
-    return () => { live = false; watch.disconnect(); };
+  useRefit(row, (el) => {
+    if (!both) return setColumn(false);
+    if (!label.current || !fig.current) return;
+    // A mono face: the bold result advances like the regular sum.
+    const sum = textWidth(line + result, styleOf(fig.current));
+    // The `.kv` gap between label and figure, then the slack.
+    setColumn(fitIndex([label.current.offsetWidth + 12 + SUM_SLACK + sum, 0], el.clientWidth) === 1);
   }, [line, result, both]);
 
   // Whatever follows the last digit ("zł", or a code the locale puts after)
