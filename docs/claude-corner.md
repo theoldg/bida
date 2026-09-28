@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "Remove the middle one and fall back to multiline as soon as
+  inline stops fitting comfortably." Three layouts for one sum was one too
+  many; "comfortably" meant slack, not the exact pixel. Fewer shapes beats a
+  ladder that covers every width.
+
 - *2026-09-28* — "Go around the app and visually critique the screens", then
   "commit these to a file somewhere in docs." A crit said once in chat is
   lost at /clear; name each finding's shot so the next session can see it.
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   smaller line." Three days of subgrid and side-bearing pulls to line two
   figures' digits up, undone in one line. A clever alignment is a bet on
   every locale and symbol; the margin never loses it.
-
-- *2026-09-28* — "Two history buttons", from an audit I never saw: named what
-  it meant from the code, mocked five, then "iterate: a quiet link above Edit",
-  five more, then the spec in two lines. The second round was the owner's
-  sketch, not mine — mock wide, then narrow to what they point at.

@@ -328,16 +328,19 @@ function bare(minor: number, currency: CurrencyCode): string {
   return `${p.whole}${p.fraction}`;
 }
 
-/** Where the sum goes, widest first: beside its label, under it, or written out. */
-const SUM_FORMS = ["beside", "under", "column"] as const;
+/**
+ * Room the one-line sum must have to spare, beyond the `.kv` gap, before it
+ * stays on the line: one that only just fits crowds its label.
+ */
+const SUM_SLACK = 24;
 
 /**
  * What this entry did to your balance — the ledger row's second figure,
  * signed and coloured as it is there. When two of the card's numbers made it
  * (you paid and had a share), it is written as their difference, uncoloured:
- * "50.00 − 20.00 = +CRD 30.00" — beside the label, under it when it won't fit
- * there, and when it won't fit a line at all, written out as at school: one
- * number under the other and the result under a rule.
+ * "50.00 − 20.00 = +CRD 30.00" beside the label, and as soon as that stops
+ * fitting comfortably, written out as at school: one number under the other
+ * and the result under a rule.
  */
 function YourBalance({ up, down, net, currency }: {
   up: number; down: number; net: number; currency: CurrencyCode;
@@ -348,18 +351,18 @@ function YourBalance({ up, down, net, currency }: {
   const row = useRef<HTMLDivElement>(null);
   const label = useRef<HTMLSpanElement>(null);
   const fig = useRef<HTMLElement>(null);
-  const [form, setForm] = useState<(typeof SUM_FORMS)[number]>("beside");
+  const [column, setColumn] = useState(false);
 
   useLayoutEffect(() => {
     const el = row.current;
-    if (!el || !both) return setForm("beside");
+    if (!el || !both) return setColumn(false);
     let live = true;
     const pick = () => {
       if (!live || !label.current || !fig.current) return;
       // A mono face: the bold result advances like the regular sum.
       const sum = textWidth(line + result, styleOf(fig.current));
-      // The `.kv` gap between label and figure; the column fits anything.
-      setForm(SUM_FORMS[fitIndex([label.current.offsetWidth + 12 + sum, sum, 0], el.clientWidth)]!);
+      // The `.kv` gap between label and figure, then the slack.
+      setColumn(fitIndex([label.current.offsetWidth + 12 + SUM_SLACK + sum, 0], el.clientWidth) === 1);
     };
     pick();
     const watch = new ResizeObserver(pick);
@@ -374,10 +377,10 @@ function YourBalance({ up, down, net, currency }: {
   const cut = result.search(/\d\D*$/) + 1;
   // One root whatever the form, so the observer above keeps watching it.
   return (
-    <div ref={row} className={form === "column" ? "yourbal col" : "kv yourbal"}>
+    <div ref={row} className={column ? "yourbal col" : "kv yourbal"}>
       {/* Set as the card's section heads are ("PAID BY"), since it is one. */}
       <span ref={label} className="k eyebrow">{copy.entry.yourBalance}</span>
-      {form === "column" ? (
+      {column ? (
         <div className="sumcol">
           <span>{bare(up, currency)}</span><span />
           <span>− {bare(down, currency)}</span><span />
