@@ -750,10 +750,12 @@ export const copy = {
       owed: "You’re owed",
       square: "You’re square",
     },
-    /** "Marie paid" · "Marie + 1 other received". */
+    /** "Marie paid" · "Marie + 2 others received". */
     payers: (who: string, others: string | null, verb: string) =>
       (others ? `${who} + ${others} ${verb}` : `${who} ${verb}`),
-    /** For a row with no room for "+ 1 other" (the ladder in `lib/row-meta.ts`); dropping co-payers would be untrue. */
+    /** Two payers are named: "Theo & Marie paid" is no longer than "Theo + 1 other paid". */
+    payersPair: (who: string, other: string, verb: string) => `${who} & ${other} ${verb}`,
+    /** For a row with no room for "+ 2 others" (the ladder in `lib/row-meta.ts`); dropping co-payers would be untrue. */
     payersTight: (who: string, others: number, verb: string) => `${who} +${others} ${verb}`,
     sharedWays: (n: string) => `shared ${n}`,
     splitWays: (n: string) => `split ${n}`,

@@ -232,7 +232,8 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
               goes first is `lib/row-meta.ts`; this only picks off it. */}
           <FitLine className="rmeta" options={expenseMeta({
             payer: payer?.name ?? copy.someone,
-            coPayers: payers.length - 1,
+            coPayers: payers.filter((id) => id !== expense.paidBy)
+              .map((id) => memberById.get(id)?.name ?? copy.someone),
             kind,
             ways: participants,
             mode: expense.split.mode,

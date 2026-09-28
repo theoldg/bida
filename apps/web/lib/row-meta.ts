@@ -24,8 +24,8 @@ function ladder(rungs: string[]): string[] {
 
 export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
   payer: string;
-  /** How many people paid *besides* `payer`. */
-  coPayers: number;
+  /** The names of whoever paid *besides* `payer`. */
+  coPayers: string[];
   /** Only the kinds with a payer side; a transfer uses `transferMeta`. */
   kind: "expense" | "income";
   /** How many shares the amount was cut into. */
@@ -33,10 +33,13 @@ export function expenseMeta({ payer, coPayers, kind, ways, mode }: {
   mode: SplitSpec["mode"];
 }): string[] {
   const verb = copy.entryKind.verb[kind];
-  const who = coPayers > 0
-    ? copy.group.payers(payer, plural(coPayers, copy.noun.other), verb)
-    : copy.group.payers(payer, null, verb);
-  const whoTight = coPayers > 0 ? copy.group.payersTight(payer, coPayers, verb) : who;
+  const [other] = coPayers;
+  const who = coPayers.length > 1
+    ? copy.group.payers(payer, plural(coPayers.length, copy.noun.other), verb)
+    : other !== undefined
+      ? copy.group.payersPair(payer, other, verb)
+      : copy.group.payers(payer, null, verb);
+  const whoTight = coPayers.length > 0 ? copy.group.payersTight(payer, coPayers.length, verb) : who;
 
   const count = plural(ways, copy.noun.way);
   const how = (kind === "income" ? copy.group.sharedWays : copy.group.splitWays)(count);

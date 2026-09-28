@@ -44,8 +44,6 @@ a user.
   `apps/web/lib/format.ts` asks for `hour: "2-digit"`. `"numeric"` gives
   "6:14 PM" in US English and still "18:14" in French or UK English.
   *`history`, `delete-entry`*
-- **"Theo + 1 other paid"** is clunky when there are only two payers. "Theo &
-  Marie paid" fits in the same space. *`group-ledger`*
 - **Content placed mid-screen.** Scan and Support place their content in the
   middle of the screen, leaving a gap under the title; every other screen starts
   at the top. *`scan`, `tip`*

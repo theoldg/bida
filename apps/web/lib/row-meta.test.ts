@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { expenseMeta, groupMeta, historyMeta, transferMeta } from "./row-meta";
 
-const base = { payer: "Alice", coPayers: 0, kind: "expense" as const, ways: 5, mode: "equal" as const };
+const base = { payer: "Alice", coPayers: [] as string[], kind: "expense" as const, ways: 5, mode: "equal" as const };
 
 describe("expenseMeta", () => {
   it("shortens a receipt split, mode first", () => {
-    expect(expenseMeta({ ...base, coPayers: 1, mode: "receipt" })).toEqual([
-      "Alice + 1 other paid · 5 people, by items",
-      "Alice + 1 other paid · split 5 ways",
+    expect(expenseMeta({ ...base, coPayers: ["Bob"], mode: "receipt" })).toEqual([
+      "Alice & Bob paid · 5 people, by items",
+      "Alice & Bob paid · split 5 ways",
       "Alice +1 paid · split 5 ways",
       "Alice +1 paid · 5 ways",
       "Alice +1 paid",
@@ -17,19 +17,19 @@ describe("expenseMeta", () => {
   it("never drops the co-payers, only abbreviates them", () => {
     // "Alice paid" when Bob paid too is a false line, and no width justifies
     // one. Every rung still carries the "+2".
-    for (const rung of expenseMeta({ ...base, coPayers: 2 })) {
+    for (const rung of expenseMeta({ ...base, coPayers: ["Bob", "Cy"] })) {
       expect(rung).toMatch(/\+ ?2/);
     }
   });
 
   it("keeps the payer on every rung", () => {
-    for (const rung of expenseMeta({ ...base, coPayers: 1, mode: "percent" })) {
+    for (const rung of expenseMeta({ ...base, coPayers: ["Bob"], mode: "percent" })) {
       expect(rung.startsWith("Alice")).toBe(true);
     }
   });
 
   it("is strictly shortening", () => {
-    const rungs = expenseMeta({ ...base, payer: "Wilhelmina", coPayers: 3, mode: "shares" });
+    const rungs = expenseMeta({ ...base, payer: "Wilhelmina", coPayers: ["Bob", "Cy", "Di"], mode: "shares" });
     for (let i = 1; i < rungs.length; i++) {
       expect(rungs[i]!.length).toBeLessThan(rungs[i - 1]!.length);
     }
@@ -38,8 +38,8 @@ describe("expenseMeta", () => {
   it("drops the rung an equal split would repeat", () => {
     // "split 5 ways" is already the whole of an equal split's mode, so the
     // ladder has four rungs here rather than five saying the same thing twice.
-    expect(expenseMeta({ ...base, coPayers: 1 })).toEqual([
-      "Alice + 1 other paid · split 5 ways",
+    expect(expenseMeta({ ...base, coPayers: ["Bob"] })).toEqual([
+      "Alice & Bob paid · split 5 ways",
       "Alice +1 paid · split 5 ways",
       "Alice +1 paid · 5 ways",
       "Alice +1 paid",
@@ -59,8 +59,14 @@ describe("expenseMeta", () => {
   });
 
   it("counts one the singular way", () => {
-    expect(expenseMeta({ ...base, ways: 1, coPayers: 1 })[0])
-      .toBe("Alice + 1 other paid · split 1 way");
+    expect(expenseMeta({ ...base, ways: 1, coPayers: ["Bob", "Cy"] })[0])
+      .toBe("Alice + 2 others paid · split 1 way");
+  });
+
+  it("names a second payer, and counts from a third", () => {
+    // "Alice + 1 other" hides a name that fits in the same space.
+    expect(expenseMeta({ ...base, coPayers: ["Bob"] })[0]).toBe("Alice & Bob paid · split 5 ways");
+    expect(expenseMeta({ ...base, coPayers: ["Bob", "Cy"] })[0]).toBe("Alice + 2 others paid · split 5 ways");
   });
 });
 

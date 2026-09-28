@@ -30,7 +30,7 @@ export function payerList(expense: PayerBearing): Id[] {
   return ids.length === 0 ? [expense.paidBy] : ids;
 }
 
-/** More than one person put money in. Drives "Bob + 1 other paid". */
+/** More than one person put money in. Drives "Bob & Ann paid". */
 export function isCoSponsored(expense: PayerBearing): boolean {
   return payerList(expense).length > 1;
 }
