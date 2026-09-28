@@ -49,9 +49,6 @@ a user.
   at the top. *`scan`, `tip`*
 - **Quick-split result.** Names (Ana, Bo, Cy) are grey while their totals are
   black, so the person reads as the secondary item. *`quick-result`*
-- **Import plan.** "Start again" is the first element on the screen, above the
-  summary. It belongs under "Create the group" as a secondary action.
-  *`import-plan`*
 - **Labels that say too little.** "rest" on every row of the split and payer
   editors; "yours" alone in the rate dialog; "the other side: picking swaps
   them" in the transfer picker; "Advanced" in the home menu.

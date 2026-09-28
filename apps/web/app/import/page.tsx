@@ -158,14 +158,9 @@ export default function ImportPage() {
                   e.target.value = "";
                 }} />
 
-              {/* Once a plan is on screen, the two ways in collapse to one button back
-                  to them. What was typed is still there on return. */}
-              {plan ? (
-                <button type="button" className="btn btn-s"
-                  onClick={() => { setPlan(undefined); setWhy(undefined); }}>
-                  {words.again}
-                </button>
-              ) : (
+              {/* Once a plan is on screen it is the screen: the ways in go,
+                  and the bar's back arrow is the way out of a plan not wanted. */}
+              {plan ? null : (
                 <>
                   <p>{words.lede}</p>
 

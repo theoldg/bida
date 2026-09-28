@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "fix the +1 other finding", then mid-turn "also remove the
+  start again button". My crit had said move it; the owner said remove. The
+  later, blunter word wins: take it, and drop the crit's item with it.
+
 - *2026-09-28* — "is it a mess?", then "so what's up with" a finding. Two of
   my crit's items were one rule seen on two different buttons. Answer the
   question with a verdict first; when my own finding is asked about, re-derive
@@ -78,6 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   design system names had been left out. Next round: "stick it like the
   who-are-you screen." Copy the nearest sibling's whole behaviour, not its look.
 
-- *2026-09-28* — "Fold Ben's items in the screenshots and reshoot." A shot's
-  script had pressed a row open to show the feature; the screen already opens
-  the viewer's own. Let the photograph show what a person sees on arrival.

@@ -122,8 +122,6 @@ export const copy = {
     /** What this makes, and what it's made from. */
     lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
     pick: "Choose a file",
-    /** Back to the two ways in, once a plan is on screen and is not the one wanted. */
-    again: "Start again",
 
     /** Fetched from its link, so it asks nothing of the other app. */
     orTricount: "Or paste a Tricount link:",
