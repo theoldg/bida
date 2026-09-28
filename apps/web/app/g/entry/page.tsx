@@ -358,7 +358,9 @@ function ExpenseDetail({ expense, kind, group, data }: {
   const english = useBillEnglish();
   const coSponsored = isCoSponsored(expense);
   const me = data.me;
-  const yours = (id: string, name: ReactNode) => (id === me ? <>{name}<You /></> : name);
+  // One span, not a fragment: a scanned row's name sits in a flex box that
+  // centres its children, which would float the smaller tag off the baseline.
+  const yours = (id: string, name: ReactNode) => (id === me ? <span>{name}<You /></span> : name);
   // What each payer put in, in the base currency — the figure that actually
   // moves their balance, so it is the one worth showing next to their name.
   const putIn = resolvePayers(expense);

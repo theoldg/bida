@@ -25,10 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-09-28* — "Reshoot the screenshots." Three words, no list: the README's
-  six, since only those are committed. Five came back byte-identical, one had
-  grown the balance line. Say which moved and why, so the owner sees the diff
-  without opening six images.
+- *2026-09-28* — "Reshoot the screenshots." One shot had moved, and I read it
+  as a diff, not a picture: the owner zoomed in and found "(you)" floating
+  above its name. A reshoot is a look at the screen; read each moved shot at
+  full size before calling it done.
 
 - *2026-09-28* — "The logo is a bit too large in circle icons." Five scales on
   one page, in every launcher shape; the owner picked 72%, smaller than my
