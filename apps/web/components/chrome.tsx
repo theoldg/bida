@@ -132,7 +132,7 @@ export function Fab({ href, label = copy.group.addEntry }: { href: string; label
  */
 export function ScanFab({ href }: { href: string }) {
   return (
-    <Link href={href} className="fab fab-2" aria-label={copy.scan.scan}>
+    <Link href={href} className="fab fab-2" aria-label={copy.scan.title}>
       <Icon name="cam" size={28} />
     </Link>
   );

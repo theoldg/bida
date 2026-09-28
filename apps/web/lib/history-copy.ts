@@ -322,7 +322,7 @@ export function describe(
       if (wasWho !== nowWho) {
         parts.push({
           what: said.payerWho[kind](who),
-          label: kind === "income" ? named.receiver : named.payer,
+          label: copy.payers.title[kind],
           diff,
         });
       } else if (wasHow !== nowHow) {

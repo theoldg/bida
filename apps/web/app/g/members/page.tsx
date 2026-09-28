@@ -140,7 +140,7 @@ function MembersScreen() {
       </Body>
 
       {ask?.kind === "who" && me ? (
-        <ChoiceDialog title={copy.members.whoTitle} value={me}
+        <ChoiceDialog title={copy.claim.title} value={me}
           options={data.members.map((m) => ({ value: m.id, label: m.name }))}
           onPick={claim} onClose={() => setAsk(null)} />
       ) : null}

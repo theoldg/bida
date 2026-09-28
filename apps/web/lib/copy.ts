@@ -118,6 +118,7 @@ export const copy = {
    * the list; `detail` is the fact each needs.
    */
   importData: {
+    /** Also the groups screen's kebab row, since what it makes is a group. */
     title: "Import a group",
     /** What this makes, and what it's made from. */
     lede: "Create a new bida group using a file exported from Splitwise (or from bida).",
@@ -241,8 +242,6 @@ export const copy = {
       body: "Finishes by itself once they sync.",
     },
     newGroup: "New group",
-    /** Kebab row above About; on this screen because what it makes is a group. */
-    importGroup: "Import a group",
     quickSplit: "Quick split",
     /** Only on an iOS home-screen app, which can't be handed a tapped link. */
     pasteLink: "Paste link",
@@ -796,7 +795,6 @@ export const copy = {
     removeLabel: (name: string) => `Remove ${name}`,
     /** A dialog, since the row also removes and invites; the check mark already shows *which*. */
     whoChange: "Change who you are",
-    whoTitle: "Which one are you?",
     removeTitle: (name: string) => `Remove ${name}?`,
     removeBody: "They aren’t involved in any entry.",
     blockedTitle: (name: string) => `Can’t remove ${name}`,
@@ -1006,8 +1004,7 @@ export const copy = {
   // ------------------------------------------------------------- receipts
 
   scan: {
-    scan: "Scan a receipt",
-    /** The scan-first screen: its title and what it promises. */
+    /** The scan-first screen: its title, which the scan FAB says too, and what it promises. */
     title: "Scan a receipt",
     /**
      * The screen's drawing: a bill and the expense it becomes. These are its
@@ -1201,8 +1198,6 @@ export const copy = {
       amount: "Amount",
       currency: "Currency",
       rate: "Rate",
-      payer: "Who paid",
-      receiver: "Who received it",
       putIn: "How much each",
       description: "Description",
       date: "Date",
