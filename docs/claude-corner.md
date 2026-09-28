@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "change who you are doesnt work while the keyboard is open",
+  with "fixed for most screens, i guess not this one". A fix that is a prop to
+  spread gets forgotten on the screen nobody re-reads: sweep every sibling
+  control when fixing one, not only the button that was named.
+
 - *2026-09-28* — "make the import screen identical to the join screen". My
   crit said "one component" when they already were one; the owner read it
   literally and asked a sharper thing. Check a finding against the code before
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   differences, the top row looks good": the baseline I'd drawn for comparison
   won over four that differed by where one line sat. Caption what each variant
   changes, and always offer today's shape, extended, as one.
-
-- *2026-09-28* — A link-preview banner in six rounds of mocks, each a
-  fragment ("less text", "bigger slogan", "lowercased, no period") before "go
-  with L1, ship it". Every round kept the one thing picked and varied only
-  what the note named.
