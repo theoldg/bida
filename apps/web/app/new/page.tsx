@@ -2,15 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { isCurrencyCode } from "@bida/core";
 import { Eyebrow } from "@/components/bits";
 import { Body, Screen, Scroll, TopBar } from "@/components/chrome";
 import { CreateAs } from "@/components/create-as";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
+import { CurrencyPicker } from "@/components/currency-picker";
+import { ConfirmDialog } from "@/components/dialog";
 import { Icon } from "@/components/icons";
 import { AddName } from "@/components/name-adder";
 import { copy } from "@/lib/copy";
-import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
+import { currencyLabel } from "@/lib/currencies";
 import { createGroup } from "@/lib/db/commands";
 import { db } from "@/lib/db/dexie";
 import { route } from "@/lib/group-link";
@@ -58,7 +58,7 @@ export default function NewGroupPage() {
     return () => { cancelled = true; };
   }, [device?.lastOpenedGroupId]);
   const [asking, setAsking] = useState(false);
-  const [ask, setAsk] = useState<null | "currency" | "other" | "discard">(null);
+  const [ask, setAsk] = useState<null | "currency" | "discard">(null);
   // The name still in the add row. Nothing acts on it — only its own plus files
   // it (components/name-adder.tsx) — but it is something typed, so leaving with
   // it on screen is leaving with work unsaved.
@@ -216,28 +216,8 @@ export default function NewGroupPage() {
       ) : null}
 
       {ask === "currency" ? (
-        <ChoiceDialog
-          title={copy.currency.title}
-          value={currency}
-          options={[
-            ...currencyChoices([currency]).map((c) => ({
-              value: c, label: currencyLabel(c),
-            })),
-            { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
-          ]}
-          onPick={(c) => { if (c === OTHER_CURRENCY) setAsk("other"); else setCurrency(c); }}
-          // "Other…" swaps one dialog for the next, so it can't close this one.
-          onClose={() => setAsk((a) => (a === "other" ? a : null))}
-        />
-      ) : null}
-
-      {ask === "other" ? (
-        <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
-          confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters"
-          clean={normalizeCurrencyCode} valid={isCurrencyCode}
-          onSubmit={(code) => { setCurrency(code); setAsk(null); }}
-          onClose={() => setAsk(null)} />
+        <CurrencyPicker value={currency} first={[currency]}
+          onPick={setCurrency} onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
   );

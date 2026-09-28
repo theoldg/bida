@@ -2,17 +2,16 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
+import { type CurrencyInUse, type RateSource } from "@bida/core";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
+import { ConfirmDialog } from "@/components/dialog";
+import { CurrencyPicker } from "@/components/currency-picker";
 import { useLongPressMenu } from "@/components/long-press";
 import { RateDialog } from "@/components/rate-dialog";
 import { clearRate, setRate } from "@/lib/db/commands";
 import { copy } from "@/lib/copy";
-import {
-  currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY,
-} from "@/lib/currencies";
+import { currencyLabel } from "@/lib/currencies";
 import { plural, rateText } from "@/lib/format";
 import { route } from "@/lib/group-link";
 import { useClaimGate, useGroupData } from "@/lib/hooks";
@@ -34,7 +33,6 @@ export default function RatesPage() {
 type Ask =
   | { kind: "edit"; currency: string }
   | { kind: "pick" }
-  | { kind: "other" }
   | { kind: "remove"; currency: string }
   | { kind: "blocked"; currency: string; entries: BlockingEntry[] };
 
@@ -129,37 +127,16 @@ function RatesScreen() {
       ) : null}
 
       {ask?.kind === "pick" ? (
-        <ChoiceDialog
-          title={copy.currency.title}
-          value={base}
-          options={[
-            ...currencyChoices([base], currencies.map((u) => u.currency)).map((c) => ({
-              value: c,
-              label: currencyLabel(c),
-              note: c === base ? copy.currency.isBase
-                : currencies.find((u) => u.currency === c)?.rate
-                  ? copy.currency.hasRate(
-                    `${rateText(currencies.find((u) => u.currency === c)!.rate!.rate)} ${base}`)
-                  : undefined,
-            })),
-            { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
-          ]}
-          onPick={(currency) => {
-            if (currency === OTHER_CURRENCY) { setAsk({ kind: "other" }); return; }
-            add(currency);
+        <CurrencyPicker value={base} first={[base]}
+          used={currencies.map((u) => u.currency)}
+          note={(c) => {
+            const rate = currencies.find((u) => u.currency === c)?.rate;
+            if (c === base) return copy.currency.isBase;
+            return rate ? copy.currency.hasRate(`${rateText(rate.rate)} ${base}`) : undefined;
           }}
-          // "Other…" hands over to the prompt, so that pick must not close it.
-          onClose={() => setAsk((a) => (a?.kind === "pick" ? null : a))}
-        />
-      ) : null}
-
-      {ask?.kind === "other" ? (
-        <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
-          confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters"
-          clean={normalizeCurrencyCode} valid={(v) => isCurrencyCode(v) && v !== base}
-          onSubmit={(currency) => add(currency)}
-          onClose={() => setAsk((a) => (a?.kind === "other" ? null : a))} />
+          refuse={base} onPick={add}
+          // A pick opens the rate editor, which this close must leave open.
+          onClose={() => setAsk((a) => (a?.kind === "pick" ? null : a))} />
       ) : null}
 
       {ask?.kind === "remove" ? (

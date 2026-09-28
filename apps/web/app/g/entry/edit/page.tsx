@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  isCurrencyCode, minorToDecimalString, receiptExtras,
+  minorToDecimalString, receiptExtras,
   type RateSource,
 } from "@bida/core";
 import { handOffReceiptTotal } from "@/lib/scan/items";
@@ -14,11 +14,11 @@ import { useReceiptScan } from "@/components/receipt-scan";
 import { useScanAs } from "@/lib/quick";
 import { SplitEditor } from "@/components/split-editor";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
-import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
+import { ChoiceDialog, ConfirmDialog } from "@/components/dialog";
+import { CurrencyPicker } from "@/components/currency-picker";
 import { RateDialog } from "@/components/rate-dialog";
 import { Icon } from "@/components/icons";
 import { TransferSides } from "@/components/transfer-sides";
-import { currencyChoices, currencyLabel, normalizeCurrencyCode, OTHER_CURRENCY } from "@/lib/currencies";
 import {
   addExpense, editExpense, editSettlement, recordSettlement, setRate,
 } from "@/lib/db/commands";
@@ -74,7 +74,7 @@ function EditEntryScreen() {
   const unclaimed = useClaimGate(groupId, data);
   const draft = useDraft(groupId);
   const scan = useReceiptScan(groupId, useScanAs(groupId));
-  const [ask, setAsk] = useState<null | "discard" | "currency" | "currency-other" | "payer" | "kind">(null);
+  const [ask, setAsk] = useState<null | "discard" | "currency" | "payer" | "kind">(null);
   /** Which currency's rate is being set, if any. See `pickCurrency`. */
   const [askRate, setAskRate] = useState<string | null>(null);
   const [failed, setFailed] = useState<string>();
@@ -733,26 +733,10 @@ function EditEntryScreen() {
       ) : null}
 
       {ask === "currency" ? (
-        <ChoiceDialog
-          title={copy.currency.title}
-          value={draft.currency}
-          options={[
-            ...currencyChoices(
-              [base, draft.currency], data.currencies.map((c) => c.currency),
-            ).map((c) => ({
-              value: c,
-              label: currencyLabel(c),
-              note: c === base ? copy.currency.isBase : undefined,
-            })),
-            { value: OTHER_CURRENCY, label: copy.currency.other, note: copy.currency.otherNote },
-          ]}
-          onPick={(currency) => {
-            if (currency === OTHER_CURRENCY) { setAsk("currency-other"); return; }
-            pickCurrency(currency);
-          }}
-          // "Other…" hands over to the prompt, so that pick must not close it.
-          onClose={() => setAsk((a) => (a === "currency-other" ? a : null))}
-        />
+        <CurrencyPicker value={draft.currency} first={[base, draft.currency]}
+          used={data.currencies.map((c) => c.currency)}
+          note={(c) => (c === base ? copy.currency.isBase : undefined)}
+          onPick={pickCurrency} onClose={() => setAsk((a) => (a === "currency" ? null : a))} />
       ) : null}
 
       {ask === "payer" ? (
@@ -794,18 +778,6 @@ function EditEntryScreen() {
           }}
           onClose={() => setAskRate(null)}
         />
-      ) : null}
-
-      {ask === "currency-other" ? (
-        <PromptDialog title={copy.currency.title} placeholder={copy.currency.otherPlaceholder}
-          confirm={copy.act.useIt} maxLength={3}
-          autoCapitalize="characters"
-          clean={normalizeCurrencyCode} valid={isCurrencyCode}
-          onSubmit={(currency) => {
-            pickCurrency(currency);
-            setAsk(null);
-          }}
-          onClose={() => setAsk(null)} />
       ) : null}
     </Screen>
   );
