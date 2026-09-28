@@ -27,8 +27,8 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 
 - *2026-09-28* — A screenshot of the payers screen: "swap the quiet corner
   Done for a large inked button, like other screens." One of the list the
-  design system names had been left out. When one screen is the odd one,
-  add it to that list too.
+  design system names had been left out. Next round: "stick it like the
+  who-are-you screen." Copy the nearest sibling's whole behaviour, not its look.
 
 - *2026-09-28* — "Fold Ben's items in the screenshots and reshoot." A shot's
   script had pressed a row open to show the feature; the screen already opens

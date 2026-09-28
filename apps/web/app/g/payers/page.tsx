@@ -167,7 +167,10 @@ function PayersScreen() {
             })}
           </div>
 
-          <div className="pad">
+          {/* The verdict and the way out travel together, sticky as on "Which
+              one are you?": on a long list they wait at the foot with names
+              passing under, on a short one they sit right below the rows. */}
+          <div className="pad whodock" style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             {/* Tick when it adds up, words alone when it doesn't — same as the
                 split footer, and for the same reason. */}
             <div className={`splitfoot alone ${check.ok ? "ok" : "bad"}`}>
@@ -179,11 +182,8 @@ function PayersScreen() {
                   : payerProblemText(check, currency, voice)}
               </span>
             </div>
-          </div>
-
-          {/* The screen's last row, as on the entry form — not a corner link. */}
-          <div className="pad" style={{ paddingTop: 18, paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}>
             <button type="button" className="btn btn-p btn-lg" disabled={!check.ok} {...keepsFocus}
+              style={{ marginTop: 10 }}
               onClick={() => goBack(() => router.back(), (to) => router.replace(to))}>
               {copy.act.done}
             </button>

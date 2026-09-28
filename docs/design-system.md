@@ -62,8 +62,11 @@ and still flat. It is the last row of the scroll, not a pinned bar: pinned, it
 fights the phone keyboard, which overlays the shell rather than shortening it.
 Where the screen has no scroll of its own to ride — the who-had-what grid owns
 its, sideways as well as down — the button sits in the fixed foot, and that
-band pays `--kb` in its place. The entry form, the new-group form, the payers screen, the
-who-had-what grid and "Which one are you?" all end this way. `/g/scan` is the
+band pays `--kb` in its place. Where the list can outgrow the screen — "Which
+one are you?", `/g/payers` — the last row is sticky (`.whodock`): under the
+rows while they fit, stopped at the scroller's foot once they don't, and on
+`/g/payers` the verdict line rides in it with the button. The entry form, the
+new-group form, the who-had-what grid and those two all end this way. `/g/scan` is the
 one exception: it holds a picture and the button that picture explains, and at
 the foot the button is a long way from the only thing explaining it, so the two
 sit centred as one block instead.
