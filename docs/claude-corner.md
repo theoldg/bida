@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "remove these items with which i disagree": three of my crit
+  findings (red for a received transfer, green's two meanings, the loud swap)
+  were the owner's deliberate choices. A crit lists what I'd change, not what
+  is wrong; expect a cull, and cut cleanly without arguing.
+
 - *2026-09-28* — "Remove the middle one and fall back to multiline as soon as
   inline stops fitting comfortably." Three layouts for one sum was one too
   many; "comfortably" meant slack, not the exact pixel. Fewer shapes beats a
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-28* — "The touch highlight should cover the button, not the whole
   row." I built the link and never pressed it in a photograph. The wash is part
   of the look: hold the mouse down in the probe before calling a control done.
-
-- *2026-09-28* — Six lens mocks drawn from memory, then "look at the
-  screenshots yourself and try a bit harder." The real screen had cases my
-  mocks never met: two payers, an income, a transfer. Prototype in the app
-  behind a switch and photograph every case before proposing.

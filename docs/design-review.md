@@ -11,14 +11,6 @@ a user.
 
 ## Confuses a person
 
-- **A transfer you receive shows in red.** "Sam paid Theo" shows −€800.00 in red
-  on Theo's ledger, and "Deposit back" (an income Theo received) shows red
-  −€1,000.00. Both are right as a balance effect, but they read as losing money.
-  *`group-ledger`*
-- **Green means two things.** In the ledger and balances, green is "in your
-  favour". In History, green is "the new value", so every created entry's amount
-  shows green, including ones that are not yours. Use a neutral colour for new
-  values in History and keep the red strike-through for old ones. *`history`*
 - **"You" is marked four ways.** A grey band with a left bar (ledger, balances,
   split rows), a ✓ (People — which reads as "selected"), "(you)" (entry view),
   and a ✓ on the claim screen that does mean "selected". "(you)" is the only
@@ -29,10 +21,6 @@ a user.
 - **The kind switch doesn't look like a switch.** The Expense / Income /
   Transfer button sits top-right with no chevron, next to EUR, which has one.
   *`entry-expense`*
-- **The transfer's swap button is the loudest thing on the form.** It is a black
-  filled → between FROM and TO, heavier than Save, and → reads as a direction,
-  not a swap. A ⇄ icon in a lighter style would say what it does.
-  *`entry-transfer`*
 
 ## Inconsistent
 
