@@ -159,6 +159,29 @@ function BannerBody({ groupId }: { groupId: string }) {
   );
 }
 
+/** Which of the three cards is due, if any: notifications once installed, else the install offer. */
+type Due = "notify" | "manual" | "ready";
+
+function useDueOffer(): Due | null {
+  const offer = useInstallOffer();
+  const push = usePushState();
+  if (offer === "installed" && push === "ask") return "notify";
+  return offer === "manual" || offer === "ready" ? offer : null;
+}
+
+/** The due card, folded or not. Both placements draw it; they differ in where the fold is kept. */
+function DueOffer({ due, groupId, open, onToggle }: {
+  due: Due; groupId: string; open: boolean; onToggle: () => void;
+}) {
+  const title = due === "notify" ? copy.notify.offer.title
+    : due === "manual" ? copy.install.banner.title : copy.install.title;
+  return (
+    <FoldedOffer title={title} open={open} onToggle={onToggle}>
+      {due === "notify" ? <NotifyBody /> : due === "manual" ? <BannerBody groupId={groupId} /> : <NudgeBody />}
+    </FoldedOffer>
+  );
+}
+
 /**
  * The offer atop the groups list — Chrome's prompt or the iOS warning, never
  * both, and in the installed app the notifications offer. Only once the list
@@ -166,32 +189,14 @@ function BannerBody({ groupId }: { groupId: string }) {
  * persists; the ledger's copy doesn't — see `LedgerInstall`.
  */
 export function InstallOfferCard({ groupId }: { groupId: string }) {
-  const offer = useInstallOffer();
-  const push = usePushState();
+  const due = useDueOffer();
   const device = useDevice();
-  const asking = offer === "installed" && push === "ask";
-  if (offer !== "ready" && offer !== "manual" && !asking) return null;
   // undefined is "Dexie hasn't answered yet", and drawing the card open before
   // it does would snap it shut a frame later on a phone that folded it.
-  if (!device) return null;
-  if (asking) {
-    const open = !device.notifyNudgeCollapsed;
-    return (
-      <FoldedOffer title={copy.notify.offer.title} open={open}
-        onToggle={() => void setNotifyNudgeCollapsed(open)}>
-        <NotifyBody />
-      </FoldedOffer>
-    );
-  }
-  const open = !device.installNudgeCollapsed;
-  const toggle = () => void setInstallNudgeCollapsed(open);
-  return offer === "manual"
-    ? <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>
-        <BannerBody groupId={groupId} />
-      </FoldedOffer>
-    : <FoldedOffer title={copy.install.title} open={open} onToggle={toggle}>
-        <NudgeBody />
-      </FoldedOffer>;
+  if (!due || !device) return null;
+  const open = !(due === "notify" ? device.notifyNudgeCollapsed : device.installNudgeCollapsed);
+  const fold = due === "notify" ? setNotifyNudgeCollapsed : setInstallNudgeCollapsed;
+  return <DueOffer due={due} groupId={groupId} open={open} onToggle={() => void fold(open)} />;
 }
 
 /**
@@ -205,33 +210,10 @@ export function InstallOfferCard({ groupId }: { groupId: string }) {
  * nothing here syncs.
  */
 export function LedgerInstall({ groupId }: { groupId: string }) {
-  const offer = useInstallOffer();
-  const push = usePushState();
+  const due = useDueOffer();
   const [open, setOpen] = useState(false);
-  const toggle = () => setOpen(!open);
-  if (isDemo(groupId)) return null;
-  if (offer === "installed" && push === "ask") {
-    return (
-      <FoldedOffer title={copy.notify.offer.title} open={open} onToggle={toggle}>
-        <NotifyBody />
-      </FoldedOffer>
-    );
-  }
-  if (offer === "manual") {
-    return (
-      <FoldedOffer title={copy.install.banner.title} open={open} onToggle={toggle}>
-        <BannerBody groupId={groupId} />
-      </FoldedOffer>
-    );
-  }
-  if (offer === "ready") {
-    return (
-      <FoldedOffer title={copy.install.title} open={open} onToggle={toggle}>
-        <NudgeBody />
-      </FoldedOffer>
-    );
-  }
-  return null;
+  if (isDemo(groupId) || !due) return null;
+  return <DueOffer due={due} groupId={groupId} open={open} onToggle={() => setOpen(!open)} />;
 }
 
 /**
