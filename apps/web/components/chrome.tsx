@@ -97,14 +97,14 @@ export function TopBar({ title, sub, back, mid, right }: {
   return (
     <div className="topbar">
       {back === true || guard ? (
-        <button className="iconbtn" onClick={press} aria-label={copy.act.back} {...keepsFocus}>
+        <button className="iconbtn back" onClick={press} aria-label={copy.act.back} {...keepsFocus}>
           <Icon name="back" size={17} />
         </button>
       ) : typeof back === "string" ? (
         /* A real anchor, but not a plain push: the arrow names a parent, and
            going up unwinds the history to it rather than stacking another
            entry on top (lib/nav.ts). */
-        <Link className="iconbtn" href={back} aria-label={copy.act.back}
+        <Link className="iconbtn back" href={back} aria-label={copy.act.back}
           onClick={(e) => { e.preventDefault(); run(); }} {...keepsFocus}>
           <Icon name="back" size={17} />
         </Link>

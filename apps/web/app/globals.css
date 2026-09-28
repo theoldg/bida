@@ -379,6 +379,10 @@ a { color: inherit; text-decoration: none }
    way to reach People, History and the invite link, and they are pressed with a
    thumb reaching across the phone. Bigger circle, bigger glyph. */
 .topbar .iconbtn { width: 37px; height: 37px }
+/* The back arrow is on every screen and always means the same thing, so it
+   needs no box to say it can be pressed: a bare glyph, pulled out onto the
+   page's left edge, with the whole 37px square still the target. */
+.iconbtn.back { background: transparent; border-color: transparent; margin-inline: -9px -6px }
 .spacer { margin-left: auto }
 /* The build's number in the bar's far corner, `/about` only (app/about/page.tsx).
    Set like the bar's own subtitle — mono, muted, a step down — so it reads as a
@@ -1369,6 +1373,7 @@ dialog.scrim::backdrop { background: transparent }
   mask-image: linear-gradient(#000 78%, transparent) }
 .keyless-bar { display: flex; align-items: center; gap: 9px }
 .keyless-bar .iconbtn { width: 28px; height: 28px; background: var(--card) }
+.keyless-bar .iconbtn.back { background: transparent; margin-inline: -7px -4px }
 .keyless-name { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; letter-spacing: -.02em; color: var(--ink) }
 .keyless-menu { position: static; animation: none; width: max-content; min-width: 190px;
   margin: 6px 0 0 auto; pointer-events: none }

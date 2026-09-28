@@ -67,7 +67,7 @@ export function KeylessLink() {
 
           <div className="keyless-fig" aria-hidden="true">
             <div className="keyless-bar">
-              <span className="iconbtn"><Icon name="back" size={15} /></span>
+              <span className="iconbtn back"><Icon name="back" size={15} /></span>
               <span className="keyless-name">{keyless.groupName}</span>
               <span className="iconbtn keyless-lit"><Icon name="more" size={16} /></span>
             </div>
