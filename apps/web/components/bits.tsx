@@ -21,31 +21,6 @@ export function Avatar({ name, size = 34 }: { name: string; size?: number }) {
   );
 }
 
-/**
- * A row that *does* something — add a member, start a group, leave one. The
- * dashed square marks it as a thing to press. `.ghostrow` carries the air
- * above the first one, so pages pass no padding.
- */
-export function GhostRow({ icon, label, href, onClick, danger }: {
-  icon: IconName;
-  label: ReactNode;
-  href?: string;
-  onClick?: () => void;
-  /** Leaving a group is the one of these that takes something away. */
-  danger?: boolean;
-}) {
-  const color = danger ? "var(--debit)" : "var(--muted)";
-  const inner = (
-    <>
-      <span className="avatar ghost" style={{ color }}><Icon name={icon} size={15} /></span>
-      <div className="rmain"><div className="rtitle" style={{ color, fontWeight: 500 }}>{label}</div></div>
-    </>
-  );
-  return href
-    ? <Link href={href} className="row ghostrow">{inner}</Link>
-    : <button className="row ghostrow" onClick={onClick}>{inner}</button>;
-}
-
 export function Chip({ children, variant, style }: {
   children: ReactNode; variant?: "hl" | "pend"; style?: CSSProperties;
 }) {

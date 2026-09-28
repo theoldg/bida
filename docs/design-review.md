@@ -11,13 +11,8 @@ a user.
 
 ## Inconsistent
 
-- **Two disabled-button styles.** A disabled primary button is a solid grey
-  block ("Done", "Pick your name"); "Fetch it" on Import is an outlined grey
-  button. *`payers`, `import`*
-- **Three "add" rows.** People and New group use a text field with a ＋ square on
-  the right. Rates uses a dashed ＋ square on the left with a label. When
-  focused, the add-member field draws a box at a 16px gutter instead of 32px.
-  *`members`, `rates`, `add-member`*
+- **The add-member field's focus box.** When focused, it draws a box at a 16px
+  gutter instead of 32px. *`members`, `add-member`*
 - **Three section-header styles.** Some are small letter-spaced caps
   ("MEMBERS", "WHO'S SPLITTING"), the entry form uses sentence-case grey "Split
   … 3 people", and the ledger's "TODAY" is a full-width grey band.

@@ -404,11 +404,8 @@ a { color: inherit; text-decoration: none }
   background: var(--card-2); color: var(--ink-2); border: 1px solid var(--rule) }
 
 /* An empty slot, not a person: the dashed square on a row that adds something. */
-.avatar.ghost { background: transparent; border-style: dashed }
 /* Air above where the list stops and the things you can do to it start — on the
    first of them only, so a second needs no rule of its own. */
-.ghostrow { padding-top: 16px }
-.ghostrow + .ghostrow { padding-top: 11px }
 
 /* The two ways to start: a group, or a bill with people who are not one. Two
    separate jobs, so two squares echoing the ledger's two FABs rather than one

@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { isCurrencyCode, type CurrencyInUse, type RateSource } from "@bida/core";
-import { GhostRow } from "@/components/bits";
+import { keepsFocus } from "@/components/bits";
 import { BadLink, Blank, Body, Empty, QueryBoundary, Screen, Scroll, TopBar } from "@/components/chrome";
 import { BlockedDialog, blockingEntries, type BlockingEntry } from "@/components/blocked-dialog";
 import { ChoiceDialog, ConfirmDialog, PromptDialog } from "@/components/dialog";
@@ -109,8 +109,11 @@ function RatesScreen() {
             </div>
           )}
 
-          <div className="rows">
-            <GhostRow icon="plus" label={copy.rates.add} onClick={() => setAsk({ kind: "pick" })} />
+          {/* The screen's second act, so People's "Change who you are". */}
+          <div className="pad" style={{ paddingTop: 16 }}>
+            <button className="btn btn-s" onClick={() => setAsk({ kind: "pick" })} {...keepsFocus}>
+              {copy.rates.add}
+            </button>
           </div>
         </Scroll>
       </Body>

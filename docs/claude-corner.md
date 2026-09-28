@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "is it a mess?", then "so what's up with" a finding. Two of
+  my crit's items were one rule seen on two different buttons. Answer the
+  question with a verdict first; when my own finding is asked about, re-derive
+  it from the code before defending it.
+
 - *2026-09-28* — "change who you are doesnt work while the keyboard is open",
   with "fixed for most screens, i guess not this one". A fix that is a prop to
   spread gets forgotten on the screen nobody re-reads: sweep every sibling
@@ -76,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-28* — "Fold Ben's items in the screenshots and reshoot." A shot's
   script had pressed a row open to show the feature; the screen already opens
   the viewer's own. Let the photograph show what a person sees on arrival.
-
-- *2026-09-28* — "Show me variants", then "I don't understand the
-  differences, the top row looks good": the baseline I'd drawn for comparison
-  won over four that differed by where one line sat. Caption what each variant
-  changes, and always offer today's shape, extended, as one.

@@ -77,8 +77,7 @@ destinations, one of which is still the primary
 ([ADR-0023](decisions/0023-monospace-monochrome.md): the "+" is the screen's
 only figure-ground inversion, and a second would spend that twice). The groups
 list ends in the same pair grown up (`.starttile`): two squares below the list
-rather than two rows in it — neither is a group, and the ghost row's dashed
-square marks a slot in the list they left — big enough to stack a word under
+rather than two rows in it — neither is a group — big enough to stack a word under
 the icon, capped so a square doesn’t become a 170px tile, and centred with the
 FAB pair's own gap between them — near enough to read as one pair, with the
 margin around it doing the separating. "New group" is the inked one and takes
