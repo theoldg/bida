@@ -7,7 +7,7 @@
  * "manual" offer.
  */
 
-import { note } from "./diag";
+import { keepNote } from "./diag";
 import { formatInvites, type CarriedGroup } from "./group-link";
 import { signal } from "./signal";
 
@@ -187,7 +187,7 @@ export function keepCarried(groups: readonly CarriedGroup[]): void {
   } catch {
     return;
   }
-  note("install.carry", `${groups.length} groups, ${groups.filter((g) => g.me).length} named`);
+  keepNote("install.carry", `${groups.length} groups, ${groups.filter((g) => g.me).length} named`);
 }
 
 /**

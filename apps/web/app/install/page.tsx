@@ -8,7 +8,7 @@ import { Icon } from "@/components/icons";
 import { claimIdentity, saveGroupKey } from "@/lib/db/commands";
 import { getDevice } from "@/lib/db/device";
 import { db } from "@/lib/db/dexie";
-import { note } from "@/lib/diag";
+import { keepNote } from "@/lib/diag";
 import { launchedOnto } from "@/lib/launch";
 import { syncGroup } from "@/lib/db/sync";
 import { copy } from "@/lib/copy";
@@ -74,7 +74,7 @@ function useLaunchedFromHomeScreen(invites: CarriedGroup[] | undefined): void {
         && !(invite.groupId in device.meByGroup));
       if (cancelled) return;
       const newcomer = fresh.length === 1 && !fresh[0]!.me && naming.length === 0;
-      note("install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
+      keepNote("install.app", `${invites.length} groups, ${invites.filter((i) => i.me).length} named; `
         + `${held.size} keys held, ${fresh.length} fresh, ${naming.length} to claim → `
         + (newcomer ? "join" : fresh.length || naming.length ? "save" : "groups list"));
       if (newcomer) { location.replace(formatJoinLink(fresh[0]!)); return; }

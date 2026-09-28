@@ -98,7 +98,7 @@ whose every step is off the screen by the time anyone looks. An inline script
 in the layout writes each load's URL to localStorage before Next runs, and keeps
 the storage's first load apart forever — on iOS the icon's storage is its own,
 so that line is the URL the icon opened, and each load says which manifest its
-head got. `/install` and `keepCarried` add `note`s beside them. Secrets are masked (`hideSecrets`); ids are not.
+head got. `/install` and `keepCarried` add `keepNote`s beside them. Secrets are masked (`hideSecrets`); ids are not.
 
 Read it at **`/diag`** — long-press the app's name on the groups list. It is
 linked from nowhere; a diagnostics screen earns no room in a menu a person

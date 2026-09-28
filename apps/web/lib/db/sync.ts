@@ -3,7 +3,7 @@ import {
   chunk, sealOp, toBase64,
   type Op, type SealedOp,
 } from "@bida/core";
-import { note, started } from "../diag";
+import { keepNote, started } from "../diag";
 import { errorText } from "../format";
 import { pushMessages } from "../notify-copy";
 import { groupCrypto } from "../seal";
@@ -333,7 +333,7 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
 
   // Only now: a notification about an op still on this phone would open to
   // nothing on the phone it reaches. Its own failures are its own.
-  await sendNotices(groupId, key.secret).catch((err: unknown) => note("notify", errorText(err)));
+  await sendNotices(groupId, key.secret).catch((err: unknown) => keepNote("notify", errorText(err)));
 
   // A pulled op can slot in before ops already folded — refold the whole group
   // rather than apply out of HLC order (docs/sync.md#gotchas). Once per run, not

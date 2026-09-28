@@ -9,7 +9,7 @@ import { fromBase64Url, isDemo, type DevicePush, type Identity } from "@bida/cor
 import { appendOps } from "./db/commands/append";
 import { db } from "./db/dexie";
 import { getDevice } from "./db/device";
-import { note } from "./diag";
+import { keepNote } from "./diag";
 
 /**
  * Where this phone stands. Only `"ask"` draws the offer: `"denied"` can't be
@@ -159,7 +159,7 @@ export async function turnOnNotifications(): Promise<void> {
     const sub = reg ? await subscription(reg) : null;
     await publish(sub ? pushFromSubscription(sub.toJSON()) : null);
   } catch (err) {
-    note("push.subscribe", String(err));
+    keepNote("push.subscribe", String(err));
   } finally {
     for (const listener of listeners) listener();
   }
@@ -180,6 +180,6 @@ export async function reconcilePush(): Promise<void> {
     const sub = Notification.permission === "granted" ? await subscription(reg) : null;
     await publish(sub ? pushFromSubscription(sub.toJSON()) : null);
   } catch (err) {
-    note("push.reconcile", String(err));
+    keepNote("push.reconcile", String(err));
   }
 }
