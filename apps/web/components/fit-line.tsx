@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { fitIndex, styleOf, textWidth } from "../lib/fit";
 import { copy } from "../lib/copy";
 
@@ -13,20 +13,23 @@ const SEP = copy.group.metaLine("", "");
  * which wordings: [`lib/row-meta.ts`](../lib/row-meta.ts).
  *
  * `lead` is never dropped: it goes first, in bold, and the rungs fit in what
- * it leaves.
+ * it leaves. `trail` is the same at the other end — a chevron that follows the
+ * words rather than the box's edge.
  *
  * Renders `options[0]` on the server and first paint, then narrows in a layout
  * effect, before paint. Keep the ellipsis class anyway: the shortest rung
  * still holds a name of any length.
  */
-export function FitLine({ options, className, lead, leadClassName }: {
+export function FitLine({ options, className, lead, leadClassName, trail }: {
   options: readonly string[];
   className?: string;
   lead?: string;
   leadClassName?: string;
+  trail?: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const leadRef = useRef<HTMLElement>(null);
+  const trailRef = useRef<HTMLSpanElement>(null);
   const [at, setAt] = useState(0);
   // The array is rebuilt every render; its contents are what changes rarely.
   const key = `${lead ?? ""}\n${options.join("\n")}`;
@@ -39,9 +42,9 @@ export function FitLine({ options, className, lead, leadClassName }: {
       if (!live) return;
       const style = styleOf(el);
       const box = el.clientWidth;
-      const taken = leadRef.current && lead
+      const taken = (leadRef.current && lead
         ? textWidth(lead, styleOf(leadRef.current)) + textWidth(SEP, style)
-        : 0;
+        : 0) + (trailRef.current?.offsetWidth ?? 0);
       // Unmeasured stays 0 ("show everything"); a lead that fills the box
       // leaves 1px, so the leanest rung, not the richest.
       const room = box <= 0 ? 0 : Math.max(1, box - taken);
@@ -61,6 +64,7 @@ export function FitLine({ options, className, lead, leadClassName }: {
     <div ref={ref} className={className}>
       {lead ? <><b ref={leadRef} className={leadClassName}>{lead}</b>{SEP}</> : null}
       {options[Math.min(at, options.length - 1)] ?? ""}
+      {trail ? <span ref={trailRef} className="fittrail">{trail}</span> : null}
     </div>
   );
 }
