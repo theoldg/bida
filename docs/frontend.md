@@ -354,7 +354,7 @@ your money nor your share drop to `opacity: .58`; the rest are plain rows, with
 no wash or coloured edge. The entry screen repeats a row's figure as
 its card's last line, "Your balance", written out as `effectSum` (the same
 subtraction) when you both paid and had a share, and marks your name with a
-`you` chip. What it looks like and why:
+muted `(you)`. What it looks like and why:
 [design-system.md](design-system.md#your-own-rows-are-highlighted).
 
 ## Gotchas

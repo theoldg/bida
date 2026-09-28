@@ -156,7 +156,7 @@ green, `−€14,28` red — and the exception is what the list marks: a row you
 no part of drops to 58% opacity rather than disappearing.
 
 **On an entry, your name carries "you" and the card ends in your balance.** A
-small `you` chip follows your name wherever the entry prints it: the one
+muted `(you)` follows your name wherever the entry prints it: the one
 payer on the paid-by line, a payer row, a split row, a transfer's side. The
 rows themselves stay uncoloured. Under them, unless you neither paid nor had
 a share, is the ledger row's figure, signed and coloured as it is there:

@@ -319,7 +319,7 @@ function EntryBy({ expense, kind, data }: {
 
 /** Beside your own name, wherever the entry prints it. */
 function You() {
-  return <span className="chip youtag">{copy.entry.you}</span>;
+  return <span className="youtag"> ({copy.entry.you})</span>;
 }
 
 /** A figure with no currency code, for the middle of a sum that ends with one. */
@@ -454,14 +454,12 @@ function TransferDetail({ settlement, group, data }: { settlement: Settlement; g
       <div className="card transfer">
         <span className="tside">
           <span className="eyebrow">{copy.entry.from}</span>
-          <span className="who">{from?.name ?? copy.none}</span>
-          {settlement.fromMember === data.me ? <You /> : null}
+          <span className="who">{from?.name ?? copy.none}{settlement.fromMember === data.me ? <You /> : null}</span>
         </span>
         <span className="tswap" aria-hidden="true"><Icon name="arrow" size={18} /></span>
         <span className="tside">
           <span className="eyebrow">{copy.entry.to}</span>
-          <span className="who">{to?.name ?? copy.none}</span>
-          {settlement.toMember === data.me ? <You /> : null}
+          <span className="who">{to?.name ?? copy.none}{settlement.toMember === data.me ? <You /> : null}</span>
         </span>
       </div>
       {/* Handing money over moves you up by all of it; being paid, down. */}
