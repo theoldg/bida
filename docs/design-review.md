@@ -15,9 +15,6 @@ a user.
   split rows), a ✓ (People — which reads as "selected"), "(you)" (entry view),
   and a ✓ on the claim screen that does mean "selected". "(you)" is the only
   unambiguous one. *`members`, `group-balances`, `claim`*
-- **Suggested reimbursements don't look tappable.** They have no chevron or
-  call to action, and their left grey bar is the one that marks "you" in the
-  balance rows above. *`group-balances`*
 - **The kind switch doesn't look like a switch.** The Expense / Income /
   Transfer button sits top-right with no chevron, next to EUR, which has one.
   *`entry-expense`*

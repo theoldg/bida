@@ -1853,6 +1853,12 @@ button.amtnote:active { background: var(--hl-edge) }
 .turnstile { position: fixed; left: 50%; z-index: 7;
   bottom: calc(env(safe-area-inset-bottom) + 76px); transform: translateX(-50%) }
 
+/* A suggested payment on the balances screen. It wears the chevron of the
+   ledger card that led here, since the row is a card that opens something. */
+.suggestrow { display: flex; align-items: center; gap: 9px; padding: 11px 8px 11px 12px;
+  position: relative; width: 100%; text-align: left }
+.suggestchev { color: var(--ink); flex: none; margin-left: 2px }
+
 /* ---- settling up, in a dialog
    A suggested payment is confirmed in a card, not the entry form: nothing here
    is yours to change. Two names, the arrow and the figure — no avatars. */

@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "give it a good think and propose some designs", then "show
+  me the tap feedback", then "ship it". Four variants, photographed in the app
+  on the demo group so a row not yours was in frame. The press shot sold it:
+  photograph the state a person meets, not only the one at rest.
+
 - *2026-09-28* — "remove these items with which i disagree": three of my crit
   findings (red for a received transfer, green's two meanings, the loud swap)
   were the owner's deliberate choices. A crit lists what I'd change, not what
@@ -62,11 +67,6 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   fragment ("less text", "bigger slogan", "lowercased, no period") before "go
   with L1, ship it". Every round kept the one thing picked and varied only
   what the note named.
-
-- *2026-09-28* — "Reshoot the screenshots." One shot had moved, and I read it
-  as a diff, not a picture: the owner zoomed in and found "(you)" floating
-  above its name. A reshoot is a look at the screen; read each moved shot at
-  full size before calling it done.
 
 - *2026-09-28* — "The logo is a bit too large in circle icons." Five scales on
   one page, in every launcher shape; the owner picked 72%, smaller than my

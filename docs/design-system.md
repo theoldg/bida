@@ -156,7 +156,9 @@ one merged block.
 **Not on the ledger.** There nearly every entry is one of yours, so a wash on
 each would mark nothing: ledger rows are the plain rows of the groups list. What they did to your balance is said on the figure — `+€45,00`
 green, `−€14,28` red — and the exception is what the list marks: a row you are
-no part of drops to 58% opacity rather than disappearing.
+no part of drops to 58% opacity rather than disappearing. Balances' suggested
+reimbursements do the same, under rows that do wear the bar: a bar there
+would say "you" about a payment, and they end in the ledger card's chevron.
 
 **On an entry, your name carries "you" and the card ends in your balance.** A
 small, faint `(you)` follows your name wherever the entry prints it: the one

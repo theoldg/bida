@@ -135,19 +135,20 @@ function Balances({ data }: { data: GroupData }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {mineFirst.map((t) => {
+            // Faded, not marked: the left bar means "you" in the rows above,
+            // and yours are already first. Still a button — anyone may record.
             const involvesMe = t.from === me || t.to === me;
             return (
               <button key={`${t.from}-${t.to}`} type="button"
                 onClick={() => setSettling(t)}
-                className={`card${involvesMe ? " mine" : ""}`}
-                style={{ display: "flex", alignItems: "center", gap: 9, padding: "11px 12px",
-                  position: "relative", width: "100%", textAlign: "left" }}>
+                className={`card suggestrow${involvesMe ? "" : " notmine"}`}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.from)}</span>
                 <Icon name="arrow" size={16} style={{ color: "var(--muted)" }} />
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{nameOf(t.to)}</span>
                 <span className="bignum spacer" style={{ fontSize: 13.5 }}>
                   {money(t.amountMinor, group.baseCurrency)}
                 </span>
+                <Icon name="chev" size={18} className="suggestchev" />
               </button>
             );
           })}
