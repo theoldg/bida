@@ -955,13 +955,19 @@ a { color: inherit; text-decoration: none }
    is read more often than pressed — but a thumb's height all the same.
    `--ink-2`, not `--muted`: at 12px the muted grey is under 4.5:1 on paper.
    `FitLine` picks the wording (`historyMeta`); the ellipsis is for a name
-   past its ladder. */
-.entryhist { display: flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 2px;
-  font-size: 12px; color: var(--ink-2) }
-.entryhist:active { background: var(--press) }
+   past its ladder. The press washes the words, as `.tlink`'s does, not the
+   row: the line stays full width because that is what `FitLine` measures, so
+   the wash is on the inline body, padded past the words and pulled back by
+   the same, inside a line padded so its clip leaves the wash room. */
+.entryhist { display: block; padding: 0 2px; font-size: 12px; color: var(--ink-2) }
+.entryhistline { line-height: 44px; margin: 0 -6px; padding: 0 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.entryhistbody { margin: 0 -6px; padding: 4px 6px; border-radius: var(--r-s);
+  transition: background-image .2s ease }
+.entryhist:active .entryhistbody { background-image: linear-gradient(var(--press), var(--press));
+  transition-duration: 0s }
 /* The clock says "history" before the words are read. */
-.entryhist > svg { flex: none; color: var(--muted) }
-.entryhistline { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.fiticon { display: inline-flex; vertical-align: middle; margin-right: 5px; color: var(--muted) }
 /* `FitLine`'s trail: the chevron right after the words, not at the row's edge. */
 .fittrail { display: inline-flex; vertical-align: middle; margin-left: 3px; color: var(--muted) }
 /* A deleted entry's band: the one inverted block on any screen, so the state is

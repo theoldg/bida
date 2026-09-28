@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "The touch highlight should cover the button, not the whole
+  row." I built the link and never pressed it in a photograph. The wash is part
+  of the look: hold the mouse down in the probe before calling a control done.
+
 - *2026-09-28* — Six lens mocks drawn from memory, then "look at the
   screenshots yourself and try a bit harder." The real screen had cases my
   mocks never met: two payers, an income, a transfer. Prototype in the app
@@ -78,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   don't have to cut text, the 200 line rule is a bit too restrictive." I had
   proposed cutting to meet a rule its owner didn't hold that hard. Ask before
   treating a written threshold as binding; a split can move every line.
-
-- *2026-09-25* — "Sort out the flaky browser tests… maybe timeouts? Idk."
-  Timeouts were never short; each flake was a pause or a quiet moment standing
-  in for the thing, plus nine chromiums on four cores. Ran verify five times
-  before touching anything: a flake has to be caught red before it is fixed.
