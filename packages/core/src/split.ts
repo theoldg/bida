@@ -218,16 +218,7 @@ export function validateSplit(
   if (spec.mode === "exact") {
     let sum = 0;
     for (const id of participants) sum += spec.amounts[id] ?? 0;
-    if (sum === totalMinor) return { ok: true, allocatedMinor: sum, totalMinor };
-    const diff = totalMinor - sum;
-    return {
-      ok: false,
-      allocatedMinor: sum,
-      totalMinor,
-      problem: diff > 0 ? "under" : "over",
-      diffMinor: diff,
-      message: diff > 0 ? "Not all of it is allocated yet" : "That is more than the total",
-    };
+    return addsUp(sum, totalMinor);
   }
 
   if (spec.mode === "percent") {
@@ -255,6 +246,24 @@ export function validateSplit(
       message: err instanceof Error ? err.message : String(err),
     };
   }
+}
+
+/**
+ * Typed amounts against the total they must make — an exact split's shares,
+ * and the payers' contributions (payers.ts). Both are the same "€12 still to
+ * place" or "€3 too many", so they are one check.
+ */
+export function addsUp(sum: number, totalMinor: number) {
+  if (sum === totalMinor) return { ok: true, allocatedMinor: sum, totalMinor };
+  const diff = totalMinor - sum;
+  return {
+    ok: false,
+    allocatedMinor: sum,
+    totalMinor,
+    problem: diff > 0 ? "under" as const : "over" as const,
+    diffMinor: diff,
+    message: diff > 0 ? "Some of it is still unaccounted for" : "That is more than the total",
+  };
 }
 
 /** Convenience: what one member owes for one expense. 0 if not involved. */

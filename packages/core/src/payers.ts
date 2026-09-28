@@ -1,4 +1,4 @@
-import { resolveSplit, SplitError, splitParticipants } from "./split.js";
+import { addsUp, resolveSplit, SplitError, splitParticipants } from "./split.js";
 import type { Expense, Id, Settlement } from "./types.js";
 
 /**
@@ -82,17 +82,7 @@ export function validatePayers(
     return { ok: false, allocatedMinor: 0, totalMinor: amountMinor, problem: "empty",
       diffMinor: amountMinor, message: "Nobody has put anything in yet" };
   }
-  if (sum !== amountMinor) {
-    const diff = amountMinor - sum;
-    return {
-      ok: false, allocatedMinor: sum, totalMinor: amountMinor,
-      problem: diff > 0 ? "under" : "over",
-      diffMinor: diff,
-      message: diff > 0 ? "Some of it is still unaccounted for"
-                        : "That is more than the expense",
-    };
-  }
-  return { ok: true, allocatedMinor: sum, totalMinor: amountMinor };
+  return addsUp(sum, amountMinor);
 }
 
 /**

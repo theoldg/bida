@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants,
+  addsUp, canonicalSplit, convertSplitMode, resolveSplit, shareOf, splitParticipants,
   upgradeReceiptSplit, validateSplit,
 } from "./split.js";
 import type { SplitSpec } from "./types.js";
@@ -105,6 +105,15 @@ describe("three-decimal and zero-decimal currencies", () => {
     const r = resolveSplit(1000, { mode: "equal", members: ["a", "b", "c"] }); // ¥1000
     expect(sum(r.shares)).toBe(1000);
     expect(Object.values(r.shares).sort()).toEqual([333, 333, 334]);
+  });
+});
+
+describe("addsUp", () => {
+  it("is ok only on the exact total, with the gap signed", () => {
+    expect(addsUp(1000, 1000)).toEqual({ ok: true, allocatedMinor: 1000, totalMinor: 1000 });
+    expect(addsUp(999, 1000)).toMatchObject({ ok: false, problem: "under", diffMinor: 1 });
+    expect(addsUp(1001, 1000)).toMatchObject({ ok: false, problem: "over", diffMinor: -1 });
+    expect(addsUp(0, 0).ok).toBe(true);
   });
 });
 
