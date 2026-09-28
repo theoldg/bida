@@ -18,7 +18,7 @@ pnpm tricount     # a Tricount link, pasted, all the way to a balanced group
 pnpm shots        # PNGs into shots/ (gitignored)
 pnpm readme-shots # the six pictures in README.md, into docs/media/ (committed)
 pnpm drive        # drive the app as text — [drive.md](drive.md)
-pnpm run docs     # links resolve, ADRs indexed, claude_corner within size, ~30ms
+pnpm run docs     # links resolve, ADRs indexed, claude-corner within size, ~30ms
 pnpm run rules    # the decisions one line could reverse, checked against the code, ~30ms
 pnpm bump         # the number this deploy will show — [hosting.md](hosting.md#versions)
 ```

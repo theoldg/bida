@@ -122,7 +122,7 @@ every session pays in. **Before you finish:**
    section.
 4. Update [implementation-status.md](docs/implementation-status.md) if what is
    built or what is open moved.
-5. **Touch [claude_corner.md](docs/claude_corner.md)** — every session, at
+5. **Touch [claude-corner.md](docs/claude-corner.md)** — every session, at
    least a line. The agents' own doc: how the owner asks, and what an agent
    gets wrong that no check catches. Vibes only, nothing technical. Its three
    limits — 100 lines, twelve postcards, 300 characters each — are checked, so

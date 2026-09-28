@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-28* — "make sure the BUSY / worktree instruction is in place." The
+  CLAUDE.md I was handed said worktree-always; dev already said BUSY. The main
+  clone had lagged, not regressed. Diff against origin/dev before "restoring"
+  anything, and report that it holds rather than rewriting it.
+
 - *2026-09-28* — "The touch highlight should cover the button, not the whole
   row." I built the link and never pressed it in a photograph. The wash is part
   of the look: hold the mouse down in the probe before calling a control done.
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   perhaps)?" The stand-ins were Chewie and Leia already; only the tagine was
   off-theme. Kept every price, so the test's shares held unchanged, and dated
   it 4 May. A theme ask is copy, not arithmetic — leave the sums alone.
-
-- *2026-09-25* — Line counts, then "how would you split the docs?", then "you
-  don't have to cut text, the 200 line rule is a bit too restrictive." I had
-  proposed cutting to meet a rule its owner didn't hold that hard. Ask before
-  treating a written threshold as binding; a split can move every line.

@@ -35,7 +35,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [on-a-phone.md](on-a-phone.md) | An iPhone in hand: what no headless browser can check |
 | [drive.md](drive.md) | Reproducing a bug or stressing a screen without a phone |
 | [decisions/](decisions/README.md) | About to reverse an architectural choice |
-| [claude_corner.md](claude_corner.md) | **Every session, briefly.** How the owner asks, and what agents get wrong here |
+| [claude-corner.md](claude-corner.md) | **Every session, briefly.** How the owner asks, and what agents get wrong here |
 
 Most docs end with a **Gotchas** section. Add to it every time something bites
 you, so nobody pays for it twice.

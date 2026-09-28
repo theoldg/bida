@@ -9,7 +9,7 @@
  * Checked: every relative markdown link resolves, and so does every
  * `docs/….md` a code comment names; every `#anchor` — a bare one included —
  * matches a heading by GitHub's slug rules (where they get clicked); the ADR index names
- * exactly the ADRs on disk; no doc states a test count; claude_corner.md
+ * exactly the ADRs on disk; no doc states a test count; claude-corner.md
  * keeps to its own three limits.
  *
  * Doc length, and whether something deserved an ADR or standing instruction,
@@ -130,17 +130,17 @@ for (const file of markdownFiles(ROOT)) {
  * enforced here; room is made by cutting in the same edit.
  */
 const CORNER = { lines: 100, postcards: 12, chars: 300 };
-const cornerFile = join(ROOT, "docs", "claude_corner.md");
+const cornerFile = join(ROOT, "docs", "claude-corner.md");
 const corner = readFileSync(cornerFile, "utf8").replace(/\n$/, "");
 const cornerLines = corner.split("\n").length;
 if (cornerLines > CORNER.lines) {
   problems.push(
-    `docs/claude_corner.md\n        ${cornerLines} lines, over ${CORNER.lines} — cut before you add`,
+    `docs/claude-corner.md\n        ${cornerLines} lines, over ${CORNER.lines} — cut before you add`,
   );
 }
 const postcardSection = corner.split(/^## Postcards$/m)[1];
 if (postcardSection === undefined) {
-  problems.push(`docs/claude_corner.md\n        no "## Postcards" section to check`);
+  problems.push(`docs/claude-corner.md\n        no "## Postcards" section to check`);
 } else {
   const postcards = postcardSection
     .split(/^## /m)[0]
@@ -150,14 +150,14 @@ if (postcardSection === undefined) {
     .map((entry) => entry.trim().replace(/\s+/g, " "));
   if (postcards.length > CORNER.postcards) {
     problems.push(
-      `docs/claude_corner.md\n        ${postcards.length} postcards, over ${CORNER.postcards}` +
+      `docs/claude-corner.md\n        ${postcards.length} postcards, over ${CORNER.postcards}` +
         ` — evict the oldest, and fold what it taught into the prose above if it has become general`,
     );
   }
   for (const card of postcards) {
     if (card.length > CORNER.chars) {
       problems.push(
-        `docs/claude_corner.md\n        postcard is ${card.length} characters, over ${CORNER.chars}` +
+        `docs/claude-corner.md\n        postcard is ${card.length} characters, over ${CORNER.chars}` +
           `: ${card.slice(0, 48)}…`,
       );
     }
