@@ -265,8 +265,20 @@ await page.goto(`${base}/g?id=${g}`);
 // failed about a third of the time.
 await page.waitForSelector(".fab");
 await untilDevice(page, (d) => d?.lastOpenedGroupId === g);
+// Every frame from here on says whether the list's own frame was on screen:
+// a launch that reopens a group must not paint it first (lib/resume-hint.ts).
+await page.addInitScript(() => {
+  const look = () => {
+    const home = document.querySelector(".homeframe");
+    if (home && getComputedStyle(home).display !== "none") window.__listPainted = true;
+    requestAnimationFrame(look);
+  };
+  look();
+});
 await page.goto(`${base}/`);
 report(await arrived(), "launching the app reopens the group last open");
+report(await page.evaluate(() => !window.__listPainted),
+  "and never paints the list on the way");
 // Backing out of it is not a launch: the list stays put once it is asked for.
 await page.locator(".iconbtn[aria-label='Back']").first().click();
 await page.waitForURL((url) => url.pathname === "/", { timeout: PATIENCE });
@@ -277,6 +289,7 @@ report(new URL(page.url()).pathname === "/", "and Back out of it stays on the li
 await page.goto(`${base}/`);
 await page.waitForTimeout(800);
 report(new URL(page.url()).pathname === "/", "a launch after that lands on the list, not the group");
+report(await page.locator(".homeframe").isVisible(), "and draws it, not the ledger's skeleton");
 // Opening the group again makes it the place to come back to once more.
 await page.goto(`${base}/g?id=${g}`);
 await page.waitForSelector(".fab");

@@ -319,6 +319,11 @@ a { color: inherit; text-decoration: none }
 .app { background: var(--card); height: 100dvh; max-height: 100%; overflow: hidden;
   display: flex; flex-direction: column;
   position: relative; max-width: 560px; margin: 0 auto; box-shadow: var(--shadow-s) }
+/* `/` draws the list and a ledger skeleton; `<html data-resuming>`, set before
+   paint on a launch that will reopen a group, picks the second
+   (lib/resume-hint.ts). */
+.resumeframe, html[data-resuming] .homeframe { display: none }
+html[data-resuming] .resumeframe { display: flex }
 .appbody { flex: 1; display: flex; flex-direction: column; min-height: 0 }
 /* The keyboard overlays the shell rather than shortening it, so the scroller
    ends behind one (components/viewport.tsx). It pays that back twice:

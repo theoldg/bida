@@ -6,6 +6,7 @@ import type { Group } from "@bida/core";
 import { getDevice, setLeftOnList } from "./db/device";
 import { db, type DeviceRecord } from "./db/dexie";
 import { route } from "./group-link";
+import { clearResuming } from "./resume-hint";
 
 /**
  * Launching the app puts you back in the group you were last in (`/g` records
@@ -118,8 +119,12 @@ export function useResumeLastGroup(): { deciding: boolean; joining: boolean } {
   // app is killed.
   useEffect(() => {
     if (deciding) return;
+    clearResuming();
     void setLeftOnList();
   }, [deciding]);
+  // Replaced by the group: its own skeleton is the same frame, so the mark
+  // goes with the list rather than hiding the next visit's (lib/resume-hint.ts).
+  useEffect(() => clearResuming, []);
 
   return { deciding, joining: deciding && came?.kind === "group" };
 }

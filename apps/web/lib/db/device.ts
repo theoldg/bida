@@ -1,5 +1,6 @@
 import { newNodeId } from "@bida/core";
 import { started } from "../diag";
+import { hintResume } from "../resume-hint";
 import { db, type DeviceRecord } from "./dexie";
 import { whenVisible } from "./visible";
 
@@ -62,6 +63,8 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
  * also how this device stops being on the list.
  */
 export async function setLastOpenedGroup(groupId: string): Promise<void> {
+  // Ahead of the early return: a phone updated into the hint has none yet.
+  hintResume(true);
   const device = await getDevice();
   if (device.lastOpenedGroupId === groupId && !device.leftOnList) return;
   await updateDevice({ lastOpenedGroupId: groupId, leftOnList: false });
@@ -72,6 +75,7 @@ export async function setLastOpenedGroup(groupId: string): Promise<void> {
  * leaves it there rather than reopening the last group (lib/launch.ts).
  */
 export async function setLeftOnList(): Promise<void> {
+  hintResume(false);
   const device = await getDevice();
   if (device.leftOnList) return;
   await updateDevice({ leftOnList: true });

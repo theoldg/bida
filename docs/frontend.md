@@ -52,7 +52,11 @@ API is reached with `fetch`.
   reopens whichever of list and group was last. `resumeGroupId` is that
   decision, pure and tested. A replace that
   doesn't take releases the list after two seconds rather than leaving the app
-  on a skeleton nothing will fill.
+  on a skeleton nothing will fill. **The list's frame never paints on a resume**:
+  the exported `/` is the list, and IndexedDB answers after first paint, so
+  `lib/resume-hint.ts` mirrors "a launch would resume" into localStorage and a
+  script before the body marks `<html data-resuming>`, under which `/` shows
+  the ledger's skeleton (`LedgerSkeleton`) — the frame `/g` then takes over.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
