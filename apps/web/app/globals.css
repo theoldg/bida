@@ -94,10 +94,9 @@ textarea { resize: vertical }
      that won on `:root`, so this follows the theme without a dark copy. */
   --hl-row:color-mix(in srgb, var(--hl) 30%, transparent);
   /* The ground a refusal fills where a solid `--debit` would swallow what sits
-     on it: a bill's row, which carries the dots and the ×N, and the plate under
-     the amount, which carries 42px of figure. Derived here like `--hl-row`, and
-     opaque rather than a tint — the grid's label column is sticky and the dots
-     pass underneath it, so anything translucent would show them through. */
+     on it: the plate under the amount, which carries 42px of figure, and an
+     empty grid cell's press tile, which carries its red square. Derived here
+     like `--hl-row`, and opaque rather than a tint. */
   --debit-wash:color-mix(in srgb, var(--debit) 22%, var(--card));
   /* Laid over whatever a control already sits on, so one value covers a row on
      paper and a highlighted row alike. */
@@ -1655,11 +1654,6 @@ button.amtnote:active { background: var(--hl-edge) }
    one ink token readable on it in both themes. */
 @keyframes refuse-ink-a { 15%, 45% { color: var(--brand-ink) } }
 @keyframes refuse-ink-b { 15%, 45% { color: var(--brand-ink) } }
-/* Where a solid `--debit` would swallow what sits on it — a bill's row with its
-   dots and ×N, the plate under the amount — the ground takes `--debit-wash`
-   and the ink goes red instead. */
-@keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash) } }
-@keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash) } }
 /* The amount is a field, so its rule goes with its plate: the figure ends up
    in a red block capped by the red line it is typed on. */
 @keyframes refuse-plate-a { 15%, 45% {
@@ -1718,25 +1712,30 @@ button.amtnote:active { background: var(--hl-edge) }
 .addrow.flash-a .addname::placeholder, .addrow.flash-b .addname::placeholder {
   color: color-mix(in srgb, currentColor 47%, transparent) }
 
-/* A refused Done on the who-had-what grid blooms the button and every line
-   nobody has been given, **the whole row** across the dots. It washes rather
-   than fills so the dots and ×N stay legible; all three text parts are named
-   because two carry their own `--muted`.
+/* A refused Done on the who-had-what grid blooms every line nobody has been
+   given: its words go `--debit` — all three text parts named, because two carry
+   their own `--muted` — and so does every empty cell, below. No wash across the
+   row: the cells say it, where to tap included.
    The class is on the row, so the cells' pointer animation must stop
-   propagating or it ends the refusal early (components/who-had-what.tsx). */
-.itemtable tr.flash-a > td { animation: refuse-wash-a .6s ease-in-out }
-.itemtable tr.flash-b > td { animation: refuse-wash-b .6s ease-in-out }
+   propagating or it ends the refusal early (components/who-had-what.tsx); the
+   words are what end it. */
 .itemtable tr.flash-a .itemname, .itemtable tr.flash-a .itemamount,
 .itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
 .itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
-/* And every empty cell in it shows its square in solid `--debit`: an empty cell
-   draws nothing at rest, so without this the row says what is missing but not
-   where to tap. Its end is stopped at the cell like the pointer's. */
+/* And every empty cell in it plays its own press in red: the 32px tile in
+   `--debit-wash` with the square solid `--debit` inside. An empty cell draws
+   nothing at rest, so without this the row says what is missing but not where
+   to tap — and the tap's own feedback is the shape that says "tap here". Both
+   ends are stopped at the cell like the pointer's. */
 @keyframes refuse-square-a { 15%, 45% { background-color: var(--debit) } }
 @keyframes refuse-square-b { 15%, 45% { background-color: var(--debit) } }
+@keyframes refuse-tile-a { 15%, 45% { opacity: 1; background-color: var(--debit-wash) } }
+@keyframes refuse-tile-b { 15%, 45% { opacity: 1; background-color: var(--debit-wash) } }
 .itemtable tr.flash-a .itemcell .dot.off { animation: refuse-square-a .6s ease-in-out }
 .itemtable tr.flash-b .itemcell .dot.off { animation: refuse-square-b .6s ease-in-out }
+.itemtable tr.flash-a .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-a .6s ease-in-out }
+.itemtable tr.flash-b .itemwho > .itemcell:has(.dot.off)::before { animation: refuse-tile-b .6s ease-in-out }
 
 /* The one exemption from the reduced-motion clamp, deliberately: that query is
    about movement, and this is a colour settling — clamped, it is no signal.
@@ -1751,11 +1750,12 @@ button.amtnote:active { background: var(--hl-edge) }
   .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,
   .addrow.flash-a .addname, .addrow.flash-b .addname,
-  .itemtable tr.flash-a > td, .itemtable tr.flash-b > td,
   .itemtable tr.flash-a .itemname, .itemtable tr.flash-b .itemname,
   .itemtable tr.flash-a .itemamount, .itemtable tr.flash-b .itemamount,
   .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty,
-  .itemtable tr.flash-a .itemcell .dot.off, .itemtable tr.flash-b .itemcell .dot.off {
+  .itemtable tr.flash-a .itemcell .dot.off, .itemtable tr.flash-b .itemcell .dot.off,
+  .itemtable tr.flash-a .itemwho > .itemcell:has(.dot.off)::before,
+  .itemtable tr.flash-b .itemwho > .itemcell:has(.dot.off)::before {
     animation-duration: .6s !important }
 }
 

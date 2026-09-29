@@ -358,12 +358,11 @@ grid, which is the Items tab's entire complaint. Both of those are ink blocks,
 so both fill (below). Pointing beats wording there, because "scan a receipt" is
 true of every untouched bill and reads as a scolding for arriving. Where what is missing is spread over
 several rows, every one of them blooms: a Done on the who-had-what grid points
-at each line nobody has been given — the whole row, right across the columns of
-dots, since most of a row is empty space. That one washes rather than
-fills, because the dots and the ×N have to stay legible through it; its words
-still go `--debit` on top, and so does every empty cell's square, since an
-empty cell draws nothing at rest and the row would say what is missing but
-not where to tap. This is how you find the line again in twenty rows
+at each line nobody has been given: its words go `--debit`, and every empty
+cell plays its own press in red — the tile in `--debit-wash`, the square solid
+`--debit` — since an empty cell draws nothing at rest and the row would say what
+is missing but not where to tap. No wash across the row: the tiles already say
+it, in the shape a tap there makes. This is how you find the line again in twenty rows
 of bill. **A refusal nobody can see whole is a press that
 did nothing**, so unless one of those rows is fully in view — a name with its
 amount cut off by the fold is not — the nearest is brought into the grid
