@@ -80,8 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   crit said "one component" when they already were one; the owner read it
   literally and asked a sharper thing. Check a finding against the code before
   it goes in a file, then do exactly what was asked, add row and all.
-
-- *2026-09-28* — "show me the 4 you marks so i can realize the gravity", then
-  "i dont see anything particularly wrong". The photographs argued the other
-  way: a finding that needs a gallery to be felt is taste, not a bug. Show it
-  plainly, and let the owner's eye be the verdict.
