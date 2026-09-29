@@ -32,6 +32,8 @@ export default function GroupsPage() {
   // A launch may reopen the last group (lib/launch.ts), so until that settles
   // the list stays "not answered yet" rather than flashing and being replaced.
   const { deciding: resuming, joining } = useResumeLastGroup();
+  const hydrating = useSyncExternalStore(never, () => false, () => true);
+  const marked = useSyncExternalStore(never, resumingMarked, () => true);
   const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
@@ -48,10 +50,11 @@ export default function GroupsPage() {
   return (
     <>
     {/* A launch reopening a group shows the ledger's frame from the first
-        paint, not this list's (lib/resume-hint.ts). Both are always drawn and
+        paint, not this list's (lib/resume-hint.ts). Both are drawn and
         globals.css picks, because the mark is set before React runs and the
-        prerender can't know it. */}
-    <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} />
+        prerender can't know it. Once React reads the mark itself, it keeps the
+        frame only on a launch that is showing it, and only until it decides. */}
+    {hydrating || (resuming && marked) ? <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} /> : null}
     <Screen className="homeframe">
       <Body>
         {/* The app says its own name once, on the screen you land on. The
@@ -144,6 +147,7 @@ function StartTiles() {
 }
 
 const never = () => () => {};
+const resumingMarked = () => document.documentElement.hasAttribute("data-resuming");
 
 /**
  * The way into a group on an iOS home-screen app, which a tapped invite never

@@ -47,6 +47,8 @@ await page.waitForSelector(".rows .row:not(.skelrow)");
 const rows = await page.locator(".rows .row:not(.skelrow)").count();
 report(rows >= 6, `the ledger is populated, not an empty state (${rows} rows)`);
 report(await page.getByText("Passage to Alderaan").count() > 0, "and it is the cantina group");
+// After the veil: for its 120ms it wears the same mark over the real one.
+await page.waitForSelector(".skelveil", { state: "detached" });
 report(await page.getByText("Demo group").count() === 1,
   "with the mark at its head, which does not fold away");
 
