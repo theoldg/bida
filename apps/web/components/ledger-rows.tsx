@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import {
-  clearSaved, FADE_IN_MS, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
+  clearSaved, FADE_IN_MS, letRoll, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
   presence, runs, SAVED_BEAT, standard, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
 import { yieldPosition } from "@/lib/ledger-position";
@@ -169,7 +169,17 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   if (!target) return false;
   clearSaved();
   target.classList.add("saved");
+  // Near the top is a matter of where the row sits in the list, not of where
+  // the list is scrolled, so it is known now: anywhere else, the summary's
+  // roll need not wait for the glide.
+  const nearTop = () => {
+    const view = box.getBoundingClientRect();
+    return target.getBoundingClientRect().top - view.top + box.scrollTop < view.height / 2;
+  };
+  const toTop = nearTop();
+  if (!toTop) letRoll(groupId);
   const release = () => {
+    if (toTop) letRoll(groupId);
     target.classList.add("released");
     target.addEventListener("animationend", () => target.classList.remove("saved", "released"), { once: true });
   };
@@ -186,8 +196,7 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     // A row that would sit in the top half of the screen with the list at its
     // very top goes there instead, so the summary banner shows with it: what
     // the save changed, beside the row that changed it.
-    const fromTop = target.getBoundingClientRect().top - view.top + box.scrollTop;
-    if (fromTop < view.height / 2) {
+    if (toTop) {
       if (box.scrollTop === 0) release();
       else glide(box, 0, release);
       return;

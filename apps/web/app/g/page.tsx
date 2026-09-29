@@ -31,6 +31,7 @@ import { dayLabel, money } from "@/lib/format";
 import { ledgerItems, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
 import { useLedgerPosition } from "@/lib/ledger-position";
+import { awaitRoll, peekSaved } from "@/lib/ledger-motion";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { expenseMeta, transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
@@ -185,6 +186,10 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
   // What this card drew last time, read once: a figure that moved while it was
   // away — a save, another phone's edit — rolls from it (lib/roll.ts).
   const [before] = useState(() => shownBefore(gid, base));
+  // Back from a save, the ledger may glide up to this card; the roll waits for
+  // it to arrive (components/ledger-rows.tsx).
+  const [hold] = useState(() => peekSaved(gid) === null ? undefined
+    : (go: () => void) => awaitRoll(gid, go));
   useEffect(() => keepShown(gid, net, base), [gid, net, base]);
   return (
     <div className="mysummary pad">
@@ -194,7 +199,7 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
           <span className="eyebrow">{label}</span>
           <span className="bignum">
             <RollingFigure minor={Math.abs(net)} currency={base}
-              from={before === null ? null : Math.abs(before)} wait={ROLL_BEAT} />
+              from={before === null ? null : Math.abs(before)} wait={ROLL_BEAT} hold={hold} />
           </span>
         </span>
         <Icon name="chev" size={20} className="mysumchev" />

@@ -724,6 +724,7 @@ html[data-resuming="manual"] .ghost-manual { display: block }
    figure (the new digit rises from below), down for a smaller; `--delay`
    cascades them from the left. The strip is masked only while it moves. */
 .rolling { display: inline-flex; vertical-align: bottom }
+.rolling.held :is(.rollstrip, .rollcell) { animation-play-state: paused }
 /* The settled figure, for a screen reader, while the cells read as noise. */
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
 .rollcell { display: inline-block; width: .57em; height: 1.1em; overflow: hidden;

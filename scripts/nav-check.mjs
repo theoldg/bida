@@ -493,11 +493,19 @@ async function onLedger() {
         const edge = box.getBoundingClientRect().top;
         const row = [...box.querySelectorAll("[data-entry]")].find((el) => el.getBoundingClientRect().bottom > edge);
         window.__landed = { top: box.scrollTop, entry: row?.dataset.entry, offset: Math.round(row.getBoundingClientRect().top - edge) };
+        requestAnimationFrame(roll);
         return;
       }
       requestAnimationFrame(look);
     };
     requestAnimationFrame(look);
+    // And the summary's figure, held at the old one until the glide is up.
+    window.__rolled = null;
+    const roll = () => {
+      const box = document.querySelector(".scroll");
+      if (document.querySelector(".rolling:not(.held)")) window.__rolled = { top: box.scrollTop };
+      else requestAnimationFrame(roll);
+    };
   });
   await page.getByRole("button", { name: "Save" }).click();
   await page.waitForFunction(() => window.__landed !== null);
@@ -519,6 +527,8 @@ async function onLedger() {
   report(shown.inView && shown.top === 0 && shown.banner,
     "and then glides to the very top, the row it saved in view under the banner",
     JSON.stringify(shown));
+  const rolled = await page.evaluate(() => window.__rolled);
+  report(rolled?.top === 0, "and the figure rolls only once it is there", JSON.stringify(rolled));
 
   await arrow(page);
   await page.waitForSelector(".grouprow");

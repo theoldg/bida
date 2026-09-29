@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
-  clearSaved, foldFrame, foldTotal, markSaved, peekSaved, presence, runs, standard,
+  awaitRoll, clearSaved, foldFrame, letRoll, foldTotal, markSaved, peekSaved, presence, runs, standard,
   type LedgerItem, type Shown,
 } from "./ledger-motion";
 
@@ -91,6 +91,28 @@ describe("the saved row", () => {
     expect(peekSaved("g", 3000)).toBe("e1");
     clearSaved();
     expect(peekSaved("g", 3000)).toBeNull();
+  });
+
+  it("holds the summary's roll until the ledger lets it go, once", () => {
+    let went = 0;
+    awaitRoll("g", () => went++);
+    const off = awaitRoll("g", () => went++);
+    off();
+    letRoll("other");
+    expect(went).toBe(0);
+    letRoll("g");
+    expect(went).toBe(1);
+  });
+
+  it("lets a card that starts listening late roll at once, until the next save", () => {
+    letRoll("g");
+    let went = 0;
+    awaitRoll("g", () => went++);
+    expect(went).toBe(1);
+    letRoll("g");
+    markSaved("g", "e2");
+    awaitRoll("g", () => went++);
+    expect(went).toBe(1);
   });
 
   it("expires, so a ledger opened much later flashes nothing", () => {

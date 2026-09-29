@@ -117,6 +117,7 @@ let saved: { groupId: string; entryId: string; at: number } | null = null;
 
 export function markSaved(groupId: string, entryId: string, now = Date.now()): void {
   saved = { groupId, entryId, at: now };
+  rollLet.delete(groupId);
 }
 
 /** The entry to flash, if a save for this group is still fresh; it stays until `clearSaved`. */
@@ -127,4 +128,28 @@ export function peekSaved(groupId: string, now = Date.now()): string | null {
 
 export function clearSaved(): void {
   saved = null;
+}
+
+/**
+ * The summary's roll, held while a save is landing: a saved row near the top
+ * takes the ledger up to the banner, and the figure rolls once it is there,
+ * not off screen. The card waits (`awaitRoll`); the ledger says go
+ * (`letRoll`) — at once when the row is further down, or when the glide ends.
+ */
+const rollWaiting = new Map<string, Set<() => void>>();
+/** Let go before the card was listening: the ledger's effects run first. */
+const rollLet = new Set<string>();
+
+export function awaitRoll(groupId: string, go: () => void): () => void {
+  if (rollLet.delete(groupId)) { go(); return () => {}; }
+  const set = rollWaiting.get(groupId) ?? new Set();
+  rollWaiting.set(groupId, set.add(go));
+  return () => { set.delete(go); };
+}
+
+export function letRoll(groupId: string): void {
+  const set = rollWaiting.get(groupId);
+  rollWaiting.delete(groupId);
+  if (!set?.size) rollLet.add(groupId);
+  for (const go of set ?? []) go();
 }
