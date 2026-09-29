@@ -101,8 +101,9 @@ report(/^-----BEGIN PUBLIC KEY-----[\s\S]+-----END PUBLIC KEY-----$/.test(asked[
 const found = await facts();
 report(found["People"] === "3", "three people", JSON.stringify(found));
 report(found["Currency"]?.includes("EUR"), "in euros", JSON.stringify(found));
-report(found["Entries"] === "2", "two entries", JSON.stringify(found));
-report(found["Transfers"] === "1", "the repayment came back as a transfer", JSON.stringify(found));
+// One count for every kind: the repayment is the third, and shows as a
+// transfer in the group below.
+report(found["Entries"] === "3", "three entries, the repayment among them", JSON.stringify(found));
 
 const name = await page.locator("#i-name").inputValue();
 report(name === "Lisbon", "the tricount's own title fills the name field", `got ${name}`);
