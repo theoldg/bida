@@ -605,6 +605,12 @@ a { color: inherit; text-decoration: none }
    act), so the name moves in with it rather than the box sticking out. */
 .addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
+/* In a list the box comes and goes with the first keystroke, so it is drawn
+   *around* the row rather than inside it: margin + border + padding add up to
+   the resting row's own padding (16 top and sides, 11 below), and neither the
+   plus, the name nor anything under the row moves by a pixel. The price is a
+   box that reaches 11px into the gutter, off the 16px column. */
+.rows > .addrow.editing { margin: 5px 5px 0; padding: 10px }
 /* The name that field would repeat, said under it and aligned with the names
    above — so it reads as a note on the list, not a new row in it. */
 .addrow:not(.editing):has(+ .addwarn) { border-bottom: 0 }

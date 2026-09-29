@@ -181,7 +181,8 @@ API is reached with `fetch`.
   way of pressing it. Leaving the field files nothing, so a name can sit in the
   row unfiled — and while one does, the row draws itself as a box
   (`.addrow.editing`), because a row that looks like the committed rows above it
-  says the opposite of what is true. **The plus is never dead** — a control
+  says the opposite of what is true. The box is drawn around the row, not
+  inside it, so nothing — the plus included — moves when it appears. **The plus is never dead** — a control
   that looks like a button and answers nothing reads as a broken app — and on
   an empty row it does not refuse either: it takes the caret, and the next
   press of that same button files what gets typed. The one press of it that
