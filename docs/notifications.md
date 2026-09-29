@@ -89,5 +89,6 @@ only if it is still missing after.
 - **The free plan's 50 subrequests per invocation** is from memory (Cloudflare's
   page was unreachable 2026-09-23). The batch of 40 sits under it; confirm
   before raising it.
-- **The large `icon` repeats the app badge, and must.** Leave it out and
-  Android fills the slot with a grey letter avatar of the host name.
+- **The large `icon` is a transparent PNG** (`notify-blank.png`). The app's
+  icon there repeats the badge, and with none Android draws a grey letter
+  avatar of the host name.

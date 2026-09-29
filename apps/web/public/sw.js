@@ -302,9 +302,9 @@ self.addEventListener("push", (event) => {
       // A replaced notification buzzes again: it is news, not a correction.
       // Chrome refuses `renotify` without a tag.
       renotify: !!tag,
-      // It repeats the app badge beside it, but it stays: without one Android
-      // draws a grey letter avatar from the host name there instead.
-      icon: "/icon-192.png",
+      // Blank on purpose: the app's own icon would repeat the badge beside it,
+      // and with no icon at all Android draws a grey letter avatar there.
+      icon: "/notify-blank.png",
       data: { url: sameOriginPath(data.url) },
     }),
   );
