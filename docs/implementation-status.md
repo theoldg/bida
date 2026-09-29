@@ -27,8 +27,9 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Three things: a gap found by reading the code rather than a report, a
-design waiting to be built, and a list of visual polish.
+Two things: a gap found by reading the code rather than a report, and a
+design waiting to be built. The visual review is closed
+([design-review.md](design-review.md)).
 
 - **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
   erased across ten stores before reaching the gate the success path waits on,
@@ -43,10 +44,6 @@ design waiting to be built, and a list of visual polish.
   checklist in [on-a-phone.md](on-a-phone.md) is unrun.
   VAPID keys are set on both Workers. Open: a screen for "everything"
   rather than "entries I'm in".
-
-- **Visual polish.** A screen-by-screen review of every shot is in
-  [design-review.md](design-review.md), ranked by what each finding costs a
-  user; none of it is fixed yet.
 
 **Three things are closed as decisions, not as work**, so a session that
 rediscovers one is rediscovering a call the owner has already made:

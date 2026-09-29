@@ -28,7 +28,7 @@ them tight — see [CLAUDE.md's doc upkeep rules](../CLAUDE.md#doc-upkeep).
 | ↳ [who-had-what.md](who-had-what.md) | The grid a bill is divided on; tip, tax and discounts |
 | ↳ [scan-worker.md](scan-worker.md) | The shared key, the envelope, the budget, Turnstile, trust |
 | [design-system.md](design-system.md) | Writing anything a person will look at — then: |
-| ↳ [design-review.md](design-review.md) | Polishing a screen: the open visual and interaction findings |
+| ↳ [design-review.md](design-review.md) | Polishing a screen: open findings, and those ruled intended |
 | [hosting.md](hosting.md) | Deploying, or worrying about cost |
 | [testing.md](testing.md) | Running the gate or writing a unit test — then one of: |
 | ↳ [browser-checks.md](browser-checks.md) | Writing, fixing or reading a browser check |
