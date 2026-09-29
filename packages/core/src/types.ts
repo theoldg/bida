@@ -43,7 +43,12 @@ export interface Group {
   baseCurrency: CurrencyCode;
   createdAt: number;
   archivedAt?: number | null;
+  /** What the group was imported from, named in its history; absent for one made here. */
+  importedFrom?: ImportSource | null;
 }
+
+/** Where an import came from: a tricount link, or a spreadsheet file (Splitwise's, bida's, Tricount's). */
+export type ImportSource = "tricount" | "file";
 
 export interface Member {
   id: Id;

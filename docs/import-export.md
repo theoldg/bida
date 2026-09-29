@@ -44,6 +44,16 @@ Five pieces, each in the layer that owns it:
 | `lib/import/tricount.ts` | The link: the key out of whatever was pasted, a throwaway RSA public key the handshake wants, and one POST to `/api/tricount`. The private half is dropped where it is made, since nothing in that protocol signs anything |
 | `lib/db/commands/import.ts` | The plan as **one `appendOps` batch** under one actor: a hundred rows are not a hundred things somebody did a millisecond apart, and one batch is also the only atomic shape |
 
+**History says an entry was imported**, since every row shares the import's
+moment and author ("Ada imported this expense from Tricount", and "Imported
+from Tricount by Ada" above the entry's Edit). It is read off the log, not a
+flag: an entry whose create shares the group's create — actor, device,
+`createdAt` — came in with it (`core/history.ts` `isImported`), so groups
+imported before this read the same. A hand-made group's first batch holds no
+entries, and the demo, seeded the same way, is excluded by id. What it came
+from is `Group.importedFrom` (`tricount` or `file`), written on the group's
+create; a group imported before that field says "imported" with no source.
+
 **A refusal is whole-source, and says what to fix.** Every code in
 `ImportRefusalCode` has a sentence in `copy.importData.refused`, interpolating
 the `line` (1-based, as a spreadsheet counts, blank lines included) and the one

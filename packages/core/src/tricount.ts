@@ -187,6 +187,7 @@ export function readTricount(payload: unknown, { dayToTimestamp }: TricountOptio
   }
 
   const plan: ImportPlan = {
+    source: "tricount",
     title: str(registry, "title"),
     currency,
     members,

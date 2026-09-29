@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  isCoSponsored, payerList, receiptExtras, resolvePayers, resolveSplit,
+  groupCreateOf, isCoSponsored, isImported, payerList, receiptExtras, resolvePayers, resolveSplit,
   restoreEntryDrafts, sortOps, splitParticipants,
   type CurrencyCode, type Expense, type Group, type Op, type Settlement,
 } from "@bida/core";
@@ -107,12 +107,17 @@ function EntryScreen() {
   const log = useLive("entryLog", async () => {
     if (!entryId) return { count: 0 };
     const ops = sortOps(await db().ops.where("entityId").equals(entryId).toArray());
+    // Came in with the group: its create shares the group's (`isImported`).
+    const first = ops.find((o) => o.kind === "create");
+    const imported = !!first && isImported(first,
+      groupCreateOf(await db().ops.where("entityId").equals(first.groupId).toArray()));
     const lifecycle = (o: Op) => o.kind === "delete"
       || (Object.keys(o.patch).length === 1 && "deletedAt" in o.patch);
     const revisions = ops.filter((o) => !lifecycle(o));
     return {
       count: revisions.length,
       creator: revisions[0]?.actor,
+      imported,
       lastEditor: revisions.at(-1)?.actor,
       lastDelete: ops.filter((o) => o.kind === "delete").at(-1),
     };
@@ -168,6 +173,8 @@ function EntryScreen() {
     edits,
     creator: data.nameOf(log.creator),
     lastEditor: data.nameOf(log.lastEditor ?? log.creator),
+    imported: log.imported
+      && (group.importedFrom ? copy.history.importSource[group.importedFrom] : true),
   }) : [""];
 
   return (

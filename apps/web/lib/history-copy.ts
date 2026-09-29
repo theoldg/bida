@@ -1,6 +1,6 @@
 import {
   isValidRate, resolveSplit, splitParticipants,
-  type CurrencyCode, type Id, type Member, type ReceiptItem, type Revision, type SplitSpec,
+  type CurrencyCode, type Id, type ImportSource, type Member, type ReceiptItem, type Revision, type SplitSpec,
 } from "@bida/core";
 import { copy } from "./copy";
 import { printedBill } from "./scan/items";
@@ -114,8 +114,11 @@ export function describe(
   who: string,
   memberById: Map<string, Member>,
   currency: CurrencyCode,
+  /** The group's `importedFrom`, which an imported entry's sentence names. */
+  source?: ImportSource | null,
 ): Described {
   const said = copy.history;
+  const from = source ? said.importSource[source] : undefined;
   const field = (name: string) => rev.changes.find((c) => c.field === name);
   const nameOf = (id: unknown) =>
     (typeof id === "string" ? memberById.get(id)?.name ?? copy.someoneLower : copy.someoneLower);
@@ -181,7 +184,7 @@ export function describe(
       const ways = n ? plural(n, copy.noun.way) : undefined;
       const shared = kind === "income";
       return {
-        what: said.createdEntry(who, noun),
+        what: rev.imported ? said.importedEntry(who, noun, from) : said.createdEntry(who, noun),
         diff: amt !== undefined
           ? { now: `${amt}${ways ? ` · ${shared ? copy.group.sharedWays(ways) : copy.group.splitWays(ways)}` : ""}` }
           : undefined,
@@ -393,7 +396,7 @@ export function describe(
       const between = field("fromMember") && field("toMember")
         ? `${nameOf(field("fromMember")!.after)} → ${nameOf(field("toMember")!.after)}` : undefined;
       return {
-        what: said.recordedTransfer(who),
+        what: rev.imported ? said.importedTransfer(who, from) : said.recordedTransfer(who),
         diff: amt !== undefined ? { now: between ? `${amt} · ${between}` : amt } : undefined,
       };
     }
@@ -493,7 +496,13 @@ export function describe(
   }
 
   // group
-  if (rev.isCreate) return { what: said.createdGroup(who) };
+  if (rev.isCreate) {
+    const own = rev.after["importedFrom"];
+    return {
+      what: own === "tricount" || own === "file"
+        ? said.importedGroup(who, said.importSource[own]) : said.createdGroup(who),
+    };
+  }
   if (field("name")) {
     const c = field("name")!;
     return { what: said.renamedGroup(who), diff: { was: c.before as string, now: c.after as string } };

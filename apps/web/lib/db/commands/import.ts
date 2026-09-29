@@ -60,6 +60,7 @@ export async function importGroup(
         baseCurrency: plan.currency,
         createdAt: now,
         archivedAt: null,
+        importedFrom: plan.source,
       },
     },
     // Everyone on the plan, all as current members: the shape has no way to

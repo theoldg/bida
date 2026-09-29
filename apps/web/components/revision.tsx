@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Expense, Member, Revision, Settlement } from "@bida/core";
+import type { Expense, ImportSource, Member, Revision, Settlement } from "@bida/core";
 import { Icon } from "@/components/icons";
 import { copy } from "@/lib/copy";
 import { stamp } from "@/lib/format";
@@ -17,6 +17,8 @@ export interface RevisionContext {
   memberById: Map<string, Member>;
   expenseById: Map<string, Expense>;
   settlementById: Map<string, Settlement>;
+  /** The group's `importedFrom`, for an imported entry's sentence. */
+  source?: ImportSource | null;
   /** Where the entry link says it came from; the ledger passes none. */
   via?: "history";
 }
@@ -51,7 +53,7 @@ export function RevisionEntry({ rev, first, context, linked = true }: {
   linked?: boolean;
 }) {
   const who = context.memberById.get(rev.op.actor)?.name ?? copy.someone;
-  const d = describe(rev, who, context.memberById, context.currency);
+  const d = describe(rev, who, context.memberById, context.currency, context.source);
   const subject = linked ? subjectOf(rev, context) : undefined;
   return (
     <div className={`tle${first ? " now" : ""}`}>

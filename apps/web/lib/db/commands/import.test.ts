@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { computeBalances, foldOps, readCsvGroup, type ImportPlan } from "@bida/core";
+import { activityFeed, computeBalances, foldOps, readCsvGroup, type ImportPlan, type Member } from "@bida/core";
+import { describe as said } from "../../history-copy";
+import { addExpense } from "./entries";
 import { importGroup } from "./import";
 import { db } from "../dexie";
 import { getMe } from "../device";
@@ -195,5 +197,31 @@ describe("imported, then exported again", () => {
     expect(again.stated).toEqual({ Ada: 23500, Sam: -8000, Theo: -15500 });
     expect(again.currency).toBe("EUR");
     expect(again.members).toEqual(["Ada", "Sam", "Theo"]);
+  });
+});
+
+describe("an imported group's history", () => {
+  beforeEach(wipe);
+
+  // Every entry shares the import's moment and author, so "Ada created this
+  // expense" at one second for all of them would be a lie told N times.
+  it("says each entry was imported, and from where", async () => {
+    const { groupId, memberId } = await importGroup(plan(FILE), { name: "Morocco", myName: "Ada" });
+    await addExpense(groupId, memberId, {
+      description: "Later", amountMinor: 500, currency: "EUR", rateToBase: "1", occurredAt: Date.now(),
+      paidBy: memberId, split: { mode: "equal", members: [memberId] },
+    }, Date.now() + 60_000);
+    const group = (await db().groups.get(groupId))!;
+    expect(group.importedFrom).toBe("file");
+    const members = await db().members.where("groupId").equals(groupId).toArray();
+    const byId = new Map<string, Member>(members.map((m) => [m.id, m]));
+    const lines = activityFeed(await db().ops.where("groupId").equals(groupId).toArray())
+      .map((rev) => said(rev, "Ada", byId, "EUR", group.importedFrom).what);
+    expect(lines).toContain("Ada imported the group from a file");
+    expect(lines).toContain("Ada imported this expense from a file");
+    expect(lines).toContain("Ada imported this income from a file");
+    expect(lines).toContain("Ada imported a transfer from a file");
+    // The one added by hand afterwards is its own.
+    expect(lines.filter((l) => l === "Ada created this expense")).toHaveLength(1);
   });
 });

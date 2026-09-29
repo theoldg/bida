@@ -110,4 +110,15 @@ describe("historyMeta", () => {
     expect(historyMeta({ edits: 3, creator: "Luke", lastEditor: "Han" }))
       .toEqual(["Edited 3 times · last by Han", "Edited 3 times"]);
   });
+
+  it("says an untouched imported entry was imported, not created", () => {
+    expect(historyMeta({ edits: 0, creator: "Luke", lastEditor: "Luke", imported: "Tricount" }))
+      .toEqual(["Imported from Tricount by Luke", "Imported from Tricount"]);
+    // A group imported before it kept its source.
+    expect(historyMeta({ edits: 0, creator: "Luke", lastEditor: "Luke", imported: true }))
+      .toEqual(["Imported by Luke", "Imported"]);
+    // Once edited, the edits are the news.
+    expect(historyMeta({ edits: 1, creator: "Luke", lastEditor: "Han", imported: "Tricount" }))
+      .toEqual(["Edited once · by Han", "Edited once"]);
+  });
 });

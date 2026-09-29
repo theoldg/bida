@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { activityFeed, entityHistory, unseenRevisions } from "./history.js";
+import { activityFeed, entityHistory, groupCreateOf, isImported, unseenRevisions } from "./history.js";
+import { DEMO_GROUP_ID } from "./demo.js";
 import { foldOps } from "./fold.js";
 import { GROUP, MARIE, OpBuilder, SAM, THEO } from "./fixtures.test-helper.js";
 
@@ -211,6 +212,61 @@ describe("unseenRevisions", () => {
   it("ignores ops not numbered yet, and never marks backwards", () => {
     const ops = twoPhones().map((o) => ({ ...o, seq: null }));
     expect(unseenRevisions(ops, 7, "mine")).toEqual({ revisions: [], through: 7, settled: 7 });
+  });
+});
+
+describe("an imported entry", () => {
+  /**
+   * `importGroup`'s shape: the group and its entries in one append, one wall
+   * moment and one actor; then an entry somebody adds by hand afterwards.
+   */
+  function imported() {
+    const b = new OpBuilder("importer");
+    const batch = [
+      b.push("group", GROUP, "create", { name: "Trip", importedFrom: "tricount" }),
+      b.push("member", THEO, "create", { name: "Theo" }),
+      b.push("expense", "e-old", "create", { description: "Hotel", amountMinor: 900 }),
+      b.push("settlement", "s-old", "create", { amountMinor: 100 }),
+    ];
+    // One append stamps one `now` on every op it writes.
+    const at = batch[0]!.createdAt;
+    const ops = batch.map((op) => ({ ...op, createdAt: at }));
+    ops.push(b.push("expense", "e-new", "create", { description: "Taxi", amountMinor: 50 }));
+    return ops;
+  }
+
+  it("is an entry written in the group's own create batch", () => {
+    const ops = imported();
+    const byEntity = new Map(activityFeed(ops).map((r) => [r.entityId, r.imported]));
+    expect(byEntity.get("e-old")).toBe(true);
+    expect(byEntity.get("s-old")).toBe(true);
+    expect(byEntity.get("e-new")).toBe(false);
+    // The group itself is not an entry; its own create says where it came from.
+    expect(byEntity.get(GROUP)).toBe(false);
+    expect(entityHistory(ops, "e-old")[0]?.imported).toBe(true);
+  });
+
+  it("is only ever the create, not an edit made in the same moment", () => {
+    const ops = imported();
+    const update = { ...ops[2]!, id: "op-edit", kind: "update" as const };
+    expect(isImported(update, groupCreateOf(ops))).toBe(false);
+  });
+
+  it("needs the same actor, since another member's entry is theirs", () => {
+    const ops = imported().map((o) => (o.entityId === "e-old" ? { ...o, actor: MARIE } : o));
+    expect(entityHistory(ops, "e-old")[0]?.imported).toBe(false);
+  });
+
+  it("is never the demo, which is seeded the same way", () => {
+    const ops = imported().map((o) => ({ ...o, groupId: DEMO_GROUP_ID }));
+    expect(activityFeed(ops).some((r) => r.imported)).toBe(false);
+  });
+
+  // The catch-up folds only the entities it touched, which leaves out the group.
+  it("survives unseenRevisions cutting the log down", () => {
+    const ops = imported().map((o, i) => ({ ...o, seq: i + 1 }));
+    const { revisions } = unseenRevisions(ops, 0, "another-phone");
+    expect(revisions.find((r) => r.entityId === "e-old")?.imported).toBe(true);
   });
 });
 

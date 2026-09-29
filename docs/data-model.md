@@ -43,7 +43,7 @@ Materialised by folding ops into IndexedDB tables. Authoritative nowhere on the
 server.
 
 ```ts
-Group      { id, name, baseCurrency, createdAt, archivedAt? }
+Group      { id, name, baseCurrency, createdAt, archivedAt?, importedFrom? }
 Member     { id, groupId, name, colorSeed, deletedAt? }
 Settlement { id, groupId, fromMember, toMember, amountMinor, currency,
              rateToBase, baseAmountMinor, occurredAt, createdAt?, note?, deletedAt? }

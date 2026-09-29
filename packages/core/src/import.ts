@@ -1,5 +1,6 @@
 import { exponentOf, isCurrencyCode, minorToDecimalString, parseMinor, type CurrencyCode } from "./money.js";
 import { resolveSplit } from "./split.js";
+import type { ImportSource } from "./types.js";
 
 /**
  * A Splitwise CSV read back into a group — `export.ts` in reverse. Takes parsed
@@ -137,6 +138,8 @@ interface DroppedRow {
 }
 
 export interface ImportPlan {
+  /** What was read. The group keeps it (`Group.importedFrom`). */
+  source: ImportSource;
   /** The group's name, when the source has one (a tricount does; a CSV's is the filename). */
   title?: string;
   /** The file's single currency. Becomes the group's base. */
@@ -238,8 +241,9 @@ export function readCsvGroup(
     throw new ImportError("no-entries", "nothing to import");
   }
 
-  checkStated({ currency, members, entries, transfers, dropped, stated });
-  return { currency, members, entries, transfers, dropped, stated };
+  const plan: ImportPlan = { source: "file", currency, members, entries, transfers, dropped, stated };
+  checkStated(plan);
+  return plan;
 }
 
 /** The five columns, then the member names. */

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { CATCH_UP_MS, compareHlc, unseenRevisions, type Revision } from "@bida/core";
+import { CATCH_UP_MS, compareHlc, unseenRevisions, type ImportSource, type Revision } from "@bida/core";
 import { Icon } from "@/components/icons";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
@@ -28,7 +28,9 @@ const CAP = 4;
  * folded again or not, and anything arriving meanwhile joins it rather than the
  * list being swapped under a thumb.
  */
-export function NewEdits({ groupId, currency }: { groupId: string; currency: string }) {
+export function NewEdits({ groupId, currency, source }: {
+  groupId: string; currency: string; source?: ImportSource | null;
+}) {
   const fresh = useLive("newEdits", async () => {
     const key = await db().groupKeys.get(groupId);
     // No key is the demo; no mark is a group whose first pull hasn't landed.
@@ -79,7 +81,7 @@ export function NewEdits({ groupId, currency }: { groupId: string; currency: str
 
   if (shown.length === 0 || !names.current?.revisions) return null;
   const { memberById, expenseById, settlementById } = names.current;
-  const context: RevisionContext = { groupId, currency, memberById, expenseById, settlementById };
+  const context: RevisionContext = { groupId, currency, memberById, expenseById, settlementById, source };
 
   function toggle() {
     if (open) { setOpen(false); return; }

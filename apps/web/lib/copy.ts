@@ -1,5 +1,5 @@
 import type {
-  ExtraKind, ImportRefusalCode, ScanMedium, ScanProblem, SplitSpec,
+  ExtraKind, ImportRefusalCode, ImportSource, ScanMedium, ScanProblem, SplitSpec,
 } from "@bida/core";
 import type { EntryKind } from "./entry-kind";
 
@@ -850,6 +850,10 @@ export const copy = {
     /** The link above Edit, when there is no room to say who (`historyMeta`). */
     history: "History",
     createdBy: (who: string) => `Created by ${who}`,
+    /** In place of `createdBy` for an entry that came in with the group. `from` is `importSource`'s. */
+    importedBy: (who: string, from?: string) =>
+      (from ? `Imported from ${from} by ${who}` : `Imported by ${who}`),
+    imported: (from?: string) => (from ? `Imported from ${from}` : "Imported"),
     edited: (n: number) => (n === 1 ? "Edited once" : `Edited ${n} times`),
     /** After the count: one edit was by somebody, several were last by one. */
     editedBy: (n: number, who: string) => (n === 1 ? `by ${who}` : `last by ${who}`),
@@ -1209,6 +1213,9 @@ export const copy = {
 
     /** One sentence per revision. `who` is the actor's own name. */
     createdEntry: (who: string, noun: string) => `${who} created this ${noun}`,
+    /** An entry that came in with the group: every one shares the import's moment and author. */
+    importedEntry: (who: string, noun: string, from?: string) =>
+      `${who} imported this ${noun}${from ? ` from ${from}` : ""}`,
     deletedEntry: (who: string, noun: string) => `${who} deleted this ${noun}`,
     restoredEntry: (who: string, noun: string) => `${who} restored this ${noun}`,
     editedEntry: (who: string, noun: string) => `${who} edited this ${noun}`,
@@ -1248,6 +1255,8 @@ export const copy = {
     /** A phone changing hands reads as a change of person. */
     became: (was: string, now: string) => `${was} became ${now}`,
     recordedTransfer: (who: string) => `${who} recorded a transfer`,
+    importedTransfer: (who: string, from?: string) =>
+      `${who} imported a transfer${from ? ` from ${from}` : ""}`,
     deletedTransfer: (who: string) => `${who} deleted a transfer`,
     restoredTransfer: (who: string) => `${who} restored a transfer`,
     editedTransfer: (who: string) => `${who} edited a transfer`,
@@ -1266,6 +1275,9 @@ export const copy = {
     updatedMember: (who: string, them: string) => `${who} updated ${them}`,
     updatedSelf: (who: string) => `${who} updated their own details`,
     createdGroup: (who: string) => `${who} created the group`,
+    importedGroup: (who: string, from: string) => `${who} imported the group from ${from}`,
+    /** What an import read, after "from". */
+    importSource: { tricount: "Tricount", file: "a file" } as Record<ImportSource, string>,
     renamedGroup: (who: string) => `${who} renamed the group`,
     archivedGroup: (who: string) => `${who} archived the group`,
     restoredGroup: (who: string) => `${who} restored the group`,

@@ -1,6 +1,7 @@
 import { compareHlc, parseHlc } from "./hlc.js";
 import { IMMUTABLE_FIELDS, WRITE_ONCE_FIELDS, type Op } from "./ops.js";
 import { applyPatch, sortOps } from "./fold.js";
+import { isDemo } from "./demo.js";
 import type { Id } from "./types.js";
 
 /**
@@ -34,6 +35,38 @@ export interface Revision {
   after: Readonly<Record<string, unknown>>;
   isCreate: boolean;
   isDelete: boolean;
+  /**
+   * An entry's create that came in with the group: written in the group's own
+   * first batch (`isImported`). Whoever imported it is its actor, and the
+   * moment is the import's, not the entry's.
+   */
+  imported: boolean;
+}
+
+/** The op that made the group, where `ops` holds it: the earliest create. */
+export function groupCreateOf(ops: readonly Op[]): Op | undefined {
+  let first: Op | undefined;
+  for (const op of ops) {
+    if (op.entity === "group" && op.kind === "create"
+      && (!first || compareHlc(op.hlc, first.hlc) < 0)) first = op;
+  }
+  return first;
+}
+
+/**
+ * Was this entry create written by an import? A group made by hand is created
+ * holding people and no entries; one made from a file or a tricount is written
+ * in one batch with every entry in it (`importGroup`), so an entry sharing the
+ * group's create — its actor, its device, its wall-clock moment — came from
+ * the source. Read off the log rather than a flag, so groups imported before
+ * anybody asked read the same. The demo is seeded the same way and is not
+ * an import.
+ */
+export function isImported(op: Op, groupCreate: Op | undefined): boolean {
+  return !!groupCreate && op.kind === "create"
+    && (op.entity === "expense" || op.entity === "settlement")
+    && op.actor === groupCreate.actor && op.createdAt === groupCreate.createdAt
+    && nodeOf(op.hlc) === nodeOf(groupCreate.hlc) && !isDemo(op.groupId);
 }
 
 /**
@@ -54,7 +87,7 @@ function equalish(a: unknown, b: unknown): boolean {
 }
 
 /** Revisions for one entity, oldest first. */
-function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
+function revisionsForEntity(ops: readonly Op[], entityId: Id, groupCreate: Op | undefined): Revision[] {
   const sorted = sortOps(ops);
   const running: Record<string, unknown> = {};
   const revisions: Revision[] = [];
@@ -104,6 +137,7 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
       after: { ...running },
       isCreate: op.kind === "create",
       isDelete,
+      imported: isImported(op, groupCreate),
     });
   }
 
@@ -113,11 +147,17 @@ function revisionsForEntity(ops: readonly Op[], entityId: Id): Revision[] {
 /** History for one expense (or any entity), newest first. */
 export function entityHistory(ops: readonly Op[], entityId: Id): Revision[] {
   const mine = ops.filter((o) => o.entityId === entityId);
-  return revisionsForEntity(mine, entityId).reverse();
+  return revisionsForEntity(mine, entityId, groupCreateOf(ops)).reverse();
 }
 
 /** The whole group's activity, newest first. */
 export function activityFeed(ops: readonly Op[], limit?: number): Revision[] {
+  const all = feedOf(ops, groupCreateOf(ops));
+  return limit === undefined ? all : all.slice(0, limit);
+}
+
+/** `activityFeed`, told the group's create — which `ops` may have been cut down past. */
+function feedOf(ops: readonly Op[], groupCreate: Op | undefined): Revision[] {
   const byEntity = new Map<Id, Op[]>();
   for (const op of ops) {
     const list = byEntity.get(op.entityId);
@@ -126,10 +166,9 @@ export function activityFeed(ops: readonly Op[], limit?: number): Revision[] {
   }
   const all: Revision[] = [];
   for (const [entityId, entityOps] of byEntity) {
-    all.push(...revisionsForEntity(entityOps, entityId));
+    all.push(...revisionsForEntity(entityOps, entityId, groupCreate));
   }
-  all.sort((a, b) => compareHlc(b.op.hlc, a.op.hlc));
-  return limit === undefined ? all : all.slice(0, limit);
+  return all.sort((a, b) => compareHlc(b.op.hlc, a.op.hlc));
 }
 
 const nodeOf = (hlc: string): string | undefined => {
@@ -169,7 +208,7 @@ export function unseenRevisions(
   // A revision's diff needs its entity's earlier ops, so the feed is folded
   // over every op of the touched entities, then cut down to the new ones.
   const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
-  const revisions = activityFeed(ops.filter((o) => touched.has(o.entityId)))
+  const revisions = feedOf(ops.filter((o) => touched.has(o.entityId)), groupCreateOf(ops))
     .filter((r) => news.has(r.op.id));
   const settled = revisions.length === 0 ? through
     : Math.min(...revisions.map((r) => r.op.seq ?? 0)) - 1;

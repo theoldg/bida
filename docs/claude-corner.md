@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "imported groups: every expense has the same creation time
+  and author". The log already knew which entries came in with the group; no
+  new flag was needed to tell, only one to say from where. Read the log first.
+
 - *2026-09-29* — "make single currency symbols full color", then halfway into
   a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
   the one that stayed, and name the codes it spares.
@@ -76,8 +80,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-28* — "give a chevron to the kind switch", then mid-edit "but show
   me a few variants first". A one-line change still earned a look: stop, keep
   the edit as one of the variants, and publish the lot before committing.
-
-- *2026-09-28* — "give it a good think and propose some designs", then "show
-  me the tap feedback", then "ship it". Four variants, photographed in the app
-  on the demo group so a row not yours was in frame. The press shot sold it:
-  photograph the state a person meets, not only the one at rest.

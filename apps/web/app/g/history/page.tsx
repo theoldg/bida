@@ -90,6 +90,7 @@ function HistoryScreen() {
 
   const context: RevisionContext = {
     groupId: group.id, currency, memberById, expenseById, settlementById, via: "history",
+    source: group.importedFrom,
   };
 
   return (

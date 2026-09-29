@@ -147,7 +147,7 @@ function Ledger({ data }: { data: GroupData }) {
       <LedgerInstall groupId={gid} />
       {me ? <MySummary net={net} base={base} gid={gid} /> : null}
       {/* Between where you stand and the rows, since it is why either moved. */}
-      <NewEdits groupId={gid} currency={base} />
+      <NewEdits groupId={gid} currency={base} source={group.importedFrom} />
 
       {entries.length === 0 ? (
         <Empty title={copy.group.empty.title}>{copy.group.empty.body}</Empty>

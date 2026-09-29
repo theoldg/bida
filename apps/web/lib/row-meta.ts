@@ -86,14 +86,21 @@ export function groupMeta({ people, entries, when }: {
  * how often it has changed and who changed it last. The name is what goes
  * when the line runs short — the count is what says whether to press, and a
  * name that doesn't fit is not worth an ellipsis. A creator with no room left
- * leaves "History", which still says where the link goes.
+ * leaves "History", which still says where the link goes. An imported entry
+ * says so instead: its creator and moment are the import's, not the entry's.
  */
-export function historyMeta({ edits, creator, lastEditor }: {
+export function historyMeta({ edits, creator, lastEditor, imported }: {
   /** Revisions after the create; a delete or a restore is not one. */
   edits: number;
   creator: string;
   lastEditor: string;
+  /** Came in with the group (`isImported`): `true`, or what it was read from. */
+  imported?: string | boolean;
 }): string[] {
+  if (edits === 0 && imported) {
+    const from = typeof imported === "string" ? imported : undefined;
+    return [copy.entry.importedBy(creator, from), copy.entry.imported(from)];
+  }
   if (edits === 0) return [copy.entry.createdBy(creator), copy.entry.history];
   const count = copy.entry.edited(edits);
   return [joined(count, copy.entry.editedBy(edits, lastEditor)), count];
