@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "make single currency symbols full color", then halfway into
+  a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
+  the one that stayed, and name the codes it spares.
+
 - *2026-09-29* — "iiuc we can't catch a back action right after entering",
   then "yes, build it". The docs called it impossible; that was true of
   history, not of the button. When a wall is documented, ask whether another
@@ -77,8 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   me the tap feedback", then "ship it". Four variants, photographed in the app
   on the demo group so a row not yours was in frame. The press shot sold it:
   photograph the state a person meets, not only the one at rest.
-
-- *2026-09-28* — "remove these items with which i disagree": three of my crit
-  findings (red for a received transfer, green's two meanings, the loud swap)
-  were the owner's deliberate choices. A crit lists what I'd change, not what
-  is wrong; expect a cull, and cut cleanly without arguing.

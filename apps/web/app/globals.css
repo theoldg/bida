@@ -949,11 +949,12 @@ a { color: inherit; text-decoration: none }
   font-size: clamp(28px, calc((100cqi - 8px) / (var(--chars) * .555 + 2)), 44px) }
 .entryamt .ccy { font-size: .55em; font-weight: 500; letter-spacing: 0; color: var(--muted) }
 /* A symbol is as tall as a code's capitals but a third as wide, so at the
-   code's size "€" reads smaller than "PLN". It takes the whole part's size.
+   code's size "€" reads smaller than "PLN". It takes the whole part's size
+   and ink — a quiet glyph reads as a smudge, where a quiet code still reads.
    And it is written against its digits, as "£6.87" is anywhere else: pulled
    into the gap, which is a code's gap — a word needs one, a glyph with its own
    side bearings does not. */
-.entryamt .ccy.sym { font-size: 1em; margin-right: -.12em }
+.entryamt .ccy.sym { font-size: 1em; margin-right: -.12em; color: inherit }
 .entryspent .sym { margin-right: -5px }
 .entryamt .frac { font-size: .55em; font-weight: 500; letter-spacing: -.03em; color: var(--muted) }
 .entryby { margin-top: 10px; font-size: 13px; color: var(--muted) }
@@ -991,7 +992,7 @@ a { color: inherit; text-decoration: none }
   background: var(--paper); color: var(--ink); font-weight: 700 }
 .deletedband .btn:active:not(:disabled) { background-image: linear-gradient(var(--press), var(--press)) }
 .deletedband + .hint { margin-top: 8px }
-.pad:has(.deletedband) + .entryhead .entryamt .whole { color: var(--ink-2) }
+.pad:has(.deletedband) + .entryhead .entryamt :is(.whole, .sym) { color: var(--ink-2) }
 .bignum { font-family: var(--f-mono); font-variant-numeric: tabular-nums; letter-spacing: -.03em;
   font-weight: 500 }
 .kv { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px;
