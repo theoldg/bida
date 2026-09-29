@@ -358,7 +358,13 @@ it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
 The column adds up to the net printed above the list, on the balance card —
 words over figure, the figure sized to its own length in CSS alone (`.mysum`
 in `globals.css`), so a seven-digit sum shrinks rather than runs under the
-chevron. Rows involving neither
+chevron. **A changed figure rolls** (`components/rolling-figure.tsx`): each
+digit that changed slides one line, up for a bigger figure and down for a
+smaller, 800ms apiece and 100ms apart from the left; the rest never move. One
+trigger covers a save, a sync and a reopen — the card keeps the net it last
+drew per group in localStorage (`lib/roll.ts`, erased with the group) and rolls
+from it, a beat after mounting; a group's first view, and reduced motion, just
+show the figure. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
 no wash or coloured edge. An expense or income on the entry screen repeats its row's figure as
 its card's last line, "Your balance", written out as `effectSum` (the same
@@ -400,3 +406,7 @@ faint `(you)`; a transfer shows neither. What it looks like and why:
   on a settled field replays it every time the field is emptied. Take the class
   off on `animationend`; `e.pseudoElement` says whether the event came from the
   element or its placeholder.
+- **Back from a save, the ledger draws the old net for a frame** — its live
+  query answers before the write lands. So a save's roll is usually a change
+  arriving while the card is mounted, not one read from `bida.shown`; a check
+  waiting for `.rolling` must wait for it, not look once.

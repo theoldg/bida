@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — a digit spinner: mock of four, "B slightly slower", "make the
+  speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
+  when feel is in question — the answer comes back as a number to ship.
+
 - *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
   was honest, but it was the wrong screen's: a flash is judged by its frame,
   not its data. Prove the check fails without the fix before trusting it.
@@ -71,7 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   -". The crit's hyphen was the fixture receipt's own title, not the app's. A
   shot shows data as well as design: before filing a finding, find the line
   of code that draws it.
-
-- *2026-09-29* — "make single currency symbols full color", then halfway into
-  a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
-  the one that stayed, and name the codes it spares.
