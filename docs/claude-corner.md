@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "only fade the skeletons if up over 100 ms, otherwise cut...
+  or advise me otherwise?" The "or" invites a view, not a veto: agree in a
+  line, then find where "up" really began — a reopen's skeleton started on
+  another route.
+
 - *2026-09-29* — a digit spinner: mock of four, "B slightly slower", "make the
   speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
   when feel is in question — the answer comes back as a number to ship.
@@ -70,7 +75,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "remove the faded squares for disabled cells", then "the pips
   are fine" and "I meant the faded marks in unselected cells". An unclear noun
   is a question, not a guess: ask which cells before the edit, not after.
-
-- *2026-09-29* — "imported groups: every expense has the same creation time
-  and author". The log already knew which entries came in with the group; no
-  new flag was needed to tell, only one to say from where. Read the log first.

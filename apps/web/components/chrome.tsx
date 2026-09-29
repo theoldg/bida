@@ -220,7 +220,7 @@ export function SkeletonSummary() {
 
 /**
  * The loading ledger, laid over the real one as it arrives and dissolved away
- * over 120ms — a cross-fade of everything at once, the balance's figure
+ * over 120ms, once it has been up long enough to be seen — a cross-fade of everything at once, the balance's figure
  * included, since the veil is opaque and the ledger under it is already whole.
  * A copy of the frame rather than the frame itself: its top bar is drawn, not
  * a `TopBar`, so nothing registers a back button twice. `onGone` unmounts it;

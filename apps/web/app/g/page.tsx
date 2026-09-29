@@ -43,6 +43,9 @@ export default function GroupPage() {
   return <QueryBoundary><GroupScreen /></QueryBoundary>;
 }
 
+/** How long a skeleton must have been up for its hand-off to fade (ms). */
+const SKELETON_SEEN = 100;
+
 function GroupScreen() {
   const params = useSearchParams();
   const groupId = params.get("id") ?? undefined;
@@ -66,9 +69,14 @@ function GroupScreen() {
   // is no honest name to sign a write with. See `useClaimGate`.
   const unclaimed = useClaimGate(groupId, data);
 
-  // Whether this screen drew its skeleton, so the ledger can dissolve it
-  // rather than cut to it. A ledger that was there at once has nothing to fade.
-  const sawSkeleton = useRef(false);
+  // When the skeleton went up, so the ledger can dissolve it rather than cut to
+  // it — but only one that was seen: under SKELETON_SEEN it barely registered,
+  // and a fade would stretch a flash into a wait. A launch reopening this group
+  // wore the same frame on `/` since first paint (lib/resume-hint.ts), and
+  // that mark is still on during this screen's first render. Decided once, on
+  // the ledger's first render.
+  const skeletonSince = useRef<number>(undefined);
+  const fade = useRef<boolean>(undefined);
   const [veiled, setVeiled] = useState(true);
 
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
@@ -76,7 +84,7 @@ function GroupScreen() {
   // The whole frame while loading, which also covers the redirect above rather
   // than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
-    sawSkeleton.current = true;
+    skeletonSince.current ??= document.documentElement.hasAttribute("data-resuming") ? 0 : performance.now();
     return <LedgerSkeleton groupId={groupId} head={<SkeletonBanner groupId={groupId} />} />;
   }
   // A group deleted from the server takes this phone's copy with it
@@ -93,6 +101,7 @@ function GroupScreen() {
   }
 
   const { group } = data;
+  fade.current ??= skeletonSince.current !== undefined && performance.now() - skeletonSince.current >= SKELETON_SEEN;
 
   return (
     <Screen>
@@ -107,7 +116,7 @@ function GroupScreen() {
         />
         <Ledger data={data} />
       </Body>
-      {sawSkeleton.current && veiled ? <SkeletonVeil head={<SkeletonBanner groupId={group.id} />} onGone={() => setVeiled(false)} /> : null}
+      {fade.current && veiled ? <SkeletonVeil head={<SkeletonBanner groupId={group.id} />} onGone={() => setVeiled(false)} /> : null}
 
       {/* Two ways to start an expense. */}
       <ScanFab href={route.scan(group.id)} />
