@@ -25,6 +25,22 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "fix both failing checks". Three had been waved off as
+  pre-existing flakes; one was a real race, one a stale expectation, one a
+  hidden frame. "Also red on the base" says whose it is, not that it is noise.
+
+- *2026-09-29* — a digit spinner: mock of four, "B slightly slower", "make the
+  speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
+  when feel is in question — the answer comes back as a number to ship.
+
+- *2026-09-29* — "can we account for the banners in the skeletons? or does
+  that come from the database too?" A question with a fix inside: answer it
+  (no, the browser), then build it, and measure the drop before and after.
+
+- *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
+  was honest, but it was the wrong screen's: a flash is judged by its frame,
+  not its data. Prove the check fails without the fix before trusting it.
+
 - *2026-09-29* — "the long hold menus are a bit bare", then a mock with
   toggles, then a phone screenshot of the ticks: "I like these settings". The
   screenshot is the spec; the one thing named to drop is the only change.
@@ -58,20 +74,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "remove the faded squares for disabled cells", then "the pips
   are fine" and "I meant the faded marks in unselected cells". An unclear noun
   is a question, not a guess: ask which cells before the edit, not after.
-
-- *2026-09-29* — "imported groups: every expense has the same creation time
-  and author". The log already knew which entries came in with the group; no
-  new flag was needed to tell, only one to say from where. Read the log first.
-
-- *2026-09-29* — "i went through the quick split flow and didn't find a single
-  -". The crit's hyphen was the fixture receipt's own title, not the app's. A
-  shot shows data as well as design: before filing a finding, find the line
-  of code that draws it.
-
-- *2026-09-29* — "make single currency symbols full color", then halfway into
-  a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
-  the one that stayed, and name the codes it spares.
-
-- *2026-09-29* — "fix both failing checks". Three had been waved off as
-  pre-existing flakes; one was a real race, one a stale expectation, one a
-  hidden frame. "Also red on the base" says whose it is, not that it is noise.

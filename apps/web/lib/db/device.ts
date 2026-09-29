@@ -64,7 +64,7 @@ export async function setMe(groupId: string, memberId: string): Promise<void> {
  */
 export async function setLastOpenedGroup(groupId: string): Promise<void> {
   // Ahead of the early return: a phone updated into the hint has none yet.
-  hintResume(true);
+  hintResume(groupId);
   const device = await getDevice();
   if (device.lastOpenedGroupId === groupId && !device.leftOnList) return;
   await updateDevice({ lastOpenedGroupId: groupId, leftOnList: false });
@@ -75,7 +75,7 @@ export async function setLastOpenedGroup(groupId: string): Promise<void> {
  * leaves it there rather than reopening the last group (lib/launch.ts).
  */
 export async function setLeftOnList(): Promise<void> {
-  hintResume(false);
+  hintResume(undefined);
   const device = await getDevice();
   if (device.leftOnList) return;
   await updateDevice({ leftOnList: true });

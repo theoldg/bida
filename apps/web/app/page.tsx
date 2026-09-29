@@ -8,7 +8,7 @@ import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
 import { Body, Empty, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
-import { InstallOfferCard } from "@/components/install";
+import { InstallOfferCard, SkeletonBanner } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
 import { usePasteLink } from "@/components/paste-link";
 import { useHold, useLongPressMenu } from "@/components/long-press";
@@ -32,7 +32,8 @@ export default function GroupsPage() {
   // A launch may reopen the last group (lib/launch.ts), so until that settles
   // the list stays "not answered yet" rather than flashing and being replaced.
   const { deciding: resuming, joining } = useResumeLastGroup();
-  const hydrated = useSyncExternalStore(never, () => true, () => false);
+  const hydrating = useSyncExternalStore(never, () => false, () => true);
+  const marked = useSyncExternalStore(never, resumingMarked, () => true);
   const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
@@ -49,11 +50,11 @@ export default function GroupsPage() {
   return (
     <>
     {/* A launch reopening a group shows the ledger's frame from the first
-        paint, not this list's (lib/resume-hint.ts). The prerender draws both
-        and globals.css picks, because the mark is set before React runs; once
-        the launch has decided, the frame goes, or its bar's up-arrow stays
-        registered and its rows keep counting as a list still loading. */}
-    {hydrated && !resuming ? null : <LedgerSkeleton className="resumeframe" />}
+        paint, not this list's (lib/resume-hint.ts). Both are drawn and
+        globals.css picks, because the mark is set before React runs and the
+        prerender can't know it. Once React reads the mark itself, it keeps the
+        frame only on a launch that is showing it, and only until it decides. */}
+    {hydrating || (resuming && marked) ? <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} /> : null}
     <Screen className="homeframe">
       <Body>
         {/* The app says its own name once, on the screen you land on. The
@@ -146,6 +147,7 @@ function StartTiles() {
 }
 
 const never = () => () => {};
+const resumingMarked = () => document.documentElement.hasAttribute("data-resuming");
 
 /**
  * The way into a group on an iOS home-screen app, which a tapped invite never

@@ -54,11 +54,17 @@ API is reached with `fetch`.
   doesn't take releases the list after two seconds rather than leaving the app
   on a skeleton nothing will fill. **The list's frame never paints on a resume**:
   the exported `/` is the list, and IndexedDB answers after first paint, so
-  `lib/resume-hint.ts` mirrors "a launch would resume" into localStorage and a
+  `lib/resume-hint.ts` mirrors the group to resume into localStorage and a
   script before the body marks `<html data-resuming>`, under which `/` shows
   the ledger's skeleton (`LedgerSkeleton`) — the frame `/g` then takes over.
-  Once the launch has decided, `/` stops rendering it: hidden is not gone, and
-  its bar's arrow would stay registered with the back button.
+  **A skeleton wears every card it can know without the database**: the
+  demo's mark and the folded install or notifications offer
+  (`SkeletonBanner`), so the rows never drop when the ledger lands. The mark's
+  value names which, decided by the same script and tested against the real
+  cards' logic; Chrome's one-tap offer waits on an event and still arrives
+  late, as do the sync banner and the new-edits line, which are data. The
+  frame goes once the launch decides: hidden is not gone, and its bar's arrow
+  would stay registered with the back button.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the
@@ -360,7 +366,13 @@ it (`myEffect` in `lib/entry-kind.ts`, one subtraction for all three kinds).
 The column adds up to the net printed above the list, on the balance card —
 words over figure, the figure sized to its own length in CSS alone (`.mysum`
 in `globals.css`), so a seven-digit sum shrinks rather than runs under the
-chevron. Rows involving neither
+chevron. **A changed figure rolls** (`components/rolling-figure.tsx`): each
+digit that changed slides one line, up for a bigger figure and down for a
+smaller, 800ms apiece and 100ms apart from the left; the rest never move. One
+trigger covers a save, a sync and a reopen — the card keeps the net it last
+drew per group in localStorage (`lib/roll.ts`, erased with the group) and rolls
+from it, a beat after mounting; a group's first view, and reduced motion, just
+show the figure. Rows involving neither
 your money nor your share drop to `opacity: .58`; the rest are plain rows, with
 no wash or coloured edge. An expense or income on the entry screen repeats its row's figure as
 its card's last line, "Your balance", written out as `effectSum` (the same
@@ -402,3 +414,7 @@ faint `(you)`; a transfer shows neither. What it looks like and why:
   on a settled field replays it every time the field is emptied. Take the class
   off on `animationend`; `e.pseudoElement` says whether the event came from the
   element or its placeholder.
+- **Back from a save, the ledger draws the old net for a frame** — its live
+  query answers before the write lands. So a save's roll is usually a change
+  arriving while the card is mounted, not one read from `bida.shown`; a check
+  waiting for `.rolling` must wait for it, not look once.

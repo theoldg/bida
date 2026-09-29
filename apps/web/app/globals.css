@@ -324,6 +324,10 @@ a { color: inherit; text-decoration: none }
    (lib/resume-hint.ts). */
 .resumeframe, html[data-resuming] .homeframe { display: none }
 html[data-resuming] .resumeframe { display: flex }
+/* Which card heads that skeleton, picked by the same mark (`SkeletonBanner`). */
+.ghost { display: none }
+html[data-resuming="demo"] .ghost-demo, html[data-resuming="notify"] .ghost-notify,
+html[data-resuming="manual"] .ghost-manual { display: block }
 .appbody { flex: 1; display: flex; flex-direction: column; min-height: 0 }
 /* The keyboard overlays the shell rather than shortening it, so the scroller
    ends behind one (components/viewport.tsx). It pays that back twice:
@@ -712,6 +716,29 @@ html[data-resuming] .resumeframe { display: flex }
 .mysum .bignum { line-height: 1.1;
   font-size: min(var(--mysum-max), (100cqi - 60px) / (var(--chars) * .6)) }
 .mysumchev { color: var(--ink); flex: none }
+
+/* The figure rolling to a new value (components/rolling-figure.tsx). Every
+   glyph a cell one advance wide — .6em, less the figure's -.03em tracking — so
+   the rolling figure is exactly as wide as the text it replaces. A changed
+   cell holds a strip of old over new and slides it one line, up for a bigger
+   figure (the new digit rises from below), down for a smaller; `--delay`
+   cascades them from the left. The strip is masked only while it moves. */
+.rolling { display: inline-flex; vertical-align: bottom }
+/* The settled figure, for a screen reader, while the cells read as noise. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
+.rollcell { display: inline-block; width: .57em; height: 1.1em; overflow: hidden;
+  letter-spacing: 0; text-align: center; white-space: pre }
+.rollcell.moving { -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(transparent, #000 18%, #000 82%, transparent) }
+.rollstrip { display: flex; flex-direction: column; line-height: 1.1em;
+  animation: roll-up .8s cubic-bezier(.2,.8,.2,1) var(--delay, 0ms) both }
+.down .rollstrip { flex-direction: column-reverse; animation-name: roll-down }
+.rollcell.open { animation: roll-open .8s cubic-bezier(.2,.8,.2,1) var(--delay, 0ms) both }
+.rollcell.close { animation: roll-close .8s cubic-bezier(.2,.8,.2,1) var(--delay, 0ms) both }
+@keyframes roll-up { from { transform: translateY(0) } to { transform: translateY(-1.1em) } }
+@keyframes roll-down { from { transform: translateY(-1.1em) } to { transform: translateY(0) } }
+@keyframes roll-open { from { width: 0 } }
+@keyframes roll-close { to { width: 0 } }
 
 /* The ledger's new-edits line (components/new-edits.tsx): drawn as a date
    line, since it is furniture of the list until pressed. No chevron: one at

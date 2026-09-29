@@ -115,7 +115,9 @@ left in the history entry under it, so the device's back button climbs the app
 rather than leaving for wherever the link was tapped. Backing out of *that*
 group must stay on the list: a document that loaded on `/join` never drew the
 list, and its first arrival there must not be read as a launch. Then the app is launched, which
-reopens the group last open without painting the list's frame on the way, while backing out of that one must leave the list
+reopens the group last open without painting the list's frame on the way —
+and on an iOS tab, whose ledger opens under the install offer, the first frame
+before any script already wears it, so the summary never moves — while backing out of that one must leave the list
 alone — and must be remembered, so the launch after it lands on the list until
 the group is opened again (`apps/web/lib/launch.ts`).
 

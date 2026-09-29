@@ -7,6 +7,7 @@ import { groupState } from "../fold";
 import { getDevice, getMe, hideGroup, setMe, unhideGroup, updateDevice } from "../device";
 import { requestPersistence } from "../../persist";
 import { reconcilePush } from "../../push";
+import { forgetShown } from "../../roll";
 import type { CarriedGroup } from "../../group-link";
 import { appendOps } from "./append";
 
@@ -210,6 +211,7 @@ async function erase(groupId: Id, deleted: boolean): Promise<boolean> {
     return true;
   });
   if (!gone) return false;
+  forgetShown(groupId);
 
   // The device record has one writer (../device.ts), so it is patched after
   // the transaction rather than inside it — which only reads it.

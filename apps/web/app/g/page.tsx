@@ -16,8 +16,9 @@ import {
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
 import { DemoCard } from "@/components/demo";
-import { LedgerInstall } from "@/components/install";
+import { LedgerInstall, SkeletonBanner } from "@/components/install";
 import { NewEdits } from "@/components/new-edits";
+import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
 import { useLongPressMenu } from "@/components/long-press";
 import { SyncBanner } from "@/components/sync-banner";
@@ -28,6 +29,7 @@ import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money } from "@/lib/format";
 import { entryOf, ledgerRows } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
+import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { expenseMeta, transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
 import type { GroupData } from "@/lib/hooks";
@@ -75,7 +77,7 @@ function GroupScreen() {
   // than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
     sawSkeleton.current = true;
-    return <LedgerSkeleton groupId={groupId} />;
+    return <LedgerSkeleton groupId={groupId} head={<SkeletonBanner groupId={groupId} />} />;
   }
   // A group deleted from the server takes this phone's copy with it
   // (lib/db/sync.ts), so the screen says "deleted" rather than "bad link".
@@ -105,7 +107,7 @@ function GroupScreen() {
         />
         <Ledger data={data} />
       </Body>
-      {sawSkeleton.current && veiled ? <SkeletonVeil onGone={() => setVeiled(false)} /> : null}
+      {sawSkeleton.current && veiled ? <SkeletonVeil head={<SkeletonBanner groupId={group.id} />} onGone={() => setVeiled(false)} /> : null}
 
       {/* Two ways to start an expense. */}
       <ScanFab href={route.scan(group.id)} />
@@ -181,13 +183,20 @@ function MySummary({ net, base, gid }: { net: number; base: string; gid: string 
   // Unsigned, unlike every other figure: "You owe" already says the direction,
   // and a "-" reads as arithmetic rather than debt.
   const figure = money(Math.abs(net), base);
+  // What this card drew last time, read once: a figure that moved while it was
+  // away — a save, another phone's edit — rolls from it (lib/roll.ts).
+  const [before] = useState(() => shownBefore(gid, base));
+  useEffect(() => keepShown(gid, net, base), [gid, net, base]);
   return (
     <div className="mysummary pad">
       <Link href={route.balances(gid)} className={`card mysum ${signClass(net)}`}
         style={{ "--chars": figure.length } as CSSProperties}>
         <span className="mysumtext">
           <span className="eyebrow">{label}</span>
-          <span className="bignum">{figure}</span>
+          <span className="bignum">
+            <RollingFigure minor={Math.abs(net)} currency={base}
+              from={before === null ? null : Math.abs(before)} wait={ROLL_BEAT} />
+          </span>
         </span>
         <Icon name="chev" size={20} className="mysumchev" />
       </Link>
