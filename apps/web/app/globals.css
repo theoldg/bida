@@ -1724,6 +1724,13 @@ button.amtnote:active { background: var(--hl-edge) }
 .itemtable tr.flash-a .itemqty { animation: refuse-text-a .6s ease-in-out }
 .itemtable tr.flash-b .itemname, .itemtable tr.flash-b .itemamount,
 .itemtable tr.flash-b .itemqty { animation: refuse-text-b .6s ease-in-out }
+/* And every empty cell in it shows its square in solid `--debit`: an empty cell
+   draws nothing at rest, so without this the row says what is missing but not
+   where to tap. Its end is stopped at the cell like the pointer's. */
+@keyframes refuse-square-a { 15%, 45% { background-color: var(--debit) } }
+@keyframes refuse-square-b { 15%, 45% { background-color: var(--debit) } }
+.itemtable tr.flash-a .itemcell .dot.off { animation: refuse-square-a .6s ease-in-out }
+.itemtable tr.flash-b .itemcell .dot.off { animation: refuse-square-b .6s ease-in-out }
 
 /* The one exemption from the reduced-motion clamp, deliberately: that query is
    about movement, and this is a colour settling — clamped, it is no signal.
@@ -1741,7 +1748,8 @@ button.amtnote:active { background: var(--hl-edge) }
   .itemtable tr.flash-a > td, .itemtable tr.flash-b > td,
   .itemtable tr.flash-a .itemname, .itemtable tr.flash-b .itemname,
   .itemtable tr.flash-a .itemamount, .itemtable tr.flash-b .itemamount,
-  .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty {
+  .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty,
+  .itemtable tr.flash-a .itemcell .dot.off, .itemtable tr.flash-b .itemcell .dot.off {
     animation-duration: .6s !important }
 }
 
