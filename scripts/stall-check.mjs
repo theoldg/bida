@@ -61,11 +61,13 @@ const { report, finish } = reporter();
   });
 
   await page.goto(`${base}/`);
-  await page.waitForSelector(".skelrow");
+  // Visible, here and on the notice: `/` also holds the resume frame, hidden,
+  // until the launch decides — and with the read wedged, it never does.
+  await page.locator(".skelrow:visible").first().waitFor();
   report(true, "a read that hasn't answered draws the skeleton, as before");
 
   // Two probes at 6s each (lib/db/live.ts), then the notice stands.
-  const notice = page.locator(".stall");
+  const notice = page.locator(".stall:visible");
   const said = await notice.waitFor({ timeout: PATIENCE }).then(() => true, () => false);
   report(said, "and says so rather than sitting there forever",
     said ? undefined : `no notice after ${PATIENCE / 1000}s`);

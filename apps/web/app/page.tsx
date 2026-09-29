@@ -32,6 +32,7 @@ export default function GroupsPage() {
   // A launch may reopen the last group (lib/launch.ts), so until that settles
   // the list stays "not answered yet" rather than flashing and being replaced.
   const { deciding: resuming, joining } = useResumeLastGroup();
+  const hydrated = useSyncExternalStore(never, () => true, () => false);
   const diagHold = useHold(() => router.push(route.diag()));
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
@@ -48,10 +49,11 @@ export default function GroupsPage() {
   return (
     <>
     {/* A launch reopening a group shows the ledger's frame from the first
-        paint, not this list's (lib/resume-hint.ts). Both are always drawn and
-        globals.css picks, because the mark is set before React runs and the
-        prerender can't know it. */}
-    <LedgerSkeleton className="resumeframe" />
+        paint, not this list's (lib/resume-hint.ts). The prerender draws both
+        and globals.css picks, because the mark is set before React runs; once
+        the launch has decided, the frame goes, or its bar's up-arrow stays
+        registered and its rows keep counting as a list still loading. */}
+    {hydrated && !resuming ? null : <LedgerSkeleton className="resumeframe" />}
     <Screen className="homeframe">
       <Body>
         {/* The app says its own name once, on the screen you land on. The

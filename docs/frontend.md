@@ -57,6 +57,8 @@ API is reached with `fetch`.
   `lib/resume-hint.ts` mirrors "a launch would resume" into localStorage and a
   script before the body marks `<html data-resuming>`, under which `/` shows
   the ledger's skeleton (`LedgerSkeleton`) — the frame `/g` then takes over.
+  Once the launch has decided, `/` stops rendering it: hidden is not gone, and
+  its bar's arrow would stay registered with the back button.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the

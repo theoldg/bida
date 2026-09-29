@@ -387,7 +387,9 @@ red when bunq moves.
   there, click.
 - **A skeleton row is `.rows .row` too**, and outlives the ledger's arrival by
   120ms in the veil that dissolves it (`SkeletonVeil`). Count or wait for
-  `.rows .row:not(.skelrow)`, or a count lands six rows high.
+  `.rows .row:not(.skelrow)`, or a count lands six rows high. And `/` holds
+  a hidden resume frame, stall notice and all, until the launch decides — a
+  wedged read never does — so a locator there wants `:visible`.
 - **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
   in the head — the manifest the head's script writes — needs
   `{ state: "attached" }`, or the wait times out and the check reports the app
