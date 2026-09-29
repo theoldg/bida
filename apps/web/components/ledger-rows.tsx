@@ -94,8 +94,8 @@ export function LedgerRows<T>({ groupId, items, row }: {
     drawn.current = new Set(keys);
 
     // Back from a save, the live query can answer before the write lands
-    // (docs/frontend.md), so the saved row may turn up a commit late: then it
-    // is the saved row, already there, and not an arrival to open.
+    // (docs/frontend.md), so the saved row may turn up a commit late. It is
+    // held still for like any arrival, but not opened: it was already there.
     let saved: string | null = null;
     if (!flashed.current) {
       saved = peekSaved(groupId);
@@ -108,12 +108,11 @@ export function LedgerRows<T>({ groupId, items, row }: {
     const hadRows = drawing.some((i) => i.kind === "row" && before.has(i.key));
     for (const run of runs(keys, (k) => !before.has(k) && !leaving.has(k))) {
       if (!hadRows) break;
-      if (saved && run.includes(saved)) continue;
       const slots = run.map(slot).filter((s): s is HTMLElement => s !== null);
       const top = slots[0]?.getBoundingClientRect().top ?? 0;
       if (top < box.getBoundingClientRect().top) {
         box.scrollTop += slots.reduce((n, s) => n + s.offsetHeight, 0);
-      } else if (!calmly()) {
+      } else if (!calmly() && !(saved && run.includes(saved))) {
         for (const s of slots) arrive(s);
       }
     }

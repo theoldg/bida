@@ -147,7 +147,9 @@ traversal (`popstate`) and every exit's replace fallback marks one — and
 edge and how far above it that row sat**, not an offset: a save lands a row
 above it, and an offset would come back a row off. In the head of the list,
 where no row reaches the edge, it is the plain offset. It follows the cards
-above the rows for 1.2s as they arrive, and a finger ends that at once.
+above the rows for 1.2s as they arrive, and a finger ends that at once — as
+does a saved row, which glides into view from the restored place
+([design-system.md](design-system.md#the-ledger-moves)).
 
 ## Gotchas
 

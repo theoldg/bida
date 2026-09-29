@@ -417,8 +417,9 @@ async function onLedger() {
 // ---- 4. the ledger comes back where it was left, only on the way back ----
 // Scrolled so a row straddles the top edge, then away and back three ways —
 // the arrow, the device's back, and Save on a new entry, which lands a row
-// above the one in view. Each must put that row back to the pixel; a tap in
-// from the list must open at the top. The demo group is long enough to
+// above the one in view. Each must put that row back to the pixel — Save's
+// before it glides on to the row it saved; a tap in from the list must open
+// at the top. The demo group is long enough to
 // scroll on a short phone, and needs no form to make.
 {
   const short = await newPhone(browser, { viewport: { width: 390, height: 480 } });
@@ -479,12 +480,40 @@ async function onLedger() {
   await page.waitForURL(/\/g\/entry\/edit/);
   await page.locator("input.amount").fill("12");
   await page.locator("#what").fill("Droid oil");
+  // Watched from inside the page, frame by frame — the trip back stays in the
+  // one document. The saved row is washed the frame it is drawn, a beat before
+  // it is brought into view (components/ledger-rows.tsx), and the live query
+  // can draw it a commit after the rest; that frame is the one that says
+  // whether the ledger came back where it was left.
+  await page.evaluate(() => {
+    window.__landed = null;
+    const look = () => {
+      const box = document.querySelector(".scroll");
+      if (box && location.pathname === "/g" && document.querySelector(".lslot.saved")) {
+        const edge = box.getBoundingClientRect().top;
+        const row = [...box.querySelectorAll("[data-entry]")].find((el) => el.getBoundingClientRect().bottom > edge);
+        window.__landed = { top: box.scrollTop, entry: row?.dataset.entry, offset: Math.round(row.getBoundingClientRect().top - edge) };
+        return;
+      }
+      requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+  });
   await page.getByRole("button", { name: "Save" }).click();
-  await back();
-  got = await place();
+  await page.waitForFunction(() => window.__landed !== null);
+  got = await page.evaluate(() => window.__landed);
   report(got.entry === left.entry && got.offset === left.offset && got.top > left.top,
     "and Save, with a new row above it, keeps the same row rather than the same offset",
     `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
+  // Then, from there, the row it saved is brought into view.
+  await settle(page, 1400);
+  const shown = await page.evaluate(() => {
+    const box = document.querySelector(".scroll").getBoundingClientRect();
+    const row = [...document.querySelectorAll(".rtitle")].find((t) => t.textContent === "Droid oil")?.closest(".row");
+    const r = row?.getBoundingClientRect();
+    return r ? r.top >= box.top - 1 && r.bottom <= box.bottom + 1 : false;
+  });
+  report(shown, "and then glides to the row it saved, which it had put out of view");
 
   await arrow(page);
   await page.waitForSelector(".grouprow");
