@@ -29,6 +29,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   and author". The log already knew which entries came in with the group; no
   new flag was needed to tell, only one to say from where. Read the log first.
 
+- *2026-09-29* — "i went through the quick split flow and didn't find a single
+  -". The crit's hyphen was the fixture receipt's own title, not the app's. A
+  shot shows data as well as design: before filing a finding, find the line
+  of code that draws it.
+
 - *2026-09-29* — "make single currency symbols full color", then halfway into
   a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
   the one that stayed, and name the codes it spares.
@@ -76,7 +81,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   "i dont see anything particularly wrong". The photographs argued the other
   way: a finding that needs a gallery to be felt is taste, not a bug. Show it
   plainly, and let the owner's eye be the verdict.
-
-- *2026-09-28* — "give a chevron to the kind switch", then mid-edit "but show
-  me a few variants first". A one-line change still earned a look: stop, keep
-  the edit as one of the variants, and publish the lot before committing.

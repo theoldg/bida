@@ -601,9 +601,9 @@ a { color: inherit; text-decoration: none }
 .addname { scroll-margin-bottom: var(--act-below) }
 /* A name in the field is *not* on the list: nothing files it but the plus. So
    while there is one, the row becomes a box on its own ground, ringed in the
-   hard rule. One pixel of border plus eight of margin keeps the name and the
-   plus on the columns they were on. */
-.addrow.editing { margin: 6px 8px 10px; padding: 10px 7px; width: auto;
+   hard rule — on the 16px column every box below it stands on (the screen's
+   act), so the name moves in with it rather than the box sticking out. */
+.addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
 /* The name that field would repeat, said under it and aligned with the names
    above — so it reads as a note on the list, not a new row in it. */

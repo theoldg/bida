@@ -72,7 +72,7 @@ export default function ImportPlanPage() {
             <section className="aboutsect">
               <h4>{words.found}</h4>
               {/* A readout, so it is rows and not a paragraph: these are
-                  four numbers to be checked against a spreadsheet, and a
+                  three facts to be checked against a spreadsheet, and a
                   sentence makes them be read rather than compared. */}
               <div className="rows">
                 {/* A count, not the names: the row is labelled, the names
@@ -80,10 +80,8 @@ export default function ImportPlanPage() {
                     into four lines of comma-separated text. */}
                 <Fact label={words.people} value={String(plan.members.length)} />
                 <Fact label={words.currency} value={currencyLabel(plan.currency)} />
-                <Fact label={words.entries} value={String(plan.entries.length)} />
-                {plan.transfers.length > 0
-                  ? <Fact label={words.transfers} value={String(plan.transfers.length)} />
-                  : null}
+                {/* One count: a transfer is one of the kinds of entry (ADR-0010). */}
+                <Fact label={words.entries} value={String(plannedCount(plan))} />
               </div>
               {plan.dropped.length > 0
                 ? <p className="keynote">{words.dropped(plural(plan.dropped.length, copy.noun.row))}</p>

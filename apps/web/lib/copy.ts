@@ -149,7 +149,6 @@ export const copy = {
     currency: "Currency",
     people: "People",
     entries: "Entries",
-    transfers: "Transfers",
     /**
      * All-zero rows (what bida's export writes for an unapportionable expense).
      * Named, since they're the only thing lost and the count would differ.
@@ -663,8 +662,8 @@ export const copy = {
    * Not "Nothing to paste": iOS can withhold a pasteboard that has the link.
    */
   paste: {
-    title: "Paste the link here",
-    placeholder: "Invite link",
+    title: "Invite link",
+    placeholder: "Paste it here",
     open: "Open",
   },
 
@@ -675,6 +674,7 @@ export const copy = {
     title: "Demo group: not synced",
     /** In the group menu, where Forget group sits for every other group. */
     clear: "Clear the demo",
+    clearTitle: "Clear the demo?",
     /**
      * Not "brings it back": the seed is deterministic, so it restores the story as
      * shipped. The address is written out because nothing links to `/demo`, and
@@ -766,8 +766,7 @@ export const copy = {
     unsplittableWhy: (reason: string) => `${reason}: left out of the balances.`,
     suggestedReimbursements: "Suggested reimbursements",
     allSquare: "Everyone’s square",
-    /** The card a suggested payment opens: it states, it doesn’t ask. */
-    recordTitle: "Record this reimbursement",
+    recordTitle: "Record this reimbursement?",
     /**
      * Under the suggestions, folded, for whoever the list sends to or from a
      * stranger. Asked neutrally and answered as the app's reasoning, so it
@@ -802,6 +801,7 @@ export const copy = {
     blockedBody: (entries: string) => `Named on ${entries}.`,
     lastBody: "Add somebody else first.",
     forget: "Forget group",
+    forgetTitle: "Forget this group?",
     forgetBody: "The invite link brings it back.",
   },
 
@@ -826,8 +826,8 @@ export const copy = {
     copy: "Copy the split",
     copied: "Copied",
     /** The clipboard refused; the text has to be read off the screen instead. */
-    fallbackTitle: "Copy it from here",
-    fallbackBody: "This phone wouldn’t take it to the clipboard.",
+    fallbackTitle: "The split",
+    fallbackBody: "Copying didn’t work: hold the text to copy it.",
     /**
      * Plain lines with an em dash: chat apps aren't monospaced, so space-aligned
      * tables arrive mangled. Figures are bare — nothing converts (ADR-0035).
@@ -1051,7 +1051,7 @@ export const copy = {
       /** Short, as three doors share a phone's width; the chip register fits the whole phrase. */
       open: "Type",
       openLong: "Type it in",
-      title: "Type the bill in",
+      title: "The bill as text",
       /**
        * Asks for items (the Items tab needs lines) and no format: per-unit or
        * per-line prices and no total all work. Naming a format teaches people to
