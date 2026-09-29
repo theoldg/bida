@@ -30,6 +30,7 @@ import { syncGroup } from "@/lib/db/sync";
 import { dayLabel, money } from "@/lib/format";
 import { ledgerItems, type LedgerRow } from "@/lib/ledger";
 import { route } from "@/lib/group-link";
+import { useLedgerPosition } from "@/lib/ledger-position";
 import { keepShown, ROLL_BEAT, shownBefore } from "@/lib/roll";
 import { expenseMeta, transferMeta } from "@/lib/row-meta";
 import { useClaimGate, useDevice, useGroupData } from "@/lib/hooks";
@@ -131,6 +132,8 @@ function GroupScreen() {
 function Ledger({ data }: { data: GroupData }) {
   const { group, expenses, settlements, memberById, me, balances } = data;
   const items = useMemo(() => ledgerItems(expenses, settlements, dayLabel), [expenses, settlements]);
+  const scroll = useRef<HTMLDivElement>(null);
+  useLedgerPosition(scroll, group?.id ?? "");
   if (!group) return null;
   // Read out once past the guard: both row components take them as props.
   const { id: gid, baseCurrency: base } = group;
@@ -141,7 +144,7 @@ function Ledger({ data }: { data: GroupData }) {
   const net = me ? balances.byMember[me] ?? 0 : 0;
 
   return (
-    <Scroll>
+    <Scroll ref={scroll}>
       {/* Inside the scroll, not fixed above it, so the ledger isn't pushed a
           third of the way down. */}
       {/* Either platform's install offer, folded to one line (docs/ios.md),
@@ -226,7 +229,7 @@ function ExpenseRow({ expense, gid, base, me, memberById }: {
 
   return (
     <>
-      <Link href={route.entry(gid, expense.id)}
+      <Link href={route.entry(gid, expense.id)} data-entry={expense.id}
         className={`row entryrow ${mine ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">{expense.description || copy.group.untitled}</div>
@@ -288,7 +291,7 @@ function SettlementRow({ settlement, gid, base, me, memberById }: {
 
   return (
     <>
-      <Link href={route.entry(gid, settlement.id)}
+      <Link href={route.entry(gid, settlement.id)} data-entry={settlement.id}
         className={`row entryrow ${myNet !== 0 ? "" : "notmine"}`} {...hold}>
         <div className="rmain">
           <div className="rtitle">

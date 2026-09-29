@@ -414,6 +414,88 @@ async function onLedger() {
   await page.close();
 }
 
+// ---- 4. the ledger comes back where it was left, only on the way back ----
+// Scrolled so a row straddles the top edge, then away and back three ways —
+// the arrow, the device's back, and Save on a new entry, which lands a row
+// above the one in view. Each must put that row back to the pixel; a tap in
+// from the list must open at the top. The demo group is long enough to
+// scroll on a short phone, and needs no form to make.
+{
+  const short = await newPhone(browser, { viewport: { width: 390, height: 480 } });
+  const page = await short.newPage();
+  await page.goto(`${base}/demo`);
+  await page.waitForURL(/\/g\?id=/, { timeout: 30_000 });
+  await page.waitForSelector(".rows a.row");
+  await page.waitForSelector(".skelveil", { state: "detached" });
+
+  /** The row across the scroller's top edge and how far above it, as the app keeps it. */
+  const place = () => page.evaluate(() => {
+    const box = document.querySelector(".scroll");
+    const edge = box.getBoundingClientRect().top;
+    const row = [...box.querySelectorAll("[data-entry]")].find((el) => el.getBoundingClientRect().bottom > edge);
+    return { top: box.scrollTop, entry: row?.dataset.entry, offset: Math.round(row.getBoundingClientRect().top - edge) };
+  });
+  const scrollTo = async (y) => {
+    await page.evaluate((to) => { document.querySelector(".scroll").scrollTop = to; }, y);
+    await settle(page, 100);
+  };
+  // Wait out the restore's window rather than sampling mid-way.
+  const back = async () => {
+    await page.waitForURL(/\/g\?id=/);
+    await page.waitForSelector(".rows a.row");
+    await settle(page, 1400);
+  };
+
+  await scrollTo(await page.evaluate(() => {
+    const box = document.querySelector(".scroll");
+    const rows = box.querySelectorAll("[data-entry]");
+    // Half into the third row, whatever the cards above add up to.
+    const third = rows[2].getBoundingClientRect();
+    return box.scrollTop + third.top - box.getBoundingClientRect().top + third.height / 2;
+  }));
+  const left = await place();
+  // A row wholly in view: Playwright scrolls a cut one into view before
+  // clicking it, which a thumb never does, and that scroll would be recorded.
+  const tap = () => page.locator(".rows a.row").nth(4).click();
+  report(left.top > 0 && left.offset < 0, "the ledger scrolls to a row cut by its top edge", JSON.stringify(left));
+
+  await tap();
+  await page.waitForURL(/\/g\/entry\?/);
+  await arrow(page);
+  await back();
+  let got = await place();
+  report(got.entry === left.entry && got.offset === left.offset,
+    "an entry's arrow comes back to the same row, to the pixel", `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
+
+  await tap();
+  await page.waitForURL(/\/g\/entry\?/);
+  await page.goBack();
+  await back();
+  got = await place();
+  report(got.entry === left.entry && got.offset === left.offset,
+    "and so does the device's back", `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
+
+  await page.locator(".fab").last().click();
+  await page.waitForURL(/\/g\/entry\/edit/);
+  await page.locator("input.amount").fill("12");
+  await page.locator("#what").fill("Droid oil");
+  await page.getByRole("button", { name: "Save" }).click();
+  await back();
+  got = await place();
+  report(got.entry === left.entry && got.offset === left.offset && got.top > left.top,
+    "and Save, with a new row above it, keeps the same row rather than the same offset",
+    `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
+
+  await arrow(page);
+  await page.waitForSelector(".grouprow");
+  await page.locator(".grouprow").first().click();
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForSelector(".rows a.row");
+  await settle(page, 300);
+  report((await place()).top === 0, "while a tap in from the list opens at the top");
+  await short.close();
+}
+
 await browser.close();
 close();
 finish();

@@ -5,6 +5,7 @@ import {
   clearSaved, FADE_IN_MS, FADE_OUT_MS, FOLD_MS, foldFrame, foldTotal, OPEN_MS, peekSaved,
   presence, runs, standard, STILL_MS, type LedgerItem, type Shown,
 } from "@/lib/ledger-motion";
+import { yieldPosition } from "@/lib/ledger-position";
 import { revealWhole, scrollTarget } from "@/lib/reveal";
 import { calmly, glide } from "@/lib/seek";
 import { ROLL_BEAT } from "@/lib/roll";
@@ -151,7 +152,7 @@ export function LedgerRows<T>({ groupId, items, row }: {
 
 /**
  * The row the last save wrote, if it is here: washed before the first paint,
- * brought whole into the strip above the floating buttons after the ledger has
+ * then — from wherever the ledger was put back to — brought whole into the strip above the floating buttons after the ledger has
  * been up a beat — as far as it must and no further, date line included when
  * it heads its day — and let go when it lands. True once there is nothing left
  * to wait for.
@@ -169,6 +170,9 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
   };
   setTimeout(() => {
     if (!target.isConnected) return;
+    // Back from a save the ledger was first put back where it was left
+    // (lib/ledger-position.ts); from there, this row is the next thing.
+    yieldPosition();
     const heads = target.previousElementSibling?.querySelector(":scope > .daylabel") ? target.previousElementSibling : null;
     const view = box.getBoundingClientRect();
     // The buttons float over the foot of the list; a row under them is not in view.

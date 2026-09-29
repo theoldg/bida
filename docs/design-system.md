@@ -219,8 +219,9 @@ line, whose band is its own edge, and under the last row.
 
 - **A save lands on its row.** The form hands the ledger the entry it wrote
   (`markSaved`); the row wears a wash from its first frame — `--ink` at 13%, a
-  shade over `--press` — and after the you-owe card's beat (`ROLL_BEAT`) is
-  brought whole into the strip above the floating buttons, date line
+  shade over `--press` — and after the you-owe card's beat (`ROLL_BEAT`),
+  from wherever the ledger was put back to ([navigation.md](navigation.md)),
+  is brought whole into the strip above the floating buttons, date line
   included when it heads its day, only as far as it has to and not at all if
   it already shows. The wash lets go when it lands, over 0.9s. A colour
   settling, so exempt from the motion clamp.

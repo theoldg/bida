@@ -30,6 +30,11 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   line or a frame, never the timing: in a mock, draw the real rules and
   borders, or the feedback is spent on what the app already does.
 
+- *2026-09-29* — "Add exact ledger position memory (not just row index) and
+  use it only when navigating back". "Exact" meant the pixel and "only" meant
+  every other arrival opens at the top; a save above the row is where both
+  showed. Scroll memory was deleted that morning: the ask narrowed it.
+
 - *2026-09-29* — "The delete dialog after a long press should maintain the
   row-highlighted state in the background". One sentence, one state carried
   one step further — and every menu whose item asks a question gets it too.
@@ -71,7 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   quick split". The grid already asked — only once touched. The gap was the
   untouched case, where the loss is the photo, not the taps. Find the guard
   that exists before building a second one.
-
-- *2026-09-29* — "fix 5": the 410 gate. The doc called it the one write
-  left; reading round it found two more on the same network path. A doc's
-  "the only one" is a claim to check, not a fence around the ask.

@@ -118,6 +118,7 @@ function leaveTo(to: string | undefined, traverse: () => void, replace: (to: str
     // The latch was armed for a `navigate` that is never coming, and one
     // left armed swallows a real press.
     disarmOwnTraversal();
+    markReturn(to);
     replace(to);
   }, SWALLOWED_MS);
 }
@@ -134,6 +135,8 @@ export function goUp(href: string, replace: (href: string) => void): void {
     if (steps !== null) { leaveTo(href, () => window.history.go(steps), replace); return; }
   }
   closeDialogs();
+  // Not a traversal, but still the way back, so the parent comes back as it was.
+  markReturn(href);
   replace(href);
 }
 
@@ -199,3 +202,32 @@ export function takeOwnTraversal(): boolean {
   disarmOwnTraversal();
   return ours;
 }
+
+/**
+ * **Arriving by going back, told apart from arriving by being sent** — what
+ * decides whether the ledger comes back where it was left
+ * ([ledger-position.ts](./ledger-position.ts)).
+ *
+ * A return is any traversal (the device's back, and `goUp`/`goBack` where the
+ * parent is behind us) or the replace an exit falls back on. Everything else —
+ * a tap into a group, a launch reopening one — is a push or a replace nobody
+ * marks, and opens at the top.
+ *
+ * Kept with the URL it arrived at, so a mark nothing spent can't send a later
+ * push somewhere; and numbered, so a screen spends each one once.
+ */
+let returned: { url: string; n: number } | undefined;
+let returns = 0;
+
+export function markReturn(url: string): void {
+  returned = { url, n: ++returns };
+}
+
+/** The number of the return that arrived at `url`, or null if it wasn't one. */
+export function returnTo(url: string): number | null {
+  return returned && sameScreen(returned.url, url) ? returned.n : null;
+}
+
+// Here rather than beside the ledger: this module loads with every screen, and
+// the ledger's own chunk can arrive after the traversal that brought it.
+if (typeof window !== "undefined") window.addEventListener("popstate", () => markReturn(location.href));
