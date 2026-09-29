@@ -230,7 +230,8 @@ line, whose band is its own edge, and under the last row.
   under it is the line above the row beneath, so it stays, rides up on that
   row and lands on the line above — two lines closing into one. A date line
   left with no rows folds in the same motion, after the row's blank space:
-  it reads whole for as long as there is room for it.
+  it reads whole for as long as there is room for it. The last row takes no
+  motion: it is gone and the empty state is up at once — too rare to earn one.
 - **A row that arrives** from another phone opens a gap (220ms) and fades in
   (180ms), at the slot's opacity so a dimmed row fades to its own 58% and not
   past it. No flash: the new-changes line already says it came. **Above what
@@ -240,6 +241,9 @@ line, whose band is its own edge, and under the last row.
   Into an empty ledger (a first pull), rows just appear.
 
 Under reduced motion the movement is instant and only the wash still plays.
+The groups list is the same list: a forgotten group folds out like a deleted
+entry, the last one included in the no-motion rule; a group that turns up just
+appears.
 
 ## Type
 

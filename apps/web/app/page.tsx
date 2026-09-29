@@ -3,7 +3,7 @@
 import { isDemo } from "@bida/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
@@ -11,6 +11,7 @@ import { Body, Empty, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } fro
 import { InstallOfferCard, SkeletonBanner } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
 import { usePasteLink } from "@/components/paste-link";
+import { LedgerRows } from "@/components/ledger-rows";
 import { useHold, useLongPressMenu } from "@/components/long-press";
 import { HomeMenu } from "@/components/home-menu";
 import { UpdateNudge } from "@/components/update";
@@ -38,10 +39,14 @@ export default function GroupsPage() {
   // Nothing in the app archives a group any more, but a production log may
   // already carry an `archivedAt`, and the fold still applies one. This is the
   // only place that decides what it means to a list of "your groups".
-  const groups = resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt);
+  // Memoised: the list below takes a new array as a change.
+  const groups = useMemo(() => resuming ? undefined : summaries?.filter((g) => !g.group.archivedAt),
+    [resuming, summaries]);
   // Which group the install offer draws for, and whether it draws at all: the
   // first that an icon would actually carry, so the demo is passed over.
   const lead = groups?.find((g) => !isDemo(g.group.id));
+  const rows = useMemo(() => (groups ?? []).map((summary) =>
+    ({ key: summary.group.id, kind: "row" as const, row: summary })), [groups]);
 
   // Handed a group by `/join`, which this list is only passing through: its
   // frame, not four skeletons, until the push lands (components/joining.tsx).
@@ -98,9 +103,9 @@ export default function GroupsPage() {
               )
             ) : null}
 
-            <div className="rows">
-              {groups?.map((summary) => <GroupRow key={summary.group.id} summary={summary} />)}
-            </div>
+            {/* A forgotten group folds out the way a deleted entry does
+              (components/ledger-rows.tsx). */}
+            <LedgerRows opens={false} items={rows} row={(summary: GroupSummary) => <GroupRow summary={summary} />} />
 
             {/* The update offer, at the foot: it draws only in the installed
               app, so it never appears alongside the install cards above,

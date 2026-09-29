@@ -42,6 +42,9 @@ export function useGroupActions(groupId: string, afterForget?: () => void): {
     afterForget?.();
     if (demo) await clearDemo();
     else await forgetGroup(groupId);
+    // Answered, so it goes: the groups list keeps the forgotten row on screen
+    // while it folds, and the question must not hang over it.
+    setAsking(false);
   }
 
   return {

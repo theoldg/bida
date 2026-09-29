@@ -1431,7 +1431,7 @@ dialog.scrim::backdrop { background: transparent }
    is its own edge, and under the last — so a row's height never depends on
    what follows it. The view holds still for rows landing above it by hand:
    the browser's own scroll anchoring would do it twice, and Safari not at all. */
-.scroll:has(> .lrows) { overflow-anchor: none }
+.scroll:has(.lrows) { overflow-anchor: none }
 .lrows > .lslot > .row { border-bottom: 1px solid var(--rule-soft) }
 .lrows > .lslot:has(+ .lslot > .daylabel) > .row,
 .lrows > .lslot:last-child > .row { border-bottom-color: transparent }

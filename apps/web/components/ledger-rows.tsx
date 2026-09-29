@@ -23,11 +23,17 @@ import { calmly, glide } from "@/lib/seek";
  *   what you're reading, it grows the list upward instead, so nothing under
  *   your eye moves — and a list moving under a finger, or still gliding, takes
  *   no change until it stops.
+ * - **The last row going** takes no motion: the list is simply gone, and the
+ *   screen's empty state stands in its place at once.
+ *
+ * The groups list uses it too, for a forgotten group: no `groupId`, so no
+ * saved row, and `opens={false}` — a group turning up just appears.
  */
-export function LedgerRows<T>({ groupId, items, row }: {
-  groupId: string;
+export function LedgerRows<T>({ groupId, items, row, opens = true }: {
+  groupId?: string;
   items: LedgerItem<T>[];
   row: (row: T) => ReactNode;
+  opens?: boolean;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const scroller = () => root.current?.closest<HTMLElement>(".scroll") ?? null;
@@ -73,7 +79,7 @@ export function LedgerRows<T>({ groupId, items, row }: {
   const [basis, setBasis] = useState(applied);
   let drawing = shown;
   if (basis !== applied) {
-    drawing = presence(shown, applied);
+    drawing = applied.some((i) => i.kind === "row") ? presence(shown, applied) : applied;
     setBasis(applied);
     setShown(drawing);
   }
@@ -96,7 +102,7 @@ export function LedgerRows<T>({ groupId, items, row }: {
     // (docs/frontend.md), so the saved row may turn up a commit late. It is
     // held still for like any arrival, but not opened: it was already there.
     let saved: string | null = null;
-    if (!flashed.current) {
+    if (!flashed.current && groupId) {
       saved = peekSaved(groupId);
       flashed.current = flashSaved(groupId, box, slot);
     }
@@ -111,7 +117,7 @@ export function LedgerRows<T>({ groupId, items, row }: {
       const top = slots[0]?.getBoundingClientRect().top ?? 0;
       if (top < box.getBoundingClientRect().top) {
         box.scrollTop += slots.reduce((n, s) => n + s.offsetHeight, 0);
-      } else if (!calmly() && !(saved && run.includes(saved))) {
+      } else if (opens && !calmly() && !(saved && run.includes(saved))) {
         for (const s of slots) arrive(s);
       }
     }

@@ -28,8 +28,7 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
   then "ship it with" three lines of letters. The mock got corrections on
   lines and frames; timing only got one once it shipped ("wait a little
-  longer"). Draw the real borders in a mock, and expect timing to be
-  judged live.
+  longer"). Then "no animation for the last one": rare cases can go bare.
 
 - *2026-09-29* — "Add exact ledger position memory (not just row index) and
   use it only when navigating back". "Exact" meant the pixel and "only" meant
