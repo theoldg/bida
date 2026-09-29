@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "iiuc we can't catch a back action right after entering",
+  then "yes, build it". The docs called it impossible; that was true of
+  history, not of the button. When a wall is documented, ask whether another
+  platform door reaches the same press before agreeing.
+
 - *2026-09-29* — "why are groups tombstoned locally instead of truly
   forgotten?", then "shouldnt it just delete (after syncing…)?". My first
   answer defended the code; the owner's premise was sharper. When asked why,
@@ -77,8 +82,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   findings (red for a received transfer, green's two meanings, the loud swap)
   were the owner's deliberate choices. A crit lists what I'd change, not what
   is wrong; expect a cull, and cut cleanly without arguing.
-
-- *2026-09-28* — "Remove the middle one and fall back to multiline as soon as
-  inline stops fitting comfortably." Three layouts for one sum was one too
-  many; "comfortably" meant slack, not the exact pixel. Fewer shapes beats a
-  ladder that covers every width.

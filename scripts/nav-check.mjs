@@ -173,6 +173,39 @@ async function onLedger() {
   await cold.close();
 }
 
+// ---- 4b. the press at the bottom of the stack ---------------------------
+// A launch reopens the last group in `/`'s place, so its back press has no
+// entry to traverse to and would close the app. A `CloseWatcher` takes it
+// instead (lib/back-button.ts), with no tap needed. Playwright cannot press
+// Android's button, but Escape is a close request too, which is enough to
+// prove the watcher is there — and gone where it must not be.
+{
+  // Section 4 left this phone on the list, which a launch would honour.
+  await (await onLedger()).close();
+  const page = await ctx.newPage();
+  await page.goto(`${base}/`);
+  await page.waitForURL(/\/g\?id=/);
+  await page.waitForSelector(".fab, .empty, .rows");
+  await is(page, "a launch reopens the group with nothing under it", { i: 0, urls: ["/g?id=G"] });
+  await page.keyboard.press("Escape");
+  await is(page, "and its first close request climbs to the list, untouched", { i: 0, urls: ["/"] });
+  await page.waitForSelector(".starttile");
+  await page.close();
+
+  const cold = await onLedger();
+  await cold.locator("a[href^='/g/balances']").first().click();
+  await is(cold, "one screen up from a cold ledger", { i: 1, urls: ["/g?id=G", "/g/balances?id=G"] });
+  await cold.keyboard.press("Escape");
+  await settle(cold, 300);
+  await is(cold, "the watcher is the bottom screen's alone", { i: 1, urls: ["/g?id=G", "/g/balances?id=G"] });
+  await cold.goBack();
+  await is(cold, "back down on it", { i: 0, urls: ["/g?id=G", "/g/balances?id=G"] });
+  await cold.keyboard.press("Escape");
+  // A swap, as the arrow's: balances stays forward of the list.
+  await is(cold, "it holds one again", { i: 0, urls: ["/", "/g/balances?id=G"] });
+  await cold.close();
+}
+
 // ---- 5. the quick split -------------------------------------------------
 {
   // Its own phone: `/` on one that has been in a group resumes into it.

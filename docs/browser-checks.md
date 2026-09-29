@@ -297,7 +297,10 @@ returns to it; the tip jar, whose form has to unwind past the tip screen as
 well as itself; a cold load with nothing behind it, where the arrow puts the
 parent in this screen's place — the degradation, and the ordinary case of it;
 and the press guard on a half-typed form, cancelled outright with the dialog as
-the whole of the answer.
+the whole of the answer. Beside the cold load, the press no traversal can
+carry: a launch's reopened ledger and a cold one each climb to the list on a
+close request with no tap first, and a screen above them doesn't. **Escape
+stands in for Android's button** there, being a close request too.
 
 **A device back press is `page.goBack()`**, which Chromium reports
 `userInitiated` and `cancelable` — the pair the guard reads. A keyboard

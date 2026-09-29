@@ -90,7 +90,14 @@ eventually a press arrives uncancelable and leaves for good. That last one is
 the degradation ADR-0007 names, and it is **accepted behaviour, not a bug to
 fix**: on `/new` and `/quick` it costs what was typed, and a page that could
 refuse indefinitely is the trap the metering exists to prevent. Any tap in the
-page refills it. An
+page refills it. **The bottom of the stack is the exception to needing a
+tap**: a screen with a parent and no entry under it — the ledger a launch
+reopened, any cold load — has nowhere to traverse to, and its press would
+close the app. There a `CloseWatcher` takes the press and swaps the parent in
+(`settleFloor`), which Chromium allows once with no activation. It never asks,
+only climbs, and the list registers none, so it cannot hold anyone. On a
+desktop, Escape is a close request too, so a `keydown` that handles Escape
+itself calls `preventDefault` (`row-menu.tsx`). An
 entry is the one screen whose parent isn't fixed: the history feed, the two
 "can't remove this yet" lists and the balances screen's tip jar link in from
 beside it, so they pass `via=` and `entryParent` (`lib/group-link.ts`) sends back
@@ -146,7 +153,9 @@ shorter than the target and saving one would walk the list towards the top.
   activation, and the device's back (not `history.back()`) skips them; on
   Android the app then closes. A launch has no activation to spend, so pushing
   the group onto the list only worked after a first tap — tried in 1.1.31 and
-  removed, and the resume `replace`s
+  removed, and the resume `replace`s. What it wanted, Back from the reopened
+  group landing on the list, is the close watcher's job instead
+  ([Back goes up](#routing))
   ([history manipulation intervention](https://github.com/chromium/chromium/blob/main/docs/history_manipulation_intervention.md)).
   Playwright's `goBack()` doesn't skip, so no check here can see it.
 

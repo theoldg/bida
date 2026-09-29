@@ -87,12 +87,12 @@ expenses you'd looked at rather than climbing out.
   fixed build-time set of pages. The group id lands in a history entry, which
   confers nothing without the secret, and old bookmarks (`/g/options`,
   `/settings`, `/g/settle`, `/g/split`, `/g/expense*`) 404.
-- **A shared link's first back press leaves the app, and cannot do otherwise.**
-  Opening a link loads a new document, so pressing back out of it is a
-  cross-document traversal — which the Navigation API reports `cancelable:
-  false`, `canIntercept: false`. There is nothing to take over. Within a session
-  every navigation is same-document and the arrow wins as described. This is
-  that degradation, and it is the ordinary case of it rather than a rare one.
+- **A screen with nothing under it cannot take the press as a traversal.**
+  A cold load or a launch's resume is the first entry, so its back press is
+  cross-document — `cancelable: false`, `canIntercept: false`. A `CloseWatcher`
+  catches it *before* it becomes one, which the platform allows once without a
+  tap, and swaps the parent in ([navigation.md](../navigation.md#routing)).
+  Where there is no `CloseWatcher` (iOS) the press leaves, as it always did.
 - **A run of presses reaches it too, and that is behaviour rather than a bug**
   (the owner, 2026-09-21: *"if someone does back 3x in a row without
   interacting with the page they deserve to be let out"*). Cancelling a press

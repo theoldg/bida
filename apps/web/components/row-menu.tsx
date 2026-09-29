@@ -102,7 +102,11 @@ export function RowMenu({ anchor, actions, onClose }: {
   }, [pos]);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === "Escape") { note("esc"); onClose(); } }
+    // Spent here, or it is also a close request, and one on a screen at the
+    // bottom of the stack climbs out of it (lib/back-button.ts).
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { e.preventDefault(); note("esc"); onClose(); }
+    }
     const onScroll = () => { note("scroll"); onClose(); };
     document.addEventListener("keydown", onKey);
     document.addEventListener("scroll", onScroll, true);
