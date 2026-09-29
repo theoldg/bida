@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   payerList, resolvePayers, shareOf, splitParticipants,
   type Expense, type Member, type Settlement,
@@ -10,7 +10,8 @@ import {
 import { kindOf, myEffect, type EntryKind } from "@/lib/entry-kind";
 import { signClass } from "@/components/bits";
 import {
-  BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, SkeletonSummary, TopBar,
+  BadLink, Blank, Body, Empty, Fab, QueryBoundary, ScanFab, Screen, Scroll, SkeletonRows, SkeletonSummary,
+  SkeletonVeil, TopBar,
 } from "@/components/chrome";
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
@@ -63,12 +64,18 @@ function GroupScreen() {
   // is no honest name to sign a write with. See `useClaimGate`.
   const unclaimed = useClaimGate(groupId, data);
 
+  // Whether this screen drew its skeleton, so the ledger can dissolve it
+  // rather than cut to it. A ledger that was there at once has nothing to fade.
+  const sawSkeleton = useRef(false);
+  const [veiled, setVeiled] = useState(true);
+
   if (!groupId) return <Blank title={copy.group.noGroup} back={route.groups()} />;
 
   // **Draw the whole frame while loading** — a bare top bar looks like a tap
   // that didn't land. It also covers the redirect above, rather than flashing
   // somebody else's ledger.
   if (data.loading || unclaimed) {
+    sawSkeleton.current = true;
     return (
       <Screen>
         <Body>
@@ -108,6 +115,7 @@ function GroupScreen() {
         />
         <Ledger data={data} />
       </Body>
+      {sawSkeleton.current && veiled ? <SkeletonVeil onGone={() => setVeiled(false)} /> : null}
 
       {/* Two ways to start an expense. */}
       <ScanFab href={route.scan(group.id)} />

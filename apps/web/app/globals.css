@@ -1880,6 +1880,13 @@ button.amtnote:active { background: var(--hl-edge) }
    pressable yet. The chevron is furniture, so it waits in the placeholder grey. */
 .skelsum, .skelday { pointer-events: none }
 .skelsum .mysumchev { color: var(--card-3) }
+/* The ledger's hand-off (`SkeletonVeil`): the loading frame, opaque, over the
+   screen that replaced it, fading out. Under the FABs, which both frames share,
+   and never in the way of a tap. */
+.skelveil { position: absolute; inset: 0; z-index: 3; background: var(--card);
+  display: flex; flex-direction: column; pointer-events: none;
+  animation: skelveil .12s ease-out forwards }
+@keyframes skelveil { to { opacity: 0 } }
 
 /* ---- empty states ---- */
 .empty { padding: 40px 26px; text-align: center; color: var(--muted); font-size: 13.5px; line-height: 1.5 }

@@ -385,6 +385,9 @@ red when bunq moves.
   navigates with `goto`
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
+- **A skeleton row is `.rows .row` too**, and outlives the ledger's arrival by
+  120ms in the veil that dissolves it (`SkeletonVeil`). Count or wait for
+  `.rows .row:not(.skelrow)`, or a count lands six rows high.
 - **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
   in the head — the manifest the head's script writes — needs
   `{ state: "attached" }`, or the wait times out and the check reports the app

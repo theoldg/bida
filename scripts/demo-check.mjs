@@ -43,8 +43,8 @@ report(groupId === "demodemodemo", "/demo lands in the demo group's ledger", gro
 // the personal lens on this screen is for.
 report(!page.url().includes("/g/claim"), "and is not stopped at the claim gate");
 
-await page.waitForSelector(".rows .row");
-const rows = await page.locator(".rows .row").count();
+await page.waitForSelector(".rows .row:not(.skelrow)");
+const rows = await page.locator(".rows .row:not(.skelrow)").count();
 report(rows >= 6, `the ledger is populated, not an empty state (${rows} rows)`);
 report(await page.getByText("Passage to Alderaan").count() > 0, "and it is the cantina group");
 report(await page.getByText("Demo group").count() === 1,
@@ -53,7 +53,7 @@ report(await page.getByText("Demo group").count() === 1,
 // ---- a bill, not a quarter each -----------------------------------------
 // The dinner keeps the receipt it was split from (ADR-0016), which only shows
 // up by opening it: the row says the same thing either way.
-await page.locator(".rows .row").filter({ hasText: "Chalmun’s cantina" }).first().click();
+await page.locator(".rows .row:not(.skelrow)").filter({ hasText: "Chalmun’s cantina" }).first().click();
 await page.waitForSelector(".billgroup");
 report(await page.getByText("By items").count() > 0,
   "the tab is split by the bill, not a quarter each");
@@ -65,7 +65,7 @@ await page.waitForSelector(".billline");
 report(await page.getByText("Bunta koosa").count() > 0,
   "and Ben's row opens onto what Ben ordered, as the cantina wrote it");
 await page.goBack();
-await page.waitForSelector(".rows .row");
+await page.waitForSelector(".rows .row:not(.skelrow)");
 
 // ---- the camera works here too, and says nothing about this group -------
 // The demo holds no key, and `/api/groups/:id/scan` authenticates a bearer
@@ -97,7 +97,7 @@ report(what === "Caf\u00e9 Clock" && amount === "76.50" && await page.getByText(
 report(apiCalls.some((path) => path.endsWith("/scan")) && !apiCalls.some((path) => path.includes(groupId)),
   "with the demo's id in none of it", apiCalls.join(" "));
 await page.goto(`${base}/g?id=${groupId}`);
-await page.waitForSelector(".rows .row");
+await page.waitForSelector(".rows .row:not(.skelrow)");
 
 // ---- the hinge: no key, so no path to the server ------------------------
 report((await keysHeld(page)).length === 0,
@@ -131,7 +131,7 @@ await page.locator("#what").fill("Droid oil");
 await page.getByRole("button", { name: "Save" }).click();
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
 await page.waitForFunction(
-  (n) => document.querySelectorAll(".rows .row").length > n, rows, { timeout: PATIENCE },
+  (n) => document.querySelectorAll(".rows .row:not(.skelrow)").length > n, rows, { timeout: PATIENCE },
 );
 report(await page.getByText("Droid oil").count() > 0,
   "the demo takes an entry of your own, like any other group");
@@ -164,7 +164,7 @@ await friend.waitForFunction(
   () => location.pathname === "/g" && document.querySelector(".rows .row:not(.skelrow)"),
   null, { timeout: PATIENCE },
 );
-report(await friend.locator(".rows .row").count() === rows && (await keysHeld(friend)).length === 0,
+report(await friend.locator(".rows .row:not(.skelrow)").count() === rows && (await keysHeld(friend)).length === 0,
   "a demo address copied off another phone opens the demo, still with no key");
 await friend.close();
 // Not on the phone that cleared it, though: the screen draws "no group" there
@@ -180,9 +180,9 @@ report(new URL(page.url()).pathname === "/g" && await page.getByText("Passage to
 const reopenedAt = Date.now();
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
-await page.waitForSelector(".rows .row");
+await page.waitForSelector(".rows .row:not(.skelrow)");
 report(new URL(page.url()).searchParams.get("id") === "demodemodemo"
-  && await page.locator(".rows .row").count() === rows,
+  && await page.locator(".rows .row:not(.skelrow)").count() === rows,
   "and the address brings the same group back, entry for entry");
 report(await page.getByText("Droid oil").count() === 0,
   "as it was shipped: the entry added before clearing is not in it");
@@ -206,19 +206,19 @@ const before = (await readStore(page, "ops")).filter((op) => op.groupId === "dem
 await stampAs(page, "some-older-build");
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
-await page.waitForSelector(".rows .row");
+await page.waitForSelector(".rows .row:not(.skelrow)");
 const after = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 const kept = new Set(before.map((op) => op.id));
 report(after.length === before.length && !after.some((op) => kept.has(op.id)),
   "a phone holding an older seed is re-seeded, not handed the group it had",
   `${before.length} ops before, ${after.length} after`);
-report(await page.locator(".rows .row").count() === rows && (await keysHeld(page)).length === 0,
+report(await page.locator(".rows .row:not(.skelrow)").count() === rows && (await keysHeld(page)).length === 0,
   "and what it lands on is the same populated ledger, still with no key");
 // ...and only once: the stamp it just stored makes the next visit ordinary.
 const third = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 await page.goto(`${base}/demo`);
 await page.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
-await page.waitForSelector(".rows .row");
+await page.waitForSelector(".rows .row:not(.skelrow)");
 const fourth = (await readStore(page, "ops")).filter((op) => op.groupId === "demodemodemo");
 report(fourth.map((op) => op.id).sort().join() === third.map((op) => op.id).sort().join(),
   "while a visit on the seed it already holds rewrites nothing");

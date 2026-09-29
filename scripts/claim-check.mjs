@@ -211,7 +211,7 @@ report(claimed, "and the button claims her");
 
 if (claimed) {
   await page.goto(`${base}/g/members?id=${g}`);
-  await page.waitForSelector(".rows .row");
+  await page.waitForSelector(".rows .row:not(.skelrow)");
   report(await page.getByRole("button", { name: "Remove Ola" }).count() === 0
     && await page.getByRole("button", { name: "Remove Nadia" }).count() === 1,
     "and the phone is her: her row carries the check, not a trash");
@@ -335,7 +335,7 @@ await flashOver();
 // One person is still not enough to split a bill.
 await field().fill("Ana");
 await field().press("Enter");
-await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 2);
+await page.waitForFunction(() => document.querySelectorAll(".rows .row:not(.skelrow)").length === 2);
 await press(page.getByRole("button", { name: "Upload" }));
 report(await page.locator(".addrow[class*=flash]").count() === 1,
   "and still refuses with only one person on the list");
@@ -343,7 +343,7 @@ await flashOver();
 
 await field().fill("Bo");
 await field().press("Enter");
-await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 3);
+await page.waitForFunction(() => document.querySelectorAll(".rows .row:not(.skelrow)").length === 3);
 await field().fill("Cy");
 await settle(page, 80);
 await press(page.getByRole("button", { name: "Upload" }));
@@ -360,7 +360,7 @@ report(!await page.getByRole("button", { name: "Upload" }).isDisabled()
   "and it comes back when the flash settles");
 // Filing the name is the fix, and then the same press goes through.
 await press(plus());
-await page.waitForFunction(() => document.querySelectorAll(".rows .row").length === 4);
+await page.waitForFunction(() => document.querySelectorAll(".rows .row:not(.skelrow)").length === 4);
 report(await field().inputValue() === "" && !await page.getByRole("button", { name: "Upload" }).isDisabled(),
   "filing the name leaves the scan free to run");
 

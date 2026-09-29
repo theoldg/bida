@@ -218,6 +218,27 @@ export function SkeletonSummary() {
   );
 }
 
+/**
+ * The loading ledger, laid over the real one as it arrives and dissolved away
+ * over 120ms — a cross-fade of everything at once, the balance's figure
+ * included, since the veil is opaque and the ledger under it is already whole.
+ * A copy of the frame rather than the frame itself: its top bar is drawn, not
+ * a `TopBar`, so nothing registers a back button twice. `onGone` unmounts it.
+ */
+export function SkeletonVeil({ onGone }: { onGone: () => void }) {
+  return (
+    <div className="skelveil" aria-hidden="true"
+      // Its own animation only: the bars' pulse bubbles here too, and never ends.
+      onAnimationEnd={(e) => { if (e.target === e.currentTarget) onGone(); }}>
+      <div className="topbar">
+        <span className="iconbtn back"><Icon name="back" size={17} /></span>
+        <div className="topbar-title"><h3>{" "}</h3></div>
+      </div>
+      <div className="scroll"><SkeletonSummary /><SkeletonRows count={6} days /></div>
+    </div>
+  );
+}
+
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return <div className="empty"><b>{title}</b>{children}</div>;
 }
