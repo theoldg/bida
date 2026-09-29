@@ -302,7 +302,7 @@ the press guard on a half-typed form, cancelled outright with the dialog as
 the whole of the answer; and the ledger's position, left with a row cut by the
 top edge and required back to the pixel after the arrow, the device's back and
 a Save that lands a row above it — watched from inside the page on the frame
-the saved row is drawn, since it then glides to that row — while a tap in
+the saved row is drawn, since it then glides to that row (today's, so up to the top, under the banner) — while a tap in
 from the list opens at the top. That section alone reads the scroller, not the history. Beside the cold load, the press no traversal can
 carry: a launch's reopened ledger and a cold one each climb to the list on a
 close request with no tap first, and a screen above them doesn't. **Escape

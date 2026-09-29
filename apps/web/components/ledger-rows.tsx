@@ -14,8 +14,9 @@ import { calmly, glide } from "@/lib/seek";
  * looking at it (docs/design-system.md#the-ledger-moves):
  *
  * - **A row this phone just saved** is brought into view whole — only as far
- *   as it has to, and only if it isn't already — under a wash it wears from
- *   the first frame, and the wash lets go once it lands.
+ *   as it has to, and only if it isn't already, or to the very top when it is
+ *   near the top anyway — under a wash it wears from the first frame, and the
+ *   wash lets go once it lands.
  * - **A row that goes** fades, then its space folds. The divider under it
  *   stays, rides up on the row beneath and settles on the line above; a date
  *   line left with nothing under it folds last.
@@ -181,9 +182,19 @@ function flashSaved(groupId: string, box: HTMLElement, slot: (key: string) => HT
     const view = box.getBoundingClientRect();
     // The buttons float over the foot of the list; a row under them is not in view.
     const fab = document.querySelector(".fab")?.getBoundingClientRect().top ?? view.bottom;
+    const band = { top: view.top, bottom: Math.min(view.bottom, fab) };
+    // A row that would sit in the top half of the screen with the list at its
+    // very top goes there instead, so the summary banner shows with it: what
+    // the save changed, beside the row that changed it.
+    const fromTop = target.getBoundingClientRect().top - view.top + box.scrollTop;
+    if (fromTop < view.height / 2) {
+      if (box.scrollTop === 0) release();
+      else glide(box, 0, release);
+      return;
+    }
     const reach = revealWhole(
       { top: (heads ?? target).getBoundingClientRect().top, bottom: target.getBoundingClientRect().bottom },
-      { top: view.top, bottom: Math.min(view.bottom, fab) },
+      band,
     );
     if (reach === 0) release();
     else glide(box, scrollTarget(box, reach), release);

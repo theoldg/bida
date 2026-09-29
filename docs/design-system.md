@@ -224,7 +224,9 @@ line, whose band is its own edge, and under the last row.
   from wherever the ledger was put back to ([navigation.md](navigation.md)),
   is brought whole into the strip above the floating buttons, date line
   included when it heads its day, only as far as it has to and not at all if
-  it already shows. The wash lets go when it lands, over 0.9s. A colour
+  it already shows — unless, with the list at its very top, the row would sit
+  in the top half of the screen: then the list goes to the top, so the banner
+  shows the change beside the row. The wash lets go when it lands, over 0.9s. A colour
   settling, so exempt from the motion clamp.
 - **A row that goes** fades (140ms), then its space folds (220ms). The divider
   under it is the line above the row beneath, so it stays, rides up on that

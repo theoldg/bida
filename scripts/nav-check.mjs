@@ -505,15 +505,20 @@ async function onLedger() {
   report(got.entry === left.entry && got.offset === left.offset && got.top > left.top,
     "and Save, with a new row above it, keeps the same row rather than the same offset",
     `left ${JSON.stringify(left)} got ${JSON.stringify(got)}`);
-  // Then, from there, the row it saved is brought into view.
+  // Then, from there, the row it saved is brought into view — today's, so near
+  // the top that the list goes all the way up and the banner shows too.
   await settle(page, 1400);
   const shown = await page.evaluate(() => {
-    const box = document.querySelector(".scroll").getBoundingClientRect();
+    const scroll = document.querySelector(".scroll");
+    const box = scroll.getBoundingClientRect();
     const row = [...document.querySelectorAll(".rtitle")].find((t) => t.textContent === "Droid oil")?.closest(".row");
     const r = row?.getBoundingClientRect();
-    return r ? r.top >= box.top - 1 && r.bottom <= box.bottom + 1 : false;
+    const inView = r ? r.top >= box.top - 1 && r.bottom <= box.bottom + 1 : false;
+    return { inView, top: scroll.scrollTop, banner: document.querySelector(".mysum") !== null };
   });
-  report(shown, "and then glides to the row it saved, which it had put out of view");
+  report(shown.inView && shown.top === 0 && shown.banner,
+    "and then glides to the very top, the row it saved in view under the banner",
+    JSON.stringify(shown));
 
   await arrow(page);
   await page.waitForSelector(".grouprow");
