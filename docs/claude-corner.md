@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "fix 5": the 410 gate. The doc called it the one write
+  left; reading round it found two more on the same network path. A doc's
+  "the only one" is a claim to check, not a fence around the ask.
+
 - *2026-09-29* — "forbid disabling the last person chip in who-had-what".
   Small, exact, one screen: a guard in the handler and `disabled` on the chip,
   a line in the doc. No crit, no alternatives — the ask was already the design.
@@ -74,8 +78,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   my crit's items were one rule seen on two different buttons. Answer the
   question with a verdict first; when my own finding is asked about, re-derive
   it from the code before defending it.
-
-- *2026-09-28* — "change who you are doesnt work while the keyboard is open",
-  then "or just add keepFocus to every button everywhere?". I had swept screen
-  by screen and still missed one; the owner saw the real fix. A fix that has
-  to be remembered per button belongs in one listener.

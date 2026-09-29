@@ -303,6 +303,53 @@ describe("syncGroup", () => {
     expect(after.every((op) => op.pending === 0)).toBe(true);
   });
 
+  it("holds a deleted group's erasure until the app is seen", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+
+    // The 410 comes off the same slow network, after the phone went to the back.
+    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+    vi.stubGlobal("document", page);
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      page.visibilityState = "hidden";
+      return new Response("gone", { status: 410 });
+    }));
+
+    let finished = false;
+    const run = syncGroup(groupId).then(() => { finished = true; });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(finished).toBe(false);
+    expect(await db().groups.get(groupId)).toBeDefined();
+    expect(await db().groupKeys.get(groupId)).toBeDefined();
+
+    page.visibilityState = "visible";
+    page.dispatchEvent(new Event("visibilitychange"));
+    await run;
+    expect(await db().groups.get(groupId)).toBeUndefined();
+    expect((await getDevice()).deletedGroups).toContain(groupId);
+  });
+
+  it("holds a failure's record until the app is seen", async () => {
+    const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
+
+    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+    vi.stubGlobal("document", page);
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      page.visibilityState = "hidden";
+      return new Response("down", { status: 503 });
+    }));
+
+    let settled = false;
+    const run = syncGroup(groupId).catch(() => {}).then(() => { settled = true; });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(settled).toBe(false);
+    expect((await db().groupKeys.get(groupId))?.failure).toBeUndefined();
+
+    page.visibilityState = "visible";
+    page.dispatchEvent(new Event("visibilitychange"));
+    await run;
+    expect((await db().groupKeys.get(groupId))?.failure).toMatchObject({ count: 1, status: 503 });
+  });
+
   it("pushes pending ops and marks them synced with the server's assigned seq", async () => {
     const { groupId } = await createGroup({ name: "Marrakech", baseCurrency: "EUR", myName: "Theo" });
     const pendingBefore = await db().ops.where("groupId").equals(groupId).toArray();

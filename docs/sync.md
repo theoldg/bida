@@ -240,9 +240,9 @@ promise already in flight. Both guards are needed: opening a group syncs it
 directly, and without the per-group guard that races the loop into pushing and
 pulling the same ops twice and taking the `rebuild()` lock twice. A run that attempted nothing must never conclude "no
 failures" and reset a backoff the failing run had grown. **Nothing writes while
-the app is hidden:** no run starts, and a response that lands after the app
-went to the background waits for it to come back before its transaction opens
-(`parked` on `/diag`) — a phone freezes a hidden app, and a transaction frozen
+the app is hidden:** no run starts, and an answer that lands after the app
+went to the background — a success, a failure, a 410, `/notify`'s — waits for
+it to come back before anything is written (`parked` on `/diag`) — a phone freezes a hidden app, and a transaction frozen
 half way keeps its lock. The rule is the app's, not sync's: `lib/db/visible.ts`
 ([live-reads.md](live-reads.md#a-live-read-can-die)).
 

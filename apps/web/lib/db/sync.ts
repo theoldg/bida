@@ -268,6 +268,9 @@ async function syncGroupOnce(groupId: string): Promise<SyncOutcome | undefined> 
       sealed = await pushPullGroup(groupId, key.secret, since, pending);
     } catch (err) {
       sent("failed");
+      // Both answers below write, and a failure lands off the same slow network
+      // a success does — so it waits for the front like the commit does.
+      await whenVisible("sync.failed");
       // 410: somebody deleted this group (docs/sync.md#deleting-a-group). Nothing
       // to retry, ever, so this phone's copy goes too — that is what "deleted for
       // everybody" means.
@@ -425,6 +428,8 @@ async function sendNotices(groupId: string, secret: string): Promise<void> {
       answered = false;
     }
   }
+  // Everything from here writes, and the answers came off the network.
+  await whenVisible("notify.commit");
   if (answered) await d.notices.bulkDelete(ready.map((r) => r.id));
   done(`${sealed.length} sent${answered ? "" : ", kept"}`);
 

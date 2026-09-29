@@ -27,16 +27,8 @@ in [product.md](product.md#deliberately-not-in-the-mvp), not work in progress.
 
 ## What is open
 
-Two things: a gap found by reading the code rather than a report, and a
-design waiting to be built. The visual review is closed
+One thing: a design waiting to be built. The visual review is closed
 ([design-review.md](design-review.md)).
-
-- **The 410 branch of `syncGroup` writes while hidden.** A deleted group is
-  erased across ten stores before reaching the gate the success path waits on,
-  and a 410 lands off the same slow network the gate exists for — so it is the
-  one write left that can strand a lock the whole origin then queues behind
-  ([live-reads.md](live-reads.md#a-live-read-can-die)). Nothing catches it:
-  `rules-check` enforces `useLive` and `goBack`, not `whenVisible`.
 
 - **Push notifications are built and work on dev**
   ([notifications.md](notifications.md), ADR-0037): an edit from an incognito

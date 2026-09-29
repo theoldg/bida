@@ -106,6 +106,32 @@ describe("sending notices", () => {
     expect(await db().notices.count()).toBe(0);
   });
 
+  it("holds what the answer writes until the app is seen", async () => {
+    const { groupId, theo, bo } = await listeningGroup();
+    await addExpense(groupId, theo, dinner(theo, bo));
+    server(() => 410);
+    // Gone to the back while `/notify` was out: the ops are in, the rest waits.
+    const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+    vi.stubGlobal("document", page);
+    const fetchOps = fetch;
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => {
+      if (url.endsWith("/notify")) page.visibilityState = "hidden";
+      return (fetchOps as typeof fetch)(url, init);
+    }));
+
+    let finished = false;
+    const run = syncGroup(groupId).then(() => { finished = true; });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(finished).toBe(false);
+    expect(await db().notices.count()).toBe(1);
+
+    page.visibilityState = "visible";
+    page.dispatchEvent(new Event("visibilitychange"));
+    await run;
+    expect(await db().notices.count()).toBe(0);
+    expect((await groupState(groupId)).identities["bo-phone"]?.push).toBeNull();
+  });
+
   it("keeps nothing when nobody else listens, or for what isn't news", async () => {
     const { groupId, memberId: theo } = await createGroup({ name: "Trip", baseCurrency: "EUR", myName: "Theo" });
     const bo = await addMember(groupId, theo, "Bo");
