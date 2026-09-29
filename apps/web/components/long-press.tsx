@@ -93,10 +93,19 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
   const start = useRef<{ id: number; x: number; y: number } | null>(null);
   /** This press has been answered by a hold, and its finger is still down. */
   const held = useRef<ReturnType<typeof heldFinger> | null>(null);
+  /**
+   * The element a touch is being held on, marked `data-holding` so its wash
+   * can build over `HOLD_MS` rather than arrive — a hold is seen coming, and a
+   * row says it can be held. Set on the node, like `.rowmenu-hot`: a re-render
+   * per press would be spent on a class.
+   */
+  const pressed = useRef<HTMLElement | null>(null);
 
   const disarm = () => {
     clearTimeout(timer.current);
     start.current = null;
+    delete pressed.current?.dataset.holding;
+    pressed.current = null;
   };
   // A row can leave mid-hold — the hold that opens /diag navigates — and its
   // finger's lift then never reaches it.
@@ -129,6 +138,8 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
       if (!latest.current || e.pointerType === "mouse") return;
       const el = e.currentTarget;
       start.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      pressed.current = el;
+      el.dataset.holding = "";
       timer.current = setTimeout(() => {
         // Read before `fire`, which disarms: where the hold landed is what a
         // later slide is measured against.
@@ -160,13 +171,15 @@ export function useHold(onHold: ((el: HTMLElement) => void) | null) {
 /**
  * A small menu of actions on a long press or right click (`useHold`); spread
  * `hold` on the row. The row is remembered, not the point, so the menu always
- * opens in the same place.
+ * opens in the same place — and **the row is marked `data-held` while its menu
+ * is open**, so it lifts out of a list that steps back behind it (`.rows` in
+ * globals.css): which row the card belongs to is never a guess.
  */
 export function useLongPressMenu(actions: SheetAction[]) {
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
-  const hold = useHold(actions.length === 0 ? null : (el) => setAnchor(el.getBoundingClientRect()));
+  const handlers = useHold(actions.length === 0 ? null : (el) => setAnchor(el.getBoundingClientRect()));
   return {
-    hold,
+    hold: { ...handlers, "data-held": anchor ? "" : undefined },
     menu: anchor
       ? <RowMenu anchor={anchor} actions={actions} onClose={() => setAnchor(null)} />
       : null,

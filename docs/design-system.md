@@ -454,7 +454,10 @@ share, but too small to be a target.
    whose actions outgrow it opens that same card from a button instead
    (`MenuButton`), so the app has one menu and not two. The card is drawn for a
    thumb: ~48px rows under a 14.5px label, parted by a `--rule-soft` hairline so
-   six actions read as six rather than as a block.
+   six actions read as six rather than as a block. The row says it can be
+   held: under a touch its wash deepens over the hold's 500ms, and while its
+   menu is open it rises 1.5% on a `--hl` fill and a `--rule-soft` ring while
+   the rest of its list fades — no shadow, no scrim.
    Inputs exempt from both. Zoom needs all
    three of `userScalable: false`, `touch-action: pan-x pan-y` on `html, body`
    and `NoPinchZoom` — no one of them covers every browser, and desktop zoom is

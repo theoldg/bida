@@ -353,6 +353,16 @@ async function main() {
       // ever holds, a destructive one last. The groups list's is the same card
       // with two rows on it, so this is the shot that shows the whole of it.
       await page.goto(`${base}/g?id=${groupId}`);
+
+      // A ledger row's own menu: the row risen out of a list that has stepped
+      // back, and the card hanging off it.
+      await page.locator(".entryrow").nth(1).click({ button: "right" });
+      await page.waitForSelector(".rowmenu");
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: join(SHOTS, `${theme}-row-menu.png`) });
+      process.stdout.write(`${theme}/row-menu `);
+      await page.keyboard.press("Escape");
+
       await page.getByRole("button", { name: "Group menu" }).click();
       await page.waitForSelector(".rowmenu");
       await page.waitForTimeout(250);

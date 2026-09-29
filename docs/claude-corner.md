@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "the long hold menus are a bit bare", then a mock with
+  toggles, then a phone screenshot of the ticks: "I like these settings". The
+  screenshot is the spec; the one thing named to drop is the only change.
+
 - *2026-09-29* — "Build D from this" with a page of four mocks. The letter is
   the whole spec: the mock's keyframes are the design, the app's own refusal
   animations are the vocabulary to say it in. Pick D, don't re-argue A–C.
@@ -72,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then "yes, build it". The docs called it impossible; that was true of
   history, not of the button. When a wall is documented, ask whether another
   platform door reaches the same press before agreeing.
-
-- *2026-09-29* — "why are groups tombstoned locally instead of truly
-  forgotten?", then "shouldnt it just delete (after syncing…)?". My first
-  answer defended the code; the owner's premise was sharper. When asked why,
-  test the reason against the code before offering it as one.

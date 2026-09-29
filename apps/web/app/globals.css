@@ -1370,6 +1370,28 @@ dialog.scrim::backdrop { background: transparent }
    the hold that opened the card without lifting (components/long-press.tsx) —
    that touch belongs to the row, so `:active` never reaches here. */
 .rowmenu-item:active, .rowmenu-item.rowmenu-hot { background: var(--press) }
+/* A touch hold's wash builds over the hold's 500ms (`HOLD_MS`,
+   components/long-press.tsx), laid over the tap's instant one: a hold is seen
+   coming, and a row says it can be held. It drains at a tap's pace. */
+.row::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--press); opacity: 0; transition: opacity .12s ease-out }
+.row[data-holding]::after { opacity: 1; transition: opacity .5s cubic-bezier(.4, 0, .6, 1) }
+/* The row a hold menu belongs to rises out of its list and the rest steps
+   back — no shadow, no blur, no scrim, since nothing in this design floats
+   and a menu is not a decision. Clipped sideways, or the risen row, wider than
+   the screen, lets the list scroll a few pixels across. */
+.rows { overflow-x: clip }
+.rows .row, .rows .daylabel {
+  transition: background-image .2s ease, opacity .18s ease-out, transform .18s cubic-bezier(.2, .8, .2, 1) }
+.rows:has(.row[data-held]) :is(.row, .daylabel):not([data-held]) { opacity: .42 }
+/* `:active` too: the hold's finger is still down when the menu opens, and the
+   tap rule would drop the lift's transition and keep its own wash. */
+.rows .row[data-held], .rows .row[data-held]:active {
+  z-index: 1; opacity: 1; transform: scale(1.015); border-radius: var(--r-m);
+  background: linear-gradient(var(--hl), var(--hl)) var(--card);
+  box-shadow: 0 0 0 1px var(--rule-soft); border-bottom-color: transparent;
+  transition: opacity .18s ease-out, transform .18s cubic-bezier(.2, .8, .2, 1) }
+.rows .row[data-held]::after { opacity: 0 }
 
 /* A link with no password in it (components/keyless-link.tsx): a sentence,
    then a drawing of where the working link is — the group's top bar with its
