@@ -25,10 +25,6 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
-  was honest, but it was the wrong screen's: a flash is judged by its frame,
-  not its data. Prove the check fails without the fix before trusting it.
-
 - *2026-09-29* — "the long hold menus are a bit bare", then a mock with
   toggles, then a phone screenshot of the ticks: "I like these settings". The
   screenshot is the spec; the one thing named to drop is the only change.
@@ -75,3 +71,7 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "make single currency symbols full color", then halfway into
   a second ask, "nevermind the kebabs". Drop the retracted half entirely; do
   the one that stayed, and name the codes it spares.
+
+- *2026-09-29* — "fix both failing checks". Three had been waved off as
+  pre-existing flakes; one was a real race, one a stale expectation, one a
+  hidden frame. "Also red on the base" says whose it is, not that it is noise.
