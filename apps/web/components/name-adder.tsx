@@ -57,7 +57,8 @@ export function AddName({
       it: an unfiled name is unfiled, and only the plus files. */
   onDraft?: (name: string | null) => void;
   /** A screen's refusal, blooming this row: on the plus when a name is waiting
-      to be filed, on the placeholder when nothing is typed. Ends early, with no
+      to be filed, on the whole row (box, writing and plus) when the field is
+      what's wrong. Ends early, with no
       event, when a keystroke makes it moot (lib/refusal.ts). */
   flash?: string;
   onFlashEnd?: (e?: React.AnimationEvent) => void;

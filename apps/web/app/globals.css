@@ -604,15 +604,17 @@ a { color: inherit; text-decoration: none }
    act), so the name moves in with it rather than the box sticking out. */
 .addrow.editing { margin: 6px 16px 10px; padding: 10px 11px; width: auto;
   background: var(--card); border: 1px solid var(--rule); border-radius: var(--r-s) }
-/* In a list the box comes and goes with the first keystroke, so it is drawn
-   *around* the row rather than inside it: margin + border + padding add up to
-   the resting row's own padding (16 top and sides, 11 below), and neither the
-   plus, the name nor anything under the row moves by a pixel. The price is a
-   box that reaches 11px into the gutter, off the 16px column. */
-.rows > .addrow.editing { margin: 5px 5px 0; padding: 10px }
+/* In a list the box comes and goes — with the first keystroke, and with a
+   refusal's wash (below) — so it is always there, drawn *around* the row in a
+   transparent border: margin + border + padding add up to the resting row's own
+   padding (16 top and sides, 11 below), and neither the plus, the name nor
+   anything under the row moves by a pixel when it shows. The price is a box
+   that reaches 11px into the gutter, off the 16px column. */
+.rows > .addrow { margin: 5px 5px 0; padding: 10px; width: auto;
+  border: 1px solid transparent; border-radius: var(--r-s) }
+.rows > .addrow.editing { border-color: var(--rule) }
 /* The name that field would repeat, said under it and aligned with the names
    above — so it reads as a note on the list, not a new row in it. */
-.addrow:not(.editing):has(+ .addwarn) { border-bottom: 0 }
 .addrow.editing:has(+ .addwarn) { margin-bottom: 0 }
 .addwarn { margin: 0; padding: 0 16px 13px 16px }
 
@@ -1694,14 +1696,22 @@ button.amtnote:active { background: var(--hl-edge) }
 .btn-pair.flash-b, .btn.flash-b, .amtnote.flash-b, .iconbtn.flash-b { animation: refuse-fill-b .6s ease-in-out }
 
 /* When the name field itself is what's wrong — empty, or a name already on the
-   list — the row blooms instead (components/name-adder.tsx). A row has no
-   ground, so this is the one text-only refusal: the placeholder for empty, the
-   input's colour for typed.
-   The input's animation is load-bearing: a `::placeholder` animation ends as a
-   pseudo-element event, which refusal handlers ignore, so the element's own
-   animation is what tells the screen the flash is over. */
+   list — the row blooms instead (components/name-adder.tsx): its box washes
+   `--debit-wash` inside a `--debit` edge, the writing goes red — the
+   placeholder for empty, the input's colour for typed — and the plus fills,
+   pointing at the press that answers it. The box is the row's resting one
+   (above), so the wash moves nothing.
+   A `::placeholder` animation ends as a pseudo-element event, which refusal
+   handlers ignore; the row's and the input's own are what tell the screen the
+   flash is over. */
+@keyframes refuse-wash-a { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
+@keyframes refuse-wash-b { 15%, 45% { background-color: var(--debit-wash); border-color: var(--debit) } }
+.addrow.flash-a { animation: refuse-wash-a .6s ease-in-out }
+.addrow.flash-b { animation: refuse-wash-b .6s ease-in-out }
 .addrow.flash-a .addname { animation: refuse-text-a .6s ease-in-out }
 .addrow.flash-b .addname { animation: refuse-text-b .6s ease-in-out }
+.addrow.flash-a .iconbtn { animation: refuse-fill-a .6s ease-in-out }
+.addrow.flash-b .iconbtn { animation: refuse-fill-b .6s ease-in-out }
 
 /* **A `::placeholder` cannot be animated.** Blink silently drops the animation,
    so the placeholder is mixed from `currentColor` instead, which the input's
@@ -1749,7 +1759,9 @@ button.amtnote:active { background: var(--hl-edge) }
   .amountfield.flash-a input, .amountfield.flash-b input,
   .field.flash-a input, .field.flash-b input,
   .field.flash-a label, .field.flash-b label,
+  .addrow.flash-a, .addrow.flash-b,
   .addrow.flash-a .addname, .addrow.flash-b .addname,
+  .addrow.flash-a .iconbtn, .addrow.flash-b .iconbtn,
   .itemtable tr.flash-a .itemname, .itemtable tr.flash-b .itemname,
   .itemtable tr.flash-a .itemamount, .itemtable tr.flash-b .itemamount,
   .itemtable tr.flash-a .itemqty, .itemtable tr.flash-b .itemqty,

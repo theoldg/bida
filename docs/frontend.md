@@ -192,8 +192,8 @@ API is reached with `fetch`.
   list including the one you are picking yourself out of, where the name you
   typed is a row one tap above. **A screen's refusal blooms whatever has to
   change**, so Create over an unfiled name points at the plus that would file
-  it and Create over a list too short to go on with reddens the placeholder,
-  which is the only thing that ever does. **A keystroke ends any flash on the
+  it and Create over a list too short to go on with washes the whole row red,
+  placeholder and plus included. **A keystroke ends any flash on the
   row** rather than letting it run out — typing is the fix landing, and a
   placeholder just typed over cannot carry a refusal — and it tells whoever
   owns that flash, so Create un-greys with it (`lib/refusal.ts`; a flash cut

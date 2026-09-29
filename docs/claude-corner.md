@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "Build D from this" with a page of four mocks. The letter is
+  the whole spec: the mock's keyframes are the design, the app's own refusal
+  animations are the vocabulary to say it in. Pick D, don't re-argue A–C.
+
 - *2026-09-29* — "have this say \"you'll have to scan it again\"" with a
   screenshot of the dialog. The quote is the copy: set it verbatim in the
   house's curly apostrophe, and touch nothing else in the dialog.
@@ -73,8 +77,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   forgotten?", then "shouldnt it just delete (after syncing…)?". My first
   answer defended the code; the owner's premise was sharper. When asked why,
   test the reason against the code before offering it as one.
-
-- *2026-09-28* — "back should take me where i came from", then mid-work "if
-  the results are the same page as the picker, they probably shouldnt". I was
-  patching back inside one page; the owner saw it wanted to be two routes.
-  When back needs special handling, ask whether the step is a screen.
