@@ -328,7 +328,11 @@ typeface, announcing that the *site* is asking, with one line where a consequenc
 needs a paragraph. `components/dialog.tsx` is a real `<dialog>` — `showModal()`,
 so focus and Escape are the platform's — filling the viewport and painting the
 scrim itself. Inside: a hairline card, `Cancel` beside an act that names itself
-("Forget group", never "OK"), `--debit` outlined when it destroys something. A
+("Forget group", never "OK"), `--debit` outlined when it destroys something.
+**A confirm's title is the question its act answers** ("Forget this group?");
+every other dialog's names what it holds ("Currency", "Invite link") or asks
+which one ("Which one are you?"). Never an imperative, which would compete with
+the button. A
 screen still wins where the decision needs the ledger on it — the payers editor,
 who-had-what ([ADR-0008](decisions/0008-hand-rolled-interface.md)). Nor is a `<select>` ours, and
 there are none left: `ChoiceDialog` picks from a short list in the app's own

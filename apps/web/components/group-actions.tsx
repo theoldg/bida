@@ -50,7 +50,8 @@ export function useGroupActions(groupId: string, afterForget?: () => void): {
       <>
         {link.dialogs}
         {asking ? (
-          <ConfirmDialog title={label} confirm={label} danger={true}
+          <ConfirmDialog title={demo ? copy.demo.clearTitle : copy.members.forgetTitle}
+            confirm={label} danger={true}
             onConfirm={forget} onClose={() => setAsking(false)}>
             <p>{demo ? copy.demo.clearBody(`${host}${route.demo()}`) : copy.members.forgetBody}</p>
           </ConfirmDialog>
