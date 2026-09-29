@@ -146,11 +146,13 @@ export function WhoHadWhat({
 
   // Saying somebody was there opens their column and nothing more — an empty
   // one, like the grid starts. Saying they weren't takes back every item they
-  // had been given, since a column that isn't shown can't be corrected.
+  // had been given, since a column that isn't shown can't be corrected. The
+  // last one there can't be taken away: a bill nobody was at has no split.
   function toggleInvolved(memberId: string) {
+    const adding = !involved.has(memberId);
+    if (!adding && involved.size === 1) return;
     setTouched(true);
     const nextInvolved = new Set(involved);
-    const adding = !nextInvolved.has(memberId);
     if (adding) nextInvolved.add(memberId); else nextInvolved.delete(memberId);
     setInvolved(nextInvolved);
     if (adding) return;
@@ -443,6 +445,7 @@ export function WhoHadWhat({
               {people.map((m) => (
                 <button key={m.id} onClick={() => toggleInvolved(m.id)}
                   aria-pressed={involved.has(m.id)}
+                  disabled={involved.size === 1 && involved.has(m.id)}
                   aria-label={involved.has(m.id) ? copy.items.wasThere(m.name) : copy.items.wasntThere(m.name)}
                   className="itemchip" style={{ opacity: involved.has(m.id) ? 1 : .4 }}>
                   <span className="avatar" style={{ width: 22, height: 22, fontSize: 10 }}>

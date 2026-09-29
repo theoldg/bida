@@ -22,6 +22,7 @@ end, so freezing either costs the grid height it needs more (at eight people
 on a 360×640 phone, over half the screen). Only Done stays put, being the way
 out. Column widths are declared in a `<colgroup>` under `table-layout: fixed`,
 never measured from the cells, or every dot moves each time a run is opened.
+The last chip still lit is disabled: somebody is always there.
 Everyone starts at the table and **nothing starts assigned**: ticking what you
 had is the work, so the grid asks for it rather than handing you a bill already
 split evenly to untick your way out of. **A tap on the line itself — the name

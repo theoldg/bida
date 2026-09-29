@@ -25,6 +25,10 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "forbid disabling the last person chip in who-had-what".
+  Small, exact, one screen: a guard in the handler and `disabled` on the chip,
+  a line in the doc. No crit, no alternatives — the ask was already the design.
+
 - *2026-09-29* — "remove the faded squares for disabled cells", then "the pips
   are fine" and "I meant the faded marks in unselected cells". An unclear noun
   is a question, not a guess: ask which cells before the edit, not after.
@@ -75,8 +79,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   then "or just add keepFocus to every button everywhere?". I had swept screen
   by screen and still missed one; the owner saw the real fix. A fix that has
   to be remembered per button belongs in one listener.
-
-- *2026-09-28* — "make the import screen identical to the join screen". My
-  crit said "one component" when they already were one; the owner read it
-  literally and asked a sharper thing. Check a finding against the code before
-  it goes in a file, then do exactly what was asked, add row and all.
