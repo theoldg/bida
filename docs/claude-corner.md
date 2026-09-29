@@ -25,10 +25,9 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
-- *2026-09-29* — "Consider the banner seen whenever the ledger is open, and
-  clear it on the next navigation". "Consider" was the whole instruction, and
-  it reversed an earlier care (only unfolding counted); the core helper that
-  care needed went with it.
+- *2026-09-29* — "Consider the banner seen whenever the ledger is open":
+  "consider" was the whole instruction. Then "animate it using the recently
+  added primitives": the ledger's own fade-then-fold, reused, not a new one.
 
 - *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
   then "ship it with" three lines of letters. The mock got corrections on

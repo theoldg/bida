@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CATCH_UP_MS, compareHlc, unseenRevisions, type ImportSource, type Revision } from "@bida/core";
 import { Icon } from "@/components/icons";
+import { foldAway } from "@/components/ledger-rows";
 import { RevisionEntry, type RevisionContext } from "@/components/revision";
 import { copy } from "@/lib/copy";
 import { markEditsSeen } from "@/lib/db/commands";
@@ -23,10 +24,12 @@ const CAP = 4;
  *
  * **New** is `unseenRevisions` (core/history.ts), which the groups list counts
  * too. **Showing it is seeing it**: the line holds for as long as the ledger is
- * open, unfolded or not, and leaving the ledger marks all of it seen — the
- * catch-up is optional, so it is offered once and not again. Anything arriving
- * meanwhile joins it rather than the list being swapped under a thumb, and what
- * waits on a group nobody opens ages out after `CATCH_UP_MS`.
+ * open, and leaving the ledger marks all of it seen — the catch-up is
+ * optional, so it is offered once and not again. Anything arriving meanwhile
+ * joins it rather than the list being swapped under a thumb. **Folding it back
+ * is done with it**: it goes the way a deleted row does, and only what arrives
+ * after brings it back. What waits on a group nobody opens ages out after
+ * `CATCH_UP_MS`.
  */
 export function NewEdits({ groupId, currency, source }: {
   groupId: string; currency: string; source?: ImportSource | null;
@@ -54,10 +57,14 @@ export function NewEdits({ groupId, currency, source }: {
   }, [groupId]);
 
   // What unfolding showed, held so marking it seen doesn't empty the list.
-  // Folding it again keeps the hold: the line stays until the ledger is left.
   const [held, setHeld] = useState<Revision[] | null>(null);
   const [open, setOpen] = useState(false);
-  const live = fresh?.revisions ?? [];
+  // What folding it back put away: kept out while the query catches up with
+  // the mark, so only a change arriving after it brings the line back.
+  const [done, setDone] = useState<ReadonlySet<string>>(new Set());
+  const box = useRef<HTMLDivElement>(null);
+  const going = useRef(false);
+  const live = (fresh?.revisions ?? []).filter((r) => !done.has(r.op.id));
   const shown = held
     ? [...held, ...live.filter((r) => !held.some((h) => h.op.id === r.op.id))]
       .sort((a, b) => compareHlc(b.op.hlc, a.op.hlc))
@@ -83,15 +90,30 @@ export function NewEdits({ groupId, currency, source }: {
   const context: RevisionContext = { groupId, currency, memberById, expenseById, settlementById, source };
 
   function toggle() {
-    if (open) { setOpen(false); return; }
+    if (open) {
+      if (going.current) return;
+      going.current = true;
+      const through = top;
+      const ids = new Set(shown.map((r) => r.op.id));
+      void markEditsSeen(groupId, through);
+      void (box.current ? foldAway(box.current) : Promise.resolve()).then(() => {
+        setDone((was) => new Set([...was, ...ids]));
+        setHeld(null);
+        setOpen(false);
+        going.current = false;
+      });
+      return;
+    }
     setOpen(true);
     // What arrived since an earlier unfold is seen by this one.
     setHeld(shown);
     void markEditsSeen(groupId, top);
   }
 
+  // Keyed by what was put away: a change arriving mid-fold draws a new line,
+  // not the folded one the animation left at no height.
   return (
-    <div className={`newedits${open ? " on" : ""}`}>
+    <div ref={box} key={done.size} className={`newedits${open ? " on" : ""}`}>
       <button type="button" className="daylabel neweditsbar" aria-expanded={open} onClick={toggle}>
         <span>{plural(shown.length, copy.noun.newChange)}</span>
       </button>

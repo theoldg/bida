@@ -224,6 +224,22 @@ function arrive(slot: HTMLElement) {
 }
 
 /**
+ * A block that goes the way a row does — fades (`FADE_OUT_MS`), then its
+ * space folds (`FOLD_MS`) on the same curve — for one that isn't in this
+ * list: the ledger's new-changes line, folded away. Held folded until its
+ * owner drops it. Under reduced motion it is simply gone.
+ */
+export async function foldAway(el: HTMLElement): Promise<void> {
+  if (calmly()) return;
+  el.style.overflow = "hidden";
+  await el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_OUT_MS, fill: "forwards" })
+    .finished.catch(() => {});
+  await el.animate([{ height: `${el.offsetHeight}px` }, { height: "0px" }],
+    { duration: FOLD_MS, easing: "cubic-bezier(.2, 0, 0, 1)", fill: "forwards" })
+    .finished.catch(() => {});
+}
+
+/**
  * Fades a run's rows, then folds the run bottom-up (`foldFrame`). The divider
  * under the last row is the line above what follows, so it comes off the row
  * onto the slot, stays while the row fades, and rides up to the line above.

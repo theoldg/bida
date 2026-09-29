@@ -243,6 +243,9 @@ line, whose band is its own edge, and under the last row.
   under a finger or still gliding takes no change until 300ms after it stops.
   Into an empty ledger (a first pull), rows just appear.
 
+The ledger's new-changes line, folded back, leaves the same way a row does
+(`foldAway`).
+
 Under reduced motion the movement is instant and only the wash still plays.
 The groups list is the same list: a forgotten group folds out like a deleted
 entry, the last one included in the no-motion rule; a group that turns up just
