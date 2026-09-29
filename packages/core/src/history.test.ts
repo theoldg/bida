@@ -188,30 +188,24 @@ describe("unseenRevisions", () => {
     expect(revisions[1]?.changes).toEqual([
       expect.objectContaining({ field: "amountMinor", before: 4200, after: 4500 }),
     ]);
-    // Unfolding covers this node's ops and the quiet ones too.
+    // Seeing it covers this node's ops and the quiet ones too.
     expect(through).toBe(6);
   });
 
-  it("settles only up to the oldest change still unseen", () => {
-    const ops = twoPhones();
-    expect(unseenRevisions(ops, 1, "mine").settled).toBe(1);
-    // Past the device's quiet ops and this phone's own, up to the next change.
-    expect(unseenRevisions(ops, 2, "mine").settled).toBe(5);
-    expect(unseenRevisions(ops, 6, "mine")).toEqual({ revisions: [], through: 6, settled: 6 });
+  it("has nothing new once the mark is past every change", () => {
+    expect(unseenRevisions(twoPhones(), 6, "mine")).toEqual({ revisions: [], through: 6 });
   });
 
-  it("lets a change age out, and then settles past it", () => {
+  it("lets a change age out", () => {
     const ops = twoPhones();
     const last = ops[5]!.createdAt;
-    const recent = unseenRevisions(ops, 1, "mine", last);
-    expect(recent.revisions.map((r) => r.op.seq)).toEqual([6]);
-    expect(recent.settled).toBe(5);
-    expect(unseenRevisions(ops, 1, "mine", last + 1)).toEqual({ revisions: [], through: 6, settled: 6 });
+    expect(unseenRevisions(ops, 1, "mine", last).revisions.map((r) => r.op.seq)).toEqual([6]);
+    expect(unseenRevisions(ops, 1, "mine", last + 1)).toEqual({ revisions: [], through: 6 });
   });
 
   it("ignores ops not numbered yet, and never marks backwards", () => {
     const ops = twoPhones().map((o) => ({ ...o, seq: null }));
-    expect(unseenRevisions(ops, 7, "mine")).toEqual({ revisions: [], through: 7, settled: 7 });
+    expect(unseenRevisions(ops, 7, "mine")).toEqual({ revisions: [], through: 7 });
   });
 });
 

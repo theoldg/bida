@@ -275,12 +275,11 @@ API is reached with `fetch`.
   at four, with "Group history" always under them. New is `unseenRevisions`
   (`core/history.ts`): an op numbered past `groupKeys.seenSeq` whose stamp is
   another phone's, your own laptop included, less a device claiming a name.
-  **The catch-up is optional, so only unfolding marks it seen** — opening the
-  group doesn't, or it would be lost on whoever wanted it, and what nobody
-  unfolds ages out after a week (`CATCH_UP_MS`) rather than waiting forever.
-  Unfolded, the line stays up, folded again or not, until the ledger is left.
-  Leaving moves the mark only up to the oldest change still unseen (`settled`),
-  which is enough to put this phone's own ops behind it. The groups list leads
+  **Showing it is seeing it**: the line stays up, unfolded or not, for as long
+  as the ledger is open, and the next navigation away marks all of it seen —
+  the catch-up is optional, so it is offered once rather than on every visit.
+  What waits on a group nobody opens ages out after a week (`CATCH_UP_MS`)
+  rather than sitting on the groups list forever. The groups list leads
   a row's meta with the same count, reading the log only for a group whose
   cursor is past its mark. The first pull sets the mark at the cursor, so a
   joined group opens with nothing new, and the mark is device-local, never an

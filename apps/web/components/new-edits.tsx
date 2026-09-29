@@ -22,11 +22,11 @@ const CAP = 4;
  * under the you-owe card, opening onto those edits as history draws them.
  *
  * **New** is `unseenRevisions` (core/history.ts), which the groups list counts
- * too. **Only unfolding marks it seen** — the catch-up is optional, so opening
- * the group leaves it for whoever wants it, and what nobody unfolds ages out
- * after `CATCH_UP_MS`. Unfolding keeps the line up until the ledger is left,
- * folded again or not, and anything arriving meanwhile joins it rather than the
- * list being swapped under a thumb.
+ * too. **Showing it is seeing it**: the line holds for as long as the ledger is
+ * open, unfolded or not, and leaving the ledger marks all of it seen — the
+ * catch-up is optional, so it is offered once and not again. Anything arriving
+ * meanwhile joins it rather than the list being swapped under a thumb, and what
+ * waits on a group nobody opens ages out after `CATCH_UP_MS`.
  */
 export function NewEdits({ groupId, currency, source }: {
   groupId: string; currency: string; source?: ImportSource | null;
@@ -35,10 +35,10 @@ export function NewEdits({ groupId, currency, source }: {
     const key = await db().groupKeys.get(groupId);
     // No key is the demo; no mark is a group whose first pull hasn't landed.
     if (key?.seenSeq === undefined) return null;
-    const { revisions, through, settled } = unseenRevisions(await opsForGroup(groupId),
+    const { revisions, through } = unseenRevisions(await opsForGroup(groupId),
       key.seenSeq, (await getDevice()).nodeId, Date.now() - CATCH_UP_MS);
     // Nothing to name, but still a mark to move: this phone's own ops.
-    if (revisions.length === 0) return { through, settled };
+    if (revisions.length === 0) return { through };
     const [members, expenses, settlements] = await Promise.all([
       db().members.where("groupId").equals(groupId).toArray(),
       db().expenses.where("groupId").equals(groupId).toArray(),
@@ -46,7 +46,6 @@ export function NewEdits({ groupId, currency, source }: {
     ]);
     return {
       through,
-      settled,
       revisions,
       memberById: new Map(members.map((m) => [m.id, m])),
       expenseById: new Map(expenses.map((e) => [e.id, e])),
@@ -64,12 +63,12 @@ export function NewEdits({ groupId, currency, source }: {
       .sort((a, b) => compareHlc(b.op.hlc, a.op.hlc))
     : live;
 
-  // Leaving the ledger — another tab, an entry, the groups list — marks what
-  // it can without skipping an unread change: this phone's own ops, and all of
-  // it if the line is open. Read through a ref: the cleanup outlives the render.
+  // Leaving the ledger — another tab, an entry, the groups list — marks all of
+  // it seen: the line was on screen. Read through a ref: the cleanup outlives
+  // the render.
   const top = fresh?.through ?? 0;
   const leave = useRef(0);
-  leave.current = open ? top : fresh?.settled ?? 0;
+  leave.current = top;
   useEffect(() => () => {
     if (leave.current > 0) void markEditsSeen(groupId, leave.current);
   }, [groupId]);

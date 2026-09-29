@@ -25,6 +25,11 @@ restating what the code enforces. What gets praised is deleting.
 *Dated, newest first. Before evicting one, ask what it taught: if the lesson
 has gone general, edit a sentence above to hold it. Usually it just goes.*
 
+- *2026-09-29* — "Consider the banner seen whenever the ledger is open, and
+  clear it on the next navigation". "Consider" was the whole instruction, and
+  it reversed an earlier care (only unfolding counted); the core helper that
+  care needed went with it.
+
 - *2026-09-29* — ledger motion: a mock, three rounds of "the divider should…",
   then "ship it with" three lines of letters. The mock got corrections on
   lines and frames; timing only got one once it shipped ("wait a little
@@ -71,8 +76,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "have this say \"you'll have to scan it again\"" with a
   screenshot of the dialog. The quote is the copy: set it verbatim in the
   house's curly apostrophe, and touch nothing else in the dialog.
-
-- *2026-09-29* — "add a confirmation for going back from who-had-what in
-  quick split". The grid already asked — only once touched. The gap was the
-  untouched case, where the loss is the photo, not the taps. Find the guard
-  that exists before building a second one.

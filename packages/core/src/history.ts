@@ -175,7 +175,7 @@ const nodeOf = (hlc: string): string | undefined => {
   try { return parseHlc(hlc).node; } catch { return undefined; }
 };
 
-/** How long a change waits in the catch-up for someone to unfold it. */
+/** How long a change waits in the catch-up for someone to open its group. */
 export const CATCH_UP_MS = 7 * 86_400_000;
 
 /**
@@ -185,17 +185,15 @@ export const CATCH_UP_MS = 7 * 86_400_000;
  * count from this, so they can't disagree.
  *
  * Not news: a device claiming a name (plumbing, not the group's money), and a
- * change stamped before `notBefore` — the catch-up is optional, so what nobody
- * unfolds ages out rather than waiting on the groups list for good.
+ * change stamped before `notBefore`, so what waits on a group nobody opens ages
+ * out rather than sitting on the groups list for good.
  *
  * `through` is the highest seq in the log, this node's and quiet ones included:
- * what unfolding the result may mark seen. `settled` stops short of the oldest
- * change still unseen: what merely opening the group may mark, so this node's
- * own ops don't hold the mark back while nothing unread is skipped.
+ * what showing the result may mark seen.
  */
 export function unseenRevisions(
   ops: readonly Op[], seenSeq: number, node: string, notBefore = 0,
-): { revisions: Revision[]; through: number; settled: number } {
+): { revisions: Revision[]; through: number } {
   let through = seenSeq;
   const news = new Set<Id>();
   for (const op of ops) {
@@ -204,13 +202,11 @@ export function unseenRevisions(
     if (seq > seenSeq && op.entity !== "identity" && op.createdAt >= notBefore
       && nodeOf(op.hlc) !== node) news.add(op.id);
   }
-  if (news.size === 0) return { revisions: [], through, settled: through };
+  if (news.size === 0) return { revisions: [], through };
   // A revision's diff needs its entity's earlier ops, so the feed is folded
   // over every op of the touched entities, then cut down to the new ones.
   const touched = new Set(ops.filter((o) => news.has(o.id)).map((o) => o.entityId));
   const revisions = feedOf(ops.filter((o) => touched.has(o.entityId)), groupCreateOf(ops))
     .filter((r) => news.has(r.op.id));
-  const settled = revisions.length === 0 ? through
-    : Math.min(...revisions.map((r) => r.op.seq ?? 0)) - 1;
-  return { revisions, through, settled };
+  return { revisions, through };
 }
