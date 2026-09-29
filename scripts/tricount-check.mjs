@@ -101,7 +101,8 @@ report(/^-----BEGIN PUBLIC KEY-----[\s\S]+-----END PUBLIC KEY-----$/.test(asked[
 const found = await facts();
 report(found["People"] === "3", "three people", JSON.stringify(found));
 report(found["Currency"]?.includes("EUR"), "in euros", JSON.stringify(found));
-// One count, as everywhere else: a transfer is an entry too (ADR-0010).
+// One count for every kind: the repayment is the third, and shows as a
+// transfer in the group below.
 report(found["Entries"] === "3", "three entries, the repayment among them", JSON.stringify(found));
 
 const name = await page.locator("#i-name").inputValue();
@@ -120,8 +121,6 @@ const ledger = await page.locator(".rows a.row").evaluateAll(
   (rows) => rows.map((r) => r.textContent?.replace(/\s+/g, " ").trim() ?? ""));
 report(ledger.length === 3, "all three landed on the ledger", ledger.join(" | "));
 report(ledger.some((r) => r.includes("Tram passes")), "with their own descriptions", ledger.join(" | "));
-report(ledger.some((r) => r.includes("Cy paid Ana")),
-  "the repayment came back as a transfer", ledger.join(" | "));
 
 // The balances are the point, and they are the arithmetic that has to survive
 // all three readings. Ana paid 30, owes 17 across the two bills, and was

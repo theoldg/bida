@@ -388,7 +388,7 @@ red when bunq moves.
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
 - **A skeleton row is `.rows .row` too**, and outlives the ledger's arrival by
-  120ms in the veil that dissolves it (`SkeletonVeil`). Count or wait for
+  120ms in the veil that dissolves it (`SkeletonVeil`) when it was up 100ms. Count or wait for
   `.rows .row:not(.skelrow)`, or a count lands six rows high. And `/` holds
   a hidden resume frame, stall notice and all, until the launch decides — a
   wedged read never does — so a locator there wants `:visible`.
