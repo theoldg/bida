@@ -24,6 +24,10 @@ export function useDeleteEntry({ groupId, me, kind, entryId, then }: {
     if (!groupId || !me) return;
     if (kind === "transfer") await deleteSettlement(groupId, me, entryId);
     else await deleteExpense(groupId, me, entryId);
+    // Answered, so it closes. It used to go with its row, unmounted by the
+    // delete; on the ledger the row now stays to fold out, and the question
+    // would stand over it until it had (components/ledger-rows.tsx).
+    setAsking(false);
     then?.();
   }
 
