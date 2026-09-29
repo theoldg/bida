@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Component, Fragment, Suspense, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, Fragment, Suspense, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { isDemo } from "@bida/core";
 import { copy } from "../lib/copy";
 import { wantsDemo } from "../lib/db/commands";
 import { route } from "../lib/group-link";
 import { useBackButton } from "../lib/back-button";
 import { retryLive, useStalled } from "../lib/db/live";
-import { useScrollMemory } from "../lib/scroll-memory";
 import { goUp, goBack } from "../lib/nav";
 import { KeylessLink } from "./keyless-link";
 import { walkFields } from "./viewport";
@@ -57,16 +56,14 @@ export function Body({ children }: { children: ReactNode }) {
 
 /**
  * The one scrolling middle of a screen — a div, so the browser won't restore
- * its position; `lib/scroll-memory.ts` does.
+ * its position, and nothing else does: every screen opens at the top.
  *
  * Also the scope the confirm key walks, in layout order (`walkFields`,
  * components/viewport.tsx). A dialog is deliberately not one: its Enter
  * submits the card.
  */
 export function Scroll({ children }: { children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useScrollMemory(ref);
-  return <div className="scroll" ref={ref} onKeyDown={walkFields}>{children}</div>;
+  return <div className="scroll" onKeyDown={walkFields}>{children}</div>;
 }
 
 /**

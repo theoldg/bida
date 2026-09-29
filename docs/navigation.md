@@ -134,17 +134,11 @@ light/dark switch and **About bida** are the two items in the top bar's kebab
 from `components/`; don't bring it back. A screen needing more destinations puts
 them behind a top-bar icon, not a second row — three icons is the ceiling.
 
-## A screen comes back where you left it
+## Every screen opens at the top
 
 The app scrolls inside a div — one `.scroll` per screen — so the browser's own
-restoration, which knows only about the document, restores nothing.
-`lib/scroll-memory.ts` keeps one offset per route in memory (the query
-included: `?id=` is which group, `?e=` which entry), and `Scroll` puts it
-back on the way in. It aims at the furthest point the content has reached and
-stays unfinished until the real one exists, because the rows arrive from Dexie
-after the frame draws; it records nothing until that lands, the finger takes
-over, or a second and a bit passes, since every position on the way there is
-shorter than the target and saving one would walk the list towards the top.
+restoration, which knows only about the document, restores nothing, and the
+app keeps no offsets of its own: going back to a list lands at its head.
 
 ## Gotchas
 

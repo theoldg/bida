@@ -381,8 +381,8 @@ red when bunq moves.
   where a save lands, grep these scripts for it in the same commit.
 - **`page.goto` between screens is a different app.** The app never reloads in
   normal use — every move is one document, back included — so anything the
-  browser keeps in memory (where each screen was scrolled,
-  `lib/scroll-memory.ts`) is gone the moment a check navigates with `goto`
+  app keeps in memory (a draft, `lib/draft.ts`) is gone the moment a check
+  navigates with `goto`
   instead of pressing what a person would press. A `goto` is for arriving; from
   there, click.
 - **`waitForSelector` waits for *visible*, and a `<link>` never is.** Anything
