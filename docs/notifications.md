@@ -76,7 +76,8 @@ only if it is still missing after.
   that isn't the subscription's — never a reason to clear one.
 - **Showing** (`public/sw.js`) — always something, as both platforms demand;
   `renotify`, so a group's latest replaces its last and still buzzes; a tap
-  focuses or opens the url, kept same-origin.
+  focuses or opens the url, kept same-origin. No `icon`: Android already
+  badges it with the installed app's, and a second copy only doubled it.
 - **Leaving** (`forgetGroup`) writes `push: null` first, and the group is kept
   on the phone until the sync that pushes it, then erased. That sync heals
   nothing: forgetting drops the claim. Rejoining puts the subscription back.
