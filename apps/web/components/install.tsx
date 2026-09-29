@@ -1,8 +1,9 @@
 "use client";
 
-import { isDemo } from "@bida/core";
+import { DEMO_GROUP_ID, isDemo } from "@bida/core";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { DemoCard } from "./demo";
 import { Icon } from "./icons";
 import { copy } from "../lib/copy";
 import { heldInvites } from "../lib/db/commands";
@@ -16,6 +17,7 @@ import {
   type InstallOffer,
 } from "../lib/install";
 import { pushState, subscribePushState, turnOnNotifications, type PushState } from "../lib/push";
+import { resumeHintId, type LedgerBanner } from "../lib/resume-hint";
 
 export function useInstallOffer(): InstallOffer {
   return useSyncExternalStore(subscribeInstall, installOffer, () => "none" as const);
@@ -101,6 +103,41 @@ function FoldedOffer(
       </div>
     </div>
   );
+}
+
+const GHOSTS: Exclude<LedgerBanner, undefined>[] = ["demo", "notify", "manual"];
+
+/**
+ * The cards atop a ledger that need no database — the demo's mark and the
+ * folded install or notifications offer — drawn into its skeleton, so the
+ * rows don't drop when the ledger lands. Folded, as `LedgerInstall` always
+ * opens.
+ *
+ * With no `groupId` it is `/` standing in for a launch that reopens a group,
+ * whose first paint is exported HTML no script has touched: every candidate
+ * is drawn there, hidden, and the mark set before paint picks one
+ * (lib/resume-hint.ts, globals.css) until React takes over.
+ */
+export function SkeletonBanner({ groupId }: { groupId?: string }) {
+  // True through the prerender and hydration, which must draw the same HTML.
+  const hydrating = useSyncExternalStore(never, () => false, () => true);
+  const hinted = useSyncExternalStore(never, resumeHintId, () => undefined);
+  const id = groupId ?? hinted;
+  if (hydrating) {
+    return (
+      <>
+        {GHOSTS.map((k) => (
+          <div key={k} className={`ghost ghost-${k}`} aria-hidden="true">
+            {k === "demo" ? <DemoCard groupId={DEMO_GROUP_ID} />
+              : <FoldedOffer title={k === "notify" ? copy.notify.offer.title : copy.install.banner.title}
+                open={false} onToggle={() => {}}>{null}</FoldedOffer>}
+          </div>
+        ))}
+      </>
+    );
+  }
+  if (!id) return null;
+  return <><DemoCard groupId={id} /><LedgerInstall groupId={id} /></>;
 }
 
 /**

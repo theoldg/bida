@@ -29,6 +29,10 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
   speed configurable for all", then "Ship C at 800ms". Put a knob on the mock
   when feel is in question — the answer comes back as a number to ship.
 
+- *2026-09-29* — "can we account for the banners in the skeletons? or does
+  that come from the database too?" A question with a fix inside: answer it
+  (no, the browser), then build it, and measure the drop before and after.
+
 - *2026-09-29* — "i can see the homescreen flashing" on a reopen. The skeleton
   was honest, but it was the wrong screen's: a flash is judged by its frame,
   not its data. Prove the check fails without the fix before trusting it.
@@ -70,8 +74,3 @@ has gone general, edit a sentence above to hold it. Usually it just goes.*
 - *2026-09-29* — "imported groups: every expense has the same creation time
   and author". The log already knew which entries came in with the group; no
   new flag was needed to tell, only one to say from where. Read the log first.
-
-- *2026-09-29* — "i went through the quick split flow and didn't find a single
-  -". The crit's hyphen was the fixture receipt's own title, not the app's. A
-  shot shows data as well as design: before filing a finding, find the line
-  of code that draws it.

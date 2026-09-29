@@ -16,7 +16,7 @@ import {
 import { FitLine } from "@/components/fit-line";
 import { GroupMenu } from "@/components/group-menu";
 import { DemoCard } from "@/components/demo";
-import { LedgerInstall } from "@/components/install";
+import { LedgerInstall, SkeletonBanner } from "@/components/install";
 import { NewEdits } from "@/components/new-edits";
 import { RollingFigure } from "@/components/rolling-figure";
 import { Icon } from "@/components/icons";
@@ -77,7 +77,7 @@ function GroupScreen() {
   // than flashing somebody else's ledger.
   if (data.loading || unclaimed) {
     sawSkeleton.current = true;
-    return <LedgerSkeleton groupId={groupId} />;
+    return <LedgerSkeleton groupId={groupId} head={<SkeletonBanner groupId={groupId} />} />;
   }
   // A group deleted from the server takes this phone's copy with it
   // (lib/db/sync.ts), so the screen says "deleted" rather than "bad link".
@@ -107,7 +107,7 @@ function GroupScreen() {
         />
         <Ledger data={data} />
       </Body>
-      {sawSkeleton.current && veiled ? <SkeletonVeil onGone={() => setVeiled(false)} /> : null}
+      {sawSkeleton.current && veiled ? <SkeletonVeil head={<SkeletonBanner groupId={group.id} />} onGone={() => setVeiled(false)} /> : null}
 
       {/* Two ways to start an expense. */}
       <ScanFab href={route.scan(group.id)} />

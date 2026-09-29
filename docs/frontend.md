@@ -54,9 +54,15 @@ API is reached with `fetch`.
   doesn't take releases the list after two seconds rather than leaving the app
   on a skeleton nothing will fill. **The list's frame never paints on a resume**:
   the exported `/` is the list, and IndexedDB answers after first paint, so
-  `lib/resume-hint.ts` mirrors "a launch would resume" into localStorage and a
+  `lib/resume-hint.ts` mirrors the group to resume into localStorage and a
   script before the body marks `<html data-resuming>`, under which `/` shows
   the ledger's skeleton (`LedgerSkeleton`) — the frame `/g` then takes over.
+  **A skeleton wears every card it can know without the database**: the
+  demo's mark and the folded install or notifications offer
+  (`SkeletonBanner`), so the rows never drop when the ledger lands. The mark's
+  value names which, decided by the same script and tested against the real
+  cards' logic; Chrome's one-tap offer waits on an event and still arrives
+  late, as do the sync banner and the new-edits line, which are data.
   *Changing* who you are is not device-local:
   `claimIdentity` writes an `identity` op
   ([ADR-0003](decisions/0003-link-only-access.md)). `setMe` is the

@@ -223,9 +223,10 @@ export function SkeletonSummary() {
  * over 120ms — a cross-fade of everything at once, the balance's figure
  * included, since the veil is opaque and the ledger under it is already whole.
  * A copy of the frame rather than the frame itself: its top bar is drawn, not
- * a `TopBar`, so nothing registers a back button twice. `onGone` unmounts it.
+ * a `TopBar`, so nothing registers a back button twice. `onGone` unmounts it;
+ * `head` is the same banner the skeleton wore (`LedgerSkeleton`).
  */
-export function SkeletonVeil({ onGone }: { onGone: () => void }) {
+export function SkeletonVeil({ head, onGone }: { head?: ReactNode; onGone: () => void }) {
   return (
     <div className="skelveil" aria-hidden="true"
       // Its own animation only: the bars' pulse bubbles here too, and never ends.
@@ -234,7 +235,7 @@ export function SkeletonVeil({ onGone }: { onGone: () => void }) {
         <span className="iconbtn back"><Icon name="back" size={17} /></span>
         <div className="topbar-title"><h3>{" "}</h3></div>
       </div>
-      <div className="scroll"><SkeletonSummary /><SkeletonRows count={6} days /></div>
+      <div className="scroll">{head}<SkeletonSummary /><SkeletonRows count={6} days /></div>
     </div>
   );
 }
@@ -244,14 +245,17 @@ export function SkeletonVeil({ onGone }: { onGone: () => void }) {
  * top bar looks like a tap that didn't land. With no `groupId` it is the groups
  * list standing in for a launch that is reopening a group (lib/resume-hint.ts):
  * the same pixels, so the handover to the real one doesn't blink, and FABs that
- * go nowhere yet.
+ * go nowhere yet. `head` is `SkeletonBanner` (components/install.tsx),
+ * passed in so the frame stays free of what the banners import.
  */
-export function LedgerSkeleton({ groupId, className }: { groupId?: string; className?: string }) {
+export function LedgerSkeleton({ groupId, className, head }: {
+  groupId?: string; className?: string; head?: ReactNode;
+}) {
   return (
     <Screen className={className}>
       <Body>
         <TopBar title=" " back={route.groups()} />
-        <Scroll><SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
+        <Scroll>{head}<SkeletonSummary /><SkeletonRows count={6} days /></Scroll>
       </Body>
       {groupId ? (
         <>

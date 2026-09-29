@@ -8,7 +8,7 @@ import { Avatar, signClass } from "@/components/bits";
 import { FitLine } from "@/components/fit-line";
 import { Icon } from "@/components/icons";
 import { Body, Empty, LedgerSkeleton, Screen, Scroll, SkeletonRows, TopBar } from "@/components/chrome";
-import { InstallOfferCard } from "@/components/install";
+import { InstallOfferCard, SkeletonBanner } from "@/components/install";
 import { useGroupActions } from "@/components/group-actions";
 import { usePasteLink } from "@/components/paste-link";
 import { useHold, useLongPressMenu } from "@/components/long-press";
@@ -51,7 +51,7 @@ export default function GroupsPage() {
         paint, not this list's (lib/resume-hint.ts). Both are always drawn and
         globals.css picks, because the mark is set before React runs and the
         prerender can't know it. */}
-    <LedgerSkeleton className="resumeframe" />
+    <LedgerSkeleton className="resumeframe" head={<SkeletonBanner />} />
     <Screen className="homeframe">
       <Body>
         {/* The app says its own name once, on the screen you land on. The

@@ -17,7 +17,7 @@
  * invite goes straight to the question, never by way of the ledger.
  */
 import {
-  onePhone, PATIENCE, settle, readDevice, putDevice, untilDevice,
+  newGroup, newPhone, onePhone, PATIENCE, settle, readDevice, putDevice, untilDevice,
 } from "./lib/harness.mjs";
 
 const { base, close, browser, ctx, page, report, finish } = await onePhone();
@@ -376,6 +376,46 @@ await press(plus());
 await page.waitForFunction(() => document.querySelectorAll(".rows .row:not(.skelrow)").length === 4);
 report(await field().inputValue() === "" && !await page.getByRole("button", { name: "Upload" }).isDisabled(),
   "filing the name leaves the scan free to run");
+
+// ---- the reopened ledger's head, known before its rows ------------------
+// An iOS tab's ledger opens under the install offer, which asks the browser,
+// not the database — so the skeleton a launch paints wears it too, from the
+// first frame before any script, and the summary under it never drops
+// (lib/resume-hint.ts). Measured from the scroll's top: the sync banner above
+// it comes from the network, which nothing can know ahead.
+{
+  const iphone = await newPhone(browser, {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+  });
+  const tab = await iphone.newPage();
+  const gid = await newGroup(tab, base, { name: "Lisbon", me: "Ann", members: ["Bo"] });
+  await tab.waitForSelector(".fab");
+  await untilDevice(tab, (d) => d?.lastOpenedGroupId === gid);
+  await tab.addInitScript(() => {
+    window.__tops = [];
+    const look = () => {
+      const el = [...document.querySelectorAll(".mysummary")].find((e) => e.offsetParent !== null);
+      const top = el && Math.round(el.getBoundingClientRect().top - el.closest(".scroll").getBoundingClientRect().top);
+      if (top !== undefined && window.__tops.at(-1) !== top) window.__tops.push(top);
+      requestAnimationFrame(look);
+    };
+    look();
+  });
+  // The exported HTML alone, as the first frame of a launch shows it.
+  await tab.route("**/*.js", (r) => r.abort());
+  await tab.goto(`${base}/`);
+  report(await tab.locator(".ghost-manual").isVisible(),
+    "a launch's first frame already wears the iOS tab's install offer");
+  await tab.unroute("**/*.js");
+  await tab.goto(`${base}/`);
+  await tab.waitForURL(/\/g\?id=/, { timeout: PATIENCE });
+  await tab.waitForSelector("a.mysum");
+  await settle(tab, 300);
+  const tops = await tab.evaluate(() => window.__tops);
+  report(tops.length === 1 && tops[0] > 0,
+    "and the ledger lands under it without the summary moving", `summary tops: ${tops.join(" → ")}`);
+  await iphone.close();
+}
 
 await browser.close();
 close();
