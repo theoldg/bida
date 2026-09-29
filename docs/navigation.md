@@ -208,7 +208,8 @@ app keeps no offsets of its own: going back to a list lands at its head.
   is **where the screen sits**, not which screen it is: the target has to be
   index 0, which is what a phone that resumed into a group gives the form
   pushed onto its ledger. So the going *checks*: still on the entry it asked
-  from 150ms later is a traversal that was swallowed, and the destination takes
+  from 150ms later — the entry, not its index, which a tap pushing straight on
+  refills — is a traversal that was swallowed, and the destination takes
   this screen's place instead — a push, which is not the queue that is stuck.
   This is the one clock the file allows, because here it fails the cheap way: a
   traversal that was merely late lands on an entry that is already the

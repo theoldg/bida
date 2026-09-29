@@ -218,6 +218,20 @@ describe("goBack", () => {
     expect(takeOwnTraversal()).toBe(true);
   });
 
+  // Save, then a row tapped inside the window: the traversal landed and the
+  // push put a new entry at the old index, which is not the one we left.
+  it("leaves a traversal that arrived and was pushed on from", () => {
+    vi.useFakeTimers();
+    const { window, back } = fakeWindow(["/g?id=a", "/g/entry/edit?id=a"], 1);
+    const replaced: string[] = [];
+    withWindow(window, () => {
+      goBack(back, (to) => replaced.push(to));
+      window.navigation.currentEntry = { index: 1 };
+      vi.runAllTimers();
+    });
+    expect(replaced).toEqual([]);
+  });
+
   it("has nothing to fall back on at the start of the history", () => {
     vi.useFakeTimers();
     const { window } = fakeWindow(["/g?id=a"], 0, false);

@@ -105,14 +105,16 @@ const SWALLOWED_MS = 150;
  */
 function leaveTo(to: string | undefined, traverse: () => void, replace: (to: string) => void): void {
   closeDialogs();
-  const here = navigation()?.currentEntry?.index;
+  // The entry itself, not its index: a traversal that landed and a tap that
+  // pushed straight on come back to the same index on a different entry.
+  const here = navigation()?.currentEntry;
   markOwnTraversal();
   traverse();
-  if (to === undefined || here === undefined) return;
+  if (to === undefined || !here) return;
   setTimeout(() => {
-    // Anywhere but where we asked from is a traversal that arrived — or a
+    // Any entry but the one we asked from is a traversal that arrived — or a
     // hand that has moved on, which is not ours to undo either.
-    if (navigation()?.currentEntry?.index !== here) return;
+    if (navigation()?.currentEntry !== here) return;
     // The latch was armed for a `navigate` that is never coming, and one
     // left armed swallows a real press.
     disarmOwnTraversal();
